@@ -1,0 +1,55 @@
+import { ApiError } from '$lib/api';
+
+export type ToastColor = 'green' | 'red' | 'yellow' | 'blue';
+export type ToastType = 'success' | 'info' | 'warning' | 'error';
+
+export const ToastTypeColors: Record<ToastType, ToastColor> = {
+	success: 'green',
+	info: 'blue',
+	warning: 'yellow',
+	error: 'red'
+};
+
+export interface ToastItem {
+	id: number;
+	message: string;
+	type: ToastType;
+}
+
+// Private state within the module
+let toasts = $state<ToastItem[]>([]);
+
+export const toastService = {
+	// Getter to access the state reactively
+	get items() {
+		return toasts;
+	},
+
+	add(message: string, type: ToastType = 'info') {
+		const id = Date.now();
+		const newToast: ToastItem = { id, message, type };
+
+		toasts.push(newToast);
+
+		// Auto-dismiss after 5 seconds
+		setTimeout(() => {
+			this.dismiss(id);
+		}, 5000);
+	},
+
+	error(err: unknown) {
+		let message = 'Произошла ошибка';
+
+		if (err instanceof ApiError) {
+			message = err.data?.detail.message;
+		} else if (err instanceof Error) {
+			message = err.message;
+		}
+
+		this.add(message, 'error');
+	},
+
+	dismiss(id: number) {
+		toasts = toasts.filter((t) => t.id !== id);
+	}
+};
