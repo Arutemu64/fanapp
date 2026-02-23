@@ -1,0 +1,11 @@
+localhost:80 {
+    # Route all requests starting with /api to FastAPI
+    handle_path /api* {
+        reverse_proxy http://127.0.0.1:8081
+    }
+
+    # Route everything else to Svelte/Vite
+    handle {
+        reverse_proxy http://127.0.0.1:5173
+    }
+}

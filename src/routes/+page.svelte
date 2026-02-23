@@ -1,20 +1,14 @@
 <script lang="ts">
 	import { Card } from 'flowbite-svelte';
 	import { CalendarWeekOutline, ThumbsUpOutline, TicketOutline } from 'flowbite-svelte-icons';
+	import SectionHeader from '$lib/components/SectionHeader.svelte';
 </script>
 
 <svelte:head>
 	<title>FAN App</title>
 </svelte:head>
 
-<div id="home-header" class="mb-6 text-center sm:mb-8">
-	<h1 class="mb-1 text-xl font-bold text-gray-900 sm:mb-2 sm:text-2xl dark:text-white">
-		Добро пожаловать!
-	</h1>
-	<p class="text-sm text-gray-500 sm:text-base dark:text-gray-400">
-		Ваш персональный помощник на мероприятии
-	</p>
-</div>
+<SectionHeader title="Добро пожаловать!" description="Ваш персональный помощник на мероприятии" />
 
 <div id="home-nav-grid" class="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
 	<Card

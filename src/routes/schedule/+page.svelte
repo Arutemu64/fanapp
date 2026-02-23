@@ -1,32 +1,26 @@
 <script lang="ts">
-	import { Search, Toggle, Button } from 'flowbite-svelte';
-	import { PlaySolid } from 'flowbite-svelte-icons';
-	import EventCard from '$lib/components/schedule/EventCard.svelte';
-	import type { GetScheduleResponse, ScheduleEventDTO } from '$lib/types/schedule';
-	import type { FullUserDTO } from '$lib/types/user';
-	import { eventsClient } from '$lib/events.svelte.js';
-	import { api } from '$lib/api.js';
-	import { ScheduleStore } from '$lib/stores/schedule.svelte.js';
-	import { setContext } from 'svelte';
+	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
-
-	let useScheduleStore = new ScheduleStore();
-	setContext('useScheduleStore', useScheduleStore);
+	import EventCard from '$lib/components/schedule/EventCard.svelte';
+	import SectionHeader from '$lib/components/SectionHeader.svelte';
+	import { getEventsClient } from '$lib/events.svelte';
+	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
+	import type { UserFullDTO } from '$lib/types/user';
+	import { Button, Search, Toggle } from 'flowbite-svelte';
+	import { PlaySolid } from 'flowbite-svelte-icons';
 
 	// Schedule
 	let { data } = $props();
-	// svelte-ignore state_referenced_locally
-	useScheduleStore.init(data.schedule);
-	let schedule: ScheduleEventDTO[] = $derived(useScheduleStore.schedule);
+	let schedule: ScheduleEventFullDTO[] = $derived(data.schedule);
 
 	// Filtering
 	let searchQuery: string = $state('');
 	let showOnlySubscribed: boolean = $state(false);
-	let filtered: ScheduleEventDTO[] = $derived(
+	let filtered: ScheduleEventFullDTO[] = $derived(
 		schedule.filter((ev) => {
 			const q = searchQuery.toLowerCase();
 			const searchMatch =
-				ev.public_id.toString().toLowerCase().includes(q) ||
+				ev.public_number.toString().toLowerCase().includes(q) ||
 				ev.title.toLowerCase().includes(q) ||
 				ev.block_title?.toLowerCase().includes(q) ||
 				ev.nomination_title?.toLowerCase().includes(q);
@@ -36,7 +30,7 @@
 	);
 
 	let currentEvent = $derived(schedule.find((ev) => ev.is_current));
-	let user = $derived(page.data.user as FullUserDTO | null);
+	let user: UserFullDTO | null = $derived(page.data.user);
 
 	// Scroll to current event
 	// TODO scroll-margin-top
@@ -49,13 +43,16 @@
 	}
 
 	$effect(() => {
-		const updateSchedule = async (event: MessageEvent) => {
-			const res: GetScheduleResponse = await api.get('/schedule');
-			schedule = res.schedule;
+		const client = getEventsClient();
+		if (!client) return;
+
+		const updateSchedule = async () => {
+			// TODO: Scoped invalidate
+			await invalidateAll();
 		};
-		eventsClient.source?.addEventListener('update_schedule', updateSchedule);
+		client.source?.addEventListener('update_schedule', updateSchedule);
 		return () => {
-			eventsClient.source?.removeEventListener('update_schedule', updateSchedule);
+			client.source?.removeEventListener('update_schedule', updateSchedule);
 		};
 	});
 </script>
@@ -63,6 +60,8 @@
 <svelte:head>
 	<title>Расписание</title>
 </svelte:head>
+
+<SectionHeader title="Расписание" description="Следите за ходом мероприятия" />
 
 <!-- Floating Control Center -->
 <div class="sticky top-4 z-40 mx-auto mb-4 max-w-2xl">
@@ -91,7 +90,7 @@
 
 <div class="space-y-4">
 	{#each filtered as event, i (event.id)}
-		{#if i === 0 || filtered[i].block_title !== filtered[i - 1].block_title}
+		{#if i === 0 || filtered[i]?.block_title !== filtered[i - 1]?.block_title}
 			<h2
 				class="mt-4 mb-1.5 border-b-2 border-gray-200 pb-1.5 text-base font-bold text-gray-900 first:mt-2 sm:mt-6 sm:mb-2 sm:pb-2 sm:text-lg dark:border-gray-700 dark:text-white"
 			>
@@ -99,7 +98,7 @@
 			</h2>
 		{/if}
 
-		{#if i === 0 || filtered[i].nomination_title !== filtered[i - 1].nomination_title}
+		{#if i === 0 || filtered[i]?.nomination_title !== filtered[i - 1]?.nomination_title}
 			<h3
 				class="mb-1.5 ml-1 text-sm font-semibold text-gray-700 sm:mb-2 sm:ml-2 sm:text-base dark:text-gray-300"
 			>

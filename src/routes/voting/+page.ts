@@ -1,8 +1,17 @@
-import type { VotingNominationUserDTO } from '$lib/types/voting';
-import { mockNominations } from '$lib/mocks/mockVoting';
+import { client } from '$lib/api';
+import type { PageLoad } from './$types';
 
-export function load() {
+export const load: PageLoad = async ({ fetch }) => {
+	const { data, error, response } = await client.GET('/voting/nominations', { fetch });
+
+	if (error) {
+		console.error('Error fetching nominations:', error);
+		return {
+			nominations: []
+		};
+	}
+
 	return {
-		nominations: mockNominations as VotingNominationUserDTO[]
+		nominations: data?.nominations ?? []
 	};
-}
+};

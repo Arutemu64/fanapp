@@ -1,4 +1,5 @@
 import { browser } from '$app/environment';
+import { PUBLIC_API_URL } from '$env/static/public';
 
 class EventsClient {
 	connectionStatus = $state('disconnected');
@@ -6,10 +7,7 @@ class EventsClient {
 	#reconnectAttempts = 0;
 
 	constructor() {
-		// Auto-connect when the store is initialized in the browser
-		if (browser) {
-			this.connect();
-		}
+		this.connect();
 	}
 
 	connect() {
@@ -18,7 +16,7 @@ class EventsClient {
 		this.connectionStatus = 'connecting';
 
 		// Replace with your actual endpoint
-		this.source = new EventSource('http://192.168.1.50:8081/api/events');
+		this.source = new EventSource(`${PUBLIC_API_URL}/events`);
 
 		this.source.onopen = () => {
 			this.connectionStatus = 'connected';
@@ -26,6 +24,7 @@ class EventsClient {
 		};
 
 		this.source.onerror = () => {
+			console.log('error');
 			this.connectionStatus = 'error';
 			// Basic reconnection logic
 			this.source?.close();
@@ -46,5 +45,15 @@ class EventsClient {
 	}
 }
 
-// Export a singleton instance
-export const eventsClient = new EventsClient();
+// Lazy singleton - only created when first accessed in the browser
+let _instance: EventsClient | null = null;
+
+export function getEventsClient(): EventsClient | null {
+	if (!browser) {
+		return null;
+	}
+	if (!_instance) {
+		_instance = new EventsClient();
+	}
+	return _instance;
+}

@@ -1,13 +1,17 @@
-import { api, client } from '$lib/api';
-import type { GetScheduleResponse } from '$lib/types/schedule';
+import { client } from '$lib/api';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ fetch }) => {
-	const test = await client.GET("/api/schedule", {fetch});
-	const data = test.data;
-	const schedule = data?.schedule;
-	const res: GetScheduleResponse = await api.get('/schedule', { customFetch: fetch });
+	const { data, error, response } = await client.GET('/schedule', { fetch });
+
+	if (error) {
+		console.error('Error fetching schedule:', error);
+		return {
+			schedule: []
+		};
+	}
+
 	return {
-		schedule: schedule ?? []
+		schedule: data?.schedule ?? []
 	};
 };

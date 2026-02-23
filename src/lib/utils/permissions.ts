@@ -1,4 +1,4 @@
-import type { FullUserDTO, UserPermissionDTO } from '$lib/types/user';
+import type { UserFullDTO, UserPermissionDTO } from '$lib/types/user';
 
 /**
  * Check if user has a specific permission.
@@ -9,7 +9,7 @@ import type { FullUserDTO, UserPermissionDTO } from '$lib/types/user';
  * @returns true if user has the permission, false otherwise
  */
 export function hasPermission(
-	user: FullUserDTO | null,
+	user: UserFullDTO | null,
 	permissionName: string,
 	objectType?: string,
 	objectId?: number
@@ -47,6 +47,6 @@ export function hasPermission(
  * @param user - The user object or null
  * @returns true if user has 'can_manage_schedule' permission
  */
-export function canManageSchedule(user: FullUserDTO | null): boolean {
+export function canManageSchedule(user: UserFullDTO | null): boolean {
 	return hasPermission(user, 'can_manage_schedule');
 }

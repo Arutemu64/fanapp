@@ -1,17 +1,4 @@
-import type { UserRole } from './role';
+import type { components } from '$lib/api/v1';
 
-export interface UserPermissionDTO {
-	name: string;
-	object_type: string | null;
-	object_id: number | null;
-}
-
-export interface FullUserDTO {
-	id: number;
-	tg_id: number | null;
-	username: string | null;
-	first_name: string | null;
-	last_name: string | null;
-	role: UserRole | null;
-	permissions: UserPermissionDTO[];
-}
+export type UserPermissionDTO = components['schemas']['UserPermissionDTO'];
+export type UserFullDTO = components['schemas']['UserFullDTO'];

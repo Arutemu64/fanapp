@@ -1,20 +1,4 @@
-// Voting types
+import type { components } from '$lib/api/v1';
 
-export type NominationId = number;
-export type VoteId = number;
-export type ParticipantId = number;
-export type ParticipantVotingNumber = string;
-
-export interface VotingNominationUserDTO {
-	id: NominationId;
-	title: string;
-	vote_id: VoteId | null;
-}
-
-export interface VotingParticipantUserDTO {
-	id: ParticipantId;
-	title: string;
-	voting_number: ParticipantVotingNumber | null;
-	vote_id: VoteId | null;
-	votes_count: number;
-}
+export type GetVotingNominationResult = components['schemas']['GetVotingNominationResult'];
+export type VotingStatus = components['schemas']['VotingStatus'];

@@ -9,7 +9,7 @@
 	import { fly } from 'svelte/transition';
 </script>
 
-<ToastContainer position="bottom-left">
+<ToastContainer position="top-right">
 	{#each toastService.items as toast (toast.id)}
 		<div transition:fly={{ x: 200, duration: 300 }}>
 			<Toast

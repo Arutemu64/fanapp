@@ -1,24 +1,38 @@
 <script lang="ts">
 	import { Badge, Button, type BadgeProps } from 'flowbite-svelte';
 	import { UndoOutline } from 'flowbite-svelte-icons';
-	import type { ScheduleChangeDTO, ScheduleChangeType } from '$lib/types/schedule';
-	import { api } from '$lib/api';
+	import { client } from '$lib/api/index.js';
+	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import { toastService } from '$lib/stores/toasts.svelte';
 	import { invalidateAll } from '$app/navigation';
+	import type { ScheduleChangeType } from '$lib/types/schedule';
 
 	let { data } = $props();
-	let scheduleChanges: ScheduleChangeDTO[] = $derived(data.schedule_changes);
+	let scheduleChanges = $derived(data.schedule_changes);
 	let undoingId: number | null = $state(null);
 
 	async function undoChange(changeId: number) {
 		undoingId = changeId;
 		try {
-			await api.delete(`/schedule/changes/${changeId}`);
+			const {
+				data: responseData,
+				error,
+				response
+			} = await client.DELETE('/schedule/changes/{schedule_change_id}', {
+				params: { path: { schedule_change_id: changeId } }
+			});
+
+			if (error) {
+				console.error('Error undoing change:', error);
+				toastService.error(error);
+				return;
+			}
+
 			toastService.add('Изменение отменено', 'success');
 			await invalidateAll();
-		} catch (error) {
+		} catch (err) {
 			toastService.error('Не удалось отменить изменение');
-			console.error('Undo error:', error);
+			console.error('Undo error:', err);
 		} finally {
 			undoingId = null;
 		}
@@ -40,9 +54,9 @@
 		unskipped: 'purple'
 	};
 
-	function formatEvent(event: { public_id: number; title: string } | null): string {
+	function formatEvent(event: any): string {
 		if (!event) return '—';
-		return `#${event.public_id} ${event.title}`;
+		return `#${event.public_number} ${event.title}`;
 	}
 </script>
 
@@ -50,15 +64,12 @@
 	<title>Изменения расписания</title>
 </svelte:head>
 
-<div class="mb-4">
-	<h1 class="text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">Изменения расписания</h1>
-	<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-		История изменений событий в расписании
-	</p>
-</div>
+<SectionHeader title="Изменения расписания" description="История изменений событий в расписании" />
 
 {#if scheduleChanges.length === 0}
-	<div class="rounded-lg border border-gray-200 bg-white p-6 text-center dark:border-gray-700 dark:bg-gray-800">
+	<div
+		class="rounded-lg border border-gray-200 bg-white p-6 text-center dark:border-gray-700 dark:bg-gray-800"
+	>
 		<p class="text-gray-500 dark:text-gray-400">Изменений пока нет</p>
 	</div>
 {:else}

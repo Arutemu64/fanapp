@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { Button, Modal, Search } from 'flowbite-svelte';
 	import { ShuffleOutline } from 'flowbite-svelte-icons';
-	import type { ScheduleEventDTO } from '$lib/types/schedule';
-	import { api } from '$lib/api';
+	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
+	import { client } from '$lib/api';
 	import { toastService } from '$lib/stores/toasts.svelte';
 
 	interface Props {
 		open: boolean;
-		event: ScheduleEventDTO;
-		schedule: ScheduleEventDTO[];
+		event: ScheduleEventFullDTO;
+		schedule: ScheduleEventFullDTO[];
 	}
 
 	let { open = $bindable(), event, schedule }: Props = $props();
@@ -20,7 +20,7 @@
 		schedule.filter((ev) => {
 			const q = query.toLowerCase();
 			return (
-				ev.public_id.toString().toLowerCase().includes(q) ||
+				ev.public_number.toString().toLowerCase().includes(q) ||
 				ev.title.toLowerCase().includes(q) ||
 				ev.block_title?.toLowerCase().includes(q) ||
 				ev.nomination_title?.toLowerCase().includes(q)
@@ -28,17 +28,24 @@
 		})
 	);
 
-	function handleSelect(ev: ScheduleEventDTO) {
+	function handleSelect(ev: ScheduleEventFullDTO) {
 		selectedId = selectedId === ev.id ? null : ev.id;
 	}
 
 	async function handleSubmit() {
 		if (selectedId) {
 			try {
-				await api.post('/schedule/move', {
-					event_id: event.id,
-					place_after_event_id: selectedId
+				const { data, error, response } = await client.PATCH('/schedule/{event_id}/move', {
+					params: { path: { event_id: event.id } },
+					body: { place_after_event_id: selectedId }
 				});
+
+				if (error) {
+					console.error('Error moving event:', error);
+					toastService.error(error);
+					return;
+				}
+
 				const selectedEvent = schedule.find((e) => e.id === selectedId);
 				console.log('Move event after:', selectedEvent?.title);
 				toastService.add('Выступление перенесено', 'success');
@@ -76,7 +83,7 @@
 						: ''}"
 					onclick={() => handleSelect(ev)}
 				>
-					<span class="font-medium text-gray-900 dark:text-white">№{ev.public_id}</span>
+					<span class="font-medium text-gray-900 dark:text-white">№{ev.public_number}</span>
 					<span class="text-gray-600 dark:text-gray-400"> — {ev.title}</span>
 				</button>
 			{:else}

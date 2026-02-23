@@ -1,0 +1,3 @@
+ngrok http --url=sharing-ringtail-stirred.ngrok-free.app --host-header=rewrite https://localhost:2024
+
+.\caddy_windows_amd64.exe run --config .\Caddyfile

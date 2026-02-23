@@ -1,12 +1,14 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
+	import { client } from '$lib/api';
+	import { toastService } from '$lib/stores/toasts.svelte';
+	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import { Button, Modal } from 'flowbite-svelte';
 	import { BellOutline } from 'flowbite-svelte-icons';
-	import type { ScheduleEventDTO } from '$lib/types/schedule';
-	import { api } from '$lib/api';
 
 	interface Props {
 		open: boolean;
-		event: ScheduleEventDTO;
+		event: ScheduleEventFullDTO;
 	}
 	let { open = $bindable(), event }: Props = $props();
 
@@ -16,14 +18,22 @@
 			return;
 		}
 
-		try {
-			await api.delete('/schedule/subscriptions', {
-				body: JSON.stringify({ subscription_id: event.subscription.id })
-			});
-			open = false;
-		} catch (error) {
+		const { data, error, response } = await client.DELETE(
+			'/schedule/subscriptions/{subscription_id}',
+			{
+				params: { path: { subscription_id: event.subscription.id } }
+			}
+		);
+
+		if (error) {
 			console.error('Error unsubscribing:', error);
+			toastService.error(error);
+			return;
 		}
+
+		toastService.add('Вы отписались от уведомлений', 'success');
+		invalidateAll();
+		open = false;
 	}
 </script>
 

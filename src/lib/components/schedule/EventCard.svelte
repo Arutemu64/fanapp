@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Badge, Dropdown, DropdownItem, Toast } from 'flowbite-svelte';
+	import { Badge, Dropdown, DropdownItem } from 'flowbite-svelte';
 	import {
 		ClockOutline,
 		HourglassOutline,
@@ -12,20 +12,20 @@
 		EyeSlashOutline,
 		BanOutline
 	} from 'flowbite-svelte-icons';
-	import type { ScheduleEventDTO } from '$lib/types/schedule';
-	import type { FullUserDTO } from '$lib/types/user';
+	import type { UserFullDTO } from '$lib/types/user';
 	import { formatDuration, formatUntil, pluralize } from '$lib/utils';
 	import { canManageSchedule } from '$lib/utils/permissions';
-	import { api } from '$lib/api';
+	import { toastService } from '$lib/stores/toasts.svelte';
+	import { client } from '$lib/api';
+	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
+	import MoveEventModal from './MoveEventModal.svelte';
 	import SubscribeModal from './SubscribeModal.svelte';
 	import UnsubscribeModal from './UnsubscribeModal.svelte';
-	import MoveEventModal from './MoveEventModal.svelte';
-	import { toastService } from '$lib/stores/toasts.svelte';
 
 	interface Props {
-		event: ScheduleEventDTO;
-		schedule: ScheduleEventDTO[];
-		user: FullUserDTO | null;
+		event: ScheduleEventFullDTO;
+		schedule: ScheduleEventFullDTO[];
+		user: UserFullDTO | null;
 	}
 
 	let { event, schedule, user }: Props = $props();
@@ -60,45 +60,54 @@
 	);
 
 	async function handleMarkCurrent() {
-		try {
-			await api.post('/schedule/set-current', { event_id: event.id });
-			toastService.add('Событие отмечено как текущее', 'success');
-			dropdownOpen = false;
-		} catch (error) {
-			console.error('Error marking event as current:', error);
+		const { data, error, response } = await client.PATCH('/schedule/{event_id}/current', {
+			params: { path: { event_id: event.id } }
+		});
+
+		if (error) {
 			toastService.error(error);
 			dropdownOpen = false;
+			return;
 		}
+
+		toastService.add('Событие отмечено как текущее', 'success');
+		dropdownOpen = false;
 	}
 
 	async function handleUnmarkCurrent() {
-		try {
-			await api.post('/schedule/set-current', { event_id: null });
-			toastService.add('Отметка снята', 'success');
-			dropdownOpen = false;
-		} catch (error) {
-			console.error('Error marking event as current:', error);
+		const { data, error, response } = await client.DELETE('/schedule/current');
+
+		if (error) {
 			toastService.error(error);
 			dropdownOpen = false;
+			return;
 		}
+
+		toastService.add('Отметка снята', 'success');
+		dropdownOpen = false;
 	}
 
 	async function handleToggleSkip() {
-		try {
-			const newIsSkipped = !event.is_skipped;
-			await api.post('/schedule/set-skip', {
-				event_id: event.id,
-				is_skipped: newIsSkipped
-			});
-			dropdownOpen = false;
-			const toastMessage = newIsSkipped
-				? 'Событие помечено как пропущенное'
-				: 'Событие возвращено в расписание';
-			toastService.add(toastMessage, 'success');
-		} catch (error) {
-			console.error('Error toggling skip status:', error);
+		const newIsSkipped = !event.is_skipped;
+
+		const { data, error, response } = newIsSkipped
+			? await client.PATCH('/schedule/{event_id}/skip', {
+					params: { path: { event_id: event.id } }
+				})
+			: await client.PATCH('/schedule/{event_id}/unskip', {
+					params: { path: { event_id: event.id } }
+				});
+
+		if (error) {
 			toastService.error(error);
+			return;
 		}
+
+		dropdownOpen = false;
+		const toastMessage = newIsSkipped
+			? 'Событие помечено как пропущенное'
+			: 'Событие возвращено в расписание';
+		toastService.add(toastMessage, 'success');
 	}
 
 	function handleUnsubscribe() {
@@ -115,7 +124,7 @@
 		<div
 			class="flex w-16 shrink-0 items-center justify-center text-4xl font-bold text-gray-900 sm:w-20 sm:text-3xl dark:text-white"
 		>
-			{event.public_id?.toString().padStart(3, '0')}
+			{event.public_number?.toString().padStart(3, '0')}
 		</div>
 
 		<div class="h-7 w-px self-center bg-gray-200 sm:h-9 dark:bg-gray-700"></div>

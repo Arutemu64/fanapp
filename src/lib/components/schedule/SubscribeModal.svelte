@@ -1,16 +1,14 @@
 <script lang="ts">
-	import { Button, Modal, Input } from 'flowbite-svelte';
-	import { PlusOutline, MinusOutline, BellActiveOutline } from 'flowbite-svelte-icons';
-	import type { ScheduleEventDTO } from '$lib/types/schedule';
-	import { api } from '$lib/api';
-	import { getContext } from 'svelte';
-	import type { ScheduleStore } from '$lib/stores/schedule.svelte';
-
-	const useScheduleStore = getContext<ScheduleStore>('useScheduleStore');
+	import { invalidateAll } from '$app/navigation';
+	import { client } from '$lib/api';
+	import { toastService } from '$lib/stores/toasts.svelte';
+	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
+	import { Button, Input, Modal } from 'flowbite-svelte';
+	import { BellActiveOutline, MinusOutline, PlusOutline } from 'flowbite-svelte-icons';
 
 	interface Props {
 		open: boolean;
-		event: ScheduleEventDTO;
+		event: ScheduleEventFullDTO;
 	}
 	let { open = $bindable(), event }: Props = $props();
 
@@ -25,18 +23,22 @@
 	}
 
 	async function handleSubmit() {
-		try {
-			await api.post('/subscriptions', {
+		const { data, error, response } = await client.POST('/schedule/subscriptions', {
+			body: {
 				event_id: event.id,
 				counter
-			});
-			useScheduleStore.refresh();
-			console.log('Subscribed with counter:', counter);
-		} catch (error) {
-			console.error('Subscription error:', error);
-		} finally {
+			}
+		});
+
+		if (error || !response.ok) {
+			toastService.error(error ?? new Error('Ошибка подписки'));
 			open = false;
+			return;
 		}
+
+		toastService.add('Подписка оформлена!', 'success');
+		invalidateAll();
+		open = false;
 	}
 </script>
 
