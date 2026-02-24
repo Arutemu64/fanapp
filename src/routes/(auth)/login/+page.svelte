@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { Button, Input, Label, Card } from 'flowbite-svelte';
+	import { Button, Input, Label, Card, Spinner } from 'flowbite-svelte';
 	import { toastService } from '$lib/stores/toasts.svelte';
 	import { client } from '$lib/api';
 	import { goto, invalidateAll } from '$app/navigation';
+	import { getEventsClient } from '$lib/events.svelte';
 
 	let username = $state('');
 	let password = $state('');
@@ -32,11 +33,13 @@
 
 			if (error) {
 				console.error('Login error:', error);
-				throw new Error(error.detail || 'Ошибка авторизации');
+				const errorMessage = typeof error.detail === 'string' ? error.detail : 'Ошибка авторизации';
+				throw new Error(errorMessage);
 			}
 
 			toastService.add('Успешный вход!', 'success');
-			goto('/', {invalidateAll: true});
+			getEventsClient()?.restart();
+			goto('/', { invalidateAll: true });
 		} catch (err) {
 			toastService.error(err);
 		} finally {
@@ -76,24 +79,13 @@
 				/>
 			</div>
 
-			<Button type="submit" class="mt-4 min-h-[44px] w-full" disabled={isLoading}>
+			<Button
+				type="submit"
+				class="mt-4 min-h-11 w-full rounded-xl font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
+				disabled={isLoading}
+			>
 				{#if isLoading}
-					<svg class="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24">
-						<circle
-							class="opacity-25"
-							cx="12"
-							cy="12"
-							r="10"
-							stroke="currentColor"
-							stroke-width="4"
-							fill="none"
-						/>
-						<path
-							class="opacity-75"
-							fill="currentColor"
-							d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-						/>
-					</svg>
+					<Spinner size="4" class="mr-2" color="gray" />
 					Вход...
 				{:else}
 					Войти

@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { Card } from 'flowbite-svelte';
 	import BasicUserInfoCard from '$lib/components/profile/BasicUserInfoCard.svelte';
 	import TicketLinkCard from '$lib/components/profile/TicketLinkCard.svelte';
 	import EditProfileCard from '$lib/components/profile/EditProfileCard.svelte';
+	import ChangePasswordCard from '$lib/components/profile/ChangePasswordCard.svelte';
+	import PushNotificationsCard from '$lib/components/profile/PushNotificationsCard.svelte';
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import type { PageProps } from './$types';
 	import { invalidateAll } from '$app/navigation';
@@ -22,12 +23,24 @@
 <SectionHeader title="Профиль" description="Управление вашим аккаунтом и информацией" />
 
 <div class="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
-	<!-- Basic User Info Card -->
-	<BasicUserInfoCard {user} />
+	<div class="flex flex-col gap-4">
+		<!-- Basic User Info Card -->
+		<BasicUserInfoCard {user} />
 
-	<!-- Ticket Link Card -->
-	<TicketLinkCard {user} onTicketLinked={refreshProfile} />
+		<!-- Change Password Card -->
+		<ChangePasswordCard />
+	</div>
 
-	<!-- Edit Profile Card -->
-	<EditProfileCard {user} onUpdate={refreshProfile} />
+	<div class="flex flex-col gap-4">
+		<!-- Edit Profile Card -->
+		<EditProfileCard {user} onUpdate={refreshProfile} />
+
+		<!-- Push Notifications Card -->
+		<PushNotificationsCard />
+	</div>
+
+	<div class="flex flex-col gap-4 sm:col-span-2 lg:col-span-1">
+		<!-- Ticket Link Card -->
+		<TicketLinkCard {user} onTicketLinked={refreshProfile} />
+	</div>
 </div>

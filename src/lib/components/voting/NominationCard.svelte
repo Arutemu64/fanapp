@@ -1,10 +1,10 @@
 <script lang="ts">
-	import type { NominationFullDTO } from '$lib/types/nominations';
+	import type { NominationVotingDTO } from '$lib/types/nominations';
 	import { Card, Badge, Button } from 'flowbite-svelte';
 	import { CheckCircleSolid, ClockOutline } from 'flowbite-svelte-icons';
 
 	interface Props {
-		nomination: NominationFullDTO;
+		nomination: NominationVotingDTO;
 	}
 
 	let { nomination }: Props = $props();
@@ -15,7 +15,7 @@
 		<h3 class="text-lg font-bold text-gray-900 dark:text-white">
 			{nomination.title}
 		</h3>
-		{#if nomination.vote}
+		{#if nomination.user_vote}
 			<Badge color="green" class="shrink-0">
 				<span class="flex items-center gap-1">
 					<CheckCircleSolid class="h-3.5 w-3.5" />

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { NominationFullDTO } from '$lib/types/nominations';
+	import type { NominationVotingDTO } from '$lib/types/nominations';
 	import { Alert } from 'flowbite-svelte';
 	import { CheckCircleSolid, ExclamationCircleSolid } from 'flowbite-svelte-icons';
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
@@ -8,7 +8,7 @@
 	import type { VotingStatus } from '$lib/types/voting';
 
 	let { data }: PageProps = $props();
-	let nominations: NominationFullDTO[] = $derived(data.nominations);
+	let nominations: NominationVotingDTO[] = $derived(data.nominations);
 	let votingStatus = $derived(data.votingStatus);
 
 	function getStatusMessage(status: VotingStatus): string {

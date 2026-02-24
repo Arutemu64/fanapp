@@ -163,11 +163,11 @@
 					</Badge>
 				{/if}
 
-				{#if event.subscription}
+				{#if event.user_subscription}
 					<Badge color="blue" border class="inline-flex items-center gap-1">
 						<BellActiveSolid class="me-1 h-2.5 w-2.5" />
-						{event.subscription.counter}
-						{pluralize(event.subscription.counter, 'событие', 'события', 'событий')}
+						{event.user_subscription.counter}
+						{pluralize(event.user_subscription.counter, 'событие', 'события', 'событий')}
 					</Badge>
 				{/if}
 			</div>
@@ -188,7 +188,7 @@
 <MoveEventModal bind:open={moveModal} {event} {schedule} />
 
 {#snippet menuItems()}
-	{#if event.subscription}
+	{#if event.user_subscription}
 		<DropdownItem onclick={handleUnsubscribe}>
 			<span class="flex items-center gap-2">
 				<BellActiveOutline class="h-4 w-4" />

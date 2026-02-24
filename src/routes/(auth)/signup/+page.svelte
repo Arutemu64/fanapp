@@ -69,7 +69,8 @@
 
 			if (error) {
 				console.error('Registration error:', error);
-				throw new Error(error.detail || 'Ошибка регистрации');
+				const errorMessage = typeof error.detail === 'string' ? error.detail : 'Ошибка регистрации';
+				throw new Error(errorMessage);
 			}
 
 			toastService.add('Регистрация успешна! Войдите в аккаунт.', 'success');
@@ -128,7 +129,7 @@
 				</p>
 			</div>
 
-			<Button type="submit" class="mt-4 min-h-[44px] w-full" disabled={isLoading}>
+			<Button type="submit" class="mt-4 min-h-11 w-full" disabled={isLoading}>
 				{#if isLoading}
 					<svg class="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24">
 						<circle

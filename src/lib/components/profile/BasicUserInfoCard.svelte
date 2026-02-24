@@ -2,7 +2,7 @@
 	import { Avatar, Badge } from 'flowbite-svelte';
 	import { TicketSolid, UserCircleSolid } from 'flowbite-svelte-icons';
 	import type { UserFullDTO } from '$lib/types/user';
-	import { getDisplayName, getRoleLabel, getRoleColor } from '$lib/utils/users';
+	import { getRoleLabel, getRoleColor } from '$lib/utils/users';
 
 	interface Props {
 		user: UserFullDTO;
@@ -17,7 +17,7 @@
 	<div class="min-w-0 flex-1">
 		<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
 			<h2 class="text-lg font-bold text-gray-900 dark:text-white">
-				{getDisplayName(user)}
+				{user.first_name || 'Пользователь'}
 			</h2>
 			<Badge color={getRoleColor(user.role)}>
 				{getRoleLabel(user.role)}

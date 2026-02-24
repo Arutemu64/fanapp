@@ -14,13 +14,15 @@
 	<Card
 		id="card-schedule"
 		href="/schedule"
-		class="h-full py-4 transition-all hover:border-gray-400 hover:shadow-md dark:hover:border-gray-500"
+		class="group h-full py-4 transition-all duration-300 ease-out hover:-translate-y-1 hover:border-primary-400 hover:shadow-xl dark:hover:border-primary-500"
 	>
 		<div class="flex flex-col items-center p-1 text-center sm:p-2">
 			<div
-				class="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 sm:mb-3 sm:h-12 sm:w-12 dark:bg-primary-900"
+				class="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary-50 transition-colors duration-300 group-hover:bg-primary-100 sm:mb-3 sm:h-12 sm:w-12 dark:bg-primary-900/30 dark:group-hover:bg-primary-900/50"
 			>
-				<CalendarWeekOutline class="h-5 w-5 text-primary-600 sm:h-6 sm:w-6 dark:text-primary-400" />
+				<CalendarWeekOutline
+					class="h-5 w-5 text-primary-600 transition-transform duration-300 group-hover:scale-110 sm:h-6 sm:w-6 dark:text-primary-400"
+				/>
 			</div>
 			<h2 class="mb-0.5 text-sm font-semibold text-gray-900 sm:mb-1 sm:text-base dark:text-white">
 				Расписание
@@ -34,13 +36,15 @@
 	<Card
 		id="card-voting"
 		href="/voting"
-		class="h-full py-4 transition-all hover:border-gray-400 hover:shadow-md dark:hover:border-gray-500"
+		class="group h-full py-4 transition-all duration-300 ease-out hover:-translate-y-1 hover:border-green-400 hover:shadow-xl dark:hover:border-green-500"
 	>
 		<div class="flex flex-col items-center p-1 text-center sm:p-2">
 			<div
-				class="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-green-100 sm:mb-3 sm:h-12 sm:w-12 dark:bg-green-900"
+				class="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-green-50 transition-colors duration-300 group-hover:bg-green-100 sm:mb-3 sm:h-12 sm:w-12 dark:bg-green-900/30 dark:group-hover:bg-green-900/50"
 			>
-				<ThumbsUpOutline class="h-5 w-5 text-green-600 sm:h-6 sm:w-6 dark:text-green-400" />
+				<ThumbsUpOutline
+					class="h-5 w-5 text-green-600 transition-transform duration-300 group-hover:scale-110 sm:h-6 sm:w-6 dark:text-green-400"
+				/>
 			</div>
 			<h2 class="mb-0.5 text-sm font-semibold text-gray-900 sm:mb-1 sm:text-base dark:text-white">
 				Голосование
@@ -54,13 +58,15 @@
 	<Card
 		id="card-link-ticket"
 		href="/link_ticket"
-		class="h-full py-4 transition-all hover:border-gray-400 hover:shadow-md sm:col-span-2 lg:col-span-1 dark:hover:border-gray-500"
+		class="group h-full py-4 transition-all duration-300 ease-out hover:-translate-y-1 hover:border-blue-400 hover:shadow-xl sm:col-span-2 lg:col-span-1 dark:hover:border-blue-500"
 	>
 		<div class="flex flex-col items-center p-1 text-center sm:p-2">
 			<div
-				class="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 sm:mb-3 sm:h-12 sm:w-12 dark:bg-blue-900"
+				class="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 transition-colors duration-300 group-hover:bg-blue-100 sm:mb-3 sm:h-12 sm:w-12 dark:bg-blue-900/30 dark:group-hover:bg-blue-900/50"
 			>
-				<TicketOutline class="h-5 w-5 text-blue-600 sm:h-6 sm:w-6 dark:text-blue-400" />
+				<TicketOutline
+					class="h-5 w-5 text-blue-600 transition-transform duration-300 group-hover:scale-110 sm:h-6 sm:w-6 dark:text-blue-400"
+				/>
 			</div>
 			<h2 class="mb-0.5 text-sm font-semibold text-gray-900 sm:mb-1 sm:text-base dark:text-white">
 				Привязать билет

@@ -5,6 +5,7 @@ class EventsClient {
 	connectionStatus = $state('disconnected');
 	source: EventSource | null = null;
 	#reconnectAttempts = 0;
+	#reconnectTimeoutId: number | ReturnType<typeof setTimeout> | null = null; // Track timeout
 
 	constructor() {
 		this.connect();
@@ -15,8 +16,10 @@ class EventsClient {
 
 		this.connectionStatus = 'connecting';
 
-		// Replace with your actual endpoint
-		this.source = new EventSource(`${PUBLIC_API_URL}/events`);
+		// Make sure it sends cookies if API is on a different origin
+		this.source = new EventSource(`${PUBLIC_API_URL}/events`, {
+			withCredentials: true
+		});
 
 		this.source.onopen = () => {
 			this.connectionStatus = 'connected';
@@ -24,24 +27,40 @@ class EventsClient {
 		};
 
 		this.source.onerror = () => {
-			console.log('error');
+			console.log('EventSource error, attempting to reconnect...');
 			this.connectionStatus = 'error';
+
 			// Basic reconnection logic
 			this.source?.close();
 			this.source = null;
+
 			const timeout = Math.min(1000 * 2 ** this.#reconnectAttempts, 30000);
-			setTimeout(() => this.connect(), timeout);
+			// Save timeout ID so we can cancel it if disconnect() is called
+			this.#reconnectTimeoutId = setTimeout(() => this.connect(), timeout);
 			this.#reconnectAttempts++;
 		};
 	}
 
+	restart() {
+		this.disconnect();
+		this.connect();
+	}
+
 	// Allow manual disconnect if needed (e.g., logout)
 	disconnect() {
+		// Clear any pending reconnections to prevent leaks
+		if (this.#reconnectTimeoutId) {
+			clearTimeout(this.#reconnectTimeoutId);
+			this.#reconnectTimeoutId = null;
+		}
+
 		if (this.source) {
 			this.source.close();
 			this.source = null;
-			this.connectionStatus = 'disconnected';
 		}
+
+		this.connectionStatus = 'disconnected';
+		this.#reconnectAttempts = 0; // Reset attempts for the next connection
 	}
 }
 

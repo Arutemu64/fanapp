@@ -18,7 +18,7 @@
 	let isLoading = $state(false);
 
 	async function handleVote() {
-		if (isLoading || participant.vote !== null) return;
+		if (isLoading || participant.user_vote !== null) return;
 
 		isLoading = true;
 		try {
@@ -48,7 +48,7 @@
 	}
 
 	async function handleCancelVote() {
-		if (isLoading || participant.vote === null) return;
+		if (isLoading || participant.user_vote === null) return;
 
 		isLoading = true;
 		try {
@@ -74,11 +74,11 @@
 </script>
 
 <Card
-	class="relative flex flex-col py-3 ps-4 pe-3 transition-all {participant.vote !== null
+	class="relative flex flex-col py-3 ps-4 pe-3 transition-all {participant.user_vote !== null
 		? 'ring-2 ring-green-400 dark:ring-green-500'
 		: ''}"
 >
-	{#if participant.vote !== null}
+	{#if participant.user_vote !== null}
 		<Badge color="green" class="absolute top-2 right-2 shrink-0">
 			<span class="flex items-center gap-1">
 				<CheckCircleSolid class="h-3.5 w-3.5" />
@@ -109,7 +109,7 @@
 		</div>
 
 		<div class="flex min-h-8 min-w-20 items-center">
-			{#if participant.vote !== null}
+			{#if participant.user_vote !== null}
 				<Button size="md" color="red" outline loading={isLoading} onclick={handleCancelVote}>
 					Отменить
 				</Button>

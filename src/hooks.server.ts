@@ -3,6 +3,7 @@ import { PUBLIC_API_URL } from '$env/static/public';
 import { client } from '$lib/api';
 import type { Handle, HandleFetch } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
+import * as setCookieParser from 'set-cookie-parser';
 
 const protectedRoutes = ['/profile'];
 
@@ -21,11 +22,27 @@ export const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
 
 export const handle: Handle = async ({ event, resolve }) => {
 	// Load user
-	const { data, error } = await client.GET('/users/me', { fetch: event.fetch });
+	const { data, error, response: apiResponse } = await client.GET('/users/me', { fetch: event.fetch });
 	if (data && !error) {
 		event.locals.user = data;
 	} else {
 		event.locals.user = null;
+	}
+
+	// Propagate new cookies from the API to the browser if they were refreshed
+	if (apiResponse && apiResponse.headers.has('set-cookie')) {
+		const cookies = apiResponse.headers.getSetCookie();
+		const parsedCookies = setCookieParser.parse(cookies);
+
+		for (const cookie of parsedCookies) {
+			const { name, value, ...options } = cookie;
+			event.cookies.set(name, value, {
+				path: '/', // SvelteKit requires path to be strictly defined
+				...options,
+				// ensure samesite matches SvelteKit's expected union type
+				sameSite: options.sameSite as 'strict' | 'lax' | 'none' | undefined
+			});
+		}
 	}
 
 	// Protect routes based on the directory group
@@ -38,7 +55,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// Prevent authenticated users from accessing auth routes
 	if (event.route.id?.includes('(auth)')) {
 		if (event.locals.user) {
-			throw redirect(303, '/'); 
+			throw redirect(303, '/');
 		}
 	}
 

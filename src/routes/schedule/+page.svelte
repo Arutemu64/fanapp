@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate, invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import EventCard from '$lib/components/schedule/EventCard.svelte';
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
@@ -24,7 +24,7 @@
 				ev.title.toLowerCase().includes(q) ||
 				ev.block_title?.toLowerCase().includes(q) ||
 				ev.nomination_title?.toLowerCase().includes(q);
-			const subscriptionMatch = !showOnlySubscribed || ev.subscription !== null;
+			const subscriptionMatch = !showOnlySubscribed || ev.user_subscription !== null;
 			return searchMatch && subscriptionMatch;
 		})
 	);
@@ -47,8 +47,7 @@
 		if (!client) return;
 
 		const updateSchedule = async () => {
-			// TODO: Scoped invalidate
-			await invalidateAll();
+			await invalidate('app:schedule');
 		};
 		client.source?.addEventListener('update_schedule', updateSchedule);
 		return () => {
@@ -64,24 +63,42 @@
 <SectionHeader title="Расписание" description="Следите за ходом мероприятия" />
 
 <!-- Floating Control Center -->
-<div class="sticky top-4 z-40 mx-auto mb-4 max-w-2xl">
+<div class="sticky top-4 z-30 mx-auto mb-6 max-w-2xl px-2 sm:px-0">
 	<div
-		class="rounded-xl border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+		class="rounded-2xl border border-gray-200/50 bg-white/80 p-3 shadow-lg backdrop-blur-lg transition-all duration-300 hover:shadow-xl dark:border-gray-700/50 dark:bg-gray-800/80"
 	>
 		<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 			<div class="flex-1">
-				<Search bind:value={searchQuery} placeholder="Поиск по событиям..." clearable size="sm" />
+				<Search
+					bind:value={searchQuery}
+					placeholder="Поиск по событиям..."
+					clearable
+					size="sm"
+					class="rounded-xl border-gray-300/50 transition-colors focus:border-primary-500 dark:border-gray-600/50"
+				/>
 			</div>
 
 			<div class="flex items-center gap-3">
 				{#if currentEvent}
-					<Button color="green" size="sm" onclick={scrollToCurrentEvent}>
-						<PlaySolid class="h-4 w-4" />
+					<Button
+						color="green"
+						size="sm"
+						class="rounded-xl font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+						onclick={scrollToCurrentEvent}
+					>
+						<PlaySolid class="mr-1 h-3.5 w-3.5" />
 						Текущее
 					</Button>
 				{/if}
-				<Toggle bind:checked={showOnlySubscribed} size="small" color="primary">
-					<span class="text-sm whitespace-nowrap">Только подписки</span>
+				<Toggle
+					bind:checked={showOnlySubscribed}
+					size="small"
+					color="primary"
+					class="rounded-xl p-1"
+				>
+					<span class="text-sm font-medium whitespace-nowrap text-gray-700 dark:text-gray-200"
+						>Только подписки</span
+					>
 				</Toggle>
 			</div>
 		</div>

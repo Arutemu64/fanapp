@@ -23,7 +23,7 @@
 		})
 	);
 
-	let hasVoted = $derived(participants.some((p) => p.vote !== null));
+	let hasVoted = $derived(participants.some((p) => p.user_vote !== null));
 
 	async function handleVoted() {
 		await invalidateAll();

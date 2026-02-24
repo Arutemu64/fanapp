@@ -6,7 +6,7 @@
 	import type { UserFullDTO } from '$lib/types/user';
 	import type { components } from '$lib/api/v1';
 
-	type UpdateUserRequest = components['schemas']['UpdateUserRequest'];
+	type UpdateCurrentUserCommand = components['schemas']['UpdateCurrentUserCommand'];
 
 	interface Props {
 		user: UserFullDTO;
@@ -18,8 +18,10 @@
 	// Form state - initialized from props, synced via effect
 
 	let previousUsername = $derived(user.username);
+	let previousFirstName = $derived(user.first_name);
 
 	let username = $state('');
+	let firstName = $state('');
 	let isLoading = $state(false);
 
 	// Validation state
@@ -42,7 +44,9 @@
 	}
 
 	function hasChanges(): boolean {
-		return username !== (user.username ?? '');
+		return (
+			(!!username && username !== user.username) || (!!firstName && firstName !== user.first_name)
+		);
 	}
 
 	function isValid(): boolean {
@@ -66,8 +70,9 @@
 
 		isLoading = true;
 
-		const body: UpdateUserRequest = {};
-		if (username !== user.username) body.username = username || null;
+		const body: UpdateCurrentUserCommand = {};
+		if (username && username !== user.username) body.username = username;
+		if (firstName && firstName !== user.first_name) body.first_name = firstName;
 
 		const { data, error } = await client.PATCH('/users/me', {
 			body
@@ -112,6 +117,16 @@
 				{:else}
 					<Helper class="mt-1">Латинские буквы, цифры и подчёркивание</Helper>
 				{/if}
+			</div>
+
+			<div>
+				<Label for="firstName" class="mb-2 block">Имя (отображаемое)</Label>
+				<Input
+					id="firstName"
+					type="text"
+					placeholder={previousFirstName ?? 'Имя'}
+					bind:value={firstName}
+				/>
 			</div>
 
 			<Button type="submit" color="primary" class="w-full" disabled={!isValid() || isLoading}>

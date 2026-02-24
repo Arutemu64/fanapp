@@ -13,7 +13,7 @@
 	let { open = $bindable(), event }: Props = $props();
 
 	async function handleUnsubscribe() {
-		if (!event.subscription) {
+		if (!event.user_subscription) {
 			open = false;
 			return;
 		}
@@ -21,7 +21,7 @@
 		const { data, error, response } = await client.DELETE(
 			'/schedule/subscriptions/{subscription_id}',
 			{
-				params: { path: { subscription_id: event.subscription.id } }
+				params: { path: { subscription_id: event.user_subscription.id } }
 			}
 		);
 

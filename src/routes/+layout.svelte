@@ -31,6 +31,7 @@
 	import { canManageSchedule } from '$lib/utils/permissions';
 	import { toastService } from '$lib/stores/toasts.svelte';
 	import { goto } from '$app/navigation';
+	import { getEventsClient } from '$lib/events.svelte';
 
 	async function handleLogout() {
 		const { data, error, response } = await client.POST('/auth/logout');
@@ -40,7 +41,8 @@
 			return;
 		}
 
-		goto('/', {invalidateAll: true});
+		getEventsClient()?.restart();
+		goto('/', { invalidateAll: true });
 	}
 
 	let { data, children } = $props();
@@ -123,20 +125,20 @@
 
 	<main class="relative flex flex-1 flex-col overflow-hidden">
 		<Navbar
-			class="sticky top-0 z-40 border-b border-gray-200 bg-white px-4 py-2.5 sm:px-6 dark:border-gray-700 dark:bg-gray-900"
+			class="sticky top-0 z-40 border-b border-gray-200/50 bg-white/80 px-4 py-2.5 backdrop-blur-md transition-colors duration-300 sm:px-6 dark:border-gray-700/50 dark:bg-gray-900/80"
 		>
 			<SidebarButton onclick={sidebarUi.toggle} class="md:hidden" />
 			<div class="flex-1"></div>
 
 			<div class="flex items-center gap-2 md:order-2">
 				<ConnectionIndicator />
-				<DarkMode />
+				<DarkMode class="rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800" />
 				{#if user}
-					<Avatar id="avatar-menu" />
+					<Avatar id="avatar-menu" class="cursor-pointer transition-transform hover:scale-105" />
 				{:else}
 					<a
 						href="/login"
-						class="inline-flex items-center gap-2 rounded-lg bg-primary-700 px-4 py-2 text-sm font-medium text-white hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 focus:outline-none dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
+						class="inline-flex items-center gap-2 rounded-lg bg-primary-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-primary-800 hover:shadow-md focus:ring-4 focus:ring-primary-300 focus:outline-none dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
 					>
 						<span class="hidden sm:inline">Войти</span>
 					</a>
