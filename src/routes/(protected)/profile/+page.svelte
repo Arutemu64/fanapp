@@ -27,8 +27,8 @@
 		<!-- Basic User Info Card -->
 		<BasicUserInfoCard {user} />
 
-		<!-- Change Password Card -->
-		<ChangePasswordCard />
+		<!-- Ticket Link Card -->
+		<TicketLinkCard {user} onTicketLinked={refreshProfile} />
 	</div>
 
 	<div class="flex flex-col gap-4">
@@ -39,8 +39,8 @@
 		<PushNotificationsCard />
 	</div>
 
-	<div class="flex flex-col gap-4 sm:col-span-2 lg:col-span-1">
-		<!-- Ticket Link Card -->
-		<TicketLinkCard {user} onTicketLinked={refreshProfile} />
+	<div class="flex flex-col gap-4">
+		<!-- Change Password Card -->
+		<ChangePasswordCard />
 	</div>
 </div>

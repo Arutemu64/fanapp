@@ -543,6 +543,15 @@ export interface components {
             /** New Password */
             new_password: string;
         };
+        /** CreatePushSubscriptionCommand */
+        CreatePushSubscriptionCommand: {
+            /** Endpoint */
+            endpoint: string;
+            /** P256Dh */
+            p256dh: string;
+            /** Auth */
+            auth: string;
+        };
         /** CreateSubscriptionCommand */
         CreateSubscriptionCommand: {
             /** Event Id */
@@ -651,15 +660,6 @@ export interface components {
         ParticipantVoteDTO: {
             /** Id */
             id: number;
-        };
-        /** PushSubscription */
-        PushSubscription: {
-            /** Endpoint */
-            endpoint: string;
-            /** Keys */
-            keys: {
-                [key: string]: unknown;
-            };
         };
         /** RegisterUserCommand */
         RegisterUserCommand: {
@@ -2321,7 +2321,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PushSubscription"];
+                "application/json": components["schemas"]["CreatePushSubscriptionCommand"];
             };
         };
         responses: {

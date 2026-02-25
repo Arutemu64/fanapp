@@ -1,49 +1,28 @@
 <script lang="ts">
-	import '../app.css';
-	import ToastContainer from '$lib/components/ToastContainer.svelte';
-	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
 	import { page } from '$app/state';
+	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
+	import ToastContainer from '$lib/components/ToastContainer.svelte';
+	import { canManageSchedule } from '$lib/utils/permissions';
 	import {
-		Sidebar,
-		SidebarGroup,
-		SidebarItem,
-		SidebarButton,
-		SidebarBrand,
 		BottomNav,
 		BottomNavItem,
-		Navbar,
-		Dropdown,
-		DropdownItem,
-		DropdownGroup,
 		DarkMode,
-		Avatar,
-		DropdownHeader,
+		Navbar,
+		Sidebar,
+		SidebarBrand,
+		SidebarButton,
+		SidebarGroup,
+		SidebarItem,
 		uiHelpers
 	} from 'flowbite-svelte';
 	import {
-		HomeSolid,
 		CalendarWeekOutline,
-		ThumbsUpOutline,
 		ClockArrowOutline,
+		HomeSolid,
+		ThumbsUpOutline,
 		UserCircleOutline
 	} from 'flowbite-svelte-icons';
-	import { client } from '$lib/api';
-	import { canManageSchedule } from '$lib/utils/permissions';
-	import { toastService } from '$lib/stores/toasts.svelte';
-	import { goto } from '$app/navigation';
-	import { getEventsClient } from '$lib/events.svelte';
-
-	async function handleLogout() {
-		const { data, error, response } = await client.POST('/auth/logout');
-
-		if (error) {
-			toastService.error(error);
-			return;
-		}
-
-		getEventsClient()?.restart();
-		goto('/', { invalidateAll: true });
-	}
+	import '../app.css';
 
 	let { data, children } = $props();
 
@@ -133,35 +112,11 @@
 			<div class="flex items-center gap-2 md:order-2">
 				<ConnectionIndicator />
 				<DarkMode class="rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800" />
-				{#if user}
-					<Avatar id="avatar-menu" class="cursor-pointer transition-transform hover:scale-105" />
-				{:else}
-					<a
-						href="/login"
-						class="inline-flex items-center gap-2 rounded-lg bg-primary-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-primary-800 hover:shadow-md focus:ring-4 focus:ring-primary-300 focus:outline-none dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
-					>
-						<span class="hidden sm:inline">Войти</span>
-					</a>
-				{/if}
 			</div>
-
-			{#if user}
-				<Dropdown placement="bottom" triggeredBy="#avatar-menu">
-					<DropdownHeader>
-						<span class="block text-sm">{user.first_name}</span>
-						<span class="block truncate text-sm font-medium">@{user.username}</span>
-					</DropdownHeader>
-					<DropdownGroup>
-						<DropdownItem href="/link_ticket">Привязать билет</DropdownItem>
-						<DropdownItem>Настройки</DropdownItem>
-					</DropdownGroup>
-					<DropdownItem onclick={handleLogout}>Выйти</DropdownItem>
-				</Dropdown>
-			{/if}
 		</Navbar>
 
 		<section class="flex-1 overflow-y-auto scroll-smooth">
-			<div class="mx-auto p-4 pb-24 md:p-6 lg:p-8">
+			<div class="mx-auto p-4 pb-24 md:p-6 md:pt-4 lg:p-8 lg:pt-4">
 				{@render children()}
 			</div>
 		</section>

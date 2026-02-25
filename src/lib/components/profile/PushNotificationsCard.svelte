@@ -92,10 +92,8 @@
 			const { error } = await client.POST('/push/subscribe', {
 				body: {
 					endpoint: subJson.endpoint!,
-					keys: {
-						p256dh: subJson.keys?.p256dh!,
-						auth: subJson.keys?.auth!
-					}
+					p256dh: subJson.keys?.p256dh!,
+					auth: subJson.keys?.auth!
 				}
 			});
 
@@ -118,7 +116,7 @@
 	}
 </script>
 
-<Card class="rounded-lg bg-white shadow dark:bg-gray-800">
+<Card class="w-full max-w-none rounded-lg bg-white shadow dark:bg-gray-800">
 	<div class="p-6">
 		<div class="mb-4 flex items-center gap-2">
 			<BellOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />

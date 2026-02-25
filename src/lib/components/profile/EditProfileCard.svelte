@@ -94,7 +94,7 @@
 	}
 </script>
 
-<Card class="rounded-lg bg-white shadow dark:bg-gray-800">
+<Card class="w-full max-w-none rounded-lg bg-white shadow dark:bg-gray-800">
 	<div class="p-6">
 		<div class="mb-4 flex items-center gap-2">
 			<UserCircleSolid class="h-5 w-5 text-gray-500 dark:text-gray-400" />

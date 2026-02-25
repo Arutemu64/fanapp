@@ -41,7 +41,7 @@
 	}
 </script>
 
-<Card class="p-5">
+<Card class="w-full max-w-none p-5">
 	<div class="mb-4 flex items-center gap-2">
 		<TicketSolid class="h-5 w-5 text-primary-600 dark:text-primary-400" />
 		<h2 class="text-lg font-bold text-gray-900 dark:text-white">Привязка билета</h2>
@@ -111,12 +111,7 @@
 				disabled={isSubmitting}
 				size="md"
 			/>
-			<Button
-				onclick={handleLinkTicket}
-				class="min-h-[44px] w-full"
-				disabled={isSubmitting}
-				size="md"
-			>
+			<Button onclick={handleLinkTicket} class="min-h-11 w-full" disabled={isSubmitting} size="md">
 				{#if isSubmitting}
 					<Spinner class="me-2 h-4 w-4" />
 					Привязка...

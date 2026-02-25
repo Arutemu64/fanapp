@@ -71,7 +71,7 @@
 			<div class="flex-1">
 				<Search
 					bind:value={searchQuery}
-					placeholder="Поиск по событиям..."
+					placeholder="Поиск по выступлениям, номинациям, блокам..."
 					clearable
 					size="sm"
 					class="rounded-xl border-gray-300/50 transition-colors focus:border-primary-500 dark:border-gray-600/50"

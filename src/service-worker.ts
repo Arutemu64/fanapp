@@ -43,6 +43,9 @@ sw.addEventListener('fetch', (event: any) => {
     // ignore POST requests etc
     if (event.request.method !== 'GET') return;
 
+    // Ignore Server-Sent Events to prevent Service Worker interception errors
+    if (event.request.headers.get('accept')?.includes('text/event-stream')) return;
+
     async function respond() {
         const url = new URL(event.request.url);
         const cache = await caches.open(CACHE);
