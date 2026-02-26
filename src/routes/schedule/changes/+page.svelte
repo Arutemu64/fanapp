@@ -90,15 +90,6 @@
 						</div>
 
 						<div class="space-y-1 text-sm">
-							{#if change.mailing_id}
-								<p>
-									<span class="font-bold text-gray-700 dark:text-gray-300">Mailing ID:</span>
-									<span class="text-gray-900 dark:text-white">
-										{change.mailing_id}
-									</span>
-								</p>
-							{/if}
-
 							{#if change.changed_event}
 								<p>
 									<span class="font-bold text-gray-700 dark:text-gray-300">Событие:</span>
@@ -124,6 +115,15 @@
 									<span class="font-bold text-gray-700 dark:text-gray-300">Пользователь:</span>
 									<span class="text-gray-900 dark:text-white">
 										{change.user.username ?? `ID: ${change.user.id}`}
+									</span>
+								</p>
+							{/if}
+
+							{#if change.mailing_id}
+								<p>
+									<span class="font-bold text-gray-700 dark:text-gray-300">ID рассылки:</span>
+									<span class="text-gray-900 dark:text-white">
+										{change.mailing_id}
 									</span>
 								</p>
 							{/if}

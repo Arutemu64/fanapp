@@ -89,7 +89,7 @@
 			// Send to backend
 			const subJson = subscription.toJSON();
 
-			const { error } = await client.POST('/push/subscribe', {
+			const { error } = await client.POST('/notifications/subscribe', {
 				body: {
 					endpoint: subJson.endpoint!,
 					p256dh: subJson.keys?.p256dh!,

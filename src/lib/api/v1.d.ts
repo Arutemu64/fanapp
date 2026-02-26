@@ -469,7 +469,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/push/subscribe": {
+    "/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List User Notifications */
+        get: operations["list_user_notifications_notifications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/subscribe": {
         parameters: {
             query?: never;
             header?: never;
@@ -479,24 +496,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Subscribe */
-        post: operations["subscribe_push_subscribe_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/push/send-notification": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Send Notification */
-        post: operations["send_notification_push_send_notification_post"];
+        post: operations["subscribe_notifications_subscribe_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -597,6 +597,11 @@ export interface components {
             /** Schedule Changes */
             schedule_changes: components["schemas"]["ScheduleChangeFullDTO"][];
         };
+        /** ListUserNotificationsResult */
+        ListUserNotificationsResult: {
+            /** Notifications */
+            notifications: components["schemas"]["NotificationDTO"][];
+        };
         /** ListVotingNominationsResult */
         ListVotingNominationsResult: {
             /** Nominations */
@@ -628,6 +633,27 @@ export interface components {
             /** Title */
             title: string;
             user_vote: components["schemas"]["NominationVoteDTO"] | null;
+        };
+        /** NotificationDTO */
+        NotificationDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** User Id */
+            user_id: number;
+            /** Title */
+            title: string;
+            /** Body */
+            body: string;
+            /** Mailing Id */
+            mailing_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** Order */
         Order: {
@@ -2312,18 +2338,17 @@ export interface operations {
             };
         };
     };
-    subscribe_push_subscribe_post: {
+    list_user_notifications_notifications_get: {
         parameters: {
-            query?: never;
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreatePushSubscriptionCommand"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -2331,7 +2356,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ListUserNotificationsResult"];
                 };
             };
             /** @description Unauthorized */
@@ -2363,14 +2388,18 @@ export interface operations {
             };
         };
     };
-    send_notification_push_send_notification_post: {
+    subscribe_notifications_subscribe_post: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePushSubscriptionCommand"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

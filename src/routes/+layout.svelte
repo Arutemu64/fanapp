@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
+	import NotificationBell from '$lib/components/NotificationBell.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
 	import { canManageSchedule } from '$lib/utils/permissions';
 	import {
@@ -111,6 +112,7 @@
 
 			<div class="flex items-center gap-2 md:order-2">
 				<ConnectionIndicator />
+				<NotificationBell />
 				<DarkMode class="rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800" />
 			</div>
 		</Navbar>
