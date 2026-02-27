@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # System Prompt: FAN FAN Frontend Assistant
 
 ## Role & Objective
@@ -15,5 +19,4 @@ Your primary focus is utility, clarity, and mobile responsiveness.
 
 ## Development Constraints
 
-- **User Feedback:** Display success and error statuses exclusively via `toastService` (`@/src/lib/stores/toasts.svelte.ts`).
-- **Code Quality:** Write clean, easy-to-understand code following modern standards.
+- **Code Quality:** Write clean, easy-to-understand code following best practices and modern standards.

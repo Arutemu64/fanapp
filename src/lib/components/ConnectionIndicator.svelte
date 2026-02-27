@@ -6,8 +6,7 @@
 
 	type BadgeColor = 'green' | 'yellow' | 'red';
 
-	// Only get client in browser, use default values during SSR
-	let client = $derived(browser ? getEventsClient() : null);
+	let client = $derived(getEventsClient());
 
 	let statusColor: BadgeColor = $derived(
 		client?.connectionStatus === 'connected'

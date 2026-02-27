@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { client } from '$lib/api';
-	import { toastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/stores/toasts.svelte';
 	import type { UserFullDTO } from '$lib/types/user';
 	import { Button, Card, Input, Spinner } from 'flowbite-svelte';
 	import { CheckCircleOutline, TicketSolid } from 'flowbite-svelte-icons';
@@ -12,6 +12,7 @@
 	}
 
 	let { user, onTicketLinked }: Props = $props();
+	const toastService = getToastService();
 
 	let barcode = $state('');
 	let isSubmitting = $state(false);

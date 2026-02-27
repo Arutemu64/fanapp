@@ -1,14 +1,8 @@
-import createClient from 'openapi-fetch';
-import type { paths } from '$lib/api/v1';
-import { PRIVATE_API_URL } from '$env/static/private';
+import { createApiClient } from '$lib/api';
 import type { LayoutServerLoad } from './$types';
 
-const serverClient = createClient<paths>({
-	baseUrl: PRIVATE_API_URL,
-	credentials: 'include'
-});
-
 export const load: LayoutServerLoad = async ({ fetch }) => {
+	const serverClient = createApiClient();
 	const { data, error } = await serverClient.GET('/voting/status', { fetch });
 
 	if (error) {

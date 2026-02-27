@@ -1,13 +1,14 @@
 <script lang="ts">
-	import { Badge, Button, type BadgeProps } from 'flowbite-svelte';
+	import { Badge, Button, Spinner, type BadgeProps } from 'flowbite-svelte';
 	import { UndoOutline } from 'flowbite-svelte-icons';
 	import { client } from '$lib/api/index.js';
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
-	import { toastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/stores/toasts.svelte';
 	import { invalidateAll } from '$app/navigation';
-	import type { ScheduleChangeType } from '$lib/types/schedule';
+	import type { ScheduleChangeEventDTO, ScheduleChangeType } from '$lib/types/schedule';
 
 	let { data } = $props();
+	const toastService = getToastService();
 	let scheduleChanges = $derived(data.schedule_changes);
 	let undoingId: number | null = $state(null);
 
@@ -54,8 +55,7 @@
 		unskipped: 'purple'
 	};
 
-	function formatEvent(event: any): string {
-		if (!event) return '—';
+	function formatEvent(event: ScheduleChangeEventDTO): string {
 		return `#${event.public_number} ${event.title}`;
 	}
 </script>
@@ -140,7 +140,11 @@
 							onclick={() => undoChange(change.id)}
 							disabled={undoingId === change.id}
 						>
-							<UndoOutline class="h-4 w-4" />
+							{#if undoingId === change.id}
+								<Spinner size="4" />
+							{:else}
+								<UndoOutline class="h-4 w-4" />
+							{/if}
 							Отменить
 						</Button>
 					</div>

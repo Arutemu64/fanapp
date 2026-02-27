@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { client } from '$lib/api';
-	import { toastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/stores/toasts.svelte';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import { Button, Input, Modal } from 'flowbite-svelte';
 	import { BellActiveOutline, MinusOutline, PlusOutline } from 'flowbite-svelte-icons';
@@ -11,6 +11,7 @@
 		event: ScheduleEventFullDTO;
 	}
 	let { open = $bindable(), event }: Props = $props();
+	const toastService = getToastService();
 
 	let counter = $state(5);
 
@@ -23,6 +24,7 @@
 	}
 
 	async function handleSubmit() {
+		counter = Math.max(1, Math.min(100, Math.floor(counter)));
 		const { data, error, response } = await client.POST('/schedule/subscriptions', {
 			body: {
 				event_id: event.id,

@@ -3,7 +3,7 @@
 	import { ShuffleOutline } from 'flowbite-svelte-icons';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import { client } from '$lib/api';
-	import { toastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/stores/toasts.svelte';
 
 	interface Props {
 		open: boolean;
@@ -12,6 +12,7 @@
 	}
 
 	let { open = $bindable(), event, schedule }: Props = $props();
+	const toastService = getToastService();
 
 	let query = $state('');
 	let selectedId: number | null = $state(null);

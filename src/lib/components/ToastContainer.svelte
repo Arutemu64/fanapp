@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { toastService, ToastTypeColors } from '$lib/stores/toasts.svelte';
+	import { getToastService, ToastTypeColors } from '$lib/stores/toasts.svelte';
 	import { Toast, ToastContainer } from 'flowbite-svelte';
 	import {
 		CheckCircleSolid,
@@ -7,9 +7,14 @@
 		ExclamationCircleSolid
 	} from 'flowbite-svelte-icons';
 	import { fly } from 'svelte/transition';
+
+	const toastService = getToastService();
 </script>
 
-<ToastContainer position="top-right">
+<ToastContainer
+	position={undefined}
+	class="absolute top-4 right-4 z-50 flex w-full max-w-xs flex-col gap-2"
+>
 	{#each toastService.items as toast (toast.id)}
 		<div transition:fly={{ x: 200, duration: 300 }}>
 			<Toast

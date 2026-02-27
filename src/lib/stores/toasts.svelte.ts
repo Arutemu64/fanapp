@@ -1,3 +1,5 @@
+import { setContext, getContext } from 'svelte';
+
 export type ToastColor = 'green' | 'red' | 'yellow' | 'blue';
 export type ToastType = 'success' | 'info' | 'warning' | 'error';
 
@@ -14,26 +16,28 @@ export interface ToastItem {
 	type: ToastType;
 }
 
-// Private state within the module
-let toasts = $state<ToastItem[]>([]);
+const TOAST_CTX_KEY = Symbol('TOAST_CTX');
 
-export const toastService = {
+export class ToastService {
+	// Private state within the instance
+	#toasts = $state<ToastItem[]>([]);
+
 	// Getter to access the state reactively
 	get items() {
-		return toasts;
-	},
+		return this.#toasts;
+	}
 
 	add(message: string, type: ToastType = 'info') {
 		const id = Date.now();
 		const newToast: ToastItem = { id, message, type };
 
-		toasts.push(newToast);
+		this.#toasts.push(newToast);
 
 		// Auto-dismiss after 5 seconds
 		setTimeout(() => {
 			this.dismiss(id);
 		}, 5000);
-	},
+	}
 
 	error(err: unknown) {
 		let message = 'Произошла ошибка';
@@ -60,9 +64,18 @@ export const toastService = {
 		}
 
 		this.add(message, 'error');
-	},
+	}
 
 	dismiss(id: number) {
-		toasts = toasts.filter((t) => t.id !== id);
+		this.#toasts = this.#toasts.filter((t) => t.id !== id);
 	}
-};
+}
+
+export function setToastService() {
+	const service = new ToastService();
+	return setContext(TOAST_CTX_KEY, service);
+}
+
+export function getToastService() {
+	return getContext<ToastService>(TOAST_CTX_KEY);
+}

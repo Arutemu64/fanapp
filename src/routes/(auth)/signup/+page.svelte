@@ -1,65 +1,87 @@
 <script lang="ts">
-	import { Button, Input, Label, Card } from 'flowbite-svelte';
-	import { toastService } from '$lib/stores/toasts.svelte';
+	import { Button, Input, Label, Card, Spinner, Helper, Alert } from 'flowbite-svelte';
+	import { getToastService } from '$lib/stores/toasts.svelte';
 	import { client } from '$lib/api';
 	import { goto } from '$app/navigation';
+	import {
+		EnvelopeSolid,
+		UserSolid,
+		LockSolid,
+		EyeOutline,
+		EyeSlashOutline
+	} from 'flowbite-svelte-icons';
 
 	let email = $state('');
 	let username = $state('');
 	let password = $state('');
 	let isLoading = $state(false);
+	let showPassword = $state(false);
+	let serverError = $state('');
 
-	function validateEmail(email: string): boolean {
+	const toastService = getToastService();
+
+	function validateEmail(e: string): boolean {
+		if (!e) return false;
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		return emailRegex.test(email);
+		return emailRegex.test(e);
 	}
 
-	function validateUsername(username: string): boolean {
-		return username.trim().length >= 3;
+	function validateUsername(u: string): boolean {
+		if (!u) return false;
+		return u.trim().length >= 3;
 	}
 
-	function validatePassword(password: string): boolean {
-		if (password.length < 8 || password.length > 128) {
+	function validatePassword(p: string): boolean {
+		if (!p) return false;
+		if (p.length < 8 || p.length > 128) {
 			return false;
 		}
-		const hasLetter = /[a-zA-Z]/.test(password);
-		const hasNumber = /[0-9]/.test(password);
+		const hasLetter = /[a-zA-Z]/.test(p);
+		const hasNumber = /[0-9]/.test(p);
 		return hasLetter && hasNumber;
 	}
 
+	const isEmailValid = $derived(email ? validateEmail(email) : null);
+	const isUsernameValid = $derived(username ? validateUsername(username) : null);
+	const isPasswordValid = $derived(password ? validatePassword(password) : null);
+
+	const emailColor = $derived(email ? (isEmailValid ? 'green' : 'red') : undefined);
+	const usernameColor = $derived(username ? (isUsernameValid ? 'green' : 'red') : undefined);
+	const passwordColor = $derived(password ? (isPasswordValid ? 'green' : 'red') : undefined);
+
 	async function handleSignup(e: Event) {
 		e.preventDefault();
+
+		serverError = '';
 
 		const trimmedEmail = email.trim();
 		const trimmedUsername = username.trim();
 
 		if (!trimmedEmail || !trimmedUsername || !password) {
-			toastService.add('Заполните все поля', 'warning');
+			serverError = 'Заполните все поля';
 			return;
 		}
 
 		if (!validateEmail(trimmedEmail)) {
-			toastService.add('Введите корректный email', 'warning');
+			serverError = 'Введите корректный email';
 			return;
 		}
 
 		if (!validateUsername(trimmedUsername)) {
-			toastService.add('Имя пользователя должно содержать минимум 3 символа', 'warning');
+			serverError = 'Имя пользователя должно содержать минимум 3 символа';
 			return;
 		}
 
 		if (!validatePassword(password)) {
-			toastService.add(
-				'Пароль должен быть от 8 до 128 символов и содержать хотя бы одну букву и одну цифру',
-				'warning'
-			);
+			serverError =
+				'Пароль должен быть от 8 до 128 символов и содержать хотя бы одну букву и одну цифру';
 			return;
 		}
 
 		isLoading = true;
 
 		try {
-			const { data, error, response } = await client.POST('/auth/register', {
+			const { error } = await client.POST('/auth/register', {
 				body: {
 					email: trimmedEmail,
 					username: trimmedUsername,
@@ -75,8 +97,12 @@
 
 			toastService.add('Регистрация успешна! Войдите в аккаунт.', 'success');
 			goto('/login');
-		} catch (err) {
-			toastService.error(err);
+		} catch (err: unknown) {
+			if (err instanceof Error) {
+				serverError = err.message;
+			} else {
+				serverError = 'Произошла неизвестная ошибка при регистрации';
+			}
 		} finally {
 			isLoading = false;
 		}
@@ -90,63 +116,97 @@
 				Регистрация в FAN App
 			</h2>
 
+			{#if serverError}
+				<Alert color="red">
+					{serverError}
+				</Alert>
+			{/if}
+
 			<div class="space-y-2">
-				<Label for="email">Email</Label>
+				<Label for="email" color={emailColor}>Email</Label>
 				<Input
 					id="email"
 					type="email"
 					bind:value={email}
 					placeholder="Введите email"
 					required
+					size="md"
+					class="ps-9"
+					color={emailColor}
 					disabled={isLoading}
-				/>
+				>
+					{#snippet left()}
+						<EnvelopeSolid class="h-5 w-5" />
+					{/snippet}
+				</Input>
+				{#if email && isEmailValid === false}
+					<Helper color="red">Введите корректный адрес электронной почты</Helper>
+				{/if}
 			</div>
 
 			<div class="space-y-2">
-				<Label for="username">Имя пользователя</Label>
+				<Label for="username" color={usernameColor}>Имя пользователя</Label>
 				<Input
 					id="username"
 					type="text"
 					bind:value={username}
 					placeholder="Введите имя пользователя"
 					required
+					color={usernameColor}
 					disabled={isLoading}
-				/>
+					class="ps-9"
+				>
+					{#snippet left()}
+						<UserSolid class="h-5 w-5" />
+					{/snippet}
+				</Input>
+				{#if username && isUsernameValid === false}
+					<Helper color="red">Имя пользователя должно содержать минимум 3 символа</Helper>
+				{/if}
 			</div>
 
 			<div class="space-y-2">
-				<Label for="password">Пароль</Label>
+				<Label for="password" color={passwordColor}>Пароль</Label>
 				<Input
 					id="password"
-					type="password"
+					type={showPassword ? 'text' : 'password'}
 					bind:value={password}
 					placeholder="Введите пароль"
 					required
+					color={passwordColor}
 					disabled={isLoading}
-				/>
-				<p class="text-sm text-gray-500 dark:text-gray-400">
-					Минимум 8 символов, должна быть буква и цифра
-				</p>
+					class="ps-9"
+				>
+					{#snippet left()}
+						<LockSolid class="h-5 w-5" />
+					{/snippet}
+					{#snippet right()}
+						<button
+							type="button"
+							class="pointer-events-auto"
+							onclick={() => (showPassword = !showPassword)}
+							aria-label="Показать пароль"
+						>
+							{#if showPassword}
+								<EyeOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+							{:else}
+								<EyeSlashOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+							{/if}
+						</button>
+					{/snippet}
+				</Input>
+				{#if password && isPasswordValid === false}
+					<Helper color="red">
+						Пароль должен быть от 8 до 128 символов и содержать хотя бы одну букву и одну цифру
+					</Helper>
+				{:else}
+					<Helper class="text-sm">Минимум 8 символов, должна быть буква и цифра</Helper>
+				{/if}
 			</div>
 
 			<Button type="submit" class="mt-4 min-h-11 w-full" disabled={isLoading}>
 				{#if isLoading}
-					<svg class="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24">
-						<circle
-							class="opacity-25"
-							cx="12"
-							cy="12"
-							r="10"
-							stroke="currentColor"
-							stroke-width="4"
-							fill="none"
-						/>
-						<path
-							class="opacity-75"
-							fill="currentColor"
-							d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-						/>
-					</svg>
+					<Spinner size="4" class="me-2" />
 					Регистрация...
 				{:else}
 					Зарегистрироваться

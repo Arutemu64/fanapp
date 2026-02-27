@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { Button, Input, Label, Card, Spinner } from 'flowbite-svelte';
-	import { toastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/stores/toasts.svelte';
 	import { client } from '$lib/api';
-	import { goto, invalidateAll } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import { getEventsClient } from '$lib/events.svelte';
 
 	let username = $state('');
+	const eventsClient = getEventsClient();
+	const toastService = getToastService();
 	let password = $state('');
 	let isLoading = $state(false);
 
@@ -38,7 +40,7 @@
 			}
 
 			toastService.add('Успешный вход!', 'success');
-			getEventsClient()?.restart();
+			eventsClient?.restart();
 			goto('/', { invalidateAll: true });
 		} catch (err) {
 			toastService.error(err);

@@ -4,2439 +4,2520 @@
  */
 
 export interface paths {
-    "/auth/login": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Login and get access token
-         * @description Authenticates user with username and password, returns JWT access token.
-         */
-        post: operations["login_auth_login_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/refresh": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Refresh access token
-         * @description Uses a refresh token cookie to issue a new access token.
-         */
-        post: operations["refresh_access_token_auth_refresh_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/register": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Register a new user
-         * @description Creates a new user account with an email, username, and password. Validates uniqueness.
-         */
-        post: operations["register_user_auth_register_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/change_password": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Change Password */
-        post: operations["change_password_auth_change_password_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/logout": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Logout user
-         * @description Clears the access token cookie to log out the user.
-         */
-        post: operations["logout_user_auth_logout_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/users/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get current user
-         * @description Retrieves the currently authenticated user's profile information.
-         */
-        get: operations["get_current_user_users_me_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Update current user
-         * @description Updates the currently authenticated user's profile information.
-         */
-        patch: operations["update_current_user_users_me_patch"];
-        trace?: never;
-    };
-    "/users/me/ticket": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Link ticket
-         * @description Links provided ticket to current user.
-         */
-        post: operations["link_ticket_users_me_ticket_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/events": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Stream events via SSE
-         * @description Opens a Server-Sent Events connection to receive real-time event updates.
-         */
-        get: operations["stream_events_events_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/schedule": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get current schedule
-         * @description Retrieves the full schedule using the GetSchedule interactor.
-         */
-        get: operations["get_schedule_schedule_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/schedule/{event_id}/current": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Set specific event as current
-         * @description Updates the schedule state to mark a specific event as active. Validates timing and event status.
-         */
-        patch: operations["set_event_as_current_schedule__event_id__current_patch"];
-        trace?: never;
-    };
-    "/schedule/current": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Unset current schedule event
-         * @description Clears the currently active event from the schedule. Subject to rate limiting.
-         */
-        delete: operations["uncheck_current_event_schedule_current_delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/schedule/{event_id}/move": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Reorder schedule event
-         * @description Moves an event to a new position in the sequence, specifically after the provided event ID.
-         */
-        patch: operations["move_schedule_event_schedule__event_id__move_patch"];
-        trace?: never;
-    };
-    "/schedule/{event_id}/skip": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Skip a schedule event
-         * @description Marks a specific event as skipped. Note: The currently active event cannot be skipped.
-         */
-        patch: operations["skip_schedule_event_schedule__event_id__skip_patch"];
-        trace?: never;
-    };
-    "/schedule/{event_id}/unskip": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Unskip a schedule event
-         * @description Restores a previously skipped event back into the active schedule sequence.
-         */
-        patch: operations["unskip_schedule_event_schedule__event_id__unskip_patch"];
-        trace?: never;
-    };
-    "/schedule/changes": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List schedule audit log
-         * @description Returns a history of all modifications made to the schedule, including skips, moves, and status changes.
-         */
-        get: operations["list_schedule_changes_schedule_changes_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/schedule/changes/{schedule_change_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Undo a specific schedule change
-         * @description Reverts a previously made change to the schedule using its unique change ID.
-         */
-        delete: operations["undo_schedule_change_schedule_changes__schedule_change_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/schedule/subscriptions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create a new event user_subscription
-         * @description Subscribes a user or system to a specific schedule event. Prevents duplicate subscriptions.
-         */
-        post: operations["new_subscription_schedule_subscriptions_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/schedule/subscriptions/{subscription_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Remove a user_subscription
-         * @description Deletes an existing user_subscription by its unique ID. Returns no content on success.
-         */
-        delete: operations["delete_subscription_schedule_subscriptions__subscription_id__delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/voting/status": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get current voting state
-         * @description Retrieves the current phase of the voting process (e.g., active, closed) and reasoning.
-         */
-        get: operations["get_voting_status_voting_status_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/voting/nominations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List all nominations for the current vote
-         * @description Retrieves a list of all candidates or items eligible for voting in the current session.
-         */
-        get: operations["list_voting_nominations_voting_nominations_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/voting/nominations/{nomination_code}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get voting nomination details
-         * @description Retrieves detailed information about a specific nomination.
-         */
-        get: operations["get_voting_nomination_voting_nominations__nomination_code__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/voting/nominations/{nomination_id}/vote": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Cast a vote
-         * @description Submits a vote for a participant in the specified nomination.
-         */
-        put: operations["add_vote_voting_nominations__nomination_id__vote_put"];
-        post?: never;
-        /**
-         * Cancel a vote
-         * @description Removes a previously cast vote in the specified nomination.
-         */
-        delete: operations["cancel_vote_voting_nominations__nomination_id__vote_delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/webhooks/tcloud": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Process TicketsCloud webhook
-         * @description Handles incoming webhook events from TicketsCloud ticketing system.
-         */
-        post: operations["process_tcloud_order_webhooks_tcloud_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/notifications": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List User Notifications */
-        get: operations["list_user_notifications_notifications_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/notifications/subscribe": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Subscribe */
-        post: operations["subscribe_notifications_subscribe_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
+	'/auth/login': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/**
+		 * Login and get access token
+		 * @description Authenticates user with username and password, returns JWT access token.
+		 */
+		post: operations['login_auth_login_post'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/auth/refresh': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/**
+		 * Refresh access token
+		 * @description Uses a refresh token cookie to issue a new access token.
+		 */
+		post: operations['refresh_access_token_auth_refresh_post'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/auth/register': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/**
+		 * Register a new user
+		 * @description Creates a new user account with an email, username, and password. Validates uniqueness.
+		 */
+		post: operations['register_user_auth_register_post'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/auth/change_password': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Change Password */
+		post: operations['change_password_auth_change_password_post'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/auth/logout': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/**
+		 * Logout user
+		 * @description Clears the access token cookie to log out the user.
+		 */
+		post: operations['logout_user_auth_logout_post'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/users/me': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * Get current user
+		 * @description Retrieves the currently authenticated user's profile information.
+		 */
+		get: operations['get_current_user_users_me_get'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		/**
+		 * Update current user
+		 * @description Updates the currently authenticated user's profile information.
+		 */
+		patch: operations['update_current_user_users_me_patch'];
+		trace?: never;
+	};
+	'/users/me/ticket': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/**
+		 * Link ticket
+		 * @description Links provided ticket to current user.
+		 */
+		post: operations['link_ticket_users_me_ticket_post'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/events': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * Stream events via SSE
+		 * @description Opens a Server-Sent Events connection to receive real-time event updates.
+		 */
+		get: operations['stream_events_events_get'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/schedule': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * Get current schedule
+		 * @description Retrieves the full schedule using the GetSchedule interactor.
+		 */
+		get: operations['get_schedule_schedule_get'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/schedule/{event_id}/current': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		/**
+		 * Set specific event as current
+		 * @description Updates the schedule state to mark a specific event as active. Validates timing and event status.
+		 */
+		patch: operations['set_event_as_current_schedule__event_id__current_patch'];
+		trace?: never;
+	};
+	'/schedule/current': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/**
+		 * Unset current schedule event
+		 * @description Clears the currently active event from the schedule. Subject to rate limiting.
+		 */
+		delete: operations['uncheck_current_event_schedule_current_delete'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/schedule/{event_id}/move': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		/**
+		 * Reorder schedule event
+		 * @description Moves an event to a new position in the sequence, specifically after the provided event ID.
+		 */
+		patch: operations['move_schedule_event_schedule__event_id__move_patch'];
+		trace?: never;
+	};
+	'/schedule/{event_id}/skip': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		/**
+		 * Skip a schedule event
+		 * @description Marks a specific event as skipped. Note: The currently active event cannot be skipped.
+		 */
+		patch: operations['skip_schedule_event_schedule__event_id__skip_patch'];
+		trace?: never;
+	};
+	'/schedule/{event_id}/unskip': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		/**
+		 * Unskip a schedule event
+		 * @description Restores a previously skipped event back into the active schedule sequence.
+		 */
+		patch: operations['unskip_schedule_event_schedule__event_id__unskip_patch'];
+		trace?: never;
+	};
+	'/schedule/changes': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * List schedule audit log
+		 * @description Returns a history of all modifications made to the schedule, including skips, moves, and status changes.
+		 */
+		get: operations['list_schedule_changes_schedule_changes_get'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/schedule/changes/{schedule_change_id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/**
+		 * Undo a specific schedule change
+		 * @description Reverts a previously made change to the schedule using its unique change ID.
+		 */
+		delete: operations['undo_schedule_change_schedule_changes__schedule_change_id__delete'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/schedule/subscriptions': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/**
+		 * Create a new event user_subscription
+		 * @description Subscribes a user or system to a specific schedule event. Prevents duplicate subscriptions.
+		 */
+		post: operations['new_subscription_schedule_subscriptions_post'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/schedule/subscriptions/{subscription_id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/**
+		 * Remove a user_subscription
+		 * @description Deletes an existing user_subscription by its unique ID. Returns no content on success.
+		 */
+		delete: operations['delete_subscription_schedule_subscriptions__subscription_id__delete'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/voting/status': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * Get current voting state
+		 * @description Retrieves the current phase of the voting process (e.g., active, closed) and reasoning.
+		 */
+		get: operations['get_voting_status_voting_status_get'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/voting/nominations': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * List all nominations for the current vote
+		 * @description Retrieves a list of all candidates or items eligible for voting in the current session.
+		 */
+		get: operations['list_voting_nominations_voting_nominations_get'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/voting/nominations/{nomination_code}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/**
+		 * Get voting nomination details
+		 * @description Retrieves detailed information about a specific nomination.
+		 */
+		get: operations['get_voting_nomination_voting_nominations__nomination_code__get'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/voting/nominations/{nomination_id}/vote': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		/**
+		 * Cast a vote
+		 * @description Submits a vote for a participant in the specified nomination.
+		 */
+		put: operations['add_vote_voting_nominations__nomination_id__vote_put'];
+		post?: never;
+		/**
+		 * Cancel a vote
+		 * @description Removes a previously cast vote in the specified nomination.
+		 */
+		delete: operations['cancel_vote_voting_nominations__nomination_id__vote_delete'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/webhooks/tcloud': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/**
+		 * Process TicketsCloud webhook
+		 * @description Handles incoming webhook events from TicketsCloud ticketing system.
+		 */
+		post: operations['process_tcloud_order_webhooks_tcloud_post'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/notifications': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List User Notifications */
+		get: operations['list_user_notifications_notifications_get'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/notifications/mark-all-read': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Mark All Notifications Read */
+		post: operations['mark_all_notifications_read_notifications_mark_all_read_post'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/notifications/subscribe': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Subscribe */
+		post: operations['subscribe_notifications_subscribe_post'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: {
-        /** AddVoteCommand */
-        AddVoteCommand: {
-            /** Participant Id */
-            participant_id: number;
-        };
-        /** Body_login_auth_login_post */
-        Body_login_auth_login_post: {
-            /** Grant Type */
-            grant_type?: string | null;
-            /** Username */
-            username: string;
-            /**
-             * Password
-             * Format: password
-             */
-            password: string;
-            /**
-             * Scope
-             * @default
-             */
-            scope: string;
-            /** Client Id */
-            client_id?: string | null;
-            /**
-             * Client Secret
-             * Format: password
-             */
-            client_secret?: string | null;
-        };
-        /** ChangePasswordCommand */
-        ChangePasswordCommand: {
-            /** Old Password */
-            old_password: string | null;
-            /** New Password */
-            new_password: string;
-        };
-        /** CreatePushSubscriptionCommand */
-        CreatePushSubscriptionCommand: {
-            /** Endpoint */
-            endpoint: string;
-            /** P256Dh */
-            p256dh: string;
-            /** Auth */
-            auth: string;
-        };
-        /** CreateSubscriptionCommand */
-        CreateSubscriptionCommand: {
-            /** Event Id */
-            event_id: number;
-            /** Counter */
-            counter: number;
-        };
-        /** ErrorMessage */
-        ErrorMessage: {
-            /** Detail */
-            detail: string;
-        };
-        /** GetScheduleResult */
-        GetScheduleResult: {
-            /** Schedule */
-            schedule: components["schemas"]["ScheduleEventFullDTO"][];
-        };
-        /** GetVotingNominationResult */
-        GetVotingNominationResult: {
-            /** Id */
-            id: number;
-            /** Code */
-            code: string;
-            /** Title */
-            title: string;
-            user_vote: components["schemas"]["NominationVoteDTO"] | null;
-            /** Participants */
-            participants: components["schemas"]["ParticipantFullDTO"][];
-        };
-        /** GetVotingStateResult */
-        GetVotingStateResult: {
-            /** Can Vote */
-            can_vote: boolean;
-            status: components["schemas"]["VotingStatus"];
-        };
-        /** LinkTicketCommand */
-        LinkTicketCommand: {
-            /** Barcode */
-            barcode: string;
-        };
-        /** ListScheduleChangesResult */
-        ListScheduleChangesResult: {
-            /** Schedule Changes */
-            schedule_changes: components["schemas"]["ScheduleChangeFullDTO"][];
-        };
-        /** ListUserNotificationsResult */
-        ListUserNotificationsResult: {
-            /** Notifications */
-            notifications: components["schemas"]["NotificationDTO"][];
-        };
-        /** ListVotingNominationsResult */
-        ListVotingNominationsResult: {
-            /** Nominations */
-            nominations: components["schemas"]["NominationVotingDTO"][];
-        };
-        /** MoveScheduleEventRequest */
-        MoveScheduleEventRequest: {
-            /** Place After Event Id */
-            place_after_event_id: number;
-        };
-        /** MoveScheduleEventResult */
-        MoveScheduleEventResult: {
-            event: components["schemas"]["ScheduleEventFullDTO"];
-            place_after_event: components["schemas"]["ScheduleEventFullDTO"];
-        };
-        /** NominationVoteDTO */
-        NominationVoteDTO: {
-            /** Id */
-            id: number;
-            /** Participant Id */
-            participant_id: number;
-        };
-        /** NominationVotingDTO */
-        NominationVotingDTO: {
-            /** Id */
-            id: number;
-            /** Code */
-            code: string;
-            /** Title */
-            title: string;
-            user_vote: components["schemas"]["NominationVoteDTO"] | null;
-        };
-        /** NotificationDTO */
-        NotificationDTO: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** User Id */
-            user_id: number;
-            /** Title */
-            title: string;
-            /** Body */
-            body: string;
-            /** Mailing Id */
-            mailing_id: string | null;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-        };
-        /** Order */
-        Order: {
-            /** Id */
-            id: string;
-            status: components["schemas"]["OrderStatus"];
-            /** Event */
-            event: string;
-            /** Tickets */
-            tickets: components["schemas"]["Ticket"][];
-        };
-        /**
-         * OrderStatus
-         * @enum {string}
-         */
-        OrderStatus: "executed" | "done" | "cancelled" | "expired" | "in_progress";
-        /** ParticipantFullDTO */
-        ParticipantFullDTO: {
-            /** Id */
-            id: number;
-            /** Title */
-            title: string;
-            /** Voting Number */
-            voting_number: number | null;
-            /** Votes Count */
-            votes_count: number;
-            user_vote: components["schemas"]["ParticipantVoteDTO"] | null;
-        };
-        /** ParticipantVoteDTO */
-        ParticipantVoteDTO: {
-            /** Id */
-            id: number;
-        };
-        /** RegisterUserCommand */
-        RegisterUserCommand: {
-            /**
-             * Email
-             * Format: email
-             */
-            email: string;
-            /** Username */
-            username: string;
-            /** Password */
-            password: string;
-        };
-        /** ScheduleChangeEventDTO */
-        ScheduleChangeEventDTO: {
-            /** Id */
-            id: number;
-            /** Public Number */
-            public_number: number;
-            /** Title */
-            title: string;
-        };
-        /** ScheduleChangeFullDTO */
-        ScheduleChangeFullDTO: {
-            /** Id */
-            id: number;
-            type: components["schemas"]["ScheduleChangeType"];
-            /** Mailing Id */
-            mailing_id: string | null;
-            /** User Id */
-            user_id: number | null;
-            /** Send Global Announcement */
-            send_global_announcement: boolean;
-            changed_event: components["schemas"]["ScheduleChangeEventDTO"] | null;
-            argument_event: components["schemas"]["ScheduleChangeEventDTO"] | null;
-            user: components["schemas"]["UserBaseDTO"] | null;
-        };
-        /**
-         * ScheduleChangeType
-         * @enum {string}
-         */
-        ScheduleChangeType: "set_as_current" | "moved" | "skipped" | "unskipped";
-        /** ScheduleEventFullDTO */
-        ScheduleEventFullDTO: {
-            /** Id */
-            id: number;
-            /** Public Number */
-            public_number: number;
-            /** Title */
-            title: string;
-            /** Duration */
-            duration: number;
-            /** Order */
-            order: number;
-            /** Is Current */
-            is_current: boolean;
-            /** Is Skipped */
-            is_skipped: boolean;
-            /** Nomination Title */
-            nomination_title: string;
-            /** Block Title */
-            block_title: string;
-            /** Queue */
-            queue: number | null;
-            /** Time Until */
-            time_until: number | null;
-            user_subscription: components["schemas"]["ScheduleEventSubscriptionDTO"] | null;
-        };
-        /** ScheduleEventSubscriptionDTO */
-        ScheduleEventSubscriptionDTO: {
-            /** Id */
-            id: number;
-            /** Counter */
-            counter: number;
-        };
-        /** SetCurrentScheduleEventResult */
-        SetCurrentScheduleEventResult: {
-            current_event: components["schemas"]["ScheduleEventFullDTO"] | null;
-            /** Schedule Change Id */
-            schedule_change_id: number;
-        };
-        /** SubscriptionEventDTO */
-        SubscriptionEventDTO: {
-            /** Id */
-            id: number;
-            /** Public Number */
-            public_number: number;
-            /** Title */
-            title: string;
-            /** Order */
-            order: number;
-            /** Queue */
-            queue: number | null;
-            /** Time Until */
-            time_until: number | null;
-        };
-        /** SubscriptionFullDTO */
-        SubscriptionFullDTO: {
-            /** Id */
-            id: number;
-            /** User Id */
-            user_id: number;
-            /** Counter */
-            counter: number;
-            event: components["schemas"]["SubscriptionEventDTO"];
-        };
-        /** TCloudWebhookPayload */
-        TCloudWebhookPayload: {
-            data: components["schemas"]["Order"];
-            /** Type */
-            type: string;
-        };
-        /** Ticket */
-        Ticket: {
-            /** Id */
-            id: string;
-            /** Serial */
-            serial: string;
-            /** Number */
-            number: number;
-            /** Barcode */
-            barcode: string | null;
-            /** Status */
-            status: string;
-            /** Price */
-            price: string;
-            /** Nominal */
-            nominal: string;
-            /** Discount */
-            discount: string;
-            /** Extra */
-            extra: string;
-            /** Full */
-            full: string;
-            /** Set */
-            set: string;
-            /** Tariff */
-            tariff: string | null;
-        };
-        /** Token */
-        Token: {
-            /** Access Token */
-            access_token: string;
-            /** Refresh Token */
-            refresh_token: string;
-            /** Token Type */
-            token_type: string;
-        };
-        /** UpdateCurrentUserCommand */
-        UpdateCurrentUserCommand: {
-            /** Username */
-            username?: string | null;
-            /** First Name */
-            first_name?: string | null;
-            /** Last Name */
-            last_name?: string | null;
-        };
-        /** UpdateScheduleEventSkipResult */
-        UpdateScheduleEventSkipResult: {
-            event: components["schemas"]["ScheduleEventFullDTO"];
-        };
-        /** UserBaseDTO */
-        UserBaseDTO: {
-            /** Id */
-            id: number;
-            /** Tg Id */
-            tg_id: number | null;
-            /** Username */
-            username: string | null;
-            /** First Name */
-            first_name: string | null;
-            /** Last Name */
-            last_name: string | null;
-            role: components["schemas"]["UserRole"];
-        };
-        /** UserFullDTO */
-        UserFullDTO: {
-            /** Id */
-            id: number;
-            /** Tg Id */
-            tg_id: number | null;
-            /** Username */
-            username: string | null;
-            /** First Name */
-            first_name: string | null;
-            /** Last Name */
-            last_name: string | null;
-            role: components["schemas"]["UserRole"];
-            ticket: components["schemas"]["UserTicketDTO"] | null;
-            /** Permissions */
-            permissions: components["schemas"]["UserPermissionDTO"][];
-            settings: components["schemas"]["UserSettings"];
-        };
-        /** UserPermissionDTO */
-        UserPermissionDTO: {
-            /** Name */
-            name: string;
-            /** Object Type */
-            object_type: string | null;
-            /** Object Id */
-            object_id: number | null;
-        };
-        /**
-         * UserRole
-         * @enum {string}
-         */
-        UserRole: "visitor" | "participant" | "helper" | "org";
-        /** UserSettings */
-        UserSettings: {
-            /**
-             * Items Per Page
-             * @default 4
-             */
-            items_per_page: number;
-            /**
-             * Receive All Announcements
-             * @default true
-             */
-            receive_all_announcements: boolean;
-        };
-        /** UserTicketDTO */
-        UserTicketDTO: {
-            /** Id */
-            id: number;
-            /** Barcode */
-            barcode: string;
-            role: components["schemas"]["UserRole"];
-        };
-        /** VoteBaseDTO */
-        VoteBaseDTO: {
-            /** Id */
-            id: number;
-            /** User Id */
-            user_id: number;
-            /** Participant Id */
-            participant_id: number;
-        };
-        /**
-         * VotingStatus
-         * @enum {string}
-         */
-        VotingStatus: "open" | "not_authenticated" | "no_ticket" | "disabled";
-    };
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+	schemas: {
+		/** AddVoteCommand */
+		AddVoteCommand: {
+			/** Participant Id */
+			participant_id: number;
+		};
+		/** Body_login_auth_login_post */
+		Body_login_auth_login_post: {
+			/** Grant Type */
+			grant_type?: string | null;
+			/** Username */
+			username: string;
+			/**
+			 * Password
+			 * Format: password
+			 */
+			password: string;
+			/**
+			 * Scope
+			 * @default
+			 */
+			scope: string;
+			/** Client Id */
+			client_id?: string | null;
+			/**
+			 * Client Secret
+			 * Format: password
+			 */
+			client_secret?: string | null;
+		};
+		/** ChangePasswordCommand */
+		ChangePasswordCommand: {
+			/** Old Password */
+			old_password: string | null;
+			/** New Password */
+			new_password: string;
+		};
+		/** CreatePushSubscriptionCommand */
+		CreatePushSubscriptionCommand: {
+			/** Endpoint */
+			endpoint: string;
+			/** P256Dh */
+			p256dh: string;
+			/** Auth */
+			auth: string;
+		};
+		/** CreateSubscriptionCommand */
+		CreateSubscriptionCommand: {
+			/** Event Id */
+			event_id: number;
+			/** Counter */
+			counter: number;
+		};
+		/** ErrorMessage */
+		ErrorMessage: {
+			/** Detail */
+			detail: string;
+		};
+		/** GetScheduleResult */
+		GetScheduleResult: {
+			/** Schedule */
+			schedule: components['schemas']['ScheduleEventFullDTO'][];
+		};
+		/** GetVotingNominationResult */
+		GetVotingNominationResult: {
+			/** Id */
+			id: number;
+			/** Code */
+			code: string;
+			/** Title */
+			title: string;
+			/** Participants Count */
+			participants_count: number;
+			user_vote: components['schemas']['NominationVoteDTO'] | null;
+			/** Participants */
+			participants: components['schemas']['ParticipantFullDTO'][];
+		};
+		/** GetVotingStateResult */
+		GetVotingStateResult: {
+			/** Can Vote */
+			can_vote: boolean;
+			status: components['schemas']['VotingStatus'];
+		};
+		/** LinkTicketCommand */
+		LinkTicketCommand: {
+			/** Barcode */
+			barcode: string;
+		};
+		/** ListScheduleChangesResult */
+		ListScheduleChangesResult: {
+			/** Schedule Changes */
+			schedule_changes: components['schemas']['ScheduleChangeFullDTO'][];
+		};
+		/** ListUserNotificationsResult */
+		ListUserNotificationsResult: {
+			/** Notifications */
+			notifications: components['schemas']['NotificationDTO'][];
+		};
+		/** ListVotingNominationsResult */
+		ListVotingNominationsResult: {
+			/** Nominations */
+			nominations: components['schemas']['NominationVotingDTO'][];
+		};
+		/** MoveScheduleEventRequest */
+		MoveScheduleEventRequest: {
+			/** Place After Event Id */
+			place_after_event_id: number;
+		};
+		/** MoveScheduleEventResult */
+		MoveScheduleEventResult: {
+			event: components['schemas']['ScheduleEventFullDTO'];
+			place_after_event: components['schemas']['ScheduleEventFullDTO'];
+		};
+		/** NominationVoteDTO */
+		NominationVoteDTO: {
+			/** Id */
+			id: number;
+			/** Participant Id */
+			participant_id: number;
+		};
+		/** NominationVotingDTO */
+		NominationVotingDTO: {
+			/** Id */
+			id: number;
+			/** Code */
+			code: string;
+			/** Title */
+			title: string;
+			/** Participants Count */
+			participants_count: number;
+			user_vote: components['schemas']['NominationVoteDTO'] | null;
+		};
+		/** NotificationDTO */
+		NotificationDTO: {
+			/**
+			 * Id
+			 * Format: uuid
+			 */
+			id: string;
+			/** User Id */
+			user_id: number;
+			/** Title */
+			title: string;
+			/** Body */
+			body: string;
+			type: components['schemas']['NotificationType'];
+			/** Mailing Id */
+			mailing_id: string | null;
+			/**
+			 * Created At
+			 * Format: date-time
+			 */
+			created_at: string;
+			/** Seen At */
+			seen_at: string | null;
+		};
+		/**
+		 * NotificationType
+		 * @enum {string}
+		 */
+		NotificationType:
+			| 'default'
+			| 'schedule_change'
+			| 'schedule_subscription'
+			| 'message'
+			| 'points_received';
+		/** Order */
+		Order: {
+			/** Id */
+			id: string;
+			status: components['schemas']['OrderStatus'];
+			/** Event */
+			event: string;
+			/** Tickets */
+			tickets: components['schemas']['Ticket'][];
+		};
+		/**
+		 * OrderStatus
+		 * @enum {string}
+		 */
+		OrderStatus: 'executed' | 'done' | 'cancelled' | 'expired' | 'in_progress';
+		/** ParticipantFullDTO */
+		ParticipantFullDTO: {
+			/** Id */
+			id: number;
+			/** Title */
+			title: string;
+			/** Voting Number */
+			voting_number: number | null;
+			/** Votes Count */
+			votes_count: number;
+			user_vote: components['schemas']['ParticipantVoteDTO'] | null;
+		};
+		/** ParticipantVoteDTO */
+		ParticipantVoteDTO: {
+			/** Id */
+			id: number;
+		};
+		/** RegisterUserCommand */
+		RegisterUserCommand: {
+			/**
+			 * Email
+			 * Format: email
+			 */
+			email: string;
+			/** Username */
+			username: string;
+			/** Password */
+			password: string;
+		};
+		/** ScheduleChangeEventDTO */
+		ScheduleChangeEventDTO: {
+			/** Id */
+			id: number;
+			/** Public Number */
+			public_number: number;
+			/** Title */
+			title: string;
+		};
+		/** ScheduleChangeFullDTO */
+		ScheduleChangeFullDTO: {
+			/** Id */
+			id: number;
+			type: components['schemas']['ScheduleChangeType'];
+			/** Mailing Id */
+			mailing_id: string | null;
+			/** User Id */
+			user_id: number | null;
+			/** Send Global Announcement */
+			send_global_announcement: boolean;
+			changed_event: components['schemas']['ScheduleChangeEventDTO'] | null;
+			argument_event: components['schemas']['ScheduleChangeEventDTO'] | null;
+			user: components['schemas']['UserBaseDTO'] | null;
+		};
+		/**
+		 * ScheduleChangeType
+		 * @enum {string}
+		 */
+		ScheduleChangeType: 'set_as_current' | 'moved' | 'skipped' | 'unskipped';
+		/** ScheduleEventFullDTO */
+		ScheduleEventFullDTO: {
+			/** Id */
+			id: number;
+			/** Public Number */
+			public_number: number;
+			/** Title */
+			title: string;
+			/** Duration */
+			duration: number;
+			/** Order */
+			order: number;
+			/** Is Current */
+			is_current: boolean;
+			/** Is Skipped */
+			is_skipped: boolean;
+			/** Nomination Title */
+			nomination_title: string;
+			/** Block Title */
+			block_title: string;
+			/** Queue */
+			queue: number | null;
+			/** Time Until */
+			time_until: number | null;
+			user_subscription: components['schemas']['ScheduleEventSubscriptionDTO'] | null;
+		};
+		/** ScheduleEventSubscriptionDTO */
+		ScheduleEventSubscriptionDTO: {
+			/** Id */
+			id: number;
+			/** Counter */
+			counter: number;
+		};
+		/** SetCurrentScheduleEventResult */
+		SetCurrentScheduleEventResult: {
+			current_event: components['schemas']['ScheduleEventFullDTO'] | null;
+			/** Schedule Change Id */
+			schedule_change_id: number;
+		};
+		/** SubscriptionEventDTO */
+		SubscriptionEventDTO: {
+			/** Id */
+			id: number;
+			/** Public Number */
+			public_number: number;
+			/** Title */
+			title: string;
+			/** Order */
+			order: number;
+			/** Queue */
+			queue: number | null;
+			/** Time Until */
+			time_until: number | null;
+		};
+		/** SubscriptionFullDTO */
+		SubscriptionFullDTO: {
+			/** Id */
+			id: number;
+			/** User Id */
+			user_id: number;
+			/** Counter */
+			counter: number;
+			event: components['schemas']['SubscriptionEventDTO'];
+		};
+		/** TCloudWebhookPayload */
+		TCloudWebhookPayload: {
+			data: components['schemas']['Order'];
+			/** Type */
+			type: string;
+		};
+		/** Ticket */
+		Ticket: {
+			/** Id */
+			id: string;
+			/** Serial */
+			serial: string;
+			/** Number */
+			number: number;
+			/** Barcode */
+			barcode: string | null;
+			/** Status */
+			status: string;
+			/** Price */
+			price: string;
+			/** Nominal */
+			nominal: string;
+			/** Discount */
+			discount: string;
+			/** Extra */
+			extra: string;
+			/** Full */
+			full: string;
+			/** Set */
+			set: string;
+			/** Tariff */
+			tariff: string | null;
+		};
+		/** Token */
+		Token: {
+			/** Access Token */
+			access_token: string;
+			/** Refresh Token */
+			refresh_token: string;
+			/** Token Type */
+			token_type: string;
+		};
+		/** UpdateCurrentUserCommand */
+		UpdateCurrentUserCommand: {
+			/** Username */
+			username?: string | null;
+			/** First Name */
+			first_name?: string | null;
+			/** Last Name */
+			last_name?: string | null;
+		};
+		/** UpdateScheduleEventSkipResult */
+		UpdateScheduleEventSkipResult: {
+			event: components['schemas']['ScheduleEventFullDTO'];
+		};
+		/** UserBaseDTO */
+		UserBaseDTO: {
+			/** Id */
+			id: number;
+			/** Tg Id */
+			tg_id: number | null;
+			/** Username */
+			username: string | null;
+			/** First Name */
+			first_name: string | null;
+			/** Last Name */
+			last_name: string | null;
+			role: components['schemas']['UserRole'];
+		};
+		/** UserFullDTO */
+		UserFullDTO: {
+			/** Id */
+			id: number;
+			/** Tg Id */
+			tg_id: number | null;
+			/** Username */
+			username: string | null;
+			/** First Name */
+			first_name: string | null;
+			/** Last Name */
+			last_name: string | null;
+			role: components['schemas']['UserRole'];
+			ticket: components['schemas']['UserTicketDTO'] | null;
+			/** Permissions */
+			permissions: components['schemas']['UserPermissionDTO'][];
+			settings: components['schemas']['UserSettings'];
+		};
+		/** UserPermissionDTO */
+		UserPermissionDTO: {
+			/** Name */
+			name: string;
+			/** Object Type */
+			object_type: string | null;
+			/** Object Id */
+			object_id: number | null;
+		};
+		/**
+		 * UserRole
+		 * @enum {string}
+		 */
+		UserRole: 'visitor' | 'participant' | 'helper' | 'org';
+		/** UserSettings */
+		UserSettings: {
+			/**
+			 * Items Per Page
+			 * @default 4
+			 */
+			items_per_page: number;
+			/**
+			 * Receive All Announcements
+			 * @default true
+			 */
+			receive_all_announcements: boolean;
+		};
+		/** UserTicketDTO */
+		UserTicketDTO: {
+			/** Id */
+			id: number;
+			/** Barcode */
+			barcode: string;
+			role: components['schemas']['UserRole'];
+		};
+		/** VoteBaseDTO */
+		VoteBaseDTO: {
+			/** Id */
+			id: number;
+			/** User Id */
+			user_id: number;
+			/** Participant Id */
+			participant_id: number;
+		};
+		/**
+		 * VotingStatus
+		 * @enum {string}
+		 */
+		VotingStatus: 'open' | 'not_authenticated' | 'no_ticket' | 'disabled';
+	};
+	responses: never;
+	parameters: never;
+	requestBodies: never;
+	headers: never;
+	pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    login_auth_login_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/x-www-form-urlencoded": components["schemas"]["Body_login_auth_login_post"];
-            };
-        };
-        responses: {
-            /** @description Successfully authenticated, access token returned. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Token"];
-                };
-            };
-            /** @description Invalid username or password. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    refresh_access_token_auth_refresh_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Token"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    register_user_auth_register_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RegisterUserCommand"];
-            };
-        };
-        responses: {
-            /** @description User successfully registered. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserBaseDTO"];
-                };
-            };
-            /** @description Validation error (e.g., weak password or invalid email). */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Conflict: Username or Email already in use. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    change_password_auth_change_password_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ChangePasswordCommand"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    logout_user_auth_logout_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successfully logged out. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    get_current_user_users_me_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description User profile retrieved successfully. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserFullDTO"];
-                };
-            };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    update_current_user_users_me_patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateCurrentUserCommand"];
-            };
-        };
-        responses: {
-            /** @description User updated successfully. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Username already taken. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    link_ticket_users_me_ticket_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LinkTicketCommand"];
-            };
-        };
-        responses: {
-            /** @description Ticket linked successfully. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Ticket not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description User already has a ticket linked. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    stream_events_events_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description SSE stream established. Returns text/event-stream. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    get_schedule_schedule_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GetScheduleResult"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    set_event_as_current_schedule__event_id__current_patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                event_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SetCurrentScheduleEventResult"];
-                };
-            };
-            /** @description Event is skipped or invalid for this operation */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Event ID not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Rate limited - Editing too fast */
-            429: {
-                headers: {
-                    /** @description Seconds to wait */
-                    "Retry-After"?: number;
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    uncheck_current_event_schedule_current_delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successfully cleared current event. Returns the updated schedule state. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SetCurrentScheduleEventResult"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Too many requests. Please wait before editing the schedule again. */
-            429: {
-                headers: {
-                    /** @description Seconds to wait before retrying */
-                    "Retry-After"?: number;
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    move_schedule_event_schedule__event_id__move_patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                event_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["MoveScheduleEventRequest"];
-            };
-        };
-        responses: {
-            /** @description Event successfully moved. Returns updated sequence info. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MoveScheduleEventResult"];
-                };
-            };
-            /** @description Invalid move: Target and destination are the same. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description The event to move, or the target neighbor event, was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    skip_schedule_event_schedule__event_id__skip_patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                event_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Event successfully marked as skipped. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UpdateScheduleEventSkipResult"];
-                };
-            };
-            /** @description Business logic error: Cannot skip the current active event. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description The specified event ID does not exist. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    unskip_schedule_event_schedule__event_id__unskip_patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                event_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Event successfully unskipped. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UpdateScheduleEventSkipResult"];
-                };
-            };
-            /** @description Invalid operation: The event state cannot be modified in its current context. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description The specified event ID does not exist. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    list_schedule_changes_schedule_changes_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description A list of schedule change events. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ListScheduleChangesResult"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    undo_schedule_change_schedule_changes__schedule_change_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                schedule_change_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Change successfully undone. No content returned. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description The specified schedule change ID was not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    new_subscription_schedule_subscriptions_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateSubscriptionCommand"];
-            };
-        };
-        responses: {
-            /** @description Subscription created successfully. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SubscriptionFullDTO"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description The event_id provided does not exist. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description A user_subscription for this event already exists (Conflict). */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    delete_subscription_schedule_subscriptions__subscription_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                subscription_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Subscription successfully deleted. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Subscription ID not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    get_voting_status_voting_status_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successfully retrieved voting status. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GetVotingStateResult"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    list_voting_nominations_voting_nominations_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successfully retrieved the list of nominations. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ListVotingNominationsResult"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    get_voting_nomination_voting_nominations__nomination_code__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                nomination_code: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Nomination details retrieved successfully. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GetVotingNominationResult"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Nomination not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    add_vote_voting_nominations__nomination_id__vote_put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                nomination_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AddVoteCommand"];
-            };
-        };
-        responses: {
-            /** @description Vote successfully cast. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["VoteBaseDTO"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Participant not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Already voted in this nomination. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    cancel_vote_voting_nominations__nomination_id__vote_delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                nomination_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Vote successfully cancelled. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description No vote found to cancel. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    process_tcloud_order_webhooks_tcloud_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TCloudWebhookPayload"];
-            };
-        };
-        responses: {
-            /** @description Webhook processed successfully. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Invalid webhook payload. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    list_user_notifications_notifications_get: {
-        parameters: {
-            query?: {
-                limit?: number;
-                offset?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ListUserNotificationsResult"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    subscribe_notifications_subscribe_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreatePushSubscriptionCommand"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Unknown Error */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
+	login_auth_login_post: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/x-www-form-urlencoded': components['schemas']['Body_login_auth_login_post'];
+			};
+		};
+		responses: {
+			/** @description Successfully authenticated, access token returned. */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Token'];
+				};
+			};
+			/** @description Invalid username or password. */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	refresh_access_token_auth_refresh_post: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Successful Response */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Token'];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	register_user_auth_register_post: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['RegisterUserCommand'];
+			};
+		};
+		responses: {
+			/** @description User successfully registered. */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['UserBaseDTO'];
+				};
+			};
+			/** @description Validation error (e.g., weak password or invalid email). */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Conflict: Username or Email already in use. */
+			409: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	change_password_auth_change_password_post: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['ChangePasswordCommand'];
+			};
+		};
+		responses: {
+			/** @description Successful Response */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': unknown;
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	logout_user_auth_logout_post: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Successfully logged out. */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': unknown;
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	get_current_user_users_me_get: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description User profile retrieved successfully. */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['UserFullDTO'];
+				};
+			};
+			/** @description Not authenticated. */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	update_current_user_users_me_patch: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['UpdateCurrentUserCommand'];
+			};
+		};
+		responses: {
+			/** @description User updated successfully. */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': unknown;
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Username already taken. */
+			409: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	link_ticket_users_me_ticket_post: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['LinkTicketCommand'];
+			};
+		};
+		responses: {
+			/** @description Ticket linked successfully. */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': unknown;
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Ticket not found. */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description User already has a ticket linked. */
+			409: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	stream_events_events_get: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description SSE stream established. Returns text/event-stream. */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': unknown;
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	get_schedule_schedule_get: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Successful Response */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['GetScheduleResult'];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	set_event_as_current_schedule__event_id__current_patch: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				event_id: number;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Successful Response */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SetCurrentScheduleEventResult'];
+				};
+			};
+			/** @description Event is skipped or invalid for this operation */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Event ID not found */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Rate limited - Editing too fast */
+			429: {
+				headers: {
+					/** @description Seconds to wait */
+					'Retry-After'?: number;
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	uncheck_current_event_schedule_current_delete: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Successfully cleared current event. Returns the updated schedule state. */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SetCurrentScheduleEventResult'];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Too many requests. Please wait before editing the schedule again. */
+			429: {
+				headers: {
+					/** @description Seconds to wait before retrying */
+					'Retry-After'?: number;
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	move_schedule_event_schedule__event_id__move_patch: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				event_id: number;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MoveScheduleEventRequest'];
+			};
+		};
+		responses: {
+			/** @description Event successfully moved. Returns updated sequence info. */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MoveScheduleEventResult'];
+				};
+			};
+			/** @description Invalid move: Target and destination are the same. */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description The event to move, or the target neighbor event, was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	skip_schedule_event_schedule__event_id__skip_patch: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				event_id: number;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Event successfully marked as skipped. */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['UpdateScheduleEventSkipResult'];
+				};
+			};
+			/** @description Business logic error: Cannot skip the current active event. */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description The specified event ID does not exist. */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	unskip_schedule_event_schedule__event_id__unskip_patch: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				event_id: number;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Event successfully unskipped. */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['UpdateScheduleEventSkipResult'];
+				};
+			};
+			/** @description Invalid operation: The event state cannot be modified in its current context. */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description The specified event ID does not exist. */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	list_schedule_changes_schedule_changes_get: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description A list of schedule change events. */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ListScheduleChangesResult'];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	undo_schedule_change_schedule_changes__schedule_change_id__delete: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				schedule_change_id: number;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Change successfully undone. No content returned. */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description The specified schedule change ID was not found. */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	new_subscription_schedule_subscriptions_post: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['CreateSubscriptionCommand'];
+			};
+		};
+		responses: {
+			/** @description Subscription created successfully. */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SubscriptionFullDTO'];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description The event_id provided does not exist. */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description A user_subscription for this event already exists (Conflict). */
+			409: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	delete_subscription_schedule_subscriptions__subscription_id__delete: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				subscription_id: number;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Subscription successfully deleted. */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Subscription ID not found. */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	get_voting_status_voting_status_get: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Successfully retrieved voting status. */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['GetVotingStateResult'];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	list_voting_nominations_voting_nominations_get: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Successfully retrieved the list of nominations. */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ListVotingNominationsResult'];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	get_voting_nomination_voting_nominations__nomination_code__get: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				nomination_code: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Nomination details retrieved successfully. */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['GetVotingNominationResult'];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Nomination not found. */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	add_vote_voting_nominations__nomination_id__vote_put: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				nomination_id: number;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['AddVoteCommand'];
+			};
+		};
+		responses: {
+			/** @description Vote successfully cast. */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['VoteBaseDTO'];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Participant not found. */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Already voted in this nomination. */
+			409: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	cancel_vote_voting_nominations__nomination_id__vote_delete: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				nomination_id: number;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Vote successfully cancelled. */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': unknown;
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description No vote found to cancel. */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	process_tcloud_order_webhooks_tcloud_post: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['TCloudWebhookPayload'];
+			};
+		};
+		responses: {
+			/** @description Webhook processed successfully. */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': unknown;
+				};
+			};
+			/** @description Invalid webhook payload. */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	list_user_notifications_notifications_get: {
+		parameters: {
+			query?: {
+				limit?: number;
+				offset?: number;
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Successful Response */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ListUserNotificationsResult'];
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	mark_all_notifications_read_notifications_mark_all_read_post: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Successful Response */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': unknown;
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
+	subscribe_notifications_subscribe_post: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['CreatePushSubscriptionCommand'];
+			};
+		};
+		responses: {
+			/** @description Successful Response */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': unknown;
+				};
+			};
+			/** @description Unauthorized */
+			401: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Forbidden */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+			/** @description Unknown Error */
+			default: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ErrorMessage'];
+				};
+			};
+		};
+	};
 }

@@ -1,15 +1,17 @@
 import createClient from 'openapi-fetch';
 import type { paths } from '$lib/api/v1';
 import { PUBLIC_API_URL } from '$env/static/public';
-import { refreshTokenMiddleware } from './middlewares';
+import { createRefreshTokenMiddleware } from './middlewares';
 
-// Client for browser-side requests (through Caddy)
-export const client = createClient<paths>({
-	baseUrl: PUBLIC_API_URL,
-	credentials: 'include'
-});
+// For server-side requests always create a new client
+export function createApiClient() {
+	const c = createClient<paths>({
+		baseUrl: PUBLIC_API_URL,
+		credentials: 'include'
+	});
+	c.use(createRefreshTokenMiddleware());
+	return c;
+}
 
-client.use(refreshTokenMiddleware);
-
-// Register the middleware with the correct refresh endpoint
-// client.use(createRefreshTokenMiddleware(`${PUBLIC_API_URL}/auth/refresh`));
+// Browser-side singleton (safe: each browser tab is a single user)
+export const client = createApiClient();

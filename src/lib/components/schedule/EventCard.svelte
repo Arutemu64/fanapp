@@ -15,7 +15,7 @@
 	import type { UserFullDTO } from '$lib/types/user';
 	import { formatDuration, formatUntil, pluralize } from '$lib/utils';
 	import { canManageSchedule } from '$lib/utils/permissions';
-	import { toastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/stores/toasts.svelte';
 	import { client } from '$lib/api';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import MoveEventModal from './MoveEventModal.svelte';
@@ -25,10 +25,12 @@
 	interface Props {
 		event: ScheduleEventFullDTO;
 		schedule: ScheduleEventFullDTO[];
+		currentEvent: ScheduleEventFullDTO | null;
 		user: UserFullDTO | null;
 	}
 
-	let { event, schedule, user }: Props = $props();
+	let { event, schedule, currentEvent, user }: Props = $props();
+	const toastService = getToastService();
 
 	let moveModal = $state(false);
 	let subscribeModal = $state(false);
@@ -39,8 +41,6 @@
 
 	// Unique ID for this card's dropdown trigger
 	let dropdownId = $derived(`event-menu-${event.id}`);
-
-	let currentEvent = $derived(schedule.find((ev) => ev.is_current) ?? null);
 
 	let queueUntil = $derived(
 		currentEvent && event.queue !== null && currentEvent.queue !== null

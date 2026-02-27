@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Design Guidelines
 
 - Prioritize official Flowbite-Svelte components (e.g., Card, Modal, BottomNav, Avatar, Badge, Button).
@@ -34,3 +38,60 @@
 - Never use complex, static, or arbitrary Tailwind values (e.g., w-[317px], mt-[15px]) unless strictly required to match an external fixed-size asset.
 - Group layout elements cleanly using flex, flex-col, and gap-4 rather than relying heavily on explicit margins.
 - Keep Svelte template files clean by destructuring props and utilizing Svelte's native logic blocks (#if, #each).
+
+## Accessibility
+
+- All interactive elements (buttons, icon-only triggers) must have an `aria-label` with a descriptive Russian label.
+- Maintain sufficient color contrast ratios between text and background in both light and dark modes.
+- Interactive elements must show a visible focus ring (e.g., `focus:ring-2 focus:ring-primary-300`).
+- Dropdowns, modals, and menus must be fully operable via keyboard (Tab, Enter, Escape).
+
+## Loading & Empty States
+
+- Show a user-friendly empty state message (in Russian) when a list has no items.
+- Disable buttons and show a loading indicator (spinner or `disabled` state) while an action is in-flight to prevent double-submission.
+
+## Error Handling UI
+
+- Use **toasts** for transient, non-blocking feedback (action results, network errors).
+- Use **inline error messages** for form validation (displayed below the relevant field).
+- Error messages must be in Russian and user-friendly — never expose raw API error keys or stack traces.
+- Default toast duration: auto-dismiss after ~4 seconds.
+
+## Semantic Colors
+
+| Color   | Usage                                              |
+| ------- | -------------------------------------------------- |
+| Primary | CTAs, active navigation highlights                 |
+| Green   | Success states, "current" indicator                |
+| Red     | Errors, destructive actions, "skipped" indicator   |
+| Yellow  | Warnings, "time until" badges                      |
+| Blue    | Informational, subscription badges                 |
+| Gray    | Neutral, duration badges, captions, secondary text |
+
+## Modal Guidelines
+
+- Always use the Flowbite `Modal` component — no custom dialog implementations.
+- Every modal must have a clear title and action buttons at the bottom.
+- Destructive confirmations (delete, unsubscribe) must use a red/danger-colored confirm button.
+- Modals must be dismissible via the Escape key and clicking the backdrop.
+
+## Bottom Navigation Safe Area
+
+- The `BottomNav` is **mobile-only** (`md:hidden`).
+- Content containers must include `pb-24` bottom padding to prevent overlap with the fixed `BottomNav`.
+
+## Icon Sizing
+
+| Context             | Size Class    |
+| ------------------- | ------------- |
+| Inside badges       | `h-2.5 w-2.5` |
+| Dropdown menu items | `h-4 w-4`     |
+| Sidebar / navbar    | `h-5 w-5`     |
+| Bottom nav          | `h-6 w-6`     |
+
+## Animation Defaults
+
+- Toast entrance/exit: `transition:fly` with `x: 200, duration: 300`.
+- Hover/state transitions: `transition duration-75` or `duration-150` for color changes.
+- Prefer `fly`, `fade`, or `slide` from `svelte/transition` — avoid heavy custom animations.

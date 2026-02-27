@@ -18,14 +18,14 @@
 		{#if nomination.user_vote}
 			<Badge color="green" class="shrink-0">
 				<span class="flex items-center gap-1">
-					<CheckCircleSolid class="h-3.5 w-3.5" />
+					<CheckCircleSolid class="h-2.5 w-2.5" />
 					<span class="hidden sm:inline">Проголосовано</span>
 				</span>
 			</Badge>
 		{:else}
 			<Badge color="gray" class="shrink-0">
 				<span class="flex items-center gap-1">
-					<ClockOutline class="h-3.5 w-3.5" />
+					<ClockOutline class="h-2.5 w-2.5" />
 					<span class="hidden sm:inline">Ожидает</span>
 				</span>
 			</Badge>
@@ -33,6 +33,8 @@
 	</div>
 
 	<div class="mt-auto pt-3 sm:pt-4">
-		<Button color="primary" href="/voting/{nomination.code}" size="md">Проголосовать</Button>
+		<Button color="primary" href="/voting/{nomination.code}" size="md">
+			{nomination.user_vote ? 'Перейти' : 'Проголосовать'}
+		</Button>
 	</div>
 </Card>

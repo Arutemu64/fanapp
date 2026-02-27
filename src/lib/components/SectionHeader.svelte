@@ -14,7 +14,7 @@
 </script>
 
 <div class="mb-4 sm:mb-6">
-	<h1 class="text-2xl font-bold text-gray-900 sm:text-3xl dark:text-white">
+	<h1 class="text-2xl font-bold text-gray-900 dark:text-white">
 		{title}
 	</h1>
 	{#if description}

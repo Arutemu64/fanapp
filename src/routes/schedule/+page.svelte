@@ -29,11 +29,10 @@
 		})
 	);
 
-	let currentEvent = $derived(schedule.find((ev) => ev.is_current));
+	let currentEvent = $derived(schedule.find((ev) => ev.is_current) ?? null);
 	let user: UserFullDTO | null = $derived(page.data.user);
 
 	// Scroll to current event
-	// TODO scroll-margin-top
 	function scrollToCurrentEvent() {
 		if (!currentEvent) return;
 		const element = document.querySelector(`[data-event-id="${currentEvent.id}"]`);
@@ -42,16 +41,17 @@
 		}
 	}
 
+	const client = getEventsClient();
+
 	$effect(() => {
-		const client = getEventsClient();
 		if (!client) return;
 
 		const updateSchedule = async () => {
 			await invalidate('app:schedule');
 		};
-		client.source?.addEventListener('update_schedule', updateSchedule);
+		client.on('update_schedule', updateSchedule);
 		return () => {
-			client.source?.removeEventListener('update_schedule', updateSchedule);
+			client.off('update_schedule', updateSchedule);
 		};
 	});
 </script>
@@ -124,7 +124,7 @@
 		{/if}
 
 		<div data-event-id={event.id} class="scroll-mt-32 sm:scroll-mt-40">
-			<EventCard {event} {schedule} {user} />
+			<EventCard {event} {schedule} {currentEvent} {user} />
 		</div>
 	{:else}
 		<div class="py-8 text-center text-sm text-gray-500 dark:text-gray-400 sm:py-12">

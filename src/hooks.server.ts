@@ -1,11 +1,9 @@
 import { PRIVATE_API_URL } from '$env/static/private';
 import { PUBLIC_API_URL } from '$env/static/public';
-import { client } from '$lib/api';
+import { createApiClient } from '$lib/api';
 import type { Handle, HandleFetch } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 import * as setCookieParser from 'set-cookie-parser';
-
-const protectedRoutes = ['/profile'];
 
 export const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
 	// https://svelte.dev/docs/kit/hooks#Server-hooks-handleFetch
@@ -14,7 +12,7 @@ export const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
 		request = new Request(request.url.replace(PUBLIC_API_URL, PRIVATE_API_URL), request);
 	}
 	if (request.url.startsWith(PRIVATE_API_URL)) {
-		// Forward browser cookies with server-side API requests, 
+		// Forward browser cookies with server-side API requests,
 		// but avoid overwriting explicitly set cookies (e.g. from token refresh retries)
 		if (!request.headers.has('cookie')) {
 			request.headers.set('cookie', event.request.headers.get('cookie') || '');
@@ -24,8 +22,15 @@ export const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
 };
 
 export const handle: Handle = async ({ event, resolve }) => {
+	// Create a per-request client to avoid cross-request state leakage
+	const serverClient = createApiClient();
+
 	// Load user
-	const { data, error, response: apiResponse } = await client.GET('/users/me', { fetch: event.fetch });
+	const {
+		data,
+		error,
+		response: apiResponse
+	} = await serverClient.GET('/users/me', { fetch: event.fetch });
 	if (data && !error) {
 		event.locals.user = data;
 	} else {

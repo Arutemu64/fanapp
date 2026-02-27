@@ -3,7 +3,7 @@
 	import { CheckCircleSolid, HeartSolid } from 'flowbite-svelte-icons';
 	import { pluralize } from '$lib/utils';
 	import { client } from '$lib/api';
-	import { toastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/stores/toasts.svelte';
 	import type { ParticipantFullDTO } from '$lib/types/participant';
 
 	interface Props {
@@ -14,6 +14,7 @@
 	}
 
 	let { participant, nominationId, hasVoted, onVoted }: Props = $props();
+	const toastService = getToastService();
 
 	let isLoading = $state(false);
 
@@ -81,7 +82,7 @@
 	{#if participant.user_vote !== null}
 		<Badge color="green" class="absolute top-2 right-2 shrink-0">
 			<span class="flex items-center gap-1">
-				<CheckCircleSolid class="h-3.5 w-3.5" />
+				<CheckCircleSolid class="h-2.5 w-2.5" />
 				<span class="hidden sm:inline">Ваш голос</span>
 			</span>
 		</Badge>
@@ -108,13 +109,26 @@
 			</span>
 		</div>
 
-		<div class="flex min-h-8 min-w-20 items-center">
+		<div class="flex min-h-8 min-w-24 items-center">
 			{#if participant.user_vote !== null}
-				<Button size="md" color="red" outline loading={isLoading} onclick={handleCancelVote}>
+				<Button
+					size="md"
+					color="red"
+					outline
+					loading={isLoading}
+					onclick={handleCancelVote}
+					aria-label="Отменить голос"
+				>
 					Отменить
 				</Button>
 			{:else if !hasVoted}
-				<Button size="md" color="blue" loading={isLoading} onclick={handleVote}>Голосовать</Button>
+				<Button
+					size="md"
+					color="blue"
+					loading={isLoading}
+					onclick={handleVote}
+					aria-label="Голосовать за {participant.title}">Голосовать</Button
+				>
 			{/if}
 		</div>
 	</div>

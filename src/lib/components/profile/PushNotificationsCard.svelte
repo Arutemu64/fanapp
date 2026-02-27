@@ -2,11 +2,12 @@
 	import { Card, Button, Toggle } from 'flowbite-svelte';
 	import { BellOutline } from 'flowbite-svelte-icons';
 	import { client } from '$lib/api';
-	import { toastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/stores/toasts.svelte';
 	import { PUBLIC_VAPID_KEY } from '$env/static/public';
 	import { onMount } from 'svelte';
 
 	let isSubscribed = $state(false);
+	const toastService = getToastService();
 	let isLoading = $state(true);
 
 	// Convert base64 VAPID key to Uint8Array required by pushManager

@@ -1,13 +1,24 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { client } from '$lib/api';
 	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
 	import NotificationBell from '$lib/components/NotificationBell.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
+	import { setEventsClient } from '$lib/events.svelte';
+	import { setToastService } from '$lib/stores/toasts.svelte';
 	import { canManageSchedule } from '$lib/utils/permissions';
 	import {
+		Avatar,
 		BottomNav,
 		BottomNavItem,
+		Button,
 		DarkMode,
+		Dropdown,
+		DropdownDivider,
+		DropdownGroup,
+		DropdownHeader,
+		DropdownItem,
 		Navbar,
 		Sidebar,
 		SidebarBrand,
@@ -20,9 +31,9 @@
 		CalendarWeekOutline,
 		ClockArrowOutline,
 		HomeSolid,
-		ThumbsUpOutline,
-		UserCircleOutline
+		ThumbsUpOutline
 	} from 'flowbite-svelte-icons';
+	import { onDestroy } from 'svelte';
 	import '../app.css';
 
 	let { data, children } = $props();
@@ -33,6 +44,25 @@
 	const sidebarUi = uiHelpers();
 	let isSidebarOpen = $derived(sidebarUi.isOpen);
 	const closeSidebar = sidebarUi.close;
+
+	const eventsClient = setEventsClient();
+	const toastService = setToastService();
+
+	onDestroy(() => {
+		eventsClient?.disconnect();
+	});
+
+	async function handleLogout() {
+		const { error } = await client.POST('/auth/logout');
+
+		if (error) {
+			toastService.error(error);
+			return;
+		}
+
+		eventsClient?.restart();
+		goto('/', { invalidateAll: true });
+	}
 </script>
 
 {#snippet sidebarLinks()}
@@ -59,13 +89,6 @@
 		<SidebarItem label="Голосование" href="/voting">
 			{#snippet icon()}
 				<ThumbsUpOutline
-					class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-				/>
-			{/snippet}
-		</SidebarItem>
-		<SidebarItem label="Профиль" href="/profile">
-			{#snippet icon()}
-				<UserCircleOutline
 					class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
 				/>
 			{/snippet}
@@ -112,13 +135,36 @@
 
 			<div class="flex items-center gap-2 md:order-2">
 				<ConnectionIndicator />
-				<NotificationBell />
+				{#if user}
+					<NotificationBell />
+				{/if}
 				<DarkMode class="rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800" />
+				{#if user}
+					<Avatar id="avatar-menu" class="cursor-pointer" />
+					<Dropdown placement="bottom-end" triggeredBy="#avatar-menu">
+						<DropdownHeader>
+							<span class="block text-sm text-gray-900 dark:text-white"
+								>{user.first_name || 'Пользователь'}</span
+							>
+							{#if user.username}
+								<span class="block truncate text-sm font-medium">@{user.username}</span>
+							{/if}
+						</DropdownHeader>
+						<DropdownGroup>
+							<DropdownItem href="/profile">Профиль</DropdownItem>
+							<DropdownDivider />
+							<DropdownItem onclick={handleLogout}>Выйти</DropdownItem>
+						</DropdownGroup>
+					</Dropdown>
+				{:else}
+					<Button href="/login" size="sm">Войти</Button>
+				{/if}
 			</div>
 		</Navbar>
 
-		<section class="flex-1 overflow-y-auto scroll-smooth">
-			<div class="mx-auto p-4 pb-24 md:p-6 md:pt-4 lg:p-8 lg:pt-4">
+		<section class="relative flex-1 overflow-y-auto scroll-smooth">
+			<ToastContainer />
+			<div class="mx-auto max-w-7xl p-4 pb-24 md:p-6 md:pt-4 lg:p-8 lg:pt-4">
 				{@render children()}
 			</div>
 		</section>
@@ -128,7 +174,7 @@
 		{activeUrl}
 		position="fixed"
 		class="bottom-0 left-0 z-50 w-full border-t border-gray-200 bg-white md:hidden dark:border-gray-800 dark:bg-gray-900"
-		classes={{ inner: 'grid-cols-4' }}
+		classes={{ inner: 'grid-cols-3' }}
 	>
 		<BottomNavItem btnName="Главная" href="/">
 			<HomeSolid
@@ -145,11 +191,5 @@
 				class="mb-1 h-6 w-6 text-gray-500 group-hover:text-primary-600 dark:text-gray-400 dark:group-hover:text-primary-500"
 			/>
 		</BottomNavItem>
-		<BottomNavItem btnName="Профиль" href="/profile">
-			<UserCircleOutline
-				class="mb-1 h-6 w-6 text-gray-500 group-hover:text-primary-600 dark:text-gray-400 dark:group-hover:text-primary-500"
-			/>
-		</BottomNavItem>
 	</BottomNav>
 </div>
-<ToastContainer />

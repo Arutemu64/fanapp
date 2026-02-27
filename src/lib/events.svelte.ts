@@ -1,44 +1,74 @@
+import { getContext, setContext } from 'svelte';
 import { browser } from '$app/environment';
 import { PUBLIC_API_URL } from '$env/static/public';
 
-class EventsClient {
-	connectionStatus = $state('disconnected');
-	source: EventSource | null = null;
+const EVENTS_CLIENT_KEY = Symbol('EVENTS_CLIENT');
+
+const MAX_RECONNECT_ATTEMPTS = 10;
+
+export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error' | 'failed';
+
+export class EventsClient {
+	connectionStatus: ConnectionStatus = $state('disconnected');
+	#source: EventSource | null = null;
 	#reconnectAttempts = 0;
-	#reconnectTimeoutId: number | ReturnType<typeof setTimeout> | null = null; // Track timeout
+	#reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
+	#listeners: Map<string, Set<EventListener>> = new Map();
 
 	constructor() {
 		this.connect();
 	}
 
 	connect() {
-		if (this.source) return; // Already connected
+		if (this.#source) return; // Already connected
 
 		this.connectionStatus = 'connecting';
 
-		// Make sure it sends cookies if API is on a different origin
-		this.source = new EventSource(`${PUBLIC_API_URL}/events`, {
+		this.#source = new EventSource(`${PUBLIC_API_URL}/events`, {
 			withCredentials: true
 		});
 
-		this.source.onopen = () => {
+		this.#source.onopen = () => {
 			this.connectionStatus = 'connected';
 			this.#reconnectAttempts = 0;
 		};
 
-		this.source.onerror = () => {
+		this.#source.onerror = () => {
 			console.log('EventSource error, attempting to reconnect...');
 			this.connectionStatus = 'error';
 
-			// Basic reconnection logic
-			this.source?.close();
-			this.source = null;
+			this.#source?.close();
+			this.#source = null;
+
+			if (this.#reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+				this.connectionStatus = 'failed';
+				return;
+			}
 
 			const timeout = Math.min(1000 * 2 ** this.#reconnectAttempts, 30000);
-			// Save timeout ID so we can cancel it if disconnect() is called
 			this.#reconnectTimeoutId = setTimeout(() => this.connect(), timeout);
 			this.#reconnectAttempts++;
 		};
+
+		// Re-attach all registered listeners to the new source
+		for (const [event, handlers] of this.#listeners) {
+			for (const handler of handlers) {
+				this.#source.addEventListener(event, handler);
+			}
+		}
+	}
+
+	on(event: string, handler: EventListener) {
+		if (!this.#listeners.has(event)) {
+			this.#listeners.set(event, new Set());
+		}
+		this.#listeners.get(event)!.add(handler);
+		this.#source?.addEventListener(event, handler);
+	}
+
+	off(event: string, handler: EventListener) {
+		this.#listeners.get(event)?.delete(handler);
+		this.#source?.removeEventListener(event, handler);
 	}
 
 	restart() {
@@ -46,33 +76,31 @@ class EventsClient {
 		this.connect();
 	}
 
-	// Allow manual disconnect if needed (e.g., logout)
 	disconnect() {
-		// Clear any pending reconnections to prevent leaks
 		if (this.#reconnectTimeoutId) {
 			clearTimeout(this.#reconnectTimeoutId);
 			this.#reconnectTimeoutId = null;
 		}
 
-		if (this.source) {
-			this.source.close();
-			this.source = null;
+		if (this.#source) {
+			this.#source.close();
+			this.#source = null;
 		}
 
 		this.connectionStatus = 'disconnected';
-		this.#reconnectAttempts = 0; // Reset attempts for the next connection
+		this.#reconnectAttempts = 0;
 	}
 }
 
-// Lazy singleton - only created when first accessed in the browser
-let _instance: EventsClient | null = null;
+export function setEventsClient(): EventsClient | null {
+	let client: EventsClient | null = null;
+	if (browser) {
+		client = new EventsClient();
+	}
+	setContext(EVENTS_CLIENT_KEY, client);
+	return client;
+}
 
 export function getEventsClient(): EventsClient | null {
-	if (!browser) {
-		return null;
-	}
-	if (!_instance) {
-		_instance = new EventsClient();
-	}
-	return _instance;
+	return getContext<EventsClient | null>(EVENTS_CLIENT_KEY) ?? null;
 }

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { client } from '$lib/api';
-	import { toastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/stores/toasts.svelte';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import { Button, Modal } from 'flowbite-svelte';
 	import { BellOutline } from 'flowbite-svelte-icons';
@@ -11,6 +11,7 @@
 		event: ScheduleEventFullDTO;
 	}
 	let { open = $bindable(), event }: Props = $props();
+	const toastService = getToastService();
 
 	async function handleUnsubscribe() {
 		if (!event.user_subscription) {

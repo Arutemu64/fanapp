@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Search, Card } from 'flowbite-svelte';
+	import { Search, Card, Button } from 'flowbite-svelte';
 	import { ArrowLeftOutline, CheckCircleSolid, UsersGroupOutline } from 'flowbite-svelte-icons';
 	import ParticipantCard from '$lib/components/voting/ParticipantCard.svelte';
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
@@ -34,13 +34,17 @@
 	<title>{nomination.title} - Голосование</title>
 </svelte:head>
 
-<a
+<Button
 	href="/voting"
-	class="mb-2 inline-flex items-center gap-1 text-xs text-gray-600 hover:text-gray-800 sm:mb-3 sm:text-sm dark:text-gray-400 dark:hover:text-gray-300"
+	outline
+	size="sm"
+	color="alternative"
+	class="mb-2 sm:mb-3"
+	aria-label="Назад к номинациям"
 >
-	<ArrowLeftOutline class="h-3 w-3 sm:h-4 sm:w-4" />
+	<ArrowLeftOutline class="mr-1 h-4 w-4" />
 	Назад к номинациям
-</a>
+</Button>
 
 <SectionHeader title={nomination.title}>
 	{#snippet children()}
@@ -58,9 +62,9 @@
 </SectionHeader>
 
 <!-- Floating Control Center -->
-<div class="sticky top-4 z-40 mx-auto mb-4 max-w-2xl">
+<div class="sticky top-4 z-30 mx-auto mb-4 max-w-2xl">
 	<div
-		class="rounded-xl border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+		class="rounded-2xl border border-gray-200/50 bg-white/80 p-3 shadow-lg backdrop-blur-lg transition-all duration-300 hover:shadow-xl dark:border-gray-700/50 dark:bg-gray-800/80"
 	>
 		<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 			<div class="flex-1">
@@ -73,12 +77,14 @@
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
 	{#each filtered as participant (participant.id)}
 		<ParticipantCard {participant} {nominationId} {hasVoted} onVoted={handleVoted} />
+	{:else}
+		<div class="col-span-full">
+			<Card class="py-8 text-center sm:py-12">
+				<UsersGroupOutline
+					class="mx-auto h-10 w-10 text-gray-300 sm:h-12 sm:w-12 dark:text-gray-600"
+				/>
+				<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Участники не найдены</p>
+			</Card>
+		</div>
 	{/each}
 </div>
-
-{#if filtered.length === 0}
-	<Card class="py-8 text-center sm:py-12">
-		<UsersGroupOutline class="mx-auto h-10 w-10 text-gray-300 sm:h-12 sm:w-12 dark:text-gray-600" />
-		<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Участники не найдены</p>
-	</Card>
-{/if}
