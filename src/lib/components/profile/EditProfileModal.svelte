@@ -1,15 +1,16 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { Modal, Input, Label, Helper, Button, Spinner } from 'flowbite-svelte';
-	import { UserCircleSolid } from 'flowbite-svelte-icons';
+	import { UserCircleSolid, UserSolid, EditOutline } from 'flowbite-svelte-icons';
 	import { client } from '$lib/api';
 	import { getToastService } from '$lib/stores/toasts.svelte';
-	import type { UserFullDTO } from '$lib/types/user';
+	import type { CurrentUserDTO } from '$lib/types/user';
 	import type { components } from '$lib/api/v1';
 
 	type UpdateCurrentUserCommand = components['schemas']['UpdateCurrentUserCommand'];
 
 	interface Props {
-		user: UserFullDTO;
+		user: CurrentUserDTO;
 		open: boolean;
 		onUpdate?: () => void;
 	}
@@ -21,12 +22,22 @@
 	let previousUsername = $derived(user.username);
 	let previousFirstName = $derived(user.first_name);
 
-	let username = $state('');
-	let firstName = $state('');
+	let username = $state(user.username ?? '');
+	let firstName = $state(user.first_name ?? '');
 	let isLoading = $state(false);
 
 	// Validation state
 	let usernameError = $state('');
+
+	$effect(() => {
+		if (open) {
+			untrack(() => {
+				username = user.username ?? '';
+				firstName = user.first_name ?? '';
+				usernameError = '';
+			});
+		}
+	});
 
 	// Validation patterns
 	const USERNAME_PATTERN = /^[a-zA-Z0-9_]+$/;
@@ -114,11 +125,16 @@
 			<Input
 				id="username"
 				type="text"
-				placeholder={previousUsername ?? 'username'}
+				placeholder="Имя пользователя"
 				bind:value={username}
 				oninput={handleUsernameInput}
 				color={usernameError ? 'red' : undefined}
-			/>
+				class="ps-9"
+			>
+				{#snippet left()}
+					<UserSolid class="h-5 w-5" />
+				{/snippet}
+			</Input>
 			{#if usernameError}
 				<Helper class="mt-1" color="red">{usernameError}</Helper>
 			{:else}
@@ -128,12 +144,11 @@
 
 		<div>
 			<Label for="firstName" class="mb-2 block">Имя (отображаемое)</Label>
-			<Input
-				id="firstName"
-				type="text"
-				placeholder={previousFirstName ?? 'Имя'}
-				bind:value={firstName}
-			/>
+			<Input id="firstName" type="text" placeholder="Имя" bind:value={firstName} class="ps-9">
+				{#snippet left()}
+					<EditOutline class="h-5 w-5" />
+				{/snippet}
+			</Input>
 		</div>
 
 		<Button type="submit" color="primary" class="w-full" disabled={!isValid() || isLoading}>

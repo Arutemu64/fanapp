@@ -1,0 +1,28 @@
+
+> fanapp@0.0.1 check C:\Users\artem\fanapp
+> svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+
+Loading svelte-check in workspace: c:\Users\artem\fanapp
+Getting Svelte diagnostics...
+
+c:\Users\artem\fanapp\[32msrc\routes\(auth)\verify-email\+page.svelte[39m:9:6
+[31mError[39m: 'state' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer. (ts)
+[36m
+	let [35mstate[36m = $state<'loading' | 'success' | 'error'>('loading');
+	let errorMessage = $state('');[39m
+
+c:\Users\artem\fanapp\[32msrc\routes\(auth)\verify-email\+page.svelte[39m:9:14
+[31mError[39m: Block-scoped variable '$state' used before its declaration. (ts)
+[36m
+	let state = [35m$state[36m<'loading' | 'success' | 'error'>('loading');
+	let errorMessage = $state('');[39m
+
+c:\Users\artem\fanapp\[32msrc\routes\(auth)\verify-email\+page.svelte[39m:9:14
+[31mError[39m: Untyped function calls may not accept type arguments. (ts)
+[36m
+	let state = [35m$state<'loading' | 'success' | 'error'>('loading')[36m;
+	let errorMessage = $state('');[39m
+
+====================================
+[31msvelte-check found 3 errors and 0 warnings in 1 file
+[39m ELIFECYCLE  Command failed with exit code 1.

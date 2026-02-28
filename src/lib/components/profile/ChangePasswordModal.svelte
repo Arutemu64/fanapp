@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Modal, Input, Label, Button, Spinner } from 'flowbite-svelte';
-	import { LockSolid } from 'flowbite-svelte-icons';
+	import { LockSolid, EyeOutline, EyeSlashOutline } from 'flowbite-svelte-icons';
 	import { client } from '$lib/api';
 	import { getToastService } from '$lib/stores/toasts.svelte';
 	import type { components } from '$lib/api/v1';
@@ -9,14 +9,18 @@
 
 	interface Props {
 		open: boolean;
+		hasPassword?: boolean;
+		onSuccess?: () => void;
 	}
 
-	let { open = $bindable(false) }: Props = $props();
+	let { open = $bindable(false), hasPassword = true, onSuccess }: Props = $props();
 
 	let oldPassword = $state('');
 	const toastService = getToastService();
 	let newPassword = $state('');
 	let isLoading = $state(false);
+	let showOldPassword = $state(false);
+	let showNewPassword = $state(false);
 
 	function isValid(): boolean {
 		return newPassword.length >= 6;
@@ -37,7 +41,7 @@
 			new_password: newPassword
 		};
 
-		const { error } = await client.POST('/auth/change_password', {
+		const { error } = await client.POST('/auth/change-password', {
 			body
 		});
 
@@ -48,10 +52,14 @@
 			return;
 		}
 
-		toastService.add('Пароль успешно изменён', 'success');
+		toastService.add(
+			hasPassword ? 'Пароль успешно изменён' : 'Пароль успешно установлен',
+			'success'
+		);
 		oldPassword = '';
 		newPassword = '';
 		open = false; // close modal
+		if (onSuccess) onSuccess();
 	}
 </script>
 
@@ -59,18 +67,70 @@
 	{#snippet header()}
 		<div class="flex items-center gap-2">
 			<LockSolid class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-			<h3 class="text-lg font-bold text-gray-900 dark:text-white">Изменение пароля</h3>
+			<h3 class="text-lg font-bold text-gray-900 dark:text-white">
+				{hasPassword ? 'Изменение пароля' : 'Установка пароля'}
+			</h3>
 		</div>
 	{/snippet}
 
 	<form onsubmit={handleSubmit} class="space-y-4">
-		<div>
-			<Label for="old_password" class="mb-2 block">Старый пароль</Label>
-			<Input id="old_password" type="password" placeholder="••••••••" bind:value={oldPassword} />
-		</div>
+		{#if hasPassword}
+			<div>
+				<Label for="old_password" class="mb-2 block">Старый пароль</Label>
+				<Input
+					id="old_password"
+					type={showOldPassword ? 'text' : 'password'}
+					placeholder="••••••••"
+					bind:value={oldPassword}
+					class="ps-9"
+				>
+					{#snippet left()}
+						<LockSolid class="h-5 w-5" />
+					{/snippet}
+					{#snippet right()}
+						<button
+							type="button"
+							class="pointer-events-auto"
+							onclick={() => (showOldPassword = !showOldPassword)}
+							aria-label="Показать старый пароль"
+						>
+							{#if showOldPassword}
+								<EyeOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+							{:else}
+								<EyeSlashOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+							{/if}
+						</button>
+					{/snippet}
+				</Input>
+			</div>
+		{/if}
 		<div>
 			<Label for="new_password" class="mb-2 block">Новый пароль</Label>
-			<Input id="new_password" type="password" placeholder="••••••••" bind:value={newPassword} />
+			<Input
+				id="new_password"
+				type={showNewPassword ? 'text' : 'password'}
+				placeholder="••••••••"
+				bind:value={newPassword}
+				class="ps-9"
+			>
+				{#snippet left()}
+					<LockSolid class="h-5 w-5" />
+				{/snippet}
+				{#snippet right()}
+					<button
+						type="button"
+						class="pointer-events-auto"
+						onclick={() => (showNewPassword = !showNewPassword)}
+						aria-label="Показать новый пароль"
+					>
+						{#if showNewPassword}
+							<EyeOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+						{:else}
+							<EyeSlashOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+						{/if}
+					</button>
+				{/snippet}
+			</Input>
 		</div>
 
 		<Button
@@ -85,7 +145,7 @@
 					Сохранение...
 				</span>
 			{:else}
-				Сменить пароль
+				{hasPassword ? 'Сменить пароль' : 'Установить пароль'}
 			{/if}
 		</Button>
 	</form>

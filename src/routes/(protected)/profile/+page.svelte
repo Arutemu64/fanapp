@@ -3,6 +3,7 @@
 	import TicketLinkCard from '$lib/components/profile/TicketLinkCard.svelte';
 	import PushNotificationsCard from '$lib/components/profile/PushNotificationsCard.svelte';
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
+	import SecurityCard from '$lib/components/profile/SecurityCard.svelte';
 	import type { PageProps } from './$types';
 	import { invalidateAll } from '$app/navigation';
 
@@ -30,7 +31,10 @@
 	</div>
 
 	<div class="flex flex-col gap-4">
+		<!-- Security Card -->
+		<SecurityCard {user} onPasswordChange={refreshProfile} />
+
 		<!-- Push Notifications Card -->
-		<PushNotificationsCard />
+		<PushNotificationsCard {user} />
 	</div>
 </div>

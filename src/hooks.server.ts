@@ -6,7 +6,7 @@ import { redirect } from '@sveltejs/kit';
 import * as setCookieParser from 'set-cookie-parser';
 
 export const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
-	// https://svelte.dev/docs/kit/hooks#Server-hooks-handleFetch
+	// // https://svelte.dev/docs/kit/hooks#Server-hooks-handleFetch
 	if (request.url.startsWith(PUBLIC_API_URL)) {
 		// Replace public API with private URL for server-side requests
 		request = new Request(request.url.replace(PUBLIC_API_URL, PRIVATE_API_URL), request);

@@ -4,7 +4,6 @@
 	import type { UserFullDTO } from '$lib/types/user';
 	import { getRoleLabel, getRoleColor } from '$lib/utils/users';
 	import EditProfileModal from './EditProfileModal.svelte';
-	import ChangePasswordModal from './ChangePasswordModal.svelte';
 
 	interface Props {
 		user: UserFullDTO;
@@ -14,7 +13,6 @@
 	let { user, onUpdate }: Props = $props();
 
 	let editProfileModalOpen = $state(false);
-	let changePasswordModalOpen = $state(false);
 </script>
 
 <Card class="w-full max-w-none p-4">
@@ -55,26 +53,17 @@
 			</div>
 		</div>
 
-		<div class="mt-2 flex gap-3">
+		<div class="mt-2 text-center">
 			<Button
 				color="alternative"
 				size="sm"
-				class="flex-1"
+				class="w-full sm:w-auto"
 				onclick={() => (editProfileModalOpen = true)}
 			>
 				Редактировать
-			</Button>
-			<Button
-				color="alternative"
-				size="sm"
-				class="flex-1"
-				onclick={() => (changePasswordModalOpen = true)}
-			>
-				Сменить пароль
 			</Button>
 		</div>
 	</div>
 </Card>
 
 <EditProfileModal {user} bind:open={editProfileModalOpen} {onUpdate} />
-<ChangePasswordModal bind:open={changePasswordModalOpen} />

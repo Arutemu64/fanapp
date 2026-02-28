@@ -39,76 +39,24 @@ sw.addEventListener('activate', (event: any) => {
 	event.waitUntil(deleteOldCaches());
 });
 
-sw.addEventListener('fetch', (event: any) => {
-	// ignore POST requests etc
-	if (event.request.method !== 'GET') return;
-
-	// Ignore Server-Sent Events to prevent Service Worker interception errors
-	if (event.request.headers.get('accept')?.includes('text/event-stream')) return;
-
-	async function respond() {
-		const url = new URL(event.request.url);
-		const cache = await caches.open(CACHE);
-
-		// `build`/`files` can always be served from the cache
-		if (ASSETS.includes(url.pathname)) {
-			const response = await cache.match(url.pathname);
-
-			if (response) {
-				return response;
-			}
-		}
-
-		// for everything else, try the network first, but
-		// fall back to the cache if we're offline
-		try {
-			const response = await fetch(event.request);
-
-			// if we're offline, fetch can return a value that is not a Response
-			// instead of throwing - and we can't pass this non-Response to respondWith
-			if (!(response instanceof Response)) {
-				throw new Error('invalid response from fetch');
-			}
-
-			if (response.status === 200) {
-				cache.put(event.request, response.clone());
-			}
-
-			return response;
-		} catch (err) {
-			const response = await cache.match(event.request);
-
-			if (response) {
-				return response;
-			}
-
-			// if there's no cache, then just error out
-			// as there is nothing we can do to respond to this request
-			throw err;
-		}
-	}
-
-	event.respondWith(respond());
-});
-
 // Push Notifications Handling
 sw.addEventListener('push', (event: any) => {
-	let data = { title: 'Notification', body: 'Новое уведомление', url: '/' };
-	try {
-		if (event.data) {
-			data = event.data.json();
-		}
-	} catch (e) {
-		// Fallback if data is not JSON
-		console.error('Error parsing push data', e);
-		if (event.data) {
+	let data = { title: 'FAN FAN', body: 'Новое уведомление', url: '/' };
+
+	if (event.data) {
+		try {
+			// Try parsing as JSON first (expected format: { title, body, url })
+			const json = event.data.json();
+			data = { ...data, ...json };
+		} catch {
+			// Not JSON — treat as plain text body
 			data.body = event.data.text();
 		}
 	}
 
 	const options = {
 		body: data.body,
-		icon: '/favicon.png', // Assuming there's a favicon.png in static
+		icon: '/favicon.png',
 		badge: '/favicon.png',
 		data: {
 			url: data.url || '/'

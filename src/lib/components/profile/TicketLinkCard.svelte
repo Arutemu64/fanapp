@@ -111,7 +111,12 @@
 				placeholder="Введите номер билета"
 				disabled={isSubmitting}
 				size="md"
-			/>
+				class="ps-9"
+			>
+				{#snippet left()}
+					<TicketSolid class="h-5 w-5" />
+				{/snippet}
+			</Input>
 			<Button onclick={handleLinkTicket} class="min-h-11 w-full" disabled={isSubmitting} size="md">
 				{#if isSubmitting}
 					<Spinner class="me-2 h-4 w-4" />

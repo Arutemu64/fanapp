@@ -5,10 +5,15 @@
 	import { getToastService } from '$lib/stores/toasts.svelte';
 	import { PUBLIC_VAPID_KEY } from '$env/static/public';
 	import { onMount } from 'svelte';
+	import type { CurrentUserDTO } from '$lib/types/user';
+
+	let { user }: { user: CurrentUserDTO } = $props();
 
 	let isSubscribed = $state(false);
 	const toastService = getToastService();
 	let isLoading = $state(true);
+	let receiveAll = $state(user.settings.receive_all_announcements);
+	let isSavingSettings = $state(false);
 
 	// Convert base64 VAPID key to Uint8Array required by pushManager
 	function urlBase64ToUint8Array(base64String: string) {
@@ -75,12 +80,8 @@
 				return;
 			}
 
-			const registration = await navigator.serviceWorker.register('/service-worker.js', {
-				type: import.meta.env.DEV ? 'module' : 'classic'
-			});
-
-			// Wait until service worker is active
-			await navigator.serviceWorker.ready;
+			// Use the existing SvelteKit-registered service worker
+			const registration = await navigator.serviceWorker.ready;
 
 			const subscription = await registration.pushManager.subscribe({
 				userVisibleOnly: true,
@@ -115,6 +116,25 @@
 			isLoading = false;
 		}
 	}
+
+	async function toggleReceiveAll() {
+		isSavingSettings = true;
+		const { error } = await client.PATCH('/users/me/settings', {
+			body: {
+				receive_all_announcements: receiveAll
+			}
+		});
+
+		if (error) {
+			console.error('API Error:', error);
+			toastService.add('Не удалось обновить настройки', 'error');
+			// Revert the local state since backend failed
+			receiveAll = !receiveAll;
+		} else {
+			toastService.add('Настройки сохранены', 'success');
+		}
+		isSavingSettings = false;
+	}
 </script>
 
 <Card class="w-full max-w-none rounded-lg bg-white shadow dark:bg-gray-800">
@@ -129,11 +149,30 @@
 		</p>
 
 		<div class="flex items-center justify-between">
-			<span class="text-sm font-medium text-gray-900 dark:text-gray-300"> Push-уведомления </span>
+			<span class="text-sm font-medium text-gray-900 dark:text-gray-300"
+				>Уведомления в браузере</span
+			>
 			<Toggle
 				checked={isSubscribed}
 				disabled={isLoading}
 				onchange={toggleSubscription}
+				color="green"
+			/>
+		</div>
+
+		<div
+			class="mt-4 flex items-center justify-between border-t border-gray-200 pt-4 dark:border-gray-700"
+		>
+			<div>
+				<span class="text-sm font-medium text-gray-900 dark:text-gray-300"> Все анонсы </span>
+				<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+					Получать уведомления о начале каждого выступления
+				</p>
+			</div>
+			<Toggle
+				bind:checked={receiveAll}
+				disabled={isSavingSettings}
+				onchange={toggleReceiveAll}
 				color="green"
 			/>
 		</div>

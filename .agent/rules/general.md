@@ -17,6 +17,7 @@ Your primary focus is utility, clarity, and mobile responsiveness.
 - **Backend:** FastAPI
 - **Output Language:** Russian (for all generated UI labels and user-facing text)
 
-## Development Constraints
+## General Rules
 
 - **Code Quality:** Write clean, easy-to-understand code following best practices and modern standards.
+- **Planning:** Always make a detailed plan before proceeding.
