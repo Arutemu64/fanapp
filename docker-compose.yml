@@ -1,0 +1,181 @@
+services:
+  bot:
+    build: .
+    depends_on:
+      - migration
+      - nats
+      - redis
+    volumes:
+      - bot-data:/media/bot-data
+    env_file:
+      - .env
+    ports:
+      - '127.0.0.1:${BOT__WEBHOOK__PORT}:${BOT__WEBHOOK__PORT}'
+    command: [ "python", "-m", "fanfan.main.bot" ]
+    restart: unless-stopped
+
+  db:
+    image: postgres:17-alpine
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${DB__USER}
+      - POSTGRES_PASSWORD=${DB__PASSWORD}
+      - POSTGRES_DB=${DB__NAME}
+    env_file:
+      - .env
+    ports:
+      - '127.0.0.1:${DB__EXPOSED_PORT}:5432'
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 2s
+      timeout: 60s
+      retries: 10
+      start_period: 5s
+
+  faststream:
+    build: .
+    depends_on:
+      - migration
+      - nats
+      - redis
+    volumes:
+      - bot-data:/media/bot-data
+    env_file:
+      - .env
+    command:
+      [
+        "faststream",
+        "run",
+        "--factory",
+        "fanfan.main.faststream:create_app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000"
+      ]
+    restart: unless-stopped
+
+  migration:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - bot-data:/media/bot-data
+      - ./alembic.ini:/app/alembic.ini
+    env_file:
+      - .env
+    command: [ "sh", "-c", "alembic upgrade head && python -m fanfan.main.migration" ]
+    restart: on-failure
+
+  nats:
+    image: docker.io/nats:alpine
+    volumes:
+      - nats-data:/data
+    env_file:
+      - .env
+    ports:
+      - '127.0.0.1:${NATS__EXPOSED_PORT}:4222'
+    command: "--js --sd=/data --user ${NATS__USER} --pass ${NATS__PASSWORD}"
+    restart: always
+
+  pgbackup:
+    image: prodrigestivill/postgres-backup-local
+    depends_on:
+      - db
+    volumes:
+      - pgbackup-data:/backups
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=${DB__NAME}
+      - POSTGRES_USER=${DB__USER}
+      - POSTGRES_PASSWORD=${DB__PASSWORD}
+      - POSTGRES_EXTRA_OPTS=-Z1 --schema=public --blobs
+      - SCHEDULE=@every 6h00m00s
+      - BACKUP_ON_START=TRUE
+      - BACKUP_KEEP_DAYS=7
+      - BACKUP_KEEP_WEEKS=4
+      - BACKUP_KEEP_MONTHS=6
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+      - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    env_file:
+      - .env
+    ports:
+      - '127.0.0.1:${REDIS__EXPOSED_PORT}:6379'
+    command: "redis-server /usr/local/etc/redis/redis.conf --requirepass
+      ${REDIS__PASSWORD}"
+    restart: always
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 20s
+      retries: 5
+
+  scheduler:
+    build: .
+    depends_on:
+      - redis
+    volumes:
+      - bot-data:/media/bot-data
+    env_file:
+      - .env
+    command:
+      [
+        "taskiq",
+        "scheduler",
+        "fanfan.main.scheduler:scheduler",
+        "fanfan.presentation.scheduler.tasks"
+      ]
+    restart: unless-stopped
+    profiles: [ "scheduler" ]
+
+  taskiq:
+    build: .
+    depends_on:
+      - migration
+      - nats
+      - redis
+    volumes:
+      - bot-data:/media/bot-data
+    env_file:
+      - .env
+    command:
+      [
+        "taskiq",
+        "worker",
+        "--workers",
+        "1",
+        "fanfan.main.scheduler:broker",
+        "fanfan.presentation.scheduler.tasks"
+      ]
+    restart: unless-stopped
+    profiles: [ "scheduler" ]
+
+  web:
+    build: .
+    depends_on:
+      - migration
+    volumes:
+      - bot-data:/media/bot-data
+    env_file:
+      - .env
+    ports:
+      - '127.0.0.1:${WEB__PORT}:${WEB__PORT}'
+    command: [ "python", "-m", "fanfan.main.web" ]
+    restart: unless-stopped
+    profiles: [ "web" ]
+    stop_signal: SIGINT
+
+volumes:
+  bot-data: {}
+  db-data: {}
+  pgbackup-data: {}
+  redis-data: {}
+  nats-data: {}

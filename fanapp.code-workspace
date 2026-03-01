@@ -1,0 +1,24 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "frontend"
+		},
+		{
+			"path": "backend"
+		}
+	],
+	"settings": {
+		"python.languageServer": "None",
+		"files.exclude": {
+			"**/.git": true,
+			"**/.DS_Store": true,
+			"**/node_modules": true,
+			"**/.venv": true,
+			"**/__pycache__": true,
+			"**/.svelte-kit": true
+		}
+	}
+}
