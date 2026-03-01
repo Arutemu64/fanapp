@@ -13,7 +13,7 @@
 
 <ToastContainer
 	position={undefined}
-	class="absolute top-4 right-4 z-50 flex w-full max-w-xs flex-col gap-2"
+	class="fixed top-20 right-4 z-50 flex w-full max-w-xs flex-col gap-2"
 >
 	{#each toastService.items as toast (toast.id)}
 		<div transition:fly={{ x: 200, duration: 300 }}>

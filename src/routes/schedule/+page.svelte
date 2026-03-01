@@ -5,7 +5,7 @@
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import { getEventsClient } from '$lib/events.svelte';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
-	import type { UserFullDTO } from '$lib/types/user';
+	import type { CurrentUserDTO } from '$lib/types/user';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
 	import { PlaySolid } from 'flowbite-svelte-icons';
 
@@ -30,7 +30,7 @@
 	);
 
 	let currentEvent = $derived(schedule.find((ev) => ev.is_current) ?? null);
-	let user: UserFullDTO | null = $derived(page.data.user);
+	let user: CurrentUserDTO | null = $derived(page.data.user);
 
 	// Scroll to current event
 	function scrollToCurrentEvent() {

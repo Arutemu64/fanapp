@@ -33,7 +33,7 @@
 	);
 </script>
 
-<Badge color={statusColor} class="text-xs">
-	<StatusIcon class="me-1.5 h-3 w-3" />
+<Badge color={statusColor} class="text-sm">
+	<StatusIcon class="me-1.5 h-4 w-4" />
 	{statusText}
 </Badge>

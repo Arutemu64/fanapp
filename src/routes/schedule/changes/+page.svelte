@@ -81,11 +81,11 @@
 				<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 					<div class="flex-1">
 						<div class="mb-2 flex flex-wrap items-center gap-2">
-							<Badge color={changeTypeColors[change.type]}>
+							<Badge color={changeTypeColors[change.type]} class="text-sm">
 								{changeTypeLabels[change.type]}
 							</Badge>
 							{#if change.send_global_announcement}
-								<Badge color="red">Объявление</Badge>
+								<Badge color="red" class="text-sm">Объявление</Badge>
 							{/if}
 						</div>
 

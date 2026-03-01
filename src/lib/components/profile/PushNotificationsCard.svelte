@@ -1,19 +1,29 @@
 <script lang="ts">
-	import { Card, Button, Toggle } from 'flowbite-svelte';
-	import { BellOutline } from 'flowbite-svelte-icons';
+	import { Card, Button, Toggle, Modal } from 'flowbite-svelte';
+	import { BellOutline, ShareNodesOutline } from 'flowbite-svelte-icons';
 	import { client } from '$lib/api';
+	import { getPwaService } from '$lib/stores/pwa.svelte';
 	import { getToastService } from '$lib/stores/toasts.svelte';
 	import { PUBLIC_VAPID_KEY } from '$env/static/public';
 	import { onMount } from 'svelte';
 	import type { CurrentUserDTO } from '$lib/types/user';
+	import type { components } from '$lib/api/v1';
 
-	let { user }: { user: CurrentUserDTO } = $props();
+	let {
+		user,
+		pushSubscriptions = []
+	}: {
+		user: CurrentUserDTO;
+		pushSubscriptions?: components['schemas']['PushSubscriptionDTO'][];
+	} = $props();
 
 	let isSubscribed = $state(false);
 	const toastService = getToastService();
 	let isLoading = $state(true);
 	let receiveAll = $state(user.settings.receive_all_announcements);
 	let isSavingSettings = $state(false);
+	const pwa = getPwaService();
+	let showIosPwaModal = $state(false);
 
 	// Convert base64 VAPID key to Uint8Array required by pushManager
 	function urlBase64ToUint8Array(base64String: string) {
@@ -37,7 +47,22 @@
 			}
 			const registration = await navigator.serviceWorker.ready;
 			const subscription = await registration.pushManager.getSubscription();
-			isSubscribed = !!subscription;
+
+			if (!subscription) {
+				isSubscribed = false;
+				return;
+			}
+
+			// Check if the current subscription exists on the server
+			const serverSub = pushSubscriptions.find((s) => s.endpoint === subscription.endpoint);
+
+			if (serverSub) {
+				isSubscribed = true;
+			} else {
+				// We have a local subscription but it's not on the server
+				// We consider this "not subscribed" for the UI toggle
+				isSubscribed = false;
+			}
 		} catch (error) {
 			console.error('Error checking push subscription:', error);
 		} finally {
@@ -51,14 +76,23 @@
 
 	async function toggleSubscription() {
 		if (isSubscribed) {
-			// we don't have an API to unsubscribe, but we could unsubscribe locally
-			// In fact, it might be better to just let users disable notifications via browser settings
-			// But let's unsubscribe locally for now
 			try {
 				isLoading = true;
 				const registration = await navigator.serviceWorker.ready;
 				const subscription = await registration.pushManager.getSubscription();
 				if (subscription) {
+					// Send delete request to backend
+					const { error } = await client.DELETE('/push', {
+						body: {
+							endpoint: subscription.endpoint
+						}
+					});
+
+					if (error) {
+						console.error('Failed to remove subscription from server:', error);
+						// We proceed with local unsubscription anyway to keep UI in sync
+					}
+
 					await subscription.unsubscribe();
 					isSubscribed = false;
 					toastService.add('Уведомления отключены для этого устройства', 'success');
@@ -72,11 +106,28 @@
 			return;
 		}
 
+		// Subscription logic
+		if (pwa.isIOS && !pwa.isInstalled) {
+			showIosPwaModal = true;
+			return;
+		}
+
 		isLoading = true;
 		try {
-			if (Notification.permission === 'denied') {
+			if (typeof Notification === 'undefined') {
+				toastService.add('Ваш браузер не поддерживает уведомления', 'error');
+				return;
+			}
+
+			// Permission request is required if not granted
+			if (Notification.permission === 'default') {
+				const permission = await Notification.requestPermission();
+				if (permission !== 'granted') {
+					toastService.add('Доступ к уведомлениям отклонен', 'error');
+					return;
+				}
+			} else if (Notification.permission === 'denied') {
 				toastService.add('Уведомления заблокированы в настройках браузера', 'error');
-				isLoading = false;
 				return;
 			}
 
@@ -91,7 +142,7 @@
 			// Send to backend
 			const subJson = subscription.toJSON();
 
-			const { error } = await client.POST('/notifications/subscribe', {
+			const { error } = await client.POST('/push', {
 				body: {
 					endpoint: subJson.endpoint!,
 					p256dh: subJson.keys?.p256dh!,
@@ -155,7 +206,10 @@
 			<Toggle
 				checked={isSubscribed}
 				disabled={isLoading}
-				onchange={toggleSubscription}
+				onclick={(e) => {
+					e.preventDefault();
+					toggleSubscription();
+				}}
 				color="green"
 			/>
 		</div>
@@ -178,3 +232,36 @@
 		</div>
 	</div>
 </Card>
+
+<Modal title="Установите приложение" bind:open={showIosPwaModal} autoclose size="sm">
+	<div class="space-y-4">
+		<p class="text-base leading-relaxed text-gray-500 dark:text-gray-400">
+			Для работы Push-уведомлений на iOS необходимо добавить приложение на экран «Домой».
+		</p>
+		<div
+			class="flex items-center gap-3 rounded-lg bg-gray-50 p-4 text-sm text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+		>
+			<div class="flex flex-col gap-2">
+				<div class="flex items-center gap-2">
+					<span
+						class="flex h-6 w-6 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-600 dark:bg-primary-900 dark:text-primary-300"
+						>1</span
+					>
+					<span>Нажмите кнопку <strong>«Поделиться»</strong> в браузере</span>
+					<ShareNodesOutline class="h-5 w-5 text-gray-500" />
+				</div>
+				<div class="flex items-center gap-2 text-primary-600"></div>
+				<div class="flex items-center gap-2">
+					<span
+						class="flex h-6 w-6 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-600 dark:bg-primary-900 dark:text-primary-300"
+						>2</span
+					>
+					<span>Выберите <strong>«На экран „Домой“»</strong></span>
+				</div>
+			</div>
+		</div>
+	</div>
+	{#snippet footer()}
+		<Button color="alternative" class="w-full">Понятно</Button>
+	{/snippet}
+</Modal>

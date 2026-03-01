@@ -609,21 +609,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/notifications/subscribe": {
+    "/push": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List push subscriptions
+         * @description Returns a list of push subscriptions for the authenticated user.
+         */
+        get: operations["list_subscriptions_push_get"];
         put?: never;
         /**
          * Subscribe to push notifications
          * @description Registers a push subscription endpoint for the authenticated user's device.
          */
-        post: operations["subscribe_notifications_subscribe_post"];
-        delete?: never;
+        post: operations["subscribe_push_post"];
+        /**
+         * Unsubscribe from push notifications
+         * @description Removes a push subscription endpoint for the authenticated user.
+         */
+        delete: operations["unsubscribe_push_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -713,6 +721,11 @@ export interface components {
             permissions: components["schemas"]["UserPermissionDTO"][];
             settings: components["schemas"]["UserSettingsDTO"];
         };
+        /** DeletePushSubscriptionCommand */
+        DeletePushSubscriptionCommand: {
+            /** Endpoint */
+            endpoint: string;
+        };
         /** ErrorMessage */
         ErrorMessage: {
             /** Detail */
@@ -774,11 +787,11 @@ export interface components {
             /** Hash */
             hash: string;
             /** Last Name */
-            last_name: string | null;
+            last_name?: string | null;
             /** Username */
-            username: string | null;
+            username?: string | null;
             /** Photo Url */
-            photo_url: string | null;
+            photo_url?: string | null;
         };
         /** MoveScheduleEventRequest */
         MoveScheduleEventRequest: {
@@ -869,6 +882,15 @@ export interface components {
         ParticipantVoteDTO: {
             /** Id */
             id: number;
+        };
+        /** PushSubscriptionDTO */
+        PushSubscriptionDTO: {
+            /** Endpoint */
+            endpoint: string;
+            /** P256Dh */
+            p256dh: string;
+            /** Auth */
+            auth: string;
         };
         /** RegisterUserCommand */
         RegisterUserCommand: {
@@ -1593,7 +1615,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["Token"];
                 };
             };
             /** @description Not authenticated. */
@@ -2953,7 +2975,54 @@ export interface operations {
             };
         };
     };
-    subscribe_notifications_subscribe_post: {
+    list_subscriptions_push_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of push subscriptions. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PushSubscriptionDTO"][];
+                };
+            };
+            /** @description User not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    subscribe_push_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -2975,7 +3044,56 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description Not authenticated. */
+            /** @description User not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    unsubscribe_push_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeletePushSubscriptionCommand"];
+            };
+        };
+        responses: {
+            /** @description Push subscription removed successfully. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description User not authenticated. */
             401: {
                 headers: {
                     [name: string]: unknown;

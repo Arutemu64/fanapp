@@ -4,6 +4,7 @@
 	import PushNotificationsCard from '$lib/components/profile/PushNotificationsCard.svelte';
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import SecurityCard from '$lib/components/profile/SecurityCard.svelte';
+	import PwaInstallCard from '$lib/components/profile/PwaInstallCard.svelte';
 	import type { PageProps } from './$types';
 	import { invalidateAll } from '$app/navigation';
 
@@ -34,7 +35,10 @@
 		<!-- Security Card -->
 		<SecurityCard {user} onPasswordChange={refreshProfile} />
 
+		<!-- PWA Install Card -->
+		<PwaInstallCard />
+
 		<!-- Push Notifications Card -->
-		<PushNotificationsCard {user} />
+		<PushNotificationsCard {user} pushSubscriptions={data.pushSubscriptions} />
 	</div>
 </div>

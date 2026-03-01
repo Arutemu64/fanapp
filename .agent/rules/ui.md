@@ -86,7 +86,7 @@ trigger: always_on
 
 | Context             | Size Class    |
 | ------------------- | ------------- |
-| Inside badges       | `h-2.5 w-2.5` |
+| Inside badges       | `h-4 w-4`     |
 | Dropdown menu items | `h-4 w-4`     |
 | Sidebar / navbar    | `h-5 w-5`     |
 | Bottom nav          | `h-6 w-6`     |

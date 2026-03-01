@@ -7,6 +7,7 @@
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
 	import { setEventsClient } from '$lib/events.svelte';
 	import { setToastService } from '$lib/stores/toasts.svelte';
+	import { setPwaService } from '$lib/stores/pwa.svelte';
 	import { canManageSchedule } from '$lib/utils/permissions';
 	import {
 		Avatar,
@@ -47,6 +48,7 @@
 
 	const eventsClient = setEventsClient();
 	const toastService = setToastService();
+	const pwaService = setPwaService();
 
 	onDestroy(() => {
 		eventsClient?.disconnect();

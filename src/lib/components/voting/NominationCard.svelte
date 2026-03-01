@@ -16,16 +16,16 @@
 			{nomination.title}
 		</h3>
 		{#if nomination.user_vote}
-			<Badge color="green" class="shrink-0">
+			<Badge color="green" class="shrink-0 text-sm">
 				<span class="flex items-center gap-1">
-					<CheckCircleSolid class="h-2.5 w-2.5" />
+					<CheckCircleSolid class="h-4 w-4" />
 					<span class="hidden sm:inline">Проголосовано</span>
 				</span>
 			</Badge>
 		{:else}
-			<Badge color="gray" class="shrink-0">
+			<Badge color="gray" class="shrink-0 text-sm">
 				<span class="flex items-center gap-1">
-					<ClockOutline class="h-2.5 w-2.5" />
+					<ClockOutline class="h-4 w-4" />
 					<span class="hidden sm:inline">Ожидает</span>
 				</span>
 			</Badge>

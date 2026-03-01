@@ -7,10 +7,15 @@
 // Ensures that the `$service-worker` import has proper type definitions
 /// <reference types="@sveltejs/kit" />
 
+// Only necessary if you have an import from `$env/static/public`
+/// <reference types="../.svelte-kit/ambient.d.ts" />
+
 import { build, files, version } from '$service-worker';
 
-const sw = globalThis.self as unknown as ServiceWorkerGlobalScope;
+// This gives `self` the correct types
+const self = globalThis.self as unknown as ServiceWorkerGlobalScope;
 
+// Create a unique cache name for this deployment
 const CACHE = `cache-${version}`;
 
 const ASSETS = [
@@ -18,7 +23,7 @@ const ASSETS = [
 	...files // everything in `static`
 ];
 
-sw.addEventListener('install', (event: any) => {
+self.addEventListener('install', (event) => {
 	// Create a new cache and add all files to it
 	async function addFilesToCache() {
 		const cache = await caches.open(CACHE);
@@ -28,7 +33,7 @@ sw.addEventListener('install', (event: any) => {
 	event.waitUntil(addFilesToCache());
 });
 
-sw.addEventListener('activate', (event: any) => {
+self.addEventListener('activate', (event) => {
 	// Remove previous cached data from disk
 	async function deleteOldCaches() {
 		for (const key of await caches.keys()) {
@@ -39,8 +44,60 @@ sw.addEventListener('activate', (event: any) => {
 	event.waitUntil(deleteOldCaches());
 });
 
+self.addEventListener('fetch', (event) => {
+	// ignore POST requests etc
+	if (event.request.method !== 'GET') return;
+
+	// Skip EventSource requests
+	if (event.request.headers.get('Accept') === 'text/event-stream') return;
+
+	async function respond() {
+		const url = new URL(event.request.url);
+		const cache = await caches.open(CACHE);
+
+		// `build`/`files` can always be served from the cache
+		if (ASSETS.includes(url.pathname)) {
+			const response = await cache.match(url.pathname);
+
+			if (response) {
+				return response;
+			}
+		}
+
+		// for everything else, try the network first, but
+		// fall back to the cache if we're offline
+		try {
+			const response = await fetch(event.request);
+
+			// if we're offline, fetch can return a value that is not a Response
+			// instead of throwing - and we can't pass this non-Response to respondWith
+			if (!(response instanceof Response)) {
+				throw new Error('invalid response from fetch');
+			}
+
+			if (response.status === 200) {
+				cache.put(event.request, response.clone());
+			}
+
+			return response;
+		} catch (err) {
+			const response = await cache.match(event.request);
+
+			if (response) {
+				return response;
+			}
+
+			// if there's no cache, then just error out
+			// as there is nothing we can do to respond to this request
+			throw err;
+		}
+	}
+
+	event.respondWith(respond());
+});
+
 // Push Notifications Handling
-sw.addEventListener('push', (event: any) => {
+self.addEventListener('push', (event: any) => {
 	let data = { title: 'FAN FAN', body: 'Новое уведомление', url: '/' };
 
 	if (event.data) {
@@ -63,17 +120,17 @@ sw.addEventListener('push', (event: any) => {
 		}
 	};
 
-	event.waitUntil(sw.registration.showNotification(data.title, options));
+	event.waitUntil(self.registration.showNotification(data.title, options));
 });
 
-sw.addEventListener('notificationclick', (event: any) => {
+self.addEventListener('notificationclick', (event: any) => {
 	event.notification.close();
 
 	// Redirect to the URL provided in the push notification data
-	const urlToOpen = new URL(event.notification.data.url, sw.location.origin).href;
+	const urlToOpen = new URL(event.notification.data.url, self.location.origin).href;
 
 	event.waitUntil(
-		sw.clients
+		self.clients
 			.matchAll({ type: 'window', includeUncontrolled: true })
 			.then((windowClients: any) => {
 				// Check if there is already a window/tab open with the target URL
@@ -84,8 +141,8 @@ sw.addEventListener('notificationclick', (event: any) => {
 					}
 				}
 				// If not, open a new window/tab
-				if (sw.clients.openWindow) {
-					return sw.clients.openWindow(urlToOpen);
+				if (self.clients.openWindow) {
+					return self.clients.openWindow(urlToOpen);
 				}
 			})
 	);

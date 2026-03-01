@@ -12,7 +12,7 @@
 		EyeSlashOutline,
 		BanOutline
 	} from 'flowbite-svelte-icons';
-	import type { UserFullDTO } from '$lib/types/user';
+	import type { CurrentUserDTO } from '$lib/types/user';
 	import { formatDuration, formatUntil, pluralize } from '$lib/utils';
 	import { canManageSchedule } from '$lib/utils/permissions';
 	import { getToastService } from '$lib/stores/toasts.svelte';
@@ -26,7 +26,7 @@
 		event: ScheduleEventFullDTO;
 		schedule: ScheduleEventFullDTO[];
 		currentEvent: ScheduleEventFullDTO | null;
-		user: UserFullDTO | null;
+		user: CurrentUserDTO | null;
 	}
 
 	let { event, schedule, currentEvent, user }: Props = $props();
@@ -138,34 +138,34 @@
 			</h3>
 			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
 				{#if event.is_current}
-					<Badge color="green" border class="inline-flex items-center gap-1">
-						<PlayOutline class="me-1 h-2.5 w-2.5" />
+					<Badge color="green" border class="inline-flex items-center gap-1 text-sm">
+						<PlayOutline class="me-1 h-4 w-4" />
 						Сейчас
 					</Badge>
 				{/if}
 
 				{#if event.is_skipped}
-					<Badge color="red" border class="inline-flex items-center gap-1">
-						<BanOutline class="me-1 h-2.5 w-2.5" />
+					<Badge color="red" border class="inline-flex items-center gap-1 text-sm">
+						<BanOutline class="me-1 h-4 w-4" />
 						Пропущено
 					</Badge>
 				{/if}
 
-				<Badge color="gray" border class="inline-flex items-center gap-1">
-					<ClockOutline class="me-1 h-2.5 w-2.5" />
+				<Badge color="gray" border class="inline-flex items-center gap-1 text-sm">
+					<ClockOutline class="me-1 h-4 w-4" />
 					{formatDuration(event.duration)}
 				</Badge>
 
 				{#if timeUntil !== null && timeUntil !== 0}
-					<Badge color="yellow" border class="inline-flex items-center gap-1">
-						<HourglassOutline class="me-1 h-2.5 w-2.5" />
+					<Badge color="yellow" border class="inline-flex items-center gap-1 text-sm">
+						<HourglassOutline class="me-1 h-4 w-4" />
 						{formatUntil(queueUntil ?? 0, timeUntil)}
 					</Badge>
 				{/if}
 
 				{#if event.user_subscription}
-					<Badge color="blue" border class="inline-flex items-center gap-1">
-						<BellActiveSolid class="me-1 h-2.5 w-2.5" />
+					<Badge color="blue" border class="inline-flex items-center gap-1 text-sm">
+						<BellActiveSolid class="me-1 h-4 w-4" />
 						{event.user_subscription.counter}
 						{pluralize(event.user_subscription.counter, 'событие', 'события', 'событий')}
 					</Badge>
