@@ -1,18 +1,12 @@
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
 from uuid import uuid7
 
 from sqlalchemy import ForeignKey, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fanfan.adapters.db.models.base import BaseORM
-from fanfan.core.models.ticket import Ticket
+from fanfan.adapters.db.models.user import UserORM
 from fanfan.core.vo.ticket import TicketId
 from fanfan.core.vo.user import UserId, UserRole
-
-if TYPE_CHECKING:
-    from fanfan.adapters.db.models.user import UserORM
 
 
 class TicketORM(BaseORM):
@@ -42,24 +36,3 @@ class TicketORM(BaseORM):
 
     def __str__(self) -> TicketId:
         return TicketId(self.id)
-
-    @classmethod
-    def from_model(cls, model: Ticket):
-        return TicketORM(
-            id=model.id,
-            barcode=model.barcode,
-            role=model.role,
-            used_by_user_id=model.used_by_user_id,
-            issued_by_user_id=model.issued_by_user_id,
-            ticketscloud_ticket_id=model.ticketscloud_ticket_id,
-        )
-
-    def to_model(self) -> Ticket:
-        return Ticket(
-            id=self.id,
-            barcode=self.barcode,
-            role=self.role,
-            used_by_user_id=self.used_by_user_id,
-            issued_by_user_id=self.issued_by_user_id,
-            ticketscloud_ticket_id=self.ticketscloud_ticket_id,
-        )

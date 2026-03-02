@@ -125,9 +125,7 @@ class SetCurrentScheduleEvent:
                         user_id=current_user.id,
                         send_global_announcement=True,
                     )
-                    schedule_change = await self.changes_gateway.add_schedule_change(
-                        schedule_change
-                    )
+                    await self.changes_gateway.add_schedule_change(schedule_change)
 
                     # Commit and proceed
                     await self.uow.commit()

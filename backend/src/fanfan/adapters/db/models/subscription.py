@@ -1,19 +1,13 @@
-from __future__ import annotations
-
-import typing
 from uuid import uuid7
 
 from sqlalchemy import ForeignKey, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from fanfan.adapters.db.models import ScheduleEventORM, UserORM
 from fanfan.adapters.db.models.base import BaseORM
-from fanfan.core.models.subscription import Subscription
 from fanfan.core.vo.schedule_event import ScheduleEventId
 from fanfan.core.vo.subscription import SubscriptionId
 from fanfan.core.vo.user import UserId
-
-if typing.TYPE_CHECKING:
-    from fanfan.adapters.db.models import ScheduleEventORM, UserORM
 
 
 class SubscriptionORM(BaseORM):
@@ -31,20 +25,3 @@ class SubscriptionORM(BaseORM):
 
     user: Mapped[UserORM] = relationship()
     event: Mapped[ScheduleEventORM] = relationship()
-
-    @classmethod
-    def from_model(cls, model: Subscription):
-        return SubscriptionORM(
-            id=model.id,
-            user_id=model.user_id,
-            event_id=model.event_id,
-            counter=model.counter,
-        )
-
-    def to_model(self) -> Subscription:
-        return Subscription(
-            id=self.id,
-            user_id=self.user_id,
-            event_id=self.event_id,
-            counter=self.counter,
-        )

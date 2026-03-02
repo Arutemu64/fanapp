@@ -1,5 +1,4 @@
 import logging
-from uuid import uuid7
 
 from pydantic import BaseModel
 
@@ -30,7 +29,7 @@ from fanfan.core.models.schedule_change import (
 )
 from fanfan.core.services.notifications import NotificationService
 from fanfan.core.services.perm import PermService
-from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
+from fanfan.core.vo.schedule_change import ScheduleChangeType
 from fanfan.core.vo.schedule_event import ScheduleEventId
 
 logger = logging.getLogger(__name__)
@@ -135,7 +134,6 @@ class MoveScheduleEvent:
                         by_user_id=current_user.id,
                     )
                     schedule_change = ScheduleChange(
-                        id=ScheduleChangeId(uuid7()),
                         type=ScheduleChangeType.MOVED,
                         changed_event_id=event.id,
                         argument_event_id=previous_event.id if previous_event else None,
@@ -145,9 +143,7 @@ class MoveScheduleEvent:
                             next_event_before_change != next_event_after_change
                         ),
                     )
-                    schedule_change = await self.changes_gateway.add_schedule_change(
-                        schedule_change
-                    )
+                    await self.changes_gateway.add_schedule_change(schedule_change)
 
                     # Commit and proceed
                     await self.uow.commit()

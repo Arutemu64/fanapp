@@ -1,14 +1,13 @@
-from __future__ import annotations
-
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
+from uuid import uuid7
 
 from fanfan.core.vo.schedule_event import ScheduleEventId, ScheduleEventPublicNumber
 
 
 @dataclass(slots=True, kw_only=True)
 class ScheduleEvent:  # noqa: PLW1641
-    id: ScheduleEventId
+    id: ScheduleEventId = field(default_factory=uuid7)
     public_number: ScheduleEventPublicNumber
     title: str
     duration: int

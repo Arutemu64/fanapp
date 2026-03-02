@@ -7,7 +7,6 @@ from sqlalchemy import ForeignKey, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fanfan.adapters.db.models.base import BaseORM
-from fanfan.core.models.vote import Vote
 from fanfan.core.vo.participant import ParticipantId
 from fanfan.core.vo.user import UserId
 from fanfan.core.vo.vote import VoteId
@@ -36,18 +35,3 @@ class VoteORM(BaseORM):
         secondary="participants",
         viewonly=True,
     )
-
-    @classmethod
-    def from_model(cls, model: Vote):
-        return VoteORM(
-            id=model.id,
-            user_id=model.user_id,
-            participant_id=model.participant_id,
-        )
-
-    def to_model(self) -> Vote:
-        return Vote(
-            id=self.id,
-            user_id=self.user_id,
-            participant_id=self.participant_id,
-        )

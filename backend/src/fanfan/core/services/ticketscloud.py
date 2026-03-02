@@ -43,7 +43,7 @@ class TCloudService:
                     issued_by_user_id=None,
                     ticketscloud_ticket_id=order_ticket.id,
                 )
-                ticket = await self.ticket_gateway.add_ticket(ticket)
+                await self.ticket_gateway.add_ticket(ticket)
                 logger.info(
                     "New ticket %s was added", ticket.id, extra={"ticket": ticket}
                 )

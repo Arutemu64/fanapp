@@ -36,7 +36,7 @@ class AddVote:
         user_gateway: UserGateway,
         vote_gateway: VoteGateway,
         uow: UnitOfWork,
-        service: VotingService,
+        vote_service: VotingService,
         id_provider: IdProvider,
         events_broker: EventBroker,
         ticket_gateway: TicketGateway,
@@ -45,7 +45,7 @@ class AddVote:
         self.user_gateway = user_gateway
         self.vote_gateway = vote_gateway
         self.uow = uow
-        self.service = service
+        self.vote_service = vote_service
         self.id_provider = id_provider
         self.events_broker = events_broker
         self.ticket_gateway = ticket_gateway
@@ -62,41 +62,40 @@ class AddVote:
         if current_user is None:
             raise UserNotFound
         ticket = await self.ticket_gateway.get_ticket_by_user_id(current_user.id)
-        await self.service.ensure_user_can_vote(user=current_user, ticket=ticket)
+        await self.vote_service.ensure_user_can_vote(user=current_user, ticket=ticket)
 
         async with self.uow:
-            # Checking participant
-            participant = await self.participant_gateway.get_participant_by_id(
-                data.participant_id
-            )
-            if not participant:
-                raise ParticipantNotFound
-
-            # Check if user voted before in this nomination
-            if await self.vote_gateway.get_user_vote_by_nomination(
-                current_user.id, participant.nomination_id
-            ):
-                raise AlreadyVotedInThisNomination
-
             try:
-                vote = Vote(user_id=current_user.id, participant_id=participant.id)
-                vote = await self.vote_gateway.add_vote(vote)
+                vote = Vote(user_id=current_user.id, participant_id=data.participant_id)
+                await self.vote_gateway.add_vote(vote)
                 await self.uow.commit()
             except IntegrityError as e:
                 await self.uow.rollback()
+                # Checking participant
+                participant = await self.participant_gateway.get_participant_by_id(
+                    data.participant_id
+                )
+                if not participant:
+                    raise ParticipantNotFound
+
+                # Check if user voted before in this nomination
+                if await self.vote_gateway.get_user_vote_by_nomination(
+                    current_user.id, participant.nomination_id
+                ):
+                    raise AlreadyVotedInThisNomination
                 raise AlreadyVotedInThisNomination from e
             else:
                 logger.info(
                     "User %s voted for participant %s",
                     current_user.id,
-                    participant.id,
+                    data.participant_id,
                     extra={"vote": vote},
                 )
                 await self.events_broker.publish(
                     CreatedVoteEvent(
                         vote_id=vote.id,
-                        user_id=current_user.id,
-                        participant_id=participant.id,
+                        user_id=vote.user_id,
+                        participant_id=vote.participant_id,
                     )
                 )
                 return await self.vote_gateway.read_base_vote(vote.id)

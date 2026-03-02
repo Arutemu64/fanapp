@@ -2,8 +2,9 @@ from sqlalchemy import and_, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, undefer
 
+from fanfan.adapters.db.mappers.subscription import SubscriptionMapper
 from fanfan.adapters.db.models import ScheduleEventORM, SubscriptionORM
-from fanfan.core.dto.subscription import SubscriptionEventDTO, SubscriptionFullDTO
+from fanfan.core.dto.subscription import SubscriptionFullDTO
 from fanfan.core.models.subscription import (
     Subscription,
 )
@@ -25,42 +26,21 @@ def _select_subscription_full_dto():
     )
 
 
-def _parse_subscription_full_dto(
-    subscription_orm: SubscriptionORM,
-) -> SubscriptionFullDTO:
-    return SubscriptionFullDTO(
-        id=subscription_orm.id,
-        user_id=subscription_orm.user_id,
-        counter=subscription_orm.counter,
-        event=SubscriptionEventDTO(
-            id=subscription_orm.event.id,
-            public_number=subscription_orm.event.public_id,
-            title=subscription_orm.event.title,
-            order=subscription_orm.event.order,
-            queue=subscription_orm.event.queue,
-            time_until=subscription_orm.event.time_until,
-        )
-        if subscription_orm.event
-        else None,
-    )
-
-
 class SubscriptionGateway:
     def __init__(self, session: AsyncSession):
         self.session = session
+        self.mapper = SubscriptionMapper()
 
-    async def add_subscription(self, subscription: Subscription) -> Subscription:
-        subscription_orm = SubscriptionORM.from_model(subscription)
+    async def add_subscription(self, subscription: Subscription) -> None:
+        subscription_orm = self.mapper.from_model(subscription)
         self.session.add(subscription_orm)
-        await self.session.flush([subscription_orm])
-        return subscription_orm.to_model()
 
     async def get_subscription_by_id(
         self, subscription_id: SubscriptionId
     ) -> Subscription | None:
         stmt = select(SubscriptionORM).where(SubscriptionORM.id == subscription_id)
         subscription_orm = await self.session.scalar(stmt)
-        return subscription_orm.to_model() if subscription_orm else None
+        return self.mapper.to_model(subscription_orm) if subscription_orm else None
 
     async def get_user_subscription_by_event(
         self, user_id: UserId, event_id: ScheduleEventId
@@ -72,7 +52,7 @@ class SubscriptionGateway:
             )
         )
         subscription_orm = await self.session.scalar(stmt)
-        return subscription_orm.to_model() if subscription_orm else None
+        return self.mapper.to_model(subscription_orm) if subscription_orm else None
 
     async def delete_subscription(self, subscription: Subscription) -> None:
         await self.session.execute(
@@ -89,7 +69,7 @@ class SubscriptionGateway:
         subscription_orm = await self.session.scalar(stmt)
 
         return (
-            _parse_subscription_full_dto(subscription_orm) if subscription_orm else None
+            self.mapper.parse_full_dto(subscription_orm) if subscription_orm else None
         )
 
     async def read_upcoming_subscriptions(
@@ -107,6 +87,5 @@ class SubscriptionGateway:
         results = await self.session.scalars(stmt)
 
         return [
-            _parse_subscription_full_dto(subscription_orm)
-            for subscription_orm in results
+            self.mapper.parse_full_dto(subscription_orm) for subscription_orm in results
         ]

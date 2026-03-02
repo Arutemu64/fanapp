@@ -12,9 +12,6 @@ from sqlalchemy.orm import (
 
 from fanfan.adapters.db.models.base import BaseORM
 from fanfan.adapters.db.models.mixins.order import OrderMixin
-from fanfan.core.models.schedule_event import (
-    ScheduleEvent,
-)
 from fanfan.core.vo.schedule_event import ScheduleEventId, ScheduleEventPublicNumber
 
 
@@ -82,30 +79,3 @@ class ScheduleEventORM(BaseORM, OrderMixin):
 
     def __str__(self) -> str:
         return self.title
-
-    @classmethod
-    def from_model(cls, model: ScheduleEvent):
-        return ScheduleEventORM(
-            id=model.id,
-            public_id=model.public_number,
-            title=model.title,
-            duration=model.duration,
-            is_current=model.is_current,
-            is_skipped=model.is_skipped,
-            order=model.order,
-            nomination_title=model.nomination_title,
-            block_title=model.block_title,
-        )
-
-    def to_model(self) -> ScheduleEvent:
-        return ScheduleEvent(
-            id=self.id,
-            public_number=self.public_id,
-            title=self.title,
-            duration=self.duration,
-            is_current=self.is_current,
-            is_skipped=self.is_skipped,
-            order=self.order,
-            nomination_title=self.nomination_title,
-            block_title=self.block_title,
-        )

@@ -14,7 +14,6 @@ from sqlalchemy.orm import (
 )
 
 from fanfan.adapters.db.models.base import BaseORM
-from fanfan.core.models.user import User, UserSettings
 from fanfan.core.vo.user import UserId, Username, UserRole
 
 if TYPE_CHECKING:
@@ -57,28 +56,3 @@ class UserORM(BaseORM):
 
     def __str__(self) -> str:
         return f"{self.username} ({self.id})"
-
-    @classmethod
-    def from_model(cls, model: User):
-        return UserORM(
-            id=model.id,
-            username=model.username,
-            hashed_password=model.hashed_password,
-            email=model.email,
-            first_name=model.first_name,
-            role=model.role,
-            settings=retort.dump(model.settings),
-            is_verified=model.is_verified,
-        )
-
-    def to_model(self) -> User:
-        return User(
-            id=UserId(self.id),
-            username=self.username,
-            hashed_password=self.hashed_password,
-            email=self.email,
-            first_name=self.first_name,
-            role=UserRole(self.role),
-            settings=retort.load(self.settings, UserSettings),
-            is_verified=self.is_verified,
-        )

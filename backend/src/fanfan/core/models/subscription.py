@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from uuid import uuid7
 
 from fanfan.core.vo.schedule_event import ScheduleEventId
 from fanfan.core.vo.subscription import SubscriptionId
@@ -9,7 +10,7 @@ from fanfan.core.vo.user import UserId
 
 @dataclass(slots=True, kw_only=True)
 class Subscription:
-    id: SubscriptionId
+    id: SubscriptionId = field(default_factory=uuid7)
     user_id: UserId
     event_id: ScheduleEventId
     counter: int

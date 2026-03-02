@@ -10,6 +10,13 @@ from fanfan.core.vo.notification import NotificationType
 from fanfan.core.vo.user import UserId
 
 
+class NotificationTypeORM(BaseORM):
+    __tablename__ = "notification_types"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(unique=True)
+
+
 class NotificationORM(BaseORM):
     __tablename__ = "notifications"
 

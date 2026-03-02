@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from uuid import uuid7
 
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
@@ -8,7 +9,7 @@ from fanfan.core.vo.user import UserId
 
 @dataclass(slots=True, kw_only=True)
 class ScheduleChange:
-    id: ScheduleChangeId
+    id: ScheduleChangeId = field(default_factory=uuid7)
     type: ScheduleChangeType
 
     # Arguments

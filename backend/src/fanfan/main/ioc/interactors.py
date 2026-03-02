@@ -62,8 +62,6 @@ from fanfan.application.tickets.link_ticket import LinkTicket
 from fanfan.application.ticketscloud.process_tcloud_order import ProcessTCloudOrder
 from fanfan.application.ticketscloud.sync_tcloud import SyncTCloud
 from fanfan.application.users.get_current_user import GetCurrentUser
-from fanfan.application.users.get_user_by_id import GetUserById
-from fanfan.application.users.get_user_by_username import GetUserByUsername
 from fanfan.application.users.update_user import UpdateCurrentUser
 from fanfan.application.users.update_user_settings import UpdateUserSettings
 from fanfan.application.voting.add_vote import AddVote
@@ -114,8 +112,6 @@ class InteractorsProvider(Provider):
 
     authenticate_user = provide(AuthenticateUser)
     register_user = provide(RegisterUser)
-    get_user_by_id = provide(GetUserById)
-    get_user_by_username = provide(GetUserByUsername)
     get_current_user = provide(GetCurrentUser)
     change_user_role = provide(UpdateCurrentUser)
     update_user_settings = provide(UpdateUserSettings)
