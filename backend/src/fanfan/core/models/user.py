@@ -14,7 +14,7 @@ class UserSettings:
 
 @dataclass(slots=True, kw_only=True)
 class User:  # noqa: PLW1641
-    id: UserId | None = None
+    id: UserId
 
     username: Username | None
     hashed_password: str | None
@@ -24,7 +24,6 @@ class User:  # noqa: PLW1641
     is_verified: bool
 
     first_name: str | None = None
-    last_name: str | None = None
 
     settings: UserSettings = field(default_factory=UserSettings)
 

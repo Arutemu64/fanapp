@@ -3,7 +3,7 @@ from pydantic import BaseModel, NameEmail
 
 from fanfan.adapters.db.gateways.users import UserGateway
 from fanfan.core.exceptions.users import UserHasNoEmail, UserNotFound
-from fanfan.core.services.auth import EMAIL_VERIFY_SALT, AuthService
+from fanfan.core.services.security import EMAIL_VERIFY_SALT, SecurityService
 from fanfan.core.vo.user import UserId
 from fanfan.presentation.web.config import WebConfig
 
@@ -16,14 +16,14 @@ class SendEmailVerification:
     def __init__(
         self,
         user_gateway: UserGateway,
-        auth: AuthService,
+        security: SecurityService,
         web_config: WebConfig,
         mail: FastMail,
     ):
         self.mail = mail
         self.web_config = web_config
         self.user_gateway = user_gateway
-        self.auth = auth
+        self.security = security
 
     async def __call__(self, data: SendEmailVerificationCommand):
         user = await self.user_gateway.get_user_by_id(data.user_id)
@@ -31,7 +31,9 @@ class SendEmailVerification:
             raise UserNotFound
         if user.email is None:
             raise UserHasNoEmail
-        token = self.auth.generate_signature(user_id=user.id, salt=EMAIL_VERIFY_SALT)
+        token = self.security.generate_signature(
+            user_id=user.id, salt=EMAIL_VERIFY_SALT
+        )
         message_body = (
             f"Для подтверждения учётной записи "
             f"перейдите по ссылке: {self.web_config.base_url}/verify-email?token={token}"

@@ -8,7 +8,7 @@ from fanfan.core.vo.user import UserId
 
 @dataclass(slots=True, kw_only=True)
 class ScheduleChange:
-    id: ScheduleChangeId | None = None
+    id: ScheduleChangeId
     type: ScheduleChangeType
 
     # Arguments

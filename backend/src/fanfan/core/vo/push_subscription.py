@@ -1,3 +1,4 @@
 from typing import NewType
+from uuid import UUID
 
-PushSubscriptionId = NewType("PushSubscriptionId", int)
+PushSubscriptionId = NewType("PushSubscriptionId", UUID)

@@ -8,9 +8,10 @@ from fanfan.adapters.nats.events_broker import EventBroker
 from fanfan.application.common.id_provider import IdProvider
 from fanfan.core.events.notifications import CancelMailingEvent
 from fanfan.core.exceptions.auth import UserNotAuthenticated
+from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.users import UserNotFound
-from fanfan.core.services.mailing import MailingService
 from fanfan.core.vo.mailing import MailingId
+from fanfan.core.vo.user import UserRole
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,6 @@ class CancelMailing:
         user_gateway: UserGateway,
         id_provider: IdProvider,
         events_broker: EventBroker,
-        service: MailingService,
         uow: UnitOfWork,
     ):
         self.mailing_gateway = mailing_gateway
@@ -46,7 +46,11 @@ class CancelMailing:
         current_user = await self.user_gateway.get_user_by_id(current_user_id)
         if current_user is None:
             raise UserNotFound
-        self.service.ensure_user_can_cancel_mailing(mailing=mailing, user=current_user)
+        if (mailing.by_user_id != current_user.id) and (
+            current_user.role is not UserRole.ORG
+        ):
+            reason = "Вы не можете удалить эту рассылку"
+            raise AccessDenied(reason)
         async with self.uow:
             mailing.set_as_cancelled()
             await self.mailing_gateway.save_mailing(mailing)

@@ -9,7 +9,7 @@ from fanfan.core.vo.user import UserId, UserRole
 
 @dataclass(slots=True, kw_only=True)
 class Ticket:
-    id: TicketId | None = None
+    id: TicketId
     barcode: str
     role: UserRole
     used_by_user_id: UserId | None

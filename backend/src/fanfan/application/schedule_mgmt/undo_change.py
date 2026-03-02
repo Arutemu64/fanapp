@@ -8,6 +8,7 @@ from fanfan.adapters.db.gateways.users import UserGateway
 from fanfan.adapters.db.uow import UnitOfWork
 from fanfan.adapters.nats.events_broker import EventBroker
 from fanfan.application.common.id_provider import IdProvider
+from fanfan.core.constants.permissions import Permissions
 from fanfan.core.events.schedule import UndoScheduleChangeEvent
 from fanfan.core.exceptions.auth import UserNotAuthenticated
 from fanfan.core.exceptions.schedule import (
@@ -15,7 +16,7 @@ from fanfan.core.exceptions.schedule import (
     ScheduleChangeNotFound,
 )
 from fanfan.core.exceptions.users import UserNotFound
-from fanfan.core.services.schedule import ScheduleService
+from fanfan.core.services.perm import PermService
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ class UndoScheduleChange:
         schedule_gateway: ScheduleEventGateway,
         events_broker: EventBroker,
         id_provider: IdProvider,
-        service: ScheduleService,
+        perm_service: PermService,
     ):
         self.uow = uow
         self.schedule_change_gateway = schedule_change_gateway
@@ -42,7 +43,7 @@ class UndoScheduleChange:
         self.user_gateway = user_gateway
         self.events_broker = events_broker
         self.id_provider = id_provider
-        self.service = service
+        self.perm_service = perm_service
 
     async def __call__(self, data: UndoScheduleChangeCommand) -> None:  # noqa: C901
         current_user_id = await self.id_provider.get_current_user_id()
@@ -51,7 +52,9 @@ class UndoScheduleChange:
         current_user = await self.user_gateway.get_user_by_id(current_user_id)
         if current_user is None:
             raise UserNotFound
-        await self.service.ensure_user_can_manage_schedule(current_user)
+        await self.perm_service.ensure(
+            user=current_user, perm_name=Permissions.CAN_MANAGE_SCHEDULE
+        )
         schedule_change = await self.schedule_change_gateway.get_schedule_change(
             data.schedule_change_id
         )

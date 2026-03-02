@@ -4,7 +4,7 @@ from fanfan.adapters.db.gateways.users import UserGateway
 from fanfan.core.dto.token import Token
 from fanfan.core.exceptions.auth import AuthenticationError
 from fanfan.core.exceptions.users import UserNotFound
-from fanfan.core.services.auth import AuthService
+from fanfan.core.services.security import SecurityService
 
 
 class AuthenticateUserCommand(BaseModel):
@@ -13,10 +13,10 @@ class AuthenticateUserCommand(BaseModel):
 
 
 class AuthenticateUser:
-    def __init__(self, user_gateway: UserGateway, auth: AuthService):
+    def __init__(self, user_gateway: UserGateway, security: SecurityService):
         self.user_gateway = user_gateway
-        self.auth = auth
-        self.dummy_hash = self.auth.hash_password("dummy_password")
+        self.security = security
+        self.dummy_hash = self.security.hash_password("dummy_password")
 
     async def __call__(self, data: AuthenticateUserCommand) -> Token:
         user = await self.user_gateway.get_user_by_username(
@@ -24,9 +24,9 @@ class AuthenticateUser:
         ) or await self.user_gateway.get_user_by_email(data.login)
         if user is None:
             # Prevent timing attack
-            self.auth.verify_password(data.password, self.dummy_hash)
+            self.security.verify_password(data.password, self.dummy_hash)
             raise UserNotFound
-        if not self.auth.verify_password(data.password, user.hashed_password):
+        if not self.security.verify_password(data.password, user.hashed_password):
             raise AuthenticationError
 
-        return self.auth.create_token(user_id=user.id)
+        return self.security.create_token(user_id=user.id)

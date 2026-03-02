@@ -2,7 +2,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.models import PushSubscriptionORM
-from fanfan.core.models.push_notification import PushSubscription
+from fanfan.core.models.push_subscription import PushSubscription
 from fanfan.core.vo.user import UserId
 
 

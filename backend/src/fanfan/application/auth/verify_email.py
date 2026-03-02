@@ -5,7 +5,7 @@ from fanfan.adapters.db.gateways.users import UserGateway
 from fanfan.adapters.db.uow import UnitOfWork
 from fanfan.core.exceptions.auth import InvalidToken, TokenExpired
 from fanfan.core.exceptions.users import UserNotFound
-from fanfan.core.services.auth import EMAIL_VERIFY_SALT, AuthService
+from fanfan.core.services.security import EMAIL_VERIFY_SALT, SecurityService
 
 
 class VerifyEmailCommand(BaseModel):
@@ -13,15 +13,17 @@ class VerifyEmailCommand(BaseModel):
 
 
 class VerifyEmail:
-    def __init__(self, user_gateway: UserGateway, auth: AuthService, uow: UnitOfWork):
+    def __init__(
+        self, user_gateway: UserGateway, security: SecurityService, uow: UnitOfWork
+    ):
         self.user_gateway = user_gateway
-        self.auth = auth
+        self.security = security
         self.uow = uow
 
     async def __call__(self, data: VerifyEmailCommand) -> None:
         async with self.uow:
             try:
-                user_id = self.auth.verify_signature(
+                user_id = self.security.verify_signature(
                     data.token, salt=EMAIL_VERIFY_SALT, max_age=3600
                 )
             except SignatureExpired as e:

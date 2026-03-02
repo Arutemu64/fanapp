@@ -6,6 +6,6 @@ from fanfan.core.vo.user_flag import UserFlagId
 
 @dataclass(kw_only=True, slots=True)
 class UserFlag:
-    id: UserFlagId | None = None
+    id: UserFlagId
     name: str
     user_id: UserId

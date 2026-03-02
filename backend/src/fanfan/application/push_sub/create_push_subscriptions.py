@@ -8,7 +8,7 @@ from fanfan.adapters.db.uow import UnitOfWork
 from fanfan.application.common.id_provider import IdProvider
 from fanfan.core.exceptions.auth import UserNotAuthenticated
 from fanfan.core.exceptions.users import UserNotFound
-from fanfan.core.models.push_notification import PushSubscription
+from fanfan.core.models.push_subscription import PushSubscription
 
 
 class CreatePushSubscriptionCommand(BaseModel):

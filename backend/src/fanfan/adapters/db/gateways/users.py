@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from fanfan.adapters.db.models import (
-    SocialIdentityORM,
+    SocialAccountORM,
     UserORM,
 )
 from fanfan.adapters.db.models.permission import PermissionORM, UserPermissionORM
@@ -17,7 +17,7 @@ from fanfan.core.dto.user import (
     UserSettingsDTO,
     UserTicketDTO,
 )
-from fanfan.core.models.social_account import SocialIdentity
+from fanfan.core.models.social_account import SocialAccount
 from fanfan.core.models.user import (
     User,
 )
@@ -63,10 +63,8 @@ class UserGateway:
         await self.session.flush([user_orm])
         return user_orm.to_model()
 
-    async def add_user_social_id(
-        self, social_identity: SocialIdentity
-    ) -> SocialIdentity:
-        social_id_orm = SocialIdentityORM.from_model(social_identity)
+    async def add_user_social_id(self, social_identity: SocialAccount) -> SocialAccount:
+        social_id_orm = SocialAccountORM.from_model(social_identity)
         self.session.add(social_id_orm)
         await self.session.flush([social_id_orm])
         return social_id_orm.to_model()
@@ -99,10 +97,10 @@ class UserGateway:
     ) -> User | None:
         stmt = (
             select(UserORM)
-            .join(UserORM.social_identities)
+            .join(UserORM.social_accounts)
             .where(
-                SocialIdentityORM.provider == provider_name,
-                SocialIdentityORM.provider_id == provider_account_id,
+                SocialAccountORM.provider == provider_name,
+                SocialAccountORM.provider_id == provider_account_id,
             )
         )
         user_orm = await self.session.scalar(stmt)
@@ -110,11 +108,11 @@ class UserGateway:
 
     async def get_user_social_id_by_provider(
         self, user_id: UserId, provider: str
-    ) -> SocialIdentity | None:
-        stmt = select(SocialIdentityORM).where(
+    ) -> SocialAccount | None:
+        stmt = select(SocialAccountORM).where(
             and_(
-                SocialIdentityORM.user_id == user_id,
-                SocialIdentityORM.provider == provider,
+                SocialAccountORM.user_id == user_id,
+                SocialAccountORM.provider == provider,
             )
         )
         social_id_orm = await self.session.scalar(stmt)

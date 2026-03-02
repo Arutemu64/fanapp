@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from uuid import uuid7
 
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import ForeignKey, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fanfan.adapters.db.models.base import BaseORM
@@ -21,7 +22,9 @@ class VoteORM(BaseORM):
     __tablename__ = "votes"
     __table_args__ = (UniqueConstraint("user_id", "participant_id"),)
 
-    id: Mapped[VoteId] = mapped_column(primary_key=True)
+    id: Mapped[VoteId] = mapped_column(
+        Uuid(as_uuid=True), primary_key=True, default=uuid7
+    )
     user_id: Mapped[UserId] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     participant_id: Mapped[ParticipantId] = mapped_column(
         ForeignKey("participants.id", ondelete="CASCADE")

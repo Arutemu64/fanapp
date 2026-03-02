@@ -1,3 +1,4 @@
 from typing import NewType
+from uuid import UUID
 
-UserFlagId = NewType("UserFlagId", int)
+UserFlagId = NewType("UserFlagId", UUID)

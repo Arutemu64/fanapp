@@ -9,7 +9,7 @@ from fanfan.core.vo.user import UserId
 
 @dataclass(slots=True, kw_only=True)
 class Subscription:
-    id: SubscriptionId | None = None
+    id: SubscriptionId
     user_id: UserId
     event_id: ScheduleEventId
     counter: int

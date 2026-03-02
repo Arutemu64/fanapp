@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from sqlalchemy import Index, func, select
+from uuid import uuid7
+
+from sqlalchemy import Index, Uuid, func, select
 from sqlalchemy.orm import (
     Mapped,
     column_property,
@@ -19,7 +21,9 @@ from fanfan.core.vo.schedule_event import ScheduleEventId, ScheduleEventPublicNu
 class ScheduleEventORM(BaseORM, OrderMixin):
     __tablename__ = "schedule"
 
-    id: Mapped[ScheduleEventId] = mapped_column(primary_key=True)
+    id: Mapped[ScheduleEventId] = mapped_column(
+        Uuid(as_uuid=True), primary_key=True, default=uuid7
+    )
     public_id: Mapped[ScheduleEventPublicNumber] = mapped_column(unique=True)
     title: Mapped[str] = mapped_column(index=True)
     duration: Mapped[int] = mapped_column(server_default="0")

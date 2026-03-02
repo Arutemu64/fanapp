@@ -1,6 +1,6 @@
-from uuid import UUID
+from uuid import UUID, uuid7
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Uuid
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -18,7 +18,9 @@ from fanfan.core.vo.user import UserId
 class ScheduleChangeORM(BaseORM):
     __tablename__ = "schedule_changes"
 
-    id: Mapped[ScheduleChangeId] = mapped_column(primary_key=True)
+    id: Mapped[ScheduleChangeId] = mapped_column(
+        Uuid(as_uuid=True), primary_key=True, default=uuid7
+    )
     type: Mapped[ScheduleChangeType] = mapped_column(
         postgresql.ENUM(ScheduleChangeType)
     )

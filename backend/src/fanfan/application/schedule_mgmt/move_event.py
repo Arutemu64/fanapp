@@ -1,4 +1,5 @@
 import logging
+from uuid import uuid7
 
 from pydantic import BaseModel
 
@@ -13,6 +14,7 @@ from fanfan.application.common.id_provider import IdProvider
 from fanfan.application.schedule_mgmt.common import (
     ANNOUNCE_LIMIT_NAME,
 )
+from fanfan.core.constants.permissions import Permissions
 from fanfan.core.dto.schedule import ScheduleEventFullDTO
 from fanfan.core.events.schedule import CreatedScheduleChangeEvent
 from fanfan.core.exceptions.auth import UserNotAuthenticated
@@ -27,8 +29,8 @@ from fanfan.core.models.schedule_change import (
     ScheduleChange,
 )
 from fanfan.core.services.notifications import NotificationService
-from fanfan.core.services.schedule import ScheduleService
-from fanfan.core.vo.schedule_change import ScheduleChangeType
+from fanfan.core.services.perm import PermService
+from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
 from fanfan.core.vo.schedule_event import ScheduleEventId
 
 logger = logging.getLogger(__name__)
@@ -52,7 +54,7 @@ class MoveScheduleEvent:
         notifications_service: NotificationService,
         settings_gateway: SettingsGateway,
         changes_gateway: ScheduleChangeGateway,
-        service: ScheduleService,
+        perm_service: PermService,
         uow: UnitOfWork,
         id_provider: IdProvider,
         rate_lock_factory: RateLockFactory,
@@ -63,7 +65,7 @@ class MoveScheduleEvent:
         self.notifications_service = notifications_service
         self.settings_gateway = settings_gateway
         self.changes_gateway = changes_gateway
-        self.service = service
+        self.perm_service = perm_service
         self.uow = uow
         self.id_provider = id_provider
         self.rate_lock_factory = rate_lock_factory
@@ -77,7 +79,9 @@ class MoveScheduleEvent:
             current_user = await self.user_gateway.get_user_by_id(current_user_id)
             if current_user is None:
                 raise UserNotFound
-            await self.service.ensure_user_can_manage_schedule(current_user)
+            await self.perm_service.ensure(
+                user=current_user, perm_name=Permissions.CAN_MANAGE_SCHEDULE
+            )
 
             settings = await self.settings_gateway.get_settings()
             lock = self.rate_lock_factory(
@@ -131,6 +135,7 @@ class MoveScheduleEvent:
                         by_user_id=current_user.id,
                     )
                     schedule_change = ScheduleChange(
+                        id=ScheduleChangeId(uuid7()),
                         type=ScheduleChangeType.MOVED,
                         changed_event_id=event.id,
                         argument_event_id=previous_event.id if previous_event else None,

@@ -1,16 +1,20 @@
-from sqlalchemy import ForeignKey
+from uuid import uuid7
+
+from sqlalchemy import ForeignKey, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from fanfan.adapters.db.models.base import BaseORM
-from fanfan.core.models.push_notification import PushSubscription
+from fanfan.core.models.push_subscription import PushSubscription
 from fanfan.core.vo.push_subscription import PushSubscriptionId
 from fanfan.core.vo.user import UserId
 
 
 class PushSubscriptionORM(BaseORM):
-    __tablename__ = "push_subscription"
+    __tablename__ = "push_subs"
 
-    id: Mapped[PushSubscriptionId] = mapped_column(primary_key=True)
+    id: Mapped[PushSubscriptionId] = mapped_column(
+        Uuid(as_uuid=True), primary_key=True, default=uuid7
+    )
     user_id: Mapped[UserId] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     endpoint: Mapped[str] = mapped_column(unique=True)
     p256dh: Mapped[str] = mapped_column()

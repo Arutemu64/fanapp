@@ -3,12 +3,9 @@ from fanfan.adapters.db.gateways.user_flags import UserFlagGateway
 from fanfan.adapters.db.gateways.users import UserGateway
 from fanfan.adapters.db.gateways.votes import VoteGateway
 from fanfan.core.constants.flags import VOTING_CONTEST_FLAG_NAME
-from fanfan.core.constants.permissions import Permissions
-from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.tickets import UserAlreadyHasTicketLinked
 from fanfan.core.models.ticket import Ticket
 from fanfan.core.models.user import User
-from fanfan.core.services.permissions import UserPermissionService
 from fanfan.core.vo.user import UserRole
 
 
@@ -19,22 +16,11 @@ class TicketService:
         user_gateway: UserGateway,
         vote_gateway: VoteGateway,
         flag_gateway: UserFlagGateway,
-        user_perm_service: UserPermissionService,
     ):
         self.ticket_gateway = ticket_gateway
         self.user_gateway = user_gateway
         self.vote_gateway = vote_gateway
         self.flag_gateway = flag_gateway
-        self.user_perm_service = user_perm_service
-
-    async def ensure_user_can_create_tickets(self, user: User):
-        user_perm = await self.user_perm_service.get_user_permission(
-            perm_name=Permissions.CAN_CREATE_TICKETS,
-            user_id=user.id,
-        )
-        if not user_perm:
-            reason = "У вас нет прав для выпуска новых билетов"
-            raise AccessDenied(reason)
 
     async def link_ticket(self, ticket: Ticket, user: User):
         # Check if user got ticket linked already

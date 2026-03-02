@@ -6,7 +6,7 @@ from fanfan.core.vo.user import UserId
 
 @dataclass(slots=True, kw_only=True)
 class PushSubscription:
-    id: PushSubscriptionId | None = None
+    id: PushSubscriptionId
     user_id: UserId
     endpoint: str
     p256dh: str

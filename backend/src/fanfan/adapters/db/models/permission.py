@@ -1,6 +1,7 @@
 import typing
+from uuid import uuid7
 
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import ForeignKey, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fanfan.adapters.db.models.base import BaseORM
@@ -24,7 +25,9 @@ class UserPermissionORM(BaseORM):
         UniqueConstraint("user_id", "permission_id", "object_id", "object_type"),
     )
 
-    id: Mapped[UserPermissionId] = mapped_column(primary_key=True)
+    id: Mapped[UserPermissionId] = mapped_column(
+        Uuid(as_uuid=True), primary_key=True, default=uuid7
+    )
     user_id: Mapped[UserId] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     permission_id: Mapped[PermissionId] = mapped_column(
         ForeignKey("permissions.id", ondelete="CASCADE")

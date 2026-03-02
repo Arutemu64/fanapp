@@ -9,6 +9,6 @@ from fanfan.core.vo.vote import VoteId
 
 @dataclass(slots=True, kw_only=True)
 class Vote:
-    id: VoteId | None = None
+    id: VoteId
     user_id: UserId
     participant_id: ParticipantId

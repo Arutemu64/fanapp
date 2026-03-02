@@ -1,19 +1,16 @@
-from fastapi_mail import FastMail, MessageSchema, MessageType
+from fastapi_mail import FastMail
 from itsdangerous import URLSafeTimedSerializer
 from pwdlib import PasswordHash
-from pydantic import NameEmail
 
 from fanfan.adapters.auth.utils.jwt import JwtTokenProcessor
 from fanfan.core.dto.token import Token
-from fanfan.core.exceptions.users import UserHasNoEmail
-from fanfan.core.models.user import User
 from fanfan.core.vo.user import UserId
 from fanfan.presentation.web.config import WebConfig
 
 EMAIL_VERIFY_SALT = "email-verification-salt"
 
 
-class AuthService:
+class SecurityService:
     def __init__(
         self,
         config: WebConfig,
@@ -46,19 +43,3 @@ class AuthService:
     def verify_signature(self, token: str, salt: str, max_age: int) -> UserId:
         user_id = self.serializer.loads(token, salt=salt, max_age=max_age)
         return UserId(user_id)
-
-    async def send_verification_email(self, user: User):
-        if user.email is None:
-            raise UserHasNoEmail
-        token = self.generate_signature(user_id=user.id, salt=EMAIL_VERIFY_SALT)
-        message_body = (
-            f"Для подтверждения учётной записи "
-            f"перейдите по ссылке: {self.web_config.host}/verify-email?token={token}"
-        )
-        message = MessageSchema(
-            subject="Подтвердите учётную запись",
-            recipients=[NameEmail(name=user.username, email=user.email)],
-            body=message_body,
-            subtype=MessageType.plain,
-        )
-        await self.mail.send_message(message)

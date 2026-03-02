@@ -9,9 +9,9 @@ from pydantic import BaseModel
 from fanfan.adapters.db.gateways.users import UserGateway
 from fanfan.adapters.db.uow import UnitOfWork
 from fanfan.core.dto.token import Token
-from fanfan.core.models.social_account import SocialIdentity
+from fanfan.core.models.social_account import SocialAccount
 from fanfan.core.models.user import User
-from fanfan.core.services.auth import AuthService
+from fanfan.core.services.security import SecurityService
 from fanfan.core.vo.user import UserRole
 from fanfan.presentation.tgbot.config import BotConfig
 
@@ -32,11 +32,11 @@ class LoginTelegram:
         bot: Bot,
         bot_config: BotConfig,
         user_gateway: UserGateway,
-        auth: AuthService,
+        security: SecurityService,
         uow: UnitOfWork,
     ) -> None:
         self.uow = uow
-        self.auth = auth
+        self.security = security
         self.user_gateway = user_gateway
         self.bot = bot
         self.bot_config = bot_config
@@ -91,7 +91,7 @@ class LoginTelegram:
         )
 
         if user:
-            return self.auth.create_token(user_id=user.id)
+            return self.security.create_token(user_id=user.id)
 
         async with self.uow:
             check = await self.user_gateway.get_user_by_username(username=data.username)
@@ -103,11 +103,11 @@ class LoginTelegram:
                 is_verified=False,
             )
             user = await self.user_gateway.add_user(user)
-            social_id = SocialIdentity(
+            social_id = SocialAccount(
                 user_id=user.id,
                 provider="telegram",
                 provider_id=str(data.id),
             )
             await self.user_gateway.add_user_social_id(social_id)
             await self.uow.commit()
-            return self.auth.create_token(user_id=user.id)
+            return self.security.create_token(user_id=user.id)

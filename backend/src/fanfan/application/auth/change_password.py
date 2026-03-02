@@ -5,7 +5,7 @@ from fanfan.adapters.db.uow import UnitOfWork
 from fanfan.application.common.id_provider import IdProvider
 from fanfan.core.exceptions.auth import IncorrectPassword, UserNotAuthenticated
 from fanfan.core.exceptions.users import UserNotFound
-from fanfan.core.services.auth import AuthService
+from fanfan.core.services.security import SecurityService
 from fanfan.core.vo.fields import PASSWORD_FIELD
 
 
@@ -17,12 +17,12 @@ class ChangePasswordCommand(BaseModel):
 class ChangePassword:
     def __init__(
         self,
-        auth: AuthService,
+        security: SecurityService,
         user_gateway: UserGateway,
         id_provider: IdProvider,
         uow: UnitOfWork,
     ):
-        self.auth = auth
+        self.security = security
         self.user_gateway = user_gateway
         self.id_provider = id_provider
         self.uow = uow
@@ -38,12 +38,14 @@ class ChangePassword:
             if current_user.hashed_password:
                 # User has password set
                 if data.old_password:
-                    if not self.auth.verify_password(
+                    if not self.security.verify_password(
                         data.old_password, current_user.hashed_password
                     ):
                         raise IncorrectPassword
                 else:
                     raise IncorrectPassword
-            current_user.hashed_password = self.auth.hash_password(data.new_password)
+            current_user.hashed_password = self.security.hash_password(
+                data.new_password
+            )
             await self.user_gateway.save_user(current_user)
             await self.uow.commit()

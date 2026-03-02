@@ -1,7 +1,8 @@
 import enum
 from typing import NewType
+from uuid import UUID
 
-ScheduleChangeId = NewType("ScheduleChangeId", int)
+ScheduleChangeId = NewType("ScheduleChangeId", UUID)
 
 
 class ScheduleChangeType(enum.StrEnum):

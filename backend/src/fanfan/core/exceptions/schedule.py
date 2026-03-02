@@ -2,6 +2,7 @@ import time
 
 from fanfan.core.exceptions.base import AppException
 from fanfan.core.utils.pluralize import SECONDS_PLURALS, pluralize
+from fanfan.core.vo.schedule_event import ScheduleEventId
 
 
 class ScheduleException(AppException):
@@ -11,13 +12,9 @@ class ScheduleException(AppException):
 class EventNotFound(ScheduleException):
     default_message = "Выступление не найдено"
 
-    def __init__(self, event_id: int | None = None) -> None:
+    def __init__(self, event_id: ScheduleEventId | None = None) -> None:
         if isinstance(event_id, int):
-            self.message = f"Выступление под номером {event_id} не найдено"
-
-
-class NoNextEvent(EventNotFound):
-    default_message = "Выступления закончились, спасибо за работу!"
+            self.message = f"Выступление {event_id} не найдено"
 
 
 class ScheduleEditTooFast(ScheduleException):

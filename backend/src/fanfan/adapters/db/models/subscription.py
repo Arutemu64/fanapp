@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import typing
+from uuid import uuid7
 
-from sqlalchemy import ForeignKey, UniqueConstraint
+from sqlalchemy import ForeignKey, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fanfan.adapters.db.models.base import BaseORM
@@ -19,7 +20,9 @@ class SubscriptionORM(BaseORM):
     __tablename__ = "subscriptions"
     __table_args__ = (UniqueConstraint("event_id", "user_id"),)
 
-    id: Mapped[SubscriptionId] = mapped_column(primary_key=True)
+    id: Mapped[SubscriptionId] = mapped_column(
+        Uuid(as_uuid=True), primary_key=True, default=uuid7
+    )
     user_id: Mapped[UserId] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     event_id: Mapped[ScheduleEventId] = mapped_column(
         ForeignKey("schedule.id", ondelete="CASCADE")
