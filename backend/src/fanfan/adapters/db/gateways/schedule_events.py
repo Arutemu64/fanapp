@@ -96,7 +96,7 @@ class ScheduleEventGateway:
     async def save_event(self, event: ScheduleEvent) -> ScheduleEvent:
         event_orm = await self.session.merge(self.mapper.from_model(event))
         await self.session.flush([event_orm])
-        return event_orm.to_model()
+        return self.mapper.to_model(event_orm)
 
     async def delete_event(self, event: ScheduleEvent) -> None:
         await self.session.execute(

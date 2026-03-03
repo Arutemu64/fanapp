@@ -5,8 +5,6 @@ from sqlalchemy import UUID, DateTime, ForeignKey, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from fanfan.adapters.db.models import BaseORM
-from fanfan.core.models.notification import Notification
-from fanfan.core.vo.notification import NotificationType
 from fanfan.core.vo.user import UserId
 
 
@@ -31,26 +29,3 @@ class NotificationORM(BaseORM):
         ForeignKey("mailings.id", ondelete="CASCADE")
     )
     seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-
-    @classmethod
-    def from_model(cls, model: Notification) -> NotificationORM:
-        return NotificationORM(
-            id=model.id,
-            user_id=model.user_id,
-            title=model.title,
-            body=model.body,
-            type=model.type,
-            mailing_id=model.mailing_id,
-            seen_at=model.seen_at,
-        )
-
-    def to_model(self) -> Notification:
-        return Notification(
-            id=self.id,
-            user_id=self.user_id,
-            title=self.title,
-            body=self.body,
-            type=NotificationType(self.type),
-            mailing_id=self.mailing_id,
-            seen_at=self.seen_at,
-        )

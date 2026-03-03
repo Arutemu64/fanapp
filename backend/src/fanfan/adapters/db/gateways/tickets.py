@@ -42,7 +42,7 @@ class TicketGateway:
         return self.mapper.to_model(ticket_orm) if ticket_orm else None
 
     async def save_ticket(self, ticket: Ticket) -> Ticket:
-        ticket_orm = await self.session.merge(TicketORM.from_model(ticket))
+        ticket_orm = await self.session.merge(self.mapper.from_model(ticket))
         await self.session.flush([ticket_orm])
         return self.mapper.to_model(ticket_orm)
 
