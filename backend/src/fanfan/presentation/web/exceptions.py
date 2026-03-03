@@ -13,6 +13,12 @@ def clear_auth_cookies(response: JSONResponse) -> JSONResponse:
         samesite="lax",
         secure=False,
     )
+    response.delete_cookie(
+        key="refresh_token",
+        httponly=True,
+        samesite="lax",
+        secure=False,
+    )
     return response
 
 

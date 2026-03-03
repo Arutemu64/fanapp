@@ -48,7 +48,7 @@ class WebIdProvider(IdProvider):
         if token is None:
             return None
         try:
-            jwt_data = self.jwt.validate_token(token)
+            jwt_data = self.jwt.validate_token(token, expected_type="access_token")
         except AuthenticationError:
             return None
         else:
