@@ -6,6 +6,7 @@ from fanfan.core.services.perm import PermService
 from fanfan.core.services.security import SecurityService
 from fanfan.core.services.tickets import TicketService
 from fanfan.core.services.ticketscloud import TCloudService
+from fanfan.core.services.user import UserService
 from fanfan.core.services.voting import VotingService
 
 
@@ -17,6 +18,7 @@ class ServicesProvider(Provider):
     security = provide(SecurityService)
     notifications = provide(NotificationService)
     perm = provide(PermService)
+    user = provide(UserService)
 
     # External
     tcloud = provide(TCloudService)

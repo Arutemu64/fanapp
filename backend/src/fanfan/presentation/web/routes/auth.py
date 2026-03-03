@@ -156,8 +156,8 @@ async def refresh_access_token(
     "/register",
     status_code=201,
     summary="Register a new user",
-    description="Creates a new user account with an email, username, and password. "
-    "Validates uniqueness of the username and email.",
+    description="Creates a new user account with an email and password. "
+    "A username is generated automatically.",
     responses={
         201: {
             "model": UserBaseDTO,

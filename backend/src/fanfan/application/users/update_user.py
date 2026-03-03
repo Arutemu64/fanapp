@@ -11,6 +11,7 @@ from fanfan.application.common.id_provider import IdProvider
 from fanfan.core.exceptions.auth import UserNotAuthenticated
 from fanfan.core.exceptions.users import UsernameAlreadyTaken, UserNotFound
 from fanfan.core.models.user import User
+from fanfan.core.vo.fields import USERNAME_PATTERN
 from fanfan.core.vo.user import UserId, UserRole
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ class ChangeUserRoleRequest:
 
 class UpdateCurrentUserCommand(BaseModel):
     username: str | None = Field(
-        None, min_length=3, max_length=25, pattern=r"^[a-zA-Z0-9_]+$"
+        None, min_length=3, max_length=25, pattern=USERNAME_PATTERN
     )
     first_name: str | None = Field(None, max_length=50)
 
