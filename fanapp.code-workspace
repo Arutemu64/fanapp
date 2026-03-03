@@ -1,25 +1,111 @@
 {
-	"folders": [
-		{
-			"path": "."
-		},
-		{
-			"path": "frontend"
-		},
-		{
-			"path": "backend"
-		}
-	],
-	"settings": {
-		"python.languageServer": "None",
-		"files.exclude": {
-			"**/.git": true,
-			"**/.DS_Store": true,
-			"**/node_modules": true,
-			"**/.venv": true,
-			"**/__pycache__": true,
-			"**/.svelte-kit": true,
-			"**/.ruff_cache": true,
-		}
-	}
+  "folders": [
+    {
+      "name": "frontend",
+      "path": "frontend"
+    },
+    {
+      "name": "backend",
+      "path": "backend"
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/.git": true,
+      "**/.DS_Store": true,
+      "**/node_modules": true,
+      "**/.venv": true,
+      "**/__pycache__": true,
+      "**/.svelte-kit": true,
+      "**/.ruff_cache": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/.venv": true,
+      "**/.svelte-kit": true,
+      "**/.mypy_cache": true,
+      "**/.pytest_cache": true
+    },
+    "eslint.workingDirectories": [
+      {
+        "directory": "frontend",
+        "changeProcessCWD": true
+      }
+    ],
+    "typescript.tsdk": "frontend/node_modules/typescript/lib",
+    "python.defaultInterpreterPath": "${workspaceFolder:backend}/.venv/bin/python",
+    "python.analysis.extraPaths": [
+      "${workspaceFolder:backend}/src"
+    ],
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.autoImportCompletions": true,
+    "editor.formatOnSave": true,
+    "files.eol": "\n"
+  },
+  "extensions": {
+    "recommendations": [
+      "svelte.svelte-vscode",
+      "esbenp.prettier-vscode",
+      "dbaeumer.vscode-eslint",
+      "ms-python.python",
+      "ms-python.vscode-pylance",
+      "charliermarsh.ruff",
+      "tamasfe.even-better-toml"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "frontend: dev",
+        "type": "shell",
+        "command": "pnpm dev",
+        "options": {
+          "cwd": "${workspaceFolder:frontend}"
+        },
+        "group": "build",
+        "problemMatcher": []
+      },
+      {
+        "label": "frontend: check",
+        "type": "shell",
+        "command": "pnpm check",
+        "options": {
+          "cwd": "${workspaceFolder:frontend}"
+        },
+        "group": "test",
+        "problemMatcher": []
+      },
+      {
+        "label": "frontend: lint",
+        "type": "shell",
+        "command": "pnpm lint",
+        "options": {
+          "cwd": "${workspaceFolder:frontend}"
+        },
+        "group": "test",
+        "problemMatcher": []
+      },
+      {
+        "label": "backend: lint",
+        "type": "shell",
+        "command": "just lint",
+        "options": {
+          "cwd": "${workspaceFolder:backend}/.."
+        },
+        "group": "test",
+        "problemMatcher": []
+      },
+      {
+        "label": "backend: migrate",
+        "type": "shell",
+        "command": "just migrate",
+        "options": {
+          "cwd": "${workspaceFolder:backend}/.."
+        },
+        "group": "test",
+        "problemMatcher": []
+      }
+    ]
+  }
 }
