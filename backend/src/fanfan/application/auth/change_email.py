@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from fanfan.adapters.db.gateways.users import UserGateway
 from fanfan.adapters.db.uow import UnitOfWork
 from fanfan.adapters.nats.events_broker import EventBroker
+from fanfan.application.common.constraints import get_constraint_name
 from fanfan.application.common.id_provider import IdProvider
 from fanfan.core.events.users import EmailVerificationRequestedEvent
 from fanfan.core.exceptions.auth import UserNotAuthenticated
@@ -41,7 +42,9 @@ class ChangeEmail:
                 await self.user_gateway.save_user(current_user)
                 await self.uow.commit()
             except IntegrityError as e:
-                raise EmailAlreadyExists from e
+                if get_constraint_name(e) == "uq_users_email":
+                    raise EmailAlreadyExists from e
+                raise
             await self.event_broker.publish(
                 EmailVerificationRequestedEvent(user_id=current_user.id)
             )

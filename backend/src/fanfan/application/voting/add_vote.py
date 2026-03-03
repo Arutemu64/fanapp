@@ -9,6 +9,7 @@ from fanfan.adapters.db.gateways.users import UserGateway
 from fanfan.adapters.db.gateways.votes import VoteGateway
 from fanfan.adapters.db.uow import UnitOfWork
 from fanfan.adapters.nats.events_broker import EventBroker
+from fanfan.application.common.constraints import get_constraint_name
 from fanfan.application.common.id_provider import IdProvider
 from fanfan.core.dto.vote import VoteBaseDTO
 from fanfan.core.events.voting import CreatedVoteEvent
@@ -71,19 +72,12 @@ class AddVote:
                 await self.uow.commit()
             except IntegrityError as e:
                 await self.uow.rollback()
-                # Checking participant
-                participant = await self.participant_gateway.get_participant_by_id(
-                    data.participant_id
-                )
-                if not participant:
-                    raise ParticipantNotFound
-
-                # Check if user voted before in this nomination
-                if await self.vote_gateway.get_user_vote_by_nomination(
-                    current_user.id, participant.nomination_id
-                ):
-                    raise AlreadyVotedInThisNomination
-                raise AlreadyVotedInThisNomination from e
+                constraint_name = get_constraint_name(e)
+                if constraint_name == "fk_votes_participant_id_participants":
+                    raise ParticipantNotFound from e
+                if constraint_name == "uq_votes_user_id":
+                    raise AlreadyVotedInThisNomination from e
+                raise
             else:
                 logger.info(
                     "User %s voted for participant %s",
