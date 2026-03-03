@@ -1,6 +1,10 @@
 {
   "folders": [
     {
+      "name": "root",
+      "path": "."
+    },
+    {
       "name": "frontend",
       "path": "frontend"
     },
@@ -91,7 +95,7 @@
         "type": "shell",
         "command": "just lint",
         "options": {
-          "cwd": "${workspaceFolder:backend}/.."
+          "cwd": "${workspaceFolder:root}"
         },
         "group": "test",
         "problemMatcher": []
@@ -101,7 +105,7 @@
         "type": "shell",
         "command": "just migrate",
         "options": {
-          "cwd": "${workspaceFolder:backend}/.."
+          "cwd": "${workspaceFolder:root}"
         },
         "group": "test",
         "problemMatcher": []
