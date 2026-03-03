@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from sqlalchemy import func, select
+from uuid import uuid7
+
+from sqlalchemy import Uuid, func, select
 from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
 from fanfan.adapters.db.models.base import BaseORM
@@ -11,7 +13,10 @@ from fanfan.core.vo.nomination import NominationCode, NominationId
 class NominationORM(BaseORM):
     __tablename__ = "nominations"
 
-    id: Mapped[NominationId] = mapped_column(primary_key=True)
+    id: Mapped[NominationId] = mapped_column(
+        Uuid(as_uuid=True), primary_key=True, default=uuid7
+    )
+    cosplay2_id: Mapped[int] = mapped_column(unique=True, index=True)
     code: Mapped[NominationCode] = mapped_column(unique=True)
     title: Mapped[str] = mapped_column(unique=True)
     is_votable: Mapped[bool] = mapped_column(server_default="False")

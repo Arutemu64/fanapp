@@ -63,6 +63,18 @@ class ParticipantGateway:
         await self.session.flush([participant_orm])
         return self.mapper.to_model(participant_orm)
 
+    async def get_participant_by_cosplay2_id(
+        self, cosplay2_id: int
+    ) -> Participant | None:
+        stmt = (
+            select(ParticipantORM)
+            .where(ParticipantORM.cosplay2_id == cosplay2_id)
+            .options(joinedload(ParticipantORM.values))
+            .with_for_update(of=ParticipantORM)
+        )
+        participant_orm = await self.session.scalar(stmt)
+        return self.mapper.to_model(participant_orm) if participant_orm else None
+
     async def get_participant_by_id(
         self, participant_id: ParticipantId
     ) -> Participant | None:
@@ -144,6 +156,17 @@ class ParticipantGateway:
             )
             for participant_orm, vote_orm in result
         ]
+
+    async def list_participant_cosplay2_ids(self) -> list[int]:
+        stmt = select(ParticipantORM.cosplay2_id)
+        return list((await self.session.scalars(stmt)).all())
+
+    async def delete_participants_by_cosplay2_ids(self, cosplay2_ids: list[int]) -> None:
+        if not cosplay2_ids:
+            return
+        await self.session.execute(
+            delete(ParticipantORM).where(ParticipantORM.cosplay2_id.in_(cosplay2_ids))
+        )
 
     async def count_participants(
         self,
