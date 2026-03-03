@@ -5,9 +5,6 @@ from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
 from fanfan.adapters.db.models.base import BaseORM
 from fanfan.adapters.db.models.participant import ParticipantORM
-from fanfan.core.models.nomination import (
-    Nomination,
-)
 from fanfan.core.vo.nomination import NominationCode, NominationId
 
 
@@ -33,20 +30,3 @@ class NominationORM(BaseORM):
 
     def __str__(self) -> str:
         return self.title
-
-    @classmethod
-    def from_model(cls, model: Nomination):
-        return NominationORM(
-            id=model.id,
-            code=model.code,
-            title=model.title,
-            is_votable=model.is_votable,
-        )
-
-    def to_model(self) -> Nomination:
-        return Nomination(
-            id=NominationId(self.id),
-            code=self.code,
-            title=self.title,
-            is_votable=self.is_votable,
-        )

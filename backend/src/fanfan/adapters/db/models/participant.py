@@ -7,12 +7,7 @@ from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
 from fanfan.adapters.db.models.base import BaseORM
 from fanfan.adapters.db.models.vote import VoteORM
-from fanfan.core.models.participant import (
-    Participant,
-    ParticipantValue,
-)
-from fanfan.core.vo.nomination import NominationId
-from fanfan.core.vo.participant import ParticipantId, ParticipantVotingNumber, ValueType
+from fanfan.core.vo.participant import ParticipantId, ValueType
 
 if TYPE_CHECKING:
     from fanfan.adapters.db.models.nomination import NominationORM
@@ -49,25 +44,6 @@ class ParticipantORM(BaseORM):
     def __str__(self) -> str:
         return self.title
 
-    @classmethod
-    def from_model(cls, model: Participant):
-        return ParticipantORM(
-            id=model.id,
-            title=model.title,
-            nomination_id=model.nomination_id,
-            voting_number=model.voting_number,
-            values=[ParticipantValueORM.from_model(value) for value in model.values],
-        )
-
-    def to_model(self) -> Participant:
-        return Participant(
-            id=ParticipantId(self.id),
-            title=self.title,
-            nomination_id=NominationId(self.nomination_id),
-            voting_number=ParticipantVotingNumber(self.voting_number),
-            values=[value.to_model() for value in self.values],
-        )
-
 
 class ParticipantValueORM(BaseORM):
     __tablename__ = "participant_values"
@@ -81,18 +57,3 @@ class ParticipantValueORM(BaseORM):
     value: Mapped[str | None] = mapped_column()
 
     participant: Mapped[ParticipantORM] = relationship(back_populates="values")
-
-    @classmethod
-    def from_model(cls, model: ParticipantValue):
-        return ParticipantValueORM(
-            title=model.title,
-            type=model.type,
-            value=model.value,
-        )
-
-    def to_model(self) -> ParticipantValue:
-        return ParticipantValue(
-            title=self.title,
-            type=self.type,
-            value=self.value,
-        )

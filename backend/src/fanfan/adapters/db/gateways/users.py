@@ -1,52 +1,33 @@
-from adaptix import Retort
 from sqlalchemy import Boolean, and_, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from fanfan.adapters.db.mappers.social_account import SocialAccountMapper
 from fanfan.adapters.db.mappers.user import UserMapper
-from fanfan.adapters.db.models import (
-    SocialAccountORM,
-    UserORM,
-)
+from fanfan.adapters.db.models import SocialAccountORM, UserORM
 from fanfan.adapters.db.models.permission import PermissionORM, UserPermissionORM
 from fanfan.core.constants.permissions import Permissions
-from fanfan.core.dto.user import (
-    CurrentUserDTO,
-    UserBaseDTO,
-)
+from fanfan.core.dto.user import CurrentUserDTO, UserBaseDTO
 from fanfan.core.models.social_account import SocialAccount
-from fanfan.core.models.user import (
-    User,
-)
+from fanfan.core.models.user import User
 from fanfan.core.vo.user import UserId, UserRole
-
-retort = Retort()
-
-
-def _parse_user_base_kwargs(user: UserORM) -> dict:
-    return {
-        "id": user.id,
-        "username": user.username,
-        "first_name": user.first_name,
-        "role": user.role,
-    }
 
 
 class UserGateway:
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = UserMapper()
+        self.social_mapper = SocialAccountMapper()
 
     async def add_user(self, user: User) -> None:
         user_orm = self.mapper.from_model(user)
         self.session.add(user_orm)
 
     async def add_user_social_id(self, social_identity: SocialAccount) -> SocialAccount:
-        # TODO Move out
-        social_id_orm = SocialAccountORM.from_model(social_identity)
+        social_id_orm = self.social_mapper.from_model(social_identity)
         self.session.add(social_id_orm)
         await self.session.flush([social_id_orm])
-        return social_id_orm.to_model()
+        return self.social_mapper.to_model(social_id_orm)
 
     async def get_user_by_id(self, user_id: UserId) -> User | None:
         stmt = select(UserORM).where(UserORM.id == user_id).with_for_update()
@@ -88,7 +69,6 @@ class UserGateway:
     async def get_user_social_id_by_provider(
         self, user_id: UserId, provider: str
     ) -> SocialAccount | None:
-        # TODO Move out
         stmt = select(SocialAccountORM).where(
             and_(
                 SocialAccountORM.user_id == user_id,
@@ -96,7 +76,7 @@ class UserGateway:
             )
         )
         social_id_orm = await self.session.scalar(stmt)
-        return social_id_orm.to_model() if social_id_orm else None
+        return self.social_mapper.to_model(social_id_orm) if social_id_orm else None
 
     async def save_user(self, user: User) -> User:
         user_orm = self.mapper.from_model(user)

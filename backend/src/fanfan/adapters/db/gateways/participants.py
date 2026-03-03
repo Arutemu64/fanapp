@@ -2,16 +2,15 @@ from sqlalchemy import Select, String, and_, cast, delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, undefer
 
+from fanfan.adapters.db.mappers.participant import ParticipantMapper
 from fanfan.adapters.db.models import (
     NominationORM,
     ParticipantORM,
     VoteORM,
 )
 from fanfan.core.dto.page import Pagination
-from fanfan.core.dto.participant import ParticipantFullDTO, ParticipantVoteDTO
-from fanfan.core.models.participant import (
-    Participant,
-)
+from fanfan.core.dto.participant import ParticipantFullDTO
+from fanfan.core.models.participant import Participant
 from fanfan.core.vo.nomination import NominationId
 from fanfan.core.vo.participant import ParticipantId, ParticipantVotingNumber
 from fanfan.core.vo.user import UserId
@@ -28,18 +27,6 @@ def _select_participant_dto(user_id: UserId | None) -> Select:
             ),
         )
         .options(undefer(ParticipantORM.votes_count))
-    )
-
-
-def _parse_participant_full_dto(
-    participant_orm: ParticipantORM, vote_orm: VoteORM | None
-) -> ParticipantFullDTO:
-    return ParticipantFullDTO(
-        id=participant_orm.id,
-        title=participant_orm.title,
-        voting_number=participant_orm.voting_number,
-        votes_count=participant_orm.votes_count,
-        user_vote=ParticipantVoteDTO(id=vote_orm.id) if vote_orm else None,
     )
 
 
@@ -68,12 +55,13 @@ def _filter_participants(
 class ParticipantGateway:
     def __init__(self, session: AsyncSession):
         self.session = session
+        self.mapper = ParticipantMapper()
 
     async def add_participant(self, participant: Participant) -> Participant:
-        participant_orm = ParticipantORM.from_model(participant)
+        participant_orm = self.mapper.from_model(participant)
         self.session.add(participant_orm)
         await self.session.flush([participant_orm])
-        return participant_orm.to_model()
+        return self.mapper.to_model(participant_orm)
 
     async def get_participant_by_id(
         self, participant_id: ParticipantId
@@ -81,11 +69,11 @@ class ParticipantGateway:
         stmt = (
             select(ParticipantORM)
             .where(ParticipantORM.id == participant_id)
-            .options(joinedload(ParticipantORM.values))  # LEFT JOIN
-            .with_for_update(of=ParticipantORM)  # only lock participants table
+            .options(joinedload(ParticipantORM.values))
+            .with_for_update(of=ParticipantORM)
         )
         participant_orm = await self.session.scalar(stmt)
-        return participant_orm.to_model() if participant_orm else None
+        return self.mapper.to_model(participant_orm) if participant_orm else None
 
     async def get_participant_by_voting_number(
         self, nomination_id: NominationId, voting_number: ParticipantVotingNumber
@@ -101,7 +89,7 @@ class ParticipantGateway:
             .options(joinedload(ParticipantORM.values, innerjoin=True))
         )
         participant_orm = await self.session.scalar(stmt)
-        return participant_orm.to_model() if participant_orm else None
+        return self.mapper.to_model(participant_orm) if participant_orm else None
 
     async def list_participants(
         self,
@@ -120,14 +108,12 @@ class ParticipantGateway:
 
         participants_orm = (await self.session.scalars(stmt)).unique()
 
-        return [p.to_model() for p in participants_orm]
+        return [self.mapper.to_model(p) for p in participants_orm]
 
     async def save_participant(self, participant: Participant) -> Participant:
-        participant_orm = await self.session.merge(
-            ParticipantORM.from_model(participant)
-        )
+        participant_orm = await self.session.merge(self.mapper.from_model(participant))
         await self.session.flush([participant_orm])
-        return participant_orm.to_model()
+        return self.mapper.to_model(participant_orm)
 
     async def list_participants_by_nomination_id(
         self,
@@ -138,25 +124,22 @@ class ParticipantGateway:
     ) -> list[ParticipantFullDTO]:
         stmt = _select_participant_dto(user_id)
 
-        # Filter
         stmt = _filter_participants(
             stmt=stmt, nomination_ids=[nomination_id], search_query=search_query
         )
 
-        # Unique order
         user_unique_order = func.md5(
             func.concat(str(user_id), "-", cast(ParticipantORM.id, String))
         )
         stmt = stmt.order_by(user_unique_order)
 
-        # Limit
         if pagination:
             stmt = stmt.limit(pagination.limit).offset(pagination.offset)
 
         result = (await self.session.execute(stmt)).all()
 
         return [
-            _parse_participant_full_dto(
+            self.mapper.parse_full_dto(
                 participant_orm=participant_orm, vote_orm=vote_orm
             )
             for participant_orm, vote_orm in result
