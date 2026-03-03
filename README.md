@@ -57,6 +57,22 @@ docker --version
 docker compose version
 ```
 
+
+## VS Code monorepo workflow
+
+Use the committed workspace file to get correct frontend/backend context, tasks, and extension recommendations:
+
+```bash
+code fanapp.code-workspace
+```
+
+This workspace config provides:
+- Visible repo root for shared files (`README.md`, `docker-compose.yml`, `justfile`) plus separate `frontend`/`backend` roots for tooling context.
+- Shared excludes for heavy/generated directories.
+- Frontend defaults (`eslint.workingDirectories`, TypeScript SDK path).
+- Backend defaults (Python interpreter path and `src` import resolution).
+- Task shortcuts for common frontend/backend commands.
+
 ## First-run sequence
 
 ### 1) Backend (deps + env + migrations)
