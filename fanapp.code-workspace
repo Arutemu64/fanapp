@@ -1,10 +1,6 @@
 {
   "folders": [
     {
-      "name": "fanapp (root)",
-      "path": "."
-    },
-    {
       "name": "frontend",
       "path": "frontend"
     },

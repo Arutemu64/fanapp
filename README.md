@@ -67,7 +67,7 @@ code fanapp.code-workspace
 ```
 
 This workspace config provides:
-- Visible repo root for shared files (`README.md`, `docker-compose.yml`, `justfile`) plus separate `frontend`/`backend` roots for tooling context.
+- Separate `frontend` and `backend` workspace roots (cleaner Explorer and language tooling context).
 - Shared excludes for heavy/generated directories.
 - Frontend defaults (`eslint.workingDirectories`, TypeScript SDK path).
 - Backend defaults (Python interpreter path and `src` import resolution).

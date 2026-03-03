@@ -1,4 +1,4 @@
-from sqlalchemy import Select, and_, func, select
+from sqlalchemy import Select, and_, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import undefer
 
@@ -36,6 +36,17 @@ class NominationGateway:
         self.session.add(nomination_orm)
         await self.session.flush([nomination_orm])
         return self.mapper.to_model(nomination_orm)
+
+    async def get_nomination_by_cosplay2_id(
+        self, cosplay2_id: int
+    ) -> Nomination | None:
+        stmt = (
+            select(NominationORM)
+            .where(NominationORM.cosplay2_id == cosplay2_id)
+            .with_for_update()
+        )
+        nomination_orm = await self.session.scalar(stmt)
+        return self.mapper.to_model(nomination_orm) if nomination_orm else None
 
     async def get_nomination_by_id(
         self, nomination_id: NominationId
@@ -78,6 +89,17 @@ class NominationGateway:
         nomination_orm = await self.session.merge(self.mapper.from_model(nomination))
         await self.session.flush([nomination_orm])
         return self.mapper.to_model(nomination_orm)
+
+    async def list_nomination_cosplay2_ids(self) -> list[int]:
+        stmt = select(NominationORM.cosplay2_id)
+        return list((await self.session.scalars(stmt)).all())
+
+    async def delete_nominations_by_cosplay2_ids(self, cosplay2_ids: list[int]) -> None:
+        if not cosplay2_ids:
+            return
+        await self.session.execute(
+            delete(NominationORM).where(NominationORM.cosplay2_id.in_(cosplay2_ids))
+        )
 
     async def read_nomination_by_code(
         self, nomination_code: NominationCode, user_id: UserId

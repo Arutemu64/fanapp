@@ -9,6 +9,7 @@ class NominationMapper:
     def from_model(model: Nomination) -> NominationORM:
         return NominationORM(
             id=model.id,
+            cosplay2_id=model.cosplay2_id,
             code=model.code,
             title=model.title,
             is_votable=model.is_votable,
@@ -18,6 +19,7 @@ class NominationMapper:
     def to_model(orm: NominationORM) -> Nomination:
         return Nomination(
             id=NominationId(orm.id),
+            cosplay2_id=orm.cosplay2_id,
             code=orm.code,
             title=orm.title,
             is_votable=orm.is_votable,
