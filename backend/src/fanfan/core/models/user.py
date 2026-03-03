@@ -15,7 +15,7 @@ class UserSettings:
 
 @dataclass(slots=True, kw_only=True)
 class User:
-    id: UserId = field(default=uuid7)
+    id: UserId = field(default_factory=uuid7)
 
     username: Username | None
     hashed_password: str | None
