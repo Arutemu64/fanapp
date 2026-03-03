@@ -9,6 +9,7 @@ from fanfan.adapters.db.gateways.subscriptions import (
 )
 from fanfan.adapters.db.gateways.users import UserGateway
 from fanfan.adapters.db.uow import UnitOfWork
+from fanfan.application.common.constraints import get_constraint_name
 from fanfan.application.common.id_provider import IdProvider
 from fanfan.core.dto.subscription import SubscriptionFullDTO
 from fanfan.core.exceptions.auth import UserNotAuthenticated
@@ -65,9 +66,12 @@ class CreateSubscription:
                 await self.uow.commit()
             except IntegrityError as e:
                 await self.uow.rollback()
-                if await self.schedule_gateway.read_event_by_id(data.event_id) is None:
+                constraint_name = get_constraint_name(e)
+                if constraint_name == "fk_subscriptions_event_id_schedule":
                     raise EventNotFound(event_id=data.event_id) from e
-                raise SubscriptionAlreadyExist from e
+                if constraint_name == "uq_subscriptions_event_id":
+                    raise SubscriptionAlreadyExist from e
+                raise
             else:
                 logger.info(
                     "Subscription %s created",
