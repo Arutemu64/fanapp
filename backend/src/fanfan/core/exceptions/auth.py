@@ -19,3 +19,7 @@ class InvalidToken(AuthenticationError):
 
 class TokenExpired(AuthenticationError):
     default_message = "Срок действия токена истек"
+
+
+class RefreshTokenReused(AuthenticationError):
+    default_message = "Refresh токен уже был использован"

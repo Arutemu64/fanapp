@@ -32,6 +32,7 @@ from fanfan.core.exceptions.auth import (
     AuthenticationError,
     IncorrectPassword,
     InvalidToken,
+    RefreshTokenReused,
     TokenExpired,
     UserNotAuthenticated,
 )
@@ -145,8 +146,8 @@ async def refresh_access_token(
 
     try:
         token = await interactor(RefreshAccessTokenCommand(refresh_token=refresh_token))
-    except InvalidToken as e:
-        raise HTTPException(status_code=401, detail="Invalid token type") from e
+    except (InvalidToken, RefreshTokenReused, AuthenticationError) as e:
+        raise HTTPException(status_code=401, detail=e.message) from e
     else:
         _set_auth_cookies(response, token)
         return token

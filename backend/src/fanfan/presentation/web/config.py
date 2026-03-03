@@ -8,6 +8,8 @@ class WebConfig(BaseModel):
     base_url: HttpUrl
     path: str = "/"
     secret_key: SecretStr
+    jwt_issuer: str = "fanapp-api"
+    jwt_audience: str = "fanapp-web"
 
     def build_admin_auth_url(self, token: str) -> str:
         url: HttpUrl = HttpUrl.build(
