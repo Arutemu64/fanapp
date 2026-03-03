@@ -11,6 +11,7 @@ class ParticipantMapper:
     def from_model(model: Participant) -> ParticipantORM:
         return ParticipantORM(
             id=model.id,
+            cosplay2_id=model.cosplay2_id,
             title=model.title,
             nomination_id=model.nomination_id,
             voting_number=model.voting_number,
@@ -23,6 +24,7 @@ class ParticipantMapper:
     def to_model(orm: ParticipantORM) -> Participant:
         return Participant(
             id=ParticipantId(orm.id),
+            cosplay2_id=orm.cosplay2_id,
             title=orm.title,
             nomination_id=NominationId(orm.nomination_id),
             voting_number=ParticipantVotingNumber(orm.voting_number),
