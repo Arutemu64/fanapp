@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import enum
 from typing import NewType
+from uuid import UUID
 
-ParticipantId = NewType("ParticipantId", int)
+ParticipantId = NewType("ParticipantId", UUID)
 ParticipantVotingNumber = NewType("ParticipantVotingNumber", int)
 
 

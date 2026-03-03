@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from uuid import uuid7
 
-from sqlalchemy import ForeignKey, UniqueConstraint, func, select
+from sqlalchemy import ForeignKey, UniqueConstraint, Uuid, func, select
 from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
 from fanfan.adapters.db.models.base import BaseORM
 from fanfan.adapters.db.models.vote import VoteORM
+from fanfan.core.vo.nomination import NominationId
 from fanfan.core.vo.participant import ParticipantId, ValueType
 
 if TYPE_CHECKING:
@@ -21,10 +23,13 @@ class ParticipantORM(BaseORM):
         ),
     )
 
-    id: Mapped[ParticipantId] = mapped_column(primary_key=True)
+    id: Mapped[ParticipantId] = mapped_column(
+        Uuid(as_uuid=True), primary_key=True, default=uuid7
+    )
+    cosplay2_id: Mapped[int] = mapped_column(unique=True, index=True)
     title: Mapped[str] = mapped_column(index=True)
     voting_number: Mapped[int | None] = mapped_column()
-    nomination_id: Mapped[int] = mapped_column(
+    nomination_id: Mapped[NominationId] = mapped_column(
         ForeignKey("nominations.id", ondelete="CASCADE"),
     )
 

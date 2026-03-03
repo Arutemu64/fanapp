@@ -15,8 +15,6 @@ from fanfan.core.exceptions.participants import (
 )
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.models.participant import Participant, ParticipantValue
-from fanfan.core.vo.nomination import NominationId
-from fanfan.core.vo.participant import ParticipantId
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +29,7 @@ class Cosplay2Service:
         self.participant_gateway = participant_gateway
 
     async def process_topic(self, topic: Topic) -> Nomination:
-        nomination = await self.nomination_gateway.get_nomination_by_id(
-            NominationId(topic.id)
-        )
+        nomination = await self.nomination_gateway.get_nomination_by_cosplay2_id(topic.id)
 
         # Update or create nomination
         if nomination:
@@ -42,7 +38,7 @@ class Cosplay2Service:
             logger.info("Nomination %s updated", nomination.id)
         else:
             nomination = Nomination(
-                id=NominationId(topic.id),
+                cosplay2_id=topic.id,
                 code=topic.card_code,
                 title=topic.title,
                 is_votable=False,
@@ -56,8 +52,8 @@ class Cosplay2Service:
         self, request: Request, request_values: list[RequestValueDTO]
     ) -> Participant:
         # Query existing participant
-        participant = await self.participant_gateway.get_participant_by_id(
-            participant_id=ParticipantId(request.id)
+        participant = await self.participant_gateway.get_participant_by_cosplay2_id(
+            cosplay2_id=request.id
         )
 
         # Non APPROVED participants are denied...
@@ -77,6 +73,13 @@ class Cosplay2Service:
             logger.error("Request %s has no voting title, cannot proceed", request.id)
             raise RequestHasNoVotingTitle
 
+        nomination = await self.nomination_gateway.get_nomination_by_cosplay2_id(
+            request.topic_id
+        )
+        if nomination is None:
+            logger.error("Nomination with Cosplay2 id=%s not found", request.topic_id)
+            raise NonApprovedRequest
+
         # Convert request values to participant values
         request_values = [v for v in request_values if v.request_id == request.id]
         participant_values = [
@@ -89,7 +92,7 @@ class Cosplay2Service:
             participant = replace(
                 participant,
                 title=request.voting_title,
-                nomination_id=NominationId(request.topic_id),
+                nomination_id=nomination.id,
                 voting_number=request.voting_number,
                 values=participant_values,
             )
@@ -97,9 +100,9 @@ class Cosplay2Service:
             logger.info("Participant %s updated", participant.id)
         else:
             participant = Participant(
-                id=ParticipantId(request.id),
+                cosplay2_id=request.id,
                 title=request.voting_title,
-                nomination_id=NominationId(request.topic_id),
+                nomination_id=nomination.id,
                 voting_number=request.voting_number,
                 values=participant_values,
             )
