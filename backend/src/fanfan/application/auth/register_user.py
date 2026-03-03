@@ -8,13 +8,13 @@ from fanfan.core.events.users import CreatedUserEvent
 from fanfan.core.exceptions.users import UserAlreadyExists
 from fanfan.core.models.user import User
 from fanfan.core.services.security import SecurityService
-from fanfan.core.vo.fields import PASSWORD_FIELD, USERNAME_FIELD
-from fanfan.core.vo.user import Username, UserRole
+from fanfan.core.services.user import UserService
+from fanfan.core.vo.fields import PASSWORD_FIELD
+from fanfan.core.vo.user import UserRole
 
 
 class RegisterUserCommand(BaseModel):
     email: EmailStr = Field(...)
-    username: str = USERNAME_FIELD
     password: str = PASSWORD_FIELD
 
 
@@ -25,17 +25,20 @@ class RegisterUser:
         user_gateway: UserGateway,
         uow: UnitOfWork,
         event_broker: EventBroker,
+        user_service: UserService,
     ):
         self.security = security
         self.user_gateway = user_gateway
         self.uow = uow
         self.event_broker = event_broker
+        self.user_service = user_service
 
     async def __call__(self, data: RegisterUserCommand) -> None:
         async with self.uow:
             try:
+                username = await self.user_service.generate_username()
                 new_user = User(
-                    username=Username(data.username),
+                    username=username,
                     email=data.email,
                     hashed_password=self.security.hash_password(data.password),
                     role=UserRole.VISITOR,

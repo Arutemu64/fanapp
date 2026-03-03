@@ -12,6 +12,7 @@ from fanfan.core.dto.token import Token
 from fanfan.core.models.social_account import SocialAccount
 from fanfan.core.models.user import User
 from fanfan.core.services.security import SecurityService
+from fanfan.core.services.user import UserService
 from fanfan.core.vo.user import UserRole
 from fanfan.presentation.tgbot.config import BotConfig
 
@@ -34,12 +35,14 @@ class LoginTelegram:
         user_gateway: UserGateway,
         security: SecurityService,
         uow: UnitOfWork,
+        user_service: UserService,
     ) -> None:
         self.uow = uow
         self.security = security
         self.user_gateway = user_gateway
         self.bot = bot
         self.bot_config = bot_config
+        self.user_service = user_service
 
     @staticmethod
     def check_telegram_authorization(auth_data: dict, bot_token: str) -> dict:
@@ -94,10 +97,8 @@ class LoginTelegram:
             return self.security.create_token(user_id=user.id)
 
         async with self.uow:
-            check = await self.user_gateway.get_user_by_username(username=data.username)
-            username = None if check else data.username
             user = User(
-                username=username,
+                username=await self.user_service.generate_username(),
                 role=UserRole.VISITOR,
                 hashed_password=None,
                 is_verified=False,

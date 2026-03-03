@@ -5,14 +5,12 @@
 	import { goto } from '$app/navigation';
 	import {
 		EnvelopeSolid,
-		UserSolid,
 		LockSolid,
 		EyeOutline,
 		EyeSlashOutline
 	} from 'flowbite-svelte-icons';
 
 	let email = $state('');
-	let username = $state('');
 	let password = $state('');
 	let isLoading = $state(false);
 	let showPassword = $state(false);
@@ -26,10 +24,6 @@
 		return emailRegex.test(e);
 	}
 
-	function validateUsername(u: string): boolean {
-		if (!u) return false;
-		return u.trim().length >= 3;
-	}
 
 	function validatePassword(p: string): boolean {
 		if (!p) return false;
@@ -42,11 +36,9 @@
 	}
 
 	const isEmailValid = $derived(email ? validateEmail(email) : null);
-	const isUsernameValid = $derived(username ? validateUsername(username) : null);
 	const isPasswordValid = $derived(password ? validatePassword(password) : null);
 
 	const emailColor = $derived(email ? (isEmailValid ? 'green' : 'red') : undefined);
-	const usernameColor = $derived(username ? (isUsernameValid ? 'green' : 'red') : undefined);
 	const passwordColor = $derived(password ? (isPasswordValid ? 'green' : 'red') : undefined);
 
 	async function handleSignup(e: Event) {
@@ -55,9 +47,7 @@
 		serverError = '';
 
 		const trimmedEmail = email.trim();
-		const trimmedUsername = username.trim();
-
-		if (!trimmedEmail || !trimmedUsername || !password) {
+		if (!trimmedEmail || !password) {
 			serverError = 'Заполните все поля';
 			return;
 		}
@@ -67,10 +57,6 @@
 			return;
 		}
 
-		if (!validateUsername(trimmedUsername)) {
-			serverError = 'Имя пользователя должно содержать минимум 3 символа';
-			return;
-		}
 
 		if (!validatePassword(password)) {
 			serverError =
@@ -84,7 +70,6 @@
 			const { error } = await client.POST('/auth/register', {
 				body: {
 					email: trimmedEmail,
-					username: trimmedUsername,
 					password: password
 				}
 			});
@@ -141,27 +126,6 @@
 				</Input>
 				{#if email && isEmailValid === false}
 					<Helper color="red">Введите корректный адрес электронной почты</Helper>
-				{/if}
-			</div>
-
-			<div class="space-y-2">
-				<Label for="username" color={usernameColor}>Имя пользователя</Label>
-				<Input
-					id="username"
-					type="text"
-					bind:value={username}
-					placeholder="Введите имя пользователя"
-					required
-					color={usernameColor}
-					disabled={isLoading}
-					class="ps-9"
-				>
-					{#snippet left()}
-						<UserSolid class="h-5 w-5" />
-					{/snippet}
-				</Input>
-				{#if username && isUsernameValid === false}
-					<Helper color="red">Имя пользователя должно содержать минимум 3 символа</Helper>
 				{/if}
 			</div>
 
