@@ -1,0 +1,31 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Backend: FastAPI (fanfan.main.web)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fanfan.main.web",
+            "cwd": "${workspaceFolder}/backend",
+            "envFile": "${workspaceFolder}/backend/.env",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Frontend: SvelteKit (pnpm dev)",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "pnpm dev",
+            "cwd": "${workspaceFolder}/frontend"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Dev: Backend + Frontend",
+            "configurations": [
+                "Backend: FastAPI (fanfan.main.web)",
+                "Frontend: SvelteKit (pnpm dev)"
+            ]
+        }
+    ]
+}

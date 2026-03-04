@@ -1,0 +1,59 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "install: all",
+            "type": "shell",
+            "command": "just install",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "dev: backend",
+            "type": "shell",
+            "command": "just backend-dev",
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "dev: frontend",
+            "type": "shell",
+            "command": "just frontend-dev",
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "check: all",
+            "type": "shell",
+            "command": "just check",
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "lint: all",
+            "type": "shell",
+            "command": "just lint",
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "infra: up web",
+            "type": "shell",
+            "command": "just infra-up-web",
+            "problemMatcher": []
+        },
+        {
+            "label": "infra: logs web",
+            "type": "shell",
+            "command": "just infra-logs-web",
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "infra: stop web",
+            "type": "shell",
+            "command": "just infra-stop-web",
+            "problemMatcher": []
+        }
+    ]
+}
