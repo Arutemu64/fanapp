@@ -14,21 +14,6 @@ services:
     profiles: [ "web" ]
     stop_signal: SIGINT
 
-  bot:
-    build: .
-    depends_on:
-      - migration
-      - nats
-      - redis
-    volumes:
-      - bot-data:/media/bot-data
-    env_file:
-      - .env
-    ports:
-      - '127.0.0.1:${BOT__WEBHOOK__PORT}:${BOT__WEBHOOK__PORT}'
-    command: [ "python", "-m", "fanfan.main.bot" ]
-    restart: unless-stopped
-
   db:
     image: postgres:17-alpine
     volumes:
@@ -134,8 +119,8 @@ services:
       retries: 5
 
 volumes:
-  bot-data: {}
-  db-data: {}
-  pgbackup-data: {}
-  redis-data: {}
-  nats-data: {}
+  bot-data: { }
+  db-data: { }
+  pgbackup-data: { }
+  redis-data: { }
+  nats-data: { }

@@ -48,7 +48,7 @@ class UserORM(BaseORM):
         foreign_keys="TicketORM.used_by_user_id"
     )
     permissions: Mapped[list[UserPermissionORM]] = relationship(
-        back_populates="user", cascade="all, delete-orphan"
+        cascade="all, delete-orphan"
     )
     social_accounts: Mapped[list[SocialAccountORM]] = relationship(
         back_populates="user"

@@ -38,7 +38,7 @@ class SyncCosplay2:
                 - topic_ids
             )
             await self.cosplay2_service.nomination_gateway.delete_nominations_by_cosplay2_ids(
-                list(stale_nomination_ids)
+                list(stale_nomination_ids),
             )
 
             # Sync requests and values
@@ -57,7 +57,7 @@ class SyncCosplay2:
                 - request_ids
             )
             await self.cosplay2_service.participant_gateway.delete_participants_by_cosplay2_ids(
-                list(stale_participant_ids)
+                list(stale_participant_ids),
             )
 
             await self.uow.commit()

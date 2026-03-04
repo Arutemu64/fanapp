@@ -14,15 +14,12 @@ class UserView(ModelView, model=UserORM):
         UserORM.username,
         UserORM.ticket,
         UserORM.role,
-        UserORM.achievements_count,
-        UserORM.points,
     ]
     form_columns = [
         UserORM.role,
         UserORM.ticket,
     ]
     column_searchable_list = [UserORM.username, UserORM.role]
-    column_sortable_list = [UserORM.achievements_count, UserORM.points]
     form_ajax_refs = {
         "ticket": {
             "fields": ("id",),
@@ -33,8 +30,6 @@ class UserView(ModelView, model=UserORM):
         UserORM.id: "Telegram ID",
         UserORM.username: "Имя пользователя",
         UserORM.role: "Роль",
-        UserORM.achievements_count: "Достижений получено",
-        UserORM.points: "Очков",
         UserORM.settings: "Настройки пользователя",
         UserORM.ticket: "Билет",
         UserORM.created_at: "Время создания",

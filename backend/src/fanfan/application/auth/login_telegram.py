@@ -51,7 +51,7 @@ class LoginTelegram:
 
         if "hash" not in data:
             msg = "Hash is missing"
-            raise Exception(msg)
+            raise ValueError(msg)
 
         check_hash = data.pop("hash")
 
@@ -73,12 +73,12 @@ class LoginTelegram:
         # Compare the hashes securely to prevent timing attacks
         if not hmac.compare_digest(calculated_hash, check_hash):
             msg = "Data is NOT from Telegram"
-            raise Exception(msg)
+            raise ValueError(msg)
 
         # Check if the authentication date is older than 24 hours (86400 seconds)
         if (time.time() - int(data.get("auth_date", 0))) > 86400:
             msg = "Data is outdated"
-            raise Exception(msg)
+            raise ValueError(msg)
 
         return data
 

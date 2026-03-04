@@ -24,7 +24,7 @@ class EmailVerificationService:
     def generate_token(self, user_id: UserId) -> tuple[str, str]:
         nonce = str(uuid.uuid4())
         token = self.serializer.dumps(
-            {"user_id": user_id, "nonce": nonce},
+            {"user_id": str(user_id), "nonce": nonce},
             salt=EMAIL_VERIFY_SALT,
         )
         return token, nonce

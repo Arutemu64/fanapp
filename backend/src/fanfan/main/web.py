@@ -21,7 +21,7 @@ def main():
             # reload=True,
             host=config.web.host,
             port=config.web.port,
-            root_path="/api",
+            # root_path="/api",
             proxy_headers=True,
             forwarded_allow_ips=["*"],
             log_level=config.debug.logging_level,
