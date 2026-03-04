@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from uuid import uuid7
 
 from sqlalchemy import ForeignKey, UniqueConstraint, Uuid, func, select
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
 from fanfan.adapters.db.models.base import BaseORM
@@ -17,11 +18,7 @@ if TYPE_CHECKING:
 
 class ParticipantORM(BaseORM):
     __tablename__ = "participants"
-    __table_args__ = (
-        UniqueConstraint(
-            "nomination_id", "voting_number", deferrable=True, initially="DEFERRED"
-        ),
-    )
+    __table_args__ = (UniqueConstraint("nomination_id", "voting_number"),)
 
     id: Mapped[ParticipantId] = mapped_column(
         Uuid(as_uuid=True), primary_key=True, default=uuid7
@@ -58,7 +55,7 @@ class ParticipantValueORM(BaseORM):
         ForeignKey("participants.id", ondelete="CASCADE")
     )
     title: Mapped[str] = mapped_column()
-    type: Mapped[ValueType] = mapped_column()
+    type: Mapped[ValueType] = mapped_column(postgresql.ENUM(ValueType))
     value: Mapped[str | None] = mapped_column()
 
     participant: Mapped[ParticipantORM] = relationship(back_populates="values")

@@ -31,9 +31,7 @@ class PermissionGateway:
             select(PermissionORM).where(PermissionORM.name == name)
         )
         return (
-            self.permission_mapper.to_model(permission_orm)
-            if permission_orm
-            else None
+            self.permission_mapper.to_model(permission_orm) if permission_orm else None
         )
 
     async def get_user_permission(

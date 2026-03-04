@@ -1,6 +1,7 @@
 from uuid import uuid7
 
 from sqlalchemy import ForeignKey, Uuid
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fanfan.adapters.db.models.base import BaseORM
@@ -16,7 +17,11 @@ class TicketORM(BaseORM):
         Uuid(as_uuid=True), primary_key=True, default=uuid7
     )
     barcode: Mapped[str] = mapped_column(unique=True)
-    role: Mapped[UserRole] = mapped_column()
+    role: Mapped[UserRole] = mapped_column(
+        postgresql.ENUM(UserRole),
+        default=UserRole.VISITOR,
+        server_default="VISITOR",
+    )
     issued_by_user_id: Mapped[UserId | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"),
     )

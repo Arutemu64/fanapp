@@ -29,7 +29,9 @@ class Cosplay2Service:
         self.participant_gateway = participant_gateway
 
     async def process_topic(self, topic: Topic) -> Nomination:
-        nomination = await self.nomination_gateway.get_nomination_by_cosplay2_id(topic.id)
+        nomination = await self.nomination_gateway.get_nomination_by_cosplay2_id(
+            topic.id
+        )
 
         # Update or create nomination
         if nomination:

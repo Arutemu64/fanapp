@@ -31,9 +31,12 @@ class SyncCosplay2:
             for topic in topics:
                 await self.cosplay2_service.process_topic(topic)
 
-            stale_nomination_ids = set(
-                await self.cosplay2_service.nomination_gateway.list_nomination_cosplay2_ids()
-            ) - topic_ids
+            stale_nomination_ids = (
+                set(
+                    await self.cosplay2_service.nomination_gateway.list_nomination_cosplay2_ids()
+                )
+                - topic_ids
+            )
             await self.cosplay2_service.nomination_gateway.delete_nominations_by_cosplay2_ids(
                 list(stale_nomination_ids)
             )
@@ -47,9 +50,12 @@ class SyncCosplay2:
                 with contextlib.suppress(RequestHasNoVotingTitle, NonApprovedRequest):
                     await self.cosplay2_service.process_request(request, values)
 
-            stale_participant_ids = set(
-                await self.cosplay2_service.participant_gateway.list_participant_cosplay2_ids()
-            ) - request_ids
+            stale_participant_ids = (
+                set(
+                    await self.cosplay2_service.participant_gateway.list_participant_cosplay2_ids()
+                )
+                - request_ids
+            )
             await self.cosplay2_service.participant_gateway.delete_participants_by_cosplay2_ids(
                 list(stale_participant_ids)
             )

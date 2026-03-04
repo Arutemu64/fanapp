@@ -26,6 +26,7 @@ def _select_nomination_voting_dto(user_id: UserId | None) -> Select:
         .options(undefer(NominationORM.participants_count))
     )
 
+
 class NominationGateway:
     def __init__(self, session: AsyncSession):
         self.session = session

@@ -21,14 +21,16 @@
       "**/.venv": true,
       "**/__pycache__": true,
       "**/.svelte-kit": true,
-      "**/.ruff_cache": true
+      "**/.ruff_cache": true,
+      "**/.idea": true,
     },
     "search.exclude": {
       "**/node_modules": true,
       "**/.venv": true,
       "**/.svelte-kit": true,
       "**/.mypy_cache": true,
-      "**/.pytest_cache": true
+      "**/.pytest_cache": true,
+      "**/.idea": true,
     },
     "eslint.workingDirectories": [
       {
@@ -37,7 +39,6 @@
       }
     ],
     "typescript.tsdk": "frontend/node_modules/typescript/lib",
-    "python.defaultInterpreterPath": "${workspaceFolder:backend}/.venv/bin/python",
     "python.analysis.extraPaths": [
       "${workspaceFolder:backend}/src"
     ],

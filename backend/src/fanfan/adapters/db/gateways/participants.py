@@ -161,7 +161,9 @@ class ParticipantGateway:
         stmt = select(ParticipantORM.cosplay2_id)
         return list((await self.session.scalars(stmt)).all())
 
-    async def delete_participants_by_cosplay2_ids(self, cosplay2_ids: list[int]) -> None:
+    async def delete_participants_by_cosplay2_ids(
+        self, cosplay2_ids: list[int]
+    ) -> None:
         if not cosplay2_ids:
             return
         await self.session.execute(
