@@ -1,9 +1,7 @@
-import json
-
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Request
-from starlette.responses import StreamingResponse
+from sse_starlette import EventSourceResponse
 
 from fanfan.application.sse.stream_events import StreamEvents
 
@@ -22,16 +20,12 @@ sse_router = APIRouter(tags=["SSE"])
 async def stream_events(
     request: Request,
     interactor: FromDishka[StreamEvents],
-) -> StreamingResponse:
+) -> EventSourceResponse:
 
     async def event_generator():
         async for message in interactor():
             if await request.is_disconnected():
                 break
+            yield {"event": message.event_name, "data": message.data}
 
-            if message is None:
-                yield ": keep-alive\n\n"
-            else:
-                yield f"event: {message.event_name}\ndata: {json.dumps(message.data)}\n\n"
-
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    return EventSourceResponse(event_generator())

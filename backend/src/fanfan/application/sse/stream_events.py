@@ -22,7 +22,7 @@ class StreamEvents:
         self.id_provider = id_provider
         self.retort = Retort()
 
-    async def __call__(self) -> AsyncGenerator[SSEMessage | None]:
+    async def __call__(self) -> AsyncGenerator[SSEMessage]:
         queue: asyncio.Queue[SSEMessage] = asyncio.Queue()
         user_id = await self.id_provider.get_current_user_id()
 
@@ -39,10 +39,7 @@ class StreamEvents:
 
         try:
             while True:
-                try:
-                    yield await asyncio.wait_for(queue.get(), timeout=10.0)
-                except TimeoutError:
-                    yield None  # Signal for keep-alive
+                yield await asyncio.wait_for(queue.get(), timeout=None)
         finally:
             for sub in subs:
                 await sub.unsubscribe()
