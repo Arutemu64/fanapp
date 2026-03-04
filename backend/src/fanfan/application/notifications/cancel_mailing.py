@@ -34,7 +34,6 @@ class CancelMailing:
         self.user_gateway = user_gateway
         self.id_provider = id_provider
         self.events_broker = events_broker
-        self.service = service
         self.uow = uow
 
     async def __call__(self, data: CancelMailingDTO) -> None:

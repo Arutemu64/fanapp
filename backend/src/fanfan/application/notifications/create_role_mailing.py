@@ -51,8 +51,7 @@ class CreateRoleMailing:
                 raise AccessDenied
 
             mailing = await self.notifications_service.create_new_mailing(
-                total_notifications=0,
-                by_user_id=current_user.id,
+                total_count=0, by_user_id=current_user.id
             )
             await self.uow.commit()
 

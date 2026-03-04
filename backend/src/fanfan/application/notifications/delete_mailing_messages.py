@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
 
-from fanfan.adapters.db.gateways.mailings import MailingGateway
+from fanfan.adapters.db.gateways.notifications import NotificationGateway
 from fanfan.adapters.db.uow import UnitOfWork
 from fanfan.core.vo.mailing import MailingId
 
@@ -16,17 +16,16 @@ class DeleteMailingMessagesDTO:
 class DeleteMailingMessages:
     def __init__(
         self,
-        mailin_gateway: MailingGateway,
+        notification_gateway: NotificationGateway,
         uow: UnitOfWork,
     ):
-        self.mailing_gateway = mailin_gateway
+        self.notification_gateway = notification_gateway
         self.uow = uow
 
     async def __call__(self, data: DeleteMailingMessagesDTO):
         # TODO try to delete as much as possible
         async with self.uow:
-            mailing = await self.mailing_gateway.get_mailing(data.mailing_id, lock=True)
-            await self.mailing_gateway.delete_mailing(mailing)
+            await self.notification_gateway.delete_all_by_mailing_id(data.mailing_id)
             await self.uow.commit()
-            logger.info("Mailing %s was cancelled", data.mailing_id)
+            logger.info("Mailing %s notifications were deleted", data.mailing_id)
             return

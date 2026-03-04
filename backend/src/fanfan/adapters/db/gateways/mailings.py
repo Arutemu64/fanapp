@@ -1,11 +1,11 @@
-from sqlalchemy import delete, select
+from sqlalchemy import and_, case, delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.mappers.mailing import MailingMapper
 from fanfan.adapters.db.models import MailingORM
 from fanfan.core.dto.mailing import MailingDTO
 from fanfan.core.models.mailing import Mailing
-from fanfan.core.vo.mailing import MailingId
+from fanfan.core.vo.mailing import MailingId, MailingStatus
 
 
 class MailingGateway:
@@ -33,6 +33,26 @@ class MailingGateway:
 
     async def delete_mailing(self, mailing: Mailing) -> None:
         stmt = delete(MailingORM).where(MailingORM.id == mailing.id)
+        await self.session.execute(stmt)
+
+    async def increment_sent(self, mailing_id: MailingId) -> None:
+        stmt = (
+            update(MailingORM)
+            .where(MailingORM.id == mailing_id)
+            .values(
+                sent_count=MailingORM.sent_count + 1,
+                status=case(
+                    (
+                        and_(
+                            MailingORM.sent_count + 1 >= MailingORM.total_count,
+                            MailingORM.status != MailingStatus.CANCELLED,
+                        ),
+                        MailingStatus.FINISHED,
+                    ),
+                    else_=MailingORM.status,
+                ),
+            )
+        )
         await self.session.execute(stmt)
 
     async def read_mailing(self, mailing_id: MailingId) -> MailingDTO | None:

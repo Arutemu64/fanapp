@@ -1,9 +1,7 @@
 from dishka import AsyncContainer, Provider, make_async_container
-from dishka.integrations.aiogram import AiogramProvider
 from dishka.integrations.fastapi import FastapiProvider
 
 from fanfan.main.ioc.auth import (
-    BotAuthProvider,
     JwtTokenProcessorProvider,
     SystemAuthProvider,
     WebAuthProvider,
@@ -12,7 +10,6 @@ from fanfan.main.ioc.bot import BotProvider
 from fanfan.main.ioc.config import ConfigProvider
 from fanfan.main.ioc.cosplay2 import Cosplay2Provider
 from fanfan.main.ioc.db import DbProvider
-from fanfan.main.ioc.dp import DpProvider, ExternalBgmFactoryProvider
 from fanfan.main.ioc.gateways import GatewaysProvider
 from fanfan.main.ioc.interactors import InteractorsProvider
 from fanfan.main.ioc.jinja import JinjaProvider
@@ -43,19 +40,13 @@ def get_common_providers() -> list[Provider]:
     ]
 
 
-def create_bot_container() -> AsyncContainer:
-    providers = get_common_providers()
-    providers += [AiogramProvider(), BotAuthProvider(), DpProvider()]
-    return make_async_container(*providers)
-
-
 def create_web_container() -> AsyncContainer:
     providers = get_common_providers()
-    providers += [FastapiProvider(), WebAuthProvider(), ExternalBgmFactoryProvider()]
+    providers += [FastapiProvider(), WebAuthProvider()]
     return make_async_container(*providers)
 
 
 def create_system_container() -> AsyncContainer:
     providers = get_common_providers()
-    providers += [SystemAuthProvider(), ExternalBgmFactoryProvider()]
+    providers += [SystemAuthProvider()]
     return make_async_container(*providers)

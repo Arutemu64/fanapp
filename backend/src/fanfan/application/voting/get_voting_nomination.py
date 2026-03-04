@@ -5,10 +5,11 @@ from fanfan.adapters.db.gateways.participants import ParticipantGateway
 from fanfan.application.common.id_provider import IdProvider
 from fanfan.core.dto.nomination import NominationVotingDTO
 from fanfan.core.dto.participant import ParticipantFullDTO
+from fanfan.core.vo.nomination import NominationCode
 
 
 class GetVotingNominationCommand(BaseModel):
-    nomination_code: str
+    nomination_code: NominationCode
 
 
 class GetVotingNominationResult(NominationVotingDTO):

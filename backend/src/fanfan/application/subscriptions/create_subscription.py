@@ -56,13 +56,12 @@ class CreateSubscription:
             if current_user is None:
                 raise UserNotFound
             try:
-                subscription = await self.subscription_gateway.add_subscription(
-                    Subscription(
-                        user_id=current_user_id,
-                        event_id=data.event_id,
-                        counter=data.counter,
-                    )
+                subscription = Subscription(
+                    user_id=current_user_id,
+                    event_id=data.event_id,
+                    counter=data.counter,
                 )
+                await self.subscription_gateway.add_subscription(subscription)
                 await self.uow.commit()
             except IntegrityError as e:
                 await self.uow.rollback()

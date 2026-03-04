@@ -51,8 +51,8 @@ class RedisAuthTokenRegistry(AuthTokenRegistry):
         ttl = max(1, ttl_seconds)
 
         async with self.redis.pipeline(transaction=True) as pipe:
-            pipe.get(issued_key)
-            pipe.set(name=used_key, value="1", ex=ttl, nx=True)
+            await pipe.get(issued_key)
+            await pipe.set(name=used_key, value="1", ex=ttl, nx=True)
             issued, used_set = await pipe.execute()
 
         if not issued:

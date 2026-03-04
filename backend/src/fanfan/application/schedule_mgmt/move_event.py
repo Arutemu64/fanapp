@@ -13,7 +13,6 @@ from fanfan.application.common.id_provider import IdProvider
 from fanfan.application.schedule_mgmt.common import (
     ANNOUNCE_LIMIT_NAME,
 )
-from fanfan.core.constants.permissions import Permissions
 from fanfan.core.dto.schedule import ScheduleEventFullDTO
 from fanfan.core.events.schedule import CreatedScheduleChangeEvent
 from fanfan.core.exceptions.auth import UserNotAuthenticated
@@ -29,6 +28,7 @@ from fanfan.core.models.schedule_change import (
 )
 from fanfan.core.services.notifications import NotificationService
 from fanfan.core.services.perm import PermService
+from fanfan.core.vo.permission import Permissions
 from fanfan.core.vo.schedule_change import ScheduleChangeType
 from fanfan.core.vo.schedule_event import ScheduleEventId
 
@@ -79,7 +79,7 @@ class MoveScheduleEvent:
             if current_user is None:
                 raise UserNotFound
             await self.perm_service.ensure(
-                user=current_user, perm_name=Permissions.CAN_MANAGE_SCHEDULE
+                user=current_user, perm_name=Permissions.SCHEDULE_MANAGE
             )
 
             settings = await self.settings_gateway.get_settings()
@@ -130,8 +130,7 @@ class MoveScheduleEvent:
 
                     # Save schedule change
                     mailing = await self.notifications_service.create_new_mailing(
-                        total_notifications=0,
-                        by_user_id=current_user.id,
+                        total_count=0, by_user_id=current_user.id
                     )
                     schedule_change = ScheduleChange(
                         type=ScheduleChangeType.MOVED,

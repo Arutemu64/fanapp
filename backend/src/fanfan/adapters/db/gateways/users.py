@@ -6,10 +6,10 @@ from fanfan.adapters.db.mappers.social_account import SocialAccountMapper
 from fanfan.adapters.db.mappers.user import UserMapper
 from fanfan.adapters.db.models import SocialAccountORM, UserORM
 from fanfan.adapters.db.models.permission import PermissionORM, UserPermissionORM
-from fanfan.core.constants.permissions import Permissions
 from fanfan.core.dto.user import CurrentUserDTO, UserBaseDTO
 from fanfan.core.models.social_account import SocialAccount
 from fanfan.core.models.user import User
+from fanfan.core.vo.permission import Permissions
 from fanfan.core.vo.user import UserId, UserRole
 
 
@@ -115,7 +115,7 @@ class UserGateway:
             select(UserORM)
             .join(UserPermissionORM)
             .join(PermissionORM)
-            .where(PermissionORM.name == Permissions.CAN_MANAGE_SCHEDULE)
+            .where(PermissionORM.name == Permissions.SCHEDULE_MANAGE)
         )
         users_orm = await self.session.scalars(stmt)
         return [self.mapper.parse_base_dto(u) for u in users_orm]

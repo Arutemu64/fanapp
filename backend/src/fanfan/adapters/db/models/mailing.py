@@ -1,9 +1,11 @@
 from uuid import uuid7
 
 from sqlalchemy import UUID, ForeignKey, Uuid
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Mapped, mapped_column
 
 from fanfan.adapters.db.models.base import BaseORM
+from fanfan.core.vo.mailing import MailingStatus
 from fanfan.core.vo.user import UserId
 
 
@@ -13,8 +15,10 @@ class MailingORM(BaseORM):
     id: Mapped[UUID] = mapped_column(
         Uuid(as_uuid=True), primary_key=True, default=uuid7
     )
-    total: Mapped[int] = mapped_column(default=0)
-    is_cancelled: Mapped[bool] = mapped_column(default="False")
+    status: Mapped[MailingStatus] = mapped_column(postgresql.ENUM(MailingStatus))
     by_user_id: Mapped[UserId | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL")
     )
+
+    sent_count: Mapped[int] = mapped_column(default=0)
+    total_count: Mapped[int] = mapped_column(default=0)

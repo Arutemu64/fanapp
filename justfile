@@ -38,7 +38,7 @@ backend-check:
 backend-lint: backend-format backend-check
 
 backend-migrate:
-	cd backend && uv run alembic upgrade head && uv run python -m fanfan.main.migration
+	cd backend && uv run alembic upgrade head
 
 backend-generate MIGRATION_NAME:
 	cd backend && uv run alembic revision --autogenerate -m "{{MIGRATION_NAME}}"

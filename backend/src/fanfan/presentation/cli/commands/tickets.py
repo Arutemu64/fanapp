@@ -5,6 +5,7 @@ import click
 from dishka.integrations.click import CONTAINER_NAME
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from fanfan.adapters.parsers.tickets import parse_tickets
 from fanfan.application.ticketscloud.sync_tcloud import SyncTCloud
 from fanfan.presentation.cli.commands.common import async_command
 

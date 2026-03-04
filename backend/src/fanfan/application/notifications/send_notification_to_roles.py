@@ -7,6 +7,7 @@ from fanfan.adapters.nats.events_broker import EventBroker
 from fanfan.core.dto.notification import NewNotificationDTO
 from fanfan.core.events.notifications import NewNotificationEvent
 from fanfan.core.vo.mailing import MailingId
+from fanfan.core.vo.notification import NotificationType
 from fanfan.core.vo.user import UserRole
 
 
@@ -46,6 +47,7 @@ class SendNotificationToRoles:
                         title=data.title,
                         body=data.body,
                         mailing_id=data.mailing_id,
+                        type=NotificationType.DEFAULT,
                     )
                 )
                 for u in users

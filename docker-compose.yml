@@ -1,4 +1,19 @@
 services:
+  web:
+    build: .
+    depends_on:
+      - migration
+    volumes:
+      - bot-data:/media/bot-data
+    env_file:
+      - .env
+    ports:
+      - '127.0.0.1:${WEB__PORT}:${WEB__PORT}'
+    command: [ "python", "-m", "fanfan.main.web" ]
+    restart: unless-stopped
+    profiles: [ "web" ]
+    stop_signal: SIGINT
+
   bot:
     build: .
     depends_on:
@@ -67,7 +82,7 @@ services:
       - ./alembic.ini:/app/alembic.ini
     env_file:
       - .env
-    command: [ "sh", "-c", "alembic upgrade head && python -m fanfan.main.migration" ]
+    command: [ "alembic", "upgrade", "head" ]
     restart: on-failure
 
   nats:
@@ -117,61 +132,6 @@ services:
       interval: 5s
       timeout: 20s
       retries: 5
-
-  scheduler:
-    build: .
-    depends_on:
-      - redis
-    volumes:
-      - bot-data:/media/bot-data
-    env_file:
-      - .env
-    command:
-      [
-        "taskiq",
-        "scheduler",
-        "fanfan.main.scheduler:scheduler",
-        "fanfan.presentation.scheduler.tasks"
-      ]
-    restart: unless-stopped
-    profiles: [ "scheduler" ]
-
-  taskiq:
-    build: .
-    depends_on:
-      - migration
-      - nats
-      - redis
-    volumes:
-      - bot-data:/media/bot-data
-    env_file:
-      - .env
-    command:
-      [
-        "taskiq",
-        "worker",
-        "--workers",
-        "1",
-        "fanfan.main.scheduler:broker",
-        "fanfan.presentation.scheduler.tasks"
-      ]
-    restart: unless-stopped
-    profiles: [ "scheduler" ]
-
-  web:
-    build: .
-    depends_on:
-      - migration
-    volumes:
-      - bot-data:/media/bot-data
-    env_file:
-      - .env
-    ports:
-      - '127.0.0.1:${WEB__PORT}:${WEB__PORT}'
-    command: [ "python", "-m", "fanfan.main.web" ]
-    restart: unless-stopped
-    profiles: [ "web" ]
-    stop_signal: SIGINT
 
 volumes:
   bot-data: {}

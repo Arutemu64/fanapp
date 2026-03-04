@@ -174,7 +174,7 @@ async def refresh_access_token(
 async def register_user(
     data: RegisterUserCommand,
     interactor: FromDishka[RegisterUser],
-) -> UserBaseDTO:
+) -> None:
     try:
         result = await interactor(data)
     except UserAlreadyExists as e:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from uuid import uuid7
+from uuid import UUID, uuid7
 
 from sqlalchemy import ForeignKey, UniqueConstraint, Uuid, func, select
 from sqlalchemy.dialects import postgresql
@@ -50,7 +50,9 @@ class ParticipantORM(BaseORM):
 class ParticipantValueORM(BaseORM):
     __tablename__ = "participant_values"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True), primary_key=True, default=uuid7
+    )
     participant_id: Mapped[ParticipantId] = mapped_column(
         ForeignKey("participants.id", ondelete="CASCADE")
     )

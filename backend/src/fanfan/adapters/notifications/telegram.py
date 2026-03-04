@@ -6,7 +6,6 @@ from aiogram.exceptions import (
     TelegramForbiddenError,
     TelegramRetryAfter,
 )
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from fanfan.adapters.db.gateways.users import UserGateway
 from fanfan.application.common.notifier import Notifier
@@ -15,13 +14,8 @@ from fanfan.core.exceptions.notifications import (
     UserNotReachable,
 )
 from fanfan.core.models.notification import Notification
-from fanfan.presentation.tgbot.keyboards.buttons import PULL_DOWN_DIALOG
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_REPLY_MARKUP = InlineKeyboardBuilder(
-    [[PULL_DOWN_DIALOG]],
-).as_markup()
 
 
 class TelegramNotifier(Notifier):
@@ -44,7 +38,7 @@ class TelegramNotifier(Notifier):
             await self.bot.send_message(
                 chat_id=int(social_id.provider_id),
                 text=self._render_message_text(notification),
-                reply_markup=DEFAULT_REPLY_MARKUP,
+                # TODO Add markup?
             )
         except TelegramRetryAfter as e:
             raise NotificationRetryAfter(retry_after=e.retry_after) from e

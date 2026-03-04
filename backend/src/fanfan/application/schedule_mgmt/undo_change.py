@@ -8,7 +8,6 @@ from fanfan.adapters.db.gateways.users import UserGateway
 from fanfan.adapters.db.uow import UnitOfWork
 from fanfan.adapters.nats.events_broker import EventBroker
 from fanfan.application.common.id_provider import IdProvider
-from fanfan.core.constants.permissions import Permissions
 from fanfan.core.events.schedule import UndoScheduleChangeEvent
 from fanfan.core.exceptions.auth import UserNotAuthenticated
 from fanfan.core.exceptions.schedule import (
@@ -17,6 +16,7 @@ from fanfan.core.exceptions.schedule import (
 )
 from fanfan.core.exceptions.users import UserNotFound
 from fanfan.core.services.perm import PermService
+from fanfan.core.vo.permission import Permissions
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
 
 logger = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ class UndoScheduleChange:
         if current_user is None:
             raise UserNotFound
         await self.perm_service.ensure(
-            user=current_user, perm_name=Permissions.CAN_MANAGE_SCHEDULE
+            user=current_user, perm_name=Permissions.SCHEDULE_MANAGE
         )
         schedule_change = await self.schedule_change_gateway.get_schedule_change(
             data.schedule_change_id

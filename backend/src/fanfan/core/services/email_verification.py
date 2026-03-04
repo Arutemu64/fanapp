@@ -24,7 +24,7 @@ class EmailVerificationService:
     def generate_token(self, user_id: UserId) -> tuple[str, str]:
         nonce = str(uuid.uuid4())
         token = self.serializer.dumps(
-            {"user_id": int(user_id), "nonce": nonce},
+            {"user_id": user_id, "nonce": nonce},
             salt=EMAIL_VERIFY_SALT,
         )
         return token, nonce
@@ -37,7 +37,7 @@ class EmailVerificationService:
         )
 
         try:
-            user_id = UserId(int(payload["user_id"]))
+            user_id = UserId(payload["user_id"])
             nonce = str(payload["nonce"])
         except (TypeError, ValueError, KeyError) as e:
             raise InvalidToken from e

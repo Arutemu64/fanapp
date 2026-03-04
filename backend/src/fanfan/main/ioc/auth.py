@@ -7,9 +7,7 @@ from fanfan.adapters.auth.providers.web import (
     WebIdProvider,
 )
 from fanfan.adapters.auth.utils.jwt import JwtTokenProcessor
-from fanfan.adapters.db.gateways.users import UserGateway
 from fanfan.application.common.id_provider import IdProvider
-from fanfan.core.vo.user import UserId
 
 
 class JwtTokenProcessorProvider(Provider):
@@ -36,5 +34,5 @@ class SystemAuthProvider(Provider):
     scope = Scope.REQUEST
 
     @provide
-    def get_system_id_provider(self, user_gateway: UserGateway) -> IdProvider:
-        return RawIdProvider(user_id=UserId(0), user_gateway=user_gateway)
+    def get_system_id_provider(self) -> IdProvider:
+        return RawIdProvider()

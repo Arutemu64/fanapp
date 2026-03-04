@@ -40,11 +40,11 @@ class NewNotification:
 
     async def __call__(self, data: NewNotificationCommand) -> NotificationId:
         async with self.uow:
-            await self.notifications_service.ensure_active_mailing(
-                data.notification.mailing_id
-            )
+            mailing_id = data.notification.mailing_id
+            await self.notifications_service.ensure_active_mailing(mailing_id)
             notification = self._dto_to_model(data.notification)
             await self.notification_gateway.add_notification(notification)
+            await self.mailing_gateway.increment_sent(mailing_id=mailing_id)
             await self.uow.commit()
 
         return notification.id

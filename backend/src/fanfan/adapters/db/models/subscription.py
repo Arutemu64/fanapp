@@ -3,7 +3,7 @@ from uuid import uuid7
 from sqlalchemy import ForeignKey, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from fanfan.adapters.db.models import ScheduleEventORM, UserORM
+from fanfan.adapters.db.models import ScheduleEventORM
 from fanfan.adapters.db.models.base import BaseORM
 from fanfan.core.vo.schedule_event import ScheduleEventId
 from fanfan.core.vo.subscription import SubscriptionId
@@ -23,5 +23,4 @@ class SubscriptionORM(BaseORM):
     )
     counter: Mapped[int] = mapped_column()
 
-    user: Mapped[UserORM] = relationship()
     event: Mapped[ScheduleEventORM] = relationship()

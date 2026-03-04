@@ -8,25 +8,28 @@ class MailingMapper:
     def from_model(model: Mailing) -> MailingORM:
         return MailingORM(
             id=model.id,
-            total=model.total,
-            is_cancelled=model.is_cancelled,
+            status=model.status,
             by_user_id=model.by_user_id,
+            sent_count=model.sent_count,
+            total_count=model.total_count,
         )
 
     @staticmethod
     def to_model(orm: MailingORM) -> Mailing:
         return Mailing(
             id=orm.id,
-            total=orm.total,
-            is_cancelled=orm.is_cancelled,
+            status=orm.status,
             by_user_id=orm.by_user_id,
+            sent_count=orm.sent_count,
+            total_count=orm.total_count,
         )
 
     @staticmethod
     def parse_dto(orm: MailingORM) -> MailingDTO:
         return MailingDTO(
             id=orm.id,
-            total=orm.total,
-            is_cancelled=orm.is_cancelled,
+            status=orm.status,
             by_user_id=orm.by_user_id,
+            sent_count=orm.sent_count,
+            total_count=orm.total_count,
         )

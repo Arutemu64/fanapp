@@ -1,4 +1,3 @@
-import typing
 from uuid import uuid7
 
 from sqlalchemy import ForeignKey, UniqueConstraint, Uuid
@@ -13,9 +12,6 @@ from fanfan.core.vo.permission import (
     UserPermissionId,
 )
 from fanfan.core.vo.user import UserId
-
-if typing.TYPE_CHECKING:
-    from fanfan.adapters.db.models import UserORM  # noqa
 
 
 class UserPermissionORM(BaseORM):
@@ -34,8 +30,7 @@ class UserPermissionORM(BaseORM):
     object_id: Mapped[PermissionObjectId | None] = mapped_column()
     object_type: Mapped[PermissionObjectType | None] = mapped_column()
 
-    user: Mapped["UserORM"] = relationship()
-    permission: Mapped["PermissionORM"] = relationship()
+    permission: Mapped["PermissionORM"] = relationship(lazy="joined")
 
 
 class PermissionORM(BaseORM):

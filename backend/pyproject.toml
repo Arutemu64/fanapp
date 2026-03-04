@@ -8,7 +8,6 @@ description = "Festival bot"
 requires-python = ">=3.14"
 dependencies = [
     "adaptix>=3.0.0b8",
-    "aiogram-dialog>=2.2.0",
     "aiogram>=3.13.1",
     "alembic-postgresql-enum>=1.5.0",
     "alembic>=1.13.3",
@@ -18,7 +17,6 @@ dependencies = [
     "dishka-faststream>=0.6.0",
     "dishka>=1.4.0",
     "fastapi-mail>=1.6.2",
-    "fastapi-storages>=0.3.0",
     "fastapi>=0.115.2",
     "faststream[cli,nats]",
     "greenlet>=3.1.1",
@@ -36,16 +34,12 @@ dependencies = [
     "pydantic[email,timezone]>=2.9.2",
     "pyjwt>=2.9.0",
     "pytz>=2025.2",
-    "pywebpush>=2.3.0",
     "qrcode[pil]>=8.0",
     "redis>=5.1.1",
     "rich>=13.9.3",
     "sqladmin>=0.20.0",
     "sqlalchemy>=2.0.36",
     "structlog>=24.4.0",
-    "sulguk>=0.8.0",
-    "taskiq-redis>=1.0.2",
-    "taskiq>=0.11.7",
     "uvicorn>=0.32.0",
     "webpush>=1.0.6",
 ]

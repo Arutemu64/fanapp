@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import and_, select, update
+from sqlalchemy import and_, delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.mappers.notification import NotificationMapper
@@ -8,6 +8,7 @@ from fanfan.adapters.db.models import NotificationORM
 from fanfan.core.dto.notification import NotificationDTO
 from fanfan.core.dto.page import Pagination
 from fanfan.core.models.notification import Notification
+from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.notification import NotificationId
 from fanfan.core.vo.user import UserId
 
@@ -55,4 +56,8 @@ class NotificationGateway:
             )
             .values({"seen_at": timestamp})
         )
+        await self.session.execute(stmt)
+
+    async def delete_all_by_mailing_id(self, mailing_id: MailingId) -> None:
+        stmt = delete(NotificationORM).where(NotificationORM.mailing_id == mailing_id)
         await self.session.execute(stmt)

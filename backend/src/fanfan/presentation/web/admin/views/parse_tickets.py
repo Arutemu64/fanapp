@@ -5,6 +5,8 @@ from fastapi import Request, UploadFile
 from sqladmin import BaseView, expose
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from fanfan.adapters.parsers.tickets import parse_tickets
+
 if TYPE_CHECKING:
     from dishka import AsyncContainer
 

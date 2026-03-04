@@ -94,7 +94,7 @@ class JwtTokenProcessor:
 
         try:
             token_data = JwtTokenData(
-                sub=UserId(int(payload["sub"])),
+                sub=UserId(payload["sub"]),
                 token_type=str(payload["type"]),
                 exp=int(payload["exp"]),
                 jti=str(payload["jti"]),
