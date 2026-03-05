@@ -8,7 +8,7 @@
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 
-	let username = $state('');
+	let login = $state('');
 	const eventsClient = getEventsClient();
 	const toastService = getToastService();
 	let password = $state('');
@@ -18,7 +18,7 @@
 	async function handleLogin(e: Event) {
 		e.preventDefault();
 
-		if (!username.trim() || !password.trim()) {
+		if (!login.trim() || !password.trim()) {
 			toastService.add('Введите имя пользователя и пароль', 'warning');
 			return;
 		}
@@ -28,7 +28,7 @@
 		try {
 			const { data, error, response } = await client.POST('/auth/login', {
 				body: {
-					username: username.trim(),
+					username: login.trim(),
 					password: password,
 					scope: ''
 				},
@@ -112,12 +112,12 @@
 			</h2>
 
 			<div class="space-y-2">
-				<Label for="username">Имя пользователя</Label>
+				<Label for="login">Имя пользователя или почта</Label>
 				<Input
-					id="username"
+					id="login"
 					type="text"
-					bind:value={username}
-					placeholder="Введите имя пользователя"
+					bind:value={login}
+					placeholder="Введите имя пользователя или почту"
 					required
 					disabled={isLoading}
 					class="ps-9"

@@ -2,7 +2,9 @@ import { error } from '@sveltejs/kit';
 import { client } from '$lib/api';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ fetch }) => {
+export const load: PageLoad = async ({ fetch, depends }) => {
+	depends('app:schedule:changes');
+
 	const {
 		data,
 		error: fetchError,

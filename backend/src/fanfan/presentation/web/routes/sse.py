@@ -26,6 +26,9 @@ async def stream_events(
         async for message in interactor():
             if await request.is_disconnected():
                 break
-            yield {"event": message.event_name, "data": message.data}
+            yield {
+                "event": message.event_name,
+                "data": message.data if message.data is not None else "",
+            }
 
     return EventSourceResponse(event_generator())

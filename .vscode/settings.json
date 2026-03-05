@@ -3,7 +3,7 @@
     "python.analysis.extraPaths": [
         "${workspaceFolder}/backend/src"
     ],
-    "typescript.tsdk": "frontend/node_modules/typescript/lib",
+    "js/ts.tsdk.path": "frontend/node_modules/typescript/lib",
     "files.exclude": {
         "**/node_modules": true,
         "**/__pycache__": true,

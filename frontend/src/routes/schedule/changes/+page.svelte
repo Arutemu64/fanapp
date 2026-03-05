@@ -4,22 +4,18 @@
 	import { client } from '$lib/api/index.js';
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import { getToastService } from '$lib/stores/toasts.svelte';
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
 	import type { ScheduleChangeEventDTO, ScheduleChangeType } from '$lib/types/schedule';
 
 	let { data } = $props();
 	const toastService = getToastService();
 	let scheduleChanges = $derived(data.schedule_changes);
-	let undoingId: number | null = $state(null);
+	let undoingId: string | null = $state(null);
 
-	async function undoChange(changeId: number) {
+	async function undoChange(changeId: string) {
 		undoingId = changeId;
 		try {
-			const {
-				data: responseData,
-				error,
-				response
-			} = await client.DELETE('/schedule/changes/{schedule_change_id}', {
+			const { error } = await client.DELETE('/schedule/changes/{schedule_change_id}', {
 				params: { path: { schedule_change_id: changeId } }
 			});
 
@@ -30,7 +26,7 @@
 			}
 
 			toastService.add('Изменение отменено', 'success');
-			await invalidateAll();
+			await invalidate('app:schedule:changes');
 		} catch (err) {
 			toastService.error('Не удалось отменить изменение');
 			console.error('Undo error:', err);

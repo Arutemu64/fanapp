@@ -181,9 +181,10 @@ class ProcessScheduleChange:
                     schedule_change.mailing_id,
                     lock=True,
                 )
-                mailing.total = len(notification_events)
-                await self.mailing_gateway.save_mailing(mailing)
-                await self.uow.commit()
+                if mailing:
+                    mailing.update_total(len(notification_events))
+                    await self.mailing_gateway.save_mailing(mailing)
+                    await self.uow.commit()
 
             await asyncio.gather(
                 *(self.events_broker.publish(e) for e in notification_events)

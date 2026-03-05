@@ -7,13 +7,14 @@ from fanfan.adapters.db.config import DatabaseConfig
 from fanfan.adapters.debug.config import DebugConfig
 from fanfan.adapters.mail.config import MailConfig
 from fanfan.adapters.nats.config import NatsConfig
+from fanfan.adapters.notifications.config import PushConfig
 from fanfan.adapters.redis.config import RedisConfig
 from fanfan.presentation.tgbot.config import BotConfig
 from fanfan.presentation.web.config import WebConfig
 
 
 class EnvConfig(BaseSettings):
-    model_config = SettingsConfigDict(env_nested_delimiter="__")
+    model_config = SettingsConfigDict(env_nested_delimiter="__", extra="allow")
 
     # General
     web: WebConfig
@@ -27,6 +28,7 @@ class EnvConfig(BaseSettings):
 
     # Notifications
     bot: BotConfig
+    push: PushConfig
 
     # Debug
     env: str

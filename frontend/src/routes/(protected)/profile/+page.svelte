@@ -6,13 +6,13 @@
 	import SecurityCard from '$lib/components/profile/SecurityCard.svelte';
 	import PwaInstallCard from '$lib/components/profile/PwaInstallCard.svelte';
 	import type { PageProps } from './$types';
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
 
 	let { data }: PageProps = $props();
 	let user = $derived(data.user!);
 
-	function refreshProfile() {
-		invalidateAll();
+	async function refreshProfile() {
+		await Promise.all([invalidate('app:current-user'), invalidate('app:push-subscriptions')]);
 	}
 </script>
 
@@ -33,12 +33,16 @@
 
 	<div class="flex flex-col gap-4">
 		<!-- Security Card -->
-		<SecurityCard {user} onPasswordChange={refreshProfile} />
+		<SecurityCard {user} onPasswordChange={refreshProfile} onEmailChange={refreshProfile} />
 
 		<!-- PWA Install Card -->
 		<PwaInstallCard />
 
 		<!-- Push Notifications Card -->
-		<PushNotificationsCard {user} pushSubscriptions={data.pushSubscriptions} />
+		<PushNotificationsCard
+			{user}
+			pushSubscriptions={data.pushSubscriptions}
+			onSettingsUpdate={refreshProfile}
+		/>
 	</div>
 </div>

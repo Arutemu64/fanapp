@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import aiohttp
 import nh3
 from webpush import WebPush, WebPushSubscription
@@ -8,21 +6,24 @@ from fanfan.adapters.db.gateways.push_subscriptions import (
     PushSubscriptionGateway,
 )
 from fanfan.adapters.db.uow import UnitOfWork
+from fanfan.adapters.notifications.config import PushConfig
 from fanfan.application.common.notifier import Notifier
 from fanfan.core.models.notification import Notification
 
 
 class PushNotifier(Notifier):
     def __init__(
-        self, push_sub_gateway: PushSubscriptionGateway, uow: UnitOfWork
+        self,
+        push_sub_gateway: PushSubscriptionGateway,
+        uow: UnitOfWork,
+        push_config: PushConfig,
     ) -> None:
         self.push_sub_gateway = push_sub_gateway
         self.uow = uow
-        # TODO Move these to config
         self.wp = WebPush(
-            private_key=Path("./private_key.pem"),
-            public_key=Path("./public_key.pem"),
-            subscriber="arutemu64@outlook.com",
+            private_key=push_config.private_key_path,
+            public_key=push_config.public_key_path,
+            subscriber=push_config.subscriber,
         )
 
     @staticmethod

@@ -2,7 +2,9 @@ import { client } from '$lib/api';
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ params, fetch }) => {
+export const load: PageLoad = async ({ params, fetch, depends }) => {
+	depends('app:voting:nomination');
+
 	const {
 		data,
 		error: apiError,

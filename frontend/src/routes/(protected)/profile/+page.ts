@@ -1,10 +1,12 @@
 import type { PageLoad } from './$types';
 import { client } from '$lib/api';
 
-export const load: PageLoad = async ({ fetch }) => {
-    const { data: pushSubscriptions } = await client.GET('/push', { fetch });
+export const load: PageLoad = async ({ fetch, depends }) => {
+	depends('app:push-subscriptions');
 
-    return {
-        pushSubscriptions: pushSubscriptions ?? []
-    };
+	const { data: pushSubscriptions } = await client.GET('/push', { fetch });
+
+	return {
+		pushSubscriptions: pushSubscriptions ?? []
+	};
 };

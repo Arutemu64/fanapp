@@ -37,21 +37,20 @@ class MailingGateway:
 
     async def increment_sent(self, mailing_id: MailingId) -> None:
         stmt = (
-            update(MailingORM)
-            .where(MailingORM.id == mailing_id)
-            .values(
-                sent_count=MailingORM.sent_count + 1,
-                status=case(
-                    (
-                        and_(
-                            MailingORM.sent_count + 1 >= MailingORM.total_count,
-                            MailingORM.status != MailingStatus.CANCELLED,
-                        ),
-                        MailingStatus.FINISHED,
-                    ),
-                    else_=MailingORM.status,
-                ),
-            )
+            update(MailingORM).where(MailingORM.id == mailing_id)
+            # .values(
+            #     sent_count=MailingORM.sent_count + 1,
+            #     status=case(
+            #         (
+            #             and_(
+            #                 MailingORM.sent_count + 1 >= MailingORM.total_count,
+            #                 MailingORM.status.isnot(MailingStatus.CANCELLED),
+            #             ),
+            #             MailingStatus.FINISHED,
+            #         ),
+            #         else_=MailingORM.status,
+            #     ),
+            # )
         )
         await self.session.execute(stmt)
 

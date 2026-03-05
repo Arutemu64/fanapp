@@ -272,3 +272,4 @@ cython_debug/
 
 /.ruff_cache/
 /etc/
+.svelte-kit/

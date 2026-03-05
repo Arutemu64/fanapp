@@ -3,7 +3,7 @@
 	import { ArrowLeftOutline, CheckCircleSolid, UsersGroupOutline } from 'flowbite-svelte-icons';
 	import ParticipantCard from '$lib/components/voting/ParticipantCard.svelte';
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate } from '$app/navigation';
 	import type { PageProps } from './$types';
 	import type { GetVotingNominationResult } from '$lib/types/voting';
 
@@ -26,7 +26,7 @@
 	let hasVoted = $derived(participants.some((p) => p.user_vote !== null));
 
 	async function handleVoted() {
-		await invalidateAll();
+		await invalidate('app:voting:nomination');
 	}
 </script>
 
@@ -47,18 +47,16 @@
 </Button>
 
 <SectionHeader title={nomination.title}>
-	{#snippet children()}
-		<p class="mt-1 text-sm text-gray-500 sm:text-base dark:text-gray-400">
-			{#if hasVoted}
-				<span class="flex items-center gap-1 text-green-600 dark:text-green-400">
-					<CheckCircleSolid class="h-3 w-3 sm:h-4 sm:w-4" />
-					Вы уже проголосовали в этой номинации
-				</span>
-			{:else}
-				Выберите участника, чтобы отдать свой голос
-			{/if}
-		</p>
-	{/snippet}
+	<p class="mt-1 text-sm text-gray-500 sm:text-base dark:text-gray-400">
+		{#if hasVoted}
+			<span class="flex items-center gap-1 text-green-600 dark:text-green-400">
+				<CheckCircleSolid class="h-3 w-3 sm:h-4 sm:w-4" />
+				Вы уже проголосовали в этой номинации
+			</span>
+		{:else}
+			Выберите участника, чтобы отдать свой голос
+		{/if}
+	</p>
 </SectionHeader>
 
 <!-- Floating Control Center -->

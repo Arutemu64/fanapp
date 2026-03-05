@@ -1,17 +1,20 @@
 services:
   web:
-    build: .
+    build: ./backend
     depends_on:
       - migration
     volumes:
-      - bot-data:/media/bot-data
+      - ./backend/config:/run/config:ro
     env_file:
       - .env
+    environment:
+      - PUSH__PRIVATE_KEY_PATH=/run/config/private_key.pem
+      - PUSH__PUBLIC_KEY_PATH=/run/config/public_key.pem
+      - PUSH__SUBSCRIBER=${PUSH__SUBSCRIBER}
     ports:
       - '127.0.0.1:${WEB__PORT}:${WEB__PORT}'
     command: [ "python", "-m", "fanfan.main.web" ]
     restart: unless-stopped
-    profiles: [ "web" ]
     stop_signal: SIGINT
 
   db:
@@ -41,9 +44,13 @@ services:
       - nats
       - redis
     volumes:
-      - bot-data:/media/bot-data
+      - ./backend/config:/run/config:ro
     env_file:
       - .env
+    environment:
+      - PUSH__PRIVATE_KEY_PATH=/run/config/private_key.pem
+      - PUSH__PUBLIC_KEY_PATH=/run/config/public_key.pem
+      - PUSH__SUBSCRIBER=${PUSH__SUBSCRIBER}
     command:
       [
         "faststream",
@@ -58,12 +65,11 @@ services:
     restart: unless-stopped
 
   migration:
-    build: .
+    build: ./backend
     depends_on:
       db:
         condition: service_healthy
     volumes:
-      - bot-data:/media/bot-data
       - ./alembic.ini:/app/alembic.ini
     env_file:
       - .env
@@ -119,7 +125,6 @@ services:
       retries: 5
 
 volumes:
-  bot-data: { }
   db-data: { }
   pgbackup-data: { }
   redis-data: { }

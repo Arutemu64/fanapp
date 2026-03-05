@@ -1,3 +1,59 @@
+# Mission
+
+Build a helper web app for "FAN FAN", a Russian anime convention.
+Optimize every change for utility, clarity, and mobile responsiveness.
+
+# Stack
+
+- Framework: SvelteKit with Svelte 5 runes
+- UI library: Flowbite-Svelte
+- Styling: Tailwind CSS
+- Backend: FastAPI
+- User-facing language: Russian
+
+# Instruction Priority
+
+1. Follow this file first.
+2. Then follow the relevant documents in `docs/`.
+3. Then follow established project patterns already present in the codebase.
+4. If instructions conflict, prefer the more specific and more local rule.
+
+# Core Principles
+
+- Prefer small, compatible changes over broad rewrites.
+- Default to SSR-safe solutions.
+- Reuse existing project utilities, generated types, and shared clients before adding new abstractions.
+- Keep implementations easy for a junior developer to read and maintain.
+- Treat mobile as the default viewport.
+- Keep UI text concise, useful, and in Russian.
+
+# Required Reading Before Editing
+
+Read only the documents relevant to the task, but do it before making changes.
+
+- API integration, request types, or client usage: `docs/api.md`
+- Data loading, SSR, browser-only APIs, environment handling: `docs/ssr.md`
+- Components, layout, accessibility, copy, and states: `docs/ui.md`
+
+# Implementation Rules
+
+- Prefer SSR-first data flows for initial page content.
+- Use Flowbite-Svelte components when they cover the need.
+- Do not invent API shapes that already exist in generated types.
+- Do not move sensitive auth or session logic into client-only storage.
+- Do not add custom visual patterns when the project already has an established equivalent.
+- Keep documentation and code aligned when behavior or constraints change.
+
+# Documentation Rules
+
+- Write instructions as short imperative bullets.
+- Prefer explicit required and forbidden rules over narrative explanation.
+- Use stable section titles so future agents can scan quickly.
+- Avoid code examples in project guidance documents unless explicitly requested.
+- Keep guidance actionable and tied to concrete files, workflows, or acceptance criteria.
+
+# Tooling Workflow
+
 ## Available MCP Servers
 
 ### Svelte MCP Server

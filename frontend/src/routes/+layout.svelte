@@ -41,6 +41,30 @@
 
 	let activeUrl = $derived(page.url.pathname);
 	let user = $derived(data.user);
+	let avatarInitials = $derived.by(() => {
+		const rawUsername = user?.username?.trim();
+
+		if (!rawUsername) {
+			return 'П';
+		}
+
+		const username = rawUsername.replace(/^@/, '');
+
+		if (!username) {
+			return 'П';
+		}
+
+		const parts = username.split(/[\s._-]+/).filter(Boolean);
+
+		if (parts.length >= 2) {
+			const firstInitial = parts[0]?.[0] ?? '';
+			const secondInitial = parts[1]?.[0] ?? '';
+
+			return `${firstInitial}${secondInitial}`.toUpperCase();
+		}
+
+		return username.slice(0, 2).toUpperCase();
+	});
 
 	const sidebarUi = uiHelpers();
 	let isSidebarOpen = $derived(sidebarUi.isOpen);
@@ -142,7 +166,7 @@
 				{/if}
 				<DarkMode class="rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800" />
 				{#if user}
-					<Avatar id="avatar-menu" class="cursor-pointer" />
+					<Avatar id="avatar-menu" class="cursor-pointer">{avatarInitials}</Avatar>
 					<Dropdown placement="bottom-end" triggeredBy="#avatar-menu">
 						<DropdownHeader>
 							<span class="block text-sm text-gray-900 dark:text-white"

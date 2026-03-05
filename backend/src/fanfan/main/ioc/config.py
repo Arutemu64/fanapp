@@ -6,6 +6,7 @@ from fanfan.adapters.config.models import (
 from fanfan.adapters.config.parsers import get_config
 from fanfan.adapters.debug.config import DebugConfig
 from fanfan.adapters.mail.config import MailConfig
+from fanfan.adapters.notifications.config import PushConfig
 from fanfan.presentation.web.config import WebConfig
 
 
@@ -27,3 +28,7 @@ class ConfigProvider(Provider):
     @provide
     def get_mail_config(self, config: EnvConfig) -> MailConfig:
         return config.mail
+
+    @provide
+    def get_push_config(self, config: EnvConfig) -> PushConfig:
+        return config.push
