@@ -38,9 +38,10 @@ class SendEmailVerification:
         if user.email is None:
             raise UserHasNoEmail
 
-        token, nonce = self.email_verification.generate_token(user_id=user.id)
-        await self.token_registry.issue_email_verification_nonce(
-            nonce=nonce,
+        token = self.email_verification.generate_token(user_id=user.id)
+        await self.token_registry.issue_email_verification_token(
+            token=token,
+            user_id=user.id,
             ttl_seconds=EMAIL_VERIFY_MAX_AGE_SECONDS,
         )
 
