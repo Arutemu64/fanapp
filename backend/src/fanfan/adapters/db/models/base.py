@@ -1,6 +1,6 @@
 import datetime
 
-from sqlalchemy import DateTime, MetaData, func
+from sqlalchemy import DateTime, MetaData, func, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr, mapped_column
 
 metadata = MetaData(
@@ -12,6 +12,8 @@ metadata = MetaData(
         "pk": "pk_%(table_name)s",
     },
 )
+
+UUID_ID_SERVER_DEFAULT = text("gen_random_uuid()")
 
 
 class BaseORM(DeclarativeBase):

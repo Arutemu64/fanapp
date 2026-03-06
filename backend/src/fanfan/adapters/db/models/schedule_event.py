@@ -10,7 +10,7 @@ from sqlalchemy.orm import (
     mapped_column,
 )
 
-from fanfan.adapters.db.models.base import BaseORM
+from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
 from fanfan.adapters.db.models.mixins.order import OrderMixin
 from fanfan.core.vo.schedule_event import ScheduleEventId, ScheduleEventPublicNumber
 
@@ -19,7 +19,10 @@ class ScheduleEventORM(BaseORM, OrderMixin):
     __tablename__ = "schedule"
 
     id: Mapped[ScheduleEventId] = mapped_column(
-        Uuid(as_uuid=True), primary_key=True, default=uuid7
+        Uuid(as_uuid=True),
+        primary_key=True,
+        default=uuid7,
+        server_default=UUID_ID_SERVER_DEFAULT,
     )
     public_id: Mapped[ScheduleEventPublicNumber] = mapped_column(unique=True)
     title: Mapped[str] = mapped_column(index=True)
