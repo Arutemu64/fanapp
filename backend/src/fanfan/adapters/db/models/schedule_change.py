@@ -4,7 +4,7 @@ from sqlalchemy import ForeignKey, Uuid
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from fanfan.adapters.db.models.base import BaseORM
+from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
 from fanfan.adapters.db.models.schedule_event import ScheduleEventORM
 from fanfan.adapters.db.models.user import UserORM
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
@@ -16,7 +16,10 @@ class ScheduleChangeORM(BaseORM):
     __tablename__ = "schedule_changes"
 
     id: Mapped[ScheduleChangeId] = mapped_column(
-        Uuid(as_uuid=True), primary_key=True, default=uuid7
+        Uuid(as_uuid=True),
+        primary_key=True,
+        default=uuid7,
+        server_default=UUID_ID_SERVER_DEFAULT,
     )
     # TODO should I use lookup table too?
     type: Mapped[ScheduleChangeType] = mapped_column(

@@ -13,7 +13,7 @@ from sqlalchemy.orm import (
     relationship,
 )
 
-from fanfan.adapters.db.models.base import BaseORM
+from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
 from fanfan.core.vo.user import UserId, Username, UserRole
 
 if TYPE_CHECKING:
@@ -29,7 +29,10 @@ class UserORM(BaseORM):
     __tablename__ = "users"
 
     id: Mapped[UserId] = mapped_column(
-        Uuid(as_uuid=True), primary_key=True, default=uuid7
+        Uuid(as_uuid=True),
+        primary_key=True,
+        default=uuid7,
+        server_default=UUID_ID_SERVER_DEFAULT,
     )
     username: Mapped[Username | None] = mapped_column(index=True, unique=True)
     hashed_password: Mapped[str | None] = mapped_column()
