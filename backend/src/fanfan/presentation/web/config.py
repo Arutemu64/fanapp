@@ -10,19 +10,3 @@ class WebConfig(BaseModel):
     secret_key: SecretStr
     jwt_issuer: str = "fanapp-api"
     jwt_audience: str = "fanapp-web"
-
-    def build_admin_auth_url(self, token: str) -> str:
-        url: HttpUrl = HttpUrl.build(
-            scheme=self.base_url.scheme,
-            host=self.base_url.host,
-            path=f"{self.path.lstrip('/')}/admin/auth?token={token}",
-        )
-        return url.unicode_string()
-
-    def build_qr_scanner_url(self) -> str:
-        url: HttpUrl = HttpUrl.build(
-            scheme=self.base_url.scheme,
-            host=self.base_url.host,
-            path=f"{self.path.lstrip('/')}/qr_scanner",
-        )
-        return url.unicode_string()

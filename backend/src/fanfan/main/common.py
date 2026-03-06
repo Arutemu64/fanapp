@@ -1,6 +1,3 @@
-import asyncio
-import sys
-
 from fanfan.adapters.config.parsers import get_config
 from fanfan.adapters.debug.logging import setup_logging
 from fanfan.adapters.debug.telemetry import setup_telemetry
@@ -23,7 +20,3 @@ def init(service_name: str) -> None:
         if config.debug.logfire_token
         else None,
     )
-
-    # Fix asyncio issues on Windows
-    if sys.platform == "win32":
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())

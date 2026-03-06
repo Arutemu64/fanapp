@@ -5,62 +5,55 @@
 
 # ---- Frontend (SvelteKit + pnpm) ----
 frontend-install:
-	cd frontend && pnpm install
+    cd frontend && pnpm install
 
 frontend-dev:
-	cd frontend && pnpm dev
+    cd frontend && pnpm dev
 
 frontend-check:
-	cd frontend && pnpm check
+    cd frontend && pnpm check
 
 frontend-lint:
-	cd frontend && pnpm lint
+    cd frontend && pnpm lint
 
 frontend-build:
-	cd frontend && pnpm build
+    cd frontend && pnpm build
 
 frontend-generate-api:
-	cd frontend && pnpm generate-api
+    cd frontend && pnpm generate-api
 
 # ---- Backend (FastAPI + uv) ----
 backend-install:
-	cd backend && uv sync --all-groups
+    cd backend && uv sync --all-groups
 
 backend-dev:
-	cd backend && uv run python -m fanfan.main.web
+    cd backend && uv run python -m fanfan.main.web
 
 backend-format:
-	cd backend && uv run ruff format src/fanfan --respect-gitignore
+    cd backend && uv run ruff format src/fanfan --respect-gitignore
 
 backend-check:
-	cd backend && uv run ruff check src/fanfan --respect-gitignore --fix --unsafe-fixes
+    cd backend && uv run ruff check src/fanfan --respect-gitignore --fix --unsafe-fixes
+
+backend-sync-cosplay2:
+    cd backend && uv run ruff check src/fanfan --respect-gitignore --fix --unsafe-fixes
 
 backend-lint: backend-format backend-check
 
 backend-migrate:
-	cd backend && uv run alembic upgrade head
+    cd backend && uv run alembic upgrade head
 
 backend-generate MIGRATION_NAME:
-	cd backend && uv run alembic revision --autogenerate -m "{{MIGRATION_NAME}}"
+    cd backend && uv run alembic revision --autogenerate -m "{{ MIGRATION_NAME }}"
 
 # ---- Docker infra helpers ----
-infra-up-web:
-	docker compose --profile web up -d db redis migration web
+run-dev:
+    docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile core up
 
-infra-logs-web:
-	docker compose logs -f web db redis migration
-
-infra-stop-web:
-	docker compose stop web db redis migration
-
-# ---- Aggregates ----
-install: frontend-install backend-install
-
-lint: frontend-lint backend-lint
-
-check: frontend-check backend-check
+run-prod:
+    docker compose -f docker-compose.yml --profile core --profile ops up
 
 dev:
-	@echo "Run in separate terminals:"
-	@echo "  just backend-dev"
-	@echo "  just frontend-dev"
+    @echo "Run in separate terminals:"
+    @echo "  just backend-dev"
+    @echo "  just frontend-dev"

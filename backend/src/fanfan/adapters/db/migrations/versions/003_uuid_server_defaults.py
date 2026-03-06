@@ -22,7 +22,7 @@ UUID_ID_TABLES = (
     "notifications",
     "participant_values",
     "participants",
-    "push_subscriptions",
+    "push_subs",
     "schedule",
     "schedule_changes",
     "social_accounts",

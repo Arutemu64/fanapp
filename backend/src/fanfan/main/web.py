@@ -18,11 +18,10 @@ def main():
         uvicorn.run(
             "fanfan.presentation.web.factory:create_app",
             factory=True,
-            # reload=True,
+            reload=True,
             host=config.web.host,
             port=config.web.port,
             root_path="/api",
-            proxy_headers=True,
             forwarded_allow_ips=["*"],
             log_level=config.debug.logging_level,
             log_config=None,

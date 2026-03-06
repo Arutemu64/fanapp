@@ -1,44 +1,43 @@
 services:
-  web:
+  frontend:
+    build:
+      context: ./frontend
+      target: prod
+    depends_on:
+      - api
+    environment:
+      PUBLIC_API_URL: "http://localhost:8000"
+      PRIVATE_API_URL: "http://api:8000"
+      HOST: "0.0.0.0"
+      PORT: "5173"
+    ports:
+      - '5173:5173'
+    restart: unless-stopped
+    profiles: [ "core" ]
+
+  api:
     build: ./backend
     depends_on:
       - migration
+      - redis
+      - nats
     volumes:
       - ./backend/config:/run/config:ro
     env_file:
       - .env
     environment:
-      - PUSH__PRIVATE_KEY_PATH=/run/config/private_key.pem
-      - PUSH__PUBLIC_KEY_PATH=/run/config/public_key.pem
-      - PUSH__SUBSCRIBER=${PUSH__SUBSCRIBER}
-    ports:
-      - '127.0.0.1:${WEB__PORT}:${WEB__PORT}'
-    command: [ "python", "-m", "fanfan.main.web" ]
+      DB__HOST: "db"
+      REDIS__HOST: "redis"
+      NATS__HOST: "nats"
+      UVICORN_HOST: "0.0.0.0"
+      UVICORN_PORT: "8000"
+      UVICORN_FORWARDED_ALLOW_IPS: "*"
     restart: unless-stopped
     stop_signal: SIGINT
-
-  db:
-    image: postgres:17-alpine
-    volumes:
-      - db-data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=${DB__USER}
-      - POSTGRES_PASSWORD=${DB__PASSWORD}
-      - POSTGRES_DB=${DB__NAME}
-    env_file:
-      - .env
-    ports:
-      - '127.0.0.1:${DB__EXPOSED_PORT}:5432'
-    restart: always
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
-      interval: 2s
-      timeout: 60s
-      retries: 10
-      start_period: 5s
+    profiles: [ "core" ]
 
   faststream:
-    build: .
+    build: ./backend
     depends_on:
       - migration
       - nats
@@ -47,45 +46,53 @@ services:
       - ./backend/config:/run/config:ro
     env_file:
       - .env
-    environment:
-      - PUSH__PRIVATE_KEY_PATH=/run/config/private_key.pem
-      - PUSH__PUBLIC_KEY_PATH=/run/config/public_key.pem
-      - PUSH__SUBSCRIBER=${PUSH__SUBSCRIBER}
     command:
       [
         "faststream",
         "run",
         "--factory",
         "fanfan.main.faststream:create_app",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        "8000"
       ]
     restart: unless-stopped
+    profiles: [ "core" ]
 
   migration:
     build: ./backend
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy
     volumes:
-      - ./alembic.ini:/app/alembic.ini
-    env_file:
-      - .env
+      - ./backend/alembic.ini:/app/alembic.ini
     command: [ "alembic", "upgrade", "head" ]
     restart: on-failure
+    profiles: [ "core" ]
+
+  db:
+    image: postgres:17-alpine
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: "${DB__USER}"
+      POSTGRES_PASSWORD: "${DB__PASSWORD}"
+      POSTGRES_DB: "${DB__NAME}"
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 2s
+      timeout: 60s
+      retries: 10
+      start_period: 5s
+    profiles: [ "core" ]
 
   nats:
     image: docker.io/nats:alpine
     volumes:
       - nats-data:/data
-    env_file:
-      - .env
-    ports:
-      - '127.0.0.1:${NATS__EXPOSED_PORT}:4222'
     command: "--js --sd=/data --user ${NATS__USER} --pass ${NATS__PASSWORD}"
     restart: always
+    profiles: [ "core" ]
 
   pgbackup:
     image: prodrigestivill/postgres-backup-local
@@ -105,24 +112,26 @@ services:
       - BACKUP_KEEP_WEEKS=4
       - BACKUP_KEEP_MONTHS=6
     restart: always
+    profiles: [ "ops" ]
 
   redis:
     image: redis:7-alpine
     volumes:
       - redis-data:/data
       - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
-    env_file:
-      - .env
-    ports:
-      - '127.0.0.1:${REDIS__EXPOSED_PORT}:6379'
     command: "redis-server /usr/local/etc/redis/redis.conf --requirepass
       ${REDIS__PASSWORD}"
     restart: always
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test:
+        [
+          "CMD-SHELL",
+          "redis-cli -a \"$${REDIS__PASSWORD}\" ping | grep PONG",
+        ]
       interval: 5s
       timeout: 20s
       retries: 5
+    profiles: [ "core" ]
 
 volumes:
   db-data: { }

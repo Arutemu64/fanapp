@@ -56,6 +56,10 @@ Read only the documents relevant to the task, but do it before making changes.
 
 ## Available MCP Servers
 
+### Context7 MCP Server
+
+Always use Context7 MCP when I need library/API documentation, code generation, setup or configuration steps without me having to explicitly ask.
+
 ### Svelte MCP Server
 
 You have access to comprehensive Svelte 5 and SvelteKit documentation. Here's how to use the available tools effectively:

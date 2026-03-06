@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+
 from redis.asyncio import Redis
 
 from fanfan.application.common.auth_token_registry import AuthTokenRegistry
