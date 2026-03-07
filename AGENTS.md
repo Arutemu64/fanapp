@@ -9,6 +9,7 @@ Optimize every change for utility, clarity, and mobile responsiveness.
 - UI library: Flowbite-Svelte
 - Styling: Tailwind CSS
 - Backend: FastAPI
+- Reverse Proxy: Caddy
 - User-facing language: Russian
 
 # Instruction Priority
@@ -24,6 +25,7 @@ Optimize every change for utility, clarity, and mobile responsiveness.
 - Default to SSR-safe solutions.
 - Reuse existing project utilities, generated types, and shared clients before adding new abstractions.
 - Keep implementations easy for a junior developer to read and maintain.
+- Include clear, beginner-friendly comments in all code you write.
 - Treat mobile as the default viewport.
 - Keep UI text concise, useful, and in Russian.
 
