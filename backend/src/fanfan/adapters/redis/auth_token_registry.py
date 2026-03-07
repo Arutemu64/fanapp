@@ -3,12 +3,11 @@ import hmac
 
 from redis.asyncio import Redis
 
-from fanfan.application.common.auth_token_registry import AuthTokenRegistry
 from fanfan.core.vo.user import UserId
 from fanfan.presentation.web.config import WebConfig
 
 
-class RedisAuthTokenRegistry(AuthTokenRegistry):
+class RedisAuthTokenRegistry:
     def __init__(self, redis: Redis, config: WebConfig):
         self.redis = redis
         self._secret = config.secret_key.get_secret_value().encode()
@@ -22,12 +21,11 @@ class RedisAuthTokenRegistry(AuthTokenRegistry):
         return f"auth:email-verification:{token_hash}"
 
     def _hash_token(self, token: str) -> str:
-        digest = hmac.new(
+        return hmac.new(
             self._secret,
             token.encode(),
             hashlib.sha256,
         ).hexdigest()
-        return digest
 
     async def consume_refresh_token_jti(self, jti: str, ttl_seconds: int) -> bool:
         ttl = max(1, ttl_seconds)

@@ -3,7 +3,7 @@ import datetime
 from pydantic import BaseModel
 
 from fanfan.adapters.auth.utils.jwt import JwtTokenProcessor
-from fanfan.application.common.auth_token_registry import AuthTokenRegistry
+from fanfan.adapters.redis.auth_token_registry import RedisAuthTokenRegistry
 from fanfan.core.dto.token import Token
 from fanfan.core.exceptions.auth import RefreshTokenReused
 
@@ -13,7 +13,7 @@ class RefreshAccessTokenCommand(BaseModel):
 
 
 class RefreshAccessToken:
-    def __init__(self, jwt: JwtTokenProcessor, token_registry: AuthTokenRegistry):
+    def __init__(self, jwt: JwtTokenProcessor, token_registry: RedisAuthTokenRegistry):
         self.jwt = jwt
         self.token_registry = token_registry
 

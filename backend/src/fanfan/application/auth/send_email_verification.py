@@ -2,7 +2,7 @@ from fastapi_mail import FastMail, MessageSchema, MessageType
 from pydantic import BaseModel, NameEmail
 
 from fanfan.adapters.db.gateways.users import UserGateway
-from fanfan.application.common.auth_token_registry import AuthTokenRegistry
+from fanfan.adapters.redis.auth_token_registry import RedisAuthTokenRegistry
 from fanfan.core.exceptions.users import UserHasNoEmail, UserNotFound
 from fanfan.core.services.email_verification import (
     EMAIL_VERIFY_MAX_AGE_SECONDS,
@@ -23,7 +23,7 @@ class SendEmailVerification:
         email_verification: EmailVerificationService,
         web_config: WebConfig,
         mail: FastMail,
-        token_registry: AuthTokenRegistry,
+        token_registry: RedisAuthTokenRegistry,
     ):
         self.mail = mail
         self.web_config = web_config
