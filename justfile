@@ -19,7 +19,7 @@ frontend-lint:
 frontend-build:
     cd frontend && pnpm build
 
-frontend-generate-api:
+frontend-generate-api: backend-generate-openapi
     cd frontend && pnpm generate-api
 
 # ---- Backend (FastAPI + uv) ----
@@ -28,6 +28,9 @@ backend-install:
 
 backend-dev:
     cd backend && uv run python -m fanfan.main.web
+
+backend-generate-openapi:
+    cd backend && uv run python -m fanfan.main.generate_openapi
 
 backend-format:
     cd backend && uv run ruff format src/fanfan --respect-gitignore
