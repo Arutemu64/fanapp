@@ -22,7 +22,7 @@ services:
       - redis
       - nats
     volumes:
-      - ./backend/config:/run/config:ro
+      - ./config:/run/config:ro
     env_file:
       - .env
     environment:
@@ -32,6 +32,8 @@ services:
       UVICORN_HOST: "0.0.0.0"
       UVICORN_PORT: "8000"
       UVICORN_FORWARDED_ALLOW_IPS: "*"
+    ports:
+      - '8000:8000'
     restart: unless-stopped
     stop_signal: SIGINT
     profiles: [ "core" ]
@@ -43,7 +45,7 @@ services:
       - nats
       - redis
     volumes:
-      - ./backend/config:/run/config:ro
+      - ./config:/run/config:ro
     env_file:
       - .env
     command:
@@ -77,7 +79,9 @@ services:
       POSTGRES_USER: "${DB__USER}"
       POSTGRES_PASSWORD: "${DB__PASSWORD}"
       POSTGRES_DB: "${DB__NAME}"
-    restart: always
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
       interval: 2s
@@ -91,7 +95,9 @@ services:
     volumes:
       - nats-data:/data
     command: "--js --sd=/data --user ${NATS__USER} --pass ${NATS__PASSWORD}"
-    restart: always
+    ports:
+      - "4222:4222"
+    restart: unless-stopped
     profiles: [ "core" ]
 
   pgbackup:
@@ -111,7 +117,7 @@ services:
       - BACKUP_KEEP_DAYS=7
       - BACKUP_KEEP_WEEKS=4
       - BACKUP_KEEP_MONTHS=6
-    restart: always
+    restart: unless-stopped
     profiles: [ "ops" ]
 
   redis:
@@ -121,7 +127,9 @@ services:
       - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
     command: "redis-server /usr/local/etc/redis/redis.conf --requirepass
       ${REDIS__PASSWORD}"
-    restart: always
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
     healthcheck:
       test:
         [

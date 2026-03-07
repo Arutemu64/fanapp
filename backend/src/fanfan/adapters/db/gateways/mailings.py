@@ -1,11 +1,11 @@
-from sqlalchemy import and_, case, delete, select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.mappers.mailing import MailingMapper
 from fanfan.adapters.db.models import MailingORM
 from fanfan.core.dto.mailing import MailingDTO
 from fanfan.core.models.mailing import Mailing
-from fanfan.core.vo.mailing import MailingId, MailingStatus
+from fanfan.core.vo.mailing import MailingId
 
 
 class MailingGateway:

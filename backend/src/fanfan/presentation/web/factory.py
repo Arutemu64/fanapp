@@ -4,7 +4,6 @@ from contextlib import asynccontextmanager
 import logfire
 from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
