@@ -42,6 +42,8 @@ Read only the documents relevant to the task, but do it before making changes.
 - Do not invent API shapes that already exist in generated types.
 - Do not move sensitive auth or session logic into client-only storage.
 - Do not add custom visual patterns when the project already has an established equivalent.
+- Create a new protocol only when at least two concrete implementations are required.
+- Replace a protocol with a concrete class when only one implementation remains.
 - Keep documentation and code aligned when behavior or constraints change.
 
 # Documentation Rules

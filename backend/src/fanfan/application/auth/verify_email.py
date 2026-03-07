@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 from fanfan.adapters.db.gateways.users import UserGateway
 from fanfan.adapters.db.uow import UnitOfWork
-from fanfan.application.common.auth_token_registry import AuthTokenRegistry
+from fanfan.adapters.redis.auth_token_registry import RedisAuthTokenRegistry
 from fanfan.core.exceptions.auth import InvalidToken
 from fanfan.core.exceptions.users import UserNotFound
 
@@ -15,7 +15,7 @@ class VerifyEmail:
     def __init__(
         self,
         user_gateway: UserGateway,
-        token_registry: AuthTokenRegistry,
+        token_registry: RedisAuthTokenRegistry,
         uow: UnitOfWork,
     ):
         self.user_gateway = user_gateway
