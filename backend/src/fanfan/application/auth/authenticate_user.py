@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 from fanfan.adapters.db.gateways.users import UserGateway
 from fanfan.core.dto.token import Token
@@ -8,7 +8,7 @@ from fanfan.core.services.security import SecurityService
 
 
 class AuthenticateUserCommand(BaseModel):
-    login: str
+    email: EmailStr
     password: str
 
 
@@ -19,13 +19,15 @@ class AuthenticateUser:
         self.dummy_hash = self.security.hash_password("dummy_password")
 
     async def __call__(self, data: AuthenticateUserCommand) -> Token:
-        user = await self.user_gateway.get_user_by_username(
-            data.login
-        ) or await self.user_gateway.get_user_by_email(data.login)
+        user = await self.user_gateway.get_user_by_email(data.email)
         if user is None:
             # Prevent timing attack
             self.security.verify_password(data.password, self.dummy_hash)
             raise UserNotFound
+        # Social-only accounts may have no password yet.
+        # Return a normal auth failure instead of crashing on password verification.
+        if user.hashed_password is None:
+            raise AuthenticationError
         if not self.security.verify_password(data.password, user.hashed_password):
             raise AuthenticationError
 

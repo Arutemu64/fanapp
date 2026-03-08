@@ -3,11 +3,14 @@ from dishka import Provider, Scope, provide
 from fanfan.application.auth.authenticate_user import AuthenticateUser
 from fanfan.application.auth.change_email import ChangeEmail
 from fanfan.application.auth.change_password import ChangePassword
+from fanfan.application.auth.login_magic_link import LoginMagicLink
 from fanfan.application.auth.login_telegram import LoginTelegram
 from fanfan.application.auth.refresh_access_token import RefreshAccessToken
 from fanfan.application.auth.register_user import RegisterUser
 from fanfan.application.auth.request_email_verification import RequestEmailVerification
+from fanfan.application.auth.request_magic_link import RequestMagicLink
 from fanfan.application.auth.send_email_verification import SendEmailVerification
+from fanfan.application.auth.send_magic_link_email import SendMagicLinkEmail
 from fanfan.application.auth.verify_email import VerifyEmail
 from fanfan.application.cosplay2.sync_cosplay2 import SyncCosplay2
 from fanfan.application.notifications.cancel_mailing import CancelMailing
@@ -125,10 +128,13 @@ class InteractorsProvider(Provider):
     update_user_settings = provide(UpdateUserSettings)
     change_password = provide(ChangePassword)
     send_email_verification = provide(SendEmailVerification)
+    send_magic_link_email = provide(SendMagicLinkEmail)
     request_email_verification = provide(RequestEmailVerification)
+    request_magic_link = provide(RequestMagicLink)
     verify_email = provide(VerifyEmail)
     change_email = provide(ChangeEmail)
     refresh_access_token = provide(RefreshAccessToken)
+    login_magic_link = provide(LoginMagicLink)
     login_telegram = provide(LoginTelegram)
 
     get_participants_page = provide(GetVotingNomination)

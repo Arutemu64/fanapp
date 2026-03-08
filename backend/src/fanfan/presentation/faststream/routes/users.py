@@ -6,7 +6,15 @@ from fanfan.application.auth.send_email_verification import (
     SendEmailVerification,
     SendEmailVerificationCommand,
 )
-from fanfan.core.events.users import CreatedUserEvent, EmailVerificationRequestedEvent
+from fanfan.application.auth.send_magic_link_email import (
+    SendMagicLinkEmail,
+    SendMagicLinkEmailCommand,
+)
+from fanfan.core.events.users import (
+    CreatedUserEvent,
+    EmailMagicLinkRequestedEvent,
+    EmailVerificationRequestedEvent,
+)
 from fanfan.presentation.faststream.jstream import stream
 
 users_router = NatsRouter()
@@ -38,3 +46,17 @@ async def send_email_verification_on_request(
     interactor: FromDishka[SendEmailVerification],
 ):
     await interactor(SendEmailVerificationCommand(user_id=data.user_id))
+
+
+@users_router.subscriber(
+    EmailMagicLinkRequestedEvent.subject,
+    stream=stream,
+    pull_sub=PullSub(),
+    durable="send_magic_link_email",
+)
+@inject
+async def send_magic_link_email(
+    data: EmailMagicLinkRequestedEvent,
+    interactor: FromDishka[SendMagicLinkEmail],
+):
+    await interactor(SendMagicLinkEmailCommand(user_id=data.user_id))

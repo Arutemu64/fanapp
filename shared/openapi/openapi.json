@@ -11,7 +11,7 @@
           "Authentication"
         ],
         "summary": "Login and get access token",
-        "description": "Authenticates user with username and password. Sets HttpOnly cookies with JWT access and refresh tokens.",
+        "description": "Authenticates user with email and password. Sets HttpOnly cookies with JWT access and refresh tokens.",
         "operationId": "login_auth_login_post",
         "requestBody": {
           "content": {
@@ -28,7 +28,7 @@
             "description": "Successfully authenticated. Tokens set in cookies."
           },
           "401": {
-            "description": "Invalid username or password.",
+            "description": "Invalid email or password.",
             "content": {
               "application/json": {
                 "schema": {
@@ -53,6 +53,141 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/request-magic-link": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Request email magic link",
+        "description": "Sends a one-time sign-in link to the requested email address. Creates an account automatically when the email is new.",
+        "operationId": "request_magic_link_auth_request_magic_link_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestMagicLinkCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "If the email is valid, the magic link was queued.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login-magic-link": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Login with email magic link",
+        "description": "Consumes a one-time email magic link token and sets auth cookies.",
+        "operationId": "login_magic_link_auth_login_magic_link_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginMagicLinkCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successfully authenticated. Tokens set in cookies."
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Magic link is invalid or has already been used.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
                 }
               }
             }
@@ -2583,59 +2718,19 @@
       },
       "Body_login_auth_login_post": {
         "properties": {
-          "grant_type": {
-            "anyOf": [
-              {
-                "type": "string",
-                "pattern": "^password$"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Grant Type"
-          },
-          "username": {
+          "email": {
             "type": "string",
-            "title": "Username"
+            "format": "email",
+            "title": "Email"
           },
           "password": {
             "type": "string",
-            "format": "password",
             "title": "Password"
-          },
-          "scope": {
-            "type": "string",
-            "title": "Scope",
-            "default": ""
-          },
-          "client_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Client Id"
-          },
-          "client_secret": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "format": "password",
-            "title": "Client Secret"
           }
         },
         "type": "object",
         "required": [
-          "username",
+          "email",
           "password"
         ],
         "title": "Body_login_auth_login_post"
@@ -3040,6 +3135,19 @@
         ],
         "title": "ListVotingNominationsResult"
       },
+      "LoginMagicLinkCommand": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "title": "LoginMagicLinkCommand"
+      },
       "LoginTelegramCommand": {
         "properties": {
           "id": {
@@ -3413,6 +3521,20 @@
           "password"
         ],
         "title": "RegisterUserCommand"
+      },
+      "RequestMagicLinkCommand": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "RequestMagicLinkCommand"
       },
       "ScheduleChangeEventDTO": {
         "properties": {

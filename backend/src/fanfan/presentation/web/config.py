@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from pydantic import BaseModel, HttpUrl, SecretStr
 
 
@@ -13,3 +15,10 @@ class WebConfig(BaseModel):
 
     # Set to True in production (HTTPS). Ensures cookies are never sent over plain HTTP.
     cookie_secure: bool = False
+
+    def build_url(self, path: str, query_params: dict[str, str] | None = None) -> str:
+        # `WEB__BASE_URL` is expected to include a trailing slash already.
+        url = f"{self.base_url.unicode_string()}{path.removeprefix('/')}"
+        if query_params is None:
+            return url
+        return f"{url}?{urlencode(query_params)}"

@@ -1,6 +1,7 @@
 from dishka import Provider, Scope, provide
 
 from fanfan.core.services.cosplay2 import Cosplay2Service
+from fanfan.core.services.email_login import EmailLoginService
 from fanfan.core.services.email_verification import EmailVerificationService
 from fanfan.core.services.notifications import NotificationService
 from fanfan.core.services.perm import PermService
@@ -17,6 +18,7 @@ class ServicesProvider(Provider):
     tickets = provide(TicketService)
     voting = provide(VotingService)
     security = provide(SecurityService)
+    email_login = provide(EmailLoginService)
     email_verification = provide(EmailVerificationService)
     notifications = provide(NotificationService)
     perm = provide(PermService)

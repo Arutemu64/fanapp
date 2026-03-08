@@ -15,9 +15,49 @@ export interface paths {
         put?: never;
         /**
          * Login and get access token
-         * @description Authenticates user with username and password. Sets HttpOnly cookies with JWT access and refresh tokens.
+         * @description Authenticates user with email and password. Sets HttpOnly cookies with JWT access and refresh tokens.
          */
         post: operations["login_auth_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/request-magic-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request email magic link
+         * @description Sends a one-time sign-in link to the requested email address. Creates an account automatically when the email is new.
+         */
+        post: operations["request_magic_link_auth_request_magic_link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/login-magic-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Login with email magic link
+         * @description Consumes a one-time email magic link token and sets auth cookies.
+         */
+        post: operations["login_magic_link_auth_login_magic_link_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -695,27 +735,13 @@ export interface components {
         };
         /** Body_login_auth_login_post */
         Body_login_auth_login_post: {
-            /** Grant Type */
-            grant_type?: string | null;
-            /** Username */
-            username: string;
             /**
-             * Password
-             * Format: password
+             * Email
+             * Format: email
              */
+            email: string;
+            /** Password */
             password: string;
-            /**
-             * Scope
-             * @default
-             */
-            scope: string;
-            /** Client Id */
-            client_id?: string | null;
-            /**
-             * Client Secret
-             * Format: password
-             */
-            client_secret?: string | null;
         };
         /** ChangeEmailCommand */
         ChangeEmailCommand: {
@@ -848,6 +874,11 @@ export interface components {
         ListVotingNominationsResult: {
             /** Nominations */
             nominations: components["schemas"]["NominationVotingDTO"][];
+        };
+        /** LoginMagicLinkCommand */
+        LoginMagicLinkCommand: {
+            /** Token */
+            token: string;
         };
         /** LoginTelegramCommand */
         LoginTelegramCommand: {
@@ -995,6 +1026,14 @@ export interface components {
             email: string;
             /** Password */
             password: string;
+        };
+        /** RequestMagicLinkCommand */
+        RequestMagicLinkCommand: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
         };
         /** ScheduleChangeEventDTO */
         ScheduleChangeEventDTO: {
@@ -1296,7 +1335,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Invalid username or password. */
+            /** @description Invalid email or password. */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -1307,6 +1346,124 @@ export interface operations {
             };
             /** @description Access denied. */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    request_magic_link_auth_request_magic_link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestMagicLinkCommand"];
+            };
+        };
+        responses: {
+            /** @description If the email is valid, the magic link was queued. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    login_magic_link_auth_login_magic_link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginMagicLinkCommand"];
+            };
+        };
+        responses: {
+            /** @description Successfully authenticated. Tokens set in cookies. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Magic link is invalid or has already been used. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not found. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -14,3 +14,9 @@ class EmailVerificationRequestedEvent(AppEvent):
     subject: ClassVar[str] = "users.email_verification_requested"
 
     user_id: UserId
+
+
+class EmailMagicLinkRequestedEvent(AppEvent):
+    subject: ClassVar[str] = "users.email_magic_link_requested"
+
+    user_id: UserId

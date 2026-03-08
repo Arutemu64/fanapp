@@ -3,8 +3,8 @@ from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response
+from pydantic import BaseModel, EmailStr, Field
 from redis.exceptions import RedisError
 from starlette import status
 
@@ -26,6 +26,10 @@ from fanfan.application.auth.change_password import (
     ChangePassword,
     ChangePasswordCommand,
 )
+from fanfan.application.auth.login_magic_link import (
+    LoginMagicLink,
+    LoginMagicLinkCommand,
+)
 from fanfan.application.auth.login_telegram import LoginTelegram, LoginTelegramCommand
 from fanfan.application.auth.refresh_access_token import (
     RefreshAccessToken,
@@ -33,6 +37,10 @@ from fanfan.application.auth.refresh_access_token import (
 )
 from fanfan.application.auth.register_user import RegisterUser, RegisterUserCommand
 from fanfan.application.auth.request_email_verification import RequestEmailVerification
+from fanfan.application.auth.request_magic_link import (
+    RequestMagicLink,
+    RequestMagicLinkCommand,
+)
 from fanfan.application.auth.verify_email import VerifyEmail, VerifyEmailCommand
 from fanfan.core.dto.user import UserBaseDTO
 from fanfan.core.exceptions.auth import (
@@ -59,6 +67,19 @@ auth_router = APIRouter(tags=["Authentication"], prefix="/auth")
 # Derive max_age from JWT TTL constants so they never drift out of sync.
 ACCESS_TOKEN_MAX_AGE = int(ACCESS_TOKEN_TTL.total_seconds())  # 900s (15 min)
 REFRESH_TOKEN_MAX_AGE = int(REFRESH_TOKEN_TTL.total_seconds())  # 604800s (7 days)
+
+
+class EmailPasswordLoginForm(BaseModel):
+    email: EmailStr = Field(...)
+    password: str = Field(...)
+
+    @classmethod
+    def as_form(
+        cls,
+        email: Annotated[EmailStr, Form(...)],
+        password: Annotated[str, Form(...)],
+    ) -> "EmailPasswordLoginForm":
+        return cls(email=email, password=password)
 
 
 def _set_auth_cookies(
@@ -105,28 +126,28 @@ def _delete_auth_cookies(response: Response, config: WebConfig) -> None:
     "/login",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Login and get access token",
-    description="Authenticates user with username and password. "
+    description="Authenticates user with email and password. "
     "Sets HttpOnly cookies with JWT access and refresh tokens.",
     responses={
         204: {"description": "Successfully authenticated. Tokens set in cookies."},
         401: {
             "model": ErrorMessage,
-            "description": "Invalid username or password.",
+            "description": "Invalid email or password.",
         },
     },
 )
 @inject
 async def login(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    form_data: Annotated[
+        EmailPasswordLoginForm, Depends(EmailPasswordLoginForm.as_form)
+    ],
     interactor: FromDishka[AuthenticateUser],
     config: FromDishka[WebConfig],
     response: Response,
 ) -> None:
     try:
         token = await interactor(
-            AuthenticateUserCommand(
-                login=form_data.username, password=form_data.password
-            )
+            AuthenticateUserCommand(email=form_data.email, password=form_data.password)
         )
     except (UserNotFound, AuthenticationError) as e:
         raise HTTPException(
@@ -136,6 +157,68 @@ async def login(
         ) from e
 
     # Tokens go into HttpOnly cookies only — not in the response body.
+    _set_auth_cookies(response, token.access_token, token.refresh_token, config)
+
+
+@auth_router.post(
+    "/request-magic-link",
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Request email magic link",
+    description="Sends a one-time sign-in link to the requested email address. "
+    "Creates an account automatically when the email is new.",
+    responses={
+        202: {
+            "description": (
+                "If the email is valid, the magic link was queued."
+            ),
+        },
+    },
+)
+@inject
+async def request_magic_link(
+    data: RequestMagicLinkCommand,
+    interactor: FromDishka[RequestMagicLink],
+) -> None:
+    await interactor(data)
+
+
+@auth_router.post(
+    "/login-magic-link",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Login with email magic link",
+    description="Consumes a one-time email magic link token and sets auth cookies.",
+    responses={
+        204: {"description": "Successfully authenticated. Tokens set in cookies."},
+        400: {
+            "model": ErrorMessage,
+            "description": "Magic link is invalid or has already been used.",
+        },
+        404: {
+            "model": ErrorMessage,
+            "description": "User not found.",
+        },
+    },
+)
+@inject
+async def login_magic_link(
+    data: LoginMagicLinkCommand,
+    interactor: FromDishka[LoginMagicLink],
+    config: FromDishka[WebConfig],
+    response: Response,
+) -> None:
+    try:
+        token = await interactor(data)
+    except (InvalidToken, TokenExpired) as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=e.message,
+        ) from e
+    except UserNotFound as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=e.message,
+        ) from e
+
     _set_auth_cookies(response, token.access_token, token.refresh_token, config)
 
 

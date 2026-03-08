@@ -32,6 +32,7 @@ services:
       UVICORN_HOST: "0.0.0.0"
       UVICORN_PORT: "8000"
       UVICORN_FORWARDED_ALLOW_IPS: "*"
+      UVICORN_ROOT_PATH: "/api"
     ports:
       - '8000:8000'
     restart: unless-stopped

@@ -94,12 +94,7 @@ export const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
 		request.url.startsWith(PUBLIC_API_URL) || request.url.startsWith(PRIVATE_API_URL);
 	const isRetryAttempt = request.headers.has(RETRY_HEADER);
 
-	// 1. Rewrite public API URL → private (internal network) URL for SSR fetches.
-	if (request.url.startsWith(PUBLIC_API_URL)) {
-		request = new Request(request.url.replace(PUBLIC_API_URL, PRIVATE_API_URL), request);
-	}
-
-	// 2. For internal API requests: attach cookies and strip retry marker.
+	// For internal API requests: attach cookies and strip retry marker.
 	if (request.url.startsWith(PRIVATE_API_URL)) {
 		const headers = new Headers(request.headers);
 		headers.delete(RETRY_HEADER);
@@ -112,11 +107,20 @@ export const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
 		}
 	}
 
-	// 3. Execute the actual fetch.
+	// Execute the actual fetch.
 	const response = await fetch(request);
 
-	// 4. If it's not a 401 from an API call, or it's an auth endpoint, or it's already
-	//    a retry — return as-is.
+	// Mirror auth cookies from any SSR API response, not just /auth/refresh.
+	// This is required for flows like magic-link login that set cookies during a server load.
+	if (request.url.startsWith(PRIVATE_API_URL)) {
+		const setCookieHeaders = response.headers.getSetCookie();
+		if (setCookieHeaders.length > 0) {
+			applySetCookieHeaders(event, setCookieHeaders);
+		}
+	}
+
+	// If it's not a 401 from an API call, or it's an auth endpoint, or it's already
+	// a retry — return as-is.
 	const url = new URL(request.url);
 	if (
 		!isApiRequest ||
@@ -127,19 +131,13 @@ export const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
 		return response;
 	}
 
-	// 5. Got a 401 — try to refresh the access token.
+	// Got a 401 — try to refresh the access token.
 	const refreshResponse = await refreshServerAuth(event);
 	if (!refreshResponse) {
 		return response; // Refresh failed — return original 401
 	}
 
-	// 6. Apply new cookies from the refresh response so subsequent fetches see them.
-	const setCookieHeaders = refreshResponse.headers.getSetCookie();
-	if (setCookieHeaders.length > 0) {
-		applySetCookieHeaders(event, setCookieHeaders);
-	}
-
-	// 7. Retry the original request with the new cookies (once only).
+	// Retry the original request with the new cookies (once only).
 	const retryHeaders = new Headers(request.headers);
 	retryHeaders.set(RETRY_HEADER, '1');
 
