@@ -15,17 +15,14 @@
 		onSettingsUpdate?: () => void;
 	}
 
-	let {
-		user,
-		pushSubscriptions = [],
-		onSettingsUpdate
-	}: Props = $props();
+	let { user, pushSubscriptions = [], onSettingsUpdate }: Props = $props();
 
 	let isSubscribed = $state(false);
 	const toastService = getToastService();
 	let isLoading = $state(true);
 	let receiveAll = $derived(user.settings.receive_all_announcements);
 	let isSavingSettings = $state(false);
+	let isSendingTest = $state(false);
 	const pwa = getPwaService();
 	let showIosPwaModal = $state(false);
 
@@ -193,6 +190,31 @@
 		}
 		isSavingSettings = false;
 	}
+
+	async function sendTestNotification() {
+		if (isSendingTest) {
+			return;
+		}
+
+		try {
+			isSendingTest = true;
+
+			const { error } = await client.POST('/notifications/test');
+
+			if (error) {
+				console.error('API Error:', error);
+				toastService.add('Не удалось отправить тест по каналам уведомлений', 'error');
+				return;
+			}
+
+			toastService.add('Тест отправлен. Проверьте колокольчик, push и Telegram', 'success');
+		} catch (error) {
+			console.error('Failed to send test notification:', error);
+			toastService.add('Не удалось отправить тест по каналам уведомлений', 'error');
+		} finally {
+			isSendingTest = false;
+		}
+	}
 </script>
 
 <Card class="w-full max-w-none rounded-lg bg-white shadow dark:bg-gray-800">
@@ -219,6 +241,20 @@
 				}}
 				color="green"
 			/>
+		</div>
+
+		<div class="mt-4">
+			<p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
+				Проверка колокольчика, web push и Telegram, если эти каналы подключены.
+			</p>
+			<Button
+				color="light"
+				class="min-h-11 w-full sm:w-auto"
+				disabled={isSendingTest}
+				onclick={sendTestNotification}
+			>
+				{isSendingTest ? 'Отправка...' : 'Проверить уведомления'}
+			</Button>
 		</div>
 
 		<div

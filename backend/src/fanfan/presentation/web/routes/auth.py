@@ -168,9 +168,7 @@ async def login(
     "Creates an account automatically when the email is new.",
     responses={
         202: {
-            "description": (
-                "If the email is valid, the magic link was queued."
-            ),
+            "description": ("If the email is valid, the magic link was queued."),
         },
     },
 )

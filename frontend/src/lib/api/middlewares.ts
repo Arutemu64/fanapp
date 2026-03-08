@@ -44,13 +44,14 @@ export function createRefreshTokenMiddleware(): Middleware {
 
 	return {
 		onRequest({ request }) {
-			// Only clone in the browser — SSR refresh is in hooks.server.ts.
-			if (!browser) return;
 			clones.set(request, request.clone());
 		},
 
 		async onResponse({ request, response, options }) {
+			// SSR refresh is handled in hooks.server.ts — skip here to avoid
+			// a parallel broken attempt (middleware can't propagate set-cookie to browser).
 			if (!browser) return;
+
 			if (response.status !== 401) return;
 
 			// Don't refresh on auth endpoints or already-retried requests.
@@ -60,7 +61,7 @@ export function createRefreshTokenMiddleware(): Middleware {
 			// Get the cloned request for replay.
 			const originalRequest = clones.get(request);
 			clones.delete(request);
-			if (!originalRequest) return response;
+			if (!originalRequest) return;
 
 			const FnFetch = options.fetch;
 

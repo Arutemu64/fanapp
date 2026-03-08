@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { client } from '$lib/api';
 	import type { components } from '$lib/api/v1';
-	import { Dropdown, DropdownGroup, DropdownItem, Avatar } from 'flowbite-svelte';
+	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
+	import { NOTIFICATION_PREVIEW_LIMIT } from '$lib/constants/notifications';
+	import { Dropdown } from 'flowbite-svelte';
 	import { BellSolid } from 'flowbite-svelte-icons';
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount } from 'svelte';
 	import { getEventsClient } from '$lib/events.svelte';
 
 	type Notification = components['schemas']['NotificationDTO'];
@@ -15,7 +17,7 @@
 	async function loadNotifications() {
 		try {
 			const { data, error } = await client.GET('/notifications', {
-				params: { query: { limit: 5 } }
+				params: { query: { limit: NOTIFICATION_PREVIEW_LIMIT } }
 			});
 
 			if (!error && data) {
@@ -40,14 +42,14 @@
 	}
 
 	onMount(() => {
-		loadNotifications();
-	});
+		void loadNotifications();
 
-	$effect(() => {
-		if (!eventsClient) return;
+		if (!eventsClient) {
+			return;
+		}
 
 		const handleUpdate = () => {
-			loadNotifications();
+			void loadNotifications();
 		};
 
 		eventsClient.on('update_notifications', handleUpdate);
@@ -61,6 +63,7 @@
 <button
 	id="notification-bell"
 	onclick={markAllRead}
+	aria-label="Открыть уведомления"
 	class="relative rounded-lg p-2 text-gray-500 hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 focus:outline-hidden dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
 >
 	<BellSolid class="h-5 w-5" />
@@ -75,32 +78,32 @@
 	triggeredBy="#notification-bell"
 	class="w-full max-w-sm divide-y divide-gray-100 rounded-sm shadow-sm dark:divide-gray-700 dark:bg-gray-800"
 >
-	<div class="py-2 text-center font-bold text-gray-900 dark:text-white">Уведомления</div>
+	<div class="px-4 py-3">
+		<div class="text-center font-bold text-gray-900 dark:text-white">Последние уведомления</div>
+		<div class="mt-1 text-center text-xs text-gray-500 dark:text-gray-400">
+			Показаны 5 последних уведомлений
+		</div>
+	</div>
 	<div class="max-h-96 overflow-y-auto">
 		{#if notifications.length > 0}
-			<DropdownGroup>
-				{#each notifications as notification}
-					<DropdownItem class="flex items-start space-x-4 p-3 rtl:space-x-reverse">
-						<div class="flex w-full flex-col gap-1 ps-3 text-left">
-							<div class="font-semibold whitespace-normal text-gray-900 dark:text-white">
-								{notification.title}
-							</div>
-							<div class="text-sm whitespace-normal text-gray-500 dark:text-gray-400">
-								{@html notification.body}
-							</div>
-							{#if notification.created_at}
-								<div class="mt-1 text-xs text-primary-600 dark:text-primary-500">
-									{new Date(notification.created_at).toLocaleString('ru')}
-								</div>
-							{/if}
-						</div>
-					</DropdownItem>
+			<div class="space-y-2 p-3">
+				{#each notifications as notification (notification.id)}
+					<NotificationListItem {notification} compact={true} />
 				{/each}
-			</DropdownGroup>
+			</div>
 		{:else}
 			<div class="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
 				Нет новых уведомлений
 			</div>
 		{/if}
+	</div>
+
+	<div class="p-2">
+		<a
+			href="/notifications"
+			class="block rounded-lg px-3 py-2 text-center text-sm font-medium text-primary-600 hover:bg-gray-100 dark:text-primary-400 dark:hover:bg-gray-700"
+		>
+			Все уведомления
+		</a>
 	</div>
 </Dropdown>

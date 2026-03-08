@@ -44,7 +44,8 @@ class NewNotification:
             await self.notifications_service.ensure_active_mailing(mailing_id)
             notification = self._dto_to_model(data.notification)
             await self.notification_gateway.add_notification(notification)
-            await self.mailing_gateway.increment_sent(mailing_id=mailing_id)
+            if mailing_id is not None:
+                await self.mailing_gateway.increment_sent(mailing_id=mailing_id)
             await self.uow.commit()
 
         return notification.id

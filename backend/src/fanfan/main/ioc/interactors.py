@@ -31,6 +31,9 @@ from fanfan.application.notifications.send_notification_to_roles import (
 from fanfan.application.notifications.send_personal_notification import (
     SendMessage,
 )
+from fanfan.application.notifications.send_test_notification import (
+    SendTestNotification,
+)
 from fanfan.application.push_sub.create_push_subscriptions import (
     CreatePushSubscription,
 )
@@ -157,3 +160,4 @@ class InteractorsProvider(Provider):
     new_notification = provide(NewNotification)
     list_user_notifications = provide(ListUserNotifications)
     mark_all_read = provide(MarkAllRead)
+    send_test_notification = provide(SendTestNotification)

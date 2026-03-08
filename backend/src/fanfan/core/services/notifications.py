@@ -22,6 +22,9 @@ class NotificationService:
         return await self.mailing_gateway.add_mailing(mailing)
 
     async def ensure_active_mailing(self, mailing_id: MailingId) -> None:
+        if mailing_id is None:
+            return
+
         mailing = await self.mailing_gateway.get_mailing(mailing_id, lock=False)
         if mailing.status == MailingStatus.CANCELLED:
             raise MailingCancelled

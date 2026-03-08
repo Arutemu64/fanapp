@@ -1,6 +1,6 @@
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from starlette import status
 
 from fanfan.application.tickets.link_ticket import LinkTicket, LinkTicketCommand
@@ -50,6 +50,7 @@ users_router = APIRouter(tags=["Users"], prefix="/users")
 )
 @inject
 async def get_current_user(
+    request: Request,
     interactor: FromDishka[GetCurrentUser],
 ) -> CurrentUserDTO:
     return await interactor()

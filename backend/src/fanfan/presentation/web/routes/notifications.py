@@ -12,6 +12,9 @@ from fanfan.application.notifications.list_user_notifications import (
     ListUserNotificationsResult,
 )
 from fanfan.application.notifications.mark_all_read import MarkAllRead
+from fanfan.application.notifications.send_test_notification import (
+    SendTestNotification,
+)
 from fanfan.core.dto.page import Pagination
 
 notifications_router = APIRouter(tags=["Notifications"], prefix="/notifications")
@@ -51,6 +54,25 @@ async def list_user_notifications(
 @inject
 async def mark_all_notifications_read(
     interactor: FromDishka[MarkAllRead],
+) -> None:
+    await interactor()
+    return
+
+
+@notifications_router.post(
+    "/test",
+    summary="Send test notification",
+    description=(
+        "Creates a test notification for the authenticated user and sends it through "
+        "all connected channels."
+    ),
+    responses={
+        200: {"description": "Test notification created successfully."},
+    },
+)
+@inject
+async def send_test_notification(
+    interactor: FromDishka[SendTestNotification],
 ) -> None:
     await interactor()
     return

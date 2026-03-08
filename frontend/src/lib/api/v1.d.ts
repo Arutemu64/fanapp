@@ -693,6 +693,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/notifications/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send test notification
+         * @description Creates a test notification for the authenticated user and sends it through all connected channels.
+         */
+        post: operations["send_test_notification_notifications_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/push": {
         parameters: {
             query?: never;
@@ -3427,6 +3447,53 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description All notifications marked as read. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    send_test_notification_notifications_test_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Test notification created successfully. */
             200: {
                 headers: {
                     [name: string]: unknown;

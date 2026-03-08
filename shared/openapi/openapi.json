@@ -2532,6 +2532,56 @@
         }
       }
     },
+    "/notifications/test": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Send test notification",
+        "description": "Creates a test notification for the authenticated user and sends it through all connected channels.",
+        "operationId": "send_test_notification_notifications_test_post",
+        "responses": {
+          "200": {
+            "description": "Test notification created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/push": {
       "get": {
         "tags": [
