@@ -104,6 +104,7 @@ class LoginTelegram:
                 is_verified=False,
             )
             await self.user_gateway.add_user(user)
+            await self.uow.flush()
             social_id = SocialAccount(
                 user_id=user.id,
                 provider="telegram",

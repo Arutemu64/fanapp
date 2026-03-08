@@ -37,7 +37,7 @@ class Cosplay2Service:
         if nomination:
             nomination = replace(nomination, code=topic.card_code, title=topic.title)
             nomination = await self.nomination_gateway.save_nomination(nomination)
-            logger.info("Nomination %s updated", nomination.id)
+            logger.info("Nomination %s updated", nomination.cosplay2_id)
         else:
             nomination = Nomination(
                 cosplay2_id=topic.id,
@@ -64,7 +64,8 @@ class Cosplay2Service:
             if participant:
                 await self.participant_gateway.delete_participant(participant)
                 logger.error(
-                    "Participant %s deleted due to non-approved request", participant.id
+                    "Participant %s deleted due to non-approved request",
+                    participant.cosplay2_id,
                 )
             else:
                 logger.error("Request %s is not approved", request.id)
@@ -99,7 +100,7 @@ class Cosplay2Service:
                 values=participant_values,
             )
             await self.participant_gateway.save_participant(participant)
-            logger.info("Participant %s updated", participant.id)
+            logger.info("Request %s updated", participant.cosplay2_id)
         else:
             participant = Participant(
                 cosplay2_id=request.id,
@@ -109,6 +110,6 @@ class Cosplay2Service:
                 values=participant_values,
             )
             await self.participant_gateway.add_participant(participant)
-            logger.info("Participant %s added", participant.id)
+            logger.info("Request %s added", participant.cosplay2_id)
 
         return participant

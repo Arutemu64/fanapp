@@ -114,7 +114,6 @@ export const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
 
 	// 3. Execute the actual fetch.
 	const response = await fetch(request);
-	console.log(response);
 
 	// 4. If it's not a 401 from an API call, or it's an auth endpoint, or it's already
 	//    a retry — return as-is.
