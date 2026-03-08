@@ -28,9 +28,15 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Then, use a final image without uv
 FROM debian:bookworm-slim
 
+# ca-certificates are necessary for web pushes
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && update-ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 # Setup a non-root user
 RUN groupadd --system --gid 999 nonroot \
- && useradd --system --gid 999 --uid 999 --create-home nonroot
+    && useradd --system --gid 999 --uid 999 --create-home nonroot
 
 # Copy the Python version
 COPY --from=builder /python /python

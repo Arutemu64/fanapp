@@ -10,3 +10,6 @@ class WebConfig(BaseModel):
     secret_key: SecretStr
     jwt_issuer: str = "fanapp-api"
     jwt_audience: str = "fanapp-web"
+
+    # Set to True in production (HTTPS). Ensures cookies are never sent over plain HTTP.
+    cookie_secure: bool = False

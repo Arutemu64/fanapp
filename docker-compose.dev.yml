@@ -5,7 +5,7 @@ services:
     environment:
       NODE_ENV: development
       HOST: "0.0.0.0"
-      PORT: "5173"
+      PORT: "3000"
     develop:
       watch:
         - action: sync
@@ -36,7 +36,7 @@ services:
             - .venv/
         - action: rebuild
           path: ./backend/uv.lock
-  
+
   faststream:
     develop:
       watch:

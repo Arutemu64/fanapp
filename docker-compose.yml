@@ -3,15 +3,15 @@ services:
     build:
       context: ./frontend
       target: prod
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "3000"
+    env_file:
+      - ./frontend/.env
     depends_on:
       - api
-    environment:
-      PUBLIC_API_URL: "http://localhost:8000"
-      PRIVATE_API_URL: "http://api:8000"
-      HOST: "0.0.0.0"
-      PORT: "5173"
     ports:
-      - '5173:5173'
+      - '3000:3000'
     restart: unless-stopped
     profiles: [ "core" ]
 
@@ -48,13 +48,7 @@ services:
       - ./config:/run/config:ro
     env_file:
       - .env
-    command:
-      [
-        "faststream",
-        "run",
-        "--factory",
-        "fanfan.main.faststream:create_app",
-      ]
+    command: [ "faststream", "run", "--factory", "fanfan.main.faststream:create_app" ]
     restart: unless-stopped
     profiles: [ "core" ]
 
@@ -125,24 +119,19 @@ services:
     volumes:
       - redis-data:/data
       - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
-    command: "redis-server /usr/local/etc/redis/redis.conf --requirepass
-      ${REDIS__PASSWORD}"
+    command: "redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS__PASSWORD}"
     ports:
       - "6379:6379"
     restart: unless-stopped
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "redis-cli -a \"$${REDIS__PASSWORD}\" ping | grep PONG",
-        ]
+      test: [ "CMD-SHELL", "redis-cli -a \"$${REDIS__PASSWORD}\" ping | grep PONG" ]
       interval: 5s
       timeout: 20s
       retries: 5
     profiles: [ "core" ]
 
 volumes:
-  db-data: { }
-  pgbackup-data: { }
-  redis-data: { }
-  nats-data: { }
+  db-data: {}
+  pgbackup-data: {}
+  redis-data: {}
+  nats-data: {}

@@ -1,3 +1,5 @@
+import datetime
+
 from typing import Annotated
 
 from dishka import FromDishka
@@ -6,6 +8,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from starlette import status
 
+from fanfan.adapters.auth.utils.jwt import (
+    ACCESS_TOKEN_TTL,
+    REFRESH_TOKEN_TTL,
+    JwtTokenProcessor,
+)
+from fanfan.adapters.redis.auth_token_registry import RedisAuthTokenRegistry
 from fanfan.application.auth.authenticate_user import (
     AuthenticateUser,
     AuthenticateUserCommand,
@@ -26,7 +34,6 @@ from fanfan.application.auth.refresh_access_token import (
 from fanfan.application.auth.register_user import RegisterUser, RegisterUserCommand
 from fanfan.application.auth.request_email_verification import RequestEmailVerification
 from fanfan.application.auth.verify_email import VerifyEmail, VerifyEmailCommand
-from fanfan.core.dto.token import Token
 from fanfan.core.dto.user import UserBaseDTO
 from fanfan.core.exceptions.auth import (
     AuthenticationError,
@@ -41,53 +48,67 @@ from fanfan.core.exceptions.users import (
     UserAlreadyExists,
     UserNotFound,
 )
+from fanfan.presentation.web.config import WebConfig
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
 auth_router = APIRouter(tags=["Authentication"], prefix="/auth")
 
+# ---------------------------------------------------------------------------
+# Cookie helpers
+# ---------------------------------------------------------------------------
+# Derive max_age from JWT TTL constants so they never drift out of sync.
+ACCESS_TOKEN_MAX_AGE = int(ACCESS_TOKEN_TTL.total_seconds())  # 900s (15 min)
+REFRESH_TOKEN_MAX_AGE = int(REFRESH_TOKEN_TTL.total_seconds())  # 604800s (7 days)
 
-def _set_auth_cookies(response: Response, token: Token) -> None:
+
+def _set_auth_cookies(
+    response: Response, access_token: str, refresh_token: str, config: WebConfig
+) -> None:
+    """Write auth tokens into HttpOnly cookies on the response.
+
+    Both cookies use path="/" because the SvelteKit SSR server needs access
+    to refresh_token to perform server-side token refresh on behalf of the
+    browser (the browser must send it to SvelteKit, not just to /auth/ paths).
+    """
     response.set_cookie(
         key="access_token",
-        value=token.access_token,
+        value=access_token,
         httponly=True,
-        max_age=1800,
+        max_age=ACCESS_TOKEN_MAX_AGE,
         samesite="lax",
-        secure=False,
+        secure=config.cookie_secure,
+        path="/",
     )
     response.set_cookie(
         key="refresh_token",
-        value=token.refresh_token,
+        value=refresh_token,
         httponly=True,
-        max_age=604800,
+        max_age=REFRESH_TOKEN_MAX_AGE,
         samesite="lax",
-        secure=False,
+        secure=config.cookie_secure,
+        path="/",
     )
 
 
-def _delete_auth_cookies(response: Response) -> None:
-    response.delete_cookie(
-        key="access_token",
-        httponly=True,
-        samesite="lax",
-        secure=False,
-    )
-    response.delete_cookie(
-        key="refresh_token",
-        httponly=True,
-        samesite="lax",
-        secure=False,
-    )
+def _delete_auth_cookies(response: Response, config: WebConfig) -> None:
+    """Clear auth cookies. Path must match what was set, otherwise cookie stays."""
+    response.delete_cookie(key="access_token", path="/")
+    response.delete_cookie(key="refresh_token", path="/")
+
+
+# ---------------------------------------------------------------------------
+# Routes
+# ---------------------------------------------------------------------------
 
 
 @auth_router.post(
     "/login",
+    status_code=status.HTTP_204_NO_CONTENT,
     summary="Login and get access token",
-    description="Authenticates user with username and password, "
-    "returns JWT access and refresh tokens. "
-    "Tokens are also set as HttpOnly cookies.",
+    description="Authenticates user with username and password. "
+    "Sets HttpOnly cookies with JWT access and refresh tokens.",
     responses={
-        200: {"model": Token, "description": "Successfully authenticated."},
+        204: {"description": "Successfully authenticated. Tokens set in cookies."},
         401: {
             "model": ErrorMessage,
             "description": "Invalid username or password.",
@@ -98,8 +119,9 @@ def _delete_auth_cookies(response: Response) -> None:
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     interactor: FromDishka[AuthenticateUser],
+    config: FromDishka[WebConfig],
     response: Response,
-) -> Token:
+) -> None:
     try:
         token = await interactor(
             AuthenticateUserCommand(
@@ -112,18 +134,19 @@ async def login(
             detail=e.message,
             headers={"WWW-Authenticate": "Bearer"},
         ) from e
-    else:
-        _set_auth_cookies(response, token)
-        return token
+
+    # Tokens go into HttpOnly cookies only — not in the response body.
+    _set_auth_cookies(response, token.access_token, token.refresh_token, config)
 
 
 @auth_router.post(
     "/refresh",
+    status_code=status.HTTP_204_NO_CONTENT,
     summary="Refresh access token",
-    description="Uses a refresh token cookie to issue new access and refresh tokens "
+    description="Uses the refresh_token cookie to issue fresh access and refresh tokens "
     "(token rotation). Old cookies are replaced.",
     responses={
-        200: {"model": Token, "description": "Tokens refreshed successfully."},
+        204: {"description": "Tokens refreshed successfully. New cookies set."},
         401: {
             "model": ErrorMessage,
             "description": "Refresh token is missing, invalid, or expired.",
@@ -135,9 +158,9 @@ async def refresh_access_token(
     request: Request,
     response: Response,
     interactor: FromDishka[RefreshAccessToken],
-) -> Token:
+    config: FromDishka[WebConfig],
+) -> None:
     refresh_token = request.cookies.get("refresh_token")
-
     if not refresh_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -148,9 +171,8 @@ async def refresh_access_token(
         token = await interactor(RefreshAccessTokenCommand(refresh_token=refresh_token))
     except (InvalidToken, RefreshTokenReused, AuthenticationError) as e:
         raise HTTPException(status_code=401, detail=e.message) from e
-    else:
-        _set_auth_cookies(response, token)
-        return token
+
+    _set_auth_cookies(response, token.access_token, token.refresh_token, config)
 
 
 @auth_router.post(
@@ -316,16 +338,37 @@ async def verify_email(
 
 @auth_router.post(
     "/logout",
+    status_code=status.HTTP_204_NO_CONTENT,
     summary="Logout user",
-    description="Clears authentication cookies to log out the current user.",
+    description="Clears auth cookies and invalidates the refresh token "
+    "so it can't be replayed even if stolen.",
     responses={
-        200: {"description": "Successfully logged out."},
+        204: {"description": "Successfully logged out."},
     },
 )
 @inject
-async def logout_user(response: Response) -> None:
-    _delete_auth_cookies(response)
-    return
+async def logout_user(
+    request: Request,
+    response: Response,
+    jwt: FromDishka[JwtTokenProcessor],
+    token_registry: FromDishka[RedisAuthTokenRegistry],
+    config: FromDishka[WebConfig],
+) -> None:
+    # Server-side invalidation: mark the refresh token JTI as consumed in Redis
+    # so it can't be replayed even if someone intercepted the cookie.
+    refresh_token = request.cookies.get("refresh_token")
+    if refresh_token:
+        try:
+            payload = jwt.validate_token(refresh_token, expected_type="refresh_token")
+            now_ts = int(datetime.datetime.now(datetime.UTC).timestamp())
+            ttl_seconds = max(payload.exp - now_ts, 1)
+            await token_registry.revoke_refresh_token_jti(
+                jti=payload.jti, ttl_seconds=ttl_seconds
+            )
+        except Exception:
+            pass  # Token may already be expired/invalid — that's fine, just clear cookies
+
+    _delete_auth_cookies(response, config)
 
 
 @auth_router.post("/login_telegram")
@@ -334,7 +377,7 @@ async def login_with_telegram(
     response: Response,
     data: LoginTelegramCommand,
     interactor: FromDishka[LoginTelegram],
-) -> Token:
+    config: FromDishka[WebConfig],
+) -> None:
     token = await interactor(data)
-    _set_auth_cookies(response, token)
-    return token
+    _set_auth_cookies(response, token.access_token, token.refresh_token, config)

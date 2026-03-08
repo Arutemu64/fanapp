@@ -1,0 +1,3872 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FastAPI",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Login and get access token",
+        "description": "Authenticates user with username and password. Sets HttpOnly cookies with JWT access and refresh tokens.",
+        "operationId": "login_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_login_auth_login_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successfully authenticated. Tokens set in cookies."
+          },
+          "401": {
+            "description": "Invalid username or password.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Refresh access token",
+        "description": "Uses the refresh_token cookie to issue fresh access and refresh tokens (token rotation). Old cookies are replaced.",
+        "operationId": "refresh_access_token_auth_refresh_post",
+        "responses": {
+          "204": {
+            "description": "Tokens refreshed successfully. New cookies set."
+          },
+          "401": {
+            "description": "Refresh token is missing, invalid, or expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Register a new user",
+        "description": "Creates a new user account with an email and password. A username is generated automatically.",
+        "operationId": "register_user_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterUserCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "User successfully registered.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserBaseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: username or email already in use.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/change-password": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Change user password",
+        "description": "Changes the authenticated user's password. Requires the current password for verification.",
+        "operationId": "change_password_auth_change_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Password changed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Current password is incorrect.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/change-email": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Change user email",
+        "description": "Changes the current user's email address and sends a verification link to the new email.",
+        "operationId": "change_email_auth_change_email_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeEmailCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Email changed and verification requested.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already in use by another account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/request-email-verification": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Request a new email verification link",
+        "description": "Sends a new verification email to the current user's email address.",
+        "operationId": "request_email_verification_auth_request_email_verification_post",
+        "responses": {
+          "202": {
+            "description": "Verification email sent.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/verify-email": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Verify user email",
+        "description": "Verifies a user's email address using a signed token received via email.",
+        "operationId": "verify_email_auth_verify_email_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Email successfully verified.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Token is invalid or expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Logout user",
+        "description": "Clears auth cookies and invalidates the refresh token so it can't be replayed even if stolen.",
+        "operationId": "logout_user_auth_logout_post",
+        "responses": {
+          "204": {
+            "description": "Successfully logged out."
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login_telegram": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Login With Telegram",
+        "operationId": "login_with_telegram_auth_login_telegram_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginTelegramCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get current user",
+        "description": "Retrieves the currently authenticated user's profile information.",
+        "operationId": "get_current_user_users_me_get",
+        "responses": {
+          "200": {
+            "description": "User profile retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update current user",
+        "description": "Updates the currently authenticated user's profile information.",
+        "operationId": "update_current_user_users_me_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCurrentUserCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "User updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Username already taken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me/settings": {
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update current user settings",
+        "description": "Updates the currently authenticated user's profile settings.",
+        "operationId": "update_current_user_settings_users_me_settings_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserSettingsCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "User settings updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me/ticket": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Link ticket",
+        "description": "Links provided ticket to current user.",
+        "operationId": "link_ticket_users_me_ticket_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkTicketCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Ticket linked successfully.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ticket not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "User already has a ticket linked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events": {
+      "get": {
+        "tags": [
+          "SSE"
+        ],
+        "summary": "Stream events via SSE",
+        "description": "Opens a Server-Sent Events connection to receive real-time event updates.",
+        "operationId": "stream_events_events_get",
+        "responses": {
+          "200": {
+            "description": "SSE stream established. Returns text/event-stream.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/schedule": {
+      "get": {
+        "tags": [
+          "Schedule"
+        ],
+        "summary": "Get current schedule",
+        "description": "Retrieves the full schedule using the GetSchedule interactor.",
+        "operationId": "get_schedule_schedule_get",
+        "responses": {
+          "200": {
+            "description": "Schedule retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetScheduleResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/schedule/{event_id}/current": {
+      "patch": {
+        "tags": [
+          "Schedule"
+        ],
+        "summary": "Set specific event as current",
+        "description": "Updates the schedule state to mark a specific event as active. Validates timing and event status.",
+        "operationId": "set_event_as_current_schedule__event_id__current_patch",
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event set as current successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetCurrentScheduleEventResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Event is skipped or invalid for this operation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Event ID not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited — editing too fast.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Seconds to wait before retrying."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/schedule/current": {
+      "delete": {
+        "tags": [
+          "Schedule"
+        ],
+        "summary": "Unset current schedule event",
+        "description": "Clears the currently active event from the schedule. Subject to rate limiting.",
+        "operationId": "uncheck_current_event_schedule_current_delete",
+        "responses": {
+          "200": {
+            "description": "Current event cleared successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetCurrentScheduleEventResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited — editing too fast.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/schedule/{event_id}/move": {
+      "patch": {
+        "tags": [
+          "Schedule"
+        ],
+        "summary": "Reorder schedule event",
+        "description": "Moves an event to a new position in the sequence, specifically after the provided event ID.",
+        "operationId": "move_schedule_event_schedule__event_id__move_patch",
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Event Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveScheduleEventRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Event moved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MoveScheduleEventResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid move: target and destination are the same.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Event to move or target neighbor event was not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/schedule/{event_id}/skip": {
+      "patch": {
+        "tags": [
+          "Schedule"
+        ],
+        "summary": "Skip a schedule event",
+        "description": "Marks a specific event as skipped. Note: the currently active event cannot be skipped.",
+        "operationId": "skip_schedule_event_schedule__event_id__skip_patch",
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event marked as skipped.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateScheduleEventSkipResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cannot skip the current active event.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Event ID not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/schedule/{event_id}/unskip": {
+      "patch": {
+        "tags": [
+          "Schedule"
+        ],
+        "summary": "Unskip a schedule event",
+        "description": "Restores a previously skipped event back into the active schedule sequence.",
+        "operationId": "unskip_schedule_event_schedule__event_id__unskip_patch",
+        "parameters": [
+          {
+            "name": "event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event restored to active schedule.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateScheduleEventSkipResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Event state cannot be modified in its current context.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Event ID not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/schedule/changes": {
+      "get": {
+        "tags": [
+          "Schedule"
+        ],
+        "summary": "List schedule audit log",
+        "description": "Returns a history of all modifications made to the schedule, including skips, moves, and status changes.",
+        "operationId": "list_schedule_changes_schedule_changes_get",
+        "responses": {
+          "200": {
+            "description": "Schedule changes retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListScheduleChangesResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/schedule/changes/{schedule_change_id}": {
+      "delete": {
+        "tags": [
+          "Schedule"
+        ],
+        "summary": "Undo a specific schedule change",
+        "description": "Reverts a previously made change to the schedule using its unique change ID.",
+        "operationId": "undo_schedule_change_schedule_changes__schedule_change_id__delete",
+        "parameters": [
+          {
+            "name": "schedule_change_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Schedule Change Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Change successfully undone."
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Schedule change ID not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/schedule/subscriptions": {
+      "post": {
+        "tags": [
+          "Schedule"
+        ],
+        "summary": "Create a new event subscription",
+        "description": "Subscribes the current user to a specific schedule event. Prevents duplicate subscriptions.",
+        "operationId": "new_subscription_schedule_subscriptions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubscriptionCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Subscription created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionFullDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Event ID does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Subscription for this event already exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/schedule/subscriptions/{subscription_id}": {
+      "delete": {
+        "tags": [
+          "Schedule"
+        ],
+        "summary": "Remove a subscription",
+        "description": "Deletes an existing subscription by its unique ID.",
+        "operationId": "delete_subscription_schedule_subscriptions__subscription_id__delete",
+        "parameters": [
+          {
+            "name": "subscription_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Subscription Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Subscription deleted successfully."
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Subscription ID not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/voting/status": {
+      "get": {
+        "tags": [
+          "Voting"
+        ],
+        "summary": "Get current voting state",
+        "description": "Retrieves the current phase of the voting process (e.g., active, closed) and reasoning.",
+        "operationId": "get_voting_status_voting_status_get",
+        "responses": {
+          "200": {
+            "description": "Voting status retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetVotingStateResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/voting/nominations": {
+      "get": {
+        "tags": [
+          "Voting"
+        ],
+        "summary": "List all nominations for the current vote",
+        "description": "Retrieves a list of all candidates or items eligible for voting in the current session.",
+        "operationId": "list_voting_nominations_voting_nominations_get",
+        "responses": {
+          "200": {
+            "description": "Nominations retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListVotingNominationsResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/voting/nominations/{nomination_code}": {
+      "get": {
+        "tags": [
+          "Voting"
+        ],
+        "summary": "Get voting nomination details",
+        "description": "Retrieves detailed information about a specific nomination.",
+        "operationId": "get_voting_nomination_voting_nominations__nomination_code__get",
+        "parameters": [
+          {
+            "name": "nomination_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Nomination Code"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Nomination details retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetVotingNominationResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nomination not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/voting/nominations/{nomination_id}/vote": {
+      "put": {
+        "tags": [
+          "Voting"
+        ],
+        "summary": "Cast a vote",
+        "description": "Submits a vote for a participant in the specified nomination.",
+        "operationId": "add_vote_voting_nominations__nomination_id__vote_put",
+        "parameters": [
+          {
+            "name": "nomination_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nomination Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddVoteCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vote successfully cast.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoteBaseDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Participant not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Already voted in this nomination.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Voting"
+        ],
+        "summary": "Cancel a vote",
+        "description": "Removes a previously cast vote in the specified nomination.",
+        "operationId": "cancel_vote_voting_nominations__nomination_id__vote_delete",
+        "parameters": [
+          {
+            "name": "nomination_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Nomination Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vote successfully cancelled.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No vote found to cancel.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhooks/tcloud": {
+      "post": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Process TicketsCloud webhook",
+        "description": "Handles incoming webhook events from TicketsCloud ticketing system.",
+        "operationId": "process_tcloud_order_webhooks_tcloud_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TCloudWebhookPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook processed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid webhook payload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "List user notifications",
+        "description": "Returns a paginated list of notifications for the authenticated user.",
+        "operationId": "list_user_notifications_notifications_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 10,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notifications retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListUserNotificationsResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications/mark-all-read": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Mark all notifications as read",
+        "description": "Marks all unread notifications for the authenticated user as read.",
+        "operationId": "mark_all_notifications_read_notifications_mark_all_read_post",
+        "responses": {
+          "200": {
+            "description": "All notifications marked as read.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/push": {
+      "get": {
+        "tags": [
+          "Push"
+        ],
+        "summary": "List push subscriptions",
+        "description": "Returns a list of push subscriptions for the authenticated user.",
+        "operationId": "list_subscriptions_push_get",
+        "responses": {
+          "200": {
+            "description": "List of push subscriptions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PushSubscriptionDTO"
+                  },
+                  "type": "array",
+                  "title": "Response List Subscriptions Push Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Push"
+        ],
+        "summary": "Subscribe to push notifications",
+        "description": "Registers a push subscription endpoint for the authenticated user's device.",
+        "operationId": "subscribe_push_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePushSubscriptionCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Push subscription registered successfully.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Push"
+        ],
+        "summary": "Unsubscribe from push notifications",
+        "description": "Removes a push subscription endpoint for the authenticated user.",
+        "operationId": "unsubscribe_push_delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeletePushSubscriptionCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Push subscription removed successfully."
+          },
+          "401": {
+            "description": "User not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AddVoteCommand": {
+        "properties": {
+          "participant_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Participant Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "participant_id"
+        ],
+        "title": "AddVoteCommand"
+      },
+      "Body_login_auth_login_post": {
+        "properties": {
+          "grant_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^password$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grant Type"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "title": "Password"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "default": ""
+          },
+          "client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id"
+          },
+          "client_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "format": "password",
+            "title": "Client Secret"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "Body_login_auth_login_post"
+      },
+      "ChangeEmailCommand": {
+        "properties": {
+          "new_email": {
+            "type": "string",
+            "format": "email",
+            "title": "New Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "new_email"
+        ],
+        "title": "ChangeEmailCommand"
+      },
+      "ChangePasswordCommand": {
+        "properties": {
+          "old_password": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Old Password"
+          },
+          "new_password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "New Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "old_password",
+          "new_password"
+        ],
+        "title": "ChangePasswordCommand"
+      },
+      "CreatePushSubscriptionCommand": {
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "title": "Endpoint"
+          },
+          "p256dh": {
+            "type": "string",
+            "title": "P256Dh"
+          },
+          "auth": {
+            "type": "string",
+            "title": "Auth"
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpoint",
+          "p256dh",
+          "auth"
+        ],
+        "title": "CreatePushSubscriptionCommand"
+      },
+      "CreateSubscriptionCommand": {
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Event Id"
+          },
+          "counter": {
+            "type": "integer",
+            "title": "Counter"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_id",
+          "counter"
+        ],
+        "title": "CreateSubscriptionCommand"
+      },
+      "CurrentUserDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
+          },
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "email"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "is_verified": {
+            "type": "boolean",
+            "title": "Is Verified"
+          },
+          "has_password": {
+            "type": "boolean",
+            "title": "Has Password"
+          },
+          "ticket": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserTicketDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "permissions": {
+            "items": {
+              "$ref": "#/components/schemas/UserPermissionDTO"
+            },
+            "type": "array",
+            "title": "Permissions"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/UserSettingsDTO"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username",
+          "first_name",
+          "role",
+          "email",
+          "is_verified",
+          "has_password",
+          "ticket",
+          "permissions",
+          "settings"
+        ],
+        "title": "CurrentUserDTO"
+      },
+      "DeletePushSubscriptionCommand": {
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "title": "Endpoint"
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpoint"
+        ],
+        "title": "DeletePushSubscriptionCommand"
+      },
+      "ErrorMessage": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorMessage"
+      },
+      "GetScheduleResult": {
+        "properties": {
+          "schedule": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduleEventFullDTO"
+            },
+            "type": "array",
+            "title": "Schedule"
+          }
+        },
+        "type": "object",
+        "required": [
+          "schedule"
+        ],
+        "title": "GetScheduleResult"
+      },
+      "GetVotingNominationResult": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "participants_count": {
+            "type": "integer",
+            "title": "Participants Count"
+          },
+          "user_vote": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NominationVoteDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "participants": {
+            "items": {
+              "$ref": "#/components/schemas/ParticipantFullDTO"
+            },
+            "type": "array",
+            "title": "Participants"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "title",
+          "participants_count",
+          "user_vote",
+          "participants"
+        ],
+        "title": "GetVotingNominationResult"
+      },
+      "GetVotingStateResult": {
+        "properties": {
+          "can_vote": {
+            "type": "boolean",
+            "title": "Can Vote"
+          },
+          "status": {
+            "$ref": "#/components/schemas/VotingStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "can_vote",
+          "status"
+        ],
+        "title": "GetVotingStateResult"
+      },
+      "LinkTicketCommand": {
+        "properties": {
+          "barcode": {
+            "type": "string",
+            "title": "Barcode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "barcode"
+        ],
+        "title": "LinkTicketCommand"
+      },
+      "ListScheduleChangesResult": {
+        "properties": {
+          "schedule_changes": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduleChangeFullDTO"
+            },
+            "type": "array",
+            "title": "Schedule Changes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "schedule_changes"
+        ],
+        "title": "ListScheduleChangesResult"
+      },
+      "ListUserNotificationsResult": {
+        "properties": {
+          "notifications": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationDTO"
+            },
+            "type": "array",
+            "title": "Notifications"
+          }
+        },
+        "type": "object",
+        "required": [
+          "notifications"
+        ],
+        "title": "ListUserNotificationsResult"
+      },
+      "ListVotingNominationsResult": {
+        "properties": {
+          "nominations": {
+            "items": {
+              "$ref": "#/components/schemas/NominationVotingDTO"
+            },
+            "type": "array",
+            "title": "Nominations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nominations"
+        ],
+        "title": "ListVotingNominationsResult"
+      },
+      "LoginTelegramCommand": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "first_name": {
+            "type": "string",
+            "title": "First Name"
+          },
+          "auth_date": {
+            "type": "integer",
+            "title": "Auth Date"
+          },
+          "hash": {
+            "type": "string",
+            "title": "Hash"
+          },
+          "last_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Name"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
+          },
+          "photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "first_name",
+          "auth_date",
+          "hash"
+        ],
+        "title": "LoginTelegramCommand"
+      },
+      "MoveScheduleEventRequest": {
+        "properties": {
+          "place_after_event_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Place After Event Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "place_after_event_id"
+        ],
+        "title": "MoveScheduleEventRequest"
+      },
+      "MoveScheduleEventResult": {
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/ScheduleEventFullDTO"
+          },
+          "place_after_event": {
+            "$ref": "#/components/schemas/ScheduleEventFullDTO"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event",
+          "place_after_event"
+        ],
+        "title": "MoveScheduleEventResult"
+      },
+      "NominationVoteDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "participant_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Participant Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "participant_id"
+        ],
+        "title": "NominationVoteDTO"
+      },
+      "NominationVotingDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "participants_count": {
+            "type": "integer",
+            "title": "Participants Count"
+          },
+          "user_vote": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NominationVoteDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "title",
+          "participants_count",
+          "user_vote"
+        ],
+        "title": "NominationVotingDTO"
+      },
+      "NotificationDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body"
+          },
+          "type": {
+            "$ref": "#/components/schemas/NotificationType"
+          },
+          "mailing_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mailing Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "seen_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seen At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "title",
+          "body",
+          "type",
+          "mailing_id",
+          "created_at",
+          "seen_at"
+        ],
+        "title": "NotificationDTO"
+      },
+      "NotificationType": {
+        "type": "string",
+        "enum": [
+          "default",
+          "schedule_change",
+          "schedule_subscription",
+          "message",
+          "points_received"
+        ],
+        "title": "NotificationType"
+      },
+      "Order": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/OrderStatus"
+          },
+          "event": {
+            "type": "string",
+            "title": "Event"
+          },
+          "tickets": {
+            "items": {
+              "$ref": "#/components/schemas/Ticket"
+            },
+            "type": "array",
+            "title": "Tickets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "event",
+          "tickets"
+        ],
+        "title": "Order"
+      },
+      "OrderStatus": {
+        "type": "string",
+        "enum": [
+          "executed",
+          "done",
+          "cancelled",
+          "expired",
+          "in_progress"
+        ],
+        "title": "OrderStatus"
+      },
+      "ParticipantFullDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "voting_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voting Number"
+          },
+          "votes_count": {
+            "type": "integer",
+            "title": "Votes Count"
+          },
+          "user_vote": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ParticipantVoteDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "voting_number",
+          "votes_count",
+          "user_vote"
+        ],
+        "title": "ParticipantFullDTO"
+      },
+      "ParticipantVoteDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "ParticipantVoteDTO"
+      },
+      "PushSubscriptionDTO": {
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "title": "Endpoint"
+          },
+          "p256dh": {
+            "type": "string",
+            "title": "P256Dh"
+          },
+          "auth": {
+            "type": "string",
+            "title": "Auth"
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpoint",
+          "p256dh",
+          "auth"
+        ],
+        "title": "PushSubscriptionDTO"
+      },
+      "RegisterUserCommand": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "RegisterUserCommand"
+      },
+      "ScheduleChangeEventDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "public_number": {
+            "type": "integer",
+            "title": "Public Number"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "public_number",
+          "title"
+        ],
+        "title": "ScheduleChangeEventDTO"
+      },
+      "ScheduleChangeFullDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ScheduleChangeType"
+          },
+          "mailing_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mailing Id"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          },
+          "send_global_announcement": {
+            "type": "boolean",
+            "title": "Send Global Announcement"
+          },
+          "changed_event": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScheduleChangeEventDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "argument_event": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScheduleChangeEventDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "user": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScheduleChangeUserDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "mailing_id",
+          "user_id",
+          "send_global_announcement",
+          "changed_event",
+          "argument_event",
+          "user"
+        ],
+        "title": "ScheduleChangeFullDTO"
+      },
+      "ScheduleChangeType": {
+        "type": "string",
+        "enum": [
+          "set_as_current",
+          "moved",
+          "skipped",
+          "unskipped"
+        ],
+        "title": "ScheduleChangeType"
+      },
+      "ScheduleChangeUserDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username"
+        ],
+        "title": "ScheduleChangeUserDTO"
+      },
+      "ScheduleEventFullDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "public_number": {
+            "type": "integer",
+            "title": "Public Number"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "duration": {
+            "type": "integer",
+            "title": "Duration"
+          },
+          "order": {
+            "type": "number",
+            "title": "Order"
+          },
+          "is_current": {
+            "type": "boolean",
+            "title": "Is Current"
+          },
+          "is_skipped": {
+            "type": "boolean",
+            "title": "Is Skipped"
+          },
+          "nomination_title": {
+            "type": "string",
+            "title": "Nomination Title"
+          },
+          "block_title": {
+            "type": "string",
+            "title": "Block Title"
+          },
+          "queue": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue"
+          },
+          "time_until": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Until"
+          },
+          "user_subscription": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScheduleEventSubscriptionDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "public_number",
+          "title",
+          "duration",
+          "order",
+          "is_current",
+          "is_skipped",
+          "nomination_title",
+          "block_title",
+          "queue",
+          "time_until",
+          "user_subscription"
+        ],
+        "title": "ScheduleEventFullDTO"
+      },
+      "ScheduleEventSubscriptionDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "counter": {
+            "type": "integer",
+            "title": "Counter"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "counter"
+        ],
+        "title": "ScheduleEventSubscriptionDTO"
+      },
+      "SetCurrentScheduleEventResult": {
+        "properties": {
+          "current_event": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScheduleEventFullDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "schedule_change_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Schedule Change Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current_event",
+          "schedule_change_id"
+        ],
+        "title": "SetCurrentScheduleEventResult"
+      },
+      "SubscriptionEventDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "public_number": {
+            "type": "integer",
+            "title": "Public Number"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "order": {
+            "type": "number",
+            "title": "Order"
+          },
+          "queue": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue"
+          },
+          "time_until": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Until"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "public_number",
+          "title",
+          "order",
+          "queue",
+          "time_until"
+        ],
+        "title": "SubscriptionEventDTO"
+      },
+      "SubscriptionFullDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "counter": {
+            "type": "integer",
+            "title": "Counter"
+          },
+          "event": {
+            "$ref": "#/components/schemas/SubscriptionEventDTO"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "counter",
+          "event"
+        ],
+        "title": "SubscriptionFullDTO"
+      },
+      "TCloudWebhookPayload": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Order"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "type"
+        ],
+        "title": "TCloudWebhookPayload"
+      },
+      "Ticket": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "serial": {
+            "type": "string",
+            "title": "Serial"
+          },
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
+          "barcode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Barcode"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "price": {
+            "type": "string",
+            "title": "Price"
+          },
+          "nominal": {
+            "type": "string",
+            "title": "Nominal"
+          },
+          "discount": {
+            "type": "string",
+            "title": "Discount"
+          },
+          "extra": {
+            "type": "string",
+            "title": "Extra"
+          },
+          "full": {
+            "type": "string",
+            "title": "Full"
+          },
+          "set": {
+            "type": "string",
+            "title": "Set"
+          },
+          "tariff": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tariff"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "serial",
+          "number",
+          "barcode",
+          "status",
+          "price",
+          "nominal",
+          "discount",
+          "extra",
+          "full",
+          "set",
+          "tariff"
+        ],
+        "title": "Ticket"
+      },
+      "UpdateCurrentUserCommand": {
+        "properties": {
+          "username": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 25,
+                "minLength": 3,
+                "pattern": "^[A-Za-zА-Яа-яЁё][A-Za-zА-Яа-яЁё0-9_]{2,24}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
+          },
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          }
+        },
+        "type": "object",
+        "title": "UpdateCurrentUserCommand"
+      },
+      "UpdateScheduleEventSkipResult": {
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/ScheduleEventFullDTO"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event"
+        ],
+        "title": "UpdateScheduleEventSkipResult"
+      },
+      "UpdateUserSettingsCommand": {
+        "properties": {
+          "receive_all_announcements": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Receive All Announcements"
+          }
+        },
+        "type": "object",
+        "title": "UpdateUserSettingsCommand"
+      },
+      "UserBaseDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
+          },
+          "first_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Name"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username",
+          "first_name",
+          "role"
+        ],
+        "title": "UserBaseDTO"
+      },
+      "UserPermissionDTO": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "object_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Object Type"
+          },
+          "object_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Object Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "object_type",
+          "object_id"
+        ],
+        "title": "UserPermissionDTO"
+      },
+      "UserRole": {
+        "type": "string",
+        "enum": [
+          "visitor",
+          "participant",
+          "helper",
+          "org"
+        ],
+        "title": "UserRole"
+      },
+      "UserSettingsDTO": {
+        "properties": {
+          "receive_all_announcements": {
+            "type": "boolean",
+            "title": "Receive All Announcements",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "UserSettingsDTO"
+      },
+      "UserTicketDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "barcode": {
+            "type": "string",
+            "title": "Barcode"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "barcode",
+          "role"
+        ],
+        "title": "UserTicketDTO"
+      },
+      "ValidationErrorDetail": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Loc"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Msg"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationErrorDetail"
+      },
+      "ValidationErrorResponse": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationErrorDetail"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "ValidationErrorResponse"
+      },
+      "VerifyEmailCommand": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "title": "VerifyEmailCommand"
+      },
+      "VoteBaseDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "participant_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Participant Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "participant_id"
+        ],
+        "title": "VoteBaseDTO"
+      },
+      "VotingStatus": {
+        "type": "string",
+        "enum": [
+          "open",
+          "not_authenticated",
+          "no_ticket",
+          "disabled"
+        ],
+        "title": "VotingStatus"
+      }
+    }
+  }
+}

@@ -28,14 +28,24 @@ class RedisAuthTokenRegistry:
         ).hexdigest()
 
     async def consume_refresh_token_jti(self, jti: str, ttl_seconds: int) -> bool:
+        """Mark a refresh token JTI as used. Returns True if it was fresh (first use)."""
         ttl = max(1, ttl_seconds)
         result = await self.redis.set(
             name=self._refresh_used_key(jti),
             value="1",
             ex=ttl,
-            nx=True,
+            nx=True,  # Only set if not already used
         )
         return bool(result)
+
+    async def revoke_refresh_token_jti(self, jti: str, ttl_seconds: int) -> None:
+        """Forcibly mark a refresh token as used (e.g. on logout) so it can't be replayed."""
+        ttl = max(1, ttl_seconds)
+        await self.redis.set(
+            name=self._refresh_used_key(jti),
+            value="1",
+            ex=ttl,
+        )
 
     async def issue_email_verification_token(
         self,

@@ -15,7 +15,7 @@ export interface paths {
         put?: never;
         /**
          * Login and get access token
-         * @description Authenticates user with username and password, returns JWT access and refresh tokens. Tokens are also set as HttpOnly cookies.
+         * @description Authenticates user with username and password. Sets HttpOnly cookies with JWT access and refresh tokens.
          */
         post: operations["login_auth_login_post"];
         delete?: never;
@@ -35,7 +35,7 @@ export interface paths {
         put?: never;
         /**
          * Refresh access token
-         * @description Uses a refresh token cookie to issue new access and refresh tokens (token rotation). Old cookies are replaced.
+         * @description Uses the refresh_token cookie to issue fresh access and refresh tokens (token rotation). Old cookies are replaced.
          */
         post: operations["refresh_access_token_auth_refresh_post"];
         delete?: never;
@@ -155,7 +155,7 @@ export interface paths {
         put?: never;
         /**
          * Logout user
-         * @description Clears authentication cookies to log out the current user.
+         * @description Clears auth cookies and invalidates the refresh token so it can't be replayed even if stolen.
          */
         post: operations["logout_user_auth_logout_post"];
         delete?: never;
@@ -1095,15 +1095,6 @@ export interface components {
             /** Tariff */
             tariff: string | null;
         };
-        /** Token */
-        Token: {
-            /** Access Token */
-            access_token: string;
-            /** Refresh Token */
-            refresh_token: string;
-            /** Token Type */
-            token_type: string;
-        };
         /** UpdateCurrentUserCommand */
         UpdateCurrentUserCommand: {
             /** Username */
@@ -1230,14 +1221,12 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Successfully authenticated. */
-            200: {
+            /** @description Successfully authenticated. Tokens set in cookies. */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["Token"];
-                };
+                content?: never;
             };
             /** @description Invalid username or password. */
             401: {
@@ -1277,14 +1266,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Tokens refreshed successfully. */
-            200: {
+            /** @description Tokens refreshed successfully. New cookies set. */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["Token"];
-                };
+                content?: never;
             };
             /** @description Refresh token is missing, invalid, or expired. */
             401: {
@@ -1639,13 +1626,11 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Successfully logged out. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -1695,7 +1680,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Token"];
+                    "application/json": unknown;
                 };
             };
             /** @description Not authenticated. */
