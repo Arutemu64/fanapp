@@ -23,3 +23,15 @@ class UserHasNoEmail(UsersException):
 
 class EmailAlreadyExists(UsersException):
     default_message = "Этот адрес электронной почты уже используется"
+
+
+class TelegramAlreadyLinked(UsersException):
+    default_message = "Этот Telegram уже привязан к другому аккаунту"
+
+
+class TelegramAlreadyConnected(UsersException):
+    default_message = "Сначала отвяжите текущий Telegram"
+
+
+class TelegramCannotBeUnlinkedWithoutEmail(UsersException):
+    default_message = "Сначала добавьте email, чтобы не потерять доступ к аккаунту"

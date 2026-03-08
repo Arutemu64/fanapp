@@ -6,7 +6,7 @@ from fanfan.adapters.db.mappers.social_account import SocialAccountMapper
 from fanfan.adapters.db.mappers.user import UserMapper
 from fanfan.adapters.db.models import SocialAccountORM, UserORM
 from fanfan.adapters.db.models.permission import PermissionORM, UserPermissionORM
-from fanfan.core.dto.user import CurrentUserDTO, UserBaseDTO
+from fanfan.core.dto.user import CurrentUserDTO, UserBaseDTO, UserSocialAccountDTO
 from fanfan.core.models.social_account import SocialAccount
 from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permissions
@@ -77,6 +77,37 @@ class UserGateway:
         )
         social_id_orm = await self.session.scalar(stmt)
         return self.social_mapper.to_model(social_id_orm) if social_id_orm else None
+
+    async def delete_user_social_id_by_provider(
+        self, user_id: UserId, provider: str
+    ) -> bool:
+        stmt = select(SocialAccountORM).where(
+            and_(
+                SocialAccountORM.user_id == user_id,
+                SocialAccountORM.provider == provider,
+            )
+        )
+        social_id_orm = await self.session.scalar(stmt)
+        if social_id_orm is None:
+            return False
+
+        # Delete only the requested provider so other linked socials stay untouched.
+        await self.session.delete(social_id_orm)
+        await self.session.flush()
+        return True
+
+    async def read_current_user_social_accounts(
+        self, user_id: UserId
+    ) -> list[UserSocialAccountDTO]:
+        stmt = select(SocialAccountORM).where(SocialAccountORM.user_id == user_id)
+        social_accounts_orm = await self.session.scalars(stmt)
+        return [
+            UserSocialAccountDTO(
+                provider=social_account.provider,
+                provider_id=social_account.provider_id,
+            )
+            for social_account in social_accounts_orm
+        ]
 
     async def save_user(self, user: User) -> User:
         user_orm = self.mapper.from_model(user)

@@ -27,6 +27,44 @@ class LoginTelegramCommand(BaseModel):
     photo_url: str | None = None
 
 
+def check_telegram_authorization(auth_data: dict, bot_token: str) -> dict:
+    # Create a copy so we don't mutate the original dictionary.
+    data = auth_data.copy()
+
+    if "hash" not in data:
+        msg = "Hash is missing"
+        raise ValueError(msg)
+
+    check_hash = data.pop("hash")
+
+    # Format the data as "key=value" and sort it alphabetically.
+    data_check_arr = [f"{key}={value}" for key, value in data.items()]
+    data_check_arr.sort()
+
+    # Join the sorted array with newlines.
+    data_check_string = "\n".join(data_check_arr)
+
+    # Generate the secret key (SHA256 hash of the bot token, outputting raw bytes).
+    secret_key = hashlib.sha256(bot_token.encode("utf-8")).digest()
+
+    # Generate the HMAC-SHA256 signature.
+    calculated_hash = hmac.new(
+        secret_key, data_check_string.encode("utf-8"), hashlib.sha256
+    ).hexdigest()
+
+    # Compare the hashes securely to prevent timing attacks.
+    if not hmac.compare_digest(calculated_hash, check_hash):
+        msg = "Data is NOT from Telegram"
+        raise ValueError(msg)
+
+    # Check if the authentication date is older than 24 hours (86400 seconds).
+    if (time.time() - int(data.get("auth_date", 0))) > 86400:
+        msg = "Data is outdated"
+        raise ValueError(msg)
+
+    return data
+
+
 class LoginTelegram:
     def __init__(
         self,
@@ -44,46 +82,8 @@ class LoginTelegram:
         self.bot_config = bot_config
         self.user_service = user_service
 
-    @staticmethod
-    def check_telegram_authorization(auth_data: dict, bot_token: str) -> dict:
-        # Create a copy so we don't mutate the original dictionary
-        data = auth_data.copy()
-
-        if "hash" not in data:
-            msg = "Hash is missing"
-            raise ValueError(msg)
-
-        check_hash = data.pop("hash")
-
-        # Format the data as "key=value" and sort it alphabetically
-        data_check_arr = [f"{key}={value}" for key, value in data.items()]
-        data_check_arr.sort()
-
-        # Join the sorted array with newlines
-        data_check_string = "\n".join(data_check_arr)
-
-        # Generate the secret key (SHA256 hash of the bot token, outputting raw bytes)
-        secret_key = hashlib.sha256(bot_token.encode("utf-8")).digest()
-
-        # Generate the HMAC-SHA256 signature
-        calculated_hash = hmac.new(
-            secret_key, data_check_string.encode("utf-8"), hashlib.sha256
-        ).hexdigest()
-
-        # Compare the hashes securely to prevent timing attacks
-        if not hmac.compare_digest(calculated_hash, check_hash):
-            msg = "Data is NOT from Telegram"
-            raise ValueError(msg)
-
-        # Check if the authentication date is older than 24 hours (86400 seconds)
-        if (time.time() - int(data.get("auth_date", 0))) > 86400:
-            msg = "Data is outdated"
-            raise ValueError(msg)
-
-        return data
-
     async def __call__(self, data: LoginTelegramCommand) -> Token:
-        self.check_telegram_authorization(
+        check_telegram_authorization(
             auth_data=data.model_dump(exclude_unset=True),
             bot_token=self.bot_config.token.get_secret_value(),
         )

@@ -5,8 +5,9 @@ from fastapi import FastAPI
 
 from fanfan.presentation.web.routes import setup_api_router
 
-
-OPENAPI_PATH = Path(__file__).resolve().parents[4] / "shared" / "openapi" / "openapi.json"
+OPENAPI_PATH = (
+    Path(__file__).resolve().parents[4] / "shared" / "openapi" / "openapi.json"
+)
 
 
 def build_openapi_schema() -> dict:

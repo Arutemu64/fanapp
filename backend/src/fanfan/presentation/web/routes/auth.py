@@ -1,11 +1,11 @@
 import datetime
-
 from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
+from redis.exceptions import RedisError
 from starlette import status
 
 from fanfan.adapters.auth.utils.jwt import (
@@ -143,8 +143,8 @@ async def login(
     "/refresh",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Refresh access token",
-    description="Uses the refresh_token cookie to issue fresh access and refresh tokens "
-    "(token rotation). Old cookies are replaced.",
+    description="Uses the refresh_token cookie to issue fresh access and refresh "
+    "tokens (token rotation). Old cookies are replaced.",
     responses={
         204: {"description": "Tokens refreshed successfully. New cookies set."},
         401: {
@@ -365,8 +365,9 @@ async def logout_user(
             await token_registry.revoke_refresh_token_jti(
                 jti=payload.jti, ttl_seconds=ttl_seconds
             )
-        except Exception:
-            pass  # Token may already be expired/invalid — that's fine, just clear cookies
+        except (InvalidToken, TokenExpired, RedisError):
+            # If token cleanup fails, still clear the browser cookies and finish logout.
+            pass
 
     _delete_auth_cookies(response, config)
 
@@ -379,5 +380,13 @@ async def login_with_telegram(
     interactor: FromDishka[LoginTelegram],
     config: FromDishka[WebConfig],
 ) -> None:
-    token = await interactor(data)
+    try:
+        token = await interactor(data)
+    except ValueError as e:
+        # Keep Telegram verification errors user-safe for the browser.
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Не удалось подтвердить Telegram",
+        ) from e
+
     _set_auth_cookies(response, token.access_token, token.refresh_token, config)

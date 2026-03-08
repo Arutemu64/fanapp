@@ -205,6 +205,26 @@ export interface paths {
         patch: operations["update_current_user_users_me_patch"];
         trace?: never;
     };
+    "/users/me/social-accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get current user social accounts
+         * @description Retrieves the currently authenticated user's linked social accounts.
+         */
+        get: operations["get_current_user_social_accounts_users_me_social_accounts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users/me/settings": {
         parameters: {
             query?: never;
@@ -223,6 +243,30 @@ export interface paths {
          * @description Updates the currently authenticated user's profile settings.
          */
         patch: operations["update_current_user_settings_users_me_settings_patch"];
+        trace?: never;
+    };
+    "/users/me/social-accounts/telegram": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Link Telegram account
+         * @description Links a Telegram account to the currently authenticated user.
+         */
+        post: operations["link_telegram_account_users_me_social_accounts_telegram_post"];
+        /**
+         * Unlink Telegram account
+         * @description Unlinks the Telegram account from the currently authenticated user.
+         */
+        delete: operations["unlink_telegram_account_users_me_social_accounts_telegram_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/users/me/ticket": {
@@ -768,6 +812,23 @@ export interface components {
             can_vote: boolean;
             status: components["schemas"]["VotingStatus"];
         };
+        /** LinkTelegramAccountCommand */
+        LinkTelegramAccountCommand: {
+            /** Id */
+            id: number;
+            /** First Name */
+            first_name: string;
+            /** Auth Date */
+            auth_date: number;
+            /** Hash */
+            hash: string;
+            /** Last Name */
+            last_name?: string | null;
+            /** Username */
+            username?: string | null;
+            /** Photo Url */
+            photo_url?: string | null;
+        };
         /** LinkTicketCommand */
         LinkTicketCommand: {
             /** Barcode */
@@ -1145,6 +1206,13 @@ export interface components {
              * @default true
              */
             receive_all_announcements: boolean;
+        };
+        /** UserSocialAccountDTO */
+        UserSocialAccountDTO: {
+            /** Provider */
+            provider: string;
+            /** Provider Id */
+            provider_id: string;
         };
         /** UserTicketDTO */
         UserTicketDTO: {
@@ -1819,6 +1887,62 @@ export interface operations {
             };
         };
     };
+    get_current_user_social_accounts_users_me_social_accounts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User social accounts retrieved successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserSocialAccountDTO"][];
+                };
+            };
+            /** @description User not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
     update_current_user_settings_users_me_settings_patch: {
         parameters: {
             query?: never;
@@ -1852,6 +1976,149 @@ export interface operations {
             };
             /** @description Access denied. */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    link_telegram_account_users_me_social_accounts_telegram_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkTelegramAccountCommand"];
+            };
+        };
+        responses: {
+            /** @description Telegram account linked successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Invalid Telegram auth payload. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Telegram is already linked to this or another account. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    unlink_telegram_account_users_me_social_accounts_telegram_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Telegram account unlinked successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description User not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Email is required before unlinking. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -38,6 +38,13 @@ class UserSettingsDTO(BaseModel):
     receive_all_announcements: bool = True
 
 
+class UserSocialAccountDTO(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    provider: str
+    provider_id: str
+
+
 class UserFullDTO(UserBaseDTO):
     model_config = ConfigDict(from_attributes=True)
 
