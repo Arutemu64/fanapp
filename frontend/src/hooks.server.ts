@@ -14,38 +14,37 @@ export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
 	if (request.url.startsWith(PUBLIC_API_URL)) {
 		request = new Request(request.url.replace(PUBLIC_API_URL, PRIVATE_API_URL), request);
 	}
-	// Pass cookies from the incoming browser request (or updated by refreshTokens)
+	// Pass cookies from the incoming browser request (or updated by previous fetches)
 	const cookieHeader = event.request.headers.get('cookie');
 	if (cookieHeader) {
 		request.headers.set('cookie', cookieHeader);
 	}
 
-	return fetch(request);
+	const response = await fetch(request);
+
+	// Automatically forward any Set-Cookie headers from API → browser
+	const parsed = parseResponseCookies(response);
+	if (parsed.length > 0) {
+		applyResponseCookies(event.cookies, parsed);
+		updateRequestCookieHeader(event.request, parsed);
+	}
+
+	return response;
 };
 
 /**
  * Attempt to refresh auth tokens server-side.
- *
- * On success:
- *   1. Parses set-cookie headers from the API response
- *   2. Updates event.cookies (→ browser gets new tokens in the SSR response)
- *   3. Updates event.request cookie header (→ subsequent event.fetch calls use new tokens)
+ * Cookie forwarding is handled automatically by handleFetch.
  *
  * Returns true if refresh succeeded.
  */
 async function refreshTokens(event: RequestEvent): Promise<boolean> {
 	const refreshResponse = await event.fetch(`${PUBLIC_API_URL}/auth/refresh`, {
 		method: 'POST'
-		// handleFetch will rewrite URL to PRIVATE_API_URL and forward cookies
+		// handleFetch will rewrite URL, forward cookies, and apply Set-Cookie headers
 	});
 
-	if (!refreshResponse.ok) return false;
-
-	const parsed = parseResponseCookies(refreshResponse);
-	applyResponseCookies(event.cookies, parsed);
-	updateRequestCookieHeader(event.request, parsed);
-
-	return true;
+	return refreshResponse.ok;
 }
 
 export const handle: Handle = async ({ event, resolve }) => {

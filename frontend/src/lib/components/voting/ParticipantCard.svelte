@@ -10,16 +10,18 @@
 		participant: ParticipantFullDTO;
 		nominationId: string;
 		hasVoted: boolean;
+		canVote: boolean;
 		onVoted?: () => void;
 	}
 
-	let { participant, nominationId, hasVoted, onVoted }: Props = $props();
+	let { participant, nominationId, hasVoted, canVote, onVoted }: Props = $props();
 	const toastService = getToastService();
 
 	let isLoading = $state(false);
+	let areActionsDisabled = $derived(isLoading || !canVote);
 
 	async function handleVote() {
-		if (isLoading || participant.user_vote !== null) return;
+		if (areActionsDisabled || participant.user_vote !== null) return;
 
 		isLoading = true;
 		try {
@@ -49,7 +51,7 @@
 	}
 
 	async function handleCancelVote() {
-		if (isLoading || participant.user_vote === null) return;
+		if (areActionsDisabled || participant.user_vote === null) return;
 
 		isLoading = true;
 		try {
@@ -116,6 +118,7 @@
 					color="red"
 					outline
 					loading={isLoading}
+					disabled={areActionsDisabled}
 					onclick={handleCancelVote}
 					aria-label="Отменить голос"
 				>
@@ -124,8 +127,9 @@
 			{:else if !hasVoted}
 				<Button
 					size="md"
-					color="blue"
+					color="primary"
 					loading={isLoading}
+					disabled={areActionsDisabled}
 					onclick={handleVote}
 					aria-label="Голосовать за {participant.title}">Голосовать</Button
 				>

@@ -3,12 +3,7 @@
 	import { getToastService } from '$lib/stores/toasts.svelte';
 	import { client } from '$lib/api';
 	import { goto } from '$app/navigation';
-	import {
-		EnvelopeSolid,
-		LockSolid,
-		EyeOutline,
-		EyeSlashOutline
-	} from 'flowbite-svelte-icons';
+	import { EnvelopeSolid, LockSolid, EyeOutline, EyeSlashOutline } from 'flowbite-svelte-icons';
 
 	let email = $state('');
 	let password = $state('');
@@ -23,7 +18,6 @@
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 		return emailRegex.test(e);
 	}
-
 
 	function validatePassword(p: string): boolean {
 		if (!p) return false;
@@ -56,7 +50,6 @@
 			serverError = 'Введите корректный email';
 			return;
 		}
-
 
 		if (!validatePassword(password)) {
 			serverError =
@@ -94,10 +87,10 @@
 	}
 </script>
 
-<div class="flex h-full items-center justify-center">
-	<Card class="w-full max-w-md p-6 sm:p-8">
-		<form onsubmit={handleSignup} class="space-y-6">
-			<h2 class="mb-6 text-center text-2xl font-bold text-gray-900 dark:text-white">
+<div class="flex h-full items-center justify-center p-4">
+	<Card class="w-full max-w-md p-4 sm:p-6">
+		<form onsubmit={handleSignup} class="space-y-4">
+			<h2 class="text-center text-2xl font-bold text-gray-900 dark:text-white">
 				Регистрация в FAN App
 			</h2>
 
@@ -107,13 +100,13 @@
 				</Alert>
 			{/if}
 
-			<div class="space-y-2">
-				<Label for="email" color={emailColor}>Email</Label>
+			<div>
+				<Label for="email" color={emailColor} class="mb-2">Email</Label>
 				<Input
 					id="email"
 					type="email"
 					bind:value={email}
-					placeholder="Введите email"
+					placeholder="you@example.com"
 					required
 					size="md"
 					class="ps-9"
@@ -125,17 +118,17 @@
 					{/snippet}
 				</Input>
 				{#if email && isEmailValid === false}
-					<Helper color="red">Введите корректный адрес электронной почты</Helper>
+					<Helper color="red" class="mt-1">Введите корректный адрес электронной почты</Helper>
 				{/if}
 			</div>
 
-			<div class="space-y-2">
-				<Label for="password" color={passwordColor}>Пароль</Label>
+			<div>
+				<Label for="password" color={passwordColor} class="mb-2">Пароль</Label>
 				<Input
 					id="password"
 					type={showPassword ? 'text' : 'password'}
 					bind:value={password}
-					placeholder="Введите пароль"
+					placeholder="••••••••"
 					required
 					color={passwordColor}
 					disabled={isLoading}
@@ -149,7 +142,7 @@
 							type="button"
 							class="pointer-events-auto"
 							onclick={() => (showPassword = !showPassword)}
-							aria-label="Показать пароль"
+							aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
 						>
 							{#if showPassword}
 								<EyeOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
@@ -160,17 +153,22 @@
 					{/snippet}
 				</Input>
 				{#if password && isPasswordValid === false}
-					<Helper color="red">
+					<Helper color="red" class="mt-1">
 						Пароль должен быть от 8 до 128 символов и содержать хотя бы одну букву и одну цифру
 					</Helper>
 				{:else}
-					<Helper class="text-sm">Минимум 8 символов, должна быть буква и цифра</Helper>
+					<Helper class="mt-1 text-sm">Минимум 8 символов, должна быть буква и цифра</Helper>
 				{/if}
 			</div>
 
-			<Button type="submit" class="mt-4 min-h-11 w-full" disabled={isLoading}>
+			<Button
+				type="submit"
+				color="primary"
+				class="min-h-11 w-full rounded-xl font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
+				disabled={isLoading}
+			>
 				{#if isLoading}
-					<Spinner size="4" class="me-2" />
+					<Spinner size="4" class="mr-2" color="white" />
 					Регистрация...
 				{:else}
 					Зарегистрироваться
@@ -178,10 +176,8 @@
 			</Button>
 
 			<p class="text-center text-sm text-gray-500 dark:text-gray-400">
-				Уже есть аккаунт? <a
-					href="/login"
-					class="text-primary-600 hover:underline dark:text-primary-500">Войти</a
-				>
+				Уже есть аккаунт?
+				<a href="/login" class="text-primary-600 hover:underline dark:text-primary-500">Войти</a>
 			</p>
 		</form>
 	</Card>

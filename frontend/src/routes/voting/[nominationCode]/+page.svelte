@@ -2,6 +2,7 @@
 	import { Search, Card, Button } from 'flowbite-svelte';
 	import { ArrowLeftOutline, CheckCircleSolid, UsersGroupOutline } from 'flowbite-svelte-icons';
 	import ParticipantCard from '$lib/components/voting/ParticipantCard.svelte';
+	import VotingStatusAlert from '$lib/components/voting/VotingStatusAlert.svelte';
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import { invalidate } from '$app/navigation';
 	import type { PageProps } from './$types';
@@ -11,6 +12,8 @@
 	let nominationId = $derived(data.nomination.id);
 	let nomination: GetVotingNominationResult = $derived(data.nomination);
 	let participants = $derived(nomination.participants);
+	let votingStatus = $derived(data.votingStatus);
+	let canVote = $derived(votingStatus?.can_vote ?? false);
 
 	let searchQuery = $state('');
 
@@ -59,6 +62,8 @@
 	</p>
 </SectionHeader>
 
+<VotingStatusAlert votingState={votingStatus} class="mb-4" />
+
 <!-- Floating Control Center -->
 <div class="sticky top-4 z-30 mx-auto mb-4 max-w-2xl">
 	<div
@@ -74,7 +79,7 @@
 
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
 	{#each filtered as participant (participant.id)}
-		<ParticipantCard {participant} {nominationId} {hasVoted} onVoted={handleVoted} />
+		<ParticipantCard {participant} {nominationId} {hasVoted} {canVote} onVoted={handleVoted} />
 	{:else}
 		<div class="col-span-full">
 			<Card class="py-8 text-center sm:py-12">

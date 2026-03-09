@@ -51,10 +51,10 @@ backend-generate MIGRATION_NAME:
 
 # ---- Docker infra helpers ----
 run-dev:
-    docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile core up
+    docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile core up --watch
 
 run-prod:
-    docker compose -f docker-compose.yml --profile core --profile ops up
+    docker compose -f docker-compose.yml --profile core --profile ops up --build
 
 dev:
     @echo "Run in separate terminals:"

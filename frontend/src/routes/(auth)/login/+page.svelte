@@ -5,7 +5,7 @@
 	import type { components } from '$lib/api/v1';
 	import { getEventsClient } from '$lib/events.svelte';
 	import { getToastService } from '$lib/stores/toasts.svelte';
-	import { Alert, Button, Card, Helper, Input, Label, Spinner } from 'flowbite-svelte';
+	import { Alert, Button, Card, Input, Label, Spinner, Tabs, TabItem } from 'flowbite-svelte';
 	import { EnvelopeSolid, EyeOutline, EyeSlashOutline, LockSolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
 
@@ -14,7 +14,6 @@
 
 	let email = $state('');
 	let password = $state('');
-	let passwordMode = $state(false);
 	let magicLinkSentTo = $state('');
 	let activeAction = $state<ActiveAction>(null);
 	let showPassword = $state(false);
@@ -82,8 +81,6 @@
 			return;
 		}
 
-		passwordMode = false;
-		password = '';
 		activeAction = 'magic';
 		magicLinkSentTo = '';
 
@@ -100,7 +97,6 @@
 				return;
 			}
 
-			// Keep the success copy generic so the UI does not confirm whether the email exists.
 			magicLinkSentTo = trimmedEmail;
 		} catch (error) {
 			toastService.error(error);
@@ -109,28 +105,16 @@
 		}
 	}
 
-	async function handlePasswordAction() {
-		magicLinkSentTo = '';
-
-		// The first tap switches the screen into password mode without duplicating the email field.
-		if (!passwordMode) {
-			passwordMode = true;
-			return;
-		}
-
-		await submitPasswordLogin();
-	}
-
-	function handleEnterKey(event: KeyboardEvent) {
+	function handleMagicLinkEnter(event: KeyboardEvent) {
 		if (event.key !== 'Enter' || isBusy) return;
 		event.preventDefault();
-
-		if (passwordMode) {
-			void submitPasswordLogin();
-			return;
-		}
-
 		void handleMagicLinkRequest();
+	}
+
+	function handlePasswordEnter(event: KeyboardEvent) {
+		if (event.key !== 'Enter' || isBusy) return;
+		event.preventDefault();
+		void submitPasswordLogin();
 	}
 
 	async function handleTelegramLogin(user: TelegramLoginPayload) {
@@ -158,7 +142,6 @@
 	onMount(() => {
 		if (!browser) return;
 
-		// The widget calls this global callback after Telegram authentication succeeds.
 		// @ts-expect-error Telegram script writes to window at runtime.
 		window.onTelegramAuth = handleTelegramLogin;
 
@@ -185,129 +168,139 @@
 </script>
 
 <div class="flex h-full items-center justify-center p-4">
-	<Card class="w-full max-w-md p-6 sm:p-8">
-		<div class="space-y-6">
-			<div class="space-y-2 text-center">
-				<h2 class="text-2xl font-bold text-gray-900 dark:text-white">Вход в FAN App</h2>
-				<p class="text-sm text-gray-500 dark:text-gray-400">
-					Введите email. Ссылка для входа работает без пароля и создаёт аккаунт при первом входе.
-				</p>
-			</div>
+	<Card class="w-full max-w-md p-4 sm:p-6">
+		<div class="space-y-4">
+			<h2 class="text-center text-2xl font-bold text-gray-900 dark:text-white">Вход в FAN App</h2>
 
-			<div class="space-y-5">
-				<div class="space-y-2">
-					<Label for="email">Email</Label>
-					<Input
-						id="email"
-						type="email"
-						bind:value={email}
-						placeholder="Введите email"
-						required
-						disabled={isBusy}
-						class="ps-9"
-						oninput={() => (magicLinkSentTo = '')}
-						onkeydown={handleEnterKey}
-					>
-						{#snippet left()}
-							<EnvelopeSolid class="h-5 w-5" />
-						{/snippet}
-					</Input>
-					{#if passwordMode}
-						<Helper>Для входа по паролю используйте этот email.</Helper>
-					{:else}
-						<Helper>Отправим одноразовую ссылку. Если аккаунта ещё нет, создадим его автоматически.</Helper>
-					{/if}
-				</div>
-
-				{#if passwordMode}
-					<div class="space-y-2">
-						<Label for="password">Пароль</Label>
-						<Input
-							id="password"
-							type={showPassword ? 'text' : 'password'}
-							bind:value={password}
-							placeholder="Введите пароль"
-							required
-							disabled={isBusy}
-							class="ps-9"
-							onkeydown={handleEnterKey}
-						>
-							{#snippet left()}
-								<LockSolid class="h-5 w-5" />
-							{/snippet}
-							{#snippet right()}
-								<button
-									type="button"
-									class="pointer-events-auto"
-									onclick={() => (showPassword = !showPassword)}
-									aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
-								>
-									{#if showPassword}
-										<EyeOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-									{:else}
-										<EyeSlashOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-									{/if}
-								</button>
-							{/snippet}
-						</Input>
-						<p class="text-sm text-gray-500 dark:text-gray-400">
-							Нет пароля? <a
-								href="/signup"
-								class="text-primary-600 hover:underline dark:text-primary-500"
+			<Tabs tabStyle="underline" contentClass="mt-3">
+				<TabItem open title="По ссылке">
+					<div class="space-y-3">
+						<div>
+							<Label for="magic-email" class="mb-2">Email</Label>
+							<Input
+								id="magic-email"
+								type="email"
+								bind:value={email}
+								placeholder="you@example.com"
+								required
+								disabled={isBusy}
+								class="ps-9"
+								oninput={() => (magicLinkSentTo = '')}
+								onkeydown={handleMagicLinkEnter}
 							>
+								{#snippet left()}
+									<EnvelopeSolid class="h-5 w-5" />
+								{/snippet}
+							</Input>
+						</div>
+
+						{#if magicLinkSentTo}
+							<Alert color="green">
+								Ссылка отправлена на <span class="font-medium">{magicLinkSentTo}</span>
+							</Alert>
+						{/if}
+
+						<Button
+							type="button"
+							color="primary"
+							class="min-h-11 w-full rounded-xl font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
+							disabled={isBusy}
+							onclick={handleMagicLinkRequest}
+						>
+							{#if activeAction === 'magic'}
+								<Spinner size="4" class="mr-2" color="white" />
+								Отправляем...
+							{:else}
+								Отправить ссылку
+							{/if}
+						</Button>
+					</div>
+				</TabItem>
+
+				<TabItem title="С паролем">
+					<div class="space-y-4">
+						<div>
+							<Label for="password-email" class="mb-2">Email</Label>
+							<Input
+								id="password-email"
+								type="email"
+								bind:value={email}
+								placeholder="you@example.com"
+								required
+								disabled={isBusy}
+								class="ps-9"
+								onkeydown={handlePasswordEnter}
+							>
+								{#snippet left()}
+									<EnvelopeSolid class="h-5 w-5" />
+								{/snippet}
+							</Input>
+						</div>
+
+						<div>
+							<Label for="password" class="mb-2">Пароль</Label>
+							<Input
+								id="password"
+								type={showPassword ? 'text' : 'password'}
+								bind:value={password}
+								placeholder="••••••••"
+								required
+								disabled={isBusy}
+								class="ps-9"
+								onkeydown={handlePasswordEnter}
+							>
+								{#snippet left()}
+									<LockSolid class="h-5 w-5" />
+								{/snippet}
+								{#snippet right()}
+									<button
+										type="button"
+										class="pointer-events-auto"
+										onclick={() => (showPassword = !showPassword)}
+										aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+									>
+										{#if showPassword}
+											<EyeOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+										{:else}
+											<EyeSlashOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+										{/if}
+									</button>
+								{/snippet}
+							</Input>
+						</div>
+
+						<Button
+							type="button"
+							color="primary"
+							class="min-h-11 w-full rounded-xl font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
+							disabled={isBusy}
+							onclick={submitPasswordLogin}
+						>
+							{#if activeAction === 'password'}
+								<Spinner size="4" class="mr-2" color="white" />
+								Входим...
+							{:else}
+								Войти
+							{/if}
+						</Button>
+
+						<p class="text-center text-sm text-gray-500 dark:text-gray-400">
+							Нет аккаунта?
+							<a href="/signup" class="text-primary-600 hover:underline dark:text-primary-500">
 								Зарегистрироваться
 							</a>
 						</p>
 					</div>
-				{/if}
+				</TabItem>
+			</Tabs>
 
-				{#if magicLinkSentTo}
-					<Alert color="green">
-						Мы отправили ссылку для входа на <span class="font-medium">{magicLinkSentTo}</span>.
-						Если это первый вход, аккаунт создастся автоматически.
-					</Alert>
-				{/if}
-
-				<div class="grid gap-3 sm:grid-cols-2">
-					<Button
-						type="button"
-						color={passwordMode ? 'alternative' : 'dark'}
-						class="min-h-11 w-full rounded-xl font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
-						disabled={isBusy}
-						onclick={handleMagicLinkRequest}
-					>
-						{#if activeAction === 'magic'}
-							<Spinner size="4" class="mr-2" color="gray" />
-							Отправляем...
-						{:else}
-							Войти по ссылке
-						{/if}
-					</Button>
-					<Button
-						type="button"
-						color={passwordMode ? 'dark' : 'alternative'}
-						class="min-h-11 w-full rounded-xl font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
-						disabled={isBusy}
-						onclick={handlePasswordAction}
-					>
-						{#if activeAction === 'password'}
-							<Spinner size="4" class="mr-2" color="gray" />
-							Входим...
-						{:else}
-							Войти с паролем
-						{/if}
-					</Button>
-				</div>
-			</div>
-
-			<div class="relative flex items-center py-1">
+			<div class="relative flex items-center">
 				<div class="grow border-t border-gray-200 dark:border-gray-700"></div>
 				<span class="mx-4 shrink text-sm text-gray-400">или</span>
 				<div class="grow border-t border-gray-200 dark:border-gray-700"></div>
 			</div>
 
-			<div class="flex flex-col items-center justify-center space-y-3">
-				<p class="text-sm text-gray-500 dark:text-gray-400">Быстрый вход через Telegram</p>
+			<div class="flex flex-col items-center justify-center space-y-2">
 				<div id="telegram-login-container" class="min-h-11"></div>
 				{#if activeAction === 'telegram'}
 					<div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
