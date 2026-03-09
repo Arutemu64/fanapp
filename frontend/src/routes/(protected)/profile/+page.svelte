@@ -49,6 +49,7 @@
 		<!-- Push Notifications Card -->
 		<PushNotificationsCard
 			{user}
+			socialAccounts={data.socialAccounts}
 			pushSubscriptions={data.pushSubscriptions}
 			onSettingsUpdate={refreshProfile}
 		/>

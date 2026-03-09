@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 class UpdateUserSettingsCommand(BaseModel):
     receive_all_announcements: bool | None = None
+    receive_telegram_notifications: bool | None = None
 
 
 class UpdateUserSettings:
@@ -33,11 +34,20 @@ class UpdateUserSettings:
             current_user = await self.user_gateway.get_user_by_id(current_user_id)
             if current_user is None:
                 raise UserNotFound
-            if receive_all_announcements := data_to_update.get(
-                "receive_all_announcements"
-            ):
+            if (
+                receive_all_announcements
+                := data_to_update.get("receive_all_announcements")
+            ) is not None:
                 current_user.settings.receive_all_announcements = (
                     receive_all_announcements
+                )
+                update_flag = True
+            if (
+                receive_telegram_notifications
+                := data_to_update.get("receive_telegram_notifications")
+            ) is not None:
+                current_user.settings.receive_telegram_notifications = (
+                    receive_telegram_notifications
                 )
                 update_flag = True
             if update_flag:

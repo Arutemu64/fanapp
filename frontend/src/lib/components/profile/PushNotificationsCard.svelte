@@ -6,25 +6,30 @@
 	import { getToastService } from '$lib/stores/toasts.svelte';
 	import { PUBLIC_VAPID_KEY } from '$env/static/public';
 	import { onMount } from 'svelte';
-	import type { CurrentUserDTO } from '$lib/types/user';
+	import type { CurrentUserDTO, UserSocialAccountDTO } from '$lib/types/user';
 	import type { components } from '$lib/api/v1';
 
 	interface Props {
 		user: CurrentUserDTO;
+		socialAccounts?: UserSocialAccountDTO[];
 		pushSubscriptions?: components['schemas']['PushSubscriptionDTO'][];
 		onSettingsUpdate?: () => void;
 	}
 
-	let { user, pushSubscriptions = [], onSettingsUpdate }: Props = $props();
+	let { user, socialAccounts = [], pushSubscriptions = [], onSettingsUpdate }: Props = $props();
 
 	let isSubscribed = $state(false);
 	const toastService = getToastService();
 	let isLoading = $state(true);
 	let receiveAll = $derived(user.settings.receive_all_announcements);
+	let receiveTelegram = $derived(user.settings.receive_telegram_notifications);
 	let isSavingSettings = $state(false);
 	let isSendingTest = $state(false);
 	const pwa = getPwaService();
 	let showIosPwaModal = $state(false);
+	let hasTelegramAccount = $derived(
+		socialAccounts.some((socialAccount) => socialAccount.provider === 'telegram')
+	);
 
 	// Convert base64 VAPID key to Uint8Array required by pushManager
 	function urlBase64ToUint8Array(base64String: string) {
@@ -171,24 +176,46 @@
 		}
 	}
 
-	async function toggleReceiveAll() {
+	async function updateSettings(
+		nextSettings: Partial<components['schemas']['UpdateUserSettingsCommand']>,
+		rollback: () => void
+	) {
 		isSavingSettings = true;
 		const { error } = await client.PATCH('/users/me/settings', {
-			body: {
-				receive_all_announcements: receiveAll
-			}
+			body: nextSettings
 		});
 
 		if (error) {
 			console.error('API Error:', error);
 			toastService.add('Не удалось обновить настройки', 'error');
-			// Roll back to the latest prop value from the server
-			receiveAll = user.settings.receive_all_announcements;
+			rollback();
 		} else {
 			toastService.add('Настройки сохранены', 'success');
 			onSettingsUpdate?.();
 		}
 		isSavingSettings = false;
+	}
+
+	function toggleReceiveAll() {
+		void updateSettings(
+			{
+				receive_all_announcements: receiveAll
+			},
+			() => {
+				receiveAll = user.settings.receive_all_announcements;
+			}
+		);
+	}
+
+	function toggleReceiveTelegram() {
+		void updateSettings(
+			{
+				receive_telegram_notifications: receiveTelegram
+			},
+			() => {
+				receiveTelegram = user.settings.receive_telegram_notifications;
+			}
+		);
 	}
 
 	async function sendTestNotification() {
@@ -243,18 +270,25 @@
 			/>
 		</div>
 
-		<div class="mt-4">
-			<p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
-				Проверка колокольчика, web push и Telegram, если эти каналы подключены.
-			</p>
-			<Button
-				color="light"
-				class="min-h-11 w-full sm:w-auto"
-				disabled={isSendingTest}
-				onclick={sendTestNotification}
-			>
-				{isSendingTest ? 'Отправка...' : 'Проверить уведомления'}
-			</Button>
+		<div
+			class="mt-4 flex items-center justify-between border-t border-gray-200 pt-4 dark:border-gray-700"
+		>
+			<div>
+				<span class="text-sm font-medium text-gray-900 dark:text-gray-300"> Telegram </span>
+				<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+					{#if hasTelegramAccount}
+						Получать сообщения в Telegram-боте
+					{:else}
+						Сначала подключите Telegram в блоке «Соцсети»
+					{/if}
+				</p>
+			</div>
+			<Toggle
+				bind:checked={receiveTelegram}
+				disabled={isSavingSettings || !hasTelegramAccount}
+				onchange={toggleReceiveTelegram}
+				color="green"
+			/>
 		</div>
 
 		<div
@@ -272,6 +306,20 @@
 				onchange={toggleReceiveAll}
 				color="green"
 			/>
+		</div>
+
+		<div class="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+			<p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
+				Проверка колокольчика, web push и Telegram, если эти каналы включены.
+			</p>
+			<Button
+				color="light"
+				class="min-h-11 w-full sm:w-auto"
+				disabled={isSendingTest}
+				onclick={sendTestNotification}
+			>
+				{isSendingTest ? 'Отправка...' : 'Проверить уведомления'}
+			</Button>
 		</div>
 	</div>
 </Card>

@@ -4098,6 +4098,17 @@
               }
             ],
             "title": "Receive All Announcements"
+          },
+          "receive_telegram_notifications": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Receive Telegram Notifications"
           }
         },
         "type": "object",
@@ -4197,6 +4208,11 @@
           "receive_all_announcements": {
             "type": "boolean",
             "title": "Receive All Announcements",
+            "default": true
+          },
+          "receive_telegram_notifications": {
+            "type": "boolean",
+            "title": "Receive Telegram Notifications",
             "default": true
           }
         },

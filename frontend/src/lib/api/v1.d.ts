@@ -1230,6 +1230,8 @@ export interface components {
         UpdateUserSettingsCommand: {
             /** Receive All Announcements */
             receive_all_announcements?: boolean | null;
+            /** Receive Telegram Notifications */
+            receive_telegram_notifications?: boolean | null;
         };
         /** UserBaseDTO */
         UserBaseDTO: {
@@ -1265,6 +1267,11 @@ export interface components {
              * @default true
              */
             receive_all_announcements: boolean;
+            /**
+             * Receive Telegram Notifications
+             * @default true
+             */
+            receive_telegram_notifications: boolean;
         };
         /** UserSocialAccountDTO */
         UserSocialAccountDTO: {

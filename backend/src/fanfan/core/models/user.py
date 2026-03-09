@@ -11,6 +11,7 @@ from fanfan.core.vo.user import UserId, Username, UserRole
 class UserSettings:
     items_per_page: int = 4
     receive_all_announcements: bool = True
+    receive_telegram_notifications: bool = True
 
 
 @dataclass(slots=True, kw_only=True)
@@ -36,3 +37,6 @@ class User:
 
     def __eq__(self, other: User | Any) -> bool:
         return isinstance(other, User) and self.id == other.id
+
+    def __hash__(self) -> int:
+        return hash(self.id)

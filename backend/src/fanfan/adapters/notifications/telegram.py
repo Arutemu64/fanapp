@@ -28,6 +28,10 @@ class TelegramNotifier(Notifier):
         return f"<b>{notification.title.upper()}</b>\n\n{notification.body}"
 
     async def send_notification(self, notification: Notification) -> None:
+        user = await self.user_gateway.get_user_by_id(notification.user_id)
+        if user is None or not user.settings.receive_telegram_notifications:
+            raise UserNotReachable
+
         social_id = await self.user_gateway.get_user_social_id_by_provider(
             user_id=notification.user_id,
             provider="telegram",
