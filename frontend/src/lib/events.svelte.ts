@@ -6,8 +6,24 @@ const EVENTS_CLIENT_KEY = Symbol('EVENTS_CLIENT');
 
 /** Max reconnect attempts before giving up. */
 const MAX_RECONNECT_ATTEMPTS = 10;
+/** Wait briefly before reconnecting after auth changes to avoid flicker during navigation. */
+const RESTART_DEBOUNCE_MS = 250;
+/** If the handshake never arrives, treat the stream as unhealthy and reconnect. */
+const HANDSHAKE_TIMEOUT_MS = 5000;
 
-export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error' | 'failed';
+export type ConnectionStatus =
+	| 'disconnected'
+	| 'connecting'
+	| 'transport_open'
+	| 'connected'
+	| 'error'
+	| 'failed';
+
+export interface EventsHandshakePayload {
+	server_time: string;
+	authenticated: boolean;
+	connection_id: string;
+}
 
 /**
  * SSE (Server-Sent Events) client with automatic reconnection.
@@ -20,13 +36,17 @@ export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'er
  */
 export class EventsClient {
 	connectionStatus: ConnectionStatus = $state('disconnected');
+	handshake: EventsHandshakePayload | null = $state(null);
 	#source: EventSource | null = null;
 	#reconnectAttempts = 0;
 	#reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
+	#handshakeTimeoutId: ReturnType<typeof setTimeout> | null = null;
+	#restartTimeoutId: ReturnType<typeof setTimeout> | null = null;
+	#manualDisconnect = false;
 
 	// Tracks registered listeners so they survive reconnects.
 	// When EventSource reconnects, we re-attach all listeners to the new instance.
-	#listeners: Map<string, Set<EventListener>> = new Map();
+	#listeners: Record<string, EventListener[]> = {};
 
 	constructor() {
 		this.connect();
@@ -35,6 +55,11 @@ export class EventsClient {
 	connect() {
 		if (this.#source) return;
 
+		this.#clearReconnectTimer();
+		this.#clearRestartTimer();
+		this.#clearHandshakeTimer();
+		this.#manualDisconnect = false;
+		this.handshake = null;
 		this.connectionStatus = 'connecting';
 
 		this.#source = new EventSource(`${PUBLIC_API_URL}/events`, {
@@ -42,30 +67,23 @@ export class EventsClient {
 		});
 
 		this.#source.onopen = () => {
-			this.connectionStatus = 'connected';
+			// The stream transport is open. We wait for the backend handshake
+			// before calling the connection fully online.
+			this.connectionStatus = 'transport_open';
 			this.#reconnectAttempts = 0;
+			this.#armHandshakeTimeout();
 		};
 
 		this.#source.onerror = () => {
+			if (this.#manualDisconnect) return;
 			console.log('EventSource error, attempting to reconnect...');
-			this.connectionStatus = 'error';
-
-			this.#source?.close();
-			this.#source = null;
-
-			if (this.#reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-				this.connectionStatus = 'failed';
-				return;
-			}
-
-			// Exponential backoff: 1s, 2s, 4s, 8s, ... capped at 30s.
-			const timeout = Math.min(1000 * 2 ** this.#reconnectAttempts, 30000);
-			this.#reconnectTimeoutId = setTimeout(() => this.connect(), timeout);
-			this.#reconnectAttempts++;
+			this.#failAndReconnect();
 		};
 
+		this.#source.addEventListener('connected', this.#handleHandshake);
+
 		// Re-attach all registered listeners to the new EventSource instance.
-		for (const [event, handlers] of this.#listeners) {
+		for (const [event, handlers] of Object.entries(this.#listeners)) {
 			for (const handler of handlers) {
 				this.#source.addEventListener(event, handler);
 			}
@@ -74,51 +92,117 @@ export class EventsClient {
 
 	/** Subscribe to a named SSE event. Survives reconnects automatically. */
 	on(event: string, handler: EventListener) {
-		if (!this.#listeners.has(event)) {
-			this.#listeners.set(event, new Set());
-		}
+		const handlers = this.#listeners[event] ?? (this.#listeners[event] = []);
+		if (handlers.includes(handler)) return; // Already registered
 
-		const handlers = this.#listeners.get(event)!;
-		if (handlers.has(handler)) return; // Already registered
-
-		handlers.add(handler);
+		handlers.push(handler);
 		this.#source?.addEventListener(event, handler);
 	}
 
 	/** Unsubscribe from a named SSE event. */
 	off(event: string, handler: EventListener) {
-		const handlers = this.#listeners.get(event);
-		if (!handlers?.has(handler)) return;
+		const handlers = this.#listeners[event];
+		if (!handlers) return;
 
-		handlers.delete(handler);
+		const nextHandlers = handlers.filter((registeredHandler) => registeredHandler !== handler);
+		if (nextHandlers.length === handlers.length) return;
+
+		this.#listeners[event] = nextHandlers;
 		this.#source?.removeEventListener(event, handler);
 
-		// Clean up empty sets.
-		if (handlers.size === 0) {
-			this.#listeners.delete(event);
+		// Clean up empty listener lists.
+		if (nextHandlers.length === 0) {
+			delete this.#listeners[event];
 		}
 	}
 
 	/** Disconnect and immediately reconnect (e.g. after login/logout). */
 	restart() {
 		this.disconnect();
-		this.connect();
+		this.connectionStatus = 'connecting';
+		this.#restartTimeoutId = setTimeout(() => {
+			this.#restartTimeoutId = null;
+			this.connect();
+		}, RESTART_DEBOUNCE_MS);
 	}
 
 	/** Close the connection and stop reconnecting. */
 	disconnect() {
-		if (this.#reconnectTimeoutId) {
-			clearTimeout(this.#reconnectTimeoutId);
-			this.#reconnectTimeoutId = null;
-		}
-
-		if (this.#source) {
-			this.#source.close();
-			this.#source = null;
-		}
-
+		this.#manualDisconnect = true;
+		this.#clearReconnectTimer();
+		this.#clearRestartTimer();
+		this.#clearHandshakeTimer();
+		this.#closeSource();
+		this.handshake = null;
 		this.connectionStatus = 'disconnected';
 		this.#reconnectAttempts = 0;
+	}
+
+	#handleHandshake = (event: Event) => {
+		if (!(event instanceof MessageEvent)) return;
+
+		try {
+			this.handshake = JSON.parse(event.data) as EventsHandshakePayload;
+		} catch (error) {
+			console.warn('Failed to parse SSE handshake payload', error);
+			this.handshake = null;
+		}
+
+		this.#clearHandshakeTimer();
+		this.connectionStatus = 'connected';
+	};
+
+	#armHandshakeTimeout() {
+		this.#clearHandshakeTimer();
+		this.#handshakeTimeoutId = setTimeout(() => {
+			console.warn('SSE handshake timed out, reconnecting...');
+			this.#failAndReconnect();
+		}, HANDSHAKE_TIMEOUT_MS);
+	}
+
+	#failAndReconnect() {
+		this.#clearHandshakeTimer();
+		this.#closeSource();
+		this.handshake = null;
+		this.connectionStatus = 'error';
+
+		if (this.#reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+			this.connectionStatus = 'failed';
+			return;
+		}
+
+		// Exponential backoff: 1s, 2s, 4s, 8s, ... capped at 30s.
+		const timeout = Math.min(1000 * 2 ** this.#reconnectAttempts, 30000);
+		this.#reconnectTimeoutId = setTimeout(() => {
+			this.#reconnectTimeoutId = null;
+			this.connect();
+		}, timeout);
+		this.#reconnectAttempts++;
+	}
+
+	#closeSource() {
+		if (!this.#source) return;
+		this.#source.removeEventListener('connected', this.#handleHandshake);
+		this.#source.close();
+		this.#source = null;
+	}
+
+	#clearReconnectTimer() {
+		if (!this.#reconnectTimeoutId) return;
+		clearTimeout(this.#reconnectTimeoutId);
+		this.#reconnectTimeoutId = null;
+	}
+
+	#clearRestartTimer() {
+		if (!this.#restartTimeoutId) return;
+		clearTimeout(this.#restartTimeoutId);
+		this.#restartTimeoutId = null;
+	}
+
+	#clearHandshakeTimer() {
+		if (!this.#handshakeTimeoutId) return;
+		clearTimeout(this.#handshakeTimeoutId);
+		this.#handshakeTimeoutId = null;
 	}
 }
 

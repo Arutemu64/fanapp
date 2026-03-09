@@ -34,8 +34,8 @@
 
 	async function finishLogin(successMessage: string) {
 		toastService.add(successMessage, 'success');
-		eventsClient?.restart();
 		await goto('/', { invalidateAll: true });
+		eventsClient?.restart();
 	}
 
 	async function submitPasswordLogin() {
@@ -208,7 +208,7 @@
 							onclick={handleMagicLinkRequest}
 						>
 							{#if activeAction === 'magic'}
-								<Spinner size="4" class="mr-2" color="white" />
+								<Spinner size="4" class="mr-2" color="primary" />
 								Отправляем...
 							{:else}
 								Отправить ссылку
@@ -277,7 +277,7 @@
 							onclick={submitPasswordLogin}
 						>
 							{#if activeAction === 'password'}
-								<Spinner size="4" class="mr-2" color="white" />
+								<Spinner size="4" class="mr-2" color="primary" />
 								Входим...
 							{:else}
 								Войти

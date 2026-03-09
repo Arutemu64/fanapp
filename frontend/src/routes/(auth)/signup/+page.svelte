@@ -168,7 +168,7 @@
 				disabled={isLoading}
 			>
 				{#if isLoading}
-					<Spinner size="4" class="mr-2" color="white" />
+					<Spinner size="4" class="mr-2" color="primary" />
 					Регистрация...
 				{:else}
 					Зарегистрироваться

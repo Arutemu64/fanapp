@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
 	import { getEventsClient } from '$lib/events.svelte';
 	import { Badge } from 'flowbite-svelte';
 	import { CheckCircleSolid, ClockSolid, CloseCircleSolid } from 'flowbite-svelte-icons';
@@ -11,7 +10,9 @@
 	let statusColor: BadgeColor = $derived(
 		client?.connectionStatus === 'connected'
 			? 'green'
-			: client?.connectionStatus === 'connecting'
+			: client?.connectionStatus === 'transport_open'
+				? 'green'
+				: client?.connectionStatus === 'connecting'
 				? 'yellow'
 				: 'red'
 	);
@@ -19,15 +20,19 @@
 	let statusText = $derived(
 		client?.connectionStatus === 'connected'
 			? 'Онлайн'
+			: client?.connectionStatus === 'transport_open'
+				? 'Проверяем вход...'
 			: client?.connectionStatus === 'connecting'
-				? 'Подключение...'
+				? 'Подключаемся...'
 				: 'Офлайн'
 	);
 
 	let StatusIcon = $derived(
 		client?.connectionStatus === 'connected'
 			? CheckCircleSolid
-			: client?.connectionStatus === 'connecting'
+			: client?.connectionStatus === 'transport_open'
+				? CheckCircleSolid
+				: client?.connectionStatus === 'connecting'
 				? ClockSolid
 				: CloseCircleSolid
 	);

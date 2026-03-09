@@ -86,8 +86,8 @@
 			return;
 		}
 
+		await goto('/', { invalidateAll: true });
 		eventsClient?.restart();
-		goto('/', { invalidateAll: true });
 	}
 </script>
 
