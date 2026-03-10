@@ -46,6 +46,7 @@ from fanfan.application.push_sub.get_user_push_subscriptions import (
 from fanfan.application.schedule.get_schedule import (
     GetSchedule,
 )
+from fanfan.application.schedule_mgmt.import_schedule import ImportSchedule
 from fanfan.application.schedule_mgmt.list_schedule_changes import ListScheduleChanges
 from fanfan.application.schedule_mgmt.move_event import MoveScheduleEvent
 from fanfan.application.schedule_mgmt.process_schedule_change import (
@@ -100,6 +101,7 @@ class InteractorsProvider(Provider):
     revert_change = provide(UndoScheduleChange)
     proceed_schedule_change = provide(ProcessScheduleChange)
     list_schedule_changes = provide(ListScheduleChanges)
+    import_schedule = provide(ImportSchedule)
 
     create_mailing = provide(CreateRoleMailing)
     get_mailing_info = provide(GetMailingInfo)

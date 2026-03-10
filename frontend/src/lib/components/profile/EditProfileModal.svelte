@@ -149,13 +149,22 @@
 			{#if usernameError}
 				<Helper class="mt-1" color="red">{usernameError}</Helper>
 			{:else}
-				<Helper class="mt-1">3–25 символов, начинается с буквы; далее буквы (латиница/кириллица), цифры и подчёркивание</Helper>
+				<Helper class="mt-1"
+					>3–25 символов, начинается с буквы; далее буквы (латиница/кириллица), цифры и
+					подчёркивание</Helper
+				>
 			{/if}
 		</div>
 
 		<div>
 			<Label for="firstName" class="mb-2 block">Настоящее имя</Label>
-			<Input id="firstName" type="text" placeholder="Настоящее имя" bind:value={firstName} class="ps-9">
+			<Input
+				id="firstName"
+				type="text"
+				placeholder="Настоящее имя"
+				bind:value={firstName}
+				class="ps-9"
+			>
 				{#snippet left()}
 					<EditOutline class="h-5 w-5" />
 				{/snippet}

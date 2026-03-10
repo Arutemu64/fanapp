@@ -12,12 +12,6 @@ Keep API usage type-safe, SSR-compatible, and consistent across the frontend.
 - Do not define new API data structures from scratch when the generated schema already covers them.
 - If a reusable local alias is needed, define it under `frontend/src/lib/types`.
 
-## Generation
-
-- Run `pnpm generate-api` from `frontend/` when `shared/openapi/openapi.json` changes.
-- Keep custom OpenAPI transforms in `frontend/scripts/generate-api.mjs`.
-- Preserve the `Blob` transform for file upload fields emitted as `format: binary` or `contentMediaType`.
-
 ## Client Usage
 
 - Use the shared API client from `frontend/src/lib/index.ts`.

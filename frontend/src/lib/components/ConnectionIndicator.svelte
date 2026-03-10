@@ -13,8 +13,8 @@
 			: client?.connectionStatus === 'transport_open'
 				? 'green'
 				: client?.connectionStatus === 'connecting'
-				? 'yellow'
-				: 'red'
+					? 'yellow'
+					: 'red'
 	);
 
 	let statusText = $derived(
@@ -22,9 +22,9 @@
 			? 'Онлайн'
 			: client?.connectionStatus === 'transport_open'
 				? 'Проверяем вход...'
-			: client?.connectionStatus === 'connecting'
-				? 'Подключаемся...'
-				: 'Офлайн'
+				: client?.connectionStatus === 'connecting'
+					? 'Подключаемся...'
+					: 'Офлайн'
 	);
 
 	let StatusIcon = $derived(
@@ -33,8 +33,8 @@
 			: client?.connectionStatus === 'transport_open'
 				? CheckCircleSolid
 				: client?.connectionStatus === 'connecting'
-				? ClockSolid
-				: CloseCircleSolid
+					? ClockSolid
+					: CloseCircleSolid
 	);
 </script>
 

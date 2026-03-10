@@ -87,8 +87,8 @@
 				<div class="flex items-start gap-2">
 					<ExclamationCircleSolid class="mt-0.5 h-4 w-4 shrink-0" />
 					<p>
-						<span class="font-medium">Внимание!</span> К вашему аккаунту не привязан email. Мы
-						настоятельно рекомендуем добавить его для защиты вашей учетной записи.
+						<span class="font-medium">Внимание!</span> К вашему аккаунту не привязан email. Мы настоятельно
+						рекомендуем добавить его для защиты вашей учетной записи.
 					</p>
 				</div>
 			</Alert>
@@ -102,4 +102,8 @@
 	onSuccess={onPasswordChange}
 />
 
-<ChangeEmailModal bind:open={changeEmailModalOpen} currentEmail={user.email} onSuccess={onEmailChange} />
+<ChangeEmailModal
+	bind:open={changeEmailModalOpen}
+	currentEmail={user.email}
+	onSuccess={onEmailChange}
+/>

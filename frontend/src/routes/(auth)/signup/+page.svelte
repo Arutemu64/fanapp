@@ -87,98 +87,96 @@
 	}
 </script>
 
-<div class="flex h-full items-center justify-center p-4">
-	<Card class="w-full max-w-md p-4 sm:p-6">
-		<form onsubmit={handleSignup} class="space-y-4">
-			<h2 class="text-center text-2xl font-bold text-gray-900 dark:text-white">
-				Регистрация в FAN App
-			</h2>
+<Card class="w-full p-4 sm:p-6">
+	<form onsubmit={handleSignup} class="space-y-4">
+		<h2 class="text-center text-2xl font-bold text-gray-900 dark:text-white">
+			Регистрация в FAN App
+		</h2>
 
-			{#if serverError}
-				<Alert color="red">
-					{serverError}
-				</Alert>
-			{/if}
+		{#if serverError}
+			<Alert color="red">
+				{serverError}
+			</Alert>
+		{/if}
 
-			<div>
-				<Label for="email" color={emailColor} class="mb-2">Email</Label>
-				<Input
-					id="email"
-					type="email"
-					bind:value={email}
-					placeholder="you@example.com"
-					required
-					size="md"
-					class="ps-9"
-					color={emailColor}
-					disabled={isLoading}
-				>
-					{#snippet left()}
-						<EnvelopeSolid class="h-5 w-5" />
-					{/snippet}
-				</Input>
-				{#if email && isEmailValid === false}
-					<Helper color="red" class="mt-1">Введите корректный адрес электронной почты</Helper>
-				{/if}
-			</div>
-
-			<div>
-				<Label for="password" color={passwordColor} class="mb-2">Пароль</Label>
-				<Input
-					id="password"
-					type={showPassword ? 'text' : 'password'}
-					bind:value={password}
-					placeholder="••••••••"
-					required
-					color={passwordColor}
-					disabled={isLoading}
-					class="ps-9"
-				>
-					{#snippet left()}
-						<LockSolid class="h-5 w-5" />
-					{/snippet}
-					{#snippet right()}
-						<button
-							type="button"
-							class="pointer-events-auto"
-							onclick={() => (showPassword = !showPassword)}
-							aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
-						>
-							{#if showPassword}
-								<EyeOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-							{:else}
-								<EyeSlashOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-							{/if}
-						</button>
-					{/snippet}
-				</Input>
-				{#if password && isPasswordValid === false}
-					<Helper color="red" class="mt-1">
-						Пароль должен быть от 8 до 128 символов и содержать хотя бы одну букву и одну цифру
-					</Helper>
-				{:else}
-					<Helper class="mt-1 text-sm">Минимум 8 символов, должна быть буква и цифра</Helper>
-				{/if}
-			</div>
-
-			<Button
-				type="submit"
-				color="primary"
-				class="min-h-11 w-full rounded-xl font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
+		<div>
+			<Label for="email" color={emailColor} class="mb-2">Email</Label>
+			<Input
+				id="email"
+				type="email"
+				bind:value={email}
+				placeholder="you@example.com"
+				required
+				size="md"
+				class="ps-9"
+				color={emailColor}
 				disabled={isLoading}
 			>
-				{#if isLoading}
-					<Spinner size="4" class="mr-2" color="primary" />
-					Регистрация...
-				{:else}
-					Зарегистрироваться
-				{/if}
-			</Button>
+				{#snippet left()}
+					<EnvelopeSolid class="h-5 w-5" />
+				{/snippet}
+			</Input>
+			{#if email && isEmailValid === false}
+				<Helper color="red" class="mt-1">Введите корректный адрес электронной почты</Helper>
+			{/if}
+		</div>
 
-			<p class="text-center text-sm text-gray-500 dark:text-gray-400">
-				Уже есть аккаунт?
-				<a href="/login" class="text-primary-600 hover:underline dark:text-primary-500">Войти</a>
-			</p>
-		</form>
-	</Card>
-</div>
+		<div>
+			<Label for="password" color={passwordColor} class="mb-2">Пароль</Label>
+			<Input
+				id="password"
+				type={showPassword ? 'text' : 'password'}
+				bind:value={password}
+				placeholder="••••••••"
+				required
+				color={passwordColor}
+				disabled={isLoading}
+				class="ps-9"
+			>
+				{#snippet left()}
+					<LockSolid class="h-5 w-5" />
+				{/snippet}
+				{#snippet right()}
+					<button
+						type="button"
+						class="pointer-events-auto"
+						onclick={() => (showPassword = !showPassword)}
+						aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+					>
+						{#if showPassword}
+							<EyeOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+						{:else}
+							<EyeSlashOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+						{/if}
+					</button>
+				{/snippet}
+			</Input>
+			{#if password && isPasswordValid === false}
+				<Helper color="red" class="mt-1">
+					Пароль должен быть от 8 до 128 символов и содержать хотя бы одну букву и одну цифру
+				</Helper>
+			{:else}
+				<Helper class="mt-1 text-sm">Минимум 8 символов, должна быть буква и цифра</Helper>
+			{/if}
+		</div>
+
+		<Button
+			type="submit"
+			color="primary"
+			class="min-h-11 w-full rounded-xl font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
+			disabled={isLoading}
+		>
+			{#if isLoading}
+				<Spinner size="4" class="mr-2" color="primary" />
+				Регистрация...
+			{:else}
+				Зарегистрироваться
+			{/if}
+		</Button>
+
+		<p class="text-center text-sm text-gray-500 dark:text-gray-400">
+			Уже есть аккаунт?
+			<a href="/login" class="text-primary-600 hover:underline dark:text-primary-500">Войти</a>
+		</p>
+	</form>
+</Card>

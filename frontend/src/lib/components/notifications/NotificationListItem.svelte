@@ -38,9 +38,7 @@
 	<div class="flex items-start gap-3">
 		<div
 			class={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${
-				notification.seen_at
-					? 'bg-gray-300 dark:bg-gray-600'
-					: 'bg-primary-600 dark:bg-primary-500'
+				notification.seen_at ? 'bg-gray-300 dark:bg-gray-600' : 'bg-primary-600 dark:bg-primary-500'
 			}`}
 		></div>
 

@@ -131,7 +131,7 @@
 
 		<div class="min-w-0 flex-1">
 			<h3
-				class="mb-1 text-lg font-bold leading-tight text-gray-900 dark:text-white"
+				class="mb-1 text-lg leading-tight font-bold text-gray-900 dark:text-white"
 				class:line-through={event.is_skipped}
 			>
 				{event.title}

@@ -1,11 +1,16 @@
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile
 from starlette import status
 
+from fanfan.adapters.parsers.schedule import parse_schedule_from_excel
 from fanfan.application.schedule.get_schedule import (
     GetSchedule,
     GetScheduleResult,
+)
+from fanfan.application.schedule_mgmt.import_schedule import (
+    ImportSchedule,
+    ImportScheduleCommand,
 )
 from fanfan.application.schedule_mgmt.list_schedule_changes import (
     ListScheduleChanges,
@@ -425,3 +430,16 @@ async def delete_subscription(
         ) from e
     else:
         return
+
+
+@schedule_router.post(
+    "/import",
+    status_code=201,
+)
+@inject
+async def import_schedule(
+    file: UploadFile,
+    interactor: FromDishka[ImportSchedule],
+) -> None:
+    schedule = parse_schedule_from_excel(file=file.file)
+    await interactor(ImportScheduleCommand(schedule=schedule))

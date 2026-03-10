@@ -114,9 +114,7 @@
 			Подключайте внешние аккаунты для быстрого входа и будущих уведомлений.
 		</p>
 
-		<div
-			class="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
-		>
+		<div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
 			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 				<div class="min-w-0">
 					<div class="flex items-center gap-2">

@@ -15,8 +15,5 @@
 </svelte:head>
 
 {#key notificationsKey}
-	<NotificationsFeed
-		initialNotifications={data.notifications}
-		initialHasMore={data.hasMore}
-	/>
+	<NotificationsFeed initialNotifications={data.notifications} initialHasMore={data.hasMore} />
 {/key}

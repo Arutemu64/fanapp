@@ -1,0 +1,134 @@
+<script lang="ts">
+	import { invalidate } from '$app/navigation';
+	import { client } from '$lib/api';
+	import SectionHeader from '$lib/components/SectionHeader.svelte';
+	import { Alert, Button, Card, Fileupload, Helper, Label, Spinner } from 'flowbite-svelte';
+
+	let selectedFiles = $state<FileList | null>(null);
+	let isUploading = $state(false);
+	let inlineError = $state('');
+	let successMessage = $state('');
+	let selectedFileName = $derived(selectedFiles?.[0]?.name ?? '');
+
+	const ACCEPTED_FILE_TYPES =
+		'.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
+	function handleFileChange() {
+		inlineError = '';
+		successMessage = '';
+	}
+
+	async function handleSubmit(event: Event) {
+		event.preventDefault();
+		const form = event.currentTarget as HTMLFormElement;
+		const selectedFile = selectedFiles?.[0] ?? null;
+
+		inlineError = '';
+		successMessage = '';
+
+		if (!selectedFile) {
+			inlineError = 'Выберите Excel-файл для импорта';
+			return;
+		}
+
+		isUploading = true;
+
+		try {
+			const { error, response } = await client.POST('/schedule/import', {
+				body: { file: selectedFile },
+				bodySerializer(body) {
+					const formData = new FormData();
+					formData.set('file', body.file);
+					return formData;
+				}
+			});
+
+			if (error || !response.ok) {
+				if (response.status === 401) {
+					inlineError = 'Нужно войти в аккаунт заново';
+				} else if (response.status === 403) {
+					inlineError = 'У вас нет доступа к импорту расписания';
+				} else if (response.status === 422) {
+					inlineError = 'Проверьте формат файла и попробуйте снова';
+				} else {
+					inlineError = 'Не удалось импортировать расписание';
+				}
+
+				return;
+			}
+
+			successMessage = 'Файл загружен. Расписание обновлено.';
+			selectedFiles = null;
+			form.reset();
+
+			await invalidate('app:schedule');
+		} catch (submitError) {
+			console.error('Schedule import failed:', submitError);
+			inlineError = 'Не удалось импортировать расписание';
+		} finally {
+			isUploading = false;
+		}
+	}
+</script>
+
+<svelte:head>
+	<title>Импорт расписания</title>
+</svelte:head>
+
+<SectionHeader
+	title="Импорт расписания"
+	description="Загрузите Excel-файл, чтобы обновить расписание мероприятия."
+/>
+
+<div class="px-4">
+	<Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
+		<form class="space-y-4" onsubmit={handleSubmit}>
+			<div class="space-y-2">
+				<Label for="schedule-file">Excel-файл</Label>
+				<Fileupload
+					id="schedule-file"
+					accept={ACCEPTED_FILE_TYPES}
+					bind:files={selectedFiles}
+					clearable
+					size="lg"
+					class="w-full"
+					disabled={isUploading}
+					onchange={handleFileChange}
+				/>
+				<Helper class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+					{#if selectedFileName}
+						Выбран файл: {selectedFileName}
+					{:else}
+						Поддерживаются файлы `.xls` и `.xlsx`.
+					{/if}
+				</Helper>
+			</div>
+
+			{#if inlineError}
+				<Alert color="red">
+					{inlineError}
+				</Alert>
+			{/if}
+
+			{#if successMessage}
+				<Alert color="green">
+					{successMessage}
+				</Alert>
+			{/if}
+
+			<Button
+				type="submit"
+				color="primary"
+				class="min-h-11 w-full justify-center rounded-xl sm:w-auto"
+				disabled={isUploading}
+			>
+				{#if isUploading}
+					<Spinner size="4" class="mr-2" color="primary" />
+					Импортируем...
+				{:else}
+					Импортировать
+				{/if}
+			</Button>
+		</form>
+	</Card>
+</div>

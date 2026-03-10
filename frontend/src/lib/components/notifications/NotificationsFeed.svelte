@@ -27,7 +27,9 @@
 	let extraOffset = $state(0);
 	let isLoadingMore = $state(false);
 
-	let notifications = $derived.by(() => appendUniqueNotifications(initialNotifications, extraNotifications));
+	let notifications = $derived.by(() =>
+		appendUniqueNotifications(initialNotifications, extraNotifications)
+	);
 	let hasMore = $derived(extraHasMore ?? initialHasMore);
 	let nextOffset = $derived(initialNotifications.length + extraOffset);
 	let unreadCount = $derived(notifications.filter((notification) => !notification.seen_at).length);

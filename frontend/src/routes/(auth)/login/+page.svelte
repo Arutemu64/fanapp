@@ -167,148 +167,146 @@
 	});
 </script>
 
-<div class="flex h-full items-center justify-center p-4">
-	<Card class="w-full max-w-md p-4 sm:p-6">
-		<div class="space-y-4">
-			<h2 class="text-center text-2xl font-bold text-gray-900 dark:text-white">Вход в FAN App</h2>
+<Card class="w-full p-4 sm:p-6">
+	<div class="space-y-4">
+		<h2 class="text-center text-2xl font-bold text-gray-900 dark:text-white">Вход в FAN App</h2>
 
-			<Tabs tabStyle="underline" contentClass="mt-3">
-				<TabItem open title="По ссылке">
-					<div class="space-y-3">
-						<div>
-							<Label for="magic-email" class="mb-2">Email</Label>
-							<Input
-								id="magic-email"
-								type="email"
-								bind:value={email}
-								placeholder="you@example.com"
-								required
-								disabled={isBusy}
-								class="ps-9"
-								oninput={() => (magicLinkSentTo = '')}
-								onkeydown={handleMagicLinkEnter}
-							>
-								{#snippet left()}
-									<EnvelopeSolid class="h-5 w-5" />
-								{/snippet}
-							</Input>
-						</div>
+		<Tabs tabStyle="underline" contentClass="mt-3">
+			<TabItem open title="По ссылке">
+				<div class="space-y-3">
+					<div>
+						<Label for="magic-email" class="mb-2">Email</Label>
+						<Input
+							id="magic-email"
+							type="email"
+							bind:value={email}
+							placeholder="you@example.com"
+							required
+							disabled={isBusy}
+							class="ps-9"
+							oninput={() => (magicLinkSentTo = '')}
+							onkeydown={handleMagicLinkEnter}
+						>
+							{#snippet left()}
+								<EnvelopeSolid class="h-5 w-5" />
+							{/snippet}
+						</Input>
+					</div>
 
-						{#if magicLinkSentTo}
-							<Alert color="green">
-								Ссылка отправлена на <span class="font-medium">{magicLinkSentTo}</span>
-							</Alert>
+					{#if magicLinkSentTo}
+						<Alert color="green">
+							Ссылка отправлена на <span class="font-medium">{magicLinkSentTo}</span>
+						</Alert>
+					{/if}
+
+					<Button
+						type="button"
+						color="primary"
+						class="min-h-11 w-full rounded-xl font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
+						disabled={isBusy}
+						onclick={handleMagicLinkRequest}
+					>
+						{#if activeAction === 'magic'}
+							<Spinner size="4" class="mr-2" color="primary" />
+							Отправляем...
+						{:else}
+							Отправить ссылку
 						{/if}
+					</Button>
+				</div>
+			</TabItem>
 
-						<Button
-							type="button"
-							color="primary"
-							class="min-h-11 w-full rounded-xl font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
+			<TabItem title="С паролем">
+				<div class="space-y-4">
+					<div>
+						<Label for="password-email" class="mb-2">Email</Label>
+						<Input
+							id="password-email"
+							type="email"
+							bind:value={email}
+							placeholder="you@example.com"
+							required
 							disabled={isBusy}
-							onclick={handleMagicLinkRequest}
+							class="ps-9"
+							onkeydown={handlePasswordEnter}
 						>
-							{#if activeAction === 'magic'}
-								<Spinner size="4" class="mr-2" color="primary" />
-								Отправляем...
-							{:else}
-								Отправить ссылку
-							{/if}
-						</Button>
+							{#snippet left()}
+								<EnvelopeSolid class="h-5 w-5" />
+							{/snippet}
+						</Input>
 					</div>
-				</TabItem>
 
-				<TabItem title="С паролем">
-					<div class="space-y-4">
-						<div>
-							<Label for="password-email" class="mb-2">Email</Label>
-							<Input
-								id="password-email"
-								type="email"
-								bind:value={email}
-								placeholder="you@example.com"
-								required
-								disabled={isBusy}
-								class="ps-9"
-								onkeydown={handlePasswordEnter}
-							>
-								{#snippet left()}
-									<EnvelopeSolid class="h-5 w-5" />
-								{/snippet}
-							</Input>
-						</div>
-
-						<div>
-							<Label for="password" class="mb-2">Пароль</Label>
-							<Input
-								id="password"
-								type={showPassword ? 'text' : 'password'}
-								bind:value={password}
-								placeholder="••••••••"
-								required
-								disabled={isBusy}
-								class="ps-9"
-								onkeydown={handlePasswordEnter}
-							>
-								{#snippet left()}
-									<LockSolid class="h-5 w-5" />
-								{/snippet}
-								{#snippet right()}
-									<button
-										type="button"
-										class="pointer-events-auto"
-										onclick={() => (showPassword = !showPassword)}
-										aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
-									>
-										{#if showPassword}
-											<EyeOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-										{:else}
-											<EyeSlashOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-										{/if}
-									</button>
-								{/snippet}
-							</Input>
-						</div>
-
-						<Button
-							type="button"
-							color="primary"
-							class="min-h-11 w-full rounded-xl font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
+					<div>
+						<Label for="password" class="mb-2">Пароль</Label>
+						<Input
+							id="password"
+							type={showPassword ? 'text' : 'password'}
+							bind:value={password}
+							placeholder="••••••••"
+							required
 							disabled={isBusy}
-							onclick={submitPasswordLogin}
+							class="ps-9"
+							onkeydown={handlePasswordEnter}
 						>
-							{#if activeAction === 'password'}
-								<Spinner size="4" class="mr-2" color="primary" />
-								Входим...
-							{:else}
-								Войти
-							{/if}
-						</Button>
-
-						<p class="text-center text-sm text-gray-500 dark:text-gray-400">
-							Нет аккаунта?
-							<a href="/signup" class="text-primary-600 hover:underline dark:text-primary-500">
-								Зарегистрироваться
-							</a>
-						</p>
+							{#snippet left()}
+								<LockSolid class="h-5 w-5" />
+							{/snippet}
+							{#snippet right()}
+								<button
+									type="button"
+									class="pointer-events-auto"
+									onclick={() => (showPassword = !showPassword)}
+									aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+								>
+									{#if showPassword}
+										<EyeOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+									{:else}
+										<EyeSlashOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+									{/if}
+								</button>
+							{/snippet}
+						</Input>
 					</div>
-				</TabItem>
-			</Tabs>
 
-			<div class="relative flex items-center">
-				<div class="grow border-t border-gray-200 dark:border-gray-700"></div>
-				<span class="mx-4 shrink text-sm text-gray-400">или</span>
-				<div class="grow border-t border-gray-200 dark:border-gray-700"></div>
-			</div>
+					<Button
+						type="button"
+						color="primary"
+						class="min-h-11 w-full rounded-xl font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
+						disabled={isBusy}
+						onclick={submitPasswordLogin}
+					>
+						{#if activeAction === 'password'}
+							<Spinner size="4" class="mr-2" color="primary" />
+							Входим...
+						{:else}
+							Войти
+						{/if}
+					</Button>
 
-			<div class="flex flex-col items-center justify-center space-y-2">
-				<div id="telegram-login-container" class="min-h-11"></div>
-				{#if activeAction === 'telegram'}
-					<div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-						<Spinner size="4" />
-						<span>Подтверждаем вход...</span>
-					</div>
-				{/if}
-			</div>
+					<p class="text-center text-sm text-gray-500 dark:text-gray-400">
+						Нет аккаунта?
+						<a href="/signup" class="text-primary-600 hover:underline dark:text-primary-500">
+							Зарегистрироваться
+						</a>
+					</p>
+				</div>
+			</TabItem>
+		</Tabs>
+
+		<div class="relative flex items-center">
+			<div class="grow border-t border-gray-200 dark:border-gray-700"></div>
+			<span class="mx-4 shrink text-sm text-gray-400">или</span>
+			<div class="grow border-t border-gray-200 dark:border-gray-700"></div>
 		</div>
-	</Card>
-</div>
+
+		<div class="flex flex-col items-center justify-center space-y-2">
+			<div id="telegram-login-container" class="min-h-11"></div>
+			{#if activeAction === 'telegram'}
+				<div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+					<Spinner size="4" />
+					<span>Подтверждаем вход...</span>
+				</div>
+			{/if}
+		</div>
+	</div>
+</Card>

@@ -4,10 +4,12 @@ from typing import TYPE_CHECKING, BinaryIO
 import click
 from dishka.integrations.click import CONTAINER_NAME
 
-from fanfan.adapters.db.gateways.schedule_events import ScheduleEventGateway
-from fanfan.adapters.db.uow import UnitOfWork
-from fanfan.adapters.parsers.schedule import parse_schedule
+from fanfan.adapters.parsers.schedule import parse_schedule_from_excel
 from fanfan.application.cosplay2.sync_cosplay2 import SyncCosplay2
+from fanfan.application.schedule_mgmt.import_schedule import (
+    ImportSchedule,
+    ImportScheduleCommand,
+)
 from fanfan.presentation.cli.commands.common import async_command
 
 if TYPE_CHECKING:
@@ -33,9 +35,7 @@ async def sync_cosplay2_command(context: click.Context):
 @async_command
 async def parse_schedule_command(context: click.Context, schedule: BinaryIO):
     container: AsyncContainer = context.meta[CONTAINER_NAME]
-    async with container() as r_container:
-        await parse_schedule(
-            file=schedule,
-            event_gateway=await r_container.get(ScheduleEventGateway),
-            uow=await r_container.get(UnitOfWork),
-        )
+    async with container():
+        interactor = await container.get(ImportSchedule)
+        schedule = parse_schedule_from_excel(file=schedule)
+        await interactor(ImportScheduleCommand(schedule=schedule))
