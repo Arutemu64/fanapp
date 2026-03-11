@@ -1,26 +1,30 @@
+from authlib.integrations.starlette_client import OAuth, StarletteOAuth2App
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, HTTPException, Request
 from starlette import status
+from starlette.responses import RedirectResponse
 
-from fanfan.application.tickets.link_ticket import LinkTicket, LinkTicketCommand
-from fanfan.application.users.get_current_user import GetCurrentUser
-from fanfan.application.users.get_current_user_social_accounts import (
+from fanfan.application.current_user.get_current_user import GetCurrentUser
+from fanfan.application.current_user.get_current_user_social_accounts import (
     GetCurrentUserSocialAccounts,
 )
-from fanfan.application.users.link_telegram_account import (
+from fanfan.application.current_user.link_telegram_account import (
     LinkTelegramAccount,
     LinkTelegramAccountCommand,
 )
-from fanfan.application.users.unlink_telegram_account import UnlinkTelegramAccount
-from fanfan.application.users.update_user import (
+from fanfan.application.current_user.unlink_telegram_account import (
+    UnlinkTelegramAccount,
+)
+from fanfan.application.current_user.update_user import (
     UpdateCurrentUser,
     UpdateCurrentUserCommand,
 )
-from fanfan.application.users.update_user_settings import (
+from fanfan.application.current_user.update_user_settings import (
     UpdateUserSettings,
     UpdateUserSettingsCommand,
 )
+from fanfan.application.tickets.link_ticket import LinkTicket, LinkTicketCommand
 from fanfan.core.dto.user import CurrentUserDTO, UserSocialAccountDTO
 from fanfan.core.exceptions.auth import UserNotAuthenticated
 from fanfan.core.exceptions.tickets import TicketNotFound, UserAlreadyHasTicketLinked
@@ -34,11 +38,11 @@ from fanfan.core.exceptions.users import (
 )
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
-users_router = APIRouter(tags=["Users"], prefix="/users")
+current_user_router = APIRouter(tags=["Users"], prefix="/me")
 
 
-@users_router.get(
-    "/me",
+@current_user_router.get(
+    "/",
     summary="Get current user",
     description="Retrieves the currently authenticated user's profile information.",
     responses={
@@ -56,8 +60,8 @@ async def get_current_user(
     return await interactor()
 
 
-@users_router.get(
-    "/me/social-accounts",
+@current_user_router.get(
+    "/social-accounts",
     summary="Get current user social accounts",
     description="Retrieves the currently authenticated user's linked social accounts.",
     responses={
@@ -87,8 +91,8 @@ async def get_current_user_social_accounts(
         ) from e
 
 
-@users_router.patch(
-    "/me",
+@current_user_router.patch(
+    "/",
     summary="Update current user",
     description="Updates the currently authenticated user's profile information.",
     responses={
@@ -120,8 +124,8 @@ async def update_current_user(
         ) from e
 
 
-@users_router.patch(
-    "/me/settings",
+@current_user_router.patch(
+    "/settings",
     summary="Update current user settings",
     description="Updates the currently authenticated user's profile settings.",
     responses={
@@ -147,8 +151,8 @@ async def update_current_user_settings(
         ) from e
 
 
-@users_router.post(
-    "/me/social-accounts/telegram",
+@current_user_router.get(
+    "/link/telegram",
     summary="Link Telegram account",
     description="Links a Telegram account to the currently authenticated user.",
     responses={
@@ -163,12 +167,42 @@ async def update_current_user_settings(
     },
 )
 @inject
-async def link_telegram_account(
-    data: LinkTelegramAccountCommand,
-    interactor: FromDishka[LinkTelegramAccount],
+async def link_telegram(
+    request: Request,
+    oauth: FromDishka[OAuth],
 ) -> None:
+    telegram: StarletteOAuth2App = oauth.create_client("telegram")
+    redirect_uri = request.url_for("link_telegram_callback")
+    return await telegram.authorize_redirect(request, redirect_uri)
+
+
+@current_user_router.get(
+    "/link/telegram/callback",
+    summary="Link Telegram account",
+    description="Links a Telegram account to the currently authenticated user.",
+    responses={
+        200: {"description": "Telegram account linked successfully."},
+        400: {"model": ErrorMessage, "description": "Invalid Telegram auth payload."},
+        401: {"model": ErrorMessage, "description": "User not authenticated."},
+        404: {"model": ErrorMessage, "description": "User not found."},
+        409: {
+            "model": ErrorMessage,
+            "description": "Telegram is already linked to this or another account.",
+        },
+    },
+)
+@inject
+async def link_telegram_callback(
+    request: Request,
+    oauth: FromDishka[OAuth],
+    interactor: FromDishka[LinkTelegramAccount],
+) -> RedirectResponse:
+    telegram: StarletteOAuth2App = oauth.create_client("telegram")
+    token = await telegram.authorize_access_token(request)
+    userinfo = token.get("userinfo", {})
     try:
-        await interactor(data)
+        await interactor(LinkTelegramAccountCommand(user_id=userinfo["id"]))
+        return RedirectResponse("/profile", status_code=status.HTTP_303_SEE_OTHER)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -191,8 +225,8 @@ async def link_telegram_account(
         ) from e
 
 
-@users_router.delete(
-    "/me/social-accounts/telegram",
+@current_user_router.delete(
+    "/unlink/telegram",
     summary="Unlink Telegram account",
     description="Unlinks the Telegram account from the currently authenticated user.",
     responses={
@@ -228,8 +262,8 @@ async def unlink_telegram_account(
         ) from e
 
 
-@users_router.post(
-    "/me/ticket",
+@current_user_router.post(
+    "/ticket",
     summary="Link ticket",
     description="Links provided ticket to current user.",
     responses={

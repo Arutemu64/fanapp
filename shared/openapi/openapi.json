@@ -647,23 +647,13 @@
         }
       }
     },
-    "/auth/login_telegram": {
-      "post": {
+    "/auth/login/telegram": {
+      "get": {
         "tags": [
           "Authentication"
         ],
-        "summary": "Login With Telegram",
-        "operationId": "login_with_telegram_auth_login_telegram_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginTelegramCommand"
-              }
-            }
-          },
-          "required": true
-        },
+        "summary": "Login Telegram",
+        "operationId": "login_telegram_auth_login_telegram_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -706,14 +696,63 @@
         }
       }
     },
-    "/users/me": {
+    "/auth/auth/telegram": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Authorize Telegram",
+        "operationId": "authorize_telegram_auth_auth_telegram_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/": {
       "get": {
         "tags": [
           "Users"
         ],
         "summary": "Get current user",
         "description": "Retrieves the currently authenticated user's profile information.",
-        "operationId": "get_current_user_users_me_get",
+        "operationId": "get_current_user_me__get",
         "responses": {
           "200": {
             "description": "User profile retrieved successfully.",
@@ -763,7 +802,7 @@
         ],
         "summary": "Update current user",
         "description": "Updates the currently authenticated user's profile information.",
-        "operationId": "update_current_user_users_me_patch",
+        "operationId": "update_current_user_me__patch",
         "requestBody": {
           "content": {
             "application/json": {
@@ -826,14 +865,14 @@
         }
       }
     },
-    "/users/me/social-accounts": {
+    "/me/social-accounts": {
       "get": {
         "tags": [
           "Users"
         ],
         "summary": "Get current user social accounts",
         "description": "Retrieves the currently authenticated user's linked social accounts.",
-        "operationId": "get_current_user_social_accounts_users_me_social_accounts_get",
+        "operationId": "get_current_user_social_accounts_me_social_accounts_get",
         "responses": {
           "200": {
             "description": "User social accounts retrieved successfully.",
@@ -844,7 +883,7 @@
                     "$ref": "#/components/schemas/UserSocialAccountDTO"
                   },
                   "type": "array",
-                  "title": "Response 200 Get Current User Social Accounts Users Me Social Accounts Get"
+                  "title": "Response 200 Get Current User Social Accounts Me Social Accounts Get"
                 }
               }
             }
@@ -892,14 +931,14 @@
         }
       }
     },
-    "/users/me/settings": {
+    "/me/settings": {
       "patch": {
         "tags": [
           "Users"
         ],
         "summary": "Update current user settings",
         "description": "Updates the currently authenticated user's profile settings.",
-        "operationId": "update_current_user_settings_users_me_settings_patch",
+        "operationId": "update_current_user_settings_me_settings_patch",
         "requestBody": {
           "content": {
             "application/json": {
@@ -952,14 +991,94 @@
         }
       }
     },
-    "/users/me/social-accounts/telegram": {
-      "post": {
+    "/me/link/telegram": {
+      "get": {
         "tags": [
           "Users"
         ],
         "summary": "Link Telegram account",
         "description": "Links a Telegram account to the currently authenticated user.",
-        "operationId": "link_telegram_account_users_me_social_accounts_telegram_post",
+        "operationId": "link_telegram_me_link_telegram_get",
+        "responses": {
+          "200": {
+            "description": "Telegram account linked successfully.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid Telegram auth payload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Telegram is already linked to this or another account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/link/telegram/callback": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Link Telegram account",
+        "description": "Links a Telegram account to the currently authenticated user.",
+        "operationId": "link_telegram_callback_me_link_telegram_callback_get",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1040,14 +1159,16 @@
             }
           }
         }
-      },
+      }
+    },
+    "/me/unlink/telegram": {
       "delete": {
         "tags": [
           "Users"
         ],
         "summary": "Unlink Telegram account",
         "description": "Unlinks the Telegram account from the currently authenticated user.",
-        "operationId": "unlink_telegram_account_users_me_social_accounts_telegram_delete",
+        "operationId": "unlink_telegram_account_me_unlink_telegram_delete",
         "responses": {
           "200": {
             "description": "Telegram account unlinked successfully.",
@@ -1110,14 +1231,14 @@
         }
       }
     },
-    "/users/me/ticket": {
+    "/me/ticket": {
       "post": {
         "tags": [
           "Users"
         ],
         "summary": "Link ticket",
         "description": "Links provided ticket to current user.",
-        "operationId": "link_ticket_users_me_ticket_post",
+        "operationId": "link_ticket_me_ticket_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3138,62 +3259,14 @@
       },
       "LinkTelegramAccountCommand": {
         "properties": {
-          "id": {
+          "user_id": {
             "type": "integer",
-            "title": "Id"
-          },
-          "first_name": {
-            "type": "string",
-            "title": "First Name"
-          },
-          "auth_date": {
-            "type": "integer",
-            "title": "Auth Date"
-          },
-          "hash": {
-            "type": "string",
-            "title": "Hash"
-          },
-          "last_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Last Name"
-          },
-          "username": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Username"
-          },
-          "photo_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Photo Url"
+            "title": "User Id"
           }
         },
         "type": "object",
         "required": [
-          "id",
-          "first_name",
-          "auth_date",
-          "hash"
+          "user_id"
         ],
         "title": "LinkTelegramAccountCommand"
       },
@@ -3270,67 +3343,6 @@
           "token"
         ],
         "title": "LoginMagicLinkCommand"
-      },
-      "LoginTelegramCommand": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "first_name": {
-            "type": "string",
-            "title": "First Name"
-          },
-          "auth_date": {
-            "type": "integer",
-            "title": "Auth Date"
-          },
-          "hash": {
-            "type": "string",
-            "title": "Hash"
-          },
-          "last_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Last Name"
-          },
-          "username": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Username"
-          },
-          "photo_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Photo Url"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "first_name",
-          "auth_date",
-          "hash"
-        ],
-        "title": "LoginTelegramCommand"
       },
       "MoveScheduleEventRequest": {
         "properties": {

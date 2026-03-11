@@ -1,11 +1,9 @@
 <script lang="ts">
 	import { client } from '$lib/api';
-	import type { components } from '$lib/api/v1';
 	import { getToastService } from '$lib/stores/toasts.svelte';
 	import type { CurrentUserDTO, UserSocialAccountDTO } from '$lib/types/user';
 	import { Alert, Badge, Button, Card, Spinner } from 'flowbite-svelte';
 	import { LinkOutline, PaperPlaneOutline, TrashBinOutline } from 'flowbite-svelte-icons';
-	import type { Attachment } from 'svelte/attachments';
 
 	interface Props {
 		user: CurrentUserDTO;
@@ -13,83 +11,21 @@
 		onUpdate?: () => void | Promise<void>;
 	}
 
-	type TelegramAuthPayload = components['schemas']['LinkTelegramAccountCommand'];
-	type TelegramCallbackWindow = Window &
-		Record<string, ((user: TelegramAuthPayload) => void) | undefined>;
-
-	const TELEGRAM_BOT_NAME = 'fanfanalpha_bot';
-
 	let { user, socialAccounts, onUpdate }: Props = $props();
-	const uid = $props.id();
-	const callbackName = `telegramProfileAuth_${uid.replaceAll('-', '_')}`;
 	const toastService = getToastService();
 
-	let isLinking = $state(false);
 	let isUnlinking = $state(false);
-	let linkError = $state('');
 
 	let telegramAccount = $derived(
 		socialAccounts.find((socialAccount) => socialAccount.provider === 'telegram') ?? null
 	);
 
-	const telegramWidget: Attachment<HTMLDivElement> = (node) => {
-		const callbackWindow = window as unknown as TelegramCallbackWindow;
-		callbackWindow[callbackName] = handleTelegramLink;
-
-		// Telegram injects its own button markup, so we isolate that work inside an action.
-		const script = document.createElement('script');
-		script.src = 'https://telegram.org/js/telegram-widget.js?22';
-		script.setAttribute('data-telegram-login', TELEGRAM_BOT_NAME);
-		script.setAttribute('data-size', 'large');
-		script.setAttribute('data-radius', '12');
-		script.setAttribute('data-onauth', `${callbackName}(user)`);
-		script.setAttribute('data-request-access', 'write');
-		script.async = true;
-		node.appendChild(script);
-
-		return () => {
-			delete callbackWindow[callbackName];
-			node.replaceChildren();
-		};
-	};
-
-	async function handleTelegramLink(telegramUser: TelegramAuthPayload) {
-		if (isLinking) return;
-
-		linkError = '';
-		isLinking = true;
-
-		const { error, response } = await client.POST('/users/me/social-accounts/telegram', {
-			body: telegramUser
-		});
-
-		isLinking = false;
-
-		if (error) {
-			const errorMessage =
-				typeof error.detail === 'string' ? error.detail : 'Не удалось привязать Telegram';
-
-			// Keep the conflict visible inside the card so the user understands why linking failed.
-			if (response.status === 409) {
-				linkError = errorMessage;
-				return;
-			}
-
-			toastService.error(error);
-			return;
-		}
-
-		toastService.add('Telegram подключён', 'success');
-		await onUpdate?.();
-	}
-
 	async function handleTelegramUnlink() {
 		if (isUnlinking) return;
 
-		linkError = '';
 		isUnlinking = true;
 
-		const { error } = await client.DELETE('/users/me/social-accounts/telegram');
+		const { error } = await client.DELETE('/me/unlink/telegram', {});
 
 		isUnlinking = false;
 
@@ -159,15 +95,15 @@
 			</div>
 
 			{#if !telegramAccount}
-				<div class="mt-4 space-y-3">
-					<div {@attach telegramWidget} class="min-h-11"></div>
-
-					{#if isLinking}
-						<div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-							<Spinner class="h-4 w-4" />
-							<span>Подключаем Telegram...</span>
-						</div>
-					{/if}
+				<div class="mt-4">
+					<!-- Backend starts the Telegram linking flow after this redirect. -->
+					<Button
+						href="/api/me/link/telegram"
+						color="alternative"
+						class="min-h-11 w-full sm:w-auto"
+					>
+						Подключить Telegram
+					</Button>
 				</div>
 			{/if}
 		</div>
@@ -178,10 +114,5 @@
 			</Alert>
 		{/if}
 
-		{#if linkError}
-			<Alert color="red" class="mt-4">
-				{linkError}
-			</Alert>
-		{/if}
 	</div>
 </Card>

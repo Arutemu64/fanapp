@@ -1,5 +1,7 @@
 from pydantic import BaseModel, SecretStr
 
 
-class BotConfig(BaseModel):
+class TelegramConfig(BaseModel):
     token: SecretStr
+    client_id: str
+    client_secret: SecretStr

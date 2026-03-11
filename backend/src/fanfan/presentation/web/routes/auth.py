@@ -1,12 +1,14 @@
 import datetime
 from typing import Annotated
 
+from authlib.integrations.starlette_client import OAuth, StarletteOAuth2App
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response
 from pydantic import BaseModel, EmailStr, Field
 from redis.exceptions import RedisError
 from starlette import status
+from starlette.responses import RedirectResponse
 
 from fanfan.adapters.auth.utils.jwt import (
     ACCESS_TOKEN_TTL,
@@ -17,6 +19,10 @@ from fanfan.adapters.redis.auth_token_registry import RedisAuthTokenRegistry
 from fanfan.application.auth.authenticate_user import (
     AuthenticateUser,
     AuthenticateUserCommand,
+)
+from fanfan.application.auth.authorize_telegram import (
+    AuthorizeTelegram,
+    AuthorizeTelegramCommand,
 )
 from fanfan.application.auth.change_email import (
     ChangeEmail,
@@ -30,7 +36,6 @@ from fanfan.application.auth.login_magic_link import (
     LoginMagicLink,
     LoginMagicLinkCommand,
 )
-from fanfan.application.auth.login_telegram import LoginTelegram, LoginTelegramCommand
 from fanfan.application.auth.refresh_access_token import (
     RefreshAccessToken,
     RefreshAccessTokenCommand,
@@ -453,21 +458,31 @@ async def logout_user(
     _delete_auth_cookies(response, config)
 
 
-@auth_router.post("/login_telegram")
+@auth_router.get("/login/telegram")
 @inject
-async def login_with_telegram(
-    response: Response,
-    data: LoginTelegramCommand,
-    interactor: FromDishka[LoginTelegram],
-    config: FromDishka[WebConfig],
+async def login_telegram(
+    request: Request,
+    oauth: FromDishka[OAuth],
 ) -> None:
-    try:
-        token = await interactor(data)
-    except ValueError as e:
-        # Keep Telegram verification errors user-safe for the browser.
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Не удалось подтвердить Telegram",
-        ) from e
+    telegram: StarletteOAuth2App = oauth.create_client("telegram")
+    redirect_uri = request.url_for("authorize_telegram")
+    return await telegram.authorize_redirect(request, redirect_uri)
 
+
+@auth_router.get("/auth/telegram")
+@inject
+async def authorize_telegram(
+    request: Request,
+    config: FromDishka[WebConfig],
+    oauth: FromDishka[OAuth],
+    interactor: FromDishka[AuthorizeTelegram],
+) -> RedirectResponse:
+    telegram: StarletteOAuth2App = oauth.create_client("telegram")
+    token = await telegram.authorize_access_token(request)
+    userinfo = token.get("userinfo", {})
+    token = await interactor(
+        AuthorizeTelegramCommand(user_id=userinfo["id"], name=userinfo["name"])
+    )
+    response = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
     _set_auth_cookies(response, token.access_token, token.refresh_token, config)
+    return response

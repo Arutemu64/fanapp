@@ -9,7 +9,7 @@ from fanfan.adapters.mail.config import MailConfig
 from fanfan.adapters.nats.config import NatsConfig
 from fanfan.adapters.notifications.config import PushConfig
 from fanfan.adapters.redis.config import RedisConfig
-from fanfan.presentation.tgbot.config import BotConfig
+from fanfan.presentation.tgbot.config import TelegramConfig
 from fanfan.presentation.web.config import WebConfig
 
 
@@ -27,7 +27,7 @@ class EnvConfig(BaseSettings):
     mail: MailConfig
 
     # Notifications
-    bot: BotConfig
+    bot: TelegramConfig
     push: PushConfig
 
     # Debug

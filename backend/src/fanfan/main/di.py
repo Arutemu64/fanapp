@@ -1,16 +1,17 @@
 from dishka import AsyncContainer, Provider, make_async_container
 from dishka.integrations.fastapi import FastapiProvider
 
-from fanfan.main.ioc.auth import (
-    JwtTokenProcessorProvider,
-    SystemAuthProvider,
-    WebAuthProvider,
-)
+from fanfan.main.ioc.auth import AuthProvider
 from fanfan.main.ioc.bot import BotProvider
 from fanfan.main.ioc.config import ConfigProvider
 from fanfan.main.ioc.cosplay2 import Cosplay2Provider
 from fanfan.main.ioc.db import DbProvider
 from fanfan.main.ioc.gateways import GatewaysProvider
+from fanfan.main.ioc.id_provider import (
+    JwtTokenProcessorProvider,
+    SystemAuthProvider,
+    WebAuthProvider,
+)
 from fanfan.main.ioc.interactors import InteractorsProvider
 from fanfan.main.ioc.jinja import JinjaProvider
 from fanfan.main.ioc.mail import MailProvider
@@ -37,6 +38,7 @@ def get_common_providers() -> list[Provider]:
         JinjaProvider(),
         PushProvider(),
         MailProvider(),
+        AuthProvider(),
     ]
 
 

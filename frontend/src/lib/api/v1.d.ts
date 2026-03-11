@@ -204,24 +204,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/login_telegram": {
+    "/auth/login/telegram": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Login Telegram */
+        get: operations["login_telegram_auth_login_telegram_get"];
         put?: never;
-        /** Login With Telegram */
-        post: operations["login_with_telegram_auth_login_telegram_post"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/users/me": {
+    "/auth/auth/telegram": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Authorize Telegram */
+        get: operations["authorize_telegram_auth_auth_telegram_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/": {
         parameters: {
             query?: never;
             header?: never;
@@ -232,7 +249,7 @@ export interface paths {
          * Get current user
          * @description Retrieves the currently authenticated user's profile information.
          */
-        get: operations["get_current_user_users_me_get"];
+        get: operations["get_current_user_me__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -242,10 +259,10 @@ export interface paths {
          * Update current user
          * @description Updates the currently authenticated user's profile information.
          */
-        patch: operations["update_current_user_users_me_patch"];
+        patch: operations["update_current_user_me__patch"];
         trace?: never;
     };
-    "/users/me/social-accounts": {
+    "/me/social-accounts": {
         parameters: {
             query?: never;
             header?: never;
@@ -256,7 +273,7 @@ export interface paths {
          * Get current user social accounts
          * @description Retrieves the currently authenticated user's linked social accounts.
          */
-        get: operations["get_current_user_social_accounts_users_me_social_accounts_get"];
+        get: operations["get_current_user_social_accounts_me_social_accounts_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -265,7 +282,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/users/me/settings": {
+    "/me/settings": {
         parameters: {
             query?: never;
             header?: never;
@@ -282,10 +299,50 @@ export interface paths {
          * Update current user settings
          * @description Updates the currently authenticated user's profile settings.
          */
-        patch: operations["update_current_user_settings_users_me_settings_patch"];
+        patch: operations["update_current_user_settings_me_settings_patch"];
         trace?: never;
     };
-    "/users/me/social-accounts/telegram": {
+    "/me/link/telegram": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Link Telegram account
+         * @description Links a Telegram account to the currently authenticated user.
+         */
+        get: operations["link_telegram_me_link_telegram_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/link/telegram/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Link Telegram account
+         * @description Links a Telegram account to the currently authenticated user.
+         */
+        get: operations["link_telegram_callback_me_link_telegram_callback_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/unlink/telegram": {
         parameters: {
             query?: never;
             header?: never;
@@ -294,22 +351,18 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Link Telegram account
-         * @description Links a Telegram account to the currently authenticated user.
-         */
-        post: operations["link_telegram_account_users_me_social_accounts_telegram_post"];
+        post?: never;
         /**
          * Unlink Telegram account
          * @description Unlinks the Telegram account from the currently authenticated user.
          */
-        delete: operations["unlink_telegram_account_users_me_social_accounts_telegram_delete"];
+        delete: operations["unlink_telegram_account_me_unlink_telegram_delete"];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/users/me/ticket": {
+    "/me/ticket": {
         parameters: {
             query?: never;
             header?: never;
@@ -322,7 +375,7 @@ export interface paths {
          * Link ticket
          * @description Links provided ticket to current user.
          */
-        post: operations["link_ticket_users_me_ticket_post"];
+        post: operations["link_ticket_me_ticket_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -882,20 +935,8 @@ export interface components {
         };
         /** LinkTelegramAccountCommand */
         LinkTelegramAccountCommand: {
-            /** Id */
-            id: number;
-            /** First Name */
-            first_name: string;
-            /** Auth Date */
-            auth_date: number;
-            /** Hash */
-            hash: string;
-            /** Last Name */
-            last_name?: string | null;
-            /** Username */
-            username?: string | null;
-            /** Photo Url */
-            photo_url?: string | null;
+            /** User Id */
+            user_id: number;
         };
         /** LinkTicketCommand */
         LinkTicketCommand: {
@@ -921,23 +962,6 @@ export interface components {
         LoginMagicLinkCommand: {
             /** Token */
             token: string;
-        };
-        /** LoginTelegramCommand */
-        LoginTelegramCommand: {
-            /** Id */
-            id: number;
-            /** First Name */
-            first_name: string;
-            /** Auth Date */
-            auth_date: number;
-            /** Hash */
-            hash: string;
-            /** Last Name */
-            last_name?: string | null;
-            /** Username */
-            username?: string | null;
-            /** Photo Url */
-            photo_url?: string | null;
         };
         /** MoveScheduleEventRequest */
         MoveScheduleEventRequest: {
@@ -1935,18 +1959,14 @@ export interface operations {
             };
         };
     };
-    login_with_telegram_auth_login_telegram_post: {
+    login_telegram_auth_login_telegram_get: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LoginTelegramCommand"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -1986,7 +2006,54 @@ export interface operations {
             };
         };
     };
-    get_current_user_users_me_get: {
+    authorize_telegram_auth_auth_telegram_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    get_current_user_me__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2033,7 +2100,7 @@ export interface operations {
             };
         };
     };
-    update_current_user_users_me_patch: {
+    update_current_user_me__patch: {
         parameters: {
             query?: never;
             header?: never;
@@ -2093,7 +2160,7 @@ export interface operations {
             };
         };
     };
-    get_current_user_social_accounts_users_me_social_accounts_get: {
+    get_current_user_social_accounts_me_social_accounts_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2149,7 +2216,7 @@ export interface operations {
             };
         };
     };
-    update_current_user_settings_users_me_settings_patch: {
+    update_current_user_settings_me_settings_patch: {
         parameters: {
             query?: never;
             header?: never;
@@ -2200,7 +2267,81 @@ export interface operations {
             };
         };
     };
-    link_telegram_account_users_me_social_accounts_telegram_post: {
+    link_telegram_me_link_telegram_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Telegram account linked successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Invalid Telegram auth payload. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Telegram is already linked to this or another account. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    link_telegram_callback_me_link_telegram_callback_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2278,7 +2419,7 @@ export interface operations {
             };
         };
     };
-    unlink_telegram_account_users_me_social_accounts_telegram_delete: {
+    unlink_telegram_account_me_unlink_telegram_delete: {
         parameters: {
             query?: never;
             header?: never;
@@ -2343,7 +2484,7 @@ export interface operations {
             };
         };
     };
-    link_ticket_users_me_ticket_post: {
+    link_ticket_me_ticket_post: {
         parameters: {
             query?: never;
             header?: never;

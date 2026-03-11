@@ -53,13 +53,13 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	if (hasToken) {
 		const client = createApiClient();
-		let { data, error, response } = await client.GET('/users/me', { fetch: event.fetch });
+		let { data, error, response } = await client.GET('/me/', { fetch: event.fetch });
 
 		// If access_token expired but refresh_token is still valid, refresh server-side
 		if (response.status === 401 && event.cookies.get('refresh_token')) {
 			const refreshed = await refreshTokens(event);
 			if (refreshed) {
-				({ data, error } = await client.GET('/users/me', { fetch: event.fetch }));
+				({ data, error } = await client.GET('/me/', { fetch: event.fetch }));
 			}
 		}
 

@@ -5,7 +5,6 @@ from sqlalchemy.exc import IntegrityError
 
 from fanfan.adapters.db.gateways.users import UserGateway
 from fanfan.adapters.db.uow import UnitOfWork
-from fanfan.application.auth.login_telegram import check_telegram_authorization
 from fanfan.application.common.id_provider import IdProvider
 from fanfan.core.exceptions.auth import UserNotAuthenticated
 from fanfan.core.exceptions.users import (
@@ -14,25 +13,19 @@ from fanfan.core.exceptions.users import (
     UserNotFound,
 )
 from fanfan.core.models.social_account import SocialAccount
-from fanfan.presentation.tgbot.config import BotConfig
+from fanfan.presentation.tgbot.config import TelegramConfig
 
 logger = logging.getLogger(__name__)
 
 
 class LinkTelegramAccountCommand(BaseModel):
-    id: int
-    first_name: str
-    auth_date: int
-    hash: str
-    last_name: str | None = None
-    username: str | None = None
-    photo_url: str | None = None
+    user_id: int
 
 
 class LinkTelegramAccount:
     def __init__(
         self,
-        bot_config: BotConfig,
+        bot_config: TelegramConfig,
         user_gateway: UserGateway,
         uow: UnitOfWork,
         id_provider: IdProvider,
@@ -43,14 +36,7 @@ class LinkTelegramAccount:
         self.id_provider = id_provider
 
     async def __call__(self, data: LinkTelegramAccountCommand) -> None:
-        # Verify the widget payload before we touch the database.
-        check_telegram_authorization(
-            auth_data=data.model_dump(exclude_unset=True),
-            bot_token=self.bot_config.token.get_secret_value(),
-        )
-
-        provider_id = str(data.id)
-
+        provider_id = str(data.user_id)
         async with self.uow:
             current_user_id = await self.id_provider.get_current_user_id()
             if current_user_id is None:

@@ -1,16 +1,12 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { browser } from '$app/environment';
 	import { client } from '$lib/api';
-	import type { components } from '$lib/api/v1';
 	import { getEventsClient } from '$lib/events.svelte';
 	import { getToastService } from '$lib/stores/toasts.svelte';
 	import { Alert, Button, Card, Input, Label, Spinner, Tabs, TabItem } from 'flowbite-svelte';
 	import { EnvelopeSolid, EyeOutline, EyeSlashOutline, LockSolid } from 'flowbite-svelte-icons';
-	import { onMount } from 'svelte';
 
-	type ActiveAction = 'password' | 'magic' | 'telegram' | null;
-	type TelegramLoginPayload = components['schemas']['LoginTelegramCommand'];
+	type ActiveAction = 'password' | 'magic' | null;
 
 	let email = $state('');
 	let password = $state('');
@@ -116,55 +112,6 @@
 		event.preventDefault();
 		void submitPasswordLogin();
 	}
-
-	async function handleTelegramLogin(user: TelegramLoginPayload) {
-		activeAction = 'telegram';
-
-		try {
-			const { error } = await client.POST('/auth/login_telegram', {
-				body: user
-			});
-
-			if (error) {
-				console.error('Telegram login error:', error);
-				toastService.error(error);
-				return;
-			}
-
-			await finishLogin('Вход через Telegram выполнен');
-		} catch (error) {
-			toastService.error(error);
-		} finally {
-			activeAction = null;
-		}
-	}
-
-	onMount(() => {
-		if (!browser) return;
-
-		// @ts-expect-error Telegram script writes to window at runtime.
-		window.onTelegramAuth = handleTelegramLogin;
-
-		const script = document.createElement('script');
-		script.src = 'https://telegram.org/js/telegram-widget.js?22';
-		script.setAttribute('data-telegram-login', 'fanfanalpha_bot');
-		script.setAttribute('data-size', 'large');
-		script.setAttribute('data-radius', '12');
-		script.setAttribute('data-onauth', 'onTelegramAuth(user)');
-		script.setAttribute('data-request-access', 'write');
-		script.async = true;
-
-		const container = document.getElementById('telegram-login-container');
-		if (container) {
-			container.innerHTML = '';
-			container.appendChild(script);
-		}
-
-		return () => {
-			// @ts-expect-error Telegram script writes to window at runtime.
-			delete window.onTelegramAuth;
-		};
-	});
 </script>
 
 <Card class="w-full p-4 sm:p-6">
@@ -299,14 +246,15 @@
 			<div class="grow border-t border-gray-200 dark:border-gray-700"></div>
 		</div>
 
-		<div class="flex flex-col items-center justify-center space-y-2">
-			<div id="telegram-login-container" class="min-h-11"></div>
-			{#if activeAction === 'telegram'}
-				<div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-					<Spinner size="4" />
-					<span>Подтверждаем вход...</span>
-				</div>
-			{/if}
+		<div class="flex justify-center">
+			<!-- Backend starts the Telegram login flow after this redirect. -->
+			<Button
+				href="/api/auth/login/telegram"
+				color="alternative"
+				class="min-h-11 w-full rounded-xl font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
+			>
+				Войти через Telegram
+			</Button>
 		</div>
 	</div>
 </Card>

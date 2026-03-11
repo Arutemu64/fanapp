@@ -1,10 +1,10 @@
 from dishka import Provider, Scope, provide
 
 from fanfan.application.auth.authenticate_user import AuthenticateUser
+from fanfan.application.auth.authorize_telegram import AuthorizeTelegram
 from fanfan.application.auth.change_email import ChangeEmail
 from fanfan.application.auth.change_password import ChangePassword
 from fanfan.application.auth.login_magic_link import LoginMagicLink
-from fanfan.application.auth.login_telegram import LoginTelegram
 from fanfan.application.auth.refresh_access_token import RefreshAccessToken
 from fanfan.application.auth.register_user import RegisterUser
 from fanfan.application.auth.request_email_verification import RequestEmailVerification
@@ -13,6 +13,16 @@ from fanfan.application.auth.send_email_verification import SendEmailVerificatio
 from fanfan.application.auth.send_magic_link_email import SendMagicLinkEmail
 from fanfan.application.auth.verify_email import VerifyEmail
 from fanfan.application.cosplay2.sync_cosplay2 import SyncCosplay2
+from fanfan.application.current_user.get_current_user import GetCurrentUser
+from fanfan.application.current_user.get_current_user_social_accounts import (
+    GetCurrentUserSocialAccounts,
+)
+from fanfan.application.current_user.link_telegram_account import LinkTelegramAccount
+from fanfan.application.current_user.unlink_telegram_account import (
+    UnlinkTelegramAccount,
+)
+from fanfan.application.current_user.update_user import UpdateCurrentUser
+from fanfan.application.current_user.update_user_settings import UpdateUserSettings
 from fanfan.application.notifications.cancel_mailing import CancelMailing
 from fanfan.application.notifications.create_role_mailing import CreateRoleMailing
 from fanfan.application.notifications.delete_mailing_messages import (
@@ -68,14 +78,6 @@ from fanfan.application.tickets.delete_ticket import DeleteTicket
 from fanfan.application.tickets.link_ticket import LinkTicket
 from fanfan.application.ticketscloud.process_tcloud_order import ProcessTCloudOrder
 from fanfan.application.ticketscloud.sync_tcloud import SyncTCloud
-from fanfan.application.users.get_current_user import GetCurrentUser
-from fanfan.application.users.get_current_user_social_accounts import (
-    GetCurrentUserSocialAccounts,
-)
-from fanfan.application.users.link_telegram_account import LinkTelegramAccount
-from fanfan.application.users.unlink_telegram_account import UnlinkTelegramAccount
-from fanfan.application.users.update_user import UpdateCurrentUser
-from fanfan.application.users.update_user_settings import UpdateUserSettings
 from fanfan.application.voting.add_vote import AddVote
 from fanfan.application.voting.cancel_vote import CancelVote
 from fanfan.application.voting.check_voting_contest_entry import CheckVotingContestEntry
@@ -140,7 +142,7 @@ class InteractorsProvider(Provider):
     change_email = provide(ChangeEmail)
     refresh_access_token = provide(RefreshAccessToken)
     login_magic_link = provide(LoginMagicLink)
-    login_telegram = provide(LoginTelegram)
+    login_telegram = provide(AuthorizeTelegram)
 
     get_participants_page = provide(GetVotingNomination)
     add_vote = provide(AddVote)
