@@ -97,7 +97,7 @@
 		if (username && username !== user.username) body.username = username;
 		if (firstName && firstName !== user.first_name) body.first_name = firstName;
 
-		const { error } = await client.PATCH('/users/me', {
+		const { error } = await client.PATCH('/me/', {
 			body
 		});
 

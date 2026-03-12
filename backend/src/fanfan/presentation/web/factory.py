@@ -1,6 +1,6 @@
 import logfire
 from dishka.integrations.fastapi import setup_dishka
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -24,14 +24,6 @@ def create_app() -> FastAPI:
     # Setup FastAPI app
     config = get_config()
     app = FastAPI(debug=config.debug.enabled)
-
-    @app.get("/debug")
-    async def debug(request: Request):
-        return {
-            "url": str(request.url),
-            "scheme": request.url.scheme,
-            "headers": dict(request.headers),
-        }
 
     # Setup DI
     setup_dishka(container=create_web_container(), app=app)

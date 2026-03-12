@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { PUBLIC_API_URL } from '$env/static/public';
 	import { client } from '$lib/api';
 	import { getEventsClient } from '$lib/events.svelte';
 	import { getToastService } from '$lib/stores/toasts.svelte';
@@ -247,9 +248,9 @@
 		</div>
 
 		<div class="flex justify-center">
-			<!-- Backend starts the Telegram login flow after this redirect. -->
+			<!-- Use the configured API base so OAuth works in every environment. -->
 			<Button
-				href="/api/auth/login/telegram"
+				href={`${PUBLIC_API_URL}/auth/login/telegram`}
 				color="alternative"
 				class="min-h-11 w-full rounded-xl font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
 			>

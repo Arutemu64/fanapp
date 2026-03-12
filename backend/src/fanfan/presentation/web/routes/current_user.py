@@ -5,6 +5,11 @@ from fastapi import APIRouter, HTTPException, Request
 from starlette import status
 from starlette.responses import RedirectResponse
 
+from fanfan.application.auth.change_email import ChangeEmail, ChangeEmailCommand
+from fanfan.application.auth.change_password import (
+    ChangePassword,
+    ChangePasswordCommand,
+)
 from fanfan.application.current_user.get_current_user import GetCurrentUser
 from fanfan.application.current_user.get_current_user_social_accounts import (
     GetCurrentUserSocialAccounts,
@@ -26,9 +31,10 @@ from fanfan.application.current_user.update_user_settings import (
 )
 from fanfan.application.tickets.link_ticket import LinkTicket, LinkTicketCommand
 from fanfan.core.dto.user import CurrentUserDTO, UserSocialAccountDTO
-from fanfan.core.exceptions.auth import UserNotAuthenticated
+from fanfan.core.exceptions.auth import IncorrectPassword, UserNotAuthenticated
 from fanfan.core.exceptions.tickets import TicketNotFound, UserAlreadyHasTicketLinked
 from fanfan.core.exceptions.users import (
+    EmailAlreadyExists,
     TelegramAlreadyConnected,
     TelegramAlreadyLinked,
     TelegramCannotBeUnlinkedWithoutEmail,
@@ -38,7 +44,7 @@ from fanfan.core.exceptions.users import (
 )
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
-current_user_router = APIRouter(tags=["Users"], prefix="/me")
+current_user_router = APIRouter(tags=["Current user"], prefix="/me")
 
 
 @current_user_router.get(
@@ -61,7 +67,7 @@ async def get_current_user(
 
 
 @current_user_router.get(
-    "/social-accounts",
+    "/connections",
     summary="Get current user social accounts",
     description="Retrieves the currently authenticated user's linked social accounts.",
     responses={
@@ -151,8 +157,90 @@ async def update_current_user_settings(
         ) from e
 
 
+@current_user_router.post(
+    "/password",
+    status_code=status.HTTP_200_OK,
+    summary="Change current user password",
+    description="Changes the authenticated user's password. "
+    "Requires the current password for verification when one is already set.",
+    responses={
+        200: {"description": "Password changed successfully."},
+        401: {"model": ErrorMessage, "description": "User not authenticated."},
+        404: {"model": ErrorMessage, "description": "User not found."},
+        409: {
+            "model": ErrorMessage,
+            "description": "Current password is incorrect.",
+        },
+    },
+)
+@inject
+async def change_current_user_password(
+    data: ChangePasswordCommand,
+    interactor: FromDishka[ChangePassword],
+) -> None:
+    # Keep the canonical self-service password change endpoint under /me.
+    try:
+        await interactor(data)
+    except UserNotAuthenticated as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=e.message,
+        ) from e
+    except UserNotFound as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=e.message,
+        ) from e
+    except IncorrectPassword as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=e.message,
+        ) from e
+
+
+@current_user_router.post(
+    "/email",
+    status_code=status.HTTP_200_OK,
+    summary="Change current user email",
+    description="Changes the authenticated user's email address "
+    "and sends a verification link to the new email.",
+    responses={
+        200: {"description": "Email changed and verification requested."},
+        401: {"model": ErrorMessage, "description": "User not authenticated."},
+        404: {"model": ErrorMessage, "description": "User not found."},
+        409: {
+            "model": ErrorMessage,
+            "description": "Email already in use by another account.",
+        },
+    },
+)
+@inject
+async def change_current_user_email(
+    data: ChangeEmailCommand,
+    interactor: FromDishka[ChangeEmail],
+) -> None:
+    # Keep the canonical self-service email change endpoint under /me.
+    try:
+        await interactor(data)
+    except UserNotAuthenticated as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=e.message,
+        ) from e
+    except UserNotFound as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=e.message,
+        ) from e
+    except EmailAlreadyExists as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=e.message,
+        ) from e
+
+
 @current_user_router.get(
-    "/link/telegram",
+    "/connections/telegram",
     summary="Link Telegram account",
     description="Links a Telegram account to the currently authenticated user.",
     responses={
@@ -177,7 +265,7 @@ async def link_telegram(
 
 
 @current_user_router.get(
-    "/link/telegram/callback",
+    "/connections/telegram/callback",
     summary="Link Telegram account",
     description="Links a Telegram account to the currently authenticated user.",
     responses={
@@ -226,7 +314,7 @@ async def link_telegram_callback(
 
 
 @current_user_router.delete(
-    "/unlink/telegram",
+    "/connections/telegram",
     summary="Unlink Telegram account",
     description="Unlinks the Telegram account from the currently authenticated user.",
     responses={

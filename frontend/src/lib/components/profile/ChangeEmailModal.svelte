@@ -38,7 +38,7 @@
 			new_email: newEmail
 		};
 
-		const { error } = await client.POST('/auth/change-email', {
+		const { error } = await client.POST('/me/email', {
 			body
 		});
 

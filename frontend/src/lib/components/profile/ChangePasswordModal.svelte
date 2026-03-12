@@ -41,7 +41,7 @@
 			new_password: newPassword
 		};
 
-		const { error } = await client.POST('/auth/change-password', {
+		const { error } = await client.POST('/me/password', {
 			body
 		});
 

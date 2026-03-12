@@ -1,109 +1,263 @@
 <script lang="ts">
-	import { Card, Button, Alert } from 'flowbite-svelte';
-	import { ShieldOutline, EnvelopeSolid, ExclamationCircleSolid } from 'flowbite-svelte-icons';
+	import { PUBLIC_API_URL } from '$env/static/public';
+	import { client } from '$lib/api';
+	import { getToastService } from '$lib/stores/toasts.svelte';
+	import type { CurrentUserDTO, UserSocialAccountDTO } from '$lib/types/user';
+	import { Alert, Badge, Button, Spinner } from 'flowbite-svelte';
+	import {
+		EnvelopeSolid,
+		ExclamationCircleSolid,
+		LinkOutline,
+		PaperPlaneOutline,
+		ShieldOutline,
+		TrashBinOutline
+	} from 'flowbite-svelte-icons';
 	import ChangePasswordModal from './ChangePasswordModal.svelte';
 	import ChangeEmailModal from './ChangeEmailModal.svelte';
-	import type { CurrentUserDTO } from '$lib/types/user';
-	import { getToastService } from '$lib/stores/toasts.svelte';
-	import { client } from '$lib/api';
+	import ProfileCardShell from './ProfileCardShell.svelte';
 
 	interface Props {
 		user: CurrentUserDTO;
-		onPasswordChange?: () => void;
-		onEmailChange?: () => void;
+		socialAccounts: UserSocialAccountDTO[];
+		onUpdate?: () => void | Promise<void>;
 	}
 
-	let { user, onPasswordChange, onEmailChange }: Props = $props();
+	let { user, socialAccounts, onUpdate }: Props = $props();
 
 	let changePasswordModalOpen = $state(false);
 	let changeEmailModalOpen = $state(false);
 	let isRequestingVerification = $state(false);
+	let isUnlinkingTelegram = $state(false);
 	const toastService = getToastService();
+
+	// Keep the connected Telegram account handy for status text and actions.
+	let telegramAccount = $derived(
+		socialAccounts.find((socialAccount) => socialAccount.provider === 'telegram') ?? null
+	);
 
 	async function requestVerification() {
 		if (isRequestingVerification) return;
+
 		isRequestingVerification = true;
+
 		try {
 			const { error } = await client.POST('/auth/request-email-verification');
+
 			if (error) {
 				toastService.error(error);
-			} else {
-				toastService.add('Письмо с подтверждением отправлено', 'success');
+				return;
 			}
+
+			toastService.add('Письмо с подтверждением отправлено', 'success');
 		} catch (err) {
 			toastService.error(err);
 		} finally {
 			isRequestingVerification = false;
 		}
 	}
+
+	async function handleTelegramUnlink() {
+		if (isUnlinkingTelegram || !telegramAccount) return;
+
+		isUnlinkingTelegram = true;
+
+		try {
+			const { error } = await client.DELETE('/me/connections/telegram', {});
+
+			if (error) {
+				toastService.error(error);
+				return;
+			}
+
+			toastService.add('Telegram отвязан', 'success');
+			await onUpdate?.();
+		} catch (err) {
+			toastService.error(err);
+		} finally {
+			isUnlinkingTelegram = false;
+		}
+	}
 </script>
 
-<Card class="w-full max-w-none rounded-lg bg-white shadow dark:bg-gray-800">
-	<div class="p-6">
-		<div class="mb-4 flex items-center gap-2">
-			<ShieldOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-			<h3 class="text-lg font-bold text-gray-900 dark:text-white">Безопасность</h3>
+<ProfileCardShell
+	title="Способы входа"
+	description="Настройте email, пароль и Telegram для входа и восстановления доступа."
+>
+	{#snippet icon()}
+		<LinkOutline class="h-5 w-5" />
+	{/snippet}
+
+	<!-- Compact inner sections keep related account settings easy to scan. -->
+	<div class="space-y-3">
+		<div class="rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
+			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+				<div class="min-w-0">
+					<div class="flex flex-wrap items-center gap-2">
+						<EnvelopeSolid class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+						<p class="font-medium text-gray-900 dark:text-white">Email</p>
+						<Badge color={user.email ? (user.is_verified ? 'green' : 'yellow') : 'gray'}>
+							{#if user.email}
+								{user.is_verified ? 'Подтверждён' : 'Не подтверждён'}
+							{:else}
+								Не добавлен
+							{/if}
+						</Badge>
+					</div>
+
+					{#if user.email}
+						<p class="mt-1.5 break-all text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+						{#if !user.is_verified}
+							<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+								Подтвердите адрес, чтобы защитить вход и восстановление доступа.
+							</p>
+						{/if}
+					{:else}
+						<p class="mt-1.5 text-sm leading-5 text-gray-500 dark:text-gray-400">
+							Добавьте email для восстановления доступа и важных уведомлений.
+						</p>
+					{/if}
+				</div>
+
+				<div class="flex w-full flex-col gap-2 sm:w-auto">
+					<Button
+						color="alternative"
+						size="sm"
+						class="min-h-11 w-full sm:w-auto"
+						onclick={() => (changeEmailModalOpen = true)}
+					>
+						{user.email ? 'Изменить email' : 'Добавить email'}
+					</Button>
+
+					{#if user.email && !user.is_verified}
+						<Button
+							color="primary"
+							size="sm"
+							class="min-h-11 w-full sm:w-auto"
+							onclick={requestVerification}
+							disabled={isRequestingVerification}
+						>
+							{#if isRequestingVerification}
+								<Spinner class="me-2 h-4 w-4" />
+								Отправка...
+							{:else}
+								<EnvelopeSolid class="me-2 h-4 w-4" />
+								Подтвердить email
+							{/if}
+						</Button>
+					{/if}
+				</div>
+			</div>
 		</div>
 
-		<p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
-			Управление настройками безопасности вашей учетной записи.
-		</p>
+		<div class="rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
+			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+				<div class="min-w-0">
+					<div class="flex flex-wrap items-center gap-2">
+						<ShieldOutline class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+						<p class="font-medium text-gray-900 dark:text-white">Пароль</p>
+						<Badge color={user.has_password ? 'green' : 'gray'}>
+							{user.has_password ? 'Установлен' : 'Не установлен'}
+						</Badge>
+					</div>
 
-		<div class="flex flex-col gap-4 sm:flex-row sm:items-center">
-			<Button
-				color="alternative"
-				size="sm"
-				class="w-full sm:w-auto"
-				onclick={() => (changePasswordModalOpen = true)}
-			>
-				{user.has_password ? 'Сменить пароль' : 'Установить пароль'}
-			</Button>
-
-			<Button
-				color="alternative"
-				size="sm"
-				class="w-full sm:w-auto"
-				onclick={() => (changeEmailModalOpen = true)}
-			>
-				{user.email ? 'Изменить email' : 'Добавить email'}
-			</Button>
-
-			{#if user.email && !user.is_verified}
-				<Button
-					color="primary"
-					size="sm"
-					class="w-full sm:w-auto"
-					onclick={requestVerification}
-					disabled={isRequestingVerification}
-				>
-					<EnvelopeSolid class="mr-2 h-4 w-4" />
-					Подтвердить email
-				</Button>
-			{/if}
-		</div>
-
-		{#if !user.email}
-			<Alert color="yellow" class="mt-4">
-				<div class="flex items-start gap-2">
-					<ExclamationCircleSolid class="mt-0.5 h-4 w-4 shrink-0" />
-					<p>
-						<span class="font-medium">Внимание!</span> К вашему аккаунту не привязан email. Мы настоятельно
-						рекомендуем добавить его для защиты вашей учетной записи.
+					<p class="mt-1.5 text-sm leading-5 text-gray-500 dark:text-gray-400">
+						{#if user.has_password}
+							Используйте пароль как дополнительный способ входа.
+						{:else}
+							Установите пароль, чтобы входить без внешних сервисов.
+						{/if}
 					</p>
 				</div>
-			</Alert>
-		{/if}
+
+				<Button
+					color="alternative"
+					size="sm"
+					class="min-h-11 w-full sm:w-auto"
+					onclick={() => (changePasswordModalOpen = true)}
+				>
+					{user.has_password ? 'Сменить пароль' : 'Установить пароль'}
+				</Button>
+			</div>
+		</div>
+
+		<div class="rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
+			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+				<div class="min-w-0">
+					<div class="flex flex-wrap items-center gap-2">
+						<PaperPlaneOutline class="h-4 w-4 text-sky-500" />
+						<p class="font-medium text-gray-900 dark:text-white">Telegram</p>
+						<Badge color={telegramAccount ? 'green' : 'gray'}>
+							{telegramAccount ? 'Подключён' : 'Не подключён'}
+						</Badge>
+					</div>
+
+					{#if telegramAccount}
+						<p class="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
+							ID аккаунта:
+							<span class="font-mono text-gray-700 dark:text-gray-200">
+								{telegramAccount.provider_id}
+							</span>
+						</p>
+						<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+							Через Telegram можно быстро входить и получать уведомления от бота.
+						</p>
+					{:else}
+						<p class="mt-1.5 text-sm leading-5 text-gray-500 dark:text-gray-400">
+							Подключите Telegram для быстрого входа без пароля.
+						</p>
+					{/if}
+				</div>
+
+				<div class="flex w-full flex-col gap-2 sm:w-auto">
+					{#if telegramAccount}
+						<!-- Unlink is blocked without email so the user does not lose a recovery path. -->
+						<Button
+							color="red"
+							size="sm"
+							class="min-h-11 w-full sm:w-auto"
+							disabled={isUnlinkingTelegram || !user.email}
+							onclick={handleTelegramUnlink}
+						>
+							{#if isUnlinkingTelegram}
+								<Spinner class="me-2 h-4 w-4" />
+								Отвязка...
+							{:else}
+								<TrashBinOutline class="me-2 h-4 w-4" />
+								Отвязать Telegram
+							{/if}
+						</Button>
+					{:else}
+						<!-- Use the configured API base so linking works in every deployment setup. -->
+						<Button
+							href={`${PUBLIC_API_URL}/me/connections/telegram`}
+							color="alternative"
+							class="min-h-11 w-full sm:w-auto"
+						>
+							Подключить Telegram
+						</Button>
+					{/if}
+				</div>
+			</div>
+		</div>
 	</div>
-</Card>
+
+	{#if !user.email}
+		<Alert color="yellow" class="text-sm">
+			<div class="flex items-start gap-2">
+				<ExclamationCircleSolid class="mt-0.5 h-4 w-4 shrink-0" />
+				<p>
+					Добавьте email. Так будет проще восстановить доступ, и только после этого можно
+					безопасно отвязать Telegram.
+				</p>
+			</div>
+		</Alert>
+	{/if}
+</ProfileCardShell>
 
 <ChangePasswordModal
 	bind:open={changePasswordModalOpen}
 	hasPassword={user.has_password}
-	onSuccess={onPasswordChange}
+	onSuccess={onUpdate}
 />
 
-<ChangeEmailModal
-	bind:open={changeEmailModalOpen}
-	currentEmail={user.email}
-	onSuccess={onEmailChange}
-/>
+<ChangeEmailModal bind:open={changeEmailModalOpen} currentEmail={user.email} onSuccess={onUpdate} />

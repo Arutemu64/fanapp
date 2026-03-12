@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Card, Button, Toggle, Modal } from 'flowbite-svelte';
+	import { Button, Modal, Toggle } from 'flowbite-svelte';
 	import { BellOutline, ShareNodesOutline } from 'flowbite-svelte-icons';
 	import { client } from '$lib/api';
 	import { getPwaService } from '$lib/stores/pwa.svelte';
@@ -8,6 +8,7 @@
 	import { onMount } from 'svelte';
 	import type { CurrentUserDTO, UserSocialAccountDTO } from '$lib/types/user';
 	import type { components } from '$lib/api/v1';
+	import ProfileCardShell from './ProfileCardShell.svelte';
 
 	interface Props {
 		user: CurrentUserDTO;
@@ -31,7 +32,7 @@
 		socialAccounts.some((socialAccount) => socialAccount.provider === 'telegram')
 	);
 
-	// Convert base64 VAPID key to Uint8Array required by pushManager
+	// Convert base64 VAPID key to Uint8Array required by pushManager.
 	function urlBase64ToUint8Array(base64String: string) {
 		const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
 		const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
@@ -59,14 +60,12 @@
 				return;
 			}
 
-			// Check if the current subscription exists on the server
+			// Compare the browser subscription with what the server knows about this device.
 			const serverSub = pushSubscriptions.find((s) => s.endpoint === subscription.endpoint);
 
 			if (serverSub) {
 				isSubscribed = true;
 			} else {
-				// We have a local subscription but it's not on the server
-				// We consider this "not subscribed" for the UI toggle
 				isSubscribed = false;
 			}
 		} catch (error) {
@@ -87,7 +86,7 @@
 				const registration = await navigator.serviceWorker.ready;
 				const subscription = await registration.pushManager.getSubscription();
 				if (subscription) {
-					// Send delete request to backend
+					// Remove the matching subscription on the backend before unsubscribing locally.
 					const { error } = await client.DELETE('/push', {
 						body: {
 							endpoint: subscription.endpoint
@@ -96,7 +95,6 @@
 
 					if (error) {
 						console.error('Failed to remove subscription from server:', error);
-						// We proceed with local unsubscription anyway to keep UI in sync
 					}
 
 					await subscription.unsubscribe();
@@ -113,7 +111,6 @@
 			return;
 		}
 
-		// Subscription logic
 		if (pwa.isIOS && !pwa.isInstalled) {
 			showIosPwaModal = true;
 			return;
@@ -126,7 +123,6 @@
 				return;
 			}
 
-			// Permission request is required if not granted
 			if (Notification.permission === 'default') {
 				const permission = await Notification.requestPermission();
 				if (permission !== 'granted') {
@@ -138,7 +134,6 @@
 				return;
 			}
 
-			// Use the existing SvelteKit-registered service worker
 			const registration = await navigator.serviceWorker.ready;
 
 			const subscription = await registration.pushManager.subscribe({
@@ -146,7 +141,6 @@
 				applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY)
 			});
 
-			// Send to backend
 			const subJson = subscription.toJSON();
 
 			const { error } = await client.POST('/push', {
@@ -160,7 +154,6 @@
 			if (error) {
 				console.error('API Error:', error);
 				toastService.add('Ошибка при подписке на уведомления', 'error');
-				// revert local subscription if backend fails
 				await subscription.unsubscribe();
 				return;
 			}
@@ -181,7 +174,7 @@
 		rollback: () => void
 	) {
 		isSavingSettings = true;
-		const { error } = await client.PATCH('/users/me/settings', {
+		const { error } = await client.PATCH('/me/settings', {
 			body: nextSettings
 		});
 
@@ -244,21 +237,24 @@
 	}
 </script>
 
-<Card class="w-full max-w-none rounded-lg bg-white shadow dark:bg-gray-800">
-	<div class="p-6">
-		<div class="mb-4 flex items-center gap-2">
-			<BellOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-			<h3 class="text-lg font-bold text-gray-900 dark:text-white">Уведомления</h3>
-		</div>
+<ProfileCardShell
+	title="Уведомления"
+	description="Выберите каналы, чтобы не пропустить расписание, анонсы и сервисные сообщения."
+>
+	{#snippet icon()}
+		<BellOutline class="h-5 w-5" />
+	{/snippet}
 
-		<p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
-			Получайте важные уведомления. Включите, чтобы не пропустить расписание и анонсы.
-		</p>
-
-		<div class="flex items-center justify-between">
-			<span class="text-sm font-medium text-gray-900 dark:text-gray-300"
-				>Уведомления в браузере</span
-			>
+	<div class="rounded-lg border border-gray-200 dark:border-gray-700">
+		<div class="flex items-start justify-between gap-3 p-3 sm:p-4">
+			<div class="min-w-0">
+				<span class="text-sm font-medium text-gray-900 dark:text-gray-300">
+					Уведомления в браузере
+				</span>
+				<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+					Получать push-уведомления на этом устройстве.
+				</p>
+			</div>
 			<Toggle
 				checked={isSubscribed}
 				disabled={isLoading}
@@ -270,59 +266,59 @@
 			/>
 		</div>
 
-		<div
-			class="mt-4 flex items-center justify-between border-t border-gray-200 pt-4 dark:border-gray-700"
-		>
-			<div>
-				<span class="text-sm font-medium text-gray-900 dark:text-gray-300"> Telegram </span>
-				<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-					{#if hasTelegramAccount}
-						Получать сообщения в Telegram-боте
-					{:else}
-						Сначала подключите Telegram в блоке «Соцсети»
-					{/if}
-				</p>
+		<div class="border-t border-gray-200 p-3 sm:p-4 dark:border-gray-700">
+			<div class="flex items-start justify-between gap-3">
+				<div class="min-w-0">
+					<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Telegram</span>
+					<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+						{#if hasTelegramAccount}
+							Получать сообщения в Telegram-боте.
+						{:else}
+							Сначала подключите Telegram в блоке «Способы входа».
+						{/if}
+					</p>
+				</div>
+				<Toggle
+					bind:checked={receiveTelegram}
+					disabled={isSavingSettings || !hasTelegramAccount}
+					onchange={toggleReceiveTelegram}
+					color="green"
+				/>
 			</div>
-			<Toggle
-				bind:checked={receiveTelegram}
-				disabled={isSavingSettings || !hasTelegramAccount}
-				onchange={toggleReceiveTelegram}
-				color="green"
-			/>
 		</div>
 
-		<div
-			class="mt-4 flex items-center justify-between border-t border-gray-200 pt-4 dark:border-gray-700"
-		>
-			<div>
-				<span class="text-sm font-medium text-gray-900 dark:text-gray-300"> Все анонсы </span>
-				<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-					Получать уведомления о начале каждого выступления
-				</p>
+		<div class="border-t border-gray-200 p-3 sm:p-4 dark:border-gray-700">
+			<div class="flex items-start justify-between gap-3">
+				<div class="min-w-0">
+					<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Все анонсы</span>
+					<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+						Получать уведомления о начале каждого выступления.
+					</p>
+				</div>
+				<Toggle
+					bind:checked={receiveAll}
+					disabled={isSavingSettings}
+					onchange={toggleReceiveAll}
+					color="green"
+				/>
 			</div>
-			<Toggle
-				bind:checked={receiveAll}
-				disabled={isSavingSettings}
-				onchange={toggleReceiveAll}
-				color="green"
-			/>
-		</div>
-
-		<div class="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
-			<p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
-				Проверка колокольчика, web push и Telegram, если эти каналы включены.
-			</p>
-			<Button
-				color="light"
-				class="min-h-11 w-full sm:w-auto"
-				disabled={isSendingTest}
-				onclick={sendTestNotification}
-			>
-				{isSendingTest ? 'Отправка...' : 'Проверить уведомления'}
-			</Button>
 		</div>
 	</div>
-</Card>
+
+	<div class="rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
+		<p class="mb-3 text-xs leading-5 text-gray-500 dark:text-gray-400">
+			Проверьте колокольчик, web push и Telegram, если эти каналы уже включены.
+		</p>
+		<Button
+			color="light"
+			class="min-h-11 w-full sm:w-auto"
+			disabled={isSendingTest}
+			onclick={sendTestNotification}
+		>
+			{isSendingTest ? 'Отправка...' : 'Проверить уведомления'}
+		</Button>
+	</div>
+</ProfileCardShell>
 
 <Modal title="Установите приложение" bind:open={showIosPwaModal} autoclose size="sm">
 	<div class="space-y-4">
@@ -341,7 +337,6 @@
 					<span>Нажмите кнопку <strong>«Поделиться»</strong> в браузере</span>
 					<ShareNodesOutline class="h-5 w-5 text-gray-500" />
 				</div>
-				<div class="flex items-center gap-2 text-primary-600"></div>
 				<div class="flex items-center gap-2">
 					<span
 						class="flex h-6 w-6 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-600 dark:bg-primary-900 dark:text-primary-300"

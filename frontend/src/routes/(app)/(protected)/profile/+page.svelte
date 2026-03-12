@@ -1,6 +1,5 @@
 <script lang="ts">
 	import BasicUserInfoCard from '$lib/components/profile/BasicUserInfoCard.svelte';
-	import SocialAccountsCard from '$lib/components/profile/SocialAccountsCard.svelte';
 	import TicketLinkCard from '$lib/components/profile/TicketLinkCard.svelte';
 	import PushNotificationsCard from '$lib/components/profile/PushNotificationsCard.svelte';
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
@@ -32,16 +31,13 @@
 		<!-- Basic User Info Card -->
 		<BasicUserInfoCard {user} onUpdate={refreshProfile} />
 
-		<!-- Social Accounts Card -->
-		<SocialAccountsCard {user} socialAccounts={data.socialAccounts} onUpdate={refreshProfile} />
-
 		<!-- Ticket Link Card -->
 		<TicketLinkCard {user} onTicketLinked={refreshProfile} />
 	</div>
 
 	<div class="flex flex-col gap-4">
-		<!-- Security Card -->
-		<SecurityCard {user} onPasswordChange={refreshProfile} onEmailChange={refreshProfile} />
+		<!-- Login Methods Card -->
+		<SecurityCard {user} socialAccounts={data.socialAccounts} onUpdate={refreshProfile} />
 
 		<!-- PWA Install Card -->
 		<PwaInstallCard />

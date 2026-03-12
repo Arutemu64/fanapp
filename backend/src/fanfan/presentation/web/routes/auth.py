@@ -24,14 +24,6 @@ from fanfan.application.auth.authorize_telegram import (
     AuthorizeTelegram,
     AuthorizeTelegramCommand,
 )
-from fanfan.application.auth.change_email import (
-    ChangeEmail,
-    ChangeEmailCommand,
-)
-from fanfan.application.auth.change_password import (
-    ChangePassword,
-    ChangePasswordCommand,
-)
 from fanfan.application.auth.login_magic_link import (
     LoginMagicLink,
     LoginMagicLinkCommand,
@@ -50,14 +42,12 @@ from fanfan.application.auth.verify_email import VerifyEmail, VerifyEmailCommand
 from fanfan.core.dto.user import UserBaseDTO
 from fanfan.core.exceptions.auth import (
     AuthenticationError,
-    IncorrectPassword,
     InvalidToken,
     RefreshTokenReused,
     TokenExpired,
     UserNotAuthenticated,
 )
 from fanfan.core.exceptions.users import (
-    EmailAlreadyExists,
     UserAlreadyExists,
     UserNotFound,
 )
@@ -291,74 +281,6 @@ async def register_user(
             detail=e.message,
         ) from e
     return result
-
-
-@auth_router.post(
-    "/change-password",
-    status_code=status.HTTP_200_OK,
-    summary="Change user password",
-    description="Changes the authenticated user's password. "
-    "Requires the current password for verification.",
-    responses={
-        200: {"description": "Password changed successfully."},
-        409: {
-            "model": ErrorMessage,
-            "description": "Current password is incorrect.",
-        },
-    },
-)
-@inject
-async def change_password(
-    data: ChangePasswordCommand,
-    interactor: FromDishka[ChangePassword],
-) -> None:
-    try:
-        result = await interactor(data)
-    except IncorrectPassword as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=e.message,
-        ) from e
-    return result
-
-
-@auth_router.post(
-    "/change-email",
-    status_code=status.HTTP_200_OK,
-    summary="Change user email",
-    description="Changes the current user's email address "
-    "and sends a verification link to the new email.",
-    responses={
-        200: {"description": "Email changed and verification requested."},
-        404: {"model": ErrorMessage, "description": "User not found."},
-        409: {
-            "model": ErrorMessage,
-            "description": "Email already in use by another account.",
-        },
-    },
-)
-@inject
-async def change_email(
-    data: ChangeEmailCommand,
-    interactor: FromDishka[ChangeEmail],
-) -> None:
-    try:
-        await interactor(data)
-    except UserNotAuthenticated as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=e.message,
-        ) from e
-    except UserNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message,
-        ) from e
-    except EmailAlreadyExists as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=e.message,
-        ) from e
 
 
 @auth_router.post(

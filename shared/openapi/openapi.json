@@ -5,6 +5,104 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/debug": {
+      "get": {
+        "tags": [
+          "Debug"
+        ],
+        "summary": "Debug",
+        "operationId": "debug_debug_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/debug/health": {
+      "get": {
+        "tags": [
+          "Debug"
+        ],
+        "summary": "Health Check",
+        "operationId": "health_check_debug_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/login": {
       "post": {
         "tags": [
@@ -312,156 +410,6 @@
         }
       }
     },
-    "/auth/change-password": {
-      "post": {
-        "tags": [
-          "Authentication"
-        ],
-        "summary": "Change user password",
-        "description": "Changes the authenticated user's password. Requires the current password for verification.",
-        "operationId": "change_password_auth_change_password_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChangePasswordCommand"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Password changed successfully.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Current password is incorrect.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/change-email": {
-      "post": {
-        "tags": [
-          "Authentication"
-        ],
-        "summary": "Change user email",
-        "description": "Changes the current user's email address and sends a verification link to the new email.",
-        "operationId": "change_email_auth_change_email_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChangeEmailCommand"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Email changed and verification requested.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User not found.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Email already in use by another account.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/auth/request-email-verification": {
       "post": {
         "tags": [
@@ -748,7 +696,7 @@
     "/me/": {
       "get": {
         "tags": [
-          "Users"
+          "Current user"
         ],
         "summary": "Get current user",
         "description": "Retrieves the currently authenticated user's profile information.",
@@ -798,7 +746,7 @@
       },
       "patch": {
         "tags": [
-          "Users"
+          "Current user"
         ],
         "summary": "Update current user",
         "description": "Updates the currently authenticated user's profile information.",
@@ -865,14 +813,14 @@
         }
       }
     },
-    "/me/social-accounts": {
+    "/me/connections": {
       "get": {
         "tags": [
-          "Users"
+          "Current user"
         ],
         "summary": "Get current user social accounts",
         "description": "Retrieves the currently authenticated user's linked social accounts.",
-        "operationId": "get_current_user_social_accounts_me_social_accounts_get",
+        "operationId": "get_current_user_social_accounts_me_connections_get",
         "responses": {
           "200": {
             "description": "User social accounts retrieved successfully.",
@@ -883,7 +831,7 @@
                     "$ref": "#/components/schemas/UserSocialAccountDTO"
                   },
                   "type": "array",
-                  "title": "Response 200 Get Current User Social Accounts Me Social Accounts Get"
+                  "title": "Response 200 Get Current User Social Accounts Me Connections Get"
                 }
               }
             }
@@ -934,7 +882,7 @@
     "/me/settings": {
       "patch": {
         "tags": [
-          "Users"
+          "Current user"
         ],
         "summary": "Update current user settings",
         "description": "Updates the currently authenticated user's profile settings.",
@@ -991,99 +939,19 @@
         }
       }
     },
-    "/me/link/telegram": {
-      "get": {
+    "/me/password": {
+      "post": {
         "tags": [
-          "Users"
+          "Current user"
         ],
-        "summary": "Link Telegram account",
-        "description": "Links a Telegram account to the currently authenticated user.",
-        "operationId": "link_telegram_me_link_telegram_get",
-        "responses": {
-          "200": {
-            "description": "Telegram account linked successfully.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "401": {
-            "description": "User not authenticated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid Telegram auth payload.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User not found.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Telegram is already linked to this or another account.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/me/link/telegram/callback": {
-      "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Link Telegram account",
-        "description": "Links a Telegram account to the currently authenticated user.",
-        "operationId": "link_telegram_callback_me_link_telegram_callback_get",
+        "summary": "Change current user password",
+        "description": "Changes the authenticated user's password. Requires the current password for verification when one is already set.",
+        "operationId": "change_current_user_password_me_password_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LinkTelegramAccountCommand"
+                "$ref": "#/components/schemas/ChangePasswordCommand"
               }
             }
           },
@@ -1091,6 +959,156 @@
         },
         "responses": {
           "200": {
+            "description": "Password changed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Current password is incorrect.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/email": {
+      "post": {
+        "tags": [
+          "Current user"
+        ],
+        "summary": "Change current user email",
+        "description": "Changes the authenticated user's email address and sends a verification link to the new email.",
+        "operationId": "change_current_user_email_me_email_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeEmailCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Email changed and verification requested.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already in use by another account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/connections/telegram": {
+      "get": {
+        "tags": [
+          "Current user"
+        ],
+        "summary": "Link Telegram account",
+        "description": "Links a Telegram account to the currently authenticated user.",
+        "operationId": "link_telegram_me_connections_telegram_get",
+        "responses": {
+          "200": {
             "description": "Telegram account linked successfully.",
             "content": {
               "application/json": {
@@ -1159,16 +1177,14 @@
             }
           }
         }
-      }
-    },
-    "/me/unlink/telegram": {
+      },
       "delete": {
         "tags": [
-          "Users"
+          "Current user"
         ],
         "summary": "Unlink Telegram account",
         "description": "Unlinks the Telegram account from the currently authenticated user.",
-        "operationId": "unlink_telegram_account_me_unlink_telegram_delete",
+        "operationId": "unlink_telegram_account_me_connections_telegram_delete",
         "responses": {
           "200": {
             "description": "Telegram account unlinked successfully.",
@@ -1231,10 +1247,90 @@
         }
       }
     },
+    "/me/connections/telegram/callback": {
+      "get": {
+        "tags": [
+          "Current user"
+        ],
+        "summary": "Link Telegram account",
+        "description": "Links a Telegram account to the currently authenticated user.",
+        "operationId": "link_telegram_callback_me_connections_telegram_callback_get",
+        "responses": {
+          "200": {
+            "description": "Telegram account linked successfully.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid Telegram auth payload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Telegram is already linked to this or another account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/me/ticket": {
       "post": {
         "tags": [
-          "Users"
+          "Current user"
         ],
         "summary": "Link ticket",
         "description": "Links provided ticket to current user.",
@@ -3256,19 +3352,6 @@
           "status"
         ],
         "title": "GetVotingStateResult"
-      },
-      "LinkTelegramAccountCommand": {
-        "properties": {
-          "user_id": {
-            "type": "integer",
-            "title": "User Id"
-          }
-        },
-        "type": "object",
-        "required": [
-          "user_id"
-        ],
-        "title": "LinkTelegramAccountCommand"
       },
       "LinkTicketCommand": {
         "properties": {
