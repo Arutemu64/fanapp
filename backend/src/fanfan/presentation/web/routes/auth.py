@@ -1,6 +1,8 @@
 import datetime
+from collections.abc import Mapping
 from typing import Annotated
 
+from authlib.integrations.base_client.errors import OAuthError
 from authlib.integrations.starlette_client import OAuth, StarletteOAuth2App
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
@@ -74,6 +76,9 @@ ACCESS_TOKEN_MAX_AGE = int(ACCESS_TOKEN_TTL.total_seconds())  # 900s (15 min)
 REFRESH_TOKEN_MAX_AGE = int(REFRESH_TOKEN_TTL.total_seconds())  # 604800s (7 days)
 
 
+TELEGRAM_OAUTH_ERROR_MESSAGE = "Не удалось подтвердить Telegram"
+
+
 class EmailPasswordLoginForm(BaseModel):
     email: EmailStr = Field(...)
     password: str = Field(...)
@@ -120,6 +125,33 @@ def _delete_auth_cookies(response: Response, config: WebConfig) -> None:
     """Clear auth cookies. Path must match what was set, otherwise cookie stays."""
     response.delete_cookie(key="access_token", path="/")
     response.delete_cookie(key="refresh_token", path="/")
+
+
+def _extract_telegram_userinfo(token_data: object) -> dict[str, object] | None:
+    """Return Telegram userinfo only when provider payload has the expected shape.
+
+    We verify runtime structure here because OAuth provider responses are external
+    input and may not always match our type hints.
+    """
+    if not isinstance(token_data, Mapping):
+        return None
+
+    userinfo = token_data.get("userinfo")
+    if isinstance(userinfo, Mapping):
+        return dict(userinfo)
+    return None
+
+
+def _get_telegram_user_id(userinfo: Mapping[str, object]) -> int | None:
+    """Extract Telegram user id from OIDC userinfo payload.
+
+    Telegram id must be a positive integer. We validate the payload shape here
+    so route handlers can return a controlled HTTP 400 instead of leaking a 500.
+    """
+    user_id = userinfo.get("id")
+    if isinstance(user_id, int) and user_id > 0:
+        return user_id
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -478,11 +510,34 @@ async def authorize_telegram(
     interactor: FromDishka[AuthorizeTelegram],
 ) -> RedirectResponse:
     telegram: StarletteOAuth2App = oauth.create_client("telegram")
-    token = await telegram.authorize_access_token(request)
-    userinfo = token.get("userinfo", {})
-    token = await interactor(
-        AuthorizeTelegramCommand(user_id=userinfo["id"], name=userinfo["name"])
-    )
+    try:
+        oauth_token = await telegram.authorize_access_token(request)
+        userinfo = _extract_telegram_userinfo(oauth_token)
+
+        # Validate provider payload before passing values to application layer.
+        if userinfo is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=TELEGRAM_OAUTH_ERROR_MESSAGE,
+            )
+
+        user_id = _get_telegram_user_id(userinfo)
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=TELEGRAM_OAUTH_ERROR_MESSAGE,
+            )
+
+        display_name = str(userinfo.get("name") or "")
+        token = await interactor(
+            AuthorizeTelegramCommand(user_id=user_id, name=display_name)
+        )
+    except OAuthError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=TELEGRAM_OAUTH_ERROR_MESSAGE,
+        ) from e
+
     response = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
     _set_auth_cookies(response, token.access_token, token.refresh_token, config)
     return response

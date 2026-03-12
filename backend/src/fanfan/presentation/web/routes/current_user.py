@@ -1,3 +1,6 @@
+from collections.abc import Mapping
+
+from authlib.integrations.base_client.errors import OAuthError
 from authlib.integrations.starlette_client import OAuth, StarletteOAuth2App
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
@@ -39,6 +42,27 @@ from fanfan.core.exceptions.users import (
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
 current_user_router = APIRouter(tags=["Users"], prefix="/me")
+
+TELEGRAM_OAUTH_ERROR_MESSAGE = "Не удалось подтвердить Telegram"
+
+
+def _extract_telegram_user_id_from_token(token_data: object) -> int | None:
+    """Extract Telegram user id from OAuth token payload safely.
+
+    Telegram payload is external input, so we must check each nesting level
+    before reading `userinfo.id` to prevent unexpected server errors.
+    """
+    if not isinstance(token_data, Mapping):
+        return None
+
+    userinfo = token_data.get("userinfo")
+    if not isinstance(userinfo, Mapping):
+        return None
+
+    user_id = userinfo.get("id")
+    if isinstance(user_id, int) and user_id > 0:
+        return user_id
+    return None
 
 
 @current_user_router.get(
@@ -198,15 +222,23 @@ async def link_telegram_callback(
     interactor: FromDishka[LinkTelegramAccount],
 ) -> RedirectResponse:
     telegram: StarletteOAuth2App = oauth.create_client("telegram")
-    token = await telegram.authorize_access_token(request)
-    userinfo = token.get("userinfo", {})
     try:
-        await interactor(LinkTelegramAccountCommand(user_id=userinfo["id"]))
+        oauth_token = await telegram.authorize_access_token(request)
+
+        # Validate that Telegram returned a usable integer user id.
+        user_id = _extract_telegram_user_id_from_token(oauth_token)
+        if user_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=TELEGRAM_OAUTH_ERROR_MESSAGE,
+            )
+
+        await interactor(LinkTelegramAccountCommand(user_id=user_id))
         return RedirectResponse("/profile", status_code=status.HTTP_303_SEE_OTHER)
-    except ValueError as e:
+    except OAuthError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Не удалось подтвердить Telegram",
+            detail=TELEGRAM_OAUTH_ERROR_MESSAGE,
         ) from e
     except UserNotAuthenticated as e:
         raise HTTPException(
