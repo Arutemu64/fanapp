@@ -7,6 +7,7 @@ from fanfan.presentation.web.routes.debug import debug_router
 from fanfan.presentation.web.routes.notifications import notifications_router
 from fanfan.presentation.web.routes.push import push_router
 from fanfan.presentation.web.routes.schedule import schedule_router
+from fanfan.presentation.web.routes.settings import settings_router
 from fanfan.presentation.web.routes.sse import sse_router
 from fanfan.presentation.web.routes.voting import voting_router
 from fanfan.presentation.web.routes.webhooks import webhooks_router
@@ -34,6 +35,7 @@ def setup_api_router() -> APIRouter:
     router.include_router(debug_router, responses=common_responses)
     router.include_router(auth_router, responses=common_responses)
     router.include_router(current_user_router, responses=common_responses)
+    router.include_router(settings_router, responses=common_responses)
     router.include_router(sse_router, responses=common_responses)
     router.include_router(schedule_router, responses=common_responses)
     router.include_router(voting_router, responses=common_responses)

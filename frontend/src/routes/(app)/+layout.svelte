@@ -29,6 +29,7 @@
 		uiHelpers
 	} from 'flowbite-svelte';
 	import {
+		AdjustmentsHorizontalOutline,
 		CalendarWeekOutline,
 		ClockArrowOutline,
 		FileImportOutline,
@@ -143,6 +144,15 @@
 						class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
 					/>
 				{/snippet}
+				<!-- Keep festival controls together so organizers can find them quickly on mobile. -->
+				<SidebarItem label="Настройки фестиваля" href="/org/settings">
+					{#snippet icon()}
+						<!-- This matches the page action: importing a schedule file. -->
+						<AdjustmentsHorizontalOutline
+							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+						/>
+					{/snippet}
+				</SidebarItem>
 				<SidebarItem label="Импорт расписания" href="/org/import_schedule">
 					{#snippet icon()}
 						<!-- This matches the page action: importing a schedule file. -->

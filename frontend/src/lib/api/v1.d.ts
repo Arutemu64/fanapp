@@ -4,7 +4,7 @@
  */
 
 export interface paths {
-    "/debug": {
+    "/debug/": {
         parameters: {
             query?: never;
             header?: never;
@@ -12,7 +12,7 @@ export interface paths {
             cookie?: never;
         };
         /** Debug */
-        get: operations["debug_debug_get"];
+        get: operations["debug_debug__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -52,66 +52,6 @@ export interface paths {
          * @description Authenticates user with email and password. Sets HttpOnly cookies with JWT access and refresh tokens.
          */
         post: operations["login_auth_login_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/request-magic-link": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Request email magic link
-         * @description Sends a one-time sign-in link to the requested email address. Creates an account automatically when the email is new.
-         */
-        post: operations["request_magic_link_auth_request_magic_link_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/login-magic-link": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Login with email magic link
-         * @description Consumes a one-time email magic link token and sets auth cookies.
-         */
-        post: operations["login_magic_link_auth_login_magic_link_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/refresh": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Refresh access token
-         * @description Uses the refresh_token cookie to issue fresh access and refresh tokens (token rotation). Old cookies are replaced.
-         */
-        post: operations["refresh_access_token_auth_refresh_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -172,6 +112,66 @@ export interface paths {
          * @description Verifies a user's email address using a signed token received via email.
          */
         post: operations["verify_email_auth_verify_email_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/request-magic-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request email magic link
+         * @description Sends a one-time sign-in link to the requested email address. Creates an account automatically when the email is new.
+         */
+        post: operations["request_magic_link_auth_request_magic_link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/login-magic-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Login with email magic link
+         * @description Consumes a one-time email magic link token and sets auth cookies.
+         */
+        post: operations["login_magic_link_auth_login_magic_link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh access token
+         * @description Uses the refresh_token cookie to issue fresh access and refresh tokens (token rotation). Old cookies are replaced.
+         */
+        post: operations["refresh_access_token_auth_refresh_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -256,26 +256,6 @@ export interface paths {
         patch: operations["update_current_user_me__patch"];
         trace?: never;
     };
-    "/me/connections": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get current user social accounts
-         * @description Retrieves the currently authenticated user's linked social accounts.
-         */
-        get: operations["get_current_user_social_accounts_me_connections_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/me/settings": {
         parameters: {
             query?: never;
@@ -330,6 +310,26 @@ export interface paths {
          * @description Changes the authenticated user's email address and sends a verification link to the new email.
          */
         post: operations["change_current_user_email_me_email_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/connections/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get current user social accounts
+         * @description Retrieves the currently authenticated user's linked social accounts.
+         */
+        get: operations["get_current_user_social_accounts_me_connections__get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -400,6 +400,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get festival settings
+         * @description Returns the current festival settings that organizers can manage.
+         */
+        get: operations["get_settings_settings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update festival settings
+         * @description Updates festival settings that are available to organizers.
+         */
+        patch: operations["update_settings_settings_patch"];
+        trace?: never;
+    };
     "/events": {
         parameters: {
             query?: never;
@@ -420,7 +444,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/schedule": {
+    "/schedule/": {
         parameters: {
             query?: never;
             header?: never;
@@ -431,7 +455,7 @@ export interface paths {
          * Get current schedule
          * @description Retrieves the full schedule using the GetSchedule interactor.
          */
-        get: operations["get_schedule_schedule_get"];
+        get: operations["get_schedule_schedule__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -540,7 +564,7 @@ export interface paths {
         patch: operations["unskip_schedule_event_schedule__event_id__unskip_patch"];
         trace?: never;
     };
-    "/schedule/changes": {
+    "/schedule/changes/": {
         parameters: {
             query?: never;
             header?: never;
@@ -551,7 +575,7 @@ export interface paths {
          * List schedule audit log
          * @description Returns a history of all modifications made to the schedule, including skips, moves, and status changes.
          */
-        get: operations["list_schedule_changes_schedule_changes_get"];
+        get: operations["list_schedule_changes_schedule_changes__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -580,7 +604,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/schedule/subscriptions": {
+    "/schedule/subscriptions/": {
         parameters: {
             query?: never;
             header?: never;
@@ -593,7 +617,7 @@ export interface paths {
          * Create a new event subscription
          * @description Subscribes the current user to a specific schedule event. Prevents duplicate subscriptions.
          */
-        post: operations["new_subscription_schedule_subscriptions_post"];
+        post: operations["new_subscription_schedule_subscriptions__post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -741,7 +765,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/notifications": {
+    "/notifications/": {
         parameters: {
             query?: never;
             header?: never;
@@ -752,7 +776,7 @@ export interface paths {
          * List user notifications
          * @description Returns a paginated list of notifications for the authenticated user.
          */
-        get: operations["list_user_notifications_notifications_get"];
+        get: operations["list_user_notifications_notifications__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -801,7 +825,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/push": {
+    "/push/": {
         parameters: {
             query?: never;
             header?: never;
@@ -812,18 +836,18 @@ export interface paths {
          * List push subscriptions
          * @description Returns a list of push subscriptions for the authenticated user.
          */
-        get: operations["list_subscriptions_push_get"];
+        get: operations["list_subscriptions_push__get"];
         put?: never;
         /**
          * Subscribe to push notifications
          * @description Registers a push subscription endpoint for the authenticated user's device.
          */
-        post: operations["subscribe_push_post"];
+        post: operations["subscribe_push__post"];
         /**
          * Unsubscribe from push notifications
          * @description Removes a push subscription endpoint for the authenticated user.
          */
-        delete: operations["unsubscribe_push_delete"];
+        delete: operations["unsubscribe_push__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -840,6 +864,12 @@ export interface components {
              * Format: uuid
              */
             participant_id: string;
+        };
+        /** AppSettingsDTO */
+        AppSettingsDTO: {
+            /** Voting Enabled */
+            voting_enabled: boolean;
+            limits: components["schemas"]["LimitsConfigDTO"];
         };
         /** Body_import_schedule_schedule_import_post */
         Body_import_schedule_schedule_import_post: {
@@ -950,6 +980,11 @@ export interface components {
             /** Can Vote */
             can_vote: boolean;
             status: components["schemas"]["VotingStatus"];
+        };
+        /** LimitsConfigDTO */
+        LimitsConfigDTO: {
+            /** Announcement Timeout */
+            announcement_timeout: number;
         };
         /** LinkTicketCommand */
         LinkTicketCommand: {
@@ -1274,6 +1309,13 @@ export interface components {
             /** Tariff */
             tariff: string | null;
         };
+        /** UpdateAppSettingsCommand */
+        UpdateAppSettingsCommand: {
+            /** Voting Enabled */
+            voting_enabled?: boolean | null;
+            /** Announcement Timeout */
+            announcement_timeout?: number | null;
+        };
         /** UpdateCurrentUserCommand */
         UpdateCurrentUserCommand: {
             /** Username */
@@ -1401,7 +1443,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    debug_debug_get: {
+    debug_debug__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1516,169 +1558,6 @@ export interface operations {
                 content?: never;
             };
             /** @description Invalid email or password. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Request validation error. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ValidationErrorResponse"];
-                };
-            };
-        };
-    };
-    request_magic_link_auth_request_magic_link_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RequestMagicLinkCommand"];
-            };
-        };
-        responses: {
-            /** @description If the email is valid, the magic link was queued. */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Request validation error. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ValidationErrorResponse"];
-                };
-            };
-        };
-    };
-    login_magic_link_auth_login_magic_link_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LoginMagicLinkCommand"];
-            };
-        };
-        responses: {
-            /** @description Successfully authenticated. Tokens set in cookies. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Magic link is invalid or has already been used. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description User not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Request validation error. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ValidationErrorResponse"];
-                };
-            };
-        };
-    };
-    refresh_access_token_auth_refresh_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Tokens refreshed successfully. New cookies set. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Refresh token is missing, invalid, or expired. */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -1874,6 +1753,169 @@ export interface operations {
             };
             /** @description User not found. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    request_magic_link_auth_request_magic_link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestMagicLinkCommand"];
+            };
+        };
+        responses: {
+            /** @description If the email is valid, the magic link was queued. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    login_magic_link_auth_login_magic_link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginMagicLinkCommand"];
+            };
+        };
+        responses: {
+            /** @description Successfully authenticated. Tokens set in cookies. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Magic link is invalid or has already been used. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    refresh_access_token_auth_refresh_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tokens refreshed successfully. New cookies set. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Refresh token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2138,62 +2180,6 @@ export interface operations {
             };
         };
     };
-    get_current_user_social_accounts_me_connections_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description User social accounts retrieved successfully. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserSocialAccountDTO"][];
-                };
-            };
-            /** @description User not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description User not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Request validation error. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ValidationErrorResponse"];
-                };
-            };
-        };
-    };
     update_current_user_settings_me_settings_patch: {
         parameters: {
             query?: never;
@@ -2365,6 +2351,62 @@ export interface operations {
             };
             /** @description Email already in use by another account. */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    get_current_user_social_accounts_me_connections__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User social accounts retrieved successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserSocialAccountDTO"][];
+                };
+            };
+            /** @description User not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not found. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2665,6 +2707,122 @@ export interface operations {
             };
         };
     };
+    get_settings_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Festival settings retrieved successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppSettingsDTO"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Festival settings were not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    update_settings_settings_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAppSettingsCommand"];
+            };
+        };
+        responses: {
+            /** @description Festival settings updated successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Festival settings were not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
     stream_events_events_get: {
         parameters: {
             query?: never;
@@ -2712,7 +2870,7 @@ export interface operations {
             };
         };
     };
-    get_schedule_schedule_get: {
+    get_schedule_schedule__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -3100,7 +3258,7 @@ export interface operations {
             };
         };
     };
-    list_schedule_changes_schedule_changes_get: {
+    list_schedule_changes_schedule_changes__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -3203,7 +3361,7 @@ export interface operations {
             };
         };
     };
-    new_subscription_schedule_subscriptions_post: {
+    new_subscription_schedule_subscriptions__post: {
         parameters: {
             query?: never;
             header?: never;
@@ -3720,7 +3878,7 @@ export interface operations {
             };
         };
     };
-    list_user_notifications_notifications_get: {
+    list_user_notifications_notifications__get: {
         parameters: {
             query?: {
                 limit?: number;
@@ -3864,7 +4022,7 @@ export interface operations {
             };
         };
     };
-    list_subscriptions_push_get: {
+    list_subscriptions_push__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -3911,7 +4069,7 @@ export interface operations {
             };
         };
     };
-    subscribe_push_post: {
+    subscribe_push__post: {
         parameters: {
             query?: never;
             header?: never;
@@ -3962,7 +4120,7 @@ export interface operations {
             };
         };
     };
-    unsubscribe_push_delete: {
+    unsubscribe_push__delete: {
         parameters: {
             query?: never;
             header?: never;

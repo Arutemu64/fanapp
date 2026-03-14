@@ -5,13 +5,13 @@
     "version": "0.1.0"
   },
   "paths": {
-    "/debug": {
+    "/debug/": {
       "get": {
         "tags": [
           "Debug"
         ],
         "summary": "Debug",
-        "operationId": "debug_debug_get",
+        "operationId": "debug_debug__get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -127,186 +127,6 @@
           },
           "401": {
             "description": "Invalid email or password.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/request-magic-link": {
-      "post": {
-        "tags": [
-          "Authentication"
-        ],
-        "summary": "Request email magic link",
-        "description": "Sends a one-time sign-in link to the requested email address. Creates an account automatically when the email is new.",
-        "operationId": "request_magic_link_auth_request_magic_link_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RequestMagicLinkCommand"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "202": {
-            "description": "If the email is valid, the magic link was queued.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/login-magic-link": {
-      "post": {
-        "tags": [
-          "Authentication"
-        ],
-        "summary": "Login with email magic link",
-        "description": "Consumes a one-time email magic link token and sets auth cookies.",
-        "operationId": "login_magic_link_auth_login_magic_link_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginMagicLinkCommand"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "Successfully authenticated. Tokens set in cookies."
-          },
-          "401": {
-            "description": "Not authenticated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Magic link is invalid or has already been used.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User not found.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/refresh": {
-      "post": {
-        "tags": [
-          "Authentication"
-        ],
-        "summary": "Refresh access token",
-        "description": "Uses the refresh_token cookie to issue fresh access and refresh tokens (token rotation). Old cookies are replaced.",
-        "operationId": "refresh_access_token_auth_refresh_post",
-        "responses": {
-          "204": {
-            "description": "Tokens refreshed successfully. New cookies set."
-          },
-          "401": {
-            "description": "Refresh token is missing, invalid, or expired.",
             "content": {
               "application/json": {
                 "schema": {
@@ -543,6 +363,186 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/request-magic-link": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Request email magic link",
+        "description": "Sends a one-time sign-in link to the requested email address. Creates an account automatically when the email is new.",
+        "operationId": "request_magic_link_auth_request_magic_link_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestMagicLinkCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "If the email is valid, the magic link was queued.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login-magic-link": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Login with email magic link",
+        "description": "Consumes a one-time email magic link token and sets auth cookies.",
+        "operationId": "login_magic_link_auth_login_magic_link_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginMagicLinkCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successfully authenticated. Tokens set in cookies."
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Magic link is invalid or has already been used.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Refresh access token",
+        "description": "Uses the refresh_token cookie to issue fresh access and refresh tokens (token rotation). Old cookies are replaced.",
+        "operationId": "refresh_access_token_auth_refresh_post",
+        "responses": {
+          "204": {
+            "description": "Tokens refreshed successfully. New cookies set."
+          },
+          "401": {
+            "description": "Refresh token is missing, invalid, or expired.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -813,72 +813,6 @@
         }
       }
     },
-    "/me/connections": {
-      "get": {
-        "tags": [
-          "Current user"
-        ],
-        "summary": "Get current user social accounts",
-        "description": "Retrieves the currently authenticated user's linked social accounts.",
-        "operationId": "get_current_user_social_accounts_me_connections_get",
-        "responses": {
-          "200": {
-            "description": "User social accounts retrieved successfully.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/UserSocialAccountDTO"
-                  },
-                  "type": "array",
-                  "title": "Response 200 Get Current User Social Accounts Me Connections Get"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "User not authenticated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User not found.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/me/settings": {
       "patch": {
         "tags": [
@@ -1088,6 +1022,72 @@
           },
           "409": {
             "description": "Email already in use by another account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me/connections/": {
+      "get": {
+        "tags": [
+          "Current user"
+        ],
+        "summary": "Get current user social accounts",
+        "description": "Retrieves the currently authenticated user's linked social accounts.",
+        "operationId": "get_current_user_social_accounts_me_connections__get",
+        "responses": {
+          "200": {
+            "description": "User social accounts retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UserSocialAccountDTO"
+                  },
+                  "type": "array",
+                  "title": "Response 200 Get Current User Social Accounts Me Connections  Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1407,6 +1407,136 @@
         }
       }
     },
+    "/settings": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Get festival settings",
+        "description": "Returns the current festival settings that organizers can manage.",
+        "operationId": "get_settings_settings_get",
+        "responses": {
+          "200": {
+            "description": "Festival settings retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppSettingsDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Festival settings were not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Update festival settings",
+        "description": "Updates festival settings that are available to organizers.",
+        "operationId": "update_settings_settings_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAppSettingsCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Festival settings updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Festival settings were not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/events": {
       "get": {
         "tags": [
@@ -1457,14 +1587,14 @@
         }
       }
     },
-    "/schedule": {
+    "/schedule/": {
       "get": {
         "tags": [
           "Schedule"
         ],
         "summary": "Get current schedule",
         "description": "Retrieves the full schedule using the GetSchedule interactor.",
-        "operationId": "get_schedule_schedule_get",
+        "operationId": "get_schedule_schedule__get",
         "responses": {
           "200": {
             "description": "Schedule retrieved successfully.",
@@ -1943,14 +2073,14 @@
         }
       }
     },
-    "/schedule/changes": {
+    "/schedule/changes/": {
       "get": {
         "tags": [
           "Schedule"
         ],
         "summary": "List schedule audit log",
         "description": "Returns a history of all modifications made to the schedule, including skips, moves, and status changes.",
-        "operationId": "list_schedule_changes_schedule_changes_get",
+        "operationId": "list_schedule_changes_schedule_changes__get",
         "responses": {
           "200": {
             "description": "Schedule changes retrieved successfully.",
@@ -2062,14 +2192,14 @@
         }
       }
     },
-    "/schedule/subscriptions": {
+    "/schedule/subscriptions/": {
       "post": {
         "tags": [
           "Schedule"
         ],
         "summary": "Create a new event subscription",
         "description": "Subscribes the current user to a specific schedule event. Prevents duplicate subscriptions.",
-        "operationId": "new_subscription_schedule_subscriptions_post",
+        "operationId": "new_subscription_schedule_subscriptions__post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2681,14 +2811,14 @@
         }
       }
     },
-    "/notifications": {
+    "/notifications/": {
       "get": {
         "tags": [
           "Notifications"
         ],
         "summary": "List user notifications",
         "description": "Returns a paginated list of notifications for the authenticated user.",
-        "operationId": "list_user_notifications_notifications_get",
+        "operationId": "list_user_notifications_notifications__get",
         "parameters": [
           {
             "name": "limit",
@@ -2858,14 +2988,14 @@
         }
       }
     },
-    "/push": {
+    "/push/": {
       "get": {
         "tags": [
           "Push"
         ],
         "summary": "List push subscriptions",
         "description": "Returns a list of push subscriptions for the authenticated user.",
-        "operationId": "list_subscriptions_push_get",
+        "operationId": "list_subscriptions_push__get",
         "responses": {
           "200": {
             "description": "List of push subscriptions.",
@@ -2876,7 +3006,7 @@
                     "$ref": "#/components/schemas/PushSubscriptionDTO"
                   },
                   "type": "array",
-                  "title": "Response List Subscriptions Push Get"
+                  "title": "Response List Subscriptions Push  Get"
                 }
               }
             }
@@ -2919,7 +3049,7 @@
         ],
         "summary": "Subscribe to push notifications",
         "description": "Registers a push subscription endpoint for the authenticated user's device.",
-        "operationId": "subscribe_push_post",
+        "operationId": "subscribe_push__post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2977,7 +3107,7 @@
         ],
         "summary": "Unsubscribe from push notifications",
         "description": "Removes a push subscription endpoint for the authenticated user.",
-        "operationId": "unsubscribe_push_delete",
+        "operationId": "unsubscribe_push__delete",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3041,6 +3171,23 @@
           "participant_id"
         ],
         "title": "AddVoteCommand"
+      },
+      "AppSettingsDTO": {
+        "properties": {
+          "voting_enabled": {
+            "type": "boolean",
+            "title": "Voting Enabled"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/LimitsConfigDTO"
+          }
+        },
+        "type": "object",
+        "required": [
+          "voting_enabled",
+          "limits"
+        ],
+        "title": "AppSettingsDTO"
       },
       "Body_import_schedule_schedule_import_post": {
         "properties": {
@@ -3352,6 +3499,20 @@
           "status"
         ],
         "title": "GetVotingStateResult"
+      },
+      "LimitsConfigDTO": {
+        "properties": {
+          "announcement_timeout": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Announcement Timeout"
+          }
+        },
+        "type": "object",
+        "required": [
+          "announcement_timeout"
+        ],
+        "title": "LimitsConfigDTO"
       },
       "LinkTicketCommand": {
         "properties": {
@@ -4209,6 +4370,35 @@
           "tariff"
         ],
         "title": "Ticket"
+      },
+      "UpdateAppSettingsCommand": {
+        "properties": {
+          "voting_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voting Enabled"
+          },
+          "announcement_timeout": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Announcement Timeout"
+          }
+        },
+        "type": "object",
+        "title": "UpdateAppSettingsCommand"
       },
       "UpdateCurrentUserCommand": {
         "properties": {
