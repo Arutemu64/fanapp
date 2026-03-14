@@ -30,7 +30,7 @@ connections_router = APIRouter(prefix="/connections")
 
 
 @connections_router.get(
-    "",
+    "/",
     summary="Get current user social accounts",
     description="Retrieves the currently authenticated user's linked social accounts.",
     responses={

@@ -20,7 +20,7 @@ push_router = APIRouter(tags=["Push"], prefix="/push")
 
 
 @push_router.post(
-    "",
+    "/",
     summary="Subscribe to push notifications",
     description="Registers a push subscription endpoint "
     "for the authenticated user's device.",
@@ -37,7 +37,7 @@ async def subscribe(
 
 
 @push_router.get(
-    "",
+    "/",
     summary="List push subscriptions",
     description="Returns a list of push subscriptions for the authenticated user.",
     responses={
@@ -53,7 +53,7 @@ async def list_subscriptions(
 
 
 @push_router.delete(
-    "",
+    "/",
     summary="Unsubscribe from push notifications",
     description="Removes a push subscription endpoint for the authenticated user.",
     status_code=204,

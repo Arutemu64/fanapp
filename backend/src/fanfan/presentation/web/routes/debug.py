@@ -4,7 +4,7 @@ from starlette.responses import JSONResponse
 debug_router = APIRouter(tags=["Debug"], prefix="/debug")
 
 
-@debug_router.get("")
+@debug_router.get("/")
 async def debug(request: Request):
     return {
         "url": str(request.url),

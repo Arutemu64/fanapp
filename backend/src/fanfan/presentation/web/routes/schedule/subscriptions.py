@@ -24,7 +24,7 @@ subscriptions_router = APIRouter(prefix="/subscriptions")
 
 
 @subscriptions_router.post(
-    "",
+    "/",
     status_code=201,
     summary="Create a new event subscription",
     description="Subscribes the current user to a specific schedule event. "

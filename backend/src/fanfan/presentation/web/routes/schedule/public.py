@@ -8,7 +8,7 @@ public_router = APIRouter()
 
 
 @public_router.get(
-    path="",
+    path="/",
     status_code=200,
     summary="Get current schedule",
     description="Retrieves the full schedule using the GetSchedule interactor.",
