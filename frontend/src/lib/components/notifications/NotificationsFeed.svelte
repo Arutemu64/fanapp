@@ -55,7 +55,7 @@
 		isLoadingMore = true;
 
 		try {
-			const { data: result, error } = await client.GET('/notifications', {
+			const { data: result, error } = await client.GET('/notifications/', {
 				params: {
 					query: {
 						limit: NOTIFICATION_PAGE_REQUEST_LIMIT,

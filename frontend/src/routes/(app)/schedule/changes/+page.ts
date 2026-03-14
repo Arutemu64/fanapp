@@ -9,7 +9,7 @@ export const load: PageLoad = async ({ fetch, depends }) => {
 		data,
 		error: fetchError,
 		response
-	} = await client.GET('/schedule/changes', {
+	} = await client.GET('/schedule/changes/', {
 		fetch
 	});
 

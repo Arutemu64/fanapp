@@ -87,7 +87,7 @@
 				const subscription = await registration.pushManager.getSubscription();
 				if (subscription) {
 					// Remove the matching subscription on the backend before unsubscribing locally.
-					const { error } = await client.DELETE('/push', {
+					const { error } = await client.DELETE('/push/', {
 						body: {
 							endpoint: subscription.endpoint
 						}
@@ -143,7 +143,7 @@
 
 			const subJson = subscription.toJSON();
 
-			const { error } = await client.POST('/push', {
+			const { error } = await client.POST('/push/', {
 				body: {
 					endpoint: subJson.endpoint!,
 					p256dh: subJson.keys?.p256dh!,

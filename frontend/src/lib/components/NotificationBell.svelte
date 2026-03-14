@@ -16,7 +16,7 @@
 
 	async function loadNotifications() {
 		try {
-			const { data, error } = await client.GET('/notifications', {
+			const { data, error } = await client.GET('/notifications/', {
 				params: { query: { limit: NOTIFICATION_PREVIEW_LIMIT } }
 			});
 

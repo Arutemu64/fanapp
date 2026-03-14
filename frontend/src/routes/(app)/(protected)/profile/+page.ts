@@ -24,8 +24,8 @@ export const load: PageLoad = async ({ fetch, depends, url }) => {
 	depends('app:social-accounts');
 
 	const [{ data: pushSubscriptions }, { data: socialAccounts }] = await Promise.all([
-		client.GET('/push', { fetch }),
-		client.GET('/me/connections', { fetch })
+		client.GET('/push/', { fetch }),
+		client.GET('/me/connections/', { fetch })
 	]);
 
 	return {
