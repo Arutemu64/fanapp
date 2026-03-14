@@ -1,21 +1,8 @@
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, HTTPException, UploadFile
+from fastapi import APIRouter, HTTPException
 from starlette import status
 
-from fanfan.adapters.parsers.schedule import parse_schedule_from_excel
-from fanfan.application.schedule.get_schedule import (
-    GetSchedule,
-    GetScheduleResult,
-)
-from fanfan.application.schedule_mgmt.import_schedule import (
-    ImportSchedule,
-    ImportScheduleCommand,
-)
-from fanfan.application.schedule_mgmt.list_schedule_changes import (
-    ListScheduleChanges,
-    ListScheduleChangesResult,
-)
 from fanfan.application.schedule_mgmt.move_event import (
     MoveScheduleEvent,
     MoveScheduleEventCommand,
@@ -26,68 +13,26 @@ from fanfan.application.schedule_mgmt.set_current_event import (
     SetCurrentScheduleEventCommand,
     SetCurrentScheduleEventResult,
 )
-from fanfan.application.schedule_mgmt.undo_change import (
-    UndoScheduleChange,
-    UndoScheduleChangeCommand,
-)
 from fanfan.application.schedule_mgmt.update_event_skip import (
     UpdateScheduleEventSkip,
     UpdateScheduleEventSkipCommand,
     UpdateScheduleEventSkipResult,
 )
-from fanfan.application.subscriptions.create_subscription import (
-    CreateSubscription,
-    CreateSubscriptionCommand,
-)
-from fanfan.application.subscriptions.delete_subscription import (
-    DeleteSubscription,
-    DeleteSubscriptionCommand,
-)
-from fanfan.core.dto.subscription import SubscriptionFullDTO
 from fanfan.core.exceptions.schedule import (
     CurrentEventNotAllowed,
     EventNotFound,
     SameEventsAreNotAllowed,
-    ScheduleChangeNotFound,
     ScheduleEditTooFast,
     SkippedEventNotAllowed,
 )
-from fanfan.core.exceptions.subscriptions import (
-    SubscriptionAlreadyExist,
-    SubscriptionNotFound,
-)
-from fanfan.core.vo.schedule_change import ScheduleChangeId
 from fanfan.core.vo.schedule_event import ScheduleEventId
-from fanfan.core.vo.subscription import SubscriptionId
 from fanfan.presentation.web.schemas.error import ErrorMessage
-from fanfan.presentation.web.schemas.schedule import (
-    MoveScheduleEventRequest,
-)
+from fanfan.presentation.web.schemas.schedule import MoveScheduleEventRequest
 
-schedule_router = APIRouter(tags=["Schedule"], prefix="/schedule")
+management_router = APIRouter()
 
 
-@schedule_router.get(
-    path="",
-    status_code=200,
-    summary="Get current schedule",
-    description="Retrieves the full schedule using the GetSchedule interactor.",
-    responses={
-        200: {
-            "model": GetScheduleResult,
-            "description": "Schedule retrieved successfully.",
-        },
-    },
-)
-@inject
-async def get_schedule(
-    interactor: FromDishka[GetSchedule],
-) -> GetScheduleResult:
-
-    return await interactor()
-
-
-@schedule_router.patch(
+@management_router.patch(
     "/{event_id}/current",
     status_code=200,
     summary="Set specific event as current",
@@ -121,11 +66,10 @@ async def set_event_as_current(
     interactor: FromDishka[SetCurrentScheduleEvent],
 ) -> SetCurrentScheduleEventResult:
     try:
-        result = await interactor(SetCurrentScheduleEventCommand(event_id=event_id))
+        return await interactor(SetCurrentScheduleEventCommand(event_id=event_id))
     except EventNotFound as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message,
+            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
         ) from e
     except SkippedEventNotAllowed as e:
         raise HTTPException(
@@ -137,11 +81,9 @@ async def set_event_as_current(
             detail=e.message,
             headers={"Retry-After": str(e.retry_after)},
         ) from e
-    else:
-        return result
 
 
-@schedule_router.delete(
+@management_router.delete(
     "/current",
     status_code=200,
     summary="Unset current schedule event",
@@ -169,18 +111,16 @@ async def uncheck_current_event(
     interactor: FromDishka[SetCurrentScheduleEvent],
 ) -> SetCurrentScheduleEventResult:
     try:
-        result = await interactor(SetCurrentScheduleEventCommand(event_id=None))
+        return await interactor(SetCurrentScheduleEventCommand(event_id=None))
     except ScheduleEditTooFast as e:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=e.message,
             headers={"Retry-After": str(e.retry_after)},
         ) from e
-    else:
-        return result
 
 
-@schedule_router.patch(
+@management_router.patch(
     "/{event_id}/move",
     status_code=200,
     summary="Reorder schedule event",
@@ -208,26 +148,22 @@ async def move_schedule_event(
     interactor: FromDishka[MoveScheduleEvent],
 ) -> MoveScheduleEventResult:
     try:
-        result = await interactor(
+        return await interactor(
             MoveScheduleEventCommand(
                 event_id=event_id, place_after_event_id=data.place_after_event_id
             )
         )
     except EventNotFound as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message,
+            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
         ) from e
     except SameEventsAreNotAllowed as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=e.message,
+            status_code=status.HTTP_400_BAD_REQUEST, detail=e.message
         ) from e
-    else:
-        return result
 
 
-@schedule_router.patch(
+@management_router.patch(
     "/{event_id}/skip",
     status_code=200,
     summary="Skip a schedule event",
@@ -251,24 +187,20 @@ async def skip_schedule_event(
     interactor: FromDishka[UpdateScheduleEventSkip],
 ) -> UpdateScheduleEventSkipResult:
     try:
-        result = await interactor(
+        return await interactor(
             UpdateScheduleEventSkipCommand(event_id=event_id, is_skipped=True)
         )
     except EventNotFound as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message,
+            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
         ) from e
     except CurrentEventNotAllowed as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=e.message,
+            status_code=status.HTTP_400_BAD_REQUEST, detail=e.message
         ) from e
-    else:
-        return result
 
 
-@schedule_router.patch(
+@management_router.patch(
     "/{event_id}/unskip",
     status_code=200,
     summary="Unskip a schedule event",
@@ -292,154 +224,14 @@ async def unskip_schedule_event(
     interactor: FromDishka[UpdateScheduleEventSkip],
 ) -> UpdateScheduleEventSkipResult:
     try:
-        result = await interactor(
+        return await interactor(
             UpdateScheduleEventSkipCommand(event_id=event_id, is_skipped=False)
         )
     except EventNotFound as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message,
+            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
         ) from e
     except CurrentEventNotAllowed as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=e.message,
+            status_code=status.HTTP_400_BAD_REQUEST, detail=e.message
         ) from e
-    else:
-        return result
-
-
-@schedule_router.get(
-    "/changes",
-    status_code=200,
-    summary="List schedule audit log",
-    description="Returns a history of all modifications made to the schedule, "
-    "including skips, moves, and status changes.",
-    responses={
-        200: {
-            "model": ListScheduleChangesResult,
-            "description": "Schedule changes retrieved successfully.",
-        },
-    },
-)
-@inject
-async def list_schedule_changes(
-    interactor: FromDishka[ListScheduleChanges],
-) -> ListScheduleChangesResult:
-    return await interactor()
-
-
-@schedule_router.delete(
-    "/changes/{schedule_change_id}",
-    status_code=204,
-    summary="Undo a specific schedule change",
-    description="Reverts a previously made change to the schedule "
-    "using its unique change ID.",
-    responses={
-        204: {"description": "Change successfully undone."},
-        404: {
-            "model": ErrorMessage,
-            "description": "Schedule change ID not found.",
-        },
-    },
-)
-@inject
-async def undo_schedule_change(
-    schedule_change_id: ScheduleChangeId,
-    interactor: FromDishka[UndoScheduleChange],
-) -> None:
-    try:
-        await interactor(
-            UndoScheduleChangeCommand(schedule_change_id=schedule_change_id)
-        )
-    except ScheduleChangeNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message,
-        ) from e
-    else:
-        return
-
-
-@schedule_router.post(
-    "/subscriptions",
-    status_code=201,
-    summary="Create a new event subscription",
-    description="Subscribes the current user to a specific schedule event. "
-    "Prevents duplicate subscriptions.",
-    responses={
-        201: {
-            "model": SubscriptionFullDTO,
-            "description": "Subscription created successfully.",
-        },
-        404: {
-            "model": ErrorMessage,
-            "description": "Event ID does not exist.",
-        },
-        409: {
-            "model": ErrorMessage,
-            "description": "Subscription for this event already exists.",
-        },
-    },
-)
-@inject
-async def new_subscription(
-    data: CreateSubscriptionCommand,
-    interactor: FromDishka[CreateSubscription],
-) -> SubscriptionFullDTO:
-    try:
-        result = await interactor(data)
-    except EventNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message,
-        ) from e
-    except SubscriptionAlreadyExist as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=e.message,
-        ) from e
-    else:
-        return result
-
-
-@schedule_router.delete(
-    "/subscriptions/{subscription_id}",
-    status_code=204,
-    summary="Remove a subscription",
-    description="Deletes an existing subscription by its unique ID.",
-    responses={
-        204: {"description": "Subscription deleted successfully."},
-        404: {
-            "model": ErrorMessage,
-            "description": "Subscription ID not found.",
-        },
-    },
-)
-@inject
-async def delete_subscription(
-    subscription_id: SubscriptionId,
-    interactor: FromDishka[DeleteSubscription],
-) -> None:
-    try:
-        await interactor(DeleteSubscriptionCommand(subscription_id=subscription_id))
-    except SubscriptionNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message,
-        ) from e
-    else:
-        return
-
-
-@schedule_router.post(
-    "/import",
-    status_code=201,
-)
-@inject
-async def import_schedule(
-    file: UploadFile,
-    interactor: FromDishka[ImportSchedule],
-) -> None:
-    schedule = parse_schedule_from_excel(file=file.file)
-    await interactor(ImportScheduleCommand(schedule=schedule))
