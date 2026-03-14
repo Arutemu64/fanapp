@@ -2,86 +2,103 @@
 
 ## Goal
 
-Produce interfaces that are clear on mobile, consistent with Flowbite-Svelte, and safe for real users.
+- Build mobile-first interfaces for FAN FAN.
+- Prefer clarity, reuse, and safe defaults over novelty.
+- Keep decisions easy to repeat across screens.
+
+## Reuse Existing Patterns
+
+- Reuse `frontend/src/lib/components/SectionHeader.svelte` for page titles and short descriptions.
+- Reuse shared toast feedback through `frontend/src/lib/components/ToastContainer.svelte` and `frontend/src/lib/stores/toasts.svelte`.
+- Reuse page shell spacing from `frontend/src/routes/(app)/+layout.svelte` and `frontend/src/routes/(auth)/+layout.svelte`.
+- Reuse existing card, form, modal, and list patterns from `frontend/src/lib/components/` before adding a new variant.
+- Match established large mobile action sizing before inventing a new button pattern.
+- Do not introduce a new visual pattern when an established equivalent already exists.
 
 ## Component Selection
 
-- Prefer official Flowbite-Svelte components before creating custom UI.
-- Check component capabilities before building a custom alternative.
-- Use icons from `flowbite-svelte-icons` and verify the icon name from documentation.
+- Prefer official Flowbite-Svelte components before custom UI.
+- Check existing project components before creating a new component.
+- Use `flowbite-svelte-icons` for icons.
+- Add icons only when they improve recognition or scanning.
+- Do not build custom controls when Flowbite-Svelte already covers the need.
 
 ## Language and Copy
 
-- All labels, buttons, placeholders, empty states, errors, and helper text must be in Russian.
-- Keep copy concise, direct, and user-oriented.
-- Avoid raw technical wording in user-facing text.
+- Write all user-facing text in Russian.
+- Keep labels, buttons, placeholders, helper text, alerts, empty states, and toasts in Russian.
+- Keep copy short, direct, and action-oriented.
+- Explain what the user can do next when a state blocks progress.
+- Replace English placeholder examples unless an external format requires Latin text.
+- Do not show raw backend messages or internal technical wording.
 
 ## Layout
 
-- Design for mobile first.
-- Add larger breakpoint behavior only when the layout clearly benefits from it.
-- Use simple layout primitives such as flex, grid, and gap-based spacing.
-- Avoid arbitrary fixed spacing and sizing unless a hard external constraint requires it.
-- Keep interactive elements away from screen edges and fixed navigation overlap zones.
+- Design for a narrow mobile viewport first.
+- Start with a single-column layout unless wider screens clearly improve the task.
+- Use flex, grid, and gap-based spacing.
+- Keep content inside the established page containers.
+- Add bottom spacing when fixed mobile navigation is present.
+- Keep primary actions reachable on mobile.
+- Avoid arbitrary fixed heights, widths, and spacing unless an external constraint requires them.
 
-## Cards and Surfaces
+## Surfaces and Hierarchy
 
-- Ensure cards have clear internal padding.
-- Keep surface hierarchy obvious through spacing, contrast, and typography.
-- Do not let content touch card edges.
+- Use cards and sections to group one task or one dataset.
+- Keep internal padding consistent.
+- Use spacing and typography as the primary hierarchy tools.
+- Use color to support hierarchy, not replace it.
+- Keep one clear primary action per area.
+- Avoid decorative hover treatment that changes the visual language without improving usability.
 
 ## Forms
 
-- Inputs should be easy to scan, easy to tap, and clearly labeled.
-- Use matching icons only when they improve recognition.
-- Password inputs should support visibility toggling.
-- Provide validation feedback near the relevant field.
+- Give every field a visible label.
+- Keep forms easy to scan in a single mobile column.
+- Use inline helper or error text near the relevant field.
+- Add a password visibility toggle for password inputs.
+- Disable repeat submission while a request is in flight.
+- Show a spinner or progress label during async submission.
+- Use toasts for final action results, not for field-level validation.
 
-## States
+## States and Feedback
 
-- Every meaningful async action should communicate progress.
-- Disable repeat submission while an action is in flight.
-- Provide explicit empty states when lists or sections have no content.
-- Show success and failure feedback in a consistent way.
-
-## Error Presentation
-
-- Use toasts for transient action feedback and network results that do not need field-level placement.
-- Use inline errors for validation and field-specific problems.
-- Keep all error text user-friendly and in Russian.
-- Never surface raw backend messages directly.
+- Provide loading, empty, success, and error states when the user can encounter them.
+- Use toasts for transient action outcomes and background request results.
+- Use inline alerts or helper text for persistent context and recoverable form issues.
+- Make empty states explain why the area is empty and what the user can do next.
+- Keep success and error wording consistent across screens.
 
 ## Accessibility
 
-- All interactive controls need a descriptive accessible name.
-- Keyboard navigation must work for menus, dialogs, dropdowns, and similar overlays.
-- Focus states must remain visible.
-- Maintain sufficient contrast in both light and dark themes.
-- Touch targets should be comfortable on mobile.
+- Give every interactive control a descriptive accessible name.
+- Keep keyboard access working for menus, dialogs, dropdowns, tabs, and drawers.
+- Keep focus states visible in light and dark themes.
+- Use semantic headings in order.
+- Keep touch targets comfortable on mobile.
+- Keep contrast sufficient in both themes.
 
 ## Theming
 
-- Support both light and dark mode.
-- Use semantic color roles consistently for primary actions, success, warning, danger, information, and neutral content.
-- Keep visual emphasis aligned with action importance.
-
-## Navigation and Safe Areas
-
-- Mobile bottom navigation must not cover page content.
-- Add enough bottom spacing for fixed mobile navigation when present.
-- Keep primary actions reachable without conflicting with system gestures.
+- Support light and dark mode.
+- Use semantic color roles consistently.
+- Match visual emphasis to action importance.
+- Do not encode critical meaning only in color.
 
 ## Motion
 
-- Use simple transitions to clarify state changes.
-- Keep motion subtle and functional.
-- Avoid heavy or decorative animation that competes with usability.
+- Use motion only to clarify interaction or state change.
+- Keep transitions subtle and short.
+- Ensure hover effects are optional, not essential, because mobile users will not see them.
+- Avoid decorative animation that competes with content or slows the interface.
 
 ## Review Checklist
 
-- The screen works on a narrow mobile viewport first.
-- Flowbite-Svelte components are used where appropriate.
-- All user-facing text is Russian.
+- Mobile layout works before desktop refinements.
+- Existing project patterns were reused before new UI was added.
+- Flowbite-Svelte components were used where they fit.
+- All user-facing copy, including placeholders and helper text, is in Russian.
+- Fixed mobile navigation does not cover content or primary actions.
 - Loading, empty, success, and error states are present when needed.
-- Light and dark themes remain usable.
-- Keyboard access, focus visibility, and touch target size are acceptable.
+- Field validation appears near the field, and transient outcomes use toasts.
+- Light mode, dark mode, keyboard access, focus visibility, and tap target size remain usable.

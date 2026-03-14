@@ -13,10 +13,11 @@
 
 <ToastContainer
 	position={undefined}
-	class="fixed top-20 right-4 z-50 flex w-full max-w-xs flex-col gap-2"
+	class="fixed inset-x-0 top-20 z-50 flex w-full flex-col gap-2 px-4 sm:px-6 lg:px-8"
 >
 	{#each toastService.items as toast (toast.id)}
-		<div transition:fly={{ x: 200, duration: 300 }}>
+		<!-- On mobile the toast uses the available width, and on larger screens it shifts to the top-right. -->
+		<div class="w-full sm:ml-auto sm:max-w-sm" transition:fly={{ x: 200, duration: 300 }}>
 			<Toast
 				color={ToastTypeColors[toast.type]}
 				dismissable={true}

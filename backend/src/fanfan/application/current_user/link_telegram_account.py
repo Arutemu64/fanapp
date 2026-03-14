@@ -8,9 +8,9 @@ from fanfan.adapters.db.uow import UnitOfWork
 from fanfan.application.common.id_provider import IdProvider
 from fanfan.core.exceptions.auth import UserNotAuthenticated
 from fanfan.core.exceptions.users import (
-    TelegramAlreadyConnected,
-    TelegramAlreadyLinked,
+    TelegramAlreadyLinkedToAnotherUser,
     UserNotFound,
+    UserAlreadyHasTelegramLinked,
 )
 from fanfan.core.models.social_account import SocialAccount
 from fanfan.presentation.tgbot.config import TelegramConfig
@@ -53,14 +53,14 @@ class LinkTelegramAccount:
             if current_telegram is not None:
                 if current_telegram.provider_id == provider_id:
                     return
-                raise TelegramAlreadyConnected
+                raise UserAlreadyHasTelegramLinked
 
             linked_user = await self.user_gateway.get_user_by_social_id(
                 provider_name="telegram",
                 provider_account_id=provider_id,
             )
             if linked_user is not None and linked_user.id != current_user_id:
-                raise TelegramAlreadyLinked
+                raise TelegramAlreadyLinkedToAnotherUser
 
             try:
                 await self.user_gateway.add_user_social_id(
@@ -73,7 +73,7 @@ class LinkTelegramAccount:
                 await self.uow.commit()
             except IntegrityError as exc:
                 await self.uow.rollback()
-                raise TelegramAlreadyLinked from exc
+                raise TelegramAlreadyLinkedToAnotherUser from exc
             else:
                 logger.info(
                     "Telegram %s was linked to user %s",

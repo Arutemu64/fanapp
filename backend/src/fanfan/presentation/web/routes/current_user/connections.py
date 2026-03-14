@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from authlib.integrations.starlette_client import OAuth, StarletteOAuth2App
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
@@ -18,15 +20,32 @@ from fanfan.application.current_user.unlink_telegram_account import (
 from fanfan.core.dto.user import UserSocialAccountDTO
 from fanfan.core.exceptions.auth import UserNotAuthenticated
 from fanfan.core.exceptions.users import (
-    TelegramAlreadyConnected,
-    TelegramAlreadyLinked,
+    TelegramAlreadyLinkedToAnotherUser,
     TelegramCannotBeUnlinkedWithoutEmail,
     UserHasNoEmail,
+    UserAlreadyHasTelegramLinked,
     UserNotFound,
 )
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
 connections_router = APIRouter(prefix="/connections")
+
+# Frontend reads this one-time code from the profile URL and shows a safe toast.
+TELEGRAM_LINK_ERROR_QUERY_PARAM = "telegramLinkError"
+TELEGRAM_LINK_ERROR_LINKED_TO_ANOTHER_ACCOUNT = "linked_to_another_account"
+TELEGRAM_LINK_ERROR_USER_ALREADY_HAS_TELEGRAM = "user_already_has_telegram"
+
+
+def _build_profile_redirect(error_code: str | None = None) -> RedirectResponse:
+    redirect_url = "/profile"
+
+    if error_code is not None:
+        redirect_url = (
+            f"{redirect_url}?"
+            f"{urlencode({TELEGRAM_LINK_ERROR_QUERY_PARAM: error_code})}"
+        )
+
+    return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
 
 
 @connections_router.get(
@@ -109,7 +128,7 @@ async def link_telegram_callback(
     userinfo = token.get("userinfo", {})
     try:
         await interactor(LinkTelegramAccountCommand(user_id=userinfo["id"]))
-        return RedirectResponse("/profile", status_code=status.HTTP_303_SEE_OTHER)
+        return _build_profile_redirect()
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -123,10 +142,12 @@ async def link_telegram_callback(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=e.message
         ) from e
-    except (TelegramAlreadyLinked, TelegramAlreadyConnected) as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail=e.message
-        ) from e
+    except TelegramAlreadyLinkedToAnotherUser:
+        return _build_profile_redirect(
+            TELEGRAM_LINK_ERROR_LINKED_TO_ANOTHER_ACCOUNT
+        )
+    except UserAlreadyHasTelegramLinked:
+        return _build_profile_redirect(TELEGRAM_LINK_ERROR_USER_ALREADY_HAS_TELEGRAM)
 
 
 @connections_router.delete(
