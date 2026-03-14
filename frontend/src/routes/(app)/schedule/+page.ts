@@ -4,7 +4,7 @@ import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ fetch, depends }) => {
 	depends('app:schedule');
-	const { data, error: fetchError, response } = await client.GET('/schedule', { fetch });
+	const { data, error: fetchError, response } = await client.GET('/schedule/', { fetch });
 
 	if (fetchError) {
 		error(response.status, 'Не удалось загрузить расписание');

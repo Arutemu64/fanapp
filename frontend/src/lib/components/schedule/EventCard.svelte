@@ -41,6 +41,7 @@
 
 	// Unique ID for this card's dropdown trigger
 	let dropdownId = $derived(`event-menu-${event.id}`);
+	let publicNumber = $derived(event.public_number.toString().padStart(3, '0'));
 
 	let queueUntil = $derived(
 		currentEvent && event.queue !== null && currentEvent.queue !== null
@@ -116,70 +117,82 @@
 </script>
 
 <div
-	class="rounded-lg border bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800 {event.is_current
-		? 'border-green-400 ring-2 ring-green-400 dark:border-green-500 dark:ring-green-500'
-		: 'border-gray-200'}"
+	class={[
+		'flex items-start gap-3 px-3 py-3 transition-colors sm:px-4',
+		event.is_current && 'bg-green-50/70 dark:bg-green-950/15',
+		event.is_skipped && !event.is_current && 'bg-gray-50/70 dark:bg-gray-900/40'
+	]}
 >
-	<div class="flex items-center gap-2 sm:gap-3">
-		<div
-			class="flex w-16 shrink-0 items-center justify-center text-4xl font-bold text-gray-900 sm:w-20 sm:text-3xl dark:text-white"
-		>
-			{event.public_number?.toString().padStart(3, '0')}
-		</div>
+	<!-- Keep the public number visible so the list stays easy to scan on mobile. -->
+	<div
+		class={[
+			'flex w-12 shrink-0 flex-col items-center rounded-lg border px-1.5 py-1.5 text-center',
+			event.is_current
+				? 'border-green-200 bg-white dark:border-green-800 dark:bg-gray-800'
+				: 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900'
+		]}
+	>
+		<span class="text-[10px] font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
+			№
+		</span>
+		<span class="text-base font-bold leading-none text-gray-900 dark:text-white">{publicNumber}</span>
+	</div>
 
-		<div class="h-7 w-px self-center bg-gray-200 sm:h-9 dark:bg-gray-700"></div>
+	<div class="min-w-0 flex-1">
+		<div class="flex items-start gap-2">
+			<div class="min-w-0 flex-1">
+				<h3
+					class="text-sm font-semibold leading-5 text-gray-900 sm:text-[15px] dark:text-white"
+					class:line-through={event.is_skipped}
+				>
+					{event.title}
+				</h3>
 
-		<div class="min-w-0 flex-1">
-			<h3
-				class="mb-1 text-lg leading-tight font-bold text-gray-900 dark:text-white"
-				class:line-through={event.is_skipped}
-			>
-				{event.title}
-			</h3>
-			<div class="flex flex-wrap items-center gap-2">
-				{#if event.is_current}
-					<Badge color="green" border class="inline-flex items-center gap-1 text-sm">
-						<PlayOutline class="h-4 w-4" />
-						Сейчас
+				<div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+					{#if event.is_current}
+						<Badge color="green" border class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium">
+							<PlayOutline class="h-3.5 w-3.5" />
+							Сейчас
+						</Badge>
+					{/if}
+
+					{#if event.is_skipped}
+						<Badge color="red" border class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium">
+							<BanOutline class="h-3.5 w-3.5" />
+							Пропущено
+						</Badge>
+					{/if}
+
+					<Badge color="gray" border class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium">
+						<ClockOutline class="h-3.5 w-3.5" />
+						{formatDuration(event.duration)}
 					</Badge>
-				{/if}
 
-				{#if event.is_skipped}
-					<Badge color="red" border class="inline-flex items-center gap-1 text-sm">
-						<BanOutline class="h-4 w-4" />
-						Пропущено
-					</Badge>
-				{/if}
+					{#if timeUntil !== null && timeUntil !== 0}
+						<Badge color="yellow" border class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium">
+							<HourglassOutline class="h-3.5 w-3.5" />
+							{formatUntil(queueUntil ?? 0, timeUntil)}
+						</Badge>
+					{/if}
 
-				<Badge color="gray" border class="inline-flex items-center gap-1 text-sm">
-					<ClockOutline class="h-4 w-4" />
-					{formatDuration(event.duration)}
-				</Badge>
-
-				{#if timeUntil !== null && timeUntil !== 0}
-					<Badge color="yellow" border class="inline-flex items-center gap-1 text-sm">
-						<HourglassOutline class="h-4 w-4" />
-						{formatUntil(queueUntil ?? 0, timeUntil)}
-					</Badge>
-				{/if}
-
-				{#if event.user_subscription}
-					<Badge color="blue" border class="inline-flex items-center gap-1 text-sm">
-						<BellActiveSolid class="h-4 w-4" />
-						{event.user_subscription.counter}
-						{pluralize(event.user_subscription.counter, 'событие', 'события', 'событий')}
-					</Badge>
-				{/if}
+					{#if event.user_subscription}
+						<Badge color="blue" border class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium">
+							<BellActiveSolid class="h-3.5 w-3.5" />
+							{event.user_subscription.counter}
+							{pluralize(event.user_subscription.counter, 'событие', 'события', 'событий')}
+						</Badge>
+					{/if}
+				</div>
 			</div>
-		</div>
 
-		<button
-			id={dropdownId}
-			class="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-gray-500 transition duration-150 hover:bg-gray-100 focus:ring-2 focus:ring-primary-300 focus:outline-none dark:text-gray-400 dark:hover:bg-gray-700"
-			aria-label="Меню действий"
-		>
-			<DotsVerticalOutline class="h-6 w-6" />
-		</button>
+			<button
+				id={dropdownId}
+				class="ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 focus:ring-2 focus:ring-primary-300 focus:outline-none dark:text-gray-400 dark:hover:bg-gray-700"
+				aria-label="Меню действий"
+			>
+				<DotsVerticalOutline class="h-5 w-5" />
+			</button>
+		</div>
 	</div>
 </div>
 

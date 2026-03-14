@@ -6,10 +6,18 @@ export class PwaService {
 	#isInstalled = $state(false);
 	#canInstall = $derived(this.#deferredPrompt !== null);
 	#isIOS = $state(false);
+	#isAndroid = $state(false);
+	#isSecureContext = $state(true);
 
 	constructor() {
 		if (browser) {
-			this.#isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+			const userAgent = navigator.userAgent;
+
+			this.#isIOS = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
+			// Android browsers may still allow installation from the browser menu
+			// even when `beforeinstallprompt` is not fired.
+			this.#isAndroid = /Android/i.test(userAgent);
+			this.#isSecureContext = window.isSecureContext;
 
 			// Check if already installed
 			if (
@@ -45,6 +53,14 @@ export class PwaService {
 
 	get isIOS() {
 		return this.#isIOS;
+	}
+
+	get isAndroid() {
+		return this.#isAndroid;
+	}
+
+	get isSecureContext() {
+		return this.#isSecureContext;
 	}
 
 	async install() {

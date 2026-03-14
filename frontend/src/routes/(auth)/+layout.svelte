@@ -29,18 +29,6 @@
 	<ToastContainer />
 
 	<div class="w-full max-w-md space-y-3">
-		<div class="flex">
-			<Button
-				href="/"
-				color="alternative"
-				class="min-h-11 rounded-xl px-4"
-				onclick={handleBackClick}
-			>
-				<ArrowLeftOutline class="mr-2 h-4 w-4" />
-				Назад
-			</Button>
-		</div>
-
 		{@render children()}
 	</div>
 </main>

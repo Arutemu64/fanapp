@@ -81,7 +81,7 @@
 
 <ProfileCardShell
 	title="Способы входа"
-	description="Настройте email, пароль и Telegram для входа и восстановления доступа."
+	description="Настройте почту, пароль и Telegram для входа и восстановления доступа."
 >
 	{#snippet icon()}
 		<LinkOutline class="h-5 w-5" />
@@ -94,7 +94,7 @@
 				<div class="min-w-0">
 					<div class="flex flex-wrap items-center gap-2">
 						<EnvelopeSolid class="h-4 w-4 text-gray-500 dark:text-gray-400" />
-						<p class="font-medium text-gray-900 dark:text-white">Email</p>
+						<p class="font-medium text-gray-900 dark:text-white">Эл. почта</p>
 						<Badge color={user.email ? (user.is_verified ? 'green' : 'yellow') : 'gray'}>
 							{#if user.email}
 								{user.is_verified ? 'Подтверждён' : 'Не подтверждён'}
@@ -125,7 +125,7 @@
 						class="min-h-11 w-full sm:w-auto"
 						onclick={() => (changeEmailModalOpen = true)}
 					>
-						{user.email ? 'Изменить email' : 'Добавить email'}
+						{user.email ? 'Изменить почту' : 'Добавить почту'}
 					</Button>
 
 					{#if user.email && !user.is_verified}
@@ -141,7 +141,7 @@
 								Отправка...
 							{:else}
 								<EnvelopeSolid class="me-2 h-4 w-4" />
-								Подтвердить email
+								Подтвердить почту
 							{/if}
 						</Button>
 					{/if}
@@ -246,7 +246,7 @@
 			<div class="flex items-start gap-2">
 				<ExclamationCircleSolid class="mt-0.5 h-4 w-4 shrink-0" />
 				<p>
-					Добавьте email. Так будет проще восстановить доступ, и только после этого можно
+					Добавьте почту. Так будет проще восстановить доступ, и только после этого можно
 					безопасно отвязать Telegram.
 				</p>
 			</div>

@@ -5,6 +5,10 @@
 	let { data } = $props();
 </script>
 
+<svelte:head>
+	<title>Подтверждение почты</title>
+</svelte:head>
+
 <div class="flex h-full items-center justify-center p-4">
 	<Card class="w-full max-w-md p-6 text-center sm:p-8">
 		<div class="flex flex-col items-center justify-center">
@@ -18,7 +22,7 @@
 				</p>
 				<Button
 					href="/"
-					class="min-h-11 w-full rounded-xl transition-all hover:-translate-y-0.5 hover:shadow-md"
+					class="min-h-11 w-full rounded-xl"
 					>Перейти на главную</Button
 				>
 			{:else}
@@ -31,7 +35,7 @@
 					href="/login"
 					outline
 					color="dark"
-					class="min-h-11 w-full rounded-xl transition-all hover:-translate-y-0.5 hover:shadow-md"
+					class="min-h-11 w-full rounded-xl"
 				>
 					Вернуться ко входу
 				</Button>

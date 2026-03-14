@@ -95,7 +95,7 @@
 {#snippet sidebarLinks()}
 	<SidebarBrand>
 		<span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">
-			FAN App
+			FAN FAN
 		</span>
 	</SidebarBrand>
 	<SidebarGroup>

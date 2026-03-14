@@ -64,14 +64,18 @@
 
 <VotingStatusAlert votingState={votingStatus} class="mb-4" />
 
-<!-- Floating Control Center -->
-<div class="sticky top-4 z-30 mx-auto mb-4 max-w-2xl">
-	<div
-		class="rounded-2xl border border-gray-200/50 bg-white/80 p-3 shadow-lg backdrop-blur-lg transition-all duration-300 hover:shadow-xl dark:border-gray-700/50 dark:bg-gray-800/80"
-	>
+<!-- Search controls -->
+<div class="mx-auto mb-4 max-w-2xl">
+	<!-- Делаем фильтр таким же спокойным по стилю, как и на странице расписания. -->
+	<div class="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
 		<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 			<div class="flex-1">
-				<Search bind:value={searchQuery} placeholder="Поиск..." clearable size="sm" />
+				<Search
+					bind:value={searchQuery}
+					placeholder="Поиск по имени или номеру"
+					clearable
+					size="sm"
+				/>
 			</div>
 		</div>
 	</div>

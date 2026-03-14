@@ -4,7 +4,7 @@
 	import { client } from '$lib/api';
 	import { getEventsClient } from '$lib/events.svelte';
 	import { getToastService } from '$lib/stores/toasts.svelte';
-	import { Alert, Button, Card, Input, Label, Spinner, Tabs, TabItem } from 'flowbite-svelte';
+	import { Alert, Button, Card, Helper, Input, Label, Spinner, Tabs, TabItem } from 'flowbite-svelte';
 	import { EnvelopeSolid, EyeOutline, EyeSlashOutline, LockSolid } from 'flowbite-svelte-icons';
 
 	type ActiveAction = 'password' | 'magic' | null;
@@ -14,6 +14,8 @@
 	let magicLinkSentTo = $state('');
 	let activeAction = $state<ActiveAction>(null);
 	let showPassword = $state(false);
+	let emailError = $state('');
+	let passwordError = $state('');
 
 	const eventsClient = getEventsClient();
 	const toastService = getToastService();
@@ -29,6 +31,67 @@
 		return email.trim().toLowerCase();
 	}
 
+	// Держим ошибки рядом с полями, чтобы пользователь мог исправить ввод без лишних toast-сообщений.
+	let normalizedEmail = $derived(getNormalizedEmail());
+	let isEmailValid = $derived(email ? validateEmail(normalizedEmail) : null);
+	let emailColor = $derived.by((): 'green' | 'red' | undefined => {
+		if (emailError) {
+			return 'red';
+		}
+
+		if (!email) {
+			return undefined;
+		}
+
+		return isEmailValid ? 'green' : 'red';
+	});
+	let passwordColor = $derived.by((): 'red' | undefined => {
+		return passwordError ? 'red' : undefined;
+	});
+
+	function resetEmailFeedback() {
+		emailError = '';
+		magicLinkSentTo = '';
+	}
+
+	function resetPasswordFeedback() {
+		passwordError = '';
+	}
+
+	function validateMagicLinkForm(): boolean {
+		emailError = '';
+		passwordError = '';
+
+		if (!normalizedEmail) {
+			emailError = 'Введите адрес эл. почты';
+			return false;
+		}
+
+		if (!validateEmail(normalizedEmail)) {
+			emailError = 'Введите адрес в формате name@example.com';
+			return false;
+		}
+
+		return true;
+	}
+
+	function validatePasswordForm(): boolean {
+		emailError = '';
+		passwordError = '';
+
+		if (!normalizedEmail) {
+			emailError = 'Введите адрес эл. почты';
+		} else if (!validateEmail(normalizedEmail)) {
+			emailError = 'Введите адрес в формате name@example.com';
+		}
+
+		if (!password.trim()) {
+			passwordError = 'Введите пароль';
+		}
+
+		return !emailError && !passwordError;
+	}
+
 	async function finishLogin(successMessage: string) {
 		toastService.add(successMessage, 'success');
 		await goto('/', { invalidateAll: true });
@@ -36,12 +99,11 @@
 	}
 
 	async function submitPasswordLogin() {
-		const trimmedEmail = getNormalizedEmail();
-
-		if (!validateEmail(trimmedEmail) || !password.trim()) {
-			toastService.add('Введите email и пароль', 'warning');
+		if (!validatePasswordForm()) {
 			return;
 		}
+
+		const trimmedEmail = normalizedEmail;
 
 		activeAction = 'password';
 		magicLinkSentTo = '';
@@ -72,11 +134,11 @@
 	}
 
 	async function handleMagicLinkRequest() {
-		const trimmedEmail = getNormalizedEmail();
-		if (!validateEmail(trimmedEmail)) {
-			toastService.add('Введите корректный email', 'warning');
+		if (!validateMagicLinkForm()) {
 			return;
 		}
+
+		const trimmedEmail = normalizedEmail;
 
 		activeAction = 'magic';
 		magicLinkSentTo = '';
@@ -117,28 +179,35 @@
 
 <Card class="w-full p-4 sm:p-6">
 	<div class="space-y-4">
-		<h2 class="text-center text-2xl font-bold text-gray-900 dark:text-white">Вход в FAN App</h2>
+		<h2 class="text-center text-2xl font-bold text-gray-900 dark:text-white">Вход в FAN FAN</h2>
 
 		<Tabs tabStyle="underline" contentClass="mt-3">
 			<TabItem open title="По ссылке">
 				<div class="space-y-3">
 					<div>
-						<Label for="magic-email" class="mb-2">Email</Label>
+						<Label for="magic-email" color={emailColor} class="mb-2">Эл. почта</Label>
 						<Input
 							id="magic-email"
 							type="email"
 							bind:value={email}
-							placeholder="you@example.com"
+							placeholder="name@example.com"
+							autocomplete="email"
 							required
 							disabled={isBusy}
 							class="ps-9"
-							oninput={() => (magicLinkSentTo = '')}
+							color={emailColor}
+							oninput={resetEmailFeedback}
 							onkeydown={handleMagicLinkEnter}
 						>
 							{#snippet left()}
 								<EnvelopeSolid class="h-5 w-5" />
 							{/snippet}
 						</Input>
+						{#if emailError}
+							<Helper color="red" class="mt-1">{emailError}</Helper>
+						{:else if email && isEmailValid === false}
+							<Helper color="red" class="mt-1">Введите адрес в формате name@example.com</Helper>
+						{/if}
 					</div>
 
 					{#if magicLinkSentTo}
@@ -150,7 +219,7 @@
 					<Button
 						type="button"
 						color="primary"
-						class="min-h-11 w-full rounded-xl font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
+						class="min-h-11 w-full rounded-xl font-medium"
 						disabled={isBusy}
 						onclick={handleMagicLinkRequest}
 					>
@@ -167,21 +236,29 @@
 			<TabItem title="С паролем">
 				<div class="space-y-4">
 					<div>
-						<Label for="password-email" class="mb-2">Email</Label>
+						<Label for="password-email" color={emailColor} class="mb-2">Эл. почта</Label>
 						<Input
 							id="password-email"
 							type="email"
 							bind:value={email}
-							placeholder="you@example.com"
+							placeholder="name@example.com"
+							autocomplete="email"
 							required
 							disabled={isBusy}
 							class="ps-9"
+							color={emailColor}
+							oninput={resetEmailFeedback}
 							onkeydown={handlePasswordEnter}
 						>
 							{#snippet left()}
 								<EnvelopeSolid class="h-5 w-5" />
 							{/snippet}
 						</Input>
+						{#if emailError}
+							<Helper color="red" class="mt-1">{emailError}</Helper>
+						{:else if email && isEmailValid === false}
+							<Helper color="red" class="mt-1">Введите адрес в формате name@example.com</Helper>
+						{/if}
 					</div>
 
 					<div>
@@ -191,9 +268,12 @@
 							type={showPassword ? 'text' : 'password'}
 							bind:value={password}
 							placeholder="••••••••"
+							autocomplete="current-password"
 							required
 							disabled={isBusy}
 							class="ps-9"
+							color={passwordColor}
+							oninput={resetPasswordFeedback}
 							onkeydown={handlePasswordEnter}
 						>
 							{#snippet left()}
@@ -214,12 +294,15 @@
 								</button>
 							{/snippet}
 						</Input>
+						{#if passwordError}
+							<Helper color="red" class="mt-1">{passwordError}</Helper>
+						{/if}
 					</div>
 
 					<Button
 						type="button"
 						color="primary"
-						class="min-h-11 w-full rounded-xl font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
+						class="min-h-11 w-full rounded-xl font-medium"
 						disabled={isBusy}
 						onclick={submitPasswordLogin}
 					>
@@ -252,7 +335,7 @@
 			<Button
 				href={`${PUBLIC_API_URL}/auth/login/telegram`}
 				color="alternative"
-				class="min-h-11 w-full rounded-xl font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
+				class="min-h-11 w-full rounded-xl font-medium"
 			>
 				Войти через Telegram
 			</Button>

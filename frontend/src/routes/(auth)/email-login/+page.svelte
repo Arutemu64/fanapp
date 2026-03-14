@@ -5,6 +5,10 @@
 	let { data } = $props();
 </script>
 
+<svelte:head>
+	<title>Не удалось войти</title>
+</svelte:head>
+
 <Card class="w-full p-6 text-center sm:p-8">
 	<div class="flex flex-col items-center justify-center">
 		<CloseCircleOutline class="mx-auto mb-4 h-16 w-16 text-red-500" />
@@ -16,7 +20,7 @@
 			href="/login"
 			outline
 			color="dark"
-			class="min-h-11 w-full rounded-xl transition-all hover:-translate-y-0.5 hover:shadow-md"
+			class="min-h-11 w-full rounded-xl"
 		>
 			Вернуться ко входу
 		</Button>

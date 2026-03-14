@@ -13,6 +13,8 @@
 
 	const toastService = getToastService();
 
+	// Показываем базовую валидацию рядом с полями, чтобы форма читалась одинаково на всех auth-экранах.
+
 	function validateEmail(e: string): boolean {
 		if (!e) return false;
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -73,8 +75,8 @@
 				throw new Error(errorMessage);
 			}
 
-			toastService.add('Регистрация успешна! Войдите в аккаунт.', 'success');
-			goto('/login');
+			toastService.add('Аккаунт создан. Теперь войдите в него.', 'success');
+			await goto('/login');
 		} catch (err: unknown) {
 			if (err instanceof Error) {
 				serverError = err.message;
@@ -90,7 +92,7 @@
 <Card class="w-full p-4 sm:p-6">
 	<form onsubmit={handleSignup} class="space-y-4">
 		<h2 class="text-center text-2xl font-bold text-gray-900 dark:text-white">
-			Регистрация в FAN App
+			Регистрация в FAN FAN
 		</h2>
 
 		{#if serverError}
@@ -100,12 +102,13 @@
 		{/if}
 
 		<div>
-			<Label for="email" color={emailColor} class="mb-2">Email</Label>
+			<Label for="email" color={emailColor} class="mb-2">Эл. почта</Label>
 			<Input
 				id="email"
 				type="email"
 				bind:value={email}
-				placeholder="you@example.com"
+				placeholder="name@example.com"
+				autocomplete="email"
 				required
 				size="md"
 				class="ps-9"
@@ -117,7 +120,7 @@
 				{/snippet}
 			</Input>
 			{#if email && isEmailValid === false}
-				<Helper color="red" class="mt-1">Введите корректный адрес электронной почты</Helper>
+				<Helper color="red" class="mt-1">Введите адрес в формате name@example.com</Helper>
 			{/if}
 		</div>
 
@@ -128,6 +131,7 @@
 				type={showPassword ? 'text' : 'password'}
 				bind:value={password}
 				placeholder="••••••••"
+				autocomplete="new-password"
 				required
 				color={passwordColor}
 				disabled={isLoading}
@@ -163,12 +167,12 @@
 		<Button
 			type="submit"
 			color="primary"
-			class="min-h-11 w-full rounded-xl font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
+			class="min-h-11 w-full rounded-xl font-medium"
 			disabled={isLoading}
 		>
 			{#if isLoading}
 				<Spinner size="4" class="mr-2" color="primary" />
-				Регистрация...
+				Создаём аккаунт...
 			{:else}
 				Зарегистрироваться
 			{/if}
