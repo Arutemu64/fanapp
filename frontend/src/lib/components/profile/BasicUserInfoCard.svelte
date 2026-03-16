@@ -45,26 +45,26 @@
 		<UserCircleSolid class="h-5 w-5" />
 	{/snippet}
 
-	<div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+	<div class="flex items-center gap-4">
 		<Avatar size="lg">{avatarInitials}</Avatar>
 
 		<div class="min-w-0 flex-1">
 			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-				<h4 class="text-lg font-semibold text-gray-900 dark:text-white">
+				<h4 class="text-lg font-semibold text-gray-900 dark:text-white truncate">
 					{user.first_name || 'Пользователь'}
 				</h4>
-				<Badge color={getRoleColor(user.role)} class="text-sm">
+				<Badge color={getRoleColor(user.role)} class="text-xs">
 					{getRoleLabel(user.role)}
 				</Badge>
 			</div>
 
 			{#if user.username}
-				<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">@{user.username}</p>
+				<p class="mt-1 truncate text-sm text-gray-500 dark:text-gray-400">@{user.username}</p>
 			{/if}
 		</div>
 	</div>
 
-	<div class="flex justify-start">
+	<div>
 		<Button
 			color="alternative"
 			size="sm"
