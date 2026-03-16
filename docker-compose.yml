@@ -1,5 +1,6 @@
 services:
   frontend:
+    image: fanapp-frontend-prod
     build:
       context: ./frontend
       target: prod
@@ -19,17 +20,17 @@ services:
   api:
     build: ./backend
     depends_on:
-      - migration
-      - redis
-      - nats
+      migration:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_started
     volumes:
       - ./config:/run/config:ro
     env_file:
       - .env
     environment:
-      DB__HOST: "db"
-      REDIS__HOST: "redis"
-      NATS__HOST: "nats"
       UVICORN_HOST: "0.0.0.0"
       UVICORN_PORT: "8000"
       UVICORN_FORWARDED_ALLOW_IPS: "*"
@@ -43,9 +44,12 @@ services:
   faststream:
     build: ./backend
     depends_on:
-      - migration
-      - nats
-      - redis
+      migration:
+        condition: service_completed_successfully
+      nats:
+        condition: service_started
+      redis:
+        condition: service_healthy
     volumes:
       - ./config:/run/config:ro
     env_file:
@@ -118,6 +122,8 @@ services:
 
   redis:
     image: redis:7-alpine
+    environment:
+      REDIS__PASSWORD: "${REDIS__PASSWORD}"
     volumes:
       - redis-data:/data
       - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf

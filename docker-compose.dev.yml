@@ -2,10 +2,9 @@ services:
   frontend:
     build:
       target: dev
+    image: fanapp-frontend-dev
     environment:
       NODE_ENV: development
-      HOST: "0.0.0.0"
-      PORT: "3000"
     develop:
       watch:
         - action: sync
@@ -24,8 +23,6 @@ services:
   api:
     environment:
       UVICORN_RELOAD: "true"
-    ports:
-      - '8000:8000'
     develop:
       watch:
         - action: sync
@@ -48,15 +45,3 @@ services:
             - .venv/
         - action: rebuild
           path: ./backend/uv.lock
-
-  db:
-    ports:
-      - '5432:5432'
-
-  redis:
-    ports:
-      - '6379:6379'
-
-  nats:
-    ports:
-      - '4222:4222'
