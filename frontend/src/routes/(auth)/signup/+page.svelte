@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button, Input, Label, Card, Spinner, Helper, Alert } from 'flowbite-svelte';
-	import { getToastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/services/toasts.svelte';
 	import { client } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { goto } from '$app/navigation';

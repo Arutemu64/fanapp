@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { client } from '$lib/api';
-	import { getToastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { CurrentUserDTO } from '$lib/types/user';
 	import { Button, Input, Label, Spinner } from 'flowbite-svelte';
 	import { CheckCircleOutline, TicketSolid } from 'flowbite-svelte-icons';

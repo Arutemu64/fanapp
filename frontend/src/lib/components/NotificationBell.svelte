@@ -6,7 +6,7 @@
 	import { Dropdown } from 'flowbite-svelte';
 	import { BellSolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
-	import { getEventsClient } from '$lib/events.svelte';
+	import { getEventsClient } from '$lib/services/events.svelte';
 
 	type Notification = components['schemas']['NotificationDTO'];
 

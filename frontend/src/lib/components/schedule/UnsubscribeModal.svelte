@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
 	import { client } from '$lib/api';
-	import { getToastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import { Button, Modal } from 'flowbite-svelte';
 	import { BellOutline } from 'flowbite-svelte-icons';

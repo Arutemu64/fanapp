@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { Badge, Button, Spinner, type BadgeProps } from 'flowbite-svelte';
 	import { UndoOutline } from 'flowbite-svelte-icons';
-	import { client } from '$lib/api/index.js';
+	import { client } from '$lib/api';
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
-	import { getToastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/services/toasts.svelte';
 	import { invalidate } from '$app/navigation';
 	import type { ScheduleChangeEventDTO, ScheduleChangeType } from '$lib/types/schedule';
 

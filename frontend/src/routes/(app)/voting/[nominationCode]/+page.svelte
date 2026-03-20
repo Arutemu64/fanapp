@@ -67,7 +67,9 @@
 <!-- Search controls -->
 <div class="mx-auto mb-4 max-w-2xl">
 	<!-- Делаем фильтр таким же спокойным по стилю, как и на странице расписания. -->
-	<div class="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+	<div
+		class="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+	>
 		<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 			<div class="flex-1">
 				<Search

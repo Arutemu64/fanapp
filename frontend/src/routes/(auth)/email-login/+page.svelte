@@ -16,12 +16,7 @@
 		<p class="mb-6 text-gray-500 dark:text-gray-400">
 			{data.errorMessage}
 		</p>
-		<Button
-			href="/login"
-			outline
-			color="dark"
-			class="min-h-11 w-full rounded-xl"
-		>
+		<Button href="/login" outline color="dark" class="min-h-11 w-full rounded-xl">
 			Вернуться ко входу
 		</Button>
 	</div>

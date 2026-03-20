@@ -3,7 +3,7 @@
 	import { page } from '$app/state';
 	import EventCard from '$lib/components/schedule/EventCard.svelte';
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
-	import { getEventsClient } from '$lib/events.svelte';
+	import { getEventsClient } from '$lib/services/events.svelte';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import type { CurrentUserDTO } from '$lib/types/user';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
@@ -165,7 +165,9 @@
 
 <div {@attach capturePageRoot} class="space-y-4">
 	<!-- Keep filters compact and static so the schedule itself can use sticky headers. -->
-	<div class="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+	<div
+		class="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+	>
 		<div class="flex flex-col gap-3">
 			<Search
 				bind:value={searchQuery}
@@ -270,7 +272,7 @@
 						color="light"
 						size="sm"
 						pill
-						class="pointer-events-auto h-12 w-12 rounded-full px-0 shadow-lg dark:border-gray-700 dark:bg-gray-800 dark:text-white lg:w-32 lg:px-3"
+						class="pointer-events-auto h-12 w-12 rounded-full px-0 shadow-lg lg:w-32 lg:px-3 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
 						onclick={scrollToTop}
 						aria-label="Подняться наверх"
 					>

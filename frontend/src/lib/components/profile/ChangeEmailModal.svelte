@@ -3,7 +3,7 @@
 	import { EnvelopeSolid } from 'flowbite-svelte-icons';
 	import { client } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
-	import { getToastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { components } from '$lib/api/v1';
 
 	type ChangeEmailCommand = components['schemas']['ChangeEmailCommand'];

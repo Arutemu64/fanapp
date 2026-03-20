@@ -5,8 +5,8 @@
 	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
 	import NotificationBell from '$lib/components/NotificationBell.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
-	import { getEventsClient } from '$lib/events.svelte.js';
-	import { getToastService } from '$lib/stores/toasts.svelte';
+	import { getEventsClient } from '$lib/services/events.svelte';
+	import { getToastService } from '$lib/services/toasts.svelte';
 	import { canManageSchedule } from '$lib/utils/permissions';
 	import {
 		Avatar,

@@ -3,7 +3,7 @@
 	import { Modal, Input, Label, Helper, Button, Spinner } from 'flowbite-svelte';
 	import { UserCircleSolid, UserSolid, EditOutline } from 'flowbite-svelte-icons';
 	import { client } from '$lib/api';
-	import { getToastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { CurrentUserDTO } from '$lib/types/user';
 	import type { components } from '$lib/api/v1';
 

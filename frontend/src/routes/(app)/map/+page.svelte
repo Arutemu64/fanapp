@@ -56,9 +56,7 @@
 					</p>
 				</div>
 
-				<Button href={map.src} target="_blank" rel="noreferrer" size="sm">
-					Открыть оригинал
-				</Button>
+				<Button href={map.src} target="_blank" rel="noreferrer" size="sm">Открыть оригинал</Button>
 			</div>
 
 			<!-- Превью тоже работает как ссылка, чтобы пользователь мог открыть карту одним касанием. -->

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Button } from 'flowbite-svelte';
 	import { DownloadSolid, ShareNodesOutline } from 'flowbite-svelte-icons';
-	import { getPwaService } from '$lib/stores/pwa.svelte';
+	import { getPwaService } from '$lib/services/pwa.svelte';
 	import ProfileCardShell from './ProfileCardShell.svelte';
 
 	const pwa = getPwaService();
@@ -39,15 +39,15 @@
 				>
 					<DownloadSolid class="h-5 w-5 shrink-0 text-gray-400" />
 					<span>
-						Откройте меню браузера и выберите «Установить приложение» или «Добавить на
-						главный экран».
+						Откройте меню браузера и выберите «Установить приложение» или «Добавить на главный
+						экран».
 					</span>
 				</div>
 
 				{#if !pwa.isSecureContext}
 					<p class="text-xs leading-5 text-gray-500 dark:text-gray-400">
-						Если пункта нет, откройте сайт по HTTPS — Android не показывает установку на
-						обычном HTTP.
+						Если пункта нет, откройте сайт по HTTPS — Android не показывает установку на обычном
+						HTTP.
 					</p>
 				{/if}
 			</div>

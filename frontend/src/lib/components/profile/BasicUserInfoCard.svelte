@@ -50,7 +50,7 @@
 
 		<div class="min-w-0 flex-1">
 			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-				<h4 class="text-lg font-semibold text-gray-900 dark:text-white truncate">
+				<h4 class="truncate text-lg font-semibold text-gray-900 dark:text-white">
 					{user.first_name || 'Пользователь'}
 				</h4>
 				<Badge color={getRoleColor(user.role)} class="text-xs">

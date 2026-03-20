@@ -2,7 +2,7 @@
 	import { invalidate } from '$app/navigation';
 	import { client } from '$lib/api';
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
-	import { getToastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { PageProps } from './$types';
 	import { Button, Card, Helper, Input, Label, Spinner, Toggle } from 'flowbite-svelte';
 	import { untrack } from 'svelte';
@@ -12,9 +12,7 @@
 
 	let isSaving = $state(false);
 	let savedVotingEnabled = $state(untrack(() => data.settings.voting_enabled));
-	let savedAnnouncementTimeout = $state(
-		untrack(() => data.settings.limits.announcement_timeout)
-	);
+	let savedAnnouncementTimeout = $state(untrack(() => data.settings.limits.announcement_timeout));
 	let votingEnabled = $state(untrack(() => data.settings.voting_enabled));
 	let announcementTimeout = $state<number | undefined>(
 		untrack(() => data.settings.limits.announcement_timeout)
@@ -115,9 +113,7 @@
 			<div class="rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
 				<div class="flex items-start justify-between gap-3">
 					<div class="min-w-0">
-						<h2 class="text-base font-medium text-gray-900 dark:text-white">
-							Голосование активно
-						</h2>
+						<h2 class="text-base font-medium text-gray-900 dark:text-white">Голосование активно</h2>
 						<p class="mt-1 text-sm leading-6 text-gray-500 dark:text-gray-400">
 							Если отключить эту настройку, посетители временно не смогут голосовать.
 						</p>

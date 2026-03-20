@@ -2,7 +2,7 @@
 	import { Button, Spinner } from 'flowbite-svelte';
 	import { client } from '$lib/api';
 	import type { components } from '$lib/api/v1';
-	import { getToastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/services/toasts.svelte';
 	import {
 		NOTIFICATION_PAGE_REQUEST_LIMIT,
 		NOTIFICATION_PAGE_SIZE

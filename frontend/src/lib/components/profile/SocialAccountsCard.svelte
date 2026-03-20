@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { client } from '$lib/api';
-	import { getToastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { CurrentUserDTO, UserSocialAccountDTO } from '$lib/types/user';
 	import { Alert, Badge, Button, Spinner } from 'flowbite-svelte';
 	import { LinkOutline, PaperPlaneOutline, TrashBinOutline } from 'flowbite-svelte-icons';

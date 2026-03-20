@@ -13,9 +13,9 @@
 		BanOutline
 	} from 'flowbite-svelte-icons';
 	import type { CurrentUserDTO } from '$lib/types/user';
-	import { formatDuration, formatUntil, pluralize } from '$lib/utils';
+	import { formatDuration, formatUntil, pluralize } from '$lib/utils/formatters';
 	import { canManageSchedule } from '$lib/utils/permissions';
-	import { getToastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/services/toasts.svelte';
 	import { client } from '$lib/api';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import MoveEventModal from './MoveEventModal.svelte';
@@ -135,14 +135,16 @@
 		<span class="text-[10px] font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
 			№
 		</span>
-		<span class="text-base font-bold leading-none text-gray-900 dark:text-white">{publicNumber}</span>
+		<span class="text-base leading-none font-bold text-gray-900 dark:text-white"
+			>{publicNumber}</span
+		>
 	</div>
 
 	<div class="min-w-0 flex-1">
 		<div class="flex items-start gap-2">
 			<div class="min-w-0 flex-1">
 				<h3
-					class="text-sm font-semibold leading-5 text-gray-900 sm:text-[15px] dark:text-white"
+					class="text-sm leading-5 font-semibold text-gray-900 sm:text-[15px] dark:text-white"
 					class:line-through={event.is_skipped}
 				>
 					{event.title}
@@ -150,33 +152,53 @@
 
 				<div class="mt-1.5 flex flex-wrap items-center gap-1.5">
 					{#if event.is_current}
-						<Badge color="green" border class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium">
+						<Badge
+							color="green"
+							border
+							class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium"
+						>
 							<PlayOutline class="h-3.5 w-3.5" />
 							Сейчас
 						</Badge>
 					{/if}
 
 					{#if event.is_skipped}
-						<Badge color="red" border class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium">
+						<Badge
+							color="red"
+							border
+							class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium"
+						>
 							<BanOutline class="h-3.5 w-3.5" />
 							Пропущено
 						</Badge>
 					{/if}
 
-					<Badge color="gray" border class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium">
+					<Badge
+						color="gray"
+						border
+						class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium"
+					>
 						<ClockOutline class="h-3.5 w-3.5" />
 						{formatDuration(event.duration)}
 					</Badge>
 
 					{#if timeUntil !== null && timeUntil !== 0}
-						<Badge color="yellow" border class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium">
+						<Badge
+							color="yellow"
+							border
+							class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium"
+						>
 							<HourglassOutline class="h-3.5 w-3.5" />
 							{formatUntil(queueUntil ?? 0, timeUntil)}
 						</Badge>
 					{/if}
 
 					{#if event.user_subscription}
-						<Badge color="blue" border class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium">
+						<Badge
+							color="blue"
+							border
+							class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium"
+						>
 							<BellActiveSolid class="h-3.5 w-3.5" />
 							{event.user_subscription.counter}
 							{pluralize(event.user_subscription.counter, 'событие', 'события', 'событий')}

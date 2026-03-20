@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { client } from '$lib/api';
-	import { getToastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { CurrentUserDTO, UserSocialAccountDTO } from '$lib/types/user';
 	import { Alert, Badge, Button, Spinner } from 'flowbite-svelte';
 	import {
@@ -116,18 +116,19 @@
 					</div>
 
 					{#if user.email}
-						<p class="mt-1.5 break-all text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+						<p class="mt-1.5 text-sm break-all text-gray-500 dark:text-gray-400">{user.email}</p>
 						{#if !user.email_verified_at}
 							<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
 								Подтвердите адрес, чтобы защитить вход и восстановление доступа.
 							</p>
 						{/if}
 					{:else if user.pending_email}
-						<p class="mt-1.5 break-all text-sm text-gray-500 dark:text-gray-400">
+						<p class="mt-1.5 text-sm break-all text-gray-500 dark:text-gray-400">
 							{user.pending_email}
 						</p>
 						<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
-							Подтвердите адрес, чтобы сделать его основной почтой для входа и восстановления доступа.
+							Подтвердите адрес, чтобы сделать его основной почтой для входа и восстановления
+							доступа.
 						</p>
 					{:else}
 						<p class="mt-1.5 text-sm leading-5 text-gray-500 dark:text-gray-400">
@@ -270,8 +271,8 @@
 			<div class="flex items-start gap-2">
 				<ExclamationCircleSolid class="mt-0.5 h-4 w-4 shrink-0" />
 				<p>
-					Добавьте почту. Так будет проще восстановить доступ, и только после этого можно
-					безопасно отвязать Telegram.
+					Добавьте почту. Так будет проще восстановить доступ, и только после этого можно безопасно
+					отвязать Telegram.
 				</p>
 			</div>
 		</Alert>

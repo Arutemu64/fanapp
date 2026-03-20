@@ -2,9 +2,19 @@
 	import { goto } from '$app/navigation';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { client } from '$lib/api';
-	import { getEventsClient } from '$lib/events.svelte';
-	import { getToastService } from '$lib/stores/toasts.svelte';
-	import { Alert, Button, Card, Helper, Input, Label, Spinner, Tabs, TabItem } from 'flowbite-svelte';
+	import { getEventsClient } from '$lib/services/events.svelte';
+	import { getToastService } from '$lib/services/toasts.svelte';
+	import {
+		Alert,
+		Button,
+		Card,
+		Helper,
+		Input,
+		Label,
+		Spinner,
+		Tabs,
+		TabItem
+	} from 'flowbite-svelte';
 	import { EnvelopeSolid, EyeOutline, EyeSlashOutline, LockSolid } from 'flowbite-svelte-icons';
 
 	type ActiveAction = 'password' | 'magic' | null;

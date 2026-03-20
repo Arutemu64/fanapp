@@ -2,7 +2,7 @@
 	import { Modal, Input, Label, Button, Spinner } from 'flowbite-svelte';
 	import { LockSolid, EyeOutline, EyeSlashOutline } from 'flowbite-svelte-icons';
 	import { client } from '$lib/api';
-	import { getToastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { components } from '$lib/api/v1';
 
 	type ChangePasswordCommand = components['schemas']['ChangePasswordCommand'];

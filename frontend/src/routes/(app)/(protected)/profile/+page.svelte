@@ -7,7 +7,7 @@
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import SecurityCard from '$lib/components/profile/SecurityCard.svelte';
 	import PwaInstallCard from '$lib/components/profile/PwaInstallCard.svelte';
-	import { getToastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { PageProps } from './$types';
 	import { invalidate } from '$app/navigation';
 

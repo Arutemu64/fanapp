@@ -3,7 +3,7 @@
 	import { ShuffleOutline } from 'flowbite-svelte-icons';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import { client } from '$lib/api';
-	import { getToastService } from '$lib/stores/toasts.svelte';
+	import { getToastService } from '$lib/services/toasts.svelte';
 
 	interface Props {
 		open: boolean;

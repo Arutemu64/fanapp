@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getToastService, ToastTypeColors } from '$lib/stores/toasts.svelte';
+	import { getToastService, ToastTypeColors } from '$lib/services/toasts.svelte';
 	import { Toast, ToastContainer } from 'flowbite-svelte';
 	import {
 		CheckCircleSolid,
