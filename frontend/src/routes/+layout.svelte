@@ -9,8 +9,8 @@
 	let { children }: LayoutProps = $props();
 
 	const eventsClient = setEventsClient();
-	const toastService = setToastService();
-	const pwaService = setPwaService();
+	setToastService();
+	setPwaService();
 
 	onDestroy(() => {
 		eventsClient?.disconnect();

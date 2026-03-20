@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Avatar, Badge, Button } from 'flowbite-svelte';
-	import { TicketSolid, UserCircleSolid } from 'flowbite-svelte-icons';
+	import { UserCircleSolid } from 'flowbite-svelte-icons';
 	import type { CurrentUserDTO } from '$lib/types/user';
 	import { getRoleLabel, getRoleColor } from '$lib/utils/users';
 	import EditProfileModal from './EditProfileModal.svelte';

@@ -35,7 +35,7 @@
 	// Convert base64 VAPID key to Uint8Array required by pushManager.
 	function urlBase64ToUint8Array(base64String: string) {
 		const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-		const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+		const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
 
 		const rawData = window.atob(base64);
 		const outputArray = new Uint8Array(rawData.length);
@@ -76,7 +76,7 @@
 	}
 
 	onMount(() => {
-		checkSubscription();
+		void checkSubscription();
 	});
 
 	async function toggleSubscription() {
@@ -142,12 +142,21 @@
 			});
 
 			const subJson = subscription.toJSON();
+			const endpoint = subJson.endpoint;
+			const p256dh = subJson.keys?.p256dh;
+			const auth = subJson.keys?.auth;
+
+			if (!endpoint || !p256dh || !auth) {
+				toastService.add('Не удалось подготовить данные устройства для подписки', 'error');
+				await subscription.unsubscribe();
+				return;
+			}
 
 			const { error } = await client.POST('/push/', {
 				body: {
-					endpoint: subJson.endpoint!,
-					p256dh: subJson.keys?.p256dh!,
-					auth: subJson.keys?.auth!
+					endpoint,
+					p256dh,
+					auth
 				}
 			});
 
@@ -161,8 +170,8 @@
 			isSubscribed = true;
 			onSettingsUpdate?.();
 			toastService.add('Включены Push-уведомления', 'success');
-		} catch (e: any) {
-			console.error('Failed to subscribe:', e);
+		} catch (error: unknown) {
+			console.error('Failed to subscribe:', error);
 			toastService.add('Не удалось включить уведомления', 'error');
 		} finally {
 			isLoading = false;

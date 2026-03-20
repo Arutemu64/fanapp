@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { client } from '$lib/api';
 	import { getEventsClient } from '$lib/services/events.svelte';
@@ -104,7 +105,7 @@
 
 	async function finishLogin(successMessage: string) {
 		toastService.add(successMessage, 'success');
-		await goto('/', { invalidateAll: true });
+		await goto(resolve('/'), { invalidateAll: true });
 		eventsClient?.restart();
 	}
 
@@ -326,7 +327,10 @@
 
 					<p class="text-center text-sm text-gray-500 dark:text-gray-400">
 						Нет аккаунта?
-						<a href="/signup" class="text-primary-600 hover:underline dark:text-primary-500">
+						<a
+							href={resolve('/signup')}
+							class="text-primary-600 hover:underline dark:text-primary-500"
+						>
 							Зарегистрироваться
 						</a>
 					</p>

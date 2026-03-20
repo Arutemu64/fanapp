@@ -58,7 +58,7 @@ async function refreshTokens(event: RequestEvent): Promise<'success' | 'unauthor
 		if (refreshResponse.ok) return 'success';
 		if (refreshResponse.status === 401 || refreshResponse.status === 403) return 'unauthorized';
 		return 'error';
-	} catch (e) {
+	} catch {
 		return 'error';
 	}
 }

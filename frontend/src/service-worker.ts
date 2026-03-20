@@ -15,6 +15,16 @@ import { build, files, version } from '$service-worker';
 // This gives `self` the correct types
 const self = globalThis.self as unknown as ServiceWorkerGlobalScope;
 
+interface PushNotificationPayload {
+	title: string;
+	body: string;
+	url: string;
+}
+
+interface NotificationClickData {
+	url?: string;
+}
+
 // Create a unique cache name for this deployment
 const CACHE = `cache-${version}`;
 
@@ -97,13 +107,17 @@ self.addEventListener('fetch', (event) => {
 });
 
 // Push Notifications Handling
-self.addEventListener('push', (event: any) => {
-	let data = { title: 'FAN FAN', body: 'Новое уведомление', url: '/' };
+self.addEventListener('push', (event: PushEvent) => {
+	let data: PushNotificationPayload = {
+		title: 'FAN FAN',
+		body: 'Новое уведомление',
+		url: '/'
+	};
 
 	if (event.data) {
 		try {
 			// Try parsing as JSON first (expected format: { title, body, url })
-			const json = event.data.json();
+			const json = event.data.json() as Partial<PushNotificationPayload>;
 			data = { ...data, ...json };
 		} catch {
 			// Not JSON — treat as plain text body
@@ -123,27 +137,29 @@ self.addEventListener('push', (event: any) => {
 	event.waitUntil(self.registration.showNotification(data.title, options));
 });
 
-self.addEventListener('notificationclick', (event: any) => {
+self.addEventListener('notificationclick', (event: NotificationEvent) => {
 	event.notification.close();
 
 	// Redirect to the URL provided in the push notification data
-	const urlToOpen = new URL(event.notification.data.url, self.location.origin).href;
+	const notificationData = (event.notification.data ?? {}) as NotificationClickData;
+	const urlToOpen = new URL(notificationData.url ?? '/', self.location.origin).href;
 
 	event.waitUntil(
-		self.clients
-			.matchAll({ type: 'window', includeUncontrolled: true })
-			.then((windowClients: any) => {
-				// Check if there is already a window/tab open with the target URL
-				for (let i = 0; i < windowClients.length; i++) {
-					const client = windowClients[i];
-					if (client.url === urlToOpen && 'focus' in client) {
-						return client.focus();
-					}
+		self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+			// Check if there is already a window/tab open with the target URL
+			for (const client of windowClients) {
+				if (client.type !== 'window') {
+					continue;
 				}
-				// If not, open a new window/tab
-				if (self.clients.openWindow) {
-					return self.clients.openWindow(urlToOpen);
+
+				if (client.url === urlToOpen) {
+					return client.focus();
 				}
-			})
+			}
+			// If not, open a new window/tab
+			if (self.clients.openWindow) {
+				return self.clients.openWindow(urlToOpen);
+			}
+		})
 	);
 });

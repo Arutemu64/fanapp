@@ -25,7 +25,7 @@
 
 	async function handleSubmit() {
 		counter = Math.max(1, Math.min(100, Math.floor(counter)));
-		const { data, error, response } = await client.POST('/schedule/subscriptions/', {
+		const { error, response } = await client.POST('/schedule/subscriptions/', {
 			body: {
 				event_id: event.id,
 				counter

@@ -19,12 +19,9 @@
 			return;
 		}
 
-		const { data, error, response } = await client.DELETE(
-			'/schedule/subscriptions/{subscription_id}',
-			{
-				params: { path: { subscription_id: event.user_subscription.id } }
-			}
-		);
+		const { error } = await client.DELETE('/schedule/subscriptions/{subscription_id}', {
+			params: { path: { subscription_id: event.user_subscription.id } }
+		});
 
 		if (error) {
 			console.error('Error unsubscribing:', error);

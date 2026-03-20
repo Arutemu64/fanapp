@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { client } from '$lib/api';
 	import type { components } from '$lib/api/v1';
 	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
@@ -100,7 +101,7 @@
 
 	<div class="p-2">
 		<a
-			href="/notifications"
+			href={resolve('/notifications')}
 			class="block rounded-lg px-3 py-2 text-center text-sm font-medium text-primary-600 hover:bg-gray-100 dark:text-primary-400 dark:hover:bg-gray-700"
 		>
 			Все уведомления

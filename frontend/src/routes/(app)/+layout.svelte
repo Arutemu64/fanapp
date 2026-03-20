@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { client } from '$lib/api';
 	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
@@ -87,7 +88,7 @@
 			return;
 		}
 
-		await goto('/', { invalidateAll: true });
+		await goto(resolve('/'), { invalidateAll: true });
 		eventsClient?.restart();
 	}
 </script>

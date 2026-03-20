@@ -61,7 +61,7 @@
 	);
 
 	async function handleMarkCurrent() {
-		const { data, error, response } = await client.PATCH('/schedule/{event_id}/current', {
+		const { error } = await client.PATCH('/schedule/{event_id}/current', {
 			params: { path: { event_id: event.id } }
 		});
 
@@ -76,7 +76,7 @@
 	}
 
 	async function handleUnmarkCurrent() {
-		const { data, error, response } = await client.DELETE('/schedule/current');
+		const { error } = await client.DELETE('/schedule/current');
 
 		if (error) {
 			toastService.error(error);
@@ -91,7 +91,7 @@
 	async function handleToggleSkip() {
 		const newIsSkipped = !event.is_skipped;
 
-		const { data, error, response } = newIsSkipped
+		const { error } = newIsSkipped
 			? await client.PATCH('/schedule/{event_id}/skip', {
 					params: { path: { event_id: event.id } }
 				})

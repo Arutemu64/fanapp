@@ -1,9 +1,10 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { Button, Input, Label, Card, Spinner, Helper, Alert } from 'flowbite-svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { client } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
-	import { goto } from '$app/navigation';
 	import { EnvelopeSolid, LockSolid, EyeOutline, EyeSlashOutline } from 'flowbite-svelte-icons';
 
 	let email = $state('');
@@ -108,7 +109,7 @@
 			}
 
 			toastService.add('Аккаунт создан. Теперь войдите в него.', 'success');
-			await goto('/login');
+			await goto(resolve('/login'));
 		} catch (err: unknown) {
 			if (err instanceof Error) {
 				serverError = err.message;
@@ -218,7 +219,9 @@
 
 		<p class="text-center text-sm text-gray-500 dark:text-gray-400">
 			Уже есть аккаунт?
-			<a href="/login" class="text-primary-600 hover:underline dark:text-primary-500">Войти</a>
+			<a href={resolve('/login')} class="text-primary-600 hover:underline dark:text-primary-500">
+				Войти
+			</a>
 		</p>
 	</form>
 </Card>

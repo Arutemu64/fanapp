@@ -1,8 +1,24 @@
 import { getContext, setContext } from 'svelte';
 import { browser } from '$app/environment';
 
+interface BeforeInstallPromptEvent extends Event {
+	prompt: () => Promise<void>;
+	userChoice: Promise<{
+		outcome: 'accepted' | 'dismissed';
+		platform: string;
+	}>;
+}
+
+interface NavigatorWithStandalone extends Navigator {
+	standalone?: boolean;
+}
+
+interface WindowWithMSStream extends Window {
+	MSStream?: unknown;
+}
+
 export class PwaService {
-	#deferredPrompt = $state<any>(null);
+	#deferredPrompt = $state<BeforeInstallPromptEvent | null>(null);
 	#isInstalled = $state(false);
 	#canInstall = $derived(this.#deferredPrompt !== null);
 	#isIOS = $state(false);
@@ -12,8 +28,10 @@ export class PwaService {
 	constructor() {
 		if (browser) {
 			const userAgent = navigator.userAgent;
+			const browserWindow = window as WindowWithMSStream;
+			const browserNavigator = navigator as NavigatorWithStandalone;
 
-			this.#isIOS = /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
+			this.#isIOS = /iPad|iPhone|iPod/.test(userAgent) && !browserWindow.MSStream;
 			// Android browsers may still allow installation from the browser menu
 			// even when `beforeinstallprompt` is not fired.
 			this.#isAndroid = /Android/i.test(userAgent);
@@ -22,14 +40,15 @@ export class PwaService {
 			// Check if already installed
 			if (
 				window.matchMedia('(display-mode: standalone)').matches ||
-				(navigator as any).standalone
+				browserNavigator.standalone === true
 			) {
 				this.#isInstalled = true;
 			}
 
-			window.addEventListener('beforeinstallprompt', (e) => {
-				e.preventDefault();
-				this.#deferredPrompt = e;
+			window.addEventListener('beforeinstallprompt', (event: Event) => {
+				const promptEvent = event as BeforeInstallPromptEvent;
+				promptEvent.preventDefault();
+				this.#deferredPrompt = promptEvent;
 			});
 
 			window.addEventListener('appinstalled', () => {

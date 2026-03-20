@@ -5,11 +5,7 @@ import type { PageLoad } from './$types';
 export const load: PageLoad = async ({ params, fetch, depends }) => {
 	depends('app:voting:nomination');
 
-	const {
-		data,
-		error: apiError,
-		response
-	} = await client.GET('/voting/nominations/{nomination_code}', {
+	const { data, error: apiError } = await client.GET('/voting/nominations/{nomination_code}', {
 		fetch,
 		params: {
 			path: {
