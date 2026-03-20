@@ -175,15 +175,23 @@
 		}
 	}
 
-	function handleMagicLinkEnter(event: KeyboardEvent) {
-		if (event.key !== 'Enter' || isBusy) return;
+	function handleMagicLinkSubmit(event: SubmitEvent) {
 		event.preventDefault();
+
+		if (isBusy) {
+			return;
+		}
+
 		void handleMagicLinkRequest();
 	}
 
-	function handlePasswordEnter(event: KeyboardEvent) {
-		if (event.key !== 'Enter' || isBusy) return;
+	function handlePasswordSubmit(event: SubmitEvent) {
 		event.preventDefault();
+
+		if (isBusy) {
+			return;
+		}
+
 		void submitPasswordLogin();
 	}
 </script>
@@ -194,21 +202,24 @@
 
 		<Tabs tabStyle="underline" contentClass="mt-3">
 			<TabItem open title="По ссылке">
-				<div class="space-y-3">
+				<form onsubmit={handleMagicLinkSubmit} class="space-y-3">
 					<div>
 						<Label for="magic-email" color={emailColor} class="mb-2">Эл. почта</Label>
 						<Input
 							id="magic-email"
+							name="email"
 							type="email"
 							bind:value={email}
 							placeholder="name@example.com"
 							autocomplete="email"
+							inputmode="email"
+							autocapitalize="off"
+							spellcheck="false"
 							required
 							disabled={isBusy}
 							class="ps-9"
 							color={emailColor}
 							oninput={resetEmailFeedback}
-							onkeydown={handleMagicLinkEnter}
 						>
 							{#snippet left()}
 								<EnvelopeSolid class="h-5 w-5" />
@@ -228,11 +239,10 @@
 					{/if}
 
 					<Button
-						type="button"
+						type="submit"
 						color="primary"
 						class="min-h-11 w-full rounded-xl font-medium"
 						disabled={isBusy}
-						onclick={handleMagicLinkRequest}
 					>
 						{#if activeAction === 'magic'}
 							<Spinner size="4" class="mr-2" color="primary" />
@@ -241,25 +251,28 @@
 							Отправить ссылку
 						{/if}
 					</Button>
-				</div>
+				</form>
 			</TabItem>
 
 			<TabItem title="С паролем">
-				<div class="space-y-4">
+				<form onsubmit={handlePasswordSubmit} class="space-y-4">
 					<div>
 						<Label for="password-email" color={emailColor} class="mb-2">Эл. почта</Label>
 						<Input
 							id="password-email"
+							name="email"
 							type="email"
 							bind:value={email}
 							placeholder="name@example.com"
-							autocomplete="email"
+							autocomplete="username"
+							inputmode="email"
+							autocapitalize="off"
+							spellcheck="false"
 							required
 							disabled={isBusy}
 							class="ps-9"
 							color={emailColor}
 							oninput={resetEmailFeedback}
-							onkeydown={handlePasswordEnter}
 						>
 							{#snippet left()}
 								<EnvelopeSolid class="h-5 w-5" />
@@ -276,6 +289,7 @@
 						<Label for="password" class="mb-2">Пароль</Label>
 						<Input
 							id="password"
+							name="password"
 							type={showPassword ? 'text' : 'password'}
 							bind:value={password}
 							placeholder="••••••••"
@@ -285,7 +299,6 @@
 							class="ps-9"
 							color={passwordColor}
 							oninput={resetPasswordFeedback}
-							onkeydown={handlePasswordEnter}
 						>
 							{#snippet left()}
 								<LockSolid class="h-5 w-5" />
@@ -296,6 +309,7 @@
 									class="pointer-events-auto"
 									onclick={() => (showPassword = !showPassword)}
 									aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+										aria-pressed={showPassword}
 								>
 									{#if showPassword}
 										<EyeOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
@@ -311,11 +325,10 @@
 					</div>
 
 					<Button
-						type="button"
+						type="submit"
 						color="primary"
 						class="min-h-11 w-full rounded-xl font-medium"
 						disabled={isBusy}
-						onclick={submitPasswordLogin}
 					>
 						{#if activeAction === 'password'}
 							<Spinner size="4" class="mr-2" color="primary" />
@@ -334,7 +347,7 @@
 							Зарегистрироваться
 						</a>
 					</p>
-				</div>
+				</form>
 			</TabItem>
 		</Tabs>
 
