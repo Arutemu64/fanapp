@@ -6,6 +6,21 @@
       "sourceType": "github",
       "computedHash": "be3303ce934b8993bc95452b190c4f25a38b5169f814d02229d0e03d601c0bf5"
     },
+    "code-refactoring": {
+      "source": "supercent-io/skills-template",
+      "sourceType": "github",
+      "computedHash": "61312d5f71ec3240606dab042c0a86b62b421031e4aa8252d61dc3b2885ef2a2"
+    },
+    "code-review": {
+      "source": "supercent-io/skills-template",
+      "sourceType": "github",
+      "computedHash": "199d2fcf315d17a4d6d96a0db7553f11a33ac291a861f93ba0ef5dd9fe1d67bf"
+    },
+    "docker-expert": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "e5556c606d3a64877877728f7b945bc189b694ead92ee4b76b475d4633f14d37"
+    },
     "fastapi-python": {
       "source": "mindrally/skills",
       "sourceType": "github",
@@ -25,6 +40,16 @@
       "source": "sveltejs/ai-tools",
       "sourceType": "github",
       "computedHash": "bec11e369679027edf9d4acbe6d9788f8da33dc14b48b874f231d3ba13705324"
+    },
+    "web-accessibility": {
+      "source": "supercent-io/skills-template",
+      "sourceType": "github",
+      "computedHash": "18f3c393f2fe364ecd7b0fbf646eafabef4dcb287af948e1414d16c84b4d7628"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "d8e7d3afe37dcc8a97b99ffb5afdb4d0919ae0092ea8b68f44eb201f035e33ac"
     }
   }
 }
