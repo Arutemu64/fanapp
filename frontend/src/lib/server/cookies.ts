@@ -1,7 +1,8 @@
 import type { Cookies } from '@sveltejs/kit';
+import type { Cookie } from 'set-cookie-parser';
 import setCookieParser from 'set-cookie-parser';
 
-type ParsedCookie = setCookieParser.Cookie;
+type ParsedCookie = Cookie;
 
 // Keep auth cookie names in one place so hooks and server routes stay consistent.
 export const AUTH_COOKIE_NAMES = ['access_token', 'refresh_token'] as const;

@@ -1,0 +1,16 @@
+.DS_Store
+node_modules
+/build
+/.svelte-kit
+/package
+.env
+.env.*
+!.env.example
+.vercel
+.netlify
+.cloudflare
+.output
+dist
+pnpm-debug.log
+.turbo
+.idea/
