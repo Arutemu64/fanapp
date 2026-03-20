@@ -5,6 +5,14 @@
 - Build mobile-first interfaces for FAN FAN.
 - Prefer clarity, reuse, and safe defaults over novelty.
 - Keep decisions easy to repeat across screens.
+- Keep this document focused on FAN FAN-specific UI conventions.
+
+## Required UI Skills
+
+- Use `web-design-guidelines` when implementing or reviewing UI.
+- Use `web-accessibility` when implementing or reviewing accessibility.
+- Use `svelte-code-writer` and `svelte-core-bestpractices` for Svelte components and Svelte UI refactors.
+- Do not duplicate generic WCAG, accessibility, or broad web UI rules here when the skills already cover them.
 
 ## Reuse Existing Patterns
 
@@ -42,63 +50,26 @@
 - Keep primary actions reachable on mobile.
 - Avoid arbitrary fixed heights, widths, and spacing unless an external constraint requires them.
 
-## Surfaces and Hierarchy
+## Forms and Feedback
 
-- Use cards and sections to group one task or one dataset.
-- Keep internal padding consistent.
-- Use spacing and typography as the primary hierarchy tools.
-- Use color to support hierarchy, not replace it.
-- Keep one clear primary action per area.
-- Avoid decorative hover treatment that changes the visual language without improving usability.
-
-## Forms
-
-- Give every field a visible label.
 - Keep forms easy to scan in a single mobile column.
 - Use inline helper or error text near the relevant field.
 - Add a password visibility toggle for password inputs.
 - Disable repeat submission while a request is in flight.
 - Show a spinner or progress label during async submission.
 - Use toasts for final action results, not for field-level validation.
-
-## States and Feedback
-
 - Provide loading, empty, success, and error states when the user can encounter them.
-- Use toasts for transient action outcomes and background request results.
 - Use inline alerts or helper text for persistent context and recoverable form issues.
 - Make empty states explain why the area is empty and what the user can do next.
 - Keep success and error wording consistent across screens.
 
-## Accessibility
-
-- Give every interactive control a descriptive accessible name.
-- Keep keyboard access working for menus, dialogs, dropdowns, tabs, and drawers.
-- Keep focus states visible in light and dark themes.
-- Use semantic headings in order.
-- Keep touch targets comfortable on mobile.
-- Keep contrast sufficient in both themes.
-
-## Theming
-
-- Support light and dark mode.
-- Use semantic color roles consistently.
-- Match visual emphasis to action importance.
-- Do not encode critical meaning only in color.
-
-## Motion
-
-- Use motion only to clarify interaction or state change.
-- Keep transitions subtle and short.
-- Ensure hover effects are optional, not essential, because mobile users will not see them.
-- Avoid decorative animation that competes with content or slows the interface.
-
 ## Review Checklist
 
-- Mobile layout works before desktop refinements.
 - Existing project patterns were reused before new UI was added.
 - Flowbite-Svelte components were used where they fit.
 - All user-facing copy, including placeholders and helper text, is in Russian.
+- Mobile layout works before desktop refinements.
 - Fixed mobile navigation does not cover content or primary actions.
 - Loading, empty, success, and error states are present when needed.
 - Field validation appears near the field, and transient outcomes use toasts.
-- Light mode, dark mode, keyboard access, focus visibility, and tap target size remain usable.
+- Relevant UI skills were used for implementation or review.

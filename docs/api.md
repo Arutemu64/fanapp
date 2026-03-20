@@ -6,8 +6,7 @@ Keep API usage type-safe, SSR-compatible, and consistent across the frontend.
 
 ## Source of Truth
 
-- This project uses `openapi-ts/openapi-typescript` library to automatically
-  generate typed API schema and implement an API client.
+- This project uses `openapi-typescript` to generate API types and `openapi-fetch` for the shared typed client.
 - Treat `frontend/src/lib/api/v1.d.ts` as the only source of truth for API shapes.
 - Do not define new API data structures from scratch when the generated schema already covers them.
 - If a reusable local alias is needed, define it under `frontend/src/lib/types`.
@@ -20,20 +19,22 @@ Keep API usage type-safe, SSR-compatible, and consistent across the frontend.
 
 ## Client Usage
 
-- Use the shared API client from `frontend/src/lib/index.ts`.
+- Use the shared API client from `frontend/src/lib/api/index.ts`, imported through `$lib/api`.
+- Reuse `client` in browser or universal code when no request-specific client setup is needed.
+- Use `createApiClient()` in server code when you need a fresh client instance for request-aware calls.
 - Do not introduce a second API client without a strong architectural reason.
 
 ## SSR Requirements
 
-- In SvelteKit load functions, hooks, or other SSR-aware contexts, use the framework-provided `fetch`.
-- Pass that `fetch` into the API client so cookies, relative URLs, and server rendering behave correctly.
+- In SvelteKit load functions, hooks, actions, or other SSR-aware contexts, use the framework-provided `fetch` or `event.fetch`.
+- Pass that `fetch` into the API client call so cookies, `handleFetch`, relative URLs, and server rendering behave correctly.
 - Prefer loading initial page data on the server when it affects first render.
 
 ## Response Handling
 
-- Always inspect the request result before consuming returned data.
+- `openapi-fetch` results expose `data`, `error`, and `response`. Check them before consuming payload fields.
 - Treat success payload, error payload, and response metadata as separate concerns.
-- Do not assume a successful payload exists when an error is present.
+- Do not assume `data` exists when `error` is present or the response is not successful.
 
 ## Error Handling
 
@@ -52,6 +53,7 @@ Keep API usage type-safe, SSR-compatible, and consistent across the frontend.
 
 - After every mutation, define how the UI becomes consistent again.
 - Prefer one clear strategy per action: refresh, invalidate, local reconciliation, or optimistic update with rollback.
+- If a page load declares `depends(...)`, invalidate the matching dependency after a successful mutation when appropriate.
 - Do not leave stale page state after a successful write.
 
 ## Review Checklist
