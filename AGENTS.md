@@ -1,60 +1,54 @@
 # Mission
 
-Build a helper web app for "FAN FAN", a Russian anime convention.
-Optimize every change for utility, clarity, and mobile responsiveness.
+- Build a helper web app for "FAN FAN", a Russian anime convention.
+- Optimize every change for utility, clarity, and mobile responsiveness.
+- Follow industry best practices.
+- Keep all user-facing copy in Russian.
 
 # Stack
 
-- Framework: SvelteKit with Svelte 5 runes
-- UI library: Flowbite-Svelte
-- Styling: Tailwind CSS
-- Backend: FastAPI
-- Reverse Proxy: Caddy
-- User-facing language: Russian
+- Framework: SvelteKit with Svelte 5 runes.
+- UI library: Flowbite-Svelte.
+- Styling: Tailwind CSS.
+- Backend: FastAPI.
+- Reverse proxy: Caddy.
+
+# Package Managers and Commands
+
+- Use `pnpm` for frontend dependencies and frontend scripts.
+- Use `uv` and `.venv` for backend dependencies and backend scripts.
+- Do not switch package managers unless the task explicitly requires it.
 
 # Instruction Priority
 
-1. Follow this file first.
-2. Then follow the relevant documents in `docs/`.
-3. Then follow established project patterns already present in the codebase.
-4. If instructions conflict, prefer the more specific and more local rule.
+1. Follow this `AGENTS.md`.
+2. Follow relevant files in `docs/`.
+3. Follow existing project patterns in code.
+4. Ask follow-up questions when necessary.
 
 # Core Principles
 
-- Prefer small, compatible changes over broad rewrites.
-- Default to SSR-safe solutions.
-- Reuse existing project utilities, generated types, and shared clients before adding new abstractions.
-- Keep implementations easy for a junior developer to read and maintain.
-- Include clear, beginner-friendly comments in all code you write.
-- Treat mobile as the default viewport.
-- Keep UI text concise, useful, and in Russian.
+- Default to SSR-safe implementations.
+- Reuse existing utilities, generated types, and shared clients.
+- Keep implementations easy for a junior developer to maintain.
+- Respect existing backend Clean Architecture / DDD boundaries without adding unnecessary abstraction.
+- Add clear beginner-friendly comments in written code.
+- Design for mobile-first layouts and interactions, but don't forget about desktop.
+- Keep UI text concise and actionable.
 
 # Required Reading Before Editing
 
-Read only the documents relevant to the task, but do it before making changes.
+- Read only documents relevant to the task.
+- Read them before writing code or docs.
+- Use `docs/api.md` for API integration, request types, and client usage.
+- Use `docs/ssr.md` for loading, SSR behavior, browser-only APIs, and environment handling.
+- Use `docs/ui.md` for components, layout, accessibility, copy, and UI states.
 
-- API integration, request types, or client usage: `docs/api.md`
-- Data loading, SSR, browser-only APIs, environment handling: `docs/ssr.md`
-- Components, layout, accessibility, copy, and states: `docs/ui.md`
+# Implementation 
 
-# Implementation Rules
-
-- Prefer SSR-first data flows for initial page content.
-- Use Flowbite-Svelte components when they cover the need.
-- Do not invent API shapes that already exist in generated types.
-- Do not move sensitive auth or session logic into client-only storage.
-- Do not add custom visual patterns when the project already has an established equivalent.
-- Create a new protocol only when at least two concrete implementations are required.
-- Replace a protocol with a concrete class when only one implementation remains.
-- Keep documentation and code aligned when behavior or constraints change.
-
-# Documentation Rules
-
-- Write instructions as short imperative bullets.
-- Prefer explicit required and forbidden rules over narrative explanation.
-- Use stable section titles so future agents can scan quickly.
-- Avoid code examples in project guidance documents unless explicitly requested.
-- Keep guidance actionable and tied to concrete files, workflows, or acceptance criteria.
+- Prefer SSR-first data flows for initial content.
+- Use Flowbite-Svelte components when they meet the requirement.
+- Do not introduce custom visual patterns when an established project pattern exists.
 
 # Tooling Workflow
 
@@ -140,4 +134,4 @@ You have access to comprehensive Flowbite-Svelte component documentation. Here's
 
 ### Context7 MCP Server
 
-For other libraries always use Context7 MCP when I need library/API documentation, code generation, setup or configuration steps without me having to explicitly ask.
+Always use Context7 MCP when you need library/API documentation, code generation, setup or configuration steps without having to explicitly ask. Prefer MCP for Svelte and Flowbite.

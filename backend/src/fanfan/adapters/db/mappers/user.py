@@ -22,10 +22,11 @@ class UserMapper:
             username=model.username,
             hashed_password=model.hashed_password,
             email=model.email,
+            pending_email=model.pending_email,
+            email_verified_at=model.email_verified_at,
             first_name=model.first_name,
             role=model.role,
             settings=self.retort.dump(model.settings),
-            is_verified=model.is_verified,
         )
 
     def to_model(self, orm: UserORM) -> User:
@@ -34,10 +35,11 @@ class UserMapper:
             username=orm.username,
             hashed_password=orm.hashed_password,
             email=orm.email,
+            pending_email=orm.pending_email,
+            email_verified_at=orm.email_verified_at,
             first_name=orm.first_name,
             role=UserRole(orm.role),
             settings=self.retort.load(orm.settings, UserSettings),
-            is_verified=orm.is_verified,
         )
 
     @staticmethod
@@ -56,7 +58,8 @@ class UserMapper:
             first_name=orm.first_name,
             role=orm.role,
             email=orm.email,
-            is_verified=orm.is_verified,
+            pending_email=orm.pending_email,
+            email_verified_at=orm.email_verified_at,
             has_password=bool(orm.hashed_password),
             ticket=UserTicketDTO(
                 id=orm.ticket.id, barcode=orm.ticket.barcode, role=orm.ticket.role

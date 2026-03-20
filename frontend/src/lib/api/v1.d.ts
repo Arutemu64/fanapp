@@ -934,8 +934,10 @@ export interface components {
             role: components["schemas"]["UserRole"];
             /** Email */
             email: string | null;
-            /** Is Verified */
-            is_verified: boolean;
+            /** Pending Email */
+            pending_email: string | null;
+            /** Email Verified At */
+            email_verified_at: string | null;
             /** Has Password */
             has_password: boolean;
             ticket: components["schemas"]["UserTicketDTO"] | null;

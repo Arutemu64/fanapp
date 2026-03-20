@@ -3349,9 +3349,29 @@
             ],
             "title": "Email"
           },
-          "is_verified": {
-            "type": "boolean",
-            "title": "Is Verified"
+          "pending_email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "email"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pending Email"
+          },
+          "email_verified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email Verified At"
           },
           "has_password": {
             "type": "boolean",
@@ -3385,7 +3405,8 @@
           "first_name",
           "role",
           "email",
-          "is_verified",
+          "pending_email",
+          "email_verified_at",
           "has_password",
           "ticket",
           "permissions",

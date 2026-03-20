@@ -10,6 +10,7 @@ from fanfan.core.exceptions.users import UserAlreadyExists
 from fanfan.core.models.user import User
 from fanfan.core.services.security import SecurityService
 from fanfan.core.services.user import UserService
+from fanfan.core.utils.email import normalize_email
 from fanfan.core.vo.fields import PASSWORD_FIELD
 from fanfan.core.vo.user import UserRole
 
@@ -36,19 +37,33 @@ class RegisterUser:
 
     async def __call__(self, data: RegisterUserCommand) -> None:
         async with self.uow:
+            normalized_email = normalize_email(data.email)
             try:
+                # Reserve the address before insert so pending replacements on
+                # other accounts are treated as conflicts too.
+                existing_user = await self.user_gateway.get_user_by_any_email(
+                    normalized_email
+                )
+                if existing_user is not None:
+                    raise UserAlreadyExists
+
                 username = await self.user_service.generate_username()
                 new_user = User(
                     username=username,
-                    email=data.email,
+                    email=normalized_email,
                     hashed_password=self.security.hash_password(data.password),
                     role=UserRole.VISITOR,
-                    is_verified=False,
+                    pending_email=None,
+                    email_verified_at=None,
                 )
                 await self.user_gateway.add_user(new_user)
                 await self.uow.commit()
             except IntegrityError as e:
-                if get_constraint_name(e) in {"uq_users_email", "uq_users_username"}:
+                if get_constraint_name(e) in {
+                    "ix_users_email",
+                    "ix_users_username",
+                    "ix_users_pending_email",
+                }:
                     raise UserAlreadyExists from e
                 raise
             else:

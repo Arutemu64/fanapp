@@ -20,23 +20,14 @@
 				<p class="mb-6 text-gray-500 dark:text-gray-400">
 					Вы можете закрыть эту страницу или перейти в приложение.
 				</p>
-				<Button
-					href="/"
-					class="min-h-11 w-full rounded-xl"
-					>Перейти на главную</Button
-				>
+				<Button href="/" class="min-h-11 w-full rounded-xl">Перейти на главную</Button>
 			{:else}
 				<CloseCircleOutline class="mx-auto mb-4 h-16 w-16 text-red-500" />
 				<h2 class="mb-2 text-xl font-bold text-gray-900 dark:text-white">Ошибка проверки</h2>
 				<p class="mb-6 text-gray-500 dark:text-gray-400">
 					{data.errorMessage}
 				</p>
-				<Button
-					href="/login"
-					outline
-					color="dark"
-					class="min-h-11 w-full rounded-xl"
-				>
+				<Button href="/login" outline color="dark" class="min-h-11 w-full rounded-xl">
 					Вернуться ко входу
 				</Button>
 			{/if}

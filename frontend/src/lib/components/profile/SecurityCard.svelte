@@ -29,6 +29,18 @@
 	let isRequestingVerification = $state(false);
 	let isUnlinkingTelegram = $state(false);
 	const toastService = getToastService();
+	let emailStatusColor = $derived.by((): 'green' | 'yellow' | 'gray' => {
+		if (user.pending_email) return 'yellow';
+		if (user.email && user.email_verified_at) return 'green';
+		if (user.email) return 'yellow';
+		return 'gray';
+	});
+	let emailStatusLabel = $derived.by(() => {
+		if (user.pending_email) return 'Ожидает подтверждения';
+		if (user.email && user.email_verified_at) return 'Подтверждена';
+		if (user.email) return 'Не подтверждена';
+		return 'Не добавлен';
+	});
 
 	// Keep the connected Telegram account handy for status text and actions.
 	let telegramAccount = $derived(
@@ -48,7 +60,12 @@
 				return;
 			}
 
-			toastService.add('Письмо с подтверждением отправлено', 'success');
+			toastService.add(
+				user.pending_email
+					? 'Письмо для подтверждения нового адреса отправлено'
+					: 'Письмо с подтверждением отправлено',
+				'success'
+			);
 		} catch (err) {
 			toastService.error(err);
 		} finally {
@@ -95,25 +112,32 @@
 					<div class="flex flex-wrap items-center gap-2">
 						<EnvelopeSolid class="h-4 w-4 text-gray-500 dark:text-gray-400" />
 						<p class="font-medium text-gray-900 dark:text-white">Эл. почта</p>
-						<Badge color={user.email ? (user.is_verified ? 'green' : 'yellow') : 'gray'}>
-							{#if user.email}
-								{user.is_verified ? 'Подтверждён' : 'Не подтверждён'}
-							{:else}
-								Не добавлен
-							{/if}
-						</Badge>
+						<Badge color={emailStatusColor}>{emailStatusLabel}</Badge>
 					</div>
 
 					{#if user.email}
 						<p class="mt-1.5 break-all text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
-						{#if !user.is_verified}
+						{#if !user.email_verified_at}
 							<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
 								Подтвердите адрес, чтобы защитить вход и восстановление доступа.
 							</p>
 						{/if}
+					{:else if user.pending_email}
+						<p class="mt-1.5 break-all text-sm text-gray-500 dark:text-gray-400">
+							{user.pending_email}
+						</p>
+						<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+							Подтвердите адрес, чтобы сделать его основной почтой для входа и восстановления доступа.
+						</p>
 					{:else}
 						<p class="mt-1.5 text-sm leading-5 text-gray-500 dark:text-gray-400">
 							Добавьте email для восстановления доступа и важных уведомлений.
+						</p>
+					{/if}
+
+					{#if user.pending_email}
+						<p class="mt-2 text-xs leading-5 text-gray-500 dark:text-gray-400">
+							Новый адрес ожидает подтверждения: {user.pending_email}
 						</p>
 					{/if}
 				</div>
@@ -125,10 +149,10 @@
 						class="min-h-11 w-full sm:w-auto"
 						onclick={() => (changeEmailModalOpen = true)}
 					>
-						{user.email ? 'Изменить почту' : 'Добавить почту'}
+						{user.email || user.pending_email ? 'Изменить почту' : 'Добавить почту'}
 					</Button>
 
-					{#if user.email && !user.is_verified}
+					{#if user.pending_email || (user.email && !user.email_verified_at)}
 						<Button
 							color="primary"
 							size="sm"
@@ -141,7 +165,7 @@
 								Отправка...
 							{:else}
 								<EnvelopeSolid class="me-2 h-4 w-4" />
-								Подтвердить почту
+								{user.pending_email ? 'Подтвердить новый адрес' : 'Подтвердить почту'}
 							{/if}
 						</Button>
 					{/if}
@@ -241,7 +265,7 @@
 		</div>
 	</div>
 
-	{#if !user.email}
+	{#if !user.email && !user.pending_email}
 		<Alert color="yellow" class="text-sm">
 			<div class="flex items-start gap-2">
 				<ExclamationCircleSolid class="mt-0.5 h-4 w-4 shrink-0" />
@@ -260,4 +284,9 @@
 	onSuccess={onUpdate}
 />
 
-<ChangeEmailModal bind:open={changeEmailModalOpen} currentEmail={user.email} onSuccess={onUpdate} />
+<ChangeEmailModal
+	bind:open={changeEmailModalOpen}
+	currentEmail={user.email}
+	pendingEmail={user.pending_email}
+	onSuccess={onUpdate}
+/>

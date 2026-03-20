@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import json
 
 from redis.asyncio import Redis
 
@@ -61,54 +62,60 @@ class RedisAuthTokenRegistry:
         self,
         token: str,
         user_id: UserId,
+        email: str,
         ttl_seconds: int,
     ) -> None:
         ttl = max(1, ttl_seconds)
+        payload = json.dumps({"user_id": str(user_id), "email": email})
         await self.redis.set(
             name=self._email_verification_key(self._hash_token(token)),
-            value=str(user_id),
+            value=payload,
             ex=ttl,
         )
 
     async def consume_email_verification_token(
         self,
         token: str,
-    ) -> UserId | None:
+    ) -> tuple[UserId, str] | None:
         key = self._email_verification_key(self._hash_token(token))
-        stored_user_id = await self.redis.getdel(key)
+        stored_payload = await self.redis.getdel(key)
 
-        if not stored_user_id:
+        if not stored_payload:
             return None
 
-        if isinstance(stored_user_id, bytes):
-            stored_user_id = stored_user_id.decode()
+        if isinstance(stored_payload, bytes):
+            stored_payload = stored_payload.decode()
 
-        return UserId(stored_user_id)
+        payload = json.loads(stored_payload)
+        return UserId(payload["user_id"]), payload["email"]
 
     async def issue_email_login_token(
         self,
         token: str,
         user_id: UserId,
+        email: str,
         ttl_seconds: int,
     ) -> None:
         ttl = max(1, ttl_seconds)
+        payload = json.dumps({"user_id": str(user_id), "email": email})
         await self.redis.set(
             name=self._email_login_key(self._hash_token(token)),
-            value=str(user_id),
+            value=payload,
             ex=ttl,
         )
 
     async def consume_email_login_token(
         self,
         token: str,
-    ) -> UserId | None:
+    ) -> tuple[UserId, str] | None:
         key = self._email_login_key(self._hash_token(token))
-        stored_user_id = await self.redis.getdel(key)
+        stored_payload = await self.redis.getdel(key)
 
-        if not stored_user_id:
+        if not stored_payload:
             return None
 
-        if isinstance(stored_user_id, bytes):
-            stored_user_id = stored_user_id.decode()
+        if isinstance(stored_payload, bytes):
+            stored_payload = stored_payload.decode()
 
-        return UserId(stored_user_id)
+        payload = json.loads(stored_payload)
+        return UserId(payload["user_id"]), payload["email"]

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, EmailStr
 
 from fanfan.core.vo.permission import (
@@ -60,7 +62,8 @@ class UserFullDTO(UserBaseDTO):
 
 class CurrentUserDTO(UserBaseDTO):
     email: EmailStr | None
-    is_verified: bool
+    pending_email: EmailStr | None
+    email_verified_at: datetime | None
     has_password: bool
 
     ticket: UserTicketDTO | None

@@ -2,11 +2,14 @@
 	import { Button, Input, Label, Card, Spinner, Helper, Alert } from 'flowbite-svelte';
 	import { getToastService } from '$lib/stores/toasts.svelte';
 	import { client } from '$lib/api';
+	import { getApiErrorDetail } from '$lib/api/errors';
 	import { goto } from '$app/navigation';
 	import { EnvelopeSolid, LockSolid, EyeOutline, EyeSlashOutline } from 'flowbite-svelte-icons';
 
 	let email = $state('');
 	let password = $state('');
+	let emailError = $state('');
+	let passwordError = $state('');
 	let isLoading = $state(false);
 	let showPassword = $state(false);
 	let serverError = $state('');
@@ -34,27 +37,50 @@
 	const isEmailValid = $derived(email ? validateEmail(email) : null);
 	const isPasswordValid = $derived(password ? validatePassword(password) : null);
 
-	const emailColor = $derived(email ? (isEmailValid ? 'green' : 'red') : undefined);
-	const passwordColor = $derived(password ? (isPasswordValid ? 'green' : 'red') : undefined);
+	const emailColor = $derived(
+		emailError ? 'red' : email ? (isEmailValid ? 'green' : 'red') : undefined
+	);
+	const passwordColor = $derived(
+		passwordError ? 'red' : password ? (isPasswordValid ? 'green' : 'red') : undefined
+	);
+
+	function handleEmailInput() {
+		emailError = '';
+		serverError = '';
+	}
+
+	function handlePasswordInput() {
+		passwordError = '';
+		serverError = '';
+	}
 
 	async function handleSignup(e: Event) {
 		e.preventDefault();
 
 		serverError = '';
+		emailError = '';
+		passwordError = '';
 
 		const trimmedEmail = email.trim();
 		if (!trimmedEmail || !password) {
-			serverError = 'Заполните все поля';
+			if (!trimmedEmail) {
+				emailError = 'Введите адрес эл. почты';
+			}
+
+			if (!password) {
+				passwordError = 'Введите пароль';
+			}
+
 			return;
 		}
 
 		if (!validateEmail(trimmedEmail)) {
-			serverError = 'Введите корректный email';
+			emailError = 'Введите адрес в формате name@example.com';
 			return;
 		}
 
 		if (!validatePassword(password)) {
-			serverError =
+			passwordError =
 				'Пароль должен быть от 8 до 128 символов и содержать хотя бы одну букву и одну цифру';
 			return;
 		}
@@ -62,7 +88,7 @@
 		isLoading = true;
 
 		try {
-			const { error } = await client.POST('/auth/register', {
+			const { error, response } = await client.POST('/auth/register', {
 				body: {
 					email: trimmedEmail,
 					password: password
@@ -71,8 +97,14 @@
 
 			if (error) {
 				console.error('Registration error:', error);
-				const errorMessage = typeof error.detail === 'string' ? error.detail : 'Ошибка регистрации';
-				throw new Error(errorMessage);
+
+				if (response.status === 409) {
+					emailError = getApiErrorDetail(error) ?? 'Этот адрес уже используется';
+					return;
+				}
+
+				serverError = getApiErrorDetail(error) ?? 'Ошибка регистрации';
+				return;
 			}
 
 			toastService.add('Аккаунт создан. Теперь войдите в него.', 'success');
@@ -107,6 +139,7 @@
 				id="email"
 				type="email"
 				bind:value={email}
+				oninput={handleEmailInput}
 				placeholder="name@example.com"
 				autocomplete="email"
 				required
@@ -119,7 +152,9 @@
 					<EnvelopeSolid class="h-5 w-5" />
 				{/snippet}
 			</Input>
-			{#if email && isEmailValid === false}
+			{#if emailError}
+				<Helper color="red" class="mt-1">{emailError}</Helper>
+			{:else if email && isEmailValid === false}
 				<Helper color="red" class="mt-1">Введите адрес в формате name@example.com</Helper>
 			{/if}
 		</div>
@@ -130,6 +165,7 @@
 				id="password"
 				type={showPassword ? 'text' : 'password'}
 				bind:value={password}
+				oninput={handlePasswordInput}
 				placeholder="••••••••"
 				autocomplete="new-password"
 				required
@@ -155,7 +191,9 @@
 					</button>
 				{/snippet}
 			</Input>
-			{#if password && isPasswordValid === false}
+			{#if passwordError}
+				<Helper color="red" class="mt-1">{passwordError}</Helper>
+			{:else if password && isPasswordValid === false}
 				<Helper color="red" class="mt-1">
 					Пароль должен быть от 8 до 128 символов и содержать хотя бы одну букву и одну цифру
 				</Helper>

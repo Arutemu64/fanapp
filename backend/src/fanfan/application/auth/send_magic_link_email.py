@@ -9,6 +9,7 @@ from fanfan.core.services.email_login import (
     EMAIL_MAGIC_LINK_MAX_AGE_SECONDS,
     EmailLoginService,
 )
+from fanfan.core.utils.email import normalize_email
 from fanfan.core.vo.user import UserId
 from fanfan.presentation.web.config import WebConfig
 
@@ -40,11 +41,13 @@ class SendMagicLinkEmail:
             raise UserNotFound
         if user.email is None:
             raise UserHasNoEmail
+        normalized_email = normalize_email(user.email)
 
         token = self.email_login.generate_token(user_id=user.id)
         await self.token_registry.issue_email_login_token(
             token=token,
             user_id=user.id,
+            email=normalized_email,
             ttl_seconds=EMAIL_MAGIC_LINK_MAX_AGE_SECONDS,
         )
 
@@ -61,8 +64,9 @@ class SendMagicLinkEmail:
         )
         message = MessageSchema(
             subject="Ссылка для входа в FAN App",
-            recipients=[NameEmail(name=user.username, email=user.email)],
+            recipients=[NameEmail(name=user.username, email=normalized_email)],
             body=message_body,
-            subtype=MessageType.plain,
+            # Send HTML so the email client renders the button and clickable link.
+            subtype=MessageType.html,
         )
         await self.mail.send_message(message)

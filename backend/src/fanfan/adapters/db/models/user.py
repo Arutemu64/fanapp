@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import uuid7
 
 from adaptix import Retort
-from sqlalchemy import Uuid
+from sqlalchemy import DateTime, Uuid
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
@@ -17,6 +18,7 @@ from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
 from fanfan.core.vo.user import UserId, Username, UserRole
 
 if TYPE_CHECKING:
+
     from fanfan.adapters.db.models.permission import UserPermissionORM
     from fanfan.adapters.db.models.social_account import SocialAccountORM
     from fanfan.adapters.db.models.ticket import TicketORM
@@ -37,7 +39,8 @@ class UserORM(BaseORM):
     username: Mapped[Username | None] = mapped_column(index=True, unique=True)
     hashed_password: Mapped[str | None] = mapped_column()
     email: Mapped[str | None] = mapped_column(index=True, unique=True)
-    is_verified: Mapped[bool] = mapped_column(server_default="false")
+    pending_email: Mapped[str | None] = mapped_column(index=True, unique=True)
+    email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     settings: Mapped[dict] = mapped_column(JSONB)
 
     first_name: Mapped[str | None] = mapped_column()

@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from pydantic import BaseModel
 
 from fanfan.adapters.db.gateways.users import UserGateway
@@ -7,6 +9,7 @@ from fanfan.core.dto.token import Token
 from fanfan.core.exceptions.auth import InvalidToken
 from fanfan.core.exceptions.users import UserNotFound
 from fanfan.core.services.security import SecurityService
+from fanfan.core.utils.email import normalize_email
 
 
 class LoginMagicLinkCommand(BaseModel):
@@ -28,9 +31,14 @@ class LoginMagicLink:
 
     async def __call__(self, data: LoginMagicLinkCommand) -> Token:
         async with self.uow:
-            user_id = await self.token_registry.consume_email_login_token(data.token)
-            if user_id is None:
+            token_payload = await self.token_registry.consume_email_login_token(
+                data.token
+            )
+            if token_payload is None:
                 raise InvalidToken
+
+            user_id, target_email = token_payload
+            normalized_target_email = normalize_email(target_email)
 
             user = await self.user_gateway.get_user_by_id(user_id)
             if user is None:
@@ -38,8 +46,11 @@ class LoginMagicLink:
 
             # A magic link proves mailbox ownership.
             # Once it is used, the account email can be treated as verified.
-            if not user.is_verified:
-                user.is_verified = True
+            if user.email is None or user.email != normalized_target_email:
+                raise InvalidToken
+
+            if user.email_verified_at is None:
+                user.email_verified_at = datetime.now(UTC)
                 await self.user_gateway.save_user(user)
                 await self.uow.commit()
 

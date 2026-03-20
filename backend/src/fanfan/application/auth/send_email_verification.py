@@ -9,6 +9,7 @@ from fanfan.core.services.email_verification import (
     EMAIL_VERIFY_MAX_AGE_SECONDS,
     EmailVerificationService,
 )
+from fanfan.core.utils.email import normalize_email
 from fanfan.core.vo.user import UserId
 from fanfan.presentation.web.config import WebConfig
 
@@ -38,13 +39,16 @@ class SendEmailVerification:
         user = await self.user_gateway.get_user_by_id(data.user_id)
         if user is None:
             raise UserNotFound
-        if user.email is None:
+        target_email = user.pending_email or user.email
+        if target_email is None:
             raise UserHasNoEmail
+        target_email = normalize_email(target_email)
 
         token = self.email_verification.generate_token(user_id=user.id)
         await self.token_registry.issue_email_verification_token(
             token=token,
             user_id=user.id,
+            email=target_email,
             ttl_seconds=EMAIL_VERIFY_MAX_AGE_SECONDS,
         )
 
@@ -61,8 +65,9 @@ class SendEmailVerification:
         )
         message = MessageSchema(
             subject="Подтвердите учётную запись",
-            recipients=[NameEmail(name=user.username, email=user.email)],
+            recipients=[NameEmail(name=user.username, email=target_email)],
             body=message_body,
-            subtype=MessageType.plain,
+            # Send HTML so the email client renders the button and clickable link.
+            subtype=MessageType.html,
         )
         await self.mail.send_message(message)

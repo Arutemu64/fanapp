@@ -42,7 +42,8 @@ class AuthorizeTelegram:
                 username=await self.user_service.generate_username(),
                 role=UserRole.VISITOR,
                 hashed_password=None,
-                is_verified=False,
+                pending_email=None,
+                email_verified_at=None,
             )
             await self.user_gateway.add_user(user)
             await self.uow.flush()

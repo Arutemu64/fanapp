@@ -8,6 +8,7 @@ from fanfan.application.common.constraints import get_constraint_name
 from fanfan.core.events.users import CreatedUserEvent, EmailMagicLinkRequestedEvent
 from fanfan.core.models.user import User
 from fanfan.core.services.user import UserService
+from fanfan.core.utils.email import normalize_email
 from fanfan.core.vo.user import UserRole
 
 
@@ -29,7 +30,14 @@ class RequestMagicLink:
         self.user_service = user_service
 
     async def __call__(self, data: RequestMagicLinkCommand) -> None:
-        user = await self.user_gateway.get_user_by_email(data.email)
+        normalized_email = normalize_email(data.email)
+        user = await self.user_gateway.get_user_by_email(normalized_email)
+
+        # Do not provision a second account if the address is already reserved as
+        # another user's pending replacement email.
+        reserved_user = await self.user_gateway.get_user_by_any_email(normalized_email)
+        if user is None and reserved_user is not None:
+            return
 
         # New emails are provisioned immediately so the same flow can both
         # register the account and send the one-time sign-in link.
@@ -39,22 +47,28 @@ class RequestMagicLink:
                     try:
                         user = User(
                             username=await self.user_service.generate_username(),
-                            email=data.email,
+                            email=normalized_email,
                             hashed_password=None,
                             role=UserRole.VISITOR,
-                            is_verified=False,
+                            pending_email=None,
+                            email_verified_at=None,
                         )
                         await self.user_gateway.add_user(user)
                         await self.uow.commit()
                     except IntegrityError as e:
                         await self.uow.rollback()
                         constraint_name = get_constraint_name(e)
-                        if constraint_name == "uq_users_email":
-                            user = await self.user_gateway.get_user_by_email(data.email)
+                        if constraint_name in {
+                            "ix_users_email",
+                            "ix_users_pending_email",
+                        }:
+                            user = await self.user_gateway.get_user_by_email(
+                                normalized_email
+                            )
                             if user is not None:
                                 break
                             continue
-                        if constraint_name == "uq_users_username":
+                        if constraint_name == "ix_users_username":
                             continue
                         raise
                     else:

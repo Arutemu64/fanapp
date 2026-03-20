@@ -1,8 +1,42 @@
-Здравствуйте, {{ username }}!
+{# HTML email with a visible CTA button and fallback link for email confirmation. #}
+{% extends "_email_layout.jinja2" %}
 
-Подтвердите email для аккаунта FAN FAN по ссылке:
-{{ verify_email_url }}
+{% set title = "Подтверждение email" %}
 
-Ссылка действует 60 минут.
+{% block content %}
+  <p style="margin:0 0 16px; font-size:16px; line-height:24px;">
+    Здравствуйте, <strong>{{ username }}</strong>!
+  </p>
+  <p style="margin:0 0 24px; font-size:16px; line-height:24px; color:#374151;">
+    Подтвердите email для аккаунта FAN FAN, чтобы завершить настройку учётной записи.
+  </p>
 
-Если вы не запрашивали это письмо, просто проигнорируйте его.
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px; border-collapse:collapse;">
+    <tr>
+      <td align="center" style="border-radius:12px; background-color:#2563eb;">
+        <a
+          href="{{ verify_email_url }}"
+          style="display:inline-block; padding:14px 20px; font-size:16px; line-height:24px; font-weight:700; color:#ffffff; text-decoration:none;"
+        >
+          Подтвердить email
+        </a>
+      </td>
+    </tr>
+  </table>
+
+  <p style="margin:0 0 12px; font-size:14px; line-height:22px; color:#4b5563;">
+    Ссылка действует 60 минут.
+  </p>
+  <p style="margin:0 0 12px; font-size:14px; line-height:22px; color:#4b5563;">
+    Если кнопка не открывается, перейдите по ссылке:
+  </p>
+  <p style="margin:0 0 24px; font-size:14px; line-height:22px; word-break:break-word;">
+    <a href="{{ verify_email_url }}" style="color:#2563eb; text-decoration:underline;">
+      {{ verify_email_url }}
+    </a>
+  </p>
+
+  <p style="margin:0; font-size:14px; line-height:22px; color:#6b7280;">
+    Если вы не запрашивали это письмо, просто проигнорируйте его.
+  </p>
+{% endblock %}

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import uuid7
 
 from fanfan.core.vo.user import UserId, Username, UserRole
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 
 @dataclass(slots=True, kw_only=True)
@@ -23,7 +26,8 @@ class User:
     role: UserRole
 
     email: str | None = None
-    is_verified: bool
+    pending_email: str | None = None
+    email_verified_at: datetime | None = None
 
     first_name: str | None = None
 

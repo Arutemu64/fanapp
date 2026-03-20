@@ -1,0 +1,50 @@
+{# Shared HTML email layout for auth emails. Keep markup simple for better email client support. #}
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ title }}</title>
+  </head>
+  <body
+    style="margin:0; padding:0; background-color:#f3f4f6; font-family:Arial, Helvetica, sans-serif; color:#111827;"
+  >
+    <table
+      role="presentation"
+      cellpadding="0"
+      cellspacing="0"
+      border="0"
+      width="100%"
+      style="width:100%; border-collapse:collapse; background-color:#f3f4f6;"
+    >
+      <tr>
+        <td style="padding:24px 12px;">
+          <table
+            role="presentation"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            width="100%"
+            style="max-width:560px; margin:0 auto; border-collapse:collapse; background-color:#ffffff; border:1px solid #e5e7eb; border-radius:20px; overflow:hidden;"
+          >
+            <tr>
+              <td style="padding:24px 24px 12px; background-color:#111827; color:#ffffff;">
+                <div style="font-size:12px; line-height:18px; letter-spacing:0.08em; text-transform:uppercase; opacity:0.8;">
+                  FAN FAN
+                </div>
+                <h1 style="margin:12px 0 0; font-size:24px; line-height:32px; font-weight:700; color:#ffffff;">
+                  {{ title }}
+                </h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:24px;">
+                {% block content %}{% endblock %}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

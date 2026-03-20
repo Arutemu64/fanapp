@@ -5,6 +5,7 @@ from fanfan.core.dto.token import Token
 from fanfan.core.exceptions.auth import AuthenticationError
 from fanfan.core.exceptions.users import UserNotFound
 from fanfan.core.services.security import SecurityService
+from fanfan.core.utils.email import normalize_email
 
 
 class AuthenticateUserCommand(BaseModel):
@@ -19,7 +20,8 @@ class AuthenticateUser:
         self.dummy_hash = self.security.hash_password("dummy_password")
 
     async def __call__(self, data: AuthenticateUserCommand) -> Token:
-        user = await self.user_gateway.get_user_by_email(data.email)
+        normalized_email = normalize_email(data.email)
+        user = await self.user_gateway.get_user_by_email(normalized_email)
         if user is None:
             # Prevent timing attack
             self.security.verify_password(data.password, self.dummy_hash)
