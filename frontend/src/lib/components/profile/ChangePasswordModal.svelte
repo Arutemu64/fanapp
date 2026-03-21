@@ -63,7 +63,7 @@
 	}
 </script>
 
-<Modal bind:open size="sm" outsideclose>
+<Modal bind:open size="sm">
 	{#snippet header()}
 		<div class="flex items-center gap-2">
 			<LockSolid class="h-5 w-5 text-gray-500 dark:text-gray-400" />
@@ -79,8 +79,10 @@
 				<Label for="old_password" class="mb-2 block">Старый пароль</Label>
 				<Input
 					id="old_password"
+					name="current_password"
 					type={showOldPassword ? 'text' : 'password'}
 					placeholder="••••••••"
+					autocomplete="current-password"
 					bind:value={oldPassword}
 					class="ps-9"
 				>
@@ -92,7 +94,8 @@
 							type="button"
 							class="pointer-events-auto"
 							onclick={() => (showOldPassword = !showOldPassword)}
-							aria-label="Показать старый пароль"
+							aria-label={showOldPassword ? 'Скрыть старый пароль' : 'Показать старый пароль'}
+							aria-pressed={showOldPassword}
 						>
 							{#if showOldPassword}
 								<EyeOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
@@ -108,8 +111,10 @@
 			<Label for="new_password" class="mb-2 block">Новый пароль</Label>
 			<Input
 				id="new_password"
+				name="new_password"
 				type={showNewPassword ? 'text' : 'password'}
 				placeholder="••••••••"
+				autocomplete="new-password"
 				bind:value={newPassword}
 				class="ps-9"
 			>
@@ -121,7 +126,8 @@
 						type="button"
 						class="pointer-events-auto"
 						onclick={() => (showNewPassword = !showNewPassword)}
-						aria-label="Показать новый пароль"
+						aria-label={showNewPassword ? 'Скрыть новый пароль' : 'Показать новый пароль'}
+						aria-pressed={showNewPassword}
 					>
 						{#if showNewPassword}
 							<EyeOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
@@ -142,7 +148,7 @@
 			{#if isLoading}
 				<span class="flex items-center gap-2">
 					<Spinner size="4" />
-					Сохранение...
+					Сохранение…
 				</span>
 			{:else}
 				{hasPassword ? 'Сменить пароль' : 'Установить пароль'}

@@ -10,6 +10,8 @@
 		description: string;
 		src: string;
 		alt: string;
+		width: number;
+		height: number;
 	}
 
 	// Держите этот список в sync с файлами внутри frontend/static/map.
@@ -19,20 +21,20 @@
 			title: 'Карта 1',
 			description: 'Откроется оригинал карты в новой вкладке.',
 			src: asset('/map/map_1.jpg'),
-			alt: 'Карта площадки 1'
+			alt: 'Карта площадки 1',
+			width: 1280,
+			height: 831
 		},
 		{
 			id: 'map_2_3',
 			title: 'Карта 2–3',
 			description: 'Откроется оригинал карты в новой вкладке.',
 			src: asset('/map/map_2_3.jpg'),
-			alt: 'Карта площадки 2 и 3'
+			alt: 'Карта площадки 2 и 3',
+			width: 1280,
+			height: 787
 		}
 	];
-
-	function openMapInNewTab(src: string) {
-		window.open(src, '_blank', 'noopener,noreferrer');
-	}
 </script>
 
 <svelte:head>
@@ -60,25 +62,30 @@
 					</p>
 				</div>
 
-				<Button type="button" size="sm" onclick={() => openMapInNewTab(map.src)}>
+				<Button href={map.src} target="_blank" rel="noopener noreferrer" size="sm">
 					Открыть оригинал
 				</Button>
 			</div>
 
 			<!-- Превью тоже работает как ссылка, чтобы пользователь мог открыть карту одним касанием. -->
-			<button
-				type="button"
-				onclick={() => openMapInNewTab(map.src)}
-				class="block w-full bg-gray-100 p-2 transition hover:bg-gray-200/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 dark:bg-gray-950 dark:hover:bg-gray-800/80"
+			<!-- eslint-disable svelte/no-navigation-without-resolve -->
+			<a
+				href={map.src}
+				target="_blank"
+				rel="noopener noreferrer"
+				class="block w-full bg-gray-100 p-2 transition-colors hover:bg-gray-200/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 dark:bg-gray-950 dark:hover:bg-gray-800/80"
 				aria-label={`Открыть оригинал ${map.title}`}
 			>
 				<img
 					src={map.src}
 					alt={map.alt}
+					width={map.width}
+					height={map.height}
 					loading="lazy"
 					class="max-h-[70dvh] w-full rounded-xl object-contain"
 				/>
-			</button>
+			</a>
+			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 		</article>
 	{:else}
 		<div

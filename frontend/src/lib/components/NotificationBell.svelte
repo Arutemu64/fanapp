@@ -13,6 +13,7 @@
 
 	let notifications: Array<Notification> = $state([]);
 	let unreadCount = $state(0);
+	let dropdownOpen = $state(false);
 	const eventsClient = getEventsClient();
 
 	async function loadNotifications() {
@@ -63,26 +64,40 @@
 
 <button
 	id="notification-bell"
-	onclick={markAllRead}
 	aria-label="Открыть уведомления"
-	class="relative rounded-lg p-2 text-gray-500 hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 focus:outline-hidden dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+	aria-expanded={dropdownOpen}
+	class="relative rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none dark:text-gray-400 dark:hover:bg-gray-700 dark:focus-visible:ring-gray-500 dark:focus-visible:ring-offset-gray-900"
 >
-	<BellSolid class="h-5 w-5" />
+	<BellSolid class="h-5 w-5" aria-hidden="true" />
 	{#if unreadCount > 0}
 		<div
 			class="absolute top-1 right-1 inline-flex h-2.5 w-2.5 items-center justify-center rounded-full border-2 border-white bg-red-500 dark:border-gray-900"
+			aria-hidden="true"
 		></div>
 	{/if}
 </button>
 
 <Dropdown
 	triggeredBy="#notification-bell"
+	bind:isOpen={dropdownOpen}
 	class="w-full max-w-sm divide-y divide-gray-100 rounded-sm shadow-sm dark:divide-gray-700 dark:bg-gray-800"
 >
 	<div class="px-4 py-3">
-		<div class="text-center font-bold text-gray-900 dark:text-white">Последние уведомления</div>
-		<div class="mt-1 text-center text-xs text-gray-500 dark:text-gray-400">
-			Показаны 5 последних уведомлений
+		<div class="flex items-start justify-between gap-3">
+			<div class="min-w-0">
+				<div class="text-left font-bold text-gray-900 dark:text-white">Последние уведомления</div>
+				<div class="mt-1 text-left text-xs text-gray-500 dark:text-gray-400">
+					Показаны 5 последних уведомлений
+				</div>
+			</div>
+			<button
+				type="button"
+				class="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-primary-600 transition-colors hover:bg-primary-50 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-primary-400 dark:hover:bg-gray-700"
+				onclick={markAllRead}
+				disabled={unreadCount === 0}
+			>
+				Прочитать все
+			</button>
 		</div>
 	</div>
 	<div class="max-h-96 overflow-y-auto">

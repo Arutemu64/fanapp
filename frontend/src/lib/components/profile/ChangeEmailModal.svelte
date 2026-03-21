@@ -93,7 +93,7 @@
 	}
 </script>
 
-<Modal bind:open size="sm" outsideclose>
+<Modal bind:open size="sm">
 	{#snippet header()}
 		<div class="flex items-center gap-2">
 			<EnvelopeSolid class="h-5 w-5 text-gray-500 dark:text-gray-400" />
@@ -107,7 +107,14 @@
 		{#if currentEmail}
 			<div>
 				<Label class="mb-2 block">Текущая эл. почта</Label>
-				<Input type="text" value={currentEmail} disabled class="ps-9">
+				<Input
+					type="text"
+					name="current_email"
+					value={currentEmail}
+					disabled
+					autocomplete="email"
+					class="ps-9"
+				>
 					{#snippet left()}
 						<EnvelopeSolid class="h-5 w-5" />
 					{/snippet}
@@ -117,7 +124,14 @@
 		{#if !currentEmail && pendingEmail}
 			<div>
 				<Label class="mb-2 block">Адрес ожидает подтверждения</Label>
-				<Input type="text" value={pendingEmail} disabled class="ps-9">
+				<Input
+					type="text"
+					name="pending_email"
+					value={pendingEmail}
+					disabled
+					autocomplete="email"
+					class="ps-9"
+				>
 					{#snippet left()}
 						<EnvelopeSolid class="h-5 w-5" />
 					{/snippet}
@@ -128,9 +142,13 @@
 			<Label for="new_email" color={emailColor} class="mb-2 block">Новая эл. почта</Label>
 			<Input
 				id="new_email"
+				name="new_email"
 				type="email"
 				placeholder="name@example.com"
 				autocomplete="email"
+				inputmode="email"
+				autocapitalize="off"
+				spellcheck={false}
 				bind:value={newEmail}
 				class="ps-9"
 				color={emailColor}
@@ -155,7 +173,7 @@
 			{#if isLoading}
 				<span class="flex items-center gap-2">
 					<Spinner size="4" />
-					Сохранение...
+					Сохранение…
 				</span>
 			{:else}
 				{hasExistingEmail ? 'Сохранить адрес' : 'Добавить адрес'}

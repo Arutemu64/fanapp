@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { components } from '$lib/api/v1';
+	import { formatMoscowDateTime } from '$lib/utils/formatters';
 
 	interface Props {
 		notification: components['schemas']['NotificationDTO'];
@@ -8,8 +9,8 @@
 
 	let { notification, compact = false }: Props = $props();
 
-	// Форматируем дату один раз, чтобы шаблон оставался читаемым.
-	let createdAt = $derived(new Date(notification.created_at).toLocaleString('ru'));
+	// Use an explicit festival timezone so the first SSR render matches hydration.
+	let createdAt = $derived(formatMoscowDateTime(notification.created_at));
 
 	function formatBody(body: string) {
 		// Базово сохраняем переносы строк и убираем HTML, чтобы безопасно показать текст.

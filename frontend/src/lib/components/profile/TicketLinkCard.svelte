@@ -83,8 +83,12 @@
 			<Label for="ticket-barcode">Номер билета</Label>
 			<Input
 				id="ticket-barcode"
+				name="ticket_barcode"
 				bind:value={barcode}
 				placeholder="Введите номер билета"
+				autocomplete="off"
+				autocapitalize="off"
+				spellcheck={false}
 				disabled={isSubmitting}
 				size="md"
 				class="ps-9"
@@ -96,7 +100,7 @@
 			<Button onclick={handleLinkTicket} class="min-h-11 w-full" disabled={isSubmitting} size="md">
 				{#if isSubmitting}
 					<Spinner class="me-2 h-4 w-4" />
-					Привязка...
+					Привязка…
 				{:else}
 					Привязать билет
 				{/if}

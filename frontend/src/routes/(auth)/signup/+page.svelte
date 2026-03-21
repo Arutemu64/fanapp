@@ -138,11 +138,15 @@
 			<Label for="email" color={emailColor} class="mb-2">Эл. почта</Label>
 			<Input
 				id="email"
+				name="email"
 				type="email"
 				bind:value={email}
 				oninput={handleEmailInput}
 				placeholder="name@example.com"
 				autocomplete="email"
+				inputmode="email"
+				autocapitalize="off"
+				spellcheck={false}
 				required
 				size="md"
 				class="ps-9"
@@ -164,6 +168,7 @@
 			<Label for="password" color={passwordColor} class="mb-2">Пароль</Label>
 			<Input
 				id="password"
+				name="password"
 				type={showPassword ? 'text' : 'password'}
 				bind:value={password}
 				oninput={handlePasswordInput}
@@ -183,6 +188,7 @@
 						class="pointer-events-auto"
 						onclick={() => (showPassword = !showPassword)}
 						aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+						aria-pressed={showPassword}
 					>
 						{#if showPassword}
 							<EyeOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
@@ -211,7 +217,7 @@
 		>
 			{#if isLoading}
 				<Spinner size="4" class="mr-2" color="primary" />
-				Создаём аккаунт...
+				Создаём аккаунт…
 			{:else}
 				Зарегистрироваться
 			{/if}

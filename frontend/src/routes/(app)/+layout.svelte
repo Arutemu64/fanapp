@@ -5,6 +5,7 @@
 	import { client } from '$lib/api';
 	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
 	import NotificationBell from '$lib/components/NotificationBell.svelte';
+	import SkipLink from '$lib/components/SkipLink.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
@@ -177,6 +178,8 @@
 {/snippet}
 
 <div class="flex h-dvh w-full overflow-hidden bg-gray-50 dark:bg-gray-950">
+	<SkipLink />
+
 	<Sidebar
 		{activeUrl}
 		backdrop={true}
@@ -233,7 +236,11 @@
 			</div>
 		</Navbar>
 
-		<section class="relative flex-1 overflow-y-auto scroll-smooth">
+		<section
+			id="main-content"
+			tabindex="-1"
+			class="relative flex-1 overflow-y-auto scroll-smooth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+		>
 			<ToastContainer />
 			<div class="mx-auto max-w-7xl p-4 pb-24 md:p-6 md:pt-4 lg:p-8 lg:pt-4">
 				{@render children()}

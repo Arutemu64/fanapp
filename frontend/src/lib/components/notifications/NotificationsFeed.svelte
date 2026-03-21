@@ -122,7 +122,7 @@
 				{#if isLoadingMore}
 					<Spinner size="4" class="me-2" />
 				{/if}
-				{isLoadingMore ? 'Загрузка...' : 'Показать ещё'}
+				{isLoadingMore ? 'Загрузка…' : 'Показать ещё'}
 			</Button>
 		</div>
 	{/if}

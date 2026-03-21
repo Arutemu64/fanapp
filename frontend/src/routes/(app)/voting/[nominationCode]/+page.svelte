@@ -74,7 +74,11 @@
 			<div class="flex-1">
 				<Search
 					bind:value={searchQuery}
-					placeholder="Поиск по имени или номеру"
+					name="participant_search"
+					aria-label="Поиск участников в номинации"
+					placeholder="Поиск по имени или номеру…"
+					autocomplete="off"
+					spellcheck={false}
 					clearable
 					size="sm"
 				/>

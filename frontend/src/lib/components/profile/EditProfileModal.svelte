@@ -122,7 +122,7 @@
 	}
 </script>
 
-<Modal bind:open size="sm" outsideclose>
+<Modal bind:open size="sm">
 	{#snippet header()}
 		<div class="flex items-center gap-2">
 			<UserCircleSolid class="h-5 w-5 text-gray-500 dark:text-gray-400" />
@@ -135,8 +135,12 @@
 			<Label for="username" class="mb-2 block">Псевдоним</Label>
 			<Input
 				id="username"
+				name="username"
 				type="text"
 				placeholder="Псевдоним"
+				autocomplete="nickname"
+				autocapitalize="off"
+				spellcheck={false}
 				bind:value={username}
 				oninput={handleUsernameInput}
 				color={usernameError ? 'red' : undefined}
@@ -160,8 +164,10 @@
 			<Label for="firstName" class="mb-2 block">Настоящее имя</Label>
 			<Input
 				id="firstName"
+				name="first_name"
 				type="text"
 				placeholder="Настоящее имя"
+				autocomplete="given-name"
 				bind:value={firstName}
 				class="ps-9"
 			>
@@ -175,7 +181,7 @@
 			{#if isLoading}
 				<span class="flex items-center gap-2">
 					<Spinner size="4" />
-					Сохранение...
+					Сохранение…
 				</span>
 			{:else}
 				Сохранить

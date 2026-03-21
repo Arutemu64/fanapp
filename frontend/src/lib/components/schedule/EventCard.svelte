@@ -209,7 +209,7 @@
 
 			<button
 				id={dropdownId}
-				class="ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 focus:ring-2 focus:ring-primary-300 focus:outline-none dark:text-gray-400 dark:hover:bg-gray-700"
+				class="ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none dark:text-gray-400 dark:hover:bg-gray-700"
 				aria-label="Меню действий"
 			>
 				<DotsVerticalOutline class="h-5 w-5" />

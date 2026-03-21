@@ -324,7 +324,7 @@
 			disabled={isSendingTest}
 			onclick={sendTestNotification}
 		>
-			{isSendingTest ? 'Отправка...' : 'Проверить уведомления'}
+			{isSendingTest ? 'Отправка…' : 'Проверить уведомления'}
 		</Button>
 	</div>
 </ProfileCardShell>

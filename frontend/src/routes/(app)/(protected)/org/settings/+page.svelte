@@ -126,9 +126,12 @@
 				<Label for="announcement-timeout">Таймаут анонсов, сек</Label>
 				<Input
 					id="announcement-timeout"
+					name="announcement_timeout"
 					type="number"
 					min="1"
 					step="1"
+					inputmode="numeric"
+					autocomplete="off"
 					bind:value={announcementTimeout}
 					disabled={isSaving}
 					oninput={handleAnnouncementTimeoutInput}
@@ -151,7 +154,7 @@
 			>
 				{#if isSaving}
 					<Spinner size="4" class="mr-2" color="primary" />
-					Сохраняем...
+					Сохраняем…
 				{:else}
 					Сохранить
 				{/if}

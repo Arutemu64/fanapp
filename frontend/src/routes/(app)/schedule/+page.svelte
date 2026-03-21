@@ -6,6 +6,7 @@
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import type { CurrentUserDTO } from '$lib/types/user';
+	import { prefersReducedMotion } from '$lib/utils/motion';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
 	import { ChevronUpOutline, PlaySolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
@@ -124,14 +125,20 @@
 			`[data-event-id="${visibleCurrentEvent.id}"]`
 		);
 
-		element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		element?.scrollIntoView({
+			behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+			block: 'center'
+		});
 	}
 
 	function scrollToTop() {
 		const scrollContainer = getScrollContainer();
 		if (!scrollContainer) return;
 
-		scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+		scrollContainer.scrollTo({
+			top: 0,
+			behavior: prefersReducedMotion() ? 'auto' : 'smooth'
+		});
 	}
 
 	onMount(() => {
@@ -171,7 +178,11 @@
 		<div class="flex flex-col gap-3">
 			<Search
 				bind:value={searchQuery}
-				placeholder="Поиск по номеру, выступлению, блоку или номинации"
+				name="schedule_search"
+				aria-label="Поиск по расписанию"
+				placeholder="Поиск по номеру, выступлению, блоку или номинации…"
+				autocomplete="off"
+				spellcheck={false}
 				clearable
 				size="sm"
 				class="rounded-xl border-gray-300 dark:border-gray-600"

@@ -6,9 +6,32 @@
 		CloseCircleSolid,
 		ExclamationCircleSolid
 	} from 'flowbite-svelte-icons';
+	import { getReducedMotionMediaQuery, prefersReducedMotion } from '$lib/utils/motion';
+	import { onMount } from 'svelte';
 	import { fly } from 'svelte/transition';
 
 	const toastService = getToastService();
+	let reducedMotion = $state(prefersReducedMotion());
+
+	onMount(() => {
+		const mediaQuery = getReducedMotionMediaQuery();
+
+		if (!mediaQuery) {
+			return;
+		}
+
+		reducedMotion = mediaQuery.matches;
+
+		const handleChange = (event: MediaQueryListEvent) => {
+			reducedMotion = event.matches;
+		};
+
+		mediaQuery.addEventListener('change', handleChange);
+
+		return () => {
+			mediaQuery.removeEventListener('change', handleChange);
+		};
+	});
 </script>
 
 <ToastContainer
@@ -17,7 +40,13 @@
 >
 	{#each toastService.items as toast (toast.id)}
 		<!-- On mobile the toast uses the available width, and on larger screens it shifts to the top-right. -->
-		<div class="w-full sm:ml-auto sm:max-w-sm" transition:fly={{ x: 200, duration: 300 }}>
+		<div
+			role={toast.type === 'error' ? 'alert' : 'status'}
+			aria-live={toast.type === 'error' ? 'assertive' : 'polite'}
+			aria-atomic="true"
+			class="w-full sm:ml-auto sm:max-w-sm"
+			transition:fly={reducedMotion ? { x: 0, duration: 0 } : { x: 200, duration: 300 }}
+		>
 			<Toast
 				color={ToastTypeColors[toast.type]}
 				dismissable={true}

@@ -87,6 +87,7 @@
 				<Label for="schedule-file">Excel-файл</Label>
 				<Fileupload
 					id="schedule-file"
+					name="schedule_file"
 					accept={ACCEPTED_FILE_TYPES}
 					bind:files={selectedFiles}
 					clearable
@@ -124,7 +125,7 @@
 			>
 				{#if isUploading}
 					<Spinner size="4" class="mr-2" color="primary" />
-					Импортируем...
+					Импортируем…
 				{:else}
 					Импортировать
 				{/if}

@@ -70,18 +70,26 @@
 			<strong class="text-primary-600 dark:text-primary-400">{event.title}</strong>
 		</p>
 
-		<Search size="md" placeholder="Поиск..." clearable bind:value={query} />
-
+		<Search
+			name="schedule_move_search"
+			size="md"
+			aria-label="Поиск события для переноса"
+			placeholder="Поиск события…"
+			autocomplete="off"
+			spellcheck={false}
+			clearable
+			bind:value={query}
+		/>
 		<div
 			class="max-h-48 overflow-y-auto rounded-lg border border-gray-200 sm:max-h-60 dark:border-gray-700"
 		>
 			{#each filtered as ev (ev.id)}
 				<button
 					type="button"
-					class="w-full cursor-pointer px-3 py-2.5 text-left text-sm transition-colors hover:bg-blue-50 sm:py-3 sm:text-base dark:hover:bg-blue-900/20 {selectedId ===
-					ev.id
-						? 'bg-blue-100 dark:bg-blue-900/40'
-						: ''}"
+					class={[
+						'w-full cursor-pointer px-3 py-2.5 text-left text-sm transition-colors hover:bg-blue-50 focus-visible:bg-blue-50 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-500 sm:py-3 sm:text-base dark:hover:bg-blue-900/20 dark:focus-visible:bg-blue-900/20',
+						selectedId === ev.id && 'bg-blue-100 dark:bg-blue-900/40'
+					]}
 					onclick={() => handleSelect(ev)}
 				>
 					<span class="font-medium text-gray-900 dark:text-white">№{ev.public_number}</span>

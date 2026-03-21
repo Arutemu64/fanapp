@@ -77,9 +77,10 @@
 </script>
 
 <Card
-	class="relative flex flex-col py-3 ps-4 pe-3 transition-all {participant.user_vote !== null
-		? 'ring-2 ring-green-400 dark:ring-green-500'
-		: ''}"
+	class={[
+		'relative flex flex-col py-3 ps-4 pe-3 transition-[box-shadow,border-color]',
+		participant.user_vote !== null && 'ring-2 ring-green-400 dark:ring-green-500'
+	]}
 >
 	{#if participant.user_vote !== null}
 		<Badge color="green" class="absolute top-2 right-2 shrink-0 text-sm">
@@ -131,7 +132,7 @@
 					loading={isLoading}
 					disabled={areActionsDisabled}
 					onclick={handleVote}
-					aria-label="Голосовать за {participant.title}">Голосовать</Button
+					aria-label={`Голосовать за ${participant.title}`}>Голосовать</Button
 				>
 			{/if}
 		</div>

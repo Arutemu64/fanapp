@@ -9,7 +9,7 @@
 
 ## Required UI Skills
 
-- Use `web-design-guidelines` when implementing or reviewing UI.
+- Use `web-design-guidelines` and `ui-ux-pro-max` when implementing or reviewing UI.
 - Use `web-accessibility` when implementing or reviewing accessibility.
 - Use `svelte-code-writer` and `svelte-core-bestpractices` for Svelte components and Svelte UI refactors.
 - Do not duplicate generic WCAG, accessibility, or broad web UI rules here when the skills already cover them.

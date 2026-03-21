@@ -163,7 +163,7 @@
 						>
 							{#if isRequestingVerification}
 								<Spinner class="me-2 h-4 w-4" />
-								Отправка...
+								Отправка…
 							{:else}
 								<EnvelopeSolid class="me-2 h-4 w-4" />
 								{user.pending_email ? 'Подтвердить новый адрес' : 'Подтвердить почту'}
@@ -245,7 +245,7 @@
 						>
 							{#if isUnlinkingTelegram}
 								<Spinner class="me-2 h-4 w-4" />
-								Отвязка...
+								Отвязка…
 							{:else}
 								<TrashBinOutline class="me-2 h-4 w-4" />
 								Отвязать Telegram

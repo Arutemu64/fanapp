@@ -3,6 +3,19 @@ export function formatDuration(seconds: number): string {
 	return `${m} ${pluralize(m, 'минута', 'минуты', 'минут')}`;
 }
 
+const MOSCOW_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+	day: '2-digit',
+	month: '2-digit',
+	year: 'numeric',
+	hour: '2-digit',
+	minute: '2-digit',
+	timeZone: 'Europe/Moscow'
+});
+
+export function formatMoscowDateTime(value: string | number | Date): string {
+	return MOSCOW_DATE_TIME_FORMATTER.format(new Date(value));
+}
+
 export function formatUntil(queueUntil: number, timeUntil: number): string {
 	const h = Math.floor(timeUntil / 3600);
 	const m = Math.ceil((timeUntil % 3600) / 60);

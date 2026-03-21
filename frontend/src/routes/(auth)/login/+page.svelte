@@ -214,7 +214,7 @@
 							autocomplete="email"
 							inputmode="email"
 							autocapitalize="off"
-							spellcheck="false"
+							spellcheck={false}
 							required
 							disabled={isBusy}
 							class="ps-9"
@@ -246,7 +246,7 @@
 					>
 						{#if activeAction === 'magic'}
 							<Spinner size="4" class="mr-2" color="primary" />
-							Отправляем...
+							Отправляем…
 						{:else}
 							Отправить ссылку
 						{/if}
@@ -267,7 +267,7 @@
 							autocomplete="username"
 							inputmode="email"
 							autocapitalize="off"
-							spellcheck="false"
+							spellcheck={false}
 							required
 							disabled={isBusy}
 							class="ps-9"
@@ -309,7 +309,7 @@
 									class="pointer-events-auto"
 									onclick={() => (showPassword = !showPassword)}
 									aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
-										aria-pressed={showPassword}
+									aria-pressed={showPassword}
 								>
 									{#if showPassword}
 										<EyeOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
@@ -332,7 +332,7 @@
 					>
 						{#if activeAction === 'password'}
 							<Spinner size="4" class="mr-2" color="primary" />
-							Входим...
+							Входим…
 						{:else}
 							Войти
 						{/if}

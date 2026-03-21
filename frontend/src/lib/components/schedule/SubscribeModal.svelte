@@ -64,9 +64,13 @@
 		</Button>
 
 		<Input
+			name="subscription_counter"
 			type="number"
+			aria-label="Сколько выступлений ждать до уведомления"
 			min="1"
 			max="100"
+			inputmode="numeric"
+			autocomplete="off"
 			bind:value={counter}
 			class="w-10 text-center font-bold [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 		/>
