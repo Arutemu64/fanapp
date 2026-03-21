@@ -4,6 +4,8 @@ services:
     build:
       context: ./frontend
       target: prod
+    networks:
+      - app
     environment:
       HOST: "0.0.0.0"
       PORT: "3000"
@@ -11,14 +13,27 @@ services:
     env_file:
       - ./frontend/.env
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     ports:
-      - '3000:3000'
+      - '127.0.0.1:3000:3000'
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          node -e "fetch('http://127.0.0.1:3000').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped
     profiles: [ "core" ]
 
   api:
     build: ./backend
+    networks:
+      - app
+      - backend
     depends_on:
       migration:
         condition: service_completed_successfully
@@ -36,13 +51,24 @@ services:
       UVICORN_FORWARDED_ALLOW_IPS: "*"
       UVICORN_ROOT_PATH: "/api"
     ports:
-      - '8000:8000'
+      - '127.0.0.1:8000:8000'
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/debug/health', timeout=3)"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped
     stop_signal: SIGINT
     profiles: [ "core" ]
 
   faststream:
     build: ./backend
+    networks:
+      - backend
     depends_on:
       migration:
         condition: service_completed_successfully
@@ -60,6 +86,8 @@ services:
 
   migration:
     build: ./backend
+    networks:
+      - backend
     env_file:
       - .env
     depends_on:
@@ -73,6 +101,8 @@ services:
 
   db:
     image: postgres:17-alpine
+    networks:
+      - backend
     volumes:
       - db-data:/var/lib/postgresql/data
     environment:
@@ -80,7 +110,7 @@ services:
       POSTGRES_PASSWORD: "${DB__PASSWORD}"
       POSTGRES_DB: "${DB__NAME}"
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
@@ -92,16 +122,20 @@ services:
 
   nats:
     image: docker.io/nats:alpine
+    networks:
+      - backend
     volumes:
       - nats-data:/data
     command: "--js --sd=/data --user ${NATS__USER} --pass ${NATS__PASSWORD}"
     ports:
-      - "4222:4222"
+      - "127.0.0.1:4222:4222"
     restart: unless-stopped
     profiles: [ "core" ]
 
   pgbackup:
     image: prodrigestivill/postgres-backup-local
+    networks:
+      - backend
     depends_on:
       - db
     volumes:
@@ -122,6 +156,8 @@ services:
 
   redis:
     image: redis:7-alpine
+    networks:
+      - backend
     environment:
       REDIS__PASSWORD: "${REDIS__PASSWORD}"
     volumes:
@@ -129,7 +165,7 @@ services:
       - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
     command: "redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS__PASSWORD}"
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "redis-cli -a \"$${REDIS__PASSWORD}\" ping | grep PONG" ]
@@ -143,3 +179,8 @@ volumes:
   pgbackup-data: {}
   redis-data: {}
   nats-data: {}
+
+networks:
+  app: {}
+  backend:
+    internal: true

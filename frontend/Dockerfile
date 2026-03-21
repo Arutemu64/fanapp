@@ -1,9 +1,11 @@
-FROM node:lts-bookworm-slim AS base
+FROM node:22-bookworm-slim AS base
 
 ENV PNPM_HOME=/pnpm
 ENV PATH=/pnpm:$PATH
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+ENV PNPM_VERSION=10.15.1
 
-RUN corepack enable
+RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
 
 WORKDIR /app
 
@@ -13,8 +15,7 @@ COPY package.json pnpm-lock.yaml ./
 FROM base AS dev
 
 RUN --mount=type=cache,target=/pnpm/store \
-	corepack prepare pnpm@latest --activate \
-	&& pnpm install --frozen-lockfile
+	pnpm install --frozen-lockfile
 
 ENV NODE_ENV=development
 
@@ -28,8 +29,7 @@ CMD ["sh", "-c", "pnpm exec svelte-kit sync && pnpm dev --host 0.0.0.0 --port 30
 FROM base AS build
 
 RUN --mount=type=cache,target=/pnpm/store \
-	corepack prepare pnpm@latest --activate \
-	&& pnpm install --frozen-lockfile
+	pnpm install --frozen-lockfile
 
 COPY . .
 RUN pnpm exec svelte-kit sync && pnpm build
@@ -37,19 +37,20 @@ RUN pnpm exec svelte-kit sync && pnpm build
 FROM base AS prod-deps
 
 RUN --mount=type=cache,target=/pnpm/store \
-	corepack prepare pnpm@latest --activate \
-	&& pnpm install --prod --frozen-lockfile
+	pnpm install --prod --frozen-lockfile
 
-FROM node:lts-bookworm-slim AS prod
+FROM node:22-bookworm-slim AS prod
 
 ENV NODE_ENV=production
 
 WORKDIR /app
 
-COPY --from=prod-deps /app/node_modules ./node_modules
-COPY --from=build /app/build ./build
-COPY --from=build /app/package.json ./package.json
+COPY --from=prod-deps --chown=node:node /app/node_modules ./node_modules
+COPY --from=build --chown=node:node /app/build ./build
+COPY --from=build --chown=node:node /app/package.json ./package.json
 
 EXPOSE 3000
+
+USER node
 
 CMD ["node", "build"]
