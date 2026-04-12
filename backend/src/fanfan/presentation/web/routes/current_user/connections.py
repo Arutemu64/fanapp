@@ -7,23 +7,23 @@ from fastapi import APIRouter, HTTPException, Request
 from starlette import status
 from starlette.responses import RedirectResponse
 
-from fanfan.application.current_user.get_current_user_social_accounts import (
-    GetCurrentUserSocialAccounts,
+from fanfan.application.dto.user import UserSocialAccountDTO
+from fanfan.application.interactors.current_user.get_current_user_social_ids import (
+    GetCurrentUserSocialIds,
 )
-from fanfan.application.current_user.link_telegram_account import (
+from fanfan.application.interactors.current_user.link_telegram_account import (
     LinkTelegramAccount,
-    LinkTelegramAccountCommand,
+    LinkTelegramAccountInput,
 )
-from fanfan.application.current_user.unlink_telegram_account import (
+from fanfan.application.interactors.current_user.unlink_telegram_account import (
     UnlinkTelegramAccount,
 )
-from fanfan.core.dto.user import UserSocialAccountDTO
 from fanfan.core.exceptions.auth import UserNotAuthenticated
 from fanfan.core.exceptions.users import (
     TelegramAlreadyLinkedToAnotherUser,
     TelegramCannotBeUnlinkedWithoutEmail,
-    UserHasNoEmail,
     UserAlreadyHasTelegramLinked,
+    UserHasNoEmail,
     UserNotFound,
 )
 from fanfan.presentation.web.schemas.error import ErrorMessage
@@ -41,8 +41,7 @@ def _build_profile_redirect(error_code: str | None = None) -> RedirectResponse:
 
     if error_code is not None:
         redirect_url = (
-            f"{redirect_url}?"
-            f"{urlencode({TELEGRAM_LINK_ERROR_QUERY_PARAM: error_code})}"
+            f"{redirect_url}?{urlencode({TELEGRAM_LINK_ERROR_QUERY_PARAM: error_code})}"
         )
 
     return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
@@ -63,7 +62,7 @@ def _build_profile_redirect(error_code: str | None = None) -> RedirectResponse:
 )
 @inject
 async def get_current_user_social_accounts(
-    interactor: FromDishka[GetCurrentUserSocialAccounts],
+    interactor: FromDishka[GetCurrentUserSocialIds],
 ) -> list[UserSocialAccountDTO]:
     try:
         return await interactor()
@@ -127,7 +126,7 @@ async def link_telegram_callback(
     token = await telegram.authorize_access_token(request)
     userinfo = token.get("userinfo", {})
     try:
-        await interactor(LinkTelegramAccountCommand(user_id=userinfo["id"]))
+        await interactor(LinkTelegramAccountInput(user_id=userinfo["id"]))
         return _build_profile_redirect()
     except ValueError as e:
         raise HTTPException(
@@ -143,9 +142,7 @@ async def link_telegram_callback(
             status_code=status.HTTP_404_NOT_FOUND, detail=e.message
         ) from e
     except TelegramAlreadyLinkedToAnotherUser:
-        return _build_profile_redirect(
-            TELEGRAM_LINK_ERROR_LINKED_TO_ANOTHER_ACCOUNT
-        )
+        return _build_profile_redirect(TELEGRAM_LINK_ERROR_LINKED_TO_ANOTHER_ACCOUNT)
     except UserAlreadyHasTelegramLinked:
         return _build_profile_redirect(TELEGRAM_LINK_ERROR_USER_ALREADY_HAS_TELEGRAM)
 

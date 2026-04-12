@@ -6,16 +6,16 @@ from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Query
 
-from fanfan.application.notifications.list_user_notifications import (
+from fanfan.application.dto.page import Pagination
+from fanfan.application.interactors.notifications.list_user_notifications import (
+    ListUserNotificationOutput,
     ListUserNotifications,
-    ListUserNotificationsCommand,
-    ListUserNotificationsResult,
+    ListUserNotificationsInput,
 )
-from fanfan.application.notifications.mark_all_read import MarkAllRead
-from fanfan.application.notifications.send_test_notification import (
+from fanfan.application.interactors.notifications.mark_all_read import MarkAllRead
+from fanfan.application.interactors.notifications.send_test_notification import (
     SendTestNotification,
 )
-from fanfan.core.dto.page import Pagination
 
 notifications_router = APIRouter(tags=["Notifications"], prefix="/notifications")
 
@@ -26,7 +26,7 @@ notifications_router = APIRouter(tags=["Notifications"], prefix="/notifications"
     description="Returns a paginated list of notifications for the authenticated user.",
     responses={
         200: {
-            "model": ListUserNotificationsResult,
+            "model": ListUserNotificationOutput,
             "description": "Notifications retrieved successfully.",
         },
     },
@@ -36,10 +36,8 @@ async def list_user_notifications(
     interactor: FromDishka[ListUserNotifications],
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
     offset: Annotated[int, Query(ge=0)] = 0,
-) -> ListUserNotificationsResult:
-    data = ListUserNotificationsCommand(
-        pagination=Pagination(limit=limit, offset=offset)
-    )
+) -> ListUserNotificationOutput:
+    data = ListUserNotificationsInput(pagination=Pagination(limit=limit, offset=offset))
     return await interactor(data)
 
 

@@ -8,6 +8,8 @@
 	import type { PageProps } from './$types';
 	import type { GetVotingNominationResult } from '$lib/types/voting';
 
+	type VotingParticipant = GetVotingNominationResult['participants'][number];
+
 	let { data }: PageProps = $props();
 	let nominationId = $derived(data.nomination.id);
 	let nomination: GetVotingNominationResult = $derived(data.nomination);
@@ -18,7 +20,7 @@
 	let searchQuery = $state('');
 
 	let filtered = $derived(
-		participants.filter((p) => {
+		participants.filter((p: VotingParticipant) => {
 			const q = searchQuery.toLowerCase();
 			return (
 				p.title.toLowerCase().includes(q) || p.voting_number?.toString().toLowerCase().includes(q)
@@ -26,7 +28,7 @@
 		})
 	);
 
-	let hasVoted = $derived(participants.some((p) => p.user_vote !== null));
+	let hasVoted = $derived(participants.some((p: VotingParticipant) => p.user_vote !== null));
 
 	async function handleVoted() {
 		await invalidate('app:voting:nomination');

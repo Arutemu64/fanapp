@@ -11,7 +11,8 @@ if typing.TYPE_CHECKING:
     from fanfan.adapters.db.models.user import UserORM
 
 
-class SocialAccountORM(BaseORM):
+class SocialIdentityORM(BaseORM):
+    # TODO Rename table
     __tablename__ = "social_accounts"
     __table_args__ = (UniqueConstraint("provider", "provider_id"),)
 

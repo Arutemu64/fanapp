@@ -179,7 +179,7 @@
 	}
 
 	async function updateSettings(
-		nextSettings: Partial<components['schemas']['UpdateUserSettingsCommand']>,
+		nextSettings: Partial<components['schemas']['UpdateUserSettingsInput']>,
 		rollback: () => void
 	) {
 		isSavingSettings = true;

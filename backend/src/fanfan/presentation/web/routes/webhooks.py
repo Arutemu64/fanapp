@@ -5,9 +5,9 @@ from pydantic import BaseModel
 from starlette.responses import JSONResponse
 
 from fanfan.adapters.api.ticketscloud.dto.order import Order
-from fanfan.application.ticketscloud.process_tcloud_order import (
+from fanfan.application.interactors.ticketscloud.process_tcloud_order import (
     ProcessTCloudOrder,
-    ProcessTCloudOrderDTO,
+    ProcessTCloudOrderInput,
 )
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
@@ -33,6 +33,6 @@ async def process_tcloud_order(
     data: TCloudWebhookPayload,
     proceed_tcloud_order: FromDishka[ProcessTCloudOrder],
 ) -> JSONResponse:
-    result = await proceed_tcloud_order(ProcessTCloudOrderDTO(order=data.data))
+    result = await proceed_tcloud_order(ProcessTCloudOrderInput(order=data.data))
     data = {"new_tickets_count": result.new_tickets_count}
     return JSONResponse(content=data, status_code=200)

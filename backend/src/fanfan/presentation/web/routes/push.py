@@ -1,19 +1,21 @@
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from starlette import status
 
-from fanfan.application.push_sub.create_push_subscriptions import (
+from fanfan.application.dto.push_sub import PushSubscriptionDTO
+from fanfan.application.interactors.push_sub.create_push_subscriptions import (
     CreatePushSubscription,
-    CreatePushSubscriptionCommand,
+    CreatePushSubscriptionInput,
 )
-from fanfan.application.push_sub.delete_user_push_subscription import (
+from fanfan.application.interactors.push_sub.delete_user_push_subscription import (
     DeletePushSubscription,
-    DeletePushSubscriptionCommand,
+    DeletePushSubscriptionInput,
 )
-from fanfan.application.push_sub.get_user_push_subscriptions import (
+from fanfan.application.interactors.push_sub.get_user_push_subscriptions import (
     ListUserPushSubscriptions,
 )
-from fanfan.core.dto.push_sub import PushSubscriptionDTO
+from fanfan.core.exceptions.push_sub import PushSubscriptionAlreadyExists
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
 push_router = APIRouter(tags=["Push"], prefix="/push")
@@ -27,13 +29,23 @@ push_router = APIRouter(tags=["Push"], prefix="/push")
     responses={
         200: {"description": "Push subscription registered successfully."},
         401: {"model": ErrorMessage, "description": "User not authenticated."},
+        409: {
+            "model": ErrorMessage,
+            "description": "Push subscription already exists.",
+        },
     },
 )
 @inject
 async def subscribe(
-    data: CreatePushSubscriptionCommand, interactor: FromDishka[CreatePushSubscription]
+    data: CreatePushSubscriptionInput, interactor: FromDishka[CreatePushSubscription]
 ) -> None:
-    await interactor(data)
+    try:
+        await interactor(data)
+    except PushSubscriptionAlreadyExists as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=e.message,
+        ) from e
 
 
 @push_router.get(
@@ -65,6 +77,6 @@ async def list_subscriptions(
 )
 @inject
 async def unsubscribe(
-    data: DeletePushSubscriptionCommand, interactor: FromDishka[DeletePushSubscription]
+    data: DeletePushSubscriptionInput, interactor: FromDishka[DeletePushSubscription]
 ) -> None:
     await interactor(data)

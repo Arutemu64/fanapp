@@ -5,7 +5,7 @@ from fanfan.core.vo.user import UserId
 
 
 @dataclass(slots=True, kw_only=True)
-class SocialAccount:
+class SocialIdentity:
     id: UUID = field(default_factory=uuid7)
     user_id: UserId
     provider: str

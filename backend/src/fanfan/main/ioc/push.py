@@ -1,6 +1,6 @@
 from dishka import Provider, Scope, provide
 
-from fanfan.adapters.notifications.push import PushNotifier
+from fanfan.adapters.push.push import PushNotifier
 
 
 class PushProvider(Provider):

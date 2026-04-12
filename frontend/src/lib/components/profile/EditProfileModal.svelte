@@ -7,7 +7,7 @@
 	import type { CurrentUserDTO } from '$lib/types/user';
 	import type { components } from '$lib/api/v1';
 
-	type UpdateCurrentUserCommand = components['schemas']['UpdateCurrentUserCommand'];
+	type UpdateCurrentUserInput = components['schemas']['UpdateCurrentUserInput'];
 
 	interface Props {
 		user: CurrentUserDTO;
@@ -93,7 +93,7 @@
 
 		isLoading = true;
 
-		const body: UpdateCurrentUserCommand = {};
+		const body: UpdateCurrentUserInput = {};
 		if (username && username !== user.username) body.username = username;
 		if (firstName && firstName !== user.first_name) body.first_name = firstName;
 

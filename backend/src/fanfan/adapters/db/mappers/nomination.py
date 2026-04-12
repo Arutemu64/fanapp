@@ -1,5 +1,5 @@
 from fanfan.adapters.db.models import NominationORM, VoteORM
-from fanfan.core.dto.nomination import NominationVoteDTO, NominationVotingDTO
+from fanfan.application.dto.nomination import NominationVoteDTO, NominationVotingDTO
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.vo.nomination import NominationId
 

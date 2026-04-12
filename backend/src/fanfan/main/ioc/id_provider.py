@@ -1,23 +1,16 @@
 from dishka import Provider, Scope, provide
 
-from fanfan.adapters.auth.providers.bot import BotIdProvider
+from fanfan.adapters.auth.jwt import JwtTokenProcessor
 from fanfan.adapters.auth.providers.raw import RawIdProvider
 from fanfan.adapters.auth.providers.web import (
     OAuth2PasswordBearerWithCookie,
     WebIdProvider,
 )
-from fanfan.adapters.auth.utils.jwt import JwtTokenProcessor
-from fanfan.application.common.id_provider import IdProvider
+from fanfan.application.ports.id_provider import IdProvider
 
 
 class JwtTokenProcessorProvider(Provider):
     token_processor = provide(JwtTokenProcessor, scope=Scope.APP)
-
-
-class BotAuthProvider(Provider):
-    scope = Scope.REQUEST
-
-    bot_id_provider = provide(BotIdProvider, provides=IdProvider)
 
 
 class WebAuthProvider(Provider):

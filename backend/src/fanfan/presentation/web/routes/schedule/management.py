@@ -3,20 +3,17 @@ from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, HTTPException
 from starlette import status
 
-from fanfan.application.schedule_mgmt.move_event import (
+from fanfan.application.interactors.schedule_mgmt.move_event import (
     MoveScheduleEvent,
-    MoveScheduleEventCommand,
-    MoveScheduleEventResult,
+    MoveScheduleEventInput,
 )
-from fanfan.application.schedule_mgmt.set_current_event import (
+from fanfan.application.interactors.schedule_mgmt.set_current_event import (
     SetCurrentScheduleEvent,
-    SetCurrentScheduleEventCommand,
-    SetCurrentScheduleEventResult,
+    SetCurrentScheduleEventInput,
 )
-from fanfan.application.schedule_mgmt.update_event_skip import (
+from fanfan.application.interactors.schedule_mgmt.update_event_skip import (
     UpdateScheduleEventSkip,
-    UpdateScheduleEventSkipCommand,
-    UpdateScheduleEventSkipResult,
+    UpdateScheduleEventSkipInput,
 )
 from fanfan.core.exceptions.schedule import (
     CurrentEventNotAllowed,
@@ -40,7 +37,7 @@ management_router = APIRouter()
     "Validates timing and event status.",
     responses={
         200: {
-            "model": SetCurrentScheduleEventResult,
+            "model": None,
             "description": "Event set as current successfully.",
         },
         400: {
@@ -64,9 +61,9 @@ management_router = APIRouter()
 async def set_event_as_current(
     event_id: ScheduleEventId,
     interactor: FromDishka[SetCurrentScheduleEvent],
-) -> SetCurrentScheduleEventResult:
+) -> None:
     try:
-        return await interactor(SetCurrentScheduleEventCommand(event_id=event_id))
+        return await interactor(SetCurrentScheduleEventInput(event_id=event_id))
     except EventNotFound as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=e.message
@@ -91,7 +88,7 @@ async def set_event_as_current(
     "Subject to rate limiting.",
     responses={
         200: {
-            "model": SetCurrentScheduleEventResult,
+            "model": None,
             "description": "Current event cleared successfully.",
         },
         429: {
@@ -109,9 +106,9 @@ async def set_event_as_current(
 @inject
 async def uncheck_current_event(
     interactor: FromDishka[SetCurrentScheduleEvent],
-) -> SetCurrentScheduleEventResult:
+) -> None:
     try:
-        return await interactor(SetCurrentScheduleEventCommand(event_id=None))
+        return await interactor(SetCurrentScheduleEventInput(event_id=None))
     except ScheduleEditTooFast as e:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -128,7 +125,7 @@ async def uncheck_current_event(
     "specifically after the provided event ID.",
     responses={
         200: {
-            "model": MoveScheduleEventResult,
+            "model": None,
             "description": "Event moved successfully.",
         },
         400: {
@@ -146,10 +143,10 @@ async def move_schedule_event(
     event_id: ScheduleEventId,
     data: MoveScheduleEventRequest,
     interactor: FromDishka[MoveScheduleEvent],
-) -> MoveScheduleEventResult:
+) -> None:
     try:
         return await interactor(
-            MoveScheduleEventCommand(
+            MoveScheduleEventInput(
                 event_id=event_id, place_after_event_id=data.place_after_event_id
             )
         )
@@ -171,7 +168,7 @@ async def move_schedule_event(
     "Note: the currently active event cannot be skipped.",
     responses={
         200: {
-            "model": UpdateScheduleEventSkipResult,
+            "model": None,
             "description": "Event marked as skipped.",
         },
         400: {
@@ -185,10 +182,10 @@ async def move_schedule_event(
 async def skip_schedule_event(
     event_id: ScheduleEventId,
     interactor: FromDishka[UpdateScheduleEventSkip],
-) -> UpdateScheduleEventSkipResult:
+) -> None:
     try:
         return await interactor(
-            UpdateScheduleEventSkipCommand(event_id=event_id, is_skipped=True)
+            UpdateScheduleEventSkipInput(event_id=event_id, is_skipped=True)
         )
     except EventNotFound as e:
         raise HTTPException(
@@ -208,7 +205,7 @@ async def skip_schedule_event(
     "the active schedule sequence.",
     responses={
         200: {
-            "model": UpdateScheduleEventSkipResult,
+            "model": None,
             "description": "Event restored to active schedule.",
         },
         400: {
@@ -222,10 +219,10 @@ async def skip_schedule_event(
 async def unskip_schedule_event(
     event_id: ScheduleEventId,
     interactor: FromDishka[UpdateScheduleEventSkip],
-) -> UpdateScheduleEventSkipResult:
+) -> None:
     try:
         return await interactor(
-            UpdateScheduleEventSkipCommand(event_id=event_id, is_skipped=False)
+            UpdateScheduleEventSkipInput(event_id=event_id, is_skipped=False)
         )
     except EventNotFound as e:
         raise HTTPException(

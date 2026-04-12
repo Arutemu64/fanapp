@@ -1,5 +1,8 @@
 from fanfan.adapters.db.models import ScheduleEventORM, SubscriptionORM
-from fanfan.core.dto.schedule import ScheduleEventFullDTO, ScheduleEventSubscriptionDTO
+from fanfan.application.dto.schedule import (
+    ScheduleEventFullDTO,
+    ScheduleEventSubscriptionDTO,
+)
 from fanfan.core.models.schedule_event import ScheduleEvent
 
 

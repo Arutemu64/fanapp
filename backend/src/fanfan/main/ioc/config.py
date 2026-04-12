@@ -6,7 +6,7 @@ from fanfan.adapters.config.models import (
 from fanfan.adapters.config.parsers import get_config
 from fanfan.adapters.debug.config import DebugConfig
 from fanfan.adapters.mail.config import MailConfig
-from fanfan.adapters.notifications.config import PushConfig
+from fanfan.adapters.push.config import PushConfig
 from fanfan.presentation.web.config import WebConfig
 
 

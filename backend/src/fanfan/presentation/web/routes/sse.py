@@ -5,7 +5,7 @@ from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Request
 from sse_starlette import EventSourceResponse
 
-from fanfan.application.sse.stream_events import StreamEvents
+from fanfan.application.interactors.sse.stream_events import StreamEvents
 
 sse_router = APIRouter(tags=["SSE"])
 logger = logging.getLogger(__name__)

@@ -2,9 +2,9 @@ from dishka import FromDishka
 from dishka_faststream import inject
 from faststream.nats import NatsRouter, PullSub
 
-from fanfan.application.voting.check_voting_contest_entry import (
+from fanfan.application.interactors.voting.check_voting_contest_entry import (
     CheckVotingContestEntry,
-    CheckVotingContestEntryCommand,
+    CheckVotingContestEntryInput,
 )
 from fanfan.core.events.voting import CreatedVoteEvent, DeletedVoteEvent
 from fanfan.presentation.faststream.jstream import stream
@@ -23,7 +23,7 @@ async def update_contest_entry_on_new_vote(
     data: CreatedVoteEvent,
     interactor: FromDishka[CheckVotingContestEntry],
 ):
-    await interactor(CheckVotingContestEntryCommand(user_id=data.user_id))
+    await interactor(CheckVotingContestEntryInput(user_id=data.user_id))
 
 
 @voting_router.subscriber(
@@ -37,4 +37,4 @@ async def update_contest_entry_on_deleted_vote(
     data: DeletedVoteEvent,
     interactor: FromDishka[CheckVotingContestEntry],
 ):
-    await interactor(CheckVotingContestEntryCommand(user_id=data.user_id))
+    await interactor(CheckVotingContestEntryInput(user_id=data.user_id))

@@ -8,7 +8,7 @@ from .permission import PermissionORM, UserPermissionORM
 from .push_subscription import PushSubscriptionORM
 from .schedule_change import ScheduleChangeORM
 from .schedule_event import ScheduleEventORM
-from .social_account import SocialAccountORM
+from .social_account import SocialIdentityORM
 from .subscription import SubscriptionORM
 from .ticket import TicketORM
 from .user import UserORM
@@ -32,5 +32,5 @@ __all__ = [
     "PushSubscriptionORM",
     "MailingORM",
     "NotificationORM",
-    "SocialAccountORM",
+    "SocialIdentityORM",
 ]

@@ -3,16 +3,16 @@ from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, HTTPException, Request
 from starlette import status
 
-from fanfan.application.current_user.get_current_user import GetCurrentUser
-from fanfan.application.current_user.update_user import (
+from fanfan.application.dto.user import CurrentUserDTO
+from fanfan.application.interactors.current_user.get_current_user import GetCurrentUser
+from fanfan.application.interactors.current_user.update_user import (
     UpdateCurrentUser,
-    UpdateCurrentUserCommand,
+    UpdateCurrentUserInput,
 )
-from fanfan.application.current_user.update_user_settings import (
+from fanfan.application.interactors.current_user.update_user_settings import (
     UpdateUserSettings,
-    UpdateUserSettingsCommand,
+    UpdateUserSettingsInput,
 )
-from fanfan.core.dto.user import CurrentUserDTO
 from fanfan.core.exceptions.auth import UserNotAuthenticated
 from fanfan.core.exceptions.users import UsernameAlreadyTaken, UserNotFound
 from fanfan.presentation.web.schemas.error import ErrorMessage
@@ -51,7 +51,7 @@ async def get_current_user(
 )
 @inject
 async def update_current_user(
-    data: UpdateCurrentUserCommand,
+    data: UpdateCurrentUserInput,
     interactor: FromDishka[UpdateCurrentUser],
 ) -> None:
     try:
@@ -78,7 +78,7 @@ async def update_current_user(
 )
 @inject
 async def update_current_user_settings(
-    data: UpdateUserSettingsCommand,
+    data: UpdateUserSettingsInput,
     interactor: FromDishka[UpdateUserSettings],
 ) -> None:
     try:

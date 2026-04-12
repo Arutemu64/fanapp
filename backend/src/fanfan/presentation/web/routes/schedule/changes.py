@@ -3,13 +3,13 @@ from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, HTTPException
 from starlette import status
 
-from fanfan.application.schedule_mgmt.list_schedule_changes import (
+from fanfan.application.interactors.schedule_mgmt.list_schedule_changes import (
     ListScheduleChanges,
     ListScheduleChangesResult,
 )
-from fanfan.application.schedule_mgmt.undo_change import (
+from fanfan.application.interactors.schedule_mgmt.undo_change import (
     UndoScheduleChange,
-    UndoScheduleChangeCommand,
+    UndoScheduleChangeInput,
 )
 from fanfan.core.exceptions.schedule import ScheduleChangeNotFound
 from fanfan.core.vo.schedule_change import ScheduleChangeId
@@ -58,9 +58,7 @@ async def undo_schedule_change(
     interactor: FromDishka[UndoScheduleChange],
 ) -> None:
     try:
-        await interactor(
-            UndoScheduleChangeCommand(schedule_change_id=schedule_change_id)
-        )
+        await interactor(UndoScheduleChangeInput(schedule_change_id=schedule_change_id))
     except ScheduleChangeNotFound as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=e.message

@@ -1,5 +1,5 @@
 from fanfan.adapters.db.models import ScheduleChangeORM
-from fanfan.core.dto.schedule_change import (
+from fanfan.application.dto.schedule_change import (
     ScheduleChangeEventDTO,
     ScheduleChangeFullDTO,
     ScheduleChangeUserDTO,
@@ -46,6 +46,7 @@ class ScheduleChangeMapper:
                 id=schedule_change_orm.changed_event.id,
                 public_number=schedule_change_orm.changed_event.public_id,
                 title=schedule_change_orm.changed_event.title,
+                order=schedule_change_orm.changed_event.order,
             )
             if schedule_change_orm.changed_event
             else None,
@@ -53,6 +54,7 @@ class ScheduleChangeMapper:
                 id=schedule_change_orm.argument_event.id,
                 public_number=schedule_change_orm.argument_event.public_id,
                 title=schedule_change_orm.argument_event.title,
+                order=schedule_change_orm.argument_event.order,
             )
             if schedule_change_orm.argument_event
             else None,

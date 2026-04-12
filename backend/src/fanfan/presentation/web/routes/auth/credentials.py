@@ -6,12 +6,15 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Response
 from pydantic import BaseModel, EmailStr, Field
 from starlette import status
 
-from fanfan.application.auth.authenticate_user import (
+from fanfan.application.dto.user import UserBaseDTO
+from fanfan.application.interactors.auth.authenticate_user import (
     AuthenticateUser,
-    AuthenticateUserCommand,
+    AuthenticateUserInput,
 )
-from fanfan.application.auth.register_user import RegisterUser, RegisterUserCommand
-from fanfan.core.dto.user import UserBaseDTO
+from fanfan.application.interactors.auth.register_user import (
+    RegisterUser,
+    RegisterUserInput,
+)
 from fanfan.core.exceptions.auth import AuthenticationError
 from fanfan.core.exceptions.users import UserAlreadyExists, UserNotFound
 from fanfan.presentation.web.config import WebConfig
@@ -58,7 +61,7 @@ async def login(
     # Keep login flow explicit so junior developers can follow each step.
     try:
         token = await interactor(
-            AuthenticateUserCommand(email=form_data.email, password=form_data.password)
+            AuthenticateUserInput(email=form_data.email, password=form_data.password)
         )
     except (UserNotFound, AuthenticationError) as e:
         raise HTTPException(
@@ -86,7 +89,7 @@ async def login(
 )
 @inject
 async def register_user(
-    data: RegisterUserCommand,
+    data: RegisterUserInput,
     interactor: FromDishka[RegisterUser],
 ) -> None:
     try:

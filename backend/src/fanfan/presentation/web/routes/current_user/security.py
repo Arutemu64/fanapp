@@ -3,10 +3,13 @@ from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, HTTPException
 from starlette import status
 
-from fanfan.application.auth.change_email import ChangeEmail, ChangeEmailCommand
-from fanfan.application.auth.change_password import (
+from fanfan.application.interactors.auth.change_email import (
+    ChangeEmail,
+    ChangeEmailInput,
+)
+from fanfan.application.interactors.auth.change_password import (
     ChangePassword,
-    ChangePasswordCommand,
+    ChangePasswordInput,
 )
 from fanfan.core.exceptions.auth import IncorrectPassword, UserNotAuthenticated
 from fanfan.core.exceptions.users import EmailAlreadyExists, UserNotFound
@@ -30,7 +33,7 @@ security_router = APIRouter()
 )
 @inject
 async def change_current_user_password(
-    data: ChangePasswordCommand,
+    data: ChangePasswordInput,
     interactor: FromDishka[ChangePassword],
 ) -> None:
     try:
@@ -67,7 +70,7 @@ async def change_current_user_password(
 )
 @inject
 async def change_current_user_email(
-    data: ChangeEmailCommand,
+    data: ChangeEmailInput,
     interactor: FromDishka[ChangeEmail],
 ) -> None:
     try:

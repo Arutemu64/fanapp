@@ -5,10 +5,10 @@ import click
 from dishka.integrations.click import CONTAINER_NAME
 
 from fanfan.adapters.parsers.schedule import parse_schedule_from_excel
-from fanfan.application.cosplay2.sync_cosplay2 import SyncCosplay2
-from fanfan.application.schedule_mgmt.import_schedule import (
+from fanfan.application.interactors.cosplay2.sync_cosplay2 import SyncCosplay2
+from fanfan.application.interactors.schedule_mgmt.import_schedule import (
     ImportSchedule,
-    ImportScheduleCommand,
+    ImportScheduleInput,
 )
 from fanfan.presentation.cli.commands.common import async_command
 
@@ -38,4 +38,4 @@ async def parse_schedule_command(context: click.Context, schedule: BinaryIO):
     async with container():
         interactor = await container.get(ImportSchedule)
         schedule = parse_schedule_from_excel(file=schedule)
-        await interactor(ImportScheduleCommand(schedule=schedule))
+        await interactor(ImportScheduleInput(schedule=schedule))

@@ -1,6 +1,6 @@
 from typing import ClassVar
 
-from fanfan.core.dto.notification import NewNotificationDTO
+from fanfan.application.dto.notification import NewNotificationDTO
 from fanfan.core.events.base import AppEvent
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.notification import NotificationId

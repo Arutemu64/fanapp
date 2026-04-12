@@ -3,9 +3,9 @@ from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, UploadFile
 
 from fanfan.adapters.parsers.schedule import parse_schedule_from_excel
-from fanfan.application.schedule_mgmt.import_schedule import (
+from fanfan.application.interactors.schedule_mgmt.import_schedule import (
     ImportSchedule,
-    ImportScheduleCommand,
+    ImportScheduleInput,
 )
 
 importing_router = APIRouter()
@@ -22,4 +22,4 @@ async def import_schedule(
 ) -> None:
     # Parse once here to keep the interactor focused on business logic.
     schedule = parse_schedule_from_excel(file=file.file)
-    await interactor(ImportScheduleCommand(schedule=schedule))
+    await interactor(ImportScheduleInput(schedule=schedule))

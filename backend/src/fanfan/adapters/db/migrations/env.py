@@ -1,5 +1,4 @@
 import asyncio
-import sys
 from logging.config import fileConfig
 
 import alembic_postgresql_enum  # noqa: F401
@@ -112,7 +111,4 @@ def process_revision_directives(context, revision, directives) -> None:
 if context.is_offline_mode():
     run_migrations_offline()
 else:
-    # Psycopg cannot use the 'ProactorEventLoop' to run in async mode
-    if sys.platform == "win32":
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     run_migrations_online()

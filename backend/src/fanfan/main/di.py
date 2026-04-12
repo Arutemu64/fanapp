@@ -5,8 +5,7 @@ from fanfan.main.ioc.auth import AuthProvider
 from fanfan.main.ioc.bot import BotProvider
 from fanfan.main.ioc.config import ConfigProvider
 from fanfan.main.ioc.cosplay2 import Cosplay2Provider
-from fanfan.main.ioc.db import DbProvider
-from fanfan.main.ioc.gateways import GatewaysProvider
+from fanfan.main.ioc.db import DbProvider, SqlRepositoriesProvider
 from fanfan.main.ioc.id_provider import (
     JwtTokenProcessorProvider,
     SystemAuthProvider,
@@ -32,7 +31,7 @@ def get_common_providers() -> list[Provider]:
         RedisProvider(),
         TCloudProvider(),
         ServicesProvider(),
-        GatewaysProvider(),
+        SqlRepositoriesProvider(),
         StreamProvider(),
         Cosplay2Provider(),
         JinjaProvider(),

@@ -4,11 +4,12 @@ import json
 
 from redis.asyncio import Redis
 
+from fanfan.application.ports.token_registry import TokenRegistry
 from fanfan.core.vo.user import UserId
 from fanfan.presentation.web.config import WebConfig
 
 
-class RedisAuthTokenRegistry:
+class RedisTokenRegistry(TokenRegistry):
     def __init__(self, redis: Redis, config: WebConfig):
         self.redis = redis
         self._secret = config.secret_key.get_secret_value().encode()
@@ -33,10 +34,6 @@ class RedisAuthTokenRegistry:
         ).hexdigest()
 
     async def consume_refresh_token_jti(self, jti: str, ttl_seconds: int) -> bool:
-        """Mark a refresh token JTI as used.
-
-        Returns True if it was fresh (first use).
-        """
         ttl = max(1, ttl_seconds)
         result = await self.redis.set(
             name=self._refresh_used_key(jti),
@@ -47,10 +44,6 @@ class RedisAuthTokenRegistry:
         return bool(result)
 
     async def revoke_refresh_token_jti(self, jti: str, ttl_seconds: int) -> None:
-        """Forcibly mark a refresh token as used.
-
-        This is used on logout so a stolen cookie cannot be replayed later.
-        """
         ttl = max(1, ttl_seconds)
         await self.redis.set(
             name=self._refresh_used_key(jti),

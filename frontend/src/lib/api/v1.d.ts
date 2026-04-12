@@ -4,4176 +4,4137 @@
  */
 
 export interface paths {
-	'/debug/': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/** Debug */
-		get: operations['debug_debug__get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/debug/health': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/** Health Check */
-		get: operations['health_check_debug_health_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/auth/login': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Login and get access token
-		 * @description Authenticates user with email and password. Sets HttpOnly cookies with JWT access and refresh tokens.
-		 */
-		post: operations['login_auth_login_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/auth/register': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Register a new user
-		 * @description Creates a new user account with an email and password. A username is generated automatically.
-		 */
-		post: operations['register_user_auth_register_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/auth/request-email-verification': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Request a new email verification link
-		 * @description Sends a new verification email to the current user's email address.
-		 */
-		post: operations['request_email_verification_auth_request_email_verification_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/auth/verify-email': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Verify user email
-		 * @description Verifies a user's email address using a signed token received via email.
-		 */
-		post: operations['verify_email_auth_verify_email_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/auth/request-magic-link': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Request email magic link
-		 * @description Sends a one-time sign-in link to the requested email address. Creates an account automatically when the email is new.
-		 */
-		post: operations['request_magic_link_auth_request_magic_link_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/auth/login-magic-link': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Login with email magic link
-		 * @description Consumes a one-time email magic link token and sets auth cookies.
-		 */
-		post: operations['login_magic_link_auth_login_magic_link_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/auth/refresh': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Refresh access token
-		 * @description Uses the refresh_token cookie to issue fresh access and refresh tokens (token rotation). Old cookies are replaced.
-		 */
-		post: operations['refresh_access_token_auth_refresh_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/auth/logout': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Logout user
-		 * @description Clears auth cookies and invalidates the refresh token so it can't be replayed even if stolen.
-		 */
-		post: operations['logout_user_auth_logout_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/auth/login/telegram': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/** Login Telegram */
-		get: operations['login_telegram_auth_login_telegram_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/auth/auth/telegram': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/** Authorize Telegram */
-		get: operations['authorize_telegram_auth_auth_telegram_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/me/': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get current user
-		 * @description Retrieves the currently authenticated user's profile information.
-		 */
-		get: operations['get_current_user_me__get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		/**
-		 * Update current user
-		 * @description Updates the currently authenticated user's profile information.
-		 */
-		patch: operations['update_current_user_me__patch'];
-		trace?: never;
-	};
-	'/me/settings': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		/**
-		 * Update current user settings
-		 * @description Updates the currently authenticated user's profile settings.
-		 */
-		patch: operations['update_current_user_settings_me_settings_patch'];
-		trace?: never;
-	};
-	'/me/password': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Change current user password
-		 * @description Changes the authenticated user's password. Requires the current password for verification when one is already set.
-		 */
-		post: operations['change_current_user_password_me_password_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/me/email': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Change current user email
-		 * @description Changes the authenticated user's email address and sends a verification link to the new email.
-		 */
-		post: operations['change_current_user_email_me_email_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/me/connections/': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get current user social accounts
-		 * @description Retrieves the currently authenticated user's linked social accounts.
-		 */
-		get: operations['get_current_user_social_accounts_me_connections__get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/me/connections/telegram': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Link Telegram account
-		 * @description Links a Telegram account to the currently authenticated user.
-		 */
-		get: operations['link_telegram_me_connections_telegram_get'];
-		put?: never;
-		post?: never;
-		/**
-		 * Unlink Telegram account
-		 * @description Unlinks the Telegram account from the currently authenticated user.
-		 */
-		delete: operations['unlink_telegram_account_me_connections_telegram_delete'];
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/me/connections/telegram/callback': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Link Telegram account
-		 * @description Links a Telegram account to the currently authenticated user.
-		 */
-		get: operations['link_telegram_callback_me_connections_telegram_callback_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/me/ticket': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Link ticket
-		 * @description Links provided ticket to current user.
-		 */
-		post: operations['link_ticket_me_ticket_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/settings': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get festival settings
-		 * @description Returns the current festival settings that organizers can manage.
-		 */
-		get: operations['get_settings_settings_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		/**
-		 * Update festival settings
-		 * @description Updates festival settings that are available to organizers.
-		 */
-		patch: operations['update_settings_settings_patch'];
-		trace?: never;
-	};
-	'/events': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Stream events via SSE
-		 * @description Opens a Server-Sent Events connection to receive real-time event updates.
-		 */
-		get: operations['stream_events_events_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/schedule/': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get current schedule
-		 * @description Retrieves the full schedule using the GetSchedule interactor.
-		 */
-		get: operations['get_schedule_schedule__get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/schedule/{event_id}/current': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		/**
-		 * Set specific event as current
-		 * @description Updates the schedule state to mark a specific event as active. Validates timing and event status.
-		 */
-		patch: operations['set_event_as_current_schedule__event_id__current_patch'];
-		trace?: never;
-	};
-	'/schedule/current': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		post?: never;
-		/**
-		 * Unset current schedule event
-		 * @description Clears the currently active event from the schedule. Subject to rate limiting.
-		 */
-		delete: operations['uncheck_current_event_schedule_current_delete'];
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/schedule/{event_id}/move': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		/**
-		 * Reorder schedule event
-		 * @description Moves an event to a new position in the sequence, specifically after the provided event ID.
-		 */
-		patch: operations['move_schedule_event_schedule__event_id__move_patch'];
-		trace?: never;
-	};
-	'/schedule/{event_id}/skip': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		/**
-		 * Skip a schedule event
-		 * @description Marks a specific event as skipped. Note: the currently active event cannot be skipped.
-		 */
-		patch: operations['skip_schedule_event_schedule__event_id__skip_patch'];
-		trace?: never;
-	};
-	'/schedule/{event_id}/unskip': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		/**
-		 * Unskip a schedule event
-		 * @description Restores a previously skipped event back into the active schedule sequence.
-		 */
-		patch: operations['unskip_schedule_event_schedule__event_id__unskip_patch'];
-		trace?: never;
-	};
-	'/schedule/changes/': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * List schedule audit log
-		 * @description Returns a history of all modifications made to the schedule, including skips, moves, and status changes.
-		 */
-		get: operations['list_schedule_changes_schedule_changes__get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/schedule/changes/{schedule_change_id}': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		post?: never;
-		/**
-		 * Undo a specific schedule change
-		 * @description Reverts a previously made change to the schedule using its unique change ID.
-		 */
-		delete: operations['undo_schedule_change_schedule_changes__schedule_change_id__delete'];
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/schedule/subscriptions/': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Create a new event subscription
-		 * @description Subscribes the current user to a specific schedule event. Prevents duplicate subscriptions.
-		 */
-		post: operations['new_subscription_schedule_subscriptions__post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/schedule/subscriptions/{subscription_id}': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		post?: never;
-		/**
-		 * Remove a subscription
-		 * @description Deletes an existing subscription by its unique ID.
-		 */
-		delete: operations['delete_subscription_schedule_subscriptions__subscription_id__delete'];
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/schedule/import': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/** Import Schedule */
-		post: operations['import_schedule_schedule_import_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/voting/status': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get current voting state
-		 * @description Retrieves the current phase of the voting process (e.g., active, closed) and reasoning.
-		 */
-		get: operations['get_voting_status_voting_status_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/voting/nominations': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * List all nominations for the current vote
-		 * @description Retrieves a list of all candidates or items eligible for voting in the current session.
-		 */
-		get: operations['list_voting_nominations_voting_nominations_get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/voting/nominations/{nomination_code}': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * Get voting nomination details
-		 * @description Retrieves detailed information about a specific nomination.
-		 */
-		get: operations['get_voting_nomination_voting_nominations__nomination_code__get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/voting/nominations/{nomination_id}/vote': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		/**
-		 * Cast a vote
-		 * @description Submits a vote for a participant in the specified nomination.
-		 */
-		put: operations['add_vote_voting_nominations__nomination_id__vote_put'];
-		post?: never;
-		/**
-		 * Cancel a vote
-		 * @description Removes a previously cast vote in the specified nomination.
-		 */
-		delete: operations['cancel_vote_voting_nominations__nomination_id__vote_delete'];
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/webhooks/tcloud': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Process TicketsCloud webhook
-		 * @description Handles incoming webhook events from TicketsCloud ticketing system.
-		 */
-		post: operations['process_tcloud_order_webhooks_tcloud_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/notifications/': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * List user notifications
-		 * @description Returns a paginated list of notifications for the authenticated user.
-		 */
-		get: operations['list_user_notifications_notifications__get'];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/notifications/mark-all-read': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Mark all notifications as read
-		 * @description Marks all unread notifications for the authenticated user as read.
-		 */
-		post: operations['mark_all_notifications_read_notifications_mark_all_read_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/notifications/test': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		/**
-		 * Send test notification
-		 * @description Creates a test notification for the authenticated user and sends it through all connected channels.
-		 */
-		post: operations['send_test_notification_notifications_test_post'];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	'/push/': {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		/**
-		 * List push subscriptions
-		 * @description Returns a list of push subscriptions for the authenticated user.
-		 */
-		get: operations['list_subscriptions_push__get'];
-		put?: never;
-		/**
-		 * Subscribe to push notifications
-		 * @description Registers a push subscription endpoint for the authenticated user's device.
-		 */
-		post: operations['subscribe_push__post'];
-		/**
-		 * Unsubscribe from push notifications
-		 * @description Removes a push subscription endpoint for the authenticated user.
-		 */
-		delete: operations['unsubscribe_push__delete'];
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
+    "/debug/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Debug */
+        get: operations["debug_debug__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/debug/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Health Check */
+        get: operations["health_check_debug_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Login and get access token
+         * @description Authenticates user with email and password. Sets HttpOnly cookies with JWT access and refresh tokens.
+         */
+        post: operations["login_auth_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register a new user
+         * @description Creates a new user account with an email and password. A username is generated automatically.
+         */
+        post: operations["register_user_auth_register_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/request-email-verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request a new email verification link
+         * @description Sends a new verification email to the current user's email address.
+         */
+        post: operations["request_email_verification_auth_request_email_verification_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/verify-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify user email
+         * @description Verifies a user's email address using a signed token received via email.
+         */
+        post: operations["verify_email_auth_verify_email_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/request-magic-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request email magic link
+         * @description Sends a one-time sign-in link to the requested email address. Creates an account automatically when the email is new.
+         */
+        post: operations["request_magic_link_auth_request_magic_link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/login-magic-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Login with email magic link
+         * @description Consumes a one-time email magic link token and sets auth cookies.
+         */
+        post: operations["login_magic_link_auth_login_magic_link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh access token
+         * @description Uses the refresh_token cookie to issue fresh access and refresh tokens (token rotation). Old cookies are replaced.
+         */
+        post: operations["refresh_access_token_auth_refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Logout user
+         * @description Clears auth cookies and invalidates the refresh token so it can't be replayed even if stolen.
+         */
+        post: operations["logout_user_auth_logout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/login/telegram": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Login Telegram */
+        get: operations["login_telegram_auth_login_telegram_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/auth/telegram": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Authorize Telegram */
+        get: operations["authorize_telegram_auth_auth_telegram_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get current user
+         * @description Retrieves the currently authenticated user's profile information.
+         */
+        get: operations["get_current_user_me__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update current user
+         * @description Updates the currently authenticated user's profile information.
+         */
+        patch: operations["update_current_user_me__patch"];
+        trace?: never;
+    };
+    "/me/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update current user settings
+         * @description Updates the currently authenticated user's profile settings.
+         */
+        patch: operations["update_current_user_settings_me_settings_patch"];
+        trace?: never;
+    };
+    "/me/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change current user password
+         * @description Changes the authenticated user's password. Requires the current password for verification when one is already set.
+         */
+        post: operations["change_current_user_password_me_password_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change current user email
+         * @description Changes the authenticated user's email address and sends a verification link to the new email.
+         */
+        post: operations["change_current_user_email_me_email_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/connections/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get current user social accounts
+         * @description Retrieves the currently authenticated user's linked social accounts.
+         */
+        get: operations["get_current_user_social_accounts_me_connections__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/connections/telegram": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Link Telegram account
+         * @description Links a Telegram account to the currently authenticated user.
+         */
+        get: operations["link_telegram_me_connections_telegram_get"];
+        put?: never;
+        post?: never;
+        /**
+         * Unlink Telegram account
+         * @description Unlinks the Telegram account from the currently authenticated user.
+         */
+        delete: operations["unlink_telegram_account_me_connections_telegram_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/connections/telegram/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Link Telegram account
+         * @description Links a Telegram account to the currently authenticated user.
+         */
+        get: operations["link_telegram_callback_me_connections_telegram_callback_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/ticket": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Link ticket
+         * @description Links provided ticket to current user.
+         */
+        post: operations["link_ticket_me_ticket_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get festival settings
+         * @description Returns the current festival settings that organizers can manage.
+         */
+        get: operations["get_settings_settings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update festival settings
+         * @description Updates festival settings that are available to organizers.
+         */
+        patch: operations["update_settings_settings_patch"];
+        trace?: never;
+    };
+    "/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stream events via SSE
+         * @description Opens a Server-Sent Events connection to receive real-time event updates.
+         */
+        get: operations["stream_events_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get current schedule
+         * @description Retrieves the full schedule using the GetSchedule interactor.
+         */
+        get: operations["get_schedule_schedule__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/{event_id}/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Set specific event as current
+         * @description Updates the schedule state to mark a specific event as active. Validates timing and event status.
+         */
+        patch: operations["set_event_as_current_schedule__event_id__current_patch"];
+        trace?: never;
+    };
+    "/schedule/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Unset current schedule event
+         * @description Clears the currently active event from the schedule. Subject to rate limiting.
+         */
+        delete: operations["uncheck_current_event_schedule_current_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/{event_id}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Reorder schedule event
+         * @description Moves an event to a new position in the sequence, specifically after the provided event ID.
+         */
+        patch: operations["move_schedule_event_schedule__event_id__move_patch"];
+        trace?: never;
+    };
+    "/schedule/{event_id}/skip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Skip a schedule event
+         * @description Marks a specific event as skipped. Note: the currently active event cannot be skipped.
+         */
+        patch: operations["skip_schedule_event_schedule__event_id__skip_patch"];
+        trace?: never;
+    };
+    "/schedule/{event_id}/unskip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Unskip a schedule event
+         * @description Restores a previously skipped event back into the active schedule sequence.
+         */
+        patch: operations["unskip_schedule_event_schedule__event_id__unskip_patch"];
+        trace?: never;
+    };
+    "/schedule/changes/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List schedule audit log
+         * @description Returns a history of all modifications made to the schedule, including skips, moves, and status changes.
+         */
+        get: operations["list_schedule_changes_schedule_changes__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/changes/{schedule_change_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Undo a specific schedule change
+         * @description Reverts a previously made change to the schedule using its unique change ID.
+         */
+        delete: operations["undo_schedule_change_schedule_changes__schedule_change_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/subscriptions/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a new event subscription
+         * @description Subscribes the current user to a specific schedule event. Prevents duplicate subscriptions.
+         */
+        post: operations["new_subscription_schedule_subscriptions__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/subscriptions/{subscription_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove a subscription
+         * @description Deletes an existing subscription by its unique ID.
+         */
+        delete: operations["delete_subscription_schedule_subscriptions__subscription_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/schedule/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Schedule */
+        post: operations["import_schedule_schedule_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/voting/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get current voting state
+         * @description Retrieves the current phase of the voting process (e.g., active, closed) and reasoning.
+         */
+        get: operations["get_voting_status_voting_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/voting/nominations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all nominations for the current vote
+         * @description Retrieves a list of all candidates or items eligible for voting in the current session.
+         */
+        get: operations["list_voting_nominations_voting_nominations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/voting/nominations/{nomination_code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get voting nomination details
+         * @description Retrieves detailed information about a specific nomination.
+         */
+        get: operations["get_voting_nomination_voting_nominations__nomination_code__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/voting/nominations/{nomination_id}/vote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Cast a vote
+         * @description Submits a vote for a participant in the specified nomination.
+         */
+        put: operations["add_vote_voting_nominations__nomination_id__vote_put"];
+        post?: never;
+        /**
+         * Cancel a vote
+         * @description Removes a previously cast vote in the specified nomination.
+         */
+        delete: operations["cancel_vote_voting_nominations__nomination_id__vote_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/webhooks/tcloud": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Process TicketsCloud webhook
+         * @description Handles incoming webhook events from TicketsCloud ticketing system.
+         */
+        post: operations["process_tcloud_order_webhooks_tcloud_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List user notifications
+         * @description Returns a paginated list of notifications for the authenticated user.
+         */
+        get: operations["list_user_notifications_notifications__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/mark-all-read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark all notifications as read
+         * @description Marks all unread notifications for the authenticated user as read.
+         */
+        post: operations["mark_all_notifications_read_notifications_mark_all_read_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send test notification
+         * @description Creates a test notification for the authenticated user and sends it through all connected channels.
+         */
+        post: operations["send_test_notification_notifications_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/push/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List push subscriptions
+         * @description Returns a list of push subscriptions for the authenticated user.
+         */
+        get: operations["list_subscriptions_push__get"];
+        put?: never;
+        /**
+         * Subscribe to push notifications
+         * @description Registers a push subscription endpoint for the authenticated user's device.
+         */
+        post: operations["subscribe_push__post"];
+        /**
+         * Unsubscribe from push notifications
+         * @description Removes a push subscription endpoint for the authenticated user.
+         */
+        delete: operations["unsubscribe_push__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-	schemas: {
-		/** AddVoteCommand */
-		AddVoteCommand: {
-			/**
-			 * Participant Id
-			 * Format: uuid
-			 */
-			participant_id: string;
-		};
-		/** AppSettingsDTO */
-		AppSettingsDTO: {
-			/** Voting Enabled */
-			voting_enabled: boolean;
-			limits: components['schemas']['LimitsConfigDTO'];
-		};
-		/** Body_import_schedule_schedule_import_post */
-		Body_import_schedule_schedule_import_post: {
-			/** File */
-			file: Blob;
-		};
-		/** Body_login_auth_login_post */
-		Body_login_auth_login_post: {
-			/**
-			 * Email
-			 * Format: email
-			 */
-			email: string;
-			/** Password */
-			password: string;
-		};
-		/** ChangeEmailCommand */
-		ChangeEmailCommand: {
-			/**
-			 * New Email
-			 * Format: email
-			 */
-			new_email: string;
-		};
-		/** ChangePasswordCommand */
-		ChangePasswordCommand: {
-			/** Old Password */
-			old_password: string | null;
-			/** New Password */
-			new_password: string;
-		};
-		/** CreatePushSubscriptionCommand */
-		CreatePushSubscriptionCommand: {
-			/** Endpoint */
-			endpoint: string;
-			/** P256Dh */
-			p256dh: string;
-			/** Auth */
-			auth: string;
-		};
-		/** CreateSubscriptionCommand */
-		CreateSubscriptionCommand: {
-			/**
-			 * Event Id
-			 * Format: uuid
-			 */
-			event_id: string;
-			/** Counter */
-			counter: number;
-		};
-		/** CurrentUserDTO */
-		CurrentUserDTO: {
-			/**
-			 * Id
-			 * Format: uuid
-			 */
-			id: string;
-			/** Username */
-			username: string | null;
-			/** First Name */
-			first_name: string | null;
-			role: components['schemas']['UserRole'];
-			/** Email */
-			email: string | null;
-			/** Pending Email */
-			pending_email: string | null;
-			/** Email Verified At */
-			email_verified_at: string | null;
-			/** Has Password */
-			has_password: boolean;
-			ticket: components['schemas']['UserTicketDTO'] | null;
-			/** Permissions */
-			permissions: components['schemas']['UserPermissionDTO'][];
-			settings: components['schemas']['UserSettingsDTO'];
-		};
-		/** DeletePushSubscriptionCommand */
-		DeletePushSubscriptionCommand: {
-			/** Endpoint */
-			endpoint: string;
-		};
-		/** ErrorMessage */
-		ErrorMessage: {
-			/** Detail */
-			detail: string;
-		};
-		/** GetScheduleResult */
-		GetScheduleResult: {
-			/** Schedule */
-			schedule: components['schemas']['ScheduleEventFullDTO'][];
-		};
-		/** GetVotingNominationResult */
-		GetVotingNominationResult: {
-			/**
-			 * Id
-			 * Format: uuid
-			 */
-			id: string;
-			/** Code */
-			code: string;
-			/** Title */
-			title: string;
-			/** Participants Count */
-			participants_count: number;
-			user_vote: components['schemas']['NominationVoteDTO'] | null;
-			/** Participants */
-			participants: components['schemas']['ParticipantFullDTO'][];
-		};
-		/** GetVotingStateResult */
-		GetVotingStateResult: {
-			/** Can Vote */
-			can_vote: boolean;
-			status: components['schemas']['VotingStatus'];
-		};
-		/** LimitsConfigDTO */
-		LimitsConfigDTO: {
-			/** Announcement Timeout */
-			announcement_timeout: number;
-		};
-		/** LinkTicketCommand */
-		LinkTicketCommand: {
-			/** Barcode */
-			barcode: string;
-		};
-		/** ListScheduleChangesResult */
-		ListScheduleChangesResult: {
-			/** Schedule Changes */
-			schedule_changes: components['schemas']['ScheduleChangeFullDTO'][];
-		};
-		/** ListUserNotificationsResult */
-		ListUserNotificationsResult: {
-			/** Notifications */
-			notifications: components['schemas']['NotificationDTO'][];
-		};
-		/** ListVotingNominationsResult */
-		ListVotingNominationsResult: {
-			/** Nominations */
-			nominations: components['schemas']['NominationVotingDTO'][];
-		};
-		/** LoginMagicLinkCommand */
-		LoginMagicLinkCommand: {
-			/** Token */
-			token: string;
-		};
-		/** MoveScheduleEventRequest */
-		MoveScheduleEventRequest: {
-			/**
-			 * Place After Event Id
-			 * Format: uuid
-			 */
-			place_after_event_id: string;
-		};
-		/** MoveScheduleEventResult */
-		MoveScheduleEventResult: {
-			event: components['schemas']['ScheduleEventFullDTO'];
-			place_after_event: components['schemas']['ScheduleEventFullDTO'];
-		};
-		/** NominationVoteDTO */
-		NominationVoteDTO: {
-			/**
-			 * Id
-			 * Format: uuid
-			 */
-			id: string;
-			/**
-			 * Participant Id
-			 * Format: uuid
-			 */
-			participant_id: string;
-		};
-		/** NominationVotingDTO */
-		NominationVotingDTO: {
-			/**
-			 * Id
-			 * Format: uuid
-			 */
-			id: string;
-			/** Code */
-			code: string;
-			/** Title */
-			title: string;
-			/** Participants Count */
-			participants_count: number;
-			user_vote: components['schemas']['NominationVoteDTO'] | null;
-		};
-		/** NotificationDTO */
-		NotificationDTO: {
-			/**
-			 * Id
-			 * Format: uuid
-			 */
-			id: string;
-			/**
-			 * User Id
-			 * Format: uuid
-			 */
-			user_id: string;
-			/** Title */
-			title: string;
-			/** Body */
-			body: string;
-			type: components['schemas']['NotificationType'];
-			/** Mailing Id */
-			mailing_id: string | null;
-			/**
-			 * Created At
-			 * Format: date-time
-			 */
-			created_at: string;
-			/** Seen At */
-			seen_at: string | null;
-		};
-		/**
-		 * NotificationType
-		 * @enum {string}
-		 */
-		NotificationType:
-			| 'default'
-			| 'schedule_change'
-			| 'schedule_subscription'
-			| 'message'
-			| 'points_received';
-		/** Order */
-		Order: {
-			/** Id */
-			id: string;
-			status: components['schemas']['OrderStatus'];
-			/** Event */
-			event: string;
-			/** Tickets */
-			tickets: components['schemas']['Ticket'][];
-		};
-		/**
-		 * OrderStatus
-		 * @enum {string}
-		 */
-		OrderStatus: 'executed' | 'done' | 'cancelled' | 'expired' | 'in_progress';
-		/** ParticipantFullDTO */
-		ParticipantFullDTO: {
-			/**
-			 * Id
-			 * Format: uuid
-			 */
-			id: string;
-			/** Title */
-			title: string;
-			/** Voting Number */
-			voting_number: number | null;
-			/** Votes Count */
-			votes_count: number;
-			user_vote: components['schemas']['ParticipantVoteDTO'] | null;
-		};
-		/** ParticipantVoteDTO */
-		ParticipantVoteDTO: {
-			/**
-			 * Id
-			 * Format: uuid
-			 */
-			id: string;
-		};
-		/** PushSubscriptionDTO */
-		PushSubscriptionDTO: {
-			/** Endpoint */
-			endpoint: string;
-			/** P256Dh */
-			p256dh: string;
-			/** Auth */
-			auth: string;
-		};
-		/** RegisterUserCommand */
-		RegisterUserCommand: {
-			/**
-			 * Email
-			 * Format: email
-			 */
-			email: string;
-			/** Password */
-			password: string;
-		};
-		/** RequestMagicLinkCommand */
-		RequestMagicLinkCommand: {
-			/**
-			 * Email
-			 * Format: email
-			 */
-			email: string;
-		};
-		/** ScheduleChangeEventDTO */
-		ScheduleChangeEventDTO: {
-			/**
-			 * Id
-			 * Format: uuid
-			 */
-			id: string;
-			/** Public Number */
-			public_number: number;
-			/** Title */
-			title: string;
-		};
-		/** ScheduleChangeFullDTO */
-		ScheduleChangeFullDTO: {
-			/**
-			 * Id
-			 * Format: uuid
-			 */
-			id: string;
-			type: components['schemas']['ScheduleChangeType'];
-			/** Mailing Id */
-			mailing_id: string | null;
-			/** User Id */
-			user_id: string | null;
-			/** Send Global Announcement */
-			send_global_announcement: boolean;
-			changed_event: components['schemas']['ScheduleChangeEventDTO'] | null;
-			argument_event: components['schemas']['ScheduleChangeEventDTO'] | null;
-			user: components['schemas']['ScheduleChangeUserDTO'] | null;
-		};
-		/**
-		 * ScheduleChangeType
-		 * @enum {string}
-		 */
-		ScheduleChangeType: 'set_as_current' | 'moved' | 'skipped' | 'unskipped';
-		/** ScheduleChangeUserDTO */
-		ScheduleChangeUserDTO: {
-			/**
-			 * Id
-			 * Format: uuid
-			 */
-			id: string;
-			/** Username */
-			username: string | null;
-		};
-		/** ScheduleEventFullDTO */
-		ScheduleEventFullDTO: {
-			/**
-			 * Id
-			 * Format: uuid
-			 */
-			id: string;
-			/** Public Number */
-			public_number: number;
-			/** Title */
-			title: string;
-			/** Duration */
-			duration: number;
-			/** Order */
-			order: number;
-			/** Is Current */
-			is_current: boolean;
-			/** Is Skipped */
-			is_skipped: boolean;
-			/** Nomination Title */
-			nomination_title: string;
-			/** Block Title */
-			block_title: string;
-			/** Queue */
-			queue: number | null;
-			/** Time Until */
-			time_until: number | null;
-			user_subscription: components['schemas']['ScheduleEventSubscriptionDTO'] | null;
-		};
-		/** ScheduleEventSubscriptionDTO */
-		ScheduleEventSubscriptionDTO: {
-			/**
-			 * Id
-			 * Format: uuid
-			 */
-			id: string;
-			/** Counter */
-			counter: number;
-		};
-		/** SetCurrentScheduleEventResult */
-		SetCurrentScheduleEventResult: {
-			current_event: components['schemas']['ScheduleEventFullDTO'] | null;
-			/**
-			 * Schedule Change Id
-			 * Format: uuid
-			 */
-			schedule_change_id: string;
-		};
-		/** SubscriptionEventDTO */
-		SubscriptionEventDTO: {
-			/**
-			 * Id
-			 * Format: uuid
-			 */
-			id: string;
-			/** Public Number */
-			public_number: number;
-			/** Title */
-			title: string;
-			/** Order */
-			order: number;
-			/** Queue */
-			queue: number | null;
-			/** Time Until */
-			time_until: number | null;
-		};
-		/** SubscriptionFullDTO */
-		SubscriptionFullDTO: {
-			/**
-			 * Id
-			 * Format: uuid
-			 */
-			id: string;
-			/**
-			 * User Id
-			 * Format: uuid
-			 */
-			user_id: string;
-			/** Counter */
-			counter: number;
-			event: components['schemas']['SubscriptionEventDTO'];
-		};
-		/** TCloudWebhookPayload */
-		TCloudWebhookPayload: {
-			data: components['schemas']['Order'];
-			/** Type */
-			type: string;
-		};
-		/** Ticket */
-		Ticket: {
-			/** Id */
-			id: string;
-			/** Serial */
-			serial: string;
-			/** Number */
-			number: number;
-			/** Barcode */
-			barcode: string | null;
-			/** Status */
-			status: string;
-			/** Price */
-			price: string;
-			/** Nominal */
-			nominal: string;
-			/** Discount */
-			discount: string;
-			/** Extra */
-			extra: string;
-			/** Full */
-			full: string;
-			/** Set */
-			set: string;
-			/** Tariff */
-			tariff: string | null;
-		};
-		/** UpdateAppSettingsCommand */
-		UpdateAppSettingsCommand: {
-			/** Voting Enabled */
-			voting_enabled?: boolean | null;
-			/** Announcement Timeout */
-			announcement_timeout?: number | null;
-		};
-		/** UpdateCurrentUserCommand */
-		UpdateCurrentUserCommand: {
-			/** Username */
-			username?: string | null;
-			/** First Name */
-			first_name?: string | null;
-		};
-		/** UpdateScheduleEventSkipResult */
-		UpdateScheduleEventSkipResult: {
-			event: components['schemas']['ScheduleEventFullDTO'];
-		};
-		/** UpdateUserSettingsCommand */
-		UpdateUserSettingsCommand: {
-			/** Receive All Announcements */
-			receive_all_announcements?: boolean | null;
-			/** Receive Telegram Notifications */
-			receive_telegram_notifications?: boolean | null;
-		};
-		/** UserBaseDTO */
-		UserBaseDTO: {
-			/**
-			 * Id
-			 * Format: uuid
-			 */
-			id: string;
-			/** Username */
-			username: string | null;
-			/** First Name */
-			first_name: string | null;
-			role: components['schemas']['UserRole'];
-		};
-		/** UserPermissionDTO */
-		UserPermissionDTO: {
-			/** Name */
-			name: string;
-			/** Object Type */
-			object_type: string | null;
-			/** Object Id */
-			object_id: number | null;
-		};
-		/**
-		 * UserRole
-		 * @enum {string}
-		 */
-		UserRole: 'visitor' | 'participant' | 'helper' | 'org';
-		/** UserSettingsDTO */
-		UserSettingsDTO: {
-			/**
-			 * Receive All Announcements
-			 * @default true
-			 */
-			receive_all_announcements: boolean;
-			/**
-			 * Receive Telegram Notifications
-			 * @default true
-			 */
-			receive_telegram_notifications: boolean;
-		};
-		/** UserSocialAccountDTO */
-		UserSocialAccountDTO: {
-			/** Provider */
-			provider: string;
-			/** Provider Id */
-			provider_id: string;
-		};
-		/** UserTicketDTO */
-		UserTicketDTO: {
-			/**
-			 * Id
-			 * Format: uuid
-			 */
-			id: string;
-			/** Barcode */
-			barcode: string;
-			role: components['schemas']['UserRole'];
-		};
-		/** ValidationErrorDetail */
-		ValidationErrorDetail: {
-			/** Loc */
-			loc: (string | number)[];
-			/** Msg */
-			msg: string;
-			/** Type */
-			type: string;
-		};
-		/** ValidationErrorResponse */
-		ValidationErrorResponse: {
-			/** Detail */
-			detail: components['schemas']['ValidationErrorDetail'][];
-		};
-		/** VerifyEmailCommand */
-		VerifyEmailCommand: {
-			/** Token */
-			token: string;
-		};
-		/** VoteBaseDTO */
-		VoteBaseDTO: {
-			/**
-			 * Id
-			 * Format: uuid
-			 */
-			id: string;
-			/**
-			 * User Id
-			 * Format: uuid
-			 */
-			user_id: string;
-			/**
-			 * Participant Id
-			 * Format: uuid
-			 */
-			participant_id: string;
-		};
-		/**
-		 * VotingStatus
-		 * @enum {string}
-		 */
-		VotingStatus: 'open' | 'not_authenticated' | 'no_ticket' | 'disabled';
-	};
-	responses: never;
-	parameters: never;
-	requestBodies: never;
-	headers: never;
-	pathItems: never;
+    schemas: {
+        /** AddVoteInput */
+        AddVoteInput: {
+            /**
+             * Participant Id
+             * Format: uuid
+             */
+            participant_id: string;
+        };
+        /** AddVoteOutput */
+        AddVoteOutput: {
+            /**
+             * Vote Id
+             * Format: uuid
+             */
+            vote_id: string;
+        };
+        /** AppSettingsDTO */
+        AppSettingsDTO: {
+            /** Voting Enabled */
+            voting_enabled: boolean;
+            limits: components["schemas"]["LimitsConfigDTO"];
+        };
+        /** Body_import_schedule_schedule_import_post */
+        Body_import_schedule_schedule_import_post: {
+            /** File */
+            file: Blob;
+        };
+        /** Body_login_auth_login_post */
+        Body_login_auth_login_post: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Password */
+            password: string;
+        };
+        /** ChangeEmailInput */
+        ChangeEmailInput: {
+            /**
+             * New Email
+             * Format: email
+             */
+            new_email: string;
+        };
+        /** ChangePasswordInput */
+        ChangePasswordInput: {
+            /** Old Password */
+            old_password: string | null;
+            /** New Password */
+            new_password: string;
+        };
+        /** CreatePushSubscriptionInput */
+        CreatePushSubscriptionInput: {
+            /** Endpoint */
+            endpoint: string;
+            /** P256Dh */
+            p256dh: string;
+            /** Auth */
+            auth: string;
+        };
+        /** CreateSubscriptionInput */
+        CreateSubscriptionInput: {
+            /**
+             * Event Id
+             * Format: uuid
+             */
+            event_id: string;
+            /** Counter */
+            counter: number;
+        };
+        /** CreateSubscriptionOutput */
+        CreateSubscriptionOutput: {
+            /**
+             * Subscription Id
+             * Format: uuid
+             */
+            subscription_id: string;
+        };
+        /** CurrentUserDTO */
+        CurrentUserDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Username */
+            username: string | null;
+            /** First Name */
+            first_name: string | null;
+            role: components["schemas"]["UserRole"];
+            /** Email */
+            email: string | null;
+            /** Pending Email */
+            pending_email: string | null;
+            /** Email Verified At */
+            email_verified_at: string | null;
+            /** Has Password */
+            has_password: boolean;
+            ticket: components["schemas"]["UserTicketDTO"] | null;
+            /** Permissions */
+            permissions: components["schemas"]["UserPermissionDTO"][];
+            settings: components["schemas"]["UserSettingsDTO"];
+        };
+        /** DeletePushSubscriptionInput */
+        DeletePushSubscriptionInput: {
+            /** Endpoint */
+            endpoint: string;
+        };
+        /** ErrorMessage */
+        ErrorMessage: {
+            /** Detail */
+            detail: string;
+        };
+        /** GetScheduleOutput */
+        GetScheduleOutput: {
+            /** Schedule */
+            schedule: components["schemas"]["ScheduleEventFullDTO"][];
+        };
+        /** GetVotingNominationOutput */
+        GetVotingNominationOutput: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            /** Title */
+            title: string;
+            /** Participants Count */
+            participants_count: number;
+            user_vote: components["schemas"]["NominationVoteDTO"] | null;
+            /** Participants */
+            participants: components["schemas"]["ParticipantFullDTO"][];
+        };
+        /** GetVotingStateOutput */
+        GetVotingStateOutput: {
+            /** Can Vote */
+            can_vote: boolean;
+            status: components["schemas"]["VotingStatus"];
+        };
+        /** LimitsConfigDTO */
+        LimitsConfigDTO: {
+            /** Announcement Timeout */
+            announcement_timeout: number;
+        };
+        /** LinkTicketInput */
+        LinkTicketInput: {
+            /** Barcode */
+            barcode: string;
+        };
+        /** ListScheduleChangesResult */
+        ListScheduleChangesResult: {
+            /** Schedule Changes */
+            schedule_changes: components["schemas"]["ScheduleChangeFullDTO"][];
+        };
+        /** ListUserNotificationOutput */
+        ListUserNotificationOutput: {
+            /** Notifications */
+            notifications: components["schemas"]["NotificationDTO"][];
+        };
+        /** ListVotingNominationsOutput */
+        ListVotingNominationsOutput: {
+            /** Nominations */
+            nominations: components["schemas"]["NominationVotingDTO"][];
+        };
+        /** LoginMagicLinkInput */
+        LoginMagicLinkInput: {
+            /** Token */
+            token: string;
+        };
+        /** MoveScheduleEventRequest */
+        MoveScheduleEventRequest: {
+            /**
+             * Place After Event Id
+             * Format: uuid
+             */
+            place_after_event_id: string;
+        };
+        /** NominationVoteDTO */
+        NominationVoteDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Participant Id
+             * Format: uuid
+             */
+            participant_id: string;
+        };
+        /** NominationVotingDTO */
+        NominationVotingDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            /** Title */
+            title: string;
+            /** Participants Count */
+            participants_count: number;
+            user_vote: components["schemas"]["NominationVoteDTO"] | null;
+        };
+        /** NotificationDTO */
+        NotificationDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Title */
+            title: string;
+            /** Body */
+            body: string;
+            type: components["schemas"]["NotificationType"];
+            /** Mailing Id */
+            mailing_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Seen At */
+            seen_at: string | null;
+        };
+        /**
+         * NotificationType
+         * @enum {string}
+         */
+        NotificationType: "default" | "schedule_change" | "schedule_subscription" | "message" | "points_received";
+        /** Order */
+        Order: {
+            /** Id */
+            id: string;
+            status: components["schemas"]["OrderStatus"];
+            /** Event */
+            event: string;
+            /** Tickets */
+            tickets: components["schemas"]["Ticket"][];
+        };
+        /**
+         * OrderStatus
+         * @enum {string}
+         */
+        OrderStatus: "executed" | "done" | "cancelled" | "expired" | "in_progress";
+        /** ParticipantFullDTO */
+        ParticipantFullDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Title */
+            title: string;
+            /** Voting Number */
+            voting_number: number | null;
+            /** Votes Count */
+            votes_count: number;
+            user_vote: components["schemas"]["ParticipantVoteDTO"] | null;
+        };
+        /** ParticipantVoteDTO */
+        ParticipantVoteDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
+        /** PushSubscriptionDTO */
+        PushSubscriptionDTO: {
+            /** Endpoint */
+            endpoint: string;
+            /** P256Dh */
+            p256dh: string;
+            /** Auth */
+            auth: string;
+        };
+        /** RegisterUserInput */
+        RegisterUserInput: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Password */
+            password: string;
+        };
+        /** RequestMagicLinkInput */
+        RequestMagicLinkInput: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+        };
+        /** ScheduleChangeEventDTO */
+        ScheduleChangeEventDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Public Number */
+            public_number: number;
+            /** Title */
+            title: string;
+            /** Order */
+            order: number;
+        };
+        /** ScheduleChangeFullDTO */
+        ScheduleChangeFullDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            type: components["schemas"]["ScheduleChangeType"];
+            /** Mailing Id */
+            mailing_id: string | null;
+            /** User Id */
+            user_id: string | null;
+            /** Send Global Announcement */
+            send_global_announcement: boolean;
+            changed_event: components["schemas"]["ScheduleChangeEventDTO"] | null;
+            argument_event: components["schemas"]["ScheduleChangeEventDTO"] | null;
+            user: components["schemas"]["ScheduleChangeUserDTO"] | null;
+        };
+        /**
+         * ScheduleChangeType
+         * @enum {string}
+         */
+        ScheduleChangeType: "set_as_current" | "moved" | "skipped" | "unskipped";
+        /** ScheduleChangeUserDTO */
+        ScheduleChangeUserDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Username */
+            username: string | null;
+        };
+        /** ScheduleEventFullDTO */
+        ScheduleEventFullDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Public Number */
+            public_number: number;
+            /** Title */
+            title: string;
+            /** Duration */
+            duration: number;
+            /** Order */
+            order: number;
+            /** Is Current */
+            is_current: boolean;
+            /** Is Skipped */
+            is_skipped: boolean;
+            /** Nomination Title */
+            nomination_title: string | null;
+            /** Block Title */
+            block_title: string | null;
+            /** Queue */
+            queue: number | null;
+            /** Time Until */
+            time_until: number | null;
+            user_subscription: components["schemas"]["ScheduleEventSubscriptionDTO"] | null;
+        };
+        /** ScheduleEventSubscriptionDTO */
+        ScheduleEventSubscriptionDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Counter */
+            counter: number;
+        };
+        /** TCloudWebhookPayload */
+        TCloudWebhookPayload: {
+            data: components["schemas"]["Order"];
+            /** Type */
+            type: string;
+        };
+        /** Ticket */
+        Ticket: {
+            /** Id */
+            id: string;
+            /** Serial */
+            serial: string;
+            /** Number */
+            number: number;
+            /** Barcode */
+            barcode: string | null;
+            /** Status */
+            status: string;
+            /** Price */
+            price: string;
+            /** Nominal */
+            nominal: string;
+            /** Discount */
+            discount: string;
+            /** Extra */
+            extra: string;
+            /** Full */
+            full: string;
+            /** Set */
+            set: string;
+            /** Tariff */
+            tariff: string | null;
+        };
+        /** UpdateAppSettingsInput */
+        UpdateAppSettingsInput: {
+            /** Voting Enabled */
+            voting_enabled?: boolean | null;
+            /** Announcement Timeout */
+            announcement_timeout?: number | null;
+        };
+        /** UpdateCurrentUserInput */
+        UpdateCurrentUserInput: {
+            /** Username */
+            username?: string | null;
+            /** First Name */
+            first_name?: string | null;
+        };
+        /** UpdateUserSettingsInput */
+        UpdateUserSettingsInput: {
+            /** Receive All Announcements */
+            receive_all_announcements?: boolean | null;
+            /** Receive Telegram Notifications */
+            receive_telegram_notifications?: boolean | null;
+        };
+        /** UserBaseDTO */
+        UserBaseDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Username */
+            username: string | null;
+            /** First Name */
+            first_name: string | null;
+            role: components["schemas"]["UserRole"];
+        };
+        /** UserPermissionDTO */
+        UserPermissionDTO: {
+            /** Name */
+            name: string;
+            /** Object Type */
+            object_type: string | null;
+            /** Object Id */
+            object_id: number | null;
+        };
+        /**
+         * UserRole
+         * @enum {string}
+         */
+        UserRole: "visitor" | "participant" | "helper" | "org";
+        /** UserSettingsDTO */
+        UserSettingsDTO: {
+            /**
+             * Receive All Announcements
+             * @default true
+             */
+            receive_all_announcements: boolean;
+            /**
+             * Receive Telegram Notifications
+             * @default true
+             */
+            receive_telegram_notifications: boolean;
+        };
+        /** UserSocialAccountDTO */
+        UserSocialAccountDTO: {
+            /** Provider */
+            provider: string;
+            /** Provider Id */
+            provider_id: string;
+        };
+        /** UserTicketDTO */
+        UserTicketDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Barcode */
+            barcode: string;
+            role: components["schemas"]["UserRole"];
+        };
+        /** ValidationErrorDetail */
+        ValidationErrorDetail: {
+            /** Loc */
+            loc: (string | number)[];
+            /** Msg */
+            msg: string;
+            /** Type */
+            type: string;
+        };
+        /** ValidationErrorResponse */
+        ValidationErrorResponse: {
+            /** Detail */
+            detail: components["schemas"]["ValidationErrorDetail"][];
+        };
+        /** VerifyEmailInput */
+        VerifyEmailInput: {
+            /** Token */
+            token: string;
+        };
+        /** VoteBaseDTO */
+        VoteBaseDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /**
+             * Participant Id
+             * Format: uuid
+             */
+            participant_id: string;
+        };
+        /**
+         * VotingStatus
+         * @enum {string}
+         */
+        VotingStatus: "open" | "not_authenticated" | "no_ticket" | "disabled";
+    };
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-	debug_debug__get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	health_check_debug_health_get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	login_auth_login_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/x-www-form-urlencoded': components['schemas']['Body_login_auth_login_post'];
-			};
-		};
-		responses: {
-			/** @description Successfully authenticated. Tokens set in cookies. */
-			204: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content?: never;
-			};
-			/** @description Invalid email or password. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	register_user_auth_register_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['RegisterUserCommand'];
-			};
-		};
-		responses: {
-			/** @description User successfully registered. */
-			201: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['UserBaseDTO'];
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Conflict: username or email already in use. */
-			409: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	request_email_verification_auth_request_email_verification_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Verification email sent. */
-			202: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description User not found. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	verify_email_auth_verify_email_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['VerifyEmailCommand'];
-			};
-		};
-		responses: {
-			/** @description Email successfully verified. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Token is invalid or expired. */
-			400: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description User not found. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	request_magic_link_auth_request_magic_link_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['RequestMagicLinkCommand'];
-			};
-		};
-		responses: {
-			/** @description If the email is valid, the magic link was queued. */
-			202: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	login_magic_link_auth_login_magic_link_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['LoginMagicLinkCommand'];
-			};
-		};
-		responses: {
-			/** @description Successfully authenticated. Tokens set in cookies. */
-			204: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content?: never;
-			};
-			/** @description Magic link is invalid or has already been used. */
-			400: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description User not found. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	refresh_access_token_auth_refresh_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Tokens refreshed successfully. New cookies set. */
-			204: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content?: never;
-			};
-			/** @description Refresh token is missing, invalid, or expired. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	logout_user_auth_logout_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successfully logged out. */
-			204: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content?: never;
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	login_telegram_auth_login_telegram_get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	authorize_telegram_auth_auth_telegram_get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Successful Response */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	get_current_user_me__get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description User profile retrieved successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['CurrentUserDTO'];
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	update_current_user_me__patch: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['UpdateCurrentUserCommand'];
-			};
-		};
-		responses: {
-			/** @description User updated successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Username already taken. */
-			409: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	update_current_user_settings_me_settings_patch: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['UpdateUserSettingsCommand'];
-			};
-		};
-		responses: {
-			/** @description User settings updated successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	change_current_user_password_me_password_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['ChangePasswordCommand'];
-			};
-		};
-		responses: {
-			/** @description Password changed successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description User not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description User not found. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Current password is incorrect. */
-			409: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	change_current_user_email_me_email_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['ChangeEmailCommand'];
-			};
-		};
-		responses: {
-			/** @description Email changed and verification requested. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description User not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description User not found. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Email already in use by another account. */
-			409: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	get_current_user_social_accounts_me_connections__get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description User social accounts retrieved successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['UserSocialAccountDTO'][];
-				};
-			};
-			/** @description User not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description User not found. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	link_telegram_me_connections_telegram_get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Telegram account linked successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Invalid Telegram auth payload. */
-			400: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description User not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description User not found. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Telegram is already linked to this or another account. */
-			409: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	unlink_telegram_account_me_connections_telegram_delete: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Telegram account unlinked successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description User not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description User not found. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Email is required before unlinking. */
-			409: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	link_telegram_callback_me_connections_telegram_callback_get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Telegram account linked successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Invalid Telegram auth payload. */
-			400: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description User not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description User not found. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Telegram is already linked to this or another account. */
-			409: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	link_ticket_me_ticket_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['LinkTicketCommand'];
-			};
-		};
-		responses: {
-			/** @description Ticket linked successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Ticket not found. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description User already has a ticket linked. */
-			409: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	get_settings_settings_get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Festival settings retrieved successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['AppSettingsDTO'];
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Festival settings were not found. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	update_settings_settings_patch: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['UpdateAppSettingsCommand'];
-			};
-		};
-		responses: {
-			/** @description Festival settings updated successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Festival settings were not found. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	stream_events_events_get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description SSE stream established. Returns text/event-stream. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	get_schedule_schedule__get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Schedule retrieved successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['GetScheduleResult'];
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	set_event_as_current_schedule__event_id__current_patch: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				event_id: string;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Event set as current successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['SetCurrentScheduleEventResult'];
-				};
-			};
-			/** @description Event is skipped or invalid for this operation. */
-			400: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Event ID not found. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-			/** @description Rate limited — editing too fast. */
-			429: {
-				headers: {
-					/** @description Seconds to wait before retrying. */
-					'Retry-After'?: number;
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-		};
-	};
-	uncheck_current_event_schedule_current_delete: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Current event cleared successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['SetCurrentScheduleEventResult'];
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-			/** @description Rate limited — editing too fast. */
-			429: {
-				headers: {
-					/** @description Seconds to wait before retrying. */
-					'Retry-After'?: number;
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-		};
-	};
-	move_schedule_event_schedule__event_id__move_patch: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				event_id: string;
-			};
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['MoveScheduleEventRequest'];
-			};
-		};
-		responses: {
-			/** @description Event moved successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['MoveScheduleEventResult'];
-				};
-			};
-			/** @description Invalid move: target and destination are the same. */
-			400: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Event to move or target neighbor event was not found. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	skip_schedule_event_schedule__event_id__skip_patch: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				event_id: string;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Event marked as skipped. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['UpdateScheduleEventSkipResult'];
-				};
-			};
-			/** @description Cannot skip the current active event. */
-			400: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Event ID not found. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	unskip_schedule_event_schedule__event_id__unskip_patch: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				event_id: string;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Event restored to active schedule. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['UpdateScheduleEventSkipResult'];
-				};
-			};
-			/** @description Event state cannot be modified in its current context. */
-			400: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Event ID not found. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	list_schedule_changes_schedule_changes__get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Schedule changes retrieved successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ListScheduleChangesResult'];
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	undo_schedule_change_schedule_changes__schedule_change_id__delete: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				schedule_change_id: string;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Change successfully undone. */
-			204: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content?: never;
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Schedule change ID not found. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	new_subscription_schedule_subscriptions__post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['CreateSubscriptionCommand'];
-			};
-		};
-		responses: {
-			/** @description Subscription created successfully. */
-			201: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['SubscriptionFullDTO'];
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Event ID does not exist. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Subscription for this event already exists. */
-			409: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	delete_subscription_schedule_subscriptions__subscription_id__delete: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				subscription_id: string;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Subscription deleted successfully. */
-			204: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content?: never;
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Subscription ID not found. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	import_schedule_schedule_import_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'multipart/form-data': components['schemas']['Body_import_schedule_schedule_import_post'];
-			};
-		};
-		responses: {
-			/** @description Successful Response */
-			201: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	get_voting_status_voting_status_get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Voting status retrieved successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['GetVotingStateResult'];
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	list_voting_nominations_voting_nominations_get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Nominations retrieved successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ListVotingNominationsResult'];
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	get_voting_nomination_voting_nominations__nomination_code__get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				nomination_code: string;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Nomination details retrieved successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['GetVotingNominationResult'];
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Nomination not found. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	add_vote_voting_nominations__nomination_id__vote_put: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				nomination_id: string;
-			};
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['AddVoteCommand'];
-			};
-		};
-		responses: {
-			/** @description Vote successfully cast. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['VoteBaseDTO'];
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Participant not found. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Already voted in this nomination. */
-			409: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	cancel_vote_voting_nominations__nomination_id__vote_delete: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				nomination_id: string;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Vote successfully cancelled. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description No vote found to cancel. */
-			404: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	process_tcloud_order_webhooks_tcloud_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['TCloudWebhookPayload'];
-			};
-		};
-		responses: {
-			/** @description Webhook processed successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Invalid webhook payload. */
-			400: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	list_user_notifications_notifications__get: {
-		parameters: {
-			query?: {
-				limit?: number;
-				offset?: number;
-			};
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Notifications retrieved successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ListUserNotificationsResult'];
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	mark_all_notifications_read_notifications_mark_all_read_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description All notifications marked as read. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	send_test_notification_notifications_test_post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Test notification created successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description Not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	list_subscriptions_push__get: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description List of push subscriptions. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['PushSubscriptionDTO'][];
-				};
-			};
-			/** @description User not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	subscribe_push__post: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['CreatePushSubscriptionCommand'];
-			};
-		};
-		responses: {
-			/** @description Push subscription registered successfully. */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': unknown;
-				};
-			};
-			/** @description User not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
-	unsubscribe_push__delete: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody: {
-			content: {
-				'application/json': components['schemas']['DeletePushSubscriptionCommand'];
-			};
-		};
-		responses: {
-			/** @description Push subscription removed successfully. */
-			204: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content?: never;
-			};
-			/** @description User not authenticated. */
-			401: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Access denied. */
-			403: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ErrorMessage'];
-				};
-			};
-			/** @description Request validation error. */
-			422: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					'application/json': components['schemas']['ValidationErrorResponse'];
-				};
-			};
-		};
-	};
+    debug_debug__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    health_check_debug_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    login_auth_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/x-www-form-urlencoded": components["schemas"]["Body_login_auth_login_post"];
+            };
+        };
+        responses: {
+            /** @description Successfully authenticated. Tokens set in cookies. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid email or password. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    register_user_auth_register_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterUserInput"];
+            };
+        };
+        responses: {
+            /** @description User successfully registered. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserBaseDTO"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Conflict: username or email already in use. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    request_email_verification_auth_request_email_verification_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Verification email sent. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    verify_email_auth_verify_email_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyEmailInput"];
+            };
+        };
+        responses: {
+            /** @description Email successfully verified. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Token is invalid or expired. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    request_magic_link_auth_request_magic_link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestMagicLinkInput"];
+            };
+        };
+        responses: {
+            /** @description If the email is valid, the magic link was queued. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    login_magic_link_auth_login_magic_link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginMagicLinkInput"];
+            };
+        };
+        responses: {
+            /** @description Successfully authenticated. Tokens set in cookies. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Magic link is invalid or has already been used. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    refresh_access_token_auth_refresh_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tokens refreshed successfully. New cookies set. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Refresh token is missing, invalid, or expired. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    logout_user_auth_logout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successfully logged out. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    login_telegram_auth_login_telegram_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    authorize_telegram_auth_auth_telegram_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    get_current_user_me__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User profile retrieved successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurrentUserDTO"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    update_current_user_me__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCurrentUserInput"];
+            };
+        };
+        responses: {
+            /** @description User updated successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Username already taken. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    update_current_user_settings_me_settings_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateUserSettingsInput"];
+            };
+        };
+        responses: {
+            /** @description User settings updated successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    change_current_user_password_me_password_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordInput"];
+            };
+        };
+        responses: {
+            /** @description Password changed successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description User not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Current password is incorrect. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    change_current_user_email_me_email_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeEmailInput"];
+            };
+        };
+        responses: {
+            /** @description Email changed and verification requested. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description User not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Email already in use by another account. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    get_current_user_social_accounts_me_connections__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User social accounts retrieved successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserSocialAccountDTO"][];
+                };
+            };
+            /** @description User not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    link_telegram_me_connections_telegram_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Telegram account linked successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Invalid Telegram auth payload. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Telegram is already linked to this or another account. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    unlink_telegram_account_me_connections_telegram_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Telegram account unlinked successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description User not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Email is required before unlinking. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    link_telegram_callback_me_connections_telegram_callback_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Telegram account linked successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Invalid Telegram auth payload. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Telegram is already linked to this or another account. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    link_ticket_me_ticket_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkTicketInput"];
+            };
+        };
+        responses: {
+            /** @description Ticket linked successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Ticket not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User already has a ticket linked. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    get_settings_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Festival settings retrieved successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppSettingsDTO"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Festival settings were not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    update_settings_settings_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAppSettingsInput"];
+            };
+        };
+        responses: {
+            /** @description Festival settings updated successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Festival settings were not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    stream_events_events_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description SSE stream established. Returns text/event-stream. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    get_schedule_schedule__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Schedule retrieved successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetScheduleOutput"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    set_event_as_current_schedule__event_id__current_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Event set as current successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Event is skipped or invalid for this operation. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Event ID not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+            /** @description Rate limited — editing too fast. */
+            429: {
+                headers: {
+                    /** @description Seconds to wait before retrying. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+        };
+    };
+    uncheck_current_event_schedule_current_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current event cleared successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+            /** @description Rate limited — editing too fast. */
+            429: {
+                headers: {
+                    /** @description Seconds to wait before retrying. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+        };
+    };
+    move_schedule_event_schedule__event_id__move_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoveScheduleEventRequest"];
+            };
+        };
+        responses: {
+            /** @description Event moved successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Invalid move: target and destination are the same. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Event to move or target neighbor event was not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    skip_schedule_event_schedule__event_id__skip_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Event marked as skipped. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Cannot skip the current active event. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Event ID not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    unskip_schedule_event_schedule__event_id__unskip_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Event restored to active schedule. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Event state cannot be modified in its current context. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Event ID not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    list_schedule_changes_schedule_changes__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Schedule changes retrieved successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListScheduleChangesResult"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    undo_schedule_change_schedule_changes__schedule_change_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                schedule_change_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Change successfully undone. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Schedule change ID not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    new_subscription_schedule_subscriptions__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSubscriptionInput"];
+            };
+        };
+        responses: {
+            /** @description Subscription created successfully. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateSubscriptionOutput"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Event ID does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Subscription for this event already exists. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    delete_subscription_schedule_subscriptions__subscription_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                subscription_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Subscription deleted successfully. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Subscription ID not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    import_schedule_schedule_import_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_schedule_schedule_import_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    get_voting_status_voting_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Voting status retrieved successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetVotingStateOutput"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    list_voting_nominations_voting_nominations_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Nominations retrieved successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListVotingNominationsOutput"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    get_voting_nomination_voting_nominations__nomination_code__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                nomination_code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Nomination details retrieved successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetVotingNominationOutput"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Nomination not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    add_vote_voting_nominations__nomination_id__vote_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                nomination_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddVoteInput"];
+            };
+        };
+        responses: {
+            /** @description Vote successfully cast. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoteBaseDTO"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Participant not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Already voted in this nomination. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    cancel_vote_voting_nominations__nomination_id__vote_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                nomination_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Vote successfully cancelled. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description No vote found to cancel. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    process_tcloud_order_webhooks_tcloud_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TCloudWebhookPayload"];
+            };
+        };
+        responses: {
+            /** @description Webhook processed successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Invalid webhook payload. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    list_user_notifications_notifications__get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Notifications retrieved successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListUserNotificationOutput"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    mark_all_notifications_read_notifications_mark_all_read_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description All notifications marked as read. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    send_test_notification_notifications_test_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Test notification created successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    list_subscriptions_push__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of push subscriptions. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PushSubscriptionDTO"][];
+                };
+            };
+            /** @description User not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    subscribe_push__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePushSubscriptionInput"];
+            };
+        };
+        responses: {
+            /** @description Push subscription registered successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description User not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    unsubscribe_push__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeletePushSubscriptionInput"];
+            };
+        };
+        responses: {
+            /** @description Push subscription removed successfully. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description User not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
 }

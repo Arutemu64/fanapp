@@ -83,10 +83,7 @@
 	}
 </script>
 
-<SectionHeader
-	title="Уведомления"
-	description="Здесь собраны все ваши уведомления. Новые сообщения находятся сверху."
->
+<SectionHeader title="Уведомления" description="Здесь собраны все ваши уведомления.">
 	{#if notifications.length > 0}
 		<div class="mt-3 text-sm text-gray-500 dark:text-gray-400">
 			{#if unreadCount > 0}

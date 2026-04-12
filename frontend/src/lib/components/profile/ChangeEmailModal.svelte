@@ -6,7 +6,7 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { components } from '$lib/api/v1';
 
-	type ChangeEmailCommand = components['schemas']['ChangeEmailCommand'];
+	type ChangeEmailInput = components['schemas']['ChangeEmailInput'];
 
 	interface Props {
 		open: boolean;
@@ -60,7 +60,7 @@
 
 		isLoading = true;
 
-		const body: ChangeEmailCommand = {
+		const body: ChangeEmailInput = {
 			new_email: trimmedEmail
 		};
 

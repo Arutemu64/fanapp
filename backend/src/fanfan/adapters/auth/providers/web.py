@@ -3,8 +3,8 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi.security.utils import get_authorization_scheme_param
 from starlette import status
 
-from fanfan.adapters.auth.utils.jwt import JwtTokenProcessor
-from fanfan.application.common.id_provider import IdProvider
+from fanfan.adapters.auth.jwt import JwtTokenProcessor
+from fanfan.application.ports.id_provider import IdProvider
 from fanfan.core.exceptions.auth import AuthenticationError
 from fanfan.core.vo.user import UserId
 

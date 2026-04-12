@@ -7,7 +7,7 @@ from fanfan.adapters.db.config import DatabaseConfig
 from fanfan.adapters.debug.config import DebugConfig
 from fanfan.adapters.mail.config import MailConfig
 from fanfan.adapters.nats.config import NatsConfig
-from fanfan.adapters.notifications.config import PushConfig
+from fanfan.adapters.push.config import PushConfig
 from fanfan.adapters.redis.config import RedisConfig
 from fanfan.presentation.tgbot.config import TelegramConfig
 from fanfan.presentation.web.config import WebConfig

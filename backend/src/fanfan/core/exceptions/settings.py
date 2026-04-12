@@ -1,9 +1,9 @@
 from fanfan.core.exceptions.base import AppException
 
 
-class SettingsException(AppException):
+class AppSettingsException(AppException):
     pass
 
 
-class SettingsNotFound(SettingsException):
+class AppAppSettingsNotFound(AppSettingsException):
     pass

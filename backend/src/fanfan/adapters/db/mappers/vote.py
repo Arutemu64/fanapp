@@ -1,5 +1,5 @@
 from fanfan.adapters.db.models import VoteORM
-from fanfan.core.dto.vote import VoteBaseDTO
+from fanfan.application.dto.vote import VoteBaseDTO
 from fanfan.core.models.vote import Vote
 
 

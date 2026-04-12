@@ -3,15 +3,15 @@ from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, HTTPException
 from starlette import status
 
-from fanfan.application.settings.get_settings import GetSettings
-from fanfan.application.settings.update_settings import (
-    UpdateAppSettingsCommand,
+from fanfan.application.dto.settings import AppSettingsDTO
+from fanfan.application.interactors.settings.get_settings import GetSettings
+from fanfan.application.interactors.settings.update_settings import (
+    UpdateAppSettingsInput,
     UpdateSettings,
 )
-from fanfan.core.dto.settings import AppSettingsDTO
 from fanfan.core.exceptions.auth import UserNotAuthenticated
 from fanfan.core.exceptions.base import AccessDenied
-from fanfan.core.exceptions.settings import SettingsNotFound
+from fanfan.core.exceptions.settings import AppAppSettingsNotFound
 from fanfan.core.exceptions.users import UserNotFound
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
@@ -38,8 +38,7 @@ async def get_settings(
     interactor: FromDishka[GetSettings],
 ) -> AppSettingsDTO:
     try:
-        # Convert the domain dataclass into an explicit response model for OpenAPI.
-        return AppSettingsDTO.model_validate(await interactor())
+        return await interactor()
     except UserNotAuthenticated as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -55,7 +54,7 @@ async def get_settings(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=e.message,
         ) from e
-    except SettingsNotFound as e:
+    except AppAppSettingsNotFound as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=e.message,
@@ -80,7 +79,7 @@ __all__ = ["settings_router"]
 )
 @inject
 async def update_settings(
-    data: UpdateAppSettingsCommand,
+    data: UpdateAppSettingsInput,
     interactor: FromDishka[UpdateSettings],
 ) -> None:
     try:
@@ -100,7 +99,7 @@ async def update_settings(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=e.message,
         ) from e
-    except SettingsNotFound as e:
+    except AppAppSettingsNotFound as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=e.message,

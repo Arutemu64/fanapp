@@ -1,6 +1,6 @@
 from fanfan.adapters.db.models import ParticipantORM, VoteORM
 from fanfan.adapters.db.models.participant import ParticipantValueORM
-from fanfan.core.dto.participant import ParticipantFullDTO, ParticipantVoteDTO
+from fanfan.application.dto.participant import ParticipantFullDTO, ParticipantVoteDTO
 from fanfan.core.models.participant import Participant, ParticipantValue
 from fanfan.core.vo.nomination import NominationId
 from fanfan.core.vo.participant import ParticipantId, ParticipantVotingNumber

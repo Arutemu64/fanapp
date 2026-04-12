@@ -3,13 +3,13 @@ from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, HTTPException, Response
 from starlette import status
 
-from fanfan.application.auth.login_magic_link import (
+from fanfan.application.interactors.auth.login_magic_link import (
     LoginMagicLink,
-    LoginMagicLinkCommand,
+    LoginMagicLinkInput,
 )
-from fanfan.application.auth.request_magic_link import (
+from fanfan.application.interactors.auth.request_magic_link import (
     RequestMagicLink,
-    RequestMagicLinkCommand,
+    RequestMagicLinkInput,
 )
 from fanfan.core.exceptions.auth import InvalidToken, TokenExpired
 from fanfan.core.exceptions.users import UserNotFound
@@ -27,12 +27,12 @@ magic_link_router = APIRouter()
     description="Sends a one-time sign-in link to the requested email address. "
     "Creates an account automatically when the email is new.",
     responses={
-        202: {"description": ("If the email is valid, the magic link was queued.")},
+        202: {"description": "If the email is valid, the magic link was queued."},
     },
 )
 @inject
 async def request_magic_link(
-    data: RequestMagicLinkCommand,
+    data: RequestMagicLinkInput,
     interactor: FromDishka[RequestMagicLink],
 ) -> None:
     await interactor(data)
@@ -54,7 +54,7 @@ async def request_magic_link(
 )
 @inject
 async def login_magic_link(
-    data: LoginMagicLinkCommand,
+    data: LoginMagicLinkInput,
     interactor: FromDishka[LoginMagicLink],
     config: FromDishka[WebConfig],
     response: Response,

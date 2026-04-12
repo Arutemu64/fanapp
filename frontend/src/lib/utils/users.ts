@@ -3,7 +3,7 @@ import type { UserFullDTO } from '$lib/types/user';
 export const roleLabels: Record<string, string> = {
 	visitor: 'Посетитель',
 	participant: 'Участник',
-	helper: 'Хелпер',
+	helper: 'Волонтер',
 	org: 'Организатор'
 };
 

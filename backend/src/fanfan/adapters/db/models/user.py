@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime  # noqa
 from typing import TYPE_CHECKING
 from uuid import uuid7
 
@@ -18,9 +18,8 @@ from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
 from fanfan.core.vo.user import UserId, Username, UserRole
 
 if TYPE_CHECKING:
-
     from fanfan.adapters.db.models.permission import UserPermissionORM
-    from fanfan.adapters.db.models.social_account import SocialAccountORM
+    from fanfan.adapters.db.models.social_account import SocialIdentityORM
     from fanfan.adapters.db.models.ticket import TicketORM
 
 
@@ -56,7 +55,7 @@ class UserORM(BaseORM):
     permissions: Mapped[list[UserPermissionORM]] = relationship(
         cascade="all, delete-orphan"
     )
-    social_accounts: Mapped[list[SocialAccountORM]] = relationship(
+    social_accounts: Mapped[list[SocialIdentityORM]] = relationship(
         back_populates="user"
     )
 

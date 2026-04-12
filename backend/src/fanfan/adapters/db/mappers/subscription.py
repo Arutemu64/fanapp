@@ -1,5 +1,8 @@
 from fanfan.adapters.db.models import SubscriptionORM
-from fanfan.core.dto.subscription import SubscriptionEventDTO, SubscriptionFullDTO
+from fanfan.application.dto.subscription import (
+    SubscriptionEventDTO,
+    SubscriptionFullDTO,
+)
 from fanfan.core.models.subscription import Subscription
 
 

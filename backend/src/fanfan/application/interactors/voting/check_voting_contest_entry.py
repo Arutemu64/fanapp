@@ -1,0 +1,48 @@
+from pydantic import BaseModel
+
+from fanfan.application.ports.repositories.nominations import NominationRepository
+from fanfan.application.ports.repositories.user_flags import UserFlagRepository
+from fanfan.application.ports.repositories.votes import VoteRepository
+from fanfan.application.ports.trx import TransactionManager
+from fanfan.core.constants.flags import VOTING_CONTEST_FLAG_NAME
+from fanfan.core.models.user_flag import UserFlag
+from fanfan.core.vo.user import UserId
+
+
+class CheckVotingContestEntryInput(BaseModel):
+    user_id: UserId
+
+
+class CheckVotingContestEntry:
+    def __init__(
+        self,
+        vote_repo: VoteRepository,
+        nomination_repo: NominationRepository,
+        user_flag_repo: UserFlagRepository,
+        trx: TransactionManager,
+    ):
+        self.vote_repo = vote_repo
+        self.nomination_repo = nomination_repo
+        self.user_flag_repo = user_flag_repo
+        self.trx = trx
+
+    async def __call__(self, data: CheckVotingContestEntryInput) -> None:
+        # Get count of current user votes and total votable nominations
+        user_votes_count = await self.vote_repo.count_user_votes(data.user_id)
+        votable_nominations_count = await self.nomination_repo.count_votable()
+
+        # Check existing user flag
+        flag = await self.user_flag_repo.get_by_user(
+            user_id=data.user_id, flag_name=VOTING_CONTEST_FLAG_NAME
+        )
+
+        # If it exists, let's check if it's still valid
+        # If it's not - check if we can create it
+        if flag and user_votes_count < votable_nominations_count:
+            await self.user_flag_repo.delete(flag)
+            await self.trx.commit()
+        else:
+            if user_votes_count >= votable_nominations_count:
+                flag = UserFlag(name=VOTING_CONTEST_FLAG_NAME, user_id=data.user_id)
+                await self.user_flag_repo.add(flag)
+                await self.trx.commit()

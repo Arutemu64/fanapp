@@ -3,8 +3,13 @@ from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, HTTPException
 from starlette import status
 
-from fanfan.application.auth.request_email_verification import RequestEmailVerification
-from fanfan.application.auth.verify_email import VerifyEmail, VerifyEmailCommand
+from fanfan.application.interactors.auth.request_email_verification import (
+    RequestEmailVerification,
+)
+from fanfan.application.interactors.auth.verify_email import (
+    VerifyEmail,
+    VerifyEmailInput,
+)
 from fanfan.core.exceptions.auth import InvalidToken, TokenExpired, UserNotAuthenticated
 from fanfan.core.exceptions.users import UserNotFound
 from fanfan.presentation.web.schemas.error import ErrorMessage
@@ -53,7 +58,7 @@ async def request_email_verification(
 )
 @inject
 async def verify_email(
-    data: VerifyEmailCommand,
+    data: VerifyEmailInput,
     interactor: FromDishka[VerifyEmail],
 ) -> None:
     try:

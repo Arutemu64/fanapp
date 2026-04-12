@@ -1,5 +1,5 @@
 from fanfan.adapters.db.models import NotificationORM
-from fanfan.core.dto.notification import NotificationDTO
+from fanfan.application.dto.notification import NotificationDTO
 from fanfan.core.models.notification import Notification
 from fanfan.core.vo.notification import NotificationType
 

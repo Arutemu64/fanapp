@@ -6,7 +6,6 @@
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import type { CurrentUserDTO } from '$lib/types/user';
-	import { prefersReducedMotion } from '$lib/utils/motion';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
 	import { ChevronUpOutline, PlaySolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
@@ -126,7 +125,7 @@
 		);
 
 		element?.scrollIntoView({
-			behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+			behavior: 'smooth',
 			block: 'center'
 		});
 	}
@@ -137,7 +136,7 @@
 
 		scrollContainer.scrollTo({
 			top: 0,
-			behavior: prefersReducedMotion() ? 'auto' : 'smooth'
+			behavior: 'smooth'
 		});
 	}
 

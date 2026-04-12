@@ -4,7 +4,7 @@ import typing
 import numpy as np
 import pandas as pd
 
-from fanfan.application.schedule_mgmt.import_schedule import ScheduleEntry
+from fanfan.application.interactors.schedule_mgmt.import_schedule import ScheduleEntry
 from fanfan.core.vo.schedule_event import ScheduleEventPublicNumber
 
 logger = logging.getLogger(__name__)

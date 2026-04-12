@@ -1,16 +1,18 @@
+{
+	servers {
+        # Set trusted proxies so passing HTTPS handled correctly
+		trusted_proxies static 100.64.0.0/10
+	}
+}
+
 :80 {
     # Route all requests starting with /api to FastAPI
-    handle_path /api* {
-        reverse_proxy http://127.0.0.1:8000 {
-			    header_up Host {host}
-				header_up X-Forwarded-For {remote_host}
-				header_up X-Forwarded-Proto {scheme}
-				header_up X-Forwarded-Host {host}
-		}
-    }
+	handle_path /api* {
+		reverse_proxy http://127.0.0.1:8000
+	}
 
     # Route everything else to Svelte/Vite
-    handle {
-        reverse_proxy http://127.0.0.1:3000
-    }
+	handle {
+		reverse_proxy http://127.0.0.1:3000
+	}
 }

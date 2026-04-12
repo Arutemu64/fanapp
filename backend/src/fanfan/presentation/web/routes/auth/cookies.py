@@ -1,6 +1,6 @@
 from fastapi import Response
 
-from fanfan.adapters.auth.utils.jwt import ACCESS_TOKEN_TTL, REFRESH_TOKEN_TTL
+from fanfan.adapters.auth.jwt import ACCESS_TOKEN_TTL, REFRESH_TOKEN_TTL
 from fanfan.presentation.web.config import WebConfig
 
 # Keep cookie max-age synchronized with JWT TTL constants.

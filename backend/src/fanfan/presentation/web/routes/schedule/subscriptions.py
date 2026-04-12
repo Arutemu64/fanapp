@@ -3,15 +3,15 @@ from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, HTTPException
 from starlette import status
 
-from fanfan.application.subscriptions.create_subscription import (
+from fanfan.application.interactors.subscriptions.create_subscription import (
     CreateSubscription,
-    CreateSubscriptionCommand,
+    CreateSubscriptionInput,
+    CreateSubscriptionOutput,
 )
-from fanfan.application.subscriptions.delete_subscription import (
+from fanfan.application.interactors.subscriptions.delete_subscription import (
     DeleteSubscription,
-    DeleteSubscriptionCommand,
+    DeleteSubscriptionInput,
 )
-from fanfan.core.dto.subscription import SubscriptionFullDTO
 from fanfan.core.exceptions.schedule import EventNotFound
 from fanfan.core.exceptions.subscriptions import (
     SubscriptionAlreadyExist,
@@ -31,7 +31,7 @@ subscriptions_router = APIRouter(prefix="/subscriptions")
     "Prevents duplicate subscriptions.",
     responses={
         201: {
-            "model": SubscriptionFullDTO,
+            "model": CreateSubscriptionOutput,
             "description": "Subscription created successfully.",
         },
         404: {"model": ErrorMessage, "description": "Event ID does not exist."},
@@ -43,9 +43,9 @@ subscriptions_router = APIRouter(prefix="/subscriptions")
 )
 @inject
 async def new_subscription(
-    data: CreateSubscriptionCommand,
+    data: CreateSubscriptionInput,
     interactor: FromDishka[CreateSubscription],
-) -> SubscriptionFullDTO:
+) -> CreateSubscriptionOutput:
     try:
         return await interactor(data)
     except EventNotFound as e:
@@ -77,7 +77,7 @@ async def delete_subscription(
     interactor: FromDishka[DeleteSubscription],
 ) -> None:
     try:
-        await interactor(DeleteSubscriptionCommand(subscription_id=subscription_id))
+        await interactor(DeleteSubscriptionInput(subscription_id=subscription_id))
     except SubscriptionNotFound as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=e.message

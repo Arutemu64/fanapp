@@ -5,7 +5,7 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { components } from '$lib/api/v1';
 
-	type ChangePasswordCommand = components['schemas']['ChangePasswordCommand'];
+	type ChangePasswordInput = components['schemas']['ChangePasswordInput'];
 
 	interface Props {
 		open: boolean;
@@ -36,7 +36,7 @@
 
 		isLoading = true;
 
-		const body: ChangePasswordCommand = {
+		const body: ChangePasswordInput = {
 			old_password: oldPassword || null,
 			new_password: newPassword
 		};

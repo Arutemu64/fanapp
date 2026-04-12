@@ -1,15 +1,13 @@
 from dishka import Provider, Scope, provide
 
-from fanfan.core.services.cosplay2 import Cosplay2Service
-from fanfan.core.services.email_login import EmailLoginService
-from fanfan.core.services.email_verification import EmailVerificationService
-from fanfan.core.services.notifications import NotificationService
-from fanfan.core.services.perm import PermService
-from fanfan.core.services.security import SecurityService
-from fanfan.core.services.tickets import TicketService
-from fanfan.core.services.ticketscloud import TCloudService
-from fanfan.core.services.user import UserService
-from fanfan.core.services.voting import VotingService
+from fanfan.application.services.mailing import MailingService
+from fanfan.application.services.permissions import PermissionService
+from fanfan.application.services.security import SecurityService
+from fanfan.application.services.tickets import TicketService
+from fanfan.application.services.ticketscloud import TCloudService
+from fanfan.application.services.user import UserService
+from fanfan.application.services.voting import VotingService
+from fanfan.core.services.email_login import EmailService
 
 
 class ServicesProvider(Provider):
@@ -18,12 +16,10 @@ class ServicesProvider(Provider):
     tickets = provide(TicketService)
     voting = provide(VotingService)
     security = provide(SecurityService)
-    email_login = provide(EmailLoginService)
-    email_verification = provide(EmailVerificationService)
-    notifications = provide(NotificationService)
-    perm = provide(PermService)
+    email = provide(EmailService)
+    notifications = provide(MailingService)
+    perm = provide(PermissionService)
     user = provide(UserService)
 
     # External
     tcloud = provide(TCloudService)
-    cosplay2 = provide(Cosplay2Service)

@@ -3,22 +3,29 @@ from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, HTTPException
 from starlette import status
 
-from fanfan.application.voting.add_vote import AddVote, AddVoteCommand
-from fanfan.application.voting.cancel_vote import CancelVote, CancelVoteRequest
-from fanfan.application.voting.get_voting_nomination import (
+from fanfan.application.dto.vote import VoteBaseDTO
+from fanfan.application.interactors.voting.add_vote import (
+    AddVote,
+    AddVoteInput,
+    AddVoteOutput,
+)
+from fanfan.application.interactors.voting.cancel_vote_by_nomination import (
+    CancelUserVoteByNomination,
+    CancelUserVoteByNominationInput,
+)
+from fanfan.application.interactors.voting.get_voting_nomination import (
     GetVotingNomination,
-    GetVotingNominationCommand,
-    GetVotingNominationResult,
+    GetVotingNominationInput,
+    GetVotingNominationOutput,
 )
-from fanfan.application.voting.get_voting_state import (
+from fanfan.application.interactors.voting.get_voting_state import (
     GetVotingState,
-    GetVotingStateResult,
+    GetVotingStateOutput,
 )
-from fanfan.application.voting.list_voting_nominations import (
+from fanfan.application.interactors.voting.list_voting_nominations import (
     ListVotingNominations,
-    ListVotingNominationsResult,
+    ListVotingNominationsOutput,
 )
-from fanfan.core.dto.vote import VoteBaseDTO
 from fanfan.core.exceptions.participants import ParticipantNotFound
 from fanfan.core.exceptions.votes import AlreadyVotedInThisNomination, VoteNotFound
 from fanfan.core.vo.nomination import NominationId
@@ -35,7 +42,7 @@ voting_router = APIRouter(tags=["Voting"], prefix="/voting")
     "(e.g., active, closed) and reasoning.",
     responses={
         200: {
-            "model": GetVotingStateResult,
+            "model": GetVotingStateOutput,
             "description": "Voting status retrieved successfully.",
         },
     },
@@ -43,7 +50,7 @@ voting_router = APIRouter(tags=["Voting"], prefix="/voting")
 @inject
 async def get_voting_status(
     interactor: FromDishka[GetVotingState],
-) -> GetVotingStateResult:
+) -> GetVotingStateOutput:
     return await interactor()
 
 
@@ -55,7 +62,7 @@ async def get_voting_status(
     "eligible for voting in the current session.",
     responses={
         200: {
-            "model": ListVotingNominationsResult,
+            "model": ListVotingNominationsOutput,
             "description": "Nominations retrieved successfully.",
         },
     },
@@ -63,7 +70,7 @@ async def get_voting_status(
 @inject
 async def list_voting_nominations(
     interactor: FromDishka[ListVotingNominations],
-) -> ListVotingNominationsResult:
+) -> ListVotingNominationsOutput:
     return await interactor()
 
 
@@ -73,7 +80,7 @@ async def list_voting_nominations(
     description="Retrieves detailed information about a specific nomination.",
     responses={
         200: {
-            "model": GetVotingNominationResult,
+            "model": GetVotingNominationOutput,
             "description": "Nomination details retrieved successfully.",
         },
         404: {"model": ErrorMessage, "description": "Nomination not found."},
@@ -83,8 +90,8 @@ async def list_voting_nominations(
 async def get_voting_nomination(
     nomination_code: str,
     interactor: FromDishka[GetVotingNomination],
-) -> GetVotingNominationResult:
-    return await interactor(GetVotingNominationCommand(nomination_code=nomination_code))
+) -> GetVotingNominationOutput:
+    return await interactor(GetVotingNominationInput(nomination_code=nomination_code))
 
 
 @voting_router.put(
@@ -103,9 +110,9 @@ async def get_voting_nomination(
 @inject
 async def add_vote(
     nomination_id: NominationId,
-    data: AddVoteCommand,
+    data: AddVoteInput,
     interactor: FromDishka[AddVote],
-) -> VoteBaseDTO:
+) -> AddVoteOutput:
     try:
         return await interactor(data)
     except ParticipantNotFound as e:
@@ -132,10 +139,12 @@ async def add_vote(
 @inject
 async def cancel_vote(
     nomination_id: NominationId,
-    interactor: FromDishka[CancelVote],
+    interactor: FromDishka[CancelUserVoteByNomination],
 ) -> None:
     try:
-        return await interactor(CancelVoteRequest(nomination_id=nomination_id))
+        return await interactor(
+            CancelUserVoteByNominationInput(nomination_id=nomination_id)
+        )
     except VoteNotFound as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

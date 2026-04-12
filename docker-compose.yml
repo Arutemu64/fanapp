@@ -4,8 +4,6 @@ services:
     build:
       context: ./frontend
       target: prod
-    networks:
-      - app
     environment:
       HOST: "0.0.0.0"
       PORT: "3000"
@@ -31,9 +29,6 @@ services:
 
   api:
     build: ./backend
-    networks:
-      - app
-      - backend
     depends_on:
       migration:
         condition: service_completed_successfully
@@ -67,8 +62,6 @@ services:
 
   faststream:
     build: ./backend
-    networks:
-      - backend
     depends_on:
       migration:
         condition: service_completed_successfully
@@ -86,8 +79,6 @@ services:
 
   migration:
     build: ./backend
-    networks:
-      - backend
     env_file:
       - .env
     depends_on:
@@ -101,8 +92,6 @@ services:
 
   db:
     image: postgres:17-alpine
-    networks:
-      - backend
     volumes:
       - db-data:/var/lib/postgresql/data
     environment:
@@ -122,8 +111,6 @@ services:
 
   nats:
     image: docker.io/nats:alpine
-    networks:
-      - backend
     volumes:
       - nats-data:/data
     command: "--js --sd=/data --user ${NATS__USER} --pass ${NATS__PASSWORD}"
@@ -134,8 +121,6 @@ services:
 
   pgbackup:
     image: prodrigestivill/postgres-backup-local
-    networks:
-      - backend
     depends_on:
       - db
     volumes:
@@ -156,8 +141,6 @@ services:
 
   redis:
     image: redis:7-alpine
-    networks:
-      - backend
     environment:
       REDIS__PASSWORD: "${REDIS__PASSWORD}"
     volumes:
@@ -179,8 +162,3 @@ volumes:
   pgbackup-data: {}
   redis-data: {}
   nats-data: {}
-
-networks:
-  app: {}
-  backend:
-    internal: true

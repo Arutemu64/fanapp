@@ -170,7 +170,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RegisterUserCommand"
+                "$ref": "#/components/schemas/RegisterUserInput"
               }
             }
           },
@@ -302,7 +302,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VerifyEmailCommand"
+                "$ref": "#/components/schemas/VerifyEmailInput"
               }
             }
           },
@@ -382,7 +382,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RequestMagicLinkCommand"
+                "$ref": "#/components/schemas/RequestMagicLinkInput"
               }
             }
           },
@@ -442,7 +442,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LoginMagicLinkCommand"
+                "$ref": "#/components/schemas/LoginMagicLinkInput"
               }
             }
           },
@@ -755,7 +755,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateCurrentUserCommand"
+                "$ref": "#/components/schemas/UpdateCurrentUserInput"
               }
             }
           },
@@ -825,7 +825,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateUserSettingsCommand"
+                "$ref": "#/components/schemas/UpdateUserSettingsInput"
               }
             }
           },
@@ -885,7 +885,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ChangePasswordCommand"
+                "$ref": "#/components/schemas/ChangePasswordInput"
               }
             }
           },
@@ -965,7 +965,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ChangeEmailCommand"
+                "$ref": "#/components/schemas/ChangeEmailInput"
               }
             }
           },
@@ -1339,7 +1339,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LinkTicketCommand"
+                "$ref": "#/components/schemas/LinkTicketInput"
               }
             }
           },
@@ -1479,7 +1479,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateAppSettingsCommand"
+                "$ref": "#/components/schemas/UpdateAppSettingsInput"
               }
             }
           },
@@ -1601,7 +1601,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetScheduleResult"
+                  "$ref": "#/components/schemas/GetScheduleOutput"
                 }
               }
             }
@@ -1664,9 +1664,7 @@
             "description": "Event set as current successfully.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SetCurrentScheduleEventResult"
-                }
+                "schema": {}
               }
             }
           },
@@ -1754,9 +1752,7 @@
             "description": "Current event cleared successfully.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SetCurrentScheduleEventResult"
-                }
+                "schema": {}
               }
             }
           },
@@ -1846,9 +1842,7 @@
             "description": "Event moved successfully.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MoveScheduleEventResult"
-                }
+                "schema": {}
               }
             }
           },
@@ -1930,9 +1924,7 @@
             "description": "Event marked as skipped.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UpdateScheduleEventSkipResult"
-                }
+                "schema": {}
               }
             }
           },
@@ -2014,9 +2006,7 @@
             "description": "Event restored to active schedule.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UpdateScheduleEventSkipResult"
-                }
+                "schema": {}
               }
             }
           },
@@ -2204,7 +2194,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateSubscriptionCommand"
+                "$ref": "#/components/schemas/CreateSubscriptionInput"
               }
             }
           },
@@ -2216,7 +2206,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SubscriptionFullDTO"
+                  "$ref": "#/components/schemas/CreateSubscriptionOutput"
                 }
               }
             }
@@ -2414,7 +2404,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetVotingStateResult"
+                  "$ref": "#/components/schemas/GetVotingStateOutput"
                 }
               }
             }
@@ -2466,7 +2456,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListVotingNominationsResult"
+                  "$ref": "#/components/schemas/ListVotingNominationsOutput"
                 }
               }
             }
@@ -2529,7 +2519,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GetVotingNominationResult"
+                  "$ref": "#/components/schemas/GetVotingNominationOutput"
                 }
               }
             }
@@ -2602,7 +2592,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AddVoteCommand"
+                "$ref": "#/components/schemas/AddVoteInput"
               }
             }
           }
@@ -2850,7 +2840,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListUserNotificationsResult"
+                  "$ref": "#/components/schemas/ListUserNotificationOutput"
                 }
               }
             }
@@ -3054,7 +3044,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreatePushSubscriptionCommand"
+                "$ref": "#/components/schemas/CreatePushSubscriptionInput"
               }
             }
           },
@@ -3112,7 +3102,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DeletePushSubscriptionCommand"
+                "$ref": "#/components/schemas/DeletePushSubscriptionInput"
               }
             }
           },
@@ -3158,7 +3148,7 @@
   },
   "components": {
     "schemas": {
-      "AddVoteCommand": {
+      "AddVoteInput": {
         "properties": {
           "participant_id": {
             "type": "string",
@@ -3170,7 +3160,21 @@
         "required": [
           "participant_id"
         ],
-        "title": "AddVoteCommand"
+        "title": "AddVoteInput"
+      },
+      "AddVoteOutput": {
+        "properties": {
+          "vote_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Vote Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vote_id"
+        ],
+        "title": "AddVoteOutput"
       },
       "AppSettingsDTO": {
         "properties": {
@@ -3222,7 +3226,7 @@
         ],
         "title": "Body_login_auth_login_post"
       },
-      "ChangeEmailCommand": {
+      "ChangeEmailInput": {
         "properties": {
           "new_email": {
             "type": "string",
@@ -3234,9 +3238,9 @@
         "required": [
           "new_email"
         ],
-        "title": "ChangeEmailCommand"
+        "title": "ChangeEmailInput"
       },
-      "ChangePasswordCommand": {
+      "ChangePasswordInput": {
         "properties": {
           "old_password": {
             "anyOf": [
@@ -3261,9 +3265,9 @@
           "old_password",
           "new_password"
         ],
-        "title": "ChangePasswordCommand"
+        "title": "ChangePasswordInput"
       },
-      "CreatePushSubscriptionCommand": {
+      "CreatePushSubscriptionInput": {
         "properties": {
           "endpoint": {
             "type": "string",
@@ -3284,9 +3288,9 @@
           "p256dh",
           "auth"
         ],
-        "title": "CreatePushSubscriptionCommand"
+        "title": "CreatePushSubscriptionInput"
       },
-      "CreateSubscriptionCommand": {
+      "CreateSubscriptionInput": {
         "properties": {
           "event_id": {
             "type": "string",
@@ -3303,7 +3307,21 @@
           "event_id",
           "counter"
         ],
-        "title": "CreateSubscriptionCommand"
+        "title": "CreateSubscriptionInput"
+      },
+      "CreateSubscriptionOutput": {
+        "properties": {
+          "subscription_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subscription Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subscription_id"
+        ],
+        "title": "CreateSubscriptionOutput"
       },
       "CurrentUserDTO": {
         "properties": {
@@ -3414,7 +3432,7 @@
         ],
         "title": "CurrentUserDTO"
       },
-      "DeletePushSubscriptionCommand": {
+      "DeletePushSubscriptionInput": {
         "properties": {
           "endpoint": {
             "type": "string",
@@ -3425,7 +3443,7 @@
         "required": [
           "endpoint"
         ],
-        "title": "DeletePushSubscriptionCommand"
+        "title": "DeletePushSubscriptionInput"
       },
       "ErrorMessage": {
         "properties": {
@@ -3440,7 +3458,7 @@
         ],
         "title": "ErrorMessage"
       },
-      "GetScheduleResult": {
+      "GetScheduleOutput": {
         "properties": {
           "schedule": {
             "items": {
@@ -3454,9 +3472,9 @@
         "required": [
           "schedule"
         ],
-        "title": "GetScheduleResult"
+        "title": "GetScheduleOutput"
       },
-      "GetVotingNominationResult": {
+      "GetVotingNominationOutput": {
         "properties": {
           "id": {
             "type": "string",
@@ -3502,9 +3520,9 @@
           "user_vote",
           "participants"
         ],
-        "title": "GetVotingNominationResult"
+        "title": "GetVotingNominationOutput"
       },
-      "GetVotingStateResult": {
+      "GetVotingStateOutput": {
         "properties": {
           "can_vote": {
             "type": "boolean",
@@ -3519,7 +3537,7 @@
           "can_vote",
           "status"
         ],
-        "title": "GetVotingStateResult"
+        "title": "GetVotingStateOutput"
       },
       "LimitsConfigDTO": {
         "properties": {
@@ -3535,7 +3553,7 @@
         ],
         "title": "LimitsConfigDTO"
       },
-      "LinkTicketCommand": {
+      "LinkTicketInput": {
         "properties": {
           "barcode": {
             "type": "string",
@@ -3546,7 +3564,7 @@
         "required": [
           "barcode"
         ],
-        "title": "LinkTicketCommand"
+        "title": "LinkTicketInput"
       },
       "ListScheduleChangesResult": {
         "properties": {
@@ -3564,7 +3582,7 @@
         ],
         "title": "ListScheduleChangesResult"
       },
-      "ListUserNotificationsResult": {
+      "ListUserNotificationOutput": {
         "properties": {
           "notifications": {
             "items": {
@@ -3578,9 +3596,9 @@
         "required": [
           "notifications"
         ],
-        "title": "ListUserNotificationsResult"
+        "title": "ListUserNotificationOutput"
       },
-      "ListVotingNominationsResult": {
+      "ListVotingNominationsOutput": {
         "properties": {
           "nominations": {
             "items": {
@@ -3594,9 +3612,9 @@
         "required": [
           "nominations"
         ],
-        "title": "ListVotingNominationsResult"
+        "title": "ListVotingNominationsOutput"
       },
-      "LoginMagicLinkCommand": {
+      "LoginMagicLinkInput": {
         "properties": {
           "token": {
             "type": "string",
@@ -3607,7 +3625,7 @@
         "required": [
           "token"
         ],
-        "title": "LoginMagicLinkCommand"
+        "title": "LoginMagicLinkInput"
       },
       "MoveScheduleEventRequest": {
         "properties": {
@@ -3622,22 +3640,6 @@
           "place_after_event_id"
         ],
         "title": "MoveScheduleEventRequest"
-      },
-      "MoveScheduleEventResult": {
-        "properties": {
-          "event": {
-            "$ref": "#/components/schemas/ScheduleEventFullDTO"
-          },
-          "place_after_event": {
-            "$ref": "#/components/schemas/ScheduleEventFullDTO"
-          }
-        },
-        "type": "object",
-        "required": [
-          "event",
-          "place_after_event"
-        ],
-        "title": "MoveScheduleEventResult"
       },
       "NominationVoteDTO": {
         "properties": {
@@ -3901,7 +3903,7 @@
         ],
         "title": "PushSubscriptionDTO"
       },
-      "RegisterUserCommand": {
+      "RegisterUserInput": {
         "properties": {
           "email": {
             "type": "string",
@@ -3920,9 +3922,9 @@
           "email",
           "password"
         ],
-        "title": "RegisterUserCommand"
+        "title": "RegisterUserInput"
       },
-      "RequestMagicLinkCommand": {
+      "RequestMagicLinkInput": {
         "properties": {
           "email": {
             "type": "string",
@@ -3934,7 +3936,7 @@
         "required": [
           "email"
         ],
-        "title": "RequestMagicLinkCommand"
+        "title": "RequestMagicLinkInput"
       },
       "ScheduleChangeEventDTO": {
         "properties": {
@@ -3950,13 +3952,18 @@
           "title": {
             "type": "string",
             "title": "Title"
+          },
+          "order": {
+            "type": "number",
+            "title": "Order"
           }
         },
         "type": "object",
         "required": [
           "id",
           "public_number",
-          "title"
+          "title",
+          "order"
         ],
         "title": "ScheduleChangeEventDTO"
       },
@@ -4110,11 +4117,25 @@
             "title": "Is Skipped"
           },
           "nomination_title": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Nomination Title"
           },
           "block_title": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Block Title"
           },
           "queue": {
@@ -4185,113 +4206,6 @@
           "counter"
         ],
         "title": "ScheduleEventSubscriptionDTO"
-      },
-      "SetCurrentScheduleEventResult": {
-        "properties": {
-          "current_event": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ScheduleEventFullDTO"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "schedule_change_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Schedule Change Id"
-          }
-        },
-        "type": "object",
-        "required": [
-          "current_event",
-          "schedule_change_id"
-        ],
-        "title": "SetCurrentScheduleEventResult"
-      },
-      "SubscriptionEventDTO": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "public_number": {
-            "type": "integer",
-            "title": "Public Number"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "order": {
-            "type": "number",
-            "title": "Order"
-          },
-          "queue": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Queue"
-          },
-          "time_until": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Time Until"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "public_number",
-          "title",
-          "order",
-          "queue",
-          "time_until"
-        ],
-        "title": "SubscriptionEventDTO"
-      },
-      "SubscriptionFullDTO": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "user_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "User Id"
-          },
-          "counter": {
-            "type": "integer",
-            "title": "Counter"
-          },
-          "event": {
-            "$ref": "#/components/schemas/SubscriptionEventDTO"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "user_id",
-          "counter",
-          "event"
-        ],
-        "title": "SubscriptionFullDTO"
       },
       "TCloudWebhookPayload": {
         "properties": {
@@ -4392,7 +4306,7 @@
         ],
         "title": "Ticket"
       },
-      "UpdateAppSettingsCommand": {
+      "UpdateAppSettingsInput": {
         "properties": {
           "voting_enabled": {
             "anyOf": [
@@ -4419,9 +4333,9 @@
           }
         },
         "type": "object",
-        "title": "UpdateAppSettingsCommand"
+        "title": "UpdateAppSettingsInput"
       },
-      "UpdateCurrentUserCommand": {
+      "UpdateCurrentUserInput": {
         "properties": {
           "username": {
             "anyOf": [
@@ -4451,21 +4365,9 @@
           }
         },
         "type": "object",
-        "title": "UpdateCurrentUserCommand"
+        "title": "UpdateCurrentUserInput"
       },
-      "UpdateScheduleEventSkipResult": {
-        "properties": {
-          "event": {
-            "$ref": "#/components/schemas/ScheduleEventFullDTO"
-          }
-        },
-        "type": "object",
-        "required": [
-          "event"
-        ],
-        "title": "UpdateScheduleEventSkipResult"
-      },
-      "UpdateUserSettingsCommand": {
+      "UpdateUserSettingsInput": {
         "properties": {
           "receive_all_announcements": {
             "anyOf": [
@@ -4491,7 +4393,7 @@
           }
         },
         "type": "object",
-        "title": "UpdateUserSettingsCommand"
+        "title": "UpdateUserSettingsInput"
       },
       "UserBaseDTO": {
         "properties": {
@@ -4688,7 +4590,7 @@
         ],
         "title": "ValidationErrorResponse"
       },
-      "VerifyEmailCommand": {
+      "VerifyEmailInput": {
         "properties": {
           "token": {
             "type": "string",
@@ -4699,7 +4601,7 @@
         "required": [
           "token"
         ],
-        "title": "VerifyEmailCommand"
+        "title": "VerifyEmailInput"
       },
       "VoteBaseDTO": {
         "properties": {

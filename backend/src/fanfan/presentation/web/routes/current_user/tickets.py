@@ -3,7 +3,10 @@ from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, HTTPException
 from starlette import status
 
-from fanfan.application.tickets.link_ticket import LinkTicket, LinkTicketCommand
+from fanfan.application.interactors.tickets.link_ticket import (
+    LinkTicket,
+    LinkTicketInput,
+)
 from fanfan.core.exceptions.auth import UserNotAuthenticated
 from fanfan.core.exceptions.tickets import TicketNotFound, UserAlreadyHasTicketLinked
 from fanfan.presentation.web.schemas.error import ErrorMessage
@@ -26,7 +29,7 @@ tickets_router = APIRouter()
 )
 @inject
 async def link_ticket(
-    data: LinkTicketCommand,
+    data: LinkTicketInput,
     interactor: FromDishka[LinkTicket],
 ) -> None:
     try:

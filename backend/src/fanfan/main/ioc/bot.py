@@ -4,7 +4,7 @@ from aiogram.enums import ParseMode
 from dishka import Provider, Scope, provide
 
 from fanfan.adapters.config.models import EnvConfig
-from fanfan.adapters.notifications.telegram import TelegramNotifier
+from fanfan.adapters.tgbot.notifier import TelegramNotifier
 from fanfan.presentation.tgbot.config import TelegramConfig
 
 

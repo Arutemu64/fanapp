@@ -1,7 +1,7 @@
 from adaptix import Retort
 
 from fanfan.adapters.db.models import UserORM
-from fanfan.core.dto.user import (
+from fanfan.application.dto.user import (
     CurrentUserDTO,
     UserBaseDTO,
     UserPermissionDTO,

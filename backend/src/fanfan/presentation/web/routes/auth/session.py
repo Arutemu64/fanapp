@@ -6,12 +6,12 @@ from fastapi import APIRouter, HTTPException, Request, Response
 from redis.exceptions import RedisError
 from starlette import status
 
-from fanfan.adapters.auth.utils.jwt import JwtTokenProcessor
-from fanfan.adapters.redis.auth_token_registry import RedisAuthTokenRegistry
-from fanfan.application.auth.refresh_access_token import (
+from fanfan.adapters.auth.jwt import JwtTokenProcessor
+from fanfan.application.interactors.auth.refresh_access_token import (
     RefreshAccessToken,
-    RefreshAccessTokenCommand,
+    RefreshAccessTokenInput,
 )
+from fanfan.application.ports.token_registry import TokenRegistry
 from fanfan.core.exceptions.auth import (
     AuthenticationError,
     InvalidToken,
@@ -57,7 +57,7 @@ async def refresh_access_token(
         )
 
     try:
-        token = await interactor(RefreshAccessTokenCommand(refresh_token=refresh_token))
+        token = await interactor(RefreshAccessTokenInput(refresh_token=refresh_token))
     except (InvalidToken, RefreshTokenReused, AuthenticationError) as e:
         raise HTTPException(status_code=401, detail=e.message) from e
 
@@ -77,7 +77,7 @@ async def logout_user(
     request: Request,
     response: Response,
     jwt: FromDishka[JwtTokenProcessor],
-    token_registry: FromDishka[RedisAuthTokenRegistry],
+    token_registry: FromDishka[TokenRegistry],
     config: FromDishka[WebConfig],
 ) -> None:
     # Best-effort token revocation before clearing cookies.

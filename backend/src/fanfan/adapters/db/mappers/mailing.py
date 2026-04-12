@@ -1,5 +1,5 @@
 from fanfan.adapters.db.models import MailingORM
-from fanfan.core.dto.mailing import MailingDTO
+from fanfan.application.dto.mailing import MailingDTO
 from fanfan.core.models.mailing import Mailing
 
 

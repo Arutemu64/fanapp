@@ -3,24 +3,24 @@ from dishka_faststream import inject
 from faststream import AckPolicy, Logger
 from faststream.nats import NatsMessage, NatsRouter, PullSub
 
-from fanfan.adapters.nats.events_broker import EventBroker
-from fanfan.application.notifications.delete_mailing_messages import (
+from fanfan.application.dto.realtime import SSEMessage
+from fanfan.application.interactors.notifications.delete_mailing_messages import (
     DeleteMailingMessages,
-    DeleteMailingMessagesDTO,
+    DeleteMailingMessagesInput,
 )
-from fanfan.application.notifications.new_notification import (
+from fanfan.application.interactors.notifications.new_notification import (
     NewNotification,
-    NewNotificationCommand,
+    NewNotificationInput,
 )
-from fanfan.application.notifications.send_notification import (
+from fanfan.application.interactors.notifications.send_notification import (
     SendNotification,
-    SendNotificationCommand,
+    SendNotificationInput,
 )
-from fanfan.application.notifications.send_notification_to_roles import (
+from fanfan.application.interactors.notifications.send_notification_to_roles import (
     SendNotificationToRoles,
-    SendNotificationToRolesDTO,
+    SendNotificationToRolesInput,
 )
-from fanfan.application.sse.stream_events import SSEMessage
+from fanfan.application.ports.realtime_gateway import RealtimeGateway
 from fanfan.core.events.notifications import (
     CancelMailingEvent,
     CreatedNotificationEvent,
@@ -52,20 +52,19 @@ notifications_router = NatsRouter()
 async def create_new_notification(
     data: NewNotificationEvent,
     interactor: FromDishka[NewNotification],
-    events_broker: FromDishka[EventBroker],
+    realtime_gateway: FromDishka[RealtimeGateway],
     msg: NatsMessage,
-    logger: Logger,
 ) -> CreatedNotificationEvent:
     try:
         notification_id = await interactor(
-            NewNotificationCommand(notification=data.notification)
+            NewNotificationInput(notification=data.notification)
         )
     except MailingCancelled:
         await msg.reject()
         raise
     else:
         await msg.ack()
-        await events_broker.push_sse_message(
+        await realtime_gateway.publish(
             SSEMessage("update_notifications"),
             user_id=data.notification.user_id,
         )
@@ -88,7 +87,7 @@ async def send_notification_to_telegram(
 ) -> None:
     try:
         await interactor.send_notification_to_telegram(
-            SendNotificationCommand(notification_id=data.notification_id)
+            SendNotificationInput(notification_id=data.notification_id)
         )
     except NotificationRetryAfter as e:
         logger.warning(
@@ -129,7 +128,7 @@ async def send_push_notification(
 ) -> None:
     try:
         await interactor.send_notification_to_push(
-            SendNotificationCommand(notification_id=data.notification_id)
+            SendNotificationInput(notification_id=data.notification_id)
         )
     except MailingCancelled:
         logger.info("Mailing for notification %s was cancelled", data.notification_id)
@@ -154,7 +153,7 @@ async def create_new_roles_notification(
     interactor: FromDishka[SendNotificationToRoles],
 ) -> None:
     await interactor(
-        SendNotificationToRolesDTO(
+        SendNotificationToRolesInput(
             title=data.title,
             body=data.body,
             roles=data.roles,
@@ -176,5 +175,5 @@ async def cancel_mailing(
     interactor: FromDishka[DeleteMailingMessages],
 ) -> None:
 
-    await interactor(DeleteMailingMessagesDTO(mailing_id=data.mailing_id))
+    await interactor(DeleteMailingMessagesInput(mailing_id=data.mailing_id))
     return

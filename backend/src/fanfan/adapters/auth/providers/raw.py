@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fanfan.application.common.id_provider import IdProvider
+from fanfan.application.ports.id_provider import IdProvider
 from fanfan.core.vo.user import UserId
 
 
