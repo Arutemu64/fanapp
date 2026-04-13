@@ -17,6 +17,10 @@ class InvalidToken(AuthenticationError):
     default_message = "Неверный токен"
 
 
+class InvalidOtpCode(AuthenticationError):
+    default_message = "Неверный или устаревший код"
+
+
 class TokenExpired(AuthenticationError):
     default_message = "Срок действия токена истек"
 

@@ -108,8 +108,8 @@
         "tags": [
           "Authentication"
         ],
-        "summary": "Login and get access token",
-        "description": "Authenticates user with email and password. Sets HttpOnly cookies with JWT access and refresh tokens.",
+        "summary": "Login and create session",
+        "description": "Authenticates user with email and password. Sets an HttpOnly cookie with a Redis-backed session id.",
         "operationId": "login_auth_login_post",
         "requestBody": {
           "content": {
@@ -123,7 +123,7 @@
         },
         "responses": {
           "204": {
-            "description": "Successfully authenticated. Tokens set in cookies."
+            "description": "Successfully authenticated. Session cookie is set."
           },
           "401": {
             "description": "Invalid email or password.",
@@ -230,17 +230,17 @@
         }
       }
     },
-    "/auth/request-email-verification": {
+    "/auth/request-email-code": {
       "post": {
         "tags": [
           "Authentication"
         ],
-        "summary": "Request a new email verification link",
-        "description": "Sends a new verification email to the current user's email address.",
-        "operationId": "request_email_verification_auth_request_email_verification_post",
+        "summary": "Request a new email confirmation code",
+        "description": "Sends a new confirmation code to the current user's email address.",
+        "operationId": "request_email_code_auth_request_email_code_post",
         "responses": {
           "202": {
-            "description": "Verification email sent.",
+            "description": "Confirmation code sent.",
             "content": {
               "application/json": {
                 "schema": {}
@@ -290,19 +290,19 @@
         }
       }
     },
-    "/auth/verify-email": {
+    "/auth/confirm-email-code": {
       "post": {
         "tags": [
           "Authentication"
         ],
-        "summary": "Verify user email",
-        "description": "Verifies a user's email address using a signed token received via email.",
-        "operationId": "verify_email_auth_verify_email_post",
+        "summary": "Confirm user email with code",
+        "description": "Confirms the current user's email address using a one-time code received via email.",
+        "operationId": "confirm_email_code_auth_confirm_email_code_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VerifyEmailInput"
+                "$ref": "#/components/schemas/ConfirmEmailCodeInput"
               }
             }
           },
@@ -310,7 +310,7 @@
         },
         "responses": {
           "200": {
-            "description": "Email successfully verified.",
+            "description": "Email successfully confirmed.",
             "content": {
               "application/json": {
                 "schema": {}
@@ -318,7 +318,7 @@
             }
           },
           "401": {
-            "description": "Not authenticated.",
+            "description": "User not authenticated.",
             "content": {
               "application/json": {
                 "schema": {
@@ -348,7 +348,7 @@
             }
           },
           "400": {
-            "description": "Token is invalid or expired.",
+            "description": "Code is invalid or expired.",
             "content": {
               "application/json": {
                 "schema": {
@@ -370,19 +370,19 @@
         }
       }
     },
-    "/auth/request-magic-link": {
+    "/auth/request-login-code": {
       "post": {
         "tags": [
           "Authentication"
         ],
-        "summary": "Request email magic link",
-        "description": "Sends a one-time sign-in link to the requested email address. Creates an account automatically when the email is new.",
-        "operationId": "request_magic_link_auth_request_magic_link_post",
+        "summary": "Request email login code",
+        "description": "Sends a one-time six-digit sign-in code to the requested email address. Creates an account automatically when the email is new.",
+        "operationId": "request_login_code_auth_request_login_code_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RequestMagicLinkInput"
+                "$ref": "#/components/schemas/RequestLoginCodeInput"
               }
             }
           },
@@ -390,7 +390,7 @@
         },
         "responses": {
           "202": {
-            "description": "If the email is valid, the magic link was queued.",
+            "description": "If the email is valid, the login code was queued.",
             "content": {
               "application/json": {
                 "schema": {}
@@ -430,19 +430,19 @@
         }
       }
     },
-    "/auth/login-magic-link": {
+    "/auth/login-with-code": {
       "post": {
         "tags": [
           "Authentication"
         ],
-        "summary": "Login with email magic link",
-        "description": "Consumes a one-time email magic link token and sets auth cookies.",
-        "operationId": "login_magic_link_auth_login_magic_link_post",
+        "summary": "Login with email code",
+        "description": "Consumes a one-time email code and sets session cookie.",
+        "operationId": "login_with_code_auth_login_with_code_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LoginMagicLinkInput"
+                "$ref": "#/components/schemas/LoginWithCodeInput"
               }
             }
           },
@@ -450,7 +450,7 @@
         },
         "responses": {
           "204": {
-            "description": "Successfully authenticated. Tokens set in cookies."
+            "description": "Successfully authenticated. Session cookie is set."
           },
           "401": {
             "description": "Not authenticated.",
@@ -483,7 +483,7 @@
             }
           },
           "400": {
-            "description": "Magic link is invalid or has already been used.",
+            "description": "Email code is invalid or has already been used.",
             "content": {
               "application/json": {
                 "schema": {
@@ -498,51 +498,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/refresh": {
-      "post": {
-        "tags": [
-          "Authentication"
-        ],
-        "summary": "Refresh access token",
-        "description": "Uses the refresh_token cookie to issue fresh access and refresh tokens (token rotation). Old cookies are replaced.",
-        "operationId": "refresh_access_token_auth_refresh_post",
-        "responses": {
-          "204": {
-            "description": "Tokens refreshed successfully. New cookies set."
-          },
-          "401": {
-            "description": "Refresh token is missing, invalid, or expired.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
               }
             }
@@ -556,7 +511,7 @@
           "Authentication"
         ],
         "summary": "Logout user",
-        "description": "Clears auth cookies and invalidates the refresh token so it can't be replayed even if stolen.",
+        "description": "Clears session cookie and removes Redis session state.",
         "operationId": "logout_user_auth_logout_post",
         "responses": {
           "204": {
@@ -959,7 +914,7 @@
           "Current user"
         ],
         "summary": "Change current user email",
-        "description": "Changes the authenticated user's email address and sends a verification link to the new email.",
+        "description": "Changes the authenticated user's email address and sends a confirmation code to the new email.",
         "operationId": "change_current_user_email_me_email_post",
         "requestBody": {
           "content": {
@@ -973,7 +928,7 @@
         },
         "responses": {
           "200": {
-            "description": "Email changed and verification requested.",
+            "description": "Email changed and confirmation code requested.",
             "content": {
               "application/json": {
                 "schema": {}
@@ -3088,6 +3043,16 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Push subscription already exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
           }
         }
       },
@@ -3266,6 +3231,22 @@
           "new_password"
         ],
         "title": "ChangePasswordInput"
+      },
+      "ConfirmEmailCodeInput": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 6,
+            "minLength": 6,
+            "pattern": "^\\d{6}$",
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "ConfirmEmailCodeInput"
       },
       "CreatePushSubscriptionInput": {
         "properties": {
@@ -3614,18 +3595,27 @@
         ],
         "title": "ListVotingNominationsOutput"
       },
-      "LoginMagicLinkInput": {
+      "LoginWithCodeInput": {
         "properties": {
-          "token": {
+          "email": {
             "type": "string",
-            "title": "Token"
+            "format": "email",
+            "title": "Email"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 6,
+            "minLength": 6,
+            "pattern": "^\\d{6}$",
+            "title": "Code"
           }
         },
         "type": "object",
         "required": [
-          "token"
+          "email",
+          "code"
         ],
-        "title": "LoginMagicLinkInput"
+        "title": "LoginWithCodeInput"
       },
       "MoveScheduleEventRequest": {
         "properties": {
@@ -3924,7 +3914,7 @@
         ],
         "title": "RegisterUserInput"
       },
-      "RequestMagicLinkInput": {
+      "RequestLoginCodeInput": {
         "properties": {
           "email": {
             "type": "string",
@@ -3936,7 +3926,7 @@
         "required": [
           "email"
         ],
-        "title": "RequestMagicLinkInput"
+        "title": "RequestLoginCodeInput"
       },
       "ScheduleChangeEventDTO": {
         "properties": {
@@ -4589,19 +4579,6 @@
           "detail"
         ],
         "title": "ValidationErrorResponse"
-      },
-      "VerifyEmailInput": {
-        "properties": {
-          "token": {
-            "type": "string",
-            "title": "Token"
-          }
-        },
-        "type": "object",
-        "required": [
-          "token"
-        ],
-        "title": "VerifyEmailInput"
       },
       "VoteBaseDTO": {
         "properties": {

@@ -5,7 +5,7 @@ from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
-from fanfan.core.events.users import EmailVerificationRequestedEvent
+from fanfan.core.events.users import EmailConfirmationCodeRequestedEvent
 from fanfan.core.exceptions.users import EmailAlreadyExists
 from fanfan.core.utils.email import normalize_email
 
@@ -44,11 +44,11 @@ class ChangeEmail:
             raise EmailAlreadyExists
 
         # Keep the active email unchanged until the new address proves
-        # mailbox ownership through the verification flow.
+        # mailbox ownership through the confirmation code flow.
         current_user.pending_email = normalized_new_email
         await self.user_repo.save(current_user)
         await self.trx.commit()
 
         await self.event_broker.publish(
-            EmailVerificationRequestedEvent(user_id=current_user.id)
+            EmailConfirmationCodeRequestedEvent(user_id=current_user.id)
         )

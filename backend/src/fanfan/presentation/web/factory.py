@@ -2,6 +2,7 @@ import logfire
 from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI, HTTPException, Request
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from starlette.responses import Response
 
 from fanfan.adapters.config.parsers import get_config
@@ -49,6 +50,13 @@ def create_app() -> FastAPI:
     app.add_exception_handler(HTTPException, auth_exception_handler)
 
     # Setup FastAPI middlewares
+    app.add_middleware(
+        SessionMiddleware,
+        secret_key=config.web.secret_key.get_secret_value(),
+        same_site="lax",
+        https_only=True,
+    )
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],

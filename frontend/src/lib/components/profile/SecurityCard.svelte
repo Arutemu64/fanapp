@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { client } from '$lib/api';
+	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { CurrentUserDTO, UserSocialAccountDTO } from '$lib/types/user';
-	import { Alert, Badge, Button, Spinner } from 'flowbite-svelte';
+	import { Alert, Badge, Button, Helper, Input, Label, Spinner } from 'flowbite-svelte';
 	import {
 		EnvelopeSolid,
 		ExclamationCircleSolid,
@@ -27,7 +28,11 @@
 	let changePasswordModalOpen = $state(false);
 	let changeEmailModalOpen = $state(false);
 	let isRequestingVerification = $state(false);
+	let isSubmittingVerificationCode = $state(false);
 	let isUnlinkingTelegram = $state(false);
+	let verificationCode = $state('');
+	let verificationCodeError = $state('');
+	let verificationSentTo = $state('');
 	const toastService = getToastService();
 	let emailStatusColor = $derived.by((): 'green' | 'yellow' | 'gray' => {
 		if (user.pending_email) return 'yellow';
@@ -51,25 +56,73 @@
 		if (isRequestingVerification) return;
 
 		isRequestingVerification = true;
+		verificationCodeError = '';
 
 		try {
-			const { error } = await client.POST('/auth/request-email-verification');
+			const { error } = await client.POST('/auth/request-email-code');
 
 			if (error) {
 				toastService.error(error);
 				return;
 			}
 
+			verificationSentTo = user.pending_email ?? user.email ?? '';
+			verificationCode = '';
 			toastService.add(
 				user.pending_email
-					? 'Письмо для подтверждения нового адреса отправлено'
-					: 'Письмо с подтверждением отправлено',
+					? 'Код для подтверждения нового адреса отправлен'
+					: 'Код подтверждения отправлен',
 				'success'
 			);
 		} catch (err) {
 			toastService.error(err);
 		} finally {
 			isRequestingVerification = false;
+		}
+	}
+
+	async function submitVerificationCode() {
+		verificationCodeError = '';
+
+		const normalizedCode = verificationCode.replace(/\D/g, '').slice(0, 6);
+		verificationCode = normalizedCode;
+
+		if (!normalizedCode) {
+			verificationCodeError = 'Введите код из письма';
+			return;
+		}
+
+		if (!/^\d{6}$/.test(normalizedCode)) {
+			verificationCodeError = 'Код должен состоять из 6 цифр';
+			return;
+		}
+
+		isSubmittingVerificationCode = true;
+
+		try {
+			const { error, response } = await client.POST('/auth/confirm-email-code', {
+				body: { code: normalizedCode }
+			});
+
+			if (error) {
+				if (response.status === 400) {
+					verificationCodeError = getApiErrorDetail(error) ?? 'Неверный или устаревший код';
+					return;
+				}
+
+				toastService.error(error);
+				return;
+			}
+
+			toastService.add('Почта подтверждена', 'success');
+			verificationCode = '';
+			verificationCodeError = '';
+			verificationSentTo = '';
+			await onUpdate?.();
+		} catch (err) {
+			toastService.error(err);
+		} finally {
+			isSubmittingVerificationCode = false;
 		}
 	}
 
@@ -172,6 +225,59 @@
 					{/if}
 				</div>
 			</div>
+
+			{#if verificationSentTo || verificationCode || verificationCodeError}
+				<div
+					class="mt-3 space-y-3 rounded-lg border border-dashed border-gray-300 p-3 dark:border-gray-600"
+				>
+					{#if verificationSentTo}
+						<Alert color="blue" class="text-sm">
+							Код отправлен на <span class="font-medium">{verificationSentTo}</span>
+						</Alert>
+					{/if}
+
+					<div>
+						<Label for="verification-code" class="mb-2">Код подтверждения</Label>
+						<Input
+							id="verification-code"
+							name="verification_code"
+							type="text"
+							bind:value={verificationCode}
+							placeholder="******"
+							autocomplete="one-time-code"
+							inputmode="numeric"
+							pattern="[0-9]*"
+							maxlength={6}
+							disabled={isSubmittingVerificationCode}
+							class="text-center text-lg tracking-[0.35em]"
+							color={verificationCodeError ? 'red' : undefined}
+							oninput={() => {
+								verificationCode = verificationCode.replace(/\D/g, '').slice(0, 6);
+								verificationCodeError = '';
+							}}
+						/>
+						{#if verificationCodeError}
+							<Helper color="red" class="mt-1">{verificationCodeError}</Helper>
+						{:else}
+							<Helper class="mt-1">Введите 6 цифр из письма.</Helper>
+						{/if}
+					</div>
+
+					<Button
+						color="alternative"
+						class="min-h-11 w-full sm:w-auto"
+						disabled={isSubmittingVerificationCode}
+						onclick={() => void submitVerificationCode()}
+					>
+						{#if isSubmittingVerificationCode}
+							<Spinner class="me-2 h-4 w-4" />
+							Проверяем…
+						{:else}
+							Подтвердить код
+						{/if}
+					</Button>
+				</div>
+			{/if}
 		</div>
 
 		<div class="rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">

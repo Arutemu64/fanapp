@@ -6,36 +6,33 @@ from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.token_registry import TokenRegistry
 from fanfan.core.exceptions.users import UserHasNoEmail, UserNotFound
 from fanfan.core.services.email_login import (
-    EMAIL_MAGIC_LINK_MAX_AGE_SECONDS,
+    EMAIL_LOGIN_CODE_MAX_AGE_SECONDS,
     EmailService,
 )
 from fanfan.core.utils.email import normalize_email
 from fanfan.core.vo.user import UserId
-from fanfan.presentation.web.config import WebConfig
 
 
-class SendMagicLinkEmailInput(BaseModel):
+class SendLoginCodeEmailInput(BaseModel):
     user_id: UserId
 
 
-class SendMagicLinkEmail:
+class SendLoginCodeEmail:
     def __init__(
         self,
         user_repo: UserRepository,
-        email_login: EmailService,
-        web_config: WebConfig,
+        email_service: EmailService,
         mail: FastMail,
         jinja: StreamJinjaEnvironment,
         token_registry: TokenRegistry,
     ):
         self.mail = mail
         self.jinja = jinja
-        self.web_config = web_config
         self.user_repo = user_repo
-        self.email_login = email_login
+        self.email_service = email_service
         self.token_registry = token_registry
 
-    async def __call__(self, data: SendMagicLinkEmailInput) -> None:
+    async def __call__(self, data: SendLoginCodeEmailInput) -> None:
         user = await self.user_repo.get_by_id(data.user_id)
         if user is None:
             raise UserNotFound
@@ -43,30 +40,27 @@ class SendMagicLinkEmail:
             raise UserHasNoEmail
         normalized_email = normalize_email(user.email)
 
-        token = self.email_login.generate_login_token(user_id=user.id)
-        await self.token_registry.issue_email_login_token(
-            token=token,
+        code = self.email_service.generate_login_code(user_id=user.id)
+        await self.token_registry.issue_email_login_code(
             user_id=user.id,
             email=normalized_email,
-            ttl_seconds=EMAIL_MAGIC_LINK_MAX_AGE_SECONDS,
+            code=code,
+            ttl_seconds=EMAIL_LOGIN_CODE_MAX_AGE_SECONDS,
         )
 
-        magic_login_url = self.web_config.build_url(
-            path="/email-login",
-            query_params={"token": token},
-        )
-        template = self.jinja.get_template("email_magic_link.jinja2")
+        template = self.jinja.get_template("email_login_code.jinja2")
         message_body = await template.render_async(
             {
                 "username": user.username,
-                "magic_login_url": magic_login_url,
+                "login_code": code,
+                "expires_in_minutes": max(1, EMAIL_LOGIN_CODE_MAX_AGE_SECONDS // 60),
             }
         )
         message = MessageSchema(
-            subject="Ссылка для входа в FAN App",
+            subject="Код входа в FAN FAN",
             recipients=[NameEmail(name=user.username, email=normalized_email)],
             body=message_body,
-            # Send HTML so the email client renders the button and clickable link.
+            # Send HTML so the email client renders the code block cleanly.
             subtype=MessageType.html,
         )
         await self.mail.send_message(message)

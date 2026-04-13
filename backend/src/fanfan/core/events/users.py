@@ -10,13 +10,13 @@ class CreatedUserEvent(AppEvent):
     user_id: UserId
 
 
-class EmailVerificationRequestedEvent(AppEvent):
-    subject: ClassVar[str] = "users.email_verification_requested"
+class EmailConfirmationCodeRequestedEvent(AppEvent):
+    subject: ClassVar[str] = "users.email_confirmation_code_requested"
 
     user_id: UserId
 
 
-class EmailMagicLinkRequestedEvent(AppEvent):
-    subject: ClassVar[str] = "users.email_magic_link_requested"
+class EmailLoginCodeRequestedEvent(AppEvent):
+    subject: ClassVar[str] = "users.email_login_code_requested"
 
     user_id: UserId

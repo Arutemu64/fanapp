@@ -48,8 +48,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Login and get access token
-         * @description Authenticates user with email and password. Sets HttpOnly cookies with JWT access and refresh tokens.
+         * Login and create session
+         * @description Authenticates user with email and password. Sets an HttpOnly cookie with a Redis-backed session id.
          */
         post: operations["login_auth_login_post"];
         delete?: never;
@@ -78,7 +78,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/request-email-verification": {
+    "/auth/request-email-code": {
         parameters: {
             query?: never;
             header?: never;
@@ -88,17 +88,17 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Request a new email verification link
-         * @description Sends a new verification email to the current user's email address.
+         * Request a new email confirmation code
+         * @description Sends a new confirmation code to the current user's email address.
          */
-        post: operations["request_email_verification_auth_request_email_verification_post"];
+        post: operations["request_email_code_auth_request_email_code_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/auth/verify-email": {
+    "/auth/confirm-email-code": {
         parameters: {
             query?: never;
             header?: never;
@@ -108,17 +108,17 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Verify user email
-         * @description Verifies a user's email address using a signed token received via email.
+         * Confirm user email with code
+         * @description Confirms the current user's email address using a one-time code received via email.
          */
-        post: operations["verify_email_auth_verify_email_post"];
+        post: operations["confirm_email_code_auth_confirm_email_code_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/auth/request-magic-link": {
+    "/auth/request-login-code": {
         parameters: {
             query?: never;
             header?: never;
@@ -128,17 +128,17 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Request email magic link
-         * @description Sends a one-time sign-in link to the requested email address. Creates an account automatically when the email is new.
+         * Request email login code
+         * @description Sends a one-time six-digit sign-in code to the requested email address. Creates an account automatically when the email is new.
          */
-        post: operations["request_magic_link_auth_request_magic_link_post"];
+        post: operations["request_login_code_auth_request_login_code_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/auth/login-magic-link": {
+    "/auth/login-with-code": {
         parameters: {
             query?: never;
             header?: never;
@@ -148,30 +148,10 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Login with email magic link
-         * @description Consumes a one-time email magic link token and sets auth cookies.
+         * Login with email code
+         * @description Consumes a one-time email code and sets session cookie.
          */
-        post: operations["login_magic_link_auth_login_magic_link_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/refresh": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Refresh access token
-         * @description Uses the refresh_token cookie to issue fresh access and refresh tokens (token rotation). Old cookies are replaced.
-         */
-        post: operations["refresh_access_token_auth_refresh_post"];
+        post: operations["login_with_code_auth_login_with_code_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -189,7 +169,7 @@ export interface paths {
         put?: never;
         /**
          * Logout user
-         * @description Clears auth cookies and invalidates the refresh token so it can't be replayed even if stolen.
+         * @description Clears session cookie and removes Redis session state.
          */
         post: operations["logout_user_auth_logout_post"];
         delete?: never;
@@ -307,7 +287,7 @@ export interface paths {
         put?: never;
         /**
          * Change current user email
-         * @description Changes the authenticated user's email address and sends a verification link to the new email.
+         * @description Changes the authenticated user's email address and sends a confirmation code to the new email.
          */
         post: operations["change_current_user_email_me_email_post"];
         delete?: never;
@@ -909,6 +889,11 @@ export interface components {
             /** New Password */
             new_password: string;
         };
+        /** ConfirmEmailCodeInput */
+        ConfirmEmailCodeInput: {
+            /** Code */
+            code: string;
+        };
         /** CreatePushSubscriptionInput */
         CreatePushSubscriptionInput: {
             /** Endpoint */
@@ -1024,10 +1009,15 @@ export interface components {
             /** Nominations */
             nominations: components["schemas"]["NominationVotingDTO"][];
         };
-        /** LoginMagicLinkInput */
-        LoginMagicLinkInput: {
-            /** Token */
-            token: string;
+        /** LoginWithCodeInput */
+        LoginWithCodeInput: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Code */
+            code: string;
         };
         /** MoveScheduleEventRequest */
         MoveScheduleEventRequest: {
@@ -1154,8 +1144,8 @@ export interface components {
             /** Password */
             password: string;
         };
-        /** RequestMagicLinkInput */
-        RequestMagicLinkInput: {
+        /** RequestLoginCodeInput */
+        RequestLoginCodeInput: {
             /**
              * Email
              * Format: email
@@ -1374,11 +1364,6 @@ export interface components {
             /** Detail */
             detail: components["schemas"]["ValidationErrorDetail"][];
         };
-        /** VerifyEmailInput */
-        VerifyEmailInput: {
-            /** Token */
-            token: string;
-        };
         /** VoteBaseDTO */
         VoteBaseDTO: {
             /**
@@ -1518,7 +1503,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Successfully authenticated. Tokens set in cookies. */
+            /** @description Successfully authenticated. Session cookie is set. */
             204: {
                 headers: {
                     [name: string]: unknown;
@@ -1614,7 +1599,7 @@ export interface operations {
             };
         };
     };
-    request_email_verification_auth_request_email_verification_post: {
+    request_email_code_auth_request_email_code_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1623,7 +1608,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Verification email sent. */
+            /** @description Confirmation code sent. */
             202: {
                 headers: {
                     [name: string]: unknown;
@@ -1670,7 +1655,7 @@ export interface operations {
             };
         };
     };
-    verify_email_auth_verify_email_post: {
+    confirm_email_code_auth_confirm_email_code_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1679,11 +1664,11 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VerifyEmailInput"];
+                "application/json": components["schemas"]["ConfirmEmailCodeInput"];
             };
         };
         responses: {
-            /** @description Email successfully verified. */
+            /** @description Email successfully confirmed. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1692,7 +1677,7 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description Token is invalid or expired. */
+            /** @description Code is invalid or expired. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -1701,7 +1686,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorMessage"];
                 };
             };
-            /** @description Not authenticated. */
+            /** @description User not authenticated. */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -1739,7 +1724,7 @@ export interface operations {
             };
         };
     };
-    request_magic_link_auth_request_magic_link_post: {
+    request_login_code_auth_request_login_code_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1748,11 +1733,11 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RequestMagicLinkInput"];
+                "application/json": components["schemas"]["RequestLoginCodeInput"];
             };
         };
         responses: {
-            /** @description If the email is valid, the magic link was queued. */
+            /** @description If the email is valid, the login code was queued. */
             202: {
                 headers: {
                     [name: string]: unknown;
@@ -1790,7 +1775,7 @@ export interface operations {
             };
         };
     };
-    login_magic_link_auth_login_magic_link_post: {
+    login_with_code_auth_login_with_code_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1799,18 +1784,18 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["LoginMagicLinkInput"];
+                "application/json": components["schemas"]["LoginWithCodeInput"];
             };
         };
         responses: {
-            /** @description Successfully authenticated. Tokens set in cookies. */
+            /** @description Successfully authenticated. Session cookie is set. */
             204: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description Magic link is invalid or has already been used. */
+            /** @description Email code is invalid or has already been used. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -1839,51 +1824,6 @@ export interface operations {
             };
             /** @description User not found. */
             404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Request validation error. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ValidationErrorResponse"];
-                };
-            };
-        };
-    };
-    refresh_access_token_auth_refresh_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Tokens refreshed successfully. New cookies set. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Refresh token is missing, invalid, or expired. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2281,7 +2221,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Email changed and verification requested. */
+            /** @description Email changed and confirmation code requested. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -4070,6 +4010,15 @@ export interface operations {
             };
             /** @description Access denied. */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Push subscription already exists. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

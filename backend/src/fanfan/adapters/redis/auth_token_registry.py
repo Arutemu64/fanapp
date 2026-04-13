@@ -19,17 +19,17 @@ class RedisTokenRegistry(TokenRegistry):
         return f"auth:refresh:used:{jti}"
 
     @staticmethod
-    def _email_verification_key(token_hash: str) -> str:
-        return f"auth:email-verification:{token_hash}"
+    def _email_confirmation_code_key(user_id: UserId, code_hash: str) -> str:
+        return f"auth:email-confirmation:{user_id}:{code_hash}"
 
     @staticmethod
-    def _email_login_key(token_hash: str) -> str:
-        return f"auth:email-login:{token_hash}"
+    def _email_login_code_key(email: str, code_hash: str) -> str:
+        return f"auth:email-login-code:{email}:{code_hash}"
 
-    def _hash_token(self, token: str) -> str:
+    def _hash_code(self, code: str) -> str:
         return hmac.new(
             self._secret,
-            token.encode(),
+            code.encode(),
             hashlib.sha256,
         ).hexdigest()
 
@@ -51,26 +51,27 @@ class RedisTokenRegistry(TokenRegistry):
             ex=ttl,
         )
 
-    async def issue_email_verification_token(
+    async def issue_email_confirmation_code(
         self,
-        token: str,
         user_id: UserId,
         email: str,
+        code: str,
         ttl_seconds: int,
     ) -> None:
         ttl = max(1, ttl_seconds)
-        payload = json.dumps({"user_id": str(user_id), "email": email})
+        payload = json.dumps({"email": email})
         await self.redis.set(
-            name=self._email_verification_key(self._hash_token(token)),
+            name=self._email_confirmation_code_key(user_id, self._hash_code(code)),
             value=payload,
             ex=ttl,
         )
 
-    async def consume_email_verification_token(
+    async def consume_email_confirmation_code(
         self,
-        token: str,
-    ) -> tuple[UserId, str] | None:
-        key = self._email_verification_key(self._hash_token(token))
+        user_id: UserId,
+        code: str,
+    ) -> str | None:
+        key = self._email_confirmation_code_key(user_id, self._hash_code(code))
         stored_payload = await self.redis.getdel(key)
 
         if not stored_payload:
@@ -80,28 +81,29 @@ class RedisTokenRegistry(TokenRegistry):
             stored_payload = stored_payload.decode()
 
         payload = json.loads(stored_payload)
-        return UserId(payload["user_id"]), payload["email"]
+        return str(payload["email"])
 
-    async def issue_email_login_token(
+    async def issue_email_login_code(
         self,
-        token: str,
         user_id: UserId,
         email: str,
+        code: str,
         ttl_seconds: int,
     ) -> None:
         ttl = max(1, ttl_seconds)
-        payload = json.dumps({"user_id": str(user_id), "email": email})
+        payload = json.dumps({"user_id": str(user_id)})
         await self.redis.set(
-            name=self._email_login_key(self._hash_token(token)),
+            name=self._email_login_code_key(email, self._hash_code(code)),
             value=payload,
             ex=ttl,
         )
 
-    async def consume_email_login_token(
+    async def consume_email_login_code(
         self,
-        token: str,
-    ) -> tuple[UserId, str] | None:
-        key = self._email_login_key(self._hash_token(token))
+        email: str,
+        code: str,
+    ) -> UserId | None:
+        key = self._email_login_code_key(email, self._hash_code(code))
         stored_payload = await self.redis.getdel(key)
 
         if not stored_payload:
@@ -111,4 +113,4 @@ class RedisTokenRegistry(TokenRegistry):
             stored_payload = stored_payload.decode()
 
         payload = json.loads(stored_payload)
-        return UserId(payload["user_id"]), payload["email"]
+        return UserId(payload["user_id"])

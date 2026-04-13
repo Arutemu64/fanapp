@@ -2,10 +2,10 @@ from fanfan.application.interactors.common.current_user import get_current_user
 from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.repositories.users import UserRepository
-from fanfan.core.events.users import EmailVerificationRequestedEvent
+from fanfan.core.events.users import EmailConfirmationCodeRequestedEvent
 
 
-class RequestEmailVerification:
+class RequestEmailCode:
     def __init__(
         self,
         user_repo: UserRepository,
@@ -22,5 +22,5 @@ class RequestEmailVerification:
         )
 
         await self.event_broker.publish(
-            EmailVerificationRequestedEvent(user_id=current_user.id)
+            EmailConfirmationCodeRequestedEvent(user_id=current_user.id)
         )

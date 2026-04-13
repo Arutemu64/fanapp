@@ -1,0 +1,32 @@
+{# HTML email with a large one-time code for sign-in. #}
+{% extends "_email_layout.jinja2" %}
+
+{% set title = "Вход в FAN FAN" %}
+
+{% block content %}
+  <p style="margin:0 0 16px; font-size:16px; line-height:24px;">
+    Здравствуйте, <strong>{{ username }}</strong>!
+  </p>
+  <p style="margin:0 0 24px; font-size:16px; line-height:24px; color:#374151;">
+    Введите этот код на экране входа, чтобы войти в FAN FAN.
+  </p>
+
+  <div
+    style="margin:0 0 24px; padding:18px 20px; border-radius:16px; background-color:#fdf2f8; border:1px solid #fbcfe8; text-align:center;"
+  >
+    <div style="margin:0 0 8px; font-size:13px; line-height:20px; letter-spacing:0.08em; text-transform:uppercase; color:#9d174d;">
+      Код входа
+    </div>
+    <div style="font-size:32px; line-height:40px; font-weight:700; letter-spacing:0.32em; color:#be185d;">
+      {{ login_code }}
+    </div>
+  </div>
+
+  <p style="margin:0 0 12px; font-size:14px; line-height:22px; color:#4b5563;">
+    Код действует {{ expires_in_minutes }} минут и перестанет работать после первого входа.
+  </p>
+
+  <p style="margin:0; font-size:14px; line-height:22px; color:#6b7280;">
+    Если вы не запрашивали это письмо, просто проигнорируйте его.
+  </p>
+{% endblock %}

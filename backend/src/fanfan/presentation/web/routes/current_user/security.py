@@ -62,9 +62,9 @@ async def change_current_user_password(
     status_code=status.HTTP_200_OK,
     summary="Change current user email",
     description="Changes the authenticated user's email address "
-    "and sends a verification link to the new email.",
+    "and sends a confirmation code to the new email.",
     responses={
-        200: {"description": "Email changed and verification requested."},
+        200: {"description": "Email changed and confirmation code requested."},
         401: {"model": ErrorMessage, "description": "User not authenticated."},
         404: {"model": ErrorMessage, "description": "User not found."},
         409: {

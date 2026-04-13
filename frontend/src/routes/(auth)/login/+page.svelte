@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { client } from '$lib/api';
+	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import {
@@ -18,15 +19,17 @@
 	} from 'flowbite-svelte';
 	import { EnvelopeSolid, EyeOutline, EyeSlashOutline, LockSolid } from 'flowbite-svelte-icons';
 
-	type ActiveAction = 'password' | 'magic' | null;
+	type ActiveAction = 'password' | 'code-request' | 'code-login' | null;
 
 	let email = $state('');
 	let password = $state('');
-	let magicLinkSentTo = $state('');
+	let loginCode = $state('');
+	let codeSentTo = $state('');
 	let activeAction = $state<ActiveAction>(null);
 	let showPassword = $state(false);
 	let emailError = $state('');
 	let passwordError = $state('');
+	let loginCodeError = $state('');
 
 	const eventsClient = getEventsClient();
 	const toastService = getToastService();
@@ -62,16 +65,23 @@
 
 	function resetEmailFeedback() {
 		emailError = '';
-		magicLinkSentTo = '';
+		loginCodeError = '';
+		codeSentTo = '';
+		loginCode = '';
 	}
 
 	function resetPasswordFeedback() {
 		passwordError = '';
 	}
 
-	function validateMagicLinkForm(): boolean {
+	function resetLoginCodeFeedback() {
+		loginCodeError = '';
+	}
+
+	function validateEmailCodeRequestForm(): boolean {
 		emailError = '';
 		passwordError = '';
+		loginCodeError = '';
 
 		if (!normalizedEmail) {
 			emailError = 'Введите адрес эл. почты';
@@ -80,6 +90,24 @@
 
 		if (!validateEmail(normalizedEmail)) {
 			emailError = 'Введите адрес в формате name@example.com';
+			return false;
+		}
+
+		return true;
+	}
+
+	function validateEmailCodeLoginForm(): boolean {
+		if (!validateEmailCodeRequestForm()) {
+			return false;
+		}
+
+		if (!loginCode.trim()) {
+			loginCodeError = 'Введите код из письма';
+			return false;
+		}
+
+		if (!/^\d{6}$/.test(loginCode.trim())) {
+			loginCodeError = 'Код должен состоять из 6 цифр';
 			return false;
 		}
 
@@ -117,7 +145,9 @@
 		const trimmedEmail = normalizedEmail;
 
 		activeAction = 'password';
-		magicLinkSentTo = '';
+		codeSentTo = '';
+		loginCode = '';
+		loginCodeError = '';
 
 		try {
 			const { error } = await client.POST('/auth/login', {
@@ -144,30 +174,32 @@
 		}
 	}
 
-	async function handleMagicLinkRequest() {
-		if (!validateMagicLinkForm()) {
+	async function handleLoginCodeRequest() {
+		if (!validateEmailCodeRequestForm()) {
 			return;
 		}
 
 		const trimmedEmail = normalizedEmail;
 
-		activeAction = 'magic';
-		magicLinkSentTo = '';
+		activeAction = 'code-request';
+		codeSentTo = '';
+		loginCodeError = '';
 
 		try {
-			const { error } = await client.POST('/auth/request-magic-link', {
+			const { error } = await client.POST('/auth/request-login-code', {
 				body: {
 					email: trimmedEmail
 				}
 			});
 
 			if (error) {
-				console.error('Magic link request error:', error);
+				console.error('Login code request error:', error);
 				toastService.error(error);
 				return;
 			}
 
-			magicLinkSentTo = trimmedEmail;
+			codeSentTo = trimmedEmail;
+			loginCode = '';
 		} catch (error) {
 			toastService.error(error);
 		} finally {
@@ -175,14 +207,56 @@
 		}
 	}
 
-	function handleMagicLinkSubmit(event: SubmitEvent) {
+	async function submitLoginCode() {
+		if (!validateEmailCodeLoginForm()) {
+			return;
+		}
+
+		activeAction = 'code-login';
+		loginCodeError = '';
+
+		try {
+			const { error, response } = await client.POST('/auth/login-with-code', {
+				body: {
+					email: normalizedEmail,
+					code: loginCode.trim()
+				}
+			});
+
+			if (error) {
+				if (response.status === 400) {
+					loginCodeError = getApiErrorDetail(error) ?? 'Неверный или устаревший код';
+					return;
+				}
+
+				toastService.error(error);
+				return;
+			}
+
+			await finishLogin('Вход выполнен');
+		} catch (error) {
+			toastService.error(error);
+		} finally {
+			activeAction = null;
+		}
+	}
+
+	function handleCodeRequestSubmit(event: SubmitEvent) {
 		event.preventDefault();
 
 		if (isBusy) {
 			return;
 		}
 
-		void handleMagicLinkRequest();
+		const submitterAction =
+			event.submitter instanceof HTMLButtonElement ? event.submitter.dataset.action : null;
+
+		if (submitterAction === 'login' || (!submitterAction && codeSentTo)) {
+			void submitLoginCode();
+			return;
+		}
+
+		void handleLoginCodeRequest();
 	}
 
 	function handlePasswordSubmit(event: SubmitEvent) {
@@ -201,12 +275,12 @@
 		<h2 class="text-center text-2xl font-bold text-gray-900 dark:text-white">Вход в FAN FAN</h2>
 
 		<Tabs tabStyle="underline" contentClass="mt-3">
-			<TabItem open title="По ссылке">
-				<form onsubmit={handleMagicLinkSubmit} class="space-y-3">
+			<TabItem open title="По коду">
+				<form onsubmit={handleCodeRequestSubmit} class="space-y-3">
 					<div>
-						<Label for="magic-email" color={emailColor} class="mb-2">Эл. почта</Label>
+						<Label for="code-email" color={emailColor} class="mb-2">Эл. почта</Label>
 						<Input
-							id="magic-email"
+							id="code-email"
 							name="email"
 							type="email"
 							bind:value={email}
@@ -232,25 +306,88 @@
 						{/if}
 					</div>
 
-					{#if magicLinkSentTo}
+					{#if codeSentTo}
 						<Alert color="green">
-							Ссылка отправлена на <span class="font-medium">{magicLinkSentTo}</span>
+							Код отправлен на <span class="font-medium">{codeSentTo}</span>
 						</Alert>
 					{/if}
 
-					<Button
-						type="submit"
-						color="primary"
-						class="min-h-11 w-full rounded-xl font-medium"
-						disabled={isBusy}
-					>
-						{#if activeAction === 'magic'}
-							<Spinner size="4" class="mr-2" color="primary" />
-							Отправляем…
-						{:else}
-							Отправить ссылку
-						{/if}
-					</Button>
+					{#if codeSentTo}
+						<div>
+							<Label for="login-code" class="mb-2">Код из письма</Label>
+							<Input
+								id="login-code"
+								name="code"
+								type="text"
+								bind:value={loginCode}
+								placeholder="******"
+								autocomplete="one-time-code"
+								inputmode="numeric"
+								pattern="[0-9]*"
+								maxlength={6}
+								disabled={isBusy}
+								class="text-center text-lg tracking-[0.35em]"
+								color={loginCodeError ? 'red' : undefined}
+								oninput={() => {
+									loginCode = loginCode.replace(/\D/g, '').slice(0, 6);
+									resetLoginCodeFeedback();
+								}}
+							/>
+							{#if loginCodeError}
+								<Helper color="red" class="mt-1">{loginCodeError}</Helper>
+							{:else}
+								<Helper class="mt-1">Введите 6 цифр из письма.</Helper>
+							{/if}
+						</div>
+					{/if}
+
+					{#if codeSentTo}
+						<Button
+							type="submit"
+							data-action="login"
+							color="primary"
+							autofocus
+							class="min-h-11 w-full rounded-xl font-medium"
+							disabled={isBusy}
+						>
+							{#if activeAction === 'code-login'}
+								<Spinner size="4" class="mr-2" color="primary" />
+								Проверяем…
+							{:else}
+								Войти по коду
+							{/if}
+						</Button>
+
+						<Button
+							type="button"
+							color="alternative"
+							class="min-h-11 w-full rounded-xl font-medium"
+							disabled={isBusy}
+							onclick={() => void handleLoginCodeRequest()}
+						>
+							{#if activeAction === 'code-request'}
+								<Spinner size="4" class="mr-2" color="primary" />
+								Отправляем…
+							{:else}
+								Отправить код ещё раз
+							{/if}
+						</Button>
+					{:else}
+						<Button
+							type="submit"
+							data-action="request"
+							color="primary"
+							class="min-h-11 w-full rounded-xl font-medium"
+							disabled={isBusy}
+						>
+							{#if activeAction === 'code-request'}
+								<Spinner size="4" class="mr-2" color="primary" />
+								Отправляем…
+							{:else}
+								Получить код
+							{/if}
+						</Button>
+					{/if}
 				</form>
 			</TabItem>
 

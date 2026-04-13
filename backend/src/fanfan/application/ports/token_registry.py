@@ -18,28 +18,30 @@ class TokenRegistry(Protocol):
         """
         ...
 
-    async def issue_email_verification_token(
+    async def issue_email_confirmation_code(
         self,
-        token: str,
         user_id: UserId,
         email: str,
+        code: str,
         ttl_seconds: int,
     ) -> None: ...
 
-    async def consume_email_verification_token(
+    async def consume_email_confirmation_code(
         self,
-        token: str,
-    ) -> tuple[UserId, str] | None: ...
+        user_id: UserId,
+        code: str,
+    ) -> str | None: ...
 
-    async def issue_email_login_token(
+    async def issue_email_login_code(
         self,
-        token: str,
         user_id: UserId,
         email: str,
+        code: str,
         ttl_seconds: int,
     ) -> None: ...
 
-    async def consume_email_login_token(
+    async def consume_email_login_code(
         self,
-        token: str,
-    ) -> tuple[UserId, str] | None: ...
+        email: str,
+        code: str,
+    ) -> UserId | None: ...

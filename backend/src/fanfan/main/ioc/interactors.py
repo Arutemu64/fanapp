@@ -4,18 +4,18 @@ from fanfan.application.interactors.auth.authenticate_user import AuthenticateUs
 from fanfan.application.interactors.auth.authorize_telegram import AuthorizeTelegram
 from fanfan.application.interactors.auth.change_email import ChangeEmail
 from fanfan.application.interactors.auth.change_password import ChangePassword
-from fanfan.application.interactors.auth.login_magic_link import LoginMagicLink
+from fanfan.application.interactors.auth.confirm_email_code import ConfirmEmailCode
+from fanfan.application.interactors.auth.login_with_code import LoginWithCode
 from fanfan.application.interactors.auth.logout_user import LogoutUser
 from fanfan.application.interactors.auth.register_user import RegisterUser
-from fanfan.application.interactors.auth.request_email_verification import (
-    RequestEmailVerification,
+from fanfan.application.interactors.auth.request_email_code import (
+    RequestEmailCode,
 )
-from fanfan.application.interactors.auth.request_magic_link import RequestMagicLink
-from fanfan.application.interactors.auth.send_email_verification import (
-    SendEmailVerification,
+from fanfan.application.interactors.auth.request_login_code import RequestLoginCode
+from fanfan.application.interactors.auth.send_email_confirmation_code import (
+    SendEmailConfirmationCode,
 )
-from fanfan.application.interactors.auth.send_magic_link_email import SendMagicLinkEmail
-from fanfan.application.interactors.auth.verify_email import VerifyEmail
+from fanfan.application.interactors.auth.send_login_code_email import SendLoginCodeEmail
 from fanfan.application.interactors.cosplay2.sync_cosplay2 import SyncCosplay2
 from fanfan.application.interactors.current_user.get_current_user import GetCurrentUser
 from fanfan.application.interactors.current_user.get_current_user_social_ids import (
@@ -150,13 +150,13 @@ class InteractorsProvider(Provider):
     change_user_role = provide(UpdateCurrentUser)
     update_user_settings = provide(UpdateUserSettings)
     change_password = provide(ChangePassword)
-    send_email_verification = provide(SendEmailVerification)
-    send_magic_link_email = provide(SendMagicLinkEmail)
-    request_email_verification = provide(RequestEmailVerification)
-    request_magic_link = provide(RequestMagicLink)
-    verify_email = provide(VerifyEmail)
+    send_email_confirmation_code = provide(SendEmailConfirmationCode)
+    send_login_code_email = provide(SendLoginCodeEmail)
+    request_email_code = provide(RequestEmailCode)
+    request_login_code = provide(RequestLoginCode)
+    confirm_email_code = provide(ConfirmEmailCode)
     change_email = provide(ChangeEmail)
-    login_magic_link = provide(LoginMagicLink)
+    login_with_code = provide(LoginWithCode)
     logout_user = provide(LogoutUser)
     login_telegram = provide(AuthorizeTelegram)
 

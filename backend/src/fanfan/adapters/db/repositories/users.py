@@ -64,6 +64,16 @@ class SqlUserRepository(UserRepository):
         user_orm = await self.session.scalar(stmt)
         return self.mapper.to_model(user_orm) if user_orm else None
 
+    async def get_by_pending_email(self, email: str) -> User | None:
+        normalized_email = normalize_email(email)
+        stmt = (
+            select(UserORM)
+            .where(UserORM.pending_email == normalized_email)
+            .with_for_update()
+        )
+        user_orm = await self.session.scalar(stmt)
+        return self.mapper.to_model(user_orm) if user_orm else None
+
     async def get_by_any_email(self, email: str) -> User | None:
         # Check the active address first, then the pending replacement address,
         # so conflicts stay explicit and deterministic.

@@ -1,21 +1,22 @@
 from datetime import UTC, datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field
 
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.session_store import SessionStore
 from fanfan.application.ports.token_registry import TokenRegistry
 from fanfan.application.ports.trx import TransactionManager
-from fanfan.core.exceptions.auth import InvalidToken
+from fanfan.core.exceptions.auth import InvalidOtpCode
 from fanfan.core.exceptions.users import UserNotFound
 from fanfan.core.utils.email import normalize_email
 
 
-class LoginMagicLinkInput(BaseModel):
-    token: str
+class LoginWithCodeInput(BaseModel):
+    email: EmailStr
+    code: str = Field(..., min_length=6, max_length=6, pattern=r"^\d{6}$")
 
 
-class LoginMagicLink:
+class LoginWithCode:
     def __init__(
         self,
         user_repo: UserRepository,
@@ -28,22 +29,22 @@ class LoginMagicLink:
         self.trx = trx
         self.session_store = session_store
 
-    async def __call__(self, data: LoginMagicLinkInput) -> str:
-        token_payload = await self.token_registry.consume_email_login_token(data.token)
-        if token_payload is None:
-            raise InvalidToken
-
-        user_id, target_email = token_payload
-        normalized_target_email = normalize_email(target_email)
+    async def __call__(self, data: LoginWithCodeInput) -> str:
+        normalized_target_email = normalize_email(data.email)
+        user_id = await self.token_registry.consume_email_login_code(
+            email=normalized_target_email,
+            code=data.code,
+        )
+        if user_id is None:
+            raise InvalidOtpCode
 
         user = await self.user_repo.get_by_id(user_id)
         if user is None:
             raise UserNotFound
 
-        # A magic link proves mailbox ownership.
-        # Once it is used, the account email can be treated as verified.
+        # The one-time email code proves mailbox ownership for this login.
         if user.email is None or user.email != normalized_target_email:
-            raise InvalidToken
+            raise InvalidOtpCode
 
         if user.email_verified_at is None:
             user.email_verified_at = datetime.now(UTC)
