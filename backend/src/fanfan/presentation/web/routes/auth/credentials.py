@@ -18,7 +18,7 @@ from fanfan.application.interactors.auth.register_user import (
 from fanfan.core.exceptions.auth import AuthenticationError
 from fanfan.core.exceptions.users import UserAlreadyExists, UserNotFound
 from fanfan.presentation.web.config import WebConfig
-from fanfan.presentation.web.routes.auth.cookies import set_auth_cookies
+from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
 
@@ -41,11 +41,11 @@ credentials_router = APIRouter()
 @credentials_router.post(
     "/login",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Login and get access token",
+    summary="Login and create session",
     description="Authenticates user with email and password. "
-    "Sets HttpOnly cookies with JWT access and refresh tokens.",
+    "Sets an HttpOnly cookie with a Redis-backed session id.",
     responses={
-        204: {"description": "Successfully authenticated. Tokens set in cookies."},
+        204: {"description": "Successfully authenticated. Session cookie is set."},
         401: {"model": ErrorMessage, "description": "Invalid email or password."},
     },
 )
@@ -60,17 +60,16 @@ async def login(
 ) -> None:
     # Keep login flow explicit so junior developers can follow each step.
     try:
-        token = await interactor(
+        session_id = await interactor(
             AuthenticateUserInput(email=form_data.email, password=form_data.password)
         )
     except (UserNotFound, AuthenticationError) as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=e.message,
-            headers={"WWW-Authenticate": "Bearer"},
         ) from e
 
-    set_auth_cookies(response, token.access_token, token.refresh_token, config)
+    set_auth_cookie(response, session_id, config)
 
 
 @credentials_router.post(

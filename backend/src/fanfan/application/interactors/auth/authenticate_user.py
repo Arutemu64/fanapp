@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 
-from fanfan.application.dto.token import Token
 from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.session_store import SessionStore
 from fanfan.application.services.security import SecurityService
 from fanfan.core.exceptions.auth import AuthenticationError
 from fanfan.core.exceptions.users import UserNotFound
@@ -18,12 +18,14 @@ class AuthenticateUser:
         self,
         user_repo: UserRepository,
         security: SecurityService,
+        session_store: SessionStore,
     ):
         self.user_repo = user_repo
         self.security = security
+        self.session_store = session_store
         self.dummy_hash = self.security.hash_password("dummy_password")
 
-    async def __call__(self, data: AuthenticateUserInput) -> Token:
+    async def __call__(self, data: AuthenticateUserInput) -> str:
         normalized_email = normalize_email(data.email)
         user = await self.user_repo.get_by_email(normalized_email)
         if user is None:
@@ -37,4 +39,4 @@ class AuthenticateUser:
         if not self.security.verify_password(data.password, user.hashed_password):
             raise AuthenticationError
 
-        return self.security.create_token(user_id=user.id)
+        return await self.session_store.create_session(user.id)

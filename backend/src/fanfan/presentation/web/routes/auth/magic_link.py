@@ -14,7 +14,7 @@ from fanfan.application.interactors.auth.request_magic_link import (
 from fanfan.core.exceptions.auth import InvalidToken, TokenExpired
 from fanfan.core.exceptions.users import UserNotFound
 from fanfan.presentation.web.config import WebConfig
-from fanfan.presentation.web.routes.auth.cookies import set_auth_cookies
+from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
 magic_link_router = APIRouter()
@@ -42,9 +42,9 @@ async def request_magic_link(
     "/login-magic-link",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Login with email magic link",
-    description="Consumes a one-time email magic link token and sets auth cookies.",
+    description="Consumes a one-time email magic link token and sets session cookie.",
     responses={
-        204: {"description": "Successfully authenticated. Tokens set in cookies."},
+        204: {"description": "Successfully authenticated. Session cookie is set."},
         400: {
             "model": ErrorMessage,
             "description": "Magic link is invalid or has already been used.",
@@ -60,7 +60,7 @@ async def login_magic_link(
     response: Response,
 ) -> None:
     try:
-        token = await interactor(data)
+        session_id = await interactor(data)
     except (InvalidToken, TokenExpired) as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -72,4 +72,4 @@ async def login_magic_link(
             detail=e.message,
         ) from e
 
-    set_auth_cookies(response, token.access_token, token.refresh_token, config)
+    set_auth_cookie(response, session_id, config)

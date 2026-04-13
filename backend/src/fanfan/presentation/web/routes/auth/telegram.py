@@ -10,7 +10,7 @@ from fanfan.application.interactors.auth.authorize_telegram import (
     AuthorizeTelegramInput,
 )
 from fanfan.presentation.web.config import WebConfig
-from fanfan.presentation.web.routes.auth.cookies import set_auth_cookies
+from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
 
 telegram_router = APIRouter()
 
@@ -37,9 +37,9 @@ async def authorize_telegram(
     telegram: StarletteOAuth2App = oauth.create_client("telegram")
     token = await telegram.authorize_access_token(request)
     userinfo = token.get("userinfo", {})
-    token = await interactor(
+    session_id = await interactor(
         AuthorizeTelegramInput(user_id=userinfo["id"], name=userinfo["name"])
     )
     response = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
-    set_auth_cookies(response, token.access_token, token.refresh_token, config)
+    set_auth_cookie(response, session_id, config)
     return response

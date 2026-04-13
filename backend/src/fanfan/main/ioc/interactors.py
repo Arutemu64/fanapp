@@ -5,7 +5,7 @@ from fanfan.application.interactors.auth.authorize_telegram import AuthorizeTele
 from fanfan.application.interactors.auth.change_email import ChangeEmail
 from fanfan.application.interactors.auth.change_password import ChangePassword
 from fanfan.application.interactors.auth.login_magic_link import LoginMagicLink
-from fanfan.application.interactors.auth.refresh_access_token import RefreshAccessToken
+from fanfan.application.interactors.auth.logout_user import LogoutUser
 from fanfan.application.interactors.auth.register_user import RegisterUser
 from fanfan.application.interactors.auth.request_email_verification import (
     RequestEmailVerification,
@@ -156,8 +156,8 @@ class InteractorsProvider(Provider):
     request_magic_link = provide(RequestMagicLink)
     verify_email = provide(VerifyEmail)
     change_email = provide(ChangeEmail)
-    refresh_access_token = provide(RefreshAccessToken)
     login_magic_link = provide(LoginMagicLink)
+    logout_user = provide(LogoutUser)
     login_telegram = provide(AuthorizeTelegram)
 
     get_participants_page = provide(GetVotingNomination)
