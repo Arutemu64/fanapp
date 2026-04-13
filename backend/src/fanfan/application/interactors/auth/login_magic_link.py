@@ -2,11 +2,10 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel
 
-from fanfan.application.dto.token import Token
 from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.session_store import SessionStore
 from fanfan.application.ports.token_registry import TokenRegistry
 from fanfan.application.ports.trx import TransactionManager
-from fanfan.application.services.security import SecurityService
 from fanfan.core.exceptions.auth import InvalidToken
 from fanfan.core.exceptions.users import UserNotFound
 from fanfan.core.utils.email import normalize_email
@@ -21,15 +20,15 @@ class LoginMagicLink:
         self,
         user_repo: UserRepository,
         token_registry: TokenRegistry,
-        security: SecurityService,
         trx: TransactionManager,
+        session_store: SessionStore,
     ):
         self.user_repo = user_repo
         self.token_registry = token_registry
-        self.security = security
         self.trx = trx
+        self.session_store = session_store
 
-    async def __call__(self, data: LoginMagicLinkInput) -> Token:
+    async def __call__(self, data: LoginMagicLinkInput) -> str:
         token_payload = await self.token_registry.consume_email_login_token(data.token)
         if token_payload is None:
             raise InvalidToken
@@ -51,4 +50,4 @@ class LoginMagicLink:
             await self.user_repo.save(user)
             await self.trx.commit()
 
-        return self.security.create_token(user_id=user.id)
+        return await self.session_store.create_session(user.id)

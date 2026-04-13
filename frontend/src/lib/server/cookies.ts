@@ -5,7 +5,7 @@ import setCookieParser from 'set-cookie-parser';
 type ParsedCookie = Cookie;
 
 // Keep auth cookie names in one place so hooks and server routes stay consistent.
-export const AUTH_COOKIE_NAMES = ['access_token', 'refresh_token'] as const;
+export const AUTH_COOKIE_NAMES = ['session_id'] as const;
 
 /**
  * Convert SvelteKit's request cookie store back into a Cookie header.

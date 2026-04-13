@@ -1,6 +1,6 @@
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from starlette import status
 
 from fanfan.application.interactors.auth.change_email import (
@@ -13,6 +13,8 @@ from fanfan.application.interactors.auth.change_password import (
 )
 from fanfan.core.exceptions.auth import IncorrectPassword, UserNotAuthenticated
 from fanfan.core.exceptions.users import EmailAlreadyExists, UserNotFound
+from fanfan.presentation.web.config import WebConfig
+from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
 security_router = APIRouter()
@@ -35,9 +37,12 @@ security_router = APIRouter()
 async def change_current_user_password(
     data: ChangePasswordInput,
     interactor: FromDishka[ChangePassword],
+    response: Response,
+    config: FromDishka[WebConfig],
 ) -> None:
     try:
-        await interactor(data)
+        session_id = await interactor(data)
+        set_auth_cookie(response, session_id, config)
     except UserNotAuthenticated as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message

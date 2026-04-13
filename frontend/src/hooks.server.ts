@@ -42,52 +42,10 @@ export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
 	return response;
 };
 
-/**
- * Attempt to refresh auth tokens server-side.
- * Cookie forwarding is handled automatically by handleFetch.
- *
- * Returns status of the refresh attempt.
- */
-async function refreshTokens(event: RequestEvent): Promise<'success' | 'unauthorized' | 'error'> {
-	try {
-		const refreshResponse = await event.fetch(`${PUBLIC_API_URL}/auth/refresh`, {
-			method: 'POST'
-			// handleFetch will rewrite URL, forward cookies, and apply Set-Cookie headers
-		});
-
-		if (refreshResponse.ok) return 'success';
-		if (refreshResponse.status === 401 || refreshResponse.status === 403) return 'unauthorized';
-		return 'error';
-	} catch {
-		return 'error';
-	}
-}
-
-/**
- * Load the current user with one optional refresh attempt.
- *
- * The goal is simple:
- * 1. Try `/me/` with current cookies.
- * 2. If access is expired but refresh still exists, refresh once and retry.
- * 3. If auth is still invalid, clear stale cookies so later requests start clean.
- */
 async function loadCurrentUser(event: RequestEvent) {
 	const client = createApiClient();
-	let result = await client.GET('/me/', { fetch: event.fetch });
+	const result = await client.GET('/me/', { fetch: event.fetch });
 
-	if (result.response.status !== 401 || !event.cookies.get('refresh_token')) {
-		return result.data && !result.error ? result.data : null;
-	}
-
-	const refreshStatus = await refreshTokens(event);
-	if (refreshStatus === 'unauthorized') {
-		clearAuthCookies(event.cookies);
-		return null;
-	} else if (refreshStatus === 'error') {
-		return null;
-	}
-
-	result = await client.GET('/me/', { fetch: event.fetch });
 	if (result.response.status === 401 || result.response.status === 403) {
 		clearAuthCookies(event.cookies);
 		return null;
@@ -98,7 +56,7 @@ async function loadCurrentUser(event: RequestEvent) {
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const routeId = event.route.id;
-	const hasToken = event.cookies.get('access_token') || event.cookies.get('refresh_token');
+	const hasToken = event.cookies.get('session_id');
 
 	if (hasToken) {
 		event.locals.user = await loadCurrentUser(event);
