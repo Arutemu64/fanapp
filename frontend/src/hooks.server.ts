@@ -4,8 +4,7 @@ import { createApiClient } from '$lib/api';
 import {
 	applyResponseCookies,
 	clearAuthCookies,
-	parseResponseCookies,
-	serializeRequestCookies
+	setRequestCookiesHeader
 } from '$lib/server/cookies';
 import type { Handle, HandleFetch, RequestEvent } from '@sveltejs/kit';
 import { error, redirect } from '@sveltejs/kit';
@@ -19,24 +18,17 @@ export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
 	const isInternalApi = request.url.startsWith(PRIVATE_API_URL);
 
 	if (isInternalApi) {
-		// Rebuild cookies from SvelteKit's cookie store so server-side refreshes or
-		// deletions earlier in the same request are visible to later API calls.
-		const cookieHeader = serializeRequestCookies(event.cookies);
-		if (cookieHeader) {
-			request.headers.set('cookie', cookieHeader);
-		} else {
-			request.headers.delete('cookie');
-		}
+		// Keep internal SSR fetches in sync with cookies that were changed earlier
+		// in the same request, such as login, logout, or session refresh.
+		setRequestCookiesHeader(request, event.cookies);
 	}
 
 	const response = await fetch(request);
 
 	if (isInternalApi) {
-		// Automatically forward any Set-Cookie headers from API → browser
-		const parsed = parseResponseCookies(response);
-		if (parsed.length > 0) {
-			applyResponseCookies(event.cookies, parsed);
-		}
+		// Mirror backend Set-Cookie headers into SvelteKit's cookie store so the
+		// browser receives them in the final SSR response.
+		applyResponseCookies(event.cookies, response);
 	}
 
 	return response;
@@ -56,9 +48,9 @@ async function loadCurrentUser(event: RequestEvent) {
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const routeId = event.route.id;
-	const hasToken = event.cookies.get('session_id');
+	const sessionId = event.cookies.get('session_id');
 
-	if (hasToken) {
+	if (sessionId) {
 		event.locals.user = await loadCurrentUser(event);
 	} else {
 		event.locals.user = null;
