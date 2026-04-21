@@ -8,7 +8,11 @@ from fanfan.application.interactors.tickets.link_ticket import (
     LinkTicketInput,
 )
 from fanfan.core.exceptions.auth import UserNotAuthenticated
-from fanfan.core.exceptions.tickets import TicketNotFound, UserAlreadyHasTicketLinked
+from fanfan.core.exceptions.tickets import (
+    TicketAlreadyUsed,
+    TicketNotFound,
+    UserAlreadyHasTicketLinked,
+)
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
 tickets_router = APIRouter()
@@ -23,7 +27,7 @@ tickets_router = APIRouter()
         404: {"model": ErrorMessage, "description": "Ticket not found."},
         409: {
             "model": ErrorMessage,
-            "description": "User already has a ticket linked.",
+            "description": "User already has a ticket linked or ticket is already used.",
         },
     },
 )
@@ -41,6 +45,10 @@ async def link_ticket(
     except TicketNotFound as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=e.message
+        ) from e
+    except TicketAlreadyUsed as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=e.message
         ) from e
     except UserAlreadyHasTicketLinked as e:
         raise HTTPException(
