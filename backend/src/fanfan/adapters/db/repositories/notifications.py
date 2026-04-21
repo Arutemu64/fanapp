@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.mappers.notification import NotificationMapper
 from fanfan.adapters.db.models import NotificationORM
-from fanfan.application.dto.notification import NotificationDTO
+from fanfan.application.dto.notification import NotificationDTO, RealtimeNotificationDTO
 from fanfan.application.dto.page import Pagination
 from fanfan.application.ports.repositories.notifications import NotificationRepository
 from fanfan.core.models.notification import Notification
@@ -29,6 +29,17 @@ class SqlNotificationRepository(NotificationRepository):
         stmt = select(NotificationORM).where(NotificationORM.id == notification_id)
         notification_orm = await self.session.scalar(stmt)
         return self.mapper.to_model(notification_orm) if notification_orm else None
+
+    async def read_realtime_notification(
+        self, notification_id: NotificationId
+    ) -> RealtimeNotificationDTO | None:
+        stmt = select(NotificationORM).where(NotificationORM.id == notification_id)
+        notification_orm = await self.session.scalar(stmt)
+        return (
+            self.mapper.parse_realtime_dto(notification_orm)
+            if notification_orm
+            else None
+        )
 
     async def read_list_user_notifications(
         self, user_id: UserId, pagination: Pagination

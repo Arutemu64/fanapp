@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Protocol
 
-from fanfan.application.dto.notification import NotificationDTO
+from fanfan.application.dto.notification import NotificationDTO, RealtimeNotificationDTO
 from fanfan.application.dto.page import Pagination
 from fanfan.core.models.notification import Notification
 from fanfan.core.vo.mailing import MailingId
@@ -12,6 +12,9 @@ from fanfan.core.vo.user import UserId
 class NotificationRepository(Protocol):
     async def add(self, notification: Notification) -> None: ...
     async def get(self, notification_id: NotificationId) -> Notification | None: ...
+    async def read_realtime_notification(
+        self, notification_id: NotificationId
+    ) -> RealtimeNotificationDTO | None: ...
     async def read_list_user_notifications(
         self, user_id: UserId, pagination: Pagination
     ) -> list[NotificationDTO]: ...

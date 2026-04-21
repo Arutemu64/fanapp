@@ -1,3 +1,4 @@
+import json
 import logging
 
 from dishka import FromDishka
@@ -39,9 +40,14 @@ async def stream_events(
                     extra={"client": request.client.host if request.client else None},
                 )
                 break
+
+            data = message.data
+            if data is not None and not isinstance(data, str):
+                data = json.dumps(data)
+
             yield {
                 "event": message.event_name,
-                "data": message.data if message.data is not None else "",
+                "data": data if data is not None else "",
             }
 
     # Send periodic pings so idle streams stay visibly alive through proxies.

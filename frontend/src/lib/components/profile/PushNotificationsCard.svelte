@@ -236,7 +236,10 @@
 				return;
 			}
 
-			toastService.add('Тест отправлен. Проверьте колокольчик, push и Telegram', 'success');
+			toastService.add(
+				'Тест отправлен. Если сайт открыт, проверьте тост и колокольчик. Для системного push сверните или закройте приложение.',
+				'success'
+			);
 		} catch (error) {
 			console.error('Failed to send test notification:', error);
 			toastService.add('Не удалось отправить тест по каналам уведомлений', 'error');
@@ -316,7 +319,9 @@
 
 	<div class="rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
 		<p class="mb-3 text-xs leading-5 text-gray-500 dark:text-gray-400">
-			Проверьте колокольчик, web push и Telegram, если эти каналы уже включены.
+			Если сайт открыт, тест покажет тост и обновит колокольчик. Чтобы проверить системный
+			web push, сверните или закройте приложение. Telegram придёт только для подключённого и
+			включённого аккаунта.
 		</p>
 		<Button
 			color="light"

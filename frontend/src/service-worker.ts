@@ -25,6 +25,15 @@ interface NotificationClickData {
 	url?: string;
 }
 
+async function hasVisibleAppClient() {
+	const windowClients = await self.clients.matchAll({
+		type: 'window',
+		includeUncontrolled: true
+	});
+
+	return windowClients.some((client) => client.visibilityState === 'visible');
+}
+
 // Create a unique cache name for this deployment
 const CACHE = `cache-${version}`;
 
@@ -134,7 +143,17 @@ self.addEventListener('push', (event: PushEvent) => {
 		}
 	};
 
-	event.waitUntil(self.registration.showNotification(data.title, options));
+	event.waitUntil(
+		(async () => {
+			// When the app is already visible, the user will see the in-app toast and bell update.
+			// Skip the OS-level push notification to avoid duplicate alerts for the same message.
+			if (await hasVisibleAppClient()) {
+				return;
+			}
+
+			await self.registration.showNotification(data.title, options);
+		})()
+	);
 });
 
 self.addEventListener('notificationclick', (event: NotificationEvent) => {

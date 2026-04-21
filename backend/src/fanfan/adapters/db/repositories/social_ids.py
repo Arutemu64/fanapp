@@ -1,4 +1,4 @@
-from sqlalchemy import and_, select
+from sqlalchemy import and_, delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -41,8 +41,9 @@ class SqlSocialIdentityRepository(SocialIdentityRepository):
         return self.social_mapper.to_model(social_id_orm) if social_id_orm else None
 
     async def delete(self, social_identity: SocialIdentity) -> None:
-        social_id_orm = self.social_mapper.from_model(social_identity)
-        await self.session.delete(social_id_orm)
+        await self.session.execute(
+            delete(SocialIdentityORM).where(SocialIdentityORM.id == social_identity.id)
+        )
         await self.session.flush()
 
     async def read_user_social_accounts(

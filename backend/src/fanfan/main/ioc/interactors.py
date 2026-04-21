@@ -38,6 +38,9 @@ from fanfan.application.interactors.notifications.delete_mailing_messages import
     DeleteMailingMessages,
 )
 from fanfan.application.interactors.notifications.get_mailing_info import GetMailingInfo
+from fanfan.application.interactors.notifications.get_notification import (
+    GetNotification,
+)
 from fanfan.application.interactors.notifications.list_user_notifications import (
     ListUserNotifications,
 )
@@ -126,6 +129,7 @@ class InteractorsProvider(Provider):
 
     create_mailing = provide(CreateRoleMailing)
     get_mailing_info = provide(GetMailingInfo)
+    get_notification = provide(GetNotification)
     proceed_mailing_cancel = provide(DeleteMailingMessages)
     send_notification = provide(SendNotification)
     send_message_to_user = provide(SendMessage)

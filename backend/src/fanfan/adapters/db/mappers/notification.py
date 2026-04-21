@@ -1,5 +1,5 @@
 from fanfan.adapters.db.models import NotificationORM
-from fanfan.application.dto.notification import NotificationDTO
+from fanfan.application.dto.notification import NotificationDTO, RealtimeNotificationDTO
 from fanfan.core.models.notification import Notification
 from fanfan.core.vo.notification import NotificationType
 
@@ -32,6 +32,19 @@ class NotificationMapper:
     @staticmethod
     def parse_dto(orm: NotificationORM) -> NotificationDTO:
         return NotificationDTO(
+            id=orm.id,
+            user_id=orm.user_id,
+            title=orm.title,
+            body=orm.body,
+            type=NotificationType(orm.type),
+            mailing_id=orm.mailing_id,
+            created_at=orm.created_at,
+            seen_at=orm.seen_at,
+        )
+
+    @staticmethod
+    def parse_realtime_dto(orm: NotificationORM) -> RealtimeNotificationDTO:
+        return RealtimeNotificationDTO(
             id=orm.id,
             user_id=orm.user_id,
             title=orm.title,

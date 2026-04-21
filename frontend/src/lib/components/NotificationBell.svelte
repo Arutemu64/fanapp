@@ -4,17 +4,19 @@
 	import type { components } from '$lib/api/v1';
 	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
 	import { NOTIFICATION_PREVIEW_LIMIT } from '$lib/constants/notifications';
+	import { getEventsClient } from '$lib/services/events.svelte';
+	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Dropdown } from 'flowbite-svelte';
 	import { BellSolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
-	import { getEventsClient } from '$lib/services/events.svelte';
 
 	type Notification = components['schemas']['NotificationDTO'];
 
-	let notifications: Array<Notification> = $state([]);
-	let unreadCount = $state(0);
+	let notifications = $state<Notification[]>([]);
+	let unreadCount = $derived(notifications.filter((notification) => !notification.seen_at).length);
 	let dropdownOpen = $state(false);
 	const eventsClient = getEventsClient();
+	const toastService = getToastService();
 
 	async function loadNotifications() {
 		try {
@@ -24,22 +26,65 @@
 
 			if (!error && data) {
 				notifications = data.notifications;
-				unreadCount = notifications.filter((n) => !n.seen_at).length;
 			}
-		} catch (e) {
-			console.error('Failed to load notifications', e);
+		} catch (error) {
+			console.error('Failed to load notifications', error);
 		}
+	}
+
+	function getNotificationToastMessage(notification: Notification) {
+		if (!notification.body) {
+			return notification.title;
+		}
+
+		return `${notification.title}: ${notification.body}`;
+	}
+
+	function addNotificationToPreview(notification: Notification) {
+		const alreadyExists = notifications.some(
+			(existingNotification) => existingNotification.id === notification.id
+		);
+
+		notifications = [
+			notification,
+			...notifications.filter(
+				(existingNotification) => existingNotification.id !== notification.id
+			)
+		].slice(0, NOTIFICATION_PREVIEW_LIMIT);
+
+		return !alreadyExists;
+	}
+
+	function parseNotificationEvent(event: Event): Notification | null {
+		if (!(event instanceof MessageEvent)) {
+			return null;
+		}
+
+		try {
+			if (typeof event.data === 'string') {
+				return JSON.parse(event.data) as Notification;
+			}
+
+			if (event.data && typeof event.data === 'object') {
+				return event.data as Notification;
+			}
+		} catch (error) {
+			console.warn('Failed to parse notification payload', error);
+		}
+
+		return null;
 	}
 
 	async function markAllRead() {
 		if (unreadCount === 0) return;
+
 		try {
 			const { error } = await client.POST('/notifications/mark-all-read');
 			if (!error) {
 				await loadNotifications();
 			}
-		} catch (e) {
-			console.error('Failed to mark notifications as read', e);
+		} catch (error) {
+			console.error('Failed to mark notifications as read', error);
 		}
 	}
 
@@ -50,14 +95,24 @@
 			return;
 		}
 
-		const handleUpdate = () => {
-			void loadNotifications();
+		const handleNewNotification = (event: Event) => {
+			const notification = parseNotificationEvent(event);
+
+			if (!notification) {
+				void loadNotifications();
+				return;
+			}
+
+			const isNewNotification = addNotificationToPreview(notification);
+			if (isNewNotification) {
+				toastService.add(getNotificationToastMessage(notification), 'info');
+			}
 		};
 
-		eventsClient.on('update_notifications', handleUpdate);
+		eventsClient.on('new_notifications', handleNewNotification);
 
 		return () => {
-			eventsClient.off('update_notifications', handleUpdate);
+			eventsClient.off('new_notifications', handleNewNotification);
 		};
 	});
 </script>
