@@ -40,7 +40,7 @@
 		failed: {
 			tone: 'red',
 			label: 'Нет соединения',
-			description: 'Не удалось переподключиться. Попробуйте обновить страницу позже.'
+			description: 'Не удалось переподключиться. Попробуй обновить страницу позже.'
 		}
 	};
 
@@ -65,7 +65,7 @@
 	let toneClasses = $derived(TONE_CLASSES[statusDetails.tone]);
 	let tooltipOpen = $state(false);
 	let tooltipLabel = $derived(
-		`Статус соединения: ${statusDetails.label}. Нажмите или наведите, чтобы открыть подсказку.`
+		`Статус соединения: ${statusDetails.label}. Нажми или наведи, чтобы открыть подсказку.`
 	);
 </script>
 

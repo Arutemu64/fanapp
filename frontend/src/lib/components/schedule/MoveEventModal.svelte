@@ -65,7 +65,7 @@
 <Modal bind:open size="sm" title="Переместить событие" class="px-2">
 	<div class="flex flex-col gap-4 sm:gap-5">
 		<p class="text-sm text-gray-600 sm:text-base dark:text-gray-400">
-			Выберите событие, <strong class="text-gray-900 dark:text-white">после</strong> которого будет
+			Выбери событие, <strong class="text-gray-900 dark:text-white">после</strong> которого будет
 			размещено:
 			<strong class="text-primary-600 dark:text-primary-400">{event.title}</strong>
 		</p>

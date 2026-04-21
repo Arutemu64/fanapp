@@ -119,7 +119,7 @@
 		isLoading = true;
 		try {
 			if (typeof Notification === 'undefined') {
-				toastService.add('Ваш браузер не поддерживает уведомления', 'error');
+				toastService.add('Твой браузер не поддерживает уведомления', 'error');
 				return;
 			}
 
@@ -237,7 +237,7 @@
 			}
 
 			toastService.add(
-				'Тест отправлен. Если сайт открыт, проверьте тост и колокольчик. Для системного push сверните или закройте приложение.',
+				'Тест отправлен. Если сайт открыт, проверь тост и колокольчик. Для системного push сверни или закрой приложение.',
 				'success'
 			);
 		} catch (error) {
@@ -251,7 +251,7 @@
 
 <ProfileCardShell
 	title="Уведомления"
-	description="Выберите каналы, чтобы не пропустить расписание, анонсы и сервисные сообщения."
+	description="Выбери каналы, чтобы не пропустить расписание, анонсы и сервисные сообщения."
 >
 	{#snippet icon()}
 		<BellOutline class="h-5 w-5" />
@@ -286,7 +286,7 @@
 						{#if hasTelegramAccount}
 							Получать сообщения в Telegram-боте.
 						{:else}
-							Сначала подключите Telegram в блоке «Способы входа».
+							Сначала подключи Telegram в блоке «Способы входа».
 						{/if}
 					</p>
 				</div>
@@ -319,9 +319,8 @@
 
 	<div class="rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
 		<p class="mb-3 text-xs leading-5 text-gray-500 dark:text-gray-400">
-			Если сайт открыт, тест покажет тост и обновит колокольчик. Чтобы проверить системный
-			web push, сверните или закройте приложение. Telegram придёт только для подключённого и
-			включённого аккаунта.
+			Попробуй отправить себе пробное уведомление, чтобы убедиться, что всё работает. Важно:
+			системные пуш-уведомления приходят только когда сайт закрыт.
 		</p>
 		<Button
 			color="light"
@@ -334,7 +333,7 @@
 	</div>
 </ProfileCardShell>
 
-<Modal title="Установите приложение" bind:open={showIosPwaModal} autoclose size="sm">
+<Modal title="Установи приложение" bind:open={showIosPwaModal} autoclose size="sm">
 	<div class="space-y-4">
 		<p class="text-base leading-relaxed text-gray-500 dark:text-gray-400">
 			Для работы Push-уведомлений на iOS необходимо добавить приложение на экран «Домой».
@@ -348,7 +347,7 @@
 						class="flex h-6 w-6 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-600 dark:bg-primary-900 dark:text-primary-300"
 						>1</span
 					>
-					<span>Нажмите кнопку <strong>«Поделиться»</strong> в браузере</span>
+					<span>Нажми кнопку <strong>«Поделиться»</strong> в браузере</span>
 					<ShareNodesOutline class="h-5 w-5 text-gray-500" />
 				</div>
 				<div class="flex items-center gap-2">
@@ -356,7 +355,7 @@
 						class="flex h-6 w-6 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-600 dark:bg-primary-900 dark:text-primary-300"
 						>2</span
 					>
-					<span>Выберите <strong>«На экран „Домой“»</strong></span>
+					<span>Выбери <strong>«На экран „Домой“»</strong></span>
 				</div>
 			</div>
 		</div>

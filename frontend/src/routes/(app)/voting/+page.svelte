@@ -16,7 +16,7 @@
 	<title>Голосование</title>
 </svelte:head>
 
-<SectionHeader title="Голосование" description="Выберите номинацию для голосования" />
+<SectionHeader title="Голосование" description="Выбери номинацию для голосования" />
 
 <VotingStatusAlert votingState={votingStatus} class="mb-4" />
 

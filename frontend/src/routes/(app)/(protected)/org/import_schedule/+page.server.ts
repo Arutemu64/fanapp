@@ -6,7 +6,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const canImportSchedule = user?.role === 'org';
 
 	if (!canImportSchedule) {
-		error(403, 'У вас нет доступа к импорту расписания');
+		error(403, 'У тебя нет доступа к импорту расписания');
 	}
 
 	return {};

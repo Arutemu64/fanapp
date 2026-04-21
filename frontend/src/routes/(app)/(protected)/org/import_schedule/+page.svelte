@@ -27,7 +27,7 @@
 		successMessage = '';
 
 		if (!selectedFile) {
-			inlineError = 'Выберите Excel-файл для импорта';
+			inlineError = 'Выбери Excel-файл для импорта';
 			return;
 		}
 
@@ -47,9 +47,9 @@
 				if (response.status === 401) {
 					inlineError = 'Нужно войти в аккаунт заново';
 				} else if (response.status === 403) {
-					inlineError = 'У вас нет доступа к импорту расписания';
+					inlineError = 'У тебя нет доступа к импорту расписания';
 				} else if (response.status === 422) {
-					inlineError = 'Проверьте формат файла и попробуйте снова';
+					inlineError = 'Проверь формат файла и попробуй снова';
 				} else {
 					inlineError = 'Не удалось импортировать расписание';
 				}
@@ -77,7 +77,7 @@
 
 <SectionHeader
 	title="Импорт расписания"
-	description="Загрузите Excel-файл, чтобы обновить расписание мероприятия."
+	description="Загрузи Excel-файл, чтобы обновить расписание мероприятия."
 />
 
 <div class="px-4">

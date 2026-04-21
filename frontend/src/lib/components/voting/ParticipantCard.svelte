@@ -86,7 +86,7 @@
 		<Badge color="green" class="absolute top-2 right-2 shrink-0 text-sm">
 			<span class="flex items-center gap-1">
 				<CheckCircleSolid class="h-4 w-4" />
-				<span class="hidden sm:inline">Ваш голос</span>
+				<span class="hidden sm:inline">Твой голос</span>
 			</span>
 		</Badge>
 	{/if}

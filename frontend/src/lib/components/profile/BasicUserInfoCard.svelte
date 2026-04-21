@@ -40,7 +40,7 @@
 	let editProfileModalOpen = $state(false);
 </script>
 
-<ProfileCardShell title="Основные данные" description="Проверьте имя, роль и привязанный билет.">
+<ProfileCardShell title="Основные данные" description="Всё о тебе.">
 	{#snippet icon()}
 		<UserCircleSolid class="h-5 w-5" />
 	{/snippet}

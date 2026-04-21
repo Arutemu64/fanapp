@@ -56,10 +56,10 @@
 		{#if hasVoted}
 			<span class="flex items-center gap-1 text-green-600 dark:text-green-400">
 				<CheckCircleSolid class="h-3 w-3 sm:h-4 sm:w-4" />
-				Вы уже проголосовали в этой номинации
+				Голос в этой номинации уже учтён
 			</span>
 		{:else}
-			Выберите участника, чтобы отдать свой голос
+			Выбери участника, чтобы отдать голос
 		{/if}
 	</p>
 </SectionHeader>
@@ -76,6 +76,9 @@
 			<div class="flex-1">
 				<Search
 					bind:value={searchQuery}
+					clearableOnClick={() => {
+						searchQuery = '';
+					}}
 					name="participant_search"
 					aria-label="Поиск участников в номинации"
 					placeholder="Поиск по имени или номеру…"

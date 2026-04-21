@@ -25,12 +25,12 @@
 
 	function validateAnnouncementTimeout() {
 		if (announcementTimeout === undefined || Number.isNaN(announcementTimeout)) {
-			announcementTimeoutError = 'Укажите таймаут анонсов';
+			announcementTimeoutError = 'Укажи таймаут анонсов';
 			return false;
 		}
 
 		if (!Number.isInteger(announcementTimeout) || announcementTimeout < 1) {
-			announcementTimeoutError = 'Введите целое число не меньше 1';
+			announcementTimeoutError = 'Введи целое число не меньше 1';
 			return false;
 		}
 
@@ -72,11 +72,11 @@
 				if (response.status === 401) {
 					toastService.add('Нужно войти в аккаунт заново', 'error');
 				} else if (response.status === 403) {
-					toastService.add('У вас нет доступа к настройкам фестиваля', 'error');
+					toastService.add('У тебя нет доступа к настройкам фестиваля', 'error');
 				} else if (response.status === 404) {
 					toastService.add('Настройки фестиваля не найдены', 'error');
 				} else if (response.status === 422) {
-					toastService.add('Проверьте введённые значения и попробуйте снова', 'error');
+					toastService.add('Проверь введённые значения и попробуй снова', 'error');
 				} else {
 					toastService.add('Не удалось сохранить настройки фестиваля', 'error');
 				}
@@ -104,7 +104,7 @@
 
 <SectionHeader
 	title="Настройки фестиваля"
-	description="Управляйте голосованием и таймаутом между анонсами расписания."
+	description="Управляй голосованием и таймаутом между анонсами расписания."
 />
 
 <div class="px-4">

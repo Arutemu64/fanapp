@@ -43,7 +43,7 @@
 
 <ProfileCardShell
 	title="Соцсети"
-	description="Подключайте внешние аккаунты для быстрого входа и будущих уведомлений."
+	description="Подключай внешние аккаунты для быстрого входа и будущих уведомлений."
 >
 	{#snippet icon()}
 		<LinkOutline class="h-5 w-5" />
@@ -68,7 +68,7 @@
 						</span>
 					</p>
 					<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
-						Используйте Telegram для быстрого входа и сообщений от бота.
+						Используй Telegram для быстрого входа и сообщений от бота.
 					</p>
 				{:else}
 					<p class="mt-2 text-sm leading-5 text-gray-500 dark:text-gray-400">
@@ -110,7 +110,7 @@
 
 	{#if telegramAccount && !user.email}
 		<Alert color="yellow" class="text-sm">
-			Сначала добавьте email, потом можно отвязать Telegram.
+			Сначала добавь email, потом можно отвязать Telegram.
 		</Alert>
 	{/if}
 </ProfileCardShell>

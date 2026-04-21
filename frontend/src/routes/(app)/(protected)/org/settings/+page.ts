@@ -16,7 +16,7 @@ export const load: PageLoad = async ({ fetch, depends }) => {
 		}
 
 		if (response.status === 403) {
-			error(403, 'У вас нет доступа к настройкам фестиваля');
+			error(403, 'У тебя нет доступа к настройкам фестиваля');
 		}
 
 		if (response.status === 404) {

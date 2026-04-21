@@ -84,12 +84,12 @@
 		loginCodeError = '';
 
 		if (!normalizedEmail) {
-			emailError = 'Введите адрес эл. почты';
+			emailError = 'Введи адрес эл. почты';
 			return false;
 		}
 
 		if (!validateEmail(normalizedEmail)) {
-			emailError = 'Введите адрес в формате name@example.com';
+			emailError = 'Введи адрес в формате name@example.com';
 			return false;
 		}
 
@@ -102,7 +102,7 @@
 		}
 
 		if (!loginCode.trim()) {
-			loginCodeError = 'Введите код из письма';
+			loginCodeError = 'Введи код из письма';
 			return false;
 		}
 
@@ -119,13 +119,13 @@
 		passwordError = '';
 
 		if (!normalizedEmail) {
-			emailError = 'Введите адрес эл. почты';
+			emailError = 'Введи адрес эл. почты';
 		} else if (!validateEmail(normalizedEmail)) {
-			emailError = 'Введите адрес в формате name@example.com';
+			emailError = 'Введи адрес в формате name@example.com';
 		}
 
 		if (!password.trim()) {
-			passwordError = 'Введите пароль';
+			passwordError = 'Введи пароль';
 		}
 
 		return !emailError && !passwordError;
@@ -272,7 +272,7 @@
 
 <Card class="w-full p-4 sm:p-6">
 	<div class="space-y-4">
-		<h2 class="text-center text-2xl font-bold text-gray-900 dark:text-white">Вход в FAN FAN</h2>
+		<h2 class="text-center text-2xl font-bold text-gray-900 dark:text-white">Вход в ФАН ФАН</h2>
 
 		<Tabs tabStyle="underline" contentClass="mt-3">
 			<TabItem open title="По коду">
@@ -302,7 +302,7 @@
 						{#if emailError}
 							<Helper color="red" class="mt-1">{emailError}</Helper>
 						{:else if email && isEmailValid === false}
-							<Helper color="red" class="mt-1">Введите адрес в формате name@example.com</Helper>
+							<Helper color="red" class="mt-1">Введи адрес в формате name@example.com</Helper>
 						{/if}
 					</div>
 
@@ -336,7 +336,7 @@
 							{#if loginCodeError}
 								<Helper color="red" class="mt-1">{loginCodeError}</Helper>
 							{:else}
-								<Helper class="mt-1">Введите 6 цифр из письма.</Helper>
+								<Helper class="mt-1">Введи 6 цифр из письма.</Helper>
 							{/if}
 						</div>
 					{/if}
@@ -418,7 +418,7 @@
 						{#if emailError}
 							<Helper color="red" class="mt-1">{emailError}</Helper>
 						{:else if email && isEmailValid === false}
-							<Helper color="red" class="mt-1">Введите адрес в формате name@example.com</Helper>
+							<Helper color="red" class="mt-1">Введи адрес в формате name@example.com</Helper>
 						{/if}
 					</div>
 

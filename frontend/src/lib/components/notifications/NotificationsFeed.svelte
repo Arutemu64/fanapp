@@ -83,7 +83,7 @@
 	}
 </script>
 
-<SectionHeader title="Уведомления" description="Здесь собраны все ваши уведомления.">
+<SectionHeader title="Уведомления" description="Здесь собраны все твои уведомления.">
 	{#if notifications.length > 0}
 		<div class="mt-3 text-sm text-gray-500 dark:text-gray-400">
 			{#if unreadCount > 0}

@@ -167,7 +167,7 @@
 	<title>Расписание</title>
 </svelte:head>
 
-<SectionHeader title="Расписание" description="Следите за ходом мероприятия" />
+<SectionHeader title="Расписание" description="Следи за ходом мероприятия" />
 
 <div {@attach capturePageRoot} class="space-y-4">
 	<!-- Keep filters compact and static so the schedule itself can use sticky headers. -->
@@ -177,6 +177,9 @@
 		<div class="flex flex-col gap-3">
 			<Search
 				bind:value={searchQuery}
+				clearableOnClick={() => {
+					searchQuery = '';
+				}}
 				name="schedule_search"
 				aria-label="Поиск по расписанию"
 				placeholder="Поиск по номеру, выступлению, блоку или номинации…"

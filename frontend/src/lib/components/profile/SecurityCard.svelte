@@ -88,7 +88,7 @@
 		verificationCode = normalizedCode;
 
 		if (!normalizedCode) {
-			verificationCodeError = 'Введите код из письма';
+			verificationCodeError = 'Введи код из письма';
 			return;
 		}
 
@@ -151,7 +151,7 @@
 
 <ProfileCardShell
 	title="Способы входа"
-	description="Настройте почту, пароль и Telegram для входа и восстановления доступа."
+	description="Настрой почту, пароль и Telegram для входа и восстановления доступа."
 >
 	{#snippet icon()}
 		<LinkOutline class="h-5 w-5" />
@@ -172,7 +172,7 @@
 						<p class="mt-1.5 text-sm break-all text-gray-500 dark:text-gray-400">{user.email}</p>
 						{#if !user.email_verified_at}
 							<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
-								Подтвердите адрес, чтобы защитить вход и восстановление доступа.
+							Подтверди адрес, чтобы защитить вход и восстановление доступа.
 							</p>
 						{/if}
 					{:else if user.pending_email}
@@ -180,12 +180,12 @@
 							{user.pending_email}
 						</p>
 						<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
-							Подтвердите адрес, чтобы сделать его основной почтой для входа и восстановления
+							Подтверди адрес, чтобы сделать его основной почтой для входа и восстановления
 							доступа.
 						</p>
 					{:else}
 						<p class="mt-1.5 text-sm leading-5 text-gray-500 dark:text-gray-400">
-							Добавьте email для восстановления доступа и важных уведомлений.
+							Добавь email для восстановления доступа и важных уведомлений.
 						</p>
 					{/if}
 
@@ -259,7 +259,7 @@
 						{#if verificationCodeError}
 							<Helper color="red" class="mt-1">{verificationCodeError}</Helper>
 						{:else}
-							<Helper class="mt-1">Введите 6 цифр из письма.</Helper>
+							<Helper class="mt-1">Введи 6 цифр из письма.</Helper>
 						{/if}
 					</div>
 
@@ -293,9 +293,9 @@
 
 					<p class="mt-1.5 text-sm leading-5 text-gray-500 dark:text-gray-400">
 						{#if user.has_password}
-							Используйте пароль как дополнительный способ входа.
+							Используй пароль как дополнительный способ входа.
 						{:else}
-							Установите пароль, чтобы входить без внешних сервисов.
+							Установи пароль, чтобы входить без внешних сервисов.
 						{/if}
 					</p>
 				</div>
@@ -334,7 +334,7 @@
 						</p>
 					{:else}
 						<p class="mt-1.5 text-sm leading-5 text-gray-500 dark:text-gray-400">
-							Подключите Telegram для быстрого входа без пароля.
+							Подключи Telegram для быстрого входа без пароля.
 						</p>
 					{/if}
 				</div>
@@ -377,7 +377,7 @@
 			<div class="flex items-start gap-2">
 				<ExclamationCircleSolid class="mt-0.5 h-4 w-4 shrink-0" />
 				<p>
-					Добавьте почту. Так будет проще восстановить доступ, и только после этого можно безопасно
+					Добавь почту. Так будет проще восстановить доступ, и только после этого можно безопасно
 					отвязать Telegram.
 				</p>
 			</div>

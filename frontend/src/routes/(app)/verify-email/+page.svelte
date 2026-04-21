@@ -14,7 +14,7 @@
 	<Card class="w-full max-w-md p-6 text-center sm:p-8">
 		<div class="flex flex-col items-center justify-center">
 			<CloseCircleOutline class="mx-auto mb-4 h-16 w-16 text-red-500" />
-			<h2 class="mb-2 text-xl font-bold text-gray-900 dark:text-white">Используйте код подтверждения</h2>
+			<h2 class="mb-2 text-xl font-bold text-gray-900 dark:text-white">Используй код подтверждения</h2>
 			<p class="mb-6 text-gray-500 dark:text-gray-400">
 				{data.errorMessage}
 			</p>

@@ -19,7 +19,7 @@
 
 	async function handleLinkTicket() {
 		if (!barcode.trim()) {
-			toastService.add('Введите номер билета', 'warning');
+			toastService.add('Введи номер билета', 'warning');
 			return;
 		}
 
@@ -42,12 +42,9 @@
 	}
 </script>
 
-<ProfileCardShell
-	title="Билет"
-	description="Привяжите билет, чтобы открыть голосования, квесты и другие активности."
->
+<ProfileCardShell title="Билет" description="Привяжи билет, чтобы получить доступ к голосованию.">
 	{#snippet icon()}
-		<TicketSolid class="h-5 w-5 text-primary-600 dark:text-primary-400" />
+		<TicketSolid class="h-5 w-5" />
 	{/snippet}
 
 	{#if user.ticket}
@@ -61,31 +58,13 @@
 			</p>
 		</div>
 	{:else}
-		<ul class="space-y-3 rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
-			<li class="flex items-start gap-2">
-				<div
-					class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900"
-				>
-					<CheckCircleOutline class="h-3 w-3 text-primary-600 dark:text-primary-400" />
-				</div>
-				<div>
-					<span class="text-sm font-medium text-gray-900 dark:text-white"
-						>Участие в голосовании</span
-					>
-					<p class="text-xs text-gray-500 dark:text-gray-400">
-						Голосуйте за лучших участников мероприятия.
-					</p>
-				</div>
-			</li>
-		</ul>
-
 		<div class="space-y-3 rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
 			<Label for="ticket-barcode">Номер билета</Label>
 			<Input
 				id="ticket-barcode"
 				name="ticket_barcode"
 				bind:value={barcode}
-				placeholder="Введите номер билета"
+				placeholder="Введи номер билета"
 				autocomplete="off"
 				autocapitalize="off"
 				spellcheck={false}

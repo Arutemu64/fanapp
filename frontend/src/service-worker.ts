@@ -118,7 +118,7 @@ self.addEventListener('fetch', (event) => {
 // Push Notifications Handling
 self.addEventListener('push', (event: PushEvent) => {
 	let data: PushNotificationPayload = {
-		title: 'FAN FAN',
+		title: 'ФАН ФАН',
 		body: 'Новое уведомление',
 		url: '/'
 	};

@@ -54,7 +54,7 @@
 		const trimmedEmail = newEmail.trim().toLowerCase();
 
 		if (!isValidEmail(trimmedEmail)) {
-			emailError = 'Введите адрес в формате name@example.com';
+			emailError = 'Введи адрес в формате name@example.com';
 			return;
 		}
 
@@ -83,7 +83,7 @@
 		toastService.add(
 			hasExistingEmail
 				? 'Новый адрес сохранён. Текущая почта останется активной до подтверждения.'
-				: 'Адрес сохранён. Запросите код и подтвердите его из письма.',
+				: 'Адрес сохранён. Запроси код и подтверди его из письма.',
 			'success'
 		);
 		newEmail = '';

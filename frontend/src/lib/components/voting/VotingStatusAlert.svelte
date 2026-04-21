@@ -14,9 +14,9 @@
 	function getStatusMessage(status: VotingStatus): string {
 		switch (status) {
 			case 'open':
-				return 'Голосование открыто. Вы можете голосовать за участников.';
+				return 'Голосование открыто. Ты можешь голосовать за участников.';
 			case 'not_authenticated':
-				return 'Войдите в аккаунт, чтобы участвовать в голосовании.';
+				return 'Войди в аккаунт, чтобы участвовать в голосовании.';
 			case 'no_ticket':
 				return 'Для участия в голосовании необходим билет.';
 			case 'disabled':

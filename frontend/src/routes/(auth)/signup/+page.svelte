@@ -65,18 +65,18 @@
 		const trimmedEmail = email.trim();
 		if (!trimmedEmail || !password) {
 			if (!trimmedEmail) {
-				emailError = 'Введите адрес эл. почты';
+				emailError = 'Введи адрес эл. почты';
 			}
 
 			if (!password) {
-				passwordError = 'Введите пароль';
+				passwordError = 'Введи пароль';
 			}
 
 			return;
 		}
 
 		if (!validateEmail(trimmedEmail)) {
-			emailError = 'Введите адрес в формате name@example.com';
+			emailError = 'Введи адрес в формате name@example.com';
 			return;
 		}
 
@@ -108,7 +108,7 @@
 				return;
 			}
 
-			toastService.add('Аккаунт создан. Теперь войдите в него.', 'success');
+			toastService.add('Аккаунт создан. Теперь войди в него.', 'success');
 			await goto(resolve('/login'));
 		} catch (err: unknown) {
 			if (err instanceof Error) {
@@ -125,7 +125,7 @@
 <Card class="w-full p-4 sm:p-6">
 	<form onsubmit={handleSignup} class="space-y-4">
 		<h2 class="text-center text-2xl font-bold text-gray-900 dark:text-white">
-			Регистрация в FAN FAN
+			Регистрация в ФАН ФАН
 		</h2>
 
 		{#if serverError}
@@ -160,7 +160,7 @@
 			{#if emailError}
 				<Helper color="red" class="mt-1">{emailError}</Helper>
 			{:else if email && isEmailValid === false}
-				<Helper color="red" class="mt-1">Введите адрес в формате name@example.com</Helper>
+				<Helper color="red" class="mt-1">Введи адрес в формате name@example.com</Helper>
 			{/if}
 		</div>
 

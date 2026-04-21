@@ -29,7 +29,7 @@
 			return;
 		}
 
-		toastService.add('Вы отписались от уведомлений', 'success');
+		toastService.add('Подписка на уведомления отключена', 'success');
 		await invalidate('app:schedule');
 		open = false;
 	}
@@ -37,7 +37,7 @@
 
 <Modal bind:open size="sm" title="Отписка от уведомлений">
 	<p class="text-gray-600 dark:text-gray-400">
-		Вы уверены, что хотите отписаться от уведомлений о выступлении <strong
+		Хочешь отписаться от уведомлений о выступлении <strong
 			class="text-gray-900 dark:text-white">{event.title}</strong
 		>?
 	</p>
