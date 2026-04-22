@@ -37,8 +37,8 @@
 
 <Modal bind:open size="sm" title="Отписка от уведомлений">
 	<p class="text-gray-600 dark:text-gray-400">
-		Хочешь отписаться от уведомлений о выступлении <strong
-			class="text-gray-900 dark:text-white">{event.title}</strong
+		Хочешь отписаться от уведомлений о выступлении <strong class="text-gray-900 dark:text-white"
+			>{event.title}</strong
 		>?
 	</p>
 

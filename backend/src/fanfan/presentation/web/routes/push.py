@@ -1,7 +1,6 @@
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, HTTPException
-from starlette import status
+from fastapi import APIRouter
 
 from fanfan.application.dto.push_sub import PushSubscriptionDTO
 from fanfan.application.interactors.push_sub.create_push_subscriptions import (
@@ -15,7 +14,6 @@ from fanfan.application.interactors.push_sub.delete_user_push_subscription impor
 from fanfan.application.interactors.push_sub.get_user_push_subscriptions import (
     ListUserPushSubscriptions,
 )
-from fanfan.core.exceptions.push_sub import PushSubscriptionAlreadyExists
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
 push_router = APIRouter(tags=["Push"], prefix="/push")
@@ -39,13 +37,7 @@ push_router = APIRouter(tags=["Push"], prefix="/push")
 async def subscribe(
     data: CreatePushSubscriptionInput, interactor: FromDishka[CreatePushSubscription]
 ) -> None:
-    try:
-        await interactor(data)
-    except PushSubscriptionAlreadyExists as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=e.message,
-        ) from e
+    await interactor(data)
 
 
 @push_router.get(

@@ -2,7 +2,7 @@ from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, Depends, Form, HTTPException, Response
+from fastapi import APIRouter, Depends, Form, Response
 from pydantic import BaseModel, EmailStr, Field
 from starlette import status
 
@@ -15,8 +15,6 @@ from fanfan.application.interactors.auth.register_user import (
     RegisterUser,
     RegisterUserInput,
 )
-from fanfan.core.exceptions.auth import AuthenticationError
-from fanfan.core.exceptions.users import UserAlreadyExists, UserNotFound
 from fanfan.presentation.web.config import WebConfig
 from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
 from fanfan.presentation.web.schemas.error import ErrorMessage
@@ -59,15 +57,9 @@ async def login(
     response: Response,
 ) -> None:
     # Keep login flow explicit so junior developers can follow each step.
-    try:
-        session_id = await interactor(
-            AuthenticateUserInput(email=form_data.email, password=form_data.password)
-        )
-    except (UserNotFound, AuthenticationError) as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=e.message,
-        ) from e
+    session_id = await interactor(
+        AuthenticateUserInput(email=form_data.email, password=form_data.password)
+    )
 
     set_auth_cookie(response, session_id, config)
 
@@ -91,11 +83,4 @@ async def register_user(
     data: RegisterUserInput,
     interactor: FromDishka[RegisterUser],
 ) -> None:
-    try:
-        result = await interactor(data)
-    except UserAlreadyExists as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=e.message,
-        ) from e
-    return result
+    return await interactor(data)

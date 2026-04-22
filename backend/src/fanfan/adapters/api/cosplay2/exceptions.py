@@ -6,4 +6,4 @@ class Cosplay2Exception(AppException):
 
 
 class NoCosplay2ConfigProvided(Cosplay2Exception):
-    default_message = "Не предоставлены настройки Cosplay2"
+    code = "COSPLAY2_CONFIG_NOT_PROVIDED"

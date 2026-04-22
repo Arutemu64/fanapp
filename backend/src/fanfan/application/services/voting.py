@@ -22,8 +22,6 @@ class VotingService:
     async def ensure_user_can_vote(self, user: User, ticket: Ticket | None) -> None:
         voting_state = await self.get_voting_state(user, ticket)
         if voting_state is VotingStatus.NO_TICKET:
-            reason = "Для голосования необходимо привязать билет"
-            raise AccessDenied(reason)
+            raise AccessDenied(details={"reason": "VOTING_TICKET_REQUIRED"})
         if voting_state is VotingStatus.DISABLED:
-            reason = "Голосование сейчас отключено"
-            raise AccessDenied(reason)
+            raise AccessDenied(details={"reason": "VOTING_DISABLED"})

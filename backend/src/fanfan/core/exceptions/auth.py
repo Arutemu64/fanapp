@@ -2,28 +2,24 @@ from fanfan.core.exceptions.base import AppException
 
 
 class AuthenticationError(AppException):
-    default_message = "Ошибка авторизации"
+    code = "AUTHENTICATION_ERROR"
+
+
+class InvalidCredentials(AuthenticationError):
+    code = "INVALID_CREDENTIALS"
 
 
 class UserNotAuthenticated(AuthenticationError):
-    default_message = "Пользователь не авторизован"
+    code = "USER_NOT_AUTHENTICATED"
 
 
 class IncorrectPassword(AuthenticationError):
-    default_message = "Неверный пароль"
-
-
-class InvalidToken(AuthenticationError):
-    default_message = "Неверный токен"
+    code = "INCORRECT_PASSWORD"
 
 
 class InvalidOtpCode(AuthenticationError):
-    default_message = "Неверный или устаревший код"
+    code = "INVALID_OTP_CODE"
 
 
-class TokenExpired(AuthenticationError):
-    default_message = "Срок действия токена истек"
-
-
-class RefreshTokenReused(AuthenticationError):
-    default_message = "Refresh токен уже был использован"
+class InvalidTelegramAuthPayload(AppException):
+    code = "INVALID_TELEGRAM_AUTH_PAYLOAD"

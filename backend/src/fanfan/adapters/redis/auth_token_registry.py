@@ -15,10 +15,6 @@ class RedisTokenRegistry(TokenRegistry):
         self._secret = config.secret_key.get_secret_value().encode()
 
     @staticmethod
-    def _refresh_used_key(jti: str) -> str:
-        return f"auth:refresh:used:{jti}"
-
-    @staticmethod
     def _email_confirmation_code_key(user_id: UserId, code_hash: str) -> str:
         return f"auth:email-confirmation:{user_id}:{code_hash}"
 
@@ -32,24 +28,6 @@ class RedisTokenRegistry(TokenRegistry):
             code.encode(),
             hashlib.sha256,
         ).hexdigest()
-
-    async def consume_refresh_token_jti(self, jti: str, ttl_seconds: int) -> bool:
-        ttl = max(1, ttl_seconds)
-        result = await self.redis.set(
-            name=self._refresh_used_key(jti),
-            value="1",
-            ex=ttl,
-            nx=True,  # Only set if not already used
-        )
-        return bool(result)
-
-    async def revoke_refresh_token_jti(self, jti: str, ttl_seconds: int) -> None:
-        ttl = max(1, ttl_seconds)
-        await self.redis.set(
-            name=self._refresh_used_key(jti),
-            value="1",
-            ex=ttl,
-        )
 
     async def issue_email_confirmation_code(
         self,

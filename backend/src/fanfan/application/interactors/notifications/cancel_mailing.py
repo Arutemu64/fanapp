@@ -47,8 +47,7 @@ class CancelMailing:
         if (mailing.by_user_id != current_user.id) and (
             current_user.role is not UserRole.ORG
         ):
-            reason = "Вы не можете удалить эту рассылку"
-            raise AccessDenied(reason)
+            raise AccessDenied(details={"reason": "MAILING_DELETE_FORBIDDEN"})
         mailing.set_as_cancelled()
         await self.mailing_repo.save(mailing)
         await self.trx.commit()

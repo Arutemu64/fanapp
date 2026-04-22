@@ -6,8 +6,8 @@ class PermissionsException(AppException):
 
 
 class PermissionNotFound(PermissionsException):
-    default_message = "Разрешение не найдено"
+    code = "PERMISSION_NOT_FOUND"
 
 
 class UserAlreadyHasPermission(PermissionsException):
-    default_message = "У пользователя уже есть это разрешение"
+    code = "USER_ALREADY_HAS_PERMISSION"

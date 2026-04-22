@@ -172,7 +172,7 @@
 						<p class="mt-1.5 text-sm break-all text-gray-500 dark:text-gray-400">{user.email}</p>
 						{#if !user.email_verified_at}
 							<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
-							Подтверди адрес, чтобы защитить вход и восстановление доступа.
+								Подтверди адрес, чтобы защитить вход и восстановление доступа.
 							</p>
 						{/if}
 					{:else if user.pending_email}
@@ -180,8 +180,7 @@
 							{user.pending_email}
 						</p>
 						<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
-							Подтверди адрес, чтобы сделать его основной почтой для входа и восстановления
-							доступа.
+							Подтверди адрес, чтобы сделать его основной почтой для входа и восстановления доступа.
 						</p>
 					{:else}
 						<p class="mt-1.5 text-sm leading-5 text-gray-500 dark:text-gray-400">

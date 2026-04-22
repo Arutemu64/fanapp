@@ -6,8 +6,8 @@ class PushSubException(AppException):
 
 
 class PushSubscriptionAlreadyExists(PushSubException):
-    default_message = "Это устройство уже подписано на push-уведомления"
+    code = "PUSH_SUBSCRIPTION_ALREADY_EXISTS"
 
 
 class PushSubNotFound(PushSubException):
-    pass
+    code = "PUSH_SUBSCRIPTION_NOT_FOUND"

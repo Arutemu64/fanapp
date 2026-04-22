@@ -101,7 +101,3 @@ You have access to comprehensive Flowbite-Svelte component documentation. Here's
 - Use Flowbite-Svelte components for consistent UI design
 - Validate all code with svelte-autofixer before delivering
 - Keep documentation lookups efficient by fetching multiple sections at once
-
-### Context7 MCP Server
-
-Always use Context7 MCP when you need library/API documentation, code generation, setup or configuration steps without having to explicitly ask. Prefer MCP for Svelte and Flowbite.

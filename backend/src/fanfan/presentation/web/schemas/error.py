@@ -1,15 +1,18 @@
-from pydantic import BaseModel
+from typing import Any
+
+from pydantic import BaseModel, Field
 
 
 class ErrorMessage(BaseModel):
-    detail: str
+    code: str
+    details: dict[str, Any] = Field(default_factory=dict)
 
 
 class ValidationErrorDetail(BaseModel):
     loc: list[str | int]
-    msg: str
     type: str
 
 
 class ValidationErrorResponse(BaseModel):
-    detail: list[ValidationErrorDetail]
+    code: str = "VALIDATION_ERROR"
+    details: dict[str, list[ValidationErrorDetail]] = Field(default_factory=dict)

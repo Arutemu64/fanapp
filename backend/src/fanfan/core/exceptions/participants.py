@@ -1,5 +1,4 @@
 from fanfan.core.exceptions.base import AppException
-from fanfan.core.vo.participant import ParticipantId
 
 
 class ParticipantsException(AppException):
@@ -7,13 +6,12 @@ class ParticipantsException(AppException):
 
 
 class ParticipantNotFound(ParticipantsException):
-    def __init__(self, participant_id: ParticipantId):
-        self.message = f"Участник {participant_id} не найден"
+    code = "PARTICIPANT_NOT_FOUND"
 
 
 class NonApprovedRequest(ParticipantsException):
-    default_message = "Заявка не одобрена"
+    code = "NON_APPROVED_REQUEST"
 
 
 class RequestHasNoVotingTitle(ParticipantsException):
-    default_message = "У заявки нет наименования"
+    code = "REQUEST_HAS_NO_VOTING_TITLE"

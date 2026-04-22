@@ -3,7 +3,7 @@ from urllib.parse import urlencode
 from authlib.integrations.starlette_client import OAuth, StarletteOAuth2App
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Request
 from starlette import status
 from starlette.responses import RedirectResponse
 
@@ -18,13 +18,10 @@ from fanfan.application.interactors.current_user.link_telegram_account import (
 from fanfan.application.interactors.current_user.unlink_telegram_account import (
     UnlinkTelegramAccount,
 )
-from fanfan.core.exceptions.auth import UserNotAuthenticated
+from fanfan.core.exceptions.auth import InvalidTelegramAuthPayload
 from fanfan.core.exceptions.users import (
     TelegramAlreadyLinkedToAnotherUser,
-    TelegramCannotBeUnlinkedWithoutEmail,
     UserAlreadyHasTelegramLinked,
-    UserHasNoEmail,
-    UserNotFound,
 )
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
@@ -64,16 +61,7 @@ def _build_profile_redirect(error_code: str | None = None) -> RedirectResponse:
 async def get_current_user_social_accounts(
     interactor: FromDishka[GetCurrentUserSocialIds],
 ) -> list[UserSocialAccountDTO]:
-    try:
-        return await interactor()
-    except UserNotAuthenticated as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
-        ) from e
-    except UserNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
-        ) from e
+    return await interactor()
 
 
 @connections_router.get(
@@ -129,18 +117,7 @@ async def link_telegram_callback(
         await interactor(LinkTelegramAccountInput(user_id=userinfo["id"]))
         return _build_profile_redirect()
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Не удалось подтвердить Telegram",
-        ) from e
-    except UserNotAuthenticated as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
-        ) from e
-    except UserNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
-        ) from e
+        raise InvalidTelegramAuthPayload from e
     except TelegramAlreadyLinkedToAnotherUser:
         return _build_profile_redirect(TELEGRAM_LINK_ERROR_LINKED_TO_ANOTHER_ACCOUNT)
     except UserAlreadyHasTelegramLinked:
@@ -165,17 +142,4 @@ async def link_telegram_callback(
 async def unlink_telegram_account(
     interactor: FromDishka[UnlinkTelegramAccount],
 ) -> None:
-    try:
-        await interactor()
-    except UserNotAuthenticated as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
-        ) from e
-    except UserNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
-        ) from e
-    except (UserHasNoEmail, TelegramCannotBeUnlinkedWithoutEmail) as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail=e.message
-        ) from e
+    await interactor()

@@ -1,7 +1,6 @@
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, HTTPException
-from starlette import status
+from fastapi import APIRouter
 
 from fanfan.application.dto.vote import VoteBaseDTO
 from fanfan.application.interactors.voting.add_vote import (
@@ -26,8 +25,6 @@ from fanfan.application.interactors.voting.list_voting_nominations import (
     ListVotingNominations,
     ListVotingNominationsOutput,
 )
-from fanfan.core.exceptions.participants import ParticipantNotFound
-from fanfan.core.exceptions.votes import AlreadyVotedInThisNomination, VoteNotFound
 from fanfan.core.vo.nomination import NominationId
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
@@ -113,18 +110,7 @@ async def add_vote(
     data: AddVoteInput,
     interactor: FromDishka[AddVote],
 ) -> AddVoteOutput:
-    try:
-        return await interactor(data)
-    except ParticipantNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message,
-        ) from e
-    except AlreadyVotedInThisNomination as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=e.message,
-        ) from e
+    return await interactor(data)
 
 
 @voting_router.delete(
@@ -141,12 +127,6 @@ async def cancel_vote(
     nomination_id: NominationId,
     interactor: FromDishka[CancelUserVoteByNomination],
 ) -> None:
-    try:
-        return await interactor(
-            CancelUserVoteByNominationInput(nomination_id=nomination_id)
-        )
-    except VoteNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message,
-        ) from e
+    return await interactor(
+        CancelUserVoteByNominationInput(nomination_id=nomination_id)
+    )

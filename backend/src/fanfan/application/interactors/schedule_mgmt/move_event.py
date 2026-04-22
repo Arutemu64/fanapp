@@ -21,7 +21,7 @@ from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.mailing import MailingService
 from fanfan.application.services.permissions import PermissionService
 from fanfan.core.events.schedule import CreatedScheduleChangeEvent
-from fanfan.core.exceptions.limiter import RateLockCooldown
+from fanfan.core.exceptions.rate_limit import RateLockCooldown
 from fanfan.core.exceptions.schedule import (
     EventNotFound,
     SameEventsAreNotAllowed,
@@ -89,13 +89,13 @@ class MoveScheduleEvent:
                     raise SameEventsAreNotAllowed
                 event = await self.schedule_repo.get_by_id(data.event_id)
                 if event is None:
-                    raise EventNotFound(event_id=data.event_id)
+                    raise EventNotFound
 
                 place_after_event = await self.schedule_repo.get_by_id(
                     data.place_after_event_id
                 )
                 if place_after_event is None:
-                    raise EventNotFound(event_id=data.place_after_event_id)
+                    raise EventNotFound
                 place_before_event = await self.schedule_repo.get_next_by_order(
                     place_after_event.order
                 )
@@ -151,6 +151,5 @@ class MoveScheduleEvent:
                 return
         except RateLockCooldown as e:
             raise ScheduleEditTooFast(
-                announcement_timeout=e.limit_timeout,
-                old_timestamp=e.current_timestamp,
+                retry_after=e.details["retry_after"],
             ) from e

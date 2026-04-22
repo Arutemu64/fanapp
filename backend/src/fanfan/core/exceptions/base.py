@@ -1,13 +1,21 @@
-class AppException(Exception):
-    default_message = "Неизвестная ошибка"
+from collections.abc import Mapping
+from typing import Any, ClassVar
 
-    def __init__(self, message: str | None = None) -> None:
-        super().__init__(message or self.default_message)
-        self.message = message or self.default_message
+
+class AppException(Exception):
+    code: ClassVar[str] = "UNKNOWN"
+
+    def __init__(
+        self,
+        *,
+        details: Mapping[str, Any] | None = None,
+    ) -> None:
+        self.details = dict(details or {})
+        super().__init__(self.code)
 
     def __str__(self) -> str:
-        return self.message
+        return self.code
 
 
 class AccessDenied(AppException):
-    default_message = "У вас нет доступа к этой функции"
+    code = "ACCESS_DENIED"

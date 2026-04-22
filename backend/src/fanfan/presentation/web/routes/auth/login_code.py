@@ -1,6 +1,6 @@
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, Response
 from starlette import status
 
 from fanfan.application.interactors.auth.login_with_code import (
@@ -11,8 +11,6 @@ from fanfan.application.interactors.auth.request_login_code import (
     RequestLoginCode,
     RequestLoginCodeInput,
 )
-from fanfan.core.exceptions.auth import InvalidOtpCode
-from fanfan.core.exceptions.users import UserNotFound
 from fanfan.presentation.web.config import WebConfig
 from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
 from fanfan.presentation.web.schemas.error import ErrorMessage
@@ -59,17 +57,6 @@ async def login_with_code(
     config: FromDishka[WebConfig],
     response: Response,
 ) -> None:
-    try:
-        session_id = await interactor(data)
-    except InvalidOtpCode as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=e.message,
-        ) from e
-    except UserNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message,
-        ) from e
+    session_id = await interactor(data)
 
     set_auth_cookie(response, session_id, config)

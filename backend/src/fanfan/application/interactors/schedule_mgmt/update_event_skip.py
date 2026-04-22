@@ -20,7 +20,7 @@ from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.mailing import MailingService
 from fanfan.application.services.permissions import PermissionService
 from fanfan.core.events.schedule import CreatedScheduleChangeEvent
-from fanfan.core.exceptions.limiter import RateLockCooldown
+from fanfan.core.exceptions.rate_limit import RateLockCooldown
 from fanfan.core.exceptions.schedule import (
     CurrentEventNotAllowed,
     EventNotFound,
@@ -84,7 +84,7 @@ class UpdateScheduleEventSkip:
                 # Get and check event
                 event = await self.schedule_repo.get_by_id(data.event_id)
                 if event is None:
-                    raise EventNotFound(event_id=data.event_id)
+                    raise EventNotFound
                 if event.is_current:
                     raise CurrentEventNotAllowed
 
@@ -132,5 +132,5 @@ class UpdateScheduleEventSkip:
                 return
         except RateLockCooldown as e:
             raise ScheduleEditTooFast(
-                announcement_timeout=e.limit_timeout, old_timestamp=e.current_timestamp
+                retry_after=e.details["retry_after"],
             ) from e

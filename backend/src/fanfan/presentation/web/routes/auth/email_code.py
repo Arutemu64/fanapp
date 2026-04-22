@@ -1,6 +1,6 @@
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from starlette import status
 
 from fanfan.application.interactors.auth.confirm_email_code import (
@@ -8,8 +8,6 @@ from fanfan.application.interactors.auth.confirm_email_code import (
     ConfirmEmailCodeInput,
 )
 from fanfan.application.interactors.auth.request_email_code import RequestEmailCode
-from fanfan.core.exceptions.auth import InvalidOtpCode, UserNotAuthenticated
-from fanfan.core.exceptions.users import UserNotFound
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
 email_code_router = APIRouter()
@@ -29,18 +27,7 @@ email_code_router = APIRouter()
 async def request_email_code(
     interactor: FromDishka[RequestEmailCode],
 ) -> None:
-    try:
-        await interactor()
-    except UserNotAuthenticated as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=e.message,
-        ) from e
-    except UserNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message,
-        ) from e
+    await interactor()
 
 
 @email_code_router.post(
@@ -60,20 +47,4 @@ async def confirm_email_code(
     data: ConfirmEmailCodeInput,
     interactor: FromDishka[ConfirmEmailCode],
 ) -> None:
-    try:
-        await interactor(data)
-    except InvalidOtpCode as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=e.message,
-        ) from e
-    except UserNotAuthenticated as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=e.message,
-        ) from e
-    except UserNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message,
-        ) from e
+    await interactor(data)

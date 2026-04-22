@@ -1350,7 +1350,7 @@
             }
           },
           "409": {
-            "description": "User already has a ticket linked.",
+            "description": "User already has a ticket linked or ticket is already used.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3428,14 +3428,19 @@
       },
       "ErrorMessage": {
         "properties": {
-          "detail": {
+          "code": {
             "type": "string",
-            "title": "Detail"
+            "title": "Code"
+          },
+          "details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Details"
           }
         },
         "type": "object",
         "required": [
-          "detail"
+          "code"
         ],
         "title": "ErrorMessage"
       },
@@ -4547,10 +4552,6 @@
             "type": "array",
             "title": "Loc"
           },
-          "msg": {
-            "type": "string",
-            "title": "Msg"
-          },
           "type": {
             "type": "string",
             "title": "Type"
@@ -4559,25 +4560,29 @@
         "type": "object",
         "required": [
           "loc",
-          "msg",
           "type"
         ],
         "title": "ValidationErrorDetail"
       },
       "ValidationErrorResponse": {
         "properties": {
-          "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationErrorDetail"
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "default": "VALIDATION_ERROR"
+          },
+          "details": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/components/schemas/ValidationErrorDetail"
+              },
+              "type": "array"
             },
-            "type": "array",
-            "title": "Detail"
+            "type": "object",
+            "title": "Details"
           }
         },
         "type": "object",
-        "required": [
-          "detail"
-        ],
         "title": "ValidationErrorResponse"
       },
       "VoteBaseDTO": {

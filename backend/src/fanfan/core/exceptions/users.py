@@ -6,32 +6,32 @@ class UsersException(AppException):
 
 
 class UserNotFound(UsersException):
-    default_message = "Пользователь не найден"
+    code = "USER_NOT_FOUND"
 
 
 class UserAlreadyExists(UsersException):
-    default_message = "Пользователь уже существует"
+    code = "USER_ALREADY_EXISTS"
 
 
 class UsernameAlreadyTaken(UsersException):
-    default_message = "Имя пользователя занято"
+    code = "USERNAME_ALREADY_TAKEN"
 
 
 class UserHasNoEmail(UsersException):
-    default_message = "У пользователя нет почтового адреса"
+    code = "USER_HAS_NO_EMAIL"
 
 
 class EmailAlreadyExists(UsersException):
-    default_message = "Этот адрес электронной почты уже используется"
+    code = "EMAIL_ALREADY_EXISTS"
 
 
 class TelegramAlreadyLinkedToAnotherUser(UsersException):
-    default_message = "Этот Telegram уже привязан к другому аккаунту"
+    code = "TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER"
 
 
 class UserAlreadyHasTelegramLinked(UsersException):
-    default_message = "К аккаунту уже привязан другой Telegram"
+    code = "USER_ALREADY_HAS_TELEGRAM_LINKED"
 
 
 class TelegramCannotBeUnlinkedWithoutEmail(UsersException):
-    default_message = "Сначала добавьте email, чтобы не потерять доступ к аккаунту"
+    code = "TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL"

@@ -1,4 +1,5 @@
 import { setContext, getContext } from 'svelte';
+import { getApiErrorDetail } from '$lib/api/errors';
 
 export type ToastColor = 'green' | 'red' | 'yellow' | 'blue';
 export type ToastType = 'success' | 'info' | 'warning' | 'error';
@@ -40,27 +41,15 @@ export class ToastService {
 	}
 
 	error(err: unknown) {
-		let message = 'Произошла ошибка';
+		let message = getApiErrorDetail(err) ?? 'Не удалось выполнить действие. Попробуй ещё раз.';
 
 		// Handle string directly
 		if (typeof err === 'string') {
 			message = err;
 		}
-		// Handle openapi-fetch error response body
-		else if (err && typeof err === 'object') {
-			// Check for HTTPValidationError format (detail array)
-			if ('detail' in err && Array.isArray(err.detail) && err.detail.length > 0) {
-				// Extract first validation error message
-				message = err.detail[0].msg;
-			}
-			// Check for simple detail string
-			else if ('detail' in err && typeof err.detail === 'string') {
-				message = err.detail;
-			}
-		}
-		// Fallback to standard Error
+		// Keep network and unexpected runtime errors user-friendly.
 		else if (err instanceof Error) {
-			message = err.message;
+			message = 'Не удалось связаться с сервером. Попробуй ещё раз.';
 		}
 
 		this.add(message, 'error');

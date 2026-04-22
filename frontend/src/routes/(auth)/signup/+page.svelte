@@ -110,12 +110,8 @@
 
 			toastService.add('Аккаунт создан. Теперь войди в него.', 'success');
 			await goto(resolve('/login'));
-		} catch (err: unknown) {
-			if (err instanceof Error) {
-				serverError = err.message;
-			} else {
-				serverError = 'Произошла неизвестная ошибка при регистрации';
-			}
+		} catch {
+			serverError = 'Не удалось создать аккаунт. Попробуй ещё раз.';
 		} finally {
 			isLoading = false;
 		}

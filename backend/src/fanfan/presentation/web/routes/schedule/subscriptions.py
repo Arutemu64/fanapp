@@ -1,7 +1,6 @@
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, HTTPException
-from starlette import status
+from fastapi import APIRouter
 
 from fanfan.application.interactors.subscriptions.create_subscription import (
     CreateSubscription,
@@ -11,11 +10,6 @@ from fanfan.application.interactors.subscriptions.create_subscription import (
 from fanfan.application.interactors.subscriptions.delete_subscription import (
     DeleteSubscription,
     DeleteSubscriptionInput,
-)
-from fanfan.core.exceptions.schedule import EventNotFound
-from fanfan.core.exceptions.subscriptions import (
-    SubscriptionAlreadyExist,
-    SubscriptionNotFound,
 )
 from fanfan.core.vo.subscription import SubscriptionId
 from fanfan.presentation.web.schemas.error import ErrorMessage
@@ -46,16 +40,7 @@ async def new_subscription(
     data: CreateSubscriptionInput,
     interactor: FromDishka[CreateSubscription],
 ) -> CreateSubscriptionOutput:
-    try:
-        return await interactor(data)
-    except EventNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
-        ) from e
-    except SubscriptionAlreadyExist as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail=e.message
-        ) from e
+    return await interactor(data)
 
 
 @subscriptions_router.delete(
@@ -76,9 +61,4 @@ async def delete_subscription(
     subscription_id: SubscriptionId,
     interactor: FromDishka[DeleteSubscription],
 ) -> None:
-    try:
-        await interactor(DeleteSubscriptionInput(subscription_id=subscription_id))
-    except SubscriptionNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
-        ) from e
+    await interactor(DeleteSubscriptionInput(subscription_id=subscription_id))

@@ -6,4 +6,4 @@ class AppSettingsException(AppException):
 
 
 class AppAppSettingsNotFound(AppSettingsException):
-    pass
+    code = "APP_SETTINGS_NOT_FOUND"

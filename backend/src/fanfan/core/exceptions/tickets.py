@@ -6,16 +6,16 @@ class TicketsException(AppException):
 
 
 class TicketNotFound(TicketsException):
-    default_message = "Билет не найден"
+    code = "TICKET_NOT_FOUND"
 
 
 class UserAlreadyHasTicketLinked(TicketsException):
-    default_message = "Билет уже привязан"
+    code = "USER_ALREADY_HAS_TICKET_LINKED"
 
 
 class TicketAlreadyUsed(TicketsException):
-    default_message = "Этот билет уже использован"
+    code = "TICKET_ALREADY_USED"
 
 
 class TicketNotLinked(TicketsException):
-    default_message = "Привяжите билет для доступа к этой функции"
+    code = "TICKET_NOT_LINKED"

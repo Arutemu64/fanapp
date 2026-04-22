@@ -47,9 +47,7 @@
 
 		notifications = [
 			notification,
-			...notifications.filter(
-				(existingNotification) => existingNotification.id !== notification.id
-			)
+			...notifications.filter((existingNotification) => existingNotification.id !== notification.id)
 		].slice(0, NOTIFICATION_PREVIEW_LIMIT);
 
 		return !alreadyExists;

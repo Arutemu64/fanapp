@@ -6,23 +6,24 @@ class NotificationsException(AppException):
 
 
 class NotificationNotFound(NotificationsException):
-    default_message = "Уведомление не найдено"
+    code = "NOTIFICATION_NOT_FOUND"
 
 
 class MailingNotFound(NotificationsException):
-    default_message = "Рассылка не найдена"
+    code = "MAILING_NOT_FOUND"
 
 
 class MailingCancelled(NotificationsException):
-    default_message = "Рассылка отменена"
+    code = "MAILING_CANCELLED"
 
 
 class UserNotReachable(NotificationsException):
-    default_message = "Пользователю нельзя отправить сообщение"
+    code = "USER_NOT_REACHABLE"
 
 
 class NotificationRetryAfter(NotificationsException):
-    default_message = "Попробуйте отправку позже"
+    code = "NOTIFICATION_RETRY_AFTER"
 
     def __init__(self, retry_after: int):
         self.retry_after = retry_after
+        super().__init__(details={"retry_after": retry_after})

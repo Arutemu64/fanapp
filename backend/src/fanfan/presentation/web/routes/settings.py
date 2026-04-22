@@ -1,7 +1,6 @@
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, HTTPException
-from starlette import status
+from fastapi import APIRouter
 
 from fanfan.application.dto.settings import AppSettingsDTO
 from fanfan.application.interactors.settings.get_settings import GetSettings
@@ -9,10 +8,6 @@ from fanfan.application.interactors.settings.update_settings import (
     UpdateAppSettingsInput,
     UpdateSettings,
 )
-from fanfan.core.exceptions.auth import UserNotAuthenticated
-from fanfan.core.exceptions.base import AccessDenied
-from fanfan.core.exceptions.settings import AppAppSettingsNotFound
-from fanfan.core.exceptions.users import UserNotFound
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
 settings_router = APIRouter(tags=["Settings"], prefix="/settings")
@@ -37,28 +32,7 @@ settings_router = APIRouter(tags=["Settings"], prefix="/settings")
 async def get_settings(
     interactor: FromDishka[GetSettings],
 ) -> AppSettingsDTO:
-    try:
-        return await interactor()
-    except UserNotAuthenticated as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=e.message,
-        ) from e
-    except UserNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message,
-        ) from e
-    except AccessDenied as e:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=e.message,
-        ) from e
-    except AppAppSettingsNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message,
-        ) from e
+    return await interactor()
 
 
 __all__ = ["settings_router"]
@@ -82,25 +56,4 @@ async def update_settings(
     data: UpdateAppSettingsInput,
     interactor: FromDishka[UpdateSettings],
 ) -> None:
-    try:
-        await interactor(data)
-    except UserNotAuthenticated as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=e.message,
-        ) from e
-    except UserNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message,
-        ) from e
-    except AccessDenied as e:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=e.message,
-        ) from e
-    except AppAppSettingsNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=e.message,
-        ) from e
+    await interactor(data)

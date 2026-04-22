@@ -1,7 +1,6 @@
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, HTTPException
-from starlette import status
+from fastapi import APIRouter
 
 from fanfan.application.interactors.schedule_mgmt.move_event import (
     MoveScheduleEvent,
@@ -14,13 +13,6 @@ from fanfan.application.interactors.schedule_mgmt.set_current_event import (
 from fanfan.application.interactors.schedule_mgmt.update_event_skip import (
     UpdateScheduleEventSkip,
     UpdateScheduleEventSkipInput,
-)
-from fanfan.core.exceptions.schedule import (
-    CurrentEventNotAllowed,
-    EventNotFound,
-    SameEventsAreNotAllowed,
-    ScheduleEditTooFast,
-    SkippedEventNotAllowed,
 )
 from fanfan.core.vo.schedule_event import ScheduleEventId
 from fanfan.presentation.web.schemas.error import ErrorMessage
@@ -62,22 +54,7 @@ async def set_event_as_current(
     event_id: ScheduleEventId,
     interactor: FromDishka[SetCurrentScheduleEvent],
 ) -> None:
-    try:
-        return await interactor(SetCurrentScheduleEventInput(event_id=event_id))
-    except EventNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
-        ) from e
-    except SkippedEventNotAllowed as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=e.message
-        ) from e
-    except ScheduleEditTooFast as e:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=e.message,
-            headers={"Retry-After": str(e.retry_after)},
-        ) from e
+    return await interactor(SetCurrentScheduleEventInput(event_id=event_id))
 
 
 @management_router.delete(
@@ -107,14 +84,7 @@ async def set_event_as_current(
 async def uncheck_current_event(
     interactor: FromDishka[SetCurrentScheduleEvent],
 ) -> None:
-    try:
-        return await interactor(SetCurrentScheduleEventInput(event_id=None))
-    except ScheduleEditTooFast as e:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=e.message,
-            headers={"Retry-After": str(e.retry_after)},
-        ) from e
+    return await interactor(SetCurrentScheduleEventInput(event_id=None))
 
 
 @management_router.patch(
@@ -144,20 +114,11 @@ async def move_schedule_event(
     data: MoveScheduleEventRequest,
     interactor: FromDishka[MoveScheduleEvent],
 ) -> None:
-    try:
-        return await interactor(
-            MoveScheduleEventInput(
-                event_id=event_id, place_after_event_id=data.place_after_event_id
-            )
+    return await interactor(
+        MoveScheduleEventInput(
+            event_id=event_id, place_after_event_id=data.place_after_event_id
         )
-    except EventNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
-        ) from e
-    except SameEventsAreNotAllowed as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=e.message
-        ) from e
+    )
 
 
 @management_router.patch(
@@ -183,18 +144,9 @@ async def skip_schedule_event(
     event_id: ScheduleEventId,
     interactor: FromDishka[UpdateScheduleEventSkip],
 ) -> None:
-    try:
-        return await interactor(
-            UpdateScheduleEventSkipInput(event_id=event_id, is_skipped=True)
-        )
-    except EventNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
-        ) from e
-    except CurrentEventNotAllowed as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=e.message
-        ) from e
+    return await interactor(
+        UpdateScheduleEventSkipInput(event_id=event_id, is_skipped=True)
+    )
 
 
 @management_router.patch(
@@ -220,15 +172,6 @@ async def unskip_schedule_event(
     event_id: ScheduleEventId,
     interactor: FromDishka[UpdateScheduleEventSkip],
 ) -> None:
-    try:
-        return await interactor(
-            UpdateScheduleEventSkipInput(event_id=event_id, is_skipped=False)
-        )
-    except EventNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
-        ) from e
-    except CurrentEventNotAllowed as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=e.message
-        ) from e
+    return await interactor(
+        UpdateScheduleEventSkipInput(event_id=event_id, is_skipped=False)
+    )

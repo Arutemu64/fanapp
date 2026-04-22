@@ -2,7 +2,7 @@ from redis.asyncio import Redis
 from redis.asyncio.lock import Lock
 
 from fanfan.application.ports.rate_lock import RateLock, RateLockFactory
-from fanfan.core.exceptions.limiter import RateLockCooldown, RateLockInUse
+from fanfan.core.exceptions.rate_limit import RateLockCooldown, RateLockInUse
 
 
 class RedisRateLock(RateLock):

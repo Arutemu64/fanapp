@@ -42,7 +42,7 @@ class SqlSubscriptionRepository(SubscriptionRepository):
         except IntegrityError as e:
             constraint_name = get_constraint_name(e)
             if constraint_name == "fk_subscriptions_event_id_schedule":
-                raise EventNotFound(event_id=subscription.event_id) from e
+                raise EventNotFound from e
             if constraint_name == "uq_subscriptions_event_id":
                 raise SubscriptionAlreadyExist from e
             raise

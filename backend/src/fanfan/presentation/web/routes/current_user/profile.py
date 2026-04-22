@@ -1,7 +1,6 @@
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, HTTPException, Request
-from starlette import status
+from fastapi import APIRouter, Request
 
 from fanfan.application.dto.user import CurrentUserDTO
 from fanfan.application.interactors.current_user.get_current_user import GetCurrentUser
@@ -13,8 +12,6 @@ from fanfan.application.interactors.current_user.update_user_settings import (
     UpdateUserSettings,
     UpdateUserSettingsInput,
 )
-from fanfan.core.exceptions.auth import UserNotAuthenticated
-from fanfan.core.exceptions.users import UsernameAlreadyTaken, UserNotFound
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
 profile_router = APIRouter()
@@ -54,20 +51,7 @@ async def update_current_user(
     data: UpdateCurrentUserInput,
     interactor: FromDishka[UpdateCurrentUser],
 ) -> None:
-    try:
-        await interactor(data)
-    except UserNotAuthenticated as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
-        ) from e
-    except UserNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
-        ) from e
-    except UsernameAlreadyTaken as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail=e.message
-        ) from e
+    await interactor(data)
 
 
 @profile_router.patch(
@@ -81,13 +65,4 @@ async def update_current_user_settings(
     data: UpdateUserSettingsInput,
     interactor: FromDishka[UpdateUserSettings],
 ) -> None:
-    try:
-        await interactor(data)
-    except UserNotAuthenticated as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
-        ) from e
-    except UserNotFound as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=e.message
-        ) from e
+    await interactor(data)

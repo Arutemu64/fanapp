@@ -6,4 +6,4 @@ class TCloudException(AppException):
 
 
 class NoTCloudConfigProvided(TCloudException):
-    default_message = "Не предоставлены настройки TimePad"
+    code = "TCLOUD_CONFIG_NOT_PROVIDED"
