@@ -13,7 +13,7 @@ from fanfan.core.vo.permission import (
 from fanfan.core.vo.user import UserId
 
 
-class SqlPermissionRepository(PermissionRepository):
+class SqlPermissionGateway(PermissionRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.permission_mapper = PermissionMapper()

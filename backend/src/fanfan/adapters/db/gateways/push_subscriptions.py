@@ -13,7 +13,7 @@ from fanfan.core.models.push_subscription import PushSubscription
 from fanfan.core.vo.user import UserId
 
 
-class SqlPushSubscriptionRepository(PushSubscriptionRepository):
+class SqlPushSubscriptionGateway(PushSubscriptionRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = PushSubscriptionMapper()

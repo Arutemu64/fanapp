@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from fanfan.application.dto.notification import NotificationDTO
 from fanfan.application.dto.page import Pagination
 from fanfan.application.ports.id_provider import IdProvider
-from fanfan.application.ports.repositories.notifications import NotificationRepository
+from fanfan.application.ports.queries.notifications import NotificationQuery
 from fanfan.core.exceptions.auth import UserNotAuthenticated
 
 
@@ -16,10 +16,8 @@ class ListUserNotificationOutput(BaseModel):
 
 
 class ListUserNotifications:
-    def __init__(
-        self, notification_repo: NotificationRepository, id_provider: IdProvider
-    ):
-        self.notification_repo = notification_repo
+    def __init__(self, notification_query: NotificationQuery, id_provider: IdProvider):
+        self.notification_query = notification_query
         self.id_provider = id_provider
 
     async def __call__(
@@ -29,7 +27,7 @@ class ListUserNotifications:
         if current_user_id is None:
             raise UserNotAuthenticated
 
-        notifications = await self.notification_repo.read_list_user_notifications(
+        notifications = await self.notification_query.read_list_user_notifications(
             user_id=current_user_id,
             pagination=data.pagination,
         )

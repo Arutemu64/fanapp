@@ -2,8 +2,8 @@ from pydantic import BaseModel
 
 from fanfan.application.dto.notification import NewNotificationDTO
 from fanfan.application.ports.events_broker import EventBroker
+from fanfan.application.ports.queries.users import UserQuery
 from fanfan.application.ports.repositories.mailings import MailingRepository
-from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.core.events.notifications import NewNotificationEvent
 from fanfan.core.exceptions.notifications import MailingNotFound
@@ -22,18 +22,18 @@ class SendNotificationToRolesInput(BaseModel):
 class SendNotificationToRoles:
     def __init__(
         self,
-        user_repo: UserRepository,
+        user_query: UserQuery,
         events_broker: EventBroker,
         mailing_repo: MailingRepository,
         trx: TransactionManager,
     ):
-        self.user_repo = user_repo
+        self.user_query = user_query
         self.events_broker = events_broker
         self.mailing_repo = mailing_repo
         self.trx = trx
 
     async def __call__(self, data: SendNotificationToRolesInput):
-        users = await self.user_repo.read_all_by_roles(*data.roles)
+        users = await self.user_query.read_all_by_roles(*data.roles)
         mailing = await self.mailing_repo.get(data.mailing_id)
         if mailing is None:
             raise MailingNotFound

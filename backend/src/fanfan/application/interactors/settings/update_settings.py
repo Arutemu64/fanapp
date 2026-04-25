@@ -41,7 +41,7 @@ class UpdateSettings:
         )
         if current_user.role is not UserRole.ORG:
             raise AccessDenied
-        settings = await self.settings_repo.get()
+        settings = await self.settings_repo.get_for_update()
         if settings is None:
             raise AppAppSettingsNotFound
 

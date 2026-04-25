@@ -8,7 +8,7 @@ from fanfan.core.models.user_flag import UserFlag
 from fanfan.core.vo.user import UserId
 
 
-class SqlUserFlagRepository(UserFlagRepository):
+class SqlUserFlagGateway(UserFlagRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = UserFlagMapper()
@@ -20,11 +20,15 @@ class SqlUserFlagRepository(UserFlagRepository):
         return
 
     async def get_by_user(self, user_id: UserId, flag_name: str) -> UserFlag | None:
-        stmt = select(UserFlagORM).where(
-            and_(
-                UserFlagORM.user_id == user_id,
-                UserFlagORM.name == flag_name,
+        stmt = (
+            select(UserFlagORM)
+            .where(
+                and_(
+                    UserFlagORM.user_id == user_id,
+                    UserFlagORM.name == flag_name,
+                )
             )
+            .with_for_update()
         )
         flag_orm = await self.session.scalar(stmt)
         return self.mapper.to_model(flag_orm) if flag_orm else None

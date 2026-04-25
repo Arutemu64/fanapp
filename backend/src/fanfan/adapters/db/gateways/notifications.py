@@ -7,6 +7,7 @@ from fanfan.adapters.db.mappers.notification import NotificationMapper
 from fanfan.adapters.db.models import NotificationORM
 from fanfan.application.dto.notification import NotificationDTO, RealtimeNotificationDTO
 from fanfan.application.dto.page import Pagination
+from fanfan.application.ports.queries.notifications import NotificationQuery
 from fanfan.application.ports.repositories.notifications import NotificationRepository
 from fanfan.core.models.notification import Notification
 from fanfan.core.vo.mailing import MailingId
@@ -14,7 +15,7 @@ from fanfan.core.vo.notification import NotificationId
 from fanfan.core.vo.user import UserId
 
 
-class SqlNotificationRepository(NotificationRepository):
+class SqlNotificationGateway(NotificationRepository, NotificationQuery):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = NotificationMapper()
@@ -26,7 +27,11 @@ class SqlNotificationRepository(NotificationRepository):
         return self.mapper.to_model(notification_orm)
 
     async def get(self, notification_id: NotificationId) -> Notification | None:
-        stmt = select(NotificationORM).where(NotificationORM.id == notification_id)
+        stmt = (
+            select(NotificationORM)
+            .where(NotificationORM.id == notification_id)
+            .with_for_update()
+        )
         notification_orm = await self.session.scalar(stmt)
         return self.mapper.to_model(notification_orm) if notification_orm else None
 

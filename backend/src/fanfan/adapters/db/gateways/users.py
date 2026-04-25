@@ -9,6 +9,7 @@ from fanfan.adapters.db.mappers.user import UserMapper
 from fanfan.adapters.db.models import SocialIdentityORM, UserORM
 from fanfan.adapters.db.models.permission import PermissionORM, UserPermissionORM
 from fanfan.application.dto.user import CurrentUserDTO, UserBaseDTO
+from fanfan.application.ports.queries.users import UserQuery
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.core.exceptions.users import (
     EmailAlreadyExists,
@@ -21,7 +22,7 @@ from fanfan.core.vo.permission import Permissions
 from fanfan.core.vo.user import UserId, UserRole
 
 
-class SqlUserRepository(UserRepository):
+class SqlUserGateway(UserRepository, UserQuery):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = UserMapper()
@@ -93,6 +94,7 @@ class SqlUserRepository(UserRepository):
                 SocialIdentityORM.provider == provider_name,
                 SocialIdentityORM.provider_id == provider_account_id,
             )
+            .with_for_update()
         )
         user_orm = await self.session.scalar(stmt)
         return self.mapper.to_model(user_orm) if user_orm else None

@@ -8,14 +8,11 @@ from fanfan.adapters.jinja.factory import StreamJinjaEnvironment
 from fanfan.application.dto.notification import NewNotificationDTO
 from fanfan.application.dto.schedule_change import ScheduleChangeFullDTO
 from fanfan.application.ports.events_broker import EventBroker
+from fanfan.application.ports.queries.schedule_changes import ScheduleChangeQuery
+from fanfan.application.ports.queries.schedule_events import ScheduleEventQuery
+from fanfan.application.ports.queries.subscriptions import SubscriptionQuery
+from fanfan.application.ports.queries.users import UserQuery
 from fanfan.application.ports.repositories.mailings import MailingRepository
-from fanfan.application.ports.repositories.schedule_changes import (
-    ScheduleChangeRepository,
-)
-from fanfan.application.ports.repositories.schedule_events import (
-    ScheduleEventRepository,
-)
-from fanfan.application.ports.repositories.subscriptions import SubscriptionRepository
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.core.events.notifications import NewNotificationEvent
@@ -56,20 +53,22 @@ class ProcessScheduleChange:
         self,
         config: EnvConfig,
         jinja: StreamJinjaEnvironment,
-        changes_repo: ScheduleChangeRepository,
-        schedule_repo: ScheduleEventRepository,
+        changes_query: ScheduleChangeQuery,
+        schedule_query: ScheduleEventQuery,
         user_repo: UserRepository,
-        subscription_repo: SubscriptionRepository,
+        user_query: UserQuery,
+        subscription_query: SubscriptionQuery,
         mailing_repo: MailingRepository,
         trx: TransactionManager,
         events_broker: EventBroker,
     ):
         self.config = config
         self.jinja = jinja
-        self.changes_repo = changes_repo
-        self.schedule_repo = schedule_repo
+        self.changes_query = changes_query
+        self.schedule_query = schedule_query
         self.user_repo = user_repo
-        self.subscription_repo = subscription_repo
+        self.user_query = user_query
+        self.subscription_query = subscription_query
         self.mailing_repo = mailing_repo
         self.trx = trx
         self.events_broker = events_broker
@@ -84,7 +83,7 @@ class ProcessScheduleChange:
         )
 
         # Get schedule change and events
-        schedule_change = await self.changes_repo.read_schedule_change(
+        schedule_change = await self.changes_query.read_schedule_change(
             data.schedule_change_id
         )
         if schedule_change is None:
@@ -111,12 +110,12 @@ class ProcessScheduleChange:
                         mailing_id=schedule_change.mailing_id,
                     )
                 )
-                for e in await self.user_repo.read_schedule_editors()
+                for e in await self.user_query.read_schedule_editors()
             )
 
-        current_event = await self.schedule_repo.read_current_event()
+        current_event = await self.schedule_query.read_current_event()
         next_event = (
-            await self.schedule_repo.read_next_event() if current_event else None
+            await self.schedule_query.read_next_event() if current_event else None
         )
 
         # Global announcement
@@ -150,14 +149,14 @@ class ProcessScheduleChange:
                         mailing_id=schedule_change.mailing_id,
                     ),
                 )
-                for u in await self.user_repo.read_all_by_receive_all_announcements()
+                for u in await self.user_query.read_all_by_receive_all_announcements()
             )
 
             # Subscriptions
             if current_event and changed_event:
                 current_event_queue = cast("int", current_event.queue)
                 upcoming_subscriptions = (
-                    await self.subscription_repo.read_upcoming_subscriptions(
+                    await self.subscription_query.read_upcoming_subscriptions(
                         current_event_queue=current_event_queue
                     )
                 )

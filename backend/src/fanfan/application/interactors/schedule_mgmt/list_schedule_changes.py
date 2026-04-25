@@ -2,8 +2,8 @@ from pydantic import BaseModel
 
 from fanfan.application.dto.schedule_change import ScheduleChangeFullDTO
 from fanfan.application.ports.id_provider import IdProvider
-from fanfan.application.ports.repositories.schedule_changes import (
-    ScheduleChangeRepository,
+from fanfan.application.ports.queries.schedule_changes import (
+    ScheduleChangeQuery,
 )
 
 
@@ -12,10 +12,12 @@ class ListScheduleChangesResult(BaseModel):
 
 
 class ListScheduleChanges:
-    def __init__(self, repo: ScheduleChangeRepository, id_provider: IdProvider):
-        self.repo = repo
+    def __init__(
+        self, schedule_change_query: ScheduleChangeQuery, id_provider: IdProvider
+    ):
+        self.schedule_change_query = schedule_change_query
         self.id_provider = id_provider
 
     async def __call__(self) -> ListScheduleChangesResult:
-        schedule_changes = await self.repo.read_list_schedule_changes()
+        schedule_changes = await self.schedule_change_query.read_list_schedule_changes()
         return ListScheduleChangesResult(schedule_changes=schedule_changes)

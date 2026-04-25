@@ -6,13 +6,14 @@ from fanfan.adapters.db.constraints import get_constraint_name
 from fanfan.adapters.db.mappers.social_account import SocialIdentityMapper
 from fanfan.adapters.db.models import SocialIdentityORM
 from fanfan.application.dto.user import UserSocialAccountDTO
+from fanfan.application.ports.queries.social_ids import SocialIdentityQuery
 from fanfan.application.ports.repositories.social_ids import SocialIdentityRepository
 from fanfan.core.exceptions.users import TelegramAlreadyLinkedToAnotherUser
 from fanfan.core.models.social_account import SocialIdentity
 from fanfan.core.vo.user import UserId
 
 
-class SqlSocialIdentityRepository(SocialIdentityRepository):
+class SqlSocialIdentityGateway(SocialIdentityRepository, SocialIdentityQuery):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.social_mapper = SocialIdentityMapper()
@@ -31,11 +32,15 @@ class SqlSocialIdentityRepository(SocialIdentityRepository):
     async def get_by_provider(
         self, user_id: UserId, provider: str
     ) -> SocialIdentity | None:
-        stmt = select(SocialIdentityORM).where(
-            and_(
-                SocialIdentityORM.user_id == user_id,
-                SocialIdentityORM.provider == provider,
+        stmt = (
+            select(SocialIdentityORM)
+            .where(
+                and_(
+                    SocialIdentityORM.user_id == user_id,
+                    SocialIdentityORM.provider == provider,
+                )
             )
+            .with_for_update()
         )
         social_id_orm = await self.session.scalar(stmt)
         return self.social_mapper.to_model(social_id_orm) if social_id_orm else None

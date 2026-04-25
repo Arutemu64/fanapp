@@ -13,7 +13,7 @@ from fanfan.core.vo.nomination import NominationId
 from fanfan.core.vo.user import UserId
 
 
-class SqlVoteRepository(VoteRepository):
+class SqlVoteGateway(VoteRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = VoteMapper()

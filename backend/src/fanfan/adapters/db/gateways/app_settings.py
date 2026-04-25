@@ -8,13 +8,20 @@ from fanfan.core.exceptions.settings import AppAppSettingsNotFound
 from fanfan.core.models.app_settings import AppSettings
 
 
-class SqlAppSettingsRepository(AppSettingsRepository):
+class SqlAppSettingsGateway(AppSettingsRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = AppSettingsMapper()
 
     async def get(self) -> AppSettings:
         stmt = select(AppSettingsORM).where(AppSettingsORM.id == 1)
+        return await self._get_by_stmt(stmt)
+
+    async def get_for_update(self) -> AppSettings:
+        stmt = select(AppSettingsORM).where(AppSettingsORM.id == 1).with_for_update()
+        return await self._get_by_stmt(stmt)
+
+    async def _get_by_stmt(self, stmt) -> AppSettings:
         settings_orm = await self.session.scalar(stmt)
         if settings_orm is None:
             raise AppAppSettingsNotFound

@@ -11,7 +11,7 @@ from fanfan.core.models.ticket import Ticket
 from fanfan.core.vo.user import UserId
 
 
-class SqlTicketRepository(TicketRepository):
+class SqlTicketGateway(TicketRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = TicketMapper()
@@ -21,21 +21,27 @@ class SqlTicketRepository(TicketRepository):
         self.session.add(ticket_orm)
 
     async def get_by_barcode(self, barcode: str) -> Ticket | None:
-        stmt = select(TicketORM).where(TicketORM.barcode == barcode)
+        stmt = select(TicketORM).where(TicketORM.barcode == barcode).with_for_update()
         ticket_orm = await self.session.scalar(stmt)
         return self.mapper.to_model(ticket_orm) if ticket_orm else None
 
     async def get_by_ticketscloud_ticket_id(
         self, ticketscloud_ticket_id: str
     ) -> Ticket | None:
-        stmt = select(TicketORM).where(
-            TicketORM.ticketscloud_ticket_id == ticketscloud_ticket_id
+        stmt = (
+            select(TicketORM)
+            .where(TicketORM.ticketscloud_ticket_id == ticketscloud_ticket_id)
+            .with_for_update()
         )
         ticket_orm = await self.session.scalar(stmt)
         return self.mapper.to_model(ticket_orm) if ticket_orm else None
 
     async def get_by_user_id(self, user_id: UserId) -> Ticket | None:
-        stmt = select(TicketORM).where(TicketORM.used_by_user_id == user_id)
+        stmt = (
+            select(TicketORM)
+            .where(TicketORM.used_by_user_id == user_id)
+            .with_for_update()
+        )
         ticket_orm = await self.session.scalar(stmt)
         return self.mapper.to_model(ticket_orm) if ticket_orm else None
 
