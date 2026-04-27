@@ -2,11 +2,10 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.interactors.common.current_user import get_current_user
-from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.repositories.social_ids import SocialIdentityRepository
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.users import (
     TelegramAlreadyLinkedToAnotherUser,
     UserAlreadyHasTelegramLinked,
@@ -28,20 +27,17 @@ class LinkTelegramAccount:
         user_repo: UserRepository,
         social_id_repo: SocialIdentityRepository,
         trx: TransactionManager,
-        id_provider: IdProvider,
+        current_user_provider: CurrentUserProvider,
     ) -> None:
         self.social_id_repo = social_id_repo
         self.bot_config = bot_config
         self.user_repo = user_repo
         self.trx = trx
-        self.id_provider = id_provider
+        self.current_user_provider = current_user_provider
 
     async def __call__(self, data: LinkTelegramAccountInput) -> None:
         provider_id = str(data.user_id)
-        current_user = await get_current_user(
-            id_provider=self.id_provider,
-            user_repo=self.user_repo,
-        )
+        current_user = await self.current_user_provider.require_user()
 
         current_telegram = await self.social_id_repo.get_by_provider(
             current_user.id, "telegram"

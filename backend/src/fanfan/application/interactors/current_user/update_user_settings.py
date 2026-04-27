@@ -2,10 +2,9 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.interactors.common.current_user import get_current_user
-from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.services.current_user import CurrentUserProvider
 
 logger = logging.getLogger(__name__)
 
@@ -19,20 +18,17 @@ class UpdateUserSettings:
     def __init__(
         self,
         user_repo: UserRepository,
-        id_provider: IdProvider,
+        current_user_provider: CurrentUserProvider,
         trx: TransactionManager,
     ):
         self.user_repo = user_repo
-        self.id_provider = id_provider
+        self.current_user_provider = current_user_provider
         self.trx = trx
 
     async def __call__(self, data: UpdateUserSettingsInput) -> None:
         data_to_update = data.model_dump(exclude_unset=True)
         update_flag = False
-        current_user = await get_current_user(
-            id_provider=self.id_provider,
-            user_repo=self.user_repo,
-        )
+        current_user = await self.current_user_provider.require_user()
         if (
             receive_all_announcements := data_to_update.get("receive_all_announcements")
         ) is not None:

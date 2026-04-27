@@ -2,10 +2,9 @@ import logging
 
 from pydantic import BaseModel, Field
 
-from fanfan.application.interactors.common.current_user import get_current_user
-from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.users import UsernameAlreadyTaken
 from fanfan.core.models.user import User
 from fanfan.core.vo.fields import USERNAME_PATTERN
@@ -24,11 +23,11 @@ class UpdateCurrentUserInput(BaseModel):
 class UpdateCurrentUser:
     def __init__(
         self,
-        id_provider: IdProvider,
+        current_user_provider: CurrentUserProvider,
         trx: TransactionManager,
         user_repo: UserRepository,
     ) -> None:
-        self.id_provider = id_provider
+        self.current_user_provider = current_user_provider
         self.user_repo = user_repo
         self.trx = trx
 
@@ -44,10 +43,7 @@ class UpdateCurrentUser:
             current_user.username = None
 
     async def __call__(self, data: UpdateCurrentUserInput) -> None:
-        current_user = await get_current_user(
-            id_provider=self.id_provider,
-            user_repo=self.user_repo,
-        )
+        current_user = await self.current_user_provider.require_user()
         data_to_update = data.model_dump(exclude_unset=True)
         user_updated_flag = False
         if (

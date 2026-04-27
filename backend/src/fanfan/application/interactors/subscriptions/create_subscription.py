@@ -2,8 +2,6 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.interactors.common.current_user import get_current_user
-from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.repositories.schedule_events import (
     ScheduleEventRepository,
 )
@@ -12,6 +10,7 @@ from fanfan.application.ports.repositories.subscriptions import (
 )
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.models.subscription import Subscription
 from fanfan.core.vo.schedule_event import ScheduleEventId
 from fanfan.core.vo.subscription import SubscriptionId
@@ -33,24 +32,21 @@ class CreateSubscription:
         self,
         subscription_repo: SubscriptionRepository,
         user_repo: UserRepository,
-        id_provider: IdProvider,
+        current_user_provider: CurrentUserProvider,
         schedule_repo: ScheduleEventRepository,
         trx: TransactionManager,
     ) -> None:
         self.subscription_repo = subscription_repo
         self.user_repo = user_repo
         self.schedule_repo = schedule_repo
-        self.id_provider = id_provider
+        self.current_user_provider = current_user_provider
         self.trx = trx
 
     async def __call__(
         self,
         data: CreateSubscriptionInput,
     ) -> CreateSubscriptionOutput:
-        current_user = await get_current_user(
-            id_provider=self.id_provider,
-            user_repo=self.user_repo,
-        )
+        current_user = await self.current_user_provider.require_user()
         subscription = Subscription(
             user_id=current_user.id,
             event_id=data.event_id,

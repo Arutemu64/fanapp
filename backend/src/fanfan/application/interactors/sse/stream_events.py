@@ -4,19 +4,23 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from fanfan.application.dto.realtime import SSE_CONNECTED_EVENT, SSEMessage
-from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.realtime_gateway import RealtimeGateway
+from fanfan.application.services.current_user import CurrentUserProvider
 
 logger = logging.getLogger(__name__)
 
 
 class StreamEvents:
-    def __init__(self, realtime_gateway: RealtimeGateway, id_provider: IdProvider):
+    def __init__(
+        self,
+        realtime_gateway: RealtimeGateway,
+        current_user_provider: CurrentUserProvider,
+    ):
         self.realtime_gateway = realtime_gateway
-        self.id_provider = id_provider
+        self.current_user_provider = current_user_provider
 
     async def __call__(self) -> AsyncGenerator[SSEMessage]:
-        user_id = await self.id_provider.get_current_user_id()
+        user_id = await self.current_user_provider.get_user_id()
         connection_id = uuid4().hex
 
         handshake = SSEMessage(

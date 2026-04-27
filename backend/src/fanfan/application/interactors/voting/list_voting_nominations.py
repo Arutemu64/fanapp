@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 
 from fanfan.application.dto.nomination import NominationVotingDTO
-from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.queries.nominations import NominationQuery
+from fanfan.application.services.current_user import CurrentUserProvider
 
 
 class ListVotingNominationsOutput(BaseModel):
@@ -11,13 +11,15 @@ class ListVotingNominationsOutput(BaseModel):
 
 class ListVotingNominations:
     def __init__(
-        self, nomination_query: NominationQuery, id_provider: IdProvider
+        self,
+        nomination_query: NominationQuery,
+        current_user_provider: CurrentUserProvider,
     ) -> None:
         self.nomination_query = nomination_query
-        self.id_provider = id_provider
+        self.current_user_provider = current_user_provider
 
     async def __call__(self) -> ListVotingNominationsOutput:
-        current_user_id = await self.id_provider.get_current_user_id()
+        current_user_id = await self.current_user_provider.get_user_id()
         nominations = await self.nomination_query.read_list_votable_nominations(
             user_id=current_user_id
         )

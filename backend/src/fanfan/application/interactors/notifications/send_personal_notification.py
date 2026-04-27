@@ -2,11 +2,10 @@ import logging
 from dataclasses import dataclass
 
 from fanfan.application.dto.notification import NewNotificationDTO
-from fanfan.application.interactors.common.current_user import get_current_user
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.repositories.mailings import MailingRepository
 from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.events.notifications import NewNotificationEvent
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.users import UserNotFound
@@ -27,19 +26,16 @@ class SendMessage:
         self,
         user_repo: UserRepository,
         mailing_repo: MailingRepository,
-        id_provider: IdProvider,
+        current_user_provider: CurrentUserProvider,
         events_broker: EventBroker,
     ):
         self.user_repo = user_repo
         self.mailing_repo = mailing_repo
-        self.id_provider = id_provider
+        self.current_user_provider = current_user_provider
         self.events_broker = events_broker
 
     async def __call__(self, data: SendMessageInput):
-        current_user = await get_current_user(
-            id_provider=self.id_provider,
-            user_repo=self.user_repo,
-        )
+        current_user = await self.current_user_provider.require_user()
         # TODO proper permission
         if current_user.role != UserRole.ORG:
             raise AccessDenied

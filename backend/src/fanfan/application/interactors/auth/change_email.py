@@ -1,10 +1,9 @@
 from pydantic import BaseModel, EmailStr
 
-from fanfan.application.interactors.common.current_user import get_current_user
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.events.users import EmailConfirmationCodeRequestedEvent
 from fanfan.core.exceptions.users import EmailAlreadyExists
 from fanfan.core.utils.email import normalize_email
@@ -19,19 +18,17 @@ class ChangeEmail:
         self,
         event_broker: EventBroker,
         user_repo: UserRepository,
-        id_provider: IdProvider,
+        current_user_provider: CurrentUserProvider,
         trx: TransactionManager,
     ):
         self.event_broker = event_broker
         self.user_repo = user_repo
-        self.id_provider = id_provider
+        self.current_user_provider = current_user_provider
         self.trx = trx
 
     async def __call__(self, data: ChangeEmailInput) -> None:
         normalized_new_email = normalize_email(data.new_email)
-        current_user = await get_current_user(
-            id_provider=self.id_provider, user_repo=self.user_repo
-        )
+        current_user = await self.current_user_provider.require_user()
 
         if (
             current_user.email == normalized_new_email
