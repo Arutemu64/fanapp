@@ -2,12 +2,11 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.interactors.common.current_user import get_current_user
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.repositories.mailings import MailingRepository
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.events.notifications import CancelMailingEvent
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.notifications import MailingNotFound
@@ -26,13 +25,13 @@ class CancelMailing:
         self,
         mailing_repo: MailingRepository,
         user_repo: UserRepository,
-        id_provider: IdProvider,
+        current_user_provider: CurrentUserProvider,
         events_broker: EventBroker,
         trx: TransactionManager,
     ):
         self.mailing_repo = mailing_repo
         self.user_repo = user_repo
-        self.id_provider = id_provider
+        self.current_user_provider = current_user_provider
         self.events_broker = events_broker
         self.trx = trx
 
@@ -40,10 +39,7 @@ class CancelMailing:
         mailing = await self.mailing_repo.get(data.mailing_id)
         if mailing is None:
             raise MailingNotFound
-        current_user = await get_current_user(
-            id_provider=self.id_provider,
-            user_repo=self.user_repo,
-        )
+        current_user = await self.current_user_provider.require_user()
         if (mailing.by_user_id != current_user.id) and (
             current_user.role is not UserRole.ORG
         ):

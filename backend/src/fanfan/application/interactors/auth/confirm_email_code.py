@@ -2,11 +2,10 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel, Field
 
-from fanfan.application.interactors.common.current_user import get_current_user
-from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.token_registry import TokenRegistry
 from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.auth import InvalidOtpCode
 from fanfan.core.exceptions.users import EmailAlreadyExists
 from fanfan.core.utils.email import normalize_email
@@ -20,20 +19,17 @@ class ConfirmEmailCode:
     def __init__(
         self,
         user_repo: UserRepository,
-        id_provider: IdProvider,
+        current_user_provider: CurrentUserProvider,
         token_registry: TokenRegistry,
         trx: TransactionManager,
     ):
         self.user_repo = user_repo
-        self.id_provider = id_provider
+        self.current_user_provider = current_user_provider
         self.token_registry = token_registry
         self.trx = trx
 
     async def __call__(self, data: ConfirmEmailCodeInput) -> None:
-        current_user = await get_current_user(
-            id_provider=self.id_provider,
-            user_repo=self.user_repo,
-        )
+        current_user = await self.current_user_provider.require_user()
 
         target_email = await self.token_registry.consume_email_confirmation_code(
             user_id=current_user.id,

@@ -2,10 +2,9 @@ from pydantic import BaseModel, ConfigDict
 
 from fanfan.application.dto.nomination import NominationVotingDTO
 from fanfan.application.dto.participant import ParticipantFullDTO
-from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.queries.nominations import NominationQuery
 from fanfan.application.ports.queries.participants import ParticipantQuery
-from fanfan.core.exceptions.auth import UserNotAuthenticated
+from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.nominations import NominationNotFound
 from fanfan.core.vo.nomination import NominationCode
 
@@ -25,19 +24,17 @@ class GetVotingNomination:
         self,
         participant_query: ParticipantQuery,
         nomination_query: NominationQuery,
-        id_provider: IdProvider,
+        current_user_provider: CurrentUserProvider,
     ) -> None:
         self.participant_query = participant_query
         self.nomination_query = nomination_query
-        self.id_provider = id_provider
+        self.current_user_provider = current_user_provider
 
     async def __call__(
         self,
         data: GetVotingNominationInput,
     ) -> GetVotingNominationOutput:
-        current_user_id = await self.id_provider.get_current_user_id()
-        if current_user_id is None:
-            raise UserNotAuthenticated
+        current_user_id = await self.current_user_provider.require_user_id()
         nomination = await self.nomination_query.read_voting_dto(
             nomination_code=data.nomination_code,
             user_id=current_user_id,

@@ -2,9 +2,7 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.interactors.common.current_user import get_current_user
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.repositories.schedule_changes import (
     ScheduleChangeRepository,
 )
@@ -13,6 +11,7 @@ from fanfan.application.ports.repositories.schedule_events import (
 )
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
 from fanfan.core.events.schedule import UndoScheduleChangeEvent
 from fanfan.core.exceptions.schedule import (
@@ -38,7 +37,7 @@ class UndoScheduleChange:
         user_repo: UserRepository,
         schedule_repo: ScheduleEventRepository,
         events_broker: EventBroker,
-        id_provider: IdProvider,
+        current_user_provider: CurrentUserProvider,
         perm_service: PermissionService,
     ):
         self.trx = trx
@@ -46,7 +45,7 @@ class UndoScheduleChange:
         self.schedule_repo = schedule_repo
         self.user_repo = user_repo
         self.events_broker = events_broker
-        self.id_provider = id_provider
+        self.current_user_provider = current_user_provider
         self.perm_service = perm_service
 
     async def _handle_set_as_current(
@@ -88,10 +87,7 @@ class UndoScheduleChange:
         await self.schedule_repo.save(changed_event)
 
     async def __call__(self, data: UndoScheduleChangeInput) -> None:
-        current_user = await get_current_user(
-            id_provider=self.id_provider,
-            user_repo=self.user_repo,
-        )
+        current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
             user=current_user, perm_name=Permissions.SCHEDULE_MANAGE
         )

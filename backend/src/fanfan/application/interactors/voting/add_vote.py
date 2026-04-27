@@ -2,14 +2,13 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.interactors.common.current_user import get_current_user
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.repositories.participants import ParticipantRepository
 from fanfan.application.ports.repositories.tickets import TicketRepository
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.repositories.votes import VoteRepository
 from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.voting import VotingService
 from fanfan.core.events.voting import CreatedVoteEvent
 from fanfan.core.models.vote import Vote
@@ -35,7 +34,7 @@ class AddVote:
         vote_repo: VoteRepository,
         trx: TransactionManager,
         vote_service: VotingService,
-        id_provider: IdProvider,
+        current_user_provider: CurrentUserProvider,
         events_broker: EventBroker,
         ticket_repo: TicketRepository,
     ) -> None:
@@ -44,7 +43,7 @@ class AddVote:
         self.vote_repo = vote_repo
         self.trx = trx
         self.vote_service = vote_service
-        self.id_provider = id_provider
+        self.current_user_provider = current_user_provider
         self.events_broker = events_broker
         self.ticket_repo = ticket_repo
 
@@ -52,10 +51,7 @@ class AddVote:
         self,
         data: AddVoteInput,
     ) -> AddVoteOutput:
-        current_user = await get_current_user(
-            id_provider=self.id_provider,
-            user_repo=self.user_repo,
-        )
+        current_user = await self.current_user_provider.require_user()
         ticket = await self.ticket_repo.get_by_user_id(current_user.id)
         await self.vote_service.ensure_user_can_vote(user=current_user, ticket=ticket)
 

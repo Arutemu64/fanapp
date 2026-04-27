@@ -1,10 +1,9 @@
 from pydantic import BaseModel
 
-from fanfan.application.interactors.common.current_user import get_current_user
-from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.session_store import SessionStore
 from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.security import SecurityService
 from fanfan.core.exceptions.auth import IncorrectPassword
 from fanfan.core.vo.fields import PASSWORD_FIELD
@@ -20,13 +19,13 @@ class ChangePassword:
         self,
         security: SecurityService,
         user_repo: UserRepository,
-        id_provider: IdProvider,
+        current_user_provider: CurrentUserProvider,
         session_store: SessionStore,
         trx: TransactionManager,
     ):
         self.security = security
         self.user_repo = user_repo
-        self.id_provider = id_provider
+        self.current_user_provider = current_user_provider
         self.session_store = session_store
         self.trx = trx
 
@@ -34,9 +33,7 @@ class ChangePassword:
         self,
         data: ChangePasswordInput,
     ) -> str:
-        current_user = await get_current_user(
-            id_provider=self.id_provider, user_repo=self.user_repo
-        )
+        current_user = await self.current_user_provider.require_user()
         if current_user.hashed_password:
             # User has password set
             if data.old_password:

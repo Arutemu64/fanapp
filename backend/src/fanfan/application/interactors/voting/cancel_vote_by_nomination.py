@@ -2,13 +2,12 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.interactors.common.current_user import get_current_user
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.repositories.tickets import TicketRepository
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.repositories.votes import VoteRepository
 from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.voting import VotingService
 from fanfan.core.events.voting import DeletedVoteEvent
 from fanfan.core.exceptions.votes import VoteNotFound
@@ -27,7 +26,7 @@ class CancelUserVoteByNomination:
         vote_repo: VoteRepository,
         user_repo: UserRepository,
         trx: TransactionManager,
-        id_provider: IdProvider,
+        current_user_provider: CurrentUserProvider,
         events_broker: EventBroker,
         service: VotingService,
         ticket_repo: TicketRepository,
@@ -35,16 +34,13 @@ class CancelUserVoteByNomination:
         self.user_repo = user_repo
         self.vote_repo = vote_repo
         self.uow = trx
-        self.id_provider = id_provider
+        self.current_user_provider = current_user_provider
         self.events_broker = events_broker
         self.service = service
         self.ticket_repo = ticket_repo
 
     async def __call__(self, data: CancelUserVoteByNominationInput) -> None:
-        current_user = await get_current_user(
-            id_provider=self.id_provider,
-            user_repo=self.user_repo,
-        )
+        current_user = await self.current_user_provider.require_user()
         ticket = await self.ticket_repo.get_by_user_id(current_user.id)
         # TODO remove unnecessary check?
         await self.service.ensure_user_can_vote(user=current_user, ticket=ticket)

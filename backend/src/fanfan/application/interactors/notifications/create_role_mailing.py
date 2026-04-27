@@ -2,11 +2,10 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.interactors.common.current_user import get_current_user
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.mailing import MailingService
 from fanfan.core.events.notifications import NewRolesNotificationEvent
 from fanfan.core.exceptions.base import AccessDenied
@@ -31,23 +30,20 @@ class CreateRoleMailingOutput(BaseModel):
 class CreateRoleMailing:
     def __init__(
         self,
-        id_provider: IdProvider,
+        current_user_provider: CurrentUserProvider,
         user_repo: UserRepository,
         notifications_service: MailingService,
         events_broker: EventBroker,
         uow: TransactionManager,
     ):
-        self.id_provider = id_provider
+        self.current_user_provider = current_user_provider
         self.user_repo = user_repo
         self.notifications_service = notifications_service
         self.events_broker = events_broker
         self.uow = uow
 
     async def __call__(self, data: CreateRoleMailingInput) -> MailingId:
-        current_user = await get_current_user(
-            id_provider=self.id_provider,
-            user_repo=self.user_repo,
-        )
+        current_user = await self.current_user_provider.require_user()
         # TODO add proper permission
         if current_user.role is not UserRole.ORG:
             raise AccessDenied

@@ -1,8 +1,7 @@
 from fanfan.application.dto.settings import AppSettingsDTO
-from fanfan.application.interactors.common.current_user import get_current_user
-from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.repositories.app_settings import AppSettingsRepository
 from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.vo.user import UserRole
 
@@ -12,17 +11,14 @@ class GetSettings:
         self,
         app_settings_repo: AppSettingsRepository,
         user_repo: UserRepository,
-        id_provider: IdProvider,
+        current_user_provider: CurrentUserProvider,
     ) -> None:
         self.app_settings_repo = app_settings_repo
         self.user_repo = user_repo
-        self.id_provider = id_provider
+        self.current_user_provider = current_user_provider
 
     async def __call__(self) -> AppSettingsDTO:
-        current_user = await get_current_user(
-            id_provider=self.id_provider,
-            user_repo=self.user_repo,
-        )
+        current_user = await self.current_user_provider.require_user()
 
         if current_user.role is not UserRole.ORG:
             raise AccessDenied

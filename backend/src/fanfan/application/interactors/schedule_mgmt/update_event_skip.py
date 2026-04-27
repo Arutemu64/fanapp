@@ -3,10 +3,8 @@ from uuid import uuid7
 
 from pydantic import BaseModel
 
-from fanfan.application.interactors.common.current_user import get_current_user
 from fanfan.application.interactors.schedule_mgmt.common import ANNOUNCE_LIMIT_NAME
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.rate_lock import RateLockFactory
 from fanfan.application.ports.repositories.app_settings import AppSettingsRepository
 from fanfan.application.ports.repositories.schedule_changes import (
@@ -17,6 +15,7 @@ from fanfan.application.ports.repositories.schedule_events import (
 )
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.mailing import MailingService
 from fanfan.application.services.permissions import PermissionService
 from fanfan.core.events.schedule import CreatedScheduleChangeEvent
@@ -49,7 +48,7 @@ class UpdateScheduleEventSkip:
         perm_service: PermissionService,
         trx: TransactionManager,
         rate_lock_factory: RateLockFactory,
-        id_provider: IdProvider,
+        current_user_provider: CurrentUserProvider,
         events_broker: EventBroker,
         notifications_service: MailingService,
     ) -> None:
@@ -61,14 +60,11 @@ class UpdateScheduleEventSkip:
         self.trx = trx
         self.rate_lock_factory = rate_lock_factory
         self.events_broker = events_broker
-        self.id_provider = id_provider
+        self.current_user_provider = current_user_provider
         self.notifications_service = notifications_service
 
     async def __call__(self, data: UpdateScheduleEventSkipInput) -> None:
-        current_user = await get_current_user(
-            id_provider=self.id_provider,
-            user_repo=self.user_repo,
-        )
+        current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
             user=current_user, perm_name=Permissions.SCHEDULE_MANAGE
         )

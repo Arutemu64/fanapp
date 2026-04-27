@@ -1,24 +1,21 @@
 from fanfan.application.dto.notification import NewNotificationDTO
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.application.ports.id_provider import IdProvider
+from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.events.notifications import NewNotificationEvent
-from fanfan.core.exceptions.auth import UserNotAuthenticated
 from fanfan.core.vo.notification import NotificationType
 
 
 class SendTestNotification:
     def __init__(
         self,
-        id_provider: IdProvider,
+        current_user_provider: CurrentUserProvider,
         events_broker: EventBroker,
     ) -> None:
-        self.id_provider = id_provider
+        self.current_user_provider = current_user_provider
         self.events_broker = events_broker
 
     async def __call__(self) -> None:
-        current_user_id = await self.id_provider.get_current_user_id()
-        if current_user_id is None:
-            raise UserNotAuthenticated
+        current_user_id = await self.current_user_provider.require_user_id()
 
         # Проверяем все пользовательские каналы одним общим уведомлением.
         await self.events_broker.publish(
