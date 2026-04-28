@@ -22,8 +22,10 @@ login_code_router = APIRouter()
     "/request-login-code",
     status_code=status.HTTP_202_ACCEPTED,
     summary="Request email login code",
-    description="Sends a one-time six-digit sign-in code to the requested email address. "
-    "Creates an account automatically when the email is new.",
+    description=(
+        "Sends a one-time six-digit sign-in code to the requested email "
+        "address. Creates an account automatically when the email is new."
+    ),
     responses={
         202: {"description": "If the email is valid, the login code was queued."},
     },

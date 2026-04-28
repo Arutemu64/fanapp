@@ -33,13 +33,13 @@ backend-generate-openapi:
     cd backend && uv run python -m fanfan.main.generate_openapi
 
 backend-format:
-    cd backend && uv run ruff format src/fanfan --respect-gitignore
+    cd backend && uv run ruff format src/fanfan tests --respect-gitignore
 
 backend-check:
-    cd backend && uv run ruff check src/fanfan --respect-gitignore --fix --unsafe-fixes
+    cd backend && uv run ruff check src/fanfan tests --respect-gitignore --fix --unsafe-fixes
 
 backend-sync-cosplay2:
-    cd backend && uv run ruff check src/fanfan --respect-gitignore --fix --unsafe-fixes
+    cd backend && uv run ruff check src/fanfan tests --respect-gitignore --fix --unsafe-fixes
 
 backend-lint: backend-format backend-check
 

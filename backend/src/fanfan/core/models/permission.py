@@ -13,7 +13,7 @@ from fanfan.core.vo.user import UserId
 
 @dataclass(slots=True, kw_only=True)
 class Permission:
-    id: PermissionId | None = None
+    id: PermissionId
     name: PermissionName
 
 

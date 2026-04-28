@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
 )
 
-from fanfan.adapters.config.models import EnvConfig
 from fanfan.adapters.db.config import DatabaseConfig
 from fanfan.adapters.db.factory import create_engine, create_session_pool
 from fanfan.adapters.db.gateways.app_settings import SqlAppSettingsGateway
@@ -15,7 +14,10 @@ from fanfan.adapters.db.gateways.mailings import SqlMailingGateway
 from fanfan.adapters.db.gateways.nominations import SqlNominationGateway
 from fanfan.adapters.db.gateways.notifications import SqlNotificationGateway
 from fanfan.adapters.db.gateways.participants import SqlParticipantGateway
-from fanfan.adapters.db.gateways.permissions import SqlPermissionGateway
+from fanfan.adapters.db.gateways.permissions import (
+    SqlPermissionGateway,
+    SqlUserPermissionGateway,
+)
 from fanfan.adapters.db.gateways.push_subscriptions import (
     SqlPushSubscriptionGateway,
 )
@@ -44,6 +46,7 @@ from fanfan.application.ports.repositories import (
     PermissionRepository,
     ScheduleChangeRepository,
     ScheduleEventRepository,
+    UserPermissionRepository,
 )
 from fanfan.application.ports.repositories.mailings import MailingRepository
 from fanfan.application.ports.repositories.nominations import NominationRepository
@@ -62,10 +65,6 @@ from fanfan.application.ports.trx import TransactionManager
 
 
 class DbProvider(Provider):
-    @provide(scope=Scope.APP)
-    def get_db_config(self, config: EnvConfig) -> DatabaseConfig:
-        return config.db
-
     @provide(scope=Scope.APP)
     async def get_engine(self, config: DatabaseConfig) -> AsyncIterable[AsyncEngine]:
         engine = create_engine(config)
@@ -139,6 +138,9 @@ class SqlGatewaysProvider(Provider):
     votes = provide(SqlVoteGateway, provides=VoteRepository)
     flags = provide(SqlUserFlagGateway, provides=UserFlagRepository)
     permissions = provide(SqlPermissionGateway, provides=PermissionRepository)
+    user_permissions = provide(
+        SqlUserPermissionGateway, provides=UserPermissionRepository
+    )
 
     push_subscriptions = provide(
         SqlPushSubscriptionGateway, provides=PushSubscriptionRepository

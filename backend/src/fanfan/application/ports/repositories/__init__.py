@@ -6,10 +6,14 @@ from fanfan.application.ports.repositories.schedule_changes import (
 from fanfan.application.ports.repositories.schedule_events import (
     ScheduleEventRepository,
 )
+from fanfan.application.ports.repositories.user_permissions import (
+    UserPermissionRepository,
+)
 
 __all__ = [
     "AppSettingsRepository",
     "PermissionRepository",
+    "UserPermissionRepository",
     "ScheduleChangeRepository",
     "ScheduleEventRepository",
 ]

@@ -8,7 +8,6 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from fanfan.adapters.config.parsers import get_config
 from fanfan.adapters.db.models import BaseORM
 
 # this is the Alembic Config object, which provides
@@ -25,7 +24,6 @@ if config.config_file_name is not None:
 # from myapp import mymodel  # noqa: ERA001
 # target_metadata = mymodel.Base.metadata  # noqa: ERA001
 target_metadata = BaseORM.metadata
-config.set_main_option("sqlalchemy.url", get_config().db.build_connection_str())
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

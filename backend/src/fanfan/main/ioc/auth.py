@@ -4,7 +4,7 @@ from dishka import Provider, Scope, provide
 from fanfan.presentation.tgbot.config import TelegramConfig
 
 
-class AuthProvider(Provider):
+class OAuthProvider(Provider):
     scope = Scope.REQUEST
 
     @provide

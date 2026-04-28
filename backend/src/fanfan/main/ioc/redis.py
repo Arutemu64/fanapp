@@ -19,10 +19,6 @@ class RedisProvider(Provider):
     scope = Scope.APP
 
     @provide
-    def get_redis_config(self, config: EnvConfig) -> RedisConfig:
-        return config.redis
-
-    @provide
     async def get_redis(self, config: RedisConfig) -> AsyncIterable[Redis]:
         async with create_redis(config) as redis:
             yield redis

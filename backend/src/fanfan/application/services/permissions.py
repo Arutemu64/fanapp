@@ -1,4 +1,6 @@
-from fanfan.application.ports.repositories.permissions import PermissionRepository
+from fanfan.application.ports.repositories.user_permissions import (
+    UserPermissionRepository,
+)
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.models.user import User
 from fanfan.core.vo.permission import (
@@ -9,7 +11,7 @@ from fanfan.core.vo.permission import (
 
 
 class PermissionService:
-    def __init__(self, perm_repo: PermissionRepository):
+    def __init__(self, perm_repo: UserPermissionRepository):
         self.perm_repo = perm_repo
 
     async def ensure(
@@ -19,7 +21,7 @@ class PermissionService:
         object_type: PermissionObjectType | None = None,
         object_id: PermissionObjectId | None = None,
     ) -> None:
-        user_perm = await self.perm_repo.get(
+        user_perm = await self.perm_repo.get_by_name(
             user_id=user.id,
             permission_name=perm_name,
             object_id=object_id,
