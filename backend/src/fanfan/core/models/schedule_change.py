@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Self
 from uuid import uuid7
 
 from fanfan.core.vo.mailing import MailingId
@@ -20,3 +21,93 @@ class ScheduleChange:
     mailing_id: MailingId | None
     user_id: UserId | None
     send_global_announcement: bool
+
+    @classmethod
+    def set_as_current(
+        cls,
+        *,
+        changed_event_id: ScheduleEventId | None,
+        previous_event_id: ScheduleEventId | None,
+        mailing_id: MailingId | None,
+        user_id: UserId | None,
+    ) -> Self:
+        return cls(
+            type=ScheduleChangeType.SET_AS_CURRENT,
+            changed_event_id=changed_event_id,
+            argument_event_id=previous_event_id,
+            mailing_id=mailing_id,
+            user_id=user_id,
+            send_global_announcement=True,
+        )
+
+    @classmethod
+    def moved(
+        cls,
+        *,
+        event_id: ScheduleEventId,
+        previous_event_id: ScheduleEventId | None,
+        mailing_id: MailingId | None,
+        user_id: UserId | None,
+        send_global_announcement: bool,
+    ) -> Self:
+        return cls(
+            type=ScheduleChangeType.MOVED,
+            changed_event_id=event_id,
+            argument_event_id=previous_event_id,
+            mailing_id=mailing_id,
+            user_id=user_id,
+            send_global_announcement=send_global_announcement,
+        )
+
+    @classmethod
+    def skipped(
+        cls,
+        *,
+        event_id: ScheduleEventId,
+        mailing_id: MailingId | None,
+        user_id: UserId | None,
+        send_global_announcement: bool,
+    ) -> Self:
+        return cls._skip_changed(
+            change_type=ScheduleChangeType.SKIPPED,
+            event_id=event_id,
+            mailing_id=mailing_id,
+            user_id=user_id,
+            send_global_announcement=send_global_announcement,
+        )
+
+    @classmethod
+    def unskipped(
+        cls,
+        *,
+        event_id: ScheduleEventId,
+        mailing_id: MailingId | None,
+        user_id: UserId | None,
+        send_global_announcement: bool,
+    ) -> Self:
+        return cls._skip_changed(
+            change_type=ScheduleChangeType.UNSKIPPED,
+            event_id=event_id,
+            mailing_id=mailing_id,
+            user_id=user_id,
+            send_global_announcement=send_global_announcement,
+        )
+
+    @classmethod
+    def _skip_changed(
+        cls,
+        *,
+        change_type: ScheduleChangeType,
+        event_id: ScheduleEventId,
+        mailing_id: MailingId | None,
+        user_id: UserId | None,
+        send_global_announcement: bool,
+    ) -> Self:
+        return cls(
+            type=change_type,
+            changed_event_id=event_id,
+            argument_event_id=None,
+            mailing_id=mailing_id,
+            user_id=user_id,
+            send_global_announcement=send_global_announcement,
+        )

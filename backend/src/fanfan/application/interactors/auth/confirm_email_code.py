@@ -45,12 +45,11 @@ class ConfirmEmailCode:
             if existing_user is not None and existing_user.id != current_user.id:
                 raise InvalidOtpCode
 
-            current_user.email = current_user.pending_email
-            current_user.pending_email = None
+            current_user.confirm_pending_email(datetime.now(UTC))
         elif current_user.email != normalized_target_email:
             raise InvalidOtpCode
-
-        current_user.email_verified_at = datetime.now(UTC)
+        else:
+            current_user.verify_email(datetime.now(UTC))
         try:
             await self.user_repo.save(current_user)
             await self.trx.commit()

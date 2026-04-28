@@ -57,11 +57,13 @@ class ImportSchedule:
             )
             if existing_event:
                 # Update event
-                existing_event.title = entry.title
-                existing_event.duration = entry.duration
-                existing_event.block_title = entry.block_title
-                existing_event.nomination_title = entry.nomination_title
-                existing_event.order = order
+                existing_event.update_details(
+                    title=entry.title,
+                    duration=entry.duration,
+                    block_title=entry.block_title,
+                    nomination_title=entry.nomination_title,
+                    order=order,
+                )
                 await self.schedule_repo.save(existing_event)
                 orphaned_events.remove(existing_event)
                 logger.info(

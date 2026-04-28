@@ -23,14 +23,12 @@ from fanfan.core.events.schedule import CreatedScheduleChangeEvent
 from fanfan.core.exceptions.rate_limit import RateLockCooldown
 from fanfan.core.exceptions.schedule import (
     EventNotFound,
-    SameEventsAreNotAllowed,
     ScheduleEditTooFast,
 )
 from fanfan.core.models.schedule_change import (
     ScheduleChange,
 )
 from fanfan.core.vo.permission import Permissions
-from fanfan.core.vo.schedule_change import ScheduleChangeType
 from fanfan.core.vo.schedule_event import ScheduleEventId
 
 logger = logging.getLogger(__name__)
@@ -81,8 +79,6 @@ class MoveScheduleEvent:
         try:
             async with lock:
                 # Get and check events
-                if data.event_id == data.place_after_event_id:
-                    raise SameEventsAreNotAllowed
                 event = await self.schedule_repo.get_by_id(data.event_id)
                 if event is None:
                     raise EventNotFound
@@ -101,13 +97,8 @@ class MoveScheduleEvent:
 
                 next_event_before_change = await self.schedule_repo.get_next()
 
-                # Update event order
-                if place_before_event:
-                    new_order = (place_after_event.order + place_before_event.order) / 2
-                else:
-                    new_order = place_after_event.order + 1
-
-                event.order = new_order
+                # Update event order through the domain model.
+                event.place_after(place_after_event, place_before_event)
                 await self.schedule_repo.save(event)
 
                 next_event_after_change = await self.schedule_repo.get_next()
@@ -116,10 +107,9 @@ class MoveScheduleEvent:
                 mailing = await self.notifications_service.create_new_mailing(
                     total_count=0, by_user_id=current_user.id
                 )
-                schedule_change = ScheduleChange(
-                    type=ScheduleChangeType.MOVED,
-                    changed_event_id=event.id,
-                    argument_event_id=previous_event.id if previous_event else None,
+                schedule_change = ScheduleChange.moved(
+                    event_id=event.id,
+                    previous_event_id=previous_event.id if previous_event else None,
                     mailing_id=mailing.id,
                     user_id=current_user.id,
                     send_global_announcement=(

@@ -32,14 +32,14 @@ class UpdateUserSettings:
         if (
             receive_all_announcements := data_to_update.get("receive_all_announcements")
         ) is not None:
-            current_user.settings.receive_all_announcements = receive_all_announcements
+            current_user.settings.set_receive_all_announcements(receive_all_announcements)
             update_flag = True
         if (
             receive_telegram_notifications := data_to_update.get(
                 "receive_telegram_notifications"
             )
         ) is not None:
-            current_user.settings.receive_telegram_notifications = (
+            current_user.settings.set_receive_telegram_notifications(
                 receive_telegram_notifications
             )
             update_flag = True

@@ -42,7 +42,7 @@ class ChangeEmail:
 
         # Keep the active email unchanged until the new address proves
         # mailbox ownership through the confirmation code flow.
-        current_user.pending_email = normalized_new_email
+        current_user.request_email_change(normalized_new_email)
         await self.user_repo.save(current_user)
         await self.trx.commit()
 

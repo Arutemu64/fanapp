@@ -1,7 +1,6 @@
 from uuid import uuid7
 
 from fanfan.application.ports.repositories.mailings import MailingRepository
-from fanfan.core.exceptions.notifications import MailingCancelled, MailingNotFound
 from fanfan.core.models.mailing import Mailing
 from fanfan.core.vo.mailing import MailingId, MailingStatus
 from fanfan.core.vo.user import UserId
@@ -21,10 +20,3 @@ class MailingService:
         )
         await self.mailing_gateway.add(mailing)
         return mailing
-
-    async def ensure_active_mailing(self, mailing_id: MailingId) -> None:
-        mailing = await self.mailing_gateway.get(mailing_id)
-        if mailing is None:
-            raise MailingNotFound
-        if mailing.status == MailingStatus.CANCELLED:
-            raise MailingCancelled

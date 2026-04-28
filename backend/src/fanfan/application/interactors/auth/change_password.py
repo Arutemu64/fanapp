@@ -43,7 +43,7 @@ class ChangePassword:
                     raise IncorrectPassword
             else:
                 raise IncorrectPassword
-        current_user.hashed_password = self.security.hash_password(data.new_password)
+        current_user.set_password_hash(self.security.hash_password(data.new_password))
         await self.user_repo.save(current_user)
         await self.trx.commit()
 

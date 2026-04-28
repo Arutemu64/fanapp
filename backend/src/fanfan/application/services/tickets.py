@@ -7,7 +7,6 @@ from fanfan.core.exceptions.tickets import UserAlreadyHasTicketLinked
 from fanfan.core.exceptions.users import UserNotFound
 from fanfan.core.models.ticket import Ticket
 from fanfan.core.models.user import User
-from fanfan.core.vo.user import UserRole
 
 
 class TicketService:
@@ -38,14 +37,17 @@ class TicketService:
         await self.ticket_repo.save(ticket)
 
     async def unlink_ticket(self, ticket: Ticket):
-        if user_id := ticket.used_by_user_id:
+        if user_id := ticket.unlink():
             user = await self.user_repo.get_by_id(user_id)
             if user is None:
                 raise UserNotFound
 
             # Reset user role
-            user.set_role(UserRole.VISITOR)
+            user.reset_ticket_role()
             await self.user_repo.save(user)
+
+            # Persist the ticket unlink before removing dependent voting data.
+            await self.ticket_repo.save(ticket)
 
             # Delete user votes and contest flag
             await self.vote_repo.delete_all_user_votes(user_id)

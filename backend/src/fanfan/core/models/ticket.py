@@ -19,7 +19,19 @@ class Ticket:
     # Ticketscloud
     ticketscloud_ticket_id: str | None
 
+    @property
+    def is_used(self) -> bool:
+        return self.used_by_user_id is not None
+
+    def is_used_by(self, user_id: UserId) -> bool:
+        return self.used_by_user_id == user_id
+
     def set_as_used(self, user_id: UserId):
-        if self.used_by_user_id is not None:
+        if self.is_used:
             raise TicketAlreadyUsed
         self.used_by_user_id = user_id
+
+    def unlink(self) -> UserId | None:
+        linked_user_id = self.used_by_user_id
+        self.used_by_user_id = None
+        return linked_user_id

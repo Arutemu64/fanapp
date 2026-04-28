@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from uuid import uuid7
 
+from fanfan.core.exceptions.notifications import MailingCancelled
 from fanfan.core.vo.mailing import MailingId, MailingStatus
 from fanfan.core.vo.user import UserId
 
@@ -19,3 +20,7 @@ class Mailing:
 
     def set_as_cancelled(self) -> None:
         self.status = MailingStatus.CANCELLED
+
+    def ensure_active(self) -> None:
+        if self.status == MailingStatus.CANCELLED:
+            raise MailingCancelled

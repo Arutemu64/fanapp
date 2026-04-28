@@ -38,9 +38,9 @@ class UpdateCurrentUser:
             user = await self.user_repo.get_by_username(new_username)
             if user and (current_user.id != user.id):
                 raise UsernameAlreadyTaken
-            current_user.username = Username(new_username)
+            current_user.set_username(Username(new_username))
         else:
-            current_user.username = None
+            current_user.set_username(None)
 
     async def __call__(self, data: UpdateCurrentUserInput) -> None:
         current_user = await self.current_user_provider.require_user()
@@ -56,7 +56,7 @@ class UpdateCurrentUser:
             "first_name" in data_to_update
             and data_to_update["first_name"] != current_user.first_name
         ):
-            current_user.first_name = data_to_update["first_name"]
+            current_user.set_first_name(data_to_update["first_name"])
             user_updated_flag = True
         if user_updated_flag:
             await self.user_repo.save(current_user)

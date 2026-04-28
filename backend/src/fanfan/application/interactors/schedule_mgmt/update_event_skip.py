@@ -1,5 +1,4 @@
 import logging
-from uuid import uuid7
 
 from pydantic import BaseModel
 
@@ -21,13 +20,11 @@ from fanfan.application.services.permissions import PermissionService
 from fanfan.core.events.schedule import CreatedScheduleChangeEvent
 from fanfan.core.exceptions.rate_limit import RateLockCooldown
 from fanfan.core.exceptions.schedule import (
-    CurrentEventNotAllowed,
     EventNotFound,
     ScheduleEditTooFast,
 )
 from fanfan.core.models.schedule_change import ScheduleChange
 from fanfan.core.vo.permission import Permissions
-from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
 from fanfan.core.vo.schedule_event import ScheduleEventId
 
 logger = logging.getLogger(__name__)
@@ -81,14 +78,15 @@ class UpdateScheduleEventSkip:
                 event = await self.schedule_repo.get_by_id(data.event_id)
                 if event is None:
                     raise EventNotFound
-                if event.is_current:
-                    raise CurrentEventNotAllowed
 
                 # Get next event at this point
                 next_event_before = await self.schedule_repo.get_next()
 
-                # Toggle event skip
-                event.is_skipped = not event.is_skipped
+                # Update event skip state through domain methods.
+                if data.is_skipped:
+                    event.skip()
+                else:
+                    event.unskip()
                 await self.schedule_repo.save(event)
 
                 next_event_after = await self.schedule_repo.get_next()
@@ -97,13 +95,11 @@ class UpdateScheduleEventSkip:
                 mailing = await self.notifications_service.create_new_mailing(
                     total_count=0, by_user_id=current_user.id
                 )
-                schedule_change = ScheduleChange(
-                    id=ScheduleChangeId(uuid7()),
-                    type=ScheduleChangeType.SKIPPED
-                    if event.is_skipped
-                    else ScheduleChangeType.UNSKIPPED,
-                    changed_event_id=event.id,
-                    argument_event_id=None,
+                factory = ScheduleChange.skipped
+                if not event.is_skipped:
+                    factory = ScheduleChange.unskipped
+                schedule_change = factory(
+                    event_id=event.id,
                     mailing_id=mailing.id,
                     user_id=current_user.id,
                     send_global_announcement=(next_event_before != next_event_after),

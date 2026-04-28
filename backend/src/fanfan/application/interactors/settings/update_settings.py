@@ -44,13 +44,13 @@ class UpdateSettings:
         update_flag = False
 
         if (voting_enabled := data_to_update.get("voting_enabled")) is not None:
-            settings.voting_enabled = voting_enabled
+            settings.set_voting_enabled(voting_enabled)
             update_flag = True
 
         if (
             announcement_timeout := data_to_update.get("announcement_timeout")
         ) is not None:
-            settings.limits.announcement_timeout = announcement_timeout
+            settings.limits.set_announcement_timeout(announcement_timeout)
             update_flag = True
 
         if not update_flag:

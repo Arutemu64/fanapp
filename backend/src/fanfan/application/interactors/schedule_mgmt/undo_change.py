@@ -59,11 +59,11 @@ class UndoScheduleChange:
             raise OutdatedScheduleChange
 
         if changed_event:
-            changed_event.is_current = False
+            changed_event.unset_current()
             await self.schedule_repo.save(changed_event)
 
         if previous_event:
-            previous_event.is_current = True
+            previous_event.set_current()
             await self.schedule_repo.save(previous_event)
 
     async def _handle_moved(
@@ -76,14 +76,13 @@ class UndoScheduleChange:
                 place_after_event.order
             )
             if place_before_event:
-                new_order = (place_after_event.order + place_before_event.order) / 2
+                changed_event.place_after(place_after_event, place_before_event)
             else:
-                new_order = place_after_event.order + 1
+                changed_event.place_after(place_after_event, None)
         else:
             first_event = await self.schedule_repo.get_by_queue(1)
-            new_order = first_event.order - 1 if first_event else 1
+            changed_event.place_before_first(first_event)
 
-        changed_event.order = new_order
         await self.schedule_repo.save(changed_event)
 
     async def __call__(self, data: UndoScheduleChangeInput) -> None:
@@ -114,11 +113,11 @@ class UndoScheduleChange:
             await self._handle_moved(changed_event, argument_event)
 
         if schedule_change.type is ScheduleChangeType.SKIPPED and changed_event:
-            changed_event.is_skipped = False
+            changed_event.unskip()
             await self.schedule_repo.save(changed_event)
 
         if schedule_change.type is ScheduleChangeType.UNSKIPPED and changed_event:
-            changed_event.is_skipped = True
+            changed_event.skip()
             await self.schedule_repo.save(changed_event)
 
         await self.changes_repo.delete(schedule_change)

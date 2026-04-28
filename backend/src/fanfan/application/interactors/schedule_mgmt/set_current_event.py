@@ -1,5 +1,4 @@
 import logging
-from uuid import uuid7
 
 from pydantic import BaseModel
 
@@ -23,11 +22,9 @@ from fanfan.core.exceptions.rate_limit import RateLockCooldown
 from fanfan.core.exceptions.schedule import (
     EventNotFound,
     ScheduleEditTooFast,
-    SkippedEventNotAllowed,
 )
 from fanfan.core.models.schedule_change import ScheduleChange
 from fanfan.core.vo.permission import Permissions
-from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
 from fanfan.core.vo.schedule_event import ScheduleEventId
 
 logger = logging.getLogger(__name__)
@@ -79,7 +76,7 @@ class SetCurrentScheduleEvent:
                 # Unset current event
                 previous_current_event = await self.schedule_repo.get_current()
                 if previous_current_event:
-                    previous_current_event.is_current = False
+                    previous_current_event.unset_current()
                     await self.schedule_repo.save(previous_current_event)
 
                 # Get event and set as current
@@ -87,9 +84,7 @@ class SetCurrentScheduleEvent:
                     event = await self.schedule_repo.get_by_id(data.event_id)
                     if event is None:
                         raise EventNotFound
-                    if event.is_skipped:
-                        raise SkippedEventNotAllowed
-                    event.is_current = True
+                    event.set_current()
                     await self.schedule_repo.save(event)
                 else:
                     event = None
@@ -98,16 +93,13 @@ class SetCurrentScheduleEvent:
                 mailing = await self.notifications_service.create_new_mailing(
                     total_count=0, by_user_id=current_user.id
                 )
-                schedule_change = ScheduleChange(
-                    id=ScheduleChangeId(uuid7()),
-                    type=ScheduleChangeType.SET_AS_CURRENT,
+                schedule_change = ScheduleChange.set_as_current(
                     changed_event_id=event.id if event else None,
-                    argument_event_id=previous_current_event.id
+                    previous_event_id=previous_current_event.id
                     if previous_current_event
                     else None,
                     mailing_id=mailing.id,
                     user_id=current_user.id,
-                    send_global_announcement=True,
                 )
                 await self.changes_repo.add(schedule_change)
 

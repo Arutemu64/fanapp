@@ -4,7 +4,7 @@ from fanfan.application.dto.notification import NewNotificationDTO
 from fanfan.application.ports.repositories.mailings import MailingRepository
 from fanfan.application.ports.repositories.notifications import NotificationRepository
 from fanfan.application.ports.trx import TransactionManager
-from fanfan.application.services.mailing import MailingService
+from fanfan.core.exceptions.notifications import MailingNotFound
 from fanfan.core.models.notification import Notification
 from fanfan.core.vo.notification import NotificationId
 
@@ -18,12 +18,10 @@ class NewNotification:
         self,
         mailing_repo: MailingRepository,
         notification_repo: NotificationRepository,
-        notifications_service: MailingService,
         trx: TransactionManager,
     ):
         self.mailing_repo = mailing_repo
         self.notification_repo = notification_repo
-        self.notifications_service = notifications_service
         self.trx = trx
 
     @staticmethod
@@ -43,7 +41,10 @@ class NewNotification:
         notification = self._dto_to_model(data.notification)
         await self.notification_repo.add(notification)
         if mailing_id is not None:
-            await self.notifications_service.ensure_active_mailing(mailing_id)
+            mailing = await self.mailing_repo.get(mailing_id)
+            if mailing is None:
+                raise MailingNotFound
+            mailing.ensure_active()
             await self.mailing_repo.increment_sent(mailing_id=mailing_id)
         await self.trx.commit()
         return notification.id
