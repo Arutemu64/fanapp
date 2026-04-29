@@ -3,7 +3,7 @@ from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Request
 from starlette import status
-from starlette.responses import RedirectResponse
+from starlette.responses import RedirectResponse, Response
 
 from fanfan.application.interactors.auth.authorize_telegram import (
     AuthorizeTelegram,
@@ -20,7 +20,7 @@ telegram_router = APIRouter()
 async def login_telegram(
     request: Request,
     oauth: FromDishka[OAuth],
-) -> None:
+) -> Response:
     telegram: StarletteOAuth2App = oauth.create_client("telegram")
     redirect_uri = request.url_for("authorize_telegram")
     return await telegram.authorize_redirect(request, redirect_uri)

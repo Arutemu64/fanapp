@@ -1,6 +1,8 @@
+from typing import Annotated
+
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter
+from fastapi import APIRouter, Path
 
 from fanfan.application.interactors.schedule_mgmt.move_event import (
     MoveScheduleEvent,
@@ -23,7 +25,6 @@ management_router = APIRouter()
 
 @management_router.patch(
     "/{event_id}/current",
-    status_code=200,
     summary="Set specific event as current",
     description="Updates the schedule state to mark a specific event as active. "
     "Validates timing and event status.",
@@ -51,15 +52,14 @@ management_router = APIRouter()
 )
 @inject
 async def set_event_as_current(
-    event_id: ScheduleEventId,
+    event_id: Annotated[ScheduleEventId, Path(description="Schedule event ID.")],
     interactor: FromDishka[SetCurrentScheduleEvent],
 ) -> None:
-    return await interactor(SetCurrentScheduleEventInput(event_id=event_id))
+    await interactor(SetCurrentScheduleEventInput(event_id=event_id))
 
 
 @management_router.delete(
     "/current",
-    status_code=200,
     summary="Unset current schedule event",
     description="Clears the currently active event from the schedule. "
     "Subject to rate limiting.",
@@ -84,12 +84,11 @@ async def set_event_as_current(
 async def uncheck_current_event(
     interactor: FromDishka[SetCurrentScheduleEvent],
 ) -> None:
-    return await interactor(SetCurrentScheduleEventInput(event_id=None))
+    await interactor(SetCurrentScheduleEventInput(event_id=None))
 
 
 @management_router.patch(
     "/{event_id}/move",
-    status_code=200,
     summary="Reorder schedule event",
     description="Moves an event to a new position in the sequence, "
     "specifically after the provided event ID.",
@@ -110,11 +109,11 @@ async def uncheck_current_event(
 )
 @inject
 async def move_schedule_event(
-    event_id: ScheduleEventId,
+    event_id: Annotated[ScheduleEventId, Path(description="Schedule event ID.")],
     data: MoveScheduleEventRequest,
     interactor: FromDishka[MoveScheduleEvent],
 ) -> None:
-    return await interactor(
+    await interactor(
         MoveScheduleEventInput(
             event_id=event_id, place_after_event_id=data.place_after_event_id
         )
@@ -123,7 +122,6 @@ async def move_schedule_event(
 
 @management_router.patch(
     "/{event_id}/skip",
-    status_code=200,
     summary="Skip a schedule event",
     description="Marks a specific event as skipped. "
     "Note: the currently active event cannot be skipped.",
@@ -141,17 +139,14 @@ async def move_schedule_event(
 )
 @inject
 async def skip_schedule_event(
-    event_id: ScheduleEventId,
+    event_id: Annotated[ScheduleEventId, Path(description="Schedule event ID.")],
     interactor: FromDishka[UpdateScheduleEventSkip],
 ) -> None:
-    return await interactor(
-        UpdateScheduleEventSkipInput(event_id=event_id, is_skipped=True)
-    )
+    await interactor(UpdateScheduleEventSkipInput(event_id=event_id, is_skipped=True))
 
 
 @management_router.patch(
     "/{event_id}/unskip",
-    status_code=200,
     summary="Unskip a schedule event",
     description="Restores a previously skipped event back into "
     "the active schedule sequence.",
@@ -169,9 +164,7 @@ async def skip_schedule_event(
 )
 @inject
 async def unskip_schedule_event(
-    event_id: ScheduleEventId,
+    event_id: Annotated[ScheduleEventId, Path(description="Schedule event ID.")],
     interactor: FromDishka[UpdateScheduleEventSkip],
 ) -> None:
-    return await interactor(
-        UpdateScheduleEventSkipInput(event_id=event_id, is_skipped=False)
-    )
+    await interactor(UpdateScheduleEventSkipInput(event_id=event_id, is_skipped=False))

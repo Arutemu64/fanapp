@@ -1,6 +1,8 @@
+from typing import Annotated
+
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter
+from fastapi import APIRouter, Path
 
 from fanfan.application.interactors.subscriptions.create_subscription import (
     CreateSubscription,
@@ -58,7 +60,10 @@ async def new_subscription(
 )
 @inject
 async def delete_subscription(
-    subscription_id: SubscriptionId,
+    subscription_id: Annotated[
+        SubscriptionId,
+        Path(description="Subscription ID to remove."),
+    ],
     interactor: FromDishka[DeleteSubscription],
 ) -> None:
     await interactor(DeleteSubscriptionInput(subscription_id=subscription_id))

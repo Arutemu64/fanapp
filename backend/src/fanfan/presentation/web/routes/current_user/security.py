@@ -1,7 +1,6 @@
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Response
-from starlette import status
 
 from fanfan.application.interactors.auth.change_email import (
     ChangeEmail,
@@ -20,7 +19,6 @@ security_router = APIRouter()
 
 @security_router.post(
     "/password",
-    status_code=status.HTTP_200_OK,
     summary="Change current user password",
     description="Changes the authenticated user's password. "
     "Requires the current password for verification when one is already set.",
@@ -44,7 +42,6 @@ async def change_current_user_password(
 
 @security_router.post(
     "/email",
-    status_code=status.HTTP_200_OK,
     summary="Change current user email",
     description="Changes the authenticated user's email address "
     "and sends a confirmation code to the new email.",

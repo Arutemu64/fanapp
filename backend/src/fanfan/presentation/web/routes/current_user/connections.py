@@ -5,7 +5,7 @@ from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Request
 from starlette import status
-from starlette.responses import RedirectResponse
+from starlette.responses import RedirectResponse, Response
 
 from fanfan.application.dto.user import UserSocialAccountDTO
 from fanfan.application.interactors.current_user.get_current_user_social_ids import (
@@ -83,7 +83,7 @@ async def get_current_user_social_accounts(
 async def link_telegram(
     request: Request,
     oauth: FromDishka[OAuth],
-) -> None:
+) -> Response:
     telegram: StarletteOAuth2App = oauth.create_client("telegram")
     redirect_uri = request.url_for("link_telegram_callback")
     return await telegram.authorize_redirect(request, redirect_uri)

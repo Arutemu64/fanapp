@@ -31,4 +31,4 @@ async def link_ticket(
     data: LinkTicketInput,
     interactor: FromDishka[LinkTicket],
 ) -> None:
-    return await interactor(data)
+    await interactor(data)

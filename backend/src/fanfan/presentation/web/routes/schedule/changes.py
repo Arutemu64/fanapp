@@ -1,6 +1,8 @@
+from typing import Annotated
+
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter
+from fastapi import APIRouter, Path
 
 from fanfan.application.interactors.schedule_mgmt.list_schedule_changes import (
     ListScheduleChanges,
@@ -18,7 +20,6 @@ changes_router = APIRouter(prefix="/changes")
 
 @changes_router.get(
     "/",
-    status_code=200,
     summary="List schedule audit log",
     description="Returns a history of all modifications made to the schedule, "
     "including skips, moves, and status changes.",
@@ -52,7 +53,10 @@ async def list_schedule_changes(
 )
 @inject
 async def undo_schedule_change(
-    schedule_change_id: ScheduleChangeId,
+    schedule_change_id: Annotated[
+        ScheduleChangeId,
+        Path(description="Schedule change ID to undo."),
+    ],
     interactor: FromDishka[UndoScheduleChange],
 ) -> None:
     await interactor(UndoScheduleChangeInput(schedule_change_id=schedule_change_id))

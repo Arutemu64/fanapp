@@ -1,6 +1,8 @@
+from typing import Annotated
+
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter
+from fastapi import APIRouter, Path
 
 from fanfan.application.dto.vote import VoteBaseDTO
 from fanfan.application.interactors.voting.add_vote import (
@@ -33,7 +35,6 @@ voting_router = APIRouter(tags=["Voting"], prefix="/voting")
 
 @voting_router.get(
     "/status",
-    status_code=200,
     summary="Get current voting state",
     description="Retrieves the current phase of the voting process "
     "(e.g., active, closed) and reasoning.",
@@ -53,7 +54,6 @@ async def get_voting_status(
 
 @voting_router.get(
     "/nominations",
-    status_code=200,
     summary="List all nominations for the current vote",
     description="Retrieves a list of all candidates or items "
     "eligible for voting in the current session.",
@@ -85,7 +85,7 @@ async def list_voting_nominations(
 )
 @inject
 async def get_voting_nomination(
-    nomination_code: str,
+    nomination_code: Annotated[str, Path(description="Voting nomination code.")],
     interactor: FromDishka[GetVotingNomination],
 ) -> GetVotingNominationOutput:
     return await interactor(GetVotingNominationInput(nomination_code=nomination_code))
@@ -106,7 +106,7 @@ async def get_voting_nomination(
 )
 @inject
 async def add_vote(
-    nomination_id: NominationId,
+    nomination_id: Annotated[NominationId, Path(description="Voting nomination ID.")],
     data: AddVoteInput,
     interactor: FromDishka[AddVote],
 ) -> AddVoteOutput:
@@ -124,9 +124,7 @@ async def add_vote(
 )
 @inject
 async def cancel_vote(
-    nomination_id: NominationId,
+    nomination_id: Annotated[NominationId, Path(description="Voting nomination ID.")],
     interactor: FromDishka[CancelUserVoteByNomination],
 ) -> None:
-    return await interactor(
-        CancelUserVoteByNominationInput(nomination_id=nomination_id)
-    )
+    await interactor(CancelUserVoteByNominationInput(nomination_id=nomination_id))

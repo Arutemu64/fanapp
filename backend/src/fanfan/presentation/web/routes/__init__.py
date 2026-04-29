@@ -26,7 +26,7 @@ def setup_api_router() -> APIRouter:
             "model": ErrorMessage,
             "description": "Access denied.",
         },
-        status.HTTP_422_UNPROCESSABLE_ENTITY: {
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {
             "model": ValidationErrorResponse,
             "description": "Request validation error.",
         },

@@ -17,7 +17,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/DebugResponse"
+                }
               }
             }
           },
@@ -66,7 +68,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/HealthCheckResponse"
+                }
               }
             }
           },
@@ -181,9 +185,7 @@
             "description": "User successfully registered.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserBaseDTO"
-                }
+                "schema": {}
               }
             }
           },
@@ -1610,8 +1612,10 @@
             "schema": {
               "type": "string",
               "format": "uuid",
+              "description": "Schedule event ID.",
               "title": "Event Id"
-            }
+            },
+            "description": "Schedule event ID."
           }
         ],
         "responses": {
@@ -1778,8 +1782,10 @@
             "schema": {
               "type": "string",
               "format": "uuid",
+              "description": "Schedule event ID.",
               "title": "Event Id"
-            }
+            },
+            "description": "Schedule event ID."
           }
         ],
         "requestBody": {
@@ -1870,8 +1876,10 @@
             "schema": {
               "type": "string",
               "format": "uuid",
+              "description": "Schedule event ID.",
               "title": "Event Id"
-            }
+            },
+            "description": "Schedule event ID."
           }
         ],
         "responses": {
@@ -1952,8 +1960,10 @@
             "schema": {
               "type": "string",
               "format": "uuid",
+              "description": "Schedule event ID.",
               "title": "Event Id"
-            }
+            },
+            "description": "Schedule event ID."
           }
         ],
         "responses": {
@@ -2086,8 +2096,10 @@
             "schema": {
               "type": "string",
               "format": "uuid",
+              "description": "Schedule change ID to undo.",
               "title": "Schedule Change Id"
-            }
+            },
+            "description": "Schedule change ID to undo."
           }
         ],
         "responses": {
@@ -2235,8 +2247,10 @@
             "schema": {
               "type": "string",
               "format": "uuid",
+              "description": "Subscription ID to remove.",
               "title": "Subscription Id"
-            }
+            },
+            "description": "Subscription ID to remove."
           }
         ],
         "responses": {
@@ -2464,8 +2478,10 @@
             "required": true,
             "schema": {
               "type": "string",
+              "description": "Voting nomination code.",
               "title": "Nomination Code"
-            }
+            },
+            "description": "Voting nomination code."
           }
         ],
         "responses": {
@@ -2538,8 +2554,10 @@
             "schema": {
               "type": "string",
               "format": "uuid",
+              "description": "Voting nomination ID.",
               "title": "Nomination Id"
-            }
+            },
+            "description": "Voting nomination ID."
           }
         ],
         "requestBody": {
@@ -2630,8 +2648,10 @@
             "schema": {
               "type": "string",
               "format": "uuid",
+              "description": "Voting nomination ID.",
               "title": "Nomination Id"
-            }
+            },
+            "description": "Voting nomination ID."
           }
         ],
         "responses": {
@@ -2709,7 +2729,9 @@
             "description": "Webhook processed successfully.",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/TCloudWebhookResponse"
+                }
               }
             }
           },
@@ -3163,7 +3185,8 @@
           "file": {
             "type": "string",
             "contentMediaType": "application/octet-stream",
-            "title": "File"
+            "title": "File",
+            "description": "Excel file with schedule data."
           }
         },
         "type": "object",
@@ -3413,6 +3436,32 @@
         ],
         "title": "CurrentUserDTO"
       },
+      "DebugResponse": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "scheme": {
+            "type": "string",
+            "title": "Scheme"
+          },
+          "headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Headers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url",
+          "scheme",
+          "headers"
+        ],
+        "title": "DebugResponse"
+      },
       "DeletePushSubscriptionInput": {
         "properties": {
           "endpoint": {
@@ -3524,6 +3573,20 @@
           "status"
         ],
         "title": "GetVotingStateOutput"
+      },
+      "HealthCheckResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "healthy",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "HealthCheckResponse"
       },
       "LimitsConfigDTO": {
         "properties": {
@@ -4219,6 +4282,19 @@
         ],
         "title": "TCloudWebhookPayload"
       },
+      "TCloudWebhookResponse": {
+        "properties": {
+          "new_tickets_count": {
+            "type": "integer",
+            "title": "New Tickets Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "new_tickets_count"
+        ],
+        "title": "TCloudWebhookResponse"
+      },
       "Ticket": {
         "properties": {
           "id": {
@@ -4389,48 +4465,6 @@
         },
         "type": "object",
         "title": "UpdateUserSettingsInput"
-      },
-      "UserBaseDTO": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "username": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Username"
-          },
-          "first_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "First Name"
-          },
-          "role": {
-            "$ref": "#/components/schemas/UserRole"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "username",
-          "first_name",
-          "role"
-        ],
-        "title": "UserBaseDTO"
       },
       "UserPermissionDTO": {
         "properties": {

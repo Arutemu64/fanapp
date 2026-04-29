@@ -2,7 +2,6 @@ from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter
 from pydantic import BaseModel
-from starlette.responses import JSONResponse
 
 from fanfan.adapters.api.ticketscloud.dto.order import Order
 from fanfan.application.interactors.ticketscloud.process_tcloud_order import (
@@ -19,6 +18,10 @@ class TCloudWebhookPayload(BaseModel):
     type: str  # TODO Enforce possible types later
 
 
+class TCloudWebhookResponse(BaseModel):
+    new_tickets_count: int
+
+
 @webhooks_router.post(
     "/tcloud",
     summary="Process TicketsCloud webhook",
@@ -32,7 +35,6 @@ class TCloudWebhookPayload(BaseModel):
 async def process_tcloud_order(
     data: TCloudWebhookPayload,
     proceed_tcloud_order: FromDishka[ProcessTCloudOrder],
-) -> JSONResponse:
+) -> TCloudWebhookResponse:
     result = await proceed_tcloud_order(ProcessTCloudOrderInput(order=data.data))
-    data = {"new_tickets_count": result.new_tickets_count}
-    return JSONResponse(content=data, status_code=200)
+    return TCloudWebhookResponse(new_tickets_count=result.new_tickets_count)

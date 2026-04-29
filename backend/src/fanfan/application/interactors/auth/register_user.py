@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
 
 from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.repositories.users import UserRepository
@@ -14,7 +14,7 @@ from fanfan.core.vo.user import UserRole
 
 
 class RegisterUserInput(BaseModel):
-    email: EmailStr = Field(...)
+    email: EmailStr
     password: str = PASSWORD_FIELD
 
 

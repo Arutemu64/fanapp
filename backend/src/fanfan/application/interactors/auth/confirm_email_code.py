@@ -12,7 +12,7 @@ from fanfan.core.utils.email import normalize_email
 
 
 class ConfirmEmailCodeInput(BaseModel):
-    code: str = Field(..., min_length=6, max_length=6, pattern=r"^\d{6}$")
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
 
 
 class ConfirmEmailCode:

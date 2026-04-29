@@ -1,6 +1,9 @@
+from typing import Annotated
+
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, UploadFile
+from fastapi import APIRouter, File, UploadFile
+from starlette.concurrency import run_in_threadpool
 
 from fanfan.adapters.parsers.schedule import parse_schedule_from_excel
 from fanfan.application.interactors.schedule_mgmt.import_schedule import (
@@ -17,9 +20,10 @@ importing_router = APIRouter()
 )
 @inject
 async def import_schedule(
-    file: UploadFile,
+    file: Annotated[UploadFile, File(description="Excel file with schedule data.")],
     interactor: FromDishka[ImportSchedule],
 ) -> None:
-    # Parse once here to keep the interactor focused on business logic.
-    schedule = parse_schedule_from_excel(file=file.file)
+    # Parse in a worker thread because Pandas/OpenPyXL are synchronous libraries.
+    # This keeps the async FastAPI event loop responsive during file imports.
+    schedule = await run_in_threadpool(parse_schedule_from_excel, file.file)
     await interactor(ImportScheduleInput(schedule=schedule))
