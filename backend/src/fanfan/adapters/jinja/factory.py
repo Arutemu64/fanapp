@@ -3,10 +3,10 @@ from typing import NewType
 
 from jinja2 import Environment, FileSystemLoader
 
-StreamJinjaEnvironment = NewType("StreamJinjaEnvironment", Environment)
+JinjaEnvironment = NewType("JinjaEnvironment", Environment)
 
 
-def create_stream_jinja() -> StreamJinjaEnvironment:
+def create_jinja_env() -> JinjaEnvironment:
     templates_path = Path(__file__).parent.joinpath("templates")
     environment = Environment(
         lstrip_blocks=True,
@@ -15,4 +15,4 @@ def create_stream_jinja() -> StreamJinjaEnvironment:
         enable_async=True,
         autoescape=True,
     )
-    return StreamJinjaEnvironment(environment)
+    return JinjaEnvironment(environment)

@@ -1,7 +1,7 @@
 from fastapi_mail import FastMail, MessageSchema, MessageType
 from pydantic import BaseModel, NameEmail
 
-from fanfan.adapters.jinja.factory import StreamJinjaEnvironment
+from fanfan.adapters.jinja.factory import JinjaEnvironment
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.token_registry import TokenRegistry
 from fanfan.core.exceptions.users import UserHasNoEmail, UserNotFound
@@ -23,7 +23,7 @@ class SendEmailConfirmationCode:
         user_repo: UserRepository,
         email_service: EmailService,
         mail: FastMail,
-        jinja: StreamJinjaEnvironment,
+        jinja: JinjaEnvironment,
         token_registry: TokenRegistry,
     ):
         self.mail = mail

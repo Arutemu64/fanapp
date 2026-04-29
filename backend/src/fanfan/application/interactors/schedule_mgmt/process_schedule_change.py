@@ -4,7 +4,7 @@ from typing import cast
 from pydantic import BaseModel
 
 from fanfan.adapters.config.models import EnvConfig
-from fanfan.adapters.jinja.factory import StreamJinjaEnvironment
+from fanfan.adapters.jinja.factory import JinjaEnvironment
 from fanfan.application.dto.notification import NewNotificationDTO
 from fanfan.application.dto.schedule_change import ScheduleChangeFullDTO
 from fanfan.application.ports.events_broker import EventBroker
@@ -52,7 +52,7 @@ class ProcessScheduleChange:
     def __init__(
         self,
         config: EnvConfig,
-        jinja: StreamJinjaEnvironment,
+        jinja: JinjaEnvironment,
         changes_query: ScheduleChangeQuery,
         schedule_query: ScheduleEventQuery,
         user_repo: UserRepository,
