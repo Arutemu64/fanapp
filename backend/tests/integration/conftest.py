@@ -15,6 +15,7 @@ from fanfan.adapters.db.models import (
     MailingORM,
     ScheduleChangeORM,
     ScheduleEventORM,
+    TicketORM,
     UserORM,
     UserPermissionORM,
 )
@@ -68,6 +69,7 @@ async def clean_test_data(dishka_request: AsyncContainer):
     session = await dishka_request.get(AsyncSession)
     redis = await dishka_request.get(Redis)
 
+    await session.execute(delete(TicketORM))
     await session.execute(delete(ScheduleChangeORM))
     await session.execute(delete(MailingORM))
     await session.execute(delete(UserPermissionORM))
