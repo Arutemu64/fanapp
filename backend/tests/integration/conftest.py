@@ -24,9 +24,9 @@ from fanfan.main.ioc.db import DbProvider, SqlGatewaysProvider
 from fanfan.main.ioc.interactors import InteractorsProvider
 from fanfan.main.ioc.redis import RedisProvider
 from fanfan.main.ioc.services import ServicesProvider
-from tests.fixtures.db_provider import TestDbProvider
 from tests.fakes.event_broker import FakeEventBroker
 from tests.fakes.id_provider import FakeIdProvider
+from tests.fixtures.db_provider import TestDbProvider
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 
