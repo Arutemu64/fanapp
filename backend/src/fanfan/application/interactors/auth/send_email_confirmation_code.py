@@ -1,7 +1,11 @@
-from fastapi_mail import FastMail, MessageSchema, MessageType
-from pydantic import BaseModel, NameEmail
+from pydantic import BaseModel
 
 from fanfan.adapters.jinja.factory import JinjaEnvironment
+from fanfan.application.ports.email_sender import (
+    EmailMessage,
+    EmailRecipient,
+    EmailSender,
+)
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.token_registry import TokenRegistry
 from fanfan.core.exceptions.users import UserHasNoEmail, UserNotFound
@@ -22,11 +26,11 @@ class SendEmailConfirmationCode:
         self,
         user_repo: UserRepository,
         email_service: EmailService,
-        mail: FastMail,
+        email_sender: EmailSender,
         jinja: JinjaEnvironment,
         token_registry: TokenRegistry,
     ):
-        self.mail = mail
+        self.email_sender = email_sender
         self.jinja = jinja
         self.user_repo = user_repo
         self.email_service = email_service
@@ -59,16 +63,14 @@ class SendEmailConfirmationCode:
                 ),
             }
         )
-        message = MessageSchema(
+        message = EmailMessage(
             subject="Подтвердите email в FAN FAN",
             recipients=[
-                NameEmail(
+                EmailRecipient(
                     name=user.username or "Пользователь",
                     email=target_email,
                 )
             ],
-            body=message_body,
-            # Send HTML so the email client renders the code block cleanly.
-            subtype=MessageType.html,
+            html_body=message_body,
         )
-        await self.mail.send_message(message)
+        await self.email_sender.send(message)

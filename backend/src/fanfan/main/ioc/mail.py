@@ -2,6 +2,8 @@ from dishka import Provider, Scope, provide
 from fastapi_mail import ConnectionConfig, FastMail
 
 from fanfan.adapters.mail.config import MailConfig
+from fanfan.adapters.mail.email_sender import FastEmailSender
+from fanfan.application.ports.email_sender import EmailSender
 
 
 class MailProvider(Provider):
@@ -22,3 +24,5 @@ class MailProvider(Provider):
     @provide
     def get_mail(self, config: ConnectionConfig) -> FastMail:
         return FastMail(config)
+
+    email_sender = provide(FastEmailSender, provides=EmailSender)

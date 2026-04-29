@@ -1,7 +1,11 @@
-from fastapi_mail import FastMail, MessageSchema, MessageType
-from pydantic import BaseModel, NameEmail
+from pydantic import BaseModel
 
 from fanfan.adapters.jinja.factory import JinjaEnvironment
+from fanfan.application.ports.email_sender import (
+    EmailMessage,
+    EmailRecipient,
+    EmailSender,
+)
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.token_registry import TokenRegistry
 from fanfan.core.exceptions.users import UserHasNoEmail, UserNotFound
@@ -22,11 +26,11 @@ class SendLoginCodeEmail:
         self,
         user_repo: UserRepository,
         email_service: EmailService,
-        mail: FastMail,
+        email_sender: EmailSender,
         jinja: JinjaEnvironment,
         token_registry: TokenRegistry,
     ):
-        self.mail = mail
+        self.email_sender = email_sender
         self.jinja = jinja
         self.user_repo = user_repo
         self.email_service = email_service
@@ -56,11 +60,9 @@ class SendLoginCodeEmail:
                 "expires_in_minutes": max(1, EMAIL_LOGIN_CODE_MAX_AGE_SECONDS // 60),
             }
         )
-        message = MessageSchema(
+        message = EmailMessage(
             subject="Код входа в FAN FAN",
-            recipients=[NameEmail(name=user.username, email=normalized_email)],
-            body=message_body,
-            # Send HTML so the email client renders the code block cleanly.
-            subtype=MessageType.html,
+            recipients=[EmailRecipient(name=user.username, email=normalized_email)],
+            html_body=message_body,
         )
-        await self.mail.send_message(message)
+        await self.email_sender.send(message)

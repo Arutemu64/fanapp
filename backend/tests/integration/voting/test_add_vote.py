@@ -120,9 +120,12 @@ async def test_add_vote_without_linked_ticket_raises_access_denied(
         await interactor(AddVoteInput(participant_id=participant.id))
 
     assert exc_info.value.details == {"reason": "VOTING_TICKET_REQUIRED"}
-    assert await vote_repo.get_user_vote_by_nomination(
-        nomination_id=nomination.id, user_id=visitor.id
-    ) is None
+    assert (
+        await vote_repo.get_user_vote_by_nomination(
+            nomination_id=nomination.id, user_id=visitor.id
+        )
+        is None
+    )
     assert events_broker.published_events == []
 
 
@@ -165,9 +168,12 @@ async def test_add_vote_when_voting_disabled_raises_access_denied(
         await interactor(AddVoteInput(participant_id=participant.id))
 
     assert exc_info.value.details == {"reason": "VOTING_DISABLED"}
-    assert await vote_repo.get_user_vote_by_nomination(
-        nomination_id=nomination.id, user_id=visitor_with_ticket.id
-    ) is None
+    assert (
+        await vote_repo.get_user_vote_by_nomination(
+            nomination_id=nomination.id, user_id=visitor_with_ticket.id
+        )
+        is None
+    )
     assert events_broker.published_events == []
 
 
@@ -306,9 +312,7 @@ async def test_add_vote_allows_votes_in_different_nominations(
     await trx.commit()
 
     first_result = await interactor(AddVoteInput(participant_id=first_participant.id))
-    second_result = await interactor(
-        AddVoteInput(participant_id=second_participant.id)
-    )
+    second_result = await interactor(AddVoteInput(participant_id=second_participant.id))
 
     first_vote = await vote_repo.get_user_vote_by_nomination(
         nomination_id=first_nomination.id, user_id=visitor_with_ticket.id
