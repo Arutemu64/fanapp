@@ -8,6 +8,7 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+from fanfan.adapters.config.parsers import get_database_config
 from fanfan.adapters.db.models import BaseORM
 
 # this is the Alembic Config object, which provides
@@ -25,10 +26,22 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata  # noqa: ERA001
 target_metadata = BaseORM.metadata
 
+# Alembic keeps this placeholder in alembic.ini. Runtime migrations should use
+# app settings instead, while tests may still override sqlalchemy.url explicitly.
+DEFAULT_ALEMBIC_DATABASE_URL = "driver://user:pass@localhost/dbname"
+
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")  # noqa: ERA001
 # ... etc.
+
+
+def get_database_url() -> str:
+    alembic_url = config.get_main_option("sqlalchemy.url")
+    if alembic_url and alembic_url != DEFAULT_ALEMBIC_DATABASE_URL:
+        return alembic_url
+
+    return get_database_config().build_connection_str()
 
 
 def run_migrations_offline() -> None:
@@ -43,7 +56,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = get_database_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -72,8 +85,11 @@ async def run_async_migrations() -> None:
     and associate a connection with the context.
 
     """
+    section = config.get_section(config.config_ini_section, {}).copy()
+    section["sqlalchemy.url"] = get_database_url()
+
     connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        section,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

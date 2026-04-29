@@ -20,6 +20,7 @@ async def visitor(dishka_request: AsyncContainer) -> User:
     """
     Create a visitor (user with no special permissions)
     """
+    user_repo = await dishka_request.get(UserRepository)
     trx = await dishka_request.get(TransactionManager)
 
     visitor = User(
@@ -28,6 +29,7 @@ async def visitor(dishka_request: AsyncContainer) -> User:
         hashed_password=None,
         role=UserRole.VISITOR,
     )
+    await user_repo.add(visitor)
     await trx.commit()
     return visitor
 
