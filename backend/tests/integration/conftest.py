@@ -25,10 +25,8 @@ from fanfan.main.ioc.interactors import InteractorsProvider
 from fanfan.main.ioc.redis import RedisProvider
 from fanfan.main.ioc.services import ServicesProvider
 from tests.fixtures.db_provider import TestDbProvider
-from tests.mocks.event_broker import FakeEventBroker
-from tests.mocks.id_provider import FakeIdProvider
-
-pytest_plugins = ["tests.fixtures.users"]
+from tests.fakes.event_broker import FakeEventBroker
+from tests.fakes.id_provider import FakeIdProvider
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 

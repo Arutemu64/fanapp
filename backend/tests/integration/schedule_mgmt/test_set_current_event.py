@@ -18,8 +18,8 @@ from fanfan.core.models.schedule_event import ScheduleEvent
 from fanfan.core.models.user import User
 from fanfan.core.vo.schedule_change import ScheduleChangeType
 from fanfan.core.vo.schedule_event import ScheduleEventId, ScheduleEventPublicNumber
-from tests.mocks.event_broker import FakeEventBroker
-from tests.mocks.id_provider import FakeIdProvider
+from tests.fakes.event_broker import FakeEventBroker
+from tests.fakes.id_provider import FakeIdProvider
 
 pytestmark = [
     pytest.mark.asyncio,

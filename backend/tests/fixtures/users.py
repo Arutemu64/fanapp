@@ -7,9 +7,11 @@ from fanfan.application.ports.repositories import (
     PermissionRepository,
     UserPermissionRepository,
 )
+from fanfan.application.ports.repositories.tickets import TicketRepository
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.core.models.permission import UserPermission
+from fanfan.core.models.ticket import Ticket
 from fanfan.core.models.user import User
 from fanfan.core.vo.permission import Permissions
 from fanfan.core.vo.user import UserId, Username, UserRole
@@ -30,6 +32,27 @@ async def visitor(dishka_request: AsyncContainer) -> User:
         role=UserRole.VISITOR,
     )
     await user_repo.add(visitor)
+    await trx.commit()
+    return visitor
+
+
+@pytest_asyncio.fixture
+async def visitor_with_ticket(dishka_request: AsyncContainer, visitor: User) -> User:
+    """
+    Create a visitor with a linked ticket.
+    """
+    ticket_repo = await dishka_request.get(TicketRepository)
+    trx = await dishka_request.get(TransactionManager)
+
+    await ticket_repo.add(
+        Ticket(
+            barcode=f"VISITOR-TICKET-{visitor.id}",
+            role=UserRole.VISITOR,
+            used_by_user_id=visitor.id,
+            issued_by_user_id=None,
+            ticketscloud_ticket_id=None,
+        )
+    )
     await trx.commit()
     return visitor
 

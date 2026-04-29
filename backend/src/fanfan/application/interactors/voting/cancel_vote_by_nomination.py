@@ -45,9 +45,8 @@ class CancelUserVoteByNomination:
         # TODO remove unnecessary check?
         await self.service.ensure_user_can_vote(user=current_user, ticket=ticket)
 
-        vote = await self.vote_repo.get_user_vote_by_nomination_id(
-            nomination_id=data.nomination_id,
-            user_id=current_user.id,
+        vote = await self.vote_repo.get_user_vote_by_nomination(
+            nomination_id=data.nomination_id, user_id=current_user.id
         )
         if vote is None:
             raise VoteNotFound

@@ -11,6 +11,8 @@ from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.voting import VotingService
 from fanfan.core.events.voting import CreatedVoteEvent
+from fanfan.core.exceptions.participants import ParticipantNotFound
+from fanfan.core.exceptions.votes import AlreadyVotedInThisNomination
 from fanfan.core.models.vote import Vote
 from fanfan.core.vo.participant import ParticipantId
 from fanfan.core.vo.vote import VoteId
@@ -54,6 +56,15 @@ class AddVote:
         current_user = await self.current_user_provider.require_user()
         ticket = await self.ticket_repo.get_by_user_id(current_user.id)
         await self.vote_service.ensure_user_can_vote(user=current_user, ticket=ticket)
+
+        # User can only vote once in a nomination
+        participant = await self.participant_repo.get(data.participant_id)
+        if participant is None:
+            raise ParticipantNotFound
+        if await self.vote_repo.get_user_vote_by_nomination(
+            nomination_id=participant.nomination_id, user_id=current_user.id
+        ):
+            raise AlreadyVotedInThisNomination
 
         vote = Vote(user_id=current_user.id, participant_id=data.participant_id)
         await self.vote_repo.add(vote)

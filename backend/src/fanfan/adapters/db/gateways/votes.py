@@ -31,7 +31,7 @@ class SqlVoteGateway(VoteRepository):
                 raise AlreadyVotedInThisNomination from e
             raise
 
-    async def get_user_vote_by_nomination_id(
+    async def get_user_vote_by_nomination(
         self, nomination_id: NominationId, user_id: UserId
     ) -> Vote | None:
         vote_orm = await self.session.scalar(

@@ -14,6 +14,7 @@ from fanfan.application.ports.queries.participants import ParticipantQuery
 from fanfan.application.ports.repositories.participants import ParticipantRepository
 from fanfan.core.models.participant import Participant
 from fanfan.core.vo.nomination import NominationId
+from fanfan.core.vo.participant import ParticipantId
 from fanfan.core.vo.user import UserId
 
 
@@ -63,6 +64,16 @@ class SqlParticipantGateway(ParticipantRepository, ParticipantQuery):
         self.session.add(participant_orm)
         await self.session.flush([participant_orm])
         return
+
+    async def get(self, participant_id: ParticipantId) -> Participant | None:
+        stmt = (
+            select(ParticipantORM)
+            .where(ParticipantORM.id == participant_id)
+            .options(joinedload(ParticipantORM.values))
+            .with_for_update(of=ParticipantORM)
+        )
+        participant_orm = await self.session.scalar(stmt)
+        return self.mapper.to_model(participant_orm) if participant_orm else None
 
     async def get_by_cosplay2_id(self, cosplay2_id: int) -> Participant | None:
         stmt = (
