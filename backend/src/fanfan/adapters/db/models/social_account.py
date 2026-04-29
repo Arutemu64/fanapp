@@ -26,4 +26,4 @@ class SocialIdentityORM(BaseORM):
     provider: Mapped[str] = mapped_column()
     provider_id: Mapped[str] = mapped_column()
 
-    user: Mapped["UserORM"] = relationship(back_populates="social_accounts")
+    user: Mapped[UserORM] = relationship(back_populates="social_accounts")

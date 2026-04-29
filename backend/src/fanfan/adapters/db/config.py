@@ -15,7 +15,7 @@ class DatabaseConfig(BaseModel):
     echo: bool = True
 
     @model_validator(mode="after")
-    def validate_url_or_parts(self) -> "DatabaseConfig":
+    def validate_url_or_parts(self) -> DatabaseConfig:
         if self.url is not None:
             return self
 

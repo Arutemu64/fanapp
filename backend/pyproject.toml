@@ -60,6 +60,16 @@ dev = [
 requires = ["uv_build"]
 build-backend = "uv_build"
 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+# Change both to session-scope so one loop is used for the whole run
+asyncio_default_test_loop_scope = "session"
+asyncio_default_fixture_loop_scope = "session"
+markers = [
+    "integration: tests that use real infrastructure such as PostgreSQL or Redis containers",
+]
+testpaths = ["tests"]
+
 [tool.uv.build-backend]
 module-name = "fanfan"
 

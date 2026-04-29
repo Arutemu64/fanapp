@@ -29,7 +29,7 @@ class EmailPasswordLoginForm(BaseModel):
         cls,
         email: Annotated[EmailStr, Form(...)],
         password: Annotated[str, Form(...)],
-    ) -> "EmailPasswordLoginForm":
+    ) -> EmailPasswordLoginForm:
         return cls(email=email, password=password)
 
 

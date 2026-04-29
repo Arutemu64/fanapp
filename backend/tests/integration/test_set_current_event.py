@@ -1,6 +1,3 @@
-# ruff: noqa: S101
-
-
 from uuid import UUID
 
 import pytest
@@ -24,7 +21,10 @@ from fanfan.core.vo.schedule_event import ScheduleEventId, ScheduleEventPublicNu
 from tests.mocks.event_broker import FakeEventBroker
 from tests.mocks.id_provider import FakeIdProvider
 
-pytestmark = pytest.mark.asyncio(loop_scope="session")
+pytestmark = [
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+]
 
 
 def _schedule_event(
@@ -48,7 +48,7 @@ def _schedule_event(
 
 async def test_set_current_event_replaces_previous_current_and_records_change(
     dishka_request: AsyncContainer,
-    schedule_manager: User,
+    schedule_editor: User,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_repo = await dishka_request.get(ScheduleEventRepository)
@@ -56,7 +56,7 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     trx = await dishka_request.get(TransactionManager)
     events_broker = await dishka_request.get(FakeEventBroker)
     id_provider = await dishka_request.get(FakeIdProvider)
-    id_provider.set_current_user_id(schedule_manager.id)
+    id_provider.set_current_user_id(schedule_editor.id)
 
     previous_current_event = ScheduleEvent(
         public_number=ScheduleEventPublicNumber(1),
@@ -100,8 +100,8 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     assert change.argument_event is not None
     assert change.argument_event.id == previous_current_event.id
     assert change.user is not None
-    assert change.user.id == schedule_manager.id
-    assert change.user.username == schedule_manager.username
+    assert change.user.id == schedule_editor.id
+    assert change.user.username == schedule_editor.username
     assert change.send_global_announcement is True
     assert change.mailing_id is not None
 
@@ -112,7 +112,7 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
 
 async def test_set_current_event_can_unset_current_event(
     dishka_request: AsyncContainer,
-    schedule_manager: User,
+    schedule_editor: User,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_repo = await dishka_request.get(ScheduleEventRepository)
@@ -120,7 +120,7 @@ async def test_set_current_event_can_unset_current_event(
     trx = await dishka_request.get(TransactionManager)
     events_broker = await dishka_request.get(FakeEventBroker)
     id_provider = await dishka_request.get(FakeIdProvider)
-    id_provider.set_current_user_id(schedule_manager.id)
+    id_provider.set_current_user_id(schedule_editor.id)
 
     previous_current_event = _schedule_event(1, "Текущее событие", 1, is_current=True)
     await schedule_repo.add(previous_current_event)
@@ -140,7 +140,7 @@ async def test_set_current_event_can_unset_current_event(
     assert change.argument_event is not None
     assert change.argument_event.id == previous_current_event.id
     assert change.user is not None
-    assert change.user.id == schedule_manager.id
+    assert change.user.id == schedule_editor.id
     assert change.send_global_announcement is True
     assert change.mailing_id is not None
 
@@ -151,7 +151,7 @@ async def test_set_current_event_can_unset_current_event(
 
 async def test_set_current_event_raises_when_event_not_found(
     dishka_request: AsyncContainer,
-    schedule_manager: User,
+    schedule_editor: User,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_repo = await dishka_request.get(ScheduleEventRepository)
@@ -159,7 +159,7 @@ async def test_set_current_event_raises_when_event_not_found(
     trx = await dishka_request.get(TransactionManager)
     events_broker = await dishka_request.get(FakeEventBroker)
     id_provider = await dishka_request.get(FakeIdProvider)
-    id_provider.set_current_user_id(schedule_manager.id)
+    id_provider.set_current_user_id(schedule_editor.id)
 
     previous_current_event = _schedule_event(1, "Текущее событие", 1, is_current=True)
     await schedule_repo.add(previous_current_event)

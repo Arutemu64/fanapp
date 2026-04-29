@@ -33,7 +33,7 @@ pytest_plugins = ["tests.fixtures.users"]
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 
 
-@pytest_asyncio.fixture(scope="session", loop_scope="session")
+@pytest_asyncio.fixture(scope="session")
 async def dishka() -> AsyncIterable[AsyncContainer]:
     mock_provider = Provider(scope=Scope.APP)
     mock_provider.provide(
@@ -59,13 +59,13 @@ async def dishka() -> AsyncIterable[AsyncContainer]:
     await container.close()
 
 
-@pytest_asyncio.fixture(loop_scope="session")
+@pytest_asyncio.fixture
 async def dishka_request(dishka: AsyncContainer) -> AsyncIterable[AsyncContainer]:
     async with dishka() as request_container:
         yield request_container
 
 
-@pytest_asyncio.fixture(autouse=True, loop_scope="session")
+@pytest_asyncio.fixture(autouse=True)
 async def clean_test_data(dishka_request: AsyncContainer):
     session = await dishka_request.get(AsyncSession)
     redis = await dishka_request.get(Redis)
@@ -80,7 +80,7 @@ async def clean_test_data(dishka_request: AsyncContainer):
     yield
 
 
-@pytest_asyncio.fixture(scope="session", loop_scope="session")
+@pytest_asyncio.fixture(scope="session")
 async def alembic_config(dishka: AsyncContainer) -> AlembicConfig:
     alembic_cfg = AlembicConfig(str(BACKEND_DIR / "alembic.ini"))
     alembic_cfg.set_main_option(

@@ -15,7 +15,7 @@ from fanfan.core.vo.permission import Permissions
 from fanfan.core.vo.user import UserId, Username, UserRole
 
 
-@pytest_asyncio.fixture(loop_scope="session")
+@pytest_asyncio.fixture
 async def visitor(dishka_request: AsyncContainer) -> User:
     """
     Create a visitor (user with no special permissions)
@@ -34,8 +34,8 @@ async def visitor(dishka_request: AsyncContainer) -> User:
     return visitor
 
 
-@pytest_asyncio.fixture(loop_scope="session")
-async def schedule_manager(dishka_request: AsyncContainer) -> User:
+@pytest_asyncio.fixture
+async def schedule_editor(dishka_request: AsyncContainer) -> User:
     """
     Create a schedule manager
     """

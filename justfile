@@ -38,6 +38,12 @@ backend-format:
 backend-check:
     cd backend && uv run ruff check src/fanfan tests --respect-gitignore --fix --unsafe-fixes
 
+backend-test:
+    cd backend && uv run pytest tests
+
+backend-test-integration:
+    cd backend && uv run pytest tests/integration
+
 backend-sync-cosplay2:
     cd backend && uv run ruff check src/fanfan tests --respect-gitignore --fix --unsafe-fixes
 

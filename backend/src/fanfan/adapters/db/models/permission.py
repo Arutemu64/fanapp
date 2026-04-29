@@ -33,7 +33,7 @@ class UserPermissionORM(BaseORM):
     object_id: Mapped[PermissionObjectId | None] = mapped_column()
     object_type: Mapped[PermissionObjectType | None] = mapped_column()
 
-    permission: Mapped["PermissionORM"] = relationship(lazy="joined")
+    permission: Mapped[PermissionORM] = relationship(lazy="joined")
 
 
 class PermissionORM(BaseORM):

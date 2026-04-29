@@ -32,12 +32,12 @@ exclude = [
 line-length = 88
 indent-width = 4
 
-# Assume Python 3.13
-target-version = "py313"
+# Assume Python 3.14
+target-version = "py314"
 
 [lint]
 select = ["ALL"]
-ignore = ["D", "ANN", "RUF", "N", "FBT", "PLR", "COM812", "ISC001", "TC001", "ARG001", "FIX002", "TD002", "TD003", "TD004", "PGH004"]
+ignore = ["D", "ANN", "RUF", "N", "FBT", "PLR", "COM812", "ISC001", "TC001", "TC002", "ARG001", "FIX002", "TD002", "TD003", "TD004", "PGH004", "TC003", "S101"]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]
