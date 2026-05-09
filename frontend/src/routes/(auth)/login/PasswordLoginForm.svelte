@@ -1,0 +1,214 @@
+<script lang="ts">
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { client } from '$lib/api';
+	import { getEventsClient } from '$lib/services/events.svelte';
+	import { getToastService } from '$lib/services/toasts.svelte';
+	import { Button, Helper, Input, Label, Spinner } from 'flowbite-svelte';
+	import { EnvelopeSolid, EyeOutline, EyeSlashOutline, LockSolid } from 'flowbite-svelte-icons';
+
+	let { email = $bindable(''), isBusy = $bindable(false) } = $props();
+
+	type ActiveAction = 'password' | null;
+
+	let password = $state('');
+	let activeAction = $state<ActiveAction>(null);
+	let showPassword = $state(false);
+	let emailError = $state('');
+	let passwordError = $state('');
+
+	const eventsClient = getEventsClient();
+	const toastService = getToastService();
+
+	// Update parent isBusy state based on local activeAction
+	$effect(() => {
+		isBusy = activeAction !== null;
+	});
+
+	function validateEmail(value: string): boolean {
+		if (!value) return false;
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		return emailRegex.test(value);
+	}
+
+	function getNormalizedEmail(): string {
+		return email.trim().toLowerCase();
+	}
+
+	let normalizedEmail = $derived(getNormalizedEmail());
+	let isEmailValid = $derived(email ? validateEmail(normalizedEmail) : null);
+	let emailColor = $derived.by((): 'green' | 'red' | undefined => {
+		if (emailError) return 'red';
+		if (!email) return undefined;
+		return isEmailValid ? 'green' : 'red';
+	});
+	let passwordColor = $derived.by((): 'red' | undefined => {
+		return passwordError ? 'red' : undefined;
+	});
+
+	function resetEmailFeedback() {
+		emailError = '';
+	}
+
+	function resetPasswordFeedback() {
+		passwordError = '';
+	}
+
+	function validatePasswordForm(): boolean {
+		emailError = '';
+		passwordError = '';
+
+		if (!normalizedEmail) {
+			emailError = 'Введи адрес эл. почты';
+		} else if (!validateEmail(normalizedEmail)) {
+			emailError = 'Введи адрес в формате name@example.com';
+		}
+
+		if (!password.trim()) {
+			passwordError = 'Введи пароль';
+		}
+
+		return !emailError && !passwordError;
+	}
+
+	async function finishLogin(successMessage: string) {
+		toastService.add(successMessage, 'success');
+		await goto(resolve('/'), { invalidateAll: true });
+		eventsClient?.restart();
+	}
+
+	async function submitPasswordLogin() {
+		if (!validatePasswordForm()) {
+			return;
+		}
+
+		const trimmedEmail = normalizedEmail;
+
+		activeAction = 'password';
+
+		try {
+			const { error } = await client.POST('/auth/login', {
+				body: {
+					email: trimmedEmail,
+					password
+				},
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded'
+				}
+			});
+
+			if (error) {
+				console.error('Login error:', error);
+				toastService.error(error);
+				return;
+			}
+
+			await finishLogin('Вход выполнен');
+		} catch (error) {
+			toastService.error(error);
+		} finally {
+			activeAction = null;
+		}
+	}
+
+	function handlePasswordSubmit(event: SubmitEvent) {
+		event.preventDefault();
+
+		if (isBusy && activeAction === null) {
+			return; // Busy from the other tab
+		}
+
+		void submitPasswordLogin();
+	}
+</script>
+
+<form onsubmit={handlePasswordSubmit} class="space-y-4">
+	<div>
+		<Label for="password-email" color={emailColor} class="mb-2">Эл. почта</Label>
+		<Input
+			id="password-email"
+			name="email"
+			type="email"
+			bind:value={email}
+			placeholder="name@example.com"
+			autocomplete="username"
+			inputmode="email"
+			autocapitalize="off"
+			spellcheck={false}
+			required
+			disabled={isBusy && activeAction === null}
+			class="ps-9"
+			color={emailColor}
+			oninput={resetEmailFeedback}
+		>
+			{#snippet left()}
+				<EnvelopeSolid class="h-5 w-5" />
+			{/snippet}
+		</Input>
+		{#if emailError}
+			<Helper color="red" class="mt-1">{emailError}</Helper>
+		{:else if email && isEmailValid === false}
+			<Helper color="red" class="mt-1">Введи адрес в формате name@example.com</Helper>
+		{/if}
+	</div>
+
+	<div>
+		<Label for="password" class="mb-2">Пароль</Label>
+		<Input
+			id="password"
+			name="password"
+			type={showPassword ? 'text' : 'password'}
+			bind:value={password}
+			placeholder="••••••••"
+			autocomplete="current-password"
+			required
+			disabled={isBusy && activeAction === null}
+			class="ps-9"
+			color={passwordColor}
+			oninput={resetPasswordFeedback}
+		>
+			{#snippet left()}
+				<LockSolid class="h-5 w-5" />
+			{/snippet}
+			{#snippet right()}
+				<button
+					type="button"
+					class="pointer-events-auto -m-1 rounded-md p-1 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-700"
+					onclick={() => (showPassword = !showPassword)}
+					aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+					aria-pressed={showPassword}
+				>
+					{#if showPassword}
+						<EyeOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+					{:else}
+						<EyeSlashOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+					{/if}
+				</button>
+			{/snippet}
+		</Input>
+		{#if passwordError}
+			<Helper color="red" class="mt-1">{passwordError}</Helper>
+		{/if}
+	</div>
+
+	<Button
+		type="submit"
+		color="primary"
+		class="min-h-11 w-full rounded-xl font-medium"
+		disabled={isBusy && activeAction === null}
+	>
+		{#if activeAction === 'password'}
+			<Spinner size="4" class="mr-2" color="primary" />
+			Входим…
+		{:else}
+			Войти
+		{/if}
+	</Button>
+
+	<p class="text-center text-sm text-gray-500 dark:text-gray-400">
+		Нет аккаунта?
+		<a href={resolve('/signup')} class="text-primary-600 hover:underline dark:text-primary-500">
+			Зарегистрироваться
+		</a>
+	</p>
+</form>

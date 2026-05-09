@@ -139,9 +139,7 @@
 			{#if announcementTimeoutError}
 				<Helper color="red">{announcementTimeoutError}</Helper>
 			{:else}
-				<Helper>
-					Минимум 1 секунда. Ограничение помогает не отправлять анонсы слишком часто.
-				</Helper>
+				<Helper>Минимум 1 секунда. Ограничение помогает не отправлять анонсы слишком часто.</Helper>
 			{/if}
 		</div>
 
