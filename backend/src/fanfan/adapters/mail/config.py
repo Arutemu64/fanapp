@@ -1,4 +1,4 @@
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, NameEmail, SecretStr
 
 
 class MailConfig(BaseModel):
@@ -6,3 +6,5 @@ class MailConfig(BaseModel):
     password: SecretStr
     host: str
     port: int
+
+    sender: NameEmail

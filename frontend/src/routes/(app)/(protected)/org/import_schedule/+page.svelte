@@ -80,56 +80,54 @@
 	description="Загрузи Excel-файл, чтобы обновить расписание мероприятия."
 />
 
-<div class="px-4">
-	<Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
-		<form class="space-y-4" onsubmit={handleSubmit}>
-			<div class="space-y-2">
-				<Label for="schedule-file">Excel-файл</Label>
-				<Fileupload
-					id="schedule-file"
-					name="schedule_file"
-					accept={ACCEPTED_FILE_TYPES}
-					bind:files={selectedFiles}
-					clearable
-					size="lg"
-					class="w-full"
-					disabled={isUploading}
-					onchange={handleFileChange}
-				/>
-				<Helper class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-					{#if selectedFileName}
-						Выбран файл: {selectedFileName}
-					{:else}
-						Поддерживаются файлы `.xls` и `.xlsx`.
-					{/if}
-				</Helper>
-			</div>
-
-			{#if inlineError}
-				<Alert color="red">
-					{inlineError}
-				</Alert>
-			{/if}
-
-			{#if successMessage}
-				<Alert color="green">
-					{successMessage}
-				</Alert>
-			{/if}
-
-			<Button
-				type="submit"
-				color="primary"
-				class="min-h-11 w-full justify-center rounded-xl sm:w-auto"
+<Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
+	<form class="space-y-4" onsubmit={handleSubmit}>
+		<div class="space-y-2">
+			<Label for="schedule-file">Excel-файл</Label>
+			<Fileupload
+				id="schedule-file"
+				name="schedule_file"
+				accept={ACCEPTED_FILE_TYPES}
+				bind:files={selectedFiles}
+				clearable
+				size="lg"
+				class="w-full"
 				disabled={isUploading}
-			>
-				{#if isUploading}
-					<Spinner size="4" class="mr-2" color="primary" />
-					Импортируем…
+				onchange={handleFileChange}
+			/>
+			<Helper class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+				{#if selectedFileName}
+					Выбран файл: {selectedFileName}
 				{:else}
-					Импортировать
+					Поддерживаются файлы `.xls` и `.xlsx`.
 				{/if}
-			</Button>
-		</form>
-	</Card>
-</div>
+			</Helper>
+		</div>
+
+		{#if inlineError}
+			<Alert color="red">
+				{inlineError}
+			</Alert>
+		{/if}
+
+		{#if successMessage}
+			<Alert color="green">
+				{successMessage}
+			</Alert>
+		{/if}
+
+		<Button
+			type="submit"
+			color="primary"
+			class="min-h-11 w-full justify-center rounded-xl sm:w-auto"
+			disabled={isUploading}
+		>
+			{#if isUploading}
+				<Spinner size="4" class="mr-2" color="primary" />
+				Импортируем…
+			{:else}
+				Импортировать
+			{/if}
+		</Button>
+	</form>
+</Card>

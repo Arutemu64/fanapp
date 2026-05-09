@@ -78,7 +78,7 @@
 
 <Card
 	class={[
-		'relative flex flex-col py-3 ps-4 pe-3 transition-[box-shadow,border-color]',
+		'relative flex w-full max-w-none flex-col py-3 ps-4 pe-3 transition-[box-shadow,border-color]',
 		participant.user_vote !== null && 'ring-2 ring-green-400 dark:ring-green-500'
 	]}
 >

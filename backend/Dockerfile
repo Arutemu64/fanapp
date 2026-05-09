@@ -55,5 +55,8 @@ WORKDIR /app
 
 EXPOSE 8000
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/debug/health', timeout=3)" || exit 1
+
 # Run the FastAPI application by default
 CMD ["uvicorn", "--factory", "fanfan.presentation.web.factory:create_app"]

@@ -248,7 +248,7 @@
 							pattern="[0-9]*"
 							maxlength={6}
 							disabled={isSubmittingVerificationCode}
-							class="text-center text-lg tracking-[0.35em]"
+							class="text-center text-lg tracking-widest"
 							color={verificationCodeError ? 'red' : undefined}
 							oninput={() => {
 								verificationCode = verificationCode.replace(/\D/g, '').slice(0, 6);

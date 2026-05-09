@@ -72,7 +72,7 @@
 			inputmode="numeric"
 			autocomplete="off"
 			bind:value={counter}
-			class="w-10 text-center font-bold [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+			class="w-16 text-center font-bold [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 		/>
 
 		<Button

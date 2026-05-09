@@ -10,7 +10,7 @@
 	let { nomination }: Props = $props();
 </script>
 
-<Card class="flex flex-col p-4 sm:p-5">
+<Card class="flex w-full max-w-none flex-col p-4 sm:p-5">
 	<div class="flex items-start justify-between gap-2">
 		<h3 class="text-lg font-bold text-gray-900 dark:text-white">
 			{nomination.title}

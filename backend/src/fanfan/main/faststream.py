@@ -11,6 +11,8 @@ from fanfan.presentation.faststream.routes import setup_router
 
 
 def create_app() -> FastStream:
+    init(service_name="stream")
+    
     # Setup broker
     config = get_config()
     broker = create_broker(config=config.nats)

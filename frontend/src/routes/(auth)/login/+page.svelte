@@ -270,11 +270,15 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Вход — ФАН ФАН</title>
+</svelte:head>
+
 <Card class="w-full p-4 sm:p-6">
 	<div class="space-y-4">
 		<h2 class="text-center text-2xl font-bold text-gray-900 dark:text-white">Вход в ФАН ФАН</h2>
 
-		<Tabs tabStyle="underline" contentClass="mt-3">
+		<Tabs tabStyle="underline" classes={{ content: 'mt-3' }}>
 			<TabItem open title="По коду">
 				<form onsubmit={handleCodeRequestSubmit} class="space-y-3">
 					<div>
@@ -308,7 +312,8 @@
 
 					{#if codeSentTo}
 						<Alert color="green">
-							Код отправлен на <span class="font-medium">{codeSentTo}</span>
+							Код отправлен на <span class="font-medium">{codeSentTo}</span>. Не забудьте проверить
+							папку "Спам"
 						</Alert>
 					{/if}
 
@@ -326,7 +331,7 @@
 								pattern="[0-9]*"
 								maxlength={6}
 								disabled={isBusy}
-								class="text-center text-lg tracking-[0.35em]"
+								class="text-center text-lg tracking-widest"
 								color={loginCodeError ? 'red' : undefined}
 								oninput={() => {
 									loginCode = loginCode.replace(/\D/g, '').slice(0, 6);
@@ -443,7 +448,7 @@
 							{#snippet right()}
 								<button
 									type="button"
-									class="pointer-events-auto"
+									class="pointer-events-auto -m-1 rounded-md p-1 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-700"
 									onclick={() => (showPassword = !showPassword)}
 									aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
 									aria-pressed={showPassword}

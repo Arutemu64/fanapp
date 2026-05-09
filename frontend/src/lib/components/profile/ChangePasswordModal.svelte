@@ -92,7 +92,7 @@
 					{#snippet right()}
 						<button
 							type="button"
-							class="pointer-events-auto"
+							class="pointer-events-auto -m-1 rounded-md p-1 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-700"
 							onclick={() => (showOldPassword = !showOldPassword)}
 							aria-label={showOldPassword ? 'Скрыть старый пароль' : 'Показать старый пароль'}
 							aria-pressed={showOldPassword}
@@ -124,7 +124,7 @@
 				{#snippet right()}
 					<button
 						type="button"
-						class="pointer-events-auto"
+						class="pointer-events-auto -m-1 rounded-md p-1 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-700"
 						onclick={() => (showNewPassword = !showNewPassword)}
 						aria-label={showNewPassword ? 'Скрыть новый пароль' : 'Показать новый пароль'}
 						aria-pressed={showNewPassword}

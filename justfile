@@ -57,7 +57,7 @@ backend-generate MIGRATION_NAME:
 
 # ---- Docker infra helpers ----
 run-dev:
-    docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile core up --watch
+    docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile core up --build --watch
 
 run-prod:
     docker compose -f docker-compose.yml --profile core --profile ops up --build

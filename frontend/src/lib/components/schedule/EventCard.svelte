@@ -132,7 +132,7 @@
 				: 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900'
 		]}
 	>
-		<span class="text-[10px] font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
+		<span class="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
 			№
 		</span>
 		<span class="text-base leading-none font-bold text-gray-900 dark:text-white"
@@ -144,7 +144,7 @@
 		<div class="flex items-start gap-2">
 			<div class="min-w-0 flex-1">
 				<h3
-					class="text-sm leading-5 font-semibold text-gray-900 sm:text-[15px] dark:text-white"
+					class="text-sm leading-5 font-semibold text-gray-900 sm:text-base dark:text-white"
 					class:line-through={event.is_skipped}
 				>
 					{event.title}
@@ -155,7 +155,7 @@
 						<Badge
 							color="green"
 							border
-							class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium"
+							class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium"
 						>
 							<PlayOutline class="h-3.5 w-3.5" />
 							Сейчас
@@ -166,7 +166,7 @@
 						<Badge
 							color="red"
 							border
-							class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium"
+							class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium"
 						>
 							<BanOutline class="h-3.5 w-3.5" />
 							Пропущено
@@ -176,7 +176,7 @@
 					<Badge
 						color="gray"
 						border
-						class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium"
+						class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium"
 					>
 						<ClockOutline class="h-3.5 w-3.5" />
 						{formatDuration(event.duration)}
@@ -186,7 +186,7 @@
 						<Badge
 							color="yellow"
 							border
-							class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium"
+							class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium"
 						>
 							<HourglassOutline class="h-3.5 w-3.5" />
 							{formatUntil(queueUntil ?? 0, timeUntil)}
@@ -197,7 +197,7 @@
 						<Badge
 							color="blue"
 							border
-							class="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium"
+							class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium"
 						>
 							<BellActiveSolid class="h-3.5 w-3.5" />
 							{event.user_subscription.counter}

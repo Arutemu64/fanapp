@@ -18,7 +18,8 @@ class MailProvider(Provider):
             MAIL_PORT=config.port,
             MAIL_STARTTLS=True,
             MAIL_SSL_TLS=False,
-            MAIL_FROM="FAN App <from@app.fancom.info>",
+            MAIL_FROM=config.sender.email,
+            MAIL_FROM_NAME=config.sender.name,
         )
 
     @provide

@@ -118,6 +118,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>Регистрация — ФАН ФАН</title>
+</svelte:head>
+
 <Card class="w-full p-4 sm:p-6">
 	<form onsubmit={handleSignup} class="space-y-4">
 		<h2 class="text-center text-2xl font-bold text-gray-900 dark:text-white">
@@ -181,7 +185,7 @@
 				{#snippet right()}
 					<button
 						type="button"
-						class="pointer-events-auto"
+						class="pointer-events-auto -m-1 rounded-md p-1 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-700"
 						onclick={() => (showPassword = !showPassword)}
 						aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
 						aria-pressed={showPassword}

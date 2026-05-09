@@ -32,23 +32,26 @@
 </script>
 
 <div
-	class={`rounded-xl border border-gray-200 bg-white text-left shadow-sm dark:border-gray-700 dark:bg-gray-800 ${
+	class={[
+		'rounded-xl border border-gray-200 bg-white text-left shadow-sm dark:border-gray-700 dark:bg-gray-800',
 		compact ? 'p-3' : 'p-4'
-	}`}
+	]}
 >
 	<div class="flex items-start gap-3">
 		<div
-			class={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${
+			class={[
+				'mt-1 h-2.5 w-2.5 shrink-0 rounded-full',
 				notification.seen_at ? 'bg-gray-300 dark:bg-gray-600' : 'bg-primary-600 dark:bg-primary-500'
-			}`}
+			]}
 		></div>
 
 		<div class="min-w-0 flex-1">
 			<div class="flex flex-wrap items-start gap-2">
 				<div
-					class={`font-semibold whitespace-normal text-gray-900 dark:text-white ${
+					class={[
+						'font-semibold whitespace-normal text-gray-900 dark:text-white',
 						compact ? 'text-sm' : 'text-base'
-					}`}
+					]}
 				>
 					{notification.title}
 				</div>
@@ -63,9 +66,10 @@
 			</div>
 
 			<div
-				class={`notification-body text-sm leading-relaxed whitespace-normal text-gray-500 dark:text-gray-400 ${
+				class={[
+					'notification-body text-sm leading-relaxed whitespace-normal text-gray-500 dark:text-gray-400',
 					compact ? 'mt-1' : 'mt-2'
-				}`}
+				]}
 			>
 				<div class="whitespace-pre-line">{bodyText}</div>
 			</div>
