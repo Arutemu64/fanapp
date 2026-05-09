@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { Search, Card, Button } from 'flowbite-svelte';
 	import { ArrowLeftOutline, CheckCircleSolid, UsersGroupOutline } from 'flowbite-svelte-icons';
-	import ParticipantCard from '$lib/components/voting/ParticipantCard.svelte';
-	import VotingStatusAlert from '$lib/components/voting/VotingStatusAlert.svelte';
+	import ParticipantCard from '../components/ParticipantCard.svelte';
+	import VotingStatusAlert from '../components/VotingStatusAlert.svelte';
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import { invalidate } from '$app/navigation';
 	import type { PageProps } from './$types';

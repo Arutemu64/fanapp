@@ -3,8 +3,8 @@
 	import { Card } from 'flowbite-svelte';
 	import { ThumbsUpOutline } from 'flowbite-svelte-icons';
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
-	import NominationCard from '$lib/components/voting/NominationCard.svelte';
-	import VotingStatusAlert from '$lib/components/voting/VotingStatusAlert.svelte';
+	import NominationCard from './components/NominationCard.svelte';
+	import VotingStatusAlert from './components/VotingStatusAlert.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();

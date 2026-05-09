@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
-	import BasicUserInfoCard from '$lib/components/profile/BasicUserInfoCard.svelte';
-	import TicketLinkCard from '$lib/components/profile/TicketLinkCard.svelte';
-	import PushNotificationsCard from '$lib/components/profile/PushNotificationsCard.svelte';
+	import BasicUserInfoCard from './components/BasicUserInfoCard.svelte';
+	import TicketLinkCard from './components/TicketLinkCard.svelte';
+	import PushNotificationsCard from './components/PushNotificationsCard.svelte';
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
-	import SecurityCard from '$lib/components/profile/SecurityCard.svelte';
-	import PwaInstallCard from '$lib/components/profile/PwaInstallCard.svelte';
+	import SecurityCard from './components/SecurityCard.svelte';
+	import PwaInstallCard from './components/PwaInstallCard.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { PageProps } from './$types';
 	import { invalidate } from '$app/navigation';

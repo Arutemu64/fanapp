@@ -1,5 +1,5 @@
 <script lang="ts">
-	import NotificationsFeed from '$lib/components/notifications/NotificationsFeed.svelte';
+	import NotificationsFeed from './components/NotificationsFeed.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();

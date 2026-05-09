@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
 	import { page } from '$app/state';
-	import EventCard from '$lib/components/schedule/EventCard.svelte';
+	import EventCard from './components/EventCard.svelte';
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';

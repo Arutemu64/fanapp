@@ -7,8 +7,8 @@
 		NOTIFICATION_PAGE_REQUEST_LIMIT,
 		NOTIFICATION_PAGE_SIZE
 	} from '$lib/constants/notifications';
-	import NotificationListItem from './NotificationListItem.svelte';
-	import SectionHeader from '../SectionHeader.svelte';
+	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
+	import SectionHeader from '$lib/components/SectionHeader.svelte';
 
 	type Notification = components['schemas']['NotificationDTO'];
 
