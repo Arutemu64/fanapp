@@ -16,6 +16,28 @@ export function formatMoscowDateTime(value: string | number | Date): string {
 	return MOSCOW_DATE_TIME_FORMATTER.format(new Date(value));
 }
 
+export function formatRelativeTime(value: string | number | Date): string {
+	const date = new Date(value);
+	const now = new Date();
+	const diffSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+	if (diffSeconds < 60) {
+		return 'только что';
+	}
+
+	const diffMinutes = Math.floor(diffSeconds / 60);
+	if (diffMinutes < 60) {
+		return `${diffMinutes} ${pluralize(diffMinutes, 'минуту', 'минуты', 'минут')} назад`;
+	}
+
+	const diffHours = Math.floor(diffMinutes / 60);
+	if (diffHours < 24) {
+		return `${diffHours} ${pluralize(diffHours, 'час', 'часа', 'часов')} назад`;
+	}
+
+	return formatMoscowDateTime(date);
+}
+
 export function formatUntil(queueUntil: number, timeUntil: number): string {
 	const h = Math.floor(timeUntil / 3600);
 	const m = Math.ceil((timeUntil % 3600) / 60);
