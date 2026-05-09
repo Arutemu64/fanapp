@@ -2955,6 +2955,68 @@
         }
       }
     },
+    "/notifications/broadcast": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Send broadcast notification",
+        "description": "Creates a new mailing broadcast for specified user roles.",
+        "operationId": "send_broadcast_notifications_broadcast_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendBroadcastInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Broadcast initiated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendBroadcastOutput"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/push/": {
       "get": {
         "tags": [
@@ -3832,7 +3894,8 @@
           "schedule_change",
           "schedule_subscription",
           "message",
-          "points_received"
+          "points_received",
+          "broadcast"
         ],
         "title": "NotificationType"
       },
@@ -4264,6 +4327,41 @@
           "counter"
         ],
         "title": "ScheduleEventSubscriptionDTO"
+      },
+      "SendBroadcastInput": {
+        "properties": {
+          "body": {
+            "type": "string",
+            "title": "Body"
+          },
+          "roles": {
+            "items": {
+              "$ref": "#/components/schemas/UserRole"
+            },
+            "type": "array",
+            "title": "Roles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "body",
+          "roles"
+        ],
+        "title": "SendBroadcastInput"
+      },
+      "SendBroadcastOutput": {
+        "properties": {
+          "mailing_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Mailing Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mailing_id"
+        ],
+        "title": "SendBroadcastOutput"
       },
       "TCloudWebhookPayload": {
         "properties": {

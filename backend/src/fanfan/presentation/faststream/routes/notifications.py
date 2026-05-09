@@ -16,20 +16,20 @@ from fanfan.application.interactors.notifications.new_notification import (
     NewNotification,
     NewNotificationInput,
 )
+from fanfan.application.interactors.notifications.process_broadcast import (
+    ProcessBroadcast,
+    ProcessBroadcastInput,
+)
 from fanfan.application.interactors.notifications.send_notification import (
     SendNotification,
     SendNotificationInput,
-)
-from fanfan.application.interactors.notifications.send_notification_to_roles import (
-    SendNotificationToRoles,
-    SendNotificationToRolesInput,
 )
 from fanfan.application.ports.realtime_gateway import RealtimeGateway
 from fanfan.core.events.notifications import (
     CancelMailingEvent,
     CreatedNotificationEvent,
+    NewBroadcastEvent,
     NewNotificationEvent,
-    NewRolesNotificationEvent,
 )
 from fanfan.core.exceptions.notifications import (
     MailingCancelled,
@@ -169,19 +169,18 @@ async def send_push_notification(
 
 
 @notifications_router.subscriber(
-    NewRolesNotificationEvent.subject,
+    NewBroadcastEvent.subject,
     stream=stream,
     pull_sub=PullSub(),
-    durable="create_new_roles_notification",
+    durable="create_new_broadcast",
 )
 @inject
-async def create_new_roles_notification(
-    data: NewRolesNotificationEvent,
-    interactor: FromDishka[SendNotificationToRoles],
+async def create_new_broadcast(
+    data: NewBroadcastEvent,
+    interactor: FromDishka[ProcessBroadcast],
 ) -> None:
     await interactor(
-        SendNotificationToRolesInput(
-            title=data.title,
+        ProcessBroadcastInput(
             body=data.body,
             roles=data.roles,
             mailing_id=data.mailing_id,

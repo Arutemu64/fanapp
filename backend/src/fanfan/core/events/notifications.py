@@ -19,13 +19,12 @@ class CreatedNotificationEvent(AppEvent):
     notification_id: NotificationId
 
 
-class NewRolesNotificationEvent(AppEvent):
-    subject: ClassVar[str] = "notifications.roles.new"
+class NewBroadcastEvent(AppEvent):
+    subject: ClassVar[str] = "notifications.broadcast.new"
 
-    title: str
+    mailing_id: MailingId
     body: str
     roles: list[UserRole]
-    mailing_id: MailingId
 
 
 class CancelMailingEvent(AppEvent):

@@ -12,14 +12,13 @@ from fanfan.core.vo.notification import NotificationType
 from fanfan.core.vo.user import UserRole
 
 
-class SendNotificationToRolesInput(BaseModel):
-    title: str
+class ProcessBroadcastInput(BaseModel):
+    mailing_id: MailingId
     body: str
     roles: list[UserRole]
-    mailing_id: MailingId
 
 
-class SendNotificationToRoles:
+class ProcessBroadcast:
     def __init__(
         self,
         user_query: UserQuery,
@@ -32,7 +31,7 @@ class SendNotificationToRoles:
         self.mailing_repo = mailing_repo
         self.trx = trx
 
-    async def __call__(self, data: SendNotificationToRolesInput):
+    async def __call__(self, data: ProcessBroadcastInput):
         users = await self.user_query.read_all_by_roles(*data.roles)
         mailing = await self.mailing_repo.get(data.mailing_id)
         if mailing is None:
@@ -45,10 +44,10 @@ class SendNotificationToRoles:
             NewNotificationEvent(
                 notification=NewNotificationDTO(
                     user_id=u.id,
-                    title=data.title,
+                    title="Рассылка от организаторов",
                     body=data.body,
                     mailing_id=data.mailing_id,
-                    type=NotificationType.DEFAULT,
+                    type=NotificationType.BROADCAST,
                 )
             )
             for u in users

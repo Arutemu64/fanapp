@@ -13,6 +13,11 @@ from fanfan.application.interactors.notifications.list_user_notifications import
     ListUserNotificationsInput,
 )
 from fanfan.application.interactors.notifications.mark_all_read import MarkAllRead
+from fanfan.application.interactors.notifications.send_broadcast import (
+    SendBroadcast,
+    SendBroadcastInput,
+    SendBroadcastOutput,
+)
 from fanfan.application.interactors.notifications.send_test_notification import (
     SendTestNotification,
 )
@@ -74,3 +79,22 @@ async def send_test_notification(
 ) -> None:
     await interactor()
     return
+
+
+@notifications_router.post(
+    "/broadcast",
+    summary="Send broadcast notification",
+    description="Creates a new mailing broadcast for specified user roles.",
+    responses={
+        200: {
+            "model": SendBroadcastOutput,
+            "description": "Broadcast initiated successfully.",
+        },
+    },
+)
+@inject
+async def send_broadcast(
+    data: SendBroadcastInput,
+    interactor: FromDishka[SendBroadcast],
+) -> SendBroadcastOutput:
+    return await interactor(data)

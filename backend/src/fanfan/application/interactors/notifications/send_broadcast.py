@@ -7,7 +7,7 @@ from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.mailing import MailingService
-from fanfan.core.events.notifications import NewRolesNotificationEvent
+from fanfan.core.events.notifications import NewBroadcastEvent
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.user import UserRole
@@ -15,19 +15,16 @@ from fanfan.core.vo.user import UserRole
 logger = logging.getLogger(__name__)
 
 
-class CreateRoleMailingInput(BaseModel):
-    title: str
+class SendBroadcastInput(BaseModel):
     body: str
     roles: list[UserRole]
 
 
-class CreateRoleMailingOutput(BaseModel):
-    title: str
-    body: str
-    roles: list[UserRole]
+class SendBroadcastOutput(BaseModel):
+    mailing_id: MailingId
 
 
-class CreateRoleMailing:
+class SendBroadcast:
     def __init__(
         self,
         current_user_provider: CurrentUserProvider,
@@ -42,7 +39,7 @@ class CreateRoleMailing:
         self.events_broker = events_broker
         self.uow = uow
 
-    async def __call__(self, data: CreateRoleMailingInput) -> MailingId:
+    async def __call__(self, data: SendBroadcastInput) -> SendBroadcastOutput:
         current_user = await self.current_user_provider.require_user()
         # TODO add proper permission
         if current_user.role is not UserRole.ORG:
@@ -54,16 +51,15 @@ class CreateRoleMailing:
         await self.uow.commit()
 
         await self.events_broker.publish(
-            NewRolesNotificationEvent(
-                title="📣 Сообщение от организаторов",
+            NewBroadcastEvent(
+                mailing_id=mailing.id,
                 body=data.body,
                 roles=data.roles,
-                mailing_id=mailing.id,
             )
         )
         logger.info(
-            "New roles mailing %s initiated by user %s",
+            "New broadcast %s initiated by user %s",
             mailing.id,
             current_user.id,
         )
-        return mailing.id
+        return SendBroadcastOutput(mailing_id=mailing.id)

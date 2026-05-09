@@ -32,6 +32,7 @@
 	} from 'flowbite-svelte';
 	import {
 		AdjustmentsHorizontalOutline,
+		BullhornOutline,
 		CalendarWeekOutline,
 		ClockArrowOutline,
 		FileImportOutline,
@@ -168,6 +169,13 @@
 					{#snippet icon()}
 						<!-- This matches the page action: importing a schedule file. -->
 						<FileImportOutline
+							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+						/>
+					{/snippet}
+				</SidebarItem>
+				<SidebarItem label="Рассылка уведомлений" href="/org/broadcast">
+					{#snippet icon()}
+						<BullhornOutline
 							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
 						/>
 					{/snippet}

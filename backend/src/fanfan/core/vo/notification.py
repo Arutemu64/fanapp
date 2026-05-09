@@ -11,3 +11,4 @@ class NotificationType(StrEnum):
     SCHEDULE_SUBSCRIPTION = "schedule_subscription"
     MESSAGE = "message"
     POINTS_RECEIVED = "points_received"
+    BROADCAST = "broadcast"

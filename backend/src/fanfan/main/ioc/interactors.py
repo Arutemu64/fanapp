@@ -31,9 +31,6 @@ from fanfan.application.interactors.current_user.update_user import UpdateCurren
 from fanfan.application.interactors.current_user.update_user_settings import (
     UpdateUserSettings,
 )
-from fanfan.application.interactors.notifications.create_role_mailing import (
-    CreateRoleMailing,
-)
 from fanfan.application.interactors.notifications.delete_mailing_messages import (
     DeleteMailingMessages,
 )
@@ -48,11 +45,14 @@ from fanfan.application.interactors.notifications.mark_all_read import MarkAllRe
 from fanfan.application.interactors.notifications.new_notification import (
     NewNotification,
 )
+from fanfan.application.interactors.notifications.process_broadcast import (
+    ProcessBroadcast,
+)
+from fanfan.application.interactors.notifications.send_broadcast import (
+    SendBroadcast,
+)
 from fanfan.application.interactors.notifications.send_notification import (
     SendNotification,
-)
-from fanfan.application.interactors.notifications.send_notification_to_roles import (
-    SendNotificationToRoles,
 )
 from fanfan.application.interactors.notifications.send_personal_notification import (
     SendMessage,
@@ -127,13 +127,13 @@ class InteractorsProvider(Provider):
     list_schedule_changes = provide(ListScheduleChanges)
     import_schedule = provide(ImportSchedule)
 
-    create_mailing = provide(CreateRoleMailing)
+    create_mailing = provide(SendBroadcast)
     get_mailing_info = provide(GetMailingInfo)
     get_notification = provide(GetNotification)
     proceed_mailing_cancel = provide(DeleteMailingMessages)
     send_notification = provide(SendNotification)
     send_message_to_user = provide(SendMessage)
-    send_to_roles = provide(SendNotificationToRoles)
+    send_to_roles = provide(ProcessBroadcast)
 
     get_nominations_page = provide(ListVotingNominations)
 
