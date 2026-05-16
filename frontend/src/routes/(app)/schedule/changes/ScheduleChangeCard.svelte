@@ -4,7 +4,11 @@
 	import { client } from '$lib/api';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { invalidate } from '$app/navigation';
-	import type { ScheduleChangeEventDTO, ScheduleChangeFullDTO, ScheduleChangeType } from '$lib/types/schedule';
+	import type {
+		ScheduleChangeEventDTO,
+		ScheduleChangeFullDTO,
+		ScheduleChangeType
+	} from '$lib/types/schedule';
 
 	let { change } = $props<{ change: ScheduleChangeFullDTO }>();
 
@@ -113,12 +117,7 @@
 			<span class="text-xs text-gray-500 dark:text-gray-400">
 				ID: {change.id}
 			</span>
-			<Button
-				color="light"
-				size="xs"
-				onclick={undoChange}
-				disabled={isUndoing}
-			>
+			<Button color="light" size="xs" onclick={undoChange} disabled={isUndoing}>
 				{#if isUndoing}
 					<Spinner size="4" />
 				{:else}

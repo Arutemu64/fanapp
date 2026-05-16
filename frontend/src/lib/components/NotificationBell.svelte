@@ -32,14 +32,6 @@
 		}
 	}
 
-	function getNotificationToastMessage(notification: Notification) {
-		if (!notification.body) {
-			return notification.title;
-		}
-
-		return `${notification.title}: ${notification.body}`;
-	}
-
 	function addNotificationToPreview(notification: Notification) {
 		const alreadyExists = notifications.some(
 			(existingNotification) => existingNotification.id === notification.id
@@ -103,7 +95,7 @@
 
 			const isNewNotification = addNotificationToPreview(notification);
 			if (isNewNotification) {
-				toastService.add(getNotificationToastMessage(notification), 'info');
+				toastService.push(notification);
 			}
 		};
 
