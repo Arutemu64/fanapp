@@ -69,7 +69,7 @@
 			{/snippet}
 		</SidebarItem>
 		{#if canSeeVolunteerMenu}
-			<SidebarDropdownWrapper label="Для волонтеров" btnClass="p-2">
+			<SidebarDropdownWrapper label="Для волонтеров" classes={{ btn: "p-2" }}>
 				{#snippet icon()}
 					<UsersGroupOutline
 						class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
@@ -87,7 +87,7 @@
 			</SidebarDropdownWrapper>
 		{/if}
 		{#if canSeeOrganizerMenu}
-			<SidebarDropdownWrapper label="Для организаторов" btnClass="p-2">
+			<SidebarDropdownWrapper label="Для организаторов" classes={{ btn: "p-2" }}>
 				{#snippet icon()}
 					<ShieldOutline
 						class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
