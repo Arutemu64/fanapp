@@ -9,10 +9,10 @@
 		EnvelopeSolid,
 		ExclamationCircleSolid,
 		LinkOutline,
-		PaperPlaneOutline,
 		ShieldOutline,
 		TrashBinOutline
 	} from 'flowbite-svelte-icons';
+	import IconTelegram from '~icons/simple-icons/telegram';
 	import ChangePasswordModal from './ChangePasswordModal.svelte';
 	import ChangeEmailModal from './ChangeEmailModal.svelte';
 	import ProfileCardShell from './ProfileCardShell.svelte';
@@ -314,7 +314,7 @@
 			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 				<div class="min-w-0">
 					<div class="flex flex-wrap items-center gap-2">
-						<PaperPlaneOutline class="h-4 w-4 text-sky-500" />
+						<IconTelegram class="h-4 w-4 text-sky-500" />
 						<p class="font-medium text-gray-900 dark:text-white">Telegram</p>
 						<Badge color={telegramAccount ? 'green' : 'gray'}>
 							{telegramAccount ? 'Подключён' : 'Не подключён'}

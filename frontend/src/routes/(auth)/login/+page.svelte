@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { Button, Card, Tabs, TabItem } from 'flowbite-svelte';
+	import IconTelegram from '~icons/simple-icons/telegram';
 	import CodeLoginForm from './CodeLoginForm.svelte';
 	import PasswordLoginForm from './PasswordLoginForm.svelte';
 
@@ -39,6 +40,7 @@
 				color="alternative"
 				class="min-h-11 w-full rounded-xl font-medium"
 			>
+				<IconTelegram class="me-2 h-5 w-5 text-sky-500" />
 				Войти через Telegram
 			</Button>
 		</div>
