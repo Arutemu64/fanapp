@@ -13,7 +13,7 @@
 <BottomNav
 	{activeUrl}
 	position="fixed"
-	class="bottom-0 left-0 z-50 w-full border-t border-gray-200 bg-white md:hidden dark:border-gray-800 dark:bg-gray-900"
+	class="bottom-0 left-0 z-50 w-full border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] md:hidden dark:border-gray-800 dark:bg-gray-900"
 	classes={{ inner: 'grid-cols-4' }}
 >
 	<BottomNavItem btnName="Главная" href="/">

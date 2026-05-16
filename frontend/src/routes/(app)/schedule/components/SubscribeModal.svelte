@@ -56,7 +56,7 @@
 			type="button"
 			color="light"
 			onclick={decrement}
-			class="h-10 w-10 p-0"
+			class="h-11 w-11 p-0"
 			disabled={counter <= 1}
 			aria-label="Уменьшить"
 		>
@@ -79,7 +79,7 @@
 			type="button"
 			color="light"
 			onclick={increment}
-			class="h-10 w-10 p-0"
+			class="h-11 w-11 p-0"
 			disabled={counter >= 100}
 			aria-label="Увеличить"
 		>

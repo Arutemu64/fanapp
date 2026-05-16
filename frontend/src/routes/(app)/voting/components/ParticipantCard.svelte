@@ -112,7 +112,7 @@
 			</span>
 		</div>
 
-		<div class="flex min-h-8 min-w-24 items-center">
+		<div class="flex min-h-11 min-w-24 items-center">
 			{#if participant.user_vote !== null}
 				<Button
 					size="md"

@@ -65,7 +65,7 @@
 </script>
 
 <Navbar
-	class="sticky top-0 z-40 border-b border-gray-200/50 bg-white/80 px-4 py-2.5 backdrop-blur-md transition-colors duration-300 sm:px-6 dark:border-gray-700/50 dark:bg-gray-900/80"
+	class="sticky top-0 z-40 border-b border-gray-200/50 bg-white/80 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] backdrop-blur-md transition-colors duration-300 sm:px-6 dark:border-gray-700/50 dark:bg-gray-900/80"
 >
 	<SidebarButton onclick={toggleSidebar} class="md:hidden" />
 	<div class="flex-1"></div>

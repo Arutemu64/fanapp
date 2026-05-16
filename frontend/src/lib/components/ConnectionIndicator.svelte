@@ -73,7 +73,7 @@
 <button
 	id="connection-indicator-trigger"
 	type="button"
-	class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none dark:focus-visible:ring-gray-500 dark:focus-visible:ring-offset-gray-900"
+	class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none dark:focus-visible:ring-gray-500 dark:focus-visible:ring-offset-gray-900"
 	aria-label={tooltipLabel}
 	aria-expanded={tooltipOpen}
 	onclick={() => (tooltipOpen = true)}
