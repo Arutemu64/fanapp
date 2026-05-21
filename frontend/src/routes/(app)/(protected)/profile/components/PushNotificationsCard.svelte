@@ -333,7 +333,8 @@
 	</div>
 </ProfileCardShell>
 
-<Modal title="Установи приложение" bind:open={showIosPwaModal} autoclose size="sm">
+<Modal bind:open={showIosPwaModal} autoclose size="sm">
+	<h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Установи приложение</h3>
 	<div class="space-y-4">
 		<p class="text-base leading-relaxed text-gray-500 dark:text-gray-400">
 			Для работы Push-уведомлений на iOS необходимо добавить приложение на экран «Домой».

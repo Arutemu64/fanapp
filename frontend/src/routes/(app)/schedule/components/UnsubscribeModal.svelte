@@ -35,7 +35,8 @@
 	}
 </script>
 
-<Modal bind:open size="sm" title="Отписка от уведомлений">
+<Modal bind:open size="sm">
+	<h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Отписка от уведомлений</h3>
 	<p class="text-gray-600 dark:text-gray-400">
 		Хочешь отписаться от уведомлений о выступлении <strong class="text-gray-900 dark:text-white"
 			>{event.title}</strong
@@ -47,10 +48,7 @@
 			Отмена
 		</Button>
 		<Button type="button" color="red" onclick={handleUnsubscribe} class="flex-1">
-			<span class="flex items-center gap-2">
-				<BellOutline class="h-4 w-4" />
-				Отписаться
-			</span>
+			Отписаться
 		</Button>
 	</div>
 </Modal>

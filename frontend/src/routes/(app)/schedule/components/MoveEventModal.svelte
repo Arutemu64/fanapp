@@ -62,8 +62,9 @@
 	}
 </script>
 
-<Modal bind:open size="sm" title="Переместить событие" class="px-2">
+<Modal bind:open size="sm" class="px-2">
 	<div class="flex flex-col gap-4 sm:gap-5">
+		<h3 class="text-xl font-semibold text-gray-900 dark:text-white">Переместить событие</h3>
 		<p class="text-sm text-gray-600 sm:text-base dark:text-gray-400">
 			Выбери событие, <strong class="text-gray-900 dark:text-white">после</strong> которого будет
 			размещено:
@@ -109,10 +110,7 @@
 			size="lg"
 			disabled={!selectedId}
 		>
-			<span class="flex items-center justify-center gap-2">
-				<ShuffleOutline class="h-5 w-5 sm:h-6 sm:w-6" />
-				Переместить
-			</span>
+			Переместить
 		</Button>
 	</div>
 </Modal>
