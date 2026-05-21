@@ -1,7 +1,12 @@
 from fanfan.application.ports.events_broker import EventBroker
+from fanfan.application.ports.rate_lock import RateLockFactory
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.events.users import EmailConfirmationCodeRequestedEvent
+from fanfan.core.exceptions.rate_limit import EmailCodeRequestTooFast, RateLockCooldown
+from fanfan.core.exceptions.users import UserHasNoEmail
+from fanfan.core.services.email_login import EMAIL_CODE_REQUEST_COOLDOWN_SECONDS
+from fanfan.core.utils.email import normalize_email
 
 
 class RequestEmailCode:
@@ -10,14 +15,30 @@ class RequestEmailCode:
         user_repo: UserRepository,
         event_broker: EventBroker,
         current_user_provider: CurrentUserProvider,
+        rate_lock_factory: RateLockFactory,
     ):
         self.user_repo = user_repo
         self.event_broker = event_broker
         self.current_user_provider = current_user_provider
+        self.rate_lock_factory = rate_lock_factory
 
     async def __call__(self) -> None:
         current_user = await self.current_user_provider.require_user()
 
-        await self.event_broker.publish(
-            EmailConfirmationCodeRequestedEvent(user_id=current_user.id)
+        target_email = current_user.pending_email or current_user.email
+        if target_email is None:
+            raise UserHasNoEmail
+
+        normalized_email = normalize_email(target_email)
+
+        lock = self.rate_lock_factory(
+            f"email_code_request:{normalized_email}",
+            cooldown_period=EMAIL_CODE_REQUEST_COOLDOWN_SECONDS,
         )
+        try:
+            async with lock:
+                await self.event_broker.publish(
+                    EmailConfirmationCodeRequestedEvent(user_id=current_user.id)
+                )
+        except RateLockCooldown as e:
+            raise EmailCodeRequestTooFast(retry_after=e.details["retry_after"])

@@ -28,6 +28,7 @@ from fanfan.core.exceptions.schedule import (
     ScheduleEditTooFast,
     SkippedEventNotAllowed,
 )
+from fanfan.core.exceptions.rate_limit import EmailCodeRequestTooFast
 from fanfan.core.exceptions.settings import AppAppSettingsNotFound
 from fanfan.core.exceptions.subscriptions import (
     SubscriptionAlreadyExist,
@@ -96,6 +97,7 @@ EXCEPTION_STATUS_MAP: dict[type[AppException], int] = {
     UserAlreadyHasTelegramLinked: status.HTTP_409_CONFLICT,
     # 429 Too Many Requests
     ScheduleEditTooFast: status.HTTP_429_TOO_MANY_REQUESTS,
+    EmailCodeRequestTooFast: status.HTTP_429_TOO_MANY_REQUESTS,
 }
 
 

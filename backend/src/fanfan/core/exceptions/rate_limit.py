@@ -17,3 +17,10 @@ class RateLockCooldown(LimiterException):
 
 class RateLockInUse(LimiterException):
     code = "RATE_LOCK_IN_USE"
+
+
+class EmailCodeRequestTooFast(LimiterException):
+    code = "EMAIL_CODE_REQUEST_TOO_FAST"
+
+    def __init__(self, retry_after: int):
+        super().__init__(details={"retry_after": retry_after})

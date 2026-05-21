@@ -2,12 +2,16 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { client } from '$lib/api';
+	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Button, Helper, Input, Label, Spinner } from 'flowbite-svelte';
 	import { EnvelopeSolid, EyeOutline, EyeSlashOutline, LockSolid } from 'flowbite-svelte-icons';
 
-	let { email = $bindable(''), isBusy = $bindable(false) } = $props();
+	let { email = $bindable(''), isBusy = $bindable(false) } = $props<{
+		email: string;
+		isBusy?: boolean;
+	}>();
 
 	type ActiveAction = 'password' | null;
 
@@ -25,18 +29,8 @@
 		isBusy = activeAction !== null;
 	});
 
-	function validateEmail(value: string): boolean {
-		if (!value) return false;
-		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		return emailRegex.test(value);
-	}
-
-	function getNormalizedEmail(): string {
-		return email.trim().toLowerCase();
-	}
-
-	let normalizedEmail = $derived(getNormalizedEmail());
-	let isEmailValid = $derived(email ? validateEmail(normalizedEmail) : null);
+	let normalizedEmail = $derived(normalizeEmail(email));
+	let isEmailValid = $derived(email ? isValidEmail(normalizedEmail) : null);
 	let emailColor = $derived.by((): 'green' | 'red' | undefined => {
 		if (emailError) return 'red';
 		if (!email) return undefined;
@@ -60,7 +54,7 @@
 
 		if (!normalizedEmail) {
 			emailError = 'Введи адрес эл. почты';
-		} else if (!validateEmail(normalizedEmail)) {
+		} else if (!isValidEmail(normalizedEmail)) {
 			emailError = 'Введи адрес в формате name@example.com';
 		}
 
@@ -78,6 +72,10 @@
 	}
 
 	async function submitPasswordLogin() {
+		if (activeAction !== null) {
+			return;
+		}
+
 		if (!validatePasswordForm()) {
 			return;
 		}
@@ -114,8 +112,8 @@
 	function handlePasswordSubmit(event: SubmitEvent) {
 		event.preventDefault();
 
-		if (isBusy && activeAction === null) {
-			return; // Busy from the other tab
+		if (activeAction !== null) {
+			return;
 		}
 
 		void submitPasswordLogin();
@@ -205,10 +203,4 @@
 		{/if}
 	</Button>
 
-	<p class="text-center text-sm text-gray-500 dark:text-gray-400">
-		Нет аккаунта?
-		<a href={resolve('/signup')} class="text-primary-600 hover:underline dark:text-primary-500">
-			Зарегистрироваться
-		</a>
-	</p>
 </form>

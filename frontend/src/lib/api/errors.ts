@@ -125,6 +125,7 @@ export function getApiErrorDetail(error: unknown): string | null {
 	// Коды, требующие дополнительной логики
 	const details = payload.details ?? {};
 	switch (payload.code) {
+		case 'EMAIL_CODE_REQUEST_TOO_FAST':
 		case 'SCHEDULE_EDIT_TOO_FAST':
 		case 'NOTIFICATION_RETRY_AFTER':
 			return formatRetryAfter(details.retry_after);
