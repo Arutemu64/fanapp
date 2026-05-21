@@ -86,7 +86,7 @@
 					<div class="flex flex-wrap items-center gap-2">
 						<EnvelopeSolid class="h-4 w-4 text-gray-500 dark:text-gray-400" />
 						<p class="font-medium text-gray-900 dark:text-white">Эл. почта</p>
-						<Badge color={emailStatusColor}>{emailStatusLabel}</Badge>
+						<Badge color={emailStatusColor} border>{emailStatusLabel}</Badge>
 					</div>
 
 					{#if user.email}
@@ -153,7 +153,7 @@
 					<div class="flex flex-wrap items-center gap-2">
 						<ShieldOutline class="h-4 w-4 text-gray-500 dark:text-gray-400" />
 						<p class="font-medium text-gray-900 dark:text-white">Пароль</p>
-						<Badge color={user.has_password ? 'green' : 'gray'}>
+						<Badge color={user.has_password ? 'green' : 'gray'} border>
 							{user.has_password ? 'Установлен' : 'Не установлен'}
 						</Badge>
 					</div>
@@ -184,7 +184,7 @@
 					<div class="flex flex-wrap items-center gap-2">
 						<IconTelegram class="h-4 w-4 text-sky-500" />
 						<p class="font-medium text-gray-900 dark:text-white">Telegram</p>
-						<Badge color={telegramAccount ? 'green' : 'gray'}>
+						<Badge color={telegramAccount ? 'green' : 'gray'} border>
 							{telegramAccount ? 'Подключён' : 'Не подключён'}
 						</Badge>
 					</div>

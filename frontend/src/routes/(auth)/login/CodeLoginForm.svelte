@@ -137,7 +137,9 @@
 			{:else if email && isEmailValid === false}
 				<Helper color="red" class="mt-1">Введи адрес в формате name@example.com</Helper>
 			{:else}
-				<Helper color="gray" class="mt-1">Если у вас ещё нет аккаунта, он будет создан автоматически.</Helper>
+				<Helper color="gray" class="mt-1"
+					>Если у вас ещё нет аккаунта, он будет создан автоматически.</Helper
+				>
 			{/if}
 		</div>
 

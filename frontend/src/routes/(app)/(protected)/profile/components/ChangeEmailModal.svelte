@@ -325,7 +325,8 @@
 		<div class="space-y-4">
 			{#if isResumed}
 				<Alert color="yellow" class="text-sm">
-					Для подтверждения адреса <span class="font-medium break-all">{emailSentTo}</span> введите 6-значный код из письма. Если код устарел, вы можете запросить новый ниже.
+					Для подтверждения адреса <span class="font-medium break-all">{emailSentTo}</span> введите 6-значный
+					код из письма. Если код устарел, вы можете запросить новый ниже.
 				</Alert>
 			{:else}
 				<Alert color="blue" class="text-sm">
@@ -334,7 +335,7 @@
 			{/if}
 
 			<div>
-				<Label class="mb-2 text-center block">Код подтверждения</Label>
+				<Label class="mb-2 block text-center">Код подтверждения</Label>
 				<OtpInput
 					bind:value={verificationCode}
 					disabled={isVerifying || isRequestingVerification}
@@ -343,9 +344,9 @@
 					onComplete={submitVerificationCode}
 				/>
 				{#if verificationCodeError}
-					<Helper color="red" class="mt-1 text-center block">{verificationCodeError}</Helper>
+					<Helper color="red" class="mt-1 block text-center">{verificationCodeError}</Helper>
 				{:else}
-					<Helper class="mt-1 text-center block">Введи 6 цифр из письма.</Helper>
+					<Helper class="mt-1 block text-center">Введи 6 цифр из письма.</Helper>
 				{/if}
 			</div>
 

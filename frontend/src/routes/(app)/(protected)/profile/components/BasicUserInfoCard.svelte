@@ -53,7 +53,7 @@
 				<h4 class="truncate text-lg font-semibold text-gray-900 dark:text-white">
 					{user.first_name || 'Пользователь'}
 				</h4>
-				<Badge color={getRoleColor(user.role)} class="text-xs">
+				<Badge color={getRoleColor(user.role)} border class="text-xs">
 					{getRoleLabel(user.role)}
 				</Badge>
 			</div>

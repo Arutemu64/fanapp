@@ -64,11 +64,11 @@
 	<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 		<div class="flex-1">
 			<div class="mb-2 flex flex-wrap items-center gap-2">
-				<Badge color={changeTypeColors[change.type as ScheduleChangeType]} class="text-sm">
+				<Badge color={changeTypeColors[change.type as ScheduleChangeType]} border class="text-sm">
 					{changeTypeLabels[change.type as ScheduleChangeType]}
 				</Badge>
 				{#if change.send_global_announcement}
-					<Badge color="red" class="text-sm">Объявление</Badge>
+					<Badge color="red" border class="text-sm">Объявление</Badge>
 				{/if}
 			</div>
 

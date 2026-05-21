@@ -83,7 +83,7 @@
 	]}
 >
 	{#if participant.user_vote !== null}
-		<Badge color="green" class="absolute top-2 right-2 shrink-0 text-sm">
+		<Badge color="green" border class="absolute top-2 right-2 shrink-0 text-sm">
 			<span class="flex items-center gap-1">
 				<CheckCircleSolid class="h-4 w-4" />
 				<span class="hidden sm:inline">Твой голос</span>

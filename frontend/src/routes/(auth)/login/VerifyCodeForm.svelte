@@ -141,7 +141,7 @@
 	</Alert>
 
 	<div>
-		<Label class="mb-2 text-center block">Код подтверждения</Label>
+		<Label class="mb-2 block text-center">Код подтверждения</Label>
 		<OtpInput
 			bind:value={loginCode}
 			disabled={isBusy && activeAction === null}
@@ -150,9 +150,9 @@
 			onComplete={submitLoginCode}
 		/>
 		{#if loginCodeError}
-			<Helper color="red" class="mt-1 text-center block">{loginCodeError}</Helper>
+			<Helper color="red" class="mt-1 block text-center">{loginCodeError}</Helper>
 		{:else}
-			<Helper class="mt-1 text-center block">Введи 6 цифр из письма.</Helper>
+			<Helper class="mt-1 block text-center">Введи 6 цифр из письма.</Helper>
 		{/if}
 	</div>
 
