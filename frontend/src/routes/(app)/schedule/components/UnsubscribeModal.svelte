@@ -36,7 +36,7 @@
 </script>
 
 <Modal bind:open size="sm">
-	<h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Отписка от уведомлений</h3>
+	<h3 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Отписка от уведомлений</h3>
 	<p class="text-gray-600 dark:text-gray-400">
 		Хочешь отписаться от уведомлений о выступлении <strong class="text-gray-900 dark:text-white"
 			>{event.title}</strong
@@ -47,8 +47,6 @@
 		<Button type="button" color="light" onclick={() => (open = false)} class="flex-1">
 			Отмена
 		</Button>
-		<Button type="button" color="red" onclick={handleUnsubscribe} class="flex-1">
-			Отписаться
-		</Button>
+		<Button type="button" color="red" onclick={handleUnsubscribe} class="flex-1">Отписаться</Button>
 	</div>
 </Modal>

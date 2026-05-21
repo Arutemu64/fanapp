@@ -107,7 +107,7 @@
 </script>
 
 {#if codeSentTo}
-	<VerifyCodeForm email={codeSentTo} bind:isBusy bind:showPasswordForm />
+	<VerifyCodeForm email={codeSentTo} bind:isBusy onBack={() => (codeSentTo = '')} />
 {:else}
 	<form onsubmit={handleSubmit} class="space-y-4">
 		<div>
@@ -136,21 +136,35 @@
 				<Helper color="red" class="mt-1">{emailError}</Helper>
 			{:else if email && isEmailValid === false}
 				<Helper color="red" class="mt-1">Введи адрес в формате name@example.com</Helper>
+			{:else}
+				<Helper color="gray" class="mt-1">Если у вас ещё нет аккаунта, он будет создан автоматически.</Helper>
 			{/if}
 		</div>
 
-		<Button
-			type="submit"
-			color="primary"
-			class="min-h-11 w-full rounded-xl font-medium"
-			disabled={isBusy && activeAction === null}
-		>
-			{#if activeAction === 'code-request'}
-				<Spinner size="4" class="mr-2" color="primary" />
-				Отправляем…
-			{:else}
-				Продолжить
-			{/if}
-		</Button>
+		<div class="flex flex-col space-y-2">
+			<Button
+				type="submit"
+				color="primary"
+				class="min-h-11 w-full rounded-xl font-medium"
+				disabled={isBusy && activeAction === null}
+			>
+				{#if activeAction === 'code-request'}
+					<Spinner size="4" class="mr-2" color="primary" />
+					Отправляем…
+				{:else}
+					Продолжить
+				{/if}
+			</Button>
+
+			<Button
+				type="button"
+				color="light"
+				class="min-h-11 w-full rounded-xl font-medium"
+				disabled={isBusy && activeAction === null}
+				onclick={() => (showPasswordForm = true)}
+			>
+				Войти с паролем
+			</Button>
+		</div>
 	</form>
 {/if}

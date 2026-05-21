@@ -4,29 +4,27 @@
 {% set title = "Подтверждение email" %}
 
 {% block content %}
-<p style="margin:0 0 16px; font-size:16px; line-height:24px;">
-  Здравствуйте, <strong>{{ username }}</strong>!
+<p style="margin:0 0 16px; font-size:16px; line-height:24px; color:#334155;">
+  Здравствуйте, <strong style="color:#0f172a;">{{ username }}</strong>!
 </p>
-<p style="margin:0 0 24px; font-size:16px; line-height:24px; color:#374151;">
-  Введите этот код в приложении ФАН ФАН, чтобы подтвердить email и завершить настройку учётной записи.
+<p style="margin:0 0 24px; font-size:15px; line-height:24px; color:#475569;">
+  Введите этот код в приложении ФАН ФАН, чтобы подтвердить ваш email и завершить настройку учётной записи.
 </p>
 
 <div
-  style="margin:0 0 24px; padding:18px 20px; border-radius:16px; background-color:#eff6ff; border:1px solid #bfdbfe; text-align:center;">
+  style="margin:0 0 24px; padding:24px 20px; border-radius:16px; background-color:#fff5f2; border:1px solid #ffd5cc; text-align:center;">
   <div
-    style="margin:0 0 8px; font-size:13px; line-height:20px; letter-spacing:0.08em; text-transform:uppercase; color:#1d4ed8;">
+    style="margin:0 0 8px; font-size:13px; line-height:20px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#cc4522;">
     Код подтверждения
   </div>
-  <div style="font-size:32px; line-height:40px; font-weight:700; letter-spacing:0.32em; color:#1d4ed8;">
-    {{ confirmation_code }}
-  </div>
+  <div style="font-size:36px; line-height:40px; font-weight:700; letter-spacing:0.25em; margin-right:-0.25em; color:#ef562f; font-family:'Inter', -apple-system, sans-serif;">{{ confirmation_code }}</div>
 </div>
 
-<p style="margin:0 0 12px; font-size:14px; line-height:22px; color:#4b5563;">
-  Код действует {{ expires_in_minutes }} минут.
+<p style="margin:0 0 12px; font-size:14px; line-height:20px; color:#64748b;">
+  Код действует <strong>{{ expires_in_minutes }}</strong> минут.
 </p>
 
-<p style="margin:0; font-size:14px; line-height:22px; color:#6b7280;">
+<p style="margin:0; font-size:13px; line-height:20px; color:#94a3b8;">
   Если вы не запрашивали это письмо, просто проигнорируйте его.
 </p>
 {% endblock %}

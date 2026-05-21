@@ -5,22 +5,23 @@
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { Alert, Button, Helper, Input, Label, Spinner } from 'flowbite-svelte';
+	import { Alert, Button, Helper, Label, Spinner } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
+	import OtpInput from '$lib/components/OtpInput.svelte';
 
 	let {
 		email,
 		isBusy = $bindable(false),
-		showPasswordForm = $bindable(false)
+		onBack
 	} = $props<{
 		email: string;
 		isBusy?: boolean;
-		showPasswordForm?: boolean;
+		onBack?: () => void;
 	}>();
 
 	type ActiveAction = 'code-request' | 'code-login' | null;
 
-	let codeDigits = $state(['', '', '', '', '', '']);
+	let loginCode = $state('');
 	let activeAction = $state<ActiveAction>(null);
 	let loginCodeError = $state('');
 
@@ -29,8 +30,6 @@
 
 	const eventsClient = getEventsClient();
 	const toastService = getToastService();
-
-	let loginCode = $derived(codeDigits.join(''));
 
 	// Update parent isBusy state
 	$effect(() => {
@@ -119,57 +118,14 @@
 				return;
 			}
 
-			codeDigits = ['', '', '', '', '', ''];
+			loginCode = '';
 			toastService.add('Код отправлен повторно', 'success');
 			startCooldown();
-			setTimeout(() => document.getElementById('code-0')?.focus(), 50);
 		} catch (error) {
 			toastService.error(error);
 		} finally {
 			activeAction = null;
 		}
-	}
-
-	function handlePinKeyup(event: KeyboardEvent, index: number) {
-		const target = event.target as HTMLInputElement;
-
-		if (event.key === 'Backspace' && target.value.length === 0 && index > 0) {
-			document.getElementById(`code-${index - 1}`)?.focus();
-			return;
-		}
-
-		if (target.value.length > 0 && index < 5) {
-			document.getElementById(`code-${index + 1}`)?.focus();
-		}
-	}
-
-	function handlePinPaste(event: ClipboardEvent) {
-		event.preventDefault();
-		// @ts-expect-error - clipboardData is not standard on Window but exists in IE/older Edge
-		const windowClipboard = window.clipboardData;
-		const pasteData =
-			event.clipboardData?.getData('text') || windowClipboard?.getData('text') || '';
-		const digits = pasteData.replace(/\D/g, ''); // Only take numbers
-
-		if (!digits) return;
-
-		for (let i = 0; i < 6; i++) {
-			if (digits[i]) {
-				codeDigits[i] = digits[i];
-			}
-		}
-
-		const nextEmptyIndex = codeDigits.findIndex((d) => d === '');
-		if (nextEmptyIndex !== -1) {
-			document.getElementById(`code-${nextEmptyIndex}`)?.focus();
-		} else {
-			document.getElementById(`code-5`)?.focus();
-			if (loginCode.length === 6) {
-				void submitLoginCode();
-			}
-		}
-
-		resetLoginCodeFeedback();
 	}
 
 	function handleSubmit(event: SubmitEvent) {
@@ -185,39 +141,18 @@
 	</Alert>
 
 	<div>
-		<Label class="mb-2">Код из письма</Label>
-		<div class="flex justify-between space-x-2 rtl:space-x-reverse">
-			{#each [0, 1, 2, 3, 4, 5] as i (i)}
-				<div>
-					<label for={`code-${i}`} class="sr-only">Code digit {i + 1}</label>
-					<Input
-						type="text"
-						inputmode="numeric"
-						autocomplete={i === 0 ? 'one-time-code' : 'off'}
-						maxlength={1}
-						id={`code-${i}`}
-						bind:value={codeDigits[i]}
-						onkeyup={(e) => handlePinKeyup(e, i)}
-						onpaste={i === 0 ? handlePinPaste : undefined}
-						oninput={() => {
-							codeDigits[i] = (codeDigits[i] || '').replace(/\D/g, '');
-							resetLoginCodeFeedback();
-							if (i === 5 && codeDigits[5] !== '' && loginCode.length === 6) {
-								void submitLoginCode();
-							}
-						}}
-						disabled={isBusy && activeAction === null}
-						color={loginCodeError ? 'red' : undefined}
-						class="block h-11 w-11 py-3 text-center text-lg font-extrabold sm:h-12 sm:w-12 sm:text-xl"
-						required
-					/>
-				</div>
-			{/each}
-		</div>
+		<Label class="mb-2 text-center block">Код подтверждения</Label>
+		<OtpInput
+			bind:value={loginCode}
+			disabled={isBusy && activeAction === null}
+			hasError={Boolean(loginCodeError)}
+			onInput={resetLoginCodeFeedback}
+			onComplete={submitLoginCode}
+		/>
 		{#if loginCodeError}
-			<Helper color="red" class="mt-1">{loginCodeError}</Helper>
+			<Helper color="red" class="mt-1 text-center block">{loginCodeError}</Helper>
 		{:else}
-			<Helper class="mt-1">Введи 6 цифр из письма.</Helper>
+			<Helper class="mt-1 text-center block">Введи 6 цифр из письма.</Helper>
 		{/if}
 	</div>
 
@@ -258,9 +193,9 @@
 			color="light"
 			class="min-h-11 w-full rounded-xl font-medium"
 			disabled={isBusy && activeAction === null}
-			onclick={() => (showPasswordForm = true)}
+			onclick={() => onBack?.()}
 		>
-			Войти с паролем
+			Назад
 		</Button>
 	</div>
 </form>
