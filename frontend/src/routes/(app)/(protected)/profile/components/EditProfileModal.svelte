@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { Modal, Input, Label, Helper, Button, Spinner } from 'flowbite-svelte';
+	import { Modal, Input, Label, Helper, Button, Spinner, Alert } from 'flowbite-svelte';
 	import { UserCircleSolid, UserSolid, EditOutline } from 'flowbite-svelte-icons';
 	import { client } from '$lib/api';
+	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { CurrentUserDTO } from '$lib/types/user';
 	import type { components } from '$lib/api/v1';
@@ -22,8 +23,9 @@
 	let firstName = $state('');
 	let isLoading = $state(false);
 
-	// Validation state
+	// Validation & form state
 	let usernameError = $state('');
+	let formError = $state('');
 
 	$effect(() => {
 		if (open) {
@@ -31,6 +33,7 @@
 				username = user.username ?? '';
 				firstName = user.first_name ?? '';
 				usernameError = '';
+				formError = '';
 			});
 		}
 	});
@@ -64,6 +67,7 @@
 		const target = e.target as HTMLInputElement;
 		username = target.value;
 		usernameError = validateUsername(username);
+		formError = '';
 	}
 
 	function hasChanges(): boolean {
@@ -104,7 +108,7 @@
 		isLoading = false;
 
 		if (error) {
-			toastService.error(error);
+			formError = getApiErrorDetail(error) ?? 'Не удалось обновить профиль';
 			return;
 		}
 
@@ -131,6 +135,12 @@
 	{/snippet}
 
 	<form onsubmit={handleSubmit} class="space-y-4">
+		{#if formError}
+			<Alert color="red" class="rounded-xl text-sm">
+				{formError}
+			</Alert>
+		{/if}
+
 		<div>
 			<Label for="username" class="mb-2 block">Псевдоним</Label>
 			<Input
@@ -169,6 +179,7 @@
 				placeholder="Настоящее имя"
 				autocomplete="given-name"
 				bind:value={firstName}
+				oninput={() => (formError = '')}
 				class="ps-9"
 			>
 				{#snippet left()}

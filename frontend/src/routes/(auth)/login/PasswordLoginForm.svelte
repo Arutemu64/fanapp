@@ -2,10 +2,11 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { client } from '$lib/api';
+	import { getApiErrorDetail } from '$lib/api/errors';
 	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { Button, Helper, Input, Label, Spinner } from 'flowbite-svelte';
+	import { Alert, Button, Helper, Input, Label, Spinner } from 'flowbite-svelte';
 	import { EnvelopeSolid, EyeOutline, EyeSlashOutline, LockSolid } from 'flowbite-svelte-icons';
 
 	let { email = $bindable(''), isBusy = $bindable(false) } = $props<{
@@ -20,6 +21,7 @@
 	let showPassword = $state(false);
 	let emailError = $state('');
 	let passwordError = $state('');
+	let formError = $state('');
 
 	const eventsClient = getEventsClient();
 	const toastService = getToastService();
@@ -42,10 +44,12 @@
 
 	function resetEmailFeedback() {
 		emailError = '';
+		formError = '';
 	}
 
 	function resetPasswordFeedback() {
 		passwordError = '';
+		formError = '';
 	}
 
 	function validatePasswordForm(): boolean {
@@ -97,13 +101,14 @@
 
 			if (error) {
 				console.error('Login error:', error);
-				toastService.error(error);
+				formError = getApiErrorDetail(error) ?? 'Неверная почта или пароль';
 				return;
 			}
 
 			await finishLogin('Вход выполнен');
-		} catch (error) {
-			toastService.error(error);
+		} catch (err) {
+			console.error('Password login exception:', err);
+			formError = 'Произошла непредвиденная ошибка';
 		} finally {
 			activeAction = null;
 		}
@@ -121,6 +126,12 @@
 </script>
 
 <form onsubmit={handlePasswordSubmit} class="space-y-4">
+	{#if formError}
+		<Alert color="red" class="rounded-xl text-sm">
+			{formError}
+		</Alert>
+	{/if}
+
 	<div>
 		<Label for="password-email" color={emailColor} class="mb-2">Эл. почта</Label>
 		<Input

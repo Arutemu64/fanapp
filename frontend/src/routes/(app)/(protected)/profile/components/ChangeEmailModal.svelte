@@ -44,6 +44,7 @@
 	let resendInterval: ReturnType<typeof setInterval>;
 
 	const toastService = getToastService();
+	let formError = $state('');
 
 	// Computed value: where the code is sent
 	let emailSentTo = $derived.by(() => {
@@ -75,6 +76,7 @@
 
 	function handleEmailInput() {
 		emailError = '';
+		formError = '';
 	}
 
 	function startCooldown() {
@@ -95,12 +97,13 @@
 
 		isRequestingVerification = true;
 		verificationCodeError = '';
+		formError = '';
 
 		try {
 			const { error } = await client.POST('/auth/request-email-code');
 
 			if (error) {
-				toastService.error(error);
+				formError = getApiErrorDetail(error) ?? 'Не удалось запросить новый код подтверждения';
 				return;
 			}
 
@@ -109,7 +112,7 @@
 			startCooldown();
 			isResumed = false;
 		} catch (err) {
-			toastService.error(err);
+			formError = 'Произошла непредвиденная ошибка';
 		} finally {
 			isRequestingVerification = false;
 		}
@@ -142,7 +145,7 @@
 					return;
 				}
 
-				toastService.error(error);
+				formError = getApiErrorDetail(error) ?? 'Не удалось подтвердить код';
 				return;
 			}
 
@@ -152,7 +155,7 @@
 			open = false; // Close modal on success
 			if (onSuccess) onSuccess();
 		} catch (err) {
-			toastService.error(err);
+			formError = 'Произошла непредвиденная ошибка';
 		} finally {
 			isVerifying = false;
 		}
@@ -188,7 +191,7 @@
 				return;
 			}
 
-			toastService.error(error);
+			formError = getApiErrorDetail(error) ?? 'Не удалось сохранить адрес почты';
 			return;
 		}
 
@@ -210,6 +213,7 @@
 				emailError = '';
 				verificationCode = '';
 				verificationCodeError = '';
+				formError = '';
 			});
 		} else {
 			untrack(() => {
@@ -242,6 +246,12 @@
 	{#if step === 'email'}
 		<!-- Step 1: Input Email Form -->
 		<form onsubmit={handleSubmit} class="space-y-4">
+			{#if formError}
+				<Alert color="red" class="rounded-xl text-sm">
+					{formError}
+				</Alert>
+			{/if}
+
 			{#if currentEmail}
 				<div>
 					<Label class="mb-2 block text-gray-500 dark:text-gray-400">Текущая эл. почта</Label>
@@ -323,6 +333,12 @@
 	{:else}
 		<!-- Step 2: Verification Code Entry -->
 		<div class="space-y-4">
+			{#if formError}
+				<Alert color="red" class="rounded-xl text-sm">
+					{formError}
+				</Alert>
+			{/if}
+
 			{#if isResumed}
 				<Alert color="yellow" class="text-sm">
 					Для подтверждения адреса <span class="font-medium break-all">{emailSentTo}</span> введите 6-значный
@@ -340,7 +356,10 @@
 					bind:value={verificationCode}
 					disabled={isVerifying || isRequestingVerification}
 					hasError={Boolean(verificationCodeError)}
-					onInput={() => (verificationCodeError = '')}
+					onInput={() => {
+						verificationCodeError = '';
+						formError = '';
+					}}
 					onComplete={submitVerificationCode}
 				/>
 				{#if verificationCodeError}

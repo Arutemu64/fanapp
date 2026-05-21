@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { client } from '$lib/api';
+	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { CurrentUserDTO } from '$lib/types/user';
-	import { Button, Input, Label, Spinner } from 'flowbite-svelte';
+	import { Alert, Button, Input, Label, Spinner } from 'flowbite-svelte';
 	import { CheckCircleOutline, TicketSolid } from 'flowbite-svelte-icons';
 	import ProfileCardShell from './ProfileCardShell.svelte';
 
@@ -16,29 +17,38 @@
 
 	let barcode = $state('');
 	let isSubmitting = $state(false);
+	let submitError = $state('');
 
 	async function handleLinkTicket() {
+		submitError = '';
+
 		if (!barcode.trim()) {
-			toastService.add('Введи номер билета', 'warning');
+			submitError = 'Введи номер билета';
 			return;
 		}
 
 		isSubmitting = true;
 
-		const { error } = await client.POST('/me/ticket', {
-			body: { barcode: barcode.trim() }
-		});
+		try {
+			const { error } = await client.POST('/me/ticket', {
+				body: { barcode: barcode.trim() }
+			});
 
-		isSubmitting = false;
+			isSubmitting = false;
 
-		if (error) {
-			toastService.error(error);
-			return;
+			if (error) {
+				submitError = getApiErrorDetail(error) ?? 'Не удалось привязать билет';
+				return;
+			}
+
+			toastService.add('Билет успешно привязан!', 'success');
+			barcode = '';
+			onTicketLinked?.();
+		} catch (err) {
+			console.error('Ticket link exception:', err);
+			submitError = 'Произошла непредвиденная ошибка';
+			isSubmitting = false;
 		}
-
-		toastService.add('Билет успешно привязан!', 'success');
-		barcode = '';
-		onTicketLinked?.();
 	}
 </script>
 
@@ -59,6 +69,12 @@
 		</div>
 	{:else}
 		<div class="space-y-3 rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
+			{#if submitError}
+				<Alert color="red" class="rounded-xl text-sm">
+					{submitError}
+				</Alert>
+			{/if}
+
 			<Label for="ticket-barcode">Номер билета</Label>
 			<Input
 				id="ticket-barcode"
@@ -71,6 +87,7 @@
 				disabled={isSubmitting}
 				size="md"
 				class="ps-9"
+				oninput={() => (submitError = '')}
 			>
 				{#snippet left()}
 					<TicketSolid class="h-5 w-5" />

@@ -75,7 +75,6 @@
 				} else {
 					submitError = 'Не удалось запустить рассылку';
 				}
-				toastService.add(submitError, 'error');
 				return;
 			}
 
@@ -88,7 +87,6 @@
 		} catch (err) {
 			console.error('Failed to send broadcast:', err);
 			submitError = 'Произошла непредвиденная ошибка';
-			toastService.add(submitError, 'error');
 		} finally {
 			isSending = false;
 		}

@@ -4,7 +4,7 @@
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { PageProps } from './$types';
-	import { Button, Card, Helper, Input, Label, Spinner, Toggle } from 'flowbite-svelte';
+	import { Alert, Button, Card, Helper, Input, Label, Spinner, Toggle } from 'flowbite-svelte';
 	import { untrack } from 'svelte';
 
 	let { data }: PageProps = $props();
@@ -18,6 +18,7 @@
 		untrack(() => data.settings.limits.announcement_timeout)
 	);
 	let announcementTimeoutError = $state('');
+	let submitError = $state('');
 
 	let hasChanges = $derived(
 		votingEnabled !== savedVotingEnabled || announcementTimeout !== savedAnnouncementTimeout
@@ -39,6 +40,7 @@
 	}
 
 	function handleAnnouncementTimeoutInput() {
+		submitError = '';
 		// Re-validate live only after the field has already shown an error once.
 		if (announcementTimeoutError) {
 			validateAnnouncementTimeout();
@@ -47,6 +49,7 @@
 
 	async function handleSubmit(event: Event) {
 		event.preventDefault();
+		submitError = '';
 
 		if (!validateAnnouncementTimeout()) {
 			return;
@@ -70,15 +73,15 @@
 
 			if (error || !response.ok) {
 				if (response.status === 401) {
-					toastService.add('Нужно войти в аккаунт заново', 'error');
+					submitError = 'Нужно войти в аккаунт заново';
 				} else if (response.status === 403) {
-					toastService.add('У тебя нет доступа к настройкам фестиваля', 'error');
+					submitError = 'У тебя нет доступа к настройкам фестиваля';
 				} else if (response.status === 404) {
-					toastService.add('Настройки фестиваля не найдены', 'error');
+					submitError = 'Настройки фестиваля не найдены';
 				} else if (response.status === 422) {
-					toastService.add('Проверь введённые значения и попробуй снова', 'error');
+					submitError = 'Проверь введённые значения и попробуй снова';
 				} else {
-					toastService.add('Не удалось сохранить настройки фестиваля', 'error');
+					submitError = 'Не удалось сохранить настройки фестиваля';
 				}
 
 				return;
@@ -89,9 +92,9 @@
 			announcementTimeoutError = '';
 			toastService.add('Настройки фестиваля сохранены', 'success');
 			await invalidate('app:festival-settings');
-		} catch (submitError) {
-			console.error('Festival settings update failed:', submitError);
-			toastService.add('Не удалось сохранить настройки фестиваля', 'error');
+		} catch (err) {
+			console.error('Festival settings update failed:', err);
+			submitError = 'Не удалось сохранить настройки фестиваля';
 		} finally {
 			isSaving = false;
 		}
@@ -109,6 +112,12 @@
 
 <Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
 	<form class="space-y-5" onsubmit={handleSubmit}>
+		{#if submitError}
+			<Alert color="red" class="rounded-xl text-sm">
+				{submitError}
+			</Alert>
+		{/if}
+
 		<div class="rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
 			<div class="flex items-start justify-between gap-3">
 				<div class="min-w-0">
@@ -117,7 +126,12 @@
 						Если отключить эту настройку, посетители временно не смогут голосовать.
 					</p>
 				</div>
-				<Toggle bind:checked={votingEnabled} color="green" disabled={isSaving} />
+				<Toggle
+					bind:checked={votingEnabled}
+					color="green"
+					disabled={isSaving}
+					onchange={() => (submitError = '')}
+				/>
 			</div>
 		</div>
 

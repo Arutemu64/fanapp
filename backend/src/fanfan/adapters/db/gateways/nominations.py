@@ -72,7 +72,7 @@ class SqlNominationGateway(NominationRepository, NominationQuery):
         )
 
     async def read_voting_dto(
-        self, nomination_code: NominationCode, user_id: UserId
+        self, nomination_code: NominationCode, user_id: UserId | None = None
     ) -> NominationVotingDTO | None:
         stmt = _select_nomination_voting_dto(user_id).where(
             NominationORM.code == nomination_code

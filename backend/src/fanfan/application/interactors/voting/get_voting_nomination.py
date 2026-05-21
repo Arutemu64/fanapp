@@ -34,7 +34,7 @@ class GetVotingNomination:
         self,
         data: GetVotingNominationInput,
     ) -> GetVotingNominationOutput:
-        current_user_id = await self.current_user_provider.require_user_id()
+        current_user_id = await self.current_user_provider.get_user_id()
         nomination = await self.nomination_query.read_voting_dto(
             nomination_code=data.nomination_code,
             user_id=current_user_id,

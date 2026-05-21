@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { Modal, Input, Label, Button, Spinner } from 'flowbite-svelte';
+	import { Modal, Input, Label, Button, Spinner, Alert } from 'flowbite-svelte';
 	import { LockSolid, EyeOutline, EyeSlashOutline } from 'flowbite-svelte-icons';
 	import { client } from '$lib/api';
+	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { components } from '$lib/api/v1';
 
@@ -21,6 +22,15 @@
 	let isLoading = $state(false);
 	let showOldPassword = $state(false);
 	let showNewPassword = $state(false);
+	let formError = $state('');
+
+	$effect(() => {
+		if (open) {
+			oldPassword = '';
+			newPassword = '';
+			formError = '';
+		}
+	});
 
 	function isValid(): boolean {
 		return newPassword.length >= 6;
@@ -30,7 +40,7 @@
 		e.preventDefault();
 
 		if (!isValid()) {
-			toastService.add('Новый пароль должен быть не короче 6 символов', 'error');
+			formError = 'Новый пароль должен быть не короче 6 символов';
 			return;
 		}
 
@@ -48,7 +58,7 @@
 		isLoading = false;
 
 		if (error) {
-			toastService.error(error);
+			formError = getApiErrorDetail(error) ?? 'Не удалось сменить пароль';
 			return;
 		}
 
@@ -74,6 +84,12 @@
 	{/snippet}
 
 	<form onsubmit={handleSubmit} class="space-y-4">
+		{#if formError}
+			<Alert color="red" class="rounded-xl text-sm">
+				{formError}
+			</Alert>
+		{/if}
+
 		{#if hasPassword}
 			<div>
 				<Label for="old_password" class="mb-2 block">Старый пароль</Label>
@@ -84,6 +100,7 @@
 					placeholder="••••••••"
 					autocomplete="current-password"
 					bind:value={oldPassword}
+					oninput={() => (formError = '')}
 					class="ps-9"
 				>
 					{#snippet left()}
@@ -116,6 +133,7 @@
 				placeholder="••••••••"
 				autocomplete="new-password"
 				bind:value={newPassword}
+				oninput={() => (formError = '')}
 				class="ps-9"
 			>
 				{#snippet left()}

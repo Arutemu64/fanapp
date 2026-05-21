@@ -24,6 +24,7 @@
 	let loginCode = $state('');
 	let activeAction = $state<ActiveAction>(null);
 	let loginCodeError = $state('');
+	let formError = $state('');
 
 	let resendCooldown = $state(60);
 	let resendInterval: ReturnType<typeof setInterval>;
@@ -55,6 +56,7 @@
 
 	function resetLoginCodeFeedback() {
 		loginCodeError = '';
+		formError = '';
 	}
 
 	async function finishLogin(successMessage: string) {
@@ -80,6 +82,7 @@
 
 		activeAction = 'code-login';
 		loginCodeError = '';
+		formError = '';
 
 		try {
 			const { error, response } = await client.POST('/auth/login-with-code', {
@@ -91,13 +94,14 @@
 					loginCodeError = getApiErrorDetail(error) ?? 'Неверный или устаревший код';
 					return;
 				}
-				toastService.error(error);
+				formError = getApiErrorDetail(error) ?? 'Не удалось выполнить вход';
 				return;
 			}
 
 			await finishLogin('Вход выполнен');
-		} catch (error) {
-			toastService.error(error);
+		} catch (err) {
+			console.error('Login code submit exception:', err);
+			formError = 'Произошла непредвиденная ошибка';
 		} finally {
 			activeAction = null;
 		}
@@ -106,6 +110,7 @@
 	async function handleLoginCodeRequest() {
 		activeAction = 'code-request';
 		loginCodeError = '';
+		formError = '';
 
 		try {
 			const { error } = await client.POST('/auth/request-login-code', {
@@ -114,15 +119,16 @@
 
 			if (error) {
 				console.error('Login code request error:', error);
-				toastService.error(error);
+				formError = getApiErrorDetail(error) ?? 'Не удалось отправить код повторно';
 				return;
 			}
 
 			loginCode = '';
 			toastService.add('Код отправлен повторно', 'success');
 			startCooldown();
-		} catch (error) {
-			toastService.error(error);
+		} catch (err) {
+			console.error('Login code request exception:', err);
+			formError = 'Произошла ошибка при повторной отправке кода';
 		} finally {
 			activeAction = null;
 		}
@@ -136,6 +142,12 @@
 </script>
 
 <form onsubmit={handleSubmit} class="space-y-4">
+	{#if formError}
+		<Alert color="red" class="rounded-xl text-sm">
+			{formError}
+		</Alert>
+	{/if}
+
 	<Alert color="green">
 		Код отправлен на <span class="font-medium">{email}</span>.
 	</Alert>

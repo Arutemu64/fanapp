@@ -9,7 +9,7 @@ from fanfan.core.vo.user import UserId
 class ParticipantQuery(Protocol):
     async def read_list_participants(
         self,
-        user_id: UserId,
+        user_id: UserId | None = None,
         nomination_id: NominationId | None = None,
         search_query: str | None = None,
         pagination: Pagination | None = None,

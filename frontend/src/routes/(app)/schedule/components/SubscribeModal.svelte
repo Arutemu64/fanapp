@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
 	import { client } from '$lib/api';
+	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
-	import { Button, ButtonGroup, Input, Modal } from 'flowbite-svelte';
+	import { Button, ButtonGroup, Input, Modal, Alert } from 'flowbite-svelte';
 	import { BellActiveOutline, MinusOutline, PlusOutline } from 'flowbite-svelte-icons';
 
 	interface Props {
@@ -14,17 +15,27 @@
 	const toastService = getToastService();
 
 	let counter = $state(5);
+	let formError = $state('');
+
+	$effect(() => {
+		if (open) {
+			formError = '';
+		}
+	});
 
 	function increment() {
 		if (counter < 100) counter++;
+		formError = '';
 	}
 
 	function decrement() {
 		if (counter > 1) counter--;
+		formError = '';
 	}
 
 	async function handleSubmit() {
 		counter = Math.max(1, Math.min(100, Math.floor(counter)));
+		formError = '';
 		const { error, response } = await client.POST('/schedule/subscriptions/', {
 			body: {
 				event_id: event.id,
@@ -33,8 +44,7 @@
 		});
 
 		if (error || !response.ok) {
-			toastService.error(error ?? new Error('Ошибка подписки'));
-			open = false;
+			formError = getApiErrorDetail(error) ?? 'Не удалось оформить подписку';
 			return;
 		}
 
@@ -45,6 +55,12 @@
 </script>
 
 <Modal bind:open size="sm">
+	{#if formError}
+		<Alert color="red" class="mb-4 rounded-xl text-sm">
+			{formError}
+		</Alert>
+	{/if}
+
 	<h3 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Подписка на уведомления</h3>
 	<p class="text-gray-600 dark:text-gray-400">
 		За сколько выступлений до начала <strong class="text-gray-900 dark:text-white"

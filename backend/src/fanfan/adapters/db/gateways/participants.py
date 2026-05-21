@@ -92,7 +92,7 @@ class SqlParticipantGateway(ParticipantRepository, ParticipantQuery):
 
     async def read_list_participants(
         self,
-        user_id: UserId,
+        user_id: UserId | None = None,
         nomination_id: NominationId | None = None,
         search_query: str | None = None,
         pagination: Pagination | None = None,
@@ -103,10 +103,7 @@ class SqlParticipantGateway(ParticipantRepository, ParticipantQuery):
             stmt=stmt, nomination_ids=[nomination_id], search_query=search_query
         )
 
-        user_unique_order = func.md5(
-            func.concat(str(user_id), "-", cast(ParticipantORM.id, String))
-        )
-        stmt = stmt.order_by(user_unique_order)
+        stmt = stmt.order_by(ParticipantORM.voting_number)
 
         if pagination:
             stmt = stmt.limit(pagination.limit).offset(pagination.offset)

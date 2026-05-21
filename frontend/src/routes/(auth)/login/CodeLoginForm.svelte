@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { client } from '$lib/api';
+	import { getApiErrorDetail } from '$lib/api/errors';
 	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { Button, Helper, Input, Label, Spinner } from 'flowbite-svelte';
+	import { Alert, Button, Helper, Input, Label, Spinner } from 'flowbite-svelte';
 	import { EnvelopeSolid } from 'flowbite-svelte-icons';
 	import { tick } from 'svelte';
 	import VerifyCodeForm from './VerifyCodeForm.svelte';
@@ -24,6 +25,7 @@
 	let codeSentTo = $state('');
 	let activeAction = $state<ActiveAction>(null);
 	let emailError = $state('');
+	let formError = $state('');
 
 	const toastService = getToastService();
 
@@ -45,6 +47,7 @@
 
 	function resetEmailFeedback() {
 		emailError = '';
+		formError = '';
 		codeSentTo = '';
 	}
 
@@ -85,15 +88,16 @@
 
 			if (error) {
 				console.error('Login code request error:', error);
-				toastService.error(error);
+				formError = getApiErrorDetail(error) ?? 'Не удалось отправить код';
 				return;
 			}
 
 			codeSentTo = trimmedEmail;
 			await tick();
 			document.getElementById('code-0')?.focus();
-		} catch (error) {
-			toastService.error(error);
+		} catch (err) {
+			console.error('Login code request exception:', err);
+			formError = 'Произошла непредвиденная ошибка';
 		} finally {
 			activeAction = null;
 		}
@@ -110,6 +114,12 @@
 	<VerifyCodeForm email={codeSentTo} bind:isBusy onBack={() => (codeSentTo = '')} />
 {:else}
 	<form onsubmit={handleSubmit} class="space-y-4">
+		{#if formError}
+			<Alert color="red" class="rounded-xl text-sm">
+				{formError}
+			</Alert>
+		{/if}
+
 		<div>
 			<Label for="code-email" color={emailColor} class="mb-2">Эл. почта</Label>
 			<Input

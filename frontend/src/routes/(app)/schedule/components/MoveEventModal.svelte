@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { Button, Modal, Search } from 'flowbite-svelte';
+	import { Button, Modal, Search, Alert } from 'flowbite-svelte';
 	import { ShuffleOutline } from 'flowbite-svelte-icons';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import { client } from '$lib/api';
+	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
 
 	interface Props {
@@ -16,6 +17,20 @@
 
 	let query = $state('');
 	let selectedId: string | null = $state(null);
+	let formError = $state('');
+
+	$effect(() => {
+		if (open) {
+			formError = '';
+		}
+	});
+
+	// Reset error when search changes
+	$effect(() => {
+		if (query) {
+			formError = '';
+		}
+	});
 
 	let filtered = $derived(
 		schedule.filter((ev) => {
@@ -35,6 +50,7 @@
 
 	async function handleSubmit() {
 		if (selectedId) {
+			formError = '';
 			try {
 				const { error } = await client.PATCH('/schedule/{event_id}/move', {
 					params: { path: { event_id: event.id } },
@@ -43,20 +59,21 @@
 
 				if (error) {
 					console.error('Error moving event:', error);
-					toastService.error(error);
+					formError = getApiErrorDetail(error) ?? 'Не удалось перенести выступление';
 					return;
 				}
 
 				const selectedEvent = schedule.find((e) => e.id === selectedId);
 				console.log('Move event after:', selectedEvent?.title);
 				toastService.add('Выступление перенесено', 'success');
-			} catch (error) {
-				console.error('Error moving event:', error);
-				toastService.error(error);
-			} finally {
+
+				// Successful flow: close modal and reset fields
 				open = false;
 				selectedId = null;
 				query = '';
+			} catch (error) {
+				console.error('Error moving event:', error);
+				formError = 'Произошла непредвиденная ошибка при переносе';
 			}
 		}
 	}
@@ -64,6 +81,12 @@
 
 <Modal bind:open size="sm" class="px-2">
 	<div class="flex flex-col gap-4 sm:gap-5">
+		{#if formError}
+			<Alert color="red" class="rounded-xl text-sm">
+				{formError}
+			</Alert>
+		{/if}
+
 		<h3 class="text-xl font-semibold text-gray-900 dark:text-white">Переместить событие</h3>
 		<p class="text-sm text-gray-600 sm:text-base dark:text-gray-400">
 			Выбери событие, <strong class="text-gray-900 dark:text-white">после</strong> которого будет
