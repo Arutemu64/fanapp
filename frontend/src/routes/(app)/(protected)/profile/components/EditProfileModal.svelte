@@ -101,13 +101,13 @@
 		if (username && username !== user.username) body.username = username;
 		if (firstName && firstName !== user.first_name) body.first_name = firstName;
 
-		const { error } = await client.PATCH('/me/', {
+		const { error, response } = await client.PATCH('/me/', {
 			body
 		});
 
 		isLoading = false;
 
-		if (error) {
+		if (error || !response.ok) {
 			formError = getApiErrorDetail(error) ?? 'Не удалось обновить профиль';
 			return;
 		}

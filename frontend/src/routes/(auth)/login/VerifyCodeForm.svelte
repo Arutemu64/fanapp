@@ -113,11 +113,11 @@
 		formError = '';
 
 		try {
-			const { error } = await client.POST('/auth/request-login-code', {
+			const { error, response } = await client.POST('/auth/request-login-code', {
 				body: { email }
 			});
 
-			if (error) {
+			if (error || !response.ok) {
 				console.error('Login code request error:', error);
 				formError = getApiErrorDetail(error) ?? 'Не удалось отправить код повторно';
 				return;

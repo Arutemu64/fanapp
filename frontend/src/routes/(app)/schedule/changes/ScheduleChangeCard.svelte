@@ -18,11 +18,11 @@
 	async function undoChange() {
 		isUndoing = true;
 		try {
-			const { error } = await client.DELETE('/schedule/changes/{schedule_change_id}', {
+			const { error, response } = await client.DELETE('/schedule/changes/{schedule_change_id}', {
 				params: { path: { schedule_change_id: change.id } }
 			});
 
-			if (error) {
+			if (error || !response.ok) {
 				console.error('Error undoing change:', error);
 				toastService.error(error);
 				return;

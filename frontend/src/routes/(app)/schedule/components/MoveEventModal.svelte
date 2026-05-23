@@ -52,12 +52,12 @@
 		if (selectedId) {
 			formError = '';
 			try {
-				const { error } = await client.PATCH('/schedule/{event_id}/move', {
+				const { error, response } = await client.PATCH('/schedule/{event_id}/move', {
 					params: { path: { event_id: event.id } },
 					body: { place_after_event_id: selectedId }
 				});
 
-				if (error) {
+				if (error || !response.ok) {
 					console.error('Error moving event:', error);
 					formError = getApiErrorDetail(error) ?? 'Не удалось перенести выступление';
 					return;

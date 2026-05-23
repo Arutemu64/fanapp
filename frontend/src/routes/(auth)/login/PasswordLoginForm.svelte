@@ -89,7 +89,7 @@
 		activeAction = 'password';
 
 		try {
-			const { error } = await client.POST('/auth/login', {
+			const { error, response } = await client.POST('/auth/login', {
 				body: {
 					email: trimmedEmail,
 					password
@@ -99,7 +99,7 @@
 				}
 			});
 
-			if (error) {
+			if (error || !response.ok) {
 				console.error('Login error:', error);
 				formError = getApiErrorDetail(error) ?? 'Неверная почта или пароль';
 				return;

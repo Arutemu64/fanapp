@@ -20,11 +20,11 @@
 
 	async function loadNotifications() {
 		try {
-			const { data, error } = await client.GET('/notifications/', {
+			const { data, error, response } = await client.GET('/notifications/', {
 				params: { query: { limit: NOTIFICATION_PREVIEW_LIMIT } }
 			});
 
-			if (!error && data) {
+			if (!error && response.ok && data) {
 				notifications = data.notifications;
 			}
 		} catch (error) {
@@ -69,8 +69,8 @@
 		if (unreadCount === 0) return;
 
 		try {
-			const { error } = await client.POST('/notifications/mark-all-read');
-			if (!error) {
+			const { error, response } = await client.POST('/notifications/mark-all-read');
+			if (!error && response.ok) {
 				await loadNotifications();
 			}
 		} catch (error) {

@@ -51,13 +51,13 @@
 			new_password: newPassword
 		};
 
-		const { error } = await client.POST('/me/password', {
+		const { error, response } = await client.POST('/me/password', {
 			body
 		});
 
 		isLoading = false;
 
-		if (error) {
+		if (error || !response.ok) {
 			formError = getApiErrorDetail(error) ?? 'Не удалось сменить пароль';
 			return;
 		}

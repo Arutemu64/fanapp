@@ -52,9 +52,9 @@
 	const eventsClient = getEventsClient();
 
 	async function handleLogout() {
-		const { error } = await client.POST('/auth/logout');
+		const { error, response } = await client.POST('/auth/logout');
 
-		if (error) {
+		if (error || !response.ok) {
 			toastService.error(error);
 			return;
 		}

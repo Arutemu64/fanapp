@@ -25,16 +25,19 @@
 
 		isLoading = true;
 		try {
-			const { data, error } = await client.PUT('/voting/nominations/{nomination_id}/vote', {
-				params: {
-					path: { nomination_id: nominationId }
-				},
-				body: {
-					participant_id: participant.id
+			const { data, error, response } = await client.PUT(
+				'/voting/nominations/{nomination_id}/vote',
+				{
+					params: {
+						path: { nomination_id: nominationId }
+					},
+					body: {
+						participant_id: participant.id
+					}
 				}
-			});
+			);
 
-			if (error) {
+			if (error || !response.ok) {
 				toastService.error(error);
 				return;
 			}
@@ -55,13 +58,13 @@
 
 		isLoading = true;
 		try {
-			const { error } = await client.DELETE('/voting/nominations/{nomination_id}/vote', {
+			const { error, response } = await client.DELETE('/voting/nominations/{nomination_id}/vote', {
 				params: {
 					path: { nomination_id: nominationId }
 				}
 			});
 
-			if (error) {
+			if (error || !response.ok) {
 				toastService.error(error);
 				return;
 			}

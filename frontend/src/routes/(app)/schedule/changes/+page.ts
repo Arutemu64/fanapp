@@ -32,4 +32,3 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 		schedule_changes: data?.schedule_changes ?? []
 	};
 };
-

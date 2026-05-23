@@ -1,11 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { Card, Button } from 'flowbite-svelte';
-	import {
-		ExclamationCircleSolid,
-		LockSolid,
-		ArrowLeftOutline
-	} from 'flowbite-svelte-icons';
+	import { ExclamationCircleSolid, LockSolid, ArrowLeftOutline } from 'flowbite-svelte-icons';
 
 	// Reactive states based on page status and error messages
 	let status = $derived(page.status);
@@ -41,27 +37,35 @@
 	<title>{title} ({status})</title>
 </svelte:head>
 
-<div class="flex min-h-dvh items-center justify-center bg-gray-50 px-4 py-6 sm:py-10 dark:bg-gray-950">
+<div
+	class="flex min-h-dvh items-center justify-center bg-gray-50 px-4 py-6 sm:py-10 dark:bg-gray-950"
+>
 	<Card class="w-full max-w-md p-6 text-center sm:p-8">
 		<div class="flex flex-col items-center justify-center">
 			<!-- Visual Icon -->
 			{#if status === 403}
-				<div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400">
+				<div
+					class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400"
+				>
 					<LockSolid class="h-8 w-8" />
 				</div>
 			{:else}
-				<div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400">
+				<div
+					class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400"
+				>
 					<ExclamationCircleSolid class="h-8 w-8" />
 				</div>
 			{/if}
 
 			<!-- Status Code -->
-			<span class="mb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500">
+			<span
+				class="mb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500"
+			>
 				Ошибка {status}
 			</span>
 
 			<!-- Title -->
-			<h2 class="mb-2 text-xl font-bold text-gray-900 dark:text-white sm:text-2xl">
+			<h2 class="mb-2 text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
 				{title}
 			</h2>
 

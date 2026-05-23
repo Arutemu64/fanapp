@@ -28,11 +28,11 @@
 		}
 
 		formError = '';
-		const { error } = await client.DELETE('/schedule/subscriptions/{subscription_id}', {
+		const { error, response } = await client.DELETE('/schedule/subscriptions/{subscription_id}', {
 			params: { path: { subscription_id: event.user_subscription.id } }
 		});
 
-		if (error) {
+		if (error || !response.ok) {
 			console.error('Error unsubscribing:', error);
 			formError = getApiErrorDetail(error) ?? 'Не удалось отключить уведомления';
 			return;

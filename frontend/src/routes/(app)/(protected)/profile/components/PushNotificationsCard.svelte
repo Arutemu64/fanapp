@@ -87,13 +87,13 @@
 				const subscription = await registration.pushManager.getSubscription();
 				if (subscription) {
 					// Remove the matching subscription on the backend before unsubscribing locally.
-					const { error } = await client.DELETE('/push/', {
+					const { error, response } = await client.DELETE('/push/', {
 						body: {
 							endpoint: subscription.endpoint
 						}
 					});
 
-					if (error) {
+					if (error || !response.ok) {
 						console.error('Failed to remove subscription from server:', error);
 					}
 
@@ -152,7 +152,7 @@
 				return;
 			}
 
-			const { error } = await client.POST('/push/', {
+			const { error, response } = await client.POST('/push/', {
 				body: {
 					endpoint,
 					p256dh,
@@ -160,7 +160,7 @@
 				}
 			});
 
-			if (error) {
+			if (error || !response.ok) {
 				console.error('API Error:', error);
 				toastService.add('Ошибка при подписке на уведомления', 'error');
 				await subscription.unsubscribe();
@@ -183,11 +183,11 @@
 		rollback: () => void
 	) {
 		isSavingSettings = true;
-		const { error } = await client.PATCH('/me/settings', {
+		const { error, response } = await client.PATCH('/me/settings', {
 			body: nextSettings
 		});
 
-		if (error) {
+		if (error || !response.ok) {
 			console.error('API Error:', error);
 			toastService.add('Не удалось обновить настройки', 'error');
 			rollback();
@@ -228,9 +228,9 @@
 		try {
 			isSendingTest = true;
 
-			const { error } = await client.POST('/notifications/test');
+			const { error, response } = await client.POST('/notifications/test');
 
-			if (error) {
+			if (error || !response.ok) {
 				console.error('API Error:', error);
 				toastService.add('Не удалось отправить тест по каналам уведомлений', 'error');
 				return;

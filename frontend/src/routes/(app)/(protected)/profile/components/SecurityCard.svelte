@@ -53,9 +53,9 @@
 		isUnlinkingTelegram = true;
 
 		try {
-			const { error } = await client.DELETE('/me/connections/telegram', {});
+			const { error, response } = await client.DELETE('/me/connections/telegram', {});
 
-			if (error) {
+			if (error || !response.ok) {
 				toastService.error(error);
 				return;
 			}

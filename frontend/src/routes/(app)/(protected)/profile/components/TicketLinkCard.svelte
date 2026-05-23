@@ -30,13 +30,13 @@
 		isSubmitting = true;
 
 		try {
-			const { error } = await client.POST('/me/ticket', {
+			const { error, response } = await client.POST('/me/ticket', {
 				body: { barcode: barcode.trim() }
 			});
 
 			isSubmitting = false;
 
-			if (error) {
+			if (error || !response.ok) {
 				submitError = getApiErrorDetail(error) ?? 'Не удалось привязать билет';
 				return;
 			}

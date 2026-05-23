@@ -100,9 +100,9 @@
 		formError = '';
 
 		try {
-			const { error } = await client.POST('/auth/request-email-code');
+			const { error, response } = await client.POST('/auth/request-email-code');
 
-			if (error) {
+			if (error || !response.ok) {
 				formError = getApiErrorDetail(error) ?? 'Не удалось запросить новый код подтверждения';
 				return;
 			}

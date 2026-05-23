@@ -61,11 +61,11 @@
 	);
 
 	async function handleMarkCurrent() {
-		const { error } = await client.PATCH('/schedule/{event_id}/current', {
+		const { error, response } = await client.PATCH('/schedule/{event_id}/current', {
 			params: { path: { event_id: event.id } }
 		});
 
-		if (error) {
+		if (error || !response.ok) {
 			toastService.error(error);
 			dropdownOpen = false;
 			return;
@@ -76,9 +76,9 @@
 	}
 
 	async function handleUnmarkCurrent() {
-		const { error } = await client.DELETE('/schedule/current');
+		const { error, response } = await client.DELETE('/schedule/current');
 
-		if (error) {
+		if (error || !response.ok) {
 			toastService.error(error);
 			dropdownOpen = false;
 			return;
@@ -91,7 +91,7 @@
 	async function handleToggleSkip() {
 		const newIsSkipped = !event.is_skipped;
 
-		const { error } = newIsSkipped
+		const { error, response } = newIsSkipped
 			? await client.PATCH('/schedule/{event_id}/skip', {
 					params: { path: { event_id: event.id } }
 				})
@@ -99,7 +99,7 @@
 					params: { path: { event_id: event.id } }
 				});
 
-		if (error) {
+		if (error || !response.ok) {
 			toastService.error(error);
 			return;
 		}

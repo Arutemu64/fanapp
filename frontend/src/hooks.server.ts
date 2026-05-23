@@ -62,8 +62,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	}
 
-
-
 	if (routeId?.includes('(auth)')) {
 		if (event.locals.user) {
 			throw redirect(303, '/');
