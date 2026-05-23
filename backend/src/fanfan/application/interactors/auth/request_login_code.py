@@ -44,8 +44,9 @@ class RequestLoginCode:
             async with lock:
                 user = await self.user_repo.get_by_email(normalized_email)
 
-                # Do not provision a second account if the address is already reserved as
-                # another user's pending replacement email.
+                # Do not provision a second account if the address is
+                # already reserved as another user's pending
+                # replacement email.
                 reserved_user = await self.user_repo.get_by_any_email(normalized_email)
                 if user is None and reserved_user is not None:
                     return
@@ -71,13 +72,17 @@ class RequestLoginCode:
                             if user is not None:
                                 break
                         else:
-                            await self.event_broker.publish(CreatedUserEvent(user_id=user.id))
+                            await self.event_broker.publish(
+                                CreatedUserEvent(user_id=user.id)
+                            )
                             break
 
                     if user is None:
                         msg = "Could not provision user for login code"
                         raise RuntimeError(msg)
 
-                await self.event_broker.publish(EmailLoginCodeRequestedEvent(user_id=user.id))
+                await self.event_broker.publish(
+                    EmailLoginCodeRequestedEvent(user_id=user.id)
+                )
         except RateLockCooldown as e:
-            raise EmailCodeRequestTooFast(retry_after=e.details["retry_after"])
+            raise EmailCodeRequestTooFast(retry_after=e.details["retry_after"]) from e

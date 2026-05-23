@@ -19,6 +19,7 @@ from fanfan.core.exceptions.push_sub import (
     PushSubNotFound,
     PushSubscriptionAlreadyExists,
 )
+from fanfan.core.exceptions.rate_limit import EmailCodeRequestTooFast
 from fanfan.core.exceptions.schedule import (
     CurrentEventNotAllowed,
     EventNotFound,
@@ -28,7 +29,6 @@ from fanfan.core.exceptions.schedule import (
     ScheduleEditTooFast,
     SkippedEventNotAllowed,
 )
-from fanfan.core.exceptions.rate_limit import EmailCodeRequestTooFast
 from fanfan.core.exceptions.settings import AppAppSettingsNotFound
 from fanfan.core.exceptions.subscriptions import (
     SubscriptionAlreadyExist,

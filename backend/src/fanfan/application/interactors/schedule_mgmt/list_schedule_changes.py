@@ -31,4 +31,3 @@ class ListScheduleChanges:
         )
         schedule_changes = await self.schedule_change_query.read_list_schedule_changes()
         return ListScheduleChangesResult(schedule_changes=schedule_changes)
-

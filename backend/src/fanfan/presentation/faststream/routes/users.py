@@ -19,7 +19,6 @@ from fanfan.presentation.faststream.jstream import stream
 users_router = NatsRouter()
 
 
-
 @users_router.subscriber(
     EmailConfirmationCodeRequestedEvent.subject,
     stream=stream,

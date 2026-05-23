@@ -41,6 +41,8 @@ services:
       UVICORN_PORT: "8000"
       UVICORN_FORWARDED_ALLOW_IPS: "*"
       UVICORN_ROOT_PATH: "/api"
+      PUSH__PRIVATE_KEY_PATH: "/app/config/private_key.pem"
+      PUSH__PUBLIC_KEY_PATH: "/app/config/public_key.pem"
     ports:
       - '127.0.0.1:8000:8000'
     restart: unless-stopped
@@ -78,6 +80,8 @@ services:
       DB__HOST: "db"
       REDIS__HOST: "redis"
       NATS__HOST: "nats"
+      PUSH__PRIVATE_KEY_PATH: "/app/config/private_key.pem"
+      PUSH__PUBLIC_KEY_PATH: "/app/config/public_key.pem"
     command: [ "faststream", "run", "--factory", "fanfan.main.faststream:create_app" ]
     restart: unless-stopped
     read_only: true

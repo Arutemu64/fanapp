@@ -41,4 +41,4 @@ class RequestEmailCode:
                     EmailConfirmationCodeRequestedEvent(user_id=current_user.id)
                 )
         except RateLockCooldown as e:
-            raise EmailCodeRequestTooFast(retry_after=e.details["retry_after"])
+            raise EmailCodeRequestTooFast(retry_after=e.details["retry_after"]) from e
