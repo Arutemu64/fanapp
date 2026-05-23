@@ -62,10 +62,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	}
 
-	// Block the whole organizer area server-side so every nested org page stays protected.
-	if (routeId?.includes('(protected)/org') && event.locals.user?.role !== 'org') {
-		throw error(403, 'У тебя нет доступа к разделу организаторов');
-	}
+
 
 	if (routeId?.includes('(auth)')) {
 		if (event.locals.user) {
