@@ -13,7 +13,9 @@
 	const toastService = getToastService();
 </script>
 
-<ToastContainer>
+<ToastContainer
+	class="pointer-events-none !sticky !top-4 !right-auto !bottom-auto !left-auto z-50 mx-auto flex h-0 w-full max-w-7xl flex-col overflow-visible px-4 md:px-6 lg:px-8"
+>
 	{#each toastService.items as toast (toast.id)}
 		<!-- Keep the toast stack inside the page container so it never covers the top navbar. -->
 		<div
@@ -57,6 +59,7 @@
 				<Toast
 					color={toast.type === 'push' ? undefined : ToastTypeColors[toast.type]}
 					dismissable={true}
+					class="w-full max-w-sm"
 					onclose={() => toastService.dismiss(toast.id)}
 				>
 					{#snippet icon()}

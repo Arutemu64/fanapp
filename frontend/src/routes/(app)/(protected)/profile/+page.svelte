@@ -31,7 +31,7 @@
 	onMount(() => {
 		const telegramLinkError = data.telegramLinkError;
 
-		if (!browser || !telegramLinkError) return;
+		if (!telegramLinkError) return;
 
 		toastService.add(telegramLinkErrorMessages[telegramLinkError], 'error');
 
