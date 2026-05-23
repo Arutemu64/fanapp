@@ -11,6 +11,46 @@
 	import { formatRelativeTime } from '$lib/utils/formatters';
 
 	const toastService = getToastService();
+
+	function handleTouchStart(e: TouchEvent) {
+		const target = e.currentTarget as HTMLElement;
+		target.dataset.startX = e.changedTouches[0].screenX.toString();
+		target.style.transition = 'none';
+	}
+
+	function handleTouchMove(e: TouchEvent) {
+		const target = e.currentTarget as HTMLElement;
+		const startX = parseFloat(target.dataset.startX || '0');
+		if (!startX) return;
+
+		const currentX = e.changedTouches[0].screenX;
+		const deltaX = currentX - startX;
+
+		target.style.transform = `translateX(${deltaX}px)`;
+		target.style.opacity = Math.max(0, 1 - Math.abs(deltaX) / 200).toString();
+	}
+
+	function handleTouchEnd(e: TouchEvent, id: number) {
+		const target = e.currentTarget as HTMLElement;
+		const startX = parseFloat(target.dataset.startX || '0');
+		const currentX = e.changedTouches[0].screenX;
+		const deltaX = currentX - startX;
+
+		target.style.transition = 'transform 0.2s ease-out, opacity 0.2s ease-out';
+
+		if (Math.abs(deltaX) > 50) {
+			target.style.transform = `translateX(${deltaX > 0 ? 100 : -100}%)`;
+			target.style.opacity = '0';
+			setTimeout(() => {
+				toastService.dismiss(id);
+			}, 200);
+		} else {
+			target.style.transform = 'translateX(0)';
+			target.style.opacity = '1';
+		}
+		
+		delete target.dataset.startX;
+	}
 </script>
 
 <ToastContainer
@@ -24,6 +64,9 @@
 			aria-atomic="true"
 			class="pointer-events-auto w-full sm:ml-auto sm:max-w-sm"
 			transition:fly={{ y: -16, duration: 300 }}
+			ontouchstart={handleTouchStart}
+			ontouchmove={handleTouchMove}
+			ontouchend={(e) => handleTouchEnd(e, toast.id)}
 		>
 			{#if toast.type === 'push' && toast.notification}
 				<Toast

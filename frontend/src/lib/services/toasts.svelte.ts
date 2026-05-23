@@ -18,6 +18,7 @@ export interface ToastItem {
 	message: string;
 	type: ToastType;
 	notification?: components['schemas']['NotificationDTO'];
+	timeoutId?: ReturnType<typeof setTimeout>;
 }
 
 const TOAST_CTX_KEY = Symbol('TOAST_CTX');
@@ -25,6 +26,7 @@ const TOAST_CTX_KEY = Symbol('TOAST_CTX');
 export class ToastService {
 	// Private state within the instance
 	#toasts = $state<ToastItem[]>([]);
+	readonly MAX_TOASTS = 3;
 
 	// Getter to access the state reactively
 	get items() {
@@ -35,12 +37,17 @@ export class ToastService {
 		const id = Date.now();
 		const newToast: ToastItem = { id, message, type };
 
-		this.#toasts.push(newToast);
+		this.#toasts.unshift(newToast);
 
-		// Auto-dismiss after 5 seconds
-		setTimeout(() => {
+		if (this.#toasts.length > this.MAX_TOASTS) {
+			const popped = this.#toasts.pop();
+			if (popped?.timeoutId) clearTimeout(popped.timeoutId);
+		}
+
+		const duration = type === 'error' || type === 'warning' ? 5000 : 3000;
+		newToast.timeoutId = setTimeout(() => {
 			this.dismiss(id);
-		}, 5000);
+		}, duration);
 	}
 
 	error(err: unknown) {
@@ -67,15 +74,21 @@ export class ToastService {
 			notification
 		};
 
-		this.#toasts.push(newToast);
+		this.#toasts.unshift(newToast);
 
-		// Auto-dismiss after 5 seconds
-		setTimeout(() => {
+		if (this.#toasts.length > this.MAX_TOASTS) {
+			const popped = this.#toasts.pop();
+			if (popped?.timeoutId) clearTimeout(popped.timeoutId);
+		}
+
+		newToast.timeoutId = setTimeout(() => {
 			this.dismiss(id);
 		}, 5000);
 	}
 
 	dismiss(id: number) {
+		const toast = this.#toasts.find((t) => t.id === id);
+		if (toast?.timeoutId) clearTimeout(toast.timeoutId);
 		this.#toasts = this.#toasts.filter((t) => t.id !== id);
 	}
 }
