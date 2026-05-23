@@ -21,6 +21,7 @@ services:
           path: ./frontend/pnpm-lock.yaml
 
   api:
+    read_only: false
     environment:
       UVICORN_RELOAD: "true"
     develop:
@@ -35,6 +36,7 @@ services:
           path: ./backend/uv.lock
 
   faststream:
+    read_only: false
     develop:
       watch:
         - action: sync

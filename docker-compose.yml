@@ -17,6 +17,8 @@ services:
       - '127.0.0.1:3000:3000'
     restart: unless-stopped
     profiles: [ "core" ]
+    networks:
+      - frontend-network
 
   api:
     build: ./backend
@@ -26,12 +28,15 @@ services:
       redis:
         condition: service_healthy
       nats:
-        condition: service_started
+        condition: service_healthy
     volumes:
-      - ./config:/run/config:ro
+      - ./config:/app/config:ro
     env_file:
       - .env
     environment:
+      DB__HOST: "db"
+      REDIS__HOST: "redis"
+      NATS__HOST: "nats"
       UVICORN_HOST: "0.0.0.0"
       UVICORN_PORT: "8000"
       UVICORN_FORWARDED_ALLOW_IPS: "*"
@@ -40,6 +45,9 @@ services:
       - '127.0.0.1:8000:8000'
     restart: unless-stopped
     stop_signal: SIGINT
+    read_only: true
+    tmpfs:
+      - /tmp
     deploy:
       resources:
         limits:
@@ -49,6 +57,9 @@ services:
           cpus: '0.1'
           memory: 128M
     profiles: [ "core" ]
+    networks:
+      - frontend-network
+      - backend-network
 
   faststream:
     build: ./backend
@@ -56,21 +67,32 @@ services:
       migration:
         condition: service_completed_successfully
       nats:
-        condition: service_started
+        condition: service_healthy
       redis:
         condition: service_healthy
     volumes:
-      - ./config:/run/config:ro
+      - ./config:/app/config:ro
     env_file:
       - .env
+    environment:
+      DB__HOST: "db"
+      REDIS__HOST: "redis"
+      NATS__HOST: "nats"
     command: [ "faststream", "run", "--factory", "fanfan.main.faststream:create_app" ]
     restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
     profiles: [ "core" ]
+    networks:
+      - backend-network
 
   migration:
     build: ./backend
     env_file:
       - .env
+    environment:
+      DB__HOST: "db"
     depends_on:
       db:
         condition: service_healthy
@@ -79,6 +101,8 @@ services:
     command: [ "alembic", "upgrade", "head" ]
     restart: on-failure
     profiles: [ "core" ]
+    networks:
+      - backend-network
 
   db:
     image: postgres:17-alpine
@@ -98,6 +122,8 @@ services:
       retries: 10
       start_period: 5s
     profiles: [ "core" ]
+    networks:
+      - backend-network
 
   nats:
     image: docker.io/nats:alpine
@@ -107,7 +133,14 @@ services:
     ports:
       - "127.0.0.1:4222:4222"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "4222"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
     profiles: [ "core" ]
+    networks:
+      - backend-network
 
   pgbackup:
     image: prodrigestivill/postgres-backup-local
@@ -128,6 +161,8 @@ services:
       - BACKUP_KEEP_MONTHS=6
     restart: unless-stopped
     profiles: [ "ops" ]
+    networks:
+      - backend-network
 
   redis:
     image: redis:7-alpine
@@ -141,14 +176,22 @@ services:
       - "127.0.0.1:6379:6379"
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD-SHELL", "redis-cli -a \"$${REDIS__PASSWORD}\" ping | grep PONG" ]
+      test: [ "CMD-SHELL", "REDISCLI_AUTH=\"$${REDIS__PASSWORD}\" redis-cli ping | grep PONG" ]
       interval: 5s
       timeout: 20s
       retries: 5
     profiles: [ "core" ]
+    networks:
+      - backend-network
 
 volumes:
   db-data: {}
   pgbackup-data: {}
   redis-data: {}
   nats-data: {}
+
+networks:
+  frontend-network:
+    driver: bridge
+  backend-network:
+    driver: bridge

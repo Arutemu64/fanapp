@@ -11,3 +11,4 @@ htmlcov/
 *.pyc
 *.pyo
 *.pyd
+tests/
