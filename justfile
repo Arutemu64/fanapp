@@ -45,7 +45,7 @@ backend-test-integration:
     cd backend && uv run pytest tests/integration
 
 backend-sync-cosplay2:
-    cd backend && uv run ruff check src/fanfan tests --respect-gitignore --fix --unsafe-fixes
+    cd backend && uv run python -m fanfan.main.cli sync-cosplay2
 
 backend-lint: backend-format backend-check
 

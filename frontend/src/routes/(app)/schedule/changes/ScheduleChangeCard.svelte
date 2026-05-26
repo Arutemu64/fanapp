@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { Badge, Button, Spinner, type BadgeProps } from 'flowbite-svelte';
 	import { UndoOutline } from 'flowbite-svelte-icons';
-	import { client } from '$lib/api';
+	import { createApiClient } from '$lib/api';
+	const client = createApiClient();
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { invalidate } from '$app/navigation';
 	import type {

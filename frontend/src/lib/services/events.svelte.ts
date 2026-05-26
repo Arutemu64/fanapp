@@ -1,8 +1,8 @@
-import { getContext, setContext } from 'svelte';
+import { createContext } from 'svelte';
 import { browser } from '$app/environment';
 import { PUBLIC_API_URL } from '$env/static/public';
 
-const EVENTS_CLIENT_KEY = Symbol('EVENTS_CLIENT');
+const [getEvents, setEvents] = createContext<EventsClient | null>();
 
 /** Max reconnect attempts before giving up. */
 const MAX_RECONNECT_ATTEMPTS = 10;
@@ -209,11 +209,14 @@ export class EventsClient {
 /** Create and set the EventsClient in Svelte context (call in root layout). */
 export function setEventsClient(): EventsClient | null {
 	const client = browser ? new EventsClient() : null;
-	setContext(EVENTS_CLIENT_KEY, client);
+	setEvents(client);
 	return client;
 }
 
-/** Retrieve the EventsClient from Svelte context. */
 export function getEventsClient(): EventsClient | null {
-	return getContext<EventsClient | null>(EVENTS_CLIENT_KEY) ?? null;
+	try {
+		return getEvents();
+	} catch {
+		return null;
+	}
 }

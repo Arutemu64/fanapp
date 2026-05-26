@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { Button, Modal, Toggle } from 'flowbite-svelte';
 	import { BellOutline, ShareNodesOutline } from 'flowbite-svelte-icons';
-	import { client } from '$lib/api';
+	import { createApiClient } from '$lib/api';
+	const client = createApiClient();
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { PUBLIC_VAPID_KEY } from '$env/static/public';

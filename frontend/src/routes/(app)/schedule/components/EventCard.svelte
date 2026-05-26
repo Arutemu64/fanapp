@@ -16,7 +16,8 @@
 	import { formatDuration, formatUntil, pluralize } from '$lib/utils/formatters';
 	import { canManageSchedule } from '$lib/utils/permissions';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { client } from '$lib/api';
+	import { createApiClient } from '$lib/api';
+	const client = createApiClient();
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import MoveEventModal from './MoveEventModal.svelte';
 	import SubscribeModal from './SubscribeModal.svelte';

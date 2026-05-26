@@ -8,5 +8,3 @@ export function createApiClient() {
 		credentials: 'include'
 	});
 }
-
-export const client = createApiClient();

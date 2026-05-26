@@ -1,5 +1,5 @@
 import { error, redirect } from '@sveltejs/kit';
-import { client } from '$lib/api';
+import { createApiClient } from '$lib/api';
 import { canManageSchedule } from '$lib/utils/permissions';
 import type { PageLoad } from './$types';
 
@@ -16,6 +16,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 
 	depends('app:schedule:changes');
 
+	const client = createApiClient();
 	const {
 		data,
 		error: fetchError,

@@ -1,5 +1,5 @@
 import type { PageLoad } from './$types';
-import { client } from '$lib/api';
+import { createApiClient } from '$lib/api';
 
 const TELEGRAM_LINK_ERROR_QUERY_PARAM = 'telegramLinkError';
 const TELEGRAM_LINK_ERROR_CODES = [
@@ -23,6 +23,7 @@ export const load: PageLoad = async ({ fetch, depends, url }) => {
 	depends('app:push-subscriptions');
 	depends('app:social-accounts');
 
+	const client = createApiClient();
 	const [{ data: pushSubscriptions }, { data: socialAccounts }] = await Promise.all([
 		client.GET('/push/', { fetch }),
 		client.GET('/me/connections/', { fetch })

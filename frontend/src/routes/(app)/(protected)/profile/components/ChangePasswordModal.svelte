@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { Modal, Input, Label, Button, Spinner, Alert } from 'flowbite-svelte';
 	import { LockSolid, EyeOutline, EyeSlashOutline } from 'flowbite-svelte-icons';
-	import { client } from '$lib/api';
+	import { createApiClient } from '$lib/api';
+	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { components } from '$lib/api/v1';

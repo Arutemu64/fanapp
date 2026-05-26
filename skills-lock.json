@@ -5,25 +5,25 @@
       "source": "cocoindex-io/cocoindex-code",
       "sourceType": "github",
       "skillPath": "skills/ccc/SKILL.md",
-      "computedHash": "ad5f1c8501fd81d45e20501cbfa2b13699a6bbb4fd218c1b1034fec7b9659eff"
+      "computedHash": "32cd2a524fe30b91737f1fedaf62fb8cd9db5c782054ad783c5dce771e917162"
     },
     "clean-ddd-hexagonal": {
       "source": "ccheney/robust-skills",
       "sourceType": "github",
       "skillPath": "skills/clean-ddd-hexagonal/SKILL.md",
-      "computedHash": "37d516cad994acaf692e6d57761601ef9477dce0bc98e8b6b76329e17afe90b6"
+      "computedHash": "3e2bcc45e58cd714b336e04c96544859d6577c4c6faf762cdf8ce3d02dbf9a79"
     },
     "context7-cli": {
       "source": "upstash/context7",
       "sourceType": "github",
       "skillPath": "skills/context7-cli/SKILL.md",
-      "computedHash": "85ea893bda89efe038b342983a184c2c69b986f10655fdacd15948e4a8b77670"
+      "computedHash": "fc0c682dac344a4c78787072ae9b5b8708d4d5a14b2101c9b45de557bf9b7755"
     },
     "docker-expert": {
       "source": "sickn33/antigravity-awesome-skills",
       "sourceType": "github",
       "skillPath": "skills/docker-expert/SKILL.md",
-      "computedHash": "b712d6d1a6ac8bc2b67e366571106e63cfcc6df7fe4596a326e39969a1999113"
+      "computedHash": "7be30b1c18b91628dcd8437a89e7e20acce76bae4349533e4ebdeb376a660bcb"
     },
     "documentation-writer": {
       "source": "github/awesome-copilot",
@@ -41,7 +41,7 @@
       "source": "wshobson/agents",
       "sourceType": "github",
       "skillPath": "plugins/python-development/skills/python-testing-patterns/SKILL.md",
-      "computedHash": "a16a6d7d7e0a5154a5058fd9aacf8e675368b2a4a0dc5edf0fee775169c6abe0"
+      "computedHash": "f4de9bdbf2db1c1f8e8211e6af463ad49956f15aa604e2f08ae716c71e71f64b"
     },
     "simple": {
       "source": "roin-orca/skills",

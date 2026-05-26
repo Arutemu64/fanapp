@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { client } from '$lib/api';
+import { createApiClient } from '$lib/api';
 import {
 	NOTIFICATION_PAGE_REQUEST_LIMIT,
 	NOTIFICATION_PAGE_SIZE
@@ -9,6 +9,7 @@ import type { PageLoad } from './$types';
 export const load: PageLoad = async ({ fetch, depends }) => {
 	depends('app:notifications');
 
+	const client = createApiClient();
 	const {
 		data,
 		error: fetchError,

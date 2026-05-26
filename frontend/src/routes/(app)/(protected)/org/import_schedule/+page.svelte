@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
-	import { client } from '$lib/api';
+	import { createApiClient } from '$lib/api';
+	const client = createApiClient();
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import { Alert, Button, Card, Fileupload, Helper, Label, Spinner } from 'flowbite-svelte';
 

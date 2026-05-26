@@ -14,7 +14,9 @@
 
 	function handleTouchStart(e: TouchEvent) {
 		const target = e.currentTarget as HTMLElement;
-		target.dataset.startX = e.changedTouches[0].screenX.toString();
+		const touch = e.changedTouches?.[0];
+		if (!touch) return;
+		target.dataset.startX = touch.screenX.toString();
 		target.style.transition = 'none';
 	}
 
@@ -23,7 +25,9 @@
 		const startX = parseFloat(target.dataset.startX || '0');
 		if (!startX) return;
 
-		const currentX = e.changedTouches[0].screenX;
+		const touch = e.changedTouches?.[0];
+		if (!touch) return;
+		const currentX = touch.screenX;
 		const deltaX = currentX - startX;
 
 		target.style.transform = `translateX(${deltaX}px)`;
@@ -33,7 +37,9 @@
 	function handleTouchEnd(e: TouchEvent, id: number) {
 		const target = e.currentTarget as HTMLElement;
 		const startX = parseFloat(target.dataset.startX || '0');
-		const currentX = e.changedTouches[0].screenX;
+		const touch = e.changedTouches?.[0];
+		if (!touch) return;
+		const currentX = touch.screenX;
 		const deltaX = currentX - startX;
 
 		target.style.transition = 'transform 0.2s ease-out, opacity 0.2s ease-out';
@@ -48,7 +54,7 @@
 			target.style.transform = 'translateX(0)';
 			target.style.opacity = '1';
 		}
-		
+
 		delete target.dataset.startX;
 	}
 </script>

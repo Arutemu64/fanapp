@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { client } from '$lib/api';
+	import { createApiClient } from '$lib/api';
+	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
-	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Alert, Button, Helper, Input, Label, Spinner } from 'flowbite-svelte';
 	import { EnvelopeSolid } from 'flowbite-svelte-icons';
 	import { tick } from 'svelte';
@@ -26,8 +26,6 @@
 	let activeAction = $state<ActiveAction>(null);
 	let emailError = $state('');
 	let formError = $state('');
-
-	const toastService = getToastService();
 
 	$effect(() => {
 		isBusy = activeAction !== null;

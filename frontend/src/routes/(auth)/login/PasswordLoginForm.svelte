@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { client } from '$lib/api';
+	import { createApiClient } from '$lib/api';
+	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
 	import { getEventsClient } from '$lib/services/events.svelte';

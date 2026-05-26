@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { client } from '$lib/api';
+	import { createApiClient } from '$lib/api';
+	const client = createApiClient();
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Alert, Button, Card, Checkbox, Helper, Label, Spinner, Textarea } from 'flowbite-svelte';

@@ -1,0 +1,66 @@
+# Frontend & SvelteKit Guidelines
+
+This document outlines the codebase-specific constraints, SvelteKit SSR rules, styling standards, layout designs, and custom component inventory.
+
+> [!IMPORTANT]
+> **Required Svelte Skills**: Svelte 5 reactivity syntax, runes usage, event handling conventions, and snippet patterns are fully documented in workspace skills. Whenever editing Svelte components (`.svelte`) or Svelte modules (`.svelte.ts`/`.svelte.js`), you **MUST** load and apply these skills:
+> 1. `svelte-code-writer`
+> 2. `svelte-core-bestpractices`
+>
+> Refer to those skills for core syntax and best practices; do not duplicate them here.
+
+---
+
+## 1. SSR Safety & Request Isolation
+
+* **Server Evaluation**: Assume every route and component may render on the server first. Do not access browser-only globals (`window`, `document`, `localStorage`, etc.) during module evaluation.
+* **Strict State Isolation**: Never store user-specific or request-specific state in global/module-level variables, legacy stores, or reactive singletons.
+* **Context API for Shared State**: For state shared across Svelte 5 components, keep logic in classes with `$state` fields instanced per component/request. Use Svelte 5's type-safe `createContext` utility (rather than global stores or raw module variables) to scope state to the request-specific component tree, eliminating SSR data leakage.
+* **Browser Guards**: Guard browser-only execution paths with `browser` from `$app/environment` during rendering, or isolate them inside component lifecycles (`onMount` or `$effect`).
+
+---
+
+## 2. Data Loading & SvelteKit Integration
+
+* **Data Fetching boundaries**: Move first-render data requirements into SvelteKit layout or page `load` functions.
+* **SSR fetch forwarding**: Always pass the SvelteKit-provided `fetch` (from load functions or server events) inside the request options block of your client calls (e.g., `client.GET('/route', { fetch })`) to preserve session headers, cookies, and correct relative routes.
+* **Server-Only Modules**: Server-only modules (e.g., `+page.server.ts`, `.server.ts` files) must be used when handling secure cookies, administrative privileges, or private environment variables. Do not import server-only environment modules in browser-reachable files.
+
+---
+
+## 3. Styling & Custom UI Rules
+
+* **Tailwind CSS v4**: Theme styling is configured directly in `frontend/src/app.css`. Avoid adding Tailwind v3 style configurations or tailwind.config files.
+* **Component Preference**: Always prioritize official Flowbite-Svelte components instead of writing custom elements.
+* **Icons**: Use `flowbite-svelte-icons` for iconography. Add icons only when they improve navigation or scanning.
+
+---
+
+## 4. Mobile Layout & Forms
+
+* **Mobile-First**: Design for narrow mobile screens first. Keep content inside standard layout containers.
+* **Bottom Spacing**: Add bottom padding/spacing to pages to prevent fixed mobile bottom navigation tabs from covering active controls.
+* **Form Submissions**: Disable submit buttons and display inline spinners/loading messages when submissions are in-flight.
+* **Feedback Scopes**: Place validation errors inline (directly near the related input field). Reserve toasts for transient action results.
+
+---
+
+## 5. Cleanups & Memory Management
+
+* **Resource Cleanups**: Any connection opened on the client (e.g., event listeners, timers, sockets, streams) must have a clear cleanup path (e.g., returning a cleanup function in `$effect` or using Svelte's `onDestroy`). Prevent memory leaks that accumulate during long sessions or client navigation.
+
+---
+
+## 6. Language & Copy
+
+* **Russian Copy Only**: All user-facing text (buttons, placeholders, errors, toasts, empty states) must be in Russian.
+* Keep sentences brief, direct, and actionable. Avoid showing raw backend exceptions or stack traces.
+
+---
+
+## 7. Reusable Component Inventory
+
+Before writing any new component, check existing items in `frontend/src/lib/components/`:
+* **Section Headers**: Use `$lib/components/SectionHeader.svelte` for screen titles and subtitles.
+* **Toasts**: Trigger alerts via `$lib/services/toasts.svelte.ts` and display them with `$lib/components/ToastContainer.svelte`.
+* **Page Containers**: Match the spacing/layout patterns established in `frontend/src/routes/(app)/+layout.svelte`.

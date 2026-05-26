@@ -1,4 +1,4 @@
-import { setContext, getContext } from 'svelte';
+import { createContext } from 'svelte';
 import { getApiErrorDetail } from '$lib/api/errors';
 import type { components } from '$lib/api/v1';
 
@@ -21,7 +21,7 @@ export interface ToastItem {
 	timeoutId?: ReturnType<typeof setTimeout>;
 }
 
-const TOAST_CTX_KEY = Symbol('TOAST_CTX');
+const [getToast, setToast] = createContext<ToastService>();
 
 export class ToastService {
 	// Private state within the instance
@@ -95,9 +95,10 @@ export class ToastService {
 
 export function setToastService() {
 	const service = new ToastService();
-	return setContext(TOAST_CTX_KEY, service);
+	setToast(service);
+	return service;
 }
 
 export function getToastService() {
-	return getContext<ToastService>(TOAST_CTX_KEY);
+	return getToast();
 }

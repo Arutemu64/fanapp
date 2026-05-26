@@ -2,7 +2,8 @@
 	import { Card, Badge, Button } from 'flowbite-svelte';
 	import { CheckCircleSolid, HeartSolid } from 'flowbite-svelte-icons';
 	import { pluralize } from '$lib/utils/formatters';
-	import { client } from '$lib/api';
+	import { createApiClient } from '$lib/api';
+	const client = createApiClient();
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { ParticipantFullDTO } from '$lib/types/participant';
 

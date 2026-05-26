@@ -19,9 +19,10 @@
 		ThumbsUpOutline,
 		UsersGroupOutline
 	} from 'flowbite-svelte-icons';
+	import type { CurrentUserDTO } from '$lib/types/user';
 
 	let { user, activeUrl, isSidebarOpen, closeSidebar } = $props<{
-		user: any;
+		user: CurrentUserDTO | null;
 		activeUrl: string;
 		isSidebarOpen: boolean;
 		closeSidebar: () => void;

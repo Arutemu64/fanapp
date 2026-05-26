@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { client } from '$lib/api';
+	import { createApiClient } from '$lib/api';
 	import type { components } from '$lib/api/v1';
+
+	const client = createApiClient();
 	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
 	import { NOTIFICATION_PREVIEW_LIMIT } from '$lib/constants/notifications';
 	import { getEventsClient } from '$lib/services/events.svelte';

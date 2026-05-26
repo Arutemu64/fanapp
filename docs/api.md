@@ -1,65 +1,125 @@
-# API Integration Rules
+# API Integration Guide
 
-## Goal
+This guide details best practices for using `openapi-typescript` and `openapi-fetch` in the SvelteKit frontend to achieve type-safe communication with the FastAPI backend, absolute state isolation, and excellent SSR performance.
 
-Keep API usage type-safe, SSR-compatible, and consistent across the frontend.
+---
 
-## Source of Truth
+## 🛠️ Core Concept: Single Source of Truth
+* **Generated Types**: `frontend/src/lib/api/v1.d.ts` is the single source of truth for all API contracts.
+* **Auto-generation**: Run `just frontend-generate-api` from the workspace root whenever the backend endpoints, routers, or Pydantic schemas change.
+* **Custom Type Transforms**: Any modifications to how types are outputted (e.g. converting FastAPI file uploads or binary schema formats to `Blob` objects) must be registered in `frontend/scripts/generate-api.mjs`.
 
-- This project uses `openapi-typescript` to generate API types and `openapi-fetch` for the shared typed client.
-- Treat `frontend/src/lib/api/v1.d.ts` as the only source of truth for API shapes.
-- Do not define new API data structures from scratch when the generated schema already covers them.
-- If a reusable local alias is needed, define it under `frontend/src/lib/types`.
+---
 
-## Generation
+## 🔒 Client Isolation & SSR Safety
+To prevent cross-request state leakage under concurrent requests during Server-Side Rendering (SSR), **never use a shared global/module singleton API client**. 
 
-- Run `pnpm generate-api` from `frontend/` when `shared/openapi/openapi.json` changes.
-- Keep custom OpenAPI transforms in `frontend/scripts/generate-api.mjs`.
-- Preserve the `Blob` transform for file upload fields emitted as `format: binary` or `contentMediaType`.
+Instead, always instantiate a local client per context using `createApiClient()`.
 
-## Client Usage
+### 1. Universal & Server contexts (Load Functions, Actions, Hooks)
+Inside universal `+page.ts` load functions, server `+page.server.ts` loads, actions, or `hooks.server.ts`, initialize the client locally and **always inject the SvelteKit-provided `fetch`**:
 
-- Use the shared API client from `frontend/src/lib/api/index.ts`, imported through `$lib/api`.
-- Reuse `client` in browser or universal code when no request-specific client setup is needed.
-- Use `createApiClient()` in server code when you need a fresh client instance for request-aware calls.
-- Do not introduce a second API client without a strong architectural reason.
+```typescript
+import { createApiClient } from '$lib/api';
+import type { PageLoad } from './$types';
 
-## SSR Requirements
+export const load: PageLoad = async ({ fetch, depends }) => {
+	depends('app:settings');
+	
+	// 1. Initialize client locally (Request isolated)
+	const client = createApiClient();
+	
+	// 2. Perform request and pass SvelteKit's fetch
+	const { data, error, response } = await client.GET('/settings', { fetch });
 
-- In SvelteKit load functions, hooks, actions, or other SSR-aware contexts, use the framework-provided `fetch` or `event.fetch`.
-- Pass that `fetch` into the API client call so cookies, `handleFetch`, relative URLs, and server rendering behave correctly.
-- Prefer loading initial page data on the server when it affects first render.
+	if (error || !response.ok) {
+		// Handle/log error...
+	}
 
-## Response Handling
+	return { settings: data };
+};
+```
 
-- `openapi-fetch` results expose `data`, `error`, and `response`. Check them before consuming payload fields.
-- Treat success payload, error payload, and response metadata as separate concerns.
-- Do not assume `data` exists when `error` is present or the response is not successful.
+> [!IMPORTANT]
+> **Why must you inject the SvelteKit-provided `fetch`?**
+> * **Session Cookie Forwarding**: SvelteKit's `fetch` automatically carries authentication and session cookies from the client browser to the backend when executing on the server.
+> * **Relative URL Resolution**: SvelteKit resolves relative routes correctly during SSR.
+> * **Set-Cookie Mirroring**: SvelteKit automatically mirrors any `Set-Cookie` headers returned by the backend back to the client response.
 
-## Error Handling
+---
 
-- Log or normalize API failures before presenting them to the user.
-- Show user-friendly Russian messages in the UI.
-- Never expose raw backend error payloads, internal identifiers, or stack traces to users.
-- Define how the UI recovers after a failed request.
+### 2. Browser & Svelte Component Context
+For local component scripts (`.svelte`), page layouts, or event handlers that only run in the browser, initialize a local client at the top of the `<script>` tag:
 
-## Type Safety
+```svelte
+<script lang="ts">
+	import { createApiClient } from '$lib/api';
+	import { onMount } from 'svelte';
 
-- Let generated request and response types drive implementation details.
-- Prefer narrowing and composition over manual duplication of schema fields.
-- Keep type aliases descriptive and close to the feature that uses them.
+	// Create local client for this component instance
+	const client = createApiClient();
+	let notifications = $state([]);
 
-## Mutation Rules
+	async function loadNotifications() {
+		const { data } = await client.GET('/notifications/', {
+			params: { query: { limit: 10 } }
+		});
+		if (data) notifications = data.notifications;
+	}
 
-- After every mutation, define how the UI becomes consistent again.
-- Prefer one clear strategy per action: refresh, invalidate, local reconciliation, or optimistic update with rollback.
-- If a page load declares `depends(...)`, invalidate the matching dependency after a successful mutation when appropriate.
-- Do not leave stale page state after a successful write.
+	onMount(() => {
+		void loadNotifications();
+	});
+</script>
+```
 
-## Review Checklist
+---
 
-- Generated API types are used everywhere relevant.
-- Shared client usage is preserved.
-- SSR contexts use the provided `fetch`.
-- Success, loading, and failure paths are all handled.
-- User-visible error text is in Russian and safe to expose.
+## 🏷️ TypeScript Type Extraction
+The generated types in `v1.d.ts` contain type definitions for all schemas, query params, paths, requests, and responses. Avoid duplicating types; extract them directly:
+
+### 1. Extracting DTOs and Schemas
+Use Svelte 5 / TypeScript syntax to extract specific schemas from `components['schemas']`:
+```typescript
+import type { components } from '$lib/api/v1';
+
+// Extract the specific Notification model type
+export type Notification = components['schemas']['NotificationDTO'];
+```
+
+### 2. Extracting Request Parameters and Bodies
+To strongly type request parameters or payloads (e.g. inside form submission handlers):
+```typescript
+import type { paths } from '$lib/api/v1';
+
+// Extract the Request Body type for PATCH /settings
+export type UpdateSettingsPayload = 
+	paths['/settings']['patch']['requestBody']['content']['application/json'];
+
+// Extract Query Parameter types
+export type NotificationQuery = 
+	paths['/notifications/']['get']['parameters']['query'];
+```
+
+### 3. Extracting Response Types
+To type-safely extract the success response payload of a specific endpoint:
+```typescript
+import type { paths } from '$lib/api/v1';
+
+// Extract the success data payload for GET /voting/nominations
+export type NominationsList = 
+	paths['/voting/nominations']['get']['responses']['200']['content']['application/json'];
+```
+
+---
+
+## 🔄 Mutations & Data Recovery
+* **UI Consistency**: Define how the UI becomes consistent after mutations (e.g. invalidate layout cache, optimistic update, or full state refetch).
+* **Dependency Invalidation**: When a route uses dependency invalidation, call `depends(...)` in the page load and trigger it with `invalidate('app:something')` after a successful mutation.
+* **Return Checking**: Success payload, error payload, and response metadata must be checked through `openapi-fetch` returns (`data`, `error`, `response`).
+
+---
+
+## 🇷🇺 Russian Localization & Error Handling
+* **No Raw Stack Traces**: Log or normalize API failures before presenting them. Never expose raw backend stack traces or internal identifiers to users.
+* **User-friendly Russian Messages**: Show friendly Russian messages in the UI explaining how the user can recover or retry the action.

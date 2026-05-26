@@ -7,7 +7,7 @@ import {
 	setRequestCookiesHeader
 } from '$lib/server/cookies';
 import type { Handle, HandleFetch, RequestEvent } from '@sveltejs/kit';
-import { error, redirect } from '@sveltejs/kit';
+import { redirect } from '@sveltejs/kit';
 
 export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
 	// Replace public API with private API

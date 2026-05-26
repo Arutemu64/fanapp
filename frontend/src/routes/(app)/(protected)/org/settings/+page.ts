@@ -1,11 +1,12 @@
 import { error } from '@sveltejs/kit';
-import { client } from '$lib/api';
+import { createApiClient } from '$lib/api';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ fetch, depends }) => {
 	// The page reuses this key after saving so the SSR-loaded data stays fresh.
 	depends('app:festival-settings');
 
+	const client = createApiClient();
 	const { data, error: requestError, response } = await client.GET('/settings', { fetch });
 
 	if (requestError || !response.ok || !data) {

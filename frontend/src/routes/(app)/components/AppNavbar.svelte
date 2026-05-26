@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { client } from '$lib/api';
+	import { createApiClient } from '$lib/api';
+	const client = createApiClient();
 	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
 	import NotificationBell from '$lib/components/NotificationBell.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
@@ -17,9 +18,10 @@
 		Navbar,
 		SidebarButton
 	} from 'flowbite-svelte';
+	import type { CurrentUserDTO } from '$lib/types/user';
 
 	let { user, toggleSidebar } = $props<{
-		user: any;
+		user: CurrentUserDTO | null;
 		toggleSidebar: () => void;
 	}>();
 

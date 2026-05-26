@@ -2,7 +2,8 @@
 	import { untrack } from 'svelte';
 	import { Modal, Input, Label, Helper, Button, Spinner, Alert } from 'flowbite-svelte';
 	import { UserCircleSolid, UserSolid, EditOutline } from 'flowbite-svelte-icons';
-	import { client } from '$lib/api';
+	import { createApiClient } from '$lib/api';
+	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { CurrentUserDTO } from '$lib/types/user';

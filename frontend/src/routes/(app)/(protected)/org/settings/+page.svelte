@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
-	import { client } from '$lib/api';
+	import { createApiClient } from '$lib/api';
+	const client = createApiClient();
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { PageProps } from './$types';

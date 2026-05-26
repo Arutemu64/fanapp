@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { Modal, Input, Label, Button, Spinner, Helper, Alert } from 'flowbite-svelte';
 	import { EnvelopeSolid } from 'flowbite-svelte-icons';
-	import { client } from '$lib/api';
+	import { createApiClient } from '$lib/api';
+	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { components } from '$lib/api/v1';
@@ -111,7 +112,7 @@
 			toastService.add('Код для подтверждения отправлен на почту', 'success');
 			startCooldown();
 			isResumed = false;
-		} catch (err) {
+		} catch {
 			formError = 'Произошла непредвиденная ошибка';
 		} finally {
 			isRequestingVerification = false;
@@ -154,7 +155,7 @@
 			verificationCodeError = '';
 			open = false; // Close modal on success
 			if (onSuccess) onSuccess();
-		} catch (err) {
+		} catch {
 			formError = 'Произошла непредвиденная ошибка';
 		} finally {
 			isVerifying = false;

@@ -1,4 +1,4 @@
-import { getContext, setContext } from 'svelte';
+import { createContext } from 'svelte';
 import { browser } from '$app/environment';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -93,13 +93,14 @@ export class PwaService {
 	}
 }
 
-const PWA_CONTEXT_KEY = Symbol('pwa');
+const [getPwa, setPwa] = createContext<PwaService>();
 
 export function setPwaService() {
 	const service = new PwaService();
-	return setContext(PWA_CONTEXT_KEY, service);
+	setPwa(service);
+	return service;
 }
 
 export function getPwaService() {
-	return getContext<PwaService>(PWA_CONTEXT_KEY);
+	return getPwa();
 }

@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { Button, Spinner } from 'flowbite-svelte';
-	import { client } from '$lib/api';
+	import { createApiClient } from '$lib/api';
 	import type { components } from '$lib/api/v1';
+
+	const client = createApiClient();
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import {
 		NOTIFICATION_PAGE_REQUEST_LIMIT,
@@ -22,7 +24,7 @@
 	const toastService = getToastService();
 
 	// Сервер отдает первую порцию, а в состоянии храним только то, что догрузили после нее.
-	let extraNotifications = $state<Array<Notification>>([]);
+	let extraNotifications = $state.raw<Array<Notification>>([]);
 	let extraHasMore = $state<boolean | null>(null);
 	let extraOffset = $state(0);
 	let isLoadingMore = $state(false);
