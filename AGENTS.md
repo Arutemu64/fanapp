@@ -7,8 +7,8 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
 ├── backend/                  # FastAPI Application
 │   └── src/fanfan/
 │       ├── core/             # Pure Domain Models, Value Objects, Exceptions
-│       ├── application/      # Interactors, Use Cases, DTOs, Ports
-│       ├── presentation/     # Interfaces: HTTP (web/), Telegram (tgbot/), NATS (faststream/)
+│       ├── application/      # Interactors, Use Cases, DTOs, Ports, Services
+│       ├── presentation/     # Interfaces: HTTP (web/), Telegram (tgbot/), NATS (faststream/), CLI (cli/)
 │       ├── adapters/         # Infrastructure: DB, Redis, NATS, Telegram, external clients
 │       ├── main/             # FastAPI setup, dependency injection (DI) container (Dishka)
 │       └── common/           # Shared static assets, path helpers
@@ -42,18 +42,20 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
 
 ## Core Constraints (Must Always Follow)
 1. **Russian Copy**: All user-facing labels, placeholders, errors, and toast notifications must be in Russian.
-2. **Mobile First**: UI must fit narrow layouts; add bottom padding for floating navigation bars. See [docs/frontend.md](file:///c:/Users/artem/fanapp/docs/frontend.md).
+2. **Mobile First**: UI must fit narrow layouts; add bottom padding for floating navigation bars. See [docs/frontend.md](docs/frontend.md).
 3. **No Automated Tests**: Do not run unit/integration tests unless explicitly requested.
-4. **Architectural Isolation**: Domain/Interactors must never import ORM models. See [docs/backend.md](file:///c:/Users/artem/fanapp/docs/backend.md).
-5. **SSR & Frontend State Safety**: Never save request-specific state in global/module singletons. Always follow SvelteKit SSR and component guidelines in [docs/frontend.md](file:///c:/Users/artem/fanapp/docs/frontend.md).
-6. **Required Svelte Skills**: When editing or analyzing Svelte components (`.svelte`) or Svelte modules (`.svelte.ts`/`.svelte.js`), the LLM MUST proactively load and apply the `svelte-code-writer` and `svelte-core-bestpractices` workspace skills before performing any changes.
-7. **Skills & Docs**: Proactively load relevant workspace skills. Read guides in [docs/](file:///c:/Users/artem/fanapp/docs/) for feature implementation.
-   * Frontend/Svelte work → `svelte-code-writer`, `svelte-core-bestpractices`, `tailwind-css-patterns`, `ui-ux-pro-max`
+4. **Architectural Isolation**: The inner layers (`core/`, `application/`) must remain pure. They must never import from outer layers—this means absolutely no ORM models, concrete adapters (DB gateways, Redis, Telegram, NATS), presentation routers, or external frameworks (no FastAPI, SQLAlchemy in `core/`). All infra operations must go through abstract ports (`application/ports/`). See [docs/backend.md](docs/backend.md).
+5. **SSR & Frontend State Safety**: Never save request-specific state in global/module singletons. Always follow SvelteKit SSR and component guidelines in [docs/frontend.md](docs/frontend.md).
+6. **Required Skills by Domain**: When working in any of the following domains, the LLM MUST load the listed skills BEFORE making changes:
+   * Svelte components/modules (`.svelte`, `.svelte.ts`, `.svelte.js`) → `svelte-code-writer`, `svelte-core-bestpractices`
+   * Frontend styling/layout → `tailwind-css-patterns`, `ui-ux-pro-max`
    * Backend/FastAPI work → `fastapi`, `clean-ddd-hexagonal`
    * Python tests → `python-testing-patterns`
    * Docker / Infra → `docker-expert`
    * Docs / Writing → `documentation-writer`
-8. **Keep Documentation in Sync**: After any structural, architectural, or path-level change, verify and update `AGENTS.md` and relevant `docs/*.md` files before marking the task complete.
+   * Third-party library API questions → `context7-cli` (query current docs; never rely on training data for API signatures)
+   * Read guides in [docs/](docs/) for feature implementation.
+7. **Keep Documentation in Sync**: After any structural, architectural, or path-level change, verify and update `AGENTS.md` and relevant `docs/*.md` files before marking the task complete.
    * Did you add, rename, or delete a `lib/` submodule (`services/`, `utils/`, etc.)? Update the **Codebase Map**.
    * Did you change an important file path referenced in docs (e.g., toast store location, CLI commands, layout paths)? Update the doc that mentions it.
    * Did you introduce a new architectural pattern (new DI provider, new ports folder, new adapter type)? Update the relevant `docs/*.md` file.
