@@ -16,7 +16,12 @@ from fanfan.core.exceptions.votes import AlreadyVotedInThisNomination
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.models.participant import Participant
 from fanfan.core.models.user import User
-from fanfan.core.vo.participant import ParticipantId, ParticipantVotingNumber
+from fanfan.core.vo.nomination import generate_nomination_id
+from fanfan.core.vo.participant import (
+    ParticipantId,
+    ParticipantVotingNumber,
+    generate_participant_id,
+)
 from tests.fakes.event_broker import FakeEventBroker
 from tests.fakes.id_provider import FakeIdProvider
 
@@ -47,12 +52,14 @@ async def test_add_vote_creates_vote_and_publishes_event(
     await settings_repo.save(settings)
 
     nomination = Nomination(
+        id=generate_nomination_id(),
         cosplay2_id=1001,
         code="add-vote-test",
         title="Тестовая номинация add-vote-test",
         is_votable=True,
     )
     participant = Participant(
+        id=generate_participant_id(),
         cosplay2_id=2001,
         title="Тестовый участник",
         nomination_id=nomination.id,
@@ -100,12 +107,14 @@ async def test_add_vote_without_linked_ticket_raises_access_denied(
     await settings_repo.save(settings)
 
     nomination = Nomination(
+        id=generate_nomination_id(),
         cosplay2_id=1002,
         code="add-vote-no-ticket-test",
         title="Тестовая номинация add-vote-no-ticket-test",
         is_votable=True,
     )
     participant = Participant(
+        id=generate_participant_id(),
         cosplay2_id=2002,
         title="Тестовый участник без билета",
         nomination_id=nomination.id,
@@ -148,12 +157,14 @@ async def test_add_vote_when_voting_disabled_raises_access_denied(
     await settings_repo.save(settings)
 
     nomination = Nomination(
+        id=generate_nomination_id(),
         cosplay2_id=1003,
         code="add-vote-disabled-test",
         title="Тестовая номинация add-vote-disabled-test",
         is_votable=True,
     )
     participant = Participant(
+        id=generate_participant_id(),
         cosplay2_id=2003,
         title="Тестовый участник при выключенном голосовании",
         nomination_id=nomination.id,
@@ -218,12 +229,14 @@ async def test_add_vote_twice_in_same_nomination_raises_already_voted(
     await settings_repo.save(settings)
 
     nomination = Nomination(
+        id=generate_nomination_id(),
         cosplay2_id=1004,
         code="add-vote-same-nomination-test",
         title="Тестовая номинация add-vote-same-nomination-test",
         is_votable=True,
     )
     first_participant = Participant(
+        id=generate_participant_id(),
         cosplay2_id=2004,
         title="Первый участник",
         nomination_id=nomination.id,
@@ -231,6 +244,7 @@ async def test_add_vote_twice_in_same_nomination_raises_already_voted(
         values=[],
     )
     second_participant = Participant(
+        id=generate_participant_id(),
         cosplay2_id=2005,
         title="Второй участник",
         nomination_id=nomination.id,
@@ -280,12 +294,14 @@ async def test_add_vote_allows_votes_in_different_nominations(
     await settings_repo.save(settings)
 
     first_nomination = Nomination(
+        id=generate_nomination_id(),
         cosplay2_id=1005,
         code="add-vote-first-nomination-test",
         title="Первая номинация",
         is_votable=True,
     )
     first_participant = Participant(
+        id=generate_participant_id(),
         cosplay2_id=2006,
         title="Участник первой номинации",
         nomination_id=first_nomination.id,
@@ -293,12 +309,14 @@ async def test_add_vote_allows_votes_in_different_nominations(
         values=[],
     )
     second_nomination = Nomination(
+        id=generate_nomination_id(),
         cosplay2_id=1006,
         code="add-vote-second-nomination-test",
         title="Вторая номинация",
         is_votable=True,
     )
     second_participant = Participant(
+        id=generate_participant_id(),
         cosplay2_id=2007,
         title="Участник второй номинации",
         nomination_id=second_nomination.id,

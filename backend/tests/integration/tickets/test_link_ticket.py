@@ -15,6 +15,7 @@ from fanfan.core.exceptions.tickets import (
 )
 from fanfan.core.models.ticket import Ticket
 from fanfan.core.models.user import User
+from fanfan.core.vo.ticket import generate_ticket_id
 from fanfan.core.vo.user import UserRole
 from tests.fakes.id_provider import FakeIdProvider
 
@@ -32,6 +33,7 @@ async def test_link_ticket_successfully(dishka_request: AsyncContainer, visitor:
     id_provider = await dishka_request.get(FakeIdProvider)
 
     ticket = Ticket(
+        id=generate_ticket_id(),
         barcode="123456",
         role=UserRole.PARTICIPANT,
         used_by_user_id=None,
@@ -75,6 +77,7 @@ async def test_link_ticket_raises_already_used(
     id_provider = await dishka_request.get(FakeIdProvider)
 
     ticket = Ticket(
+        id=generate_ticket_id(),
         barcode="123456",
         role=UserRole.PARTICIPANT,
         used_by_user_id=schedule_editor.id,  # Used by other user
@@ -100,6 +103,7 @@ async def test_link_ticket_raises_when_user_already_has_ticket(
 
     # New ticket to link
     ticket = Ticket(
+        id=generate_ticket_id(),
         barcode="123456",
         role=UserRole.PARTICIPANT,
         used_by_user_id=None,

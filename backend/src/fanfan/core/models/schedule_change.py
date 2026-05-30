@@ -1,16 +1,19 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Self
-from uuid import uuid7
 
 from fanfan.core.vo.mailing import MailingId
-from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
+from fanfan.core.vo.schedule_change import (
+    ScheduleChangeId,
+    ScheduleChangeType,
+    generate_schedule_change_id,
+)
 from fanfan.core.vo.schedule_event import ScheduleEventId
 from fanfan.core.vo.user import UserId
 
 
 @dataclass(slots=True, kw_only=True)
 class ScheduleChange:
-    id: ScheduleChangeId = field(default_factory=uuid7)
+    id: ScheduleChangeId
     type: ScheduleChangeType
 
     # Arguments
@@ -32,6 +35,7 @@ class ScheduleChange:
         user_id: UserId | None,
     ) -> Self:
         return cls(
+            id=generate_schedule_change_id(),
             type=ScheduleChangeType.SET_AS_CURRENT,
             changed_event_id=changed_event_id,
             argument_event_id=previous_event_id,
@@ -51,6 +55,7 @@ class ScheduleChange:
         send_global_announcement: bool,
     ) -> Self:
         return cls(
+            id=generate_schedule_change_id(),
             type=ScheduleChangeType.MOVED,
             changed_event_id=event_id,
             argument_event_id=previous_event_id,
@@ -104,6 +109,7 @@ class ScheduleChange:
         send_global_announcement: bool,
     ) -> Self:
         return cls(
+            id=generate_schedule_change_id(),
             type=change_type,
             changed_event_id=event_id,
             argument_event_id=None,

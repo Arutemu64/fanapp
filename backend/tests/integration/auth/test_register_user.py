@@ -11,7 +11,7 @@ from fanfan.application.services.security import SecurityService
 from fanfan.core.events.users import CreatedUserEvent
 from fanfan.core.exceptions.users import UserAlreadyExists
 from fanfan.core.models.user import User
-from fanfan.core.vo.user import Username, UserRole
+from fanfan.core.vo.user import Username, UserRole, generate_user_id
 from tests.fakes.event_broker import FakeEventBroker
 
 pytestmark = [
@@ -54,6 +54,7 @@ async def test_register_user_raises_when_email_already_exists(
     events_broker = await dishka_request.get(FakeEventBroker)
 
     existing_user = User(
+        id=generate_user_id(),
         username=Username("existing_user"),
         email="existing@example.com",
         hashed_password=None,
@@ -80,6 +81,7 @@ async def test_register_user_raises_when_email_is_pending_on_another_user(
     events_broker = await dishka_request.get(FakeEventBroker)
 
     existing_user = User(
+        id=generate_user_id(),
         username=Username("pending_email_user"),
         email="current@example.com",
         pending_email="reserved@example.com",

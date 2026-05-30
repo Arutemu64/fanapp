@@ -17,7 +17,7 @@ from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.core.events.notifications import NewNotificationEvent
 from fanfan.core.exceptions.schedule import ScheduleChangeNotFound
-from fanfan.core.vo.notification import NotificationType
+from fanfan.core.vo.notification import NotificationType, generate_notification_id
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
 
 
@@ -102,6 +102,7 @@ class ProcessScheduleChange:
             notification_events.extend(
                 NewNotificationEvent(
                     notification=NewNotificationDTO(
+                        id=generate_notification_id(),
                         user_id=e.id,
                         title="Изменение расписания",
                         body=f"@{editor.username} сделал изменение "
@@ -142,6 +143,7 @@ class ProcessScheduleChange:
             notification_events.extend(
                 NewNotificationEvent(
                     notification=NewNotificationDTO(
+                        id=generate_notification_id(),
                         user_id=u.id,
                         title="На сцене",
                         body=body,
@@ -175,6 +177,7 @@ class ProcessScheduleChange:
                         notification_events.append(
                             NewNotificationEvent(
                                 notification=NewNotificationDTO(
+                                    id=generate_notification_id(),
                                     user_id=s.user_id,
                                     title="Уведомление о подписке",
                                     body=body,

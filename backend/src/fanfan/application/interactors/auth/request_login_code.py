@@ -11,7 +11,7 @@ from fanfan.core.exceptions.users import UserAlreadyExists
 from fanfan.core.models.user import User
 from fanfan.core.services.email_login import EMAIL_CODE_REQUEST_COOLDOWN_SECONDS
 from fanfan.core.utils.email import normalize_email
-from fanfan.core.vo.user import UserRole
+from fanfan.core.vo.user import UserRole, generate_user_id
 
 
 class RequestLoginCodeInput(BaseModel):
@@ -57,6 +57,7 @@ class RequestLoginCode:
                     for _ in range(3):
                         try:
                             user = User(
+                                id=generate_user_id(),
                                 username=await self.user_service.generate_username(),
                                 email=normalized_email,
                                 hashed_password=None,

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
-from uuid import uuid7
 
 from fanfan.core.vo.user import UserId, Username, UserRole
 
@@ -25,7 +24,7 @@ class UserSettings:
 
 @dataclass(slots=True, kw_only=True)
 class User:
-    id: UserId = field(default_factory=uuid7)
+    id: UserId
 
     username: Username | None
     hashed_password: str | None

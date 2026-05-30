@@ -10,7 +10,7 @@ from fanfan.core.exceptions.users import UserAlreadyExists
 from fanfan.core.models.user import User
 from fanfan.core.utils.email import normalize_email
 from fanfan.core.vo.fields import PASSWORD_FIELD
-from fanfan.core.vo.user import UserRole
+from fanfan.core.vo.user import UserRole, generate_user_id
 
 
 class RegisterUserInput(BaseModel):
@@ -43,6 +43,7 @@ class RegisterUser:
 
         username = await self.user_service.generate_username()
         new_user = User(
+            id=generate_user_id(),
             username=username,
             email=normalized_email,
             hashed_password=self.security.hash_password(data.password),

@@ -8,7 +8,7 @@ from fanfan.application.ports.trx import TransactionManager
 from fanfan.core.events.notifications import NewNotificationEvent
 from fanfan.core.exceptions.notifications import MailingNotFound
 from fanfan.core.vo.mailing import MailingId
-from fanfan.core.vo.notification import NotificationType
+from fanfan.core.vo.notification import NotificationType, generate_notification_id
 from fanfan.core.vo.user import UserRole
 
 
@@ -43,6 +43,7 @@ class ProcessBroadcast:
         events = [
             NewNotificationEvent(
                 notification=NewNotificationDTO(
+                    id=generate_notification_id(),
                     user_id=u.id,
                     title="Рассылка от организаторов",
                     body=data.body,

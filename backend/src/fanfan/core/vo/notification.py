@@ -1,8 +1,12 @@
 from enum import StrEnum
 from typing import NewType
-from uuid import UUID
+from uuid import UUID, uuid7
 
 NotificationId = NewType("NotificationId", UUID)
+
+
+def generate_notification_id() -> NotificationId:
+    return NotificationId(uuid7())
 
 
 class NotificationType(StrEnum):

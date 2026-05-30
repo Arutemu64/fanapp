@@ -1,8 +1,12 @@
 import enum
 from typing import NewType
-from uuid import UUID
+from uuid import UUID, uuid7
 
 ScheduleChangeId = NewType("ScheduleChangeId", UUID)
+
+
+def generate_schedule_change_id() -> ScheduleChangeId:
+    return ScheduleChangeId(uuid7())
 
 
 class ScheduleChangeType(enum.StrEnum):

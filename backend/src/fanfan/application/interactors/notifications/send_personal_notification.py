@@ -9,7 +9,7 @@ from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.events.notifications import NewNotificationEvent
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.users import UserNotFound
-from fanfan.core.vo.notification import NotificationType
+from fanfan.core.vo.notification import NotificationType, generate_notification_id
 from fanfan.core.vo.user import UserId, UserRole
 
 logger = logging.getLogger(__name__)
@@ -47,6 +47,7 @@ class SendMessage:
         await self.events_broker.publish(
             NewNotificationEvent(
                 notification=NewNotificationDTO(
+                    id=generate_notification_id(),
                     user_id=user.id,
                     title="Личное сообщение",
                     body=data.message_text,

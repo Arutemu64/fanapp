@@ -7,6 +7,7 @@ from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.models.push_subscription import PushSubscription
+from fanfan.core.vo.push_subscription import generate_push_subscription_id
 
 
 class CreatePushSubscriptionInput(BaseModel):
@@ -31,6 +32,7 @@ class CreatePushSubscription:
     async def __call__(self, data: CreatePushSubscriptionInput) -> None:
         current_user = await self.current_user_provider.require_user()
         push_subscription = PushSubscription(
+            id=generate_push_subscription_id(),
             user_id=current_user.id,
             endpoint=data.endpoint,
             p256dh=data.p256dh,

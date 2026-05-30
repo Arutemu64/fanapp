@@ -1,12 +1,12 @@
-from dataclasses import dataclass, field
-from uuid import UUID, uuid7
+from dataclasses import dataclass
 
+from fanfan.core.vo.social_identity import SocialIdentityId
 from fanfan.core.vo.user import UserId
 
 
 @dataclass(slots=True, kw_only=True)
 class SocialIdentity:
-    id: UUID = field(default_factory=uuid7)
+    id: SocialIdentityId
     user_id: UserId
     provider: str
     provider_id: str

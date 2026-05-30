@@ -11,6 +11,7 @@ from fanfan.core.exceptions.users import (
     UserAlreadyHasTelegramLinked,
 )
 from fanfan.core.models.social_account import SocialIdentity
+from fanfan.core.vo.social_identity import generate_social_identity_id
 from fanfan.presentation.tgbot.config import TelegramConfig
 
 logger = logging.getLogger(__name__)
@@ -55,6 +56,7 @@ class LinkTelegramAccount:
 
         await self.social_id_repo.add(
             SocialIdentity(
+                id=generate_social_identity_id(),
                 user_id=current_user.id,
                 provider="telegram",
                 provider_id=provider_id,

@@ -1,5 +1,4 @@
-from dataclasses import dataclass, field
-from uuid import uuid7
+from dataclasses import dataclass
 
 from fanfan.core.exceptions.notifications import MailingCancelled
 from fanfan.core.vo.mailing import MailingId, MailingStatus
@@ -8,7 +7,7 @@ from fanfan.core.vo.user import UserId
 
 @dataclass(slots=True, kw_only=True)
 class Mailing:
-    id: MailingId = field(default_factory=uuid7)
+    id: MailingId
     status: MailingStatus
     by_user_id: UserId | None
 

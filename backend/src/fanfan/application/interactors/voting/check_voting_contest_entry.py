@@ -7,6 +7,7 @@ from fanfan.application.ports.trx import TransactionManager
 from fanfan.core.constants.flags import VOTING_CONTEST_FLAG_NAME
 from fanfan.core.models.user_flag import UserFlag
 from fanfan.core.vo.user import UserId
+from fanfan.core.vo.user_flag import generate_user_flag_id
 
 
 class CheckVotingContestEntryInput(BaseModel):
@@ -43,6 +44,10 @@ class CheckVotingContestEntry:
             await self.trx.commit()
         else:
             if user_votes_count >= votable_nominations_count:
-                flag = UserFlag(name=VOTING_CONTEST_FLAG_NAME, user_id=data.user_id)
+                flag = UserFlag(
+                    id=generate_user_flag_id(),
+                    name=VOTING_CONTEST_FLAG_NAME,
+                    user_id=data.user_id,
+                )
                 await self.user_flag_repo.add(flag)
                 await self.trx.commit()

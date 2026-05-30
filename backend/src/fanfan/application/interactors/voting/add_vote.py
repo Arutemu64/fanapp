@@ -15,7 +15,7 @@ from fanfan.core.exceptions.participants import ParticipantNotFound
 from fanfan.core.exceptions.votes import AlreadyVotedInThisNomination
 from fanfan.core.models.vote import Vote
 from fanfan.core.vo.participant import ParticipantId
-from fanfan.core.vo.vote import VoteId
+from fanfan.core.vo.vote import VoteId, generate_vote_id
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,11 @@ class AddVote:
         ):
             raise AlreadyVotedInThisNomination
 
-        vote = Vote(user_id=current_user.id, participant_id=data.participant_id)
+        vote = Vote(
+            id=generate_vote_id(),
+            user_id=current_user.id,
+            participant_id=data.participant_id,
+        )
         await self.vote_repo.add(vote)
         await self.trx.commit()
 

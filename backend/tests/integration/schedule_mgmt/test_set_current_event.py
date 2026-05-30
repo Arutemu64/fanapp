@@ -17,7 +17,11 @@ from fanfan.core.exceptions.schedule import EventNotFound
 from fanfan.core.models.schedule_event import ScheduleEvent
 from fanfan.core.models.user import User
 from fanfan.core.vo.schedule_change import ScheduleChangeType
-from fanfan.core.vo.schedule_event import ScheduleEventId, ScheduleEventPublicNumber
+from fanfan.core.vo.schedule_event import (
+    ScheduleEventId,
+    ScheduleEventPublicNumber,
+    generate_schedule_event_id,
+)
 from tests.fakes.event_broker import FakeEventBroker
 from tests.fakes.id_provider import FakeIdProvider
 
@@ -35,6 +39,7 @@ def _schedule_event(
     is_current: bool = False,
 ) -> ScheduleEvent:
     return ScheduleEvent(
+        id=generate_schedule_event_id(),
         public_number=ScheduleEventPublicNumber(public_number),
         title=title,
         duration=15,
@@ -59,6 +64,7 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     id_provider.set_current_user_id(schedule_editor.id)
 
     previous_current_event = ScheduleEvent(
+        id=generate_schedule_event_id(),
         public_number=ScheduleEventPublicNumber(1),
         title="Старое текущее событие",
         duration=15,
@@ -69,6 +75,7 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
         block_title=None,
     )
     new_current_event = ScheduleEvent(
+        id=generate_schedule_event_id(),
         public_number=ScheduleEventPublicNumber(2),
         title="Новое текущее событие",
         duration=20,

@@ -1,5 +1,4 @@
-from dataclasses import dataclass, field
-from uuid import uuid7
+from dataclasses import dataclass
 
 from fanfan.core.vo.permission import (
     PermissionId,
@@ -19,7 +18,7 @@ class Permission:
 
 @dataclass(slots=True, kw_only=True)
 class UserPermission:
-    id: UserPermissionId = field(default_factory=uuid7)
+    id: UserPermissionId
     permission_id: PermissionId
     user_id: UserId
     object_type: PermissionObjectType | None

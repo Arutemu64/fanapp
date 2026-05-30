@@ -1,5 +1,4 @@
 import logging
-from uuid import uuid7
 
 from fanfan.adapters.api.ticketscloud.client import TCloudClient
 from fanfan.adapters.api.ticketscloud.config import TCloudConfig
@@ -8,7 +7,7 @@ from fanfan.adapters.api.ticketscloud.dto.refund import Refund, RefundStatus
 from fanfan.application.ports.repositories.tickets import TicketRepository
 from fanfan.application.services.tickets import TicketService
 from fanfan.core.models.ticket import Ticket
-from fanfan.core.vo.ticket import TicketId
+from fanfan.core.vo.ticket import generate_ticket_id
 from fanfan.core.vo.user import UserRole
 
 logger = logging.getLogger(__name__)
@@ -40,7 +39,7 @@ class TCloudService:
             ):
                 role = self.config.event_ids_map.get(order.event, UserRole.VISITOR)
                 ticket = Ticket(
-                    id=TicketId(uuid7()),
+                    id=generate_ticket_id(),
                     barcode=order_ticket.barcode,
                     role=role,
                     used_by_user_id=None,

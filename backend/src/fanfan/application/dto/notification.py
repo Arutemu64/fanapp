@@ -1,7 +1,6 @@
 from datetime import datetime
-from uuid import uuid7
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.notification import NotificationId, NotificationType
@@ -9,7 +8,7 @@ from fanfan.core.vo.user import UserId
 
 
 class NewNotificationDTO(BaseModel):
-    id: NotificationId = Field(default_factory=uuid7)
+    id: NotificationId
     user_id: UserId
     title: str
     body: str

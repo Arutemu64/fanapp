@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
-from uuid import uuid7
 
 from fanfan.core.exceptions.schedule import (
     CurrentEventNotAllowed,
@@ -14,7 +13,7 @@ from fanfan.core.vo.schedule_event import ScheduleEventId, ScheduleEventPublicNu
 
 @dataclass(slots=True, kw_only=True)
 class ScheduleEvent:  # noqa: PLW1641
-    id: ScheduleEventId = field(default_factory=uuid7)
+    id: ScheduleEventId
     public_number: ScheduleEventPublicNumber
     title: str
     duration: int

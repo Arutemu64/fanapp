@@ -13,7 +13,7 @@ from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.models.subscription import Subscription
 from fanfan.core.vo.schedule_event import ScheduleEventId
-from fanfan.core.vo.subscription import SubscriptionId
+from fanfan.core.vo.subscription import SubscriptionId, generate_subscription_id
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +48,7 @@ class CreateSubscription:
     ) -> CreateSubscriptionOutput:
         current_user = await self.current_user_provider.require_user()
         subscription = Subscription(
+            id=generate_subscription_id(),
             user_id=current_user.id,
             event_id=data.event_id,
             counter=data.counter,

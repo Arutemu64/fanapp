@@ -7,7 +7,8 @@ from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.user import UserService
 from fanfan.core.models.social_account import SocialIdentity
 from fanfan.core.models.user import User
-from fanfan.core.vo.user import UserRole
+from fanfan.core.vo.social_identity import generate_social_identity_id
+from fanfan.core.vo.user import UserRole, generate_user_id
 
 
 class AuthorizeTelegramInput(BaseModel):
@@ -40,6 +41,7 @@ class AuthorizeTelegram:
             return await self.session_store.create_session(user.id)
 
         user = User(
+            id=generate_user_id(),
             username=await self.user_service.generate_username(),
             role=UserRole.VISITOR,
             hashed_password=None,
@@ -49,6 +51,7 @@ class AuthorizeTelegram:
         await self.user_repo.add(user)
         await self.trx.flush()
         social_id = SocialIdentity(
+            id=generate_social_identity_id(),
             user_id=user.id,
             provider="telegram",
             provider_id=str(data.user_id),

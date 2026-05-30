@@ -1,7 +1,6 @@
 import contextlib
 import logging
 from dataclasses import replace
-from uuid import uuid7
 
 from fanfan.adapters.api.cosplay2.client import Cosplay2Client
 from fanfan.adapters.api.cosplay2.config import Cosplay2Config
@@ -20,8 +19,11 @@ from fanfan.core.exceptions.participants import (
 )
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.models.participant import Participant, ParticipantValue
-from fanfan.core.vo.nomination import NominationId
-from fanfan.core.vo.participant import ParticipantId, ParticipantVotingNumber
+from fanfan.core.vo.nomination import generate_nomination_id
+from fanfan.core.vo.participant import (
+    ParticipantVotingNumber,
+    generate_participant_id,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +53,7 @@ class SyncCosplay2:
             logger.info("Nomination %s updated", nomination.cosplay2_id)
         else:
             nomination = Nomination(
-                id=NominationId(uuid7()),
+                id=generate_nomination_id(),
                 cosplay2_id=topic.id,
                 code=topic.card_code,
                 title=topic.title,
@@ -115,7 +117,7 @@ class SyncCosplay2:
             logger.info("Request %s updated", participant.cosplay2_id)
         else:
             participant = Participant(
-                id=ParticipantId(uuid7()),
+                id=generate_participant_id(),
                 cosplay2_id=request.id,
                 title=request.voting_title,
                 nomination_id=nomination.id,

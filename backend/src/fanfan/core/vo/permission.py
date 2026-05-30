@@ -1,12 +1,16 @@
 import enum
 from typing import NewType
-from uuid import UUID
+from uuid import UUID, uuid7
 
 PermissionId = NewType("PermissionId", int)
 PermissionName = NewType("PermissionName", str)
 UserPermissionId = NewType("UserPermissionId", UUID)
 PermissionObjectType = NewType("PermissionObjectType", str)
 PermissionObjectId = NewType("PermissionObjectId", int)
+
+
+def generate_user_permission_id() -> UserPermissionId:
+    return UserPermissionId(uuid7())
 
 
 class Permissions(enum.StrEnum):

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from uuid import uuid7
+from dataclasses import dataclass
 
 from fanfan.core.exceptions.tickets import TicketAlreadyUsed
 from fanfan.core.vo.ticket import TicketId
@@ -10,7 +9,7 @@ from fanfan.core.vo.user import UserId, UserRole
 
 @dataclass(slots=True, kw_only=True)
 class Ticket:
-    id: TicketId = field(default_factory=uuid7)
+    id: TicketId
     barcode: str
     role: UserRole
     used_by_user_id: UserId | None

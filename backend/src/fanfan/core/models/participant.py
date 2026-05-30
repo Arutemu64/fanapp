@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from uuid import uuid7
+from dataclasses import dataclass
 
 from fanfan.core.vo.nomination import NominationId
 from fanfan.core.vo.participant import ParticipantId, ParticipantVotingNumber, ValueType
@@ -9,7 +8,7 @@ from fanfan.core.vo.participant import ParticipantId, ParticipantVotingNumber, V
 
 @dataclass(slots=True, kw_only=True)
 class Participant:
-    id: ParticipantId = field(default_factory=uuid7)
+    id: ParticipantId
     cosplay2_id: int
     title: str
     nomination_id: NominationId

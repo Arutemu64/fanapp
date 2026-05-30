@@ -13,7 +13,8 @@ from fanfan.application.ports.trx import TransactionManager
 from fanfan.core.models.permission import UserPermission
 from fanfan.core.models.ticket import Ticket
 from fanfan.core.models.user import User
-from fanfan.core.vo.permission import Permissions
+from fanfan.core.vo.permission import Permissions, generate_user_permission_id
+from fanfan.core.vo.ticket import TicketId, generate_ticket_id
 from fanfan.core.vo.user import UserId, Username, UserRole
 
 
@@ -46,6 +47,7 @@ async def visitor_with_ticket(dishka_request: AsyncContainer, visitor: User) -> 
 
     await ticket_repo.add(
         Ticket(
+            id=generate_ticket_id(),
             barcode=f"VISITOR-TICKET-{visitor.id}",
             role=UserRole.VISITOR,
             used_by_user_id=visitor.id,
@@ -79,6 +81,7 @@ async def schedule_editor(dishka_request: AsyncContainer) -> User:
     )
     await user_permission_repo.add(
         UserPermission(
+            id=generate_user_permission_id(),
             permission_id=schedule_manage_permission.id,
             user_id=schedule_editor.id,
             object_type=None,
