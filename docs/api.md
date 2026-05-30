@@ -12,7 +12,7 @@ This guide details best practices for using `openapi-typescript` and `openapi-fe
 ---
 
 ## 🔒 Client Isolation & SSR Safety
-To prevent cross-request state leakage under concurrent requests during Server-Side Rendering (SSR), **never use a shared global/module singleton API client**. 
+To prevent cross-request state leakage under concurrent requests during Server-Side Rendering (SSR), **never use a shared global/module singleton API client**.
 
 Instead, always instantiate a local client per context using `createApiClient()`.
 
@@ -25,10 +25,10 @@ import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ fetch, depends }) => {
 	depends('app:settings');
-	
+
 	// 1. Initialize client locally (Request isolated)
 	const client = createApiClient();
-	
+
 	// 2. Perform request and pass SvelteKit's fetch
 	const { data, error, response } = await client.GET('/settings', { fetch });
 
@@ -93,11 +93,11 @@ To strongly type request parameters or payloads (e.g. inside form submission han
 import type { paths } from '$lib/api/v1';
 
 // Extract the Request Body type for PATCH /settings
-export type UpdateSettingsPayload = 
+export type UpdateSettingsPayload =
 	paths['/settings']['patch']['requestBody']['content']['application/json'];
 
 // Extract Query Parameter types
-export type NotificationQuery = 
+export type NotificationQuery =
 	paths['/notifications/']['get']['parameters']['query'];
 ```
 
@@ -107,7 +107,7 @@ To type-safely extract the success response payload of a specific endpoint:
 import type { paths } from '$lib/api/v1';
 
 // Extract the success data payload for GET /voting/nominations
-export type NominationsList = 
+export type NominationsList =
 	paths['/voting/nominations']['get']['responses']['200']['content']['application/json'];
 ```
 

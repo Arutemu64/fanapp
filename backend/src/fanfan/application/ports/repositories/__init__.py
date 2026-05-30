@@ -13,7 +13,7 @@ from fanfan.application.ports.repositories.user_permissions import (
 __all__ = [
     "AppSettingsRepository",
     "PermissionRepository",
-    "UserPermissionRepository",
     "ScheduleChangeRepository",
     "ScheduleEventRepository",
+    "UserPermissionRepository",
 ]

@@ -29,7 +29,7 @@ async def test_register_user_creates_visitor_with_password_and_publishes_event(
     events_broker = await dishka_request.get(FakeEventBroker)
 
     await interactor(
-        RegisterUserInput(email="New.Visitor@Example.COM", password="strong-password")  # noqa: S106
+        RegisterUserInput(email="New.Visitor@Example.COM", password="strong-password")
     )
 
     saved_user = await user_repo.get_by_email("new.visitor@example.com")
@@ -40,7 +40,7 @@ async def test_register_user_creates_visitor_with_password_and_publishes_event(
     assert saved_user.pending_email is None
     assert saved_user.email_verified_at is None
     assert saved_user.hashed_password is not None
-    assert saved_user.hashed_password != "strong-password"  # noqa: S105
+    assert saved_user.hashed_password != "strong-password"
     assert security.verify_password("strong-password", saved_user.hashed_password)
     assert events_broker.published_events == [CreatedUserEvent(user_id=saved_user.id)]
 
@@ -64,7 +64,7 @@ async def test_register_user_raises_when_email_already_exists(
 
     with pytest.raises(UserAlreadyExists):
         await interactor(
-            RegisterUserInput(email="Existing@Example.COM", password="strong-password")  # noqa: S106
+            RegisterUserInput(email="Existing@Example.COM", password="strong-password")
         )
 
     assert (await user_repo.get_by_email("existing@example.com")) == existing_user
@@ -91,7 +91,7 @@ async def test_register_user_raises_when_email_is_pending_on_another_user(
 
     with pytest.raises(UserAlreadyExists):
         await interactor(
-            RegisterUserInput(email="Reserved@Example.COM", password="strong-password")  # noqa: S106
+            RegisterUserInput(email="Reserved@Example.COM", password="strong-password")
         )
 
     assert (

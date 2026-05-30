@@ -22,8 +22,8 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-# from myapp import mymodel  # noqa: ERA001
-# target_metadata = mymodel.Base.metadata  # noqa: ERA001
+# from myapp import mymodel
+# target_metadata = mymodel.Base.metadata
 target_metadata = BaseORM.metadata
 
 # Alembic keeps this placeholder in alembic.ini. Runtime migrations should use
@@ -32,7 +32,7 @@ DEFAULT_ALEMBIC_DATABASE_URL = "driver://user:pass@localhost/dbname"
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
-# my_important_option = config.get_main_option("my_important_option")  # noqa: ERA001
+# my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
 

@@ -26,6 +26,9 @@ frontend-generate-api: backend-generate-openapi
 backend-install:
     cd backend && uv sync --all-groups
 
+backend-setup-hooks:
+    cd backend && uv run pre-commit install
+
 backend-dev:
     cd backend && uv run python -m fanfan.main.web
 

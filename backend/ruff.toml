@@ -38,24 +38,30 @@ target-version = "py314"
 [lint]
 select = ["ALL"]
 ignore = [
-    "D",
-    "ANN",
-    "RUF",
-    "N",
-    "FBT",
-    "PLR",
-    "COM812",
-    "ISC001",
-    "ARG001",
-    "FIX002",
-    "TD002",
-    "TD003",
-    "TD004",
-    "PGH004",
-    # TCs break many things like dishka and Sqlalchemy
+    "D",       # pydocstyle (noisy in app development where public docs aren't strictly mandated)
+    "ANN",     # flake8-annotations (type-checking is handled statically by mypy/pyright)
+    "N",       # pep8-naming (occasionally conflicts with external schemas or webhook models)
+    "FBT",     # flake8-boolean-trap (perfectly fine for query params/arguments in web routes)
+    "PLR",     # pylint-refactor (too many arguments/returns; noisy in DDD controllers)
+    "COM812",  # missing-trailing-comma (formatter compatibility)
+    "ISC001",  # single-line-implicit-string-concatenation (formatter compatibility)
+    "ARG001",  # unused-function-argument (standard in web routers / dependency injections)
+    "FIX002",  # line-contains-todo (TODOs are valid development indicators, not errors)
+    "TD002",   # missing-todo-author (flake8-todos)
+    "TD003",   # missing-todo-link (flake8-todos)
+    "TD004",   # missing-todo-description (flake8-todos)
+
+    # ⚠️ CRITICAL: Moving imports to TYPE_CHECKING blocks breaks runtime resolution of
+    # DI containers (Dishka) and ORMs/Schemas (SQLAlchemy, Pydantic). Keep disabled!
     "TC001",
     "TC002",
     "TC003",
+
+    # Allow Cyrillic characters (Russian language project)
+    "RUF001",
+    "RUF002",
+    "RUF003",
+
     "S101",
 ]
 
@@ -65,6 +71,10 @@ unfixable = []
 
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[lint.flake8-bugbear]
+# Safe list of immutables to prevent false positives when using FastAPI/FastStream DI
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Body", "fastapi.Header", "faststream.Depends", "pydantic.Field"]
 
 [format]
 # Like Black, use double quotes for strings.
@@ -92,3 +102,21 @@ docstring-code-format = false
 # This only has an effect when the `docstring-code-format` setting is
 # enabled.
 docstring-code-line-length = "dynamic"
+
+[lint.per-file-ignores]
+"tests/**/*.py" = [
+    "S101",    # asserts are standard in tests
+    "S105",    # hardcoded passwords in tests are fine
+    "S106",    # hardcoded passwords in tests are fine
+    "F401",    # unused imports are common in fixtures / conftest files
+    "PLR2004", # magic numbers (e.g. status code == 200) are totally fine in tests
+    "SLF001",  # accessing private members during testing is sometimes necessary
+]
+"src/fanfan/adapters/db/migrations/env.py" = [
+    "ERA001",  # Alembic auto-generates commented out code
+    "INP001",  # Not a package
+]
+"src/fanfan/adapters/db/migrations/versions/*.py" = [
+    "E501",    # Alembic sometimes generates long lines
+    "INP001",  # Not a package
+]
