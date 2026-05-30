@@ -12,11 +12,10 @@ def init(service_name: str) -> None:
         json_logs=config.debug.json_logs,
     )
 
-    # Setup telemetry
     setup_telemetry(
         service_name=service_name,
         environment=config.env,
-        logfire_token=config.debug.logfire_token.get_secret_value()
-        if config.debug.logfire_token
-        else None,
+        sentry_dsn=config.debug.sentry_dsn,
+        traces_sample_rate=config.debug.sentry_traces_sample_rate,
+        profiles_sample_rate=config.debug.sentry_profiles_sample_rate,
     )

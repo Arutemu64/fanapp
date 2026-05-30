@@ -1,7 +1,6 @@
 import logging
 import sys
 
-import logfire
 import structlog
 
 
@@ -50,7 +49,6 @@ def setup_logging(level: int, json_logs: bool):
     handler.setFormatter(formatter)
 
     root_logger = logging.getLogger()
-    root_logger.addHandler(logfire.LogfireLoggingHandler())
     root_logger.addHandler(handler)
     root_logger.setLevel(level)
 

@@ -14,3 +14,5 @@ dist
 pnpm-debug.log
 .turbo
 .idea/
+# Sentry Config File
+.env.sentry-build-plugin

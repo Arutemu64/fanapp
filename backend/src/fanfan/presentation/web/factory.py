@@ -1,4 +1,3 @@
-import logfire
 from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -64,8 +63,5 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-    # Instrument with Logfire
-    logfire.instrument_fastapi(app)
 
     return app

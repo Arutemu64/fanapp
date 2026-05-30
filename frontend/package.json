@@ -45,6 +45,7 @@
 		"vite": "^8.0.14"
 	},
 	"dependencies": {
+		"@sentry/sveltekit": "^8.54.0",
 		"openapi-fetch": "^0.17.0",
 		"set-cookie-parser": "^3.1.0"
 	},

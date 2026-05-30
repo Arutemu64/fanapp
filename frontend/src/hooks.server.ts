@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/sveltekit';
 import { PRIVATE_API_URL } from '$env/static/private';
 import { PUBLIC_API_URL } from '$env/static/public';
 import { createApiClient } from '$lib/api';
@@ -6,8 +7,9 @@ import {
 	clearAuthCookies,
 	setRequestCookiesHeader
 } from '$lib/server/cookies';
-import type { Handle, HandleFetch, RequestEvent } from '@sveltejs/kit';
+import type { Handle, HandleFetch, HandleServerError, RequestEvent } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
+import { sequence } from '@sveltejs/kit/hooks';
 
 export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
 	// Replace public API with private API
@@ -46,7 +48,7 @@ async function loadCurrentUser(event: RequestEvent) {
 	return result.data && !result.error ? result.data : null;
 }
 
-export const handle: Handle = async ({ event, resolve }) => {
+const customHandle: Handle = async ({ event, resolve }) => {
 	const routeId = event.route.id;
 	const sessionId = event.cookies.get('session_id');
 
@@ -54,6 +56,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 		event.locals.user = await loadCurrentUser(event);
 	} else {
 		event.locals.user = null;
+	}
+
+	if (event.locals.user) {
+		Sentry.setUser({ id: event.locals.user.id, username: event.locals.user.username });
+	} else {
+		Sentry.setUser(null);
 	}
 
 	if (routeId?.includes('(protected)')) {
@@ -72,3 +80,16 @@ export const handle: Handle = async ({ event, resolve }) => {
 		filterSerializedResponseHeaders: (name) => name === 'content-length'
 	});
 };
+
+export const handle: Handle = sequence(Sentry.sentryHandle(), customHandle);
+
+export const handleError: HandleServerError = Sentry.handleErrorWithSentry(({ error }) => {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const err = error as any;
+
+	// Localized Russian error response to fulfill the Russian Copy policy
+	return {
+		message: 'Произошла непредвиденная ошибка на сервере.',
+		code: err?.code ?? 'UNKNOWN'
+	};
+});

@@ -1,6 +1,6 @@
 import logging
 
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, Field
 
 
 class DebugConfig(BaseModel):
@@ -10,4 +10,6 @@ class DebugConfig(BaseModel):
     logging_level: int = logging.DEBUG
     json_logs: bool = False
 
-    logfire_token: SecretStr | None = None
+    sentry_dsn: str | None = None
+    sentry_traces_sample_rate: float = Field(default=0.1, ge=0.0, le=1.0)
+    sentry_profiles_sample_rate: float = Field(default=0.0, ge=0.0, le=1.0)
