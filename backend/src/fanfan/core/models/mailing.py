@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 
 from fanfan.core.exceptions.notifications import MailingCancelled
+from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.mailing import MailingId, MailingStatus
 from fanfan.core.vo.user import UserId
 
 
 @dataclass(slots=True, kw_only=True)
-class Mailing:
+class Mailing(AggregateRoot):
     id: MailingId
     status: MailingStatus
     by_user_id: UserId | None

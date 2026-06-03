@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
+from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.user import UserId, Username, UserRole
 
 if TYPE_CHECKING:
@@ -23,7 +24,7 @@ class UserSettings:
 
 
 @dataclass(slots=True, kw_only=True)
-class User:
+class User(AggregateRoot):
     id: UserId
 
     username: Username | None

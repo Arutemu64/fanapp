@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.nomination import NominationId
 from fanfan.core.vo.participant import ParticipantId, ParticipantVotingNumber, ValueType
 
 
 @dataclass(slots=True, kw_only=True)
-class Participant:
+class Participant(AggregateRoot):
     id: ParticipantId
     cosplay2_id: int
     title: str

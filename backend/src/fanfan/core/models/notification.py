@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.notification import NotificationId, NotificationType
 from fanfan.core.vo.user import UserId
 
 
 @dataclass(slots=True, kw_only=True)
-class Notification:
+class Notification(AggregateRoot):
     id: NotificationId
     user_id: UserId
     title: str

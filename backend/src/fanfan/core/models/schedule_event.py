@@ -8,11 +8,12 @@ from fanfan.core.exceptions.schedule import (
     SameEventsAreNotAllowed,
     SkippedEventNotAllowed,
 )
+from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.schedule_event import ScheduleEventId, ScheduleEventPublicNumber
 
 
 @dataclass(slots=True, kw_only=True)
-class ScheduleEvent:  # noqa: PLW1641
+class ScheduleEvent(AggregateRoot):  # noqa: PLW1641
     id: ScheduleEventId
     public_number: ScheduleEventPublicNumber
     title: str

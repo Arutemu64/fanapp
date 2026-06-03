@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 
+from fanfan.core.models.base import AggregateRoot
+
 
 @dataclass(slots=True, kw_only=True)
 class LimitsConfig:
@@ -10,7 +12,7 @@ class LimitsConfig:
 
 
 @dataclass(slots=True, kw_only=True)
-class AppSettings:
+class AppSettings(AggregateRoot):
     voting_enabled: bool = False
 
     limits: LimitsConfig = field(default_factory=LimitsConfig)

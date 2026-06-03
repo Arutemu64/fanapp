@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Self
 
+from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.schedule_change import (
     ScheduleChangeId,
@@ -12,7 +13,7 @@ from fanfan.core.vo.user import UserId
 
 
 @dataclass(slots=True, kw_only=True)
-class ScheduleChange:
+class ScheduleChange(AggregateRoot):
     id: ScheduleChangeId
     type: ScheduleChangeType
 
