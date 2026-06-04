@@ -50,11 +50,10 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
    * Svelte components/modules (`.svelte`, `.svelte.ts`, `.svelte.js`) → `svelte-code-writer`, `svelte-core-bestpractices`
    * Frontend styling/layout → `tailwind-css-patterns`, `ui-ux-pro-max`
    * Backend/FastAPI work → `fastapi`, `clean-ddd-hexagonal`
-   * Python tests → `python-testing-patterns`
    * Docker / Infra → `docker-expert`
    * Docs / Writing → `documentation-writer`
-   * Third-party library API questions → `context7-cli` (query current docs; never rely on training data for API signatures)
-   * Read guides in [docs/](docs/) for feature implementation.
+   * Third-party library API questions → `find-docs` (query current docs; never rely on training data for API signatures)
+   * Read the architecture guides in [docs/](docs/) (`backend.md`, `frontend.md`, `api.md`) before implementing in those areas.
 7. **Keep Documentation in Sync**: After any structural, architectural, or path-level change, verify and update `AGENTS.md` and relevant `docs/*.md` files before marking the task complete.
    * Did you add, rename, or delete a `lib/` submodule (`services/`, `utils/`, etc.)? Update the **Codebase Map**.
    * Did you change an important file path referenced in docs (e.g., toast store location, CLI commands, layout paths)? Update the doc that mentions it.

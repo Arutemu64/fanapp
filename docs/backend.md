@@ -2,11 +2,13 @@
 
 ## Core Domain & Interactors
 * **Core Layer (`core/`)**: Pure domain entities, value objects, and domain exceptions. Must be completely free of external frameworks (absolutely no FastAPI, SQLAlchemy, or Pydantic imports).
-* **Application Layer (`application/`)**: Orchestrates interactors and business use cases. Must never import database ORM models directly. Communication with infrastructure happens via abstract interfaces (gateways/repositories under `application/ports/`) and schemas/DTOs.
+* **Application Layer (`application/`)**: Orchestrates interactors and business use cases. Must never import database ORM models directly. Communication with infrastructure happens via abstract interfaces (ports under `application/ports/`) and schemas/DTOs.
+* **Command/Query Port Split (CQRS-style)**: Ports are split by intent. Writes (loading and persisting aggregates) go through `application/ports/repositories/`; reads (projections returned to callers) go through `application/ports/queries/`. When adding a read, add a query port — do not extend a repository.
 
 ## Persistence & Transaction Management
 * **ORM Models**: SQLAlchemy database models live strictly under `adapters/db/models/`.
-* **Repositories/Gateways**: Concrete SQL queries, database reads, and inserts are isolated in repository implementations under `adapters/db/gateways/`.
+* **Repositories/Gateways**: Concrete SQL queries, database reads, and inserts are isolated in gateway implementations under `adapters/db/gateways/` (one per aggregate/concern). These implement the abstract `repositories/` and `queries/` ports.
+* **Mappers**: ORM model ↔ domain entity translation lives in `adapters/db/mappers/` (one per aggregate). Gateways must map ORM rows to pure domain objects (and back) through these — never leak ORM models out of the adapter layer. When you add a new persisted aggregate, you typically add a model, a mapper, and a gateway together.
 * **Transaction Management**: Database commits and rollbacks in use cases are managed strictly by injecting `trx: TransactionManager` (from `application/ports/trx`) and invoking `await self.trx.commit()`. Do not call raw SQLAlchemy session commits (`session.commit()`) inside interactors.
 * **Migrations**: Generate and apply database migrations strictly via Alembic CLI helpers (`just backend-generate <name>` and `just backend-migrate`).
 
