@@ -34,7 +34,7 @@ class ScheduleChangeORM(BaseORM):
     user_id: Mapped[UserId | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"),
     )
-    send_global_announcement: Mapped[bool] = mapped_column()
+    next_event_changed: Mapped[bool] = mapped_column()
     mailing_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("mailings.id", ondelete="SET NULL")
     )

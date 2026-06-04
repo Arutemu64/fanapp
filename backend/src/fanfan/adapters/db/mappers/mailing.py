@@ -10,8 +10,6 @@ class MailingMapper:
             id=model.id,
             status=model.status,
             by_user_id=model.by_user_id,
-            sent_count=model.sent_count,
-            total_count=model.total_count,
         )
 
     @staticmethod
@@ -20,8 +18,6 @@ class MailingMapper:
             id=orm.id,
             status=orm.status,
             by_user_id=orm.by_user_id,
-            sent_count=orm.sent_count,
-            total_count=orm.total_count,
         )
 
     @staticmethod

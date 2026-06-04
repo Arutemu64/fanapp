@@ -29,7 +29,7 @@ class ScheduleChangeFullDTO(BaseModel):
     type: ScheduleChangeType
     mailing_id: MailingId | None
     user_id: UserId | None
-    send_global_announcement: bool
+    next_event_changed: bool
     changed_event: ScheduleChangeEventDTO | None
     argument_event: ScheduleChangeEventDTO | None
     user: ScheduleChangeUserDTO | None

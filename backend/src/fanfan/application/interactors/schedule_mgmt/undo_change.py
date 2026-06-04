@@ -13,7 +13,6 @@ from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
-from fanfan.core.events.schedule import UndoScheduleChangeEvent
 from fanfan.core.exceptions.schedule import (
     OutdatedScheduleChange,
     ScheduleChangeNotFound,
@@ -120,12 +119,12 @@ class UndoScheduleChange:
             changed_event.skip()
             await self.schedule_repo.save(changed_event)
 
+        schedule_change.mark_undone()
         await self.changes_repo.delete(schedule_change)
         await self.trx.commit()
 
-        await self.events_broker.publish(
-            UndoScheduleChangeEvent(mailing_id=schedule_change.mailing_id)
-        )
+        for event in schedule_change.pull_events():
+            await self.events_broker.publish(event)
 
         logger.info(
             "User %s reverted schedule change %s",

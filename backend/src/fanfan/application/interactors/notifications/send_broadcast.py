@@ -3,12 +3,13 @@ import logging
 from pydantic import BaseModel
 
 from fanfan.application.ports.events_broker import EventBroker
+from fanfan.application.ports.repositories.mailings import MailingRepository
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.current_user import CurrentUserProvider
-from fanfan.application.services.mailing import MailingService
 from fanfan.core.events.notifications import NewBroadcastEvent
 from fanfan.core.exceptions.base import AccessDenied
+from fanfan.core.models.mailing import Mailing
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.user import UserRole
 
@@ -29,13 +30,13 @@ class SendBroadcast:
         self,
         current_user_provider: CurrentUserProvider,
         user_repo: UserRepository,
-        notifications_service: MailingService,
+        mailing_repo: MailingRepository,
         events_broker: EventBroker,
         uow: TransactionManager,
     ):
         self.current_user_provider = current_user_provider
         self.user_repo = user_repo
-        self.notifications_service = notifications_service
+        self.mailing_repo = mailing_repo
         self.events_broker = events_broker
         self.uow = uow
 
@@ -45,9 +46,8 @@ class SendBroadcast:
         if current_user.role is not UserRole.ORG:
             raise AccessDenied
 
-        mailing = await self.notifications_service.create_new_mailing(
-            total_count=0, by_user_id=current_user.id
-        )
+        mailing = Mailing.create(by_user_id=current_user.id)
+        await self.mailing_repo.add(mailing)
         await self.uow.commit()
 
         await self.events_broker.publish(

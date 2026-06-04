@@ -34,7 +34,6 @@ from fanfan.application.interactors.current_user.update_user_settings import (
 from fanfan.application.interactors.notifications.delete_mailing_messages import (
     DeleteMailingMessages,
 )
-from fanfan.application.interactors.notifications.get_mailing_info import GetMailingInfo
 from fanfan.application.interactors.notifications.get_notification import (
     GetNotification,
 )
@@ -57,6 +56,9 @@ from fanfan.application.interactors.notifications.send_notification import (
 from fanfan.application.interactors.notifications.send_personal_notification import (
     SendMessage,
 )
+from fanfan.application.interactors.notifications.send_schedule_change_notifications import (  # noqa: E501
+    SendScheduleChangeNotifications,
+)
 from fanfan.application.interactors.notifications.send_test_notification import (
     SendTestNotification,
 )
@@ -75,9 +77,6 @@ from fanfan.application.interactors.schedule_mgmt.list_schedule_changes import (
     ListScheduleChanges,
 )
 from fanfan.application.interactors.schedule_mgmt.move_event import MoveScheduleEvent
-from fanfan.application.interactors.schedule_mgmt.process_schedule_change import (
-    ProcessScheduleChange,
-)
 from fanfan.application.interactors.schedule_mgmt.set_current_event import (
     SetCurrentScheduleEvent,
 )
@@ -123,12 +122,11 @@ class InteractorsProvider(Provider):
     set_current_event = provide(SetCurrentScheduleEvent)
     toggle_event_skip = provide(UpdateScheduleEventSkip)
     revert_change = provide(UndoScheduleChange)
-    proceed_schedule_change = provide(ProcessScheduleChange)
+    proceed_schedule_change = provide(SendScheduleChangeNotifications)
     list_schedule_changes = provide(ListScheduleChanges)
     import_schedule = provide(ImportSchedule)
 
     create_mailing = provide(SendBroadcast)
-    get_mailing_info = provide(GetMailingInfo)
     get_notification = provide(GetNotification)
     proceed_mailing_cancel = provide(DeleteMailingMessages)
     send_notification = provide(SendNotification)

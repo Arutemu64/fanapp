@@ -1,6 +1,10 @@
 from dataclasses import dataclass
 from typing import Self
 
+from fanfan.core.events.schedule import (
+    CreatedScheduleChangeEvent,
+    UndoScheduleChangeEvent,
+)
 from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.schedule_change import (
@@ -24,7 +28,7 @@ class ScheduleChange(AggregateRoot):
     # Mailing
     mailing_id: MailingId | None
     user_id: UserId | None
-    send_global_announcement: bool
+    next_event_changed: bool
 
     @classmethod
     def set_as_current(
@@ -35,15 +39,19 @@ class ScheduleChange(AggregateRoot):
         mailing_id: MailingId | None,
         user_id: UserId | None,
     ) -> Self:
-        return cls(
+        instance = cls(
             id=generate_schedule_change_id(),
             type=ScheduleChangeType.SET_AS_CURRENT,
             changed_event_id=changed_event_id,
             argument_event_id=previous_event_id,
             mailing_id=mailing_id,
             user_id=user_id,
-            send_global_announcement=True,
+            next_event_changed=True,
         )
+        instance.record_event(
+            CreatedScheduleChangeEvent(schedule_change_id=instance.id)
+        )
+        return instance
 
     @classmethod
     def moved(
@@ -53,17 +61,21 @@ class ScheduleChange(AggregateRoot):
         previous_event_id: ScheduleEventId | None,
         mailing_id: MailingId | None,
         user_id: UserId | None,
-        send_global_announcement: bool,
+        next_event_changed: bool,
     ) -> Self:
-        return cls(
+        instance = cls(
             id=generate_schedule_change_id(),
             type=ScheduleChangeType.MOVED,
             changed_event_id=event_id,
             argument_event_id=previous_event_id,
             mailing_id=mailing_id,
             user_id=user_id,
-            send_global_announcement=send_global_announcement,
+            next_event_changed=next_event_changed,
         )
+        instance.record_event(
+            CreatedScheduleChangeEvent(schedule_change_id=instance.id)
+        )
+        return instance
 
     @classmethod
     def skipped(
@@ -72,14 +84,14 @@ class ScheduleChange(AggregateRoot):
         event_id: ScheduleEventId,
         mailing_id: MailingId | None,
         user_id: UserId | None,
-        send_global_announcement: bool,
+        next_event_changed: bool,
     ) -> Self:
         return cls._skip_changed(
             change_type=ScheduleChangeType.SKIPPED,
             event_id=event_id,
             mailing_id=mailing_id,
             user_id=user_id,
-            send_global_announcement=send_global_announcement,
+            next_event_changed=next_event_changed,
         )
 
     @classmethod
@@ -89,14 +101,14 @@ class ScheduleChange(AggregateRoot):
         event_id: ScheduleEventId,
         mailing_id: MailingId | None,
         user_id: UserId | None,
-        send_global_announcement: bool,
+        next_event_changed: bool,
     ) -> Self:
         return cls._skip_changed(
             change_type=ScheduleChangeType.UNSKIPPED,
             event_id=event_id,
             mailing_id=mailing_id,
             user_id=user_id,
-            send_global_announcement=send_global_announcement,
+            next_event_changed=next_event_changed,
         )
 
     @classmethod
@@ -107,14 +119,21 @@ class ScheduleChange(AggregateRoot):
         event_id: ScheduleEventId,
         mailing_id: MailingId | None,
         user_id: UserId | None,
-        send_global_announcement: bool,
+        next_event_changed: bool,
     ) -> Self:
-        return cls(
+        instance = cls(
             id=generate_schedule_change_id(),
             type=change_type,
             changed_event_id=event_id,
             argument_event_id=None,
             mailing_id=mailing_id,
             user_id=user_id,
-            send_global_announcement=send_global_announcement,
+            next_event_changed=next_event_changed,
         )
+        instance.record_event(
+            CreatedScheduleChangeEvent(schedule_change_id=instance.id)
+        )
+        return instance
+
+    def mark_undone(self) -> None:
+        self.record_event(UndoScheduleChangeEvent(mailing_id=self.mailing_id))

@@ -31,8 +31,20 @@ class SqlMailingGateway(MailingRepository, MailingQuery):
         await self.session.merge(mailing_orm)
         return
 
-    async def increment_sent(self, mailing_id: MailingId) -> None:
-        stmt = update(MailingORM).where(MailingORM.id == mailing_id)
+    async def set_total(self, mailing_id: MailingId, total_count: int) -> None:
+        stmt = (
+            update(MailingORM)
+            .where(MailingORM.id == mailing_id)
+            .values(total_count=total_count)
+        )
+        await self.session.execute(stmt)
+
+    async def increment_sent(self, mailing_id: MailingId, incr_by: int = 1) -> None:
+        stmt = (
+            update(MailingORM)
+            .where(MailingORM.id == mailing_id)
+            .values(sent_count=MailingORM.sent_count + incr_by)
+        )
         await self.session.execute(stmt)
 
     async def read_mailing(self, mailing_id: MailingId) -> MailingDTO | None:

@@ -109,7 +109,7 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     assert change.user is not None
     assert change.user.id == schedule_editor.id
     assert change.user.username == schedule_editor.username
-    assert change.send_global_announcement is True
+    assert change.next_event_changed is True
     assert change.mailing_id is not None
 
     assert events_broker.published_events == [
@@ -148,7 +148,7 @@ async def test_set_current_event_can_unset_current_event(
     assert change.argument_event.id == previous_current_event.id
     assert change.user is not None
     assert change.user.id == schedule_editor.id
-    assert change.send_global_announcement is True
+    assert change.next_event_changed is True
     assert change.mailing_id is not None
 
     assert events_broker.published_events == [

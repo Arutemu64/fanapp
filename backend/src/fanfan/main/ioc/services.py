@@ -1,7 +1,6 @@
 from dishka import Provider, Scope, provide
 
 from fanfan.application.services.current_user import CurrentUserProvider
-from fanfan.application.services.mailing import MailingService
 from fanfan.application.services.permissions import PermissionService
 from fanfan.application.services.security import SecurityService
 from fanfan.application.services.tickets import TicketService
@@ -19,7 +18,6 @@ class ServicesProvider(Provider):
     security = provide(SecurityService)
     email = provide(EmailService)
     current_user = provide(CurrentUserProvider)
-    notifications = provide(MailingService)
     perm = provide(PermissionService)
     user = provide(UserService)
 

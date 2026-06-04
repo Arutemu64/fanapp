@@ -1,23 +1,11 @@
 {
   "version": 1,
   "skills": {
-    "ccc": {
-      "source": "cocoindex-io/cocoindex-code",
-      "sourceType": "github",
-      "skillPath": "skills/ccc/SKILL.md",
-      "computedHash": "32cd2a524fe30b91737f1fedaf62fb8cd9db5c782054ad783c5dce771e917162"
-    },
     "clean-ddd-hexagonal": {
       "source": "ccheney/robust-skills",
       "sourceType": "github",
       "skillPath": "skills/clean-ddd-hexagonal/SKILL.md",
       "computedHash": "3e2bcc45e58cd714b336e04c96544859d6577c4c6faf762cdf8ce3d02dbf9a79"
-    },
-    "context7-cli": {
-      "source": "upstash/context7",
-      "sourceType": "github",
-      "skillPath": "skills/context7-cli/SKILL.md",
-      "computedHash": "fc0c682dac344a4c78787072ae9b5b8708d4d5a14b2101c9b45de557bf9b7755"
     },
     "docker-expert": {
       "source": "sickn33/antigravity-awesome-skills",
@@ -37,17 +25,11 @@
       "skillPath": "fastapi/.agents/skills/fastapi/SKILL.md",
       "computedHash": "9feb517089c269af4fdab5031dea1100a92fd50081e906ccfaf8a971858e39f9"
     },
-    "python-testing-patterns": {
-      "source": "wshobson/agents",
+    "find-docs": {
+      "source": "upstash/context7",
       "sourceType": "github",
-      "skillPath": "plugins/python-development/skills/python-testing-patterns/SKILL.md",
-      "computedHash": "f4de9bdbf2db1c1f8e8211e6af463ad49956f15aa604e2f08ae716c71e71f64b"
-    },
-    "simple": {
-      "source": "roin-orca/skills",
-      "sourceType": "github",
-      "skillPath": "skills/simple/SKILL.md",
-      "computedHash": "33c6d82002c7d88bc5a29e647d847f6546e13786a9030bfc0e330e3731939c6c"
+      "skillPath": "skills/find-docs/SKILL.md",
+      "computedHash": "d0321f889edc54a338b22615d6b00ace35f73f5879558e7183d0a70ceb819aa7"
     },
     "svelte-code-writer": {
       "source": "sveltejs/ai-tools",

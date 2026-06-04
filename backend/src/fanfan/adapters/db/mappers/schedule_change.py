@@ -17,7 +17,7 @@ class ScheduleChangeMapper:
             user_id=model.user_id,
             changed_event_id=model.changed_event_id,
             argument_event_id=model.argument_event_id,
-            send_global_announcement=model.send_global_announcement,
+            next_event_changed=model.next_event_changed,
         )
 
     @staticmethod
@@ -29,7 +29,7 @@ class ScheduleChangeMapper:
             user_id=orm.user_id,
             changed_event_id=orm.changed_event_id,
             argument_event_id=orm.argument_event_id,
-            send_global_announcement=orm.send_global_announcement,
+            next_event_changed=orm.next_event_changed,
         )
 
     @staticmethod
@@ -41,7 +41,7 @@ class ScheduleChangeMapper:
             type=schedule_change_orm.type,
             mailing_id=schedule_change_orm.mailing_id,
             user_id=schedule_change_orm.user_id,
-            send_global_announcement=schedule_change_orm.send_global_announcement,
+            next_event_changed=schedule_change_orm.next_event_changed,
             changed_event=ScheduleChangeEventDTO(
                 id=schedule_change_orm.changed_event.id,
                 public_number=schedule_change_orm.changed_event.public_id,
