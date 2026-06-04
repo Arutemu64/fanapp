@@ -48,28 +48,29 @@
 
 <SectionHeader title="Профиль" description="Управление вашим аккаунтом и информацией" />
 
-<div class="grid items-start gap-4 sm:grid-cols-2">
-	<div class="flex flex-col gap-4">
-		<!-- Basic User Info Card -->
-		<BasicUserInfoCard {user} onUpdate={refreshProfile} />
+<div class="flex flex-col gap-4">
+	<!-- Basic User Info Card -->
+	<BasicUserInfoCard {user} onUpdate={refreshProfile} />
 
-		<!-- Ticket Link Card -->
-		<TicketLinkCard {user} onTicketLinked={refreshProfile} />
-	</div>
+	<div class="grid items-start gap-4 sm:grid-cols-2">
+		<div class="flex flex-col gap-4">
+			<!-- Ticket Link Card -->
+			<TicketLinkCard {user} onTicketLinked={refreshProfile} />
+			<!-- Login Methods Card -->
+			<SecurityCard {user} socialAccounts={data.socialAccounts} onUpdate={refreshProfile} />
+		</div>
 
-	<div class="flex flex-col gap-4">
-		<!-- Login Methods Card -->
-		<SecurityCard {user} socialAccounts={data.socialAccounts} onUpdate={refreshProfile} />
+		<div class="flex flex-col gap-4">
+			<!-- PWA Install Card -->
+			<PwaInstallCard />
 
-		<!-- PWA Install Card -->
-		<PwaInstallCard />
-
-		<!-- Push Notifications Card -->
-		<PushNotificationsCard
-			{user}
-			socialAccounts={data.socialAccounts}
-			pushSubscriptions={data.pushSubscriptions}
-			onSettingsUpdate={refreshProfile}
-		/>
+			<!-- Push Notifications Card -->
+			<PushNotificationsCard
+				{user}
+				socialAccounts={data.socialAccounts}
+				pushSubscriptions={data.pushSubscriptions}
+				onSettingsUpdate={refreshProfile}
+			/>
+		</div>
 	</div>
 </div>

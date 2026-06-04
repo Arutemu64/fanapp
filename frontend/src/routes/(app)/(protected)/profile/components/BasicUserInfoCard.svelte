@@ -45,30 +45,30 @@
 		<UserCircleSolid class="h-5 w-5" />
 	{/snippet}
 
-	<div class="flex items-center gap-4">
-		<Avatar size="lg">{avatarInitials}</Avatar>
+	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+		<div class="flex min-w-0 items-center gap-4">
+			<Avatar size="lg">{avatarInitials}</Avatar>
 
-		<div class="min-w-0 flex-1">
-			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-				<h4 class="truncate text-lg font-semibold text-gray-900 dark:text-white">
-					{user.first_name || 'Пользователь'}
-				</h4>
-				<Badge color={getRoleColor(user.role)} border class="text-xs">
-					{getRoleLabel(user.role)}
-				</Badge>
+			<div class="min-w-0">
+				<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+					<h4 class="truncate text-lg font-semibold text-gray-900 dark:text-white">
+						{user.first_name || 'Пользователь'}
+					</h4>
+					<Badge color={getRoleColor(user.role)} border class="text-xs">
+						{getRoleLabel(user.role)}
+					</Badge>
+				</div>
+
+				{#if user.username}
+					<p class="mt-1 truncate text-sm text-gray-500 dark:text-gray-400">@{user.username}</p>
+				{/if}
 			</div>
-
-			{#if user.username}
-				<p class="mt-1 truncate text-sm text-gray-500 dark:text-gray-400">@{user.username}</p>
-			{/if}
 		</div>
-	</div>
 
-	<div>
 		<Button
 			color="alternative"
 			size="sm"
-			class="min-h-11 w-full sm:w-auto"
+			class="min-h-11 w-full shrink-0 sm:w-auto"
 			onclick={() => (editProfileModalOpen = true)}
 		>
 			Редактировать профиль
