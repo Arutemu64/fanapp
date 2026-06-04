@@ -12,7 +12,7 @@ from fanfan.application.ports.repositories import (
     ScheduleEventRepository,
 )
 from fanfan.application.ports.trx import TransactionManager
-from fanfan.core.events.schedule import CreatedScheduleChangeEvent
+from fanfan.core.events.schedule import ScheduleChangeCreated
 from fanfan.core.exceptions.schedule import EventNotFound
 from fanfan.core.models.schedule_event import ScheduleEvent
 from fanfan.core.models.user import User
@@ -113,7 +113,7 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     assert change.mailing_id is not None
 
     assert events_broker.published_events == [
-        CreatedScheduleChangeEvent(schedule_change_id=change.id)
+        ScheduleChangeCreated(schedule_change_id=change.id)
     ]
 
 
@@ -152,7 +152,7 @@ async def test_set_current_event_can_unset_current_event(
     assert change.mailing_id is not None
 
     assert events_broker.published_events == [
-        CreatedScheduleChangeEvent(schedule_change_id=change.id)
+        ScheduleChangeCreated(schedule_change_id=change.id)
     ]
 
 

@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fanfan.adapters.db.mappers.app_settings import AppSettingsMapper
 from fanfan.adapters.db.models import AppSettingsORM
 from fanfan.application.ports.repositories.app_settings import AppSettingsRepository
-from fanfan.core.exceptions.settings import AppAppSettingsNotFound
+from fanfan.core.exceptions.settings import AppSettingsNotFound
 from fanfan.core.models.app_settings import AppSettings
 
 
@@ -24,7 +24,7 @@ class SqlAppSettingsGateway(AppSettingsRepository):
     async def _get_by_stmt(self, stmt) -> AppSettings:
         settings_orm = await self.session.scalar(stmt)
         if settings_orm is None:
-            raise AppAppSettingsNotFound
+            raise AppSettingsNotFound
         return self.mapper.to_model(settings_orm)
 
     async def save(self, settings: AppSettings) -> None:

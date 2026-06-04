@@ -5,5 +5,5 @@ class AppSettingsException(AppException):
     pass
 
 
-class AppAppSettingsNotFound(AppSettingsException):
+class AppSettingsNotFound(AppSettingsException):
     code = "APP_SETTINGS_NOT_FOUND"

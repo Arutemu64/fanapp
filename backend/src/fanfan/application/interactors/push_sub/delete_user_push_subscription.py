@@ -6,7 +6,7 @@ from fanfan.application.ports.repositories.push_subscriptions import (
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.base import AccessDenied
-from fanfan.core.exceptions.push_sub import PushSubNotFound
+from fanfan.core.exceptions.push_sub import PushSubscriptionNotFound
 
 
 class DeletePushSubscriptionInput(BaseModel):
@@ -28,7 +28,7 @@ class DeletePushSubscription:
         current_user_id = await self.current_user_provider.require_user_id()
         push_sub = await self.push_sub_repo.get_by_endpoint(data.endpoint)
         if push_sub is None:
-            raise PushSubNotFound
+            raise PushSubscriptionNotFound
         if push_sub.user_id != current_user_id:
             raise AccessDenied
         await self.push_sub_repo.delete(push_sub)

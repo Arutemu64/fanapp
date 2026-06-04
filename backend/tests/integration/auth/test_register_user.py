@@ -8,7 +8,7 @@ from fanfan.application.interactors.auth.register_user import (
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.security import SecurityService
-from fanfan.core.events.users import CreatedUserEvent
+from fanfan.core.events.users import UserCreated
 from fanfan.core.exceptions.users import UserAlreadyExists
 from fanfan.core.models.user import User
 from fanfan.core.vo.user import Username, UserRole, generate_user_id
@@ -42,7 +42,7 @@ async def test_register_user_creates_visitor_with_password_and_publishes_event(
     assert saved_user.hashed_password is not None
     assert saved_user.hashed_password != "strong-password"
     assert security.verify_password("strong-password", saved_user.hashed_password)
-    assert events_broker.published_events == [CreatedUserEvent(user_id=saved_user.id)]
+    assert events_broker.published_events == [UserCreated(user_id=saved_user.id)]
 
 
 async def test_register_user_raises_when_email_already_exists(

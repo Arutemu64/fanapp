@@ -5,7 +5,7 @@ from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.security import SecurityService
 from fanfan.application.services.user import UserService
-from fanfan.core.events.users import CreatedUserEvent
+from fanfan.core.events.users import UserCreated
 from fanfan.core.exceptions.users import UserAlreadyExists
 from fanfan.core.models.user import User
 from fanfan.core.utils.email import normalize_email
@@ -53,4 +53,4 @@ class RegisterUser:
         )
         await self.user_repo.add(new_user)
         await self.trx.commit()
-        await self.event_broker.publish(CreatedUserEvent(user_id=new_user.id))
+        await self.event_broker.publish(UserCreated(user_id=new_user.id))

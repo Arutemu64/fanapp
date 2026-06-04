@@ -6,7 +6,7 @@ from fanfan.core.vo.user import UserId
 from fanfan.core.vo.vote import VoteId
 
 
-class CreatedVoteEvent(AppEvent):
+class VoteCreated(AppEvent):
     subject: ClassVar[str] = "votes.created"
 
     vote_id: VoteId
@@ -14,7 +14,7 @@ class CreatedVoteEvent(AppEvent):
     participant_id: ParticipantId
 
 
-class DeletedVoteEvent(AppEvent):
+class VoteDeleted(AppEvent):
     subject: ClassVar[str] = "votes.deleted"
 
     vote_id: VoteId

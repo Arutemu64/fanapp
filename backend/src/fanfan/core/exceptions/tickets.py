@@ -1,21 +1,21 @@
 from fanfan.core.exceptions.base import AppException
 
 
-class TicketsException(AppException):
+class TicketException(AppException):
     pass
 
 
-class TicketNotFound(TicketsException):
+class TicketNotFound(TicketException):
     code = "TICKET_NOT_FOUND"
 
 
-class UserAlreadyHasTicketLinked(TicketsException):
+class UserAlreadyHasTicketLinked(TicketException):
     code = "USER_ALREADY_HAS_TICKET_LINKED"
 
 
-class TicketAlreadyUsed(TicketsException):
+class TicketAlreadyUsed(TicketException):
     code = "TICKET_ALREADY_USED"
 
 
-class TicketNotLinked(TicketsException):
+class TicketNotLinked(TicketException):
     code = "TICKET_NOT_LINKED"

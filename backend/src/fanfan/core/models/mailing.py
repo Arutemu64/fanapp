@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from fanfan.core.exceptions.notifications import MailingCancelled
+from fanfan.core.exceptions.notifications import MailingAlreadyCancelled
 from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.mailing import MailingId, MailingStatus, generate_mailing_id
 from fanfan.core.vo.user import UserId
@@ -25,4 +25,4 @@ class Mailing(AggregateRoot):
 
     def ensure_active(self) -> None:
         if self.status == MailingStatus.CANCELLED:
-            raise MailingCancelled
+            raise MailingAlreadyCancelled

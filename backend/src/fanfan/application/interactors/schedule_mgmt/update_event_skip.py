@@ -17,7 +17,7 @@ from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
-from fanfan.core.exceptions.rate_limit import RateLockCooldown
+from fanfan.core.exceptions.rate_limit import RateLimitCooldown
 from fanfan.core.exceptions.schedule import (
     EventNotFound,
     ScheduleEditTooFast,
@@ -120,7 +120,7 @@ class UpdateScheduleEventSkip:
                     extra={"skipped_event": event},
                 )
                 return
-        except RateLockCooldown as e:
+        except RateLimitCooldown as e:
             raise ScheduleEditTooFast(
                 retry_after=e.details["retry_after"],
             ) from e

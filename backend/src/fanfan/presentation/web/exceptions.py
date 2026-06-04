@@ -16,8 +16,8 @@ from fanfan.core.exceptions.base import AccessDenied, AppException
 from fanfan.core.exceptions.nominations import NominationNotFound
 from fanfan.core.exceptions.participants import ParticipantNotFound
 from fanfan.core.exceptions.push_sub import (
-    PushSubNotFound,
     PushSubscriptionAlreadyExists,
+    PushSubscriptionNotFound,
 )
 from fanfan.core.exceptions.rate_limit import EmailCodeRequestTooFast
 from fanfan.core.exceptions.schedule import (
@@ -29,9 +29,9 @@ from fanfan.core.exceptions.schedule import (
     ScheduleEditTooFast,
     SkippedEventNotAllowed,
 )
-from fanfan.core.exceptions.settings import AppAppSettingsNotFound
+from fanfan.core.exceptions.settings import AppSettingsNotFound
 from fanfan.core.exceptions.subscriptions import (
-    SubscriptionAlreadyExist,
+    SubscriptionAlreadyExists,
     SubscriptionNotFound,
 )
 from fanfan.core.exceptions.tickets import (
@@ -49,7 +49,7 @@ from fanfan.core.exceptions.users import (
     UsernameAlreadyTaken,
     UserNotFound,
 )
-from fanfan.core.exceptions.votes import AlreadyVotedInThisNomination, VoteNotFound
+from fanfan.core.exceptions.votes import VoteAlreadyExists, VoteNotFound
 from fanfan.presentation.web.schemas.error import (
     ErrorMessage,
     ValidationErrorDetail,
@@ -75,19 +75,19 @@ EXCEPTION_STATUS_MAP: dict[type[AppException], int] = {
     EventNotFound: status.HTTP_404_NOT_FOUND,
     NominationNotFound: status.HTTP_404_NOT_FOUND,
     ParticipantNotFound: status.HTTP_404_NOT_FOUND,
-    PushSubNotFound: status.HTTP_404_NOT_FOUND,
+    PushSubscriptionNotFound: status.HTTP_404_NOT_FOUND,
     SubscriptionNotFound: status.HTTP_404_NOT_FOUND,
     TicketNotFound: status.HTTP_404_NOT_FOUND,
     VoteNotFound: status.HTTP_404_NOT_FOUND,
     ScheduleChangeNotFound: status.HTTP_404_NOT_FOUND,
-    AppAppSettingsNotFound: status.HTTP_404_NOT_FOUND,
+    AppSettingsNotFound: status.HTTP_404_NOT_FOUND,
     # 409 Conflict
     UserAlreadyExists: status.HTTP_409_CONFLICT,
     UsernameAlreadyTaken: status.HTTP_409_CONFLICT,
     EmailAlreadyExists: status.HTTP_409_CONFLICT,
     OutdatedScheduleChange: status.HTTP_409_CONFLICT,
-    AlreadyVotedInThisNomination: status.HTTP_409_CONFLICT,
-    SubscriptionAlreadyExist: status.HTTP_409_CONFLICT,
+    VoteAlreadyExists: status.HTTP_409_CONFLICT,
+    SubscriptionAlreadyExists: status.HTTP_409_CONFLICT,
     PushSubscriptionAlreadyExists: status.HTTP_409_CONFLICT,
     TicketAlreadyUsed: status.HTTP_409_CONFLICT,
     UserAlreadyHasTicketLinked: status.HTTP_409_CONFLICT,

@@ -3,11 +3,11 @@ import time
 from fanfan.core.exceptions.base import AppException
 
 
-class LimiterException(AppException):
+class RateLimitException(AppException):
     pass
 
 
-class RateLockCooldown(LimiterException):
+class RateLimitCooldown(RateLimitException):
     code = "RATE_LOCK_COOLDOWN"
 
     def __init__(self, cooldown_period: float, timestamp: float):
@@ -15,11 +15,11 @@ class RateLockCooldown(LimiterException):
         super().__init__(details={"retry_after": retry_after})
 
 
-class RateLockInUse(LimiterException):
+class RateLimitInUse(RateLimitException):
     code = "RATE_LOCK_IN_USE"
 
 
-class EmailCodeRequestTooFast(LimiterException):
+class EmailCodeRequestTooFast(RateLimitException):
     code = "EMAIL_CODE_REQUEST_TOO_FAST"
 
     def __init__(self, retry_after: int):

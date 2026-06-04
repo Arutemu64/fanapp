@@ -7,7 +7,7 @@ from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.base import AccessDenied
-from fanfan.core.exceptions.settings import AppAppSettingsNotFound
+from fanfan.core.exceptions.settings import AppSettingsNotFound
 from fanfan.core.vo.user import UserRole
 
 logger = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ class UpdateSettings:
             raise AccessDenied
         settings = await self.settings_repo.get_for_update()
         if settings is None:
-            raise AppAppSettingsNotFound
+            raise AppSettingsNotFound
 
         update_flag = False
 

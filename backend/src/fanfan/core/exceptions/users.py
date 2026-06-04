@@ -1,37 +1,37 @@
 from fanfan.core.exceptions.base import AppException
 
 
-class UsersException(AppException):
+class UserException(AppException):
     pass
 
 
-class UserNotFound(UsersException):
+class UserNotFound(UserException):
     code = "USER_NOT_FOUND"
 
 
-class UserAlreadyExists(UsersException):
+class UserAlreadyExists(UserException):
     code = "USER_ALREADY_EXISTS"
 
 
-class UsernameAlreadyTaken(UsersException):
+class UsernameAlreadyTaken(UserException):
     code = "USERNAME_ALREADY_TAKEN"
 
 
-class UserHasNoEmail(UsersException):
+class UserHasNoEmail(UserException):
     code = "USER_HAS_NO_EMAIL"
 
 
-class EmailAlreadyExists(UsersException):
+class EmailAlreadyExists(UserException):
     code = "EMAIL_ALREADY_EXISTS"
 
 
-class TelegramAlreadyLinkedToAnotherUser(UsersException):
+class TelegramAlreadyLinkedToAnotherUser(UserException):
     code = "TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER"
 
 
-class UserAlreadyHasTelegramLinked(UsersException):
+class UserAlreadyHasTelegramLinked(UserException):
     code = "USER_ALREADY_HAS_TELEGRAM_LINKED"
 
 
-class TelegramCannotBeUnlinkedWithoutEmail(UsersException):
+class TelegramCannotBeUnlinkedWithoutEmail(UserException):
     code = "TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL"

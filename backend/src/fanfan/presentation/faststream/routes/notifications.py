@@ -26,13 +26,13 @@ from fanfan.application.interactors.notifications.send_notification import (
 )
 from fanfan.application.ports.realtime_gateway import RealtimeGateway
 from fanfan.core.events.notifications import (
-    CancelMailingEvent,
-    CreatedNotificationEvent,
-    NewBroadcastEvent,
-    NewNotificationEvent,
+    BroadcastQueued,
+    MailingCancelled,
+    NotificationCreated,
+    NotificationQueued,
 )
 from fanfan.core.exceptions.notifications import (
-    MailingCancelled,
+    MailingAlreadyCancelled,
     NotificationNotFound,
     NotificationRetryAfter,
     UserNotReachable,
@@ -43,30 +43,30 @@ notifications_router = NatsRouter()
 
 
 @notifications_router.subscriber(
-    NewNotificationEvent.subject,
+    NotificationQueued.subject,
     stream=stream,
     pull_sub=PullSub(),
     durable="create_new_notification",
     ack_policy=AckPolicy.MANUAL,
 )
 @notifications_router.publisher(
-    subject=CreatedNotificationEvent.subject,
+    subject=NotificationCreated.subject,
     stream=stream,
 )
 @inject
 async def create_new_notification(
-    data: NewNotificationEvent,
+    data: NotificationQueued,
     interactor: FromDishka[NewNotification],
     get_notification: FromDishka[GetNotification],
     realtime_gateway: FromDishka[RealtimeGateway],
     msg: NatsMessage,
     logger: Logger,
-) -> CreatedNotificationEvent:
+) -> NotificationCreated:
     try:
         notification_id = await interactor(
             NewNotificationInput(notification=data.notification)
         )
-    except MailingCancelled:
+    except MailingAlreadyCancelled:
         await msg.reject()
         raise
     else:
@@ -95,11 +95,11 @@ async def create_new_notification(
                 notification_id,
             )
 
-        return CreatedNotificationEvent(notification_id=notification_id)
+        return NotificationCreated(notification_id=notification_id)
 
 
 @notifications_router.subscriber(
-    CreatedNotificationEvent.subject,
+    NotificationCreated.subject,
     stream=stream,
     pull_sub=PullSub(),
     durable="send_notification_to_telegram",
@@ -107,7 +107,7 @@ async def create_new_notification(
 )
 @inject
 async def send_notification_to_telegram(
-    data: CreatedNotificationEvent,
+    data: NotificationCreated,
     interactor: FromDishka[SendNotification],
     msg: NatsMessage,
     logger: Logger,
@@ -128,7 +128,7 @@ async def send_notification_to_telegram(
         logger.info("Skip sending notification %s to Telegram", data.notification_id)
         await msg.reject()
         return
-    except MailingCancelled:
+    except MailingAlreadyCancelled:
         logger.info("Mailing for notification %s was cancelled", data.notification_id)
         await msg.reject()
         return
@@ -140,7 +140,7 @@ async def send_notification_to_telegram(
 
 
 @notifications_router.subscriber(
-    CreatedNotificationEvent.subject,
+    NotificationCreated.subject,
     stream=stream,
     pull_sub=PullSub(),
     durable="send_push_notification",
@@ -148,7 +148,7 @@ async def send_notification_to_telegram(
 )
 @inject
 async def send_push_notification(
-    data: CreatedNotificationEvent,
+    data: NotificationCreated,
     interactor: FromDishka[SendNotification],
     msg: NatsMessage,
     logger: Logger,
@@ -157,7 +157,7 @@ async def send_push_notification(
         await interactor.send_notification_to_push(
             SendNotificationInput(notification_id=data.notification_id)
         )
-    except MailingCancelled:
+    except MailingAlreadyCancelled:
         logger.info("Mailing for notification %s was cancelled", data.notification_id)
         await msg.reject()
         return
@@ -169,14 +169,14 @@ async def send_push_notification(
 
 
 @notifications_router.subscriber(
-    NewBroadcastEvent.subject,
+    BroadcastQueued.subject,
     stream=stream,
     pull_sub=PullSub(),
     durable="create_new_broadcast",
 )
 @inject
 async def create_new_broadcast(
-    data: NewBroadcastEvent,
+    data: BroadcastQueued,
     interactor: FromDishka[ProcessBroadcast],
 ) -> None:
     await interactor(
@@ -190,14 +190,14 @@ async def create_new_broadcast(
 
 
 @notifications_router.subscriber(
-    CancelMailingEvent.subject,
+    MailingCancelled.subject,
     stream=stream,
     pull_sub=PullSub(),
     durable="cancel_mailing",
 )
 @inject
 async def cancel_mailing(
-    data: CancelMailingEvent,
+    data: MailingCancelled,
     interactor: FromDishka[DeleteMailingMessages],
 ) -> None:
 

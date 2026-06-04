@@ -9,10 +9,10 @@ from fanfan.application.ports.repositories.nominations import NominationReposito
 from fanfan.application.ports.repositories.participants import ParticipantRepository
 from fanfan.application.ports.repositories.votes import VoteRepository
 from fanfan.application.ports.trx import TransactionManager
-from fanfan.core.events.voting import CreatedVoteEvent
+from fanfan.core.events.voting import VoteCreated
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.participants import ParticipantNotFound
-from fanfan.core.exceptions.votes import AlreadyVotedInThisNomination
+from fanfan.core.exceptions.votes import VoteAlreadyExists
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.models.participant import Participant
 from fanfan.core.models.user import User
@@ -80,7 +80,7 @@ async def test_add_vote_creates_vote_and_publishes_event(
     assert saved_vote.user_id == visitor_with_ticket.id
     assert saved_vote.participant_id == participant.id
     assert events_broker.published_events == [
-        CreatedVoteEvent(
+        VoteCreated(
             vote_id=result.vote_id,
             user_id=visitor_with_ticket.id,
             participant_id=participant.id,
@@ -257,7 +257,7 @@ async def test_add_vote_twice_in_same_nomination_raises_already_voted(
     await trx.commit()
 
     first_result = await interactor(AddVoteInput(participant_id=first_participant.id))
-    with pytest.raises(AlreadyVotedInThisNomination):
+    with pytest.raises(VoteAlreadyExists):
         await interactor(AddVoteInput(participant_id=second_participant.id))
 
     saved_vote = await vote_repo.get_user_vote_by_nomination(
@@ -267,7 +267,7 @@ async def test_add_vote_twice_in_same_nomination_raises_already_voted(
     assert saved_vote.id == first_result.vote_id
     assert saved_vote.participant_id == first_participant.id
     assert events_broker.published_events == [
-        CreatedVoteEvent(
+        VoteCreated(
             vote_id=first_result.vote_id,
             user_id=visitor_with_ticket.id,
             participant_id=first_participant.id,
@@ -345,12 +345,12 @@ async def test_add_vote_allows_votes_in_different_nominations(
     assert second_vote.id == second_result.vote_id
     assert second_vote.participant_id == second_participant.id
     assert events_broker.published_events == [
-        CreatedVoteEvent(
+        VoteCreated(
             vote_id=first_result.vote_id,
             user_id=visitor_with_ticket.id,
             participant_id=first_participant.id,
         ),
-        CreatedVoteEvent(
+        VoteCreated(
             vote_id=second_result.vote_id,
             user_id=visitor_with_ticket.id,
             participant_id=second_participant.id,

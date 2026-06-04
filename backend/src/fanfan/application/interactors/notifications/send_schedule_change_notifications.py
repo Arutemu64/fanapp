@@ -17,7 +17,7 @@ from fanfan.application.ports.queries.users import UserQuery
 from fanfan.application.ports.repositories.mailings import MailingRepository
 from fanfan.application.ports.template_renderer import TemplateRenderer
 from fanfan.application.ports.trx import TransactionManager
-from fanfan.core.events.notifications import NewNotificationEvent
+from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.schedule import ScheduleChangeNotFound
 from fanfan.core.vo.notification import NotificationType, generate_notification_id
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
@@ -76,13 +76,13 @@ class SendScheduleChangeNotifications:
 
     async def _build_editor_notifications(
         self, schedule_change: ScheduleChangeFullDTO, reason_msg: str | None
-    ) -> list[NewNotificationEvent]:
-        events: list[NewNotificationEvent] = []
+    ) -> list[NotificationQueued]:
+        events: list[NotificationQueued] = []
         if schedule_change.user:
             editor = schedule_change.user
             editors = await self.user_query.read_schedule_editors()
             events.extend(
-                NewNotificationEvent(
+                NotificationQueued(
                     notification=NewNotificationDTO(
                         id=generate_notification_id(),
                         user_id=e.id,
@@ -102,8 +102,8 @@ class SendScheduleChangeNotifications:
         schedule_change: ScheduleChangeFullDTO,
         current_event: ScheduleEventFullDTO,
         next_event: ScheduleEventFullDTO | None,
-    ) -> list[NewNotificationEvent]:
-        events: list[NewNotificationEvent] = []
+    ) -> list[NotificationQueued]:
+        events: list[NotificationQueued] = []
         body = await self.template_renderer.render(
             "global_announcement.jinja2",
             {
@@ -124,7 +124,7 @@ class SendScheduleChangeNotifications:
             },
         )
         events.extend(
-            NewNotificationEvent(
+            NotificationQueued(
                 notification=NewNotificationDTO(
                     id=generate_notification_id(),
                     user_id=u.id,
@@ -144,8 +144,8 @@ class SendScheduleChangeNotifications:
         current_event: ScheduleEventFullDTO,
         changed_event: ScheduleChangeEventDTO,
         reason_msg: str | None,
-    ) -> list[NewNotificationEvent]:
-        events: list[NewNotificationEvent] = []
+    ) -> list[NotificationQueued]:
+        events: list[NotificationQueued] = []
         # Queue always exists for current event
         current_event_queue = cast("int", current_event.queue)
 
@@ -169,7 +169,7 @@ class SendScheduleChangeNotifications:
                     },
                 )
                 events.append(
-                    NewNotificationEvent(
+                    NotificationQueued(
                         notification=NewNotificationDTO(
                             id=generate_notification_id(),
                             user_id=s.user_id,
@@ -193,7 +193,7 @@ class SendScheduleChangeNotifications:
         changed_event = schedule_change.changed_event
         reason_msg = self._resolve_reason_msg(schedule_change)
 
-        notification_events: list[NewNotificationEvent] = []
+        notification_events: list[NotificationQueued] = []
         notification_events.extend(
             await self._build_editor_notifications(schedule_change, reason_msg)
         )

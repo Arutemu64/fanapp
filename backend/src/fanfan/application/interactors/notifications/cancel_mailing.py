@@ -7,7 +7,7 @@ from fanfan.application.ports.repositories.mailings import MailingRepository
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.current_user import CurrentUserProvider
-from fanfan.core.events.notifications import CancelMailingEvent
+from fanfan.core.events.notifications import MailingCancelled
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.notifications import MailingNotFound
 from fanfan.core.vo.mailing import MailingId
@@ -47,7 +47,7 @@ class CancelMailing:
         mailing.set_as_cancelled()
         await self.mailing_repo.save(mailing)
         await self.trx.commit()
-        await self.events_broker.publish(CancelMailingEvent(mailing_id=data.mailing_id))
+        await self.events_broker.publish(MailingCancelled(mailing_id=data.mailing_id))
         logger.info(
             "Mailing %s deleted by user %s",
             data.mailing_id,

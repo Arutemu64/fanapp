@@ -10,7 +10,7 @@ from fanfan.application.dto.subscription import SubscriptionFullDTO
 from fanfan.application.ports.queries.subscriptions import SubscriptionQuery
 from fanfan.application.ports.repositories.subscriptions import SubscriptionRepository
 from fanfan.core.exceptions.schedule import EventNotFound
-from fanfan.core.exceptions.subscriptions import SubscriptionAlreadyExist
+from fanfan.core.exceptions.subscriptions import SubscriptionAlreadyExists
 from fanfan.core.models.subscription import (
     Subscription,
 )
@@ -45,7 +45,7 @@ class SqlSubscriptionGateway(SubscriptionRepository, SubscriptionQuery):
             if constraint_name == "fk_subscriptions_event_id_schedule":
                 raise EventNotFound from e
             if constraint_name == "uq_subscriptions_event_id":
-                raise SubscriptionAlreadyExist from e
+                raise SubscriptionAlreadyExists from e
             raise
 
     async def get_by_id(self, subscription_id: SubscriptionId) -> Subscription | None:

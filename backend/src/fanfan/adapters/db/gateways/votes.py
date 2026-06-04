@@ -7,7 +7,7 @@ from fanfan.adapters.db.mappers.vote import VoteMapper
 from fanfan.adapters.db.models import NominationORM, VoteORM
 from fanfan.application.ports.repositories.votes import VoteRepository
 from fanfan.core.exceptions.participants import ParticipantNotFound
-from fanfan.core.exceptions.votes import AlreadyVotedInThisNomination
+from fanfan.core.exceptions.votes import VoteAlreadyExists
 from fanfan.core.models.vote import Vote
 from fanfan.core.vo.nomination import NominationId
 from fanfan.core.vo.user import UserId
@@ -28,7 +28,7 @@ class SqlVoteGateway(VoteRepository):
             if constraint_name == "fk_votes_participant_id_participants":
                 raise ParticipantNotFound from e
             if constraint_name == "uq_votes_user_id":
-                raise AlreadyVotedInThisNomination from e
+                raise VoteAlreadyExists from e
             raise
 
     async def get_user_vote_by_nomination(

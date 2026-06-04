@@ -5,13 +5,13 @@ from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.schedule_change import ScheduleChangeId
 
 
-class CreatedScheduleChangeEvent(AppEvent):
+class ScheduleChangeCreated(AppEvent):
     subject: ClassVar[str] = "schedule.change.created"
 
     schedule_change_id: ScheduleChangeId
 
 
-class UndoScheduleChangeEvent(AppEvent):
-    subject: ClassVar[str] = "schedule.change.undo"
+class ScheduleChangeUndone(AppEvent):
+    subject: ClassVar[str] = "schedule.change.undone"
 
     mailing_id: MailingId | None

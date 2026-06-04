@@ -7,7 +7,7 @@ from fanfan.application.ports.repositories.mailings import MailingRepository
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.current_user import CurrentUserProvider
-from fanfan.core.events.notifications import NewBroadcastEvent
+from fanfan.core.events.notifications import BroadcastQueued
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.models.mailing import Mailing
 from fanfan.core.vo.mailing import MailingId
@@ -51,7 +51,7 @@ class SendBroadcast:
         await self.uow.commit()
 
         await self.events_broker.publish(
-            NewBroadcastEvent(
+            BroadcastQueued(
                 mailing_id=mailing.id,
                 body=data.body,
                 roles=data.roles,

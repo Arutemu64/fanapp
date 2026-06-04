@@ -1,13 +1,13 @@
 from fanfan.core.exceptions.base import AppException
 
 
-class PermissionsException(AppException):
+class PermissionException(AppException):
     pass
 
 
-class PermissionNotFound(PermissionsException):
+class PermissionNotFound(PermissionException):
     code = "PERMISSION_NOT_FOUND"
 
 
-class UserAlreadyHasPermission(PermissionsException):
+class UserAlreadyHasPermission(PermissionException):
     code = "USER_ALREADY_HAS_PERMISSION"

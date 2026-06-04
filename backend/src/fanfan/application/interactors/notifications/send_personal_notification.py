@@ -6,7 +6,7 @@ from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.repositories.mailings import MailingRepository
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.services.current_user import CurrentUserProvider
-from fanfan.core.events.notifications import NewNotificationEvent
+from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.users import UserNotFound
 from fanfan.core.vo.notification import NotificationType, generate_notification_id
@@ -45,7 +45,7 @@ class SendMessage:
             raise UserNotFound
 
         await self.events_broker.publish(
-            NewNotificationEvent(
+            NotificationQueued(
                 notification=NewNotificationDTO(
                     id=generate_notification_id(),
                     user_id=user.id,

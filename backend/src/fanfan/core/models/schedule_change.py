@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from typing import Self
 
 from fanfan.core.events.schedule import (
-    CreatedScheduleChangeEvent,
-    UndoScheduleChangeEvent,
+    ScheduleChangeCreated,
+    ScheduleChangeUndone,
 )
 from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.mailing import MailingId
@@ -48,9 +48,7 @@ class ScheduleChange(AggregateRoot):
             user_id=user_id,
             next_event_changed=True,
         )
-        instance.record_event(
-            CreatedScheduleChangeEvent(schedule_change_id=instance.id)
-        )
+        instance.record_event(ScheduleChangeCreated(schedule_change_id=instance.id))
         return instance
 
     @classmethod
@@ -72,9 +70,7 @@ class ScheduleChange(AggregateRoot):
             user_id=user_id,
             next_event_changed=next_event_changed,
         )
-        instance.record_event(
-            CreatedScheduleChangeEvent(schedule_change_id=instance.id)
-        )
+        instance.record_event(ScheduleChangeCreated(schedule_change_id=instance.id))
         return instance
 
     @classmethod
@@ -130,10 +126,8 @@ class ScheduleChange(AggregateRoot):
             user_id=user_id,
             next_event_changed=next_event_changed,
         )
-        instance.record_event(
-            CreatedScheduleChangeEvent(schedule_change_id=instance.id)
-        )
+        instance.record_event(ScheduleChangeCreated(schedule_change_id=instance.id))
         return instance
 
     def mark_undone(self) -> None:
-        self.record_event(UndoScheduleChangeEvent(mailing_id=self.mailing_id))
+        self.record_event(ScheduleChangeUndone(mailing_id=self.mailing_id))

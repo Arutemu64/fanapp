@@ -5,8 +5,8 @@ from fanfan.application.ports.rate_lock import RateLockFactory
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.user import UserService
-from fanfan.core.events.users import CreatedUserEvent, EmailLoginCodeRequestedEvent
-from fanfan.core.exceptions.rate_limit import EmailCodeRequestTooFast, RateLockCooldown
+from fanfan.core.events.users import EmailLoginCodeRequested, UserCreated
+from fanfan.core.exceptions.rate_limit import EmailCodeRequestTooFast, RateLimitCooldown
 from fanfan.core.exceptions.users import UserAlreadyExists
 from fanfan.core.models.user import User
 from fanfan.core.services.email_login import EMAIL_CODE_REQUEST_COOLDOWN_SECONDS
@@ -74,7 +74,7 @@ class RequestLoginCode:
                                 break
                         else:
                             await self.event_broker.publish(
-                                CreatedUserEvent(user_id=user.id)
+                                UserCreated(user_id=user.id)
                             )
                             break
 
@@ -83,7 +83,7 @@ class RequestLoginCode:
                         raise RuntimeError(msg)
 
                 await self.event_broker.publish(
-                    EmailLoginCodeRequestedEvent(user_id=user.id)
+                    EmailLoginCodeRequested(user_id=user.id)
                 )
-        except RateLockCooldown as e:
+        except RateLimitCooldown as e:
             raise EmailCodeRequestTooFast(retry_after=e.details["retry_after"]) from e

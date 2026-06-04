@@ -9,7 +9,7 @@ from fanfan.application.ports.repositories.votes import VoteRepository
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.voting import VotingService
-from fanfan.core.events.voting import DeletedVoteEvent
+from fanfan.core.events.voting import VoteDeleted
 from fanfan.core.exceptions.votes import VoteNotFound
 from fanfan.core.vo.nomination import NominationId
 
@@ -58,7 +58,7 @@ class CancelUserVoteByNomination:
             vote.participant_id,
         )
         await self.events_broker.publish(
-            DeletedVoteEvent(
+            VoteDeleted(
                 vote_id=vote.id,
                 user_id=current_user.id,
                 participant_id=vote.participant_id,

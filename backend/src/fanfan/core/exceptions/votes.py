@@ -1,13 +1,13 @@
 from fanfan.core.exceptions.base import AppException
 
 
-class VotesException(AppException):
+class VoteException(AppException):
     pass
 
 
-class AlreadyVotedInThisNomination(VotesException):
+class VoteAlreadyExists(VoteException):
     code = "ALREADY_VOTED_IN_THIS_NOMINATION"
 
 
-class VoteNotFound(VotesException):
+class VoteNotFound(VoteException):
     code = "VOTE_NOT_FOUND"
