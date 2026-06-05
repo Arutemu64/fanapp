@@ -4,7 +4,7 @@ from fastapi import APIRouter, Request
 
 from fanfan.application.dto.user import CurrentUserDTO
 from fanfan.application.interactors.current_user.get_current_user import GetCurrentUser
-from fanfan.application.interactors.current_user.update_user import (
+from fanfan.application.interactors.current_user.update_current_user import (
     UpdateCurrentUser,
     UpdateCurrentUserInput,
 )

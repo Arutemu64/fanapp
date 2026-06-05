@@ -16,12 +16,12 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True, frozen=True)
-class SendMessageInput:
+class SendPersonalNotificationInput:
     user_id: UserId
     message_text: str
 
 
-class SendMessage:
+class SendPersonalNotification:
     def __init__(
         self,
         user_repo: UserRepository,
@@ -34,7 +34,7 @@ class SendMessage:
         self.current_user_provider = current_user_provider
         self.events_broker = events_broker
 
-    async def __call__(self, data: SendMessageInput):
+    async def __call__(self, data: SendPersonalNotificationInput):
         current_user = await self.current_user_provider.require_user()
         # TODO proper permission
         if current_user.role != UserRole.ORG:

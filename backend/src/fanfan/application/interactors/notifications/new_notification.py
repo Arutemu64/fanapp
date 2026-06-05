@@ -9,11 +9,11 @@ from fanfan.core.models.notification import Notification
 from fanfan.core.vo.notification import NotificationId
 
 
-class NewNotificationInput(BaseModel):
+class CreateNotificationInput(BaseModel):
     notification: NewNotificationDTO
 
 
-class NewNotification:
+class CreateNotification:
     def __init__(
         self,
         mailing_repo: MailingRepository,
@@ -36,7 +36,7 @@ class NewNotification:
             seen_at=None,
         )
 
-    async def __call__(self, data: NewNotificationInput) -> NotificationId:
+    async def __call__(self, data: CreateNotificationInput) -> NotificationId:
         mailing_id = data.notification.mailing_id
         notification = self._dto_to_model(data.notification)
         await self.notification_repo.add(notification)

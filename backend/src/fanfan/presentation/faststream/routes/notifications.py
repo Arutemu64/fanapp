@@ -13,8 +13,8 @@ from fanfan.application.interactors.notifications.get_notification import (
     GetNotificationInput,
 )
 from fanfan.application.interactors.notifications.new_notification import (
-    NewNotification,
-    NewNotificationInput,
+    CreateNotification,
+    CreateNotificationInput,
 )
 from fanfan.application.interactors.notifications.process_broadcast import (
     ProcessBroadcast,
@@ -56,7 +56,7 @@ notifications_router = NatsRouter()
 @inject
 async def create_new_notification(
     data: NotificationQueued,
-    interactor: FromDishka[NewNotification],
+    interactor: FromDishka[CreateNotification],
     get_notification: FromDishka[GetNotification],
     realtime_gateway: FromDishka[RealtimeGateway],
     msg: NatsMessage,
@@ -64,7 +64,7 @@ async def create_new_notification(
 ) -> NotificationCreated:
     try:
         notification_id = await interactor(
-            NewNotificationInput(notification=data.notification)
+            CreateNotificationInput(notification=data.notification)
         )
     except MailingAlreadyCancelled:
         await msg.reject()

@@ -15,11 +15,11 @@ from fanfan.core.vo.nomination import NominationId
 logger = logging.getLogger(__name__)
 
 
-class CancelUserVoteByNominationInput(BaseModel):
+class CancelVoteByNominationInput(BaseModel):
     nomination_id: NominationId
 
 
-class CancelUserVoteByNomination:
+class CancelVoteByNomination:
     def __init__(
         self,
         vote_repo: VoteRepository,
@@ -38,7 +38,7 @@ class CancelUserVoteByNomination:
         self.service = service
         self.ticket_repo = ticket_repo
 
-    async def __call__(self, data: CancelUserVoteByNominationInput) -> None:
+    async def __call__(self, data: CancelVoteByNominationInput) -> None:
         current_user = await self.current_user_provider.require_user()
         ticket = await self.ticket_repo.get_by_user_id(current_user.id)
         # TODO remove unnecessary check?
