@@ -1,7 +1,7 @@
 # An example of using standalone Python builds with multistage images.
 
 # First, build the application in the `/app` directory
-FROM ghcr.io/astral-sh/uv:bookworm-slim AS builder
+FROM ghcr.io/astral-sh/uv:0.11.19-trixie-slim AS builder
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 
 # Omit development dependencies
@@ -26,7 +26,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
 
 # Then, use a final image without uv
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 
 # ca-certificates are necessary for web pushes
 RUN apt-get update \
@@ -56,7 +56,7 @@ WORKDIR /app
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/debug/health', timeout=3)" || exit 1
+    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/debug/health', timeout=3)"]
 
 # Run the FastAPI application by default
 CMD ["uvicorn", "--factory", "fanfan.presentation.web.factory:create_app"]

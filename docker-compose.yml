@@ -87,6 +87,8 @@ services:
     read_only: true
     tmpfs:
       - /tmp
+    healthcheck:
+      disable: true
     profiles: [ "core" ]
     networks:
       - backend-network
@@ -101,7 +103,7 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ./backend/alembic.ini:/app/alembic.ini
+      - ./backend/alembic.ini:/app/alembic.ini:ro
     command: [ "alembic", "upgrade", "head" ]
     restart: on-failure
     profiles: [ "core" ]
@@ -130,15 +132,15 @@ services:
       - backend-network
 
   nats:
-    image: docker.io/nats:alpine
+    image: nats:2.14-alpine
     volumes:
       - nats-data:/data
-    command: "--js --sd=/data --user ${NATS__USER} --pass ${NATS__PASSWORD}"
+    command: "--js --sd=/data -m 8222 --user ${NATS__USER} --pass ${NATS__PASSWORD}"
     ports:
       - "127.0.0.1:4222:4222"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "nc", "-z", "127.0.0.1", "4222"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8222/healthz?js-enabled-only=true"]
       interval: 5s
       timeout: 5s
       retries: 3
@@ -147,7 +149,7 @@ services:
       - backend-network
 
   pgbackup:
-    image: prodrigestivill/postgres-backup-local
+    image: prodrigestivill/postgres-backup-local:17-alpine
     depends_on:
       - db
     volumes:
@@ -169,12 +171,12 @@ services:
       - backend-network
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.4-alpine
     environment:
       REDIS__PASSWORD: "${REDIS__PASSWORD}"
     volumes:
       - redis-data:/data
-      - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
     command: "redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS__PASSWORD}"
     ports:
       - "127.0.0.1:6379:6379"

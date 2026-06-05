@@ -1,4 +1,4 @@
-FROM node:22-alpine AS base
+FROM node:22.22-alpine AS base
 
 ENV PNPM_HOME=/pnpm
 ENV PATH=/pnpm:$PATH
@@ -39,7 +39,7 @@ FROM base AS prod-deps
 RUN --mount=type=cache,target=/pnpm/store \
 	pnpm install --prod --frozen-lockfile
 
-FROM node:22-alpine AS prod
+FROM node:22.22-alpine AS prod
 
 ENV NODE_ENV=production
 
@@ -52,7 +52,7 @@ COPY --from=build --chown=node:node /app/package.json ./package.json
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:3000').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+  CMD ["wget", "-qO-", "http://127.0.0.1:3000/healthz"]
 
 USER node
 
