@@ -171,18 +171,18 @@ services:
       - backend-network
 
   redis:
-    image: redis:7.4-alpine
+    image: valkey/valkey:9.1-alpine
     environment:
       REDIS__PASSWORD: "${REDIS__PASSWORD}"
     volumes:
       - redis-data:/data
-      - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
-    command: "redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS__PASSWORD}"
+      - ./config/redis/redis.conf:/usr/local/etc/valkey/valkey.conf:ro
+    command: "valkey-server /usr/local/etc/valkey/valkey.conf --requirepass ${REDIS__PASSWORD}"
     ports:
       - "127.0.0.1:6379:6379"
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD-SHELL", "REDISCLI_AUTH=\"$${REDIS__PASSWORD}\" redis-cli ping | grep PONG" ]
+      test: [ "CMD-SHELL", "REDISCLI_AUTH=\"$${REDIS__PASSWORD}\" valkey-cli ping | grep PONG" ]
       interval: 5s
       timeout: 20s
       retries: 5
