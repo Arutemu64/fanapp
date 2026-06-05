@@ -33,6 +33,9 @@ from fanfan.application.interactors.current_user.update_current_user import (
 from fanfan.application.interactors.current_user.update_user_settings import (
     UpdateUserSettings,
 )
+from fanfan.application.interactors.notifications.create_notification import (
+    CreateNotification,
+)
 from fanfan.application.interactors.notifications.delete_mailing_messages import (
     DeleteMailingMessages,
 )
@@ -43,9 +46,6 @@ from fanfan.application.interactors.notifications.list_user_notifications import
     ListUserNotifications,
 )
 from fanfan.application.interactors.notifications.mark_all_read import MarkAllRead
-from fanfan.application.interactors.notifications.new_notification import (
-    CreateNotification,
-)
 from fanfan.application.interactors.notifications.process_broadcast import (
     ProcessBroadcast,
 )
