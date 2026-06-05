@@ -8,7 +8,7 @@ from fanfan.application.interactors.schedule_mgmt.list_schedule_changes import (
     ListScheduleChanges,
     ListScheduleChangesResult,
 )
-from fanfan.application.interactors.schedule_mgmt.undo_change import (
+from fanfan.application.interactors.schedule_mgmt.undo_schedule_change import (
     UndoScheduleChange,
     UndoScheduleChangeInput,
 )

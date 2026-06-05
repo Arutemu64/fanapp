@@ -27,9 +27,14 @@ from fanfan.application.interactors.current_user.link_telegram_account import (
 from fanfan.application.interactors.current_user.unlink_telegram_account import (
     UnlinkTelegramAccount,
 )
-from fanfan.application.interactors.current_user.update_user import UpdateCurrentUser
+from fanfan.application.interactors.current_user.update_current_user import (
+    UpdateCurrentUser,
+)
 from fanfan.application.interactors.current_user.update_user_settings import (
     UpdateUserSettings,
+)
+from fanfan.application.interactors.notifications.create_notification import (
+    CreateNotification,
 )
 from fanfan.application.interactors.notifications.delete_mailing_messages import (
     DeleteMailingMessages,
@@ -41,9 +46,6 @@ from fanfan.application.interactors.notifications.list_user_notifications import
     ListUserNotifications,
 )
 from fanfan.application.interactors.notifications.mark_all_read import MarkAllRead
-from fanfan.application.interactors.notifications.new_notification import (
-    NewNotification,
-)
 from fanfan.application.interactors.notifications.process_broadcast import (
     ProcessBroadcast,
 )
@@ -54,7 +56,7 @@ from fanfan.application.interactors.notifications.send_notification import (
     SendNotification,
 )
 from fanfan.application.interactors.notifications.send_personal_notification import (
-    SendMessage,
+    SendPersonalNotification,
 )
 from fanfan.application.interactors.notifications.send_schedule_change_notifications import (  # noqa: E501
     SendScheduleChangeNotifications,
@@ -62,13 +64,13 @@ from fanfan.application.interactors.notifications.send_schedule_change_notificat
 from fanfan.application.interactors.notifications.send_test_notification import (
     SendTestNotification,
 )
-from fanfan.application.interactors.push_sub.create_push_subscriptions import (
+from fanfan.application.interactors.push_sub.create_push_subscription import (
     CreatePushSubscription,
 )
-from fanfan.application.interactors.push_sub.delete_user_push_subscription import (
+from fanfan.application.interactors.push_sub.delete_push_subscription import (
     DeletePushSubscription,
 )
-from fanfan.application.interactors.push_sub.get_user_push_subscriptions import (
+from fanfan.application.interactors.push_sub.list_user_push_subscriptions import (
     ListUserPushSubscriptions,
 )
 from fanfan.application.interactors.schedule.get_schedule import GetSchedule
@@ -76,12 +78,16 @@ from fanfan.application.interactors.schedule_mgmt.import_schedule import ImportS
 from fanfan.application.interactors.schedule_mgmt.list_schedule_changes import (
     ListScheduleChanges,
 )
-from fanfan.application.interactors.schedule_mgmt.move_event import MoveScheduleEvent
-from fanfan.application.interactors.schedule_mgmt.set_current_event import (
+from fanfan.application.interactors.schedule_mgmt.move_schedule_event import (
+    MoveScheduleEvent,
+)
+from fanfan.application.interactors.schedule_mgmt.set_current_schedule_event import (
     SetCurrentScheduleEvent,
 )
-from fanfan.application.interactors.schedule_mgmt.undo_change import UndoScheduleChange
-from fanfan.application.interactors.schedule_mgmt.update_event_skip import (
+from fanfan.application.interactors.schedule_mgmt.undo_schedule_change import (
+    UndoScheduleChange,
+)
+from fanfan.application.interactors.schedule_mgmt.update_schedule_event_skip import (
     UpdateScheduleEventSkip,
 )
 from fanfan.application.interactors.settings.get_settings import GetSettings
@@ -100,7 +106,7 @@ from fanfan.application.interactors.ticketscloud.process_tcloud_order import (
 from fanfan.application.interactors.ticketscloud.sync_tcloud import SyncTCloud
 from fanfan.application.interactors.voting.add_vote import AddVote
 from fanfan.application.interactors.voting.cancel_vote_by_nomination import (
-    CancelUserVoteByNomination,
+    CancelVoteByNomination,
 )
 from fanfan.application.interactors.voting.check_voting_contest_entry import (
     CheckVotingContestEntry,
@@ -117,23 +123,23 @@ from fanfan.application.interactors.voting.list_voting_nominations import (
 class InteractorsProvider(Provider):
     scope = Scope.REQUEST
 
-    get_schedule_page = provide(GetSchedule)
-    move_event = provide(MoveScheduleEvent)
-    set_current_event = provide(SetCurrentScheduleEvent)
-    toggle_event_skip = provide(UpdateScheduleEventSkip)
-    revert_change = provide(UndoScheduleChange)
-    proceed_schedule_change = provide(SendScheduleChangeNotifications)
+    get_schedule = provide(GetSchedule)
+    move_schedule_event = provide(MoveScheduleEvent)
+    set_current_schedule_event = provide(SetCurrentScheduleEvent)
+    update_schedule_event_skip = provide(UpdateScheduleEventSkip)
+    undo_schedule_change = provide(UndoScheduleChange)
+    send_schedule_change_notifications = provide(SendScheduleChangeNotifications)
     list_schedule_changes = provide(ListScheduleChanges)
     import_schedule = provide(ImportSchedule)
 
-    create_mailing = provide(SendBroadcast)
+    send_broadcast = provide(SendBroadcast)
     get_notification = provide(GetNotification)
-    proceed_mailing_cancel = provide(DeleteMailingMessages)
+    delete_mailing_messages = provide(DeleteMailingMessages)
     send_notification = provide(SendNotification)
-    send_message_to_user = provide(SendMessage)
-    send_to_roles = provide(ProcessBroadcast)
+    send_personal_notification = provide(SendPersonalNotification)
+    process_broadcast = provide(ProcessBroadcast)
 
-    get_nominations_page = provide(ListVotingNominations)
+    list_voting_nominations = provide(ListVotingNominations)
 
     get_settings = provide(GetSettings)
     update_settings = provide(UpdateSettings)
@@ -141,15 +147,15 @@ class InteractorsProvider(Provider):
     create_subscription = provide(CreateSubscription)
     delete_subscription = provide(DeleteSubscription)
 
-    use_ticket = provide(LinkTicket)
+    link_ticket = provide(LinkTicket)
 
     authenticate_user = provide(AuthenticateUser)
     register_user = provide(RegisterUser)
     get_current_user = provide(GetCurrentUser)
-    get_current_user_social_accounts = provide(GetCurrentUserSocialIds)
+    get_current_user_social_ids = provide(GetCurrentUserSocialIds)
     link_telegram_account = provide(LinkTelegramAccount)
     unlink_telegram_account = provide(UnlinkTelegramAccount)
-    change_user_role = provide(UpdateCurrentUser)
+    update_current_user = provide(UpdateCurrentUser)
     update_user_settings = provide(UpdateUserSettings)
     change_password = provide(ChangePassword)
     send_email_confirmation_code = provide(SendEmailConfirmationCode)
@@ -160,26 +166,26 @@ class InteractorsProvider(Provider):
     change_email = provide(ChangeEmail)
     login_with_code = provide(LoginWithCode)
     logout_user = provide(LogoutUser)
-    login_telegram = provide(AuthorizeTelegram)
+    authorize_telegram = provide(AuthorizeTelegram)
 
-    get_participants_page = provide(GetVotingNomination)
+    get_voting_nomination = provide(GetVotingNomination)
     add_vote = provide(AddVote)
-    cancel_vote = provide(CancelUserVoteByNomination)
+    cancel_vote_by_nomination = provide(CancelVoteByNomination)
     get_voting_state = provide(GetVotingState)
     check_voting_contest_entry = provide(CheckVotingContestEntry)
 
     sync_tcloud = provide(SyncTCloud)
-    proceed_tcloud_webhook = provide(ProcessTCloudOrder)
+    process_tcloud_order = provide(ProcessTCloudOrder)
 
     sync_cosplay2 = provide(SyncCosplay2)
 
-    steam_events = provide(StreamEvents)
+    stream_events = provide(StreamEvents)
 
     create_push_subscription = provide(CreatePushSubscription)
     list_user_push_subscriptions = provide(ListUserPushSubscriptions)
     delete_push_subscription = provide(DeletePushSubscription)
 
-    new_notification = provide(NewNotification)
+    create_notification = provide(CreateNotification)
     list_user_notifications = provide(ListUserNotifications)
     mark_all_read = provide(MarkAllRead)
     send_test_notification = provide(SendTestNotification)

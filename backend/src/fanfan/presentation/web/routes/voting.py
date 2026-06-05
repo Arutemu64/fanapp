@@ -11,8 +11,8 @@ from fanfan.application.interactors.voting.add_vote import (
     AddVoteOutput,
 )
 from fanfan.application.interactors.voting.cancel_vote_by_nomination import (
-    CancelUserVoteByNomination,
-    CancelUserVoteByNominationInput,
+    CancelVoteByNomination,
+    CancelVoteByNominationInput,
 )
 from fanfan.application.interactors.voting.get_voting_nomination import (
     GetVotingNomination,
@@ -125,6 +125,6 @@ async def add_vote(
 @inject
 async def cancel_vote(
     nomination_id: Annotated[NominationId, Path(description="Voting nomination ID.")],
-    interactor: FromDishka[CancelUserVoteByNomination],
+    interactor: FromDishka[CancelVoteByNomination],
 ) -> None:
-    await interactor(CancelUserVoteByNominationInput(nomination_id=nomination_id))
+    await interactor(CancelVoteByNominationInput(nomination_id=nomination_id))

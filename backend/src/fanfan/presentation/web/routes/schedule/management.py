@@ -4,15 +4,15 @@ from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Path
 
-from fanfan.application.interactors.schedule_mgmt.move_event import (
+from fanfan.application.interactors.schedule_mgmt.move_schedule_event import (
     MoveScheduleEvent,
     MoveScheduleEventInput,
 )
-from fanfan.application.interactors.schedule_mgmt.set_current_event import (
+from fanfan.application.interactors.schedule_mgmt.set_current_schedule_event import (
     SetCurrentScheduleEvent,
     SetCurrentScheduleEventInput,
 )
-from fanfan.application.interactors.schedule_mgmt.update_event_skip import (
+from fanfan.application.interactors.schedule_mgmt.update_schedule_event_skip import (
     UpdateScheduleEventSkip,
     UpdateScheduleEventSkipInput,
 )

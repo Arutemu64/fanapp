@@ -3,15 +3,15 @@ from dishka.integrations.fastapi import inject
 from fastapi import APIRouter
 
 from fanfan.application.dto.push_sub import PushSubscriptionDTO
-from fanfan.application.interactors.push_sub.create_push_subscriptions import (
+from fanfan.application.interactors.push_sub.create_push_subscription import (
     CreatePushSubscription,
     CreatePushSubscriptionInput,
 )
-from fanfan.application.interactors.push_sub.delete_user_push_subscription import (
+from fanfan.application.interactors.push_sub.delete_push_subscription import (
     DeletePushSubscription,
     DeletePushSubscriptionInput,
 )
-from fanfan.application.interactors.push_sub.get_user_push_subscriptions import (
+from fanfan.application.interactors.push_sub.list_user_push_subscriptions import (
     ListUserPushSubscriptions,
 )
 from fanfan.presentation.web.schemas.error import ErrorMessage
