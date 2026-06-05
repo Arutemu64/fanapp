@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.repositories.social_ids import SocialIdentityRepository
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.session_store import SessionStore
@@ -24,12 +25,14 @@ class AuthorizeTelegram:
         trx: TransactionManager,
         user_service: UserService,
         session_store: SessionStore,
+        events_broker: EventBroker,
     ) -> None:
         self.social_id_repo = social_id_repo
         self.trx = trx
         self.user_repo = user_repo
         self.user_service = user_service
         self.session_store = session_store
+        self.events_broker = events_broker
 
     async def __call__(self, data: AuthorizeTelegramInput) -> str:
         telegram_id = str(data.user_id)
@@ -40,13 +43,11 @@ class AuthorizeTelegram:
         if user:
             return await self.session_store.create_session(user.id)
 
-        user = User(
+        user = User.create(
             id=generate_user_id(),
             username=await self.user_service.generate_username(),
             role=UserRole.VISITOR,
             hashed_password=None,
-            pending_email=None,
-            email_verified_at=None,
         )
         await self.user_repo.add(user)
         await self.trx.flush()
@@ -58,4 +59,6 @@ class AuthorizeTelegram:
         )
         await self.social_id_repo.add(social_id)
         await self.trx.commit()
+        for event in user.pull_events():
+            await self.events_broker.publish(event)
         return await self.session_store.create_session(user.id)
