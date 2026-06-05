@@ -7,17 +7,44 @@ import {
 	clearAuthCookies,
 	setRequestCookiesHeader
 } from '$lib/server/cookies';
+import type { UserFullDTO } from '$lib/types/user';
 import type { Handle, HandleFetch, HandleServerError, RequestEvent } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 
+// Route-group folders that drive access control. SvelteKit puts the group name
+// (in parentheses) into the route id, so we can detect them with a substring.
+const PROTECTED_GROUP = '(protected)'; // requires a logged-in user
+const GUEST_ONLY_GROUP = '(auth)'; // login/register pages — only for guests
+
+const LOGIN_PATH = '/login';
+const HOME_PATH = '/';
+
+// Trim a trailing slash so we can append our own and match on a clean boundary.
+const PUBLIC_API_BASE = PUBLIC_API_URL.replace(/\/$/, '');
+const PRIVATE_API_BASE = PRIVATE_API_URL.replace(/\/$/, '');
+
+/**
+ * Match a URL against an API base, requiring a path boundary.
+ *
+ * Using `startsWith(base + '/')` (instead of a bare `startsWith(base)`) stops a
+ * malicious host like `https://api.example.com.evil.com` from matching
+ * `https://api.example.com`.
+ */
+function isApiUrl(url: string, base: string): boolean {
+	return url === base || url.startsWith(`${base}/`);
+}
+
 export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
-	// Replace public API with private API
-	if (request.url.startsWith(PUBLIC_API_URL)) {
-		request = new Request(request.url.replace(PUBLIC_API_URL, PRIVATE_API_URL), request);
+	// Server-side SSR fetches go to the public URL; rewrite them to the internal
+	// (in-cluster) URL so they never leave the network.
+	if (isApiUrl(request.url, PUBLIC_API_BASE)) {
+		const internalUrl = PRIVATE_API_BASE + request.url.slice(PUBLIC_API_BASE.length);
+		// Clone the original request, but change the URL (official SvelteKit pattern).
+		request = new Request(internalUrl, request);
 	}
 
-	const isInternalApi = request.url.startsWith(PRIVATE_API_URL);
+	const isInternalApi = isApiUrl(request.url, PRIVATE_API_BASE);
 
 	if (isInternalApi) {
 		// Keep internal SSR fetches in sync with cookies that were changed earlier
@@ -36,27 +63,36 @@ export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
 	return response;
 };
 
-async function loadCurrentUser(event: RequestEvent) {
-	const client = createApiClient();
-	const result = await client.GET('/me/', { fetch: event.fetch });
+/**
+ * Fetch the current user from the backend. Returns `null` for any "not logged
+ * in" situation so callers never have to handle errors.
+ */
+async function loadCurrentUser(event: RequestEvent): Promise<UserFullDTO | null> {
+	try {
+		const client = createApiClient();
+		const result = await client.GET('/me/', { fetch: event.fetch });
 
-	if (result.response.status === 401 || result.response.status === 403) {
-		clearAuthCookies(event.cookies);
+		// Stale or invalid session — drop the cookie so the user becomes a guest.
+		if (result.response.status === 401 || result.response.status === 403) {
+			clearAuthCookies(event.cookies);
+			return null;
+		}
+
+		return result.data && !result.error ? result.data : null;
+	} catch {
+		// Backend unreachable (network error / timeout). Render the page as a guest
+		// instead of failing the whole request with a 500.
 		return null;
 	}
-
-	return result.data && !result.error ? result.data : null;
 }
 
-const customHandle: Handle = async ({ event, resolve }) => {
-	const routeId = event.route.id;
+/**
+ * Load the current user into `event.locals` and tag Sentry, so every later hook,
+ * load function, and page can read `locals.user`.
+ */
+const authHandle: Handle = async ({ event, resolve }) => {
 	const sessionId = event.cookies.get('session_id');
-
-	if (sessionId) {
-		event.locals.user = await loadCurrentUser(event);
-	} else {
-		event.locals.user = null;
-	}
+	event.locals.user = sessionId ? await loadCurrentUser(event) : null;
 
 	if (event.locals.user) {
 		Sentry.setUser({ id: event.locals.user.id, username: event.locals.user.username ?? undefined });
@@ -64,16 +100,23 @@ const customHandle: Handle = async ({ event, resolve }) => {
 		Sentry.setUser(null);
 	}
 
-	if (routeId?.includes('(protected)')) {
-		if (!event.locals.user) {
-			throw redirect(303, '/login');
-		}
+	return resolve(event);
+};
+
+/**
+ * Enforce route-group access rules based on the user loaded in `authHandle`.
+ */
+const guardHandle: Handle = async ({ event, resolve }) => {
+	const routeId = event.route.id;
+
+	// Protected pages need a user; send guests to login.
+	if (routeId?.includes(PROTECTED_GROUP) && !event.locals.user) {
+		redirect(303, LOGIN_PATH);
 	}
 
-	if (routeId?.includes('(auth)')) {
-		if (event.locals.user) {
-			throw redirect(303, '/');
-		}
+	// Guest-only pages (login/register) make no sense for a logged-in user.
+	if (routeId?.includes(GUEST_ONLY_GROUP) && event.locals.user) {
+		redirect(303, HOME_PATH);
 	}
 
 	return resolve(event, {
@@ -81,7 +124,8 @@ const customHandle: Handle = async ({ event, resolve }) => {
 	});
 };
 
-export const handle: Handle = sequence(Sentry.sentryHandle(), customHandle);
+// Order matters: Sentry first, then load the user, then guard routes with it.
+export const handle: Handle = sequence(Sentry.sentryHandle(), authHandle, guardHandle);
 
 export const handleError: HandleServerError = Sentry.handleErrorWithSentry(({ error }) => {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -10,7 +10,10 @@ declare global {
 		interface Locals {
 			user: UserFullDTO | null;
 		}
-		// interface Error {}
+		interface Error {
+			message: string;
+			code?: string;
+		}
 		interface PageData {
 			user: UserFullDTO | null;
 		}
