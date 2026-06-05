@@ -18,7 +18,7 @@ from fanfan.core.exceptions.schedule import (
     ScheduleChangeNotFound,
 )
 from fanfan.core.models.schedule_event import ScheduleEvent
-from fanfan.core.vo.permission import Permissions
+from fanfan.core.vo.permission import PermissionName, Permissions
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
 
 logger = logging.getLogger(__name__)
@@ -87,7 +87,7 @@ class UndoScheduleChange:
     async def __call__(self, data: UndoScheduleChangeInput) -> None:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
-            user=current_user, perm_name=Permissions.SCHEDULE_MANAGE
+            user=current_user, perm_name=PermissionName(Permissions.SCHEDULE_MANAGE)
         )
         schedule_change = await self.changes_repo.get_by_id(data.schedule_change_id)
         if schedule_change is None:

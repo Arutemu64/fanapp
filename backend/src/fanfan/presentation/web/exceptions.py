@@ -1,4 +1,5 @@
 from collections.abc import Mapping
+from typing import cast
 
 from fastapi import HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -105,7 +106,7 @@ def _resolve_status_code(exc: AppException) -> int:
     """Resolve the HTTP status code using the exception MRO."""
     for exc_type in type(exc).__mro__:
         if exc_type in EXCEPTION_STATUS_MAP:
-            return EXCEPTION_STATUS_MAP[exc_type]
+            return EXCEPTION_STATUS_MAP[cast("type[AppException]", exc_type)]
 
     return status.HTTP_500_INTERNAL_SERVER_ERROR
 
@@ -162,12 +163,15 @@ async def auth_exception_handler(request: Request, exc: HTTPException) -> JSONRe
     _ = request
 
     if isinstance(exc.detail, Mapping):
-        code = exc.detail.get("code")
-        details = exc.detail.get("details")
+        detail = cast("Mapping[str, object]", exc.detail)
+        code = detail.get("code")
+        details = detail.get("details")
         if isinstance(code, str) and isinstance(details, Mapping):
             return JSONResponse(
                 status_code=exc.status_code,
-                content=_build_error_content(code, details),
+                content=_build_error_content(
+                    code, cast("Mapping[str, object]", details)
+                ),
                 headers=exc.headers,
             )
 

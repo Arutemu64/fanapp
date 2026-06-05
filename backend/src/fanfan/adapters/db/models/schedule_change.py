@@ -1,4 +1,4 @@
-from uuid import UUID, uuid7
+from uuid import uuid7
 
 from sqlalchemy import ForeignKey, Uuid
 from sqlalchemy.dialects import postgresql
@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
 from fanfan.adapters.db.models.schedule_event import ScheduleEventORM
 from fanfan.adapters.db.models.user import UserORM
+from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
 from fanfan.core.vo.schedule_event import ScheduleEventId
 from fanfan.core.vo.user import UserId
@@ -35,7 +36,7 @@ class ScheduleChangeORM(BaseORM):
         ForeignKey("users.id", ondelete="SET NULL"),
     )
     next_event_changed: Mapped[bool] = mapped_column()
-    mailing_id: Mapped[UUID | None] = mapped_column(
+    mailing_id: Mapped[MailingId | None] = mapped_column(
         ForeignKey("mailings.id", ondelete="SET NULL")
     )
 

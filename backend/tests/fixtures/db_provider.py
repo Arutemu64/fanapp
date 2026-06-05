@@ -3,6 +3,7 @@ import os
 from collections.abc import Iterable
 
 from dishka import Provider, Scope, provide
+from pydantic import PostgresDsn
 from testcontainers.postgres import PostgresContainer
 from testcontainers.redis import RedisContainer
 
@@ -20,7 +21,7 @@ class TestDbProvider(Provider):
         postgres = PostgresContainer("postgres:18.2")
         # TODO: workaround from testcontainers/testcontainers-python#108.
         if os.name == "nt":
-            postgres.get_container_host_ip = lambda: "localhost"
+            postgres.get_container_host_ip = lambda: "localhost"  # type: ignore  # noqa: PGH003
         try:
             postgres.start()
             postgres_url = postgres.get_connection_url().replace(
@@ -28,7 +29,7 @@ class TestDbProvider(Provider):
                 "postgresql+asyncpg",
             )
             logger.info("postgres url %s", postgres_url)
-            db_config = DatabaseConfig(url=postgres_url, echo=False)
+            db_config = DatabaseConfig(url=PostgresDsn(postgres_url), echo=False)
             yield db_config
         finally:
             postgres.stop()
@@ -38,7 +39,7 @@ class TestDbProvider(Provider):
         redis_container = RedisContainer("redis:6.2.13-alpine")
         # TODO: workaround from testcontainers/testcontainers-python#108.
         if os.name == "nt":
-            redis_container.get_container_host_ip = lambda: "localhost"
+            redis_container.get_container_host_ip = lambda: "localhost"  # type: ignore  # noqa: PGH003
         try:
             redis_container.start()
             host = redis_container.get_container_host_ip()

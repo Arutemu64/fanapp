@@ -3,7 +3,7 @@ from uuid import UUID
 import pytest
 from dishka import AsyncContainer
 
-from fanfan.application.interactors.schedule_mgmt.set_current_event import (
+from fanfan.application.interactors.schedule_mgmt.set_current_schedule_event import (
     SetCurrentScheduleEvent,
     SetCurrentScheduleEventInput,
 )

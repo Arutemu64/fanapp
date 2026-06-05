@@ -50,7 +50,10 @@ backend-test-integration:
 backend-sync-cosplay2:
     cd backend && uv run python -m fanfan.main.cli sync-cosplay2
 
-backend-lint: backend-format backend-check
+backend-typecheck:
+    cd backend && uv run ty check src/fanfan
+
+backend-lint: backend-format backend-check backend-typecheck
 
 backend-migrate:
     cd backend && uv run alembic upgrade head

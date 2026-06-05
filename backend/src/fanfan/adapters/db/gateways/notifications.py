@@ -24,7 +24,7 @@ class SqlNotificationGateway(NotificationRepository, NotificationQuery):
         notification_orm = self.mapper.from_model(notification)
         self.session.add(notification_orm)
         await self.session.flush([notification_orm])
-        return self.mapper.to_model(notification_orm)
+        return
 
     async def get(self, notification_id: NotificationId) -> Notification | None:
         stmt = (

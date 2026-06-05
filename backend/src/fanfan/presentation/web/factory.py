@@ -44,9 +44,9 @@ def create_app() -> FastAPI:
     app.include_router(setup_api_router())
 
     # Register error handlers
-    app.add_exception_handler(AppException, app_exception_handler)
-    app.add_exception_handler(HTTPException, auth_exception_handler)
-    app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(AppException, app_exception_handler)  # type: ignore  # noqa: PGH003
+    app.add_exception_handler(HTTPException, auth_exception_handler)  # type: ignore  # noqa: PGH003
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore  # noqa: PGH003
 
     # Setup FastAPI middlewares
     app.add_middleware(

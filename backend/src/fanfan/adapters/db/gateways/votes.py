@@ -47,8 +47,11 @@ class SqlVoteGateway(VoteRepository):
         return self.mapper.to_model(vote_orm) if vote_orm else None
 
     async def count_user_votes(self, user_id: UserId) -> int:
-        return await self.session.scalar(
-            select(func.count(VoteORM.id)).where(VoteORM.user_id == user_id)
+        return (
+            await self.session.scalar(
+                select(func.count(VoteORM.id)).where(VoteORM.user_id == user_id)
+            )
+            or 0
         )
 
     async def delete(self, vote: Vote) -> None:

@@ -42,5 +42,5 @@ class TicketORM(BaseORM):
         back_populates="ticket",
     )
 
-    def __str__(self) -> TicketId:
-        return TicketId(self.id)
+    def __str__(self):
+        return self.id

@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter
 from starlette import status
 
@@ -17,7 +19,7 @@ from fanfan.presentation.web.schemas.error import ErrorMessage, ValidationErrorR
 def setup_api_router() -> APIRouter:
     router = APIRouter()
 
-    common_responses = {
+    common_responses: dict[int | str, dict[str, Any]] = {
         status.HTTP_401_UNAUTHORIZED: {
             "model": ErrorMessage,
             "description": "Not authenticated.",

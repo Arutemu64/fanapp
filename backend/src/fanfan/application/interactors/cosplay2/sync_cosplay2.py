@@ -20,10 +20,7 @@ from fanfan.core.exceptions.participants import (
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.models.participant import Participant, ParticipantValue
 from fanfan.core.vo.nomination import generate_nomination_id
-from fanfan.core.vo.participant import (
-    ParticipantVotingNumber,
-    generate_participant_id,
-)
+from fanfan.core.vo.participant import generate_participant_id
 
 logger = logging.getLogger(__name__)
 
@@ -108,9 +105,7 @@ class SyncCosplay2:
                 participant,
                 title=request.voting_title,
                 nomination_id=nomination.id,
-                voting_number=ParticipantVotingNumber(request.voting_number)
-                if request.voting_number
-                else None,
+                voting_number=request.voting_number,
                 values=participant_values,
             )
             await self.participant_repo.save(participant)
@@ -121,9 +116,7 @@ class SyncCosplay2:
                 cosplay2_id=request.id,
                 title=request.voting_title,
                 nomination_id=nomination.id,
-                voting_number=ParticipantVotingNumber(request.voting_number)
-                if request.voting_number
-                else None,
+                voting_number=request.voting_number,
                 values=participant_values,
             )
             await self.participant_repo.add(participant)

@@ -3,7 +3,7 @@ from fanfan.adapters.db.models.participant import ParticipantValueORM
 from fanfan.application.dto.participant import ParticipantFullDTO, ParticipantVoteDTO
 from fanfan.core.models.participant import Participant, ParticipantValue
 from fanfan.core.vo.nomination import NominationId
-from fanfan.core.vo.participant import ParticipantId, ParticipantVotingNumber
+from fanfan.core.vo.participant import ParticipantId
 
 
 class ParticipantMapper:
@@ -27,7 +27,7 @@ class ParticipantMapper:
             cosplay2_id=orm.cosplay2_id,
             title=orm.title,
             nomination_id=NominationId(orm.nomination_id),
-            voting_number=ParticipantVotingNumber(orm.voting_number),
+            voting_number=orm.voting_number,
             values=[ParticipantMapper.value_to_model(value) for value in orm.values],
         )
 

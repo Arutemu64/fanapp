@@ -1,18 +1,18 @@
 from uuid import uuid7
 
-from sqlalchemy import UUID, ForeignKey, Uuid
+from sqlalchemy import ForeignKey, Uuid
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Mapped, mapped_column
 
 from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
-from fanfan.core.vo.mailing import MailingStatus
+from fanfan.core.vo.mailing import MailingId, MailingStatus
 from fanfan.core.vo.user import UserId
 
 
 class MailingORM(BaseORM):
     __tablename__ = "mailings"
 
-    id: Mapped[UUID] = mapped_column(
+    id: Mapped[MailingId] = mapped_column(
         Uuid(as_uuid=True),
         primary_key=True,
         default=uuid7,

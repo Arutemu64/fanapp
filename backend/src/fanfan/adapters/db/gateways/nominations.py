@@ -53,7 +53,7 @@ class SqlNominationGateway(NominationRepository, NominationQuery):
         stmt = select(func.count(NominationORM.id)).where(
             NominationORM.is_votable.is_(True)
         )
-        return await self.session.scalar(stmt)
+        return await self.session.scalar(stmt) or 0
 
     async def save(self, nomination: Nomination) -> None:
         nomination_orm = await self.session.merge(self.mapper.from_model(nomination))

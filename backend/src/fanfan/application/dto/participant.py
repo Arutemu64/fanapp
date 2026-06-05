@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 
-from fanfan.core.vo.participant import ParticipantId, ParticipantVotingNumber
+from fanfan.core.vo.participant import ParticipantId
 from fanfan.core.vo.vote import VoteId
 
 
@@ -9,7 +9,7 @@ class ParticipantBaseDTO(BaseModel):
 
     id: ParticipantId
     title: str
-    voting_number: ParticipantVotingNumber | None
+    voting_number: int | None
 
 
 class ParticipantVoteDTO(BaseModel):

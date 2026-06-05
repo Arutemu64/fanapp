@@ -1,3 +1,5 @@
+from typing import cast
+
 import sentry_sdk
 from fastapi.exceptions import RequestValidationError
 from sentry_sdk.integrations.fastapi import FastApiIntegration
@@ -18,7 +20,7 @@ def _scrub_sensitive_data(event: Event, hint: dict) -> Event | None:
 
     # Scrub request headers
     if event.get("request", {}).get("headers"):
-        headers = event["request"]["headers"]
+        headers = cast("dict[str, str]", event["request"]["headers"])
         sensitive = ["cookie", "authorization", "x-api-key", "x-auth-token"]
         for key in list(headers.keys()):
             if key.lower() in sensitive:

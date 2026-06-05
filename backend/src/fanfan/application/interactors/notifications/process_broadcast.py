@@ -36,7 +36,7 @@ class ProcessBroadcast:
         mailing = await self.mailing_repo.get(data.mailing_id)
         if mailing is None:
             raise MailingNotFound
-        mailing.update_total(len(users))
+        await self.mailing_repo.set_total(mailing_id=mailing.id, total_count=len(users))
         await self.mailing_repo.save(mailing)
         await self.trx.commit()
 

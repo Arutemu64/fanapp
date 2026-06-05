@@ -22,3 +22,12 @@ repos:
       # Run the formatter
       - id: ruff-format
         files: ^backend/
+
+  - repo: local
+    hooks:
+      - id: ty
+        name: ty
+        entry: uvx ty check backend
+        language: system
+        types: [ python ]
+        pass_filenames: false

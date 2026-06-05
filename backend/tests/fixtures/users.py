@@ -13,7 +13,11 @@ from fanfan.application.ports.trx import TransactionManager
 from fanfan.core.models.permission import UserPermission
 from fanfan.core.models.ticket import Ticket
 from fanfan.core.models.user import User
-from fanfan.core.vo.permission import Permissions, generate_user_permission_id
+from fanfan.core.vo.permission import (
+    PermissionName,
+    Permissions,
+    generate_user_permission_id,
+)
 from fanfan.core.vo.ticket import TicketId, generate_ticket_id
 from fanfan.core.vo.user import UserId, Username, UserRole
 
@@ -77,8 +81,9 @@ async def schedule_editor(dishka_request: AsyncContainer) -> User:
     )
     await user_repo.add(schedule_editor)
     schedule_manage_permission = await permission_repo.get_by_name(
-        Permissions.SCHEDULE_MANAGE
+        PermissionName(Permissions.SCHEDULE_MANAGE)
     )
+    assert schedule_manage_permission is not None
     await user_permission_repo.add(
         UserPermission(
             id=generate_user_permission_id(),

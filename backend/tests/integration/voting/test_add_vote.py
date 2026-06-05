@@ -19,7 +19,6 @@ from fanfan.core.models.user import User
 from fanfan.core.vo.nomination import generate_nomination_id
 from fanfan.core.vo.participant import (
     ParticipantId,
-    ParticipantVotingNumber,
     generate_participant_id,
 )
 from tests.fakes.event_broker import FakeEventBroker
@@ -63,7 +62,7 @@ async def test_add_vote_creates_vote_and_publishes_event(
         cosplay2_id=2001,
         title="Тестовый участник",
         nomination_id=nomination.id,
-        voting_number=ParticipantVotingNumber(1),
+        voting_number=1,
         values=[],
     )
     await nomination_repo.add(nomination)
@@ -118,7 +117,7 @@ async def test_add_vote_without_linked_ticket_raises_access_denied(
         cosplay2_id=2002,
         title="Тестовый участник без билета",
         nomination_id=nomination.id,
-        voting_number=ParticipantVotingNumber(1),
+        voting_number=1,
         values=[],
     )
     await nomination_repo.add(nomination)
@@ -168,7 +167,7 @@ async def test_add_vote_when_voting_disabled_raises_access_denied(
         cosplay2_id=2003,
         title="Тестовый участник при выключенном голосовании",
         nomination_id=nomination.id,
-        voting_number=ParticipantVotingNumber(1),
+        voting_number=1,
         values=[],
     )
     await nomination_repo.add(nomination)
@@ -240,7 +239,7 @@ async def test_add_vote_twice_in_same_nomination_raises_already_voted(
         cosplay2_id=2004,
         title="Первый участник",
         nomination_id=nomination.id,
-        voting_number=ParticipantVotingNumber(1),
+        voting_number=1,
         values=[],
     )
     second_participant = Participant(
@@ -248,7 +247,7 @@ async def test_add_vote_twice_in_same_nomination_raises_already_voted(
         cosplay2_id=2005,
         title="Второй участник",
         nomination_id=nomination.id,
-        voting_number=ParticipantVotingNumber(2),
+        voting_number=2,
         values=[],
     )
     await nomination_repo.add(nomination)
@@ -305,7 +304,7 @@ async def test_add_vote_allows_votes_in_different_nominations(
         cosplay2_id=2006,
         title="Участник первой номинации",
         nomination_id=first_nomination.id,
-        voting_number=ParticipantVotingNumber(1),
+        voting_number=1,
         values=[],
     )
     second_nomination = Nomination(
@@ -320,7 +319,7 @@ async def test_add_vote_allows_votes_in_different_nominations(
         cosplay2_id=2007,
         title="Участник второй номинации",
         nomination_id=second_nomination.id,
-        voting_number=ParticipantVotingNumber(1),
+        voting_number=1,
         values=[],
     )
     await nomination_repo.add(first_nomination)

@@ -1,4 +1,4 @@
-from sqlalchemy import Select, and_, delete, or_, select
+from sqlalchemy import Select, and_, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, undefer
 
@@ -8,7 +8,6 @@ from fanfan.adapters.db.models import (
     ParticipantORM,
     VoteORM,
 )
-from fanfan.application.dto.page import Pagination
 from fanfan.application.dto.participant import ParticipantFullDTO
 from fanfan.application.ports.queries.participants import ParticipantQuery
 from fanfan.application.ports.repositories.participants import ParticipantRepository
@@ -30,28 +29,6 @@ def _select_participant_dto(user_id: UserId | None) -> Select:
         )
         .options(undefer(ParticipantORM.votes_count))
     )
-
-
-def _filter_participants(
-    stmt: Select,
-    nomination_ids: list[NominationId] | None = None,
-    search_query: str | None = None,
-) -> Select:
-    filters = []
-    if nomination_ids:
-        filters.append(
-            ParticipantORM.nomination.has(NominationORM.id.in_(nomination_ids))
-        )
-    if search_query:
-        filters.append(
-            or_(
-                ParticipantORM.title.ilike(f"%{search_query}%"),
-                ParticipantORM.voting_number == int(search_query)
-                if search_query.isnumeric()
-                else False,
-            )
-        )
-    return stmt.where(*filters)
 
 
 class SqlParticipantGateway(ParticipantRepository, ParticipantQuery):
@@ -94,19 +71,12 @@ class SqlParticipantGateway(ParticipantRepository, ParticipantQuery):
         self,
         user_id: UserId | None = None,
         nomination_id: NominationId | None = None,
-        search_query: str | None = None,
-        pagination: Pagination | None = None,
     ) -> list[ParticipantFullDTO]:
         stmt = _select_participant_dto(user_id)
 
-        stmt = _filter_participants(
-            stmt=stmt, nomination_ids=[nomination_id], search_query=search_query
-        )
-
-        stmt = stmt.order_by(ParticipantORM.voting_number)
-
-        if pagination:
-            stmt = stmt.limit(pagination.limit).offset(pagination.offset)
+        stmt = stmt.where(
+            ParticipantORM.nomination.has(NominationORM.id == nomination_id)
+        ).order_by(ParticipantORM.voting_number)
 
         result = (await self.session.execute(stmt)).all()
 

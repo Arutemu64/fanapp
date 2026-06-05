@@ -62,7 +62,9 @@ class SendLoginCodeEmail:
         )
         message = EmailMessage(
             subject="Код входа в FAN FAN",
-            recipients=[EmailRecipient(name=user.username, email=normalized_email)],
+            recipients=[
+                EmailRecipient(name=user.username or "", email=normalized_email)
+            ],
             html_body=message_body,
         )
         await self.email_sender.send(message)

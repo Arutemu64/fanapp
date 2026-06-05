@@ -1,6 +1,5 @@
 from fanfan.adapters.db.models import SocialIdentityORM
 from fanfan.core.models.social_account import SocialIdentity
-from fanfan.core.vo.social_identity import SocialIdentityId
 
 
 class SocialIdentityMapper:
@@ -16,7 +15,7 @@ class SocialIdentityMapper:
     @staticmethod
     def to_model(orm: SocialIdentityORM) -> SocialIdentity:
         return SocialIdentity(
-            id=SocialIdentityId(orm.id),
+            id=orm.id,
             user_id=orm.user_id,
             provider=orm.provider,
             provider_id=orm.provider_id,

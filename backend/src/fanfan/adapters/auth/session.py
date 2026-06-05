@@ -1,4 +1,5 @@
 import secrets
+from uuid import UUID
 
 from redis.asyncio import Redis
 
@@ -47,20 +48,31 @@ class SessionManager(SessionStore):
             await self.redis.expire(key, self.ttl_seconds)
             touched = True
 
-        return SessionResolution(user_id=UserId(user_id), touched=touched)
+        return SessionResolution(
+            user_id=UserId(
+                UUID(user_id.decode() if isinstance(user_id, bytes) else user_id)
+            ),
+            touched=touched,
+        )
 
     async def delete_session(self, session_id: str) -> None:
         key = self._session_key(session_id)
         user_id = await self.redis.get(key)
         await self.redis.delete(key)
         if user_id:
-            await self.redis.srem(self._user_sessions_key(UserId(user_id)), session_id)
+            user_id_str = user_id.decode() if isinstance(user_id, bytes) else user_id
+            await self.redis.srem(
+                self._user_sessions_key(UserId(UUID(user_id_str))), session_id
+            )
 
     async def revoke_user_sessions(self, user_id: UserId) -> None:
         user_sessions_key = self._user_sessions_key(user_id)
         session_ids = await self.redis.smembers(user_sessions_key)
         if session_ids:
             await self.redis.delete(
-                *(self._session_key(session_id) for session_id in session_ids)
+                *(
+                    self._session_key(sid.decode() if isinstance(sid, bytes) else sid)
+                    for sid in session_ids
+                )
             )
         await self.redis.delete(user_sessions_key)

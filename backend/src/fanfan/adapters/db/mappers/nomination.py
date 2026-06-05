@@ -29,7 +29,6 @@ class NominationMapper:
     def parse_voting_dto(
         nomination_orm: NominationORM, vote_orm: VoteORM | None
     ) -> NominationVotingDTO:
-        nomination_orm.vote = vote_orm
         return NominationVotingDTO(
             id=nomination_orm.id,
             code=nomination_orm.code,

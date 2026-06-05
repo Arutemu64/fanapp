@@ -40,7 +40,5 @@ class SubscriptionMapper:
                 order=subscription_orm.event.order,
                 queue=subscription_orm.event.queue,
                 time_until=subscription_orm.event.time_until,
-            )
-            if subscription_orm.event
-            else None,
+            ),
         )

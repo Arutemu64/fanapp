@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.nomination import NominationId
-from fanfan.core.vo.participant import ParticipantId, ParticipantVotingNumber, ValueType
+from fanfan.core.vo.participant import ParticipantId, ValueType
 
 
 @dataclass(slots=True, kw_only=True)
@@ -13,7 +13,7 @@ class Participant(AggregateRoot):
     cosplay2_id: int
     title: str
     nomination_id: NominationId
-    voting_number: ParticipantVotingNumber | None
+    voting_number: int | None
     values: list[ParticipantValue]
 
 

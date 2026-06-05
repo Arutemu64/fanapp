@@ -37,5 +37,5 @@ async def parse_schedule_command(context: click.Context, schedule: BinaryIO):
     container: AsyncContainer = context.meta[CONTAINER_NAME]
     async with container():
         interactor = await container.get(ImportSchedule)
-        schedule = parse_schedule_from_excel(file=schedule)
-        await interactor(ImportScheduleInput(schedule=schedule))
+        entries = parse_schedule_from_excel(file=schedule)
+        await interactor(ImportScheduleInput(schedule=entries))

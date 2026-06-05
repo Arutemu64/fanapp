@@ -27,7 +27,7 @@ from fanfan.application.interactors.voting.list_voting_nominations import (
     ListVotingNominations,
     ListVotingNominationsOutput,
 )
-from fanfan.core.vo.nomination import NominationId
+from fanfan.core.vo.nomination import NominationCode, NominationId
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
 voting_router = APIRouter(tags=["Voting"], prefix="/voting")
@@ -88,7 +88,9 @@ async def get_voting_nomination(
     nomination_code: Annotated[str, Path(description="Voting nomination code.")],
     interactor: FromDishka[GetVotingNomination],
 ) -> GetVotingNominationOutput:
-    return await interactor(GetVotingNominationInput(nomination_code=nomination_code))
+    return await interactor(
+        GetVotingNominationInput(nomination_code=NominationCode(nomination_code))
+    )
 
 
 @voting_router.put(

@@ -14,7 +14,12 @@ from fanfan.presentation.web.config import WebConfig
 
 
 class EnvConfig(BaseSettings):
-    model_config = SettingsConfigDict(env_nested_delimiter="__", extra="allow")
+    model_config = SettingsConfigDict(
+        env_nested_delimiter="__",
+        extra="allow",
+        env_file=".env",
+        env_file_encoding="utf-8",
+    )
 
     # General
     web: WebConfig
