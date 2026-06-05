@@ -17,7 +17,7 @@
 		if (data?.user) {
 			Sentry.setUser({
 				id: String(data.user.id),
-				username: data.user.username
+				username: data.user.username ?? undefined
 			});
 		} else {
 			Sentry.setUser(null);

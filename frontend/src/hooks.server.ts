@@ -59,7 +59,7 @@ const customHandle: Handle = async ({ event, resolve }) => {
 	}
 
 	if (event.locals.user) {
-		Sentry.setUser({ id: event.locals.user.id, username: event.locals.user.username });
+		Sentry.setUser({ id: event.locals.user.id, username: event.locals.user.username ?? undefined });
 	} else {
 		Sentry.setUser(null);
 	}
