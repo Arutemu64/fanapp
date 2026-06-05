@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from uuid import uuid7
 
 from sqlalchemy import Uuid, func, select

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from secrets import randbelow
 
 from fanfan.application.ports.repositories.users import UserRepository
