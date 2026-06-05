@@ -2,7 +2,6 @@ from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.rate_lock import RateLockFactory
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.services.current_user import CurrentUserProvider
-from fanfan.core.events.users import EmailConfirmationCodeRequested
 from fanfan.core.exceptions.rate_limit import EmailCodeRequestTooFast, RateLimitCooldown
 from fanfan.core.exceptions.users import UserHasNoEmail
 from fanfan.core.services.email_login import EMAIL_CODE_REQUEST_COOLDOWN_SECONDS
@@ -37,8 +36,8 @@ class RequestEmailCode:
         )
         try:
             async with lock:
-                await self.event_broker.publish(
-                    EmailConfirmationCodeRequested(user_id=current_user.id)
-                )
+                current_user.request_confirmation_code()
+                for event in current_user.pull_events():
+                    await self.event_broker.publish(event)
         except RateLimitCooldown as e:
             raise EmailCodeRequestTooFast(retry_after=e.details["retry_after"]) from e

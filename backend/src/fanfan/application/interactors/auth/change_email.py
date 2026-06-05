@@ -4,7 +4,6 @@ from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.current_user import CurrentUserProvider
-from fanfan.core.events.users import EmailConfirmationCodeRequested
 from fanfan.core.exceptions.users import EmailAlreadyExists
 from fanfan.core.utils.email import normalize_email
 
@@ -46,6 +45,5 @@ class ChangeEmail:
         await self.user_repo.save(current_user)
         await self.trx.commit()
 
-        await self.event_broker.publish(
-            EmailConfirmationCodeRequested(user_id=current_user.id)
-        )
+        for event in current_user.pull_events():
+            await self.event_broker.publish(event)

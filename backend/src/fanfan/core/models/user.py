@@ -1,8 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
+from fanfan.core.events.users import (
+    EmailConfirmationCodeRequested,
+    EmailLoginCodeRequested,
+    UserCreated,
+)
 from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.user import UserId, Username, UserRole
 
@@ -39,6 +44,32 @@ class User(AggregateRoot):
 
     settings: UserSettings = field(default_factory=UserSettings)
 
+    @classmethod
+    def create(
+        cls,
+        *,
+        id: UserId,  # noqa: A002
+        username: Username | None,
+        hashed_password: str | None,
+        role: UserRole,
+        email: str | None = None,
+        pending_email: str | None = None,
+        email_verified_at: datetime | None = None,
+        first_name: str | None = None,
+    ) -> Self:
+        user = cls(
+            id=id,
+            username=username,
+            hashed_password=hashed_password,
+            role=role,
+            email=email,
+            pending_email=pending_email,
+            email_verified_at=email_verified_at,
+            first_name=first_name,
+        )
+        user.record_event(UserCreated(user_id=user.id))
+        return user
+
     def set_username(self, username: Username | None) -> None:
         self.username = username
 
@@ -53,6 +84,13 @@ class User(AggregateRoot):
 
     def request_email_change(self, email: str) -> None:
         self.pending_email = email
+        self.record_event(EmailConfirmationCodeRequested(user_id=self.id))
+
+    def request_confirmation_code(self) -> None:
+        self.record_event(EmailConfirmationCodeRequested(user_id=self.id))
+
+    def request_login_code(self) -> None:
+        self.record_event(EmailLoginCodeRequested(user_id=self.id))
 
     def confirm_pending_email(self, verified_at: datetime) -> None:
         self.email = self.pending_email
