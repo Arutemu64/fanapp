@@ -3,6 +3,16 @@ import sys
 
 import structlog
 
+# Path of the container/Dockerfile HEALTHCHECK probe; its access logs are noise.
+_HEALTH_CHECK_PATH = "/debug/health"
+
+
+class _HealthCheckFilter(logging.Filter):
+    """Drop uvicorn access logs for the health check endpoint."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return _HEALTH_CHECK_PATH not in record.getMessage()
+
 
 def setup_logging(level: int, json_logs: bool):
     default_processors = [
@@ -62,3 +72,4 @@ def setup_logging(level: int, json_logs: bool):
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("aiogram.event").setLevel(logging.WARNING)
     logging.getLogger("aiohttp.access").setLevel(logging.WARNING)
+    logging.getLogger("uvicorn.access").addFilter(_HealthCheckFilter())

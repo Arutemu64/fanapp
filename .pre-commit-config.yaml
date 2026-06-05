@@ -27,7 +27,7 @@ repos:
     hooks:
       - id: ty
         name: ty
-        entry: uvx ty check backend
+        entry: uv run --directory backend ty check src/fanfan
         language: system
         types: [ python ]
         pass_filenames: false
