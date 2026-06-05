@@ -27,6 +27,51 @@
       return await interactor()
   ```
 
+## Domain Events
+
+Events are published via `EventBroker` (port: `application/ports/events_broker.py`) and consumed by FastStream subscribers in `presentation/faststream/routes/`.
+
+**Do not add a published event without a corresponding subscriber.**
+
+### Events raised by aggregates (preferred)
+
+When an event directly records a state change on an aggregate, raise it inside the aggregate method using `record_event()`. The interactor then dispatches all collected events after the commit via `pull_events()`:
+
+```python
+# core/models/vote.py
+class Vote(AggregateRoot):
+    @classmethod
+    def create(cls, *, user_id, participant_id) -> Self:
+        vote = cls(...)
+        vote.record_event(VoteCreated(vote_id=vote.id, ...))
+        return vote
+
+    def delete(self) -> None:
+        self.record_event(VoteDeleted(vote_id=self.id, ...))
+
+# application/interactors/voting/add_vote.py
+vote = Vote.create(user_id=..., participant_id=...)
+await self.vote_repo.add(vote)
+await self.trx.commit()
+for event in vote.pull_events():
+    await self.events_broker.publish(event)
+```
+
+`ScheduleChange` and `Vote` follow this pattern. The `pull_events()` call clears the aggregate's internal event list, so events are dispatched exactly once.
+
+### Events raised directly by interactors
+
+Some events are not tied to a single aggregate's state change — they are application-level triggers to infrastructure (e.g. "queue a notification for these users"). These may be constructed and published directly in the interactor without going through an aggregate:
+
+```python
+# application/interactors/notifications/send_broadcast.py
+await self.events_broker.publish(
+    BroadcastQueued(mailing_id=mailing.id, body=data.body, roles=data.roles)
+)
+```
+
+`NotificationQueued`, `BroadcastQueued`, and `MailingCancelled` follow this pattern.
+
 ## Presentation Layers
 * **HTTP APIs (`presentation/web/`)**: FastAPI routes mapping HTTP requests.
 * **Event Streaming & Bots (`presentation/faststream/`, `presentation/tgbot/`)**: FastStream handlers consuming NATS subjects, or Telegram bots handling events. Inject interactors exactly the same way using `@inject` and `FromDishka`.
