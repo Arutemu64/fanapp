@@ -19,6 +19,9 @@ interface PushNotificationPayload {
 	title: string;
 	body: string;
 	url: string;
+	// Set by the backend to `notification.id` — collapses re-pushes of the same
+	// notification while keeping distinct notifications separate.
+	tag?: string;
 }
 
 interface NotificationClickData {
@@ -94,7 +97,9 @@ self.addEventListener('fetch', (event) => {
 				throw new Error('invalid response from fetch');
 			}
 
-			if (response.status === 200) {
+			// Cache successful responses, but skip API calls — they return
+			// user-specific/dynamic data that must not be served stale offline.
+			if (response.status === 200 && !url.pathname.startsWith('/api')) {
 				cache.put(event.request, response.clone());
 			}
 
@@ -138,6 +143,7 @@ self.addEventListener('push', (event: PushEvent) => {
 		body: data.body,
 		icon: '/favicon.png',
 		badge: '/favicon.png',
+		tag: data.tag,
 		data: {
 			url: data.url || '/'
 		}
@@ -164,21 +170,33 @@ self.addEventListener('notificationclick', (event: NotificationEvent) => {
 	const urlToOpen = new URL(notificationData.url ?? '/', self.location.origin).href;
 
 	event.waitUntil(
-		self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-			// Check if there is already a window/tab open with the target URL
-			for (const client of windowClients) {
-				if (client.type !== 'window') {
-					continue;
-				}
+		(async () => {
+			const windowClients = await self.clients.matchAll({
+				type: 'window',
+				includeUncontrolled: true
+			});
 
-				if (client.url === urlToOpen) {
-					return client.focus();
-				}
+			// Reuse an already-open window when possible to avoid duplicate tabs.
+			// Prefer one already at the target URL, otherwise focus the first
+			// window and navigate it there (e.g. a PWA window on another page).
+			const exactMatch = windowClients.find((client) => client.url === urlToOpen);
+			if (exactMatch) {
+				await exactMatch.focus();
+				return;
 			}
-			// If not, open a new window/tab
+
+			const existing = windowClients[0];
+			if (existing) {
+				await existing.focus();
+				// `navigate` can reject (e.g. cross-origin) — fall back to staying put.
+				await existing.navigate(urlToOpen).catch(() => undefined);
+				return;
+			}
+
+			// No window open at all — open a fresh one.
 			if (self.clients.openWindow) {
-				return self.clients.openWindow(urlToOpen);
+				await self.clients.openWindow(urlToOpen);
 			}
-		})
+		})()
 	);
 });
