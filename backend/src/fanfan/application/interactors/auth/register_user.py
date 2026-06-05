@@ -1,6 +1,5 @@
 from pydantic import BaseModel, EmailStr
 
-from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.security import SecurityService
@@ -23,13 +22,11 @@ class RegisterUser:
         security: SecurityService,
         user_repo: UserRepository,
         trx: TransactionManager,
-        event_broker: EventBroker,
         user_service: UserService,
     ):
         self.security = security
         self.user_repo = user_repo
         self.trx = trx
-        self.event_broker = event_broker
         self.user_service = user_service
 
     async def __call__(self, data: RegisterUserInput) -> None:
@@ -50,5 +47,3 @@ class RegisterUser:
         )
         await self.user_repo.add(new_user)
         await self.trx.commit()
-        for event in new_user.pull_events():
-            await self.event_broker.publish(event)

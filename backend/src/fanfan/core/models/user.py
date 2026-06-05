@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Any, Self
 from fanfan.core.events.users import (
     EmailConfirmationCodeRequested,
     EmailLoginCodeRequested,
-    UserCreated,
 )
 from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.user import UserId, Username, UserRole
@@ -57,7 +56,7 @@ class User(AggregateRoot):
         email_verified_at: datetime | None = None,
         first_name: str | None = None,
     ) -> Self:
-        user = cls(
+        return cls(
             id=id,
             username=username,
             hashed_password=hashed_password,
@@ -67,8 +66,6 @@ class User(AggregateRoot):
             email_verified_at=email_verified_at,
             first_name=first_name,
         )
-        user.record_event(UserCreated(user_id=user.id))
-        return user
 
     def set_username(self, username: Username | None) -> None:
         self.username = username
