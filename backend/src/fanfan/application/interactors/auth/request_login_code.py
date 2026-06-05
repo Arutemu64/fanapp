@@ -5,7 +5,6 @@ from fanfan.application.ports.rate_lock import RateLockFactory
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.user import UserService
-from fanfan.core.events.users import EmailLoginCodeRequested, UserCreated
 from fanfan.core.exceptions.rate_limit import EmailCodeRequestTooFast, RateLimitCooldown
 from fanfan.core.exceptions.users import UserAlreadyExists
 from fanfan.core.models.user import User
@@ -56,14 +55,12 @@ class RequestLoginCode:
                 if user is None:
                     for _ in range(3):
                         try:
-                            user = User(
+                            user = User.create(
                                 id=generate_user_id(),
                                 username=await self.user_service.generate_username(),
                                 email=normalized_email,
                                 hashed_password=None,
                                 role=UserRole.VISITOR,
-                                pending_email=None,
-                                email_verified_at=None,
                             )
                             await self.user_repo.add(user)
                             await self.trx.commit()
@@ -73,17 +70,14 @@ class RequestLoginCode:
                             if user is not None:
                                 break
                         else:
-                            await self.event_broker.publish(
-                                UserCreated(user_id=user.id)
-                            )
                             break
 
                     if user is None:
                         msg = "Could not provision user for login code"
                         raise RuntimeError(msg)
 
-                await self.event_broker.publish(
-                    EmailLoginCodeRequested(user_id=user.id)
-                )
+                user.request_login_code()
+                for event in user.pull_events():
+                    await self.event_broker.publish(event)
         except RateLimitCooldown as e:
             raise EmailCodeRequestTooFast(retry_after=e.details["retry_after"]) from e

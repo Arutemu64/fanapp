@@ -10,12 +10,11 @@ from fanfan.application.ports.repositories.votes import VoteRepository
 from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.voting import VotingService
-from fanfan.core.events.voting import VoteCreated
 from fanfan.core.exceptions.participants import ParticipantNotFound
 from fanfan.core.exceptions.votes import VoteAlreadyExists
 from fanfan.core.models.vote import Vote
 from fanfan.core.vo.participant import ParticipantId
-from fanfan.core.vo.vote import VoteId, generate_vote_id
+from fanfan.core.vo.vote import VoteId
 
 logger = logging.getLogger(__name__)
 
@@ -66,8 +65,7 @@ class AddVote:
         ):
             raise VoteAlreadyExists
 
-        vote = Vote(
-            id=generate_vote_id(),
+        vote = Vote.create(
             user_id=current_user.id,
             participant_id=data.participant_id,
         )
@@ -79,11 +77,6 @@ class AddVote:
             current_user.id,
             data.participant_id,
         )
-        await self.events_broker.publish(
-            VoteCreated(
-                vote_id=vote.id,
-                user_id=vote.user_id,
-                participant_id=vote.participant_id,
-            )
-        )
+        for event in vote.pull_events():
+            await self.events_broker.publish(event)
         return AddVoteOutput(vote_id=vote.id)

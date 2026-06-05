@@ -40,13 +40,11 @@ class AuthorizeTelegram:
         if user:
             return await self.session_store.create_session(user.id)
 
-        user = User(
+        user = User.create(
             id=generate_user_id(),
             username=await self.user_service.generate_username(),
             role=UserRole.VISITOR,
             hashed_password=None,
-            pending_email=None,
-            email_verified_at=None,
         )
         await self.user_repo.add(user)
         await self.trx.flush()

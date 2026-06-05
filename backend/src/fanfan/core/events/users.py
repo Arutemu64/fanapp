@@ -4,12 +4,6 @@ from fanfan.core.events.base import AppEvent
 from fanfan.core.vo.user import UserId
 
 
-class UserCreated(AppEvent):
-    subject: ClassVar[str] = "users.created"
-
-    user_id: UserId
-
-
 class EmailConfirmationCodeRequested(AppEvent):
     subject: ClassVar[str] = "users.email_confirmation_code_requested"
 
