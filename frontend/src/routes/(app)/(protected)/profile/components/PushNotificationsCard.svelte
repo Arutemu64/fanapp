@@ -5,7 +5,7 @@
 	const client = createApiClient();
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { PUBLIC_VAPID_KEY } from '$env/static/public';
+	import { env } from '$env/dynamic/public';
 	import { onMount } from 'svelte';
 	import type { CurrentUserDTO, UserSocialAccountDTO } from '$lib/types/user';
 	import type { components } from '$lib/api/v1';
@@ -139,7 +139,7 @@
 
 			const subscription = await registration.pushManager.subscribe({
 				userVisibleOnly: true,
-				applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY)
+				applicationServerKey: urlBase64ToUint8Array(env.PUBLIC_VAPID_KEY)
 			});
 
 			const subJson = subscription.toJSON();

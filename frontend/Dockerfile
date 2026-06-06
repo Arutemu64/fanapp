@@ -32,6 +32,10 @@ RUN --mount=type=cache,target=/pnpm/store \
 	pnpm install --frozen-lockfile
 
 COPY . .
+
+ARG SENTRY_AUTH_TOKEN
+ENV SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
+
 RUN pnpm exec svelte-kit sync && pnpm build
 
 FROM base AS prod-deps

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PUBLIC_API_URL } from '$env/static/public';
+	import { env } from '$env/dynamic/public';
 	import { Button, Card } from 'flowbite-svelte';
 	import { ArrowLeftOutline } from 'flowbite-svelte-icons';
 	import IconTelegram from '~icons/simple-icons/telegram';
@@ -27,7 +27,7 @@
 				<div class="flex justify-center">
 					<!-- Use the configured API base so OAuth works in every environment. -->
 					<Button
-						href={`${PUBLIC_API_URL}/auth/login/telegram`}
+						href={`${env.PUBLIC_API_URL}/auth/login/telegram`}
 						color="alternative"
 						class="min-h-11 w-full rounded-xl font-medium"
 					>

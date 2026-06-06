@@ -1,6 +1,9 @@
 import * as Sentry from '@sentry/sveltekit';
-import { PRIVATE_API_URL } from '$env/static/private';
-import { PUBLIC_API_URL } from '$env/static/public';
+import { env as privateEnv } from '$env/dynamic/private';
+import { env as publicEnv } from '$env/dynamic/public';
+
+const { PRIVATE_API_URL } = privateEnv;
+const { PUBLIC_API_URL } = publicEnv;
 import { createApiClient } from '$lib/api';
 import {
 	applyResponseCookies,

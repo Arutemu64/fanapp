@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { PUBLIC_API_URL } from '$env/static/public';
+	import { env } from '$env/dynamic/public';
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
 	import { getToastService } from '$lib/services/toasts.svelte';
@@ -228,7 +228,7 @@
 					{:else}
 						<!-- Use the configured API base so linking works in every deployment setup. -->
 						<Button
-							href={`${PUBLIC_API_URL}/me/connections/telegram`}
+							href={`${env.PUBLIC_API_URL}/me/connections/telegram`}
 							color="alternative"
 							class="min-h-11 w-full sm:w-auto"
 						>

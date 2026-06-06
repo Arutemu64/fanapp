@@ -4,12 +4,14 @@ services:
     build:
       context: ./frontend
       target: prod
+      args:
+        SENTRY_AUTH_TOKEN: ${DEBUG__SENTRY_AUTH_TOKEN}
     environment:
       HOST: "0.0.0.0"
       PORT: "3000"
       PRIVATE_API_URL: "http://api:8000"
     env_file:
-      - ./frontend/.env
+      - .env
     depends_on:
       api:
         condition: service_healthy
