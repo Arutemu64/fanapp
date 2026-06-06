@@ -6,6 +6,9 @@
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import SecurityCard from './components/SecurityCard.svelte';
 	import PwaInstallCard from './components/PwaInstallCard.svelte';
+	import IconSvelte from '~icons/simple-icons/svelte';
+	import IconFastapi from '~icons/simple-icons/fastapi';
+	import IconHeart from '~icons/lucide/heart';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { PageProps } from './$types';
 	import { invalidate } from '$app/navigation';
@@ -74,3 +77,17 @@
 		</div>
 	</div>
 </div>
+
+<footer class="mt-6 pb-4 text-center text-xs text-gray-400 dark:text-gray-500">
+	<p class="flex items-center justify-center gap-1">
+		Работает на
+		<IconSvelte class="inline size-3.5 text-[#FF3E00]" />
+		Svelte и
+		<IconFastapi class="inline size-3.5 text-[#009688]" />
+		FastAPI
+	</p>
+	<p class="mt-0.5 flex items-center justify-center gap-1">
+		С любовью, Arutemu64
+		<IconHeart class="inline size-3.5 text-red-400" />
+	</p>
+</footer>
