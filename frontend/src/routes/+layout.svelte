@@ -4,6 +4,7 @@
 	import { setToastService } from '$lib/services/toasts.svelte';
 	import { setEventsClient } from '$lib/services/events.svelte';
 	import { setPwaService } from '$lib/services/pwa.svelte';
+	import { setThemeService } from '$lib/services/theme.svelte';
 	import { onDestroy } from 'svelte';
 	import * as Sentry from '@sentry/sveltekit';
 
@@ -12,6 +13,7 @@
 	const eventsClient = setEventsClient();
 	setToastService();
 	setPwaService();
+	setThemeService();
 
 	$effect(() => {
 		if (data?.user) {

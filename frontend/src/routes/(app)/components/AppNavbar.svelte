@@ -10,7 +10,6 @@
 	import {
 		Avatar,
 		Button,
-		DarkMode,
 		Dropdown,
 		DropdownGroup,
 		DropdownHeader,
@@ -78,7 +77,6 @@
 		{#if user}
 			<NotificationBell />
 		{/if}
-		<DarkMode class="rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800" />
 		{#if user}
 			<Avatar id="avatar-menu" class="cursor-pointer">{avatarInitials}</Avatar>
 			<Dropdown placement="bottom-end" triggeredBy="#avatar-menu">

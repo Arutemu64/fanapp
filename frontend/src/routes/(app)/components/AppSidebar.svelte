@@ -19,6 +19,7 @@
 		ThumbsUpOutline,
 		UsersGroupOutline
 	} from 'flowbite-svelte-icons';
+	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import type { CurrentUserDTO } from '$lib/types/user';
 
 	let { user, activeUrl, isSidebarOpen, closeSidebar } = $props<{
@@ -34,93 +35,98 @@
 </script>
 
 {#snippet sidebarLinks()}
-	<SidebarBrand>
-		<span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">
-			ФАН ФАН
-		</span>
-	</SidebarBrand>
-	<SidebarGroup>
-		<SidebarItem label="Главная" href="/">
-			{#snippet icon()}
-				<HomeSolid
-					class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-				/>
-			{/snippet}
-		</SidebarItem>
-		<SidebarItem label="Расписание" href="/schedule">
-			{#snippet icon()}
-				<CalendarWeekOutline
-					class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-				/>
-			{/snippet}
-		</SidebarItem>
-		<!-- Keep the venue map in the main navigation so it is reachable in one tap on mobile. -->
-		<SidebarItem label="Карта" href="/map">
-			{#snippet icon()}
-				<MapPinAltOutline
-					class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-				/>
-			{/snippet}
-		</SidebarItem>
-		<SidebarItem label="Голосование" href="/voting">
-			{#snippet icon()}
-				<ThumbsUpOutline
-					class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-				/>
-			{/snippet}
-		</SidebarItem>
-		{#if canSeeVolunteerMenu}
-			<SidebarDropdownWrapper label="Для волонтеров" classes={{ btn: 'p-2' }}>
+	<div class="flex h-full flex-col">
+		<SidebarBrand>
+			<span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">
+				ФАН ФАН
+			</span>
+		</SidebarBrand>
+		<SidebarGroup>
+			<SidebarItem label="Главная" href="/">
 				{#snippet icon()}
-					<UsersGroupOutline
+					<HomeSolid
 						class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
 					/>
 				{/snippet}
-				{#if canManageSchedule(user)}
-					<SidebarItem label="Изменения расписания" href="/schedule/changes">
+			</SidebarItem>
+			<SidebarItem label="Расписание" href="/schedule">
+				{#snippet icon()}
+					<CalendarWeekOutline
+						class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+					/>
+				{/snippet}
+			</SidebarItem>
+			<!-- Keep the venue map in the main navigation so it is reachable in one tap on mobile. -->
+			<SidebarItem label="Карта" href="/map">
+				{#snippet icon()}
+					<MapPinAltOutline
+						class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+					/>
+				{/snippet}
+			</SidebarItem>
+			<SidebarItem label="Голосование" href="/voting">
+				{#snippet icon()}
+					<ThumbsUpOutline
+						class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+					/>
+				{/snippet}
+			</SidebarItem>
+			{#if canSeeVolunteerMenu}
+				<SidebarDropdownWrapper label="Для волонтеров" classes={{ btn: 'p-2' }}>
+					{#snippet icon()}
+						<UsersGroupOutline
+							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+						/>
+					{/snippet}
+					{#if canManageSchedule(user)}
+						<SidebarItem label="Изменения расписания" href="/schedule/changes">
+							{#snippet icon()}
+								<ClockArrowOutline
+									class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+								/>
+							{/snippet}
+						</SidebarItem>
+					{/if}
+				</SidebarDropdownWrapper>
+			{/if}
+			{#if canSeeOrganizerMenu}
+				<SidebarDropdownWrapper label="Для организаторов" classes={{ btn: 'p-2' }}>
+					{#snippet icon()}
+						<ShieldOutline
+							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+						/>
+					{/snippet}
+					<!-- Keep festival controls together so organizers can find them quickly on mobile. -->
+					<SidebarItem label="Настройки фестиваля" href="/org/settings">
 						{#snippet icon()}
-							<ClockArrowOutline
+							<!-- This matches the page action: importing a schedule file. -->
+							<AdjustmentsHorizontalOutline
 								class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
 							/>
 						{/snippet}
 					</SidebarItem>
-				{/if}
-			</SidebarDropdownWrapper>
-		{/if}
-		{#if canSeeOrganizerMenu}
-			<SidebarDropdownWrapper label="Для организаторов" classes={{ btn: 'p-2' }}>
-				{#snippet icon()}
-					<ShieldOutline
-						class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-					/>
-				{/snippet}
-				<!-- Keep festival controls together so organizers can find them quickly on mobile. -->
-				<SidebarItem label="Настройки фестиваля" href="/org/settings">
-					{#snippet icon()}
-						<!-- This matches the page action: importing a schedule file. -->
-						<AdjustmentsHorizontalOutline
-							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-						/>
-					{/snippet}
-				</SidebarItem>
-				<SidebarItem label="Импорт расписания" href="/org/import_schedule">
-					{#snippet icon()}
-						<!-- This matches the page action: importing a schedule file. -->
-						<FileImportOutline
-							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-						/>
-					{/snippet}
-				</SidebarItem>
-				<SidebarItem label="Рассылка уведомлений" href="/org/broadcast">
-					{#snippet icon()}
-						<BullhornOutline
-							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-						/>
-					{/snippet}
-				</SidebarItem>
-			</SidebarDropdownWrapper>
-		{/if}
-	</SidebarGroup>
+					<SidebarItem label="Импорт расписания" href="/org/import_schedule">
+						{#snippet icon()}
+							<!-- This matches the page action: importing a schedule file. -->
+							<FileImportOutline
+								class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+							/>
+						{/snippet}
+					</SidebarItem>
+					<SidebarItem label="Рассылка уведомлений" href="/org/broadcast">
+						{#snippet icon()}
+							<BullhornOutline
+								class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+							/>
+						{/snippet}
+					</SidebarItem>
+				</SidebarDropdownWrapper>
+			{/if}
+		</SidebarGroup>
+		<div class="mt-auto border-t border-gray-200 p-3 dark:border-gray-700">
+			<ThemeToggle />
+		</div>
+	</div>
 {/snippet}
 
 <Sidebar
