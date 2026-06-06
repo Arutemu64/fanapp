@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { Button, Card } from 'flowbite-svelte';
+	import { ArrowLeftOutline } from 'flowbite-svelte-icons';
 	import IconTelegram from '~icons/simple-icons/telegram';
 	import CodeLoginForm from './CodeLoginForm.svelte';
 	import PasswordLoginForm from './PasswordLoginForm.svelte';
@@ -47,6 +48,7 @@
 			<PasswordLoginForm bind:email bind:isBusy />
 			<div class="mt-4 text-center">
 				<Button color="light" class="w-full rounded-xl" onclick={() => (showPasswordForm = false)}>
+					<ArrowLeftOutline class="me-2 h-4 w-4" />
 					Назад
 				</Button>
 			</div>

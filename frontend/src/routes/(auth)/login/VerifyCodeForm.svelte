@@ -7,6 +7,7 @@
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Alert, Button, Helper, Label, Spinner } from 'flowbite-svelte';
+	import { ArrowLeftOutline, RefreshOutline } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
 	import OtpInput from '$lib/components/OtpInput.svelte';
 
@@ -197,6 +198,7 @@
 			{:else if resendCooldown > 0}
 				Отправить код ещё раз ({resendCooldown} сек.)
 			{:else}
+				<RefreshOutline class="me-2 h-4 w-4" />
 				Отправить код ещё раз
 			{/if}
 		</Button>
@@ -208,6 +210,7 @@
 			disabled={isBusy && activeAction === null}
 			onclick={() => onBack?.()}
 		>
+			<ArrowLeftOutline class="me-2 h-4 w-4" />
 			Назад
 		</Button>
 	</div>

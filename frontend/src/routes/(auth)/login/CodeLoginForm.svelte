@@ -4,7 +4,7 @@
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
 	import { Alert, Button, Helper, Input, Label, Spinner } from 'flowbite-svelte';
-	import { EnvelopeSolid } from 'flowbite-svelte-icons';
+	import { EnvelopeSolid, LockSolid } from 'flowbite-svelte-icons';
 	import { tick } from 'svelte';
 	import VerifyCodeForm from './VerifyCodeForm.svelte';
 
@@ -173,6 +173,7 @@
 				disabled={isBusy && activeAction === null}
 				onclick={() => (showPasswordForm = true)}
 			>
+				<LockSolid class="me-2 h-4 w-4" />
 				Войти с паролем
 			</Button>
 		</div>
