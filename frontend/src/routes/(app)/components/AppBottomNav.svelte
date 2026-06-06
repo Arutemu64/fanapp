@@ -2,12 +2,21 @@
 	import { BottomNav, BottomNavItem } from 'flowbite-svelte';
 	import {
 		CalendarWeekOutline,
+		CalendarWeekSolid,
+		HomeOutline,
 		HomeSolid,
 		MapPinAltOutline,
-		ThumbsUpOutline
+		MapPinAltSolid,
+		ThumbsUpOutline,
+		ThumbsUpSolid
 	} from 'flowbite-svelte-icons';
 
 	let { activeUrl } = $props<{ activeUrl: string }>();
+
+	function isActive(href: string): boolean {
+		if (href === '/') return activeUrl === '/';
+		return activeUrl === href || activeUrl.startsWith(href + '/');
+	}
 </script>
 
 <BottomNav
@@ -17,24 +26,40 @@
 	classes={{ inner: 'grid-cols-4' }}
 >
 	<BottomNavItem btnName="Главная" href="/">
-		<HomeSolid
-			class="mb-1 h-6 w-6 text-gray-500 group-hover:text-primary-600 dark:text-gray-400 dark:group-hover:text-primary-500"
-		/>
+		{#if isActive('/')}
+			<HomeSolid class="mb-1 h-6 w-6 text-primary-600 dark:text-primary-500" />
+		{:else}
+			<HomeOutline
+				class="mb-1 h-6 w-6 text-gray-500 group-hover:text-primary-600 dark:text-gray-400 dark:group-hover:text-primary-500"
+			/>
+		{/if}
 	</BottomNavItem>
 	<BottomNavItem btnName="Расписание" href="/schedule">
-		<CalendarWeekOutline
-			class="mb-1 h-6 w-6 text-gray-500 group-hover:text-primary-600 dark:text-gray-400 dark:group-hover:text-primary-500"
-		/>
+		{#if isActive('/schedule')}
+			<CalendarWeekSolid class="mb-1 h-6 w-6 text-primary-600 dark:text-primary-500" />
+		{:else}
+			<CalendarWeekOutline
+				class="mb-1 h-6 w-6 text-gray-500 group-hover:text-primary-600 dark:text-gray-400 dark:group-hover:text-primary-500"
+			/>
+		{/if}
 	</BottomNavItem>
 	<!-- Mirror the sidebar shortcut here so the map stays visible above the fixed mobile nav. -->
 	<BottomNavItem btnName="Карта" href="/map">
-		<MapPinAltOutline
-			class="mb-1 h-6 w-6 text-gray-500 group-hover:text-primary-600 dark:text-gray-400 dark:group-hover:text-primary-500"
-		/>
+		{#if isActive('/map')}
+			<MapPinAltSolid class="mb-1 h-6 w-6 text-primary-600 dark:text-primary-500" />
+		{:else}
+			<MapPinAltOutline
+				class="mb-1 h-6 w-6 text-gray-500 group-hover:text-primary-600 dark:text-gray-400 dark:group-hover:text-primary-500"
+			/>
+		{/if}
 	</BottomNavItem>
 	<BottomNavItem btnName="Голосование" href="/voting">
-		<ThumbsUpOutline
-			class="mb-1 h-6 w-6 text-gray-500 group-hover:text-primary-600 dark:text-gray-400 dark:group-hover:text-primary-500"
-		/>
+		{#if isActive('/voting')}
+			<ThumbsUpSolid class="mb-1 h-6 w-6 text-primary-600 dark:text-primary-500" />
+		{:else}
+			<ThumbsUpOutline
+				class="mb-1 h-6 w-6 text-gray-500 group-hover:text-primary-600 dark:text-gray-400 dark:group-hover:text-primary-500"
+			/>
+		{/if}
 	</BottomNavItem>
 </BottomNav>
