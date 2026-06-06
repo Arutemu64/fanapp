@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button } from 'flowbite-svelte';
-	import { DownloadSolid, ShareNodesOutline } from 'flowbite-svelte-icons';
+	import { DownloadSolid } from 'flowbite-svelte-icons';
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import ProfileCardShell from './ProfileCardShell.svelte';
 
@@ -14,7 +14,7 @@
 {#if showCard}
 	<ProfileCardShell
 		title="Установить приложение"
-		description="Добавь ФАН ФАН на главный экран, чтобы быстрее открывать профиль и уведомления."
+		description="Добавь ФАН ФАН на главный экран, чтобы быстрее открывать приложение и получать пуш-уведомления."
 	>
 		{#snippet icon()}
 			<DownloadSolid class="h-5 w-5" />
@@ -26,12 +26,39 @@
 				Установить
 			</Button>
 		{:else if pwa.isIOS}
-			<div
-				class="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
-			>
-				<ShareNodesOutline class="h-5 w-5 shrink-0 text-gray-400" />
-				<span>Нажми «Поделиться», затем «На экран „Домой“».</span>
-			</div>
+			<p class="mb-3 text-xs text-amber-600 dark:text-amber-400">
+				Установка работает только через Safari
+			</p>
+			<ol class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
+				<li class="flex items-start gap-3">
+					<span
+						class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700 dark:bg-primary-900 dark:text-primary-300"
+						>1</span
+					>
+					Открой этот сайт в браузере Safari
+				</li>
+				<li class="flex items-start gap-3">
+					<span
+						class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700 dark:bg-primary-900 dark:text-primary-300"
+						>2</span
+					>
+					Нажми «···» справа от адресной строки, затем «Поделиться»
+				</li>
+				<li class="flex items-start gap-3">
+					<span
+						class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700 dark:bg-primary-900 dark:text-primary-300"
+						>3</span
+					>
+					Прокрути список и выбери «На экран "Домой"»
+				</li>
+				<li class="flex items-start gap-3">
+					<span
+						class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700 dark:bg-primary-900 dark:text-primary-300"
+						>4</span
+					>
+					Нажми «Добавить» в правом верхнем углу
+				</li>
+			</ol>
 		{:else if pwa.isAndroid}
 			<div class="space-y-2">
 				<div
