@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Card, Badge, Button } from 'flowbite-svelte';
-	import { CheckCircleSolid, HeartSolid } from 'flowbite-svelte-icons';
+	import { CheckCircleSolid, CheckOutline, CloseOutline, HeartSolid } from 'flowbite-svelte-icons';
 	import { pluralize } from '$lib/utils/formatters';
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
@@ -82,63 +82,85 @@
 
 <Card
 	class={[
-		'relative flex w-full max-w-none flex-col py-3 ps-4 pe-3 transition-[box-shadow,border-color]',
-		participant.user_vote !== null && 'ring-2 ring-green-400 dark:ring-green-500'
+		'relative flex w-full max-w-none flex-col overflow-hidden p-4 transition-[box-shadow,border-color,background-color]',
+		participant.user_vote !== null
+			? 'bg-green-50 ring-2 ring-green-400 dark:bg-green-950/20 dark:ring-green-500'
+			: ''
 	]}
 >
-	{#if participant.user_vote !== null}
-		<Badge color="green" border class="absolute top-2 right-2 shrink-0 text-sm">
-			<span class="flex items-center gap-1">
-				<CheckCircleSolid class="h-4 w-4" />
-				<span class="hidden sm:inline">Твой голос</span>
-			</span>
-		</Badge>
+	<!-- Watermark number -->
+	{#if participant.voting_number}
+		<div
+			class="pointer-events-none absolute right-2 bottom-0 leading-none font-black text-gray-900/[0.04] select-none dark:text-white/[0.06]"
+			style="font-size: 6rem; line-height: 1;"
+			aria-hidden="true"
+		>
+			{participant.voting_number}
+		</div>
 	{/if}
 
-	<div class="min-w-0 flex-1">
+	<!-- Header row: number + badge -->
+	<div class="mb-2 flex min-h-6 items-center justify-between gap-2">
 		{#if participant.voting_number}
-			<div class="mb-0.5 text-xs font-medium text-gray-500 sm:mb-1 sm:text-sm dark:text-gray-400">
+			<span class="text-xs font-semibold tracking-wide text-primary-600 dark:text-primary-400">
 				№{participant.voting_number}
-			</div>
+			</span>
+		{:else}
+			<span></span>
 		{/if}
 
-		<h3 class="text-lg font-bold text-gray-900 dark:text-white">
-			{participant.title}
-		</h3>
+		{#if participant.user_vote !== null}
+			<Badge color="green" border class="shrink-0">
+				<span class="flex items-center gap-1">
+					<CheckCircleSolid class="h-3.5 w-3.5" />
+					Твой голос
+				</span>
+			</Badge>
+		{/if}
 	</div>
 
-	<div class="mt-auto flex items-center justify-between pt-2 sm:pt-3">
-		<div class="flex items-center gap-1 text-xs text-gray-500 sm:text-sm dark:text-gray-400">
-			<HeartSolid class="h-3.5 w-3.5 text-red-500" />
+	<!-- Title -->
+	<h3 class="relative z-10 flex-1 text-base leading-snug font-bold text-gray-900 dark:text-white">
+		{participant.title}
+	</h3>
+
+	<!-- Footer row: vote count + action button -->
+	<div
+		class="relative z-10 mt-3 flex items-center justify-between gap-2 border-t border-gray-100 pt-3 dark:border-gray-700"
+	>
+		<div class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+			<HeartSolid class="h-3.5 w-3.5 shrink-0 text-red-400" />
 			<span>
 				{participant.votes_count}
 				{pluralize(participant.votes_count, 'голос', 'голоса', 'голосов')}
 			</span>
 		</div>
 
-		<div class="flex min-h-11 min-w-24 items-center">
-			{#if participant.user_vote !== null}
-				<Button
-					size="md"
-					color="red"
-					outline
-					loading={isLoading}
-					disabled={areActionsDisabled}
-					onclick={handleCancelVote}
-					aria-label="Отменить голос"
-				>
-					Отменить
-				</Button>
-			{:else if !hasVoted}
-				<Button
-					size="md"
-					color="primary"
-					loading={isLoading}
-					disabled={areActionsDisabled}
-					onclick={handleVote}
-					aria-label={`Голосовать за ${participant.title}`}>Голосовать</Button
-				>
-			{/if}
-		</div>
+		{#if participant.user_vote !== null}
+			<Button
+				size="sm"
+				color="red"
+				outline
+				loading={isLoading}
+				disabled={areActionsDisabled}
+				onclick={handleCancelVote}
+				aria-label="Отменить голос"
+			>
+				<CloseOutline class="me-1.5 h-3.5 w-3.5" />
+				Отменить
+			</Button>
+		{:else if !hasVoted}
+			<Button
+				size="sm"
+				color="primary"
+				loading={isLoading}
+				disabled={areActionsDisabled}
+				onclick={handleVote}
+				aria-label={`Голосовать за ${participant.title}`}
+			>
+				<CheckOutline class="me-1.5 h-3.5 w-3.5" />
+				Голосовать
+			</Button>
+		{/if}
 	</div>
 </Card>
