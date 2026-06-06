@@ -9,6 +9,9 @@ This document outlines the codebase-specific constraints, SvelteKit SSR rules, s
 >
 > Refer to those skills for core syntax and best practices; do not duplicate them here.
 
+> [!NOTE]
+> **Scope of this doc**: only FAN FAN–specific decisions and bindings live here — chosen scales, tokens, component wiring, conventions. Generic best-practice (accessibility, UX, responsive + dark-mode mechanics) lives in the `ui-ux-pro-max`, `tailwind-css-patterns`, and `svelte-core-bestpractices` skills — load those. **Rule of thumb**: if a skill that has never seen this repo could state a rule, it belongs in the skill, not here.
+
 ---
 
 ## 1. SSR Safety & Request Isolation
@@ -16,7 +19,7 @@ This document outlines the codebase-specific constraints, SvelteKit SSR rules, s
 * **Server Evaluation**: Assume every route and component may render on the server first. Do not access browser-only globals (`window`, `document`, `localStorage`, etc.) during module evaluation.
 * **Strict State Isolation**: Never store user-specific or request-specific state in global/module-level variables, legacy stores, or reactive singletons.
 * **Context API for Shared State**: For state shared across Svelte 5 components, keep logic in classes with `$state` fields instanced per component/request. Use Svelte 5's type-safe `createContext` utility (rather than global stores or raw module variables) to scope state to the request-specific component tree, eliminating SSR data leakage.
-* **Browser Guards**: Guard browser-only execution paths with `browser` from `$app/environment` during rendering, or isolate them inside component lifecycles (`onMount` or `$effect`).
+* **Browser Guards**: Guard browser-only execution paths with `browser` from `$app/environment` during rendering, or isolate them inside the client lifecycle. Prefer (in order) event handlers, `{@attach ...}` for external libs, `<svelte:window>`/`<svelte:document>` for global listeners, and `createSubscriber` for external sources; reach for `$effect` only as a last resort. See `svelte-core-bestpractices`.
 
 ---
 
@@ -53,6 +56,7 @@ Two fonts are defined in `app.css`: `font-sans` (Inter, body text) and `font-dis
 * Never use arbitrary sizes (`text-[10px]`, `text-[0.6rem]`).
 * Always add `sm:` responsive upgrade on headings.
 * Body text: `leading-relaxed`. Headings: `leading-tight`.
+* Countdown/timer numerics (the `font-display` case): add `tabular-nums` so digit-width stays fixed and the layout never jitters as numbers tick.
 
 ### Border-Radius Scale
 
@@ -69,12 +73,35 @@ Three tiers — pick by element role:
 * Never use `rounded-sm`, `rounded-md`, or bare `rounded` — they have no role in this scale.
 * `rounded-2xl` on the outermost container, `rounded-lg` on inner borders/rows inside it.
 
+### Z-Index Scale
+
+Keep stacking on this fixed ladder — never invent ad-hoc `z-*` values:
+
+| Layer | Class | Elements |
+|---|---|---|
+| Base content | `z-0` / auto | In-flow page content |
+| Sticky chrome | `z-40` | Top navbar (`AppNavbar`, `sticky top-0`) |
+| Overlays | `z-50` | Mobile bottom nav, mobile sidebar drawer, toasts, modals/backdrops |
+
+**Rules:**
+* Sticky navbar stays *below* overlays (`z-40` < `z-50`) so drawers/modals cover it.
+* Flowbite `<Modal>` manages its own backdrop + `z-50` — don't override it.
+
+### Dark Mode
+
+Theming is wired via `@custom-variant dark` in `app.css` with `.dark` on `<html>`. Project rules:
+* Ship a `dark:` variant for every surface — never light-only.
+* Use semantic tokens (`primary-*`, `secondary-*`, `gray-*`), never raw hex.
+
+Contrast targets and dark-mode mechanics → `tailwind-css-patterns` / `ui-ux-pro-max`.
+
 ---
 
 ## 4. Mobile Layout & Forms
 
 * **Mobile-First**: Design for narrow mobile screens first. Keep content inside standard layout containers.
 * **Bottom Spacing**: Add bottom padding/spacing to pages to prevent fixed mobile bottom navigation tabs from covering active controls.
+* **Touch & Inputs**: Generic mobile rules (≥44px touch targets, semantic input `type`, `autocomplete`, password show/hide) live in `ui-ux-pro-max` — apply them; not restated here.
 * **Form Submissions**: Disable submit buttons and display inline spinners/loading messages when submissions are in-flight.
 * **Feedback Scopes**: Place validation errors inline (directly near the related input field). Reserve toasts for transient action results.
 
@@ -149,3 +176,23 @@ Before writing any new component, check existing items in `frontend/src/lib/comp
 * **Section Headers**: Use `$lib/components/SectionHeader.svelte` for screen titles and subtitles.
 * **Toasts**: Trigger alerts via `$lib/services/toasts.svelte.ts` and display them with `$lib/components/ToastContainer.svelte`.
 * **Page Containers**: Match the spacing/layout patterns established in `frontend/src/routes/(app)/+layout.svelte`.
+
+---
+
+## 9. Accessibility
+
+Project a11y bindings — keep wired, don't regress:
+
+* **Skip link**: `$lib/components/SkipLink.svelte` is wired in `(app)/+layout.svelte` and targets `#main-content`. Keep both the link and the target id.
+* **Focus on route**: the main scroll region carries the `#main-content` id and is focusable (`tabindex="-1"` + `focus-visible` ring) — keyboard/screen-reader users land in content after navigation.
+* **Toast a11y contract**: `ToastContainer` sets `role="alert"`/`aria-live="assertive"` for errors and `role="status"`/`aria-live="polite"` otherwise, with `aria-atomic`. Match this on any new toast markup; toasts must not steal focus.
+
+Everything generic — contrast ratios, keyboard/tab order, `aria-label` on icon-only buttons, heading hierarchy, color-not-sole-signal, `prefers-reduced-motion` (our `scroll-smooth` / toast `fly` / swipe-dismiss) — lives in `ui-ux-pro-max`. Load it; don't restate here.
+
+---
+
+## 10. Loading, Empty & Error States
+
+Generic patterns (skeletons for >~300ms loads, empty-state layouts, error-recovery affordances, toast auto-dismiss timing) → `ui-ux-pro-max`. Project bindings only, and they already live elsewhere:
+* Copy is Russian; never surface raw backend exceptions — §6.
+* Toasts are for action results, not field validation — §4 (Feedback Scopes).
