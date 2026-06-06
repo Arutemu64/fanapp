@@ -18,6 +18,7 @@
 		Navbar,
 		SidebarButton
 	} from 'flowbite-svelte';
+	import { ArrowRightToBracketOutline } from 'flowbite-svelte-icons';
 	import type { CurrentUserDTO } from '$lib/types/user';
 
 	let { user, toggleSidebar } = $props<{
@@ -95,7 +96,10 @@
 				</DropdownGroup>
 			</Dropdown>
 		{:else}
-			<Button href="/login" size="sm">Войти</Button>
+			<Button href="/login" size="sm">
+				<ArrowRightToBracketOutline class="me-2 h-4 w-4" />
+				Войти
+			</Button>
 		{/if}
 	</div>
 </Navbar>

@@ -1,7 +1,13 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { Card, Button } from 'flowbite-svelte';
-	import { ExclamationCircleSolid, LockSolid, ArrowLeftOutline } from 'flowbite-svelte-icons';
+	import {
+		ArrowLeftOutline,
+		ExclamationCircleSolid,
+		HomeOutline,
+		LockSolid,
+		RefreshOutline
+	} from 'flowbite-svelte-icons';
 
 	// Reactive states based on page status and error messages
 	let status = $derived(page.status);
@@ -82,6 +88,7 @@
 						class="min-h-11 w-full rounded-xl font-medium"
 						onclick={handleRetry}
 					>
+						<RefreshOutline class="me-2 h-4 w-4" />
 						Попробовать снова
 					</Button>
 				{/if}
@@ -91,6 +98,7 @@
 					color={status >= 500 ? 'alternative' : 'primary'}
 					class="min-h-11 w-full rounded-xl font-medium"
 				>
+					<HomeOutline class="me-2 h-4 w-4" />
 					На главную
 				</Button>
 
