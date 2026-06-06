@@ -6,7 +6,7 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import { Button, Modal, Alert } from 'flowbite-svelte';
-	import { MinusOutline, PlusOutline } from 'flowbite-svelte-icons';
+	import { BellActiveSolid, MinusOutline, PlusOutline } from 'flowbite-svelte-icons';
 
 	interface Props {
 		open: boolean;
@@ -117,5 +117,8 @@
 		</div>
 	</div>
 
-	<Button type="button" onclick={handleSubmit} class="w-full">Подписаться</Button>
+	<Button type="button" onclick={handleSubmit} class="w-full">
+		<BellActiveSolid class="me-2 h-4 w-4" />
+		Подписаться
+	</Button>
 </Modal>

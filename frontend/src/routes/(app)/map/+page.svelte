@@ -2,7 +2,7 @@
 	import { asset } from '$app/paths';
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import { Button } from 'flowbite-svelte';
-	import { MapPinAltOutline } from 'flowbite-svelte-icons';
+	import { ArrowUpRightFromSquareOutline, MapPinAltOutline } from 'flowbite-svelte-icons';
 
 	interface MapEntry {
 		id: string;
@@ -63,6 +63,7 @@
 				</div>
 
 				<Button href={map.src} target="_blank" rel="noopener noreferrer" size="sm">
+					<ArrowUpRightFromSquareOutline class="me-2 h-3.5 w-3.5" />
 					Открыть оригинал
 				</Button>
 			</div>

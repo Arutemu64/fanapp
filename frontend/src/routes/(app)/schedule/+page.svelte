@@ -266,20 +266,6 @@
 		<!-- Lift FAB actions above the bottom mobile navigation so they stay tappable. -->
 		<div class="pointer-events-none fixed right-4 bottom-24 z-30 md:bottom-6">
 			<div class="flex flex-col items-end gap-2">
-				{#if visibleCurrentEvent}
-					<Button
-						color="green"
-						size="sm"
-						pill
-						class="pointer-events-auto h-12 w-12 rounded-full px-0 shadow-lg shadow-green-500/15 lg:w-32 lg:px-3"
-						onclick={scrollToCurrentEvent}
-						aria-label="Перейти к текущему событию"
-					>
-						<PlaySolid class="h-4 w-4 shrink-0" />
-						<span class="sr-only lg:not-sr-only lg:ml-2">Текущее</span>
-					</Button>
-				{/if}
-
 				{#if showScrollTopButton}
 					<Button
 						color="light"
@@ -291,6 +277,20 @@
 					>
 						<ChevronUpOutline class="h-4 w-4 shrink-0" />
 						<span class="sr-only lg:not-sr-only lg:ml-2">Наверх</span>
+					</Button>
+				{/if}
+
+				{#if visibleCurrentEvent}
+					<Button
+						color="green"
+						size="sm"
+						pill
+						class="pointer-events-auto h-12 w-12 rounded-full px-0 shadow-lg shadow-green-500/15 lg:w-32 lg:px-3"
+						onclick={scrollToCurrentEvent}
+						aria-label="Перейти к текущему событию"
+					>
+						<PlaySolid class="h-4 w-4 shrink-0" />
+						<span class="sr-only lg:not-sr-only lg:ml-2">Текущее</span>
 					</Button>
 				{/if}
 			</div>
