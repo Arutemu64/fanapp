@@ -31,8 +31,7 @@ if (PUBLIC_SENTRY_DSN) {
 }
 
 export const handleError: HandleClientError = Sentry.handleErrorWithSentry(({ error }) => {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const err = error as any;
+	const err = error as { code?: string } | undefined;
 	// Localized Russian error response to fulfill the Russian Copy policy
 	return {
 		message: 'Произошла непредвиденная ошибка в приложении. Мы уже работаем над её устранением.',

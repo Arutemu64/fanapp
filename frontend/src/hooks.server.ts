@@ -131,8 +131,7 @@ const guardHandle: Handle = async ({ event, resolve }) => {
 export const handle: Handle = sequence(Sentry.sentryHandle(), authHandle, guardHandle);
 
 export const handleError: HandleServerError = Sentry.handleErrorWithSentry(({ error }) => {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const err = error as any;
+	const err = error as { code?: string } | undefined;
 
 	// Localized Russian error response to fulfill the Russian Copy policy
 	return {

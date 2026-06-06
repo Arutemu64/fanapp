@@ -69,11 +69,10 @@
 			</div>
 
 			<!-- Превью тоже работает как ссылка, чтобы пользователь мог открыть карту одним касанием. -->
-			<!-- eslint-disable svelte/no-navigation-without-resolve -->
 			<a
 				href={map.src}
 				target="_blank"
-				rel="noopener noreferrer"
+				rel="external noopener noreferrer"
 				class="block w-full bg-gray-100 p-2 transition-colors hover:bg-gray-200/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 dark:bg-gray-950 dark:hover:bg-gray-800/80"
 				aria-label={`Открыть оригинал ${map.title}`}
 			>
@@ -86,7 +85,6 @@
 					class="max-h-[70dvh] w-full rounded-xl object-contain"
 				/>
 			</a>
-			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 		</article>
 	{:else}
 		<div
