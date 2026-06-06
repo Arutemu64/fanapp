@@ -93,7 +93,57 @@ Three tiers — pick by element role:
 
 ---
 
-## 7. Reusable Component Inventory
+## 7. Modal Conventions
+
+All modals use Flowbite-Svelte `<Modal bind:open size="sm">`. Follow these structural rules:
+
+### Required: `{#snippet header()}`
+
+Every modal **must** use the `header` snippet — never put a raw `<h3>` inside the modal body. Always pair the title with a contextual icon:
+
+```svelte
+<Modal bind:open size="sm">
+  {#snippet header()}
+    <div class="flex items-center gap-2">
+      <SomeIcon class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+      <h3 class="text-lg font-bold text-gray-900 dark:text-white">Заголовок</h3>
+    </div>
+  {/snippet}
+
+  <!-- body -->
+</Modal>
+```
+
+### Footer snippet: action-only modals
+
+Use `{#snippet footer()}` for modals whose primary content is not a form — confirmation dialogs, single-action prompts. Flowbite renders a top-border separator automatically:
+
+```svelte
+{#snippet footer()}
+  <Button type="button" color="alternative" onclick={() => (open = false)}>Отмена</Button>
+  <Button type="button" color="red" onclick={handleDelete}>Удалить</Button>
+{/snippet}
+```
+
+### Form modals: submit button stays in body
+
+When the modal contains a real `<form onsubmit={...}>`, put the submit button **inside the form** in the body — not in the footer snippet. This keeps the button as part of the form flow, and the visual separation is intentional (no footer divider).
+
+### Destructive actions
+
+Destructive confirm buttons use `color="red"`. Always pair with a neutral cancel (`color="alternative"` or `color="light"`).
+
+### No `autoclose`
+
+Do not use the deprecated `autoclose` prop. Wire close explicitly: `onclick={() => (open = false)}`.
+
+### Curly-quote hazard
+
+Never copy-paste class attribute values from rich-text sources. Unicode curly quotes `"` `"` (U+201C/U+201D) look identical to straight quotes but break Svelte's attribute parser, causing cryptic "Object literal" TypeScript errors. Always verify with `cat -A` if type-check fails on a class attribute.
+
+---
+
+## 8. Reusable Component Inventory
 
 Before writing any new component, check existing items in `frontend/src/lib/components/`:
 * **Section Headers**: Use `$lib/components/SectionHeader.svelte` for screen titles and subtitles.

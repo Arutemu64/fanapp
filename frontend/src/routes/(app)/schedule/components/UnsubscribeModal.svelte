@@ -6,6 +6,7 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import { Button, Modal, Alert } from 'flowbite-svelte';
+	import { BellOutline } from 'flowbite-svelte-icons';
 
 	interface Props {
 		open: boolean;
@@ -45,23 +46,27 @@
 </script>
 
 <Modal bind:open size="sm">
+	{#snippet header()}
+		<div class="flex items-center gap-2">
+			<BellOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+			<h3 class="text-lg font-bold text-gray-900 dark:text-white">Отписка от уведомлений</h3>
+		</div>
+	{/snippet}
+
 	{#if formError}
 		<Alert color="red" class="mb-4 rounded-xl text-sm">
 			{formError}
 		</Alert>
 	{/if}
 
-	<h3 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Отписка от уведомлений</h3>
 	<p class="text-gray-600 dark:text-gray-400">
 		Хочешь отписаться от уведомлений о выступлении <strong class="text-gray-900 dark:text-white"
 			>{event.title}</strong
 		>?
 	</p>
 
-	<div class="flex gap-3">
-		<Button type="button" color="light" onclick={() => (open = false)} class="flex-1">
-			Отмена
-		</Button>
-		<Button type="button" color="red" onclick={handleUnsubscribe} class="flex-1">Отписаться</Button>
-	</div>
+	{#snippet footer()}
+		<Button type="button" color="alternative" onclick={() => (open = false)}>Отмена</Button>
+		<Button type="button" color="red" onclick={handleUnsubscribe}>Отписаться</Button>
+	{/snippet}
 </Modal>

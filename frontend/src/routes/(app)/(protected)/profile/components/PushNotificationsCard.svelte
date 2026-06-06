@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button, Modal, Toggle } from 'flowbite-svelte';
-	import { BellOutline, BellSolid, ShareNodesOutline } from 'flowbite-svelte-icons';
+	import { ArrowDownToBracketOutline, BellOutline, BellSolid } from 'flowbite-svelte-icons';
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
 	import { getPwaService } from '$lib/services/pwa.svelte';
@@ -170,7 +170,7 @@
 
 			isSubscribed = true;
 			onSettingsUpdate?.();
-			toastService.add('Включены Push-уведомления', 'success');
+			toastService.add('Включены пуш-уведомления', 'success');
 		} catch (error: unknown) {
 			console.error('Failed to subscribe:', error);
 			toastService.add('Не удалось включить уведомления', 'error');
@@ -238,7 +238,7 @@
 			}
 
 			toastService.add(
-				'Тест отправлен. Если сайт открыт, проверь тост и колокольчик. Для системного push сверни или закрой приложение.',
+				'Тест отправлен. Если сайт открыт, проверь тост и колокольчик. Для системного пуш сверни или закрой приложение.',
 				'success'
 			);
 		} catch (error) {
@@ -265,7 +265,7 @@
 					Уведомления в браузере
 				</span>
 				<p class="mt-1 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
-					Получать push-уведомления на этом устройстве.
+					Получать пуш-уведомления на этом устройстве.
 				</p>
 			</div>
 			<Toggle
@@ -339,35 +339,21 @@
 	</div>
 </ProfileCardShell>
 
-<Modal bind:open={showIosPwaModal} autoclose size="sm">
-	<h3 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Установи приложение</h3>
-	<div class="space-y-4">
-		<p class="text-base leading-relaxed text-gray-500 dark:text-gray-400">
-			Для работы Push-уведомлений на iOS необходимо добавить приложение на экран «Домой».
-		</p>
-		<div
-			class="flex items-center gap-3 rounded-lg bg-gray-50 p-4 text-sm text-gray-700 dark:bg-gray-700 dark:text-gray-300"
-		>
-			<div class="flex flex-col gap-2">
-				<div class="flex items-center gap-2">
-					<span
-						class="flex h-6 w-6 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-600 dark:bg-primary-900 dark:text-primary-300"
-						>1</span
-					>
-					<span>Нажми кнопку <strong>«Поделиться»</strong> в браузере</span>
-					<ShareNodesOutline class="h-5 w-5 text-gray-500" />
-				</div>
-				<div class="flex items-center gap-2">
-					<span
-						class="flex h-6 w-6 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-600 dark:bg-primary-900 dark:text-primary-300"
-						>2</span
-					>
-					<span>Выбери <strong>«На экран „Домой“»</strong></span>
-				</div>
-			</div>
+<Modal bind:open={showIosPwaModal} size="sm">
+	{#snippet header()}
+		<div class="flex items-center gap-2">
+			<ArrowDownToBracketOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+			<h3 class="text-lg font-bold text-gray-900 dark:text-white">Установи приложение</h3>
 		</div>
-	</div>
+	{/snippet}
+
+	<p class="text-sm text-gray-500 dark:text-gray-400">
+		Пуш-уведомления на iOS доступны только в установленном приложении. Найди карточку «Установить
+		приложение» на этой странице и следуй инструкции.
+	</p>
 	{#snippet footer()}
-		<Button color="alternative" class="w-full">Понятно</Button>
+		<Button color="alternative" class="w-full" onclick={() => (showIosPwaModal = false)}
+			>Понятно</Button
+		>
 	{/snippet}
 </Modal>

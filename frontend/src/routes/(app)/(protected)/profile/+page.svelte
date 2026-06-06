@@ -49,7 +49,7 @@
 	<title>Профиль</title>
 </svelte:head>
 
-<SectionHeader title="Профиль" description="Управление вашим аккаунтом и информацией" />
+<SectionHeader title="Профиль" description="Управление твоим аккаунтом" />
 
 <div class="flex flex-col gap-4">
 	<!-- Basic User Info Card -->

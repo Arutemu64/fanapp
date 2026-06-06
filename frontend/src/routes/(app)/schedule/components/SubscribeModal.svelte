@@ -20,6 +20,7 @@
 
 	$effect(() => {
 		if (open) {
+			counter = 5;
 			formError = '';
 		}
 	});
@@ -56,13 +57,19 @@
 </script>
 
 <Modal bind:open size="sm">
+	{#snippet header()}
+		<div class="flex items-center gap-2">
+			<BellActiveSolid class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+			<h3 class="text-lg font-bold text-gray-900 dark:text-white">Подписка на уведомления</h3>
+		</div>
+	{/snippet}
+
 	{#if formError}
 		<Alert color="red" class="mb-4 rounded-xl text-sm">
 			{formError}
 		</Alert>
 	{/if}
 
-	<h3 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Подписка на уведомления</h3>
 	<p class="text-gray-600 dark:text-gray-400">
 		За сколько выступлений до начала <strong class="text-gray-900 dark:text-white"
 			>{event.title}</strong
@@ -73,7 +80,6 @@
 		<div
 			class="flex -space-x-px overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
 		>
-			<!-- Decrement Button -->
 			<button
 				type="button"
 				onclick={decrement}
@@ -84,7 +90,6 @@
 				<MinusOutline class="h-5 w-5" />
 			</button>
 
-			<!-- Input Wrapper with absolute positioning for label -->
 			<div class="relative flex h-11 w-44 flex-col items-center justify-center">
 				<input
 					name="subscription_counter"
@@ -104,7 +109,6 @@
 				</div>
 			</div>
 
-			<!-- Increment Button -->
 			<button
 				type="button"
 				onclick={increment}
@@ -117,8 +121,10 @@
 		</div>
 	</div>
 
-	<Button type="button" onclick={handleSubmit} class="w-full">
-		<BellActiveSolid class="me-2 h-4 w-4" />
-		Подписаться
-	</Button>
+	{#snippet footer()}
+		<Button type="button" onclick={handleSubmit} class="w-full">
+			<BellActiveSolid class="me-2 h-4 w-4" />
+			Подписаться
+		</Button>
+	{/snippet}
 </Modal>

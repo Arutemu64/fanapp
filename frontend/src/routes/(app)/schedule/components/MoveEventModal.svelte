@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Button, Modal, Search, Alert } from 'flowbite-svelte';
+	import { ArrowUpDownOutline } from 'flowbite-svelte-icons';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
@@ -79,7 +80,14 @@
 	}
 </script>
 
-<Modal bind:open size="sm" class="px-2">
+<Modal bind:open size="sm">
+	{#snippet header()}
+		<div class="flex items-center gap-2">
+			<ArrowUpDownOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+			<h3 class="text-lg font-bold text-gray-900 dark:text-white">Переместить событие</h3>
+		</div>
+	{/snippet}
+
 	<div class="flex flex-col gap-4 sm:gap-5">
 		{#if formError}
 			<Alert color="red" class="rounded-xl text-sm">
@@ -87,7 +95,6 @@
 			</Alert>
 		{/if}
 
-		<h3 class="text-xl font-semibold text-gray-900 dark:text-white">Переместить событие</h3>
 		<p class="text-sm text-gray-600 sm:text-base dark:text-gray-400">
 			Выбери событие, <strong class="text-gray-900 dark:text-white">после</strong> которого будет
 			размещено:
@@ -125,15 +132,11 @@
 				</div>
 			{/each}
 		</div>
+	</div>
 
-		<Button
-			type="button"
-			onclick={handleSubmit}
-			class="w-full py-3 text-base sm:py-4 sm:text-lg"
-			size="lg"
-			disabled={!selectedId}
-		>
+	{#snippet footer()}
+		<Button type="button" onclick={handleSubmit} class="w-full" size="lg" disabled={!selectedId}>
 			Переместить
 		</Button>
-	</div>
+	{/snippet}
 </Modal>
