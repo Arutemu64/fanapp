@@ -183,7 +183,7 @@
 			{#snippet right()}
 				<button
 					type="button"
-					class="pointer-events-auto -mr-2 flex min-h-11 min-w-11 items-center justify-center rounded-md hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-700"
+					class="pointer-events-auto -mr-2 flex min-h-11 min-w-11 items-center justify-center rounded-lg hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-700"
 					onclick={() => (showPassword = !showPassword)}
 					aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
 					aria-pressed={showPassword}

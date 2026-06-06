@@ -12,7 +12,7 @@
 	let { title, description, icon, children }: Props = $props();
 </script>
 
-<Card class="w-full max-w-none rounded-lg bg-white shadow-sm dark:bg-gray-800">
+<Card class="w-full max-w-none rounded-2xl bg-white shadow-sm dark:bg-gray-800">
 	<div class="p-5 sm:p-6">
 		<div class="flex flex-col gap-4">
 			<!-- Shared header keeps all profile cards visually aligned. -->

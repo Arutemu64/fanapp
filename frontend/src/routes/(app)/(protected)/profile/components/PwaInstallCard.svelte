@@ -44,7 +44,7 @@
 				</div>
 
 				{#if !pwa.isSecureContext}
-					<p class="text-xs leading-5 text-gray-500 dark:text-gray-400">
+					<p class="text-sm leading-relaxed text-gray-500 dark:text-gray-400">
 						Если пункта нет, открой сайт по HTTPS — Android не показывает установку на обычном HTTP.
 					</p>
 				{/if}

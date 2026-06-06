@@ -93,7 +93,7 @@
 					{#if user.email}
 						<p class="mt-1.5 text-sm break-all text-gray-500 dark:text-gray-400">{user.email}</p>
 						{#if !user.email_verified_at}
-							<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+							<p class="mt-1 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
 								Подтверди адрес, чтобы защитить вход и восстановление доступа.
 							</p>
 						{/if}
@@ -101,7 +101,7 @@
 						<p class="mt-1.5 text-sm break-all text-gray-500 dark:text-gray-400">
 							{user.pending_email}
 						</p>
-						<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+						<p class="mt-1 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
 							Подтверди адрес, чтобы сделать его основной почтой для входа и восстановления доступа.
 						</p>
 					{:else}
@@ -111,7 +111,7 @@
 					{/if}
 
 					{#if user.pending_email}
-						<p class="mt-2 text-xs leading-5 text-gray-500 dark:text-gray-400">
+						<p class="mt-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
 							Новый адрес ожидает подтверждения: {user.pending_email}
 						</p>
 					{/if}
@@ -197,7 +197,7 @@
 								{telegramAccount.provider_id}
 							</span>
 						</p>
-						<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+						<p class="mt-1 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
 							Через Telegram можно быстро входить и получать уведомления от бота.
 						</p>
 					{:else}

@@ -104,7 +104,7 @@
 			list.push({
 				key: 'schedule',
 				title: 'Посмотреть программу',
-				description: 'Подпишись на номера, чтобы не пропустить любимые события.',
+				description: 'Подпишись на номера, чтобы не пропустить любимые выступления.',
 				icon: CalendarCheckIcon,
 				iconClass: accent.green.icon,
 				hoverClass: accent.green.hover,

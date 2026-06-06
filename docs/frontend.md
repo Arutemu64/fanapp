@@ -34,6 +34,41 @@ This document outlines the codebase-specific constraints, SvelteKit SSR rules, s
 * **Component Preference**: Always prioritize official Flowbite-Svelte components instead of writing custom elements.
 * **Icons**: Use `flowbite-svelte-icons` for iconography. Add icons only when they improve navigation or scanning.
 
+### Typography Scale
+
+Two fonts are defined in `app.css`: `font-sans` (Inter, body text) and `font-display` (Unbounded, hero headings and countdown numerics only). Apply sizes by role:
+
+| Role | Classes | Notes |
+|---|---|---|
+| Hero heading | `font-display text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight` | `font-display` here only |
+| Page heading | `text-xl sm:text-2xl font-bold leading-tight` | Used in `SectionHeader` |
+| Card/section heading | `text-base sm:text-lg font-semibold leading-snug` | h2/h3 inside cards |
+| Body paragraph | `text-sm sm:text-base leading-relaxed` | Default for descriptive text |
+| Secondary/helper | `text-xs sm:text-sm leading-relaxed` | Short helper lines next to controls |
+| Label/metadata | `text-xs leading-none font-medium` | Single-line only — timestamps, badges, tags |
+
+**Rules:**
+* `text-sm` (14px) is the minimum for any multi-line paragraph.
+* `text-xs` is for labels, timestamps, and single-line chips — never for multi-sentence body text.
+* Never use arbitrary sizes (`text-[10px]`, `text-[0.6rem]`).
+* Always add `sm:` responsive upgrade on headings.
+* Body text: `leading-relaxed`. Headings: `leading-tight`.
+
+### Border-Radius Scale
+
+Three tiers — pick by element role:
+
+| Tier | Class | Use for |
+|---|---|---|
+| Outer | `rounded-2xl` | Page-level cards, modals, sheet containers (`ProfileCardShell`, `HeroCard`, `EventCard` wrappers, etc.) |
+| Inner | `rounded-xl` | Icon containers, social/chip buttons, dropdown popovers, pill-shaped elements |
+| Sub-group | `rounded-lg` | Sections/rows inside a card, toasts, small interactive elements (icon buttons) |
+| Circular | `rounded-full` | Avatars, dot indicators, step-number badges |
+
+**Rules:**
+* Never use `rounded-sm`, `rounded-md`, or bare `rounded` — they have no role in this scale.
+* `rounded-2xl` on the outermost container, `rounded-lg` on inner borders/rows inside it.
+
 ---
 
 ## 4. Mobile Layout & Forms

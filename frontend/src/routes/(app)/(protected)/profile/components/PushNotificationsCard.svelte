@@ -264,7 +264,7 @@
 				<span class="text-sm font-medium text-gray-900 dark:text-gray-300">
 					Уведомления в браузере
 				</span>
-				<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+				<p class="mt-1 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
 					Получать push-уведомления на этом устройстве.
 				</p>
 			</div>
@@ -283,7 +283,7 @@
 			<div class="flex items-start justify-between gap-3">
 				<div class="min-w-0">
 					<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Telegram</span>
-					<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+					<p class="mt-1 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
 						{#if hasTelegramAccount}
 							Получать сообщения в Telegram-боте.
 						{:else}
@@ -304,7 +304,7 @@
 			<div class="flex items-start justify-between gap-3">
 				<div class="min-w-0">
 					<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Все анонсы</span>
-					<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+					<p class="mt-1 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
 						Получать уведомления о начале каждого выступления.
 					</p>
 				</div>
@@ -319,7 +319,7 @@
 	</div>
 
 	<div class="rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
-		<p class="mb-3 text-xs leading-5 text-gray-500 dark:text-gray-400">
+		<p class="mb-3 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
 			Попробуй отправить себе пробное уведомление, чтобы убедиться, что всё работает. Важно:
 			системные пуш-уведомления приходят только когда сайт закрыт.
 		</p>

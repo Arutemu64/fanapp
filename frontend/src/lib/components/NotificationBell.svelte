@@ -126,13 +126,13 @@
 <Dropdown
 	triggeredBy="#notification-bell"
 	bind:isOpen={dropdownOpen}
-	class="w-full max-w-sm divide-y divide-gray-100 rounded-sm shadow-sm dark:divide-gray-700 dark:bg-gray-800"
+	class="w-full max-w-sm divide-y divide-gray-100 rounded-xl shadow-sm dark:divide-gray-700 dark:bg-gray-800"
 >
 	<div class="flex items-center justify-between px-4 py-2">
 		<div class="text-center font-bold text-gray-900 dark:text-white">Уведомления</div>
 		<button
 			type="button"
-			class="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-primary-600 transition-colors hover:bg-primary-50 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-primary-400 dark:hover:bg-gray-700"
+			class="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-primary-600 transition-colors hover:bg-primary-50 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-primary-400 dark:hover:bg-gray-700"
 			onclick={markAllRead}
 			disabled={unreadCount === 0}
 		>

@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import CalendarIcon from '~icons/mdi/calendar';
-	import PinDropIcon from '~icons/material-symbols/pin-drop';
+	import CalendarIcon from '~icons/lucide/calendar';
+	import PinDropIcon from '~icons/lucide/map-pin';
 	import GlobeIcon from '~icons/lucide/globe';
-	import TelegramIcon from '~icons/ic/baseline-telegram';
-	import VkIcon from '~icons/ri/vk-fill';
-	import TiktokIcon from '~icons/ic/baseline-tiktok';
+	import TelegramIcon from '~icons/simple-icons/telegram';
+	import VkIcon from '~icons/simple-icons/vk';
+	import TiktokIcon from '~icons/simple-icons/tiktok';
 
 	const socials = [
 		{ label: 'Официальный сайт fancom.info', href: 'https://fancom.info', icon: GlobeIcon },
@@ -166,7 +166,7 @@
 										</span>
 									{/key}
 								{/if}
-								<span class="mt-1 text-[0.6rem] text-gray-400 dark:text-gray-500">
+								<span class="mt-1 text-xs text-gray-400 dark:text-gray-500">
 									{unit.label}
 								</span>
 							</div>

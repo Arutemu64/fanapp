@@ -98,7 +98,7 @@
 					class="h-full w-full border-0 bg-transparent pb-5 text-center font-bold text-gray-900 [-moz-appearance:textfield] focus:ring-0 focus:outline-none dark:text-white [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 				/>
 				<div
-					class="pointer-events-none absolute bottom-1 flex items-center text-[10px] text-gray-400 select-none dark:text-gray-500"
+					class="pointer-events-none absolute bottom-1 flex items-center text-xs text-gray-400 select-none dark:text-gray-500"
 				>
 					<span>выступлений</span>
 				</div>
