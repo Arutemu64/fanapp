@@ -127,7 +127,7 @@
 							changeEmailModalOpen = true;
 						}}
 					>
-						{user.email || user.pending_email ? 'Изменить почту' : 'Добавить почту'}
+						{user.email || user.pending_email ? 'Изменить' : 'Добавить'}
 					</Button>
 
 					{#if user.pending_email || (user.email && !user.email_verified_at)}
@@ -141,7 +141,7 @@
 							}}
 						>
 							<EnvelopeSolid class="me-2 h-4 w-4" />
-							{user.pending_email ? 'Подтвердить новый адрес' : 'Подтвердить почту'}
+							Подтвердить
 						</Button>
 					{/if}
 				</div>
@@ -174,7 +174,7 @@
 					class="min-h-11 w-full sm:w-auto"
 					onclick={() => (changePasswordModalOpen = true)}
 				>
-					{user.has_password ? 'Сменить пароль' : 'Установить пароль'}
+					{user.has_password ? 'Изменить' : 'Установить'}
 				</Button>
 			</div>
 		</div>
@@ -222,7 +222,7 @@
 								Отвязка…
 							{:else}
 								<TrashBinOutline class="me-2 h-4 w-4" />
-								Отвязать Telegram
+								Отвязать
 							{/if}
 						</Button>
 					{:else}
@@ -232,7 +232,7 @@
 							color="alternative"
 							class="min-h-11 w-full sm:w-auto"
 						>
-							Подключить Telegram
+							Подключить
 						</Button>
 					{/if}
 				</div>

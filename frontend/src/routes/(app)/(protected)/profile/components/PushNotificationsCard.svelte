@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button, Modal, Toggle } from 'flowbite-svelte';
-	import { BellOutline, ShareNodesOutline } from 'flowbite-svelte-icons';
+	import { BellOutline, BellSolid, ShareNodesOutline } from 'flowbite-svelte-icons';
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
 	import { getPwaService } from '$lib/services/pwa.svelte';
@@ -329,7 +329,12 @@
 			disabled={isSendingTest}
 			onclick={sendTestNotification}
 		>
-			{isSendingTest ? 'Отправка…' : 'Проверить уведомления'}
+			{#if isSendingTest}
+				Отправка…
+			{:else}
+				<BellSolid class="me-2 h-4 w-4" />
+				Проверить уведомления
+			{/if}
 		</Button>
 	</div>
 </ProfileCardShell>

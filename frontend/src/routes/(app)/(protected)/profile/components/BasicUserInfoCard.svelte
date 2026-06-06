@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Avatar, Badge, Button } from 'flowbite-svelte';
-	import { UserCircleSolid } from 'flowbite-svelte-icons';
+	import { PenSolid, UserCircleSolid } from 'flowbite-svelte-icons';
 	import type { CurrentUserDTO } from '$lib/types/user';
 	import { getRoleLabel, getRoleColor } from '$lib/utils/users';
 	import EditProfileModal from './EditProfileModal.svelte';
@@ -71,6 +71,7 @@
 			class="min-h-11 w-full shrink-0 sm:w-auto"
 			onclick={() => (editProfileModalOpen = true)}
 		>
+			<PenSolid class="me-2 h-4 w-4" />
 			Редактировать профиль
 		</Button>
 	</div>

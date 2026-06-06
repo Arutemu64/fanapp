@@ -99,6 +99,7 @@
 					<Spinner class="me-2 h-4 w-4" />
 					Привязка…
 				{:else}
+					<TicketSolid class="me-2 h-4 w-4" />
 					Привязать билет
 				{/if}
 			</Button>
