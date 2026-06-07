@@ -50,6 +50,9 @@ backend-test-integration:
 backend-sync-cosplay2:
     cd backend && uv run python -m fanfan.main.cli sync-cosplay2
 
+backend-sync-tcloud:
+    cd backend && uv run python -m fanfan.main.cli sync_tcloud
+
 backend-typecheck:
     cd backend && uv run ty check src/fanfan
 

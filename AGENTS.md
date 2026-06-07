@@ -8,7 +8,7 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
 │   └── src/fanfan/
 │       ├── core/             # Pure Domain Models, Value Objects, Exceptions
 │       ├── application/      # Interactors, Use Cases, DTOs, Ports, Services
-│       ├── presentation/     # Interfaces: HTTP (web/), Telegram (tgbot/), NATS (faststream/), CLI (cli/)
+│       ├── presentation/     # Interfaces: HTTP (web/), Telegram (tgbot/), NATS (faststream/), CLI (cli/), Scheduler (scheduler/, APScheduler cron jobs)
 │       ├── adapters/         # Infrastructure: DB, Redis, NATS, Telegram, external clients
 │       ├── main/             # FastAPI setup, dependency injection (DI) container (Dishka)
 │       └── common/           # Shared static assets, path helpers

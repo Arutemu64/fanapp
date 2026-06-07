@@ -95,6 +95,28 @@ services:
     networks:
       - backend-network
 
+  scheduler:
+    build: ./backend
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+    volumes:
+      - ./config:/app/config:ro
+    env_file:
+      - .env
+    environment:
+      DB__HOST: "db"
+    command: [ "scheduler" ]
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      disable: true
+    profiles: [ "core" ]
+    networks:
+      - backend-network
+
   migration:
     build: ./backend
     env_file:
