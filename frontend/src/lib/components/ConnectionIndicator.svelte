@@ -59,7 +59,9 @@
 		}
 	};
 
-	let client = $derived(getEventsClient());
+	// Context value is stable for the component's lifetime; only the client's
+	// own $state fields (connectionStatus) are reactive.
+	const client = getEventsClient();
 	let status = $derived(client?.connectionStatus ?? 'disconnected');
 	let statusDetails = $derived(STATUS_DETAILS[status]);
 	let toneClasses = $derived(TONE_CLASSES[statusDetails.tone]);

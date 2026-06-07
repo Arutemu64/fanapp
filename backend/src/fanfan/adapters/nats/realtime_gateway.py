@@ -13,6 +13,10 @@ from fanfan.core.vo.user import UserId
 
 logger = logging.getLogger(__name__)
 
+# Cap per-connection buffering so a slow/stuck SSE client cannot grow memory
+# without bound. On overflow we drop the oldest message to favour freshness.
+SSE_QUEUE_MAXSIZE = 100
+
 
 class NatsRealtimeGateway(RealtimeGateway):
     def __init__(self, nc: NATSClient):
@@ -36,11 +40,25 @@ class NatsRealtimeGateway(RealtimeGateway):
 
     def subscribe(self, user_id: UserId | None = None) -> AsyncIterator[SSEMessage]:
         async def iterator() -> AsyncIterator[SSEMessage]:
-            queue: asyncio.Queue[SSEMessage] = asyncio.Queue()
+            queue: asyncio.Queue[SSEMessage] = asyncio.Queue(maxsize=SSE_QUEUE_MAXSIZE)
 
             async def message_handler(msg: Msg) -> None:
                 data = json.loads(msg.data.decode()) if msg.data else {}
-                await queue.put(self.retort.load(data, SSEMessage))
+                message = self.retort.load(data, SSEMessage)
+
+                # Slow consumer: drop the oldest to make room for the newest.
+                # No lock needed — asyncio runs this callback without interruption.
+                if queue.full():
+                    queue.get_nowait()
+                    logger.warning(
+                        "SSE queue full, dropped oldest message",
+                        extra={
+                            "user_id": str(user_id) if user_id else None,
+                            "event_name": message.event_name,
+                        },
+                    )
+
+                queue.put_nowait(message)
 
             subs = [await self.nc.subscribe("sse.broadcast.*", cb=message_handler)]
             if user_id:

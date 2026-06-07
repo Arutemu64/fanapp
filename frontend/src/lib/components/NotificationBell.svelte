@@ -47,24 +47,11 @@
 		return !alreadyExists;
 	}
 
-	function parseNotificationEvent(event: Event): Notification | null {
-		if (!(event instanceof MessageEvent)) {
-			return null;
+	function handleNewNotification(notification: Notification) {
+		const isNewNotification = addNotificationToPreview(notification);
+		if (isNewNotification) {
+			toastService.push(notification);
 		}
-
-		try {
-			if (typeof event.data === 'string') {
-				return JSON.parse(event.data) as Notification;
-			}
-
-			if (event.data && typeof event.data === 'object') {
-				return event.data as Notification;
-			}
-		} catch (error) {
-			console.warn('Failed to parse notification payload', error);
-		}
-
-		return null;
 	}
 
 	async function markAllRead() {
@@ -80,6 +67,11 @@
 		}
 	}
 
+	function reloadAfterReconnect() {
+		// Reload so notifications published while the stream was down aren't missed.
+		void loadNotifications();
+	}
+
 	onMount(() => {
 		void loadNotifications();
 
@@ -87,24 +79,13 @@
 			return;
 		}
 
-		const handleNewNotification = (event: Event) => {
-			const notification = parseNotificationEvent(event);
-
-			if (!notification) {
-				void loadNotifications();
-				return;
-			}
-
-			const isNewNotification = addNotificationToPreview(notification);
-			if (isNewNotification) {
-				toastService.push(notification);
-			}
-		};
-
 		eventsClient.on('new_notifications', handleNewNotification);
+		// 'connected' fires on the first connect and on every reconnect.
+		eventsClient.on('connected', reloadAfterReconnect);
 
 		return () => {
 			eventsClient.off('new_notifications', handleNewNotification);
+			eventsClient.off('connected', reloadAfterReconnect);
 		};
 	});
 </script>

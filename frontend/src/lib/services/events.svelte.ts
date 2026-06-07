@@ -1,6 +1,9 @@
 import { createContext } from 'svelte';
 import { browser } from '$app/environment';
 import { env } from '$env/dynamic/public';
+import type { components } from '$lib/api/v1';
+
+type NotificationDTO = components['schemas']['NotificationDTO'];
 
 const [getEvents, setEvents] = createContext<EventsClient | null>();
 
@@ -26,6 +29,34 @@ export interface EventsHandshakePayload {
 }
 
 /**
+ * Maps each SSE event name to the shape of its parsed payload.
+ * `void` means the event carries no usable data (handler called with `undefined`).
+ */
+export interface SSEEventMap {
+	connected: EventsHandshakePayload;
+	update_schedule: void;
+	new_notifications: NotificationDTO;
+}
+
+export type SSEEventName = keyof SSEEventMap;
+export type SSEHandler<K extends SSEEventName> = (data: SSEEventMap[K]) => void;
+
+interface RegisteredListener {
+	handler: unknown;
+	wrapper: EventListener;
+}
+
+/** Parse a raw SSE data string into a payload. Empty string → undefined; non-JSON → raw string. */
+function parseEventData(raw: unknown): unknown {
+	if (typeof raw !== 'string' || raw.length === 0) return undefined;
+	try {
+		return JSON.parse(raw);
+	} catch {
+		return raw;
+	}
+}
+
+/**
  * SSE (Server-Sent Events) client with automatic reconnection.
  *
  * Usage:
@@ -46,7 +77,9 @@ export class EventsClient {
 
 	// Tracks registered listeners so they survive reconnects.
 	// When EventSource reconnects, we re-attach all listeners to the new instance.
-	#listeners: Record<string, EventListener[]> = {};
+	// Each entry keeps the user handler (for identity on off()) and the JSON-parsing
+	// wrapper actually attached to the EventSource.
+	#listeners: Record<string, RegisteredListener[]> = {};
 
 	constructor() {
 		this.connect();
@@ -84,35 +117,45 @@ export class EventsClient {
 
 		// Re-attach all registered listeners to the new EventSource instance.
 		for (const [event, handlers] of Object.entries(this.#listeners)) {
-			for (const handler of handlers) {
-				this.#source.addEventListener(event, handler);
+			for (const { wrapper } of handlers) {
+				this.#source.addEventListener(event, wrapper);
 			}
 		}
 	}
 
-	/** Subscribe to a named SSE event. Survives reconnects automatically. */
-	on(event: string, handler: EventListener) {
+	/**
+	 * Subscribe to a named SSE event. The handler receives the parsed payload
+	 * (typed per {@link SSEEventMap}). Survives reconnects automatically.
+	 */
+	on<K extends SSEEventName>(event: K, handler: SSEHandler<K>) {
 		const handlers = this.#listeners[event] ?? (this.#listeners[event] = []);
-		if (handlers.includes(handler)) return; // Already registered
+		if (handlers.some((registered) => registered.handler === handler)) return; // Already registered
 
-		handlers.push(handler);
-		this.#source?.addEventListener(event, handler);
+		const wrapper: EventListener = (domEvent) => {
+			const data = parseEventData(domEvent instanceof MessageEvent ? domEvent.data : undefined);
+			(handler as (payload: unknown) => void)(data);
+		};
+
+		handlers.push({ handler, wrapper });
+		this.#source?.addEventListener(event, wrapper);
 	}
 
 	/** Unsubscribe from a named SSE event. */
-	off(event: string, handler: EventListener) {
+	off<K extends SSEEventName>(event: K, handler: SSEHandler<K>) {
 		const handlers = this.#listeners[event];
 		if (!handlers) return;
 
-		const nextHandlers = handlers.filter((registeredHandler) => registeredHandler !== handler);
-		if (nextHandlers.length === handlers.length) return;
+		const registered = handlers.find((entry) => entry.handler === handler);
+		if (!registered) return;
 
-		this.#listeners[event] = nextHandlers;
-		this.#source?.removeEventListener(event, handler);
+		this.#source?.removeEventListener(event, registered.wrapper);
+		const nextHandlers = handlers.filter((entry) => entry !== registered);
 
 		// Clean up empty listener lists.
 		if (nextHandlers.length === 0) {
 			delete this.#listeners[event];
+		} else {
+			this.#listeners[event] = nextHandlers;
 		}
 	}
 

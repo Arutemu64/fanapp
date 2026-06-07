@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { Button, Spinner } from 'flowbite-svelte';
+	import { onMount } from 'svelte';
 	import { createApiClient } from '$lib/api';
 	import type { components } from '$lib/api/v1';
 
 	const client = createApiClient();
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { getEventsClient } from '$lib/services/events.svelte';
 	import {
 		NOTIFICATION_PAGE_REQUEST_LIMIT,
 		NOTIFICATION_PAGE_SIZE
@@ -22,16 +24,21 @@
 	let { initialNotifications, initialHasMore }: Props = $props();
 
 	const toastService = getToastService();
+	const eventsClient = getEventsClient();
 
 	// Сервер отдает первую порцию, а в состоянии храним только то, что догрузили после нее.
 	let extraNotifications = $state.raw<Array<Notification>>([]);
 	let extraHasMore = $state<boolean | null>(null);
 	let extraOffset = $state(0);
 	let isLoadingMore = $state(false);
+	// Уведомления, прилетевшие по SSE — держим их сверху, новейшие первыми.
+	let liveNotifications = $state.raw<Array<Notification>>([]);
 
-	let notifications = $derived.by(() =>
-		appendUniqueNotifications(initialNotifications, extraNotifications)
-	);
+	let notifications = $derived.by(() => {
+		// Порядок: свежие из SSE сверху, затем серверная страница и догруженное.
+		const serverNotifications = appendUniqueNotifications(initialNotifications, extraNotifications);
+		return appendUniqueNotifications(liveNotifications, serverNotifications);
+	});
 	let hasMore = $derived(extraHasMore ?? initialHasMore);
 	let nextOffset = $derived(initialNotifications.length + extraOffset);
 	let unreadCount = $derived(notifications.filter((notification) => !notification.seen_at).length);
@@ -83,6 +90,52 @@
 			isLoadingMore = false;
 		}
 	}
+
+	function addLiveNotification(notification: Notification) {
+		liveNotifications = appendUniqueNotifications([notification], liveNotifications);
+		toastService.push(notification);
+	}
+
+	// Догружаем первую страницу и поднимаем наверх всё, чего ещё нет в списке —
+	// так не теряем уведомления, пришедшие пока SSE-канал был отключён.
+	async function syncLatestNotifications() {
+		try {
+			const { data: result, error } = await client.GET('/notifications/', {
+				params: { query: { limit: NOTIFICATION_PAGE_SIZE } }
+			});
+
+			if (error || !result) {
+				return;
+			}
+
+			const knownIds = new Set(
+				[...initialNotifications, ...extraNotifications].map((notification) => notification.id)
+			);
+			const fresh = result.notifications.filter((notification) => !knownIds.has(notification.id));
+			liveNotifications = appendUniqueNotifications(fresh, liveNotifications);
+		} catch (error) {
+			console.error('Failed to sync notifications', error);
+		}
+	}
+
+	function syncAfterReconnect() {
+		void syncLatestNotifications();
+	}
+
+	onMount(() => {
+		if (!eventsClient) {
+			return;
+		}
+
+		eventsClient.on('new_notifications', addLiveNotification);
+		// 'connected' срабатывает при первом подключении и каждом переподключении.
+		eventsClient.on('connected', syncAfterReconnect);
+
+		return () => {
+			eventsClient.off('new_notifications', addLiveNotification);
+			eventsClient.off('connected', syncAfterReconnect);
+		};
+	});
 </script>
 
 <SectionHeader title="Уведомления" description="Здесь собраны все твои уведомления.">
