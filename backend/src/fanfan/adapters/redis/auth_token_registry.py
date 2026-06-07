@@ -1,22 +1,23 @@
 import hashlib
 import hmac
 import json
-from collections.abc import Awaitable, Callable
-from typing import cast
+from collections.abc import Callable
 from uuid import UUID
 
 from redis.asyncio import Redis
 
+from fanfan.application.ports.rate_limiter import RateLimiter
 from fanfan.application.ports.token_registry import TokenRegistry
-from fanfan.core.exceptions.rate_limit import TooManyOtpAttempts
+from fanfan.core.exceptions.rate_limit import TooManyAttempts, TooManyOtpAttempts
 from fanfan.core.vo.user import UserId
 from fanfan.presentation.web.config import WebConfig
 
 
 class RedisTokenRegistry(TokenRegistry):
-    def __init__(self, redis: Redis, config: WebConfig):
+    def __init__(self, redis: Redis, config: WebConfig, rate_limiter: RateLimiter):
         self.redis = redis
         self._secret = config.secret_key.get_secret_value().encode()
+        self.rate_limiter = rate_limiter
 
     @staticmethod
     def _email_confirmation_code_key(user_id: UserId, code_hash: str) -> str:
@@ -60,14 +61,16 @@ class RedisTokenRegistry(TokenRegistry):
         # Count every consume attempt (including wrong guesses) and lock the
         # target once it goes over the limit. A wrong guess never deletes the
         # code, so without this counter brute-forcing a 6-digit code is free.
-        # redis-py's async stubs mistype incr() as a plain int, so cast the
-        # call to its real awaitable return type before awaiting it.
-        attempts = await cast("Awaitable[int]", self.redis.incr(attempts_key))
-        if attempts == 1:
-            await self.redis.expire(attempts_key, max(1, window_seconds))
-        if attempts > max_attempts:
-            retry_after = await self.redis.ttl(attempts_key)
-            raise TooManyOtpAttempts(retry_after=max(1, retry_after))
+        # Re-raise the shared limiter error as the OTP-specific one so the
+        # frontend keeps its own error code and copy for this flow.
+        try:
+            await self.rate_limiter.hit(
+                attempts_key,
+                limit=max_attempts,
+                window_seconds=window_seconds,
+            )
+        except TooManyAttempts as e:
+            raise TooManyOtpAttempts(retry_after=e.details["retry_after"]) from e
 
     async def _revoke_active_code(
         self,
@@ -125,10 +128,8 @@ class RedisTokenRegistry(TokenRegistry):
             return None
 
         # Correct code: clear the attempt counter and the active-code pointer.
-        await self.redis.delete(
-            attempts_key,
-            self._email_confirmation_active_key(user_id),
-        )
+        await self.rate_limiter.reset(attempts_key)
+        await self.redis.delete(self._email_confirmation_active_key(user_id))
 
         if isinstance(stored_payload, bytes):
             stored_payload = stored_payload.decode()
@@ -175,7 +176,8 @@ class RedisTokenRegistry(TokenRegistry):
             return None
 
         # Correct code: clear the attempt counter and the active-code pointer.
-        await self.redis.delete(attempts_key, self._email_login_active_key(email))
+        await self.rate_limiter.reset(attempts_key)
+        await self.redis.delete(self._email_login_active_key(email))
 
         if isinstance(stored_payload, bytes):
             stored_payload = stored_payload.decode()

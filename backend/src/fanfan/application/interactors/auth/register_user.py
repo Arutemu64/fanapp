@@ -31,11 +31,14 @@ class RegisterUser:
 
     async def __call__(self, data: RegisterUserInput) -> None:
         normalized_email = normalize_email(data.email)
-        # Reserve the address before insert so pending replacements on
-        # other accounts are treated as conflicts too.
+        # If the address is already used (or reserved as another account's
+        # pending replacement), silently no-op: never reveal that it is taken
+        # (prevents account enumeration) and never touch the existing account
+        # (overwriting its password would be account takeover). The caller
+        # always sees the same neutral success.
         existing_user = await self.user_repo.get_by_any_email(normalized_email)
         if existing_user is not None:
-            raise UserAlreadyExists
+            return
 
         username = await self.user_service.generate_username()
         new_user = User.create(
@@ -45,5 +48,10 @@ class RegisterUser:
             hashed_password=self.security.hash_password(data.password),
             role=UserRole.VISITOR,
         )
-        await self.user_repo.add(new_user)
-        await self.trx.commit()
+        try:
+            await self.user_repo.add(new_user)
+            await self.trx.commit()
+        except UserAlreadyExists:
+            # Lost a race with a concurrent registration for the same email.
+            # Keep the response neutral instead of leaking a 409 conflict.
+            await self.trx.rollback()
