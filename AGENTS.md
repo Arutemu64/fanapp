@@ -61,3 +61,4 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
    * Did you change an important file path referenced in docs (e.g., toast store location, CLI commands, layout paths)? Update the doc that mentions it.
    * Did you introduce a new architectural pattern (new DI provider, new ports folder, new adapter type)? Update the relevant `docs/*.md` file.
    * Prefer **documenting patterns and rules** over exact file lists that rot quickly. The Codebase Map should stay high-level; do not list every individual file.
+9. **Clear, Simple Code**: Write straightforward code that a junior developer can read and understand without help. Favor explicit, obvious solutions over clever tricks, dense one-liners, or implicit magic. Use descriptive names, small focused functions, and add a short comment when intent isn't obvious. If a clever approach is unavoidable, explain why in a comment.
