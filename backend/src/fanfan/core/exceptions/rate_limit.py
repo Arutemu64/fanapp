@@ -23,8 +23,22 @@ class EmailCodeRequestTooFast(RateLimitException):
         super().__init__(details={"retry_after": retry_after})
 
 
-class TooManyOtpAttempts(RateLimitException):
-    code = "TOO_MANY_OTP_ATTEMPTS"
+class TooManyAttempts(RateLimitException):
+    """Raised by the RateLimiter port when a key goes over its attempt limit.
+
+    Callers catch this and re-raise a flow-specific subclass so each feature can
+    keep its own error code and Russian copy.
+    """
+
+    code = "TOO_MANY_ATTEMPTS"
 
     def __init__(self, retry_after: int):
         super().__init__(details={"retry_after": retry_after})
+
+
+class TooManyOtpAttempts(TooManyAttempts):
+    code = "TOO_MANY_OTP_ATTEMPTS"
+
+
+class TooManyLoginAttempts(TooManyAttempts):
+    code = "TOO_MANY_LOGIN_ATTEMPTS"

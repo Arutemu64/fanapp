@@ -2,7 +2,7 @@ from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, Depends, Form, Response
+from fastapi import APIRouter, Depends, Form, Request, Response
 from pydantic import BaseModel, EmailStr
 from starlette import status
 
@@ -17,6 +17,7 @@ from fanfan.application.interactors.auth.register_user import (
 from fanfan.presentation.web.config import WebConfig
 from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
 from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.utils import get_client_ip
 
 
 class EmailPasswordLoginForm(BaseModel):
@@ -44,10 +45,15 @@ credentials_router = APIRouter()
     responses={
         204: {"description": "Successfully authenticated. Session cookie is set."},
         401: {"model": ErrorMessage, "description": "Invalid email or password."},
+        429: {
+            "model": ErrorMessage,
+            "description": "Too many login attempts. Try again later.",
+        },
     },
 )
 @inject
 async def login(
+    request: Request,
     form_data: Annotated[
         EmailPasswordLoginForm, Depends(EmailPasswordLoginForm.as_form)
     ],
@@ -57,7 +63,11 @@ async def login(
 ) -> None:
     # Keep login flow explicit so junior developers can follow each step.
     session_id = await interactor(
-        AuthenticateUserInput(email=form_data.email, password=form_data.password)
+        AuthenticateUserInput(
+            email=form_data.email,
+            password=form_data.password,
+            client_ip=get_client_ip(request),
+        )
     )
 
     set_auth_cookie(response, session_id, config)

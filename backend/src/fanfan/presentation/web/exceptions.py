@@ -22,7 +22,7 @@ from fanfan.core.exceptions.push_sub import (
 )
 from fanfan.core.exceptions.rate_limit import (
     EmailCodeRequestTooFast,
-    TooManyOtpAttempts,
+    TooManyAttempts,
 )
 from fanfan.core.exceptions.schedule import (
     CurrentEventNotAllowed,
@@ -102,7 +102,8 @@ EXCEPTION_STATUS_MAP: dict[type[AppException], int] = {
     # 429 Too Many Requests
     ScheduleEditTooFast: status.HTTP_429_TOO_MANY_REQUESTS,
     EmailCodeRequestTooFast: status.HTTP_429_TOO_MANY_REQUESTS,
-    TooManyOtpAttempts: status.HTTP_429_TOO_MANY_REQUESTS,
+    # Covers every subclass (OTP and login) via the exception MRO lookup.
+    TooManyAttempts: status.HTTP_429_TOO_MANY_REQUESTS,
 }
 
 

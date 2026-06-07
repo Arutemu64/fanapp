@@ -8,8 +8,10 @@ from fanfan.adapters.config.models import EnvConfig
 from fanfan.adapters.redis.auth_token_registry import RedisTokenRegistry
 from fanfan.adapters.redis.config import RedisConfig
 from fanfan.adapters.redis.factory import create_redis
+from fanfan.adapters.redis.rate_limiter import RedisRateLimiter
 from fanfan.adapters.redis.rate_lock import RedisRateLockFactory
 from fanfan.adapters.redis.utils import RedisRetort, get_redis_retort
+from fanfan.application.ports.rate_limiter import RateLimiter
 from fanfan.application.ports.rate_lock import RateLockFactory
 from fanfan.application.ports.session_store import SessionStore
 from fanfan.application.ports.token_registry import TokenRegistry
@@ -43,5 +45,10 @@ class RedisProvider(Provider):
     rate_limit_factory = provide(
         RedisRateLockFactory,
         provides=RateLockFactory,
+        scope=Scope.APP,
+    )
+    rate_limiter = provide(
+        RedisRateLimiter,
+        provides=RateLimiter,
         scope=Scope.APP,
     )
