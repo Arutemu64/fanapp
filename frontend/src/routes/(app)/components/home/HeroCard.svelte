@@ -86,17 +86,14 @@
 	<div class="relative grid lg:grid-cols-2 lg:items-stretch">
 		<!-- Ключевой арт: сверху на мобильных (full-bleed), справа на десктопе (full-bleed) -->
 		<div class="aspect-[16/9] w-full sm:aspect-[4/3] lg:order-2 lg:aspect-auto">
-			<div
-				class="relative flex h-full w-full items-center justify-center bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-600"
-			>
-				<div
-					aria-hidden="true"
-					class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.35),transparent_55%)]"
-				></div>
-				<span class="font-display text-sm font-semibold tracking-wide text-white/80 uppercase">
-					Key art
-				</span>
-			</div>
+			<img
+				src="/main.webp"
+				alt="Участники фестиваля ФАН ФАН на сцене"
+				width="1500"
+				height="844"
+				loading="eager"
+				class="h-full w-full object-cover"
+			/>
 		</div>
 
 		<!-- Текстовый блок -->
