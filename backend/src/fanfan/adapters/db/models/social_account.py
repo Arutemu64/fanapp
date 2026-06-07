@@ -23,7 +23,9 @@ class SocialIdentityORM(BaseORM):
         default=uuid7,
         server_default=UUID_ID_SERVER_DEFAULT,
     )
-    user_id: Mapped[UserId] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    user_id: Mapped[UserId] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     provider: Mapped[str] = mapped_column()
     provider_id: Mapped[str] = mapped_column()
 

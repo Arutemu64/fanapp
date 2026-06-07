@@ -27,17 +27,17 @@ class ScheduleChangeORM(BaseORM):
         postgresql.ENUM(ScheduleChangeType)
     )
     changed_event_id: Mapped[ScheduleEventId | None] = mapped_column(
-        ForeignKey("schedule.id", ondelete="CASCADE")
+        ForeignKey("schedule.id", ondelete="CASCADE"), index=True
     )
     argument_event_id: Mapped[ScheduleEventId | None] = mapped_column(
-        ForeignKey("schedule.id", ondelete="CASCADE")
+        ForeignKey("schedule.id", ondelete="CASCADE"), index=True
     )
     user_id: Mapped[UserId | None] = mapped_column(
-        ForeignKey("users.id", ondelete="SET NULL"),
+        ForeignKey("users.id", ondelete="SET NULL"), index=True
     )
     next_event_changed: Mapped[bool] = mapped_column()
     mailing_id: Mapped[MailingId | None] = mapped_column(
-        ForeignKey("mailings.id", ondelete="SET NULL")
+        ForeignKey("mailings.id", ondelete="SET NULL"), index=True
     )
 
     changed_event: Mapped[ScheduleEventORM | None] = relationship(

@@ -17,7 +17,9 @@ class PushSubscriptionORM(BaseORM):
         default=uuid7,
         server_default=UUID_ID_SERVER_DEFAULT,
     )
-    user_id: Mapped[UserId] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    user_id: Mapped[UserId] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     endpoint: Mapped[str] = mapped_column(unique=True)
     p256dh: Mapped[str] = mapped_column()
     auth: Mapped[str] = mapped_column()

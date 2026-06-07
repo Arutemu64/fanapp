@@ -20,7 +20,9 @@ class SubscriptionORM(BaseORM):
         default=uuid7,
         server_default=UUID_ID_SERVER_DEFAULT,
     )
-    user_id: Mapped[UserId] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    user_id: Mapped[UserId] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
     event_id: Mapped[ScheduleEventId] = mapped_column(
         ForeignKey("schedule.id", ondelete="CASCADE")
     )

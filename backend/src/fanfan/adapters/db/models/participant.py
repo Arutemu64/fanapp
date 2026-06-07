@@ -58,7 +58,7 @@ class ParticipantValueORM(BaseORM):
         server_default=UUID_ID_SERVER_DEFAULT,
     )
     participant_id: Mapped[ParticipantId] = mapped_column(
-        ForeignKey("participants.id", ondelete="CASCADE")
+        ForeignKey("participants.id", ondelete="CASCADE"), index=True
     )
     title: Mapped[str] = mapped_column()
     type: Mapped[ValueType] = mapped_column(postgresql.ENUM(ValueType))

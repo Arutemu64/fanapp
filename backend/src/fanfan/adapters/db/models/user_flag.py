@@ -18,4 +18,6 @@ class UserFlagORM(BaseORM):
         server_default=UUID_ID_SERVER_DEFAULT,
     )
     name: Mapped[str] = mapped_column()
-    user_id: Mapped[UserId] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    user_id: Mapped[UserId] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )

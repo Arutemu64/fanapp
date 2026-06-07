@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import uuid7
 
-from sqlalchemy import DateTime, ForeignKey, Uuid
+from sqlalchemy import DateTime, ForeignKey, Index, Uuid, text
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -25,6 +25,17 @@ class NotificationORM(BaseORM):
     body: Mapped[str] = mapped_column()
     type: Mapped[NotificationType] = mapped_column(postgresql.ENUM(NotificationType))
     mailing_id: Mapped[MailingId | None] = mapped_column(
-        ForeignKey("mailings.id", ondelete="CASCADE")
+        ForeignKey("mailings.id", ondelete="CASCADE"),
+        index=True,
     )
     seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    __table_args__ = (
+        # Covers "list user notifications newest first" filter + sort.
+        # created_at is inherited from BaseORM, so reference it as SQL text.
+        Index(
+            "ix_notifications_user_id_created_at",
+            "user_id",
+            text("created_at DESC"),
+        ),
+    )
