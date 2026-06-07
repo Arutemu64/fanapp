@@ -78,13 +78,11 @@ async def login(
     status_code=201,
     summary="Register a new user",
     description="Creates a new user account with an email and password. "
-    "A username is generated automatically.",
+    "A username is generated automatically. To avoid leaking which emails "
+    "already have an account, the response is the same whether the account "
+    "was created or the email was already taken.",
     responses={
-        201: {"description": "User successfully registered."},
-        409: {
-            "model": ErrorMessage,
-            "description": "Conflict: username or email already in use.",
-        },
+        201: {"description": "Registration request accepted."},
     },
 )
 @inject

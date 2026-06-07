@@ -58,7 +58,9 @@ def create_app() -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        # Explicit origins (never "*") because requests carry the session
+        # cookie — a wildcard with credentials would trust every site.
+        allow_origins=config.web.cors_origins(),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
