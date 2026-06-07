@@ -69,7 +69,7 @@ export interface paths {
         put?: never;
         /**
          * Register a new user
-         * @description Creates a new user account with an email and password. A username is generated automatically.
+         * @description Creates a new user account with an email and password. A username is generated automatically. To avoid leaking which emails already have an account, the response is the same whether the account was created or the email was already taken.
          */
         post: operations["register_user_auth_register_post"];
         delete?: never;
@@ -1628,6 +1628,15 @@ export interface operations {
                     "application/json": components["schemas"]["ValidationErrorResponse"];
                 };
             };
+            /** @description Too many login attempts. Try again later. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
         };
     };
     register_user_auth_register_post: {
@@ -1643,7 +1652,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description User successfully registered. */
+            /** @description Registration request accepted. */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -1663,15 +1672,6 @@ export interface operations {
             };
             /** @description Access denied. */
             403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Conflict: username or email already in use. */
-            409: {
                 headers: {
                     [name: string]: unknown;
                 };
