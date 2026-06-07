@@ -1,0 +1,117 @@
+# FAN FAN
+
+Helper web app for the **FAN FAN** Russian anime convention. It gives attendees the event schedule, voting, notifications, and ticket-linked profiles from their phone, and gives organizers the tools to run all of it. Audience is teen to young-adult and non-technical, so the UI is mobile-first and all user-facing copy is in Russian.
+
+This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAPI contract between them.
+
+## Features
+
+- **Schedule** — public event schedule with live changes, per-user subscriptions, and organizer management/import tools.
+- **Voting** — nominations and voting, with cosplay data synced from Cosplay2.
+- **Notifications** — in-app feed plus Web Push (VAPID) for broadcasts and per-user alerts.
+- **Auth** — sign in via Telegram, email code, one-time login code, or credentials; cookie-based sessions.
+- **Profiles & tickets** — user profile, linked tickets (synced from TicketsCloud), account connections, and security settings.
+- **Feedback** — user feedback submission.
+- **Telegram bot** — companion bot sharing the same backend and domain logic.
+- **Live updates** — Server-Sent Events (SSE) push real-time changes to the client.
+
+## Stack
+
+| Layer | Tech |
+|---|---|
+| Frontend | SvelteKit (Svelte 5 runes), Flowbite-Svelte, Tailwind CSS v4, `pnpm` |
+| Backend | FastAPI, SQLAlchemy + Alembic, Dishka (DI), `uv` |
+| Data / infra | PostgreSQL, Redis (Valkey), NATS + FastStream |
+| Jobs | APScheduler (periodic syncs), FastStream consumers (domain events) |
+| Tooling | Docker Compose, `just` task runner |
+
+The backend follows clean / hexagonal architecture — pure `core` and `application` layers, infrastructure behind ports in `adapters`. See [`AGENTS.md`](AGENTS.md) and [`docs/`](docs/) for the full guidelines.
+
+## Repository layout
+
+```text
+backend/    FastAPI app (core / application / adapters / presentation / main)
+frontend/   SvelteKit app (routes + lib: components, api, services, utils)
+shared/     Shared OpenAPI spec
+config/     Redis config, VAPID keys, infra config
+docs/       Architecture guides (backend.md, frontend.md, api.md)
+```
+
+## Requirements
+
+- Python ≥ 3.14 and [`uv`](https://docs.astral.sh/uv/)
+- Node.js + [`pnpm`](https://pnpm.io/)
+- [`just`](https://github.com/casey/just)
+- Docker + Docker Compose (for the full environment)
+
+## Getting started
+
+### 1. Configure
+
+```sh
+cp .env.example .env
+# Edit .env — replace every `change-me-*` placeholder (DB / Redis / NATS passwords,
+# WEB__SECRET_KEY, bot token, mail, etc.)
+```
+
+For local (non-Docker) frontend dev, also copy `frontend/.env.example` → `frontend/.env`.
+
+Generate VAPID keys for Web Push (`config/private_key.pem`, `config/public_key.pem`) with `vapid-gen` and set `PUSH__*` / `PUBLIC_VAPID_KEY` accordingly.
+
+### 2. Run with Docker (full environment)
+
+```sh
+just run-dev      # dev: hot-reload via Compose --watch
+just run-prod     # prod: includes ops profile (pgbackup)
+```
+
+This brings up the frontend, API, FastStream consumer, scheduler, Postgres, Redis, and NATS. Migrations run automatically via the `migration` service.
+
+- Frontend: http://localhost:3000
+- API: http://localhost:8000
+
+### 3. Run locally (without Docker)
+
+Install dependencies, then start each side in its own terminal:
+
+```sh
+just backend-install
+just frontend-install
+
+just backend-migrate     # apply DB migrations (needs Postgres reachable)
+just backend-dev         # FastAPI on :8000
+just frontend-dev        # SvelteKit dev server
+```
+
+## Common commands
+
+All commands run from the repo root via `just`.
+
+| Command | What it does |
+|---|---|
+| `just backend-dev` / `just frontend-dev` | Start backend / frontend locally |
+| `just backend-migrate` | Apply Alembic migrations |
+| `just backend-generate <name>` | Autogenerate a migration |
+| `just backend-lint` | Format + lint + type-check backend |
+| `just backend-typecheck` | Run `ty` type checker |
+| `just frontend-lint` / `just frontend-check` | Lint / type-check frontend |
+| `just frontend-generate-api` | Regenerate frontend API types from the OpenAPI spec |
+| `just backend-sync-tcloud` | Sync tickets from TicketsCloud |
+| `just backend-sync-cosplay2` | Sync cosplay data from Cosplay2 |
+
+> The frontend talks to the backend through generated types in `frontend/src/lib/api/v1.d.ts`. Whenever backend endpoints or schemas change, run `just frontend-generate-api` to keep the contract in sync.
+
+## External integrations
+
+Optional, enabled via `.env`:
+
+- **TicketsCloud** (`TCLOUD__*`) — ticket sync.
+- **Cosplay2** (`COSPLAY2__*`) — cosplay / voting data sync.
+- **Scheduler** (`SCHEDULER__SYNC_*_CRON`) — cron strings (in `TIMEZONE`) that run the syncs periodically. Unset = disabled. After editing, `docker compose restart scheduler`. Trigger a sync manually any time with `docker compose run --rm api cli sync tcloud`.
+
+## Documentation
+
+- [`AGENTS.md`](AGENTS.md) — monorepo guidelines and core constraints
+- [`docs/backend.md`](docs/backend.md) — backend architecture (domain, ports, DI, events)
+- [`docs/frontend.md`](docs/frontend.md) — SvelteKit SSR rules, styling, components
+- [`docs/api.md`](docs/api.md) — type-safe API integration
