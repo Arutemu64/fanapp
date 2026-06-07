@@ -1,5 +1,6 @@
 from .app_settings import AppSettingsORM
 from .base import BaseORM
+from .feedback import FeedbackORM
 from .mailing import MailingORM
 from .nomination import NominationORM
 from .notification import NotificationORM
@@ -18,6 +19,7 @@ from .vote import VoteORM
 __all__ = [
     "AppSettingsORM",
     "BaseORM",
+    "FeedbackORM",
     "MailingORM",
     "NominationORM",
     "NotificationORM",

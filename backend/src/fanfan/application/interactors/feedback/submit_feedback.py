@@ -1,0 +1,50 @@
+import logging
+
+from pydantic import BaseModel, Field
+
+from fanfan.application.ports.repositories.feedback import FeedbackRepository
+from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.services.current_user import CurrentUserProvider
+from fanfan.core.models.feedback import Feedback
+from fanfan.core.vo.feedback import FeedbackId, generate_feedback_id
+
+logger = logging.getLogger(__name__)
+
+
+class SubmitFeedbackInput(BaseModel):
+    text: str = Field(min_length=1, max_length=2000)
+
+
+class SubmitFeedbackOutput(BaseModel):
+    feedback_id: FeedbackId
+
+
+class SubmitFeedback:
+    def __init__(
+        self,
+        feedback_repo: FeedbackRepository,
+        current_user_provider: CurrentUserProvider,
+        trx: TransactionManager,
+    ) -> None:
+        self.feedback_repo = feedback_repo
+        self.current_user_provider = current_user_provider
+        self.trx = trx
+
+    async def __call__(
+        self,
+        data: SubmitFeedbackInput,
+    ) -> SubmitFeedbackOutput:
+        current_user = await self.current_user_provider.require_user()
+        feedback = Feedback(
+            id=generate_feedback_id(),
+            user_id=current_user.id,
+            text=data.text,
+        )
+        await self.feedback_repo.add(feedback)
+        await self.trx.commit()
+        logger.info(
+            "Feedback %s submitted",
+            feedback.id,
+            extra={"user_feedback": feedback},
+        )
+        return SubmitFeedbackOutput(feedback_id=feedback.id)

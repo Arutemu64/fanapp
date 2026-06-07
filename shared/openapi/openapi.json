@@ -3193,6 +3193,65 @@
           }
         }
       }
+    },
+    "/feedback/": {
+      "post": {
+        "summary": "Submit app feedback",
+        "description": "Submits free-text feedback about the app from the current user.",
+        "operationId": "submit_feedback_feedback__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitFeedbackInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Feedback submitted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitFeedbackOutput"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4122,9 +4181,9 @@
             ],
             "title": "User Id"
           },
-          "send_global_announcement": {
+          "next_event_changed": {
             "type": "boolean",
-            "title": "Send Global Announcement"
+            "title": "Next Event Changed"
           },
           "changed_event": {
             "anyOf": [
@@ -4163,7 +4222,7 @@
           "type",
           "mailing_id",
           "user_id",
-          "send_global_announcement",
+          "next_event_changed",
           "changed_event",
           "argument_event",
           "user"
@@ -4362,6 +4421,35 @@
           "mailing_id"
         ],
         "title": "SendBroadcastOutput"
+      },
+      "SubmitFeedbackInput": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "SubmitFeedbackInput"
+      },
+      "SubmitFeedbackOutput": {
+        "properties": {
+          "feedback_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Feedback Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "feedback_id"
+        ],
+        "title": "SubmitFeedbackOutput"
       },
       "TCloudWebhookPayload": {
         "properties": {

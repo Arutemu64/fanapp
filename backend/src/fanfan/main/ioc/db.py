@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import (
 from fanfan.adapters.db.config import DatabaseConfig
 from fanfan.adapters.db.factory import create_engine, create_session_pool
 from fanfan.adapters.db.gateways.app_settings import SqlAppSettingsGateway
+from fanfan.adapters.db.gateways.feedback import SqlFeedbackGateway
 from fanfan.adapters.db.gateways.mailings import SqlMailingGateway
 from fanfan.adapters.db.gateways.nominations import SqlNominationGateway
 from fanfan.adapters.db.gateways.notifications import SqlNotificationGateway
@@ -48,6 +49,7 @@ from fanfan.application.ports.repositories import (
     ScheduleEventRepository,
     UserPermissionRepository,
 )
+from fanfan.application.ports.repositories.feedback import FeedbackRepository
 from fanfan.application.ports.repositories.mailings import MailingRepository
 from fanfan.application.ports.repositories.nominations import NominationRepository
 from fanfan.application.ports.repositories.notifications import NotificationRepository
@@ -130,6 +132,8 @@ class SqlGatewaysProvider(Provider):
     )
 
     tickets = provide(SqlTicketGateway, provides=TicketRepository)
+
+    feedback = provide(SqlFeedbackGateway, provides=FeedbackRepository)
 
     users = provide(SqlUserGateway)
     users_repo = alias(source=SqlUserGateway, provides=UserRepository)

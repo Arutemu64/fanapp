@@ -33,6 +33,7 @@ from fanfan.application.interactors.current_user.update_current_user import (
 from fanfan.application.interactors.current_user.update_user_settings import (
     UpdateUserSettings,
 )
+from fanfan.application.interactors.feedback.submit_feedback import SubmitFeedback
 from fanfan.application.interactors.notifications.create_notification import (
     CreateNotification,
 )
@@ -148,6 +149,8 @@ class InteractorsProvider(Provider):
     delete_subscription = provide(DeleteSubscription)
 
     link_ticket = provide(LinkTicket)
+
+    submit_feedback = provide(SubmitFeedback)
 
     authenticate_user = provide(AuthenticateUser)
     register_user = provide(RegisterUser)

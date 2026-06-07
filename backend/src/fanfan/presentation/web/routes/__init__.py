@@ -6,6 +6,7 @@ from starlette import status
 from fanfan.presentation.web.routes.auth import auth_router
 from fanfan.presentation.web.routes.current_user import current_user_router
 from fanfan.presentation.web.routes.debug import debug_router
+from fanfan.presentation.web.routes.feedback import feedback_router
 from fanfan.presentation.web.routes.notifications import notifications_router
 from fanfan.presentation.web.routes.push import push_router
 from fanfan.presentation.web.routes.schedule import schedule_router
@@ -44,5 +45,6 @@ def setup_api_router() -> APIRouter:
     router.include_router(webhooks_router, responses=common_responses)
     router.include_router(notifications_router, responses=common_responses)
     router.include_router(push_router, responses=common_responses)
+    router.include_router(feedback_router, responses=common_responses)
 
     return router

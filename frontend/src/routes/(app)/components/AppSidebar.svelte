@@ -9,6 +9,7 @@
 	} from 'flowbite-svelte';
 	import {
 		AdjustmentsHorizontalOutline,
+		AnnotationOutline,
 		BullhornOutline,
 		CalendarWeekOutline,
 		ClockArrowOutline,
@@ -71,6 +72,15 @@
 					/>
 				{/snippet}
 			</SidebarItem>
+			{#if user}
+				<SidebarItem label="Обратная связь" href="/feedback">
+					{#snippet icon()}
+						<AnnotationOutline
+							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+						/>
+					{/snippet}
+				</SidebarItem>
+			{/if}
 			{#if canSeeVolunteerMenu}
 				<SidebarDropdownWrapper label="Для волонтеров" classes={{ btn: 'p-2' }}>
 					{#snippet icon()}
