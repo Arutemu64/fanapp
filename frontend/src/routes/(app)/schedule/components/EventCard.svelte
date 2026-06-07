@@ -17,11 +17,12 @@
 	import { canManageSchedule } from '$lib/utils/permissions';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { createApiClient } from '$lib/api';
-	const client = createApiClient();
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import MoveEventModal from './MoveEventModal.svelte';
 	import SubscribeModal from './SubscribeModal.svelte';
 	import UnsubscribeModal from './UnsubscribeModal.svelte';
+
+	const client = createApiClient();
 
 	interface Props {
 		event: ScheduleEventFullDTO;
@@ -42,23 +43,20 @@
 
 	// Unique ID for this card's dropdown trigger
 	let dropdownId = $derived(`event-menu-${event.id}`);
+	// Pad the public number to three digits, e.g. 7 → "007".
 	let publicNumber = $derived(event.public_number.toString().padStart(3, '0'));
 
-	let queueUntil = $derived(
-		currentEvent && event.queue !== null && currentEvent.queue !== null
-			? (() => {
-					const diff = event.queue - currentEvent.queue;
-					return diff >= 0 ? diff : null;
-				})()
-			: null
-	);
+	// How far ahead this event is compared to the one on stage now.
+	// Returns null if either value is missing or the event has already passed.
+	function aheadOf(value: number | null, currentValue: number | null): number | null {
+		if (value === null || currentValue === null) return null;
+		const diff = value - currentValue;
+		return diff >= 0 ? diff : null;
+	}
+
+	let queueUntil = $derived(currentEvent ? aheadOf(event.queue, currentEvent.queue) : null);
 	let timeUntil = $derived(
-		currentEvent && event.time_until !== null && currentEvent.time_until !== null
-			? (() => {
-					const diff = event.time_until - currentEvent.time_until;
-					return diff >= 0 ? diff : null;
-				})()
-			: null
+		currentEvent ? aheadOf(event.time_until, currentEvent.time_until) : null
 	);
 
 	async function handleMarkCurrent() {
@@ -102,6 +100,7 @@
 
 		if (error || !response.ok) {
 			toastService.error(error);
+			dropdownOpen = false;
 			return;
 		}
 
@@ -110,6 +109,15 @@
 			? 'Событие помечено как пропущенное'
 			: 'Событие возвращено в расписание';
 		toastService.add(toastMessage, 'success');
+	}
+
+	function handleSubscribe() {
+		if (!user) {
+			toastService.add('Необходимо войти в аккаунт для подписки', 'error');
+			dropdownOpen = false;
+			return;
+		}
+		subscribeModal = true;
 	}
 
 	function handleUnsubscribe() {
@@ -145,8 +153,10 @@
 		<div class="flex items-start gap-2">
 			<div class="min-w-0 flex-1">
 				<h3
-					class="text-sm leading-snug font-semibold text-gray-900 sm:text-base dark:text-white"
-					class:line-through={event.is_skipped}
+					class={[
+						'text-sm leading-snug font-semibold text-gray-900 sm:text-base dark:text-white',
+						event.is_skipped && 'line-through'
+					]}
 				>
 					{event.title}
 				</h3>
@@ -232,16 +242,7 @@
 			</span>
 		</DropdownItem>
 	{:else}
-		<DropdownItem
-			onclick={() => {
-				if (!user) {
-					toastService.add('Необходимо войти в аккаунт для подписки', 'error');
-					dropdownOpen = false;
-					return;
-				}
-				subscribeModal = true;
-			}}
-		>
+		<DropdownItem onclick={handleSubscribe}>
 			<span class="flex items-center gap-2">
 				<BellActiveOutline class="h-4 w-4" />
 				Подписаться
