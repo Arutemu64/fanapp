@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-@click.command(name="sync_cosplay2")
+@click.command(name="cosplay2")
 @click.pass_context
 @async_command
 async def sync_cosplay2_command(context: click.Context):
@@ -29,7 +29,7 @@ async def sync_cosplay2_command(context: click.Context):
         logger.info("Importing from C2 done!")
 
 
-@click.command(name="parse_schedule")
+@click.command(name="schedule")
 @click.argument("schedule", type=click.File("rb"))
 @click.pass_context
 @async_command

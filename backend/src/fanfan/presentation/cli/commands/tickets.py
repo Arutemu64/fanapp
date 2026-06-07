@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-@click.command(name="sync_tcloud")
+@click.command(name="tcloud")
 @click.pass_context
 @async_command
 async def sync_tcloud_command(context: click.Context):
@@ -26,7 +26,7 @@ async def sync_tcloud_command(context: click.Context):
         logger.info("Importing from TCloud done!")
 
 
-@click.command(name="parse_tickets")
+@click.command(name="tickets")
 @click.argument("tickets", type=click.File("rb"))
 @click.pass_context
 @async_command

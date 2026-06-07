@@ -20,13 +20,26 @@ def cli(context: click.Context):
     context.meta[CONTAINER_NAME] = create_system_container()
 
 
+@click.group(name="sync")
+def sync_group():
+    """Run external syncs."""
+
+
+@click.group(name="parse")
+def parse_group():
+    """Parse files into the database."""
+
+
 def main():
     init(service_name="cli")
 
-    cli.add_command(parse_schedule_command)
-    cli.add_command(sync_cosplay2_command)
-    cli.add_command(sync_tcloud_command)
-    cli.add_command(parse_tickets_command)
+    sync_group.add_command(sync_cosplay2_command)
+    sync_group.add_command(sync_tcloud_command)
+    parse_group.add_command(parse_schedule_command)
+    parse_group.add_command(parse_tickets_command)
+
+    cli.add_command(sync_group)
+    cli.add_command(parse_group)
 
     cli()
 
