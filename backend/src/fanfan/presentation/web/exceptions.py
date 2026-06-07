@@ -20,7 +20,10 @@ from fanfan.core.exceptions.push_sub import (
     PushSubscriptionAlreadyExists,
     PushSubscriptionNotFound,
 )
-from fanfan.core.exceptions.rate_limit import EmailCodeRequestTooFast
+from fanfan.core.exceptions.rate_limit import (
+    EmailCodeRequestTooFast,
+    TooManyOtpAttempts,
+)
 from fanfan.core.exceptions.schedule import (
     CurrentEventNotAllowed,
     EventNotFound,
@@ -99,6 +102,7 @@ EXCEPTION_STATUS_MAP: dict[type[AppException], int] = {
     # 429 Too Many Requests
     ScheduleEditTooFast: status.HTTP_429_TOO_MANY_REQUESTS,
     EmailCodeRequestTooFast: status.HTTP_429_TOO_MANY_REQUESTS,
+    TooManyOtpAttempts: status.HTTP_429_TOO_MANY_REQUESTS,
 }
 
 

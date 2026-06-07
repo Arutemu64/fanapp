@@ -21,3 +21,10 @@ class EmailCodeRequestTooFast(RateLimitException):
 
     def __init__(self, retry_after: int):
         super().__init__(details={"retry_after": retry_after})
+
+
+class TooManyOtpAttempts(RateLimitException):
+    code = "TOO_MANY_OTP_ATTEMPTS"
+
+    def __init__(self, retry_after: int):
+        super().__init__(details={"retry_after": retry_after})

@@ -8,6 +8,10 @@ from fanfan.application.ports.trx import TransactionManager
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.auth import InvalidOtpCode
 from fanfan.core.exceptions.users import EmailAlreadyExists
+from fanfan.core.services.email_login import (
+    EMAIL_OTP_LOCKOUT_SECONDS,
+    EMAIL_OTP_MAX_ATTEMPTS,
+)
 from fanfan.core.utils.email import normalize_email
 
 
@@ -34,6 +38,8 @@ class ConfirmEmailCode:
         target_email = await self.token_registry.consume_email_confirmation_code(
             user_id=current_user.id,
             code=data.code,
+            max_attempts=EMAIL_OTP_MAX_ATTEMPTS,
+            window_seconds=EMAIL_OTP_LOCKOUT_SECONDS,
         )
         if target_email is None:
             raise InvalidOtpCode
