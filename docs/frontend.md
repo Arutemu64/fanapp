@@ -92,6 +92,7 @@ Keep stacking on this fixed ladder — never invent ad-hoc `z-*` values:
 Theming is wired via `@custom-variant dark` in `app.css` with `.dark` on `<html>`. Project rules:
 * Ship a `dark:` variant for every surface — never light-only.
 * Use semantic tokens (`primary-*`, `secondary-*`, `gray-*`), never raw hex.
+* "Active/selected" = ring/border + badge, not a bold fill (don't signal by color alone; keep dark text contrast). Cards: `ring-2 ring-green-600 dark:ring-green-500` (ring only, no fill either mode — keeps neutral card + readable green badge; ring shade tuned per mode for 3:1 non-text contrast). Rows: left accent bar (`border-l-4 border-transparent` everywhere, `border-green-500` active — reserves space, no shift) + `bg-green-100 dark:bg-green-900/40`.
 
 Contrast targets and dark-mode mechanics → `tailwind-css-patterns` / `ui-ux-pro-max`.
 

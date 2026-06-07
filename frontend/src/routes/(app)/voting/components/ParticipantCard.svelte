@@ -83,9 +83,7 @@
 <Card
 	class={[
 		'relative flex w-full max-w-none flex-col overflow-hidden p-4 transition-[box-shadow,border-color,background-color]',
-		participant.user_vote !== null
-			? 'bg-green-50 ring-2 ring-green-400 dark:bg-green-950/20 dark:ring-green-500'
-			: ''
+		participant.user_vote !== null ? 'ring-2 ring-green-600 dark:ring-green-500' : ''
 	]}
 >
 	<!-- Watermark number -->

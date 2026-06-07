@@ -18,9 +18,7 @@
 <Card
 	class={[
 		'flex w-full max-w-none flex-col p-4 transition-[box-shadow,border-color,background-color]',
-		nomination.user_vote
-			? 'bg-green-50 ring-2 ring-green-400 dark:bg-green-950/20 dark:ring-green-500'
-			: ''
+		nomination.user_vote ? 'ring-2 ring-green-600 dark:ring-green-500' : ''
 	]}
 >
 	<!-- Header row: status badge -->

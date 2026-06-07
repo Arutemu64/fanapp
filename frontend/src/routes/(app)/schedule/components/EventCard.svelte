@@ -119,8 +119,8 @@
 
 <div
 	class={[
-		'flex items-start gap-3 px-3 py-3 transition-colors sm:px-4',
-		event.is_current && 'bg-green-50/70 dark:bg-green-950/15',
+		'flex items-start gap-3 border-l-4 border-transparent px-3 py-3 transition-colors sm:px-4',
+		event.is_current && 'border-green-500 bg-green-100 dark:bg-green-900/40',
 		event.is_skipped && !event.is_current && 'bg-gray-50/70 dark:bg-gray-900/40'
 	]}
 >
@@ -129,7 +129,7 @@
 		class={[
 			'flex w-12 shrink-0 flex-col items-center rounded-lg border px-1.5 py-1.5 text-center',
 			event.is_current
-				? 'border-green-200 bg-white dark:border-green-800 dark:bg-gray-800'
+				? 'border-green-200 bg-white dark:border-green-600 dark:bg-gray-800'
 				: 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900'
 		]}
 	>
