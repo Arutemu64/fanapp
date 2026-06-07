@@ -1,5 +1,3 @@
-import time
-
 from fanfan.core.exceptions.base import AppException
 
 
@@ -10,8 +8,7 @@ class RateLimitException(AppException):
 class RateLimitCooldown(RateLimitException):
     code = "RATE_LOCK_COOLDOWN"
 
-    def __init__(self, cooldown_period: float, timestamp: float):
-        retry_after = max(0, int(timestamp + cooldown_period - time.time()))
+    def __init__(self, retry_after: int):
         super().__init__(details={"retry_after": retry_after})
 
 

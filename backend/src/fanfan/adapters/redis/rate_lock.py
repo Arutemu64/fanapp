@@ -1,5 +1,8 @@
+import contextlib
+
 from redis.asyncio import Redis
 from redis.asyncio.lock import Lock
+from redis.exceptions import LockError
 
 from fanfan.application.ports.rate_lock import RateLock, RateLockFactory
 from fanfan.core.exceptions.rate_limit import RateLimitCooldown, RateLimitInUse
@@ -22,6 +25,12 @@ class RedisRateLock(RateLock):
         value = await self.redis.get(self.timestamp_key)
         return float(value) if value else None
 
+    async def _release_lock(self) -> None:
+        # The lock may have auto-expired if the critical section ran longer
+        # than its timeout; releasing an expired lock raises, so ignore it.
+        with contextlib.suppress(LockError):
+            await self.lock.release()
+
     async def __aenter__(self) -> None:
         if not await self.lock.acquire():
             raise RateLimitInUse
@@ -30,15 +39,22 @@ class RedisRateLock(RateLock):
         last = await self._get_last_timestamp() or 0
 
         if (now - last) < self.cooldown_period:
-            await self.lock.release()
-            raise RateLimitCooldown(
-                cooldown_period=self.cooldown_period, timestamp=last
-            )
+            await self._release_lock()
+            # Compute the wait from Redis time so the value matches the
+            # clock that produced the stored timestamp (no app/Redis skew).
+            retry_after = max(0, int(last + self.cooldown_period - now))
+            raise RateLimitCooldown(retry_after=retry_after)
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         if exc_type is None:
-            await self.redis.set(self.timestamp_key, await self._get_redis_time())
-        await self.lock.release()
+            # Expire the timestamp once the cooldown is over so per-key
+            # entries (e.g. per-email) do not accumulate in Redis forever.
+            await self.redis.set(
+                self.timestamp_key,
+                await self._get_redis_time(),
+                ex=int(self.cooldown_period) + 1,
+            )
+        await self._release_lock()
 
 
 class RedisRateLockFactory(RateLockFactory):
@@ -51,13 +67,20 @@ class RedisRateLockFactory(RateLockFactory):
         cooldown_period: float = 60,
         blocking: bool = True,
         lock_timeout: float = 60,
+        blocking_timeout: float | None = None,
     ) -> RateLock:
+        # Without a blocking_timeout a blocking acquire waits forever, which
+        # could hang a request indefinitely. Cap the wait at lock_timeout (the
+        # longest another holder can keep the lock) so acquire always returns.
+        if blocking and blocking_timeout is None:
+            blocking_timeout = lock_timeout
         return RedisRateLock(
             redis=self.redis,
             lock=self.redis.lock(
                 name=f"rate_limit:{limit_name}:lock",
                 timeout=lock_timeout,
                 blocking=blocking,
+                blocking_timeout=blocking_timeout,
             ),
             timestamp_key=f"rate_limit:{limit_name}:timestamp",
             cooldown_period=cooldown_period,
