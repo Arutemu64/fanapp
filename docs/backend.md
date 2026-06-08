@@ -1,5 +1,8 @@
 # Backend Architectural Guidelines
 
+> Testing conventions (unit vs integration, what to fake, rollback isolation)
+> live in [testing.md](testing.md).
+
 ## Core Domain & Interactors
 * **Core Layer (`core/`)**: Pure domain entities, value objects, and domain exceptions. Must be completely free of external frameworks (absolutely no FastAPI, SQLAlchemy, or Pydantic imports).
 * **Application Layer (`application/`)**: Orchestrates interactors and business use cases. Must never import database ORM models directly. Communication with infrastructure happens via abstract interfaces (ports under `application/ports/`) and schemas/DTOs.

@@ -44,7 +44,7 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
 ## Core Constraints (Must Always Follow)
 1. **Russian Copy**: All user-facing labels, placeholders, errors, and toast notifications must be in Russian.
 2. **Mobile First**: UI must fit narrow layouts; add bottom padding for floating navigation bars. See [docs/frontend.md](docs/frontend.md).
-3. **No Automated Tests**: Do not run unit/integration tests unless explicitly requested.
+3. **No Automated Tests**: Do not run unit/integration tests unless explicitly requested. When you do write or run tests, follow [docs/testing.md](docs/testing.md).
 4. **Lint & Type-Check After Backend Changes**: After modifying any backend Python code, run `just backend-lint` and `just backend-typecheck`. Fix all errors before marking the task complete. For frontend changes, run `just frontend-lint` and `just frontend-check`.
 5. **Architectural Isolation**: The inner layers (`core/`, `application/`) must remain pure. They must never import from outer layers—this means absolutely no ORM models, concrete adapters (DB gateways, Redis, Telegram, NATS), presentation routers, or external frameworks (no FastAPI, SQLAlchemy in `core/`). All infra operations must go through abstract ports (`application/ports/`). See [docs/backend.md](docs/backend.md).
 6. **SSR & Frontend State Safety**: Never save request-specific state in global/module singletons. Always follow SvelteKit SSR and component guidelines in [docs/frontend.md](docs/frontend.md).
@@ -55,7 +55,7 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
    * Docker / Infra → `docker-expert`
    * Docs / Writing → `documentation-writer`
    * Third-party library API questions → `find-docs` (query current docs; never rely on training data for API signatures)
-   * Read the architecture guides in [docs/](docs/) (`backend.md`, `frontend.md`, `api.md`) before implementing in those areas.
+   * Read the architecture guides in [docs/](docs/) (`backend.md`, `frontend.md`, `api.md`, `testing.md`) before implementing in those areas.
 8. **Keep Documentation in Sync**: After any structural, architectural, or path-level change, verify and update `AGENTS.md` and relevant `docs/*.md` files before marking the task complete.
    * Did you add, rename, or delete a `lib/` submodule (`services/`, `utils/`, etc.)? Update the **Codebase Map**.
    * Did you change an important file path referenced in docs (e.g., toast store location, CLI commands, layout paths)? Update the doc that mentions it.

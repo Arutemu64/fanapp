@@ -70,10 +70,26 @@ asyncio_mode = "auto"
 # Change both to session-scope so one loop is used for the whole run
 asyncio_default_test_loop_scope = "session"
 asyncio_default_fixture_loop_scope = "session"
+addopts = ["--strict-markers"]
 markers = [
     "integration: tests that use real infrastructure such as PostgreSQL or Redis containers",
+    "unit: fast, pure tests with no infrastructure (no DB, Redis, or DI container)",
 ]
 testpaths = ["tests"]
+filterwarnings = [
+    # Our ORM models map branded NewType columns; SQLAlchemy warns about
+    # resolving them implicitly. Tracked separately from the test suite.
+    "ignore:Matching the provided NewType",
+    # testcontainers' Redis module uses a deprecated wait decorator internally.
+    "ignore:The @wait_container_is_ready decorator is deprecated",
+]
+
+[tool.coverage.run]
+source = ["fanfan"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
 
 [tool.uv.build-backend]
 module-name = "fanfan"
