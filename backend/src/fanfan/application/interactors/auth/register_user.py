@@ -1,8 +1,8 @@
 from pydantic import BaseModel, EmailStr
 
+from fanfan.application.ports.password_hasher import PasswordHasher
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.application.services.security import SecurityService
 from fanfan.application.services.user import UserService
 from fanfan.core.exceptions.users import UserAlreadyExists
 from fanfan.core.models.user import User
@@ -19,12 +19,12 @@ class RegisterUserInput(BaseModel):
 class RegisterUser:
     def __init__(
         self,
-        security: SecurityService,
+        password_hasher: PasswordHasher,
         user_repo: UserRepository,
         uow: UnitOfWork,
         user_service: UserService,
     ):
-        self.security = security
+        self.password_hasher = password_hasher
         self.user_repo = user_repo
         self.uow = uow
         self.user_service = user_service
@@ -45,7 +45,7 @@ class RegisterUser:
             id=generate_user_id(),
             username=username,
             email=normalized_email,
-            hashed_password=self.security.hash_password(data.password),
+            hashed_password=self.password_hasher.hash(data.password),
             role=UserRole.VISITOR,
         )
         try:

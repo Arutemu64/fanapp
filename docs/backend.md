@@ -5,6 +5,15 @@
 * **Application Layer (`application/`)**: Orchestrates interactors and business use cases. Must never import database ORM models directly. Communication with infrastructure happens via abstract interfaces (ports under `application/ports/`) and schemas/DTOs.
 * **Command/Query Port Split (CQRS-style)**: Ports are split by intent. Writes (loading and persisting aggregates) go through `application/ports/repositories/`; reads (projections returned to callers) go through `application/ports/queries/`. When adding a read, add a query port — do not extend a repository.
 
+## Services
+
+Services hold logic that is reused across several interactors (or is too cohesive to scatter through them). An interactor is one use case end-to-end; a service is a focused collaborator the use case leans on. Use a service only when the logic is genuinely shared — a single-caller helper usually belongs inline in its interactor. Services are wired in `main/ioc/services.py` (request-scoped). There are two homes, chosen by what the service depends on:
+
+* **`core/services/`** — **pure** domain logic with no ports and no I/O (e.g. `email_login.py`: OTP policy constants plus a code generator). Same purity rules as the rest of `core/`: no FastAPI, SQLAlchemy, Pydantic, or adapter imports. These need no DI wiring when they are plain functions.
+* **`application/services/`** — services that orchestrate over **ports** (repositories, id-provider, etc.). They live in the application layer precisely because they touch infrastructure through abstract ports — never concrete adapters or ORM models.
+
+Naming: suffix services with `Service` (the historical `CurrentUserProvider` is the one exception). A port-dependent collaborator that is really an infrastructure concern (password hashing, etc.) is **not** a service — model it as a port in `application/ports/` with an adapter in `adapters/`, so the application layer stays free of concrete libraries.
+
 ## Persistence & Transaction Management
 * **ORM Models**: SQLAlchemy database models live strictly under `adapters/db/models/`.
 * **Repositories/Gateways**: Concrete SQL queries, database reads, and inserts are isolated in gateway implementations under `adapters/db/gateways/` (one per aggregate/concern). These implement the abstract `repositories/` and `queries/` ports.

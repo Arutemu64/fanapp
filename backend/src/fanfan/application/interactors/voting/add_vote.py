@@ -4,7 +4,6 @@ from pydantic import BaseModel
 
 from fanfan.application.ports.repositories.participants import ParticipantRepository
 from fanfan.application.ports.repositories.tickets import TicketRepository
-from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.repositories.votes import VoteRepository
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
@@ -30,7 +29,6 @@ class AddVote:
     def __init__(
         self,
         participant_repo: ParticipantRepository,
-        user_repo: UserRepository,
         vote_repo: VoteRepository,
         uow: UnitOfWork,
         vote_service: VotingService,
@@ -38,7 +36,6 @@ class AddVote:
         ticket_repo: TicketRepository,
     ) -> None:
         self.participant_repo = participant_repo
-        self.user_repo = user_repo
         self.vote_repo = vote_repo
         self.uow = uow
         self.vote_service = vote_service

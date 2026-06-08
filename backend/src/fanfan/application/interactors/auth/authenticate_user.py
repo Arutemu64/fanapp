@@ -1,9 +1,9 @@
 from pydantic import BaseModel, EmailStr
 
+from fanfan.application.ports.password_hasher import PasswordHasher
 from fanfan.application.ports.rate_limiter import RateLimiter
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.session_store import SessionStore
-from fanfan.application.services.security import SecurityService
 from fanfan.core.exceptions.auth import InvalidCredentials
 from fanfan.core.exceptions.rate_limit import TooManyAttempts, TooManyLoginAttempts
 from fanfan.core.utils.email import normalize_email
@@ -28,15 +28,15 @@ class AuthenticateUser:
     def __init__(
         self,
         user_repo: UserRepository,
-        security: SecurityService,
+        password_hasher: PasswordHasher,
         session_store: SessionStore,
         rate_limiter: RateLimiter,
     ):
         self.user_repo = user_repo
-        self.security = security
+        self.password_hasher = password_hasher
         self.session_store = session_store
         self.rate_limiter = rate_limiter
-        self.dummy_hash = self.security.hash_password("dummy_password")
+        self.dummy_hash = self.password_hasher.hash("dummy_password")
 
     async def __call__(self, data: AuthenticateUserInput) -> str:
         normalized_email = normalize_email(data.email)
@@ -48,13 +48,13 @@ class AuthenticateUser:
         user = await self.user_repo.get_by_email(normalized_email)
         if user is None:
             # Prevent timing attack
-            self.security.verify_password(data.password, self.dummy_hash)
+            self.password_hasher.verify(data.password, self.dummy_hash)
             raise InvalidCredentials
         # Social-only accounts may have no password yet.
         # Return a normal auth failure instead of crashing on password verification.
         if user.hashed_password is None:
             raise InvalidCredentials
-        if not self.security.verify_password(data.password, user.hashed_password):
+        if not self.password_hasher.verify(data.password, user.hashed_password):
             raise InvalidCredentials
 
         # Successful login: clear the counters so a legitimate user is never
