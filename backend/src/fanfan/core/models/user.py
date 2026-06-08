@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, Any, Self
 
 from fanfan.core.events.users import (
     EmailConfirmationCodeRequested,
-    EmailLoginCodeRequested,
 )
 from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.user import UserId, Username, UserRole
@@ -80,12 +79,6 @@ class User(AggregateRoot):
     def request_email_change(self, email: str) -> None:
         self.pending_email = email
         self.record_event(EmailConfirmationCodeRequested(user_id=self.id))
-
-    def request_confirmation_code(self) -> None:
-        self.record_event(EmailConfirmationCodeRequested(user_id=self.id))
-
-    def request_login_code(self) -> None:
-        self.record_event(EmailLoginCodeRequested(user_id=self.id))
 
     def confirm_pending_email(self, verified_at: datetime) -> None:
         self.email = self.pending_email

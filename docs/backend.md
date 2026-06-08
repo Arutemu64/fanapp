@@ -76,7 +76,11 @@ await self.events_broker.publish(
 )
 ```
 
-`NotificationQueued`, `BroadcastQueued`, and `MailingCancelled` follow this pattern. The user email-code events (`EmailLoginCodeRequested`, `EmailConfirmationCodeRequested`) are also treated as service events: although they are recorded on the `User` aggregate, they represent "send a code" commands with no reliable commit boundary (some flows publish them without persisting any state), so the `User` aggregate is **not** registered with the `UnitOfWork` and those interactors publish via `EventBroker` directly. Rule of thumb: inject `EventBroker` into an interactor **only** for service events; aggregate state-change events flow through `uow.commit()`.
+`NotificationQueued`, `BroadcastQueued`, and `MailingCancelled` follow this pattern, as do the user email-code events `EmailLoginCodeRequested` (`request_login_code.py`) and `EmailConfirmationCodeRequested` when sent as a standalone "resend a code" (`request_email_code.py`). These represent "send a code" commands, not aggregate state changes — `request_login_code` / `request_email_code` change no persistent state and may run with no commit at all — so they are **not** recorded on the `User` aggregate. The interactor constructs and publishes them directly via `EventBroker`.
+
+> Keep domain events honest: a domain event must record an actual state change (past tense). Do **not** call `record_event()` for an action that mutates nothing — model it as a service event published by the interactor instead. `User.request_email_change()` is the counter-example that *is* a domain event: it sets `pending_email`, so it records `EmailConfirmationCodeRequested` and that event flows through `uow.commit()` (the `SqlUserGateway` registers every `User` it adds or loads).
+
+Rule of thumb: inject `EventBroker` into an interactor **only** for service events; aggregate state-change events flow through `uow.commit()`.
 
 ## Rate Limiting
 

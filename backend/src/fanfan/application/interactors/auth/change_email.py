@@ -1,6 +1,5 @@
 from pydantic import BaseModel, EmailStr
 
-from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
@@ -15,12 +14,10 @@ class ChangeEmailInput(BaseModel):
 class ChangeEmail:
     def __init__(
         self,
-        event_broker: EventBroker,
         user_repo: UserRepository,
         current_user_provider: CurrentUserProvider,
         uow: UnitOfWork,
     ):
-        self.event_broker = event_broker
         self.user_repo = user_repo
         self.current_user_provider = current_user_provider
         self.uow = uow
@@ -40,10 +37,9 @@ class ChangeEmail:
             raise EmailAlreadyExists
 
         # Keep the active email unchanged until the new address proves
-        # mailbox ownership through the confirmation code flow.
+        # mailbox ownership through the confirmation code flow. The recorded
+        # EmailConfirmationCodeRequested event is dispatched by the UnitOfWork
+        # on commit (current_user was registered when loaded).
         current_user.request_email_change(normalized_new_email)
         await self.user_repo.save(current_user)
         await self.uow.commit()
-
-        for event in current_user.pull_events():
-            await self.event_broker.publish(event)

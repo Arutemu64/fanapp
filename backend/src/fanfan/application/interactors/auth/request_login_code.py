@@ -5,6 +5,7 @@ from fanfan.application.ports.rate_lock import RateLockFactory
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.user import UserService
+from fanfan.core.events.users import EmailLoginCodeRequested
 from fanfan.core.exceptions.rate_limit import EmailCodeRequestTooFast, RateLimitCooldown
 from fanfan.core.exceptions.users import UserAlreadyExists
 from fanfan.core.models.user import User
@@ -76,8 +77,11 @@ class RequestLoginCode:
                         msg = "Could not provision user for login code"
                         raise RuntimeError(msg)
 
-                user.request_login_code()
-                for event in user.pull_events():
-                    await self.event_broker.publish(event)
+                # "Send a login code" is a command to the email subsystem,
+                # not an aggregate state change, so it is published directly
+                # as a service event.
+                await self.event_broker.publish(
+                    EmailLoginCodeRequested(user_id=user.id)
+                )
         except RateLimitCooldown as e:
             raise EmailCodeRequestTooFast(retry_after=e.details["retry_after"]) from e
