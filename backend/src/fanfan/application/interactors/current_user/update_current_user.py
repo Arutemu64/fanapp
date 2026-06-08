@@ -3,7 +3,7 @@ import logging
 from pydantic import BaseModel, Field
 
 from fanfan.application.ports.repositories.users import UserRepository
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.users import UsernameAlreadyTaken
 from fanfan.core.models.user import User
@@ -24,12 +24,12 @@ class UpdateCurrentUser:
     def __init__(
         self,
         current_user_provider: CurrentUserProvider,
-        trx: TransactionManager,
+        uow: UnitOfWork,
         user_repo: UserRepository,
     ) -> None:
         self.current_user_provider = current_user_provider
         self.user_repo = user_repo
-        self.trx = trx
+        self.uow = uow
 
     async def _update_username(
         self, current_user: User, new_username: str | None
@@ -60,4 +60,4 @@ class UpdateCurrentUser:
             user_updated_flag = True
         if user_updated_flag:
             await self.user_repo.save(current_user)
-            await self.trx.commit()
+            await self.uow.commit()

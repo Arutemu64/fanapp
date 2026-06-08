@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.repositories.mailings import MailingRepository
 from fanfan.application.ports.repositories.users import UserRepository
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.events.notifications import MailingCancelled
 from fanfan.core.exceptions.base import AccessDenied
@@ -27,13 +27,13 @@ class CancelMailing:
         user_repo: UserRepository,
         current_user_provider: CurrentUserProvider,
         events_broker: EventBroker,
-        trx: TransactionManager,
+        uow: UnitOfWork,
     ):
         self.mailing_repo = mailing_repo
         self.user_repo = user_repo
         self.current_user_provider = current_user_provider
         self.events_broker = events_broker
-        self.trx = trx
+        self.uow = uow
 
     async def __call__(self, data: CancelMailingInput) -> None:
         mailing = await self.mailing_repo.get(data.mailing_id)
@@ -46,7 +46,7 @@ class CancelMailing:
             raise AccessDenied(details={"reason": "MAILING_DELETE_FORBIDDEN"})
         mailing.set_as_cancelled()
         await self.mailing_repo.save(mailing)
-        await self.trx.commit()
+        await self.uow.commit()
         await self.events_broker.publish(MailingCancelled(mailing_id=data.mailing_id))
         logger.info(
             "Mailing %s deleted by user %s",

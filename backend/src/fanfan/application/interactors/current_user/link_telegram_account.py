@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from fanfan.application.ports.repositories.social_ids import SocialIdentityRepository
 from fanfan.application.ports.repositories.users import UserRepository
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.users import (
     TelegramAlreadyLinkedToAnotherUser,
@@ -27,13 +27,13 @@ class LinkTelegramAccount:
         bot_config: TelegramConfig,
         user_repo: UserRepository,
         social_id_repo: SocialIdentityRepository,
-        trx: TransactionManager,
+        uow: UnitOfWork,
         current_user_provider: CurrentUserProvider,
     ) -> None:
         self.social_id_repo = social_id_repo
         self.bot_config = bot_config
         self.user_repo = user_repo
-        self.trx = trx
+        self.uow = uow
         self.current_user_provider = current_user_provider
 
     async def __call__(self, data: LinkTelegramAccountInput) -> None:
@@ -62,7 +62,7 @@ class LinkTelegramAccount:
                 provider_id=provider_id,
             )
         )
-        await self.trx.commit()
+        await self.uow.commit()
         logger.info(
             "Telegram %s was linked to user %s",
             provider_id,

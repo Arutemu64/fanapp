@@ -6,6 +6,7 @@ from fanfan.adapters.db.constraints import get_constraint_name
 from fanfan.adapters.db.mappers.vote import VoteMapper
 from fanfan.adapters.db.models import NominationORM, VoteORM
 from fanfan.application.ports.repositories.votes import VoteRepository
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.participants import ParticipantNotFound
 from fanfan.core.exceptions.votes import VoteAlreadyExists
 from fanfan.core.models.vote import Vote
@@ -14,8 +15,9 @@ from fanfan.core.vo.user import UserId
 
 
 class SqlVoteGateway(VoteRepository):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, uow: UnitOfWork):
         self.session = session
+        self.uow = uow
         self.mapper = VoteMapper()
 
     async def add(self, vote: Vote) -> None:
@@ -30,6 +32,7 @@ class SqlVoteGateway(VoteRepository):
             if constraint_name == "uq_votes_user_id":
                 raise VoteAlreadyExists from e
             raise
+        self.uow.register(vote)
 
     async def get_user_vote_by_nomination(
         self, nomination_id: NominationId, user_id: UserId
@@ -44,7 +47,11 @@ class SqlVoteGateway(VoteRepository):
             )
             .with_for_update()
         )
-        return self.mapper.to_model(vote_orm) if vote_orm else None
+        if vote_orm is None:
+            return None
+        vote = self.mapper.to_model(vote_orm)
+        self.uow.register(vote)
+        return vote
 
     async def count_user_votes(self, user_id: UserId) -> int:
         return (

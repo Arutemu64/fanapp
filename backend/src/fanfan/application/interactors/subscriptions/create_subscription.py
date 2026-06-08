@@ -9,7 +9,7 @@ from fanfan.application.ports.repositories.subscriptions import (
     SubscriptionRepository,
 )
 from fanfan.application.ports.repositories.users import UserRepository
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.models.subscription import Subscription
 from fanfan.core.vo.schedule_event import ScheduleEventId
@@ -34,13 +34,13 @@ class CreateSubscription:
         user_repo: UserRepository,
         current_user_provider: CurrentUserProvider,
         schedule_repo: ScheduleEventRepository,
-        trx: TransactionManager,
+        uow: UnitOfWork,
     ) -> None:
         self.subscription_repo = subscription_repo
         self.user_repo = user_repo
         self.schedule_repo = schedule_repo
         self.current_user_provider = current_user_provider
-        self.trx = trx
+        self.uow = uow
 
     async def __call__(
         self,
@@ -54,7 +54,7 @@ class CreateSubscription:
             counter=data.counter,
         )
         await self.subscription_repo.add(subscription)
-        await self.trx.commit()
+        await self.uow.commit()
         logger.info(
             "Subscription %s created",
             subscription.id,

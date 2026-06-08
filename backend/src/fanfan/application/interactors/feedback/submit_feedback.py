@@ -3,7 +3,7 @@ import logging
 from pydantic import BaseModel, Field
 
 from fanfan.application.ports.repositories.feedback import FeedbackRepository
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.models.feedback import Feedback
 from fanfan.core.vo.feedback import FeedbackId, generate_feedback_id
@@ -24,11 +24,11 @@ class SubmitFeedback:
         self,
         feedback_repo: FeedbackRepository,
         current_user_provider: CurrentUserProvider,
-        trx: TransactionManager,
+        uow: UnitOfWork,
     ) -> None:
         self.feedback_repo = feedback_repo
         self.current_user_provider = current_user_provider
-        self.trx = trx
+        self.uow = uow
 
     async def __call__(
         self,
@@ -41,7 +41,7 @@ class SubmitFeedback:
             text=data.text,
         )
         await self.feedback_repo.add(feedback)
-        await self.trx.commit()
+        await self.uow.commit()
         logger.info(
             "Feedback %s submitted",
             feedback.id,

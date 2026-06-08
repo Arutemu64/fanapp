@@ -3,7 +3,6 @@ import logging
 from pydantic import BaseModel
 
 from fanfan.application.interactors.schedule_mgmt.common import ANNOUNCE_LIMIT_NAME
-from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.rate_lock import RateLockFactory
 from fanfan.application.ports.repositories.app_settings import AppSettingsRepository
 from fanfan.application.ports.repositories.mailings import MailingRepository
@@ -14,7 +13,7 @@ from fanfan.application.ports.repositories.schedule_events import (
     ScheduleEventRepository,
 )
 from fanfan.application.ports.repositories.users import UserRepository
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
 from fanfan.core.exceptions.rate_limit import RateLimitCooldown
@@ -42,19 +41,17 @@ class SetCurrentScheduleEvent:
         changes_repo: ScheduleChangeRepository,
         user_repo: UserRepository,
         perm_service: PermissionService,
-        trx: TransactionManager,
+        uow: UnitOfWork,
         rate_lock_factory: RateLockFactory,
         current_user_provider: CurrentUserProvider,
-        events_broker: EventBroker,
         mailing_repo: MailingRepository,
     ) -> None:
         self.schedule_repo = schedule_repo
         self.settings_repo = settings_repo
         self.user_repo = user_repo
         self.perm_service = perm_service
-        self.uow = trx
+        self.uow = uow
         self.rate_lock_factory = rate_lock_factory
-        self.events_broker = events_broker
         self.current_user_provider = current_user_provider
         self.mailing_repo = mailing_repo
         self.changes_repo = changes_repo
@@ -104,8 +101,6 @@ class SetCurrentScheduleEvent:
 
                 # Commit and proceed
                 await self.uow.commit()
-                for event in schedule_change.pull_events():
-                    await self.events_broker.publish(event)
 
                 logger.info(
                     "Event %s was set as current by user %s",

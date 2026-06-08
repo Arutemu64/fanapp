@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from fanfan.application.ports.repositories.push_subscriptions import (
     PushSubscriptionRepository,
 )
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.push_sub import PushSubscriptionNotFound
@@ -18,9 +18,9 @@ class DeletePushSubscription:
         self,
         push_sub_repo: PushSubscriptionRepository,
         current_user_provider: CurrentUserProvider,
-        trx: TransactionManager,
+        uow: UnitOfWork,
     ) -> None:
-        self.trx = trx
+        self.uow = uow
         self.current_user_provider = current_user_provider
         self.push_sub_repo = push_sub_repo
 
@@ -32,4 +32,4 @@ class DeletePushSubscription:
         if push_sub.user_id != current_user_id:
             raise AccessDenied
         await self.push_sub_repo.delete(push_sub)
-        await self.trx.commit()
+        await self.uow.commit()

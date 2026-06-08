@@ -7,7 +7,7 @@ from fanfan.application.ports.notifier import Notifier
 from fanfan.application.ports.repositories.push_subscriptions import (
     PushSubscriptionRepository,
 )
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.notification import Notification
 
 
@@ -15,11 +15,11 @@ class PushNotifier(Notifier):
     def __init__(
         self,
         push_sub_repo: PushSubscriptionRepository,
-        trx: TransactionManager,
+        uow: UnitOfWork,
         push_config: PushConfig,
     ) -> None:
         self.push_sub_repo = push_sub_repo
-        self.trx = trx
+        self.uow = uow
         self.wp = WebPush(
             private_key=push_config.private_key_path,
             public_key=push_config.public_key_path,
@@ -70,4 +70,4 @@ class PushNotifier(Notifier):
                 ) as response:
                     if response.status in [404, 410]:
                         await self.push_sub_repo.delete(sub)
-                        await self.trx.commit()
+                        await self.uow.commit()

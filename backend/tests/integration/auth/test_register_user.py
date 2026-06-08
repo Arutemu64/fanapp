@@ -6,7 +6,7 @@ from fanfan.application.interactors.auth.register_user import (
     RegisterUserInput,
 )
 from fanfan.application.ports.repositories.users import UserRepository
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.security import SecurityService
 from fanfan.core.exceptions.users import UserAlreadyExists
 from fanfan.core.models.user import User
@@ -47,7 +47,7 @@ async def test_register_user_raises_when_email_already_exists(
 ):
     interactor = await dishka_request.get(RegisterUser)
     user_repo = await dishka_request.get(UserRepository)
-    trx = await dishka_request.get(TransactionManager)
+    uow = await dishka_request.get(UnitOfWork)
     events_broker = await dishka_request.get(FakeEventBroker)
 
     existing_user = User(
@@ -58,7 +58,7 @@ async def test_register_user_raises_when_email_already_exists(
         role=UserRole.VISITOR,
     )
     await user_repo.add(existing_user)
-    await trx.commit()
+    await uow.commit()
 
     with pytest.raises(UserAlreadyExists):
         await interactor(
@@ -74,7 +74,7 @@ async def test_register_user_raises_when_email_is_pending_on_another_user(
 ):
     interactor = await dishka_request.get(RegisterUser)
     user_repo = await dishka_request.get(UserRepository)
-    trx = await dishka_request.get(TransactionManager)
+    uow = await dishka_request.get(UnitOfWork)
     events_broker = await dishka_request.get(FakeEventBroker)
 
     existing_user = User(
@@ -86,7 +86,7 @@ async def test_register_user_raises_when_email_is_pending_on_another_user(
         role=UserRole.VISITOR,
     )
     await user_repo.add(existing_user)
-    await trx.commit()
+    await uow.commit()
 
     with pytest.raises(UserAlreadyExists):
         await interactor(

@@ -7,7 +7,7 @@ from fanfan.application.interactors.tickets.link_ticket import (
 )
 from fanfan.application.ports.repositories.tickets import TicketRepository
 from fanfan.application.ports.repositories.users import UserRepository
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.tickets import (
     TicketAlreadyUsed,
     TicketNotFound,
@@ -29,7 +29,7 @@ async def test_link_ticket_successfully(dishka_request: AsyncContainer, visitor:
     interactor = await dishka_request.get(LinkTicket)
     user_repo = await dishka_request.get(UserRepository)
     ticket_repo = await dishka_request.get(TicketRepository)
-    trx = await dishka_request.get(TransactionManager)
+    uow = await dishka_request.get(UnitOfWork)
     id_provider = await dishka_request.get(FakeIdProvider)
 
     ticket = Ticket(
@@ -41,7 +41,7 @@ async def test_link_ticket_successfully(dishka_request: AsyncContainer, visitor:
         ticketscloud_ticket_id=None,
     )
     await ticket_repo.add(ticket)
-    await trx.commit()
+    await uow.commit()
 
     id_provider.set_current_user_id(visitor.id)
 
@@ -75,7 +75,7 @@ async def test_link_ticket_raises_already_used(
 ):
     interactor = await dishka_request.get(LinkTicket)
     ticket_repo = await dishka_request.get(TicketRepository)
-    trx = await dishka_request.get(TransactionManager)
+    uow = await dishka_request.get(UnitOfWork)
     id_provider = await dishka_request.get(FakeIdProvider)
 
     ticket = Ticket(
@@ -87,7 +87,7 @@ async def test_link_ticket_raises_already_used(
         ticketscloud_ticket_id=None,
     )
     await ticket_repo.add(ticket)
-    await trx.commit()
+    await uow.commit()
 
     id_provider.set_current_user_id(visitor.id)
 
@@ -100,7 +100,7 @@ async def test_link_ticket_raises_when_user_already_has_ticket(
 ):
     interactor = await dishka_request.get(LinkTicket)
     ticket_repo = await dishka_request.get(TicketRepository)
-    trx = await dishka_request.get(TransactionManager)
+    uow = await dishka_request.get(UnitOfWork)
     id_provider = await dishka_request.get(FakeIdProvider)
 
     # New ticket to link
@@ -113,7 +113,7 @@ async def test_link_ticket_raises_when_user_already_has_ticket(
         ticketscloud_ticket_id=None,
     )
     await ticket_repo.add(ticket)
-    await trx.commit()
+    await uow.commit()
 
     id_provider.set_current_user_id(visitor_with_ticket.id)
 

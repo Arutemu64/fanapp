@@ -12,7 +12,7 @@ from fanfan.adapters.api.cosplay2.dto.requests import (
 from fanfan.adapters.api.cosplay2.dto.topics import Topic
 from fanfan.application.ports.repositories.nominations import NominationRepository
 from fanfan.application.ports.repositories.participants import ParticipantRepository
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.participants import (
     NonApprovedRequest,
     RequestHasNoVotingTitle,
@@ -30,7 +30,7 @@ class SyncCosplay2:
         self,
         client: Cosplay2Client,
         config: Cosplay2Config,
-        trx: TransactionManager,
+        uow: UnitOfWork,
         nomination_repo: NominationRepository,
         participant_repo: ParticipantRepository,
     ):
@@ -38,7 +38,7 @@ class SyncCosplay2:
         self.nomination_repo = nomination_repo
         self.client = client
         self.config = config
-        self.trx = trx
+        self.uow = uow
 
     async def _process_topic(self, topic: Topic) -> Nomination:
         nomination = await self.nomination_repo.get_by_cosplay2_id(topic.id)
@@ -150,4 +150,4 @@ class SyncCosplay2:
         )
         await self.participant_repo.delete_by_cosplay2_ids(list(stale_participant_ids))
 
-        await self.trx.commit()
+        await self.uow.commit()

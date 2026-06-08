@@ -8,7 +8,7 @@ from fanfan.application.ports.repositories.app_settings import AppSettingsReposi
 from fanfan.application.ports.repositories.nominations import NominationRepository
 from fanfan.application.ports.repositories.participants import ParticipantRepository
 from fanfan.application.ports.repositories.votes import VoteRepository
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.voting import VoteCreated
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.participants import ParticipantNotFound
@@ -39,7 +39,7 @@ async def test_add_vote_creates_vote_and_publishes_event(
     nomination_repo = await dishka_request.get(NominationRepository)
     participant_repo = await dishka_request.get(ParticipantRepository)
     vote_repo = await dishka_request.get(VoteRepository)
-    trx = await dishka_request.get(TransactionManager)
+    uow = await dishka_request.get(UnitOfWork)
     events_broker = await dishka_request.get(FakeEventBroker)
     id_provider = await dishka_request.get(FakeIdProvider)
     id_provider.set_current_user_id(visitor_with_ticket.id)
@@ -67,7 +67,7 @@ async def test_add_vote_creates_vote_and_publishes_event(
     )
     await nomination_repo.add(nomination)
     await participant_repo.add(participant)
-    await trx.commit()
+    await uow.commit()
 
     result = await interactor(AddVoteInput(participant_id=participant.id))
 
@@ -96,7 +96,7 @@ async def test_add_vote_without_linked_ticket_raises_access_denied(
     nomination_repo = await dishka_request.get(NominationRepository)
     participant_repo = await dishka_request.get(ParticipantRepository)
     vote_repo = await dishka_request.get(VoteRepository)
-    trx = await dishka_request.get(TransactionManager)
+    uow = await dishka_request.get(UnitOfWork)
     events_broker = await dishka_request.get(FakeEventBroker)
     id_provider = await dishka_request.get(FakeIdProvider)
     id_provider.set_current_user_id(visitor.id)
@@ -122,7 +122,7 @@ async def test_add_vote_without_linked_ticket_raises_access_denied(
     )
     await nomination_repo.add(nomination)
     await participant_repo.add(participant)
-    await trx.commit()
+    await uow.commit()
 
     with pytest.raises(AccessDenied) as exc_info:
         await interactor(AddVoteInput(participant_id=participant.id))
@@ -146,7 +146,7 @@ async def test_add_vote_when_voting_disabled_raises_access_denied(
     nomination_repo = await dishka_request.get(NominationRepository)
     participant_repo = await dishka_request.get(ParticipantRepository)
     vote_repo = await dishka_request.get(VoteRepository)
-    trx = await dishka_request.get(TransactionManager)
+    uow = await dishka_request.get(UnitOfWork)
     events_broker = await dishka_request.get(FakeEventBroker)
     id_provider = await dishka_request.get(FakeIdProvider)
     id_provider.set_current_user_id(visitor_with_ticket.id)
@@ -172,7 +172,7 @@ async def test_add_vote_when_voting_disabled_raises_access_denied(
     )
     await nomination_repo.add(nomination)
     await participant_repo.add(participant)
-    await trx.commit()
+    await uow.commit()
 
     with pytest.raises(AccessDenied) as exc_info:
         await interactor(AddVoteInput(participant_id=participant.id))
@@ -193,7 +193,7 @@ async def test_add_vote_for_missing_participant_raises_not_found(
 ):
     interactor = await dishka_request.get(AddVote)
     settings_repo = await dishka_request.get(AppSettingsRepository)
-    trx = await dishka_request.get(TransactionManager)
+    uow = await dishka_request.get(UnitOfWork)
     events_broker = await dishka_request.get(FakeEventBroker)
     id_provider = await dishka_request.get(FakeIdProvider)
     id_provider.set_current_user_id(visitor_with_ticket.id)
@@ -201,7 +201,7 @@ async def test_add_vote_for_missing_participant_raises_not_found(
     settings = await settings_repo.get_for_update()
     settings.set_voting_enabled(True)
     await settings_repo.save(settings)
-    await trx.commit()
+    await uow.commit()
 
     with pytest.raises(ParticipantNotFound):
         await interactor(AddVoteInput(participant_id=ParticipantId(uuid7())))
@@ -218,7 +218,7 @@ async def test_add_vote_twice_in_same_nomination_raises_already_voted(
     nomination_repo = await dishka_request.get(NominationRepository)
     participant_repo = await dishka_request.get(ParticipantRepository)
     vote_repo = await dishka_request.get(VoteRepository)
-    trx = await dishka_request.get(TransactionManager)
+    uow = await dishka_request.get(UnitOfWork)
     events_broker = await dishka_request.get(FakeEventBroker)
     id_provider = await dishka_request.get(FakeIdProvider)
     id_provider.set_current_user_id(visitor_with_ticket.id)
@@ -253,7 +253,7 @@ async def test_add_vote_twice_in_same_nomination_raises_already_voted(
     await nomination_repo.add(nomination)
     await participant_repo.add(first_participant)
     await participant_repo.add(second_participant)
-    await trx.commit()
+    await uow.commit()
 
     first_result = await interactor(AddVoteInput(participant_id=first_participant.id))
     with pytest.raises(VoteAlreadyExists):
@@ -283,7 +283,7 @@ async def test_add_vote_allows_votes_in_different_nominations(
     nomination_repo = await dishka_request.get(NominationRepository)
     participant_repo = await dishka_request.get(ParticipantRepository)
     vote_repo = await dishka_request.get(VoteRepository)
-    trx = await dishka_request.get(TransactionManager)
+    uow = await dishka_request.get(UnitOfWork)
     events_broker = await dishka_request.get(FakeEventBroker)
     id_provider = await dishka_request.get(FakeIdProvider)
     id_provider.set_current_user_id(visitor_with_ticket.id)
@@ -326,7 +326,7 @@ async def test_add_vote_allows_votes_in_different_nominations(
     await nomination_repo.add(second_nomination)
     await participant_repo.add(first_participant)
     await participant_repo.add(second_participant)
-    await trx.commit()
+    await uow.commit()
 
     first_result = await interactor(AddVoteInput(participant_id=first_participant.id))
     second_result = await interactor(AddVoteInput(participant_id=second_participant.id))

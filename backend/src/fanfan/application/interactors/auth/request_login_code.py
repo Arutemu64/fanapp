@@ -3,7 +3,7 @@ from pydantic import BaseModel, EmailStr
 from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.rate_lock import RateLockFactory
 from fanfan.application.ports.repositories.users import UserRepository
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.user import UserService
 from fanfan.core.exceptions.rate_limit import EmailCodeRequestTooFast, RateLimitCooldown
 from fanfan.core.exceptions.users import UserAlreadyExists
@@ -22,13 +22,13 @@ class RequestLoginCode:
         self,
         user_repo: UserRepository,
         event_broker: EventBroker,
-        trx: TransactionManager,
+        uow: UnitOfWork,
         user_service: UserService,
         rate_lock_factory: RateLockFactory,
     ):
         self.user_repo = user_repo
         self.event_broker = event_broker
-        self.trx = trx
+        self.uow = uow
         self.user_service = user_service
         self.rate_lock_factory = rate_lock_factory
 
@@ -63,9 +63,9 @@ class RequestLoginCode:
                                 role=UserRole.VISITOR,
                             )
                             await self.user_repo.add(user)
-                            await self.trx.commit()
+                            await self.uow.commit()
                         except UserAlreadyExists:
-                            await self.trx.rollback()
+                            await self.uow.rollback()
                             user = await self.user_repo.get_by_email(normalized_email)
                             if user is not None:
                                 break

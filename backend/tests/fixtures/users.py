@@ -9,7 +9,7 @@ from fanfan.application.ports.repositories import (
 )
 from fanfan.application.ports.repositories.tickets import TicketRepository
 from fanfan.application.ports.repositories.users import UserRepository
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.permission import UserPermission
 from fanfan.core.models.ticket import Ticket
 from fanfan.core.models.user import User
@@ -28,7 +28,7 @@ async def visitor(dishka_request: AsyncContainer) -> User:
     Create a visitor (user with no special permissions)
     """
     user_repo = await dishka_request.get(UserRepository)
-    trx = await dishka_request.get(TransactionManager)
+    uow = await dishka_request.get(UnitOfWork)
 
     visitor = User(
         id=UserId(uuid7()),
@@ -37,7 +37,7 @@ async def visitor(dishka_request: AsyncContainer) -> User:
         role=UserRole.VISITOR,
     )
     await user_repo.add(visitor)
-    await trx.commit()
+    await uow.commit()
     return visitor
 
 
@@ -47,7 +47,7 @@ async def visitor_with_ticket(dishka_request: AsyncContainer, visitor: User) -> 
     Create a visitor with a linked ticket.
     """
     ticket_repo = await dishka_request.get(TicketRepository)
-    trx = await dishka_request.get(TransactionManager)
+    uow = await dishka_request.get(UnitOfWork)
 
     await ticket_repo.add(
         Ticket(
@@ -59,7 +59,7 @@ async def visitor_with_ticket(dishka_request: AsyncContainer, visitor: User) -> 
             ticketscloud_ticket_id=None,
         )
     )
-    await trx.commit()
+    await uow.commit()
     return visitor
 
 
@@ -71,7 +71,7 @@ async def schedule_editor(dishka_request: AsyncContainer) -> User:
     user_repo = await dishka_request.get(UserRepository)
     permission_repo = await dishka_request.get(PermissionRepository)
     user_permission_repo = await dishka_request.get(UserPermissionRepository)
-    trx = await dishka_request.get(TransactionManager)
+    uow = await dishka_request.get(UnitOfWork)
 
     schedule_editor = User(
         id=UserId(uuid7()),
@@ -93,5 +93,5 @@ async def schedule_editor(dishka_request: AsyncContainer) -> User:
             object_id=None,
         )
     )
-    await trx.commit()
+    await uow.commit()
     return schedule_editor

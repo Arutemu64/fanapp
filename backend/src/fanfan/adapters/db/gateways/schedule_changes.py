@@ -9,6 +9,7 @@ from fanfan.application.dto.schedule_change import (
 )
 from fanfan.application.ports.queries.schedule_changes import ScheduleChangeQuery
 from fanfan.application.ports.repositories import ScheduleChangeRepository
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.schedule_change import (
     ScheduleChange,
 )
@@ -16,13 +17,15 @@ from fanfan.core.vo.schedule_change import ScheduleChangeId
 
 
 class SqlScheduleChangeGateway(ScheduleChangeRepository, ScheduleChangeQuery):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, uow: UnitOfWork):
         self.session = session
+        self.uow = uow
         self.mapper = ScheduleChangeMapper()
 
     async def add(self, change: ScheduleChange) -> None:
         change_orm = self.mapper.from_model(change)
         self.session.add(change_orm)
+        self.uow.register(change)
 
     async def get_by_id(self, change_id: ScheduleChangeId) -> ScheduleChange | None:
         stmt = (
@@ -31,7 +34,11 @@ class SqlScheduleChangeGateway(ScheduleChangeRepository, ScheduleChangeQuery):
             .with_for_update()
         )
         change_orm = await self.session.scalar(stmt)
-        return self.mapper.to_model(change_orm) if change_orm else None
+        if change_orm is None:
+            return None
+        change = self.mapper.to_model(change_orm)
+        self.uow.register(change)
+        return change
 
     async def delete(self, change: ScheduleChange) -> None:
         await self.session.execute(

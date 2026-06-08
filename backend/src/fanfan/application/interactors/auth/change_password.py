@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.session_store import SessionStore
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.security import SecurityService
 from fanfan.core.exceptions.auth import IncorrectPassword
@@ -21,13 +21,13 @@ class ChangePassword:
         user_repo: UserRepository,
         current_user_provider: CurrentUserProvider,
         session_store: SessionStore,
-        trx: TransactionManager,
+        uow: UnitOfWork,
     ):
         self.security = security
         self.user_repo = user_repo
         self.current_user_provider = current_user_provider
         self.session_store = session_store
-        self.trx = trx
+        self.uow = uow
 
     async def __call__(
         self,
@@ -45,7 +45,7 @@ class ChangePassword:
                 raise IncorrectPassword
         current_user.set_password_hash(self.security.hash_password(data.new_password))
         await self.user_repo.save(current_user)
-        await self.trx.commit()
+        await self.uow.commit()
 
         # Security-first behavior: revoke every active session after password change.
         await self.session_store.revoke_user_sessions(current_user.id)

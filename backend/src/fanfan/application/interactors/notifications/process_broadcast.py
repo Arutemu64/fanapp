@@ -4,7 +4,7 @@ from fanfan.application.dto.notification import NewNotificationDTO
 from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.queries.users import UserQuery
 from fanfan.application.ports.repositories.mailings import MailingRepository
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.notifications import MailingNotFound
 from fanfan.core.vo.mailing import MailingId
@@ -24,12 +24,12 @@ class ProcessBroadcast:
         user_query: UserQuery,
         events_broker: EventBroker,
         mailing_repo: MailingRepository,
-        trx: TransactionManager,
+        uow: UnitOfWork,
     ):
         self.user_query = user_query
         self.events_broker = events_broker
         self.mailing_repo = mailing_repo
-        self.trx = trx
+        self.uow = uow
 
     async def __call__(self, data: ProcessBroadcastInput):
         users = await self.user_query.read_all_by_roles(*data.roles)
@@ -38,7 +38,7 @@ class ProcessBroadcast:
             raise MailingNotFound
         await self.mailing_repo.set_total(mailing_id=mailing.id, total_count=len(users))
         await self.mailing_repo.save(mailing)
-        await self.trx.commit()
+        await self.uow.commit()
 
         events = [
             NotificationQueued(

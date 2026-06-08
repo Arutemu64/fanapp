@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from fanfan.application.ports.repositories.nominations import NominationRepository
 from fanfan.application.ports.repositories.user_flags import UserFlagRepository
 from fanfan.application.ports.repositories.votes import VoteRepository
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.constants.flags import VOTING_CONTEST_FLAG_NAME
 from fanfan.core.models.user_flag import UserFlag
 from fanfan.core.vo.user import UserId
@@ -20,12 +20,12 @@ class CheckVotingContestEntry:
         vote_repo: VoteRepository,
         nomination_repo: NominationRepository,
         user_flag_repo: UserFlagRepository,
-        trx: TransactionManager,
+        uow: UnitOfWork,
     ):
         self.vote_repo = vote_repo
         self.nomination_repo = nomination_repo
         self.user_flag_repo = user_flag_repo
-        self.trx = trx
+        self.uow = uow
 
     async def __call__(self, data: CheckVotingContestEntryInput) -> None:
         # Get count of current user votes and total votable nominations
@@ -41,7 +41,7 @@ class CheckVotingContestEntry:
         # If it's not - check if we can create it
         if flag and user_votes_count < votable_nominations_count:
             await self.user_flag_repo.delete(flag)
-            await self.trx.commit()
+            await self.uow.commit()
         else:
             if user_votes_count >= votable_nominations_count:
                 flag = UserFlag(
@@ -50,4 +50,4 @@ class CheckVotingContestEntry:
                     user_id=data.user_id,
                 )
                 await self.user_flag_repo.add(flag)
-                await self.trx.commit()
+                await self.uow.commit()
