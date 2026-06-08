@@ -85,6 +85,11 @@ class SessionManager(SessionStore):
     async def revoke_user_sessions(self, user_id: UserId) -> None:
         user_sessions_key = self._user_sessions_key(user_id)
         session_ids = await self.redis.smembers(user_sessions_key)
+        # The index set can hold ids of sessions that already expired naturally
+        # (Redis does not remove a member when its session key's TTL lapses).
+        # We tolerate these stale ids here: deleting a missing key is a no-op,
+        # and the whole set is dropped below, so they never cause incorrect
+        # behavior — at worst the set carries some dead ids until it is rewritten.
         async with self.redis.pipeline(transaction=True) as pipe:
             for sid in session_ids:
                 pipe.delete(self._session_key(self._decode(sid)))
