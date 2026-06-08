@@ -23,17 +23,28 @@ class SessionManager(SessionStore):
     def _user_sessions_key(user_id: UserId) -> str:
         return f"auth:user-sessions:{user_id}"
 
+    @staticmethod
+    def _decode(value: str | bytes) -> str:
+        # The Redis client is created with decode_responses=True, so values come
+        # back as str at runtime; the stubs still type them as str | bytes.
+        return value.decode() if isinstance(value, bytes) else value
+
     async def create_session(self, user_id: UserId) -> str:
         # Keep session IDs opaque so user identity is never embedded in cookies.
         session_id = secrets.token_urlsafe(32)
         user_sessions_key = self._user_sessions_key(user_id)
-        await self.redis.set(
-            name=self._session_key(session_id),
-            value=str(user_id),
-            ex=self.ttl_seconds,
-        )
-        await self.redis.sadd(user_sessions_key, session_id)
-        await self.redis.expire(user_sessions_key, self.ttl_seconds)
+        # Write the session and its index entry together so a failure can never
+        # leave a valid session that is missing from the index (which would make
+        # it impossible to revoke via revoke_user_sessions).
+        async with self.redis.pipeline(transaction=True) as pipe:
+            pipe.set(
+                name=self._session_key(session_id),
+                value=str(user_id),
+                ex=self.ttl_seconds,
+            )
+            pipe.sadd(user_sessions_key, session_id)
+            pipe.expire(user_sessions_key, self.ttl_seconds)
+            await pipe.execute()
         return session_id
 
     async def resolve_session(self, session_id: str) -> SessionResolution:
@@ -42,37 +53,45 @@ class SessionManager(SessionStore):
         if not user_id:
             return SessionResolution(user_id=None, touched=False)
 
+        resolved_user_id = UserId(UUID(self._decode(user_id)))
         ttl_left = await self.redis.ttl(key)
         touched = False
         if ttl_left > 0 and ttl_left <= self.touch_threshold_seconds:
-            await self.redis.expire(key, self.ttl_seconds)
+            # Extend the session and its index entry together. The index set has
+            # its own TTL, so refreshing only the session key would let the index
+            # expire out from under a still-valid session, leaving it unrevokable.
+            user_sessions_key = self._user_sessions_key(resolved_user_id)
+            async with self.redis.pipeline(transaction=True) as pipe:
+                pipe.expire(key, self.ttl_seconds)
+                pipe.sadd(user_sessions_key, session_id)
+                pipe.expire(user_sessions_key, self.ttl_seconds)
+                await pipe.execute()
             touched = True
 
-        return SessionResolution(
-            user_id=UserId(
-                UUID(user_id.decode() if isinstance(user_id, bytes) else user_id)
-            ),
-            touched=touched,
-        )
+        return SessionResolution(user_id=resolved_user_id, touched=touched)
 
     async def delete_session(self, session_id: str) -> None:
         key = self._session_key(session_id)
         user_id = await self.redis.get(key)
-        await self.redis.delete(key)
-        if user_id:
-            user_id_str = user_id.decode() if isinstance(user_id, bytes) else user_id
-            await self.redis.srem(
-                self._user_sessions_key(UserId(UUID(user_id_str))), session_id
-            )
+        async with self.redis.pipeline(transaction=True) as pipe:
+            pipe.delete(key)
+            if user_id:
+                pipe.srem(
+                    self._user_sessions_key(UserId(UUID(self._decode(user_id)))),
+                    session_id,
+                )
+            await pipe.execute()
 
     async def revoke_user_sessions(self, user_id: UserId) -> None:
         user_sessions_key = self._user_sessions_key(user_id)
         session_ids = await self.redis.smembers(user_sessions_key)
-        if session_ids:
-            await self.redis.delete(
-                *(
-                    self._session_key(sid.decode() if isinstance(sid, bytes) else sid)
-                    for sid in session_ids
-                )
-            )
-        await self.redis.delete(user_sessions_key)
+        # The index set can hold ids of sessions that already expired naturally
+        # (Redis does not remove a member when its session key's TTL lapses).
+        # We tolerate these stale ids here: deleting a missing key is a no-op,
+        # and the whole set is dropped below, so they never cause incorrect
+        # behavior — at worst the set carries some dead ids until it is rewritten.
+        async with self.redis.pipeline(transaction=True) as pipe:
+            for sid in session_ids:
+                pipe.delete(self._session_key(self._decode(sid)))
+            pipe.delete(user_sessions_key)
+            await pipe.execute()
