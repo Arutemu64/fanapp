@@ -2,7 +2,6 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.repositories.schedule_changes import (
     ScheduleChangeRepository,
 )
@@ -10,7 +9,7 @@ from fanfan.application.ports.repositories.schedule_events import (
     ScheduleEventRepository,
 )
 from fanfan.application.ports.repositories.users import UserRepository
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
 from fanfan.core.exceptions.schedule import (
@@ -31,19 +30,17 @@ class UndoScheduleChangeInput(BaseModel):
 class UndoScheduleChange:
     def __init__(
         self,
-        trx: TransactionManager,
+        uow: UnitOfWork,
         changes_repo: ScheduleChangeRepository,
         user_repo: UserRepository,
         schedule_repo: ScheduleEventRepository,
-        events_broker: EventBroker,
         current_user_provider: CurrentUserProvider,
         perm_service: PermissionService,
     ):
-        self.trx = trx
+        self.uow = uow
         self.changes_repo = changes_repo
         self.schedule_repo = schedule_repo
         self.user_repo = user_repo
-        self.events_broker = events_broker
         self.current_user_provider = current_user_provider
         self.perm_service = perm_service
 
@@ -121,10 +118,7 @@ class UndoScheduleChange:
 
         schedule_change.mark_undone()
         await self.changes_repo.delete(schedule_change)
-        await self.trx.commit()
-
-        for event in schedule_change.pull_events():
-            await self.events_broker.publish(event)
+        await self.uow.commit()
 
         logger.info(
             "User %s reverted schedule change %s",

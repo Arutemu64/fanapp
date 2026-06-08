@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 from fanfan.application.ports.repositories.app_settings import AppSettingsRepository
 from fanfan.application.ports.repositories.users import UserRepository
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.settings import AppSettingsNotFound
@@ -24,12 +24,12 @@ class UpdateSettings:
         settings_repo: AppSettingsRepository,
         user_repo: UserRepository,
         current_user_provider: CurrentUserProvider,
-        trx: TransactionManager,
+        uow: UnitOfWork,
     ) -> None:
         self.settings_repo = settings_repo
         self.user_repo = user_repo
         self.current_user_provider = current_user_provider
-        self.trx = trx
+        self.uow = uow
 
     async def __call__(self, data: UpdateAppSettingsInput) -> None:
         # Only persist fields that were actually sent by the client.
@@ -57,7 +57,7 @@ class UpdateSettings:
             return
 
         await self.settings_repo.save(settings)
-        await self.trx.commit()
+        await self.uow.commit()
         logger.info(
             "Festival settings updated by user %s",
             current_user.id,

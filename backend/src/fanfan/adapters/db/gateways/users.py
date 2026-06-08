@@ -11,6 +11,7 @@ from fanfan.adapters.db.models.permission import PermissionORM, UserPermissionOR
 from fanfan.application.dto.user import CurrentUserDTO, UserBaseDTO
 from fanfan.application.ports.queries.users import UserQuery
 from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.users import (
     EmailAlreadyExists,
     UserAlreadyExists,
@@ -23,10 +24,20 @@ from fanfan.core.vo.user import UserId, UserRole
 
 
 class SqlUserGateway(UserRepository, UserQuery):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, uow: UnitOfWork):
         self.session = session
+        self.uow = uow
         self.mapper = UserMapper()
         self.social_mapper = SocialIdentityMapper()
+
+    def _to_model(self, user_orm: UserORM | None) -> User | None:
+        if user_orm is None:
+            return None
+        user = self.mapper.to_model(user_orm)
+        # Track the aggregate so any domain events it records are dispatched
+        # by the UnitOfWork on commit.
+        self.uow.register(user)
+        return user
 
     async def add(self, user: User) -> None:
         user_orm = self.mapper.from_model(user)
@@ -42,11 +53,12 @@ class SqlUserGateway(UserRepository, UserQuery):
             }:
                 raise UserAlreadyExists from e
             raise
+        self.uow.register(user)
 
     async def get_by_id(self, user_id: UserId) -> User | None:
         stmt = select(UserORM).where(UserORM.id == user_id).with_for_update()
         user_orm = await self.session.scalar(stmt)
-        return self.mapper.to_model(user_orm) if user_orm else None
+        return self._to_model(user_orm)
 
     async def get_by_username(self, username: str) -> User | None:
         stmt = (
@@ -55,7 +67,7 @@ class SqlUserGateway(UserRepository, UserQuery):
             .with_for_update()
         )
         user_orm = await self.session.scalar(stmt)
-        return self.mapper.to_model(user_orm) if user_orm else None
+        return self._to_model(user_orm)
 
     async def get_by_email(self, email: str) -> User | None:
         normalized_email = normalize_email(email)
@@ -63,7 +75,7 @@ class SqlUserGateway(UserRepository, UserQuery):
             select(UserORM).where(UserORM.email == normalized_email).with_for_update()
         )
         user_orm = await self.session.scalar(stmt)
-        return self.mapper.to_model(user_orm) if user_orm else None
+        return self._to_model(user_orm)
 
     async def get_by_pending_email(self, email: str) -> User | None:
         normalized_email = normalize_email(email)
@@ -73,7 +85,7 @@ class SqlUserGateway(UserRepository, UserQuery):
             .with_for_update()
         )
         user_orm = await self.session.scalar(stmt)
-        return self.mapper.to_model(user_orm) if user_orm else None
+        return self._to_model(user_orm)
 
     async def get_by_any_email(self, email: str) -> User | None:
         # Check the active address first, then the pending replacement address,
@@ -97,7 +109,7 @@ class SqlUserGateway(UserRepository, UserQuery):
             .with_for_update()
         )
         user_orm = await self.session.scalar(stmt)
-        return self.mapper.to_model(user_orm) if user_orm else None
+        return self._to_model(user_orm)
 
     async def save(self, user: User) -> None:
         user_orm = self.mapper.from_model(user)
@@ -111,6 +123,7 @@ class SqlUserGateway(UserRepository, UserQuery):
             if constraint_name in {"ix_users_email", "ix_users_pending_email"}:
                 raise EmailAlreadyExists from e
             raise
+        self.uow.register(user)
 
     async def read_current_user(self, user_id: UserId) -> CurrentUserDTO | None:
         stmt = (

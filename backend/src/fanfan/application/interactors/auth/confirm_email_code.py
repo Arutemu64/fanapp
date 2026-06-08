@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.token_registry import TokenRegistry
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.auth import InvalidOtpCode
 from fanfan.core.exceptions.users import EmailAlreadyExists
@@ -25,12 +25,12 @@ class ConfirmEmailCode:
         user_repo: UserRepository,
         current_user_provider: CurrentUserProvider,
         token_registry: TokenRegistry,
-        trx: TransactionManager,
+        uow: UnitOfWork,
     ):
         self.user_repo = user_repo
         self.current_user_provider = current_user_provider
         self.token_registry = token_registry
-        self.trx = trx
+        self.uow = uow
 
     async def __call__(self, data: ConfirmEmailCodeInput) -> None:
         current_user = await self.current_user_provider.require_user()
@@ -58,6 +58,6 @@ class ConfirmEmailCode:
             current_user.verify_email(datetime.now(UTC))
         try:
             await self.user_repo.save(current_user)
-            await self.trx.commit()
+            await self.uow.commit()
         except EmailAlreadyExists as e:
             raise InvalidOtpCode from e

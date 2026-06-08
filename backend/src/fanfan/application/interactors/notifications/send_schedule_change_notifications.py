@@ -16,7 +16,7 @@ from fanfan.application.ports.queries.subscriptions import SubscriptionQuery
 from fanfan.application.ports.queries.users import UserQuery
 from fanfan.application.ports.repositories.mailings import MailingRepository
 from fanfan.application.ports.template_renderer import TemplateRenderer
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.schedule import ScheduleChangeNotFound
 from fanfan.core.vo.notification import NotificationType, generate_notification_id
@@ -36,7 +36,7 @@ class SendScheduleChangeNotifications:
         user_query: UserQuery,
         subscription_query: SubscriptionQuery,
         mailing_repo: MailingRepository,
-        trx: TransactionManager,
+        uow: UnitOfWork,
         events_broker: EventBroker,
     ):
         self.template_renderer = template_renderer
@@ -45,7 +45,7 @@ class SendScheduleChangeNotifications:
         self.user_query = user_query
         self.subscription_query = subscription_query
         self.mailing_repo = mailing_repo
-        self.trx = trx
+        self.uow = uow
         self.events_broker = events_broker
 
     @staticmethod
@@ -220,7 +220,7 @@ class SendScheduleChangeNotifications:
                 mailing_id=schedule_change.mailing_id,
                 total_count=len(notification_events),
             )
-            await self.trx.commit()
+            await self.uow.commit()
 
         await asyncio.gather(
             *(self.events_broker.publish(e) for e in notification_events)

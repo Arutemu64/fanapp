@@ -5,7 +5,7 @@ from pydantic import BaseModel, EmailStr, Field
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.session_store import SessionStore
 from fanfan.application.ports.token_registry import TokenRegistry
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.auth import InvalidOtpCode
 from fanfan.core.exceptions.users import UserNotFound
 from fanfan.core.services.email_login import (
@@ -25,12 +25,12 @@ class LoginWithCode:
         self,
         user_repo: UserRepository,
         token_registry: TokenRegistry,
-        trx: TransactionManager,
+        uow: UnitOfWork,
         session_store: SessionStore,
     ):
         self.user_repo = user_repo
         self.token_registry = token_registry
-        self.trx = trx
+        self.uow = uow
         self.session_store = session_store
 
     async def __call__(self, data: LoginWithCodeInput) -> str:
@@ -55,6 +55,6 @@ class LoginWithCode:
         if user.email_verified_at is None:
             user.email_verified_at = datetime.now(UTC)
             await self.user_repo.save(user)
-            await self.trx.commit()
+            await self.uow.commit()
 
         return await self.session_store.create_session(user.id)

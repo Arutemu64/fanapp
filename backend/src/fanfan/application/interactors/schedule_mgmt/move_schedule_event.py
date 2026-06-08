@@ -5,7 +5,6 @@ from pydantic import BaseModel
 from fanfan.application.interactors.schedule_mgmt.common import (
     ANNOUNCE_LIMIT_NAME,
 )
-from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.rate_lock import RateLockFactory
 from fanfan.application.ports.repositories.app_settings import AppSettingsRepository
 from fanfan.application.ports.repositories.mailings import MailingRepository
@@ -16,7 +15,7 @@ from fanfan.application.ports.repositories.schedule_events import (
     ScheduleEventRepository,
 )
 from fanfan.application.ports.repositories.users import UserRepository
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
 from fanfan.core.exceptions.rate_limit import RateLimitCooldown
@@ -48,10 +47,9 @@ class MoveScheduleEvent:
         settings_repo: AppSettingsRepository,
         changes_repo: ScheduleChangeRepository,
         perm_service: PermissionService,
-        trx: TransactionManager,
+        uow: UnitOfWork,
         current_user_provider: CurrentUserProvider,
         rate_lock_factory: RateLockFactory,
-        events_broker: EventBroker,
     ) -> None:
         self.schedule_repo = schedule_repo
         self.user_repo = user_repo
@@ -59,10 +57,9 @@ class MoveScheduleEvent:
         self.settings_repo = settings_repo
         self.changes_repo = changes_repo
         self.perm_service = perm_service
-        self.trx = trx
+        self.uow = uow
         self.current_user_provider = current_user_provider
         self.rate_lock_factory = rate_lock_factory
-        self.events_broker = events_broker
 
     async def __call__(self, data: MoveScheduleEventInput) -> None:
         current_user = await self.current_user_provider.require_user()
@@ -118,9 +115,7 @@ class MoveScheduleEvent:
                 await self.changes_repo.add(schedule_change)
 
                 # Commit and proceed
-                await self.trx.commit()
-                for event in schedule_change.pull_events():
-                    await self.events_broker.publish(event)
+                await self.uow.commit()
 
                 logger.info(
                     "Event %s was placed after event %s by user %s",

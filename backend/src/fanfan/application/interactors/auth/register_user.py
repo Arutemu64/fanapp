@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 
 from fanfan.application.ports.repositories.users import UserRepository
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.security import SecurityService
 from fanfan.application.services.user import UserService
 from fanfan.core.exceptions.users import UserAlreadyExists
@@ -21,12 +21,12 @@ class RegisterUser:
         self,
         security: SecurityService,
         user_repo: UserRepository,
-        trx: TransactionManager,
+        uow: UnitOfWork,
         user_service: UserService,
     ):
         self.security = security
         self.user_repo = user_repo
-        self.trx = trx
+        self.uow = uow
         self.user_service = user_service
 
     async def __call__(self, data: RegisterUserInput) -> None:
@@ -50,8 +50,8 @@ class RegisterUser:
         )
         try:
             await self.user_repo.add(new_user)
-            await self.trx.commit()
+            await self.uow.commit()
         except UserAlreadyExists:
             # Lost a race with a concurrent registration for the same email.
             # Keep the response neutral instead of leaking a 409 conflict.
-            await self.trx.rollback()
+            await self.uow.rollback()

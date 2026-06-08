@@ -11,7 +11,7 @@ from fanfan.application.ports.queries import ScheduleChangeQuery
 from fanfan.application.ports.repositories import (
     ScheduleEventRepository,
 )
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.schedule import ScheduleChangeCreated
 from fanfan.core.exceptions.schedule import EventNotFound
 from fanfan.core.models.schedule_event import ScheduleEvent
@@ -58,7 +58,7 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_repo = await dishka_request.get(ScheduleEventRepository)
     changes_query = await dishka_request.get(ScheduleChangeQuery)
-    trx = await dishka_request.get(TransactionManager)
+    uow = await dishka_request.get(UnitOfWork)
     events_broker = await dishka_request.get(FakeEventBroker)
     id_provider = await dishka_request.get(FakeIdProvider)
     id_provider.set_current_user_id(schedule_editor.id)
@@ -87,7 +87,7 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     )
     await schedule_repo.add(previous_current_event)
     await schedule_repo.add(new_current_event)
-    await trx.commit()
+    await uow.commit()
 
     await interactor(SetCurrentScheduleEventInput(event_id=new_current_event.id))
 
@@ -124,14 +124,14 @@ async def test_set_current_event_can_unset_current_event(
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_repo = await dishka_request.get(ScheduleEventRepository)
     changes_query = await dishka_request.get(ScheduleChangeQuery)
-    trx = await dishka_request.get(TransactionManager)
+    uow = await dishka_request.get(UnitOfWork)
     events_broker = await dishka_request.get(FakeEventBroker)
     id_provider = await dishka_request.get(FakeIdProvider)
     id_provider.set_current_user_id(schedule_editor.id)
 
     previous_current_event = _schedule_event(1, "Текущее событие", 1, is_current=True)
     await schedule_repo.add(previous_current_event)
-    await trx.commit()
+    await uow.commit()
 
     await interactor(SetCurrentScheduleEventInput(event_id=None))
 
@@ -163,14 +163,14 @@ async def test_set_current_event_raises_when_event_not_found(
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_repo = await dishka_request.get(ScheduleEventRepository)
     changes_query = await dishka_request.get(ScheduleChangeQuery)
-    trx = await dishka_request.get(TransactionManager)
+    uow = await dishka_request.get(UnitOfWork)
     events_broker = await dishka_request.get(FakeEventBroker)
     id_provider = await dishka_request.get(FakeIdProvider)
     id_provider.set_current_user_id(schedule_editor.id)
 
     previous_current_event = _schedule_event(1, "Текущее событие", 1, is_current=True)
     await schedule_repo.add(previous_current_event)
-    await trx.commit()
+    await uow.commit()
 
     unknown_event_id = ScheduleEventId(UUID("00000000-0000-0000-0000-000000000000"))
 
@@ -178,7 +178,7 @@ async def test_set_current_event_raises_when_event_not_found(
         await interactor(SetCurrentScheduleEventInput(event_id=unknown_event_id))
 
     # Откатываем сброшенный current из незавершённой транзакции после ошибки.
-    await trx.rollback()
+    await uow.rollback()
 
     saved_previous_event = await schedule_repo.get_by_id(previous_current_event.id)
     assert saved_previous_event is not None

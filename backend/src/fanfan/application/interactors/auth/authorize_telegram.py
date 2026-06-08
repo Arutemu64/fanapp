@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from fanfan.application.ports.repositories.social_ids import SocialIdentityRepository
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.session_store import SessionStore
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.user import UserService
 from fanfan.core.models.social_account import SocialIdentity
 from fanfan.core.models.user import User
@@ -21,12 +21,12 @@ class AuthorizeTelegram:
         self,
         user_repo: UserRepository,
         social_id_repo: SocialIdentityRepository,
-        trx: TransactionManager,
+        uow: UnitOfWork,
         user_service: UserService,
         session_store: SessionStore,
     ) -> None:
         self.social_id_repo = social_id_repo
-        self.trx = trx
+        self.uow = uow
         self.user_repo = user_repo
         self.user_service = user_service
         self.session_store = session_store
@@ -47,7 +47,7 @@ class AuthorizeTelegram:
             hashed_password=None,
         )
         await self.user_repo.add(user)
-        await self.trx.flush()
+        await self.uow.flush()
         social_id = SocialIdentity(
             id=generate_social_identity_id(),
             user_id=user.id,
@@ -55,5 +55,5 @@ class AuthorizeTelegram:
             provider_id=str(data.user_id),
         )
         await self.social_id_repo.add(social_id)
-        await self.trx.commit()
+        await self.uow.commit()
         return await self.session_store.create_session(user.id)

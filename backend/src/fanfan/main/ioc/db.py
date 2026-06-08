@@ -30,7 +30,7 @@ from fanfan.adapters.db.gateways.tickets import SqlTicketGateway
 from fanfan.adapters.db.gateways.user_flags import SqlUserFlagGateway
 from fanfan.adapters.db.gateways.users import SqlUserGateway
 from fanfan.adapters.db.gateways.votes import SqlVoteGateway
-from fanfan.adapters.db.uow import SqlTransactionManager
+from fanfan.adapters.db.uow import SqlUnitOfWork
 from fanfan.application.ports.queries import (
     MailingQuery,
     NominationQuery,
@@ -63,7 +63,7 @@ from fanfan.application.ports.repositories.tickets import TicketRepository
 from fanfan.application.ports.repositories.user_flags import UserFlagRepository
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.repositories.votes import VoteRepository
-from fanfan.application.ports.trx import TransactionManager
+from fanfan.application.ports.uow import UnitOfWork
 
 
 class DbProvider(Provider):
@@ -85,9 +85,7 @@ class DbProvider(Provider):
         async with pool() as session:
             yield session
 
-    trx = provide(
-        SqlTransactionManager, provides=TransactionManager, scope=Scope.REQUEST
-    )
+    uow = provide(SqlUnitOfWork, provides=UnitOfWork, scope=Scope.REQUEST)
 
 
 class SqlGatewaysProvider(Provider):

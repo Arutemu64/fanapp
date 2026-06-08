@@ -9,7 +9,7 @@
 * **ORM Models**: SQLAlchemy database models live strictly under `adapters/db/models/`.
 * **Repositories/Gateways**: Concrete SQL queries, database reads, and inserts are isolated in gateway implementations under `adapters/db/gateways/` (one per aggregate/concern). These implement the abstract `repositories/` and `queries/` ports.
 * **Mappers**: ORM model ↔ domain entity translation lives in `adapters/db/mappers/` (one per aggregate). Gateways must map ORM rows to pure domain objects (and back) through these — never leak ORM models out of the adapter layer. When you add a new persisted aggregate, you typically add a model, a mapper, and a gateway together.
-* **Transaction Management**: Database commits and rollbacks in use cases are managed strictly by injecting `trx: TransactionManager` (from `application/ports/trx`) and invoking `await self.trx.commit()`. Do not call raw SQLAlchemy session commits (`session.commit()`) inside interactors.
+* **Transaction Management (Unit of Work)**: Database commits and rollbacks in use cases are managed strictly by injecting `uow: UnitOfWork` (from `application/ports/uow.py`) and invoking `await self.uow.commit()`. Do not call raw SQLAlchemy session commits (`session.commit()`) inside interactors. The `UnitOfWork` also tracks aggregates and dispatches their domain events on commit (see [Domain Events](#domain-events)) — gateways call `self.uow.register(aggregate)` inside their `add`/`get` methods so the interactor never pulls or publishes those events by hand.
 * **Migrations**: Generate and apply database migrations strictly via Alembic CLI helpers (`just backend-generate <name>` and `just backend-migrate`).
 
 ## Dependency Injection (Dishka)
@@ -35,7 +35,7 @@ Events are published via `EventBroker` (port: `application/ports/events_broker.p
 
 ### Events raised by aggregates (preferred)
 
-When an event directly records a state change on an aggregate, raise it inside the aggregate method using `record_event()`. The interactor then dispatches all collected events after the commit via `pull_events()`:
+When an event directly records a state change on an aggregate, raise it inside the aggregate method using `record_event()`. The interactor does **not** publish these — the `UnitOfWork` dispatches them automatically. The gateway registers the aggregate when it is added or loaded, and `uow.commit()` publishes the recorded events *after* the transaction is durable:
 
 ```python
 # core/models/vote.py
@@ -49,19 +49,25 @@ class Vote(AggregateRoot):
     def delete(self) -> None:
         self.record_event(VoteDeleted(vote_id=self.id, ...))
 
-# application/interactors/voting/add_vote.py
+# adapters/db/gateways/votes.py — register on add/get
+async def add(self, vote: Vote) -> None:
+    self.session.add(self.mapper.from_model(vote))
+    await self.session.flush(...)
+    self.uow.register(vote)
+
+# application/interactors/voting/add_vote.py — no manual publish
 vote = Vote.create(user_id=..., participant_id=...)
 await self.vote_repo.add(vote)
-await self.trx.commit()
-for event in vote.pull_events():
-    await self.events_broker.publish(event)
+await self.uow.commit()  # commits, then publishes VoteCreated
 ```
 
-`ScheduleChange` and `Vote` follow this pattern. The `pull_events()` call clears the aggregate's internal event list, so events are dispatched exactly once.
+`Vote` and `ScheduleChange` follow this pattern; their gateways register the aggregate in every `add`/`get` method. The `UnitOfWork` pulls events from each registered aggregate exactly once (the internal event list is cleared on dispatch) and publishes strictly **after** the DB commit, so a rolled-back transaction never emits events. When you add a new aggregate that records events, register it in its gateway's `add`/`get` methods — that is the only wiring required.
 
-### Events raised directly by interactors
+> Note: this is still a dual write (DB commit, then in-process publish). If the process dies between the two, events are lost. The `UnitOfWork` is the natural place to later adopt a transactional outbox if at-least-once delivery is ever required.
 
-Some events are not tied to a single aggregate's state change — they are application-level triggers to infrastructure (e.g. "queue a notification for these users"). These may be constructed and published directly in the interactor without going through an aggregate:
+### Events raised directly by interactors (service events)
+
+Some events are not tied to a single aggregate's committed state change — they are application-level triggers to infrastructure (e.g. "queue a notification for these users", "send an email code"). These are constructed and published directly in the interactor via an injected `EventBroker`, and are **not** routed through the `UnitOfWork`:
 
 ```python
 # application/interactors/notifications/send_broadcast.py
@@ -70,7 +76,11 @@ await self.events_broker.publish(
 )
 ```
 
-`NotificationQueued`, `BroadcastQueued`, and `MailingCancelled` follow this pattern.
+`NotificationQueued`, `BroadcastQueued`, and `MailingCancelled` follow this pattern, as do the user email-code events `EmailLoginCodeRequested` (`request_login_code.py`) and `EmailConfirmationCodeRequested` when sent as a standalone "resend a code" (`request_email_code.py`). These represent "send a code" commands, not aggregate state changes — `request_login_code` / `request_email_code` change no persistent state and may run with no commit at all — so they are **not** recorded on the `User` aggregate. The interactor constructs and publishes them directly via `EventBroker`.
+
+> Keep domain events honest: a domain event must record an actual state change (past tense). Do **not** call `record_event()` for an action that mutates nothing — model it as a service event published by the interactor instead. `User.request_email_change()` is the counter-example that *is* a domain event: it sets `pending_email`, so it records `EmailConfirmationCodeRequested` and that event flows through `uow.commit()` (the `SqlUserGateway` registers every `User` it adds or loads).
+
+Rule of thumb: inject `EventBroker` into an interactor **only** for service events; aggregate state-change events flow through `uow.commit()`.
 
 ## Rate Limiting
 
