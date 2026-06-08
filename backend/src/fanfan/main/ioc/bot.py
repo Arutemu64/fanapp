@@ -5,6 +5,7 @@ from dishka import Provider, Scope, provide
 
 from fanfan.adapters.config.models import EnvConfig
 from fanfan.adapters.tgbot.notifier import TelegramNotifier
+from fanfan.application.ports.notifier import TelegramNotifierPort
 from fanfan.presentation.tgbot.config import TelegramConfig
 
 
@@ -22,4 +23,6 @@ class BotProvider(Provider):
             default=DefaultBotProperties(parse_mode=ParseMode.HTML),
         )
 
-    telegram_notifier = provide(TelegramNotifier, scope=scope.REQUEST)
+    telegram_notifier = provide(
+        TelegramNotifier, scope=Scope.REQUEST, provides=TelegramNotifierPort
+    )
