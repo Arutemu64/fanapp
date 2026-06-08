@@ -7,7 +7,6 @@ from fanfan.application.services.tickets import TicketService
 from fanfan.application.services.ticketscloud import TCloudService
 from fanfan.application.services.user import UserService
 from fanfan.application.services.voting import VotingService
-from fanfan.core.services.email_login import EmailService
 
 
 class ServicesProvider(Provider):
@@ -16,7 +15,6 @@ class ServicesProvider(Provider):
     tickets = provide(TicketService)
     voting = provide(VotingService)
     security = provide(SecurityService)
-    email = provide(EmailService)
     current_user = provide(CurrentUserProvider)
     perm = provide(PermissionService)
     user = provide(UserService)

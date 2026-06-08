@@ -11,7 +11,7 @@ from fanfan.application.ports.token_registry import TokenRegistry
 from fanfan.core.exceptions.users import UserHasNoEmail, UserNotFound
 from fanfan.core.services.email_login import (
     EMAIL_LOGIN_CODE_MAX_AGE_SECONDS,
-    EmailService,
+    generate_numeric_code,
 )
 from fanfan.core.utils.email import normalize_email
 from fanfan.core.vo.user import UserId
@@ -25,7 +25,6 @@ class SendLoginCodeEmail:
     def __init__(
         self,
         user_repo: UserRepository,
-        email_service: EmailService,
         email_sender: EmailSender,
         jinja: JinjaEnvironment,
         token_registry: TokenRegistry,
@@ -33,7 +32,6 @@ class SendLoginCodeEmail:
         self.email_sender = email_sender
         self.jinja = jinja
         self.user_repo = user_repo
-        self.email_service = email_service
         self.token_registry = token_registry
 
     async def __call__(self, data: SendLoginCodeEmailInput) -> None:
@@ -44,7 +42,7 @@ class SendLoginCodeEmail:
             raise UserHasNoEmail
         normalized_email = normalize_email(user.email)
 
-        code = self.email_service.generate_login_code(user_id=user.id)
+        code = generate_numeric_code()
         await self.token_registry.issue_email_login_code(
             user_id=user.id,
             email=normalized_email,

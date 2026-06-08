@@ -10,8 +10,6 @@ class VotingService:
         self.settings_repo = settings_repo
 
     async def get_voting_state(self, user: User, ticket: Ticket | None) -> VotingStatus:
-        if user is None:
-            return VotingStatus.NOT_AUTHENTICATED
         if (ticket is None) or (ticket.used_by_user_id != user.id):
             return VotingStatus.NO_TICKET
         settings = await self.settings_repo.get()
