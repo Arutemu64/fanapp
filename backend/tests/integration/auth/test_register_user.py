@@ -1,17 +1,15 @@
 import pytest
 from dishka import AsyncContainer
-from fanfan.application.services.security import SecurityService
 
 from fanfan.application.interactors.auth.register_user import (
     RegisterUser,
     RegisterUserInput,
 )
+from fanfan.application.ports.password_hasher import PasswordHasher
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.core.exceptions.users import UserAlreadyExists
 from fanfan.core.models.user import User
 from fanfan.core.vo.user import Username, UserRole, generate_user_id
-from tests.fakes.event_broker import FakeEventBroker
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -19,12 +17,12 @@ pytestmark = [
 ]
 
 
-async def test_register_user_creates_visitor_with_password_and_publishes_event(
+async def test_register_user_creates_visitor_with_hashed_password(
     dishka_request: AsyncContainer,
 ):
     interactor = await dishka_request.get(RegisterUser)
     user_repo = await dishka_request.get(UserRepository)
-    security = await dishka_request.get(SecurityService)
+    password_hasher = await dishka_request.get(PasswordHasher)
 
     await interactor(
         RegisterUserInput(email="New.Visitor@Example.COM", password="strong-password")
@@ -39,16 +37,17 @@ async def test_register_user_creates_visitor_with_password_and_publishes_event(
     assert saved_user.email_verified_at is None
     assert saved_user.hashed_password is not None
     assert saved_user.hashed_password != "strong-password"
-    assert security.verify_password("strong-password", saved_user.hashed_password)
+    assert password_hasher.verify("strong-password", saved_user.hashed_password)
 
 
-async def test_register_user_raises_when_email_already_exists(
+async def test_register_user_with_existing_email_is_silent_noop(
     dishka_request: AsyncContainer,
 ):
+    # Registering an already-used email must NOT raise (avoids account
+    # enumeration) and must NOT touch the existing account (avoids takeover).
     interactor = await dishka_request.get(RegisterUser)
     user_repo = await dishka_request.get(UserRepository)
     uow = await dishka_request.get(UnitOfWork)
-    events_broker = await dishka_request.get(FakeEventBroker)
 
     existing_user = User(
         id=generate_user_id(),
@@ -60,22 +59,23 @@ async def test_register_user_raises_when_email_already_exists(
     await user_repo.add(existing_user)
     await uow.commit()
 
-    with pytest.raises(UserAlreadyExists):
-        await interactor(
-            RegisterUserInput(email="Existing@Example.COM", password="strong-password")
-        )
+    await interactor(
+        RegisterUserInput(email="Existing@Example.COM", password="strong-password")
+    )
 
-    assert (await user_repo.get_by_email("existing@example.com")) == existing_user
-    assert events_broker.published_events == []
+    saved_user = await user_repo.get_by_email("existing@example.com")
+    assert saved_user is not None
+    assert saved_user.id == existing_user.id
+    # Password was never set on the existing account, so it must stay empty.
+    assert saved_user.hashed_password is None
 
 
-async def test_register_user_raises_when_email_is_pending_on_another_user(
+async def test_register_user_with_email_pending_on_another_user_is_silent_noop(
     dishka_request: AsyncContainer,
 ):
     interactor = await dishka_request.get(RegisterUser)
     user_repo = await dishka_request.get(UserRepository)
     uow = await dishka_request.get(UnitOfWork)
-    events_broker = await dishka_request.get(FakeEventBroker)
 
     existing_user = User(
         id=generate_user_id(),
@@ -88,12 +88,13 @@ async def test_register_user_raises_when_email_is_pending_on_another_user(
     await user_repo.add(existing_user)
     await uow.commit()
 
-    with pytest.raises(UserAlreadyExists):
-        await interactor(
-            RegisterUserInput(email="Reserved@Example.COM", password="strong-password")
-        )
+    await interactor(
+        RegisterUserInput(email="Reserved@Example.COM", password="strong-password")
+    )
 
-    assert (
-        await user_repo.get_by_pending_email("reserved@example.com")
-    ) == existing_user
-    assert events_broker.published_events == []
+    # The address is reserved as another account's pending email, so no new
+    # account is created and the reservation is left untouched.
+    assert (await user_repo.get_by_email("reserved@example.com")) is None
+    reserved_owner = await user_repo.get_by_pending_email("reserved@example.com")
+    assert reserved_owner is not None
+    assert reserved_owner.id == existing_user.id
