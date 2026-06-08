@@ -1,5 +1,6 @@
 import pytest
 from dishka import AsyncContainer
+from fanfan.application.services.security import SecurityService
 
 from fanfan.application.interactors.auth.register_user import (
     RegisterUser,
@@ -7,7 +8,6 @@ from fanfan.application.interactors.auth.register_user import (
 )
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.application.services.security import SecurityService
 from fanfan.core.exceptions.users import UserAlreadyExists
 from fanfan.core.models.user import User
 from fanfan.core.vo.user import Username, UserRole, generate_user_id
