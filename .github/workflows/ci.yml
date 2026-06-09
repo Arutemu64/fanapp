@@ -1,0 +1,89 @@
+name: CI
+
+# Run the same quality gates we run locally (see justfile / .pre-commit-config.yaml)
+# on every pull request and on pushes to main.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# If new commits are pushed to the same branch/PR while a run is in progress,
+# cancel the older run so we only spend CI minutes on the latest code.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (lint, types, tests)
+    runs-on: ubuntu-latest
+    # Docker is preinstalled and running on ubuntu-latest, which is all the
+    # testcontainers-based integration tests (Postgres + Redis) need.
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      # CI runners can block the testcontainers Ryuk reaper's socket; the
+      # ephemeral VM is thrown away after the job, so cleanup isn't needed.
+      TESTCONTAINERS_RYUK_DISABLED: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          # Cache invalidates when the backend lockfile changes.
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install dependencies
+        run: uv sync --all-groups --frozen
+
+      # Lint and format are check-only here (no --fix / no rewrite): CI must
+      # fail on violations, not silently "fix" them like the local justfile does.
+      - name: Ruff lint
+        run: uv run ruff check src/fanfan tests --respect-gitignore
+
+      - name: Ruff format check
+        run: uv run ruff format --check src/fanfan tests --respect-gitignore
+
+      - name: Type check (ty)
+        run: uv run ty check src/fanfan
+
+      # Runs unit and integration tests. Integration tests start their own
+      # Postgres/Redis containers via testcontainers fixtures.
+      - name: Tests
+        run: uv run pytest tests
+
+  frontend:
+    name: Frontend (lint, check, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.1
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (prettier + eslint)
+        run: pnpm lint
+
+      - name: Svelte check
+        run: pnpm check
+
+      - name: Build
+        run: pnpm build

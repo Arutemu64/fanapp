@@ -101,6 +101,15 @@ All commands run from the repo root via `just`.
 
 > The frontend talks to the backend through generated types in `frontend/src/lib/api/v1.d.ts`. Whenever backend endpoints or schemas change, run `just frontend-generate-api` to keep the contract in sync.
 
+## Continuous integration
+
+Every pull request and every push to `main` runs [`.github/workflows/ci.yml`](.github/workflows/ci.yml) on GitHub Actions. It mirrors the local quality gates:
+
+- **Backend** — Ruff lint + format check, `ty` type check, and the full `pytest` suite. Integration tests spin up Postgres and Redis automatically via testcontainers (Docker is preinstalled on the runner).
+- **Frontend** — Prettier + ESLint, `svelte-check`, and a production build.
+
+CI is check-only: unlike `just backend-lint`, it never auto-fixes — a violation fails the run. Run the local `just` commands before pushing to get the same result faster.
+
 ## External integrations
 
 Optional, enabled via `.env`:
