@@ -1,12 +1,16 @@
+import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
 
+import sentry_sdk
 from dishka import AsyncContainer
 
 from fanfan.application.interactors.cosplay2.sync_cosplay2 import SyncCosplay2
 from fanfan.application.interactors.ticketscloud.sync_tcloud import SyncTCloud
 from fanfan.presentation.scheduler.config import SchedulerConfig
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,8 +41,17 @@ def make_interactor_job(
     # Each run opens a fresh REQUEST scope and resolves the interactor,
     # mirroring the CLI commands (presentation/cli/commands).
     async def job() -> None:
-        async with container() as request_container:
-            interactor = await request_container.get(interactor_type)
-            await interactor()
+        try:
+            async with container() as request_container:
+                interactor = await request_container.get(interactor_type)
+                await interactor()
+        except Exception:
+            # Capture explicitly so background failures are always reported to
+            # Sentry with context, instead of relying on APScheduler's logging
+            # being picked up indirectly. Re-raise so APScheduler still records
+            # the missed run.
+            logger.exception("Scheduled job for '%s' failed", interactor_type.__name__)
+            sentry_sdk.capture_exception()
+            raise
 
     return job
