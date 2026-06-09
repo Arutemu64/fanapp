@@ -1,0 +1,35 @@
+# Production overlay: run prebuilt images from the GitHub Container Registry
+# (GHCR) instead of building from source on the server.
+#
+# Usage on the server (always together with the base file):
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile core --profile ops pull
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile core --profile ops up -d
+# (or simply `just deploy`).
+#
+# Pin a specific build for a reproducible deploy or a rollback by setting
+# IMAGE_TAG in .env, e.g. `IMAGE_TAG=sha-1a2b3c4`. Defaults to `latest`, which
+# the publish workflow moves to the newest build on `main`.
+#
+# `build: !reset null` drops the `build:` config inherited from the base file so
+# the server can never accidentally rebuild from source — it only ever pulls.
+# (Requires Docker Compose v2.24+ for the `!reset` tag.)
+services:
+  frontend:
+    image: ghcr.io/arutemu64/fanapp-frontend:${IMAGE_TAG:-latest}
+    build: !reset null
+
+  api:
+    image: ghcr.io/arutemu64/fanapp-backend:${IMAGE_TAG:-latest}
+    build: !reset null
+
+  faststream:
+    image: ghcr.io/arutemu64/fanapp-backend:${IMAGE_TAG:-latest}
+    build: !reset null
+
+  scheduler:
+    image: ghcr.io/arutemu64/fanapp-backend:${IMAGE_TAG:-latest}
+    build: !reset null
+
+  migration:
+    image: ghcr.io/arutemu64/fanapp-backend:${IMAGE_TAG:-latest}
+    build: !reset null

@@ -34,6 +34,8 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
 * **Backend**: FastAPI + PostgreSQL (SQLAlchemy + Alembic) + Redis + NATS (FastStream) | `uv`
 * **Command Runner**: `justfile` (Run from root):
   * `just run-dev` - Start full env via Docker Compose
+  * `just run-prod` - Build & run the prod images locally (test before shipping)
+  * `just deploy` - Server deploy: pull prebuilt GHCR images (`docker-compose.prod.yml`) & restart
   * `just backend-dev` / `just frontend-dev` - Start dev locally
   * `just backend-migrate` - Run Alembic migrations
   * `just backend-generate <name>` - Generate migration file

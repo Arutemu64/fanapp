@@ -110,6 +110,31 @@ Every pull request and every push to `main` runs [`.github/workflows/ci.yml`](.g
 
 CI is check-only: unlike `just backend-lint`, it never auto-fixes — a violation fails the run. Run the local `just` commands before pushing to get the same result faster.
 
+[`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml) additionally builds the backend and frontend images and pushes them to the GitHub Container Registry (GHCR) on pushes to `main` (which move the `latest` tag) and on `v*` tags. The `SENTRY_AUTH_TOKEN` repository secret is passed only to the frontend build (source-map upload); it is consumed in a discarded build stage and never ends up in the published image.
+
+## Deployment
+
+The server runs the **prebuilt** GHCR images instead of building from source — see [`docker-compose.prod.yml`](docker-compose.prod.yml). To test the exact same images locally first, build them from your working tree with `just run-prod` (no registry needed).
+
+One-time server setup:
+
+```sh
+docker login ghcr.io          # use a read-only PAT / deploy token, not a password
+cp .env.example .env          # fill in placeholders (see Getting started)
+# Put the VAPID keys in config/ and make them readable by the container user
+# (backend runs as uid 999):
+chmod 600 config/private_key.pem
+sudo chown 999:999 config/*.pem
+```
+
+Deploy (pulls the images and restarts, builds nothing on the host):
+
+```sh
+just deploy                   # docker compose ... -f docker-compose.prod.yml pull && up -d
+```
+
+By default `just deploy` tracks the latest `main` build. Pin a specific build (or roll back) by setting `IMAGE_TAG` in `.env`, e.g. `IMAGE_TAG=sha-1a2b3c4`. The server still needs the repo's compose files, `.env`, `config/` (Redis config + VAPID keys), and `backend/alembic.ini` on disk — only the application *build* moves to CI, not the runtime config.
+
 ## External integrations
 
 Optional, enabled via `.env`:
