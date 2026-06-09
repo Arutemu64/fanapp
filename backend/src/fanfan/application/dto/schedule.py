@@ -1,15 +1,7 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 from fanfan.core.vo.schedule_event import ScheduleEventId, ScheduleEventPublicNumber
 from fanfan.core.vo.subscription import SubscriptionId
-
-
-class ScheduleEventBaseDTO(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: ScheduleEventId
-    public_number: ScheduleEventPublicNumber
-    title: str
 
 
 class ScheduleEventSubscriptionDTO(BaseModel):
@@ -18,8 +10,6 @@ class ScheduleEventSubscriptionDTO(BaseModel):
 
 
 class ScheduleEventFullDTO(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     id: ScheduleEventId
     public_number: ScheduleEventPublicNumber
     title: str

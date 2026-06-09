@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 from fanfan.core.vo.schedule_event import ScheduleEventId, ScheduleEventPublicNumber
 from fanfan.core.vo.subscription import SubscriptionId
@@ -17,8 +17,6 @@ class SubscriptionEventDTO(BaseModel):
 
 
 class SubscriptionFullDTO(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     id: SubscriptionId
     user_id: UserId
     counter: int
