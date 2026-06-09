@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
@@ -7,8 +7,6 @@ from fanfan.core.vo.user import UserId
 
 
 class ScheduleChangeEventDTO(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     id: ScheduleEventId
     public_number: ScheduleEventPublicNumber
     title: str
@@ -16,15 +14,11 @@ class ScheduleChangeEventDTO(BaseModel):
 
 
 class ScheduleChangeUserDTO(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     id: UserId
     username: str | None
 
 
 class ScheduleChangeFullDTO(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     id: ScheduleChangeId
     type: ScheduleChangeType
     mailing_id: MailingId | None
