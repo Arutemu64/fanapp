@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from uuid import UUID
 
 import pytest
@@ -25,7 +26,6 @@ from fanfan.core.vo.schedule_event import (
     generate_schedule_event_id,
 )
 from tests.fakes.event_broker import FakeEventBroker
-from tests.fakes.id_provider import FakeIdProvider
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -59,15 +59,15 @@ def _schedule_event(
 async def test_set_current_event_replaces_previous_current_and_records_change(
     dishka_request: AsyncContainer,
     schedule_editor: User,
+    login: Callable[[User], None],
+    events_broker: FakeEventBroker,
+    uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_repo = await dishka_request.get(ScheduleEventRepository)
     changes_query = await dishka_request.get(ScheduleChangeQuery)
     mailing_repo = await dishka_request.get(MailingRepository)
-    uow = await dishka_request.get(UnitOfWork)
-    events_broker = await dishka_request.get(FakeEventBroker)
-    id_provider = await dishka_request.get(FakeIdProvider)
-    id_provider.set_current_user_id(schedule_editor.id)
+    login(schedule_editor)
 
     previous_current_event = _schedule_event(
         1, "Старое текущее событие", 1, is_current=True
@@ -120,14 +120,14 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
 async def test_set_current_event_sets_current_when_none_was_current(
     dishka_request: AsyncContainer,
     schedule_editor: User,
+    login: Callable[[User], None],
+    events_broker: FakeEventBroker,
+    uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_repo = await dishka_request.get(ScheduleEventRepository)
     changes_query = await dishka_request.get(ScheduleChangeQuery)
-    uow = await dishka_request.get(UnitOfWork)
-    events_broker = await dishka_request.get(FakeEventBroker)
-    id_provider = await dishka_request.get(FakeIdProvider)
-    id_provider.set_current_user_id(schedule_editor.id)
+    login(schedule_editor)
 
     # Ни одно событие ещё не отмечено текущим.
     event = _schedule_event(1, "Первое текущее событие", 1)
@@ -159,14 +159,14 @@ async def test_set_current_event_sets_current_when_none_was_current(
 async def test_set_current_event_can_unset_current_event(
     dishka_request: AsyncContainer,
     schedule_editor: User,
+    login: Callable[[User], None],
+    events_broker: FakeEventBroker,
+    uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_repo = await dishka_request.get(ScheduleEventRepository)
     changes_query = await dishka_request.get(ScheduleChangeQuery)
-    uow = await dishka_request.get(UnitOfWork)
-    events_broker = await dishka_request.get(FakeEventBroker)
-    id_provider = await dishka_request.get(FakeIdProvider)
-    id_provider.set_current_user_id(schedule_editor.id)
+    login(schedule_editor)
 
     previous_current_event = _schedule_event(1, "Текущее событие", 1, is_current=True)
     await schedule_repo.add(previous_current_event)
@@ -198,14 +198,14 @@ async def test_set_current_event_can_unset_current_event(
 async def test_set_current_event_raises_when_event_not_found(
     dishka_request: AsyncContainer,
     schedule_editor: User,
+    login: Callable[[User], None],
+    events_broker: FakeEventBroker,
+    uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_repo = await dishka_request.get(ScheduleEventRepository)
     changes_query = await dishka_request.get(ScheduleChangeQuery)
-    uow = await dishka_request.get(UnitOfWork)
-    events_broker = await dishka_request.get(FakeEventBroker)
-    id_provider = await dishka_request.get(FakeIdProvider)
-    id_provider.set_current_user_id(schedule_editor.id)
+    login(schedule_editor)
 
     previous_current_event = _schedule_event(1, "Текущее событие", 1, is_current=True)
     await schedule_repo.add(previous_current_event)
@@ -229,15 +229,15 @@ async def test_set_current_event_raises_when_event_not_found(
 async def test_set_current_event_without_permission_raises_access_denied(
     dishka_request: AsyncContainer,
     visitor: User,
+    login: Callable[[User], None],
+    events_broker: FakeEventBroker,
+    uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_repo = await dishka_request.get(ScheduleEventRepository)
     changes_query = await dishka_request.get(ScheduleChangeQuery)
-    uow = await dishka_request.get(UnitOfWork)
-    events_broker = await dishka_request.get(FakeEventBroker)
-    id_provider = await dishka_request.get(FakeIdProvider)
     # У обычного посетителя нет права SCHEDULE_MANAGE.
-    id_provider.set_current_user_id(visitor.id)
+    login(visitor)
 
     event = _schedule_event(1, "Событие", 1)
     await schedule_repo.add(event)
@@ -256,14 +256,14 @@ async def test_set_current_event_without_permission_raises_access_denied(
 async def test_set_current_event_twice_in_a_row_raises_too_fast(
     dishka_request: AsyncContainer,
     schedule_editor: User,
+    login: Callable[[User], None],
+    events_broker: FakeEventBroker,
+    uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_repo = await dishka_request.get(ScheduleEventRepository)
     changes_query = await dishka_request.get(ScheduleChangeQuery)
-    uow = await dishka_request.get(UnitOfWork)
-    events_broker = await dishka_request.get(FakeEventBroker)
-    id_provider = await dishka_request.get(FakeIdProvider)
-    id_provider.set_current_user_id(schedule_editor.id)
+    login(schedule_editor)
 
     first_event = _schedule_event(1, "Первое событие", 1)
     second_event = _schedule_event(2, "Второе событие", 2)

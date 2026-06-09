@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterable
+from collections.abc import AsyncIterable, Callable
 from pathlib import Path
 
 import pytest
@@ -14,6 +14,8 @@ from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.notifier import PushNotifierPort, TelegramNotifierPort
 from fanfan.application.ports.realtime_gateway import RealtimeGateway
+from fanfan.application.ports.uow import UnitOfWork
+from fanfan.core.models.user import User
 from fanfan.main.ioc.db import DbProvider, SqlGatewaysProvider
 from fanfan.main.ioc.interactors import InteractorsProvider
 from fanfan.main.ioc.jinja import JinjaProvider
@@ -79,6 +81,36 @@ async def dishka() -> AsyncIterable[AsyncContainer]:
 async def dishka_request(dishka: AsyncContainer) -> AsyncIterable[AsyncContainer]:
     async with dishka() as request_container:
         yield request_container
+
+
+# --- Shared plumbing fixtures ---------------------------------------------
+# Almost every integration test resolves the same request-scoped plumbing:
+# the event broker it asserts on, the UnitOfWork it commits setup with, and
+# the acting user. Expose them as fixtures so each test body only spells out
+# the interactor under test and the repositories/queries it actually checks.
+# The feature-specific dependencies stay explicit via `dishka_request.get()`
+# so a reader can see at a glance what each test exercises.
+
+
+@pytest_asyncio.fixture
+async def events_broker(dishka_request: AsyncContainer) -> FakeEventBroker:
+    return await dishka_request.get(FakeEventBroker)
+
+
+@pytest_asyncio.fixture
+async def uow(dishka_request: AsyncContainer) -> UnitOfWork:
+    return await dishka_request.get(UnitOfWork)
+
+
+@pytest_asyncio.fixture
+async def login(dishka_request: AsyncContainer) -> Callable[[User], None]:
+    """Return a helper that sets the acting user for the request under test."""
+    id_provider = await dishka_request.get(FakeIdProvider)
+
+    def _login(user: User) -> None:
+        id_provider.set_current_user_id(user.id)
+
+    return _login
 
 
 @pytest_asyncio.fixture(autouse=True)

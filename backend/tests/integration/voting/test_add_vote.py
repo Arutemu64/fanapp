@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from uuid import uuid7
 
 import pytest
@@ -22,7 +23,6 @@ from fanfan.core.vo.participant import (
     generate_participant_id,
 )
 from tests.fakes.event_broker import FakeEventBroker
-from tests.fakes.id_provider import FakeIdProvider
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -33,16 +33,16 @@ pytestmark = [
 async def test_add_vote_creates_vote_and_publishes_event(
     dishka_request: AsyncContainer,
     visitor_with_ticket: User,
+    login: Callable[[User], None],
+    events_broker: FakeEventBroker,
+    uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
     settings_repo = await dishka_request.get(AppSettingsRepository)
     nomination_repo = await dishka_request.get(NominationRepository)
     participant_repo = await dishka_request.get(ParticipantRepository)
     vote_repo = await dishka_request.get(VoteRepository)
-    uow = await dishka_request.get(UnitOfWork)
-    events_broker = await dishka_request.get(FakeEventBroker)
-    id_provider = await dishka_request.get(FakeIdProvider)
-    id_provider.set_current_user_id(visitor_with_ticket.id)
+    login(visitor_with_ticket)
 
     # Голосование доступно только пользователю с привязанным билетом
     # и включённой настройкой фестиваля.
@@ -90,16 +90,16 @@ async def test_add_vote_creates_vote_and_publishes_event(
 async def test_add_vote_without_linked_ticket_raises_access_denied(
     dishka_request: AsyncContainer,
     visitor: User,
+    login: Callable[[User], None],
+    events_broker: FakeEventBroker,
+    uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
     settings_repo = await dishka_request.get(AppSettingsRepository)
     nomination_repo = await dishka_request.get(NominationRepository)
     participant_repo = await dishka_request.get(ParticipantRepository)
     vote_repo = await dishka_request.get(VoteRepository)
-    uow = await dishka_request.get(UnitOfWork)
-    events_broker = await dishka_request.get(FakeEventBroker)
-    id_provider = await dishka_request.get(FakeIdProvider)
-    id_provider.set_current_user_id(visitor.id)
+    login(visitor)
 
     settings = await settings_repo.get_for_update()
     settings.set_voting_enabled(True)
@@ -140,16 +140,16 @@ async def test_add_vote_without_linked_ticket_raises_access_denied(
 async def test_add_vote_when_voting_disabled_raises_access_denied(
     dishka_request: AsyncContainer,
     visitor_with_ticket: User,
+    login: Callable[[User], None],
+    events_broker: FakeEventBroker,
+    uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
     settings_repo = await dishka_request.get(AppSettingsRepository)
     nomination_repo = await dishka_request.get(NominationRepository)
     participant_repo = await dishka_request.get(ParticipantRepository)
     vote_repo = await dishka_request.get(VoteRepository)
-    uow = await dishka_request.get(UnitOfWork)
-    events_broker = await dishka_request.get(FakeEventBroker)
-    id_provider = await dishka_request.get(FakeIdProvider)
-    id_provider.set_current_user_id(visitor_with_ticket.id)
+    login(visitor_with_ticket)
 
     settings = await settings_repo.get_for_update()
     settings.set_voting_enabled(False)
@@ -190,13 +190,13 @@ async def test_add_vote_when_voting_disabled_raises_access_denied(
 async def test_add_vote_for_missing_participant_raises_not_found(
     dishka_request: AsyncContainer,
     visitor_with_ticket: User,
+    login: Callable[[User], None],
+    events_broker: FakeEventBroker,
+    uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
     settings_repo = await dishka_request.get(AppSettingsRepository)
-    uow = await dishka_request.get(UnitOfWork)
-    events_broker = await dishka_request.get(FakeEventBroker)
-    id_provider = await dishka_request.get(FakeIdProvider)
-    id_provider.set_current_user_id(visitor_with_ticket.id)
+    login(visitor_with_ticket)
 
     settings = await settings_repo.get_for_update()
     settings.set_voting_enabled(True)
@@ -212,16 +212,16 @@ async def test_add_vote_for_missing_participant_raises_not_found(
 async def test_add_vote_twice_in_same_nomination_raises_already_voted(
     dishka_request: AsyncContainer,
     visitor_with_ticket: User,
+    login: Callable[[User], None],
+    events_broker: FakeEventBroker,
+    uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
     settings_repo = await dishka_request.get(AppSettingsRepository)
     nomination_repo = await dishka_request.get(NominationRepository)
     participant_repo = await dishka_request.get(ParticipantRepository)
     vote_repo = await dishka_request.get(VoteRepository)
-    uow = await dishka_request.get(UnitOfWork)
-    events_broker = await dishka_request.get(FakeEventBroker)
-    id_provider = await dishka_request.get(FakeIdProvider)
-    id_provider.set_current_user_id(visitor_with_ticket.id)
+    login(visitor_with_ticket)
 
     settings = await settings_repo.get_for_update()
     settings.set_voting_enabled(True)
@@ -277,16 +277,16 @@ async def test_add_vote_twice_in_same_nomination_raises_already_voted(
 async def test_add_vote_allows_votes_in_different_nominations(
     dishka_request: AsyncContainer,
     visitor_with_ticket: User,
+    login: Callable[[User], None],
+    events_broker: FakeEventBroker,
+    uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
     settings_repo = await dishka_request.get(AppSettingsRepository)
     nomination_repo = await dishka_request.get(NominationRepository)
     participant_repo = await dishka_request.get(ParticipantRepository)
     vote_repo = await dishka_request.get(VoteRepository)
-    uow = await dishka_request.get(UnitOfWork)
-    events_broker = await dishka_request.get(FakeEventBroker)
-    id_provider = await dishka_request.get(FakeIdProvider)
-    id_provider.set_current_user_id(visitor_with_ticket.id)
+    login(visitor_with_ticket)
 
     settings = await settings_repo.get_for_update()
     settings.set_voting_enabled(True)

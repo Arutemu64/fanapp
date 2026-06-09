@@ -42,12 +42,12 @@ async def test_register_user_creates_visitor_with_hashed_password(
 
 async def test_register_user_with_existing_email_is_silent_noop(
     dishka_request: AsyncContainer,
+    uow: UnitOfWork,
 ):
     # Registering an already-used email must NOT raise (avoids account
     # enumeration) and must NOT touch the existing account (avoids takeover).
     interactor = await dishka_request.get(RegisterUser)
     user_repo = await dishka_request.get(UserRepository)
-    uow = await dishka_request.get(UnitOfWork)
 
     existing_user = User(
         id=generate_user_id(),
@@ -72,10 +72,10 @@ async def test_register_user_with_existing_email_is_silent_noop(
 
 async def test_register_user_with_email_pending_on_another_user_is_silent_noop(
     dishka_request: AsyncContainer,
+    uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(RegisterUser)
     user_repo = await dishka_request.get(UserRepository)
-    uow = await dishka_request.get(UnitOfWork)
 
     existing_user = User(
         id=generate_user_id(),
