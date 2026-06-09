@@ -66,22 +66,31 @@ echo "[session-start] Installing frontend dependencies (pnpm install)..."
 
 # codegraph is a global pnpm package. pnpm needs a global bin directory; point
 # it at the standard PNPM_HOME and add that to PATH so the `codegraph` binary is
-# reachable here and for the rest of the session. Pinned for reproducible
-# sessions; bump this version deliberately when you want a newer codegraph.
+# reachable here and for the rest of the session. We track @latest so every
+# session gets upstream fixes for this fast-moving (pre-1.0) tool.
+#
+# codegraph is an optional navigation aid, not part of building or running the
+# app, and it gates every web session from inside this hook. So the whole block
+# is best-effort: if a bad upstream release or a transient network error makes
+# the install or index fail, we log a warning and continue rather than abort
+# session setup. `set -e` would turn any failure here fatal, so the block runs
+# in an `if` (which suppresses -e) and each step degrades gracefully.
 echo "[session-start] Installing codegraph (code-intelligence CLI)..."
 export PNPM_HOME="$HOME/.local/share/pnpm"
 export PATH="$PNPM_HOME:$PATH"
-pnpm add -g @colbymchenry/codegraph@0.9.9
-
-# Build (or refresh) the code index so symbol/call-graph queries are ready. The
-# .codegraph/ database is gitignored, so a fresh container has no db and needs a
-# full `init`; if a db is already present (re-run/resume) an incremental `sync`
-# is enough.
-echo "[session-start] Building codegraph index..."
-if [ -f "$REPO_ROOT/.codegraph/codegraph.db" ]; then
-  codegraph sync "$REPO_ROOT"
+if pnpm add -g @colbymchenry/codegraph@latest; then
+  # Build (or refresh) the code index so symbol/call-graph queries are ready.
+  # The .codegraph/ database is gitignored, so a fresh container has no db and
+  # needs a full `init`; if a db is already present (re-run/resume) an
+  # incremental `sync` is enough.
+  echo "[session-start] Building codegraph index..."
+  if [ -f "$REPO_ROOT/.codegraph/codegraph.db" ]; then
+    codegraph sync "$REPO_ROOT" || echo "[session-start] WARN: codegraph sync failed; skipping."
+  else
+    codegraph init "$REPO_ROOT" || echo "[session-start] WARN: codegraph init failed; skipping."
+  fi
 else
-  codegraph init "$REPO_ROOT"
+  echo "[session-start] WARN: codegraph install failed; continuing without it."
 fi
 
 # Persist PATH additions so the upgraded uv (~/.local/bin) and the codegraph
