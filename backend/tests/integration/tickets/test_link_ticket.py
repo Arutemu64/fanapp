@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 import pytest
 from dishka import AsyncContainer
 
@@ -17,7 +19,6 @@ from fanfan.core.models.ticket import Ticket
 from fanfan.core.models.user import User
 from fanfan.core.vo.ticket import generate_ticket_id
 from fanfan.core.vo.user import UserRole
-from tests.fakes.id_provider import FakeIdProvider
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -25,12 +26,15 @@ pytestmark = [
 ]
 
 
-async def test_link_ticket_successfully(dishka_request: AsyncContainer, visitor: User):
+async def test_link_ticket_successfully(
+    dishka_request: AsyncContainer,
+    visitor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+):
     interactor = await dishka_request.get(LinkTicket)
     user_repo = await dishka_request.get(UserRepository)
     ticket_repo = await dishka_request.get(TicketRepository)
-    uow = await dishka_request.get(UnitOfWork)
-    id_provider = await dishka_request.get(FakeIdProvider)
 
     ticket = Ticket(
         id=generate_ticket_id(),
@@ -43,7 +47,7 @@ async def test_link_ticket_successfully(dishka_request: AsyncContainer, visitor:
     await ticket_repo.add(ticket)
     await uow.commit()
 
-    id_provider.set_current_user_id(visitor.id)
+    login(visitor)
 
     await interactor(LinkTicketInput(barcode="123456"))
 
@@ -59,24 +63,27 @@ async def test_link_ticket_successfully(dishka_request: AsyncContainer, visitor:
 
 
 async def test_link_ticket_raises_ticket_not_found(
-    dishka_request: AsyncContainer, visitor: User
+    dishka_request: AsyncContainer,
+    visitor: User,
+    login: Callable[[User], None],
 ):
     interactor = await dishka_request.get(LinkTicket)
-    id_provider = await dishka_request.get(FakeIdProvider)
 
-    id_provider.set_current_user_id(visitor.id)
+    login(visitor)
 
     with pytest.raises(TicketNotFound):
         await interactor(LinkTicketInput(barcode="123456"))
 
 
 async def test_link_ticket_raises_already_used(
-    dishka_request: AsyncContainer, visitor: User, schedule_editor: User
+    dishka_request: AsyncContainer,
+    visitor: User,
+    schedule_editor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(LinkTicket)
     ticket_repo = await dishka_request.get(TicketRepository)
-    uow = await dishka_request.get(UnitOfWork)
-    id_provider = await dishka_request.get(FakeIdProvider)
 
     ticket = Ticket(
         id=generate_ticket_id(),
@@ -89,19 +96,20 @@ async def test_link_ticket_raises_already_used(
     await ticket_repo.add(ticket)
     await uow.commit()
 
-    id_provider.set_current_user_id(visitor.id)
+    login(visitor)
 
     with pytest.raises(TicketAlreadyUsed):
         await interactor(LinkTicketInput(barcode="123456"))
 
 
 async def test_link_ticket_raises_when_user_already_has_ticket(
-    dishka_request: AsyncContainer, visitor_with_ticket: User
+    dishka_request: AsyncContainer,
+    visitor_with_ticket: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(LinkTicket)
     ticket_repo = await dishka_request.get(TicketRepository)
-    uow = await dishka_request.get(UnitOfWork)
-    id_provider = await dishka_request.get(FakeIdProvider)
 
     # New ticket to link
     ticket = Ticket(
@@ -115,7 +123,7 @@ async def test_link_ticket_raises_when_user_already_has_ticket(
     await ticket_repo.add(ticket)
     await uow.commit()
 
-    id_provider.set_current_user_id(visitor_with_ticket.id)
+    login(visitor_with_ticket)
 
     with pytest.raises(UserAlreadyHasTicketLinked):
         await interactor(LinkTicketInput(barcode="123456"))

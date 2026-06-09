@@ -57,19 +57,47 @@ instead of verifying behavior.
 
 A test resolves what it needs from `dishka_request`, sets up state through
 repositories, runs the interactor, and asserts on persisted state and
-published events:
+published events. The shared plumbing (acting user, event broker, unit of
+work) comes in as fixtures; the interactor under test and the
+repositories/queries it asserts on stay explicit so a reader sees the test's
+surface at a glance:
 
 ```python
 pytestmark = [pytest.mark.asyncio, pytest.mark.integration]
 
 async def test_add_vote_creates_vote_and_publishes_event(
-    dishka_request: AsyncContainer, visitor_with_ticket: User,
+    dishka_request: AsyncContainer,
+    visitor_with_ticket: User,
+    login: Callable[[User], None],
+    events_broker: FakeEventBroker,
+    uow: UnitOfWork,
 ):
+    login(visitor_with_ticket)              # set the acting user
     interactor = await dishka_request.get(AddVote)
-    events_broker = await dishka_request.get(FakeEventBroker)
+    vote_repo = await dishka_request.get(VoteRepository)
     ...
     assert events_broker.published_events == [VoteCreated(...)]
 ```
+
+`tests/integration/schedule_mgmt/test_set_current_event.py` is the reference
+example to copy from — happy paths, the permission failure, the rate-limit
+path, and an error path that rolls back.
+
+### Shared plumbing fixtures
+
+These live in `tests/integration/conftest.py` and exist only to remove the
+identical `dishka_request.get(...)` boilerplate every test would otherwise
+repeat:
+
+| Fixture | Type | Use |
+|---------|------|-----|
+| `login` | `Callable[[User], None]` | `login(user)` sets the acting user (wraps `FakeIdProvider`) |
+| `events_broker` | `FakeEventBroker` | assert on `events_broker.published_events` |
+| `uow` | `UnitOfWork` | commit setup state; `uow.rollback()` after an expected error |
+
+Rule of thumb: take the plumbing you need from fixtures, but resolve the
+**interactor under test and its repositories/queries explicitly** in the body
+— do not hide what a test exercises behind more fixtures.
 
 ## What is real and what is faked
 
@@ -132,7 +160,10 @@ providers plus test overrides:
 
 Reusable user fixtures (`visitor`, `visitor_with_ticket`, `schedule_editor`)
 live in `tests/fixtures/users.py` and are registered as a plugin in
-`tests/conftest.py`. Add shared setup there rather than copying it between tests.
+`tests/conftest.py`. The shared plumbing fixtures (`login`, `events_broker`,
+`uow`) live in `tests/integration/conftest.py` — see *Shared plumbing
+fixtures* above. Add shared setup in these places rather than copying it
+between tests.
 
 ## Adding a test — checklist
 
