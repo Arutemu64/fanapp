@@ -95,9 +95,7 @@ show_missing = true
 module-name = "fanfan"
 
 [project.scripts]
-migrate = "fanfan.main.migration:main"
-bot = "fanfan.main.bot:main"
 web = "fanfan.main.web:main"
-stream = "fanfan.main.stream:main"
+stream = "fanfan.main.faststream:main"
 cli = "fanfan.main.cli:main"
 scheduler = "fanfan.main.scheduler:main"
