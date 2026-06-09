@@ -4,6 +4,14 @@ import { env as publicEnv } from '$env/dynamic/public';
 
 const { PRIVATE_API_URL } = privateEnv;
 const { PUBLIC_API_URL } = publicEnv;
+
+// These come from the runtime environment ($env/dynamic), so the types are
+// `string | undefined`. The server cannot proxy API requests without them, so
+// fail fast at startup instead of crashing later on a confusing `undefined`.
+if (!PUBLIC_API_URL || !PRIVATE_API_URL) {
+	throw new Error('PUBLIC_API_URL and PRIVATE_API_URL environment variables must be set');
+}
+
 import { createApiClient } from '$lib/api';
 import {
 	applyResponseCookies,

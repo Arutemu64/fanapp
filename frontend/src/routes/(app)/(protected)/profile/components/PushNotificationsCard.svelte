@@ -124,6 +124,14 @@
 				return;
 			}
 
+			// PUBLIC_VAPID_KEY comes from the runtime environment, so it may be
+			// missing if push notifications were not configured for this deployment.
+			const vapidKey = env.PUBLIC_VAPID_KEY;
+			if (!vapidKey) {
+				toastService.add('Уведомления сейчас недоступны', 'error');
+				return;
+			}
+
 			if (Notification.permission === 'default') {
 				const permission = await Notification.requestPermission();
 				if (permission !== 'granted') {
@@ -139,7 +147,7 @@
 
 			const subscription = await registration.pushManager.subscribe({
 				userVisibleOnly: true,
-				applicationServerKey: urlBase64ToUint8Array(env.PUBLIC_VAPID_KEY)
+				applicationServerKey: urlBase64ToUint8Array(vapidKey)
 			});
 
 			const subJson = subscription.toJSON();
