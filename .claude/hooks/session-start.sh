@@ -16,6 +16,15 @@
 #   * just - The repo drives every workflow through `just`, which is not
 #           preinstalled. Its official installer also pulls from GitHub (403),
 #           so we use the native Ubuntu package instead (`apt-get install just`).
+#   * codegraph - Code-intelligence CLI used to navigate this 550+ file codebase
+#           with fewer tokens (symbol search, call graph, change-impact) instead
+#           of reading whole files. Not preinstalled and not a project dependency
+#           (it is an agent tool, not frontend/backend runtime code), so we add it
+#           globally via pnpm and build its index. We use the CLI rather than the
+#           MCP server on purpose: the CLI costs zero context until invoked, while
+#           an always-on MCP server would add tool definitions to every session.
+#           Usage is documented in AGENTS.md. The index lives in .codegraph/ and
+#           is kept out of git by .codegraph/.gitignore.
 #
 # The hook is idempotent and safe to re-run: apt, pip, uv and pnpm all
 # short-circuit when everything is already present (and the container caches
@@ -55,9 +64,39 @@ echo "[session-start] Installing backend dependencies (uv sync)..."
 echo "[session-start] Installing frontend dependencies (pnpm install)..."
 (cd "$REPO_ROOT/frontend" && pnpm install)
 
-# Persist ~/.local/bin on PATH so the upgraded uv is used in the session.
+# codegraph is a global pnpm package. pnpm needs a global bin directory; point
+# it at the standard PNPM_HOME and add that to PATH so the `codegraph` binary is
+# reachable here and for the rest of the session. We track @latest so every
+# session gets upstream fixes for this fast-moving (pre-1.0) tool.
+#
+# codegraph is an optional navigation aid, not part of building or running the
+# app, and it gates every web session from inside this hook. So the whole block
+# is best-effort: if a bad upstream release or a transient network error makes
+# the install or index fail, we log a warning and continue rather than abort
+# session setup. `set -e` would turn any failure here fatal, so the block runs
+# in an `if` (which suppresses -e) and each step degrades gracefully.
+echo "[session-start] Installing codegraph (code-intelligence CLI)..."
+export PNPM_HOME="$HOME/.local/share/pnpm"
+export PATH="$PNPM_HOME:$PATH"
+if pnpm add -g @colbymchenry/codegraph@latest; then
+  # Build (or refresh) the code index so symbol/call-graph queries are ready.
+  # The .codegraph/ database is gitignored, so a fresh container has no db and
+  # needs a full `init`; if a db is already present (re-run/resume) an
+  # incremental `sync` is enough.
+  echo "[session-start] Building codegraph index..."
+  if [ -f "$REPO_ROOT/.codegraph/codegraph.db" ]; then
+    codegraph sync "$REPO_ROOT" || echo "[session-start] WARN: codegraph sync failed; skipping."
+  else
+    codegraph init "$REPO_ROOT" || echo "[session-start] WARN: codegraph init failed; skipping."
+  fi
+else
+  echo "[session-start] WARN: codegraph install failed; continuing without it."
+fi
+
+# Persist PATH additions so the upgraded uv (~/.local/bin) and the codegraph
+# binary ($PNPM_HOME) are used throughout the session.
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
-  echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$CLAUDE_ENV_FILE"
+  echo 'export PATH="$HOME/.local/bin:$HOME/.local/share/pnpm:$PATH"' >> "$CLAUDE_ENV_FILE"
 fi
 
 echo "[session-start] Setup complete."
