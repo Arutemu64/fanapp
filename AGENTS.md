@@ -41,6 +41,16 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
   * `just backend-lint` / `just frontend-lint` - Lint & format code
   * `just backend-typecheck` - Run `ty` type checker on backend
 
+## Code Navigation (`codegraph`)
+This 550+ file codebase is indexed by [`codegraph`](https://www.npmjs.com/package/@colbymchenry/codegraph), a code-intelligence CLI. In Claude Code web sessions it is auto-installed and indexed by the SessionStart hook (`.claude/hooks/session-start.sh`); locally, install it once with `pnpm add -g @colbymchenry/codegraph && codegraph init`. **Prefer it over reading whole files to trace symbols** — it answers structural questions in one call and saves tokens:
+  * `codegraph query <name>` - Find a symbol's definition(s) with `file:line`
+  * `codegraph callers <symbol>` / `codegraph callees <symbol>` - Walk the call graph
+  * `codegraph impact <symbol>` - Blast radius before a refactor (what breaks if you change it)
+  * `codegraph node <symbol> --source` - One symbol's source without opening the file
+  * `codegraph files [--path <dir>]` - Indexed file tree with language + symbol counts
+  * `codegraph sync` - Refresh the index after edits (the index in `.codegraph/` is gitignored)
+We use the CLI on demand rather than the always-on MCP server so it costs no context until invoked.
+
 ## Core Constraints (Must Always Follow)
 1. **Russian Copy**: All user-facing labels, placeholders, errors, and toast notifications must be in Russian.
 2. **Mobile First**: UI must fit narrow layouts; add bottom padding for floating navigation bars. See [docs/frontend.md](docs/frontend.md).
