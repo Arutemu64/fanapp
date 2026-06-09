@@ -27,7 +27,6 @@ def create_app() -> FastStream:
 
 
 def main():
-    init(service_name="stream")
     app = create_app()
     asyncio.run(app.run())
 

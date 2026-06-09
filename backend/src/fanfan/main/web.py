@@ -3,17 +3,17 @@ from contextlib import suppress
 import uvicorn
 
 from fanfan.adapters.config.parsers import get_config
-from fanfan.presentation.web.factory import create_app
 
 
 def main():
     config = get_config()
-    create_app()
     with suppress(KeyboardInterrupt):
         uvicorn.run(
             "fanfan.presentation.web.factory:create_app",
             factory=True,
-            reload=True,
+            # Auto-reload is a development convenience only; never run it
+            # against a production deployment.
+            reload=config.debug.enabled,
             host=config.web.host,
             port=config.web.port,
             root_path="/api",
