@@ -14,6 +14,7 @@ from fanfan.presentation.web.exceptions import (
     auth_exception_handler,
     validation_exception_handler,
 )
+from fanfan.presentation.web.middlewares import bind_request_context
 from fanfan.presentation.web.routes import setup_api_router
 from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
 
@@ -65,5 +66,10 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Registered last so it runs first (outermost): the request id is bound
+    # before any other middleware or route handler, so all of their logs
+    # carry it.
+    app.middleware("http")(bind_request_context)
 
     return app

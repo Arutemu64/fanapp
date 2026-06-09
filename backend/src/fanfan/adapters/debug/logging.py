@@ -59,6 +59,11 @@ def setup_logging(level: int, json_logs: bool):
     handler.setFormatter(formatter)
 
     root_logger = logging.getLogger()
+    # Drop any handlers from a previous setup_logging() call so repeated
+    # initialization (e.g. running a service entrypoint that also builds the
+    # app factory) does not stack handlers and emit every log line twice.
+    for existing_handler in root_logger.handlers[:]:
+        root_logger.removeHandler(existing_handler)
     root_logger.addHandler(handler)
     root_logger.setLevel(level)
 
