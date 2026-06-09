@@ -71,6 +71,14 @@ run-dev:
 run-prod:
     docker compose -f docker-compose.yml --profile core --profile ops up --build
 
+# Pulls prebuilt GHCR images (docker-compose.prod.yml), builds nothing on the host.
+# Requires `docker login ghcr.io` first. Pin a build via IMAGE_TAG in .env.
+
+# Server deploy: pull prebuilt images and (re)start
+deploy:
+    docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile core --profile ops pull
+    docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile core --profile ops up -d
+
 dev:
     @echo "Run in separate terminals:"
     @echo "  just backend-dev"
