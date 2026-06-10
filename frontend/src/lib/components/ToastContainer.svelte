@@ -103,8 +103,10 @@
 								{toast.notification.title}
 							</h4>
 							{#if toast.notification.body}
+								<!-- Body is sanitized to a safe HTML subset on the backend (HtmlSanitizer). -->
 								<div class="mt-1 line-clamp-2 text-sm font-normal text-gray-500 dark:text-gray-400">
-									{toast.notification.body}
+									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+									{@html toast.notification.body}
 								</div>
 							{/if}
 							<span class="mt-1 block text-xs font-medium text-primary-600 dark:text-primary-500"

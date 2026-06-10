@@ -32,7 +32,9 @@
 		<div class="mb-1.5 text-sm whitespace-normal text-gray-500 dark:text-gray-400">
 			<span class="font-semibold text-gray-900 dark:text-white">{notification.title}</span>
 			{#if notification.body}
-				<div class="mt-0.5 whitespace-pre-line">{notification.body}</div>
+				<!-- Body is sanitized to a safe HTML subset on the backend (HtmlSanitizer). -->
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				<div class="mt-0.5 whitespace-pre-line">{@html notification.body}</div>
 			{/if}
 		</div>
 		<div class="text-xs text-primary-600 dark:text-primary-500">

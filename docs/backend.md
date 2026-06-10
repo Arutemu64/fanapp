@@ -97,6 +97,14 @@ await self.events_broker.publish(
 
 Rule of thumb: inject `EventBroker` into an interactor **only** for service events; aggregate state-change events flow through `uow.commit()`.
 
+## Notification Formatting
+
+A notification `body` is stored as a **small, safe HTML subset** so the same text can be highlighted across every delivery channel. The subset is the intersection of what Telegram's HTML parse mode accepts and what the web UI can render: `b`, `strong`, `i`, `em`, `u`, `s`, `a[href]`, `code`, `pre`, `blockquote`. Line breaks are stored as plain `\n` (no `<br>`/`<p>`), which Telegram treats as newlines and the web renders via CSS `white-space: pre-line`.
+
+* **Single sanitization chokepoint**: every notification — broadcast, personal message, schedule-change template — is built into the persisted model in `CreateNotification._to_model` (`application/interactors/notifications/create_notification.py`), which runs the body through the `HtmlSanitizer` port (`application/ports/html_sanitizer.py`, nh3 adapter `adapters/html/sanitizer.py`). `SendNotification` and the realtime SSE DTO both re-read the **persisted, already-sanitized** record, so sanitizing once covers web, Telegram, and push. Never sanitize per-channel.
+* **Per-channel rendering**: the web UI renders the stored body with `{@html}` (it is pre-sanitized — see [frontend.md](frontend.md)); the Telegram notifier (`adapters/tgbot/notifier.py`) sends it with `parse_mode=ParseMode.HTML` and only HTML-escapes the plain-text `title`; the push notifier (`adapters/push/push.py`) strips all tags to plain text because OS notifications do not render HTML.
+* **Templates**: Jinja notification templates (`adapters/jinja/templates/`) may use the subset tags directly (e.g. `<b>`) to highlight key details. `autoescape=True` keeps `{{ variables }}` escaped, and the central sanitizer is the final safety net, so template-interpolated DB values can never inject markup.
+
 ## Rate Limiting
 
 Two distinct rate-limiting ports exist — pick by semantics, do not overload one for the other:

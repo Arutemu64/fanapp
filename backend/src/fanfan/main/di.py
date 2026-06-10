@@ -8,6 +8,7 @@ from fanfan.main.ioc.captcha import CaptchaProvider
 from fanfan.main.ioc.config import ConfigProvider
 from fanfan.main.ioc.cosplay2 import Cosplay2Provider
 from fanfan.main.ioc.db import DbProvider, SqlGatewaysProvider
+from fanfan.main.ioc.html import HtmlProvider
 from fanfan.main.ioc.id_provider import SystemAuthProvider, WebAuthProvider
 from fanfan.main.ioc.interactors import InteractorsProvider
 from fanfan.main.ioc.jinja import JinjaProvider
@@ -36,6 +37,7 @@ def get_common_providers() -> list[Provider]:
         StreamProvider(),
         Cosplay2Provider(),
         JinjaProvider(),
+        HtmlProvider(),
         PushProvider(),
         MailProvider(),
         OAuthProvider(),
