@@ -44,6 +44,7 @@ class SqlScheduleChangeGateway(ScheduleChangeGateway):
             delete(ScheduleChangeORM).where(ScheduleChangeORM.id == change.id)
         )
 
+    # Read projections (return DTOs, not aggregates)
     async def read_schedule_change(
         self, change_id: ScheduleChangeId
     ) -> ScheduleChangeFullDTO | None:

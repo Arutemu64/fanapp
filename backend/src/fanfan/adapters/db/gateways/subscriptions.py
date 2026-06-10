@@ -61,6 +61,7 @@ class SqlSubscriptionGateway(SubscriptionGateway):
             delete(SubscriptionORM).where(SubscriptionORM.id == subscription.id)
         )
 
+    # Read projections (return DTOs, not aggregates)
     async def read_upcoming_subscriptions(
         self, current_event_queue: int
     ) -> list[SubscriptionFullDTO]:

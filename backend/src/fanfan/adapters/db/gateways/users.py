@@ -124,6 +124,7 @@ class SqlUserGateway(UserGateway):
             raise
         self.uow.register(user)
 
+    # Read projections (return DTOs, not aggregates)
     async def read_current_user(self, user_id: UserId) -> CurrentUserDTO | None:
         stmt = (
             select(UserORM)

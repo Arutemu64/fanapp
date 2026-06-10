@@ -66,6 +66,23 @@ class SqlParticipantGateway(ParticipantGateway):
         await self.session.flush([participant_orm])
         return
 
+    async def list_cosplay2_ids(self) -> list[int]:
+        stmt = select(ParticipantORM.cosplay2_id)
+        return list((await self.session.scalars(stmt)).all())
+
+    async def delete_by_cosplay2_ids(self, cosplay2_ids: list[int]) -> None:
+        if not cosplay2_ids:
+            return
+        await self.session.execute(
+            delete(ParticipantORM).where(ParticipantORM.cosplay2_id.in_(cosplay2_ids))
+        )
+
+    async def delete(self, participant: Participant) -> None:
+        await self.session.execute(
+            delete(ParticipantORM).where(ParticipantORM.id == participant.id)
+        )
+
+    # Read projections (return DTOs, not aggregates)
     async def read_list_participants(
         self,
         user_id: UserId | None = None,
@@ -85,19 +102,3 @@ class SqlParticipantGateway(ParticipantGateway):
             )
             for participant_orm, vote_orm in result
         ]
-
-    async def list_cosplay2_ids(self) -> list[int]:
-        stmt = select(ParticipantORM.cosplay2_id)
-        return list((await self.session.scalars(stmt)).all())
-
-    async def delete_by_cosplay2_ids(self, cosplay2_ids: list[int]) -> None:
-        if not cosplay2_ids:
-            return
-        await self.session.execute(
-            delete(ParticipantORM).where(ParticipantORM.cosplay2_id.in_(cosplay2_ids))
-        )
-
-    async def delete(self, participant: Participant) -> None:
-        await self.session.execute(
-            delete(ParticipantORM).where(ParticipantORM.id == participant.id)
-        )

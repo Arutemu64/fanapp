@@ -50,6 +50,7 @@ class SqlSocialIdentityGateway(SocialIdentityGateway):
         )
         await self.session.flush()
 
+    # Read projections (return DTOs, not aggregates)
     async def read_user_social_accounts(
         self, user_id: UserId
     ) -> list[UserSocialAccountDTO]:

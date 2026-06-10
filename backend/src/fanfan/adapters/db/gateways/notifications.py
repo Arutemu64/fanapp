@@ -34,6 +34,26 @@ class SqlNotificationGateway(NotificationGateway):
         notification_orm = await self.session.scalar(stmt)
         return self.mapper.to_model(notification_orm) if notification_orm else None
 
+    async def mark_all_read_for_user(
+        self, user_id: UserId, timestamp: datetime
+    ) -> None:
+        stmt = (
+            update(NotificationORM)
+            .where(
+                and_(
+                    NotificationORM.user_id == user_id,
+                    NotificationORM.seen_at.is_(None),
+                )
+            )
+            .values({"seen_at": timestamp})
+        )
+        await self.session.execute(stmt)
+
+    async def delete_all_by_mailing_id(self, mailing_id: MailingId) -> None:
+        stmt = delete(NotificationORM).where(NotificationORM.mailing_id == mailing_id)
+        await self.session.execute(stmt)
+
+    # Read projections (return DTOs, not aggregates)
     async def read_realtime_notification(
         self, notification_id: NotificationId
     ) -> RealtimeNotificationDTO | None:
@@ -56,22 +76,3 @@ class SqlNotificationGateway(NotificationGateway):
         stmt = stmt.limit(pagination.limit).offset(pagination.offset)
         notifications = await self.session.scalars(stmt)
         return [self.mapper.parse_dto(n) for n in notifications]
-
-    async def mark_all_read_for_user(
-        self, user_id: UserId, timestamp: datetime
-    ) -> None:
-        stmt = (
-            update(NotificationORM)
-            .where(
-                and_(
-                    NotificationORM.user_id == user_id,
-                    NotificationORM.seen_at.is_(None),
-                )
-            )
-            .values({"seen_at": timestamp})
-        )
-        await self.session.execute(stmt)
-
-    async def delete_all_by_mailing_id(self, mailing_id: MailingId) -> None:
-        stmt = delete(NotificationORM).where(NotificationORM.mailing_id == mailing_id)
-        await self.session.execute(stmt)
