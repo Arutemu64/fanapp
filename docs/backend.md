@@ -7,6 +7,7 @@
 * **Core Layer (`core/`)**: Pure domain entities, value objects, and domain exceptions. Must be completely free of external frameworks (absolutely no FastAPI, SQLAlchemy, or Pydantic imports).
 * **Application Layer (`application/`)**: Orchestrates interactors and business use cases. Must never import database ORM models directly. Communication with infrastructure happens via abstract interfaces (ports under `application/ports/`) and schemas/DTOs.
 * **Command/Query Port Split (CQRS-style)**: Ports are split by intent. Writes (loading and persisting aggregates) go through `application/ports/repositories/`; reads (projections returned to callers) go through `application/ports/queries/`. When adding a read, add a query port — do not extend a repository.
+* **Ports are `Protocol`, never `ABC`**: Define every port in `application/ports/` as a `typing.Protocol` (structural typing keeps the application layer free of any inward dependency from adapters). Do not decorate port methods with `@abstractmethod` — it does not catch signature drift and is redundant with the type checker. Adapters in `adapters/` **must explicitly subclass** the port(s) they implement (e.g. `class SqlUserGateway(UserRepository, UserQuery): ...`); the explicit inheritance turns structural typing into checked nominal typing, so `just backend-typecheck` (`ty`) flags any method that drifts from its port — missing method, changed parameters, or a changed return type.
 
 ## Services
 
