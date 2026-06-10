@@ -65,6 +65,12 @@ from fanfan.application.interactors.notifications.send_schedule_change_notificat
 from fanfan.application.interactors.notifications.send_test_notification import (
     SendTestNotification,
 )
+from fanfan.application.interactors.outbox.publish_outbox_events import (
+    PublishOutboxEvents,
+)
+from fanfan.application.interactors.outbox.purge_outbox_events import (
+    PurgeOutboxEvents,
+)
 from fanfan.application.interactors.push_sub.create_push_subscription import (
     CreatePushSubscription,
 )
@@ -187,6 +193,9 @@ class InteractorsProvider(Provider):
     create_push_subscription = provide(CreatePushSubscription)
     list_user_push_subscriptions = provide(ListUserPushSubscriptions)
     delete_push_subscription = provide(DeletePushSubscription)
+
+    publish_outbox_events = provide(PublishOutboxEvents)
+    purge_outbox_events = provide(PurgeOutboxEvents)
 
     create_notification = provide(CreateNotification)
     list_user_notifications = provide(ListUserNotifications)

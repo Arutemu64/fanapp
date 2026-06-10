@@ -10,6 +10,7 @@ from fanfan.adapters.mail.config import MailConfig
 from fanfan.adapters.nats.config import NatsConfig
 from fanfan.adapters.push.config import PushConfig
 from fanfan.adapters.redis.config import RedisConfig
+from fanfan.application.interactors.outbox.config import OutboxConfig
 from fanfan.presentation.scheduler.config import SchedulerConfig
 from fanfan.presentation.tgbot.config import TelegramConfig
 from fanfan.presentation.web.config import WebConfig
@@ -50,3 +51,6 @@ class EnvConfig(BaseSettings):
 
     # Scheduler
     scheduler: SchedulerConfig = SchedulerConfig()
+
+    # Outbox relay (poll interval, batch size, retention)
+    outbox: OutboxConfig = OutboxConfig()

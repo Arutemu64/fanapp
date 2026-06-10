@@ -7,6 +7,9 @@ import sentry_sdk
 from dishka import AsyncContainer
 
 from fanfan.application.interactors.cosplay2.sync_cosplay2 import SyncCosplay2
+from fanfan.application.interactors.outbox.purge_outbox_events import (
+    PurgeOutboxEvents,
+)
 from fanfan.application.interactors.ticketscloud.sync_tcloud import SyncTCloud
 from fanfan.presentation.scheduler.config import SchedulerConfig
 
@@ -32,6 +35,11 @@ def get_job_definitions(config: SchedulerConfig) -> list[JobDefinition]:
             cron=config.sync_cosplay2_cron,
             interactor=SyncCosplay2,
         ),
+        JobDefinition(
+            id="outbox_retention",
+            cron=config.outbox_retention_cron,
+            interactor=PurgeOutboxEvents,
+        ),
     ]
 
 
@@ -54,4 +62,7 @@ def make_interactor_job(
             sentry_sdk.capture_exception()
             raise
 
+    # APScheduler names jobs after the callable; without this they all log as
+    # the opaque closure name "make_interactor_job.<locals>.job".
+    job.__name__ = job.__qualname__ = interactor_type.__name__
     return job

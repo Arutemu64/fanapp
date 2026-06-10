@@ -5,8 +5,12 @@ import signal
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 
 from fanfan.adapters.config.parsers import get_config
+from fanfan.application.interactors.outbox.publish_outbox_events import (
+    PublishOutboxEvents,
+)
 from fanfan.main.common import init
 from fanfan.main.di import create_system_container
 from fanfan.presentation.scheduler.jobs import get_job_definitions, make_interactor_job
@@ -30,6 +34,21 @@ async def run() -> None:
             replace_existing=True,
         )
         logger.info("Job '%s' scheduled (cron: %s)", job.id, job.cron)
+
+    # Outbox relay: an interval (not cron) job so delivery latency is seconds,
+    # not minutes. max_instances/coalesce stop a slow tick piling up on itself.
+    scheduler.add_job(
+        make_interactor_job(container, PublishOutboxEvents),
+        IntervalTrigger(seconds=config.outbox.poll_interval_seconds),
+        id="outbox_relay",
+        max_instances=1,
+        coalesce=True,
+        replace_existing=True,
+    )
+    logger.info(
+        "Job 'outbox_relay' scheduled (interval: %ss)",
+        config.outbox.poll_interval_seconds,
+    )
 
     scheduler.start()
 

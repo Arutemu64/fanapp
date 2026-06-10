@@ -14,6 +14,7 @@ from fanfan.adapters.db.gateways.feedback import SqlFeedbackGateway
 from fanfan.adapters.db.gateways.mailings import SqlMailingGateway
 from fanfan.adapters.db.gateways.nominations import SqlNominationGateway
 from fanfan.adapters.db.gateways.notifications import SqlNotificationGateway
+from fanfan.adapters.db.gateways.outbox import SqlOutboxGateway
 from fanfan.adapters.db.gateways.participants import SqlParticipantGateway
 from fanfan.adapters.db.gateways.permissions import (
     SqlPermissionGateway,
@@ -42,6 +43,7 @@ from fanfan.application.ports.gateways.feedback import FeedbackGateway
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.application.ports.gateways.notifications import NotificationGateway
+from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.gateways.participants import ParticipantGateway
 from fanfan.application.ports.gateways.push_subscriptions import (
     PushSubscriptionGateway,
@@ -101,3 +103,4 @@ class SqlGatewaysProvider(Provider):
     mailings = provide(SqlMailingGateway, provides=MailingGateway)
     notifications = provide(SqlNotificationGateway, provides=NotificationGateway)
     social_ids = provide(SqlSocialIdentityGateway, provides=SocialIdentityGateway)
+    outbox = provide(SqlOutboxGateway, provides=OutboxGateway)
