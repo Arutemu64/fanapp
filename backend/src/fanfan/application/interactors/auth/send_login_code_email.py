@@ -13,7 +13,6 @@ from fanfan.core.services.email_login import (
     EMAIL_LOGIN_CODE_MAX_AGE_SECONDS,
     generate_numeric_code,
 )
-from fanfan.core.utils.email import normalize_email
 from fanfan.core.vo.user import UserId
 
 
@@ -40,12 +39,12 @@ class SendLoginCodeEmail:
             raise UserNotFound
         if user.email is None:
             raise UserHasNoEmail
-        normalized_email = normalize_email(user.email)
+        email_value = user.email.value
 
         code = generate_numeric_code()
         await self.token_registry.issue_email_login_code(
             user_id=user.id,
-            email=normalized_email,
+            email=email_value,
             code=code,
             ttl_seconds=EMAIL_LOGIN_CODE_MAX_AGE_SECONDS,
         )
@@ -60,9 +59,7 @@ class SendLoginCodeEmail:
         )
         message = EmailMessage(
             subject="Код входа в FAN FAN",
-            recipients=[
-                EmailRecipient(name=user.username or "", email=normalized_email)
-            ],
+            recipients=[EmailRecipient(name=user.username or "", email=email_value)],
             html_body=message_body,
         )
         await self.email_sender.send(message)

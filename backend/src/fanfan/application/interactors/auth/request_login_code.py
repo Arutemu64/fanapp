@@ -11,7 +11,7 @@ from fanfan.core.exceptions.rate_limit import EmailCodeRequestTooFast, RateLimit
 from fanfan.core.exceptions.users import UserAlreadyExists
 from fanfan.core.models.user import User
 from fanfan.core.services.email_login import EMAIL_CODE_REQUEST_COOLDOWN_SECONDS
-from fanfan.core.utils.email import normalize_email
+from fanfan.core.vo.email import Email
 from fanfan.core.vo.user import UserRole, generate_user_id
 
 
@@ -43,22 +43,20 @@ class RequestLoginCode:
         # Reject bots before touching the database or rate-limit budget.
         await self.captcha_verifier.verify(data.turnstile_token)
 
-        normalized_email = normalize_email(data.email)
+        email = Email(data.email)
 
         lock = self.rate_lock_factory(
-            f"email_code_request:{normalized_email}",
+            f"email_code_request:{email.value}",
             cooldown_period=EMAIL_CODE_REQUEST_COOLDOWN_SECONDS,
         )
         try:
             async with lock:
-                user = await self.user_gateway.get_by_email(normalized_email)
+                user = await self.user_gateway.get_by_email(email.value)
 
                 # Do not provision a second account if the address is
                 # already reserved as another user's pending
                 # replacement email.
-                reserved_user = await self.user_gateway.get_by_any_email(
-                    normalized_email
-                )
+                reserved_user = await self.user_gateway.get_by_any_email(email.value)
                 if user is None and reserved_user is not None:
                     return
 
@@ -70,7 +68,7 @@ class RequestLoginCode:
                             user = User.create(
                                 id=generate_user_id(),
                                 username=await self.user_service.generate_username(),
-                                email=normalized_email,
+                                email=email,
                                 hashed_password=None,
                                 role=UserRole.VISITOR,
                             )
@@ -78,9 +76,7 @@ class RequestLoginCode:
                             await self.uow.commit()
                         except UserAlreadyExists:
                             await self.uow.rollback()
-                            user = await self.user_gateway.get_by_email(
-                                normalized_email
-                            )
+                            user = await self.user_gateway.get_by_email(email.value)
                             if user is not None:
                                 break
                         else:

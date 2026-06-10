@@ -5,6 +5,7 @@ from fanfan.core.events.users import (
     EmailConfirmationCodeRequested,
 )
 from fanfan.core.models.base import AggregateRoot
+from fanfan.core.vo.email import Email
 from fanfan.core.vo.user import UserId, Username, UserRole
 
 if TYPE_CHECKING:
@@ -26,8 +27,8 @@ class User(AggregateRoot):
     hashed_password: str | None
     role: UserRole
 
-    email: str | None = None
-    pending_email: str | None = None
+    email: Email | None = None
+    pending_email: Email | None = None
     email_verified_at: datetime | None = None
 
     first_name: str | None = None
@@ -42,8 +43,8 @@ class User(AggregateRoot):
         username: Username | None,
         hashed_password: str | None,
         role: UserRole,
-        email: str | None = None,
-        pending_email: str | None = None,
+        email: Email | None = None,
+        pending_email: Email | None = None,
         email_verified_at: datetime | None = None,
         first_name: str | None = None,
     ) -> Self:
@@ -86,7 +87,7 @@ class User(AggregateRoot):
                 receive_telegram_notifications
             )
 
-    def request_email_change(self, email: str) -> None:
+    def request_email_change(self, email: Email) -> None:
         self.pending_email = email
         self.record_event(EmailConfirmationCodeRequested(user_id=self.id))
 

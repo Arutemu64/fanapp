@@ -25,6 +25,10 @@ class EmailAlreadyExists(UserException):
     code = "EMAIL_ALREADY_EXISTS"
 
 
+class InvalidEmail(UserException):
+    code = "INVALID_EMAIL"
+
+
 class TelegramAlreadyLinkedToAnotherUser(UserException):
     code = "TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER"
 

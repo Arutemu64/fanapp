@@ -13,7 +13,6 @@ from fanfan.core.services.email_login import (
     EMAIL_CONFIRMATION_CODE_MAX_AGE_SECONDS,
     generate_numeric_code,
 )
-from fanfan.core.utils.email import normalize_email
 from fanfan.core.vo.user import UserId
 
 
@@ -41,12 +40,12 @@ class SendEmailConfirmationCode:
         target_email = user.pending_email or user.email
         if target_email is None:
             raise UserHasNoEmail
-        target_email = normalize_email(target_email)
+        email_value = target_email.value
 
         code = generate_numeric_code()
         await self.token_registry.issue_email_confirmation_code(
             user_id=user.id,
-            email=target_email,
+            email=email_value,
             code=code,
             ttl_seconds=EMAIL_CONFIRMATION_CODE_MAX_AGE_SECONDS,
         )
@@ -66,7 +65,7 @@ class SendEmailConfirmationCode:
             recipients=[
                 EmailRecipient(
                     name=user.username or "Пользователь",
-                    email=target_email,
+                    email=email_value,
                 )
             ],
             html_body=message_body,

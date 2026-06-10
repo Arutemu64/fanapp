@@ -12,7 +12,7 @@ from fanfan.core.services.email_login import (
     EMAIL_OTP_LOCKOUT_SECONDS,
     EMAIL_OTP_MAX_ATTEMPTS,
 )
-from fanfan.core.utils.email import normalize_email
+from fanfan.core.vo.email import Email
 
 
 class LoginWithCodeInput(BaseModel):
@@ -34,9 +34,9 @@ class LoginWithCode:
         self.session_store = session_store
 
     async def __call__(self, data: LoginWithCodeInput) -> str:
-        normalized_target_email = normalize_email(data.email)
+        target_email = Email(data.email)
         user_id = await self.token_registry.consume_email_login_code(
-            email=normalized_target_email,
+            email=target_email.value,
             code=data.code,
             max_attempts=EMAIL_OTP_MAX_ATTEMPTS,
             window_seconds=EMAIL_OTP_LOCKOUT_SECONDS,
@@ -49,7 +49,7 @@ class LoginWithCode:
             raise UserNotFound
 
         # The one-time email code proves mailbox ownership for this login.
-        if user.email is None or user.email != normalized_target_email:
+        if user.email is None or user.email != target_email:
             raise InvalidOtpCode
 
         if user.email_verified_at is None:

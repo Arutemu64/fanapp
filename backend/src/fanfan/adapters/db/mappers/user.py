@@ -9,6 +9,7 @@ from fanfan.application.dto.user import (
     UserTicketDTO,
 )
 from fanfan.core.models.user import User, UserSettings
+from fanfan.core.vo.email import Email
 from fanfan.core.vo.user import UserId, UserRole
 
 
@@ -21,8 +22,8 @@ class UserMapper:
             id=model.id,
             username=model.username,
             hashed_password=model.hashed_password,
-            email=model.email,
-            pending_email=model.pending_email,
+            email=model.email.value if model.email else None,
+            pending_email=model.pending_email.value if model.pending_email else None,
             email_verified_at=model.email_verified_at,
             first_name=model.first_name,
             role=model.role,
@@ -34,8 +35,8 @@ class UserMapper:
             id=UserId(orm.id),
             username=orm.username,
             hashed_password=orm.hashed_password,
-            email=orm.email,
-            pending_email=orm.pending_email,
+            email=Email(orm.email) if orm.email else None,
+            pending_email=Email(orm.pending_email) if orm.pending_email else None,
             email_verified_at=orm.email_verified_at,
             first_name=orm.first_name,
             role=UserRole(orm.role),
