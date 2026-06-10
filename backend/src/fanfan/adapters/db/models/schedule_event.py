@@ -36,6 +36,9 @@ class ScheduleEventORM(BaseORM, OrderMixin):
             unique=True,
             postgresql_where=(is_current.is_(True)),
         ),
+        # OrderMixin declares its own __table_args__; SQLAlchemy does not merge
+        # it with ours, so splice in the deferred order constraint explicitly.
+        *OrderMixin.order_table_args(),
     )
 
     @declared_attr

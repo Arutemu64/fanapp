@@ -25,7 +25,7 @@ class TicketORM(BaseORM):
         server_default="VISITOR",
     )
     issued_by_user_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("users.id", ondelete="SET NULL"),
+        ForeignKey("users.id", ondelete="SET NULL"), index=True
     )
     used_by_user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"),
