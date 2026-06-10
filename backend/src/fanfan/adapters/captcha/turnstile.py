@@ -3,6 +3,7 @@ import logging
 import httpx
 
 from fanfan.adapters.captcha.config import TurnstileConfig
+from fanfan.application.ports.captcha import CaptchaVerifier
 from fanfan.core.exceptions.captcha import CaptchaVerificationFailed
 
 logger = logging.getLogger(__name__)
@@ -11,7 +12,7 @@ logger = logging.getLogger(__name__)
 SITEVERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
 
 
-class TurnstileCaptchaVerifier:
+class TurnstileCaptchaVerifier(CaptchaVerifier):
     """Validates Turnstile tokens against Cloudflare's siteverify endpoint."""
 
     def __init__(self, config: TurnstileConfig, client: httpx.AsyncClient):
@@ -20,6 +21,8 @@ class TurnstileCaptchaVerifier:
 
     async def verify(self, token: str | None) -> None:
         if not token:
+            # No token at all: the user never attempted the challenge. This is
+            # rejected even during a Cloudflare outage (see fail-open below).
             raise CaptchaVerificationFailed
 
         payload = {
@@ -28,14 +31,25 @@ class TurnstileCaptchaVerifier:
         }
         try:
             response = await self.client.post(SITEVERIFY_URL, data=payload)
-            response.raise_for_status()
-            result = response.json()
-        except httpx.HTTPError as e:
-            # Fail closed: if we cannot reach Cloudflare we reject the request
-            # rather than let a bot through. Logged so outages are visible.
-            logger.exception("Turnstile siteverify request failed")
-            raise CaptchaVerificationFailed from e
+        except httpx.RequestError:
+            # Cloudflare is unreachable (DNS / connection / timeout). Fail open:
+            # a network blip or Cloudflare outage shouldn't lock everyone out of
+            # login. The per-email rate lock still caps abuse in the meantime.
+            logger.warning(
+                "Turnstile siteverify unreachable; allowing request", exc_info=True
+            )
+            return
 
+        if response.is_server_error:
+            # A 5xx is an outage signal, not a verdict — fail open as above.
+            logger.warning(
+                "Turnstile siteverify returned %s; allowing request",
+                response.status_code,
+            )
+            return
+
+        # We got a real answer from Cloudflare, so honour its verdict.
+        result = response.json()
         if not result.get("success", False):
             logger.warning(
                 "Turnstile verification rejected: %s", result.get("error-codes")
@@ -43,7 +57,7 @@ class TurnstileCaptchaVerifier:
             raise CaptchaVerificationFailed
 
 
-class NoOpCaptchaVerifier:
+class NoOpCaptchaVerifier(CaptchaVerifier):
     """Accepts every token. Wired in when Turnstile is not configured."""
 
     async def verify(self, token: str | None) -> None:  # noqa: ARG002
