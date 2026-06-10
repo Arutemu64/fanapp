@@ -4,7 +4,6 @@ import typing
 import polars as pl
 
 from fanfan.application.interactors.schedule_mgmt.import_schedule import ScheduleEntry
-from fanfan.core.vo.schedule_event import ScheduleEventPublicNumber
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +24,7 @@ def parse_schedule_from_excel(file: typing.BinaryIO) -> list[ScheduleEntry]:
     schedule_df = pl.read_excel(file.read(), schema_overrides=_SCHEMA_OVERRIDES)
     return [
         ScheduleEntry(
-            public_number=ScheduleEventPublicNumber(row["public_number"]),
+            public_number=row["public_number"],
             title=row["title"],
             duration=row["duration"],
             block_title=row["block_title"],

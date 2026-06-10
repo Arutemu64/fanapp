@@ -4,7 +4,7 @@ from fanfan.application.dto.schedule import (
     ScheduleEventSubscriptionDTO,
 )
 from fanfan.core.models.schedule_event import ScheduleEvent
-from fanfan.core.vo.schedule_event import ScheduleEventId, ScheduleEventPublicNumber
+from fanfan.core.vo.schedule_event import ScheduleEventId
 from fanfan.core.vo.subscription import SubscriptionId
 
 
@@ -27,7 +27,7 @@ class ScheduleEventMapper:
     def to_model(orm: ScheduleEventORM) -> ScheduleEvent:
         return ScheduleEvent(
             id=ScheduleEventId(orm.id),
-            public_number=ScheduleEventPublicNumber(orm.public_id),
+            public_number=orm.public_id,
             title=orm.title,
             duration=orm.duration,
             is_current=orm.is_current,
@@ -43,7 +43,7 @@ class ScheduleEventMapper:
     ) -> ScheduleEventFullDTO:
         return ScheduleEventFullDTO(
             id=ScheduleEventId(event_orm.id),
-            public_number=ScheduleEventPublicNumber(event_orm.public_id),
+            public_number=event_orm.public_id,
             title=event_orm.title,
             duration=event_orm.duration,
             order=event_orm.order,

@@ -1,13 +1,13 @@
 from pydantic import BaseModel
 
-from fanfan.core.vo.schedule_event import ScheduleEventId, ScheduleEventPublicNumber
+from fanfan.core.vo.schedule_event import ScheduleEventId
 from fanfan.core.vo.subscription import SubscriptionId
 from fanfan.core.vo.user import UserId
 
 
 class SubscriptionEventDTO(BaseModel):
     id: ScheduleEventId
-    public_number: ScheduleEventPublicNumber
+    public_number: int
     title: str
     order: float
 

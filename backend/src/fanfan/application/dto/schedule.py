@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from fanfan.core.vo.schedule_event import ScheduleEventId, ScheduleEventPublicNumber
+from fanfan.core.vo.schedule_event import ScheduleEventId
 from fanfan.core.vo.subscription import SubscriptionId
 
 
@@ -11,7 +11,7 @@ class ScheduleEventSubscriptionDTO(BaseModel):
 
 class ScheduleEventFullDTO(BaseModel):
     id: ScheduleEventId
-    public_number: ScheduleEventPublicNumber
+    public_number: int
     title: str
     duration: int
     order: float

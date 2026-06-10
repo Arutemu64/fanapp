@@ -7,7 +7,7 @@ from fanfan.application.dto.schedule_change import (
 from fanfan.core.models.schedule_change import ScheduleChange
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.schedule_change import ScheduleChangeId
-from fanfan.core.vo.schedule_event import ScheduleEventId, ScheduleEventPublicNumber
+from fanfan.core.vo.schedule_event import ScheduleEventId
 from fanfan.core.vo.user import UserId
 
 
@@ -58,9 +58,7 @@ class ScheduleChangeMapper:
             next_event_changed=schedule_change_orm.next_event_changed,
             changed_event=ScheduleChangeEventDTO(
                 id=ScheduleEventId(schedule_change_orm.changed_event.id),
-                public_number=ScheduleEventPublicNumber(
-                    schedule_change_orm.changed_event.public_id
-                ),
+                public_number=schedule_change_orm.changed_event.public_id,
                 title=schedule_change_orm.changed_event.title,
                 order=schedule_change_orm.changed_event.order,
             )
@@ -68,9 +66,7 @@ class ScheduleChangeMapper:
             else None,
             argument_event=ScheduleChangeEventDTO(
                 id=ScheduleEventId(schedule_change_orm.argument_event.id),
-                public_number=ScheduleEventPublicNumber(
-                    schedule_change_orm.argument_event.public_id
-                ),
+                public_number=schedule_change_orm.argument_event.public_id,
                 title=schedule_change_orm.argument_event.title,
                 order=schedule_change_orm.argument_event.order,
             )
