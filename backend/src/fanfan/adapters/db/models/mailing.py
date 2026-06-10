@@ -19,7 +19,7 @@ class MailingORM(BaseORM):
     )
     status: Mapped[MailingStatus] = mapped_column(postgresql.ENUM(MailingStatus))
     by_user_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("users.id", ondelete="SET NULL")
+        ForeignKey("users.id", ondelete="SET NULL"), index=True
     )
 
     sent_count: Mapped[int] = mapped_column(default=0)

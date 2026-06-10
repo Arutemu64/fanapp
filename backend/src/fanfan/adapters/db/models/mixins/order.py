@@ -3,24 +3,39 @@ from sqlalchemy.orm import Mapped, declared_attr, mapped_column
 
 
 class OrderMixin:
-    """
-    This mixin adds a float column 'order' to make moving
-    rows (i.e. events in schedule) in between and sorting possible.
-    Unique constraint is initially deferred so you can swap orders
-    in one transaction without violating it during flushes.
-    Alembic doesn't autogenerate sequences (yet) so remember
-    to create one manually in migration.
+    """Adds a deferred-unique float ``order`` column so rows (e.g. schedule
+    events) can be reordered — and swapped within a single transaction —
+    without violating uniqueness during intermediate flushes.
+
+    Each table gets its own ``<table>_order_seq`` sequence. Alembic does NOT
+    autogenerate sequences, so create it by hand in the migration.
+
+    IMPORTANT: a model that declares its OWN ``__table_args__`` must merge in
+    ``order_table_args()`` explicitly — SQLAlchemy does not merge
+    ``__table_args__`` across a mixin and its subclass; the subclass shadows
+    the mixin. Models with no other table args inherit the constraint below
+    automatically.
     """
 
+    # Hint for the type checker; each concrete model overrides it with its own
+    # table name, which is what `order` reads at runtime to name the sequence.
     __tablename__ = None
 
     @declared_attr
-    def order(self) -> Mapped[float]:
-        order_sequence = Sequence(f"{self.__tablename__}_order_seq", start=1)
+    def order(cls) -> Mapped[float]:
+        order_sequence = Sequence(f"{cls.__tablename__}_order_seq", start=1)
         return mapped_column(
-            unique=True,
             nullable=False,
             server_default=order_sequence.next_value(),
         )
 
-    UniqueConstraint("order", deferrable=True, initially="DEFERRED")
+    # Auto-applied to orderable models that declare NO other table args.
+    @declared_attr.directive
+    def __table_args__(cls) -> tuple:
+        return cls.order_table_args()
+
+    @staticmethod
+    def order_table_args() -> tuple:
+        # Deferred so a transaction can swap two rows' order values without
+        # tripping the unique constraint on an intermediate flush.
+        return (UniqueConstraint("order", deferrable=True, initially="DEFERRED"),)
