@@ -39,8 +39,9 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
   * `just backend-migrate` - Run Alembic migrations
   * `just backend-generate <name>` - Generate migration file
   * `just frontend-generate-api` - Update SvelteKit types from OpenAPI spec
-  * `just backend-lint` / `just frontend-lint` - Lint & format code
+  * `just backend-lint` / `just frontend-lint` - Lint & format code (`backend-lint` also runs the import-linter boundary check)
   * `just backend-typecheck` - Run `ty` type checker on backend
+  * `just backend-import-lint` - Enforce layer boundaries (import-linter); see [docs/backend.md](docs/backend.md)
 
 ## Code Navigation (`codegraph`)
 This 550+ file codebase is indexed by [`codegraph`](https://www.npmjs.com/package/@colbymchenry/codegraph), a code-intelligence CLI. In Claude Code web sessions it is auto-installed and indexed by the SessionStart hook (`.claude/hooks/session-start.sh`); locally, install it once with `pnpm add -g @colbymchenry/codegraph && codegraph init`. **Prefer it over reading whole files to trace symbols** — it answers structural questions in one call and saves tokens:

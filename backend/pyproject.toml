@@ -59,6 +59,7 @@ dev = [
     "types-authlib>=1.6.9.20260303",
     "uv-sort>=0.2.1",
     "ty>=0.0.40",
+    "import-linter>=2.11",
 ]
 
 [build-system]
@@ -93,6 +94,47 @@ show_missing = true
 
 [tool.uv.build-backend]
 module-name = "fanfan"
+
+# Architectural boundary enforcement (run via `just backend-import-lint`).
+# Keeps the Clean/Hexagonal layering from docs/backend.md honest: inner layers
+# must never import outer ones. See AGENTS.md constraint #5.
+[tool.importlinter]
+root_package = "fanfan"
+
+[[tool.importlinter.contracts]]
+name = "core stays pure (no outward imports)"
+type = "forbidden"
+source_modules = ["fanfan.core"]
+forbidden_modules = [
+    "fanfan.application",
+    "fanfan.adapters",
+    "fanfan.presentation",
+    "fanfan.main",
+]
+
+[[tool.importlinter.contracts]]
+name = "application depends only on core (not on adapters/presentation)"
+type = "forbidden"
+source_modules = ["fanfan.application"]
+forbidden_modules = [
+    "fanfan.adapters",
+    "fanfan.presentation",
+    "fanfan.main",
+]
+# Sanctioned anti-corruption layers: the cosplay2 / TicketsCloud vendor sync
+# interactors and service legitimately translate vendor wire formats, so they
+# may import their own vendor adapter's client + DTOs. See docs/backend.md
+# ("Anti-corruption layers"). Any OTHER application -> adapters import is a bug.
+ignore_imports = [
+    "fanfan.application.interactors.cosplay2.sync_cosplay2 -> fanfan.adapters.api.cosplay2.client",
+    "fanfan.application.interactors.cosplay2.sync_cosplay2 -> fanfan.adapters.api.cosplay2.config",
+    "fanfan.application.interactors.cosplay2.sync_cosplay2 -> fanfan.adapters.api.cosplay2.dto.requests",
+    "fanfan.application.interactors.cosplay2.sync_cosplay2 -> fanfan.adapters.api.cosplay2.dto.topics",
+    "fanfan.application.interactors.ticketscloud.sync_tcloud -> fanfan.adapters.api.ticketscloud.client",
+    "fanfan.application.interactors.ticketscloud.process_tcloud_order -> fanfan.adapters.api.ticketscloud.dto.order",
+    "fanfan.application.services.ticketscloud -> fanfan.adapters.api.ticketscloud.config",
+    "fanfan.application.services.ticketscloud -> fanfan.adapters.api.ticketscloud.dto.order",
+]
 
 [project.scripts]
 web = "fanfan.main.web:main"
