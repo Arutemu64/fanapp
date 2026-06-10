@@ -49,7 +49,7 @@
 		class="flex items-center gap-3 border-b border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-800 sm:px-6 dark:border-red-900/50 dark:bg-red-950/60 dark:text-red-200"
 	>
 		<ExclamationCircleOutline class="h-5 w-5 shrink-0" aria-hidden="true" />
-		<p class="flex-1 leading-snug">Обновления отключились. Свежие данные пока не приходят.</p>
+		<p class="flex-1 leading-snug">Соединение с сервером потеряно</p>
 		<button
 			type="button"
 			onclick={reconnect}
@@ -65,6 +65,6 @@
 		class="flex items-center gap-2.5 border-b border-yellow-200 bg-yellow-50 px-4 py-2 text-sm text-yellow-800 sm:px-6 dark:border-yellow-900/50 dark:bg-yellow-950/50 dark:text-yellow-200"
 	>
 		<ArrowsRepeatOutline class="h-4 w-4 shrink-0 motion-safe:animate-spin" aria-hidden="true" />
-		<p class="leading-snug">Переподключаемся к обновлениям…</p>
+		<p class="leading-snug">Подключаемся к серверу…</p>
 	</div>
 {/if}
