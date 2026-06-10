@@ -19,22 +19,22 @@ class SendNotificationInput(BaseModel):
 class SendNotification:
     def __init__(
         self,
-        mailing_repo: MailingGateway,
-        notification_repo: NotificationGateway,
+        mailing_gateway: MailingGateway,
+        notification_gateway: NotificationGateway,
         tg_notifier: TelegramNotifierPort,
         push_notifier: PushNotifierPort,
     ):
-        self.mailing_repo = mailing_repo
-        self.notification_repo = notification_repo
+        self.mailing_gateway = mailing_gateway
+        self.notification_gateway = notification_gateway
         self.tg_notifier = tg_notifier
         self.push_notifier = push_notifier
 
     async def _get_notification(self, data: SendNotificationInput) -> Notification:
-        notification = await self.notification_repo.get(data.notification_id)
+        notification = await self.notification_gateway.get(data.notification_id)
         if notification is None:
             raise NotificationNotFound
         if notification.mailing_id:
-            mailing = await self.mailing_repo.get(notification.mailing_id)
+            mailing = await self.mailing_gateway.get(notification.mailing_id)
             if mailing is None:
                 raise MailingNotFound
             mailing.ensure_active()

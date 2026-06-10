@@ -11,11 +11,11 @@ class GetNotificationInput(BaseModel):
 
 
 class GetNotification:
-    def __init__(self, notification_query: NotificationGateway):
-        self.notification_query = notification_query
+    def __init__(self, notification_gateway: NotificationGateway):
+        self.notification_gateway = notification_gateway
 
     async def __call__(self, data: GetNotificationInput) -> RealtimeNotificationDTO:
-        notification = await self.notification_query.read_realtime_notification(
+        notification = await self.notification_gateway.read_realtime_notification(
             data.notification_id
         )
         if notification is None:

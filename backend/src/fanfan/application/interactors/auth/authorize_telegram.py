@@ -19,21 +19,21 @@ class AuthorizeTelegramInput(BaseModel):
 class AuthorizeTelegram:
     def __init__(
         self,
-        user_repo: UserGateway,
-        social_id_repo: SocialIdentityGateway,
+        user_gateway: UserGateway,
+        social_id_gateway: SocialIdentityGateway,
         uow: UnitOfWork,
         user_service: UserService,
         session_store: SessionStore,
     ) -> None:
-        self.social_id_repo = social_id_repo
+        self.social_id_gateway = social_id_gateway
         self.uow = uow
-        self.user_repo = user_repo
+        self.user_gateway = user_gateway
         self.user_service = user_service
         self.session_store = session_store
 
     async def __call__(self, data: AuthorizeTelegramInput) -> str:
         telegram_id = str(data.user_id)
-        user = await self.user_repo.get_by_social_id(
+        user = await self.user_gateway.get_by_social_id(
             provider_name="telegram", provider_account_id=telegram_id
         )
 
@@ -46,7 +46,7 @@ class AuthorizeTelegram:
             role=UserRole.VISITOR,
             hashed_password=None,
         )
-        await self.user_repo.add(user)
+        await self.user_gateway.add(user)
         await self.uow.flush()
         social_id = SocialIdentity(
             id=generate_social_identity_id(),
@@ -54,6 +54,6 @@ class AuthorizeTelegram:
             provider="telegram",
             provider_id=str(data.user_id),
         )
-        await self.social_id_repo.add(social_id)
+        await self.social_id_gateway.add(social_id)
         await self.uow.commit()
         return await self.session_store.create_session(user.id)

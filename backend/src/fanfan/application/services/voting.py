@@ -6,13 +6,13 @@ from fanfan.core.vo.vote import VotingStatus
 
 
 class VotingService:
-    def __init__(self, settings_repo: AppSettingsGateway):
-        self.settings_repo = settings_repo
+    def __init__(self, settings_gateway: AppSettingsGateway):
+        self.settings_gateway = settings_gateway
 
     async def get_voting_state(self, user: User, ticket: Ticket | None) -> VotingStatus:
         if (ticket is None) or (ticket.used_by_user_id != user.id):
             return VotingStatus.NO_TICKET
-        settings = await self.settings_repo.get()
+        settings = await self.settings_gateway.get()
         if not settings.voting_enabled:
             return VotingStatus.DISABLED
         return VotingStatus.OPEN

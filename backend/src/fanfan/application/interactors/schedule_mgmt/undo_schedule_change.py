@@ -31,16 +31,16 @@ class UndoScheduleChange:
     def __init__(
         self,
         uow: UnitOfWork,
-        changes_repo: ScheduleChangeGateway,
-        user_repo: UserGateway,
-        schedule_repo: ScheduleEventGateway,
+        changes_gateway: ScheduleChangeGateway,
+        user_gateway: UserGateway,
+        schedule_gateway: ScheduleEventGateway,
         current_user_provider: CurrentUserProvider,
         perm_service: PermissionService,
     ):
         self.uow = uow
-        self.changes_repo = changes_repo
-        self.schedule_repo = schedule_repo
-        self.user_repo = user_repo
+        self.changes_gateway = changes_gateway
+        self.schedule_gateway = schedule_gateway
+        self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
         self.perm_service = perm_service
 
@@ -49,18 +49,18 @@ class UndoScheduleChange:
         changed_event: ScheduleEvent | None,
         previous_event: ScheduleEvent | None,
     ) -> None:
-        current_event = await self.schedule_repo.get_current()
+        current_event = await self.schedule_gateway.get_current()
 
         if changed_event != current_event:
             raise OutdatedScheduleChange
 
         if changed_event:
             changed_event.unset_current()
-            await self.schedule_repo.save(changed_event)
+            await self.schedule_gateway.save(changed_event)
 
         if previous_event:
             previous_event.set_current()
-            await self.schedule_repo.save(previous_event)
+            await self.schedule_gateway.save(previous_event)
 
     async def _handle_moved(
         self,
@@ -68,7 +68,7 @@ class UndoScheduleChange:
         place_after_event: ScheduleEvent | None,
     ) -> None:
         if place_after_event:
-            place_before_event = await self.schedule_repo.get_next_by_order(
+            place_before_event = await self.schedule_gateway.get_next_by_order(
                 place_after_event.order
             )
             if place_before_event:
@@ -76,28 +76,28 @@ class UndoScheduleChange:
             else:
                 changed_event.place_after(place_after_event, None)
         else:
-            first_event = await self.schedule_repo.get_by_queue(1)
+            first_event = await self.schedule_gateway.get_by_queue(1)
             changed_event.place_before_first(first_event)
 
-        await self.schedule_repo.save(changed_event)
+        await self.schedule_gateway.save(changed_event)
 
     async def __call__(self, data: UndoScheduleChangeInput) -> None:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
             user=current_user, perm_name=PermissionName(Permissions.SCHEDULE_MANAGE)
         )
-        schedule_change = await self.changes_repo.get_by_id(data.schedule_change_id)
+        schedule_change = await self.changes_gateway.get_by_id(data.schedule_change_id)
         if schedule_change is None:
             raise ScheduleChangeNotFound
 
         # TODO check for None
         changed_event = (
-            await self.schedule_repo.get_by_id(schedule_change.changed_event_id)
+            await self.schedule_gateway.get_by_id(schedule_change.changed_event_id)
             if schedule_change.changed_event_id
             else None
         )
         argument_event = (
-            await self.schedule_repo.get_by_id(schedule_change.argument_event_id)
+            await self.schedule_gateway.get_by_id(schedule_change.argument_event_id)
             if schedule_change.argument_event_id
             else None
         )
@@ -110,14 +110,14 @@ class UndoScheduleChange:
 
         if schedule_change.type is ScheduleChangeType.SKIPPED and changed_event:
             changed_event.unskip()
-            await self.schedule_repo.save(changed_event)
+            await self.schedule_gateway.save(changed_event)
 
         if schedule_change.type is ScheduleChangeType.UNSKIPPED and changed_event:
             changed_event.skip()
-            await self.schedule_repo.save(changed_event)
+            await self.schedule_gateway.save(changed_event)
 
         schedule_change.mark_undone()
-        await self.changes_repo.delete(schedule_change)
+        await self.changes_gateway.delete(schedule_change)
         await self.uow.commit()
 
         logger.info(

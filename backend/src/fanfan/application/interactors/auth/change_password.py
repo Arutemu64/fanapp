@@ -18,13 +18,13 @@ class ChangePassword:
     def __init__(
         self,
         password_hasher: PasswordHasher,
-        user_repo: UserGateway,
+        user_gateway: UserGateway,
         current_user_provider: CurrentUserProvider,
         session_store: SessionStore,
         uow: UnitOfWork,
     ):
         self.password_hasher = password_hasher
-        self.user_repo = user_repo
+        self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
         self.session_store = session_store
         self.uow = uow
@@ -44,7 +44,7 @@ class ChangePassword:
             else:
                 raise IncorrectPassword
         current_user.set_password_hash(self.password_hasher.hash(data.new_password))
-        await self.user_repo.save(current_user)
+        await self.user_gateway.save(current_user)
         await self.uow.commit()
 
         # Security-first behavior: revoke every active session after password change.

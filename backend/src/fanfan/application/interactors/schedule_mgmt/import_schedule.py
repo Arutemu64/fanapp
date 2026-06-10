@@ -37,21 +37,21 @@ class ImportScheduleInput(BaseModel):
 class ImportSchedule:
     def __init__(
         self,
-        schedule_repo: ScheduleEventGateway,
+        schedule_gateway: ScheduleEventGateway,
         uow: UnitOfWork,
         current_user_provider: CurrentUserProvider,
-        user_repo: UserGateway,
+        user_gateway: UserGateway,
     ):
-        self.user_repo = user_repo
+        self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
         self.uow = uow
-        self.schedule_repo = schedule_repo
+        self.schedule_gateway = schedule_gateway
 
     async def __call__(self, data: ImportScheduleInput) -> None:
         current_user = await self.current_user_provider.require_user()
         if current_user.role is not UserRole.ORG:
             raise AccessDenied
-        orphaned_events = await self.schedule_repo.list_all()
+        orphaned_events = await self.schedule_gateway.list_all()
         order = ORDER_INIT
         for entry in data.schedule:
             existing_event = next(
@@ -67,7 +67,7 @@ class ImportSchedule:
                     nomination_title=entry.nomination_title,
                     order=order,
                 )
-                await self.schedule_repo.save(existing_event)
+                await self.schedule_gateway.save(existing_event)
                 orphaned_events.remove(existing_event)
                 logger.info(
                     "Existing event was updated",
@@ -86,10 +86,10 @@ class ImportSchedule:
                     is_current=False,
                     is_skipped=False,
                 )
-                await self.schedule_repo.add(new_event)
+                await self.schedule_gateway.add(new_event)
                 logger.info("New event was added", extra={"new_event": new_event})
             order += ORDER_STEP
         for e in orphaned_events:
-            await self.schedule_repo.delete(e)
+            await self.schedule_gateway.delete(e)
             logger.info("Orphaned event was deleted", extra={"deleted_event": e})
         await self.uow.commit()

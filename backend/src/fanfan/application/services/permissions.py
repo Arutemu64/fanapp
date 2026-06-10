@@ -11,8 +11,8 @@ from fanfan.core.vo.permission import (
 
 
 class PermissionService:
-    def __init__(self, perm_repo: UserPermissionGateway):
-        self.perm_repo = perm_repo
+    def __init__(self, perm_gateway: UserPermissionGateway):
+        self.perm_gateway = perm_gateway
 
     async def ensure(
         self,
@@ -21,7 +21,7 @@ class PermissionService:
         object_type: PermissionObjectType | None = None,
         object_id: PermissionObjectId | None = None,
     ) -> None:
-        user_perm = await self.perm_repo.get_by_name(
+        user_perm = await self.perm_gateway.get_by_name(
             user_id=user.id,
             permission_name=perm_name,
             object_id=object_id,

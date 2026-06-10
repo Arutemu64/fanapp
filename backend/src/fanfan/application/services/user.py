@@ -59,13 +59,13 @@ RUSSIAN_NOUNS: tuple[str, ...] = (
 
 
 class UserService:
-    def __init__(self, user_repo: UserGateway) -> None:
-        self.user_repo = user_repo
+    def __init__(self, user_gateway: UserGateway) -> None:
+        self.user_gateway = user_gateway
 
     async def generate_username(self) -> Username:
         for _ in range(500):
             candidate = self._build_candidate()
-            if not await self.user_repo.get_by_username(candidate):
+            if not await self.user_gateway.get_by_username(candidate):
                 return Username(candidate)
 
         msg = "Could not generate unique username"

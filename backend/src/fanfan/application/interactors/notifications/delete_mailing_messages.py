@@ -16,10 +16,10 @@ class DeleteMailingMessagesInput(BaseModel):
 class DeleteMailingMessages:
     def __init__(
         self,
-        notification_repo: NotificationGateway,
+        notification_gateway: NotificationGateway,
         uow: UnitOfWork,
     ):
-        self.notification_gateway = notification_repo
+        self.notification_gateway = notification_gateway
         self.uow = uow
 
     async def __call__(self, data: DeleteMailingMessagesInput) -> None:

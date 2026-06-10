@@ -9,12 +9,12 @@ from fanfan.core.vo.user import UserRole
 class GetSettings:
     def __init__(
         self,
-        app_settings_repo: AppSettingsGateway,
-        user_repo: UserGateway,
+        app_settings_gateway: AppSettingsGateway,
+        user_gateway: UserGateway,
         current_user_provider: CurrentUserProvider,
     ) -> None:
-        self.app_settings_repo = app_settings_repo
-        self.user_repo = user_repo
+        self.app_settings_gateway = app_settings_gateway
+        self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
 
     async def __call__(self) -> AppSettingsDTO:
@@ -23,4 +23,4 @@ class GetSettings:
         if current_user.role is not UserRole.ORG:
             raise AccessDenied
 
-        return AppSettingsDTO.model_validate(await self.app_settings_repo.get())
+        return AppSettingsDTO.model_validate(await self.app_settings_gateway.get())

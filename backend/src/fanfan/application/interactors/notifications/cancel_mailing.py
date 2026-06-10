@@ -23,20 +23,20 @@ class CancelMailingInput(BaseModel):
 class CancelMailing:
     def __init__(
         self,
-        mailing_repo: MailingGateway,
-        user_repo: UserGateway,
+        mailing_gateway: MailingGateway,
+        user_gateway: UserGateway,
         current_user_provider: CurrentUserProvider,
         events_broker: EventBroker,
         uow: UnitOfWork,
     ):
-        self.mailing_repo = mailing_repo
-        self.user_repo = user_repo
+        self.mailing_gateway = mailing_gateway
+        self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
         self.events_broker = events_broker
         self.uow = uow
 
     async def __call__(self, data: CancelMailingInput) -> None:
-        mailing = await self.mailing_repo.get(data.mailing_id)
+        mailing = await self.mailing_gateway.get(data.mailing_id)
         if mailing is None:
             raise MailingNotFound
         current_user = await self.current_user_provider.require_user()
@@ -45,7 +45,7 @@ class CancelMailing:
         ):
             raise AccessDenied(details={"reason": "MAILING_DELETE_FORBIDDEN"})
         mailing.set_as_cancelled()
-        await self.mailing_repo.save(mailing)
+        await self.mailing_gateway.save(mailing)
         await self.uow.commit()
         await self.events_broker.publish(MailingCancelled(mailing_id=data.mailing_id))
         logger.info(

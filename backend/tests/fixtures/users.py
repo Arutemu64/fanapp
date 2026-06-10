@@ -27,7 +27,7 @@ async def visitor(dishka_request: AsyncContainer) -> User:
     """
     Create a visitor (user with no special permissions)
     """
-    user_repo = await dishka_request.get(UserGateway)
+    user_gateway = await dishka_request.get(UserGateway)
     uow = await dishka_request.get(UnitOfWork)
 
     visitor = User(
@@ -36,7 +36,7 @@ async def visitor(dishka_request: AsyncContainer) -> User:
         hashed_password=None,
         role=UserRole.VISITOR,
     )
-    await user_repo.add(visitor)
+    await user_gateway.add(visitor)
     await uow.commit()
     return visitor
 
@@ -46,10 +46,10 @@ async def visitor_with_ticket(dishka_request: AsyncContainer, visitor: User) -> 
     """
     Create a visitor with a linked ticket.
     """
-    ticket_repo = await dishka_request.get(TicketGateway)
+    ticket_gateway = await dishka_request.get(TicketGateway)
     uow = await dishka_request.get(UnitOfWork)
 
-    await ticket_repo.add(
+    await ticket_gateway.add(
         Ticket(
             id=generate_ticket_id(),
             barcode=f"VISITOR-TICKET-{visitor.id}",
@@ -68,9 +68,9 @@ async def schedule_editor(dishka_request: AsyncContainer) -> User:
     """
     Create a schedule manager
     """
-    user_repo = await dishka_request.get(UserGateway)
-    permission_repo = await dishka_request.get(PermissionGateway)
-    user_permission_repo = await dishka_request.get(UserPermissionGateway)
+    user_gateway = await dishka_request.get(UserGateway)
+    permission_gateway = await dishka_request.get(PermissionGateway)
+    user_permission_gateway = await dishka_request.get(UserPermissionGateway)
     uow = await dishka_request.get(UnitOfWork)
 
     schedule_editor = User(
@@ -79,12 +79,12 @@ async def schedule_editor(dishka_request: AsyncContainer) -> User:
         hashed_password=None,
         role=UserRole.ORG,
     )
-    await user_repo.add(schedule_editor)
-    schedule_manage_permission = await permission_repo.get_by_name(
+    await user_gateway.add(schedule_editor)
+    schedule_manage_permission = await permission_gateway.get_by_name(
         PermissionName(Permissions.SCHEDULE_MANAGE)
     )
     assert schedule_manage_permission is not None
-    await user_permission_repo.add(
+    await user_permission_gateway.add(
         UserPermission(
             id=generate_user_permission_id(),
             permission_id=schedule_manage_permission.id,

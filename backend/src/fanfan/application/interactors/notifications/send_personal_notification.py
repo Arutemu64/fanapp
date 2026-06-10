@@ -24,13 +24,13 @@ class SendPersonalNotificationInput:
 class SendPersonalNotification:
     def __init__(
         self,
-        user_repo: UserGateway,
-        mailing_repo: MailingGateway,
+        user_gateway: UserGateway,
+        mailing_gateway: MailingGateway,
         current_user_provider: CurrentUserProvider,
         events_broker: EventBroker,
     ):
-        self.user_repo = user_repo
-        self.mailing_repo = mailing_repo
+        self.user_gateway = user_gateway
+        self.mailing_gateway = mailing_gateway
         self.current_user_provider = current_user_provider
         self.events_broker = events_broker
 
@@ -40,7 +40,7 @@ class SendPersonalNotification:
         if current_user.role != UserRole.ORG:
             raise AccessDenied
 
-        user = await self.user_repo.get_by_id(data.user_id)
+        user = await self.user_gateway.get_by_id(data.user_id)
         if user is None:
             raise UserNotFound
 

@@ -22,12 +22,12 @@ class GetVotingNominationOutput(NominationVotingDTO):
 class GetVotingNomination:
     def __init__(
         self,
-        participant_query: ParticipantGateway,
-        nomination_query: NominationGateway,
+        participant_gateway: ParticipantGateway,
+        nomination_gateway: NominationGateway,
         current_user_provider: CurrentUserProvider,
     ) -> None:
-        self.participant_query = participant_query
-        self.nomination_query = nomination_query
+        self.participant_gateway = participant_gateway
+        self.nomination_gateway = nomination_gateway
         self.current_user_provider = current_user_provider
 
     async def __call__(
@@ -35,14 +35,14 @@ class GetVotingNomination:
         data: GetVotingNominationInput,
     ) -> GetVotingNominationOutput:
         current_user_id = await self.current_user_provider.get_user_id()
-        nomination = await self.nomination_query.read_voting_dto(
+        nomination = await self.nomination_gateway.read_voting_dto(
             nomination_code=data.nomination_code,
             user_id=current_user_id,
         )
         if nomination is None:
             raise NominationNotFound
 
-        participants = await self.participant_query.read_list_participants(
+        participants = await self.participant_gateway.read_list_participants(
             user_id=current_user_id,
             nomination_id=nomination.id,
         )

@@ -25,17 +25,17 @@ class UpdateCurrentUser:
         self,
         current_user_provider: CurrentUserProvider,
         uow: UnitOfWork,
-        user_repo: UserGateway,
+        user_gateway: UserGateway,
     ) -> None:
         self.current_user_provider = current_user_provider
-        self.user_repo = user_repo
+        self.user_gateway = user_gateway
         self.uow = uow
 
     async def _update_username(
         self, current_user: User, new_username: str | None
     ) -> None:
         if new_username:
-            user = await self.user_repo.get_by_username(new_username)
+            user = await self.user_gateway.get_by_username(new_username)
             if user and (current_user.id != user.id):
                 raise UsernameAlreadyTaken
             current_user.set_username(Username(new_username))
@@ -59,5 +59,5 @@ class UpdateCurrentUser:
             current_user.set_first_name(data_to_update["first_name"])
             user_updated_flag = True
         if user_updated_flag:
-            await self.user_repo.save(current_user)
+            await self.user_gateway.save(current_user)
             await self.uow.commit()

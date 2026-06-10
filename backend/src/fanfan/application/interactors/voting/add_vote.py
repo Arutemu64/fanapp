@@ -28,33 +28,33 @@ class AddVoteOutput(BaseModel):
 class AddVote:
     def __init__(
         self,
-        participant_repo: ParticipantGateway,
-        vote_repo: VoteGateway,
+        participant_gateway: ParticipantGateway,
+        vote_gateway: VoteGateway,
         uow: UnitOfWork,
         vote_service: VotingService,
         current_user_provider: CurrentUserProvider,
-        ticket_repo: TicketGateway,
+        ticket_gateway: TicketGateway,
     ) -> None:
-        self.participant_repo = participant_repo
-        self.vote_repo = vote_repo
+        self.participant_gateway = participant_gateway
+        self.vote_gateway = vote_gateway
         self.uow = uow
         self.vote_service = vote_service
         self.current_user_provider = current_user_provider
-        self.ticket_repo = ticket_repo
+        self.ticket_gateway = ticket_gateway
 
     async def __call__(
         self,
         data: AddVoteInput,
     ) -> AddVoteOutput:
         current_user = await self.current_user_provider.require_user()
-        ticket = await self.ticket_repo.get_by_user_id(current_user.id)
+        ticket = await self.ticket_gateway.get_by_user_id(current_user.id)
         await self.vote_service.ensure_user_can_vote(user=current_user, ticket=ticket)
 
         # User can only vote once in a nomination
-        participant = await self.participant_repo.get(data.participant_id)
+        participant = await self.participant_gateway.get(data.participant_id)
         if participant is None:
             raise ParticipantNotFound
-        if await self.vote_repo.get_user_vote_by_nomination(
+        if await self.vote_gateway.get_user_vote_by_nomination(
             nomination_id=participant.nomination_id, user_id=current_user.id
         ):
             raise VoteAlreadyExists
@@ -63,7 +63,7 @@ class AddVote:
             user_id=current_user.id,
             participant_id=data.participant_id,
         )
-        await self.vote_repo.add(vote)
+        await self.vote_gateway.add(vote)
         await self.uow.commit()
 
         logger.info(

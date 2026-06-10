@@ -36,25 +36,25 @@ class SetCurrentScheduleEventInput(BaseModel):
 class SetCurrentScheduleEvent:
     def __init__(
         self,
-        schedule_repo: ScheduleEventGateway,
-        settings_repo: AppSettingsGateway,
-        changes_repo: ScheduleChangeGateway,
-        user_repo: UserGateway,
+        schedule_gateway: ScheduleEventGateway,
+        settings_gateway: AppSettingsGateway,
+        changes_gateway: ScheduleChangeGateway,
+        user_gateway: UserGateway,
         perm_service: PermissionService,
         uow: UnitOfWork,
         rate_lock_factory: RateLockFactory,
         current_user_provider: CurrentUserProvider,
-        mailing_repo: MailingGateway,
+        mailing_gateway: MailingGateway,
     ) -> None:
-        self.schedule_repo = schedule_repo
-        self.settings_repo = settings_repo
-        self.user_repo = user_repo
+        self.schedule_gateway = schedule_gateway
+        self.settings_gateway = settings_gateway
+        self.user_gateway = user_gateway
         self.perm_service = perm_service
         self.uow = uow
         self.rate_lock_factory = rate_lock_factory
         self.current_user_provider = current_user_provider
-        self.mailing_repo = mailing_repo
-        self.changes_repo = changes_repo
+        self.mailing_gateway = mailing_gateway
+        self.changes_gateway = changes_gateway
 
     async def __call__(self, data: SetCurrentScheduleEventInput) -> None:
         current_user = await self.current_user_provider.require_user()
@@ -62,7 +62,7 @@ class SetCurrentScheduleEvent:
             user=current_user, perm_name=PermissionName(Permissions.SCHEDULE_MANAGE)
         )
 
-        settings = await self.settings_repo.get()
+        settings = await self.settings_gateway.get()
         lock = self.rate_lock_factory(
             ANNOUNCE_LIMIT_NAME,
             cooldown_period=settings.limits.announcement_timeout,
@@ -71,24 +71,24 @@ class SetCurrentScheduleEvent:
         try:
             async with lock:
                 # Unset current event
-                previous_current_event = await self.schedule_repo.get_current()
+                previous_current_event = await self.schedule_gateway.get_current()
                 if previous_current_event:
                     previous_current_event.unset_current()
-                    await self.schedule_repo.save(previous_current_event)
+                    await self.schedule_gateway.save(previous_current_event)
 
                 # Get event and set as current
                 if data.event_id is not None:
-                    event = await self.schedule_repo.get_by_id(data.event_id)
+                    event = await self.schedule_gateway.get_by_id(data.event_id)
                     if event is None:
                         raise EventNotFound
                     event.set_current()
-                    await self.schedule_repo.save(event)
+                    await self.schedule_gateway.save(event)
                 else:
                     event = None
 
                 # Save schedule change
                 mailing = Mailing.create(by_user_id=current_user.id)
-                await self.mailing_repo.add(mailing)
+                await self.mailing_gateway.add(mailing)
                 schedule_change = ScheduleChange.set_as_current(
                     changed_event_id=event.id if event else None,
                     previous_event_id=previous_current_event.id
@@ -97,7 +97,7 @@ class SetCurrentScheduleEvent:
                     mailing_id=mailing.id,
                     user_id=current_user.id,
                 )
-                await self.changes_repo.add(schedule_change)
+                await self.changes_gateway.add(schedule_change)
 
                 # Commit and proceed
                 await self.uow.commit()

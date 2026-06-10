@@ -14,13 +14,13 @@ class GetScheduleOutput(BaseModel):
 class GetSchedule:
     def __init__(
         self,
-        schedule_query: ScheduleEventGateway,
+        schedule_gateway: ScheduleEventGateway,
         current_user_provider: CurrentUserProvider,
     ) -> None:
-        self.schedule_query = schedule_query
+        self.schedule_gateway = schedule_gateway
         self.current_user_provider = current_user_provider
 
     async def __call__(self) -> GetScheduleOutput:
         current_user_id = await self.current_user_provider.get_user_id()
-        events = await self.schedule_query.read_list_schedule(user_id=current_user_id)
+        events = await self.schedule_gateway.read_list_schedule(user_id=current_user_id)
         return GetScheduleOutput(schedule=events)

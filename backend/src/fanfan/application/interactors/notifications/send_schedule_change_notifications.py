@@ -35,20 +35,20 @@ class SendScheduleChangeNotifications:
     def __init__(
         self,
         template_renderer: TemplateRenderer,
-        changes_query: ScheduleChangeGateway,
-        schedule_query: ScheduleEventGateway,
-        user_query: UserGateway,
-        subscription_query: SubscriptionGateway,
-        mailing_repo: MailingGateway,
+        changes_gateway: ScheduleChangeGateway,
+        schedule_gateway: ScheduleEventGateway,
+        user_gateway: UserGateway,
+        subscription_gateway: SubscriptionGateway,
+        mailing_gateway: MailingGateway,
         uow: UnitOfWork,
         events_broker: EventBroker,
     ):
         self.template_renderer = template_renderer
-        self.changes_query = changes_query
-        self.schedule_query = schedule_query
-        self.user_query = user_query
-        self.subscription_query = subscription_query
-        self.mailing_repo = mailing_repo
+        self.changes_gateway = changes_gateway
+        self.schedule_gateway = schedule_gateway
+        self.user_gateway = user_gateway
+        self.subscription_gateway = subscription_gateway
+        self.mailing_gateway = mailing_gateway
         self.uow = uow
         self.events_broker = events_broker
 
@@ -84,7 +84,7 @@ class SendScheduleChangeNotifications:
         events: list[NotificationQueued] = []
         if schedule_change.user:
             editor = schedule_change.user
-            editors = await self.user_query.read_schedule_editors()
+            editors = await self.user_gateway.read_schedule_editors()
             events.extend(
                 NotificationQueued(
                     notification=NewNotification(
@@ -138,7 +138,7 @@ class SendScheduleChangeNotifications:
                     mailing_id=schedule_change.mailing_id,
                 ),
             )
-            for u in await self.user_query.read_all_by_receive_all_announcements()
+            for u in await self.user_gateway.read_all_by_receive_all_announcements()
         )
         return events
 
@@ -154,7 +154,7 @@ class SendScheduleChangeNotifications:
         current_event_queue = cast("int", current_event.queue)
 
         upcoming_subscriptions = (
-            await self.subscription_query.read_upcoming_subscriptions(
+            await self.subscription_gateway.read_upcoming_subscriptions(
                 current_event_queue=current_event_queue
             )
         )
@@ -187,13 +187,13 @@ class SendScheduleChangeNotifications:
         return events
 
     async def __call__(self, data: SendScheduleChangeNotificationsInput) -> None:
-        schedule_change = await self.changes_query.read_schedule_change(
+        schedule_change = await self.changes_gateway.read_schedule_change(
             data.schedule_change_id
         )
         if schedule_change is None:
             raise ScheduleChangeNotFound
-        current_event = await self.schedule_query.read_current_event()
-        next_event = await self.schedule_query.read_next_event()
+        current_event = await self.schedule_gateway.read_current_event()
+        next_event = await self.schedule_gateway.read_next_event()
         changed_event = schedule_change.changed_event
         reason_msg = self._resolve_reason_msg(schedule_change)
 
@@ -220,7 +220,7 @@ class SendScheduleChangeNotifications:
             )
 
         if schedule_change.mailing_id:
-            await self.mailing_repo.set_total(
+            await self.mailing_gateway.set_total(
                 mailing_id=schedule_change.mailing_id,
                 total_count=len(notification_events),
             )

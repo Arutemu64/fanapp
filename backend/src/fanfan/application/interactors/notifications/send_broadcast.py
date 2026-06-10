@@ -29,14 +29,14 @@ class SendBroadcast:
     def __init__(
         self,
         current_user_provider: CurrentUserProvider,
-        user_repo: UserGateway,
-        mailing_repo: MailingGateway,
+        user_gateway: UserGateway,
+        mailing_gateway: MailingGateway,
         events_broker: EventBroker,
         uow: UnitOfWork,
     ):
         self.current_user_provider = current_user_provider
-        self.user_repo = user_repo
-        self.mailing_repo = mailing_repo
+        self.user_gateway = user_gateway
+        self.mailing_gateway = mailing_gateway
         self.events_broker = events_broker
         self.uow = uow
 
@@ -47,7 +47,7 @@ class SendBroadcast:
             raise AccessDenied
 
         mailing = Mailing.create(by_user_id=current_user.id)
-        await self.mailing_repo.add(mailing)
+        await self.mailing_gateway.add(mailing)
         await self.uow.commit()
 
         await self.events_broker.publish(

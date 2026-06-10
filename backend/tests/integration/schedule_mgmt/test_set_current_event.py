@@ -64,9 +64,9 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_repo = await dishka_request.get(ScheduleEventGateway)
-    changes_query = await dishka_request.get(ScheduleChangeGateway)
-    mailing_repo = await dishka_request.get(MailingGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
+    mailing_gateway = await dishka_request.get(MailingGateway)
     login(schedule_editor)
 
     previous_current_event = _schedule_event(
@@ -80,20 +80,20 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
         nomination_title="Номинация",
         block_title="Блок",
     )
-    await schedule_repo.add(previous_current_event)
-    await schedule_repo.add(new_current_event)
+    await schedule_gateway.add(previous_current_event)
+    await schedule_gateway.add(new_current_event)
     await uow.commit()
 
     await interactor(SetCurrentScheduleEventInput(event_id=new_current_event.id))
 
-    saved_previous_event = await schedule_repo.get_by_id(previous_current_event.id)
-    saved_new_event = await schedule_repo.get_by_id(new_current_event.id)
+    saved_previous_event = await schedule_gateway.get_by_id(previous_current_event.id)
+    saved_new_event = await schedule_gateway.get_by_id(new_current_event.id)
     assert saved_previous_event is not None
     assert saved_new_event is not None
     assert saved_previous_event.is_current is False
     assert saved_new_event.is_current is True
 
-    changes = await changes_query.read_list_schedule_changes()
+    changes = await changes_gateway.read_list_schedule_changes()
     assert len(changes) == 1
     change = changes[0]
     assert change.type == ScheduleChangeType.SET_AS_CURRENT
@@ -108,7 +108,7 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     assert change.mailing_id is not None
 
     # Смена текущего события создаёт рассылку-уведомление от того же пользователя.
-    mailing = await mailing_repo.get(change.mailing_id)
+    mailing = await mailing_gateway.get(change.mailing_id)
     assert mailing is not None
     assert mailing.by_user_id == schedule_editor.id
 
@@ -125,22 +125,22 @@ async def test_set_current_event_sets_current_when_none_was_current(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_repo = await dishka_request.get(ScheduleEventGateway)
-    changes_query = await dishka_request.get(ScheduleChangeGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
     # Ни одно событие ещё не отмечено текущим.
     event = _schedule_event(1, "Первое текущее событие", 1)
-    await schedule_repo.add(event)
+    await schedule_gateway.add(event)
     await uow.commit()
 
     await interactor(SetCurrentScheduleEventInput(event_id=event.id))
 
-    saved_event = await schedule_repo.get_by_id(event.id)
+    saved_event = await schedule_gateway.get_by_id(event.id)
     assert saved_event is not None
     assert saved_event.is_current is True
 
-    changes = await changes_query.read_list_schedule_changes()
+    changes = await changes_gateway.read_list_schedule_changes()
     assert len(changes) == 1
     change = changes[0]
     assert change.type == ScheduleChangeType.SET_AS_CURRENT
@@ -164,21 +164,21 @@ async def test_set_current_event_can_unset_current_event(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_repo = await dishka_request.get(ScheduleEventGateway)
-    changes_query = await dishka_request.get(ScheduleChangeGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
     previous_current_event = _schedule_event(1, "Текущее событие", 1, is_current=True)
-    await schedule_repo.add(previous_current_event)
+    await schedule_gateway.add(previous_current_event)
     await uow.commit()
 
     await interactor(SetCurrentScheduleEventInput(event_id=None))
 
-    saved_previous_event = await schedule_repo.get_by_id(previous_current_event.id)
+    saved_previous_event = await schedule_gateway.get_by_id(previous_current_event.id)
     assert saved_previous_event is not None
     assert saved_previous_event.is_current is False
 
-    changes = await changes_query.read_list_schedule_changes()
+    changes = await changes_gateway.read_list_schedule_changes()
     assert len(changes) == 1
     change = changes[0]
     assert change.type == ScheduleChangeType.SET_AS_CURRENT
@@ -203,12 +203,12 @@ async def test_set_current_event_raises_when_event_not_found(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_repo = await dishka_request.get(ScheduleEventGateway)
-    changes_query = await dishka_request.get(ScheduleChangeGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
     previous_current_event = _schedule_event(1, "Текущее событие", 1, is_current=True)
-    await schedule_repo.add(previous_current_event)
+    await schedule_gateway.add(previous_current_event)
     await uow.commit()
 
     unknown_event_id = ScheduleEventId(UUID("00000000-0000-0000-0000-000000000000"))
@@ -219,10 +219,10 @@ async def test_set_current_event_raises_when_event_not_found(
     # Откатываем сброшенный current из незавершённой транзакции после ошибки.
     await uow.rollback()
 
-    saved_previous_event = await schedule_repo.get_by_id(previous_current_event.id)
+    saved_previous_event = await schedule_gateway.get_by_id(previous_current_event.id)
     assert saved_previous_event is not None
     assert saved_previous_event.is_current is True
-    assert await changes_query.read_list_schedule_changes() == []
+    assert await changes_gateway.read_list_schedule_changes() == []
     assert events_broker.published_events == []
 
 
@@ -234,22 +234,22 @@ async def test_set_current_event_without_permission_raises_access_denied(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_repo = await dishka_request.get(ScheduleEventGateway)
-    changes_query = await dishka_request.get(ScheduleChangeGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     # У обычного посетителя нет права SCHEDULE_MANAGE.
     login(visitor)
 
     event = _schedule_event(1, "Событие", 1)
-    await schedule_repo.add(event)
+    await schedule_gateway.add(event)
     await uow.commit()
 
     with pytest.raises(AccessDenied):
         await interactor(SetCurrentScheduleEventInput(event_id=event.id))
 
-    saved_event = await schedule_repo.get_by_id(event.id)
+    saved_event = await schedule_gateway.get_by_id(event.id)
     assert saved_event is not None
     assert saved_event.is_current is False
-    assert await changes_query.read_list_schedule_changes() == []
+    assert await changes_gateway.read_list_schedule_changes() == []
     assert events_broker.published_events == []
 
 
@@ -261,14 +261,14 @@ async def test_set_current_event_twice_in_a_row_raises_too_fast(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_repo = await dishka_request.get(ScheduleEventGateway)
-    changes_query = await dishka_request.get(ScheduleChangeGateway)
+    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
     first_event = _schedule_event(1, "Первое событие", 1)
     second_event = _schedule_event(2, "Второе событие", 2)
-    await schedule_repo.add(first_event)
-    await schedule_repo.add(second_event)
+    await schedule_gateway.add(first_event)
+    await schedule_gateway.add(second_event)
     await uow.commit()
 
     # Защита от слишком частых анонсов использует реальный Redis-лок
@@ -279,14 +279,14 @@ async def test_set_current_event_twice_in_a_row_raises_too_fast(
         await interactor(SetCurrentScheduleEventInput(event_id=second_event.id))
 
     # Второй вызов отклонён до записи изменений: текущим остаётся первое событие.
-    saved_first_event = await schedule_repo.get_by_id(first_event.id)
-    saved_second_event = await schedule_repo.get_by_id(second_event.id)
+    saved_first_event = await schedule_gateway.get_by_id(first_event.id)
+    saved_second_event = await schedule_gateway.get_by_id(second_event.id)
     assert saved_first_event is not None
     assert saved_first_event.is_current is True
     assert saved_second_event is not None
     assert saved_second_event.is_current is False
 
-    changes = await changes_query.read_list_schedule_changes()
+    changes = await changes_gateway.read_list_schedule_changes()
     assert len(changes) == 1
     assert events_broker.published_events == [
         ScheduleChangeCreated(schedule_change_id=changes[0].id)

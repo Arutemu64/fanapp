@@ -21,33 +21,33 @@ class CancelVoteByNominationInput(BaseModel):
 class CancelVoteByNomination:
     def __init__(
         self,
-        vote_repo: VoteGateway,
-        user_repo: UserGateway,
+        vote_gateway: VoteGateway,
+        user_gateway: UserGateway,
         uow: UnitOfWork,
         current_user_provider: CurrentUserProvider,
         service: VotingService,
-        ticket_repo: TicketGateway,
+        ticket_gateway: TicketGateway,
     ) -> None:
-        self.user_repo = user_repo
-        self.vote_repo = vote_repo
+        self.user_gateway = user_gateway
+        self.vote_gateway = vote_gateway
         self.uow = uow
         self.current_user_provider = current_user_provider
         self.service = service
-        self.ticket_repo = ticket_repo
+        self.ticket_gateway = ticket_gateway
 
     async def __call__(self, data: CancelVoteByNominationInput) -> None:
         current_user = await self.current_user_provider.require_user()
-        ticket = await self.ticket_repo.get_by_user_id(current_user.id)
+        ticket = await self.ticket_gateway.get_by_user_id(current_user.id)
         # TODO remove unnecessary check?
         await self.service.ensure_user_can_vote(user=current_user, ticket=ticket)
 
-        vote = await self.vote_repo.get_user_vote_by_nomination(
+        vote = await self.vote_gateway.get_user_vote_by_nomination(
             nomination_id=data.nomination_id, user_id=current_user.id
         )
         if vote is None:
             raise VoteNotFound
         vote.delete()
-        await self.vote_repo.delete(vote)
+        await self.vote_gateway.delete(vote)
         await self.uow.commit()
         logger.info(
             "User %s cancelled their vote for %s",

@@ -14,11 +14,11 @@ from fanfan.core.models.notification import Notification
 class PushNotifier(Notifier):
     def __init__(
         self,
-        push_sub_repo: PushSubscriptionGateway,
+        push_sub_gateway: PushSubscriptionGateway,
         uow: UnitOfWork,
         push_config: PushConfig,
     ) -> None:
-        self.push_sub_repo = push_sub_repo
+        self.push_sub_gateway = push_sub_gateway
         self.uow = uow
         self.wp = WebPush(
             private_key=push_config.private_key_path,
@@ -52,7 +52,7 @@ class PushNotifier(Notifier):
         return push_subscription, message
 
     async def send_notification(self, notification: Notification) -> None:
-        push_subs = await self.push_sub_repo.list_by_user(notification.user_id)
+        push_subs = await self.push_sub_gateway.list_by_user(notification.user_id)
         async with aiohttp.ClientSession() as session:
             for sub in push_subs:
                 subscription, message = self._build_message(
@@ -69,5 +69,5 @@ class PushNotifier(Notifier):
                     headers=message.headers,
                 ) as response:
                     if response.status in [404, 410]:
-                        await self.push_sub_repo.delete(sub)
+                        await self.push_sub_gateway.delete(sub)
                         await self.uow.commit()

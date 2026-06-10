@@ -27,12 +27,12 @@ class AuthenticateUserInput(BaseModel):
 class AuthenticateUser:
     def __init__(
         self,
-        user_repo: UserGateway,
+        user_gateway: UserGateway,
         password_hasher: PasswordHasher,
         session_store: SessionStore,
         rate_limiter: RateLimiter,
     ):
-        self.user_repo = user_repo
+        self.user_gateway = user_gateway
         self.password_hasher = password_hasher
         self.session_store = session_store
         self.rate_limiter = rate_limiter
@@ -45,7 +45,7 @@ class AuthenticateUser:
         # keeps the timing identical and stops attackers from probing for free.
         await self._register_attempt(normalized_email, data.client_ip)
 
-        user = await self.user_repo.get_by_email(normalized_email)
+        user = await self.user_gateway.get_by_email(normalized_email)
         if user is None:
             # Prevent timing attack
             self.password_hasher.verify(data.password, self.dummy_hash)

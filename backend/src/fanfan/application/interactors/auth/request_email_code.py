@@ -12,12 +12,12 @@ from fanfan.core.utils.email import normalize_email
 class RequestEmailCode:
     def __init__(
         self,
-        user_repo: UserGateway,
+        user_gateway: UserGateway,
         event_broker: EventBroker,
         current_user_provider: CurrentUserProvider,
         rate_lock_factory: RateLockFactory,
     ):
-        self.user_repo = user_repo
+        self.user_gateway = user_gateway
         self.event_broker = event_broker
         self.current_user_provider = current_user_provider
         self.rate_lock_factory = rate_lock_factory

@@ -21,21 +21,21 @@ class LinkTicketInput(BaseModel):
 class LinkTicket:
     def __init__(
         self,
-        ticket_repo: TicketGateway,
-        user_repo: UserGateway,
+        ticket_gateway: TicketGateway,
+        user_gateway: UserGateway,
         tickets_service: TicketService,
         uow: UnitOfWork,
         current_user_provider: CurrentUserProvider,
     ) -> None:
-        self.ticket_repo = ticket_repo
-        self.user_repo = user_repo
+        self.ticket_gateway = ticket_gateway
+        self.user_gateway = user_gateway
         self.tickets_service = tickets_service
         self.uow = uow
         self.current_user_provider = current_user_provider
 
     async def __call__(self, data: LinkTicketInput) -> None:
         current_user = await self.current_user_provider.require_user()
-        ticket = await self.ticket_repo.get_by_barcode(barcode=data.barcode)
+        ticket = await self.ticket_gateway.get_by_barcode(barcode=data.barcode)
         if ticket is None:
             raise TicketNotFound
         await self.tickets_service.link_ticket(ticket=ticket, user=current_user)

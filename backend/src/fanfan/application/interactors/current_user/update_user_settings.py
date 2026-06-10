@@ -17,11 +17,11 @@ class UpdateUserSettingsInput(BaseModel):
 class UpdateUserSettings:
     def __init__(
         self,
-        user_repo: UserGateway,
+        user_gateway: UserGateway,
         current_user_provider: CurrentUserProvider,
         uow: UnitOfWork,
     ):
-        self.user_repo = user_repo
+        self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
         self.uow = uow
 
@@ -46,5 +46,5 @@ class UpdateUserSettings:
             )
             update_flag = True
         if update_flag:
-            await self.user_repo.save(current_user)
+            await self.user_gateway.save(current_user)
             await self.uow.commit()

@@ -12,15 +12,15 @@ class ListVotingNominationsOutput(BaseModel):
 class ListVotingNominations:
     def __init__(
         self,
-        nomination_query: NominationGateway,
+        nomination_gateway: NominationGateway,
         current_user_provider: CurrentUserProvider,
     ) -> None:
-        self.nomination_query = nomination_query
+        self.nomination_gateway = nomination_gateway
         self.current_user_provider = current_user_provider
 
     async def __call__(self) -> ListVotingNominationsOutput:
         current_user_id = await self.current_user_provider.get_user_id()
-        nominations = await self.nomination_query.read_list_votable_nominations(
+        nominations = await self.nomination_gateway.read_list_votable_nominations(
             user_id=current_user_id
         )
         return ListVotingNominationsOutput(nominations=nominations)

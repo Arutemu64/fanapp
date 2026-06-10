@@ -21,13 +21,13 @@ class UpdateAppSettingsInput(BaseModel):
 class UpdateSettings:
     def __init__(
         self,
-        settings_repo: AppSettingsGateway,
-        user_repo: UserGateway,
+        settings_gateway: AppSettingsGateway,
+        user_gateway: UserGateway,
         current_user_provider: CurrentUserProvider,
         uow: UnitOfWork,
     ) -> None:
-        self.settings_repo = settings_repo
-        self.user_repo = user_repo
+        self.settings_gateway = settings_gateway
+        self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
         self.uow = uow
 
@@ -37,7 +37,7 @@ class UpdateSettings:
         current_user = await self.current_user_provider.require_user()
         if current_user.role is not UserRole.ORG:
             raise AccessDenied
-        settings = await self.settings_repo.get_for_update()
+        settings = await self.settings_gateway.get_for_update()
         if settings is None:
             raise AppSettingsNotFound
 
@@ -56,7 +56,7 @@ class UpdateSettings:
         if not update_flag:
             return
 
-        await self.settings_repo.save(settings)
+        await self.settings_gateway.save(settings)
         await self.uow.commit()
         logger.info(
             "Festival settings updated by user %s",

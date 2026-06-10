@@ -19,13 +19,13 @@ class CreatePushSubscriptionInput(BaseModel):
 class CreatePushSubscription:
     def __init__(
         self,
-        push_sub_repo: PushSubscriptionGateway,
-        user_repo: UserGateway,
+        push_sub_gateway: PushSubscriptionGateway,
+        user_gateway: UserGateway,
         current_user_provider: CurrentUserProvider,
         uow: UnitOfWork,
     ):
-        self.user_repo = user_repo
-        self.push_sub_repo = push_sub_repo
+        self.user_gateway = user_gateway
+        self.push_sub_gateway = push_sub_gateway
         self.current_user_provider = current_user_provider
         self.uow = uow
 
@@ -38,5 +38,5 @@ class CreatePushSubscription:
             p256dh=data.p256dh,
             auth=data.auth,
         )
-        await self.push_sub_repo.add(push_subscription)
+        await self.push_sub_gateway.add(push_subscription)
         await self.uow.commit()
