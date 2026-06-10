@@ -25,7 +25,7 @@
   Keep entries short and specific. Newest entries go at the top.
 -->
 
-# Common Issues & Lessons Learned
+# Gotchas & Lessons Learned
 
 No issues recorded yet. When you hit one, add an entry above using the template
 in the comment at the top of this file.
