@@ -1,8 +1,9 @@
 <script lang="ts">
 	import SectionHeader from '$lib/components/SectionHeader.svelte';
-	import ScheduleChangeCard from './ScheduleChangeCard.svelte';
+	import ScheduleChangeCard from './components/ScheduleChangeCard.svelte';
+	import type { PageProps } from './$types';
 
-	let { data } = $props();
+	let { data }: PageProps = $props();
 	let scheduleChanges = $derived(data.schedule_changes);
 </script>
 

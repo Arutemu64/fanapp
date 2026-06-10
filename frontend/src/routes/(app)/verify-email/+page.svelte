@@ -2,8 +2,9 @@
 	import { resolve } from '$app/paths';
 	import { Card, Button } from 'flowbite-svelte';
 	import { CloseCircleOutline } from 'flowbite-svelte-icons';
+	import type { PageProps } from './$types';
 
-	let { data } = $props();
+	let { data }: PageProps = $props();
 </script>
 
 <svelte:head>

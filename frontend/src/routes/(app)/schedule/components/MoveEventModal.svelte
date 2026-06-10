@@ -64,8 +64,6 @@
 					return;
 				}
 
-				const selectedEvent = schedule.find((e) => e.id === selectedId);
-				console.log('Move event after:', selectedEvent?.title);
 				toastService.add('Выступление перенесено', 'success');
 
 				// Successful flow: close modal and reset fields
