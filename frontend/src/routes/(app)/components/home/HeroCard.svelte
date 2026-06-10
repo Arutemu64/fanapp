@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { prefersReducedMotion } from 'svelte/motion';
 	import CalendarIcon from '~icons/lucide/calendar';
 	import PinDropIcon from '~icons/lucide/map-pin';
 	import GlobeIcon from '~icons/lucide/globe';
@@ -18,23 +19,14 @@
 	const TARGET = new Date('2026-08-22T11:30:00+03:00').getTime();
 
 	let now = $state(Date.now());
-	let prefersReducedMotion = $state(false);
 
 	onMount(() => {
-		const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-		prefersReducedMotion = motionQuery.matches;
-		const onMotionChange = (e: MediaQueryListEvent) => {
-			prefersReducedMotion = e.matches;
-		};
-		motionQuery.addEventListener('change', onMotionChange);
-
 		const interval = setInterval(() => {
 			now = Date.now();
 		}, 1000);
 
 		return () => {
 			clearInterval(interval);
-			motionQuery.removeEventListener('change', onMotionChange);
 		};
 	});
 
@@ -145,10 +137,10 @@
 						{#each units as unit, index (unit.id)}
 							<div
 								class="countdown-cell flex flex-col items-center rounded-lg bg-white px-1 py-2.5 shadow-sm dark:bg-gray-800"
-								class:countdown-cell--animated={!prefersReducedMotion}
+								class:countdown-cell--animated={!prefersReducedMotion.current}
 								style:--enter-delay="{index * 80}ms"
 							>
-								{#if prefersReducedMotion}
+								{#if prefersReducedMotion.current}
 									<span
 										class="font-display text-xl leading-none font-bold text-gray-900 tabular-nums sm:text-2xl dark:text-white"
 									>

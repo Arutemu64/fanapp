@@ -188,8 +188,9 @@ Project a11y bindings — keep wired, don't regress:
 * **Skip link**: `$lib/components/SkipLink.svelte` is wired in `(app)/+layout.svelte` and targets `#main-content`. Keep both the link and the target id.
 * **Focus on route**: the main scroll region carries the `#main-content` id and is focusable (`tabindex="-1"` + `focus-visible` ring) — keyboard/screen-reader users land in content after navigation.
 * **Toast a11y contract**: `ToastContainer` sets `role="alert"`/`aria-live="assertive"` for errors and `role="status"`/`aria-live="polite"` otherwise, with `aria-atomic`. Match this on any new toast markup; toasts must not steal focus.
+* **Reduced motion**: a global `@media (prefers-reduced-motion: reduce)` rule in `app.css` near-instantly finishes all CSS animations/transitions and disables `scroll-smooth`. CSS-only motion is covered automatically. JS-driven Svelte transitions are **not** affected by that rule — gate them on `prefersReducedMotion.current` from `svelte/motion` instead (see `ToastContainer` toast `fly` + swipe-dismiss and `HeroCard` countdown).
 
-Everything generic — contrast ratios, keyboard/tab order, `aria-label` on icon-only buttons, heading hierarchy, color-not-sole-signal, `prefers-reduced-motion` (our `scroll-smooth` / toast `fly` / swipe-dismiss) — lives in `ui-ux-pro-max`. Load it; don't restate here.
+Everything generic — contrast ratios, keyboard/tab order, `aria-label` on icon-only buttons, heading hierarchy, color-not-sole-signal — lives in `ui-ux-pro-max`. Load it; don't restate here.
 
 ---
 
