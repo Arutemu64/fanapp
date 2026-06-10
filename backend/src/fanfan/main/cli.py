@@ -7,10 +7,7 @@ from fanfan.presentation.cli.commands.program import (
     parse_schedule_command,
     sync_cosplay2_command,
 )
-from fanfan.presentation.cli.commands.tickets import (
-    parse_tickets_command,
-    sync_tcloud_command,
-)
+from fanfan.presentation.cli.commands.tickets import sync_tcloud_command
 
 
 @click.group()
@@ -36,7 +33,6 @@ def main():
     sync_group.add_command(sync_cosplay2_command)
     sync_group.add_command(sync_tcloud_command)
     parse_group.add_command(parse_schedule_command)
-    parse_group.add_command(parse_tickets_command)
 
     cli.add_command(sync_group)
     cli.add_command(parse_group)
