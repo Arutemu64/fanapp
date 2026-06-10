@@ -192,6 +192,7 @@ Never copy-paste class attribute values from rich-text sources. Unicode curly qu
 Before writing any new component, check existing items in `frontend/src/lib/components/`:
 * **Section Headers**: Use `$lib/components/SectionHeader.svelte` for screen titles and subtitles.
 * **Toasts**: Trigger alerts via `$lib/services/toasts.svelte.ts` and display them with `$lib/components/ToastContainer.svelte`.
+* **Notification bodies**: A notification `body` arrives as a pre-sanitized, safe HTML subset (the backend's `HtmlSanitizer` is the single source of truth — see [backend.md](backend.md)). Render it with `{@html notification.body}` (in `ToastContainer.svelte` and `NotificationListItem.svelte`), keeping `whitespace-pre-line` so the stored `\n` line breaks show. The notification `title` is plain text — render it with normal `{title}` interpolation. Do **not** add a client-side sanitizer or `{@html}` any other API field.
 * **Page Containers**: Match the spacing/layout patterns established in `frontend/src/routes/(app)/+layout.svelte`.
 * **Captcha**: `$lib/components/CaptchaWidget.svelte` wraps the Cloudflare Turnstile widget. It renders nothing unless `PUBLIC_TURNSTILE_SITE_KEY` is set, so callers must gate their submit logic on the exported `captchaEnabled` flag and pass the bound `token` to the API. Used on the login-code request and resend.
 

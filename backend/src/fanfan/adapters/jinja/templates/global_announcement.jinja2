@@ -1,6 +1,6 @@
 {% if current_event_public_number -%}
-Сейчас - №{{ '%03d' % current_event_public_number }} {{ current_event_title }}
+<b>Сейчас:</b> №{{ '%03d' % current_event_public_number }} <b>{{ current_event_title }}</b>
 {% endif %}
 {% if next_event_public_number -%}
-Затем - №{{ '%03d' % next_event_public_number }} {{ next_event_title }}
+<b>Затем:</b> №{{ '%03d' % next_event_public_number }} {{ next_event_title }}
 {% endif %}

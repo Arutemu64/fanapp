@@ -1,6 +1,7 @@
 import logging
 
-from aiogram import Bot
+from aiogram import Bot, html
+from aiogram.enums import ParseMode
 from aiogram.exceptions import (
     TelegramBadRequest,
     TelegramForbiddenError,
@@ -32,7 +33,10 @@ class TelegramNotifier(Notifier):
 
     @staticmethod
     def _render_message_text(notification: Notification) -> str:
-        return f"<b>{notification.title.upper()}</b>\n\n{notification.body}"
+        # The body is already stored as a safe Telegram-compatible HTML subset
+        # (see HtmlSanitizer). The title is plain text, so escape it before
+        # wrapping it in <b> to keep the message valid HTML.
+        return f"<b>{html.quote(notification.title.upper())}</b>\n\n{notification.body}"
 
     async def send_notification(self, notification: Notification) -> None:
         user = await self.user_gateway.get_by_id(notification.user_id)
@@ -48,7 +52,7 @@ class TelegramNotifier(Notifier):
             await self.bot.send_message(
                 chat_id=int(social_id.provider_id),
                 text=self._render_message_text(notification),
-                # TODO Add markup?
+                parse_mode=ParseMode.HTML,
             )
         except TelegramRetryAfter as e:
             raise NotificationRetryAfter(retry_after=e.retry_after) from e

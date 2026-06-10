@@ -2,6 +2,7 @@ from pydantic import BaseModel
 
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.notifications import NotificationGateway
+from fanfan.application.ports.html_sanitizer import HtmlSanitizer
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import MailingNotFound
 from fanfan.core.models.notification import NewNotification, Notification
@@ -17,19 +18,23 @@ class CreateNotification:
         self,
         mailing_gateway: MailingGateway,
         notification_gateway: NotificationGateway,
+        html_sanitizer: HtmlSanitizer,
         uow: UnitOfWork,
     ):
         self.mailing_gateway = mailing_gateway
         self.notification_gateway = notification_gateway
+        self.html_sanitizer = html_sanitizer
         self.uow = uow
 
-    @staticmethod
-    def _to_model(notification: NewNotification) -> Notification:
+    def _to_model(self, notification: NewNotification) -> Notification:
+        # Sanitize the body to the canonical safe HTML subset here, the single
+        # point every notification passes through before it is stored and then
+        # fanned out to the web UI, Telegram and push.
         return Notification(
             id=notification.id,
             user_id=notification.user_id,
             title=notification.title,
-            body=notification.body,
+            body=self.html_sanitizer.sanitize(notification.body),
             type=notification.type,
             mailing_id=notification.mailing_id,
             seen_at=None,
