@@ -1,12 +1,12 @@
 from pydantic import BaseModel
 
-from fanfan.application.dto.notification import NewNotificationDTO
 from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.queries.users import UserQuery
 from fanfan.application.ports.repositories.mailings import MailingRepository
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.notifications import MailingNotFound
+from fanfan.core.models.notification import NewNotification
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.notification import NotificationType, generate_notification_id
 from fanfan.core.vo.user import UserRole
@@ -42,7 +42,7 @@ class ProcessBroadcast:
 
         events = [
             NotificationQueued(
-                notification=NewNotificationDTO(
+                notification=NewNotification(
                     id=generate_notification_id(),
                     user_id=u.id,
                     title="Рассылка от организаторов",

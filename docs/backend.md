@@ -3,8 +3,10 @@
 > Testing conventions (unit vs integration, what to fake, rollback isolation)
 > live in [testing.md](testing.md).
 
+> Layer boundaries are enforced, not just documented: `just backend-import-lint` (import-linter, config in `backend/pyproject.toml`) fails the build if `core/` imports any outer layer, or if `application/` imports `adapters/`/`presentation/` outside the sanctioned exceptions listed below. Run it after touching imports; it is part of `just backend-lint`.
+
 ## Core Domain & Interactors
-* **Core Layer (`core/`)**: Pure domain entities, value objects, and domain exceptions. Must be completely free of external frameworks (absolutely no FastAPI, SQLAlchemy, or Pydantic imports).
+* **Core Layer (`core/`)**: Pure domain entities, value objects, and domain exceptions. Must be free of all I/O frameworks and outer layers — no FastAPI, SQLAlchemy, no `adapters/`/`application/`/`presentation/` imports. **Pydantic is the one allowed exception, and only in two narrow spots**: `core/events/base.py` (`AppEvent` is a `BaseModel` so domain events serialize cleanly over NATS) and `core/vo/fields.py` (validation helpers for value objects). Do not reach for Pydantic elsewhere in `core/` — plain dataclasses are the default for entities and value objects.
 * **Application Layer (`application/`)**: Orchestrates interactors and business use cases. Must never import database ORM models directly. Communication with infrastructure happens via abstract interfaces (ports under `application/ports/`) and schemas/DTOs.
 * **Command/Query Port Split (CQRS-style)**: Ports are split by intent. Writes (loading and persisting aggregates) go through `application/ports/repositories/`; reads (projections returned to callers) go through `application/ports/queries/`. When adding a read, add a query port — do not extend a repository.
 * **Ports are `Protocol`, never `ABC`**: Define every port in `application/ports/` as a `typing.Protocol` (structural typing keeps the application layer free of any inward dependency from adapters). Do not decorate port methods with `@abstractmethod` — it does not catch signature drift and is redundant with the type checker. Adapters in `adapters/` **must explicitly subclass** the port(s) they implement (e.g. `class SqlUserGateway(UserRepository, UserQuery): ...`); the explicit inheritance turns structural typing into checked nominal typing, so `just backend-typecheck` (`ty`) flags any method that drifts from its port — missing method, changed parameters, or a changed return type.
@@ -109,6 +111,14 @@ The Redis adapters live in `adapters/redis/rate_lock.py` and `adapters/redis/rat
 The unauthenticated `request-login-code` flow is additionally guarded by a captcha, behind the `CaptchaVerifier` port (`application/ports/captcha.py`). The interactor calls `await captcha_verifier.verify(token)` before doing any work; a missing or rejected token raises `CaptchaVerificationFailed` (mapped to HTTP 403). The token rides in on the input DTO so the application layer never touches `Request`.
 
 The feature is **optional and config-gated**, like the other external integrations: when `turnstile` is unset in `EnvConfig` (no `TURNSTILE__SECRET_KEY`), `CaptchaProvider` (`main/ioc/captcha.py`) wires a `NoOpCaptchaVerifier` that accepts everything; when set, it wires `TurnstileCaptchaVerifier` (`adapters/captcha/turnstile.py`), which validates against Cloudflare's siteverify endpoint. A missing token or an explicit negative verdict is always rejected, but if Cloudflare is **unreachable** (transport error or 5xx) the verifier **fails open** — a CDN outage shouldn't lock everyone out of login, and the per-email rate lock still caps abuse. The matching frontend key is `PUBLIC_TURNSTILE_SITE_KEY`.
+
+## Anti-corruption layers (vendor sync)
+
+The `application/` layer must not import `adapters/` — with one sanctioned, narrow exception: the third-party sync flows for **cosplay2** and **TicketsCloud**. These are anti-corruption layers (ACLs): their whole job is to translate a vendor's wire format into our domain model, so they legitimately depend on the vendor adapter's client, config, and DTOs.
+
+* The sanctioned modules are `interactors/cosplay2/sync_cosplay2.py`, `interactors/ticketscloud/sync_tcloud.py`, `interactors/ticketscloud/process_tcloud_order.py`, and `services/ticketscloud.py`.
+* The exact allowed edges are pinned as `ignore_imports` in the import-linter contract (`backend/pyproject.toml`). **Any other `application → adapters` import is a bug** and will fail `just backend-import-lint`.
+* If you build a new vendor integration, prefer keeping the translation here as an ACL and adding the specific edges to the `ignore_imports` list — do **not** widen the rule. Do not dress an ACL up behind a generic port whose methods still traffic in vendor DTOs; that hides the coupling without removing it.
 
 ## Presentation Layers
 * **HTTP APIs (`presentation/web/`)**: FastAPI routes mapping HTTP requests.

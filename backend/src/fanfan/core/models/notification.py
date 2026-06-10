@@ -16,3 +16,20 @@ class Notification(AggregateRoot):
     type: NotificationType
     mailing_id: MailingId | None
     seen_at: datetime | None
+
+
+@dataclass(slots=True, kw_only=True)
+class NewNotification:
+    """Data required to create a Notification.
+
+    Carried by the NotificationQueued service event and consumed by the
+    CreateNotification interactor. Lives in core so the domain event does not
+    depend on the application layer.
+    """
+
+    id: NotificationId
+    user_id: UserId
+    title: str
+    body: str
+    type: NotificationType
+    mailing_id: MailingId | None

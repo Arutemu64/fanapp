@@ -1,12 +1,12 @@
 from pydantic import BaseModel
 
-from fanfan.adapters.jinja.factory import JinjaEnvironment
 from fanfan.application.ports.email_sender import (
     EmailMessage,
     EmailRecipient,
     EmailSender,
 )
 from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.template_renderer import TemplateRenderer
 from fanfan.application.ports.token_registry import TokenRegistry
 from fanfan.core.exceptions.users import UserHasNoEmail, UserNotFound
 from fanfan.core.services.email_login import (
@@ -26,11 +26,11 @@ class SendLoginCodeEmail:
         self,
         user_repo: UserRepository,
         email_sender: EmailSender,
-        jinja: JinjaEnvironment,
+        template_renderer: TemplateRenderer,
         token_registry: TokenRegistry,
     ):
         self.email_sender = email_sender
-        self.jinja = jinja
+        self.template_renderer = template_renderer
         self.user_repo = user_repo
         self.token_registry = token_registry
 
@@ -50,13 +50,13 @@ class SendLoginCodeEmail:
             ttl_seconds=EMAIL_LOGIN_CODE_MAX_AGE_SECONDS,
         )
 
-        template = self.jinja.get_template("email_login_code.jinja2")
-        message_body = await template.render_async(
+        message_body = await self.template_renderer.render(
+            "email_login_code.jinja2",
             {
                 "username": user.username,
                 "login_code": code,
                 "expires_in_minutes": max(1, EMAIL_LOGIN_CODE_MAX_AGE_SECONDS // 60),
-            }
+            },
         )
         message = EmailMessage(
             subject="Код входа в FAN FAN",

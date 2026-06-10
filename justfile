@@ -56,7 +56,10 @@ backend-sync-tcloud:
 backend-typecheck:
     cd backend && uv run ty check src/fanfan
 
-backend-lint: backend-format backend-check backend-typecheck
+backend-import-lint:
+    cd backend && uv run lint-imports
+
+backend-lint: backend-format backend-check backend-typecheck backend-import-lint
 
 backend-migrate:
     cd backend && uv run alembic upgrade head

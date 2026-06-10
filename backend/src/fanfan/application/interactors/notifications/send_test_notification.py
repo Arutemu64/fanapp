@@ -1,7 +1,7 @@
-from fanfan.application.dto.notification import NewNotificationDTO
 from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.events.notifications import NotificationQueued
+from fanfan.core.models.notification import NewNotification
 from fanfan.core.vo.notification import NotificationType, generate_notification_id
 
 
@@ -20,7 +20,7 @@ class SendTestNotification:
         # Проверяем все пользовательские каналы одним общим уведомлением.
         await self.events_broker.publish(
             NotificationQueued(
-                notification=NewNotificationDTO(
+                notification=NewNotification(
                     id=generate_notification_id(),
                     user_id=current_user_id,
                     title="Тестовое уведомление",

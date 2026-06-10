@@ -1,7 +1,6 @@
 import logging
 from dataclasses import dataclass
 
-from fanfan.application.dto.notification import NewNotificationDTO
 from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.repositories.mailings import MailingRepository
 from fanfan.application.ports.repositories.users import UserRepository
@@ -9,6 +8,7 @@ from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.users import UserNotFound
+from fanfan.core.models.notification import NewNotification
 from fanfan.core.vo.notification import NotificationType, generate_notification_id
 from fanfan.core.vo.user import UserId, UserRole
 
@@ -46,7 +46,7 @@ class SendPersonalNotification:
 
         await self.events_broker.publish(
             NotificationQueued(
-                notification=NewNotificationDTO(
+                notification=NewNotification(
                     id=generate_notification_id(),
                     user_id=user.id,
                     title="Личное сообщение",

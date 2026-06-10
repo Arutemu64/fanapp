@@ -12,7 +12,6 @@ from fanfan.core.exceptions.users import (
 )
 from fanfan.core.models.social_account import SocialIdentity
 from fanfan.core.vo.social_identity import generate_social_identity_id
-from fanfan.presentation.tgbot.config import TelegramConfig
 
 logger = logging.getLogger(__name__)
 
@@ -24,14 +23,12 @@ class LinkTelegramAccountInput(BaseModel):
 class LinkTelegramAccount:
     def __init__(
         self,
-        bot_config: TelegramConfig,
         user_repo: UserRepository,
         social_id_repo: SocialIdentityRepository,
         uow: UnitOfWork,
         current_user_provider: CurrentUserProvider,
     ) -> None:
         self.social_id_repo = social_id_repo
-        self.bot_config = bot_config
         self.user_repo = user_repo
         self.uow = uow
         self.current_user_provider = current_user_provider
