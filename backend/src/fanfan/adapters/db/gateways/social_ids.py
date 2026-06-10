@@ -6,14 +6,13 @@ from fanfan.adapters.db.constraints import get_constraint_name
 from fanfan.adapters.db.mappers.social_account import SocialIdentityMapper
 from fanfan.adapters.db.models import SocialIdentityORM
 from fanfan.application.dto.user import UserSocialAccountDTO
-from fanfan.application.ports.queries.social_ids import SocialIdentityQuery
 from fanfan.application.ports.repositories.social_ids import SocialIdentityRepository
 from fanfan.core.exceptions.users import TelegramAlreadyLinkedToAnotherUser
 from fanfan.core.models.social_account import SocialIdentity
 from fanfan.core.vo.user import UserId
 
 
-class SqlSocialIdentityGateway(SocialIdentityRepository, SocialIdentityQuery):
+class SqlSocialIdentityGateway(SocialIdentityRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.social_mapper = SocialIdentityMapper()

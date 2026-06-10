@@ -1,6 +1,10 @@
 from typing import Protocol
 
+from fanfan.application.dto.nomination import NominationVotingDTO
+from fanfan.application.dto.page import Pagination
 from fanfan.core.models.nomination import Nomination
+from fanfan.core.vo.nomination import NominationCode
+from fanfan.core.vo.user import UserId
 
 
 class NominationRepository(Protocol):
@@ -10,3 +14,14 @@ class NominationRepository(Protocol):
     async def count_votable(self) -> int: ...
     async def list_cosplay2_ids(self) -> list[int]: ...
     async def delete_by_cosplay2_ids(self, cosplay2_ids: list[int]) -> None: ...
+
+    # Read projections (return DTOs, not aggregates)
+    async def read_voting_dto(
+        self, nomination_code: NominationCode, user_id: UserId | None = None
+    ) -> NominationVotingDTO | None: ...
+
+    async def read_list_votable_nominations(
+        self,
+        user_id: UserId | None = None,
+        pagination: Pagination | None = None,
+    ) -> list[NominationVotingDTO]: ...

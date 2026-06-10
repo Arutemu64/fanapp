@@ -1,5 +1,5 @@
 from fanfan.application.dto.user import CurrentUserDTO
-from fanfan.application.ports.queries.users import UserQuery
+from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.users import UserNotFound
 
@@ -7,7 +7,7 @@ from fanfan.core.exceptions.users import UserNotFound
 class GetCurrentUser:
     def __init__(
         self,
-        user_query: UserQuery,
+        user_query: UserRepository,
         current_user_provider: CurrentUserProvider,
     ) -> None:
         self.user_query = user_query

@@ -4,13 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fanfan.adapters.db.mappers.mailing import MailingMapper
 from fanfan.adapters.db.models import MailingORM
 from fanfan.application.dto.mailing import MailingDTO
-from fanfan.application.ports.queries.mailings import MailingQuery
 from fanfan.application.ports.repositories.mailings import MailingRepository
 from fanfan.core.models.mailing import Mailing
 from fanfan.core.vo.mailing import MailingId
 
 
-class SqlMailingGateway(MailingRepository, MailingQuery):
+class SqlMailingGateway(MailingRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = MailingMapper()

@@ -1,7 +1,9 @@
 from typing import Protocol
 
+from fanfan.application.dto.schedule import ScheduleEventFullDTO
 from fanfan.core.models.schedule_event import ScheduleEvent
 from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.user import UserId
 
 
 class ScheduleEventRepository(Protocol):
@@ -15,3 +17,12 @@ class ScheduleEventRepository(Protocol):
     async def get_previous_by_order(self, order: float) -> ScheduleEvent | None: ...
     async def save(self, event: ScheduleEvent) -> None: ...
     async def delete(self, event: ScheduleEvent) -> None: ...
+
+    # Read projections (return DTOs, not aggregates)
+    async def read_next_event(self) -> ScheduleEventFullDTO | None: ...
+
+    async def read_current_event(self) -> ScheduleEventFullDTO | None: ...
+
+    async def read_list_schedule(
+        self, user_id: UserId | None
+    ) -> list[ScheduleEventFullDTO]: ...

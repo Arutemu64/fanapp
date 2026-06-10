@@ -9,11 +9,15 @@ from fanfan.application.dto.schedule_change import (
     ScheduleChangeFullDTO,
 )
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.application.ports.queries.schedule_changes import ScheduleChangeQuery
-from fanfan.application.ports.queries.schedule_events import ScheduleEventQuery
-from fanfan.application.ports.queries.subscriptions import SubscriptionQuery
-from fanfan.application.ports.queries.users import UserQuery
 from fanfan.application.ports.repositories.mailings import MailingRepository
+from fanfan.application.ports.repositories.schedule_changes import (
+    ScheduleChangeRepository,
+)
+from fanfan.application.ports.repositories.schedule_events import (
+    ScheduleEventRepository,
+)
+from fanfan.application.ports.repositories.subscriptions import SubscriptionRepository
+from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.template_renderer import TemplateRenderer
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.notifications import NotificationQueued
@@ -31,10 +35,10 @@ class SendScheduleChangeNotifications:
     def __init__(
         self,
         template_renderer: TemplateRenderer,
-        changes_query: ScheduleChangeQuery,
-        schedule_query: ScheduleEventQuery,
-        user_query: UserQuery,
-        subscription_query: SubscriptionQuery,
+        changes_query: ScheduleChangeRepository,
+        schedule_query: ScheduleEventRepository,
+        user_query: UserRepository,
+        subscription_query: SubscriptionRepository,
         mailing_repo: MailingRepository,
         uow: UnitOfWork,
         events_broker: EventBroker,

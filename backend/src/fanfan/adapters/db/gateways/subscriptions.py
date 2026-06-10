@@ -7,7 +7,6 @@ from fanfan.adapters.db.constraints import get_constraint_name
 from fanfan.adapters.db.mappers.subscription import SubscriptionMapper
 from fanfan.adapters.db.models import ScheduleEventORM, SubscriptionORM
 from fanfan.application.dto.subscription import SubscriptionFullDTO
-from fanfan.application.ports.queries.subscriptions import SubscriptionQuery
 from fanfan.application.ports.repositories.subscriptions import SubscriptionRepository
 from fanfan.core.exceptions.schedule import EventNotFound
 from fanfan.core.exceptions.subscriptions import SubscriptionAlreadyExists
@@ -30,7 +29,7 @@ def _select_subscription_full_dto():
     )
 
 
-class SqlSubscriptionGateway(SubscriptionRepository, SubscriptionQuery):
+class SqlSubscriptionGateway(SubscriptionRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = SubscriptionMapper()

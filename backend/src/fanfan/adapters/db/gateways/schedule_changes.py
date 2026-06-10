@@ -7,7 +7,6 @@ from fanfan.adapters.db.models import ScheduleChangeORM
 from fanfan.application.dto.schedule_change import (
     ScheduleChangeFullDTO,
 )
-from fanfan.application.ports.queries.schedule_changes import ScheduleChangeQuery
 from fanfan.application.ports.repositories import ScheduleChangeRepository
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.schedule_change import (
@@ -16,7 +15,7 @@ from fanfan.core.models.schedule_change import (
 from fanfan.core.vo.schedule_change import ScheduleChangeId
 
 
-class SqlScheduleChangeGateway(ScheduleChangeRepository, ScheduleChangeQuery):
+class SqlScheduleChangeGateway(ScheduleChangeRepository):
     def __init__(self, session: AsyncSession, uow: UnitOfWork):
         self.session = session
         self.uow = uow

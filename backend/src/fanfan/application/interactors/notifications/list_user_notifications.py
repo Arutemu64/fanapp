@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 from fanfan.application.dto.notification import NotificationDTO
 from fanfan.application.dto.page import Pagination
-from fanfan.application.ports.queries.notifications import NotificationQuery
+from fanfan.application.ports.repositories.notifications import NotificationRepository
 from fanfan.application.services.current_user import CurrentUserProvider
 
 
@@ -17,7 +17,7 @@ class ListUserNotificationOutput(BaseModel):
 class ListUserNotifications:
     def __init__(
         self,
-        notification_query: NotificationQuery,
+        notification_query: NotificationRepository,
         current_user_provider: CurrentUserProvider,
     ):
         self.notification_query = notification_query

@@ -9,7 +9,6 @@ from fanfan.adapters.db.mappers.user import UserMapper
 from fanfan.adapters.db.models import SocialIdentityORM, UserORM
 from fanfan.adapters.db.models.permission import PermissionORM, UserPermissionORM
 from fanfan.application.dto.user import CurrentUserDTO, UserBaseDTO
-from fanfan.application.ports.queries.users import UserQuery
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.users import (
@@ -23,7 +22,7 @@ from fanfan.core.vo.permission import Permissions
 from fanfan.core.vo.user import UserId, UserRole
 
 
-class SqlUserGateway(UserRepository, UserQuery):
+class SqlUserGateway(UserRepository):
     def __init__(self, session: AsyncSession, uow: UnitOfWork):
         self.session = session
         self.uow = uow

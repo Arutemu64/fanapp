@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 
 from fanfan.application.dto.schedule_change import ScheduleChangeFullDTO
-from fanfan.application.ports.queries.schedule_changes import (
-    ScheduleChangeQuery,
+from fanfan.application.ports.repositories.schedule_changes import (
+    ScheduleChangeRepository,
 )
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
@@ -16,7 +16,7 @@ class ListScheduleChangesResult(BaseModel):
 class ListScheduleChanges:
     def __init__(
         self,
-        schedule_change_query: ScheduleChangeQuery,
+        schedule_change_query: ScheduleChangeRepository,
         current_user_provider: CurrentUserProvider,
         perm_service: PermissionService,
     ):

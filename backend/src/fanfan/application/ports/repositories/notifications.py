@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Protocol
 
+from fanfan.application.dto.notification import NotificationDTO, RealtimeNotificationDTO
+from fanfan.application.dto.page import Pagination
 from fanfan.core.models.notification import Notification
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.notification import NotificationId
@@ -14,3 +16,12 @@ class NotificationRepository(Protocol):
         self, user_id: UserId, timestamp: datetime
     ) -> None: ...
     async def delete_all_by_mailing_id(self, mailing_id: MailingId) -> None: ...
+
+    # Read projections (return DTOs, not aggregates)
+    async def read_realtime_notification(
+        self, notification_id: NotificationId
+    ) -> RealtimeNotificationDTO | None: ...
+
+    async def read_list_user_notifications(
+        self, user_id: UserId, pagination: Pagination
+    ) -> list[NotificationDTO]: ...

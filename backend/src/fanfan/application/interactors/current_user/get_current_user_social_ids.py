@@ -1,5 +1,5 @@
 from fanfan.application.dto.user import UserSocialAccountDTO
-from fanfan.application.ports.queries.social_ids import SocialIdentityQuery
+from fanfan.application.ports.repositories.social_ids import SocialIdentityRepository
 from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.services.current_user import CurrentUserProvider
 
@@ -9,7 +9,7 @@ class GetCurrentUserSocialIds:
         self,
         user_repo: UserRepository,
         current_user_provider: CurrentUserProvider,
-        social_id_query: SocialIdentityQuery,
+        social_id_query: SocialIdentityRepository,
     ) -> None:
         self.social_id_query = social_id_query
         self.user_repo = user_repo

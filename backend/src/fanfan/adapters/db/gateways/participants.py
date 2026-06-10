@@ -9,7 +9,6 @@ from fanfan.adapters.db.models import (
     VoteORM,
 )
 from fanfan.application.dto.participant import ParticipantFullDTO
-from fanfan.application.ports.queries.participants import ParticipantQuery
 from fanfan.application.ports.repositories.participants import ParticipantRepository
 from fanfan.core.models.participant import Participant
 from fanfan.core.vo.nomination import NominationId
@@ -31,7 +30,7 @@ def _select_participant_dto(user_id: UserId | None) -> Select:
     )
 
 
-class SqlParticipantGateway(ParticipantRepository, ParticipantQuery):
+class SqlParticipantGateway(ParticipantRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = ParticipantMapper()

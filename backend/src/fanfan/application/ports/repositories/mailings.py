@@ -1,5 +1,6 @@
 from typing import Protocol
 
+from fanfan.application.dto.mailing import MailingDTO
 from fanfan.core.models.mailing import Mailing
 from fanfan.core.vo.mailing import MailingId
 
@@ -11,3 +12,6 @@ class MailingRepository(Protocol):
 
     async def set_total(self, mailing_id: MailingId, total_count: int) -> None: ...
     async def increment_sent(self, mailing_id: MailingId) -> None: ...
+
+    # Read projections (return DTOs, not aggregates)
+    async def read_mailing(self, mailing_id: MailingId) -> MailingDTO | None: ...

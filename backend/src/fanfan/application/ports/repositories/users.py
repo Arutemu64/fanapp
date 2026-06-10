@@ -1,7 +1,8 @@
 from typing import Protocol
 
+from fanfan.application.dto.user import CurrentUserDTO, UserBaseDTO
 from fanfan.core.models.user import User
-from fanfan.core.vo.user import UserId
+from fanfan.core.vo.user import UserId, UserRole
 
 
 class UserRepository(Protocol):
@@ -17,3 +18,12 @@ class UserRepository(Protocol):
         provider_account_id: str,
     ) -> User | None: ...
     async def save(self, user: User) -> None: ...
+
+    # Read projections (return DTOs, not aggregates)
+    async def read_current_user(self, user_id: UserId) -> CurrentUserDTO | None: ...
+
+    async def read_all_by_roles(self, *roles: UserRole) -> list[UserBaseDTO]: ...
+
+    async def read_all_by_receive_all_announcements(self) -> list[UserBaseDTO]: ...
+
+    async def read_schedule_editors(self) -> list[UserBaseDTO]: ...

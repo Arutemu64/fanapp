@@ -8,8 +8,8 @@ from fanfan.application.interactors.schedule_mgmt.set_current_schedule_event imp
     SetCurrentScheduleEvent,
     SetCurrentScheduleEventInput,
 )
-from fanfan.application.ports.queries import ScheduleChangeQuery
 from fanfan.application.ports.repositories import (
+    ScheduleChangeRepository,
     ScheduleEventRepository,
 )
 from fanfan.application.ports.repositories.mailings import MailingRepository
@@ -65,7 +65,7 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_repo = await dishka_request.get(ScheduleEventRepository)
-    changes_query = await dishka_request.get(ScheduleChangeQuery)
+    changes_query = await dishka_request.get(ScheduleChangeRepository)
     mailing_repo = await dishka_request.get(MailingRepository)
     login(schedule_editor)
 
@@ -126,7 +126,7 @@ async def test_set_current_event_sets_current_when_none_was_current(
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_repo = await dishka_request.get(ScheduleEventRepository)
-    changes_query = await dishka_request.get(ScheduleChangeQuery)
+    changes_query = await dishka_request.get(ScheduleChangeRepository)
     login(schedule_editor)
 
     # Ни одно событие ещё не отмечено текущим.
@@ -165,7 +165,7 @@ async def test_set_current_event_can_unset_current_event(
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_repo = await dishka_request.get(ScheduleEventRepository)
-    changes_query = await dishka_request.get(ScheduleChangeQuery)
+    changes_query = await dishka_request.get(ScheduleChangeRepository)
     login(schedule_editor)
 
     previous_current_event = _schedule_event(1, "Текущее событие", 1, is_current=True)
@@ -204,7 +204,7 @@ async def test_set_current_event_raises_when_event_not_found(
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_repo = await dishka_request.get(ScheduleEventRepository)
-    changes_query = await dishka_request.get(ScheduleChangeQuery)
+    changes_query = await dishka_request.get(ScheduleChangeRepository)
     login(schedule_editor)
 
     previous_current_event = _schedule_event(1, "Текущее событие", 1, is_current=True)
@@ -235,7 +235,7 @@ async def test_set_current_event_without_permission_raises_access_denied(
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_repo = await dishka_request.get(ScheduleEventRepository)
-    changes_query = await dishka_request.get(ScheduleChangeQuery)
+    changes_query = await dishka_request.get(ScheduleChangeRepository)
     # У обычного посетителя нет права SCHEDULE_MANAGE.
     login(visitor)
 
@@ -262,7 +262,7 @@ async def test_set_current_event_twice_in_a_row_raises_too_fast(
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_repo = await dishka_request.get(ScheduleEventRepository)
-    changes_query = await dishka_request.get(ScheduleChangeQuery)
+    changes_query = await dishka_request.get(ScheduleChangeRepository)
     login(schedule_editor)
 
     first_event = _schedule_event(1, "Первое событие", 1)
