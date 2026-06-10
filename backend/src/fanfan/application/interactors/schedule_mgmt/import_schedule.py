@@ -10,10 +10,7 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.models.schedule_event import ScheduleEvent
-from fanfan.core.vo.schedule_event import (
-    ScheduleEventPublicNumber,
-    generate_schedule_event_id,
-)
+from fanfan.core.vo.schedule_event import generate_schedule_event_id
 from fanfan.core.vo.user import UserRole
 
 ORDER_INIT = 100.0
@@ -23,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class ScheduleEntry(BaseModel):
-    public_number: ScheduleEventPublicNumber
+    public_number: int
     title: str
     duration: int
     nomination_title: str

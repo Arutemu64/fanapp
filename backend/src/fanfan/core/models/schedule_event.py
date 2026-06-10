@@ -7,13 +7,13 @@ from fanfan.core.exceptions.schedule import (
     SkippedEventNotAllowed,
 )
 from fanfan.core.models.base import AggregateRoot
-from fanfan.core.vo.schedule_event import ScheduleEventId, ScheduleEventPublicNumber
+from fanfan.core.vo.schedule_event import ScheduleEventId
 
 
 @dataclass(slots=True, kw_only=True)
 class ScheduleEvent(AggregateRoot):  # noqa: PLW1641
     id: ScheduleEventId
-    public_number: ScheduleEventPublicNumber
+    public_number: int
     title: str
     duration: int
     order: float

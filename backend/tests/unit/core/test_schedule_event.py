@@ -6,10 +6,7 @@ from fanfan.core.exceptions.schedule import (
     SkippedEventNotAllowed,
 )
 from fanfan.core.models.schedule_event import ScheduleEvent
-from fanfan.core.vo.schedule_event import (
-    ScheduleEventPublicNumber,
-    generate_schedule_event_id,
-)
+from fanfan.core.vo.schedule_event import generate_schedule_event_id
 
 pytestmark = pytest.mark.unit
 
@@ -23,7 +20,7 @@ def _event(
 ) -> ScheduleEvent:
     return ScheduleEvent(
         id=generate_schedule_event_id(),
-        public_number=ScheduleEventPublicNumber(public_number),
+        public_number=public_number,
         title=f"Событие {public_number}",
         duration=15,
         order=order,

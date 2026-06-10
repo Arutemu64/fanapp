@@ -22,7 +22,6 @@ from fanfan.core.models.user import User
 from fanfan.core.vo.schedule_change import ScheduleChangeType
 from fanfan.core.vo.schedule_event import (
     ScheduleEventId,
-    ScheduleEventPublicNumber,
     generate_schedule_event_id,
 )
 from tests.fakes.event_broker import FakeEventBroker
@@ -45,7 +44,7 @@ def _schedule_event(
 ) -> ScheduleEvent:
     return ScheduleEvent(
         id=generate_schedule_event_id(),
-        public_number=ScheduleEventPublicNumber(public_number),
+        public_number=public_number,
         title=title,
         duration=duration,
         order=order,
