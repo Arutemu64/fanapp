@@ -62,4 +62,7 @@ def make_interactor_job(
             sentry_sdk.capture_exception()
             raise
 
+    # APScheduler names jobs after the callable; without this they all log as
+    # the opaque closure name "make_interactor_job.<locals>.job".
+    job.__name__ = job.__qualname__ = interactor_type.__name__
     return job
