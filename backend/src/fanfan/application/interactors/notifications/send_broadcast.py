@@ -3,8 +3,8 @@ import logging
 from pydantic import BaseModel
 
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.application.ports.repositories.mailings import MailingRepository
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.mailings import MailingGateway
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.events.notifications import BroadcastQueued
@@ -29,14 +29,14 @@ class SendBroadcast:
     def __init__(
         self,
         current_user_provider: CurrentUserProvider,
-        user_repo: UserRepository,
-        mailing_repo: MailingRepository,
+        user_gateway: UserGateway,
+        mailing_gateway: MailingGateway,
         events_broker: EventBroker,
         uow: UnitOfWork,
     ):
         self.current_user_provider = current_user_provider
-        self.user_repo = user_repo
-        self.mailing_repo = mailing_repo
+        self.user_gateway = user_gateway
+        self.mailing_gateway = mailing_gateway
         self.events_broker = events_broker
         self.uow = uow
 
@@ -47,7 +47,7 @@ class SendBroadcast:
             raise AccessDenied
 
         mailing = Mailing.create(by_user_id=current_user.id)
-        await self.mailing_repo.add(mailing)
+        await self.mailing_gateway.add(mailing)
         await self.uow.commit()
 
         await self.events_broker.publish(

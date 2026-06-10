@@ -2,8 +2,8 @@ from pydantic import BaseModel, EmailStr
 
 from fanfan.application.ports.captcha import CaptchaVerifier
 from fanfan.application.ports.events_broker import EventBroker
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.rate_lock import RateLockFactory
-from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.user import UserService
 from fanfan.core.events.users import EmailLoginCodeRequested
@@ -25,14 +25,14 @@ class RequestLoginCodeInput(BaseModel):
 class RequestLoginCode:
     def __init__(
         self,
-        user_repo: UserRepository,
+        user_gateway: UserGateway,
         event_broker: EventBroker,
         uow: UnitOfWork,
         user_service: UserService,
         rate_lock_factory: RateLockFactory,
         captcha_verifier: CaptchaVerifier,
     ):
-        self.user_repo = user_repo
+        self.user_gateway = user_gateway
         self.event_broker = event_broker
         self.uow = uow
         self.user_service = user_service
@@ -51,12 +51,14 @@ class RequestLoginCode:
         )
         try:
             async with lock:
-                user = await self.user_repo.get_by_email(normalized_email)
+                user = await self.user_gateway.get_by_email(normalized_email)
 
                 # Do not provision a second account if the address is
                 # already reserved as another user's pending
                 # replacement email.
-                reserved_user = await self.user_repo.get_by_any_email(normalized_email)
+                reserved_user = await self.user_gateway.get_by_any_email(
+                    normalized_email
+                )
                 if user is None and reserved_user is not None:
                     return
 
@@ -72,11 +74,13 @@ class RequestLoginCode:
                                 hashed_password=None,
                                 role=UserRole.VISITOR,
                             )
-                            await self.user_repo.add(user)
+                            await self.user_gateway.add(user)
                             await self.uow.commit()
                         except UserAlreadyExists:
                             await self.uow.rollback()
-                            user = await self.user_repo.get_by_email(normalized_email)
+                            user = await self.user_gateway.get_by_email(
+                                normalized_email
+                            )
                             if user is not None:
                                 break
                         else:

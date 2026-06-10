@@ -6,8 +6,7 @@ from fanfan.adapters.db.mappers.nomination import NominationMapper
 from fanfan.adapters.db.models import NominationORM, ParticipantORM, VoteORM
 from fanfan.application.dto.nomination import NominationVotingDTO
 from fanfan.application.dto.page import Pagination
-from fanfan.application.ports.queries.nominations import NominationQuery
-from fanfan.application.ports.repositories.nominations import NominationRepository
+from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.vo.nomination import NominationCode
 from fanfan.core.vo.user import UserId
@@ -29,7 +28,7 @@ def _select_nomination_voting_dto(user_id: UserId | None) -> Select:
     )
 
 
-class SqlNominationGateway(NominationRepository, NominationQuery):
+class SqlNominationGateway(NominationGateway):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = NominationMapper()
@@ -71,6 +70,7 @@ class SqlNominationGateway(NominationRepository, NominationQuery):
             delete(NominationORM).where(NominationORM.cosplay2_id.in_(cosplay2_ids))
         )
 
+    # Read projections (return DTOs, not aggregates)
     async def read_voting_dto(
         self, nomination_code: NominationCode, user_id: UserId | None = None
     ) -> NominationVotingDTO | None:

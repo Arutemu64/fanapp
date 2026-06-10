@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fanfan.adapters.db.constraints import get_constraint_name
 from fanfan.adapters.db.mappers.vote import VoteMapper
 from fanfan.adapters.db.models import NominationORM, VoteORM
-from fanfan.application.ports.repositories.votes import VoteRepository
+from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.participants import ParticipantNotFound
 from fanfan.core.exceptions.votes import VoteAlreadyExists
@@ -14,7 +14,7 @@ from fanfan.core.vo.nomination import NominationId
 from fanfan.core.vo.user import UserId
 
 
-class SqlVoteGateway(VoteRepository):
+class SqlVoteGateway(VoteGateway):
     def __init__(self, session: AsyncSession, uow: UnitOfWork):
         self.session = session
         self.uow = uow

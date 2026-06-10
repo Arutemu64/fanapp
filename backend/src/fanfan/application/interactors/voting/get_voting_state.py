@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from fanfan.application.ports.repositories.tickets import TicketRepository
+from fanfan.application.ports.gateways.tickets import TicketGateway
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.voting import VotingService
 from fanfan.core.vo.vote import VotingStatus
@@ -16,11 +16,11 @@ class GetVotingState:
         self,
         voting_service: VotingService,
         current_user_provider: CurrentUserProvider,
-        ticket_repo: TicketRepository,
+        ticket_gateway: TicketGateway,
     ) -> None:
         self.voting_service = voting_service
         self.current_user_provider = current_user_provider
-        self.ticket_repo = ticket_repo
+        self.ticket_gateway = ticket_gateway
 
     async def __call__(self) -> GetVotingStateOutput:
         current_user = await self.current_user_provider.get_user()
@@ -28,6 +28,6 @@ class GetVotingState:
             return GetVotingStateOutput(
                 can_vote=False, status=VotingStatus.NOT_AUTHENTICATED
             )
-        ticket = await self.ticket_repo.get_by_user_id(current_user.id)
+        ticket = await self.ticket_gateway.get_by_user_id(current_user.id)
         status = await self.voting_service.get_voting_state(current_user, ticket)
         return GetVotingStateOutput(can_vote=status == VotingStatus.OPEN, status=status)

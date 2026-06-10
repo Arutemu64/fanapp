@@ -49,17 +49,17 @@ to verify the right event was raised (see `tests/unit/core/test_vote.py`).
 ## Integration tests — for interactors
 
 Interactors are tested **through the real stack**: a real database and real
-repositories/queries, resolved from the Dishka container, exactly as in
-production. We do not unit-test interactors with mocked repositories — most of
+gateways, resolved from the Dishka container, exactly as in
+production. We do not unit-test interactors with mocked gateways — most of
 their behavior lives in SQL (constraints, cascades, joins, locking), so a
 mock-only test would assert call order and re-encode the implementation
 instead of verifying behavior.
 
 A test resolves what it needs from `dishka_request`, sets up state through
-repositories, runs the interactor, and asserts on persisted state and
+gateways, runs the interactor, and asserts on persisted state and
 published events. The shared plumbing (acting user, event broker, unit of
 work) comes in as fixtures; the interactor under test and the
-repositories/queries it asserts on stay explicit so a reader sees the test's
+gateways it asserts on stay explicit so a reader sees the test's
 surface at a glance:
 
 ```python
@@ -74,7 +74,7 @@ async def test_add_vote_creates_vote_and_publishes_event(
 ):
     login(visitor_with_ticket)              # set the acting user
     interactor = await dishka_request.get(AddVote)
-    vote_repo = await dishka_request.get(VoteRepository)
+    vote_gateway = await dishka_request.get(VoteGateway)
     ...
     assert events_broker.published_events == [VoteCreated(...)]
 ```
@@ -96,7 +96,7 @@ repeat:
 | `uow` | `UnitOfWork` | commit setup state; `uow.rollback()` after an expected error |
 
 Rule of thumb: take the plumbing you need from fixtures, but resolve the
-**interactor under test and its repositories/queries explicitly** in the body
+**interactor under test and its gateways explicitly** in the body
 — do not hide what a test exercises behind more fixtures.
 
 ## What is real and what is faked
@@ -106,7 +106,7 @@ adapters for real; fake the ports that reach other external systems.**
 
 | Dependency | In tests | Why |
 |------------|----------|-----|
-| Repositories, queries, gateways, `UnitOfWork` | **real** (PostgreSQL) | behavior is in the SQL |
+| Gateways, `UnitOfWork` | **real** (PostgreSQL) | behavior is in the SQL |
 | `TokenRegistry`, `SessionStore`, `RateLimiter`, `RateLockFactory` | **real** (Redis) | behavior is in Redis semantics |
 | `PasswordHasher`, Jinja `TemplateRenderer` | **real** | deterministic, no external I/O |
 | `EventBroker` | **fake** (`FakeEventBroker`) | assert *what* was published, not NATS delivery |

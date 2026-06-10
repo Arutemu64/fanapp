@@ -5,15 +5,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fanfan.adapters.db.constraints import get_constraint_name
 from fanfan.adapters.db.mappers.push_subscription import PushSubscriptionMapper
 from fanfan.adapters.db.models import PushSubscriptionORM
-from fanfan.application.ports.repositories.push_subscriptions import (
-    PushSubscriptionRepository,
+from fanfan.application.ports.gateways.push_subscriptions import (
+    PushSubscriptionGateway,
 )
 from fanfan.core.exceptions.push_sub import PushSubscriptionAlreadyExists
 from fanfan.core.models.push_subscription import PushSubscription
 from fanfan.core.vo.user import UserId
 
 
-class SqlPushSubscriptionGateway(PushSubscriptionRepository):
+class SqlPushSubscriptionGateway(PushSubscriptionGateway):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = PushSubscriptionMapper()

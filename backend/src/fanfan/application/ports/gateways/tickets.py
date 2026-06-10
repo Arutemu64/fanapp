@@ -4,7 +4,7 @@ from fanfan.core.models.ticket import Ticket
 from fanfan.core.vo.user import UserId
 
 
-class TicketRepository(Protocol):
+class TicketGateway(Protocol):
     async def add(self, ticket: Ticket) -> None: ...
     async def get_by_barcode(self, barcode: str) -> Ticket | None: ...
     async def get_by_ticketscloud_ticket_id(

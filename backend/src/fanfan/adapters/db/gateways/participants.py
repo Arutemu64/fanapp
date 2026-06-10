@@ -9,8 +9,7 @@ from fanfan.adapters.db.models import (
     VoteORM,
 )
 from fanfan.application.dto.participant import ParticipantFullDTO
-from fanfan.application.ports.queries.participants import ParticipantQuery
-from fanfan.application.ports.repositories.participants import ParticipantRepository
+from fanfan.application.ports.gateways.participants import ParticipantGateway
 from fanfan.core.models.participant import Participant
 from fanfan.core.vo.nomination import NominationId
 from fanfan.core.vo.participant import ParticipantId
@@ -31,7 +30,7 @@ def _select_participant_dto(user_id: UserId | None) -> Select:
     )
 
 
-class SqlParticipantGateway(ParticipantRepository, ParticipantQuery):
+class SqlParticipantGateway(ParticipantGateway):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = ParticipantMapper()
@@ -67,6 +66,23 @@ class SqlParticipantGateway(ParticipantRepository, ParticipantQuery):
         await self.session.flush([participant_orm])
         return
 
+    async def list_cosplay2_ids(self) -> list[int]:
+        stmt = select(ParticipantORM.cosplay2_id)
+        return list((await self.session.scalars(stmt)).all())
+
+    async def delete_by_cosplay2_ids(self, cosplay2_ids: list[int]) -> None:
+        if not cosplay2_ids:
+            return
+        await self.session.execute(
+            delete(ParticipantORM).where(ParticipantORM.cosplay2_id.in_(cosplay2_ids))
+        )
+
+    async def delete(self, participant: Participant) -> None:
+        await self.session.execute(
+            delete(ParticipantORM).where(ParticipantORM.id == participant.id)
+        )
+
+    # Read projections (return DTOs, not aggregates)
     async def read_list_participants(
         self,
         user_id: UserId | None = None,
@@ -86,19 +102,3 @@ class SqlParticipantGateway(ParticipantRepository, ParticipantQuery):
             )
             for participant_orm, vote_orm in result
         ]
-
-    async def list_cosplay2_ids(self) -> list[int]:
-        stmt = select(ParticipantORM.cosplay2_id)
-        return list((await self.session.scalars(stmt)).all())
-
-    async def delete_by_cosplay2_ids(self, cosplay2_ids: list[int]) -> None:
-        if not cosplay2_ids:
-            return
-        await self.session.execute(
-            delete(ParticipantORM).where(ParticipantORM.cosplay2_id.in_(cosplay2_ids))
-        )
-
-    async def delete(self, participant: Participant) -> None:
-        await self.session.execute(
-            delete(ParticipantORM).where(ParticipantORM.id == participant.id)
-        )

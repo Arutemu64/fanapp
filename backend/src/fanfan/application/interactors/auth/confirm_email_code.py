@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel, Field
 
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.token_registry import TokenRegistry
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
@@ -22,12 +22,12 @@ class ConfirmEmailCodeInput(BaseModel):
 class ConfirmEmailCode:
     def __init__(
         self,
-        user_repo: UserRepository,
+        user_gateway: UserGateway,
         current_user_provider: CurrentUserProvider,
         token_registry: TokenRegistry,
         uow: UnitOfWork,
     ):
-        self.user_repo = user_repo
+        self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
         self.token_registry = token_registry
         self.uow = uow
@@ -47,7 +47,9 @@ class ConfirmEmailCode:
         normalized_target_email = normalize_email(target_email)
 
         if current_user.pending_email == normalized_target_email:
-            existing_user = await self.user_repo.get_by_email(normalized_target_email)
+            existing_user = await self.user_gateway.get_by_email(
+                normalized_target_email
+            )
             if existing_user is not None and existing_user.id != current_user.id:
                 raise InvalidOtpCode
 
@@ -57,7 +59,7 @@ class ConfirmEmailCode:
         else:
             current_user.verify_email(datetime.now(UTC))
         try:
-            await self.user_repo.save(current_user)
+            await self.user_gateway.save(current_user)
             await self.uow.commit()
         except EmailAlreadyExists as e:
             raise InvalidOtpCode from e

@@ -5,10 +5,10 @@ import pytest
 from dishka import AsyncContainer
 
 from fanfan.application.interactors.voting.add_vote import AddVote, AddVoteInput
-from fanfan.application.ports.repositories.app_settings import AppSettingsRepository
-from fanfan.application.ports.repositories.nominations import NominationRepository
-from fanfan.application.ports.repositories.participants import ParticipantRepository
-from fanfan.application.ports.repositories.votes import VoteRepository
+from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
+from fanfan.application.ports.gateways.nominations import NominationGateway
+from fanfan.application.ports.gateways.participants import ParticipantGateway
+from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.voting import VoteCreated
 from fanfan.core.exceptions.base import AccessDenied
@@ -38,17 +38,17 @@ async def test_add_vote_creates_vote_and_publishes_event(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
-    settings_repo = await dishka_request.get(AppSettingsRepository)
-    nomination_repo = await dishka_request.get(NominationRepository)
-    participant_repo = await dishka_request.get(ParticipantRepository)
-    vote_repo = await dishka_request.get(VoteRepository)
+    settings_gateway = await dishka_request.get(AppSettingsGateway)
+    nomination_gateway = await dishka_request.get(NominationGateway)
+    participant_gateway = await dishka_request.get(ParticipantGateway)
+    vote_gateway = await dishka_request.get(VoteGateway)
     login(visitor_with_ticket)
 
     # Голосование доступно только пользователю с привязанным билетом
     # и включённой настройкой фестиваля.
-    settings = await settings_repo.get_for_update()
+    settings = await settings_gateway.get_for_update()
     settings.set_voting_enabled(True)
-    await settings_repo.save(settings)
+    await settings_gateway.save(settings)
 
     nomination = Nomination(
         id=generate_nomination_id(),
@@ -65,13 +65,13 @@ async def test_add_vote_creates_vote_and_publishes_event(
         voting_number=1,
         values=[],
     )
-    await nomination_repo.add(nomination)
-    await participant_repo.add(participant)
+    await nomination_gateway.add(nomination)
+    await participant_gateway.add(participant)
     await uow.commit()
 
     result = await interactor(AddVoteInput(participant_id=participant.id))
 
-    saved_vote = await vote_repo.get_user_vote_by_nomination(
+    saved_vote = await vote_gateway.get_user_vote_by_nomination(
         nomination_id=nomination.id, user_id=visitor_with_ticket.id
     )
     assert saved_vote is not None
@@ -95,15 +95,15 @@ async def test_add_vote_without_linked_ticket_raises_access_denied(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
-    settings_repo = await dishka_request.get(AppSettingsRepository)
-    nomination_repo = await dishka_request.get(NominationRepository)
-    participant_repo = await dishka_request.get(ParticipantRepository)
-    vote_repo = await dishka_request.get(VoteRepository)
+    settings_gateway = await dishka_request.get(AppSettingsGateway)
+    nomination_gateway = await dishka_request.get(NominationGateway)
+    participant_gateway = await dishka_request.get(ParticipantGateway)
+    vote_gateway = await dishka_request.get(VoteGateway)
     login(visitor)
 
-    settings = await settings_repo.get_for_update()
+    settings = await settings_gateway.get_for_update()
     settings.set_voting_enabled(True)
-    await settings_repo.save(settings)
+    await settings_gateway.save(settings)
 
     nomination = Nomination(
         id=generate_nomination_id(),
@@ -120,8 +120,8 @@ async def test_add_vote_without_linked_ticket_raises_access_denied(
         voting_number=1,
         values=[],
     )
-    await nomination_repo.add(nomination)
-    await participant_repo.add(participant)
+    await nomination_gateway.add(nomination)
+    await participant_gateway.add(participant)
     await uow.commit()
 
     with pytest.raises(AccessDenied) as exc_info:
@@ -129,7 +129,7 @@ async def test_add_vote_without_linked_ticket_raises_access_denied(
 
     assert exc_info.value.details == {"reason": "VOTING_TICKET_REQUIRED"}
     assert (
-        await vote_repo.get_user_vote_by_nomination(
+        await vote_gateway.get_user_vote_by_nomination(
             nomination_id=nomination.id, user_id=visitor.id
         )
         is None
@@ -145,15 +145,15 @@ async def test_add_vote_when_voting_disabled_raises_access_denied(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
-    settings_repo = await dishka_request.get(AppSettingsRepository)
-    nomination_repo = await dishka_request.get(NominationRepository)
-    participant_repo = await dishka_request.get(ParticipantRepository)
-    vote_repo = await dishka_request.get(VoteRepository)
+    settings_gateway = await dishka_request.get(AppSettingsGateway)
+    nomination_gateway = await dishka_request.get(NominationGateway)
+    participant_gateway = await dishka_request.get(ParticipantGateway)
+    vote_gateway = await dishka_request.get(VoteGateway)
     login(visitor_with_ticket)
 
-    settings = await settings_repo.get_for_update()
+    settings = await settings_gateway.get_for_update()
     settings.set_voting_enabled(False)
-    await settings_repo.save(settings)
+    await settings_gateway.save(settings)
 
     nomination = Nomination(
         id=generate_nomination_id(),
@@ -170,8 +170,8 @@ async def test_add_vote_when_voting_disabled_raises_access_denied(
         voting_number=1,
         values=[],
     )
-    await nomination_repo.add(nomination)
-    await participant_repo.add(participant)
+    await nomination_gateway.add(nomination)
+    await participant_gateway.add(participant)
     await uow.commit()
 
     with pytest.raises(AccessDenied) as exc_info:
@@ -179,7 +179,7 @@ async def test_add_vote_when_voting_disabled_raises_access_denied(
 
     assert exc_info.value.details == {"reason": "VOTING_DISABLED"}
     assert (
-        await vote_repo.get_user_vote_by_nomination(
+        await vote_gateway.get_user_vote_by_nomination(
             nomination_id=nomination.id, user_id=visitor_with_ticket.id
         )
         is None
@@ -195,12 +195,12 @@ async def test_add_vote_for_missing_participant_raises_not_found(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
-    settings_repo = await dishka_request.get(AppSettingsRepository)
+    settings_gateway = await dishka_request.get(AppSettingsGateway)
     login(visitor_with_ticket)
 
-    settings = await settings_repo.get_for_update()
+    settings = await settings_gateway.get_for_update()
     settings.set_voting_enabled(True)
-    await settings_repo.save(settings)
+    await settings_gateway.save(settings)
     await uow.commit()
 
     with pytest.raises(ParticipantNotFound):
@@ -217,15 +217,15 @@ async def test_add_vote_twice_in_same_nomination_raises_already_voted(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
-    settings_repo = await dishka_request.get(AppSettingsRepository)
-    nomination_repo = await dishka_request.get(NominationRepository)
-    participant_repo = await dishka_request.get(ParticipantRepository)
-    vote_repo = await dishka_request.get(VoteRepository)
+    settings_gateway = await dishka_request.get(AppSettingsGateway)
+    nomination_gateway = await dishka_request.get(NominationGateway)
+    participant_gateway = await dishka_request.get(ParticipantGateway)
+    vote_gateway = await dishka_request.get(VoteGateway)
     login(visitor_with_ticket)
 
-    settings = await settings_repo.get_for_update()
+    settings = await settings_gateway.get_for_update()
     settings.set_voting_enabled(True)
-    await settings_repo.save(settings)
+    await settings_gateway.save(settings)
 
     nomination = Nomination(
         id=generate_nomination_id(),
@@ -250,16 +250,16 @@ async def test_add_vote_twice_in_same_nomination_raises_already_voted(
         voting_number=2,
         values=[],
     )
-    await nomination_repo.add(nomination)
-    await participant_repo.add(first_participant)
-    await participant_repo.add(second_participant)
+    await nomination_gateway.add(nomination)
+    await participant_gateway.add(first_participant)
+    await participant_gateway.add(second_participant)
     await uow.commit()
 
     first_result = await interactor(AddVoteInput(participant_id=first_participant.id))
     with pytest.raises(VoteAlreadyExists):
         await interactor(AddVoteInput(participant_id=second_participant.id))
 
-    saved_vote = await vote_repo.get_user_vote_by_nomination(
+    saved_vote = await vote_gateway.get_user_vote_by_nomination(
         nomination_id=nomination.id, user_id=visitor_with_ticket.id
     )
     assert saved_vote is not None
@@ -282,15 +282,15 @@ async def test_add_vote_allows_votes_in_different_nominations(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
-    settings_repo = await dishka_request.get(AppSettingsRepository)
-    nomination_repo = await dishka_request.get(NominationRepository)
-    participant_repo = await dishka_request.get(ParticipantRepository)
-    vote_repo = await dishka_request.get(VoteRepository)
+    settings_gateway = await dishka_request.get(AppSettingsGateway)
+    nomination_gateway = await dishka_request.get(NominationGateway)
+    participant_gateway = await dishka_request.get(ParticipantGateway)
+    vote_gateway = await dishka_request.get(VoteGateway)
     login(visitor_with_ticket)
 
-    settings = await settings_repo.get_for_update()
+    settings = await settings_gateway.get_for_update()
     settings.set_voting_enabled(True)
-    await settings_repo.save(settings)
+    await settings_gateway.save(settings)
 
     first_nomination = Nomination(
         id=generate_nomination_id(),
@@ -322,19 +322,19 @@ async def test_add_vote_allows_votes_in_different_nominations(
         voting_number=1,
         values=[],
     )
-    await nomination_repo.add(first_nomination)
-    await nomination_repo.add(second_nomination)
-    await participant_repo.add(first_participant)
-    await participant_repo.add(second_participant)
+    await nomination_gateway.add(first_nomination)
+    await nomination_gateway.add(second_nomination)
+    await participant_gateway.add(first_participant)
+    await participant_gateway.add(second_participant)
     await uow.commit()
 
     first_result = await interactor(AddVoteInput(participant_id=first_participant.id))
     second_result = await interactor(AddVoteInput(participant_id=second_participant.id))
 
-    first_vote = await vote_repo.get_user_vote_by_nomination(
+    first_vote = await vote_gateway.get_user_vote_by_nomination(
         nomination_id=first_nomination.id, user_id=visitor_with_ticket.id
     )
-    second_vote = await vote_repo.get_user_vote_by_nomination(
+    second_vote = await vote_gateway.get_user_vote_by_nomination(
         nomination_id=second_nomination.id, user_id=visitor_with_ticket.id
     )
     assert first_vote is not None

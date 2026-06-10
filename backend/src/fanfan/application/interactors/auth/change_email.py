@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.users import EmailAlreadyExists
@@ -14,11 +14,11 @@ class ChangeEmailInput(BaseModel):
 class ChangeEmail:
     def __init__(
         self,
-        user_repo: UserRepository,
+        user_gateway: UserGateway,
         current_user_provider: CurrentUserProvider,
         uow: UnitOfWork,
     ):
-        self.user_repo = user_repo
+        self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
         self.uow = uow
 
@@ -32,7 +32,7 @@ class ChangeEmail:
         ):
             return
 
-        existing_user = await self.user_repo.get_by_any_email(normalized_new_email)
+        existing_user = await self.user_gateway.get_by_any_email(normalized_new_email)
         if existing_user is not None and existing_user.id != current_user.id:
             raise EmailAlreadyExists
 
@@ -41,5 +41,5 @@ class ChangeEmail:
         # EmailConfirmationCodeRequested event is dispatched by the UnitOfWork
         # on commit (current_user was registered when loaded).
         current_user.request_email_change(normalized_new_email)
-        await self.user_repo.save(current_user)
+        await self.user_gateway.save(current_user)
         await self.uow.commit()

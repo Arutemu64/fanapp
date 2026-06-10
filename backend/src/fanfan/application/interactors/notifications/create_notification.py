@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
-from fanfan.application.ports.repositories.mailings import MailingRepository
-from fanfan.application.ports.repositories.notifications import NotificationRepository
+from fanfan.application.ports.gateways.mailings import MailingGateway
+from fanfan.application.ports.gateways.notifications import NotificationGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import MailingNotFound
 from fanfan.core.models.notification import NewNotification, Notification
@@ -15,12 +15,12 @@ class CreateNotificationInput(BaseModel):
 class CreateNotification:
     def __init__(
         self,
-        mailing_repo: MailingRepository,
-        notification_repo: NotificationRepository,
+        mailing_gateway: MailingGateway,
+        notification_gateway: NotificationGateway,
         uow: UnitOfWork,
     ):
-        self.mailing_repo = mailing_repo
-        self.notification_repo = notification_repo
+        self.mailing_gateway = mailing_gateway
+        self.notification_gateway = notification_gateway
         self.uow = uow
 
     @staticmethod
@@ -38,12 +38,12 @@ class CreateNotification:
     async def __call__(self, data: CreateNotificationInput) -> NotificationId:
         mailing_id = data.notification.mailing_id
         notification = self._to_model(data.notification)
-        await self.notification_repo.add(notification)
+        await self.notification_gateway.add(notification)
         if mailing_id is not None:
-            mailing = await self.mailing_repo.get(mailing_id)
+            mailing = await self.mailing_gateway.get(mailing_id)
             if mailing is None:
                 raise MailingNotFound
             mailing.ensure_active()
-            await self.mailing_repo.increment_sent(mailing_id=mailing_id)
+            await self.mailing_gateway.increment_sent(mailing_id=mailing_id)
         await self.uow.commit()
         return notification.id

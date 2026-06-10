@@ -1,6 +1,6 @@
 from collections.abc import AsyncIterable
 
-from dishka import Provider, Scope, alias, provide
+from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -31,38 +31,27 @@ from fanfan.adapters.db.gateways.user_flags import SqlUserFlagGateway
 from fanfan.adapters.db.gateways.users import SqlUserGateway
 from fanfan.adapters.db.gateways.votes import SqlVoteGateway
 from fanfan.adapters.db.uow import SqlUnitOfWork
-from fanfan.application.ports.queries import (
-    MailingQuery,
-    NominationQuery,
-    NotificationQuery,
-    ParticipantQuery,
-    ScheduleChangeQuery,
-    ScheduleEventQuery,
-    SocialIdentityQuery,
-    SubscriptionQuery,
-    UserQuery,
+from fanfan.application.ports.gateways import (
+    AppSettingsGateway,
+    PermissionGateway,
+    ScheduleChangeGateway,
+    ScheduleEventGateway,
+    UserPermissionGateway,
 )
-from fanfan.application.ports.repositories import (
-    AppSettingsRepository,
-    PermissionRepository,
-    ScheduleChangeRepository,
-    ScheduleEventRepository,
-    UserPermissionRepository,
+from fanfan.application.ports.gateways.feedback import FeedbackGateway
+from fanfan.application.ports.gateways.mailings import MailingGateway
+from fanfan.application.ports.gateways.nominations import NominationGateway
+from fanfan.application.ports.gateways.notifications import NotificationGateway
+from fanfan.application.ports.gateways.participants import ParticipantGateway
+from fanfan.application.ports.gateways.push_subscriptions import (
+    PushSubscriptionGateway,
 )
-from fanfan.application.ports.repositories.feedback import FeedbackRepository
-from fanfan.application.ports.repositories.mailings import MailingRepository
-from fanfan.application.ports.repositories.nominations import NominationRepository
-from fanfan.application.ports.repositories.notifications import NotificationRepository
-from fanfan.application.ports.repositories.participants import ParticipantRepository
-from fanfan.application.ports.repositories.push_subscriptions import (
-    PushSubscriptionRepository,
-)
-from fanfan.application.ports.repositories.social_ids import SocialIdentityRepository
-from fanfan.application.ports.repositories.subscriptions import SubscriptionRepository
-from fanfan.application.ports.repositories.tickets import TicketRepository
-from fanfan.application.ports.repositories.user_flags import UserFlagRepository
-from fanfan.application.ports.repositories.users import UserRepository
-from fanfan.application.ports.repositories.votes import VoteRepository
+from fanfan.application.ports.gateways.social_ids import SocialIdentityGateway
+from fanfan.application.ports.gateways.subscriptions import SubscriptionGateway
+from fanfan.application.ports.gateways.tickets import TicketGateway
+from fanfan.application.ports.gateways.user_flags import UserFlagGateway
+from fanfan.application.ports.gateways.users import UserGateway
+from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
 
 
@@ -91,79 +80,24 @@ class DbProvider(Provider):
 class SqlGatewaysProvider(Provider):
     scope = Scope.REQUEST
 
-    nominations = provide(SqlNominationGateway)
-    nominations_repo = alias(source=SqlNominationGateway, provides=NominationRepository)
-    nominations_query = alias(source=SqlNominationGateway, provides=NominationQuery)
-
-    participants = provide(SqlParticipantGateway)
-    participants_repo = alias(
-        source=SqlParticipantGateway, provides=ParticipantRepository
-    )
-    participants_query = alias(source=SqlParticipantGateway, provides=ParticipantQuery)
-
-    schedule_events = provide(SqlScheduleEventGateway)
-    schedule_events_repo = alias(
-        source=SqlScheduleEventGateway, provides=ScheduleEventRepository
-    )
-    schedule_events_query = alias(
-        source=SqlScheduleEventGateway, provides=ScheduleEventQuery
-    )
-
-    schedule_changes = provide(SqlScheduleChangeGateway)
-    schedule_changes_repo = alias(
-        source=SqlScheduleChangeGateway,
-        provides=ScheduleChangeRepository,
-    )
-    schedule_changes_query = alias(
-        source=SqlScheduleChangeGateway,
-        provides=ScheduleChangeQuery,
-    )
-
-    settings = provide(SqlAppSettingsGateway, provides=AppSettingsRepository)
-
-    subscriptions = provide(SqlSubscriptionGateway)
-    subscriptions_repo = alias(
-        source=SqlSubscriptionGateway, provides=SubscriptionRepository
-    )
-    subscriptions_query = alias(
-        source=SqlSubscriptionGateway, provides=SubscriptionQuery
-    )
-
-    tickets = provide(SqlTicketGateway, provides=TicketRepository)
-
-    feedback = provide(SqlFeedbackGateway, provides=FeedbackRepository)
-
-    users = provide(SqlUserGateway)
-    users_repo = alias(source=SqlUserGateway, provides=UserRepository)
-    users_query = alias(source=SqlUserGateway, provides=UserQuery)
-
-    votes = provide(SqlVoteGateway, provides=VoteRepository)
-    flags = provide(SqlUserFlagGateway, provides=UserFlagRepository)
-    permissions = provide(SqlPermissionGateway, provides=PermissionRepository)
-    user_permissions = provide(
-        SqlUserPermissionGateway, provides=UserPermissionRepository
-    )
-
+    # Each gateway implements a single repository port (reads + writes),
+    # so one binding per aggregate is enough.
+    nominations = provide(SqlNominationGateway, provides=NominationGateway)
+    participants = provide(SqlParticipantGateway, provides=ParticipantGateway)
+    schedule_events = provide(SqlScheduleEventGateway, provides=ScheduleEventGateway)
+    schedule_changes = provide(SqlScheduleChangeGateway, provides=ScheduleChangeGateway)
+    settings = provide(SqlAppSettingsGateway, provides=AppSettingsGateway)
+    subscriptions = provide(SqlSubscriptionGateway, provides=SubscriptionGateway)
+    tickets = provide(SqlTicketGateway, provides=TicketGateway)
+    feedback = provide(SqlFeedbackGateway, provides=FeedbackGateway)
+    users = provide(SqlUserGateway, provides=UserGateway)
+    votes = provide(SqlVoteGateway, provides=VoteGateway)
+    flags = provide(SqlUserFlagGateway, provides=UserFlagGateway)
+    permissions = provide(SqlPermissionGateway, provides=PermissionGateway)
+    user_permissions = provide(SqlUserPermissionGateway, provides=UserPermissionGateway)
     push_subscriptions = provide(
-        SqlPushSubscriptionGateway, provides=PushSubscriptionRepository
+        SqlPushSubscriptionGateway, provides=PushSubscriptionGateway
     )
-
-    mailings = provide(SqlMailingGateway)
-    mailings_repo = alias(source=SqlMailingGateway, provides=MailingRepository)
-    mailings_query = alias(source=SqlMailingGateway, provides=MailingQuery)
-
-    notifications = provide(SqlNotificationGateway)
-    notifications_repo = alias(
-        source=SqlNotificationGateway, provides=NotificationRepository
-    )
-    notifications_query = alias(
-        source=SqlNotificationGateway, provides=NotificationQuery
-    )
-
-    social_ids = provide(SqlSocialIdentityGateway)
-    social_ids_repo = alias(
-        source=SqlSocialIdentityGateway, provides=SocialIdentityRepository
-    )
-    social_ids_query = alias(
-        source=SqlSocialIdentityGateway, provides=SocialIdentityQuery
-    )
+    mailings = provide(SqlMailingGateway, provides=MailingGateway)
+    notifications = provide(SqlNotificationGateway, provides=NotificationGateway)
+    social_ids = provide(SqlSocialIdentityGateway, provides=SocialIdentityGateway)

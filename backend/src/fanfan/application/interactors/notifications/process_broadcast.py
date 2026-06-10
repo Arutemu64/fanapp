@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.application.ports.queries.users import UserQuery
-from fanfan.application.ports.repositories.mailings import MailingRepository
+from fanfan.application.ports.gateways.mailings import MailingGateway
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.notifications import MailingNotFound
@@ -21,23 +21,25 @@ class ProcessBroadcastInput(BaseModel):
 class ProcessBroadcast:
     def __init__(
         self,
-        user_query: UserQuery,
+        user_gateway: UserGateway,
         events_broker: EventBroker,
-        mailing_repo: MailingRepository,
+        mailing_gateway: MailingGateway,
         uow: UnitOfWork,
     ):
-        self.user_query = user_query
+        self.user_gateway = user_gateway
         self.events_broker = events_broker
-        self.mailing_repo = mailing_repo
+        self.mailing_gateway = mailing_gateway
         self.uow = uow
 
     async def __call__(self, data: ProcessBroadcastInput):
-        users = await self.user_query.read_all_by_roles(*data.roles)
-        mailing = await self.mailing_repo.get(data.mailing_id)
+        users = await self.user_gateway.read_all_by_roles(*data.roles)
+        mailing = await self.mailing_gateway.get(data.mailing_id)
         if mailing is None:
             raise MailingNotFound
-        await self.mailing_repo.set_total(mailing_id=mailing.id, total_count=len(users))
-        await self.mailing_repo.save(mailing)
+        await self.mailing_gateway.set_total(
+            mailing_id=mailing.id, total_count=len(users)
+        )
+        await self.mailing_gateway.save(mailing)
         await self.uow.commit()
 
         events = [

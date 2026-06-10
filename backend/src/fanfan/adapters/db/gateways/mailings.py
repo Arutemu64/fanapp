@@ -4,13 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fanfan.adapters.db.mappers.mailing import MailingMapper
 from fanfan.adapters.db.models import MailingORM
 from fanfan.application.dto.mailing import MailingDTO
-from fanfan.application.ports.queries.mailings import MailingQuery
-from fanfan.application.ports.repositories.mailings import MailingRepository
+from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.core.models.mailing import Mailing
 from fanfan.core.vo.mailing import MailingId
 
 
-class SqlMailingGateway(MailingRepository, MailingQuery):
+class SqlMailingGateway(MailingGateway):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = MailingMapper()
@@ -47,6 +46,7 @@ class SqlMailingGateway(MailingRepository, MailingQuery):
         )
         await self.session.execute(stmt)
 
+    # Read projections (return DTOs, not aggregates)
     async def read_mailing(self, mailing_id: MailingId) -> MailingDTO | None:
         stmt = select(MailingORM).where(MailingORM.id == mailing_id)
         mailing_orm = await self.session.scalar(stmt)

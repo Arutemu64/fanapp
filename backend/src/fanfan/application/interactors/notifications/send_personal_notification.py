@@ -2,8 +2,8 @@ import logging
 from dataclasses import dataclass
 
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.application.ports.repositories.mailings import MailingRepository
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.mailings import MailingGateway
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.base import AccessDenied
@@ -24,13 +24,13 @@ class SendPersonalNotificationInput:
 class SendPersonalNotification:
     def __init__(
         self,
-        user_repo: UserRepository,
-        mailing_repo: MailingRepository,
+        user_gateway: UserGateway,
+        mailing_gateway: MailingGateway,
         current_user_provider: CurrentUserProvider,
         events_broker: EventBroker,
     ):
-        self.user_repo = user_repo
-        self.mailing_repo = mailing_repo
+        self.user_gateway = user_gateway
+        self.mailing_gateway = mailing_gateway
         self.current_user_provider = current_user_provider
         self.events_broker = events_broker
 
@@ -40,7 +40,7 @@ class SendPersonalNotification:
         if current_user.role != UserRole.ORG:
             raise AccessDenied
 
-        user = await self.user_repo.get_by_id(data.user_id)
+        user = await self.user_gateway.get_by_id(data.user_id)
         if user is None:
             raise UserNotFound
 

@@ -5,16 +5,16 @@ from pydantic import BaseModel
 from fanfan.application.interactors.schedule_mgmt.common import (
     ANNOUNCE_LIMIT_NAME,
 )
+from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
+from fanfan.application.ports.gateways.mailings import MailingGateway
+from fanfan.application.ports.gateways.schedule_changes import (
+    ScheduleChangeGateway,
+)
+from fanfan.application.ports.gateways.schedule_events import (
+    ScheduleEventGateway,
+)
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.rate_lock import RateLockFactory
-from fanfan.application.ports.repositories.app_settings import AppSettingsRepository
-from fanfan.application.ports.repositories.mailings import MailingRepository
-from fanfan.application.ports.repositories.schedule_changes import (
-    ScheduleChangeRepository,
-)
-from fanfan.application.ports.repositories.schedule_events import (
-    ScheduleEventRepository,
-)
-from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
@@ -41,21 +41,21 @@ class MoveScheduleEventInput(BaseModel):
 class MoveScheduleEvent:
     def __init__(
         self,
-        schedule_repo: ScheduleEventRepository,
-        user_repo: UserRepository,
-        mailing_repo: MailingRepository,
-        settings_repo: AppSettingsRepository,
-        changes_repo: ScheduleChangeRepository,
+        schedule_gateway: ScheduleEventGateway,
+        user_gateway: UserGateway,
+        mailing_gateway: MailingGateway,
+        settings_gateway: AppSettingsGateway,
+        changes_gateway: ScheduleChangeGateway,
         perm_service: PermissionService,
         uow: UnitOfWork,
         current_user_provider: CurrentUserProvider,
         rate_lock_factory: RateLockFactory,
     ) -> None:
-        self.schedule_repo = schedule_repo
-        self.user_repo = user_repo
-        self.mailing_repo = mailing_repo
-        self.settings_repo = settings_repo
-        self.changes_repo = changes_repo
+        self.schedule_gateway = schedule_gateway
+        self.user_gateway = user_gateway
+        self.mailing_gateway = mailing_gateway
+        self.settings_gateway = settings_gateway
+        self.changes_gateway = changes_gateway
         self.perm_service = perm_service
         self.uow = uow
         self.current_user_provider = current_user_provider
@@ -67,7 +67,7 @@ class MoveScheduleEvent:
             user=current_user, perm_name=PermissionName(Permissions.SCHEDULE_MANAGE)
         )
 
-        settings = await self.settings_repo.get()
+        settings = await self.settings_gateway.get()
         lock = self.rate_lock_factory(
             ANNOUNCE_LIMIT_NAME,
             cooldown_period=settings.limits.announcement_timeout,
@@ -76,33 +76,33 @@ class MoveScheduleEvent:
         try:
             async with lock:
                 # Get and check events
-                event = await self.schedule_repo.get_by_id(data.event_id)
+                event = await self.schedule_gateway.get_by_id(data.event_id)
                 if event is None:
                     raise EventNotFound
 
-                place_after_event = await self.schedule_repo.get_by_id(
+                place_after_event = await self.schedule_gateway.get_by_id(
                     data.place_after_event_id
                 )
                 if place_after_event is None:
                     raise EventNotFound
-                place_before_event = await self.schedule_repo.get_next_by_order(
+                place_before_event = await self.schedule_gateway.get_next_by_order(
                     place_after_event.order
                 )
-                previous_event = await self.schedule_repo.get_previous_by_order(
+                previous_event = await self.schedule_gateway.get_previous_by_order(
                     event.order
                 )
 
-                next_event_before_change = await self.schedule_repo.get_next()
+                next_event_before_change = await self.schedule_gateway.get_next()
 
                 # Update event order through the domain model.
                 event.place_after(place_after_event, place_before_event)
-                await self.schedule_repo.save(event)
+                await self.schedule_gateway.save(event)
 
-                next_event_after_change = await self.schedule_repo.get_next()
+                next_event_after_change = await self.schedule_gateway.get_next()
 
                 # Save schedule change
                 mailing = Mailing.create(by_user_id=current_user.id)
-                await self.mailing_repo.add(mailing)
+                await self.mailing_gateway.add(mailing)
                 schedule_change = ScheduleChange.moved(
                     event_id=event.id,
                     previous_event_id=previous_event.id if previous_event else None,
@@ -112,7 +112,7 @@ class MoveScheduleEvent:
                         next_event_before_change != next_event_after_change
                     ),
                 )
-                await self.changes_repo.add(schedule_change)
+                await self.changes_gateway.add(schedule_change)
 
                 # Commit and proceed
                 await self.uow.commit()

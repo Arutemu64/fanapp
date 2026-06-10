@@ -10,8 +10,8 @@ from fanfan.adapters.api.cosplay2.dto.requests import (
     RequestValueDTO,
 )
 from fanfan.adapters.api.cosplay2.dto.topics import Topic
-from fanfan.application.ports.repositories.nominations import NominationRepository
-from fanfan.application.ports.repositories.participants import ParticipantRepository
+from fanfan.application.ports.gateways.nominations import NominationGateway
+from fanfan.application.ports.gateways.participants import ParticipantGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.participants import (
     NonApprovedRequest,
@@ -31,22 +31,22 @@ class SyncCosplay2:
         client: Cosplay2Client,
         config: Cosplay2Config,
         uow: UnitOfWork,
-        nomination_repo: NominationRepository,
-        participant_repo: ParticipantRepository,
+        nomination_gateway: NominationGateway,
+        participant_gateway: ParticipantGateway,
     ):
-        self.participant_repo = participant_repo
-        self.nomination_repo = nomination_repo
+        self.participant_gateway = participant_gateway
+        self.nomination_gateway = nomination_gateway
         self.client = client
         self.config = config
         self.uow = uow
 
     async def _process_topic(self, topic: Topic) -> Nomination:
-        nomination = await self.nomination_repo.get_by_cosplay2_id(topic.id)
+        nomination = await self.nomination_gateway.get_by_cosplay2_id(topic.id)
 
         # Update or create nomination
         if nomination:
             nomination = replace(nomination, code=topic.card_code, title=topic.title)
-            await self.nomination_repo.save(nomination)
+            await self.nomination_gateway.save(nomination)
             logger.info("Nomination %s updated", nomination.cosplay2_id)
         else:
             nomination = Nomination(
@@ -56,7 +56,7 @@ class SyncCosplay2:
                 title=topic.title,
                 is_votable=False,
             )
-            await self.nomination_repo.add(nomination)
+            await self.nomination_gateway.add(nomination)
             logger.info("Nomination %s added", nomination.id)
 
         return nomination
@@ -65,7 +65,7 @@ class SyncCosplay2:
         self, request: Request, request_values: list[RequestValueDTO]
     ) -> Participant:
         # Query existing participant
-        participant = await self.participant_repo.get_by_cosplay2_id(
+        participant = await self.participant_gateway.get_by_cosplay2_id(
             cosplay2_id=request.id
         )
 
@@ -73,7 +73,7 @@ class SyncCosplay2:
         if request.status != RequestStatus.APPROVED:
             # ...and deleted if they are already in database
             if participant:
-                await self.participant_repo.delete(participant)
+                await self.participant_gateway.delete(participant)
                 logger.error(
                     "Participant %s deleted due to non-approved request",
                     participant.cosplay2_id,
@@ -87,7 +87,7 @@ class SyncCosplay2:
             logger.error("Request %s has no voting title, cannot proceed", request.id)
             raise RequestHasNoVotingTitle
 
-        nomination = await self.nomination_repo.get_by_cosplay2_id(request.topic_id)
+        nomination = await self.nomination_gateway.get_by_cosplay2_id(request.topic_id)
         if nomination is None:
             logger.error("Nomination with Cosplay2 id=%s not found", request.topic_id)
             raise NonApprovedRequest
@@ -108,7 +108,7 @@ class SyncCosplay2:
                 voting_number=request.voting_number,
                 values=participant_values,
             )
-            await self.participant_repo.save(participant)
+            await self.participant_gateway.save(participant)
             logger.info("Request %s updated", participant.cosplay2_id)
         else:
             participant = Participant(
@@ -119,7 +119,7 @@ class SyncCosplay2:
                 voting_number=request.voting_number,
                 values=participant_values,
             )
-            await self.participant_repo.add(participant)
+            await self.participant_gateway.add(participant)
             logger.info("Request %s added", participant.cosplay2_id)
 
         return participant
@@ -132,9 +132,9 @@ class SyncCosplay2:
             await self._process_topic(topic)
 
         stale_nomination_ids = (
-            set(await self.nomination_repo.list_cosplay2_ids()) - topic_ids
+            set(await self.nomination_gateway.list_cosplay2_ids()) - topic_ids
         )
-        await self.nomination_repo.delete_by_cosplay2_ids(list(stale_nomination_ids))
+        await self.nomination_gateway.delete_by_cosplay2_ids(list(stale_nomination_ids))
 
         # Sync requests and values
         requests = await self.client.get_all_requests()
@@ -146,8 +146,10 @@ class SyncCosplay2:
                 await self._process_request(request, values)
 
         stale_participant_ids = (
-            set(await self.participant_repo.list_cosplay2_ids()) - request_ids
+            set(await self.participant_gateway.list_cosplay2_ids()) - request_ids
         )
-        await self.participant_repo.delete_by_cosplay2_ids(list(stale_participant_ids))
+        await self.participant_gateway.delete_by_cosplay2_ids(
+            list(stale_participant_ids)
+        )
 
         await self.uow.commit()

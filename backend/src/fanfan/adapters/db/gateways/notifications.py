@@ -7,15 +7,14 @@ from fanfan.adapters.db.mappers.notification import NotificationMapper
 from fanfan.adapters.db.models import NotificationORM
 from fanfan.application.dto.notification import NotificationDTO, RealtimeNotificationDTO
 from fanfan.application.dto.page import Pagination
-from fanfan.application.ports.queries.notifications import NotificationQuery
-from fanfan.application.ports.repositories.notifications import NotificationRepository
+from fanfan.application.ports.gateways.notifications import NotificationGateway
 from fanfan.core.models.notification import Notification
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.notification import NotificationId
 from fanfan.core.vo.user import UserId
 
 
-class SqlNotificationGateway(NotificationRepository, NotificationQuery):
+class SqlNotificationGateway(NotificationGateway):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = NotificationMapper()
@@ -35,6 +34,26 @@ class SqlNotificationGateway(NotificationRepository, NotificationQuery):
         notification_orm = await self.session.scalar(stmt)
         return self.mapper.to_model(notification_orm) if notification_orm else None
 
+    async def mark_all_read_for_user(
+        self, user_id: UserId, timestamp: datetime
+    ) -> None:
+        stmt = (
+            update(NotificationORM)
+            .where(
+                and_(
+                    NotificationORM.user_id == user_id,
+                    NotificationORM.seen_at.is_(None),
+                )
+            )
+            .values({"seen_at": timestamp})
+        )
+        await self.session.execute(stmt)
+
+    async def delete_all_by_mailing_id(self, mailing_id: MailingId) -> None:
+        stmt = delete(NotificationORM).where(NotificationORM.mailing_id == mailing_id)
+        await self.session.execute(stmt)
+
+    # Read projections (return DTOs, not aggregates)
     async def read_realtime_notification(
         self, notification_id: NotificationId
     ) -> RealtimeNotificationDTO | None:
@@ -57,22 +76,3 @@ class SqlNotificationGateway(NotificationRepository, NotificationQuery):
         stmt = stmt.limit(pagination.limit).offset(pagination.offset)
         notifications = await self.session.scalars(stmt)
         return [self.mapper.parse_dto(n) for n in notifications]
-
-    async def mark_all_read_for_user(
-        self, user_id: UserId, timestamp: datetime
-    ) -> None:
-        stmt = (
-            update(NotificationORM)
-            .where(
-                and_(
-                    NotificationORM.user_id == user_id,
-                    NotificationORM.seen_at.is_(None),
-                )
-            )
-            .values({"seen_at": timestamp})
-        )
-        await self.session.execute(stmt)
-
-    async def delete_all_by_mailing_id(self, mailing_id: MailingId) -> None:
-        stmt = delete(NotificationORM).where(NotificationORM.mailing_id == mailing_id)
-        await self.session.execute(stmt)

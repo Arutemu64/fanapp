@@ -7,8 +7,8 @@ from fanfan.application.interactors.tickets.link_ticket import (
     LinkTicket,
     LinkTicketInput,
 )
-from fanfan.application.ports.repositories.tickets import TicketRepository
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.tickets import TicketGateway
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.tickets import (
     TicketAlreadyUsed,
@@ -33,8 +33,8 @@ async def test_link_ticket_successfully(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(LinkTicket)
-    user_repo = await dishka_request.get(UserRepository)
-    ticket_repo = await dishka_request.get(TicketRepository)
+    user_gateway = await dishka_request.get(UserGateway)
+    ticket_gateway = await dishka_request.get(TicketGateway)
 
     ticket = Ticket(
         id=generate_ticket_id(),
@@ -44,7 +44,7 @@ async def test_link_ticket_successfully(
         issued_by_user_id=None,
         ticketscloud_ticket_id=None,
     )
-    await ticket_repo.add(ticket)
+    await ticket_gateway.add(ticket)
     await uow.commit()
 
     login(visitor)
@@ -52,12 +52,12 @@ async def test_link_ticket_successfully(
     await interactor(LinkTicketInput(barcode="123456"))
 
     # Assert user role updated
-    saved_user = await user_repo.get_by_id(visitor.id)
+    saved_user = await user_gateway.get_by_id(visitor.id)
     assert saved_user is not None
     assert saved_user.role == UserRole.PARTICIPANT
 
     # Assert ticket is used by user
-    saved_ticket = await ticket_repo.get_by_barcode("123456")
+    saved_ticket = await ticket_gateway.get_by_barcode("123456")
     assert saved_ticket is not None
     assert saved_ticket.is_used_by(visitor.id)
 
@@ -83,7 +83,7 @@ async def test_link_ticket_raises_already_used(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(LinkTicket)
-    ticket_repo = await dishka_request.get(TicketRepository)
+    ticket_gateway = await dishka_request.get(TicketGateway)
 
     ticket = Ticket(
         id=generate_ticket_id(),
@@ -93,7 +93,7 @@ async def test_link_ticket_raises_already_used(
         issued_by_user_id=None,
         ticketscloud_ticket_id=None,
     )
-    await ticket_repo.add(ticket)
+    await ticket_gateway.add(ticket)
     await uow.commit()
 
     login(visitor)
@@ -109,7 +109,7 @@ async def test_link_ticket_raises_when_user_already_has_ticket(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(LinkTicket)
-    ticket_repo = await dishka_request.get(TicketRepository)
+    ticket_gateway = await dishka_request.get(TicketGateway)
 
     # New ticket to link
     ticket = Ticket(
@@ -120,7 +120,7 @@ async def test_link_ticket_raises_when_user_already_has_ticket(
         issued_by_user_id=None,
         ticketscloud_ticket_id=None,
     )
-    await ticket_repo.add(ticket)
+    await ticket_gateway.add(ticket)
     await uow.commit()
 
     login(visitor_with_ticket)

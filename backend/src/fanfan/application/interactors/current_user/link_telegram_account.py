@@ -2,8 +2,8 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.ports.repositories.social_ids import SocialIdentityRepository
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.social_ids import SocialIdentityGateway
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.users import (
@@ -23,13 +23,13 @@ class LinkTelegramAccountInput(BaseModel):
 class LinkTelegramAccount:
     def __init__(
         self,
-        user_repo: UserRepository,
-        social_id_repo: SocialIdentityRepository,
+        user_gateway: UserGateway,
+        social_id_gateway: SocialIdentityGateway,
         uow: UnitOfWork,
         current_user_provider: CurrentUserProvider,
     ) -> None:
-        self.social_id_repo = social_id_repo
-        self.user_repo = user_repo
+        self.social_id_gateway = social_id_gateway
+        self.user_gateway = user_gateway
         self.uow = uow
         self.current_user_provider = current_user_provider
 
@@ -37,7 +37,7 @@ class LinkTelegramAccount:
         provider_id = str(data.user_id)
         current_user = await self.current_user_provider.require_user()
 
-        current_telegram = await self.social_id_repo.get_by_provider(
+        current_telegram = await self.social_id_gateway.get_by_provider(
             current_user.id, "telegram"
         )
         if current_telegram is not None:
@@ -45,13 +45,13 @@ class LinkTelegramAccount:
                 return
             raise UserAlreadyHasTelegramLinked
 
-        linked_user = await self.user_repo.get_by_social_id(
+        linked_user = await self.user_gateway.get_by_social_id(
             provider_name="telegram", provider_account_id=provider_id
         )
         if linked_user is not None and linked_user.id != current_user.id:
             raise TelegramAlreadyLinkedToAnotherUser
 
-        await self.social_id_repo.add(
+        await self.social_id_gateway.add(
             SocialIdentity(
                 id=generate_social_identity_id(),
                 user_id=current_user.id,

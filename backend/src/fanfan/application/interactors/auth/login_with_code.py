@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel, EmailStr, Field
 
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.session_store import SessionStore
 from fanfan.application.ports.token_registry import TokenRegistry
 from fanfan.application.ports.uow import UnitOfWork
@@ -23,12 +23,12 @@ class LoginWithCodeInput(BaseModel):
 class LoginWithCode:
     def __init__(
         self,
-        user_repo: UserRepository,
+        user_gateway: UserGateway,
         token_registry: TokenRegistry,
         uow: UnitOfWork,
         session_store: SessionStore,
     ):
-        self.user_repo = user_repo
+        self.user_gateway = user_gateway
         self.token_registry = token_registry
         self.uow = uow
         self.session_store = session_store
@@ -44,7 +44,7 @@ class LoginWithCode:
         if user_id is None:
             raise InvalidOtpCode
 
-        user = await self.user_repo.get_by_id(user_id)
+        user = await self.user_gateway.get_by_id(user_id)
         if user is None:
             raise UserNotFound
 
@@ -54,7 +54,7 @@ class LoginWithCode:
 
         if user.email_verified_at is None:
             user.email_verified_at = datetime.now(UTC)
-            await self.user_repo.save(user)
+            await self.user_gateway.save(user)
             await self.uow.commit()
 
         return await self.session_store.create_session(user.id)

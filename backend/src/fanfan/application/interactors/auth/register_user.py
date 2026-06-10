@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.password_hasher import PasswordHasher
-from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.user import UserService
 from fanfan.core.exceptions.users import UserAlreadyExists
@@ -20,12 +20,12 @@ class RegisterUser:
     def __init__(
         self,
         password_hasher: PasswordHasher,
-        user_repo: UserRepository,
+        user_gateway: UserGateway,
         uow: UnitOfWork,
         user_service: UserService,
     ):
         self.password_hasher = password_hasher
-        self.user_repo = user_repo
+        self.user_gateway = user_gateway
         self.uow = uow
         self.user_service = user_service
 
@@ -36,7 +36,7 @@ class RegisterUser:
         # (prevents account enumeration) and never touch the existing account
         # (overwriting its password would be account takeover). The caller
         # always sees the same neutral success.
-        existing_user = await self.user_repo.get_by_any_email(normalized_email)
+        existing_user = await self.user_gateway.get_by_any_email(normalized_email)
         if existing_user is not None:
             return
 
@@ -49,7 +49,7 @@ class RegisterUser:
             role=UserRole.VISITOR,
         )
         try:
-            await self.user_repo.add(new_user)
+            await self.user_gateway.add(new_user)
             await self.uow.commit()
         except UserAlreadyExists:
             # Lost a race with a concurrent registration for the same email.

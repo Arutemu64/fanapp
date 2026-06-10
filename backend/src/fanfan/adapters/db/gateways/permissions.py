@@ -3,9 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.mappers.permission import PermissionMapper, UserPermissionMapper
 from fanfan.adapters.db.models.permission import PermissionORM, UserPermissionORM
-from fanfan.application.ports.repositories import (
-    PermissionRepository,
-    UserPermissionRepository,
+from fanfan.application.ports.gateways import (
+    PermissionGateway,
+    UserPermissionGateway,
 )
 from fanfan.core.models.permission import Permission, UserPermission
 from fanfan.core.vo.permission import (
@@ -16,7 +16,7 @@ from fanfan.core.vo.permission import (
 from fanfan.core.vo.user import UserId
 
 
-class SqlPermissionGateway(PermissionRepository):
+class SqlPermissionGateway(PermissionGateway):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = PermissionMapper()
@@ -29,7 +29,7 @@ class SqlPermissionGateway(PermissionRepository):
         return self.mapper.to_model(permission_orm) if permission_orm else None
 
 
-class SqlUserPermissionGateway(UserPermissionRepository):
+class SqlUserPermissionGateway(UserPermissionGateway):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.permission_mapper = PermissionMapper()

@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
-from fanfan.application.ports.repositories.push_subscriptions import (
-    PushSubscriptionRepository,
+from fanfan.application.ports.gateways.push_subscriptions import (
+    PushSubscriptionGateway,
 )
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.models.push_subscription import PushSubscription
@@ -19,13 +19,13 @@ class CreatePushSubscriptionInput(BaseModel):
 class CreatePushSubscription:
     def __init__(
         self,
-        push_sub_repo: PushSubscriptionRepository,
-        user_repo: UserRepository,
+        push_sub_gateway: PushSubscriptionGateway,
+        user_gateway: UserGateway,
         current_user_provider: CurrentUserProvider,
         uow: UnitOfWork,
     ):
-        self.user_repo = user_repo
-        self.push_sub_repo = push_sub_repo
+        self.user_gateway = user_gateway
+        self.push_sub_gateway = push_sub_gateway
         self.current_user_provider = current_user_provider
         self.uow = uow
 
@@ -38,5 +38,5 @@ class CreatePushSubscription:
             p256dh=data.p256dh,
             auth=data.auth,
         )
-        await self.push_sub_repo.add(push_subscription)
+        await self.push_sub_gateway.add(push_subscription)
         await self.uow.commit()

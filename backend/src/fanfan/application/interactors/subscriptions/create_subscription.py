@@ -2,13 +2,13 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.ports.repositories.schedule_events import (
-    ScheduleEventRepository,
+from fanfan.application.ports.gateways.schedule_events import (
+    ScheduleEventGateway,
 )
-from fanfan.application.ports.repositories.subscriptions import (
-    SubscriptionRepository,
+from fanfan.application.ports.gateways.subscriptions import (
+    SubscriptionGateway,
 )
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.models.subscription import Subscription
@@ -30,15 +30,15 @@ class CreateSubscriptionOutput(BaseModel):
 class CreateSubscription:
     def __init__(
         self,
-        subscription_repo: SubscriptionRepository,
-        user_repo: UserRepository,
+        subscription_gateway: SubscriptionGateway,
+        user_gateway: UserGateway,
         current_user_provider: CurrentUserProvider,
-        schedule_repo: ScheduleEventRepository,
+        schedule_gateway: ScheduleEventGateway,
         uow: UnitOfWork,
     ) -> None:
-        self.subscription_repo = subscription_repo
-        self.user_repo = user_repo
-        self.schedule_repo = schedule_repo
+        self.subscription_gateway = subscription_gateway
+        self.user_gateway = user_gateway
+        self.schedule_gateway = schedule_gateway
         self.current_user_provider = current_user_provider
         self.uow = uow
 
@@ -53,7 +53,7 @@ class CreateSubscription:
             event_id=data.event_id,
             counter=data.counter,
         )
-        await self.subscription_repo.add(subscription)
+        await self.subscription_gateway.add(subscription)
         await self.uow.commit()
         logger.info(
             "Subscription %s created",
