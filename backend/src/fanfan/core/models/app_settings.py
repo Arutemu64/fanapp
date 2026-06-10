@@ -7,9 +7,6 @@ from fanfan.core.models.base import AggregateRoot
 class LimitsConfig:
     announcement_timeout: int = 10
 
-    def set_announcement_timeout(self, seconds: int) -> None:
-        self.announcement_timeout = seconds
-
 
 @dataclass(slots=True, kw_only=True)
 class AppSettings(AggregateRoot):
@@ -19,3 +16,9 @@ class AppSettings(AggregateRoot):
 
     def set_voting_enabled(self, enabled: bool) -> None:
         self.voting_enabled = enabled
+
+    def update_limits(self, *, announcement_timeout: int | None = None) -> None:
+        # Mutation of the nested limits config goes through the aggregate root
+        # so callers never reach into it directly. None means "leave as is".
+        if announcement_timeout is not None:
+            self.limits.announcement_timeout = announcement_timeout

@@ -26,25 +26,15 @@ class UpdateUserSettings:
         self.uow = uow
 
     async def __call__(self, data: UpdateUserSettingsInput) -> None:
+        # Only persist fields that were actually sent by the client.
         data_to_update = data.model_dump(exclude_unset=True)
-        update_flag = False
         current_user = await self.current_user_provider.require_user()
-        if (
-            receive_all_announcements := data_to_update.get("receive_all_announcements")
-        ) is not None:
-            current_user.settings.set_receive_all_announcements(
-                receive_all_announcements
-            )
-            update_flag = True
-        if (
-            receive_telegram_notifications := data_to_update.get(
+        current_user.update_settings(
+            receive_all_announcements=data_to_update.get("receive_all_announcements"),
+            receive_telegram_notifications=data_to_update.get(
                 "receive_telegram_notifications"
-            )
-        ) is not None:
-            current_user.settings.set_receive_telegram_notifications(
-                receive_telegram_notifications
-            )
-            update_flag = True
-        if update_flag:
+            ),
+        )
+        if data_to_update:
             await self.user_gateway.save(current_user)
             await self.uow.commit()
