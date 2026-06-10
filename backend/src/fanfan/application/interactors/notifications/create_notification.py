@@ -1,16 +1,15 @@
 from pydantic import BaseModel
 
-from fanfan.application.dto.notification import NewNotificationDTO
 from fanfan.application.ports.repositories.mailings import MailingRepository
 from fanfan.application.ports.repositories.notifications import NotificationRepository
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import MailingNotFound
-from fanfan.core.models.notification import Notification
+from fanfan.core.models.notification import NewNotification, Notification
 from fanfan.core.vo.notification import NotificationId
 
 
 class CreateNotificationInput(BaseModel):
-    notification: NewNotificationDTO
+    notification: NewNotification
 
 
 class CreateNotification:
@@ -25,7 +24,7 @@ class CreateNotification:
         self.uow = uow
 
     @staticmethod
-    def _dto_to_model(notification: NewNotificationDTO) -> Notification:
+    def _to_model(notification: NewNotification) -> Notification:
         return Notification(
             id=notification.id,
             user_id=notification.user_id,
@@ -38,7 +37,7 @@ class CreateNotification:
 
     async def __call__(self, data: CreateNotificationInput) -> NotificationId:
         mailing_id = data.notification.mailing_id
-        notification = self._dto_to_model(data.notification)
+        notification = self._to_model(data.notification)
         await self.notification_repo.add(notification)
         if mailing_id is not None:
             mailing = await self.mailing_repo.get(mailing_id)

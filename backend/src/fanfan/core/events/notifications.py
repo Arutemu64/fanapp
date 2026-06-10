@@ -1,7 +1,7 @@
 from typing import ClassVar
 
-from fanfan.application.dto.notification import NewNotificationDTO
 from fanfan.core.events.base import AppEvent
+from fanfan.core.models.notification import NewNotification
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.notification import NotificationId
 from fanfan.core.vo.user import UserRole
@@ -10,7 +10,7 @@ from fanfan.core.vo.user import UserRole
 class NotificationQueued(AppEvent):
     subject: ClassVar[str] = "notifications.queued"
 
-    notification: NewNotificationDTO
+    notification: NewNotification
 
 
 class NotificationCreated(AppEvent):

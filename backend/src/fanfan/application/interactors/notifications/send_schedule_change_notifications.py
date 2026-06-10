@@ -3,7 +3,6 @@ from typing import cast
 
 from pydantic import BaseModel
 
-from fanfan.application.dto.notification import NewNotificationDTO
 from fanfan.application.dto.schedule import ScheduleEventFullDTO
 from fanfan.application.dto.schedule_change import (
     ScheduleChangeEventDTO,
@@ -19,6 +18,7 @@ from fanfan.application.ports.template_renderer import TemplateRenderer
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.schedule import ScheduleChangeNotFound
+from fanfan.core.models.notification import NewNotification
 from fanfan.core.vo.notification import NotificationType, generate_notification_id
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
 
@@ -83,7 +83,7 @@ class SendScheduleChangeNotifications:
             editors = await self.user_query.read_schedule_editors()
             events.extend(
                 NotificationQueued(
-                    notification=NewNotificationDTO(
+                    notification=NewNotification(
                         id=generate_notification_id(),
                         user_id=e.id,
                         title="Изменение расписания",
@@ -125,7 +125,7 @@ class SendScheduleChangeNotifications:
         )
         events.extend(
             NotificationQueued(
-                notification=NewNotificationDTO(
+                notification=NewNotification(
                     id=generate_notification_id(),
                     user_id=u.id,
                     title="На сцене",
@@ -170,7 +170,7 @@ class SendScheduleChangeNotifications:
                 )
                 events.append(
                     NotificationQueued(
-                        notification=NewNotificationDTO(
+                        notification=NewNotification(
                             id=generate_notification_id(),
                             user_id=s.user_id,
                             title="Уведомление о подписке",
