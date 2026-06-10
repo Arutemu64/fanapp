@@ -67,6 +67,10 @@ backend-migrate:
 backend-generate MIGRATION_NAME:
     cd backend && uv run alembic revision --autogenerate -m "{{ MIGRATION_NAME }}"
 
+# Fail if ORM models drift from migrations (spins a throwaway Postgres via testcontainers)
+backend-check-migrations:
+    cd backend && uv run pytest tests/integration/test_migrations.py
+
 # ---- Docker infra helpers ----
 run-dev:
     docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile core up --build --watch
