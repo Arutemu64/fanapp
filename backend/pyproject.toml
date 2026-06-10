@@ -27,10 +27,6 @@ dependencies = [
     "jinja2>=3.1.4",
     "sentry-sdk[fastapi,sqlalchemy]>=2.0.0",
     "nh3>=0.3.3",
-    "numpy>=2.1.2",
-    "openpyxl>=3.1.5",
-    "pandas-stubs==2.3.3.251201",
-    "pandas>=2.2.3",
     "pwdlib[argon2]>=0.3.0",
     "pydantic-extra-types>=2.9.0",
     "pydantic-settings>=2.6.1",
@@ -46,6 +42,8 @@ dependencies = [
     "structlog>=24.4.0",
     "uvicorn>=0.32.0",
     "webpush>=1.0.6",
+    "polars>=1.41.2",
+    "fastexcel>=0.20.2",
 ]
 
 [dependency-groups]

@@ -1,30 +1,28 @@
 import logging
 import typing
 
-import numpy as np
-import pandas as pd
+import polars as pl
 
 from fanfan.application.interactors.schedule_mgmt.import_schedule import ScheduleEntry
 from fanfan.core.vo.schedule_event import ScheduleEventPublicNumber
 
 logger = logging.getLogger(__name__)
 
-ORDER_INIT = 100.0
-ORDER_STEP = 100.0
+# Coerce each column to a known type on read. Numbers stored as floats in Excel
+# (e.g. 1.0) are cast to int, and empty cells become None instead of NaN.
+_SCHEMA_OVERRIDES = {
+    "public_number": pl.Int64,
+    "title": pl.String,
+    "duration": pl.Int64,
+    "nomination_title": pl.String,
+    "block_title": pl.String,
+}
 
 
 def parse_schedule_from_excel(file: typing.BinaryIO) -> list[ScheduleEntry]:
-    schedule_df = pd.read_excel(
-        file,
-        converters={
-            "public_number": int,
-            "title": str,
-            "duration": int,
-            "nomination_title": str,
-            "block_title": str,
-        },
-    )
-    schedule_df = schedule_df.replace({np.nan: None})
+    # fastexcel (the calamine engine) only accepts a path or raw bytes, not a
+    # file object, so read the upload into memory before handing it to polars.
+    schedule_df = pl.read_excel(file.read(), schema_overrides=_SCHEMA_OVERRIDES)
     return [
         ScheduleEntry(
             public_number=ScheduleEventPublicNumber(row["public_number"]),
@@ -33,5 +31,5 @@ def parse_schedule_from_excel(file: typing.BinaryIO) -> list[ScheduleEntry]:
             block_title=row["block_title"],
             nomination_title=row["nomination_title"],
         )
-        for _index, row in schedule_df.iterrows()
+        for row in schedule_df.iter_rows(named=True)
     ]

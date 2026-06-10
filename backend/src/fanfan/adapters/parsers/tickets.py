@@ -1,7 +1,7 @@
 import logging
 from typing import BinaryIO
 
-import pandas as pd
+import polars as pl
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,21 +12,22 @@ logger = logging.getLogger(__name__)
 
 
 async def parse_tickets(file: BinaryIO, session: AsyncSession) -> None:
-    tickets_df = pd.read_excel(
-        file,
-        converters={
-            "id": str,
-            "role": UserRole,
-        },
+    # fastexcel (the calamine engine) only accepts a path or raw bytes, not a
+    # file object, so read the upload into memory before handing it to polars.
+    tickets_df = pl.read_excel(
+        file.read(),
+        schema_overrides={"id": pl.String, "role": pl.String},
     )
-    for _index, row in tickets_df.iterrows():
+    for row in tickets_df.iter_rows(named=True):
+        ticket_id = row["id"]
+        role = UserRole(row["role"])
         try:
             async with session.begin_nested():
-                session.add(TicketORM(id=row["id"], role=row["role"]))
-            logger.info("Parsed ticket %s with role %s", row["id"], row["role"])
+                session.add(TicketORM(id=ticket_id, role=role))
+            logger.info("Parsed ticket %s with role %s", ticket_id, role)
         except IntegrityError:
-            ticket = await session.get(TicketORM, row["id"])
+            ticket = await session.get(TicketORM, ticket_id)
             if not ticket:
                 raise
-            logger.info("Ticket %s already exist", row["id"])
+            logger.info("Ticket %s already exist", ticket_id)
     await session.commit()
