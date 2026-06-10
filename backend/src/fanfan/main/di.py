@@ -4,6 +4,7 @@ from dishka.integrations.fastapi import FastapiProvider
 from fanfan.main.db_config import DbConfigProvider
 from fanfan.main.ioc.auth import OAuthProvider
 from fanfan.main.ioc.bot import BotProvider
+from fanfan.main.ioc.captcha import CaptchaProvider
 from fanfan.main.ioc.config import ConfigProvider
 from fanfan.main.ioc.cosplay2 import Cosplay2Provider
 from fanfan.main.ioc.db import DbProvider, SqlGatewaysProvider
@@ -22,6 +23,7 @@ from fanfan.main.ioc.tcloud import TCloudProvider
 def get_common_providers() -> list[Provider]:
     return [
         ConfigProvider(),
+        CaptchaProvider(),
         DbConfigProvider(),
         DbProvider(),
         InteractorsProvider(),

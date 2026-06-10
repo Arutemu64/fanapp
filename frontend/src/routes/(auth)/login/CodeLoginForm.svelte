@@ -2,6 +2,7 @@
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
+	import CaptchaWidget, { captchaEnabled } from '$lib/components/CaptchaWidget.svelte';
 	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
 	import { Alert, Button, Helper, Input, Label, Spinner } from 'flowbite-svelte';
 	import { EnvelopeSolid, LockSolid } from 'flowbite-svelte-icons';
@@ -26,6 +27,10 @@
 	let activeAction = $state<ActiveAction>(null);
 	let emailError = $state('');
 	let formError = $state('');
+
+	// Captcha state (only relevant when a Turnstile site key is configured).
+	let captchaToken = $state<string | null>(null);
+	let resetCaptcha = $state<(() => void) | undefined>(undefined);
 
 	$effect(() => {
 		isBusy = activeAction !== null;
@@ -74,6 +79,11 @@
 			return;
 		}
 
+		if (captchaEnabled && !captchaToken) {
+			formError = 'Подтвердите, что вы не робот';
+			return;
+		}
+
 		const trimmedEmail = normalizedEmail;
 
 		activeAction = 'code-request';
@@ -81,12 +91,15 @@
 
 		try {
 			const { error, response } = await client.POST('/auth/request-login-code', {
-				body: { email: trimmedEmail }
+				body: { email: trimmedEmail, turnstile_token: captchaToken }
 			});
 
 			if (error || !response.ok) {
 				console.error('Login code request error:', error);
 				formError = getApiErrorDetail(error) ?? 'Не удалось отправить код';
+				// The token is single-use, so fetch a fresh one before a retry.
+				resetCaptcha?.();
+				captchaToken = null;
 				return;
 			}
 
@@ -96,6 +109,8 @@
 		} catch (err) {
 			console.error('Login code request exception:', err);
 			formError = 'Произошла непредвиденная ошибка';
+			resetCaptcha?.();
+			captchaToken = null;
 		} finally {
 			activeAction = null;
 		}
@@ -150,6 +165,8 @@
 				>
 			{/if}
 		</div>
+
+		<CaptchaWidget bind:token={captchaToken} bind:reset={resetCaptcha} />
 
 		<div class="flex flex-col space-y-2">
 			<Button

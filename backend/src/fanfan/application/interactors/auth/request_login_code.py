@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 
+from fanfan.application.ports.captcha import CaptchaVerifier
 from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.rate_lock import RateLockFactory
 from fanfan.application.ports.repositories.users import UserRepository
@@ -16,6 +17,9 @@ from fanfan.core.vo.user import UserRole, generate_user_id
 
 class RequestLoginCodeInput(BaseModel):
     email: EmailStr
+    # Captcha token solved by the user. Optional so the same endpoint works
+    # when captcha is disabled (no token sent, no verification performed).
+    turnstile_token: str | None = None
 
 
 class RequestLoginCode:
@@ -26,14 +30,19 @@ class RequestLoginCode:
         uow: UnitOfWork,
         user_service: UserService,
         rate_lock_factory: RateLockFactory,
+        captcha_verifier: CaptchaVerifier,
     ):
         self.user_repo = user_repo
         self.event_broker = event_broker
         self.uow = uow
         self.user_service = user_service
         self.rate_lock_factory = rate_lock_factory
+        self.captcha_verifier = captcha_verifier
 
     async def __call__(self, data: RequestLoginCodeInput) -> None:
+        # Reject bots before touching the database or rate-limit budget.
+        await self.captcha_verifier.verify(data.turnstile_token)
+
         normalized_email = normalize_email(data.email)
 
         lock = self.rate_lock_factory(

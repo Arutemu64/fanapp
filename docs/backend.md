@@ -103,6 +103,12 @@ Two distinct rate-limiting ports exist — pick by semantics, do not overload on
 
 The Redis adapters live in `adapters/redis/rate_lock.py` and `adapters/redis/rate_limiter.py`. The login interactor passes the client IP in via its input DTO (filled by the web route through `presentation/web/utils.get_client_ip`) so the application layer never touches `Request`.
 
+## Captcha
+
+The unauthenticated `request-login-code` flow is additionally guarded by a captcha, behind the `CaptchaVerifier` port (`application/ports/captcha.py`). The interactor calls `await captcha_verifier.verify(token)` before doing any work; a missing or rejected token raises `CaptchaVerificationFailed` (mapped to HTTP 403). The token rides in on the input DTO so the application layer never touches `Request`.
+
+The feature is **optional and config-gated**, like the other external integrations: when `turnstile` is unset in `EnvConfig` (no `TURNSTILE__SECRET_KEY`), `CaptchaProvider` (`main/ioc/captcha.py`) wires a `NoOpCaptchaVerifier` that accepts everything; when set, it wires `TurnstileCaptchaVerifier` (`adapters/captcha/turnstile.py`), which validates against Cloudflare's siteverify endpoint. A missing token or an explicit negative verdict is always rejected, but if Cloudflare is **unreachable** (transport error or 5xx) the verifier **fails open** — a CDN outage shouldn't lock everyone out of login, and the per-email rate lock still caps abuse. The matching frontend key is `PUBLIC_TURNSTILE_SITE_KEY`.
+
 ## Presentation Layers
 * **HTTP APIs (`presentation/web/`)**: FastAPI routes mapping HTTP requests.
 * **Event Streaming & Bots (`presentation/faststream/`, `presentation/tgbot/`)**: FastStream handlers consuming NATS subjects, or Telegram bots handling events. Inject interactors exactly the same way using `@inject` and `FromDishka`.

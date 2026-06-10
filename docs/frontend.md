@@ -177,6 +177,7 @@ Before writing any new component, check existing items in `frontend/src/lib/comp
 * **Section Headers**: Use `$lib/components/SectionHeader.svelte` for screen titles and subtitles.
 * **Toasts**: Trigger alerts via `$lib/services/toasts.svelte.ts` and display them with `$lib/components/ToastContainer.svelte`.
 * **Page Containers**: Match the spacing/layout patterns established in `frontend/src/routes/(app)/+layout.svelte`.
+* **Captcha**: `$lib/components/CaptchaWidget.svelte` wraps the Cloudflare Turnstile widget. It renders nothing unless `PUBLIC_TURNSTILE_SITE_KEY` is set, so callers must gate their submit logic on the exported `captchaEnabled` flag and pass the bound `token` to the API. Used on the login-code request and resend.
 
 ---
 
