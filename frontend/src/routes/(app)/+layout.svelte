@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import ConnectionBanner from '$lib/components/ConnectionBanner.svelte';
 	import SkipLink from '$lib/components/SkipLink.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
 	import { uiHelpers } from 'flowbite-svelte';
@@ -24,6 +25,8 @@
 
 	<main class="relative flex flex-1 flex-col overflow-hidden">
 		<AppNavbar {user} toggleSidebar={sidebarUi.toggle} />
+
+		<ConnectionBanner />
 
 		<section
 			id="main-content"

@@ -3,7 +3,6 @@
 	import { resolve } from '$app/paths';
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
-	import ConnectionIndicator from '$lib/components/ConnectionIndicator.svelte';
 	import NotificationBell from '$lib/components/NotificationBell.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
@@ -73,7 +72,6 @@
 	<div class="flex-1"></div>
 
 	<div class="flex items-center gap-2 md:order-2">
-		<ConnectionIndicator />
 		{#if user}
 			<NotificationBell />
 		{/if}
