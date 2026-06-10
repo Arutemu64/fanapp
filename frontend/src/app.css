@@ -45,4 +45,20 @@
 	input[type='search']::-webkit-search-cancel-button {
 		display: none;
 	}
+
+	/*
+	 * Respect the user's "reduce motion" OS setting: near-instantly finish any
+	 * CSS animation/transition and disable smooth scrolling. JS-driven Svelte
+	 * transitions (e.g. toast fly) are handled separately via `prefersReducedMotion`.
+	 */
+	@media (prefers-reduced-motion: reduce) {
+		*,
+		*::before,
+		*::after {
+			animation-duration: 0.01ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.01ms !important;
+			scroll-behavior: auto !important;
+		}
+	}
 }

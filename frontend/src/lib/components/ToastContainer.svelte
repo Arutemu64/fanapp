@@ -8,9 +8,16 @@
 		BellSolid
 	} from 'flowbite-svelte-icons';
 	import { fly } from 'svelte/transition';
+	import { prefersReducedMotion } from 'svelte/motion';
 	import { formatRelativeTime } from '$lib/utils/formatters';
 
 	const toastService = getToastService();
+
+	// When the user prefers reduced motion, drop the slide-in/out distance and
+	// duration so toasts simply appear and disappear instead of flying.
+	let flyParams = $derived(
+		prefersReducedMotion.current ? { y: 0, duration: 0 } : { y: -16, duration: 300 }
+	);
 
 	function handleTouchStart(e: TouchEvent) {
 		const target = e.currentTarget as HTMLElement;
@@ -42,14 +49,16 @@
 		const currentX = touch.screenX;
 		const deltaX = currentX - startX;
 
-		target.style.transition = 'transform 0.2s ease-out, opacity 0.2s ease-out';
+		// Honour reduced motion: snap back / dismiss instantly instead of easing.
+		const settleMs = prefersReducedMotion.current ? 0 : 200;
+		target.style.transition = settleMs ? 'transform 0.2s ease-out, opacity 0.2s ease-out' : 'none';
 
 		if (Math.abs(deltaX) > 50) {
 			target.style.transform = `translateX(${deltaX > 0 ? 100 : -100}%)`;
 			target.style.opacity = '0';
 			setTimeout(() => {
 				toastService.dismiss(id);
-			}, 200);
+			}, settleMs);
 		} else {
 			target.style.transform = 'translateX(0)';
 			target.style.opacity = '1';
@@ -69,7 +78,7 @@
 			aria-live={toast.type === 'error' ? 'assertive' : 'polite'}
 			aria-atomic="true"
 			class="pointer-events-auto w-full sm:ml-auto sm:max-w-sm"
-			transition:fly={{ y: -16, duration: 300 }}
+			transition:fly={flyParams}
 			ontouchstart={handleTouchStart}
 			ontouchmove={handleTouchMove}
 			ontouchend={(e) => handleTouchEnd(e, toast.id)}
