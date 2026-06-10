@@ -66,7 +66,7 @@ We use the CLI on demand rather than the always-on MCP server so it costs no con
    * Backend/FastAPI work → `fastapi`, `clean-ddd-hexagonal`
    * Docker / Infra → `docker-expert`
    * Docs / Writing → `documentation-writer`
-   * Third-party library API questions → `find-docs` (query current docs; never rely on training data for API signatures)
+   * Third-party library API questions → use web search to look up current docs; never rely on training data for API signatures
    * Read the architecture guides in [docs/](docs/) (`backend.md`, `frontend.md`, `api.md`, `testing.md`) before implementing in those areas.
 8. **Keep Documentation in Sync**: After any structural, architectural, or path-level change, verify and update `AGENTS.md` and relevant `docs/*.md` files before marking the task complete.
    * Did you add, rename, or delete a `lib/` submodule (`services/`, `utils/`, etc.)? Update the **Codebase Map**.
