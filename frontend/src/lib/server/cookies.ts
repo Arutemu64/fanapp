@@ -4,8 +4,8 @@ import setCookieParser from 'set-cookie-parser';
 
 type ParsedCookie = Cookie;
 
-// Keep auth cookie names in one place so hooks and server routes stay consistent.
-export const AUTH_COOKIE_NAMES = ['session_id'] as const;
+// Keep auth cookie names in one place so the helpers below stay consistent.
+const AUTH_COOKIE_NAMES = ['session_id'] as const;
 
 type HeadersWithGetSetCookie = Headers & {
 	getSetCookie?: () => string[];
@@ -18,7 +18,7 @@ type HeadersWithGetSetCookie = Headers & {
  * That keeps later server-side fetches in sync with any cookies that were set or
  * deleted earlier in the same request.
  */
-export function serializeRequestCookies(cookies: Cookies): string {
+function serializeRequestCookies(cookies: Cookies): string {
 	return cookies
 		.getAll()
 		.map(({ name, value }) => `${name}=${value}`)

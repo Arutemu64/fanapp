@@ -6,6 +6,7 @@
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import type { CurrentUserDTO } from '$lib/types/user';
+	import type { PageProps } from './$types';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
 	import { ChevronUpOutline, PlaySolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
@@ -23,7 +24,7 @@
 	};
 
 	// Keep the schedule source close to the page data so it stays SSR-friendly.
-	let { data } = $props();
+	let { data }: PageProps = $props();
 	let schedule: ScheduleEventFullDTO[] = $derived(data.schedule);
 
 	// Store filter state locally because it only affects this page view.

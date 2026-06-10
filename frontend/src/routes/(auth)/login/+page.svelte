@@ -3,8 +3,8 @@
 	import { Button, Card } from 'flowbite-svelte';
 	import { ArrowLeftOutline } from 'flowbite-svelte-icons';
 	import IconTelegram from '~icons/simple-icons/telegram';
-	import CodeLoginForm from './CodeLoginForm.svelte';
-	import PasswordLoginForm from './PasswordLoginForm.svelte';
+	import CodeLoginForm from './components/CodeLoginForm.svelte';
+	import PasswordLoginForm from './components/PasswordLoginForm.svelte';
 
 	let email = $state('');
 	let isBusy = $state(false);

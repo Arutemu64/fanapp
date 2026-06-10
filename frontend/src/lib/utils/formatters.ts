@@ -12,7 +12,7 @@ const MOSCOW_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
 	timeZone: 'Europe/Moscow'
 });
 
-export function formatMoscowDateTime(value: string | number | Date): string {
+function formatMoscowDateTime(value: string | number | Date): string {
 	return MOSCOW_DATE_TIME_FORMATTER.format(new Date(value));
 }
 

@@ -28,6 +28,15 @@ This document outlines the codebase-specific constraints, SvelteKit SSR rules, s
 * **Data Fetching boundaries**: Move first-render data requirements into SvelteKit layout or page `load` functions.
 * **SSR fetch forwarding**: Always pass the SvelteKit-provided `fetch` (from load functions or server events) inside the request options block of your client calls (e.g., `client.GET('/route', { fetch })`) to preserve session headers, cookies, and correct relative routes.
 * **Server-Only Modules**: Server-only modules (e.g., `+page.server.ts`, `.server.ts` files) must be used when handling secure cookies, administrative privileges, or private environment variables. Do not import server-only environment modules in browser-reachable files.
+* **Typed `data`**: Always type page/layout props with the generated `PageProps`/`LayoutProps` (or `PageData`/`LayoutData`) from `./$types`. Never leave `$props()` untyped — typed `data` is what catches load/page mismatches at check time.
+
+### Access Control (don't duplicate guards)
+
+Route access is enforced **once**, centrally, in `hooks.server.ts`:
+
+* `authHandle` loads the current user into `locals.user`; the root `+layout.server.ts` exposes it to the client, so it flows down to **every** page. Do not re-return `user` from a nested layout — it is already inherited.
+* `guardHandle` gates by route-group name: `(protected)` requires a logged-in user (else → `/login`), `(auth)` is guests-only (else → `/`). Putting a route inside the group is the guard — do **not** re-check `locals.user` in that route's `load`.
+* A per-route `+page.server.ts`/`+layout.server.ts` should only add checks the group can't express — e.g. a finer-grained `error(403, …)` for a role. The whole `org/` section is already gated by `org/+layout.server.ts` (`role === 'org'`); never re-check the org role inside individual org pages.
 
 ---
 
@@ -171,7 +180,14 @@ Never copy-paste class attribute values from rich-text sources. Unicode curly qu
 
 ---
 
-## 8. Reusable Component Inventory
+## 8. Component Placement & Reusable Inventory
+
+**Placement rule** — decide where a component lives by *who uses it*:
+
+* Used by **one route subtree** → put it in a `components/` subfolder next to the page that uses it (e.g. `routes/(app)/schedule/components/EventCard.svelte`). Always the `components/` subfolder — never loose in the route folder.
+* Used across **different route subtrees** → promote it to `frontend/src/lib/components/` (e.g. `SectionHeader`, `OtpInput`, `ToastContainer`).
+* App-shell pieces used only once (navbar/sidebar/banner) stay colocated under `routes/(app)/components/` — single-use does **not** justify `lib/`.
+* `lib/` modules (`utils/`, `services/`, `server/`) follow the same spirit: only `export` what is consumed outside the file, and delete unused exports rather than letting them accumulate.
 
 Before writing any new component, check existing items in `frontend/src/lib/components/`:
 * **Section Headers**: Use `$lib/components/SectionHeader.svelte` for screen titles and subtitles.

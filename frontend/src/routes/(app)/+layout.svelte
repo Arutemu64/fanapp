@@ -1,14 +1,15 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import ConnectionBanner from '$lib/components/ConnectionBanner.svelte';
+	import ConnectionBanner from './components/ConnectionBanner.svelte';
 	import SkipLink from '$lib/components/SkipLink.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
 	import { uiHelpers } from 'flowbite-svelte';
 	import AppBottomNav from './components/AppBottomNav.svelte';
 	import AppNavbar from './components/AppNavbar.svelte';
 	import AppSidebar from './components/AppSidebar.svelte';
+	import type { LayoutProps } from './$types';
 
-	let { data, children } = $props();
+	let { data, children }: LayoutProps = $props();
 
 	let activeUrl = $derived(page.url.pathname);
 	let user = $derived(data.user);
