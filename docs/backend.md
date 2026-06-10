@@ -25,7 +25,7 @@ Naming: suffix services with `Service` (the historical `CurrentUserProvider` is 
 * **VO ↔ storage conversion happens only in mappers**: the mapper is the single seam where domain value objects are constructed from rows (`UserId(orm.id)`, `Email(orm.email)`) and unwrapped back (`model.id`, `model.email.value`). Because `to_model`/`parse_*_dto` must wrap every value, a VO whose base type drifts surfaces as a **type error in the mapper** — caught by `just backend-typecheck`, not at runtime. (Storage-vs-actual-column drift is still Alembic's job.)
 * **Gateways**: Concrete SQL queries, database reads, and inserts are isolated in gateway implementations under `adapters/db/gateways/` (one per aggregate/concern). Each implements its aggregate's abstract `gateways/` port (reads and writes). Order methods to mirror the port: aggregate persistence first (`add`/`get`/`save`/`delete`), then `read_*` DTO projections last under the same `# Read projections (return DTOs, not aggregates)` divider, so port and adapter read identically top-to-bottom.
 * **Mappers**: ORM model ↔ domain entity translation lives in `adapters/db/mappers/` (one per aggregate). Gateways must map ORM rows to pure domain objects (and back) through these — never leak ORM models out of the adapter layer. When you add a new persisted aggregate, you typically add a model, a mapper, and a gateway together.
-* **Transaction Management (Unit of Work)**: Database commits and rollbacks in use cases are managed strictly by injecting `uow: UnitOfWork` (from `application/ports/uow.py`) and invoking `await self.uow.commit()`. Do not call raw SQLAlchemy session commits (`session.commit()`) inside interactors. The `UnitOfWork` also tracks aggregates and dispatches their domain events on commit (see [Domain Events](#domain-events)) — gateways call `self.uow.register(aggregate)` inside their `add`/`get` methods so the interactor never pulls or publishes those events by hand.
+* **Transaction Management (Unit of Work)**: Database commits and rollbacks in use cases are managed strictly by injecting `uow: UnitOfWork` (from `application/ports/uow.py`) and invoking `await self.uow.commit()`. Do not call raw SQLAlchemy session commits (`session.commit()`) inside interactors. The `UnitOfWork` also tracks aggregates and, on commit, writes their domain events to the transactional outbox in the same transaction (see [Domain Events](#domain-events)) — gateways call `self.uow.register(aggregate)` inside their `add`/`get` methods so the interactor never pulls or publishes those events by hand.
 * **Migrations**: Generate and apply database migrations strictly via Alembic CLI helpers (`just backend-generate <name>` and `just backend-migrate`). Autogenerate has `compare_type` on (Alembic's default since 1.12.0), so it detects column **type** drift between the ORM models and the database — which pairs with the mapper's compile-time VO checks to cover both seams. Plain Alembic ignores changes to **enum members**, so PostgreSQL enum migrations (adding/removing/renaming `ENUM` labels) are handled by [`alembic-postgresql-enum`](https://github.com/RustyGuard/alembic-postgresql-enum); it is activated by the bare `import alembic_postgresql_enum` at the top of `migrations/env.py`, which registers the autogenerate hooks. Keep that import — without it, enum-value changes silently produce no migration.
 
 ## Dependency Injection (Dishka)
@@ -51,7 +51,7 @@ Events are published via `EventBroker` (port: `application/ports/events_broker.p
 
 ### Events raised by aggregates (preferred)
 
-When an event directly records a state change on an aggregate, raise it inside the aggregate method using `record_event()`. The interactor does **not** publish these — the `UnitOfWork` dispatches them automatically. The gateway registers the aggregate when it is added or loaded, and `uow.commit()` publishes the recorded events *after* the transaction is durable:
+When an event directly records a state change on an aggregate, raise it inside the aggregate method using `record_event()`. The interactor does **not** publish these — the `UnitOfWork` handles them automatically. The gateway registers the aggregate when it is added or loaded, and `uow.commit()` writes the recorded events to the **transactional outbox** in the same transaction as the state change (see [Transactional outbox](#transactional-outbox)):
 
 ```python
 # core/models/vote.py
@@ -74,12 +74,21 @@ async def add(self, vote: Vote) -> None:
 # application/interactors/voting/add_vote.py — no manual publish
 vote = Vote.create(user_id=..., participant_id=...)
 await self.vote_repo.add(vote)
-await self.uow.commit()  # commits, then publishes VoteCreated
+await self.uow.commit()  # writes the vote + a VoteCreated outbox row atomically
 ```
 
-`Vote` and `ScheduleChange` follow this pattern; their gateways register the aggregate in every `add`/`get` method. The `UnitOfWork` pulls events from each registered aggregate exactly once (the internal event list is cleared on dispatch) and publishes strictly **after** the DB commit, so a rolled-back transaction never emits events. When you add a new aggregate that records events, register it in its gateway's `add`/`get` methods — that is the only wiring required.
+`Vote` and `ScheduleChange` follow this pattern; their gateways register the aggregate in every `add`/`get` method. The `UnitOfWork` pulls events from each registered aggregate exactly once (the internal event list is cleared on store) and writes them as outbox rows in the same transaction, so a rolled-back transaction never emits events. When you add a new aggregate that records events, register it in its gateway's `add`/`get` methods — that is the only wiring required.
 
-> Note: this is still a dual write (DB commit, then in-process publish). If the process dies between the two, events are lost. The `UnitOfWork` is the natural place to later adopt a transactional outbox if at-least-once delivery is ever required.
+### Transactional outbox
+
+Aggregate events are **not** published to NATS on commit. Publishing to a separate system after the DB commits is a dual write — if the process dies between the two, the state is persisted but the event is lost. Instead, `uow.commit()` serializes each recorded event into an `OutboxEventORM` row (`adapters/db/models/outbox.py`) committed in the **same transaction** as the aggregate change, and a relay delivers it asynchronously:
+
+* **Relay** — `PublishOutboxEvents` (`application/interactors/outbox/`), run as an `IntervalTrigger` job (~seconds) in the scheduler (`main/scheduler.py`). It reads unpublished rows `FOR UPDATE SKIP LOCKED`, calls `EventBroker.publish_raw(subject, payload, message_id)`, marks them published, and commits.
+* **Delivery guarantee** — at-least-once: a row is marked published only after NATS acks it. Consumers stay idempotent; the row id is sent as `Nats-Msg-Id` so JetStream dedups redeliveries within its window.
+* **Retention** — `PurgeOutboxEvents` drops delivered rows older than `OutboxConfig.retention_days`, on the `SCHEDULER__OUTBOX_RETENTION_CRON` cron.
+* **Scope** — outbox covers aggregate events only. Service events (below) stay direct, since they guard no committed state.
+
+This makes domain-event delivery atomic with the write, at the cost of one poll-interval of latency. SSE/realtime is unaffected — it uses `RealtimeGateway`, not `EventBroker`.
 
 ### Events raised directly by interactors (service events)
 

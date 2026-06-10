@@ -6,3 +6,5 @@ class SchedulerConfig(BaseModel):
     # None disables the job (default) — opt in per job via env.
     sync_tcloud_cron: str | None = None
     sync_cosplay2_cron: str | None = None
+    # When to purge delivered outbox rows (retention age lives in OutboxConfig).
+    outbox_retention_cron: str | None = None

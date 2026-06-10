@@ -13,6 +13,7 @@ from fanfan.application.ports.gateways import (
     ScheduleEventGateway,
 )
 from fanfan.application.ports.gateways.mailings import MailingGateway
+from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.schedule import ScheduleChangeCreated
 from fanfan.core.exceptions.base import AccessDenied
@@ -24,7 +25,7 @@ from fanfan.core.vo.schedule_event import (
     ScheduleEventId,
     generate_schedule_event_id,
 )
-from tests.fakes.event_broker import FakeEventBroker
+from tests.integration.conftest import as_outbox
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -59,7 +60,7 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    events_broker: FakeEventBroker,
+    outbox: OutboxGateway,
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
@@ -111,16 +112,16 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     assert mailing is not None
     assert mailing.by_user_id == schedule_editor.id
 
-    assert events_broker.published_events == [
-        ScheduleChangeCreated(schedule_change_id=change.id)
-    ]
+    assert [
+        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
+    ] == as_outbox(ScheduleChangeCreated(schedule_change_id=change.id))
 
 
 async def test_set_current_event_sets_current_when_none_was_current(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    events_broker: FakeEventBroker,
+    outbox: OutboxGateway,
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
@@ -150,16 +151,16 @@ async def test_set_current_event_sets_current_when_none_was_current(
     assert change.user is not None
     assert change.user.id == schedule_editor.id
 
-    assert events_broker.published_events == [
-        ScheduleChangeCreated(schedule_change_id=change.id)
-    ]
+    assert [
+        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
+    ] == as_outbox(ScheduleChangeCreated(schedule_change_id=change.id))
 
 
 async def test_set_current_event_can_unset_current_event(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    events_broker: FakeEventBroker,
+    outbox: OutboxGateway,
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
@@ -189,16 +190,16 @@ async def test_set_current_event_can_unset_current_event(
     assert change.next_event_changed is True
     assert change.mailing_id is not None
 
-    assert events_broker.published_events == [
-        ScheduleChangeCreated(schedule_change_id=change.id)
-    ]
+    assert [
+        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
+    ] == as_outbox(ScheduleChangeCreated(schedule_change_id=change.id))
 
 
 async def test_set_current_event_raises_when_event_not_found(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    events_broker: FakeEventBroker,
+    outbox: OutboxGateway,
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
@@ -222,14 +223,14 @@ async def test_set_current_event_raises_when_event_not_found(
     assert saved_previous_event is not None
     assert saved_previous_event.is_current is True
     assert await changes_gateway.read_list_schedule_changes() == []
-    assert events_broker.published_events == []
+    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
 
 
 async def test_set_current_event_without_permission_raises_access_denied(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-    events_broker: FakeEventBroker,
+    outbox: OutboxGateway,
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
@@ -249,14 +250,14 @@ async def test_set_current_event_without_permission_raises_access_denied(
     assert saved_event is not None
     assert saved_event.is_current is False
     assert await changes_gateway.read_list_schedule_changes() == []
-    assert events_broker.published_events == []
+    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
 
 
 async def test_set_current_event_twice_in_a_row_raises_too_fast(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-    events_broker: FakeEventBroker,
+    outbox: OutboxGateway,
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
@@ -287,6 +288,6 @@ async def test_set_current_event_twice_in_a_row_raises_too_fast(
 
     changes = await changes_gateway.read_list_schedule_changes()
     assert len(changes) == 1
-    assert events_broker.published_events == [
-        ScheduleChangeCreated(schedule_change_id=changes[0].id)
-    ]
+    assert [
+        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
+    ] == as_outbox(ScheduleChangeCreated(schedule_change_id=changes[0].id))

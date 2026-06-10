@@ -7,6 +7,9 @@ import sentry_sdk
 from dishka import AsyncContainer
 
 from fanfan.application.interactors.cosplay2.sync_cosplay2 import SyncCosplay2
+from fanfan.application.interactors.outbox.purge_outbox_events import (
+    PurgeOutboxEvents,
+)
 from fanfan.application.interactors.ticketscloud.sync_tcloud import SyncTCloud
 from fanfan.presentation.scheduler.config import SchedulerConfig
 
@@ -31,6 +34,11 @@ def get_job_definitions(config: SchedulerConfig) -> list[JobDefinition]:
             id="sync_cosplay2",
             cron=config.sync_cosplay2_cron,
             interactor=SyncCosplay2,
+        ),
+        JobDefinition(
+            id="outbox_retention",
+            cron=config.outbox_retention_cron,
+            interactor=PurgeOutboxEvents,
         ),
     ]
 

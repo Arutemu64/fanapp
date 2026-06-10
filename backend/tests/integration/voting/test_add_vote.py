@@ -7,6 +7,7 @@ from dishka import AsyncContainer
 from fanfan.application.interactors.voting.add_vote import AddVote, AddVoteInput
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.nominations import NominationGateway
+from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.gateways.participants import ParticipantGateway
 from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
@@ -22,7 +23,7 @@ from fanfan.core.vo.participant import (
     ParticipantId,
     generate_participant_id,
 )
-from tests.fakes.event_broker import FakeEventBroker
+from tests.integration.conftest import as_outbox
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -34,7 +35,7 @@ async def test_add_vote_creates_vote_and_publishes_event(
     dishka_request: AsyncContainer,
     visitor_with_ticket: User,
     login: Callable[[User], None],
-    events_broker: FakeEventBroker,
+    outbox: OutboxGateway,
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
@@ -78,20 +79,22 @@ async def test_add_vote_creates_vote_and_publishes_event(
     assert saved_vote.id == result.vote_id
     assert saved_vote.user_id == visitor_with_ticket.id
     assert saved_vote.participant_id == participant.id
-    assert events_broker.published_events == [
+    assert [
+        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
+    ] == as_outbox(
         VoteCreated(
             vote_id=result.vote_id,
             user_id=visitor_with_ticket.id,
             participant_id=participant.id,
         )
-    ]
+    )
 
 
 async def test_add_vote_without_linked_ticket_raises_access_denied(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-    events_broker: FakeEventBroker,
+    outbox: OutboxGateway,
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
@@ -134,14 +137,14 @@ async def test_add_vote_without_linked_ticket_raises_access_denied(
         )
         is None
     )
-    assert events_broker.published_events == []
+    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
 
 
 async def test_add_vote_when_voting_disabled_raises_access_denied(
     dishka_request: AsyncContainer,
     visitor_with_ticket: User,
     login: Callable[[User], None],
-    events_broker: FakeEventBroker,
+    outbox: OutboxGateway,
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
@@ -184,14 +187,14 @@ async def test_add_vote_when_voting_disabled_raises_access_denied(
         )
         is None
     )
-    assert events_broker.published_events == []
+    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
 
 
 async def test_add_vote_for_missing_participant_raises_not_found(
     dishka_request: AsyncContainer,
     visitor_with_ticket: User,
     login: Callable[[User], None],
-    events_broker: FakeEventBroker,
+    outbox: OutboxGateway,
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
@@ -206,14 +209,14 @@ async def test_add_vote_for_missing_participant_raises_not_found(
     with pytest.raises(ParticipantNotFound):
         await interactor(AddVoteInput(participant_id=ParticipantId(uuid7())))
 
-    assert events_broker.published_events == []
+    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
 
 
 async def test_add_vote_twice_in_same_nomination_raises_already_voted(
     dishka_request: AsyncContainer,
     visitor_with_ticket: User,
     login: Callable[[User], None],
-    events_broker: FakeEventBroker,
+    outbox: OutboxGateway,
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
@@ -265,20 +268,22 @@ async def test_add_vote_twice_in_same_nomination_raises_already_voted(
     assert saved_vote is not None
     assert saved_vote.id == first_result.vote_id
     assert saved_vote.participant_id == first_participant.id
-    assert events_broker.published_events == [
+    assert [
+        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
+    ] == as_outbox(
         VoteCreated(
             vote_id=first_result.vote_id,
             user_id=visitor_with_ticket.id,
             participant_id=first_participant.id,
         )
-    ]
+    )
 
 
 async def test_add_vote_allows_votes_in_different_nominations(
     dishka_request: AsyncContainer,
     visitor_with_ticket: User,
     login: Callable[[User], None],
-    events_broker: FakeEventBroker,
+    outbox: OutboxGateway,
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
@@ -343,7 +348,9 @@ async def test_add_vote_allows_votes_in_different_nominations(
     assert second_vote is not None
     assert second_vote.id == second_result.vote_id
     assert second_vote.participant_id == second_participant.id
-    assert events_broker.published_events == [
+    assert [
+        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
+    ] == as_outbox(
         VoteCreated(
             vote_id=first_result.vote_id,
             user_id=visitor_with_ticket.id,
@@ -354,4 +361,4 @@ async def test_add_vote_allows_votes_in_different_nominations(
             user_id=visitor_with_ticket.id,
             participant_id=second_participant.id,
         ),
-    ]
+    )
