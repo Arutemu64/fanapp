@@ -12,7 +12,7 @@ from fanfan.core.services.email_login import (
     EMAIL_OTP_LOCKOUT_SECONDS,
     EMAIL_OTP_MAX_ATTEMPTS,
 )
-from fanfan.core.utils.email import normalize_email
+from fanfan.core.vo.email import Email
 
 
 class ConfirmEmailCodeInput(BaseModel):
@@ -35,26 +35,24 @@ class ConfirmEmailCode:
     async def __call__(self, data: ConfirmEmailCodeInput) -> None:
         current_user = await self.current_user_provider.require_user()
 
-        target_email = await self.token_registry.consume_email_confirmation_code(
+        target_email_value = await self.token_registry.consume_email_confirmation_code(
             user_id=current_user.id,
             code=data.code,
             max_attempts=EMAIL_OTP_MAX_ATTEMPTS,
             window_seconds=EMAIL_OTP_LOCKOUT_SECONDS,
         )
-        if target_email is None:
+        if target_email_value is None:
             raise InvalidOtpCode
 
-        normalized_target_email = normalize_email(target_email)
+        target_email = Email(target_email_value)
 
-        if current_user.pending_email == normalized_target_email:
-            existing_user = await self.user_gateway.get_by_email(
-                normalized_target_email
-            )
+        if current_user.pending_email == target_email:
+            existing_user = await self.user_gateway.get_by_email(target_email.value)
             if existing_user is not None and existing_user.id != current_user.id:
                 raise InvalidOtpCode
 
             current_user.confirm_pending_email(datetime.now(UTC))
-        elif current_user.email != normalized_target_email:
+        elif current_user.email != target_email:
             raise InvalidOtpCode
         else:
             current_user.verify_email(datetime.now(UTC))

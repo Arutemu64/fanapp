@@ -1,5 +1,7 @@
 from fanfan.adapters.db.models import FeedbackORM
 from fanfan.core.models.feedback import Feedback
+from fanfan.core.vo.feedback import FeedbackId
+from fanfan.core.vo.user import UserId
 
 
 class FeedbackMapper:
@@ -14,7 +16,7 @@ class FeedbackMapper:
     @staticmethod
     def to_model(orm: FeedbackORM) -> Feedback:
         return Feedback(
-            id=orm.id,
-            user_id=orm.user_id,
+            id=FeedbackId(orm.id),
+            user_id=UserId(orm.user_id),
             text=orm.text,
         )

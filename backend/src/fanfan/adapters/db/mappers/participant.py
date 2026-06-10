@@ -4,6 +4,7 @@ from fanfan.application.dto.participant import ParticipantFullDTO, ParticipantVo
 from fanfan.core.models.participant import Participant, ParticipantValue
 from fanfan.core.vo.nomination import NominationId
 from fanfan.core.vo.participant import ParticipantId
+from fanfan.core.vo.vote import VoteId
 
 
 class ParticipantMapper:
@@ -52,9 +53,9 @@ class ParticipantMapper:
         participant_orm: ParticipantORM, vote_orm: VoteORM | None
     ) -> ParticipantFullDTO:
         return ParticipantFullDTO(
-            id=participant_orm.id,
+            id=ParticipantId(participant_orm.id),
             title=participant_orm.title,
             voting_number=participant_orm.voting_number,
             votes_count=participant_orm.votes_count,
-            user_vote=ParticipantVoteDTO(id=vote_orm.id) if vote_orm else None,
+            user_vote=ParticipantVoteDTO(id=VoteId(vote_orm.id)) if vote_orm else None,
         )

@@ -9,6 +9,7 @@ from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.password_hasher import PasswordHasher
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.user import User
+from fanfan.core.vo.email import Email
 from fanfan.core.vo.user import Username, UserRole, generate_user_id
 
 pytestmark = [
@@ -30,7 +31,7 @@ async def test_register_user_creates_visitor_with_hashed_password(
 
     saved_user = await user_gateway.get_by_email("new.visitor@example.com")
     assert saved_user is not None
-    assert saved_user.email == "new.visitor@example.com"
+    assert saved_user.email == Email("new.visitor@example.com")
     assert saved_user.username is not None
     assert saved_user.role == UserRole.VISITOR
     assert saved_user.pending_email is None
@@ -52,7 +53,7 @@ async def test_register_user_with_existing_email_is_silent_noop(
     existing_user = User(
         id=generate_user_id(),
         username=Username("existing_user"),
-        email="existing@example.com",
+        email=Email("existing@example.com"),
         hashed_password=None,
         role=UserRole.VISITOR,
     )
@@ -80,8 +81,8 @@ async def test_register_user_with_email_pending_on_another_user_is_silent_noop(
     existing_user = User(
         id=generate_user_id(),
         username=Username("pending_email_user"),
-        email="current@example.com",
-        pending_email="reserved@example.com",
+        email=Email("current@example.com"),
+        pending_email=Email("reserved@example.com"),
         hashed_password=None,
         role=UserRole.VISITOR,
     )

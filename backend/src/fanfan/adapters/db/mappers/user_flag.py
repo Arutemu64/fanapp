@@ -1,5 +1,7 @@
 from fanfan.adapters.db.models import UserFlagORM
 from fanfan.core.models.user_flag import UserFlag
+from fanfan.core.vo.user import UserId
+from fanfan.core.vo.user_flag import UserFlagId
 
 
 class UserFlagMapper:
@@ -14,7 +16,7 @@ class UserFlagMapper:
     @staticmethod
     def to_model(orm: UserFlagORM) -> UserFlag:
         return UserFlag(
-            id=orm.id,
+            id=UserFlagId(orm.id),
             name=orm.name,
-            user_id=orm.user_id,
+            user_id=UserId(orm.user_id),
         )

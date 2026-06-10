@@ -27,9 +27,9 @@ def test_announcement_timeout_has_default():
     assert settings.limits.announcement_timeout == 10
 
 
-def test_set_announcement_timeout_updates_value():
+def test_update_limits_updates_announcement_timeout():
     settings = AppSettings()
 
-    settings.limits.set_announcement_timeout(30)
+    settings.update_limits(announcement_timeout=30)
 
     assert settings.limits.announcement_timeout == 30

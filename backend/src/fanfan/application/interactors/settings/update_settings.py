@@ -50,7 +50,7 @@ class UpdateSettings:
         if (
             announcement_timeout := data_to_update.get("announcement_timeout")
         ) is not None:
-            settings.limits.set_announcement_timeout(announcement_timeout)
+            settings.update_limits(announcement_timeout=announcement_timeout)
             update_flag = True
 
         if not update_flag:

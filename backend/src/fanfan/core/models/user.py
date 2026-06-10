@@ -5,6 +5,7 @@ from fanfan.core.events.users import (
     EmailConfirmationCodeRequested,
 )
 from fanfan.core.models.base import AggregateRoot
+from fanfan.core.vo.email import Email
 from fanfan.core.vo.user import UserId, Username, UserRole
 
 if TYPE_CHECKING:
@@ -17,12 +18,6 @@ class UserSettings:
     receive_all_announcements: bool = True
     receive_telegram_notifications: bool = True
 
-    def set_receive_all_announcements(self, value: bool) -> None:
-        self.receive_all_announcements = value
-
-    def set_receive_telegram_notifications(self, value: bool) -> None:
-        self.receive_telegram_notifications = value
-
 
 @dataclass(slots=True, kw_only=True)
 class User(AggregateRoot):
@@ -32,8 +27,8 @@ class User(AggregateRoot):
     hashed_password: str | None
     role: UserRole
 
-    email: str | None = None
-    pending_email: str | None = None
+    email: Email | None = None
+    pending_email: Email | None = None
     email_verified_at: datetime | None = None
 
     first_name: str | None = None
@@ -48,8 +43,8 @@ class User(AggregateRoot):
         username: Username | None,
         hashed_password: str | None,
         role: UserRole,
-        email: str | None = None,
-        pending_email: str | None = None,
+        email: Email | None = None,
+        pending_email: Email | None = None,
         email_verified_at: datetime | None = None,
         first_name: str | None = None,
     ) -> Self:
@@ -76,7 +71,23 @@ class User(AggregateRoot):
     def set_first_name(self, first_name: str | None) -> None:
         self.first_name = first_name
 
-    def request_email_change(self, email: str) -> None:
+    def update_settings(
+        self,
+        *,
+        receive_all_announcements: bool | None = None,
+        receive_telegram_notifications: bool | None = None,
+    ) -> None:
+        # Only the fields that were explicitly passed get changed; None means
+        # "leave as is". Mutation goes through the aggregate root so callers
+        # never reach into the settings object directly.
+        if receive_all_announcements is not None:
+            self.settings.receive_all_announcements = receive_all_announcements
+        if receive_telegram_notifications is not None:
+            self.settings.receive_telegram_notifications = (
+                receive_telegram_notifications
+            )
+
+    def request_email_change(self, email: Email) -> None:
         self.pending_email = email
         self.record_event(EmailConfirmationCodeRequested(user_id=self.id))
 

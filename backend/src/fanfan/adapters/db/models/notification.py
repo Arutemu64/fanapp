@@ -1,30 +1,28 @@
 from datetime import datetime
-from uuid import uuid7
+from uuid import UUID, uuid7
 
 from sqlalchemy import DateTime, ForeignKey, Index, Uuid, text
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Mapped, mapped_column
 
 from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
-from fanfan.core.vo.mailing import MailingId
-from fanfan.core.vo.notification import NotificationId, NotificationType
-from fanfan.core.vo.user import UserId
+from fanfan.core.vo.notification import NotificationType
 
 
 class NotificationORM(BaseORM):
     __tablename__ = "notifications"
 
-    id: Mapped[NotificationId] = mapped_column(
+    id: Mapped[UUID] = mapped_column(
         Uuid(as_uuid=True),
         primary_key=True,
         default=uuid7,
         server_default=UUID_ID_SERVER_DEFAULT,
     )
-    user_id: Mapped[UserId] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     title: Mapped[str] = mapped_column()
     body: Mapped[str] = mapped_column()
     type: Mapped[NotificationType] = mapped_column(postgresql.ENUM(NotificationType))
-    mailing_id: Mapped[MailingId | None] = mapped_column(
+    mailing_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("mailings.id", ondelete="CASCADE"),
         index=True,
     )

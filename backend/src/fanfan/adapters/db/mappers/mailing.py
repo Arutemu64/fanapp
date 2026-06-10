@@ -1,6 +1,8 @@
 from fanfan.adapters.db.models import MailingORM
 from fanfan.application.dto.mailing import MailingDTO
 from fanfan.core.models.mailing import Mailing
+from fanfan.core.vo.mailing import MailingId
+from fanfan.core.vo.user import UserId
 
 
 class MailingMapper:
@@ -15,17 +17,17 @@ class MailingMapper:
     @staticmethod
     def to_model(orm: MailingORM) -> Mailing:
         return Mailing(
-            id=orm.id,
+            id=MailingId(orm.id),
             status=orm.status,
-            by_user_id=orm.by_user_id,
+            by_user_id=UserId(orm.by_user_id) if orm.by_user_id is not None else None,
         )
 
     @staticmethod
     def parse_dto(orm: MailingORM) -> MailingDTO:
         return MailingDTO(
-            id=orm.id,
+            id=MailingId(orm.id),
             status=orm.status,
-            by_user_id=orm.by_user_id,
+            by_user_id=UserId(orm.by_user_id) if orm.by_user_id is not None else None,
             sent_count=orm.sent_count,
             total_count=orm.total_count,
         )

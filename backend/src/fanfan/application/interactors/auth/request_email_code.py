@@ -6,7 +6,6 @@ from fanfan.core.events.users import EmailConfirmationCodeRequested
 from fanfan.core.exceptions.rate_limit import EmailCodeRequestTooFast, RateLimitCooldown
 from fanfan.core.exceptions.users import UserHasNoEmail
 from fanfan.core.services.email_login import EMAIL_CODE_REQUEST_COOLDOWN_SECONDS
-from fanfan.core.utils.email import normalize_email
 
 
 class RequestEmailCode:
@@ -29,10 +28,10 @@ class RequestEmailCode:
         if target_email is None:
             raise UserHasNoEmail
 
-        normalized_email = normalize_email(target_email)
+        email_value = target_email.value
 
         lock = self.rate_lock_factory(
-            f"email_code_request:{normalized_email}",
+            f"email_code_request:{email_value}",
             cooldown_period=EMAIL_CODE_REQUEST_COOLDOWN_SECONDS,
         )
         try:
