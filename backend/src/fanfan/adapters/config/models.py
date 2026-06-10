@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from fanfan.adapters.api.cosplay2.config import Cosplay2Config
 from fanfan.adapters.api.ticketscloud.config import TCloudConfig
+from fanfan.adapters.captcha.config import TurnstileConfig
 from fanfan.adapters.db.config import DatabaseConfig
 from fanfan.adapters.debug.config import DebugConfig
 from fanfan.adapters.mail.config import MailConfig
@@ -43,6 +44,9 @@ class EnvConfig(BaseSettings):
     # External
     cosplay2: Cosplay2Config | None = None
     tcloud: TCloudConfig | None = None
+
+    # Captcha (optional — when unset, captcha verification is disabled)
+    turnstile: TurnstileConfig | None = None
 
     # Scheduler
     scheduler: SchedulerConfig = SchedulerConfig()

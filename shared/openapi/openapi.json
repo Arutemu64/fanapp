@@ -4110,6 +4110,17 @@
             "type": "string",
             "format": "email",
             "title": "Email"
+          },
+          "turnstile_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnstile Token"
           }
         },
         "type": "object",

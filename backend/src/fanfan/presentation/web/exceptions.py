@@ -14,6 +14,7 @@ from fanfan.core.exceptions.auth import (
     UserNotAuthenticated,
 )
 from fanfan.core.exceptions.base import AccessDenied, AppException
+from fanfan.core.exceptions.captcha import CaptchaVerificationFailed
 from fanfan.core.exceptions.nominations import NominationNotFound
 from fanfan.core.exceptions.participants import ParticipantNotFound
 from fanfan.core.exceptions.push_sub import (
@@ -74,6 +75,7 @@ EXCEPTION_STATUS_MAP: dict[type[AppException], int] = {
     AuthenticationError: status.HTTP_401_UNAUTHORIZED,
     # 403 Forbidden
     AccessDenied: status.HTTP_403_FORBIDDEN,
+    CaptchaVerificationFailed: status.HTTP_403_FORBIDDEN,
     # 404 Not Found
     UserNotFound: status.HTTP_404_NOT_FOUND,
     EventNotFound: status.HTTP_404_NOT_FOUND,

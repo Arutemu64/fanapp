@@ -4,6 +4,7 @@
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
+	import CaptchaWidget, { captchaEnabled } from '$lib/components/CaptchaWidget.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Alert, Button, Helper, Label, Spinner } from 'flowbite-svelte';
@@ -30,6 +31,10 @@
 
 	let resendCooldown = $state(60);
 	let resendInterval: ReturnType<typeof setInterval>;
+
+	// Captcha state for the "resend code" request (same endpoint as the first one).
+	let captchaToken = $state<string | null>(null);
+	let resetCaptcha = $state<(() => void) | undefined>(undefined);
 
 	const eventsClient = getEventsClient();
 	const toastService = getToastService();
@@ -110,27 +115,40 @@
 	}
 
 	async function handleLoginCodeRequest() {
+		if (captchaEnabled && !captchaToken) {
+			formError = 'Подтвердите, что вы не робот';
+			return;
+		}
+
 		activeAction = 'code-request';
 		loginCodeError = '';
 		formError = '';
 
 		try {
 			const { error, response } = await client.POST('/auth/request-login-code', {
-				body: { email }
+				body: { email, turnstile_token: captchaToken }
 			});
 
 			if (error || !response.ok) {
 				console.error('Login code request error:', error);
 				formError = getApiErrorDetail(error) ?? 'Не удалось отправить код повторно';
+				// The token is single-use, so fetch a fresh one before a retry.
+				resetCaptcha?.();
+				captchaToken = null;
 				return;
 			}
 
 			loginCode = '';
 			toastService.add('Код отправлен повторно', 'success');
+			// Each resend needs its own fresh token.
+			resetCaptcha?.();
+			captchaToken = null;
 			startCooldown();
 		} catch (err) {
 			console.error('Login code request exception:', err);
 			formError = 'Произошла ошибка при повторной отправке кода';
+			resetCaptcha?.();
+			captchaToken = null;
 		} finally {
 			activeAction = null;
 		}
@@ -185,6 +203,8 @@
 	</Button>
 
 	<div class="flex flex-col space-y-2">
+		<CaptchaWidget bind:token={captchaToken} bind:reset={resetCaptcha} />
+
 		<Button
 			type="button"
 			color="alternative"
