@@ -20,7 +20,7 @@
 		ThumbsUpOutline,
 		UsersGroupOutline
 	} from 'flowbite-svelte-icons';
-	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
+	import ThemeToggle from './ThemeToggle.svelte';
 	import type { CurrentUserDTO } from '$lib/types/user';
 
 	let { user, activeUrl, isSidebarOpen, closeSidebar } = $props<{

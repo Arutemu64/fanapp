@@ -3,7 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
-	import NotificationBell from '$lib/components/NotificationBell.svelte';
+	import NotificationBell from './NotificationBell.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import {

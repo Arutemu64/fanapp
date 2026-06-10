@@ -106,10 +106,6 @@ const ERROR_MESSAGES: Record<string, string> = {
 	USERNAME_ALREADY_TAKEN: 'Это имя пользователя уже занято'
 };
 
-export function getApiErrorCode(error: unknown): string | null {
-	return getApiErrorPayload(error)?.code ?? null;
-}
-
 export function getApiErrorDetail(error: unknown): string | null {
 	const payload = getApiErrorPayload(error);
 	if (!payload) {

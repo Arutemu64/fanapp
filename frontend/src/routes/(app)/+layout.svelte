@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import ConnectionBanner from '$lib/components/ConnectionBanner.svelte';
+	import ConnectionBanner from './components/ConnectionBanner.svelte';
 	import SkipLink from '$lib/components/SkipLink.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
 	import { uiHelpers } from 'flowbite-svelte';
