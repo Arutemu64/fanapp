@@ -1,24 +1,23 @@
-from uuid import uuid7
+from uuid import UUID, uuid7
 
 from sqlalchemy import Uuid, func, select
 from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
 from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
 from fanfan.adapters.db.models.participant import ParticipantORM
-from fanfan.core.vo.nomination import NominationCode, NominationId
 
 
 class NominationORM(BaseORM):
     __tablename__ = "nominations"
 
-    id: Mapped[NominationId] = mapped_column(
+    id: Mapped[UUID] = mapped_column(
         Uuid(as_uuid=True),
         primary_key=True,
         default=uuid7,
         server_default=UUID_ID_SERVER_DEFAULT,
     )
     cosplay2_id: Mapped[int] = mapped_column(unique=True, index=True)
-    code: Mapped[NominationCode] = mapped_column(unique=True)
+    code: Mapped[str] = mapped_column(unique=True)
     title: Mapped[str] = mapped_column(unique=True)
     is_votable: Mapped[bool] = mapped_column(server_default="False")
 

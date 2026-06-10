@@ -1,4 +1,4 @@
-from uuid import uuid7
+from uuid import UUID, uuid7
 
 from sqlalchemy import ForeignKey, Uuid
 from sqlalchemy.dialects import postgresql
@@ -7,16 +7,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
 from fanfan.adapters.db.models.schedule_event import ScheduleEventORM
 from fanfan.adapters.db.models.user import UserORM
-from fanfan.core.vo.mailing import MailingId
-from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
-from fanfan.core.vo.schedule_event import ScheduleEventId
-from fanfan.core.vo.user import UserId
+from fanfan.core.vo.schedule_change import ScheduleChangeType
 
 
 class ScheduleChangeORM(BaseORM):
     __tablename__ = "schedule_changes"
 
-    id: Mapped[ScheduleChangeId] = mapped_column(
+    id: Mapped[UUID] = mapped_column(
         Uuid(as_uuid=True),
         primary_key=True,
         default=uuid7,
@@ -26,17 +23,17 @@ class ScheduleChangeORM(BaseORM):
     type: Mapped[ScheduleChangeType] = mapped_column(
         postgresql.ENUM(ScheduleChangeType)
     )
-    changed_event_id: Mapped[ScheduleEventId | None] = mapped_column(
+    changed_event_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("schedule.id", ondelete="CASCADE"), index=True
     )
-    argument_event_id: Mapped[ScheduleEventId | None] = mapped_column(
+    argument_event_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("schedule.id", ondelete="CASCADE"), index=True
     )
-    user_id: Mapped[UserId | None] = mapped_column(
+    user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), index=True
     )
     next_event_changed: Mapped[bool] = mapped_column()
-    mailing_id: Mapped[MailingId | None] = mapped_column(
+    mailing_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("mailings.id", ondelete="SET NULL"), index=True
     )
 

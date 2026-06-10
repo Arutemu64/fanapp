@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
-from uuid import uuid7
+from uuid import UUID, uuid7
 
 from adaptix import Retort
 from sqlalchemy import DateTime, Uuid
@@ -13,7 +13,7 @@ from sqlalchemy.orm import (
 )
 
 from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
-from fanfan.core.vo.user import UserId, Username, UserRole
+from fanfan.core.vo.user import UserRole
 
 if TYPE_CHECKING:
     from fanfan.adapters.db.models.permission import UserPermissionORM
@@ -27,13 +27,13 @@ retort = Retort()
 class UserORM(BaseORM):
     __tablename__ = "users"
 
-    id: Mapped[UserId] = mapped_column(
+    id: Mapped[UUID] = mapped_column(
         Uuid(as_uuid=True),
         primary_key=True,
         default=uuid7,
         server_default=UUID_ID_SERVER_DEFAULT,
     )
-    username: Mapped[Username | None] = mapped_column(index=True, unique=True)
+    username: Mapped[str | None] = mapped_column(index=True, unique=True)
     hashed_password: Mapped[str | None] = mapped_column()
     email: Mapped[str | None] = mapped_column(index=True, unique=True)
     pending_email: Mapped[str | None] = mapped_column(index=True, unique=True)

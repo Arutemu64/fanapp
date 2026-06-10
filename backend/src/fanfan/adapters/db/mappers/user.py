@@ -10,7 +10,13 @@ from fanfan.application.dto.user import (
 )
 from fanfan.core.models.user import User, UserSettings
 from fanfan.core.vo.email import Email
-from fanfan.core.vo.user import UserId, UserRole
+from fanfan.core.vo.permission import (
+    PermissionName,
+    PermissionObjectId,
+    PermissionObjectType,
+)
+from fanfan.core.vo.ticket import TicketId
+from fanfan.core.vo.user import UserId, Username, UserRole
 
 
 class UserMapper:
@@ -33,7 +39,7 @@ class UserMapper:
     def to_model(self, orm: UserORM) -> User:
         return User(
             id=UserId(orm.id),
-            username=orm.username,
+            username=Username(orm.username) if orm.username is not None else None,
             hashed_password=orm.hashed_password,
             email=Email(orm.email) if orm.email else None,
             pending_email=Email(orm.pending_email) if orm.pending_email else None,
@@ -46,7 +52,7 @@ class UserMapper:
     @staticmethod
     def parse_base_dto(orm: UserORM) -> UserBaseDTO:
         return UserBaseDTO(
-            id=orm.id,
+            id=UserId(orm.id),
             username=orm.username,
             first_name=orm.first_name,
             role=orm.role,
@@ -54,7 +60,7 @@ class UserMapper:
 
     def parse_current_user_dto(self, orm: UserORM) -> CurrentUserDTO:
         return CurrentUserDTO(
-            id=orm.id,
+            id=UserId(orm.id),
             username=orm.username,
             first_name=orm.first_name,
             role=orm.role,
@@ -63,15 +69,21 @@ class UserMapper:
             email_verified_at=orm.email_verified_at,
             has_password=bool(orm.hashed_password),
             ticket=UserTicketDTO(
-                id=orm.ticket.id, barcode=orm.ticket.barcode, role=orm.ticket.role
+                id=TicketId(orm.ticket.id),
+                barcode=orm.ticket.barcode,
+                role=orm.ticket.role,
             )
             if orm.ticket
             else None,
             permissions=[
                 UserPermissionDTO(
-                    name=p.permission.name,
-                    object_type=p.object_type,
-                    object_id=p.object_id,
+                    name=PermissionName(p.permission.name),
+                    object_type=PermissionObjectType(p.object_type)
+                    if p.object_type is not None
+                    else None,
+                    object_id=PermissionObjectId(p.object_id)
+                    if p.object_id is not None
+                    else None,
                 )
                 for p in orm.permissions
             ],

@@ -1,7 +1,9 @@
 from fanfan.adapters.db.models import NominationORM, VoteORM
 from fanfan.application.dto.nomination import NominationVoteDTO, NominationVotingDTO
 from fanfan.core.models.nomination import Nomination
-from fanfan.core.vo.nomination import NominationId
+from fanfan.core.vo.nomination import NominationCode, NominationId
+from fanfan.core.vo.participant import ParticipantId
+from fanfan.core.vo.vote import VoteId
 
 
 class NominationMapper:
@@ -30,13 +32,13 @@ class NominationMapper:
         nomination_orm: NominationORM, vote_orm: VoteORM | None
     ) -> NominationVotingDTO:
         return NominationVotingDTO(
-            id=nomination_orm.id,
-            code=nomination_orm.code,
+            id=NominationId(nomination_orm.id),
+            code=NominationCode(nomination_orm.code),
             title=nomination_orm.title,
             participants_count=nomination_orm.participants_count,
             user_vote=NominationVoteDTO(
-                id=vote_orm.id,
-                participant_id=vote_orm.participant_id,
+                id=VoteId(vote_orm.id),
+                participant_id=ParticipantId(vote_orm.participant_id),
             )
             if vote_orm
             else None,

@@ -7,8 +7,7 @@ from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
 from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
 from fanfan.adapters.db.models.vote import VoteORM
-from fanfan.core.vo.nomination import NominationId
-from fanfan.core.vo.participant import ParticipantId, ValueType
+from fanfan.core.vo.participant import ValueType
 
 if TYPE_CHECKING:
     from fanfan.adapters.db.models.nomination import NominationORM
@@ -18,7 +17,7 @@ class ParticipantORM(BaseORM):
     __tablename__ = "participants"
     __table_args__ = (UniqueConstraint("nomination_id", "voting_number"),)
 
-    id: Mapped[ParticipantId] = mapped_column(
+    id: Mapped[UUID] = mapped_column(
         Uuid(as_uuid=True),
         primary_key=True,
         default=uuid7,
@@ -27,7 +26,7 @@ class ParticipantORM(BaseORM):
     cosplay2_id: Mapped[int] = mapped_column(unique=True, index=True)
     title: Mapped[str] = mapped_column(index=True)
     voting_number: Mapped[int | None] = mapped_column()
-    nomination_id: Mapped[NominationId] = mapped_column(
+    nomination_id: Mapped[UUID] = mapped_column(
         ForeignKey("nominations.id", ondelete="CASCADE"),
     )
 
@@ -57,7 +56,7 @@ class ParticipantValueORM(BaseORM):
         default=uuid7,
         server_default=UUID_ID_SERVER_DEFAULT,
     )
-    participant_id: Mapped[ParticipantId] = mapped_column(
+    participant_id: Mapped[UUID] = mapped_column(
         ForeignKey("participants.id", ondelete="CASCADE"), index=True
     )
     title: Mapped[str] = mapped_column()

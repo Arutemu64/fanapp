@@ -1,17 +1,9 @@
-from uuid import uuid7
+from uuid import UUID, uuid7
 
 from sqlalchemy import ForeignKey, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
-from fanfan.core.vo.permission import (
-    PermissionId,
-    PermissionName,
-    PermissionObjectId,
-    PermissionObjectType,
-    UserPermissionId,
-)
-from fanfan.core.vo.user import UserId
 
 
 class UserPermissionORM(BaseORM):
@@ -20,18 +12,18 @@ class UserPermissionORM(BaseORM):
         UniqueConstraint("user_id", "permission_id", "object_id", "object_type"),
     )
 
-    id: Mapped[UserPermissionId] = mapped_column(
+    id: Mapped[UUID] = mapped_column(
         Uuid(as_uuid=True),
         primary_key=True,
         default=uuid7,
         server_default=UUID_ID_SERVER_DEFAULT,
     )
-    user_id: Mapped[UserId] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-    permission_id: Mapped[PermissionId] = mapped_column(
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    permission_id: Mapped[int] = mapped_column(
         ForeignKey("permissions.id", ondelete="CASCADE")
     )
-    object_id: Mapped[PermissionObjectId | None] = mapped_column()
-    object_type: Mapped[PermissionObjectType | None] = mapped_column()
+    object_id: Mapped[int | None] = mapped_column()
+    object_type: Mapped[str | None] = mapped_column()
 
     permission: Mapped[PermissionORM] = relationship(lazy="joined")
 
@@ -39,5 +31,5 @@ class UserPermissionORM(BaseORM):
 class PermissionORM(BaseORM):
     __tablename__ = "permissions"
 
-    id: Mapped[PermissionId] = mapped_column(primary_key=True)
-    name: Mapped[PermissionName] = mapped_column(unique=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(unique=True)

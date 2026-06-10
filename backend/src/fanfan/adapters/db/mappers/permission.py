@@ -1,5 +1,13 @@
 from fanfan.adapters.db.models import PermissionORM, UserPermissionORM
 from fanfan.core.models.permission import Permission, UserPermission
+from fanfan.core.vo.permission import (
+    PermissionId,
+    PermissionName,
+    PermissionObjectId,
+    PermissionObjectType,
+    UserPermissionId,
+)
+from fanfan.core.vo.user import UserId
 
 
 class PermissionMapper:
@@ -13,8 +21,8 @@ class PermissionMapper:
     @staticmethod
     def to_model(orm: PermissionORM) -> Permission:
         return Permission(
-            id=orm.id,
-            name=orm.name,
+            id=PermissionId(orm.id),
+            name=PermissionName(orm.name),
         )
 
 
@@ -32,9 +40,13 @@ class UserPermissionMapper:
     @staticmethod
     def to_model(orm: UserPermissionORM) -> UserPermission:
         return UserPermission(
-            id=orm.id,
-            permission_id=orm.permission_id,
-            user_id=orm.user_id,
-            object_type=orm.object_type,
-            object_id=orm.object_id,
+            id=UserPermissionId(orm.id),
+            permission_id=PermissionId(orm.permission_id),
+            user_id=UserId(orm.user_id),
+            object_type=PermissionObjectType(orm.object_type)
+            if orm.object_type is not None
+            else None,
+            object_id=PermissionObjectId(orm.object_id)
+            if orm.object_id is not None
+            else None,
         )

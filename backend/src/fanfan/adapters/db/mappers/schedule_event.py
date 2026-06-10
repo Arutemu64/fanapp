@@ -4,6 +4,8 @@ from fanfan.application.dto.schedule import (
     ScheduleEventSubscriptionDTO,
 )
 from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.vo.schedule_event import ScheduleEventId, ScheduleEventPublicNumber
+from fanfan.core.vo.subscription import SubscriptionId
 
 
 class ScheduleEventMapper:
@@ -24,8 +26,8 @@ class ScheduleEventMapper:
     @staticmethod
     def to_model(orm: ScheduleEventORM) -> ScheduleEvent:
         return ScheduleEvent(
-            id=orm.id,
-            public_number=orm.public_id,
+            id=ScheduleEventId(orm.id),
+            public_number=ScheduleEventPublicNumber(orm.public_id),
             title=orm.title,
             duration=orm.duration,
             is_current=orm.is_current,
@@ -40,8 +42,8 @@ class ScheduleEventMapper:
         event_orm: ScheduleEventORM, subscription_orm: SubscriptionORM | None
     ) -> ScheduleEventFullDTO:
         return ScheduleEventFullDTO(
-            id=event_orm.id,
-            public_number=event_orm.public_id,
+            id=ScheduleEventId(event_orm.id),
+            public_number=ScheduleEventPublicNumber(event_orm.public_id),
             title=event_orm.title,
             duration=event_orm.duration,
             order=event_orm.order,
@@ -52,7 +54,7 @@ class ScheduleEventMapper:
             queue=event_orm.queue,
             time_until=event_orm.time_until,
             user_subscription=ScheduleEventSubscriptionDTO(
-                id=subscription_orm.id,
+                id=SubscriptionId(subscription_orm.id),
                 counter=subscription_orm.counter,
             )
             if subscription_orm
