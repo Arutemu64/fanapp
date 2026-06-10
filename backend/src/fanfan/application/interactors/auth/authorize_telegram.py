@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
-from fanfan.application.ports.repositories.social_ids import SocialIdentityRepository
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.social_ids import SocialIdentityGateway
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.session_store import SessionStore
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.user import UserService
@@ -19,8 +19,8 @@ class AuthorizeTelegramInput(BaseModel):
 class AuthorizeTelegram:
     def __init__(
         self,
-        user_repo: UserRepository,
-        social_id_repo: SocialIdentityRepository,
+        user_repo: UserGateway,
+        social_id_repo: SocialIdentityGateway,
         uow: UnitOfWork,
         user_service: UserService,
         session_store: SessionStore,

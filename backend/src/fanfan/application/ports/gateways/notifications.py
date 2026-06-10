@@ -9,7 +9,7 @@ from fanfan.core.vo.notification import NotificationId
 from fanfan.core.vo.user import UserId
 
 
-class NotificationRepository(Protocol):
+class NotificationGateway(Protocol):
     async def add(self, notification: Notification) -> None: ...
     async def get(self, notification_id: NotificationId) -> Notification | None: ...
     async def mark_all_read_for_user(

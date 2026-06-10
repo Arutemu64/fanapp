@@ -5,7 +5,7 @@ from fanfan.core.vo.nomination import NominationId
 from fanfan.core.vo.user import UserId
 
 
-class VoteRepository(Protocol):
+class VoteGateway(Protocol):
     async def add(self, vote: Vote) -> None: ...
     async def get_user_vote_by_nomination(
         self, nomination_id: NominationId, user_id: UserId

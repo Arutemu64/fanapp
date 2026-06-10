@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 
-from fanfan.application.ports.repositories.nominations import NominationRepository
-from fanfan.application.ports.repositories.user_flags import UserFlagRepository
-from fanfan.application.ports.repositories.votes import VoteRepository
+from fanfan.application.ports.gateways.nominations import NominationGateway
+from fanfan.application.ports.gateways.user_flags import UserFlagGateway
+from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.constants.flags import VOTING_CONTEST_FLAG_NAME
 from fanfan.core.models.user_flag import UserFlag
@@ -17,9 +17,9 @@ class CheckVotingContestEntryInput(BaseModel):
 class CheckVotingContestEntry:
     def __init__(
         self,
-        vote_repo: VoteRepository,
-        nomination_repo: NominationRepository,
-        user_flag_repo: UserFlagRepository,
+        vote_repo: VoteGateway,
+        nomination_repo: NominationGateway,
+        user_flag_repo: UserFlagGateway,
         uow: UnitOfWork,
     ):
         self.vote_repo = vote_repo

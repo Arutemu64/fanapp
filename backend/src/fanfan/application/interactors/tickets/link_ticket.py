@@ -2,8 +2,8 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.ports.repositories.tickets import TicketRepository
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.tickets import TicketGateway
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.tickets import TicketService
@@ -21,8 +21,8 @@ class LinkTicketInput(BaseModel):
 class LinkTicket:
     def __init__(
         self,
-        ticket_repo: TicketRepository,
-        user_repo: UserRepository,
+        ticket_repo: TicketGateway,
+        user_repo: UserGateway,
         tickets_service: TicketService,
         uow: UnitOfWork,
         current_user_provider: CurrentUserProvider,

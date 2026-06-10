@@ -5,16 +5,16 @@ from pydantic import BaseModel
 from fanfan.application.interactors.schedule_mgmt.common import (
     ANNOUNCE_LIMIT_NAME,
 )
+from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
+from fanfan.application.ports.gateways.mailings import MailingGateway
+from fanfan.application.ports.gateways.schedule_changes import (
+    ScheduleChangeGateway,
+)
+from fanfan.application.ports.gateways.schedule_events import (
+    ScheduleEventGateway,
+)
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.rate_lock import RateLockFactory
-from fanfan.application.ports.repositories.app_settings import AppSettingsRepository
-from fanfan.application.ports.repositories.mailings import MailingRepository
-from fanfan.application.ports.repositories.schedule_changes import (
-    ScheduleChangeRepository,
-)
-from fanfan.application.ports.repositories.schedule_events import (
-    ScheduleEventRepository,
-)
-from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
@@ -41,11 +41,11 @@ class MoveScheduleEventInput(BaseModel):
 class MoveScheduleEvent:
     def __init__(
         self,
-        schedule_repo: ScheduleEventRepository,
-        user_repo: UserRepository,
-        mailing_repo: MailingRepository,
-        settings_repo: AppSettingsRepository,
-        changes_repo: ScheduleChangeRepository,
+        schedule_repo: ScheduleEventGateway,
+        user_repo: UserGateway,
+        mailing_repo: MailingGateway,
+        settings_repo: AppSettingsGateway,
+        changes_repo: ScheduleChangeGateway,
         perm_service: PermissionService,
         uow: UnitOfWork,
         current_user_provider: CurrentUserProvider,

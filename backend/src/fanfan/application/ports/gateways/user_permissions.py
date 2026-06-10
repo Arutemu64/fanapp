@@ -9,7 +9,7 @@ from fanfan.core.vo.permission import (
 from fanfan.core.vo.user import UserId
 
 
-class UserPermissionRepository(Protocol):
+class UserPermissionGateway(Protocol):
     async def add(self, user_permission: UserPermission) -> None: ...
 
     async def get_by_name(

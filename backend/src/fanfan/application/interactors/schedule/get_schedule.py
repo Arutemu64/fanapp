@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 
 from fanfan.application.dto.schedule import ScheduleEventFullDTO
-from fanfan.application.ports.repositories.schedule_events import (
-    ScheduleEventRepository,
+from fanfan.application.ports.gateways.schedule_events import (
+    ScheduleEventGateway,
 )
 from fanfan.application.services.current_user import CurrentUserProvider
 
@@ -14,7 +14,7 @@ class GetScheduleOutput(BaseModel):
 class GetSchedule:
     def __init__(
         self,
-        schedule_query: ScheduleEventRepository,
+        schedule_query: ScheduleEventGateway,
         current_user_provider: CurrentUserProvider,
     ) -> None:
         self.schedule_query = schedule_query

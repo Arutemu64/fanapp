@@ -7,8 +7,8 @@ from fanfan.application.interactors.tickets.link_ticket import (
     LinkTicket,
     LinkTicketInput,
 )
-from fanfan.application.ports.repositories.tickets import TicketRepository
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.tickets import TicketGateway
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.tickets import (
     TicketAlreadyUsed,
@@ -33,8 +33,8 @@ async def test_link_ticket_successfully(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(LinkTicket)
-    user_repo = await dishka_request.get(UserRepository)
-    ticket_repo = await dishka_request.get(TicketRepository)
+    user_repo = await dishka_request.get(UserGateway)
+    ticket_repo = await dishka_request.get(TicketGateway)
 
     ticket = Ticket(
         id=generate_ticket_id(),
@@ -83,7 +83,7 @@ async def test_link_ticket_raises_already_used(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(LinkTicket)
-    ticket_repo = await dishka_request.get(TicketRepository)
+    ticket_repo = await dishka_request.get(TicketGateway)
 
     ticket = Ticket(
         id=generate_ticket_id(),
@@ -109,7 +109,7 @@ async def test_link_ticket_raises_when_user_already_has_ticket(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(LinkTicket)
-    ticket_repo = await dishka_request.get(TicketRepository)
+    ticket_repo = await dishka_request.get(TicketGateway)
 
     # New ticket to link
     ticket = Ticket(

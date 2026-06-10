@@ -7,14 +7,14 @@ from fanfan.adapters.db.mappers.notification import NotificationMapper
 from fanfan.adapters.db.models import NotificationORM
 from fanfan.application.dto.notification import NotificationDTO, RealtimeNotificationDTO
 from fanfan.application.dto.page import Pagination
-from fanfan.application.ports.repositories.notifications import NotificationRepository
+from fanfan.application.ports.gateways.notifications import NotificationGateway
 from fanfan.core.models.notification import Notification
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.notification import NotificationId
 from fanfan.core.vo.user import UserId
 
 
-class SqlNotificationGateway(NotificationRepository):
+class SqlNotificationGateway(NotificationGateway):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = NotificationMapper()

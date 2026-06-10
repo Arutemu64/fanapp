@@ -7,9 +7,9 @@ from aiogram.exceptions import (
     TelegramRetryAfter,
 )
 
+from fanfan.application.ports.gateways.social_ids import SocialIdentityGateway
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.notifier import Notifier
-from fanfan.application.ports.repositories.social_ids import SocialIdentityRepository
-from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.core.exceptions.notifications import (
     NotificationRetryAfter,
     UserNotReachable,
@@ -23,8 +23,8 @@ class TelegramNotifier(Notifier):
     def __init__(
         self,
         bot: Bot,
-        user_gateway: UserRepository,
-        social_id_gateway: SocialIdentityRepository,
+        user_gateway: UserGateway,
+        social_id_gateway: SocialIdentityGateway,
     ) -> None:
         self.social_id_gateway = social_id_gateway
         self.bot = bot

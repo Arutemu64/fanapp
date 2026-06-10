@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 from fanfan.application.dto.notification import RealtimeNotificationDTO
-from fanfan.application.ports.repositories.notifications import NotificationRepository
+from fanfan.application.ports.gateways.notifications import NotificationGateway
 from fanfan.core.exceptions.notifications import NotificationNotFound
 from fanfan.core.vo.notification import NotificationId
 
@@ -11,7 +11,7 @@ class GetNotificationInput(BaseModel):
 
 
 class GetNotification:
-    def __init__(self, notification_query: NotificationRepository):
+    def __init__(self, notification_query: NotificationGateway):
         self.notification_query = notification_query
 
     async def __call__(self, data: GetNotificationInput) -> RealtimeNotificationDTO:

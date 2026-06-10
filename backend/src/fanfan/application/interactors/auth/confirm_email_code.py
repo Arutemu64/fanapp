@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel, Field
 
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.token_registry import TokenRegistry
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
@@ -22,7 +22,7 @@ class ConfirmEmailCodeInput(BaseModel):
 class ConfirmEmailCode:
     def __init__(
         self,
-        user_repo: UserRepository,
+        user_repo: UserGateway,
         current_user_provider: CurrentUserProvider,
         token_registry: TokenRegistry,
         uow: UnitOfWork,

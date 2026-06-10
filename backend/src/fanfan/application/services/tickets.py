@@ -1,7 +1,7 @@
-from fanfan.application.ports.repositories.tickets import TicketRepository
-from fanfan.application.ports.repositories.user_flags import UserFlagRepository
-from fanfan.application.ports.repositories.users import UserRepository
-from fanfan.application.ports.repositories.votes import VoteRepository
+from fanfan.application.ports.gateways.tickets import TicketGateway
+from fanfan.application.ports.gateways.user_flags import UserFlagGateway
+from fanfan.application.ports.gateways.users import UserGateway
+from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.core.constants.flags import VOTING_CONTEST_FLAG_NAME
 from fanfan.core.exceptions.tickets import UserAlreadyHasTicketLinked
 from fanfan.core.exceptions.users import UserNotFound
@@ -12,10 +12,10 @@ from fanfan.core.models.user import User
 class TicketService:
     def __init__(
         self,
-        ticket_repo: TicketRepository,
-        user_repo: UserRepository,
-        vote_repo: VoteRepository,
-        flag_repo: UserFlagRepository,
+        ticket_repo: TicketGateway,
+        user_repo: UserGateway,
+        vote_repo: VoteGateway,
+        flag_repo: UserFlagGateway,
     ):
         self.ticket_repo = ticket_repo
         self.user_repo = user_repo

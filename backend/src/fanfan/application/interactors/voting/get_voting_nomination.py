@@ -2,8 +2,8 @@ from pydantic import BaseModel, ConfigDict
 
 from fanfan.application.dto.nomination import NominationVotingDTO
 from fanfan.application.dto.participant import ParticipantFullDTO
-from fanfan.application.ports.repositories.nominations import NominationRepository
-from fanfan.application.ports.repositories.participants import ParticipantRepository
+from fanfan.application.ports.gateways.nominations import NominationGateway
+from fanfan.application.ports.gateways.participants import ParticipantGateway
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.nominations import NominationNotFound
 from fanfan.core.vo.nomination import NominationCode
@@ -22,8 +22,8 @@ class GetVotingNominationOutput(NominationVotingDTO):
 class GetVotingNomination:
     def __init__(
         self,
-        participant_query: ParticipantRepository,
-        nomination_query: NominationRepository,
+        participant_query: ParticipantGateway,
+        nomination_query: NominationGateway,
         current_user_provider: CurrentUserProvider,
     ) -> None:
         self.participant_query = participant_query

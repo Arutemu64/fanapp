@@ -2,13 +2,13 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.ports.repositories.schedule_changes import (
-    ScheduleChangeRepository,
+from fanfan.application.ports.gateways.schedule_changes import (
+    ScheduleChangeGateway,
 )
-from fanfan.application.ports.repositories.schedule_events import (
-    ScheduleEventRepository,
+from fanfan.application.ports.gateways.schedule_events import (
+    ScheduleEventGateway,
 )
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
@@ -31,9 +31,9 @@ class UndoScheduleChange:
     def __init__(
         self,
         uow: UnitOfWork,
-        changes_repo: ScheduleChangeRepository,
-        user_repo: UserRepository,
-        schedule_repo: ScheduleEventRepository,
+        changes_repo: ScheduleChangeGateway,
+        user_repo: UserGateway,
+        schedule_repo: ScheduleEventGateway,
         current_user_provider: CurrentUserProvider,
         perm_service: PermissionService,
     ):

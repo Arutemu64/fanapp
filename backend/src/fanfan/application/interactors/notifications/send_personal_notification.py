@@ -2,8 +2,8 @@ import logging
 from dataclasses import dataclass
 
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.application.ports.repositories.mailings import MailingRepository
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.mailings import MailingGateway
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.base import AccessDenied
@@ -24,8 +24,8 @@ class SendPersonalNotificationInput:
 class SendPersonalNotification:
     def __init__(
         self,
-        user_repo: UserRepository,
-        mailing_repo: MailingRepository,
+        user_repo: UserGateway,
+        mailing_repo: MailingGateway,
         current_user_provider: CurrentUserProvider,
         events_broker: EventBroker,
     ):

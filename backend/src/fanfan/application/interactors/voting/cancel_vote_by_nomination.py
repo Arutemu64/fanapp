@@ -2,9 +2,9 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.ports.repositories.tickets import TicketRepository
-from fanfan.application.ports.repositories.users import UserRepository
-from fanfan.application.ports.repositories.votes import VoteRepository
+from fanfan.application.ports.gateways.tickets import TicketGateway
+from fanfan.application.ports.gateways.users import UserGateway
+from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.voting import VotingService
@@ -21,12 +21,12 @@ class CancelVoteByNominationInput(BaseModel):
 class CancelVoteByNomination:
     def __init__(
         self,
-        vote_repo: VoteRepository,
-        user_repo: UserRepository,
+        vote_repo: VoteGateway,
+        user_repo: UserGateway,
         uow: UnitOfWork,
         current_user_provider: CurrentUserProvider,
         service: VotingService,
-        ticket_repo: TicketRepository,
+        ticket_repo: TicketGateway,
     ) -> None:
         self.user_repo = user_repo
         self.vote_repo = vote_repo

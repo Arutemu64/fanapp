@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 from fanfan.application.dto.nomination import NominationVotingDTO
-from fanfan.application.ports.repositories.nominations import NominationRepository
+from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.application.services.current_user import CurrentUserProvider
 
 
@@ -12,7 +12,7 @@ class ListVotingNominationsOutput(BaseModel):
 class ListVotingNominations:
     def __init__(
         self,
-        nomination_query: NominationRepository,
+        nomination_query: NominationGateway,
         current_user_provider: CurrentUserProvider,
     ) -> None:
         self.nomination_query = nomination_query

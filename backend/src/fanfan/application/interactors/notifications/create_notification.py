@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
-from fanfan.application.ports.repositories.mailings import MailingRepository
-from fanfan.application.ports.repositories.notifications import NotificationRepository
+from fanfan.application.ports.gateways.mailings import MailingGateway
+from fanfan.application.ports.gateways.notifications import NotificationGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import MailingNotFound
 from fanfan.core.models.notification import NewNotification, Notification
@@ -15,8 +15,8 @@ class CreateNotificationInput(BaseModel):
 class CreateNotification:
     def __init__(
         self,
-        mailing_repo: MailingRepository,
-        notification_repo: NotificationRepository,
+        mailing_repo: MailingGateway,
+        notification_repo: NotificationGateway,
         uow: UnitOfWork,
     ):
         self.mailing_repo = mailing_repo

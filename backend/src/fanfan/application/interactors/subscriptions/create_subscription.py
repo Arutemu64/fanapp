@@ -2,13 +2,13 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.ports.repositories.schedule_events import (
-    ScheduleEventRepository,
+from fanfan.application.ports.gateways.schedule_events import (
+    ScheduleEventGateway,
 )
-from fanfan.application.ports.repositories.subscriptions import (
-    SubscriptionRepository,
+from fanfan.application.ports.gateways.subscriptions import (
+    SubscriptionGateway,
 )
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.models.subscription import Subscription
@@ -30,10 +30,10 @@ class CreateSubscriptionOutput(BaseModel):
 class CreateSubscription:
     def __init__(
         self,
-        subscription_repo: SubscriptionRepository,
-        user_repo: UserRepository,
+        subscription_repo: SubscriptionGateway,
+        user_repo: UserGateway,
         current_user_provider: CurrentUserProvider,
-        schedule_repo: ScheduleEventRepository,
+        schedule_repo: ScheduleEventGateway,
         uow: UnitOfWork,
     ) -> None:
         self.subscription_repo = subscription_repo

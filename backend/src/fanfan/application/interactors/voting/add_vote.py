@@ -2,9 +2,9 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.ports.repositories.participants import ParticipantRepository
-from fanfan.application.ports.repositories.tickets import TicketRepository
-from fanfan.application.ports.repositories.votes import VoteRepository
+from fanfan.application.ports.gateways.participants import ParticipantGateway
+from fanfan.application.ports.gateways.tickets import TicketGateway
+from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.voting import VotingService
@@ -28,12 +28,12 @@ class AddVoteOutput(BaseModel):
 class AddVote:
     def __init__(
         self,
-        participant_repo: ParticipantRepository,
-        vote_repo: VoteRepository,
+        participant_repo: ParticipantGateway,
+        vote_repo: VoteGateway,
         uow: UnitOfWork,
         vote_service: VotingService,
         current_user_provider: CurrentUserProvider,
-        ticket_repo: TicketRepository,
+        ticket_repo: TicketGateway,
     ) -> None:
         self.participant_repo = participant_repo
         self.vote_repo = vote_repo

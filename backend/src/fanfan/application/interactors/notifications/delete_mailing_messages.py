@@ -2,7 +2,7 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.ports.repositories.notifications import NotificationRepository
+from fanfan.application.ports.gateways.notifications import NotificationGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.vo.mailing import MailingId
 
@@ -16,7 +16,7 @@ class DeleteMailingMessagesInput(BaseModel):
 class DeleteMailingMessages:
     def __init__(
         self,
-        notification_repo: NotificationRepository,
+        notification_repo: NotificationGateway,
         uow: UnitOfWork,
     ):
         self.notification_gateway = notification_repo

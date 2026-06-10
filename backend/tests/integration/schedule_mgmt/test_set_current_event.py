@@ -8,11 +8,11 @@ from fanfan.application.interactors.schedule_mgmt.set_current_schedule_event imp
     SetCurrentScheduleEvent,
     SetCurrentScheduleEventInput,
 )
-from fanfan.application.ports.repositories import (
-    ScheduleChangeRepository,
-    ScheduleEventRepository,
+from fanfan.application.ports.gateways import (
+    ScheduleChangeGateway,
+    ScheduleEventGateway,
 )
-from fanfan.application.ports.repositories.mailings import MailingRepository
+from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.schedule import ScheduleChangeCreated
 from fanfan.core.exceptions.base import AccessDenied
@@ -64,9 +64,9 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_repo = await dishka_request.get(ScheduleEventRepository)
-    changes_query = await dishka_request.get(ScheduleChangeRepository)
-    mailing_repo = await dishka_request.get(MailingRepository)
+    schedule_repo = await dishka_request.get(ScheduleEventGateway)
+    changes_query = await dishka_request.get(ScheduleChangeGateway)
+    mailing_repo = await dishka_request.get(MailingGateway)
     login(schedule_editor)
 
     previous_current_event = _schedule_event(
@@ -125,8 +125,8 @@ async def test_set_current_event_sets_current_when_none_was_current(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_repo = await dishka_request.get(ScheduleEventRepository)
-    changes_query = await dishka_request.get(ScheduleChangeRepository)
+    schedule_repo = await dishka_request.get(ScheduleEventGateway)
+    changes_query = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
     # Ни одно событие ещё не отмечено текущим.
@@ -164,8 +164,8 @@ async def test_set_current_event_can_unset_current_event(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_repo = await dishka_request.get(ScheduleEventRepository)
-    changes_query = await dishka_request.get(ScheduleChangeRepository)
+    schedule_repo = await dishka_request.get(ScheduleEventGateway)
+    changes_query = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
     previous_current_event = _schedule_event(1, "Текущее событие", 1, is_current=True)
@@ -203,8 +203,8 @@ async def test_set_current_event_raises_when_event_not_found(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_repo = await dishka_request.get(ScheduleEventRepository)
-    changes_query = await dishka_request.get(ScheduleChangeRepository)
+    schedule_repo = await dishka_request.get(ScheduleEventGateway)
+    changes_query = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
     previous_current_event = _schedule_event(1, "Текущее событие", 1, is_current=True)
@@ -234,8 +234,8 @@ async def test_set_current_event_without_permission_raises_access_denied(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_repo = await dishka_request.get(ScheduleEventRepository)
-    changes_query = await dishka_request.get(ScheduleChangeRepository)
+    schedule_repo = await dishka_request.get(ScheduleEventGateway)
+    changes_query = await dishka_request.get(ScheduleChangeGateway)
     # У обычного посетителя нет права SCHEDULE_MANAGE.
     login(visitor)
 
@@ -261,8 +261,8 @@ async def test_set_current_event_twice_in_a_row_raises_too_fast(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
-    schedule_repo = await dishka_request.get(ScheduleEventRepository)
-    changes_query = await dishka_request.get(ScheduleChangeRepository)
+    schedule_repo = await dishka_request.get(ScheduleEventGateway)
+    changes_query = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
     first_event = _schedule_event(1, "Первое событие", 1)

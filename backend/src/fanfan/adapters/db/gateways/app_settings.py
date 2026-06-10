@@ -3,12 +3,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.mappers.app_settings import AppSettingsMapper
 from fanfan.adapters.db.models import AppSettingsORM
-from fanfan.application.ports.repositories.app_settings import AppSettingsRepository
+from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.core.exceptions.settings import AppSettingsNotFound
 from fanfan.core.models.app_settings import AppSettings
 
 
-class SqlAppSettingsGateway(AppSettingsRepository):
+class SqlAppSettingsGateway(AppSettingsGateway):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = AppSettingsMapper()

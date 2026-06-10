@@ -1,6 +1,6 @@
 from fanfan.application.dto.push_sub import PushSubscriptionDTO
-from fanfan.application.ports.repositories.push_subscriptions import (
-    PushSubscriptionRepository,
+from fanfan.application.ports.gateways.push_subscriptions import (
+    PushSubscriptionGateway,
 )
 from fanfan.application.services.current_user import CurrentUserProvider
 
@@ -9,7 +9,7 @@ class ListUserPushSubscriptions:
     # TODO Do I need this?
     def __init__(
         self,
-        push_sub_repo: PushSubscriptionRepository,
+        push_sub_repo: PushSubscriptionGateway,
         current_user_provider: CurrentUserProvider,
     ) -> None:
         self.current_user_provider = current_user_provider

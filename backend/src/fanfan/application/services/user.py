@@ -1,6 +1,6 @@
 from secrets import randbelow
 
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.core.vo.user import Username
 
 RUSSIAN_ADJECTIVES: tuple[str, ...] = (
@@ -59,7 +59,7 @@ RUSSIAN_NOUNS: tuple[str, ...] = (
 
 
 class UserService:
-    def __init__(self, user_repo: UserRepository) -> None:
+    def __init__(self, user_repo: UserGateway) -> None:
         self.user_repo = user_repo
 
     async def generate_username(self) -> Username:

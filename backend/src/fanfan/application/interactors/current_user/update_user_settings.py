@@ -2,7 +2,7 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 
@@ -17,7 +17,7 @@ class UpdateUserSettingsInput(BaseModel):
 class UpdateUserSettings:
     def __init__(
         self,
-        user_repo: UserRepository,
+        user_repo: UserGateway,
         current_user_provider: CurrentUserProvider,
         uow: UnitOfWork,
     ):

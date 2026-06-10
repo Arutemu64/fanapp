@@ -2,8 +2,8 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.ports.repositories.social_ids import SocialIdentityRepository
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.social_ids import SocialIdentityGateway
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.users import (
@@ -23,8 +23,8 @@ class LinkTelegramAccountInput(BaseModel):
 class LinkTelegramAccount:
     def __init__(
         self,
-        user_repo: UserRepository,
-        social_id_repo: SocialIdentityRepository,
+        user_repo: UserGateway,
+        social_id_repo: SocialIdentityGateway,
         uow: UnitOfWork,
         current_user_provider: CurrentUserProvider,
     ) -> None:

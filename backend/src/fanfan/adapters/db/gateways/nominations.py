@@ -6,7 +6,7 @@ from fanfan.adapters.db.mappers.nomination import NominationMapper
 from fanfan.adapters.db.models import NominationORM, ParticipantORM, VoteORM
 from fanfan.application.dto.nomination import NominationVotingDTO
 from fanfan.application.dto.page import Pagination
-from fanfan.application.ports.repositories.nominations import NominationRepository
+from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.vo.nomination import NominationCode
 from fanfan.core.vo.user import UserId
@@ -28,7 +28,7 @@ def _select_nomination_voting_dto(user_id: UserId | None) -> Select:
     )
 
 
-class SqlNominationGateway(NominationRepository):
+class SqlNominationGateway(NominationGateway):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = NominationMapper()

@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.password_hasher import PasswordHasher
-from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.user import UserService
 from fanfan.core.exceptions.users import UserAlreadyExists
@@ -20,7 +20,7 @@ class RegisterUser:
     def __init__(
         self,
         password_hasher: PasswordHasher,
-        user_repo: UserRepository,
+        user_repo: UserGateway,
         uow: UnitOfWork,
         user_service: UserService,
     ):

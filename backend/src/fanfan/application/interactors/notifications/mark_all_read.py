@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from fanfan.application.ports.repositories.notifications import NotificationRepository
+from fanfan.application.ports.gateways.notifications import NotificationGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 
@@ -8,7 +8,7 @@ from fanfan.application.services.current_user import CurrentUserProvider
 class MarkAllRead:
     def __init__(
         self,
-        notifications_repo: NotificationRepository,
+        notifications_repo: NotificationGateway,
         current_user_provider: CurrentUserProvider,
         uow: UnitOfWork,
     ):

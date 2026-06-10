@@ -3,12 +3,12 @@ from uuid import uuid7
 import pytest_asyncio
 from dishka import AsyncContainer
 
-from fanfan.application.ports.repositories import (
-    PermissionRepository,
-    UserPermissionRepository,
+from fanfan.application.ports.gateways import (
+    PermissionGateway,
+    UserPermissionGateway,
 )
-from fanfan.application.ports.repositories.tickets import TicketRepository
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.tickets import TicketGateway
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.permission import UserPermission
 from fanfan.core.models.ticket import Ticket
@@ -27,7 +27,7 @@ async def visitor(dishka_request: AsyncContainer) -> User:
     """
     Create a visitor (user with no special permissions)
     """
-    user_repo = await dishka_request.get(UserRepository)
+    user_repo = await dishka_request.get(UserGateway)
     uow = await dishka_request.get(UnitOfWork)
 
     visitor = User(
@@ -46,7 +46,7 @@ async def visitor_with_ticket(dishka_request: AsyncContainer, visitor: User) -> 
     """
     Create a visitor with a linked ticket.
     """
-    ticket_repo = await dishka_request.get(TicketRepository)
+    ticket_repo = await dishka_request.get(TicketGateway)
     uow = await dishka_request.get(UnitOfWork)
 
     await ticket_repo.add(
@@ -68,9 +68,9 @@ async def schedule_editor(dishka_request: AsyncContainer) -> User:
     """
     Create a schedule manager
     """
-    user_repo = await dishka_request.get(UserRepository)
-    permission_repo = await dishka_request.get(PermissionRepository)
-    user_permission_repo = await dishka_request.get(UserPermissionRepository)
+    user_repo = await dishka_request.get(UserGateway)
+    permission_repo = await dishka_request.get(PermissionGateway)
+    user_permission_repo = await dishka_request.get(UserPermissionGateway)
     uow = await dishka_request.get(UnitOfWork)
 
     schedule_editor = User(

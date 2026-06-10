@@ -2,7 +2,7 @@ import logging
 
 from pydantic import BaseModel, Field
 
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.users import UsernameAlreadyTaken
@@ -25,7 +25,7 @@ class UpdateCurrentUser:
         self,
         current_user_provider: CurrentUserProvider,
         uow: UnitOfWork,
-        user_repo: UserRepository,
+        user_repo: UserGateway,
     ) -> None:
         self.current_user_provider = current_user_provider
         self.user_repo = user_repo

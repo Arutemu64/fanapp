@@ -3,8 +3,8 @@ import logging
 from pydantic import BaseModel
 
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.application.ports.repositories.mailings import MailingRepository
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.mailings import MailingGateway
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.events.notifications import MailingCancelled
@@ -23,8 +23,8 @@ class CancelMailingInput(BaseModel):
 class CancelMailing:
     def __init__(
         self,
-        mailing_repo: MailingRepository,
-        user_repo: UserRepository,
+        mailing_repo: MailingGateway,
+        user_repo: UserGateway,
         current_user_provider: CurrentUserProvider,
         events_broker: EventBroker,
         uow: UnitOfWork,

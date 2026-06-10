@@ -2,10 +2,10 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.ports.repositories.schedule_events import (
-    ScheduleEventRepository,
+from fanfan.application.ports.gateways.schedule_events import (
+    ScheduleEventGateway,
 )
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.base import AccessDenied
@@ -37,10 +37,10 @@ class ImportScheduleInput(BaseModel):
 class ImportSchedule:
     def __init__(
         self,
-        schedule_repo: ScheduleEventRepository,
+        schedule_repo: ScheduleEventGateway,
         uow: UnitOfWork,
         current_user_provider: CurrentUserProvider,
-        user_repo: UserRepository,
+        user_repo: UserGateway,
     ):
         self.user_repo = user_repo
         self.current_user_provider = current_user_provider

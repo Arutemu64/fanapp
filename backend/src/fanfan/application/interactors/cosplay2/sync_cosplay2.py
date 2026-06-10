@@ -10,8 +10,8 @@ from fanfan.adapters.api.cosplay2.dto.requests import (
     RequestValueDTO,
 )
 from fanfan.adapters.api.cosplay2.dto.topics import Topic
-from fanfan.application.ports.repositories.nominations import NominationRepository
-from fanfan.application.ports.repositories.participants import ParticipantRepository
+from fanfan.application.ports.gateways.nominations import NominationGateway
+from fanfan.application.ports.gateways.participants import ParticipantGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.participants import (
     NonApprovedRequest,
@@ -31,8 +31,8 @@ class SyncCosplay2:
         client: Cosplay2Client,
         config: Cosplay2Config,
         uow: UnitOfWork,
-        nomination_repo: NominationRepository,
-        participant_repo: ParticipantRepository,
+        nomination_repo: NominationGateway,
+        participant_repo: ParticipantGateway,
     ):
         self.participant_repo = participant_repo
         self.nomination_repo = nomination_repo

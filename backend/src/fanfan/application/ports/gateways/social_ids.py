@@ -5,7 +5,7 @@ from fanfan.core.models.social_account import SocialIdentity
 from fanfan.core.vo.user import UserId
 
 
-class SocialIdentityRepository(Protocol):
+class SocialIdentityGateway(Protocol):
     async def add(self, social_identity: SocialIdentity) -> None: ...
 
     async def get_by_provider(

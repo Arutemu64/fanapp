@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
-from fanfan.application.ports.repositories.push_subscriptions import (
-    PushSubscriptionRepository,
+from fanfan.application.ports.gateways.push_subscriptions import (
+    PushSubscriptionGateway,
 )
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
@@ -16,7 +16,7 @@ class DeletePushSubscriptionInput(BaseModel):
 class DeletePushSubscription:
     def __init__(
         self,
-        push_sub_repo: PushSubscriptionRepository,
+        push_sub_repo: PushSubscriptionGateway,
         current_user_provider: CurrentUserProvider,
         uow: UnitOfWork,
     ) -> None:

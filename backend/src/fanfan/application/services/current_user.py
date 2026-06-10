@@ -1,5 +1,5 @@
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.id_provider import IdProvider
-from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.core.exceptions.auth import UserNotAuthenticated
 from fanfan.core.exceptions.users import UserNotFound
 from fanfan.core.models.user import User
@@ -7,7 +7,7 @@ from fanfan.core.vo.user import UserId
 
 
 class CurrentUserProvider:
-    def __init__(self, id_provider: IdProvider, user_repo: UserRepository) -> None:
+    def __init__(self, id_provider: IdProvider, user_repo: UserGateway) -> None:
         self.id_provider = id_provider
         self.user_repo = user_repo
 

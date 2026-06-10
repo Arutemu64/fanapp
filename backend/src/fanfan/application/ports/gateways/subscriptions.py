@@ -7,7 +7,7 @@ from fanfan.core.models.subscription import (
 from fanfan.core.vo.subscription import SubscriptionId
 
 
-class SubscriptionRepository(Protocol):
+class SubscriptionGateway(Protocol):
     async def add(self, subscription: Subscription) -> None: ...
     async def get_by_id(
         self, subscription_id: SubscriptionId

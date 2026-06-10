@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel, EmailStr, Field
 
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.session_store import SessionStore
 from fanfan.application.ports.token_registry import TokenRegistry
 from fanfan.application.ports.uow import UnitOfWork
@@ -23,7 +23,7 @@ class LoginWithCodeInput(BaseModel):
 class LoginWithCode:
     def __init__(
         self,
-        user_repo: UserRepository,
+        user_repo: UserGateway,
         token_registry: TokenRegistry,
         uow: UnitOfWork,
         session_store: SessionStore,

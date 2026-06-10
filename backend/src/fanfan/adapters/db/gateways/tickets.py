@@ -5,13 +5,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fanfan.adapters.db.constraints import get_constraint_name
 from fanfan.adapters.db.mappers.ticket import TicketMapper
 from fanfan.adapters.db.models import TicketORM
-from fanfan.application.ports.repositories.tickets import TicketRepository
+from fanfan.application.ports.gateways.tickets import TicketGateway
 from fanfan.core.exceptions.tickets import UserAlreadyHasTicketLinked
 from fanfan.core.models.ticket import Ticket
 from fanfan.core.vo.user import UserId
 
 
-class SqlTicketGateway(TicketRepository):
+class SqlTicketGateway(TicketGateway):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = TicketMapper()

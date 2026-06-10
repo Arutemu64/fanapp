@@ -3,10 +3,10 @@ import nh3
 from webpush import WebPush, WebPushSubscription
 
 from fanfan.adapters.push.config import PushConfig
-from fanfan.application.ports.notifier import Notifier
-from fanfan.application.ports.repositories.push_subscriptions import (
-    PushSubscriptionRepository,
+from fanfan.application.ports.gateways.push_subscriptions import (
+    PushSubscriptionGateway,
 )
+from fanfan.application.ports.notifier import Notifier
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.notification import Notification
 
@@ -14,7 +14,7 @@ from fanfan.core.models.notification import Notification
 class PushNotifier(Notifier):
     def __init__(
         self,
-        push_sub_repo: PushSubscriptionRepository,
+        push_sub_repo: PushSubscriptionGateway,
         uow: UnitOfWork,
         push_config: PushConfig,
     ) -> None:

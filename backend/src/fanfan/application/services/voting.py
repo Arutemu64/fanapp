@@ -1,4 +1,4 @@
-from fanfan.application.ports.repositories.app_settings import AppSettingsRepository
+from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.models.ticket import Ticket
 from fanfan.core.models.user import User
@@ -6,7 +6,7 @@ from fanfan.core.vo.vote import VotingStatus
 
 
 class VotingService:
-    def __init__(self, settings_repo: AppSettingsRepository):
+    def __init__(self, settings_repo: AppSettingsGateway):
         self.settings_repo = settings_repo
 
     async def get_voting_state(self, user: User, ticket: Ticket | None) -> VotingStatus:

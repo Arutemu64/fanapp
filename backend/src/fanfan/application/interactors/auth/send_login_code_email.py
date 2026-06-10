@@ -5,7 +5,7 @@ from fanfan.application.ports.email_sender import (
     EmailRecipient,
     EmailSender,
 )
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.template_renderer import TemplateRenderer
 from fanfan.application.ports.token_registry import TokenRegistry
 from fanfan.core.exceptions.users import UserHasNoEmail, UserNotFound
@@ -24,7 +24,7 @@ class SendLoginCodeEmailInput(BaseModel):
 class SendLoginCodeEmail:
     def __init__(
         self,
-        user_repo: UserRepository,
+        user_repo: UserGateway,
         email_sender: EmailSender,
         template_renderer: TemplateRenderer,
         token_registry: TokenRegistry,

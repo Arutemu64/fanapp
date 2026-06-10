@@ -9,15 +9,15 @@ from fanfan.application.dto.schedule_change import (
     ScheduleChangeFullDTO,
 )
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.application.ports.repositories.mailings import MailingRepository
-from fanfan.application.ports.repositories.schedule_changes import (
-    ScheduleChangeRepository,
+from fanfan.application.ports.gateways.mailings import MailingGateway
+from fanfan.application.ports.gateways.schedule_changes import (
+    ScheduleChangeGateway,
 )
-from fanfan.application.ports.repositories.schedule_events import (
-    ScheduleEventRepository,
+from fanfan.application.ports.gateways.schedule_events import (
+    ScheduleEventGateway,
 )
-from fanfan.application.ports.repositories.subscriptions import SubscriptionRepository
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.subscriptions import SubscriptionGateway
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.template_renderer import TemplateRenderer
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.notifications import NotificationQueued
@@ -35,11 +35,11 @@ class SendScheduleChangeNotifications:
     def __init__(
         self,
         template_renderer: TemplateRenderer,
-        changes_query: ScheduleChangeRepository,
-        schedule_query: ScheduleEventRepository,
-        user_query: UserRepository,
-        subscription_query: SubscriptionRepository,
-        mailing_repo: MailingRepository,
+        changes_query: ScheduleChangeGateway,
+        schedule_query: ScheduleEventGateway,
+        user_query: UserGateway,
+        subscription_query: SubscriptionGateway,
+        mailing_repo: MailingGateway,
         uow: UnitOfWork,
         events_broker: EventBroker,
     ):

@@ -5,8 +5,8 @@ from fanfan.application.interactors.auth.register_user import (
     RegisterUser,
     RegisterUserInput,
 )
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.password_hasher import PasswordHasher
-from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.user import User
 from fanfan.core.vo.user import Username, UserRole, generate_user_id
@@ -21,7 +21,7 @@ async def test_register_user_creates_visitor_with_hashed_password(
     dishka_request: AsyncContainer,
 ):
     interactor = await dishka_request.get(RegisterUser)
-    user_repo = await dishka_request.get(UserRepository)
+    user_repo = await dishka_request.get(UserGateway)
     password_hasher = await dishka_request.get(PasswordHasher)
 
     await interactor(
@@ -47,7 +47,7 @@ async def test_register_user_with_existing_email_is_silent_noop(
     # Registering an already-used email must NOT raise (avoids account
     # enumeration) and must NOT touch the existing account (avoids takeover).
     interactor = await dishka_request.get(RegisterUser)
-    user_repo = await dishka_request.get(UserRepository)
+    user_repo = await dishka_request.get(UserGateway)
 
     existing_user = User(
         id=generate_user_id(),
@@ -75,7 +75,7 @@ async def test_register_user_with_email_pending_on_another_user_is_silent_noop(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(RegisterUser)
-    user_repo = await dishka_request.get(UserRepository)
+    user_repo = await dishka_request.get(UserGateway)
 
     existing_user = User(
         id=generate_user_id(),

@@ -8,7 +8,7 @@ from fanfan.adapters.db.models import (
     SubscriptionORM,
 )
 from fanfan.application.dto.schedule import ScheduleEventFullDTO
-from fanfan.application.ports.repositories import ScheduleEventRepository
+from fanfan.application.ports.gateways import ScheduleEventGateway
 from fanfan.core.models.schedule_event import (
     ScheduleEvent,
 )
@@ -39,7 +39,7 @@ def _select_schedule_event_full_dto(user_id: UserId | None) -> Select:
     )
 
 
-class SqlScheduleEventGateway(ScheduleEventRepository):
+class SqlScheduleEventGateway(ScheduleEventGateway):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = ScheduleEventMapper()

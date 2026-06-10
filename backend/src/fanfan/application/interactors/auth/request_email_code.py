@@ -1,6 +1,6 @@
 from fanfan.application.ports.events_broker import EventBroker
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.rate_lock import RateLockFactory
-from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.events.users import EmailConfirmationCodeRequested
 from fanfan.core.exceptions.rate_limit import EmailCodeRequestTooFast, RateLimitCooldown
@@ -12,7 +12,7 @@ from fanfan.core.utils.email import normalize_email
 class RequestEmailCode:
     def __init__(
         self,
-        user_repo: UserRepository,
+        user_repo: UserGateway,
         event_broker: EventBroker,
         current_user_provider: CurrentUserProvider,
         rate_lock_factory: RateLockFactory,

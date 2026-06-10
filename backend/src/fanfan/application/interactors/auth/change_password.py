@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.password_hasher import PasswordHasher
-from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.session_store import SessionStore
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
@@ -18,7 +18,7 @@ class ChangePassword:
     def __init__(
         self,
         password_hasher: PasswordHasher,
-        user_repo: UserRepository,
+        user_repo: UserGateway,
         current_user_provider: CurrentUserProvider,
         session_store: SessionStore,
         uow: UnitOfWork,

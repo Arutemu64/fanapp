@@ -2,7 +2,7 @@ import logging
 
 from pydantic import BaseModel, Field
 
-from fanfan.application.ports.repositories.feedback import FeedbackRepository
+from fanfan.application.ports.gateways.feedback import FeedbackGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.models.feedback import Feedback
@@ -22,7 +22,7 @@ class SubmitFeedbackOutput(BaseModel):
 class SubmitFeedback:
     def __init__(
         self,
-        feedback_repo: FeedbackRepository,
+        feedback_repo: FeedbackGateway,
         current_user_provider: CurrentUserProvider,
         uow: UnitOfWork,
     ) -> None:

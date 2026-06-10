@@ -3,16 +3,16 @@ import logging
 from pydantic import BaseModel
 
 from fanfan.application.interactors.schedule_mgmt.common import ANNOUNCE_LIMIT_NAME
+from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
+from fanfan.application.ports.gateways.mailings import MailingGateway
+from fanfan.application.ports.gateways.schedule_changes import (
+    ScheduleChangeGateway,
+)
+from fanfan.application.ports.gateways.schedule_events import (
+    ScheduleEventGateway,
+)
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.rate_lock import RateLockFactory
-from fanfan.application.ports.repositories.app_settings import AppSettingsRepository
-from fanfan.application.ports.repositories.mailings import MailingRepository
-from fanfan.application.ports.repositories.schedule_changes import (
-    ScheduleChangeRepository,
-)
-from fanfan.application.ports.repositories.schedule_events import (
-    ScheduleEventRepository,
-)
-from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
@@ -37,15 +37,15 @@ class UpdateScheduleEventSkipInput(BaseModel):
 class UpdateScheduleEventSkip:
     def __init__(
         self,
-        schedule_repo: ScheduleEventRepository,
-        settings_repo: AppSettingsRepository,
-        changes_repo: ScheduleChangeRepository,
-        user_repo: UserRepository,
+        schedule_repo: ScheduleEventGateway,
+        settings_repo: AppSettingsGateway,
+        changes_repo: ScheduleChangeGateway,
+        user_repo: UserGateway,
         perm_service: PermissionService,
         uow: UnitOfWork,
         rate_lock_factory: RateLockFactory,
         current_user_provider: CurrentUserProvider,
-        mailing_repo: MailingRepository,
+        mailing_repo: MailingGateway,
     ) -> None:
         self.schedule_repo = schedule_repo
         self.settings_repo = settings_repo

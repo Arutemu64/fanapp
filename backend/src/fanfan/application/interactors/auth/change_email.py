@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.users import EmailAlreadyExists
@@ -14,7 +14,7 @@ class ChangeEmailInput(BaseModel):
 class ChangeEmail:
     def __init__(
         self,
-        user_repo: UserRepository,
+        user_repo: UserGateway,
         current_user_provider: CurrentUserProvider,
         uow: UnitOfWork,
     ):

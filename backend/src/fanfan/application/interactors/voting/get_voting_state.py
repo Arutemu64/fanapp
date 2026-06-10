@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from fanfan.application.ports.repositories.tickets import TicketRepository
+from fanfan.application.ports.gateways.tickets import TicketGateway
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.voting import VotingService
 from fanfan.core.vo.vote import VotingStatus
@@ -16,7 +16,7 @@ class GetVotingState:
         self,
         voting_service: VotingService,
         current_user_provider: CurrentUserProvider,
-        ticket_repo: TicketRepository,
+        ticket_repo: TicketGateway,
     ) -> None:
         self.voting_service = voting_service
         self.current_user_provider = current_user_provider

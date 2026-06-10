@@ -3,12 +3,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.mappers.user_flag import UserFlagMapper
 from fanfan.adapters.db.models import UserFlagORM
-from fanfan.application.ports.repositories.user_flags import UserFlagRepository
+from fanfan.application.ports.gateways.user_flags import UserFlagGateway
 from fanfan.core.models.user_flag import UserFlag
 from fanfan.core.vo.user import UserId
 
 
-class SqlUserFlagGateway(UserFlagRepository):
+class SqlUserFlagGateway(UserFlagGateway):
     def __init__(self, session: AsyncSession):
         self.session = session
         self.mapper = UserFlagMapper()

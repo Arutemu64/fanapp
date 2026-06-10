@@ -5,10 +5,10 @@ import pytest
 from dishka import AsyncContainer
 
 from fanfan.application.interactors.voting.add_vote import AddVote, AddVoteInput
-from fanfan.application.ports.repositories.app_settings import AppSettingsRepository
-from fanfan.application.ports.repositories.nominations import NominationRepository
-from fanfan.application.ports.repositories.participants import ParticipantRepository
-from fanfan.application.ports.repositories.votes import VoteRepository
+from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
+from fanfan.application.ports.gateways.nominations import NominationGateway
+from fanfan.application.ports.gateways.participants import ParticipantGateway
+from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.voting import VoteCreated
 from fanfan.core.exceptions.base import AccessDenied
@@ -38,10 +38,10 @@ async def test_add_vote_creates_vote_and_publishes_event(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
-    settings_repo = await dishka_request.get(AppSettingsRepository)
-    nomination_repo = await dishka_request.get(NominationRepository)
-    participant_repo = await dishka_request.get(ParticipantRepository)
-    vote_repo = await dishka_request.get(VoteRepository)
+    settings_repo = await dishka_request.get(AppSettingsGateway)
+    nomination_repo = await dishka_request.get(NominationGateway)
+    participant_repo = await dishka_request.get(ParticipantGateway)
+    vote_repo = await dishka_request.get(VoteGateway)
     login(visitor_with_ticket)
 
     # Голосование доступно только пользователю с привязанным билетом
@@ -95,10 +95,10 @@ async def test_add_vote_without_linked_ticket_raises_access_denied(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
-    settings_repo = await dishka_request.get(AppSettingsRepository)
-    nomination_repo = await dishka_request.get(NominationRepository)
-    participant_repo = await dishka_request.get(ParticipantRepository)
-    vote_repo = await dishka_request.get(VoteRepository)
+    settings_repo = await dishka_request.get(AppSettingsGateway)
+    nomination_repo = await dishka_request.get(NominationGateway)
+    participant_repo = await dishka_request.get(ParticipantGateway)
+    vote_repo = await dishka_request.get(VoteGateway)
     login(visitor)
 
     settings = await settings_repo.get_for_update()
@@ -145,10 +145,10 @@ async def test_add_vote_when_voting_disabled_raises_access_denied(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
-    settings_repo = await dishka_request.get(AppSettingsRepository)
-    nomination_repo = await dishka_request.get(NominationRepository)
-    participant_repo = await dishka_request.get(ParticipantRepository)
-    vote_repo = await dishka_request.get(VoteRepository)
+    settings_repo = await dishka_request.get(AppSettingsGateway)
+    nomination_repo = await dishka_request.get(NominationGateway)
+    participant_repo = await dishka_request.get(ParticipantGateway)
+    vote_repo = await dishka_request.get(VoteGateway)
     login(visitor_with_ticket)
 
     settings = await settings_repo.get_for_update()
@@ -195,7 +195,7 @@ async def test_add_vote_for_missing_participant_raises_not_found(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
-    settings_repo = await dishka_request.get(AppSettingsRepository)
+    settings_repo = await dishka_request.get(AppSettingsGateway)
     login(visitor_with_ticket)
 
     settings = await settings_repo.get_for_update()
@@ -217,10 +217,10 @@ async def test_add_vote_twice_in_same_nomination_raises_already_voted(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
-    settings_repo = await dishka_request.get(AppSettingsRepository)
-    nomination_repo = await dishka_request.get(NominationRepository)
-    participant_repo = await dishka_request.get(ParticipantRepository)
-    vote_repo = await dishka_request.get(VoteRepository)
+    settings_repo = await dishka_request.get(AppSettingsGateway)
+    nomination_repo = await dishka_request.get(NominationGateway)
+    participant_repo = await dishka_request.get(ParticipantGateway)
+    vote_repo = await dishka_request.get(VoteGateway)
     login(visitor_with_ticket)
 
     settings = await settings_repo.get_for_update()
@@ -282,10 +282,10 @@ async def test_add_vote_allows_votes_in_different_nominations(
     uow: UnitOfWork,
 ):
     interactor = await dishka_request.get(AddVote)
-    settings_repo = await dishka_request.get(AppSettingsRepository)
-    nomination_repo = await dishka_request.get(NominationRepository)
-    participant_repo = await dishka_request.get(ParticipantRepository)
-    vote_repo = await dishka_request.get(VoteRepository)
+    settings_repo = await dishka_request.get(AppSettingsGateway)
+    nomination_repo = await dishka_request.get(NominationGateway)
+    participant_repo = await dishka_request.get(ParticipantGateway)
+    vote_repo = await dishka_request.get(VoteGateway)
     login(visitor_with_ticket)
 
     settings = await settings_repo.get_for_update()

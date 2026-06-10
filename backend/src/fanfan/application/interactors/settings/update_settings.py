@@ -2,8 +2,8 @@ import logging
 
 from pydantic import BaseModel, Field
 
-from fanfan.application.ports.repositories.app_settings import AppSettingsRepository
-from fanfan.application.ports.repositories.users import UserRepository
+from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.base import AccessDenied
@@ -21,8 +21,8 @@ class UpdateAppSettingsInput(BaseModel):
 class UpdateSettings:
     def __init__(
         self,
-        settings_repo: AppSettingsRepository,
-        user_repo: UserRepository,
+        settings_repo: AppSettingsGateway,
+        user_repo: UserGateway,
         current_user_provider: CurrentUserProvider,
         uow: UnitOfWork,
     ) -> None:

@@ -2,8 +2,8 @@ from pydantic import BaseModel, EmailStr
 
 from fanfan.application.ports.captcha import CaptchaVerifier
 from fanfan.application.ports.events_broker import EventBroker
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.rate_lock import RateLockFactory
-from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.user import UserService
 from fanfan.core.events.users import EmailLoginCodeRequested
@@ -25,7 +25,7 @@ class RequestLoginCodeInput(BaseModel):
 class RequestLoginCode:
     def __init__(
         self,
-        user_repo: UserRepository,
+        user_repo: UserGateway,
         event_broker: EventBroker,
         uow: UnitOfWork,
         user_service: UserService,

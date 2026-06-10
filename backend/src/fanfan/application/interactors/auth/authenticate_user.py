@@ -1,8 +1,8 @@
 from pydantic import BaseModel, EmailStr
 
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.password_hasher import PasswordHasher
 from fanfan.application.ports.rate_limiter import RateLimiter
-from fanfan.application.ports.repositories.users import UserRepository
 from fanfan.application.ports.session_store import SessionStore
 from fanfan.core.exceptions.auth import InvalidCredentials
 from fanfan.core.exceptions.rate_limit import TooManyAttempts, TooManyLoginAttempts
@@ -27,7 +27,7 @@ class AuthenticateUserInput(BaseModel):
 class AuthenticateUser:
     def __init__(
         self,
-        user_repo: UserRepository,
+        user_repo: UserGateway,
         password_hasher: PasswordHasher,
         session_store: SessionStore,
         rate_limiter: RateLimiter,
