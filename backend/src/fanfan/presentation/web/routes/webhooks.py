@@ -6,7 +6,6 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
 from fanfan.adapters.api.ticketscloud.config import TCloudConfig
-from fanfan.adapters.api.ticketscloud.dto.order import Order
 from fanfan.application.interactors.ticketscloud.process_tcloud_order import (
     ProcessTCloudOrder,
     ProcessTCloudOrderInput,
@@ -16,8 +15,14 @@ from fanfan.presentation.web.schemas.error import ErrorMessage
 webhooks_router = APIRouter(tags=["Webhooks"], prefix="/webhooks")
 
 
+class TCloudWebhookOrderRef(BaseModel):
+    # The webhook body is untrusted, so we read only the order id from it and
+    # re-fetch the authoritative order from the API. Other fields are ignored.
+    id: str
+
+
 class TCloudWebhookPayload(BaseModel):
-    data: Order
+    data: TCloudWebhookOrderRef
     type: str  # TODO Enforce possible types later
 
 
@@ -52,8 +57,7 @@ async def process_tcloud_order(
     ):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-    # TODO Don't trust the payload body. Re-fetch the order from the
-    # authenticated TicketsCloud API by id and act on that, so a leaked token
-    # alone cannot mint tickets.
-    result = await proceed_tcloud_order(ProcessTCloudOrderInput(order=data.data))
+    # Only the order id is trusted; the interactor re-fetches the order from the
+    # authenticated API, so a leaked token alone cannot mint tickets.
+    result = await proceed_tcloud_order(ProcessTCloudOrderInput(order_id=data.data.id))
     return TCloudWebhookResponse(new_tickets_count=result.new_tickets_count)

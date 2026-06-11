@@ -34,11 +34,15 @@ class SyncTCloud:
             "About to process %s orders",
             orders_init.total_count,
         )
-        # Orders
+        # Orders. Reuse the page we already fetched above and request the rest
+        # starting from page 2, so page 1 is not fetched twice.
         for page in range(1, orders_init.pagination.total + 1):
-            result = await self.client.get_orders(
-                page=page, page_size=DEFAULT_PAGE_SIZE
-            )
+            if page == 1:
+                result = orders_init
+            else:
+                result = await self.client.get_orders(
+                    page=page, page_size=DEFAULT_PAGE_SIZE
+                )
             for order_data in result.data:
                 new_tickets_count += await self.tcloud_service.proceed_order(order_data)
             await self.uow.commit()
