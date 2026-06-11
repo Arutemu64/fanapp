@@ -27,6 +27,14 @@
 
 # Gotchas & Lessons Learned
 
+## SvelteKit simulates CORS during SSR — adapter-node must know the real origin
+
+- **Area**: frontend / SvelteKit (adapter-node, `hooks.server.ts` `handleFetch`), infra / Caddy
+- **Expected**: Server-side `fetch` has no origin, so CORS can't apply during SSR. A page that loads fine in the browser should render fine on the server too.
+- **Actual**: A `load` fetch to the API failed **only during SSR** with `CORS error: No 'Access-Control-Allow-Origin' header is present`, even though the underlying request to `http://api:8000` returned 200. Recent SvelteKit *simulates* the browser CORS check during SSR, based on the **original** request URL (`PUBLIC_API_URL`) versus the page origin `event.url.origin` — not the internal URL that `handleFetch` rewrites to. Behind Caddy (which terminates TLS and forwards plain HTTP), `adapter-node` defaulted the SSR origin to `http://<host>`, so a same-origin `https://<host>/api` call looked cross-origin (scheme mismatch) and the simulation rejected the response. The browser, loaded over real HTTPS, saw it as same-origin and worked — hence "SSR only".
+- **Fix / Correct approach**: Two things must hold. (1) `adapter-node` must derive the true public origin: set `PROTOCOL_HEADER=x-forwarded-proto` and `HOST_HEADER=x-forwarded-host` on the frontend service (done in `docker-compose.yml`) so it reads Caddy's forwarded scheme/host. (2) `PUBLIC_API_URL` must be the **same origin** as the site with the `/api` path (e.g. `https://example.com/api`), matching `Caddyfile.example`. Then API calls are same-origin in both the browser and SSR and no CORS is involved. Only set `WEB__CORS_ALLOW_ORIGINS` when the API genuinely lives on a different origin; if you do, it must list the public app origin exactly (scheme + host, no trailing slash, no path).
+- **Date**: 2026-06-11
+
 ## A new service process needs its own infra-host env overrides in docker-compose
 
 - **Area**: infra / docker-compose, DI (`StreamProvider`, `EventBroker`)
