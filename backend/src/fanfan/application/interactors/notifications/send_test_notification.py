@@ -17,7 +17,7 @@ class SendTestNotification:
     async def __call__(self) -> None:
         current_user_id = await self.current_user_provider.require_user_id()
 
-        # Проверяем все пользовательские каналы одним общим уведомлением.
+        # Tests all user notification channels with a single shared notification.
         await self.events_broker.publish(
             NotificationQueued(
                 notification=NewNotification(

@@ -45,8 +45,8 @@ async def test_add_vote_creates_vote_and_publishes_event(
     vote_gateway = await dishka_request.get(VoteGateway)
     login(visitor_with_ticket)
 
-    # Голосование доступно только пользователю с привязанным билетом
-    # и включённой настройкой фестиваля.
+    # Voting is only available to a user with a linked ticket
+    # and the voting setting enabled in the festival config.
     settings = await settings_gateway.get_for_update()
     settings.set_voting_enabled(True)
     await settings_gateway.save(settings)

@@ -55,12 +55,13 @@ We use the CLI on demand rather than the always-on MCP server so it costs no con
 
 ## Core Constraints (Must Always Follow)
 1. **Russian Copy**: All user-facing labels, placeholders, errors, and toast notifications must be in Russian.
-2. **Mobile First**: UI must fit narrow layouts; add bottom padding for floating navigation bars. See [docs/frontend.md](docs/frontend.md).
-3. **No Automated Tests**: Do not run unit/integration tests unless explicitly requested. When you do write or run tests, follow [docs/testing.md](docs/testing.md).
-4. **Lint & Type-Check After Backend Changes**: After modifying any backend Python code, run `just backend-lint` and `just backend-typecheck`. Fix all errors before marking the task complete. For frontend changes, run `just frontend-lint` and `just frontend-check`.
-5. **Architectural Isolation**: The inner layers (`core/`, `application/`) must remain pure. They must never import from outer layers—this means absolutely no ORM models, concrete adapters (DB gateways, Redis, Telegram, NATS), presentation routers, or external frameworks (no FastAPI, SQLAlchemy in `core/`). All infra operations must go through abstract ports (`application/ports/`). See [docs/backend.md](docs/backend.md).
-6. **SSR & Frontend State Safety**: Never save request-specific state in global/module singletons. Always follow SvelteKit SSR and component guidelines in [docs/frontend.md](docs/frontend.md).
-7. **Required Skills by Domain**: When working in any of the following domains, the LLM MUST load the listed skills BEFORE making changes:
+2. **English Comments**: All code comments (inline `#`, `//`, `<!-- -->`, docstrings) must be written in English. Never write code comments in Russian or any other language.
+3. **Mobile First**: UI must fit narrow layouts; add bottom padding for floating navigation bars. See [docs/frontend.md](docs/frontend.md).
+4. **No Automated Tests**: Do not run unit/integration tests unless explicitly requested. When you do write or run tests, follow [docs/testing.md](docs/testing.md).
+5. **Lint & Type-Check After Backend Changes**: After modifying any backend Python code, run `just backend-lint` and `just backend-typecheck`. Fix all errors before marking the task complete. For frontend changes, run `just frontend-lint` and `just frontend-check`.
+6. **Architectural Isolation**: The inner layers (`core/`, `application/`) must remain pure. They must never import from outer layers—this means absolutely no ORM models, concrete adapters (DB gateways, Redis, Telegram, NATS), presentation routers, or external frameworks (no FastAPI, SQLAlchemy in `core/`). All infra operations must go through abstract ports (`application/ports/`). See [docs/backend.md](docs/backend.md).
+7. **SSR & Frontend State Safety**: Never save request-specific state in global/module singletons. Always follow SvelteKit SSR and component guidelines in [docs/frontend.md](docs/frontend.md).
+8. **Required Skills by Domain**: When working in any of the following domains, the LLM MUST load the listed skills BEFORE making changes:
    * Svelte components/modules (`.svelte`, `.svelte.ts`, `.svelte.js`) → `svelte-code-writer`, `svelte-core-bestpractices`
    * Frontend styling/layout → `tailwind-css-patterns`, `ui-ux-pro-max`
    * Backend/FastAPI work → `fastapi`, `clean-ddd-hexagonal`
@@ -68,11 +69,11 @@ We use the CLI on demand rather than the always-on MCP server so it costs no con
    * Docs / Writing → `documentation-writer`
    * Third-party library API questions → use web search to look up current docs; never rely on training data for API signatures
    * Read the architecture guides in [docs/](docs/) (`backend.md`, `frontend.md`, `api.md`, `testing.md`) before implementing in those areas.
-8. **Keep Documentation in Sync**: After any structural, architectural, or path-level change, verify and update `AGENTS.md` and relevant `docs/*.md` files before marking the task complete.
+9. **Keep Documentation in Sync**: After any structural, architectural, or path-level change, verify and update `AGENTS.md` and relevant `docs/*.md` files before marking the task complete.
    * Did you add, rename, or delete a `lib/` submodule (`services/`, `utils/`, etc.)? Update the **Codebase Map**.
    * Did you change an important file path referenced in docs (e.g., toast store location, CLI commands, layout paths)? Update the doc that mentions it.
    * Did you introduce a new architectural pattern (new DI provider, new ports folder, new adapter type)? Update the relevant `docs/*.md` file.
    * Prefer **documenting patterns and rules** over exact file lists that rot quickly. The Codebase Map should stay high-level; do not list every individual file.
-9. **Clear, Simple Code**: Write straightforward code that a junior developer can read and understand without help. Favor explicit, obvious solutions over clever tricks, dense one-liners, or implicit magic. Use descriptive names, small focused functions, and add a short comment when intent isn't obvious. If a clever approach is unavoidable, explain why in a comment.
-10. **Log Mistakes for Future Selves**: Whenever something behaves differently than you expected — a wrong assumption about an API, a confusing pattern, a non-obvious gotcha — record it in [docs/gotchas.md](docs/gotchas.md) so you (or a less capable AI model) never repeat the mistake. Write a short entry: what you expected, what actually happened, and how to do it right. Skip issues that are purely about the environment you run inside (e.g. bash vs PowerShell, container quirks) — only log issues about *this* codebase and its libraries.
-11. **Verify Jinja Templates by Rendering**: Whenever you create or edit a Jinja template, do not assume it renders correctly. Manually render it by executing it with all the contextual values it expects, and confirm the output matches what you intended before marking the task complete.
+10. **Clear, Simple Code**: Write straightforward code that a junior developer can read and understand without help. Favor explicit, obvious solutions over clever tricks, dense one-liners, or implicit magic. Use descriptive names, small focused functions, and add a short comment when intent isn't obvious. If a clever approach is unavoidable, explain why in a comment.
+11. **Log Mistakes for Future Selves**: Whenever something behaves differently than you expected — a wrong assumption about an API, a confusing pattern, a non-obvious gotcha — record it in [docs/gotchas.md](docs/gotchas.md) so you (or a less capable AI model) never repeat the mistake. Write a short entry: what you expected, what actually happened, and how to do it right. Skip issues that are purely about the environment you run inside (e.g. bash vs PowerShell, container quirks) — only log issues about *this* codebase and its libraries.
+12. **Verify Jinja Templates by Rendering**: Whenever you create or edit a Jinja template, do not assume it renders correctly. Manually render it by executing it with all the contextual values it expects, and confirm the output matches what you intended before marking the task complete.

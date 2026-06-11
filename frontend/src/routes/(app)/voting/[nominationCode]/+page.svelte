@@ -68,7 +68,7 @@
 
 <!-- Search controls -->
 <div class="mx-auto mb-4 max-w-2xl">
-	<!-- Делаем фильтр таким же спокойным по стилю, как и на странице расписания. -->
+	<!-- Keep the filter visually calm, matching the style of the schedule page. -->
 	<div
 		class="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800"
 	>
