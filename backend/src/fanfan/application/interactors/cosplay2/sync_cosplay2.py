@@ -1,4 +1,3 @@
-import contextlib
 import logging
 from collections import defaultdict
 from dataclasses import replace
@@ -14,11 +13,6 @@ from fanfan.adapters.api.cosplay2.dto.topics import Topic
 from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.application.ports.gateways.participants import ParticipantGateway
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.core.exceptions.participants import (
-    NonApprovedRequest,
-    RequestHasNoVotingTitle,
-    RequestNominationNotFound,
-)
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.models.participant import Participant, ParticipantValue
 from fanfan.core.vo.nomination import generate_nomination_id
@@ -65,7 +59,7 @@ class SyncCosplay2:
 
     async def _process_request(
         self, request: Request, request_values: list[RequestValueDTO]
-    ) -> Participant:
+    ) -> Participant | None:
         # Query existing participant
         participant = await self.participant_gateway.get_by_cosplay2_id(
             cosplay2_id=request.id
@@ -83,7 +77,7 @@ class SyncCosplay2:
             else:
                 # A non-approved request with no stored participant is routine.
                 logger.info("Request %s is not approved, skipping", request.id)
-            raise NonApprovedRequest
+            return None
 
         # Check voting title
         if not request.voting_title:
@@ -98,12 +92,12 @@ class SyncCosplay2:
                 )
             else:
                 logger.info("Request %s has no voting title, skipping", request.id)
-            raise RequestHasNoVotingTitle
+            return None
 
         nomination = await self.nomination_gateway.get_by_cosplay2_id(request.topic_id)
         if nomination is None:
             logger.error("Nomination with Cosplay2 id=%s not found", request.topic_id)
-            raise RequestNominationNotFound
+            return None
 
         # Convert request values to participant values
         participant_values = [
@@ -160,16 +154,11 @@ class SyncCosplay2:
             values_by_request[value.request_id].append(value)
 
         for request in requests:
-            # Skip requests that cannot be turned into a participant
-            # (non-approved, missing voting title, or unknown nomination).
-            with contextlib.suppress(
-                RequestHasNoVotingTitle,
-                NonApprovedRequest,
-                RequestNominationNotFound,
-            ):
-                await self._process_request(
-                    request, values_by_request.get(request.id, [])
-                )
+            # Requests that cannot be turned into a participant (non-approved,
+            # missing voting title, or unknown nomination) return None and are
+            # skipped. Stale participants are pruned below by id, so skipping
+            # here is enough.
+            await self._process_request(request, values_by_request.get(request.id, []))
 
         stale_participant_ids = (
             set(await self.participant_gateway.list_cosplay2_ids()) - request_ids
