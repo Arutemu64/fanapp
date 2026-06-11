@@ -101,9 +101,11 @@ export class EventsClient {
 
 		this.#source.onopen = () => {
 			// The stream transport is open. We wait for the backend handshake
-			// before calling the connection fully online.
+			// before calling the connection fully online. The attempt counter is
+			// reset on handshake success, not here: a transport that opens but
+			// never completes the handshake must still count toward `failed`,
+			// otherwise it loops forever instead of surfacing the down banner.
 			this.connectionStatus = 'transport_open';
-			this.#reconnectAttempts = 0;
 			this.#armHandshakeTimeout();
 		};
 
@@ -193,6 +195,8 @@ export class EventsClient {
 
 		this.#clearHandshakeTimer();
 		this.connectionStatus = 'connected';
+		// Connection is fully online; reset backoff so the next blip starts fresh.
+		this.#reconnectAttempts = 0;
 	};
 
 	#armHandshakeTimeout() {
