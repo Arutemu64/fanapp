@@ -42,12 +42,11 @@ class CheckVotingContestEntry:
         if flag and user_votes_count < votable_nominations_count:
             await self.user_flag_gateway.delete(flag)
             await self.uow.commit()
-        else:
-            if user_votes_count >= votable_nominations_count:
-                flag = UserFlag(
-                    id=generate_user_flag_id(),
-                    name=VOTING_CONTEST_FLAG_NAME,
-                    user_id=data.user_id,
-                )
-                await self.user_flag_gateway.add(flag)
-                await self.uow.commit()
+        elif not flag and user_votes_count >= votable_nominations_count:
+            flag = UserFlag(
+                id=generate_user_flag_id(),
+                name=VOTING_CONTEST_FLAG_NAME,
+                user_id=data.user_id,
+            )
+            await self.user_flag_gateway.add(flag)
+            await self.uow.commit()
