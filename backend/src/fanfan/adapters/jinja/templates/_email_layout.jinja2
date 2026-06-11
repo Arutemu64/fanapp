@@ -1,4 +1,6 @@
-{# Shared HTML email layout for auth emails. Keep markup simple for better email client support. #}
+{# Shared HTML email layout for auth emails. Mirrors the app's light card UI: white
+   rounded card on a gray-50 page, Unbounded display heading, orange wordmark, gray
+   palette. Keep markup simple (tables + inline styles) for email client support. #}
 <!doctype html>
 <html lang="ru">
 
@@ -8,44 +10,46 @@
   <title>{{ title }}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  {# Inter (body) + Unbounded (display) match the app's font stack. Clients without
+     web-font support fall back to the system sans-serif declared inline below. #}
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet">
 </head>
 
-<body style="margin:0; padding:0; background-color:#f8fafc; font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color:#0f172a; -webkit-font-smoothing:antialiased;">
+<body style="margin:0; padding:0; background-color:#f9fafb; font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color:#111827; -webkit-font-smoothing:antialiased;">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
-    style="width:100%; border-collapse:collapse; background-color:#f8fafc;">
+    style="width:100%; border-collapse:collapse; background-color:#f9fafb;">
     <tr>
       <td style="padding:40px 16px;">
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
-          style="max-width:500px; margin:0 auto; border-collapse:collapse; background-color:#ffffff; border:1px solid #e2e8f0; border-radius:20px; box-shadow:0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); overflow:hidden;">
-          <!-- Brand gradient border at the very top -->
+          style="max-width:500px; margin:0 auto; border-collapse:collapse; background-color:#ffffff; border:1px solid #e5e7eb; border-radius:16px; box-shadow:0 1px 2px 0 rgba(0, 0, 0, 0.05); overflow:hidden;">
+          <!-- Brand gradient accent at the very top (primary -> secondary) -->
           <tr>
             <td height="4" style="height:4px; font-size:0; line-height:0; background:linear-gradient(90deg, #fe795d, #0ea5e9); background-color:#fe795d;">&nbsp;</td>
           </tr>
-          <!-- Dark premium header -->
+          <!-- Light header: orange wordmark + Unbounded display title -->
           <tr>
-            <td style="padding:32px 32px 24px; background-color:#0f172a; color:#ffffff;">
+            <td style="padding:32px 32px 4px; background-color:#ffffff;">
               <div
-                style="font-size:12px; line-height:16px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#fe795d;">
+                style="font-size:12px; line-height:16px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#ef562f;">
                 ФАН ФАН
               </div>
-              <h1 style="margin:8px 0 0; font-size:24px; line-height:32px; font-weight:700; color:#ffffff; letter-spacing:-0.02em;">
+              <h1 style="margin:8px 0 0; font-family:'Unbounded', 'Inter', -apple-system, sans-serif; font-size:24px; line-height:32px; font-weight:700; color:#111827; letter-spacing:-0.01em;">
                 {{ title }}
               </h1>
             </td>
           </tr>
           <!-- Main content area -->
           <tr>
-            <td style="padding:32px 32px 28px;">
+            <td style="padding:20px 32px 28px;">
               {% block content %}{% endblock %}
             </td>
           </tr>
           <!-- Footer section -->
           <tr>
-            <td style="padding:0 32px 24px; text-align:center; font-size:12px; line-height:18px; color:#94a3b8;">
-              <hr style="margin:0 0 20px; border:0; border-top:1px solid #f1f5f9;" />
-              <div style="font-weight:600; color:#64748b;">Помощник фестиваля ФАН ФАН</div>
-              <div style="margin-top:4px; font-size:11px; color:#94a3b8; opacity:0.9;">
+            <td style="padding:0 32px 28px; text-align:center; font-size:12px; line-height:18px; color:#9ca3af;">
+              <hr style="margin:0 0 20px; border:0; border-top:1px solid #f3f4f6;" />
+              <div style="font-weight:600; color:#4b5563;">Помощник фестиваля ФАН ФАН</div>
+              <div style="margin-top:4px; font-size:11px; color:#9ca3af;">
                 Это автоматическое письмо, отвечать на него не нужно.
               </div>
             </td>
