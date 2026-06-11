@@ -107,7 +107,7 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     assert change.next_event_changed is True
     assert change.mailing_id is not None
 
-    # Смена текущего события создаёт рассылку-уведомление от того же пользователя.
+    # Changing the current event creates a mailing notification from the same user.
     mailing = await mailing_gateway.get(change.mailing_id)
     assert mailing is not None
     assert mailing.by_user_id == schedule_editor.id
@@ -129,7 +129,7 @@ async def test_set_current_event_sets_current_when_none_was_current(
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
 
-    # Ни одно событие ещё не отмечено текущим.
+    # No event has been marked as current yet.
     event = _schedule_event(1, "Первое текущее событие", 1)
     await schedule_gateway.add(event)
     await uow.commit()
@@ -146,7 +146,7 @@ async def test_set_current_event_sets_current_when_none_was_current(
     assert change.type == ScheduleChangeType.SET_AS_CURRENT
     assert change.changed_event is not None
     assert change.changed_event.id == event.id
-    # Предыдущего текущего события не было.
+    # There was no previous current event.
     assert change.argument_event is None
     assert change.user is not None
     assert change.user.id == schedule_editor.id
@@ -216,7 +216,8 @@ async def test_set_current_event_raises_when_event_not_found(
     with pytest.raises(EventNotFound):
         await interactor(SetCurrentScheduleEventInput(event_id=unknown_event_id))
 
-    # Откатываем сброшенный current из незавершённой транзакции после ошибки.
+    # Roll back the cleared current flag from the incomplete
+    # transaction after the error.
     await uow.rollback()
 
     saved_previous_event = await schedule_gateway.get_by_id(previous_current_event.id)
@@ -236,7 +237,7 @@ async def test_set_current_event_without_permission_raises_access_denied(
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
-    # У обычного посетителя нет права SCHEDULE_MANAGE.
+    # A regular visitor does not have the SCHEDULE_MANAGE permission.
     login(visitor)
 
     event = _schedule_event(1, "Событие", 1)
@@ -271,14 +272,15 @@ async def test_set_current_event_twice_in_a_row_raises_too_fast(
     await schedule_gateway.add(second_event)
     await uow.commit()
 
-    # Защита от слишком частых анонсов использует реальный Redis-лок
-    # (announcement_timeout из сидов — 10 секунд), который сбрасывается
-    # между тестами фикстурой reset_redis.
+    # The rate-limit guard for announcements uses a real Redis lock
+    # (announcement_timeout from seeds — 10 seconds), which is cleared
+    # between tests by the reset_redis fixture.
     await interactor(SetCurrentScheduleEventInput(event_id=first_event.id))
     with pytest.raises(ScheduleEditTooFast):
         await interactor(SetCurrentScheduleEventInput(event_id=second_event.id))
 
-    # Второй вызов отклонён до записи изменений: текущим остаётся первое событие.
+    # The second call is rejected before writing changes:
+    # the first event remains current.
     saved_first_event = await schedule_gateway.get_by_id(first_event.id)
     saved_second_event = await schedule_gateway.get_by_id(second_event.id)
     assert saved_first_event is not None

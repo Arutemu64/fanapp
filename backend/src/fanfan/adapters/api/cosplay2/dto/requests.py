@@ -5,12 +5,13 @@ from fanfan.core.vo.participant import ValueType
 
 
 class RequestStatus(enum.StrEnum):
-    PENDING = "pending"  # Проверка
-    WAITING = "waiting"  # Нужен отклик
-    MATERIALS = "materials"  # Ждём материалы
-    REVIEW = "review"  # Рассмотрена
-    APPROVED = "approved"  # Принята
-    DISAPPROVED = "disapproved"  # Отклонена
+    # Comments show the label as displayed on the cosplay2 site (in Russian).
+    PENDING = "pending"  # Under review ("Проверка")
+    WAITING = "waiting"  # Response needed ("Нужен отклик")
+    MATERIALS = "materials"  # Awaiting materials ("Ждём материалы")
+    REVIEW = "review"  # Reviewed ("Рассмотрена")
+    APPROVED = "approved"  # Accepted ("Принята")
+    DISAPPROVED = "disapproved"  # Rejected ("Отклонена")
 
 
 @dataclass(slots=True, frozen=True)

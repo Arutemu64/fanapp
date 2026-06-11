@@ -1,8 +1,8 @@
-// Дропдаун оставляем коротким, чтобы список было удобно читать на телефоне.
+// Keep the dropdown short so the list is easy to read on mobile.
 export const NOTIFICATION_PREVIEW_LIMIT = 5;
 
-// На отдельной странице показываем уведомления порциями, чтобы не грузить весь список сразу.
+// On the dedicated page, load notifications in pages to avoid fetching the entire list at once.
 export const NOTIFICATION_PAGE_SIZE = 20;
 
-// Запрашиваем на один элемент больше, чтобы понять, есть ли следующая страница.
+// Fetch one extra item to determine whether a next page exists.
 export const NOTIFICATION_PAGE_REQUEST_LIMIT = NOTIFICATION_PAGE_SIZE + 1;
