@@ -3,8 +3,8 @@
 How the backend test suite is structured and the conventions to follow when
 adding tests. Tests live under `backend/tests/` and run with `pytest` + `uv`.
 
-> Per repo policy, tests are **not** run automatically on every change — run
-> them on request or in CI. After backend code changes you still always run
+> Tests are optional, not mandatory on every change — run them when useful,
+> on request, or in CI. After backend code changes you still always run
 > `just backend-lint` and `just backend-typecheck`.
 
 ## Two layers
