@@ -1,5 +1,6 @@
 import contextlib
 import logging
+from collections import defaultdict
 from dataclasses import replace
 
 from fanfan.adapters.api.cosplay2.client import Cosplay2Client
@@ -16,6 +17,7 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.participants import (
     NonApprovedRequest,
     RequestHasNoVotingTitle,
+    RequestNominationNotFound,
 )
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.models.participant import Participant, ParticipantValue
@@ -74,26 +76,36 @@ class SyncCosplay2:
             # ...and deleted if they are already in database
             if participant:
                 await self.participant_gateway.delete(participant)
-                logger.error(
+                logger.warning(
                     "Participant %s deleted due to non-approved request",
                     participant.cosplay2_id,
                 )
             else:
-                logger.error("Request %s is not approved", request.id)
+                # A non-approved request with no stored participant is routine.
+                logger.info("Request %s is not approved, skipping", request.id)
             raise NonApprovedRequest
 
         # Check voting title
         if not request.voting_title:
-            logger.error("Request %s has no voting title, cannot proceed", request.id)
+            # An approved request that lost its voting title can no longer be
+            # represented as a participant. Drop any stale participant so it
+            # does not linger with outdated data, then skip it.
+            if participant:
+                await self.participant_gateway.delete(participant)
+                logger.warning(
+                    "Participant %s deleted due to missing voting title",
+                    participant.cosplay2_id,
+                )
+            else:
+                logger.info("Request %s has no voting title, skipping", request.id)
             raise RequestHasNoVotingTitle
 
         nomination = await self.nomination_gateway.get_by_cosplay2_id(request.topic_id)
         if nomination is None:
             logger.error("Nomination with Cosplay2 id=%s not found", request.topic_id)
-            raise NonApprovedRequest
+            raise RequestNominationNotFound
 
         # Convert request values to participant values
-        request_values = [v for v in request_values if v.request_id == request.id]
         participant_values = [
             ParticipantValue(title=r.title, type=r.type, value=r.value)
             for r in request_values
@@ -140,10 +152,24 @@ class SyncCosplay2:
         requests = await self.client.get_all_requests()
         values = await self.client.get_all_values()
         request_ids = {request.id for request in requests}
+
+        # Group values by request id once, so each request lookup is O(1)
+        # instead of rescanning the full values list per request.
+        values_by_request: dict[int, list[RequestValueDTO]] = defaultdict(list)
+        for value in values:
+            values_by_request[value.request_id].append(value)
+
         for request in requests:
-            # Skip non-approved and no voting title requests
-            with contextlib.suppress(RequestHasNoVotingTitle, NonApprovedRequest):
-                await self._process_request(request, values)
+            # Skip requests that cannot be turned into a participant
+            # (non-approved, missing voting title, or unknown nomination).
+            with contextlib.suppress(
+                RequestHasNoVotingTitle,
+                NonApprovedRequest,
+                RequestNominationNotFound,
+            ):
+                await self._process_request(
+                    request, values_by_request.get(request.id, [])
+                )
 
         stale_participant_ids = (
             set(await self.participant_gateway.list_cosplay2_ids()) - request_ids
