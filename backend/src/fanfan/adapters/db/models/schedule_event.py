@@ -44,6 +44,11 @@ class ScheduleEventORM(BaseORM, OrderMixin):
     @declared_attr
     @classmethod
     def queue(cls) -> Mapped[int | None]:
+        # Dense 1..N position among non-skipped events (skipped rows -> NULL).
+        # Kept as a correlated scalar subquery (not a plain window column) so it
+        # can be referenced as an expression in WHERE clauses too, e.g.
+        # get_by_queue and the subscription-distance filters. Do not "optimize"
+        # it into a single-pass window column without preserving that.
         queue_subquery = (
             select(
                 cls.id,
@@ -66,7 +71,10 @@ class ScheduleEventORM(BaseORM, OrderMixin):
             select(
                 cls.id,
                 func.coalesce(
-                    func.sum(cls.duration).over(order_by=cls.order, range_=(None, -1)),
+                    # ROWS frame = "all preceding non-skipped rows". RANGE here
+                    # would frame by the float ``order`` value (which has gaps
+                    # from place_after averaging) and drop events.
+                    func.sum(cls.duration).over(order_by=cls.order, rows=(None, -1)),
                     0,
                 ).label("time_until"),
             )

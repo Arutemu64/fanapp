@@ -1,0 +1,66 @@
+import pytest
+from dishka import AsyncContainer
+
+from fanfan.application.ports.gateways import ScheduleEventGateway
+from fanfan.application.ports.uow import UnitOfWork
+from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.vo.schedule_event import generate_schedule_event_id
+
+pytestmark = [
+    pytest.mark.asyncio,
+    pytest.mark.integration,
+]
+
+
+def _schedule_event(
+    public_number: int,
+    order: float,
+    *,
+    duration: int,
+    is_skipped: bool = False,
+) -> ScheduleEvent:
+    return ScheduleEvent(
+        id=generate_schedule_event_id(),
+        public_number=public_number,
+        title=f"Событие {public_number}",
+        duration=duration,
+        order=order,
+        is_current=False,
+        is_skipped=is_skipped,
+        nomination_title=None,
+        block_title=None,
+    )
+
+
+async def test_queue_and_time_until_with_fractional_orders(
+    dishka_request: AsyncContainer,
+    uow: UnitOfWork,
+):
+    # place_after averages neighbour orders, so orders are floats with gaps
+    # smaller than 1. queue must stay a dense 1..N rank and time_until must
+    # sum every preceding non-skipped duration regardless of those gaps
+    # (a RANGE window frame would frame by the order value and drop events).
+    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+
+    first = _schedule_event(1, order=1.0, duration=10)
+    second = _schedule_event(2, order=1.5, duration=20)
+    skipped = _schedule_event(3, order=1.7, duration=99, is_skipped=True)
+    third = _schedule_event(4, order=2.0, duration=30)
+    for event in (first, second, skipped, third):
+        await schedule_gateway.add(event)
+    await uow.commit()
+
+    schedule = await schedule_gateway.read_list_schedule(user_id=None)
+    by_number = {e.public_number: e for e in schedule}
+
+    # Skipped events are excluded from the queue numbering.
+    assert by_number[1].queue == 1
+    assert by_number[2].queue == 2
+    assert by_number[4].queue == 3
+    assert by_number[3].queue is None
+
+    # time_until = sum of all preceding non-skipped durations.
+    assert by_number[1].time_until == 0
+    assert by_number[2].time_until == 10
+    assert by_number[4].time_until == 30  # 10 + 20, skipped 99 not counted
+    assert by_number[3].time_until is None
