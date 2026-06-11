@@ -1,4 +1,5 @@
 from sqlalchemy import and_, delete, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.mappers.user_flag import UserFlagMapper
@@ -15,9 +16,12 @@ class SqlUserFlagGateway(UserFlagGateway):
 
     async def add(self, flag: UserFlag) -> None:
         flag_orm = self.mapper.from_model(flag)
-        self.session.add(flag_orm)
-        await self.session.flush([flag_orm])
-        return
+        stmt = (
+            insert(UserFlagORM)
+            .values(id=flag_orm.id, name=flag_orm.name, user_id=flag_orm.user_id)
+            .on_conflict_do_nothing(index_elements=["user_id", "name"])
+        )
+        await self.session.execute(stmt)
 
     async def get_by_user(self, user_id: UserId, flag_name: str) -> UserFlag | None:
         stmt = (
