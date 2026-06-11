@@ -56,8 +56,20 @@ jobs:
         run: uv run pytest tests
 
   frontend:
-    name: Frontend (lint, check, build)
+    # Lint, check and build are independent, so we run them as a matrix of
+    # parallel jobs instead of three sequential steps. Wall-clock time drops to
+    # the slowest single task (the build) instead of the sum of all three.
+    name: Frontend (${{ matrix.task.name }})
     runs-on: ubuntu-latest
+    strategy:
+      # Don't cancel the other tasks when one fails: we want to see every
+      # failure (lint, types and build) in a single CI run, not just the first.
+      fail-fast: false
+      matrix:
+        task:
+          - { name: lint, command: pnpm lint }
+          - { name: check, command: pnpm check }
+          - { name: build, command: pnpm build }
     defaults:
       run:
         working-directory: frontend
@@ -79,11 +91,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint (prettier + eslint)
-        run: pnpm lint
-
-      - name: Svelte check
-        run: pnpm check
-
-      - name: Build
-        run: pnpm build
+      - name: Run ${{ matrix.task.name }}
+        run: ${{ matrix.task.command }}
