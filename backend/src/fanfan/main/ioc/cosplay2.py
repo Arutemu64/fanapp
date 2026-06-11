@@ -1,6 +1,7 @@
 from collections.abc import AsyncIterable
 
-from aiohttp import ClientSession
+import httpx
+from adaptix import Retort
 from dishka import Provider, Scope, provide
 
 from fanfan.adapters.api.cosplay2.client import Cosplay2Client
@@ -20,11 +21,13 @@ class Cosplay2Provider(Provider):
 
     @provide
     async def get_cosplay2_client(
-        self, config: Cosplay2Config
+        self, config: Cosplay2Config, retort: Retort
     ) -> AsyncIterable[Cosplay2Client]:
         headers = {
             "X-API-Key": config.api_key,
             "X-API-Secret": config.api_secret.get_secret_value(),
         }
-        async with ClientSession(headers=headers) as session:
-            yield Cosplay2Client(base_url=config.build_api_base_url(), session=session)
+        async with httpx.AsyncClient(
+            base_url=config.build_api_base_url(), headers=headers
+        ) as client:
+            yield Cosplay2Client(client=client, retort=retort)

@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid7
 
-from adaptix import Retort
 from sqlalchemy import DateTime, Uuid
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import JSONB
@@ -19,9 +18,6 @@ if TYPE_CHECKING:
     from fanfan.adapters.db.models.permission import UserPermissionORM
     from fanfan.adapters.db.models.social_account import SocialIdentityORM
     from fanfan.adapters.db.models.ticket import TicketORM
-
-
-retort = Retort()
 
 
 class UserORM(BaseORM):
