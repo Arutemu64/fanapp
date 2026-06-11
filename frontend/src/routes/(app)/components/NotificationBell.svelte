@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import { createApiClient } from '$lib/api';
 	import type { components } from '$lib/api/v1';
 
@@ -14,7 +15,9 @@
 
 	type Notification = components['schemas']['NotificationDTO'];
 
-	let notifications = $state<Notification[]>([]);
+	// Seed from the SSR-loaded layout preview so the unread badge is correct on the
+	// first paint. The SSE 'connected' handler refreshes this once the stream is up.
+	let notifications = $state<Notification[]>(page.data.notificationPreview ?? []);
 	let unreadCount = $derived(notifications.filter((notification) => !notification.seen_at).length);
 	let dropdownOpen = $state(false);
 	const eventsClient = getEventsClient();
@@ -73,9 +76,9 @@
 	}
 
 	onMount(() => {
-		void loadNotifications();
-
 		if (!eventsClient) {
+			// No live stream: the SSR seed is all we have, so refresh once on mount.
+			void loadNotifications();
 			return;
 		}
 
