@@ -28,6 +28,7 @@ export const load: PageLoad = async ({ fetch, depends }) => {
 	}
 
 	return {
+		title: 'Настройки фестиваля',
 		settings: data
 	};
 };

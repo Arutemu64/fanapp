@@ -3,7 +3,7 @@
 	import { ArrowLeftOutline, CheckCircleSolid, UsersGroupOutline } from 'flowbite-svelte-icons';
 	import ParticipantCard from '../components/ParticipantCard.svelte';
 	import VotingStatusAlert from '../components/VotingStatusAlert.svelte';
-	import SectionHeader from '$lib/components/SectionHeader.svelte';
+	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { invalidate } from '$app/navigation';
 	import type { PageProps } from './$types';
 	import type { GetVotingNominationResult } from '$lib/types/voting';
@@ -51,7 +51,10 @@
 	Назад к номинациям
 </Button>
 
-<SectionHeader title={nomination.title}>
+<SectionIntro>
+	<!-- Navbar shows the generic "Голосование"; the nomination name is the page's
+		own heading (h2) so long names stay readable instead of clipping in the navbar. -->
+	<h2 class="text-xl font-bold text-gray-900 dark:text-white">{nomination.title}</h2>
 	<p class="mt-1 text-sm text-gray-500 sm:text-base dark:text-gray-400">
 		{#if hasVoted}
 			<span class="flex items-center gap-1 text-green-600 dark:text-green-400">
@@ -62,7 +65,7 @@
 			Выбери участника, чтобы отдать голос
 		{/if}
 	</p>
-</SectionHeader>
+</SectionIntro>
 
 <VotingStatusAlert votingState={votingStatus} class="mb-4" />
 

@@ -2,7 +2,6 @@
 	import { invalidate } from '$app/navigation';
 	import { page } from '$app/state';
 	import EventCard from './components/EventCard.svelte';
-	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import type { CurrentUserDTO } from '$lib/types/user';
@@ -167,8 +166,6 @@
 <svelte:head>
 	<title>Расписание</title>
 </svelte:head>
-
-<SectionHeader title="Расписание" description="Следи за ходом мероприятия" />
 
 <div {@attach capturePageRoot} class="space-y-4">
 	<!-- Keep filters compact and static so the schedule itself can use sticky headers. -->

@@ -16,6 +16,8 @@ declare global {
 		}
 		interface PageData {
 			user: UserFullDTO | null;
+			/** Page heading rendered in the navbar; set per page via `load`. */
+			title?: string;
 		}
 		// interface PageState {}
 		// interface Platform {}

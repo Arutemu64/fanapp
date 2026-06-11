@@ -1,5 +1,4 @@
 <script lang="ts">
-	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import ScheduleChangeCard from './components/ScheduleChangeCard.svelte';
 	import type { PageProps } from './$types';
 
@@ -10,8 +9,6 @@
 <svelte:head>
 	<title>Изменения расписания</title>
 </svelte:head>
-
-<SectionHeader title="Изменения расписания" description="История изменений событий в расписании" />
 
 {#if scheduleChanges.length === 0}
 	<div

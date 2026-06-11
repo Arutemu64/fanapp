@@ -2,7 +2,7 @@
 	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
-	import SectionHeader from '$lib/components/SectionHeader.svelte';
+	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { PageProps } from './$types';
 	import { Alert, Button, Card, Helper, Input, Label, Spinner, Toggle } from 'flowbite-svelte';
@@ -106,10 +106,7 @@
 	<title>Настройки фестиваля</title>
 </svelte:head>
 
-<SectionHeader
-	title="Настройки фестиваля"
-	description="Управляй голосованием и таймаутом между анонсами расписания."
-/>
+<SectionIntro description="Управляй голосованием и таймаутом между анонсами расписания." />
 
 <Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
 	<form class="space-y-5" onsubmit={handleSubmit}>

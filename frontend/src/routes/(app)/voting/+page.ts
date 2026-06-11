@@ -12,6 +12,7 @@ export const load: PageLoad = async ({ fetch }) => {
 	}
 
 	return {
+		title: 'Голосование',
 		nominations: data?.nominations ?? []
 	};
 };

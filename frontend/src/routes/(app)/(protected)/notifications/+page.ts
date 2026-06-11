@@ -31,6 +31,7 @@ export const load: PageLoad = async ({ fetch, depends }) => {
 	const notifications = data?.notifications ?? [];
 
 	return {
+		title: 'Уведомления',
 		notifications: notifications.slice(0, NOTIFICATION_PAGE_SIZE),
 		hasMore: notifications.length > NOTIFICATION_PAGE_SIZE
 	};

@@ -2,7 +2,7 @@
 	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
-	import SectionHeader from '$lib/components/SectionHeader.svelte';
+	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { Alert, Button, Card, Fileupload, Helper, Label, Spinner } from 'flowbite-svelte';
 
 	let selectedFiles = $state<FileList | null>(null);
@@ -76,10 +76,7 @@
 	<title>Импорт расписания</title>
 </svelte:head>
 
-<SectionHeader
-	title="Импорт расписания"
-	description="Загрузи Excel-файл, чтобы обновить расписание мероприятия."
-/>
+<SectionIntro description="Загрузи Excel-файл, чтобы обновить расписание мероприятия." />
 
 <Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
 	<form class="space-y-4" onsubmit={handleSubmit}>

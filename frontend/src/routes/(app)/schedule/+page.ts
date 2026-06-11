@@ -12,6 +12,7 @@ export const load: PageLoad = async ({ fetch, depends }) => {
 	}
 
 	return {
+		title: 'Расписание',
 		schedule: data?.schedule ?? []
 	};
 };

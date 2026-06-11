@@ -12,7 +12,7 @@
 		NOTIFICATION_PAGE_SIZE
 	} from '$lib/constants/notifications';
 	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
-	import SectionHeader from '$lib/components/SectionHeader.svelte';
+	import SectionIntro from '$lib/components/SectionIntro.svelte';
 
 	type Notification = components['schemas']['NotificationDTO'];
 
@@ -138,9 +138,9 @@
 	});
 </script>
 
-<SectionHeader title="Уведомления" description="Здесь собраны все твои уведомления.">
+<SectionIntro>
 	{#if notifications.length > 0}
-		<div class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+		<div class="text-sm text-gray-500 dark:text-gray-400">
 			{#if unreadCount > 0}
 				Непрочитанных: {unreadCount}
 			{:else}
@@ -148,7 +148,7 @@
 			{/if}
 		</div>
 	{/if}
-</SectionHeader>
+</SectionIntro>
 
 {#if notifications.length === 0}
 	<div
