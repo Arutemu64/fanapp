@@ -23,6 +23,7 @@ from fanfan.main.ioc.interactors import InteractorsProvider
 from fanfan.main.ioc.jinja import JinjaProvider
 from fanfan.main.ioc.redis import RedisProvider
 from fanfan.main.ioc.security import SecurityProvider
+from fanfan.main.ioc.serialization import SerializationProvider
 from fanfan.main.ioc.services import ServicesProvider
 from tests.fakes.email_sender import FakeEmailSender
 from tests.fakes.event_broker import FakeEventBroker
@@ -65,6 +66,7 @@ async def dishka() -> AsyncIterable[AsyncContainer]:
         ServicesProvider(),
         SqlGatewaysProvider(),
         SecurityProvider(),
+        SerializationProvider(),
         JinjaProvider(),
         # Override DbProvider's session with the rollback-per-test session.
         # Must come after DbProvider so it wins the AsyncSession key.
