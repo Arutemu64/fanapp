@@ -5,25 +5,34 @@ from fanfan.adapters.db.mappers.mailing import MailingMapper
 from fanfan.adapters.db.models import MailingORM
 from fanfan.application.dto.mailing import MailingDTO
 from fanfan.application.ports.gateways.mailings import MailingGateway
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.mailing import Mailing
 from fanfan.core.vo.mailing import MailingId
 
 
 class SqlMailingGateway(MailingGateway):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, uow: UnitOfWork):
         self.session = session
+        self.uow = uow
         self.mapper = MailingMapper()
 
     async def add(self, mailing: Mailing) -> None:
         mailing_orm = self.mapper.from_model(mailing)
         self.session.add(mailing_orm)
         await self.session.flush([mailing_orm])
+        # Register so any event recorded on the mailing (e.g. BroadcastQueued)
+        # is written to the outbox when the unit of work commits.
+        self.uow.register(mailing)
         return
 
     async def get(self, mailing_id: MailingId) -> Mailing | None:
         stmt = select(MailingORM).where(MailingORM.id == mailing_id).with_for_update()
         mailing_orm = await self.session.scalar(stmt)
-        return self.mapper.to_model(mailing_orm) if mailing_orm else None
+        if mailing_orm is None:
+            return None
+        mailing = self.mapper.to_model(mailing_orm)
+        self.uow.register(mailing)
+        return mailing
 
     async def save(self, mailing: Mailing) -> None:
         mailing_orm = self.mapper.from_model(mailing)
