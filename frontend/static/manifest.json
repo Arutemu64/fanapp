@@ -1,22 +1,40 @@
 {
-    "short_name": "FAN App",
-    "name": "Твой личный помощник на фестивале",
+    "id": "/",
+    "scope": "/",
+    "lang": "ru",
+    "dir": "ltr",
+    "short_name": "ФАН ФАН",
+    "name": "ФАН ФАН",
+    "description": "Личный помощник зрителя на аниме-фестивале ФАН ФАН: программа выступлений, голосование и push-уведомления.",
+    "categories": ["entertainment", "events"],
     "icons": [
         {
             "src": "/icons/icon-192x192.png",
             "sizes": "192x192",
             "type": "image/png",
-            "purpose": "any maskable"
+            "purpose": "any"
         },
         {
             "src": "/icons/icon-512x512.png",
             "sizes": "512x512",
             "type": "image/png",
-            "purpose": "any maskable"
+            "purpose": "any"
+        },
+        {
+            "src": "/icons/icon-192x192-maskable.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/icons/icon-512x512-maskable.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
         }
     ],
     "start_url": "/",
     "display": "standalone",
-    "theme_color": "black",
+    "theme_color": "#ef562f",
     "background_color": "white"
 }
