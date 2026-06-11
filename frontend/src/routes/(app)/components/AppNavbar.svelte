@@ -2,7 +2,6 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { createApiClient } from '$lib/api';
-	const client = createApiClient();
 	import NotificationBell from './NotificationBell.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
@@ -18,6 +17,8 @@
 	} from 'flowbite-svelte';
 	import { ArrowRightToBracketOutline } from 'flowbite-svelte-icons';
 	import type { CurrentUserDTO } from '$lib/types/user';
+
+	const client = createApiClient();
 
 	let { user, toggleSidebar } = $props<{
 		user: CurrentUserDTO | null;
@@ -65,7 +66,10 @@
 	}
 </script>
 
+<!-- `fluid` makes the navbar content span the full width of the main area so the
+	avatar/bell pin to the right edge; without it Flowbite caps content in a `container`. -->
 <Navbar
+	fluid
 	class="sticky top-0 z-40 border-b border-gray-200/50 bg-white/80 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] backdrop-blur-md transition-colors duration-300 sm:px-6 dark:border-gray-700/50 dark:bg-gray-900/80"
 >
 	<SidebarButton onclick={toggleSidebar} class="md:hidden" />
