@@ -58,7 +58,10 @@ class SyncCosplay2:
         return nomination
 
     async def _process_request(
-        self, request: Request, request_values: list[RequestValueDTO]
+        self,
+        request: Request,
+        request_values: list[RequestValueDTO],
+        nominations_by_cosplay2_id: dict[int, Nomination],
     ) -> Participant | None:
         # Query existing participant
         participant = await self.participant_gateway.get_by_cosplay2_id(
@@ -94,7 +97,9 @@ class SyncCosplay2:
                 logger.info("Request %s has no voting title, skipping", request.id)
             return None
 
-        nomination = await self.nomination_gateway.get_by_cosplay2_id(request.topic_id)
+        # Look up the nomination in the map built from this sync's topics
+        # instead of querying per request (avoids an N+1 over all requests).
+        nomination = nominations_by_cosplay2_id.get(request.topic_id)
         if nomination is None:
             logger.error("Nomination with Cosplay2 id=%s not found", request.topic_id)
             return None
@@ -134,8 +139,11 @@ class SyncCosplay2:
         # Sync topics
         topics = await self.client.get_topics_list()
         topic_ids = {topic.id for topic in topics}
+        # Keep the upserted nominations in memory so request processing can
+        # resolve a request's nomination without a DB query per request.
+        nominations_by_cosplay2_id: dict[int, Nomination] = {}
         for topic in topics:
-            await self._process_topic(topic)
+            nominations_by_cosplay2_id[topic.id] = await self._process_topic(topic)
 
         # Prune nominations the upstream no longer has. Guard against a
         # successful-but-empty API response (a vendor hiccup returning 200 with
@@ -168,7 +176,11 @@ class SyncCosplay2:
             # missing voting title, or unknown nomination) return None and are
             # skipped. Stale participants are pruned below by id, so skipping
             # here is enough.
-            await self._process_request(request, values_by_request.get(request.id, []))
+            await self._process_request(
+                request,
+                values_by_request.get(request.id, []),
+                nominations_by_cosplay2_id,
+            )
 
         # Same empty-response guard as topics above: never let an empty request
         # list delete every stored participant.

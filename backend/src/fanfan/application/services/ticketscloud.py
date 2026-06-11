@@ -20,6 +20,11 @@ class TCloudService:
         self.ticket_gateway = ticket_gateway
 
     async def proceed_order(self, order: Order) -> int:
+        # TODO Handle revocation. This only ever adds tickets for DONE orders;
+        # CANCELLED / EXPIRED / refunded orders are ignored, so a ticket issued
+        # and later cancelled upstream stays valid forever. Revoke (delete or
+        # flag) the matching ticket when the order is no longer DONE, and wire
+        # up removed_tickets_count in SyncTCloud once refunds are handled.
         new_tickets_count = 0
         for order_ticket in order.tickets:
             ticket = await self.ticket_gateway.get_by_ticketscloud_ticket_id(
