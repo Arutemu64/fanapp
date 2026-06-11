@@ -7,15 +7,3 @@ class ParticipantException(AppException):
 
 class ParticipantNotFound(ParticipantException):
     code = "PARTICIPANT_NOT_FOUND"
-
-
-class NonApprovedRequest(ParticipantException):
-    code = "NON_APPROVED_REQUEST"
-
-
-class RequestHasNoVotingTitle(ParticipantException):
-    code = "REQUEST_HAS_NO_VOTING_TITLE"
-
-
-class RequestNominationNotFound(ParticipantException):
-    code = "REQUEST_NOMINATION_NOT_FOUND"

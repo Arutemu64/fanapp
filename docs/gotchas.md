@@ -27,6 +27,14 @@
 
 # Gotchas & Lessons Learned
 
+## TicketsCloud reuses ticket ids — do not revoke tickets by id alone
+
+- **Area**: backend / TicketsCloud integration (`application/services/ticketscloud.py`, `TCloudService.proceed_order`)
+- **Expected**: A ticket id (`ticketscloud_ticket_id`) uniquely and permanently identifies one ticket, so revoking a cancelled/refunded order could just delete the ticket row with that id.
+- **Actual**: TicketsCloud **reuses ticket ids** — after a ticket is revoked, the same id can be resold to a different buyer. Deleting purely by `ticketscloud_ticket_id` would therefore drop a ticket that is now legitimately valid again, or churn rows on every sync.
+- **Fix / Correct approach**: Revocation is intentionally **not implemented**. `proceed_order` is add-only (it creates tickets for `DONE` orders, never deletes). If/when revocation is added, key the decision off more than the id alone (e.g. also `barcode`/`serial`, and the order's current status) so a resold id is not mistaken for the revoked one. See the TODO in `proceed_order`.
+- **Date**: 2026-06-11
+
 ## SvelteKit simulates CORS during SSR — adapter-node must know the real origin
 
 - **Area**: frontend / SvelteKit (adapter-node, `hooks.server.ts` `handleFetch`), infra / Caddy

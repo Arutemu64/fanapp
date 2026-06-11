@@ -20,6 +20,12 @@ class TCloudService:
         self.ticket_gateway = ticket_gateway
 
     async def proceed_order(self, order: Order) -> int:
+        # TODO Handle revocation by deleting the matching ticket when an order
+        # is no longer DONE (CANCELLED / EXPIRED / refunded). NOT implemented
+        # yet: TicketsCloud reuses ticket ids — a revoked ticket can be resold
+        # under the same id, so naive deletion would drop a now-valid ticket.
+        # Any revocation must key off more than ticketscloud_ticket_id (e.g.
+        # also barcode/serial) before it is safe. See docs/gotchas.md.
         new_tickets_count = 0
         for order_ticket in order.tickets:
             ticket = await self.ticket_gateway.get_by_ticketscloud_ticket_id(

@@ -129,7 +129,7 @@ ignore_imports = [
     "fanfan.application.interactors.cosplay2.sync_cosplay2 -> fanfan.adapters.api.cosplay2.dto.requests",
     "fanfan.application.interactors.cosplay2.sync_cosplay2 -> fanfan.adapters.api.cosplay2.dto.topics",
     "fanfan.application.interactors.ticketscloud.sync_tcloud -> fanfan.adapters.api.ticketscloud.client",
-    "fanfan.application.interactors.ticketscloud.process_tcloud_order -> fanfan.adapters.api.ticketscloud.dto.order",
+    "fanfan.application.interactors.ticketscloud.process_tcloud_order -> fanfan.adapters.api.ticketscloud.client",
     "fanfan.application.services.ticketscloud -> fanfan.adapters.api.ticketscloud.config",
     "fanfan.application.services.ticketscloud -> fanfan.adapters.api.ticketscloud.dto.order",
 ]
