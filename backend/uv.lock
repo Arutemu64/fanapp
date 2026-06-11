@@ -496,18 +496,6 @@ wheels = [
 ]
 
 [[package]]
-name = "descanso"
-version = "0.7.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "kiss-headers" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/6b/d5/29786db6e85c961853f1bbfc9988b7f34c98c2a20479916d8a125095ad48/descanso-0.7.1.tar.gz", hash = "sha256:43fffd408b31a02ebafde56d603ecd0f60886a945d8fb87a3859c993630e7ed5", size = 40775, upload-time = "2025-12-06T16:20:51.956Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/2e/e9/ae2ceeedc2cdadd5fce8ced4d271ad83921f2acd6b82972a45f466746868/descanso-0.7.1-py3-none-any.whl", hash = "sha256:d3d5509b7f36ab19691ab9f64b7edc51f24739e7f9ea3ec237fb913f0cff5a49", size = 24111, upload-time = "2025-12-06T16:20:53.004Z" },
-]
-
-[[package]]
 name = "dishka"
 version = "1.10.1"
 source = { registry = "https://pypi.org/simple" }
@@ -587,7 +575,6 @@ dependencies = [
     { name = "asyncpg" },
     { name = "authlib" },
     { name = "click" },
-    { name = "descanso" },
     { name = "dishka" },
     { name = "dishka-faststream" },
     { name = "fastapi" },
@@ -642,7 +629,6 @@ requires-dist = [
     { name = "asyncpg", specifier = ">=0.31.0" },
     { name = "authlib", specifier = ">=1.6.9" },
     { name = "click", specifier = ">=8.1.8" },
-    { name = "descanso", specifier = ">=0.7.1" },
     { name = "dishka", specifier = ">=1.4.0" },
     { name = "dishka-faststream", specifier = ">=0.6.0" },
     { name = "fastapi", specifier = ">=0.115.2" },
@@ -1029,15 +1015,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/d3/c3/2f590052b55cbdd0ace470ee7ee1f685f6882051be93a9374891005623e2/joserfc-1.7.0.tar.gz", hash = "sha256:4aced6ab0c47846f0a531402aec2419a874b91e918df9c4c9da8a82fb559d6c4", size = 232967, upload-time = "2026-06-02T09:59:34.506Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5b/83/b6b62a66a06ce872d9429a5eb5ee20b2002fd9c331b953c94381c1f7c9f9/joserfc-1.7.0-py3-none-any.whl", hash = "sha256:17e5d7a5a35e65442b05efc435a3d5d46696ffa2c8a2ed0eea6f63fc268e3224", size = 70387, upload-time = "2026-06-02T09:59:33.264Z" },
-]
-
-[[package]]
-name = "kiss-headers"
-version = "2.5.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/09/c1/8c6c563328ca0721b7c5fb7dbcd1e3ba48b5a2e336890bb7510c5146b6b6/kiss_headers-2.5.0.tar.gz", hash = "sha256:63ce797b6d85763d4b0e9611bd62d30fe31b0c4edb601838e76a039e4a4cdb59", size = 71911, upload-time = "2025-01-27T07:48:52.453Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/24/60/c63e6ff0ee5c038bc31ebcfd5824730a6637e04cd769080c2dd95f0e3ad6/kiss_headers-2.5.0-py3-none-any.whl", hash = "sha256:db49d2e906aa1da7a7bb98357f4c21aa857dc6ed426753d9d90c527eb1b7aa6a", size = 43579, upload-time = "2025-01-27T07:48:50.092Z" },
 ]
 
 [[package]]

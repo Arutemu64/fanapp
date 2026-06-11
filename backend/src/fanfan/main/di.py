@@ -16,6 +16,7 @@ from fanfan.main.ioc.mail import MailProvider
 from fanfan.main.ioc.push import PushProvider
 from fanfan.main.ioc.redis import RedisProvider
 from fanfan.main.ioc.security import SecurityProvider
+from fanfan.main.ioc.serialization import SerializationProvider
 from fanfan.main.ioc.services import ServicesProvider
 from fanfan.main.ioc.stream import StreamProvider
 from fanfan.main.ioc.tcloud import TCloudProvider
@@ -32,6 +33,7 @@ def get_common_providers() -> list[Provider]:
         RedisProvider(),
         TCloudProvider(),
         SecurityProvider(),
+        SerializationProvider(),
         ServicesProvider(),
         SqlGatewaysProvider(),
         StreamProvider(),

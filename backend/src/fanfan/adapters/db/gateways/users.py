@@ -1,3 +1,4 @@
+from adaptix import Retort
 from sqlalchemy import Boolean, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -22,10 +23,10 @@ from fanfan.core.vo.user import UserId, UserRole
 
 
 class SqlUserGateway(UserGateway):
-    def __init__(self, session: AsyncSession, uow: UnitOfWork):
+    def __init__(self, session: AsyncSession, uow: UnitOfWork, retort: Retort):
         self.session = session
         self.uow = uow
-        self.mapper = UserMapper()
+        self.mapper = UserMapper(retort)
         self.social_mapper = SocialIdentityMapper()
 
     def _to_model(self, user_orm: UserORM | None) -> User | None:

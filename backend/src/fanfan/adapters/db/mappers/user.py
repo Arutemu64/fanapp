@@ -20,8 +20,8 @@ from fanfan.core.vo.user import UserId, Username, UserRole
 
 
 class UserMapper:
-    def __init__(self):
-        self.retort = Retort()
+    def __init__(self, retort: Retort):
+        self.retort = retort
 
     def from_model(self, model: User):
         return UserORM(

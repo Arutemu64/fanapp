@@ -5,8 +5,8 @@ from fanfan.core.models.app_settings import AppSettings
 
 
 class AppSettingsMapper:
-    def __init__(self):
-        self.retort = Retort()
+    def __init__(self, retort: Retort):
+        self.retort = retort
 
     def from_model(self, model: AppSettings) -> AppSettingsORM:
         return AppSettingsORM(id=1, config=self.retort.dump(model))

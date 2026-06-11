@@ -19,9 +19,9 @@ SSE_QUEUE_MAXSIZE = 100
 
 
 class NatsRealtimeGateway(RealtimeGateway):
-    def __init__(self, nc: NATSClient):
+    def __init__(self, nc: NATSClient, retort: Retort):
         self.nc = nc
-        self.retort = Retort()
+        self.retort = retort
 
     async def publish(self, message: SSEMessage, user_id: UserId | None = None) -> None:
         payload = json.dumps(self.retort.dump(message)).encode()

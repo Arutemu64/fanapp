@@ -1,6 +1,7 @@
 from collections.abc import AsyncIterable
 
-from aiohttp import ClientSession
+import httpx
+from adaptix import Retort
 from dishka import Provider, Scope, provide
 
 from fanfan.adapters.api.ticketscloud.client import TCloudClient
@@ -20,8 +21,10 @@ class TCloudProvider(Provider):
 
     @provide
     async def get_tcloud_client(
-        self, config: TCloudConfig
+        self, config: TCloudConfig, retort: Retort
     ) -> AsyncIterable[TCloudClient]:
         headers = {"Authorization": f"key {config.api_key.get_secret_value()}"}
-        async with ClientSession(headers=headers) as session:
-            yield TCloudClient(base_url="https://ticketscloud.com/v2/", session=session)
+        async with httpx.AsyncClient(
+            base_url="https://ticketscloud.com/v2/", headers=headers
+        ) as client:
+            yield TCloudClient(client=client, retort=retort)
