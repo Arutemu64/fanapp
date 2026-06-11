@@ -31,63 +31,52 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
 ## Stack & Core Commands
 * **Frontend**: SvelteKit (Svelte 5 Runes) + Flowbite-Svelte + Tailwind CSS v4 | `pnpm`
 * **Backend**: FastAPI + PostgreSQL (SQLAlchemy + Alembic) + Redis + NATS (FastStream) | `uv`
-* **Command Runner**: `justfile` (Run from root):
-  * `just run-dev` - Start full env via Docker Compose
-  * `just run-prod` - Build & run the prod images locally (test before shipping)
+* **Command Runner**: `justfile` (run from root):
+  * `just run-dev` / `just run-prod` - Start full env (dev / local prod build) via Docker Compose
   * `just deploy` - Server deploy: pull prebuilt GHCR images (`docker-compose.prod.yml`) & restart
   * `just backend-dev` / `just frontend-dev` - Start dev locally
-  * `just backend-migrate` - Run Alembic migrations
-  * `just backend-generate <name>` - Generate migration file
+  * `just backend-migrate` / `just backend-generate <name>` - Run / generate Alembic migration
   * `just frontend-generate-api` - Update SvelteKit types from OpenAPI spec
-  * `just backend-lint` / `just frontend-lint` - Lint & format code (`backend-lint` also runs the import-linter boundary check)
+  * `just backend-lint` / `just frontend-lint` - Lint & format (`backend-lint` also runs the import-linter boundary check)
   * `just backend-typecheck` - Run `ty` type checker on backend
   * `just backend-import-lint` - Enforce layer boundaries (import-linter); see [docs/backend.md](docs/backend.md)
 
 ## Code Navigation (`codegraph`)
-This 550+ file codebase is indexed by [`codegraph`](https://www.npmjs.com/package/@colbymchenry/codegraph), a code-intelligence CLI. In Claude Code web sessions it is auto-installed and indexed by the SessionStart hook (`.claude/hooks/session-start.sh`); locally, install it once with `pnpm add -g @colbymchenry/codegraph && codegraph init`.
+This 550+ file codebase is indexed by [`codegraph`](https://www.npmjs.com/package/@colbymchenry/codegraph), a code-intelligence CLI. Web sessions auto-install and index it via the SessionStart hook (`.claude/hooks/session-start.sh`); locally, install once with `pnpm add -g @colbymchenry/codegraph && codegraph init`.
 
-**Use codegraph first** for any navigation question — it answers in one call and avoids reading whole files:
+**Use codegraph first** for any navigation question — one call, no whole-file reads:
   * `codegraph query <name>` - Find a symbol's definition(s) with `file:line`
   * `codegraph callers <symbol>` / `codegraph callees <symbol>` - Walk the call graph
-  * `codegraph impact <symbol>` - Blast radius before a refactor (what breaks if you change it)
+  * `codegraph impact <symbol>` - Blast radius before a refactor
   * `codegraph node <symbol> --source` - Read one symbol's source without opening the file
   * `codegraph files [--path <dir>]` - Indexed file tree with language + symbol counts
-  * `codegraph sync` - Refresh the index after edits (the index in `.codegraph/` is gitignored)
+  * `codegraph sync` - Refresh the index after edits (`.codegraph/` is gitignored)
 
-We use the CLI on demand rather than the always-on MCP server so it costs no context until invoked. See Core Constraint #13 for mandatory usage triggers.
+On-demand CLI (not the always-on MCP server), so it costs no context until invoked. See Core Constraint #11 for mandatory triggers.
 
 ## Core Constraints (Must Always Follow)
 1. **Russian Copy**: All user-facing labels, placeholders, errors, and toast notifications must be in Russian.
-2. **English Comments**: All code comments (inline `#`, `//`, `<!-- -->`, docstrings) must be written in English. Never write code comments in Russian or any other language.
+2. **English Comments**: All code comments (inline `#`, `//`, `<!-- -->`, docstrings) must be in English — never Russian or any other language.
 3. **Mobile First**: UI must fit narrow layouts; add bottom padding for floating navigation bars. See [docs/frontend.md](docs/frontend.md).
-4. **No Automated Tests**: Do not run unit/integration tests unless explicitly requested. When you do write or run tests, follow [docs/testing.md](docs/testing.md).
-5. **Lint & Type-Check After Backend Changes**: After modifying any backend Python code, run `just backend-lint` and `just backend-typecheck`. Fix all errors before marking the task complete. For frontend changes, run `just frontend-lint` and `just frontend-check`.
-6. **Architectural Isolation**: The inner layers (`core/`, `application/`) must remain pure. They must never import from outer layers—this means absolutely no ORM models, concrete adapters (DB gateways, Redis, Telegram, NATS), presentation routers, or external frameworks (no FastAPI, SQLAlchemy in `core/`). All infra operations must go through abstract ports (`application/ports/`). See [docs/backend.md](docs/backend.md).
-7. **SSR & Frontend State Safety**: Never save request-specific state in global/module singletons. Always follow SvelteKit SSR and component guidelines in [docs/frontend.md](docs/frontend.md).
-8. **Required Skills by Domain**: When working in any of the following domains, the LLM MUST load the listed skills BEFORE making changes:
+4. **Lint & Type-Check After Changes**: After backend Python changes, run `just backend-lint` and `just backend-typecheck`. After frontend changes, run `just frontend-lint` and `just frontend-check`. Fix all errors before marking the task complete. Tests are optional but allowed — run them when useful; see [docs/testing.md](docs/testing.md).
+5. **Architectural Isolation**: The inner layers (`core/`, `application/`) must stay pure — never import from outer layers. No ORM models, concrete adapters (DB gateways, Redis, Telegram, NATS), presentation routers, or external frameworks (no FastAPI/SQLAlchemy in `core/`). All infra goes through abstract ports (`application/ports/`). See [docs/backend.md](docs/backend.md).
+6. **SSR & Frontend State Safety**: Never save request-specific state in global/module singletons. Follow the SvelteKit SSR and component guidelines in [docs/frontend.md](docs/frontend.md).
+7. **Required Skills by Domain**: Before making changes in a domain, the LLM MUST load its skills:
    * Svelte components/modules (`.svelte`, `.svelte.ts`, `.svelte.js`) → `svelte-code-writer`, `svelte-core-bestpractices`
    * Frontend styling/layout → `tailwind-css-patterns`, `ui-ux-pro-max`
-   * Backend/FastAPI work → `fastapi`, `clean-ddd-hexagonal`
+   * Backend/FastAPI → `fastapi`, `clean-ddd-hexagonal`
    * Docker / Infra → `docker-expert`
    * Docs / Writing → `documentation-writer`
-   * Third-party library API questions → use web search to look up current docs; never rely on training data for API signatures
-   * Read the architecture guides in [docs/](docs/) (`backend.md`, `frontend.md`, `api.md`, `testing.md`) before implementing in those areas.
-9. **Keep Documentation in Sync**: After any structural, architectural, or path-level change, verify and update `AGENTS.md` and relevant `docs/*.md` files before marking the task complete.
-   * Did you add, rename, or delete a `lib/` submodule (`services/`, `utils/`, etc.)? Update the **Codebase Map**.
-   * Did you change an important file path referenced in docs (e.g., toast store location, CLI commands, layout paths)? Update the doc that mentions it.
-   * Did you introduce a new architectural pattern (new DI provider, new ports folder, new adapter type)? Update the relevant `docs/*.md` file.
-   * Prefer **documenting patterns and rules** over exact file lists that rot quickly. The Codebase Map should stay high-level; do not list every individual file.
-10. **Clear, Simple Code**: Write straightforward code that a junior developer can read and understand without help. Favor explicit, obvious solutions over clever tricks, dense one-liners, or implicit magic. Use descriptive names, small focused functions, and add a short comment when intent isn't obvious. If a clever approach is unavoidable, explain why in a comment.
-11. **Log Mistakes for Future Selves**: Whenever something behaves differently than you expected — a wrong assumption about an API, a confusing pattern, a non-obvious gotcha — record it in [docs/gotchas.md](docs/gotchas.md) so you (or a less capable AI model) never repeat the mistake. Write a short entry: what you expected, what actually happened, and how to do it right. Skip issues that are purely about the environment you run inside (e.g. bash vs PowerShell, container quirks) — only log issues about *this* codebase and its libraries.
-12. **Verify Jinja Templates by Rendering**: Whenever you create or edit a Jinja template, do not assume it renders correctly. Manually render it by executing it with all the contextual values it expects, and confirm the output matches what you intended before marking the task complete.
-13. **codegraph Before Grep/Read for Symbols**: This codebase has 550+ files. Before reaching for Grep, Glob, or Read to answer a structural question, MUST try codegraph first. Mandatory triggers:
-    * "Where is `X` defined?" → `codegraph query X`
-    * "What calls `X`?" → `codegraph callers X`
-    * "What does `X` call/import?" → `codegraph callees X`
-    * "What breaks if I change `X`?" → `codegraph impact X`
-    * "Show me the source of `X`" → `codegraph node X --source`
-    * Exploring an unfamiliar directory → `codegraph files --path <dir>`
-    Only fall back to Grep/Read if codegraph returns no results or the question is not symbol-based (e.g. searching for a string literal, regex pattern, or config value).
+   * Third-party library APIs → web-search current docs; never rely on training data for signatures
+   * Read the relevant architecture guide in [docs/](docs/) (`backend.md`, `frontend.md`, `api.md`, `testing.md`) before implementing.
+8. **Keep Documentation in Sync**: After any structural, architectural, or path-level change, verify and update `AGENTS.md` and relevant `docs/*.md` before marking the task complete.
+   * Added/renamed/deleted a `lib/` submodule (`services/`, `utils/`, etc.)? Update the **Codebase Map**.
+   * Changed an important file path referenced in docs (toast store, CLI commands, layout paths)? Update that doc.
+   * Introduced a new architectural pattern (DI provider, ports folder, adapter type)? Update the relevant `docs/*.md`.
+   * Prefer **documenting patterns and rules** over exact file lists that rot. Keep the Codebase Map high-level.
+9. **Clear, Simple Code**: Write straightforward code a junior developer can read unaided. Favor explicit, obvious solutions over clever tricks or dense one-liners. Use descriptive names, small focused functions, and a short comment when intent isn't obvious. If a clever approach is unavoidable, explain why in a comment.
+10. **Verify Jinja Templates by Rendering**: After creating or editing a Jinja template, render it with all expected context values and confirm the output before marking the task complete — do not assume it renders correctly.
+11. **codegraph Before Grep/Read for Symbols**: With 550+ files, try codegraph before Grep/Glob/Read for any structural question. Triggers: "Where is `X`?" → `query`; "What calls `X`?" → `callers`; "What does `X` call?" → `callees`; "What breaks if I change `X`?" → `impact`; "Show source of `X`" → `node --source`; unfamiliar dir → `files --path <dir>`. Fall back to Grep/Read only when codegraph returns nothing or the question isn't symbol-based (string literal, regex, config value).
 
 Respond terse like smart caveman. All technical substance stay. Only fluff die.
 
