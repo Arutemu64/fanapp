@@ -57,8 +57,8 @@
 		}
 	};
 
-	// Установку показываем, пока приложение не добавлено и платформа это поддерживает.
-	let showPwa = $derived(!pwa.isInstalled && (pwa.canInstall || pwa.isIOS || pwa.isAndroid));
+	// Установку показываем, пока библиотека сообщает, что она доступна на платформе.
+	let showPwa = $derived(pwa.canInstall);
 
 	let cards = $derived.by<ReadyCard[]>(() => {
 		const list: ReadyCard[] = [];
@@ -83,8 +83,8 @@
 				icon: DownloadIcon,
 				iconClass: accent.secondary.icon,
 				hoverClass: accent.secondary.hover,
-				// Если установка доступна напрямую — запускаем её, иначе ведём в профиль с подсказкой.
-				...(pwa.canInstall ? { onclick: () => pwa.install() } : { href: '/profile' })
+				// Open the install dialog directly; the library handles per-platform UX.
+				onclick: () => pwa.showInstallDialog()
 			});
 		}
 

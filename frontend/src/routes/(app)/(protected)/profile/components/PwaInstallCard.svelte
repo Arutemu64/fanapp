@@ -5,13 +5,13 @@
 	import ProfileCardShell from './ProfileCardShell.svelte';
 
 	const pwa = getPwaService();
-
-	// Keep the helper visible on Android even when the browser only shows
-	// installation through its own menu instead of `beforeinstallprompt`.
-	let showCard = $derived(!pwa.isInstalled && (pwa.canInstall || pwa.isIOS || pwa.isAndroid));
 </script>
 
-{#if showCard}
+<!--
+	The install button opens the @khmyznikov/pwa-install dialog, which renders its
+	own platform-specific instructions (Chromium prompt, iOS "На экран Домой", etc.).
+-->
+{#if pwa.canInstall}
 	<ProfileCardShell
 		title="Установить приложение"
 		description="Добавь ФАН ФАН на главный экран, чтобы быстрее открывать приложение и получать пуш-уведомления."
@@ -20,62 +20,13 @@
 			<DownloadSolid class="h-5 w-5" />
 		{/snippet}
 
-		{#if pwa.canInstall}
-			<Button color="primary" class="min-h-11 w-full sm:w-auto" onclick={() => pwa.install()}>
-				<DownloadSolid class="me-2 h-5 w-5" />
-				Установить
-			</Button>
-		{:else if pwa.isIOS}
-			<p class="mb-3 text-xs text-amber-600 dark:text-amber-400">
-				Установка работает только через Safari
-			</p>
-			<ol class="space-y-2 text-sm text-gray-700 dark:text-gray-200">
-				<li class="flex items-start gap-3">
-					<span
-						class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700 dark:bg-primary-900 dark:text-primary-300"
-						>1</span
-					>
-					Открой этот сайт в браузере Safari
-				</li>
-				<li class="flex items-start gap-3">
-					<span
-						class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700 dark:bg-primary-900 dark:text-primary-300"
-						>2</span
-					>
-					Нажми «···» справа от адресной строки, затем «Поделиться»
-				</li>
-				<li class="flex items-start gap-3">
-					<span
-						class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700 dark:bg-primary-900 dark:text-primary-300"
-						>3</span
-					>
-					Прокрути список и выбери «На экран "Домой"»
-				</li>
-				<li class="flex items-start gap-3">
-					<span
-						class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700 dark:bg-primary-900 dark:text-primary-300"
-						>4</span
-					>
-					Нажми «Добавить» в правом верхнем углу
-				</li>
-			</ol>
-		{:else if pwa.isAndroid}
-			<div class="space-y-2">
-				<div
-					class="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400"
-				>
-					<DownloadSolid class="h-5 w-5 shrink-0 text-gray-400" />
-					<span>
-						Открой меню браузера и выбери «Установить приложение» или «Добавить на главный экран».
-					</span>
-				</div>
-
-				{#if !pwa.isSecureContext}
-					<p class="text-sm leading-relaxed text-gray-500 dark:text-gray-400">
-						Если пункта нет, открой сайт по HTTPS — Android не показывает установку на обычном HTTP.
-					</p>
-				{/if}
-			</div>
-		{/if}
+		<Button
+			color="primary"
+			class="min-h-11 w-full sm:w-auto"
+			onclick={() => pwa.showInstallDialog()}
+		>
+			<DownloadSolid class="me-2 h-5 w-5" />
+			Установить
+		</Button>
 	</ProfileCardShell>
 {/if}

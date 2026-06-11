@@ -47,6 +47,7 @@
 		"vite": "^8.0.16"
 	},
 	"dependencies": {
+		"@khmyznikov/pwa-install": "^0.6.3",
 		"@sentry/sveltekit": "^8.55.2",
 		"openapi-fetch": "^0.17.0",
 		"set-cookie-parser": "^3.1.0"

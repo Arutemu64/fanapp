@@ -112,7 +112,7 @@
 			return;
 		}
 
-		if (pwa.isIOS && !pwa.isInstalled) {
+		if (pwa.isApplePlatform && !pwa.isInstalled) {
 			showIosPwaModal = true;
 			return;
 		}
