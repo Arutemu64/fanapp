@@ -137,10 +137,20 @@ class SyncCosplay2:
         for topic in topics:
             await self._process_topic(topic)
 
-        stale_nomination_ids = (
-            set(await self.nomination_gateway.list_cosplay2_ids()) - topic_ids
-        )
-        await self.nomination_gateway.delete_by_cosplay2_ids(list(stale_nomination_ids))
+        # Prune nominations the upstream no longer has. Guard against a
+        # successful-but-empty API response (a vendor hiccup returning 200 with
+        # []): without this an empty topic list marks every stored nomination as
+        # stale and wipes the table. Leaving stale rows is recoverable; a mass
+        # delete is not.
+        if topics:
+            stale_nomination_ids = (
+                set(await self.nomination_gateway.list_cosplay2_ids()) - topic_ids
+            )
+            await self.nomination_gateway.delete_by_cosplay2_ids(
+                list(stale_nomination_ids)
+            )
+        else:
+            logger.warning("Cosplay2 returned no topics, skipping nomination cleanup")
 
         # Sync requests and values
         requests = await self.client.get_all_requests()
@@ -160,11 +170,18 @@ class SyncCosplay2:
             # here is enough.
             await self._process_request(request, values_by_request.get(request.id, []))
 
-        stale_participant_ids = (
-            set(await self.participant_gateway.list_cosplay2_ids()) - request_ids
-        )
-        await self.participant_gateway.delete_by_cosplay2_ids(
-            list(stale_participant_ids)
-        )
+        # Same empty-response guard as topics above: never let an empty request
+        # list delete every stored participant.
+        if requests:
+            stale_participant_ids = (
+                set(await self.participant_gateway.list_cosplay2_ids()) - request_ids
+            )
+            await self.participant_gateway.delete_by_cosplay2_ids(
+                list(stale_participant_ids)
+            )
+        else:
+            logger.warning(
+                "Cosplay2 returned no requests, skipping participant cleanup"
+            )
 
         await self.uow.commit()
