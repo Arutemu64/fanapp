@@ -4,12 +4,12 @@ from fanfan.core.models.base import AggregateRoot
 
 
 class UnitOfWork(Protocol):
-    """Transaction boundary that also dispatches recorded domain events.
+    """Transaction boundary that also captures recorded domain events.
 
     Repositories call ``register`` for every aggregate they add or load, so the
     interactor never has to pull and publish events by hand. On ``commit`` the
-    transaction is persisted first, then the domain events recorded on those
-    aggregates are published.
+    domain events recorded on those aggregates are written to the transactional
+    outbox in the same transaction; the relay delivers them to NATS afterwards.
     """
 
     def register(self, entity: AggregateRoot) -> None: ...

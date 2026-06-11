@@ -80,7 +80,7 @@ await self.vote_repo.add(vote)
 await self.uow.commit()  # writes the vote + a VoteCreated outbox row atomically
 ```
 
-`Vote` and `ScheduleChange` follow this pattern; their gateways register the aggregate in every `add`/`get` method. The `UnitOfWork` pulls events from each registered aggregate exactly once (the internal event list is cleared on store) and writes them as outbox rows in the same transaction, so a rolled-back transaction never emits events. When you add a new aggregate that records events, register it in its gateway's `add`/`get` methods — that is the only wiring required.
+`Vote`, `ScheduleChange`, and `Mailing` follow this pattern; their gateways register the aggregate in every `add`/`get` method. `Mailing.queue_broadcast()` records `BroadcastQueued`, so a broadcast lands in the outbox and is delivered atomically with its mailing row. The `UnitOfWork` pulls events from each registered aggregate exactly once (the internal event list is cleared on store) and writes them as outbox rows in the same transaction, so a rolled-back transaction never emits events. When you add a new aggregate that records events, register it in its gateway's `add`/`get` methods — that is the only wiring required.
 
 ### Transactional outbox
 
@@ -98,13 +98,15 @@ This makes domain-event delivery atomic with the write, at the cost of one poll-
 Some events are not tied to a single aggregate's committed state change — they are application-level triggers to infrastructure (e.g. "queue a notification for these users", "send an email code"). These are constructed and published directly in the interactor via an injected `EventBroker`, and are **not** routed through the `UnitOfWork`:
 
 ```python
-# application/interactors/notifications/send_broadcast.py
+# application/interactors/notifications/send_personal_notification.py
 await self.events_broker.publish(
-    BroadcastQueued(mailing_id=mailing.id, body=data.body, roles=data.roles)
+    NotificationQueued(notification=...)
 )
 ```
 
-`NotificationQueued`, `BroadcastQueued`, and `MailingCancelled` follow this pattern, as do the user email-code events `EmailLoginCodeRequested` (`request_login_code.py`) and `EmailConfirmationCodeRequested` when sent as a standalone "resend a code" (`request_email_code.py`). These represent "send a code" commands, not aggregate state changes — `request_login_code` / `request_email_code` change no persistent state and may run with no commit at all — so they are **not** recorded on the `User` aggregate. The interactor constructs and publishes them directly via `EventBroker`.
+`NotificationQueued` and `MailingCancelled` follow this pattern, as do the user email-code events `EmailLoginCodeRequested` (`request_login_code.py`) and `EmailConfirmationCodeRequested` when sent as a standalone "resend a code" (`request_email_code.py`). These represent "send a code" commands, not aggregate state changes — `request_login_code` / `request_email_code` change no persistent state and may run with no commit at all — so they are **not** recorded on the `User` aggregate. The interactor constructs and publishes them directly via `EventBroker`.
+
+> `BroadcastQueued` used to be published here too, but it guards a committed `Mailing` row, so it now flows through the outbox via `Mailing.queue_broadcast()` (see [Domain Events](#domain-events)).
 
 > Keep domain events honest: a domain event must record an actual state change (past tense). Do **not** call `record_event()` for an action that mutates nothing — model it as a service event published by the interactor instead. `User.request_email_change()` is the counter-example that *is* a domain event: it sets `pending_email`, so it records `EmailConfirmationCodeRequested` and that event flows through `uow.commit()` (the `SqlUserGateway` registers every `User` it adds or loads).
 
