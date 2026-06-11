@@ -20,9 +20,15 @@ export class PwaService {
 
 	constructor() {
 		if (browser) {
+			// Detect standalone mode synchronously — reliable and race-free, unlike the
+			// element's `isUnderStandaloneMode`, which is set during its async init.
+			this.#isInstalled = this.#detectStandalone();
+
 			// Registers the <pwa-install> custom element. Browser-only because the
 			// module touches `window` at import time and would break SSR.
-			import('@khmyznikov/pwa-install');
+			import('@khmyznikov/pwa-install').catch(() => {
+				// Chunk failed to load; the install card just stays hidden.
+			});
 		}
 	}
 
@@ -51,17 +57,25 @@ export class PwaService {
 		};
 	}
 
+	// Standalone (installed) detection that does not depend on the element.
+	#detectStandalone() {
+		return (
+			window.matchMedia('(display-mode: standalone)').matches ||
+			(navigator as { standalone?: boolean }).standalone === true
+		);
+	}
+
 	// Arrow function so it can be used directly as an event listener.
 	#syncState = () => {
 		const el = this.#element;
 		if (!el) return;
 
-		this.#isInstalled = el.isUnderStandaloneMode;
+		// Combine our own detection with the element's signal (e.g. install-success).
+		this.#isInstalled = this.#detectStandalone() || el.isUnderStandaloneMode;
 		this.#isApplePlatform = el.isAppleMobilePlatform || el.isAppleDesktopPlatform;
 		// Offer installation when Chromium reports it is available, or on Apple
 		// platforms where the library shows its own how-to instructions instead.
-		this.#canInstall =
-			!el.isUnderStandaloneMode && (el.isInstallAvailable || this.#isApplePlatform);
+		this.#canInstall = !this.#isInstalled && (el.isInstallAvailable || this.#isApplePlatform);
 	};
 
 	get canInstall() {
