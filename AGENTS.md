@@ -16,7 +16,7 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
 │   └── src/
 │       ├── routes/           # Pages & layout files
 │       └── lib/
-│           ├── components/   # Reusable UI (SectionHeader, ToastContainer, etc.)
+│           ├── components/   # Reusable UI (SectionIntro, ToastContainer, etc.)
 │           ├── api/          # Shared openapi-fetch client & generated types (v1.d.ts)
 │           ├── types/        # Local TS interfaces and schema type overrides
 │           ├── services/     # Svelte 5 reactivity services (toasts, events, PWA)

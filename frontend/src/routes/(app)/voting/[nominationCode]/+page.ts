@@ -21,6 +21,7 @@ export const load: PageLoad = async ({ params, fetch, depends }) => {
 	}
 
 	return {
+		title: data.title,
 		nomination: data
 	};
 };

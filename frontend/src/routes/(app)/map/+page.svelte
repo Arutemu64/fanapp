@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { asset } from '$app/paths';
-	import SectionHeader from '$lib/components/SectionHeader.svelte';
+	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { Button } from 'flowbite-svelte';
 	import { ArrowUpRightFromSquareOutline, MapPinAltOutline } from 'flowbite-svelte-icons';
 
@@ -41,8 +41,7 @@
 	<title>Карта площадки</title>
 </svelte:head>
 
-<SectionHeader
-	title="Карта площадки"
+<SectionIntro
 	description="Нажми на превью, чтобы открыть оригинал карты в новой вкладке и увеличить изображение привычными жестами браузера."
 />
 

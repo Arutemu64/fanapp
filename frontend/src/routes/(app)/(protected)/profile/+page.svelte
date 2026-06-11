@@ -3,7 +3,6 @@
 	import BasicUserInfoCard from './components/BasicUserInfoCard.svelte';
 	import TicketLinkCard from './components/TicketLinkCard.svelte';
 	import PushNotificationsCard from './components/PushNotificationsCard.svelte';
-	import SectionHeader from '$lib/components/SectionHeader.svelte';
 	import SecurityCard from './components/SecurityCard.svelte';
 	import PwaInstallCard from './components/PwaInstallCard.svelte';
 	import IconSvelte from '~icons/simple-icons/svelte';
@@ -48,8 +47,6 @@
 <svelte:head>
 	<title>Профиль</title>
 </svelte:head>
-
-<SectionHeader title="Профиль" description="Управление твоим аккаунтом" />
 
 <div class="flex flex-col gap-4">
 	<!-- Basic User Info Card -->

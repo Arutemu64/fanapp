@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
-	import SectionHeader from '$lib/components/SectionHeader.svelte';
+	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Alert, Button, Card, Helper, Label, Spinner, Textarea } from 'flowbite-svelte';
 
@@ -76,8 +76,7 @@
 	<title>Обратная связь</title>
 </svelte:head>
 
-<SectionHeader
-	title="Обратная связь"
+<SectionIntro
 	description="Расскажите, что нравится в приложении, а что хотелось бы улучшить. Мы читаем каждое сообщение."
 />
 

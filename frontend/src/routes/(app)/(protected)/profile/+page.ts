@@ -30,6 +30,7 @@ export const load: PageLoad = async ({ fetch, depends, url }) => {
 	]);
 
 	return {
+		title: 'Профиль',
 		telegramLinkError: getTelegramLinkErrorCode(url),
 		pushSubscriptions: pushSubscriptions ?? [],
 		socialAccounts: socialAccounts ?? []

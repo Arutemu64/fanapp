@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
-	import SectionHeader from '$lib/components/SectionHeader.svelte';
+	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Alert, Button, Card, Checkbox, Helper, Label, Spinner, Textarea } from 'flowbite-svelte';
 
@@ -98,8 +98,7 @@
 	<title>Рассылка уведомлений</title>
 </svelte:head>
 
-<SectionHeader
-	title="Рассылка уведомлений"
+<SectionIntro
 	description="Создавай массовые рассылки уведомлений для выбранных категорий участников фестиваля."
 />
 

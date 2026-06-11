@@ -53,7 +53,7 @@ Two fonts are defined in `app.css`: `font-sans` (Inter, body text) and `font-dis
 | Role | Classes | Notes |
 |---|---|---|
 | Hero heading | `font-display text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight` | `font-display` here only |
-| Page heading | `text-xl sm:text-2xl font-bold leading-tight` | Used in `SectionHeader` |
+| Page heading | `text-lg sm:text-xl font-semibold leading-tight` | The page title rendered in `AppNavbar` (see "Page titles" below) |
 | Card/section heading | `text-base sm:text-lg font-semibold leading-snug` | h2/h3 inside cards |
 | Body paragraph | `text-sm sm:text-base leading-relaxed` | Default for descriptive text |
 | Secondary/helper | `text-xs sm:text-sm leading-relaxed` | Short helper lines next to controls |
@@ -185,12 +185,12 @@ Never copy-paste class attribute values from rich-text sources. Unicode curly qu
 **Placement rule** — decide where a component lives by *who uses it*:
 
 * Used by **one route subtree** → put it in a `components/` subfolder next to the page that uses it (e.g. `routes/(app)/schedule/components/EventCard.svelte`). Always the `components/` subfolder — never loose in the route folder.
-* Used across **different route subtrees** → promote it to `frontend/src/lib/components/` (e.g. `SectionHeader`, `OtpInput`, `ToastContainer`).
+* Used across **different route subtrees** → promote it to `frontend/src/lib/components/` (e.g. `SectionIntro`, `OtpInput`, `ToastContainer`).
 * App-shell pieces used only once (navbar/sidebar/banner) stay colocated under `routes/(app)/components/` — single-use does **not** justify `lib/`.
 * `lib/` modules (`utils/`, `services/`, `server/`) follow the same spirit: only `export` what is consumed outside the file, and delete unused exports rather than letting them accumulate.
 
 Before writing any new component, check existing items in `frontend/src/lib/components/`:
-* **Section Headers**: Use `$lib/components/SectionHeader.svelte` for screen titles and subtitles.
+* **Page titles**: The screen title lives in the top `AppNavbar`, not in the page body. Each page sets it by returning `title` from its `load` (`page.data.title`); `AppNavbar` renders it as the page `<h1>`. For optional intro text or extra context below the navbar, use `$lib/components/SectionIntro.svelte` (description + children, no title).
 * **Toasts**: Trigger alerts via `$lib/services/toasts.svelte.ts` and display them with `$lib/components/ToastContainer.svelte`.
 * **Notification bodies**: A notification `body` arrives as a pre-sanitized, safe HTML subset (the backend's `HtmlSanitizer` is the single source of truth — see [backend.md](backend.md)). Render it with `{@html notification.body}` (in `ToastContainer.svelte` and `NotificationListItem.svelte`), keeping `whitespace-pre-line` so the stored `\n` line breaks show. The notification `title` is plain text — render it with normal `{title}` interpolation. Do **not** add a client-side sanitizer or `{@html}` any other API field.
 * **Page Containers**: Match the spacing/layout patterns established in `frontend/src/routes/(app)/+layout.svelte`.
