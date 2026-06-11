@@ -25,7 +25,7 @@ class TCloudService:
         # yet: TicketsCloud reuses ticket ids — a revoked ticket can be resold
         # under the same id, so naive deletion would drop a now-valid ticket.
         # Any revocation must key off more than ticketscloud_ticket_id (e.g.
-        # also barcode/serial) before it is safe. See docs/gotchas.md.
+        # also barcode/serial) before it is safe.
         new_tickets_count = 0
         for order_ticket in order.tickets:
             ticket = await self.ticket_gateway.get_by_ticketscloud_ticket_id(

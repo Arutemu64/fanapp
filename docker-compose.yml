@@ -15,7 +15,7 @@ services:
       # X-Forwarded-* headers when building event.url. Without these it assumes
       # http:// during SSR, so a same-origin https://<site>/api call looks
       # cross-origin and SvelteKit's SSR CORS simulation rejects it (the bug
-      # where pages fail only during server-side rendering). See docs/gotchas.md.
+      # where pages fail only during server-side rendering).
       PROTOCOL_HEADER: "x-forwarded-proto"
       HOST_HEADER: "x-forwarded-host"
     env_file:
