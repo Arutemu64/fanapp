@@ -1,9 +1,8 @@
 from sqlalchemy import Boolean, cast, func, select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from fanfan.adapters.db.constraints import get_constraint_name
+from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.mappers.social_account import SocialIdentityMapper
 from fanfan.adapters.db.mappers.user import UserMapper
 from fanfan.adapters.db.models import SocialIdentityORM, UserORM
@@ -40,18 +39,15 @@ class SqlUserGateway(UserGateway):
 
     async def add(self, user: User) -> None:
         user_orm = self.mapper.from_model(user)
-        try:
+        with translate_integrity_error(
+            {
+                "ix_users_email": UserAlreadyExists,
+                "ix_users_username": UserAlreadyExists,
+                "ix_users_pending_email": UserAlreadyExists,
+            }
+        ):
             self.session.add(user_orm)
             await self.session.flush([user_orm])
-        except IntegrityError as e:
-            constraint_name = get_constraint_name(e)
-            if constraint_name in {
-                "ix_users_email",
-                "ix_users_username",
-                "ix_users_pending_email",
-            }:
-                raise UserAlreadyExists from e
-            raise
         self.uow.register(user)
 
     async def get_by_id(self, user_id: UserId) -> User | None:
@@ -112,16 +108,15 @@ class SqlUserGateway(UserGateway):
 
     async def save(self, user: User) -> None:
         user_orm = self.mapper.from_model(user)
-        try:
+        with translate_integrity_error(
+            {
+                "ix_users_username": UsernameAlreadyTaken,
+                "ix_users_email": EmailAlreadyExists,
+                "ix_users_pending_email": EmailAlreadyExists,
+            }
+        ):
             user_orm = await self.session.merge(user_orm)
             await self.session.flush([user_orm])
-        except IntegrityError as e:
-            constraint_name = get_constraint_name(e)
-            if constraint_name == "ix_users_username":
-                raise UsernameAlreadyTaken from e
-            if constraint_name in {"ix_users_email", "ix_users_pending_email"}:
-                raise EmailAlreadyExists from e
-            raise
         self.uow.register(user)
 
     # Read projections (return DTOs, not aggregates)

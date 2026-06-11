@@ -1,4 +1,6 @@
 import re
+from collections.abc import Iterator, Mapping
+from contextlib import contextmanager
 
 from sqlalchemy.exc import IntegrityError
 
@@ -25,3 +27,30 @@ def get_constraint_name(error: IntegrityError) -> str | None:
         return match.group(1)
 
     return None
+
+
+@contextmanager
+def translate_integrity_error(
+    mapping: Mapping[str, type[Exception]],
+) -> Iterator[None]:
+    """Map a DB constraint violation to a domain exception.
+
+    On IntegrityError, look up the violated constraint name and raise the
+    matching domain exception. Unmapped constraints are re-raised unchanged,
+    so an unexpected violation (a NOT NULL or CHECK bug) is never silently
+    swallowed or mislabeled.
+
+    Wrap the write that can violate a constraint, e.g.::
+
+        with translate_integrity_error({"uq_votes_user_id": VoteAlreadyExists}):
+            self.session.add(vote_orm)
+            await self.session.flush([vote_orm])
+    """
+    try:
+        yield
+    except IntegrityError as e:
+        constraint_name = get_constraint_name(e)
+        exception = mapping.get(constraint_name) if constraint_name else None
+        if exception is not None:
+            raise exception from e
+        raise

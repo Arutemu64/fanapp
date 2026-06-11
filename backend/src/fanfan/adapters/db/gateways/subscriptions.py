@@ -1,9 +1,8 @@
 from sqlalchemy import delete, select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, undefer
 
-from fanfan.adapters.db.constraints import get_constraint_name
+from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.mappers.subscription import SubscriptionMapper
 from fanfan.adapters.db.models import ScheduleEventORM, SubscriptionORM
 from fanfan.application.dto.subscription import SubscriptionFullDTO
@@ -37,15 +36,13 @@ class SqlSubscriptionGateway(SubscriptionGateway):
     async def add(self, subscription: Subscription) -> None:
         subscription_orm = self.mapper.from_model(subscription)
         self.session.add(subscription_orm)
-        try:
+        with translate_integrity_error(
+            {
+                "fk_subscriptions_event_id_schedule": EventNotFound,
+                "uq_subscriptions_event_id": SubscriptionAlreadyExists,
+            }
+        ):
             await self.session.flush([subscription_orm])
-        except IntegrityError as e:
-            constraint_name = get_constraint_name(e)
-            if constraint_name == "fk_subscriptions_event_id_schedule":
-                raise EventNotFound from e
-            if constraint_name == "uq_subscriptions_event_id":
-                raise SubscriptionAlreadyExists from e
-            raise
 
     async def get_by_id(self, subscription_id: SubscriptionId) -> Subscription | None:
         stmt = (

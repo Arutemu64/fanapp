@@ -1,8 +1,7 @@
 from sqlalchemy import and_, delete, select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fanfan.adapters.db.constraints import get_constraint_name
+from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.mappers.social_account import SocialIdentityMapper
 from fanfan.adapters.db.models import SocialIdentityORM
 from fanfan.application.dto.user import UserSocialAccountDTO
@@ -19,14 +18,13 @@ class SqlSocialIdentityGateway(SocialIdentityGateway):
 
     async def add(self, social_identity: SocialIdentity) -> None:
         social_id_orm = self.social_mapper.from_model(social_identity)
-        try:
+        with translate_integrity_error(
+            {
+                "uq_social_accounts_provider": TelegramAlreadyLinkedToAnotherUser,
+            }
+        ):
             self.session.add(social_id_orm)
             await self.session.flush([social_id_orm])
-        except IntegrityError as e:
-            constraint_name = get_constraint_name(e)
-            if constraint_name == "uq_social_accounts_provider":
-                raise TelegramAlreadyLinkedToAnotherUser from e
-            raise
 
     async def get_by_provider(
         self, user_id: UserId, provider: str
