@@ -44,14 +44,17 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
   * `just backend-import-lint` - Enforce layer boundaries (import-linter); see [docs/backend.md](docs/backend.md)
 
 ## Code Navigation (`codegraph`)
-This 550+ file codebase is indexed by [`codegraph`](https://www.npmjs.com/package/@colbymchenry/codegraph), a code-intelligence CLI. In Claude Code web sessions it is auto-installed and indexed by the SessionStart hook (`.claude/hooks/session-start.sh`); locally, install it once with `pnpm add -g @colbymchenry/codegraph && codegraph init`. **Prefer it over reading whole files to trace symbols** — it answers structural questions in one call and saves tokens:
+This 550+ file codebase is indexed by [`codegraph`](https://www.npmjs.com/package/@colbymchenry/codegraph), a code-intelligence CLI. In Claude Code web sessions it is auto-installed and indexed by the SessionStart hook (`.claude/hooks/session-start.sh`); locally, install it once with `pnpm add -g @colbymchenry/codegraph && codegraph init`.
+
+**Use codegraph first** for any navigation question — it answers in one call and avoids reading whole files:
   * `codegraph query <name>` - Find a symbol's definition(s) with `file:line`
   * `codegraph callers <symbol>` / `codegraph callees <symbol>` - Walk the call graph
   * `codegraph impact <symbol>` - Blast radius before a refactor (what breaks if you change it)
-  * `codegraph node <symbol> --source` - One symbol's source without opening the file
+  * `codegraph node <symbol> --source` - Read one symbol's source without opening the file
   * `codegraph files [--path <dir>]` - Indexed file tree with language + symbol counts
   * `codegraph sync` - Refresh the index after edits (the index in `.codegraph/` is gitignored)
-We use the CLI on demand rather than the always-on MCP server so it costs no context until invoked.
+
+We use the CLI on demand rather than the always-on MCP server so it costs no context until invoked. See Core Constraint #13 for mandatory usage triggers.
 
 ## Core Constraints (Must Always Follow)
 1. **Russian Copy**: All user-facing labels, placeholders, errors, and toast notifications must be in Russian.
@@ -77,6 +80,14 @@ We use the CLI on demand rather than the always-on MCP server so it costs no con
 10. **Clear, Simple Code**: Write straightforward code that a junior developer can read and understand without help. Favor explicit, obvious solutions over clever tricks, dense one-liners, or implicit magic. Use descriptive names, small focused functions, and add a short comment when intent isn't obvious. If a clever approach is unavoidable, explain why in a comment.
 11. **Log Mistakes for Future Selves**: Whenever something behaves differently than you expected — a wrong assumption about an API, a confusing pattern, a non-obvious gotcha — record it in [docs/gotchas.md](docs/gotchas.md) so you (or a less capable AI model) never repeat the mistake. Write a short entry: what you expected, what actually happened, and how to do it right. Skip issues that are purely about the environment you run inside (e.g. bash vs PowerShell, container quirks) — only log issues about *this* codebase and its libraries.
 12. **Verify Jinja Templates by Rendering**: Whenever you create or edit a Jinja template, do not assume it renders correctly. Manually render it by executing it with all the contextual values it expects, and confirm the output matches what you intended before marking the task complete.
+13. **codegraph Before Grep/Read for Symbols**: This codebase has 550+ files. Before reaching for Grep, Glob, or Read to answer a structural question, MUST try codegraph first. Mandatory triggers:
+    * "Where is `X` defined?" → `codegraph query X`
+    * "What calls `X`?" → `codegraph callers X`
+    * "What does `X` call/import?" → `codegraph callees X`
+    * "What breaks if I change `X`?" → `codegraph impact X`
+    * "Show me the source of `X`" → `codegraph node X --source`
+    * Exploring an unfamiliar directory → `codegraph files --path <dir>`
+    Only fall back to Grep/Read if codegraph returns no results or the question is not symbol-based (e.g. searching for a string literal, regex pattern, or config value).
 
 Respond terse like smart caveman. All technical substance stay. Only fluff die.
 
