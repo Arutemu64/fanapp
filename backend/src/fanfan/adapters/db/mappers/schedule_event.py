@@ -39,8 +39,15 @@ class ScheduleEventMapper:
 
     @staticmethod
     def parse_full_dto(
-        event_orm: ScheduleEventORM, subscription_orm: SubscriptionORM | None
+        event_orm: ScheduleEventORM,
+        subscription_orm: SubscriptionORM | None,
+        *,
+        queue: int | None,
+        time_until: int | None,
     ) -> ScheduleEventFullDTO:
+        # queue/time_until are passed in explicitly: single-row reads supply the
+        # undeferred column_property values, while the list query supplies the
+        # columns from its single joined ranking subquery.
         return ScheduleEventFullDTO(
             id=ScheduleEventId(event_orm.id),
             public_number=event_orm.public_id,
@@ -51,8 +58,8 @@ class ScheduleEventMapper:
             is_skipped=event_orm.is_skipped,
             nomination_title=event_orm.nomination_title,
             block_title=event_orm.block_title,
-            queue=event_orm.queue,
-            time_until=event_orm.time_until,
+            queue=queue,
+            time_until=time_until,
             user_subscription=ScheduleEventSubscriptionDTO(
                 id=SubscriptionId(subscription_orm.id),
                 counter=subscription_orm.counter,

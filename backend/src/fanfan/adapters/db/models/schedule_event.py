@@ -41,18 +41,37 @@ class ScheduleEventORM(BaseORM, OrderMixin):
         *OrderMixin.order_table_args(),
     )
 
-    @declared_attr
     @classmethod
-    def queue(cls) -> Mapped[int | None]:
-        queue_subquery = (
+    def ranking_subquery(cls):
+        # Single window pass over the non-skipped events, producing each row's
+        # dense 1..N ``queue`` position and cumulative ``time_until`` (sum of all
+        # preceding non-skipped durations). This is the one source of truth for
+        # the ranking logic: the queue/time_until column_properties correlate it
+        # per row (cheap for single-row reads and reusable as a WHERE expression
+        # in get_by_queue / subscription-distance filters), while the schedule
+        # list query joins it once to avoid re-running it per row.
+        #
+        # ROWS frame = "all preceding non-skipped rows". A RANGE frame would
+        # frame by the float ``order`` value (which has gaps from place_after
+        # averaging) and drop events.
+        return (
             select(
                 cls.id,
                 func.row_number().over(order_by=cls.order).label("queue"),
+                func.coalesce(
+                    func.sum(cls.duration).over(order_by=cls.order, rows=(None, -1)),
+                    0,
+                ).label("time_until"),
             )
             .where(cls.is_skipped.isnot(True))
             .subquery()
         )
-        stmt = select(queue_subquery.c.queue).where(cls.id == queue_subquery.c.id)
+
+    @declared_attr
+    @classmethod
+    def queue(cls) -> Mapped[int | None]:
+        ranked = cls.ranking_subquery()
+        stmt = select(ranked.c.queue).where(cls.id == ranked.c.id)
         return column_property(
             stmt.scalar_subquery(),
             expire_on_flush=True,
@@ -62,20 +81,10 @@ class ScheduleEventORM(BaseORM, OrderMixin):
     @declared_attr
     @classmethod
     def time_until(cls) -> Mapped[int | None]:
-        stmt = (
-            select(
-                cls.id,
-                func.coalesce(
-                    func.sum(cls.duration).over(order_by=cls.order, range_=(None, -1)),
-                    0,
-                ).label("time_until"),
-            )
-            .where(cls.is_skipped.isnot(True))
-            .subquery()
-        )
-
+        ranked = cls.ranking_subquery()
+        stmt = select(ranked.c.time_until).where(cls.id == ranked.c.id)
         return column_property(
-            select(stmt.c.time_until).where(cls.id == stmt.c.id).scalar_subquery(),
+            stmt.scalar_subquery(),
             expire_on_flush=True,
             deferred=True,
         )

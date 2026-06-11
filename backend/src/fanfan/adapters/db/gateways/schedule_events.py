@@ -155,7 +155,10 @@ class SqlScheduleEventGateway(ScheduleEventGateway):
         if result:
             event_orm, subscription_orm = result
             return self.mapper.parse_full_dto(
-                event_orm=event_orm, subscription_orm=subscription_orm
+                event_orm=event_orm,
+                subscription_orm=subscription_orm,
+                queue=event_orm.queue,
+                time_until=event_orm.time_until,
             )
         return None
 
@@ -167,18 +170,45 @@ class SqlScheduleEventGateway(ScheduleEventGateway):
         if result:
             event_orm, subscription_orm = result
             return self.mapper.parse_full_dto(
-                event_orm=event_orm, subscription_orm=subscription_orm
+                event_orm=event_orm,
+                subscription_orm=subscription_orm,
+                queue=event_orm.queue,
+                time_until=event_orm.time_until,
             )
         return None
 
     async def read_list_schedule(
         self, user_id: UserId | None
     ) -> list[ScheduleEventFullDTO]:
-        stmt = _select_schedule_event_full_dto(user_id).order_by(ScheduleEventORM.order)
+        # The whole schedule is read per user and uncached, so queue/time_until
+        # come from a single ranking subquery joined once here, rather than the
+        # per-row correlated column_properties (which would re-run the window
+        # for every one of the ~hundreds of rows).
+        ranked = ScheduleEventORM.ranking_subquery()
+        user_condition = (
+            (SubscriptionORM.user_id == user_id) if user_id is not None else false()
+        )
+        stmt = (
+            select(
+                ScheduleEventORM, SubscriptionORM, ranked.c.queue, ranked.c.time_until
+            )
+            .outerjoin(ranked, ScheduleEventORM.id == ranked.c.id)
+            .outerjoin(
+                SubscriptionORM,
+                and_(
+                    SubscriptionORM.event_id == ScheduleEventORM.id,
+                    user_condition,
+                ),
+            )
+            .order_by(ScheduleEventORM.order)
+        )
         results = (await self.session.execute(stmt)).all()
         return [
             self.mapper.parse_full_dto(
-                event_orm=event_orm, subscription_orm=subscription_orm
+                event_orm=event_orm,
+                subscription_orm=subscription_orm,
+                queue=queue,
+                time_until=time_until,
             )
-            for event_orm, subscription_orm in results
+            for event_orm, subscription_orm, queue, time_until in results
         ]
