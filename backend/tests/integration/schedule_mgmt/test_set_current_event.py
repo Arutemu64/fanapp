@@ -216,7 +216,8 @@ async def test_set_current_event_raises_when_event_not_found(
     with pytest.raises(EventNotFound):
         await interactor(SetCurrentScheduleEventInput(event_id=unknown_event_id))
 
-    # Roll back the cleared current flag from the incomplete transaction after the error.
+    # Roll back the cleared current flag from the incomplete
+    # transaction after the error.
     await uow.rollback()
 
     saved_previous_event = await schedule_gateway.get_by_id(previous_current_event.id)
@@ -278,7 +279,8 @@ async def test_set_current_event_twice_in_a_row_raises_too_fast(
     with pytest.raises(ScheduleEditTooFast):
         await interactor(SetCurrentScheduleEventInput(event_id=second_event.id))
 
-    # The second call is rejected before writing changes: the first event remains current.
+    # The second call is rejected before writing changes:
+    # the first event remains current.
     saved_first_event = await schedule_gateway.get_by_id(first_event.id)
     saved_second_event = await schedule_gateway.get_by_id(second_event.id)
     assert saved_first_event is not None
