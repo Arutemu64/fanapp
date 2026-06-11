@@ -135,6 +135,24 @@ just deploy                   # docker compose ... -f docker-compose.prod.yml pu
 
 By default `just deploy` tracks the latest `main` build. Pin a specific build (or roll back) by setting `IMAGE_TAG` in `.env`, e.g. `IMAGE_TAG=sha-1a2b3c4`. The server still needs the repo's compose files, `.env`, `config/` (Redis config + VAPID keys), and `backend/alembic.ini` on disk — only the application *build* moves to CI, not the runtime config.
 
+### Reverse proxy (Caddy): HTTPS and HTTP testing
+
+The app is meant to run behind a reverse proxy that puts the frontend and the API on **one origin**: [`Caddyfile.example`](Caddyfile.example) routes `/api*` to the backend and everything else to the SvelteKit frontend. Because the API is same-origin (`https://<site>/api`), the browser and SSR never make a cross-origin request, so **no CORS config is needed**. Caddy's `X-Forwarded-Proto`/`X-Forwarded-Host` headers are already honoured — the frontend container reads them via `PROTOCOL_HEADER`/`HOST_HEADER` in [`docker-compose.yml`](docker-compose.yml), so `adapter-node` builds the correct public origin during SSR in either mode.
+
+`just run-prod` exposes the apps on `127.0.0.1:3000` (frontend) and `127.0.0.1:8000` (API); run Caddy with `Caddyfile.example` in front to reach them on a single origin (e.g. `http://localhost`).
+
+Set these `.env` values to match exactly how the browser reaches the site (same scheme + host + port as the address bar):
+
+| `.env` / Caddy | HTTPS (production) | HTTP (local / insecure testing) |
+|---|---|---|
+| Caddy site block | your domain, e.g. `example.com { … }` (auto-TLS) | `:80 { … }` (as shipped) |
+| `WEB__BASE_URL` | `https://example.com/` | `http://localhost/` |
+| `PUBLIC_API_URL` | `https://example.com/api` | `http://localhost/api` |
+| `WEB__COOKIE_SECURE` | `True` | `False` |
+| `WEB__CORS_ALLOW_ORIGINS` | unset (same-origin) | unset (same-origin) |
+
+`WEB__COOKIE_SECURE=False` is **required** over plain HTTP — a `Secure` cookie is never sent over HTTP, which would otherwise break login (including the Telegram OAuth callback, whose state cookie follows the same flag). When you switch a host between HTTP and HTTPS, clear its cookies first, or stale `Secure` cookies look like an auth bug. Only set `WEB__CORS_ALLOW_ORIGINS` if you deliberately serve the API on a *different* origin than the site; if so, list the public app origin exactly (scheme + host, no trailing slash, no path).
+
 ## External integrations
 
 Optional, enabled via `.env`:
