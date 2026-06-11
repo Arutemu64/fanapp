@@ -1,8 +1,7 @@
 from sqlalchemy import delete, select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fanfan.adapters.db.constraints import get_constraint_name
+from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.mappers.ticket import TicketMapper
 from fanfan.adapters.db.models import TicketORM
 from fanfan.application.ports.gateways.tickets import TicketGateway
@@ -46,14 +45,13 @@ class SqlTicketGateway(TicketGateway):
         return self.mapper.to_model(ticket_orm) if ticket_orm else None
 
     async def save(self, ticket: Ticket) -> None:
-        try:
+        with translate_integrity_error(
+            {
+                "uq_tickets_used_by_user_id": UserAlreadyHasTicketLinked,
+            }
+        ):
             ticket_orm = await self.session.merge(self.mapper.from_model(ticket))
             await self.session.flush([ticket_orm])
-        except IntegrityError as e:
-            constraint_name = get_constraint_name(e)
-            if constraint_name == "uq_tickets_used_by_user_id":
-                raise UserAlreadyHasTicketLinked from e
-            raise
         return
 
     async def delete(self, ticket: Ticket) -> None:

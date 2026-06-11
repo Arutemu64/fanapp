@@ -16,6 +16,10 @@ class SqlUserFlagGateway(UserFlagGateway):
 
     async def add(self, flag: UserFlag) -> None:
         flag_orm = self.mapper.from_model(flag)
+        # A flag is an idempotent marker: a concurrent insert of the same
+        # (user_id, name) is a no-op by design, so the conflict is NOT reported
+        # to the caller. This differs from votes/subscriptions, where a
+        # duplicate must surface as a domain exception (translate_integrity_error).
         stmt = (
             insert(UserFlagORM)
             .values(id=flag_orm.id, name=flag_orm.name, user_id=flag_orm.user_id)

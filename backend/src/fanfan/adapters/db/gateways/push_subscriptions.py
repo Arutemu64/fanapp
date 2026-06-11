@@ -1,8 +1,7 @@
 from sqlalchemy import delete, select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fanfan.adapters.db.constraints import get_constraint_name
+from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.mappers.push_subscription import PushSubscriptionMapper
 from fanfan.adapters.db.models import PushSubscriptionORM
 from fanfan.application.ports.gateways.push_subscriptions import (
@@ -20,14 +19,13 @@ class SqlPushSubscriptionGateway(PushSubscriptionGateway):
 
     async def add(self, model: PushSubscription) -> None:
         push_sub_orm = self.mapper.from_model(model)
-        try:
+        with translate_integrity_error(
+            {
+                "uq_push_subs_endpoint": PushSubscriptionAlreadyExists,
+            }
+        ):
             self.session.add(push_sub_orm)
             await self.session.flush([push_sub_orm])
-        except IntegrityError as e:
-            constraint_name = get_constraint_name(e)
-            if constraint_name == "uq_push_subs_endpoint":
-                raise PushSubscriptionAlreadyExists from e
-            raise
 
     async def get_by_endpoint(self, endpoint: str) -> PushSubscription | None:
         stmt = (

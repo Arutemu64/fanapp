@@ -1,8 +1,7 @@
 from sqlalchemy import and_, delete, func, select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fanfan.adapters.db.constraints import get_constraint_name
+from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.mappers.vote import VoteMapper
 from fanfan.adapters.db.models import NominationORM, VoteORM
 from fanfan.application.ports.gateways.votes import VoteGateway
@@ -22,16 +21,14 @@ class SqlVoteGateway(VoteGateway):
 
     async def add(self, vote: Vote) -> None:
         vote_orm = self.mapper.from_model(vote)
-        try:
+        with translate_integrity_error(
+            {
+                "fk_votes_participant_id_participants": ParticipantNotFound,
+                "uq_votes_user_id": VoteAlreadyExists,
+            }
+        ):
             self.session.add(vote_orm)
             await self.session.flush([vote_orm])
-        except IntegrityError as e:
-            constraint_name = get_constraint_name(e)
-            if constraint_name == "fk_votes_participant_id_participants":
-                raise ParticipantNotFound from e
-            if constraint_name == "uq_votes_user_id":
-                raise VoteAlreadyExists from e
-            raise
         self.uow.register(vote)
 
     async def get_user_vote_by_nomination(
