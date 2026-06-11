@@ -50,11 +50,15 @@ def create_app() -> FastAPI:
     app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore  # noqa: PGH003
 
     # Setup FastAPI middlewares
+    # This session cookie holds the Telegram OAuth state/nonce (authlib). Mark it
+    # Secure only when the rest of the app is (cookie_secure), so a plain-HTTP
+    # deploy can still complete the OAuth flow — a Secure cookie is never sent
+    # back over HTTP, which would break the login callback. Keep it True in prod.
     app.add_middleware(
         SessionMiddleware,
         secret_key=config.web.secret_key.get_secret_value(),
         same_site="lax",
-        https_only=True,
+        https_only=config.web.cookie_secure,
     )
 
     app.add_middleware(
