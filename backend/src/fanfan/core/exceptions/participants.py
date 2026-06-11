@@ -15,3 +15,7 @@ class NonApprovedRequest(ParticipantException):
 
 class RequestHasNoVotingTitle(ParticipantException):
     code = "REQUEST_HAS_NO_VOTING_TITLE"
+
+
+class RequestNominationNotFound(ParticipantException):
+    code = "REQUEST_NOMINATION_NOT_FOUND"
