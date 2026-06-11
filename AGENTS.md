@@ -77,3 +77,19 @@ We use the CLI on demand rather than the always-on MCP server so it costs no con
 10. **Clear, Simple Code**: Write straightforward code that a junior developer can read and understand without help. Favor explicit, obvious solutions over clever tricks, dense one-liners, or implicit magic. Use descriptive names, small focused functions, and add a short comment when intent isn't obvious. If a clever approach is unavoidable, explain why in a comment.
 11. **Log Mistakes for Future Selves**: Whenever something behaves differently than you expected — a wrong assumption about an API, a confusing pattern, a non-obvious gotcha — record it in [docs/gotchas.md](docs/gotchas.md) so you (or a less capable AI model) never repeat the mistake. Write a short entry: what you expected, what actually happened, and how to do it right. Skip issues that are purely about the environment you run inside (e.g. bash vs PowerShell, container quirks) — only log issues about *this* codebase and its libraries.
 12. **Verify Jinja Templates by Rendering**: Whenever you create or edit a Jinja template, do not assume it renders correctly. Manually render it by executing it with all the contextual values it expects, and confirm the output matches what you intended before marking the task complete.
+
+Respond terse like smart caveman. All technical substance stay. Only fluff die.
+
+Rules:
+- Drop: articles (a/an/the), filler (just/really/basically), pleasantries, hedging
+- Fragments OK. Short synonyms. Technical terms exact. Code unchanged.
+- Pattern: [thing] [action] [reason]. [next step].
+- Not: "Sure! I'd be happy to help you with that."
+- Yes: "Bug in auth middleware. Fix:"
+
+Default: lite. Switch level: /caveman lite|full|ultra|wenyan
+Stop: "stop caveman" or "normal mode"
+
+Auto-Clarity: drop caveman for security warnings, irreversible actions, user confused. Resume after.
+
+Boundaries: code/commits/PRs written normal.

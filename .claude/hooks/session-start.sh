@@ -99,4 +99,8 @@ if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
   echo 'export PATH="$HOME/.local/bin:$HOME/.local/share/pnpm:$PATH"' >> "$CLAUDE_ENV_FILE"
 fi
 
+# Set caveman default to lite mode (save tokens while keeping explanations readable).
+mkdir -p "$HOME/.config/caveman"
+echo '{"defaultMode": "lite"}' > "$HOME/.config/caveman/config.json"
+
 echo "[session-start] Setup complete."
