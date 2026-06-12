@@ -2,7 +2,7 @@
 	import { Button, Spinner } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
 	import { createApiClient } from '$lib/api';
-	import type { components } from '$lib/api/v1';
+	import type { NotificationDTO } from '$lib/types/notifications';
 
 	const client = createApiClient();
 	import { getToastService } from '$lib/services/toasts.svelte';
@@ -14,7 +14,7 @@
 	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 
-	type Notification = components['schemas']['NotificationDTO'];
+	type Notification = NotificationDTO;
 
 	interface Props {
 		initialNotifications: Array<Notification>;

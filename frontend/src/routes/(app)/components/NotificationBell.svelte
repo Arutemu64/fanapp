@@ -2,7 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { createApiClient } from '$lib/api';
-	import type { components } from '$lib/api/v1';
+	import type { NotificationDTO } from '$lib/types/notifications';
 
 	const client = createApiClient();
 	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
@@ -13,7 +13,7 @@
 	import { BellSolid, EyeSolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
 
-	type Notification = components['schemas']['NotificationDTO'];
+	type Notification = NotificationDTO;
 
 	// Seed from the SSR-loaded layout preview so the unread badge is correct on the
 	// first paint. The SSE 'connected' handler refreshes this once the stream is up.

@@ -1,9 +1,7 @@
 import { createContext } from 'svelte';
 import { browser } from '$app/environment';
 import { env } from '$env/dynamic/public';
-import type { components } from '$lib/api/v1';
-
-type NotificationDTO = components['schemas']['NotificationDTO'];
+import type { NotificationDTO } from '$lib/types/notifications';
 
 const [getEvents, setEvents] = createContext<EventsClient | null>();
 
