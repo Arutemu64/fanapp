@@ -15,6 +15,7 @@ class NotificationMapper:
             title=model.title,
             body=model.body,
             type=model.type,
+            path=model.path,
             mailing_id=model.mailing_id,
             seen_at=model.seen_at,
         )
@@ -27,6 +28,7 @@ class NotificationMapper:
             title=orm.title,
             body=orm.body,
             type=NotificationType(orm.type),
+            path=orm.path,
             mailing_id=MailingId(orm.mailing_id)
             if orm.mailing_id is not None
             else None,
@@ -41,6 +43,7 @@ class NotificationMapper:
             title=orm.title,
             body=orm.body,
             type=NotificationType(orm.type),
+            path=orm.path,
             mailing_id=MailingId(orm.mailing_id)
             if orm.mailing_id is not None
             else None,
@@ -56,6 +59,7 @@ class NotificationMapper:
             title=orm.title,
             body=orm.body,
             type=NotificationType(orm.type),
+            path=orm.path,
             mailing_id=MailingId(orm.mailing_id)
             if orm.mailing_id is not None
             else None,

@@ -2706,23 +2706,34 @@
         }
       }
     },
-    "/webhooks/tcloud": {
+    "/webhooks/tcloud/{token}": {
       "post": {
         "tags": [
           "Webhooks"
         ],
         "summary": "Process TicketsCloud webhook",
         "description": "Handles incoming webhook events from TicketsCloud ticketing system.",
-        "operationId": "process_tcloud_order_webhooks_tcloud_post",
+        "operationId": "process_tcloud_order_webhooks_tcloud__token__post",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/TCloudWebhookPayload"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -2774,6 +2785,9 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Unknown endpoint."
           }
         }
       }
@@ -3903,6 +3917,17 @@
           "type": {
             "$ref": "#/components/schemas/NotificationType"
           },
+          "path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path"
+          },
           "mailing_id": {
             "anyOf": [
               {
@@ -3940,6 +3965,7 @@
           "title",
           "body",
           "type",
+          "path",
           "mailing_id",
           "created_at",
           "seen_at"
@@ -3954,50 +3980,10 @@
           "schedule_subscription",
           "message",
           "points_received",
-          "broadcast"
+          "broadcast",
+          "test"
         ],
         "title": "NotificationType"
-      },
-      "Order": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "status": {
-            "$ref": "#/components/schemas/OrderStatus"
-          },
-          "event": {
-            "type": "string",
-            "title": "Event"
-          },
-          "tickets": {
-            "items": {
-              "$ref": "#/components/schemas/Ticket"
-            },
-            "type": "array",
-            "title": "Tickets"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "status",
-          "event",
-          "tickets"
-        ],
-        "title": "Order"
-      },
-      "OrderStatus": {
-        "type": "string",
-        "enum": [
-          "executed",
-          "done",
-          "cancelled",
-          "expired",
-          "in_progress"
-        ],
-        "title": "OrderStatus"
       },
       "ParticipantFullDTO": {
         "properties": {
@@ -4462,10 +4448,23 @@
         ],
         "title": "SubmitFeedbackOutput"
       },
+      "TCloudWebhookOrderRef": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "TCloudWebhookOrderRef"
+      },
       "TCloudWebhookPayload": {
         "properties": {
           "data": {
-            "$ref": "#/components/schemas/Order"
+            "$ref": "#/components/schemas/TCloudWebhookOrderRef"
           },
           "type": {
             "type": "string",
@@ -4491,88 +4490,6 @@
           "new_tickets_count"
         ],
         "title": "TCloudWebhookResponse"
-      },
-      "Ticket": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "serial": {
-            "type": "string",
-            "title": "Serial"
-          },
-          "number": {
-            "type": "integer",
-            "title": "Number"
-          },
-          "barcode": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Barcode"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "price": {
-            "type": "string",
-            "title": "Price"
-          },
-          "nominal": {
-            "type": "string",
-            "title": "Nominal"
-          },
-          "discount": {
-            "type": "string",
-            "title": "Discount"
-          },
-          "extra": {
-            "type": "string",
-            "title": "Extra"
-          },
-          "full": {
-            "type": "string",
-            "title": "Full"
-          },
-          "set": {
-            "type": "string",
-            "title": "Set"
-          },
-          "tariff": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tariff"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "serial",
-          "number",
-          "barcode",
-          "status",
-          "price",
-          "nominal",
-          "discount",
-          "extra",
-          "full",
-          "set",
-          "tariff"
-        ],
-        "title": "Ticket"
       },
       "UpdateAppSettingsInput": {
         "properties": {

@@ -46,7 +46,8 @@ class PushNotifier(Notifier):
             "tag": str(notification.id),
             "title": self._sanitize_text(notification.title),
             "body": self._sanitize_text(notification.body),
-            "url": "/",
+            # Deep-link the service worker navigates to on click; root when unset.
+            "url": notification.path or "/",
             # Test pushes must always render the OS notification, even when the
             # app is in the foreground (the service worker otherwise suppresses
             # it to avoid duplicating the in-app toast).

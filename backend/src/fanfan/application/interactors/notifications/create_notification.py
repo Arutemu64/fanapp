@@ -36,6 +36,7 @@ class CreateNotification:
             title=notification.title,
             body=self.html_sanitizer.sanitize(notification.body),
             type=notification.type,
+            path=notification.path,
             mailing_id=notification.mailing_id,
             seen_at=None,
         )

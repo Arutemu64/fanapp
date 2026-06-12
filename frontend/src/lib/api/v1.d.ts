@@ -725,7 +725,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/webhooks/tcloud": {
+    "/webhooks/tcloud/{token}": {
         parameters: {
             query?: never;
             header?: never;
@@ -738,7 +738,7 @@ export interface paths {
          * Process TicketsCloud webhook
          * @description Handles incoming webhook events from TicketsCloud ticketing system.
          */
-        post: operations["process_tcloud_order_webhooks_tcloud_post"];
+        post: operations["process_tcloud_order_webhooks_tcloud__token__post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1138,6 +1138,8 @@ export interface components {
             /** Body */
             body: string;
             type: components["schemas"]["NotificationType"];
+            /** Path */
+            path: string | null;
             /** Mailing Id */
             mailing_id: string | null;
             /**
@@ -1152,22 +1154,7 @@ export interface components {
          * NotificationType
          * @enum {string}
          */
-        NotificationType: "default" | "schedule_change" | "schedule_subscription" | "message" | "points_received" | "broadcast";
-        /** Order */
-        Order: {
-            /** Id */
-            id: string;
-            status: components["schemas"]["OrderStatus"];
-            /** Event */
-            event: string;
-            /** Tickets */
-            tickets: components["schemas"]["Ticket"][];
-        };
-        /**
-         * OrderStatus
-         * @enum {string}
-         */
-        OrderStatus: "executed" | "done" | "cancelled" | "expired" | "in_progress";
+        NotificationType: "default" | "schedule_change" | "schedule_subscription" | "message" | "points_received" | "broadcast" | "test";
         /** ParticipantFullDTO */
         ParticipantFullDTO: {
             /**
@@ -1334,9 +1321,14 @@ export interface components {
              */
             feedback_id: string;
         };
+        /** TCloudWebhookOrderRef */
+        TCloudWebhookOrderRef: {
+            /** Id */
+            id: string;
+        };
         /** TCloudWebhookPayload */
         TCloudWebhookPayload: {
-            data: components["schemas"]["Order"];
+            data: components["schemas"]["TCloudWebhookOrderRef"];
             /** Type */
             type: string;
         };
@@ -1344,33 +1336,6 @@ export interface components {
         TCloudWebhookResponse: {
             /** New Tickets Count */
             new_tickets_count: number;
-        };
-        /** Ticket */
-        Ticket: {
-            /** Id */
-            id: string;
-            /** Serial */
-            serial: string;
-            /** Number */
-            number: number;
-            /** Barcode */
-            barcode: string | null;
-            /** Status */
-            status: string;
-            /** Price */
-            price: string;
-            /** Nominal */
-            nominal: string;
-            /** Discount */
-            discount: string;
-            /** Extra */
-            extra: string;
-            /** Full */
-            full: string;
-            /** Set */
-            set: string;
-            /** Tariff */
-            tariff: string | null;
         };
         /** UpdateAppSettingsInput */
         UpdateAppSettingsInput: {
@@ -3828,11 +3793,13 @@ export interface operations {
             };
         };
     };
-    process_tcloud_order_webhooks_tcloud_post: {
+    process_tcloud_order_webhooks_tcloud__token__post: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                token: string;
+            };
             cookie?: never;
         };
         requestBody: {
@@ -3876,6 +3843,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorMessage"];
                 };
+            };
+            /** @description Unknown endpoint. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Request validation error. */
             422: {

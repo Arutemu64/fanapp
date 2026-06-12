@@ -22,6 +22,9 @@ class NotificationORM(BaseORM):
     title: Mapped[str] = mapped_column()
     body: Mapped[str] = mapped_column()
     type: Mapped[NotificationType] = mapped_column(postgresql.ENUM(NotificationType))
+    # In-app deep-link path the notification points to (e.g. "/schedule").
+    # Nullable: legacy rows and notifications without a target fall back to root.
+    path: Mapped[str | None] = mapped_column()
     mailing_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("mailings.id", ondelete="CASCADE"),
         index=True,

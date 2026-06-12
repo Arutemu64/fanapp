@@ -1,4 +1,6 @@
 <script lang="ts">
+	import type { Pathname } from '$app/types';
+	import { resolve } from '$app/paths';
 	import { getToastService, ToastTypeColors } from '$lib/services/toasts.svelte';
 	import { Toast, ToastContainer } from 'flowbite-svelte';
 	import {
@@ -10,6 +12,7 @@
 	import { fly } from 'svelte/transition';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import { formatRelativeTime } from '$lib/utils/formatters';
+	import type { NotificationDTO } from '$lib/types/notifications';
 
 	const toastService = getToastService();
 
@@ -68,6 +71,29 @@
 	}
 </script>
 
+{#snippet pushContent(notification: NotificationDTO)}
+	<div
+		class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+	>
+		<BellSolid class="h-5 w-5" />
+	</div>
+	<div class="ms-3 min-w-0 flex-1">
+		<h4 class="text-sm font-semibold text-gray-900 dark:text-white">
+			{notification.title}
+		</h4>
+		{#if notification.body}
+			<!-- Body is sanitized to a safe HTML subset on the backend (HtmlSanitizer). -->
+			<div class="mt-1 line-clamp-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+				{@html notification.body}
+			</div>
+		{/if}
+		<span class="mt-1 block text-xs font-medium text-primary-600 dark:text-primary-500"
+			>{formatRelativeTime(notification.created_at)}</span
+		>
+	</div>
+{/snippet}
+
 <ToastContainer
 	class="pointer-events-none !sticky !top-4 !right-auto !bottom-auto !left-auto z-50 mx-auto flex h-0 w-full max-w-7xl flex-col overflow-visible px-4 md:px-6 lg:px-8"
 >
@@ -92,28 +118,20 @@
 					class="w-full max-w-sm rounded-lg bg-white p-4 text-gray-500 shadow dark:bg-gray-800 dark:text-gray-400"
 				>
 					<span class="font-semibold text-gray-900 dark:text-white">Новое уведомление</span>
-					<div class="mt-3 flex items-start">
-						<div
-							class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+					{#if toast.notification.path}
+						<!-- Whole body deep-links to the notification's in-app target on tap. -->
+						<a
+							href={resolve(toast.notification.path as Pathname)}
+							class="mt-3 flex items-start"
+							onclick={() => toastService.dismiss(toast.id)}
 						>
-							<BellSolid class="h-5 w-5" />
+							{@render pushContent(toast.notification)}
+						</a>
+					{:else}
+						<div class="mt-3 flex items-start">
+							{@render pushContent(toast.notification)}
 						</div>
-						<div class="ms-3 min-w-0 flex-1">
-							<h4 class="text-sm font-semibold text-gray-900 dark:text-white">
-								{toast.notification.title}
-							</h4>
-							{#if toast.notification.body}
-								<!-- Body is sanitized to a safe HTML subset on the backend (HtmlSanitizer). -->
-								<div class="mt-1 line-clamp-2 text-sm font-normal text-gray-500 dark:text-gray-400">
-									<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-									{@html toast.notification.body}
-								</div>
-							{/if}
-							<span class="mt-1 block text-xs font-medium text-primary-600 dark:text-primary-500"
-								>{formatRelativeTime(toast.notification.created_at)}</span
-							>
-						</div>
-					</div>
+					{/if}
 				</Toast>
 			{:else}
 				<Toast
