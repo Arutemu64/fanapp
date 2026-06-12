@@ -94,6 +94,7 @@ class SendScheduleChangeNotifications:
                         body=f"@{editor.username} сделал изменение "
                         f"в расписании: {reason_msg}",
                         type=NotificationType.SCHEDULE_CHANGE,
+                        path="/schedule/changes",
                         mailing_id=schedule_change.mailing_id,
                     )
                 )
@@ -135,6 +136,7 @@ class SendScheduleChangeNotifications:
                     title="На сцене",
                     body=body,
                     type=NotificationType.SCHEDULE_CHANGE,
+                    path="/schedule",
                     mailing_id=schedule_change.mailing_id,
                 ),
             )
@@ -180,6 +182,7 @@ class SendScheduleChangeNotifications:
                             title="Уведомление о подписке",
                             body=body,
                             type=NotificationType.SCHEDULE_SUBSCRIPTION,
+                            path="/schedule",
                             mailing_id=schedule_change.mailing_id,
                         )
                     )

@@ -52,6 +52,7 @@ class SendPersonalNotification:
                     title="Личное сообщение",
                     body=data.message_text,
                     type=NotificationType.MESSAGE,
+                    path="/notifications",
                     mailing_id=None,
                 ),
             )

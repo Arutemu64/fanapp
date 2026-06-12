@@ -28,6 +28,8 @@ class SendTestNotification:
                         "Проверка каналов уведомлений.\n"
                         "Если канал подключён, вы должны получить это сообщение."
                     ),
+                    # Test pushes only verify delivery; root is a safe landing.
+                    path="/",
                     type=NotificationType.TEST,
                     mailing_id=None,
                 )

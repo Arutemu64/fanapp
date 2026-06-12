@@ -1,4 +1,6 @@
 <script lang="ts">
+	import type { Pathname } from '$app/types';
+	import { resolve } from '$app/paths';
 	import type { NotificationDTO } from '$lib/types/notifications';
 	import { formatRelativeTime } from '$lib/utils/formatters';
 	import { DropdownItem } from 'flowbite-svelte';
@@ -13,6 +15,13 @@
 
 	// Use an explicit festival timezone so the first SSR render matches hydration.
 	let createdAt = $derived(formatRelativeTime(notification.created_at));
+
+	// Backend-provided in-app deep-link (e.g. "/schedule"). When absent the item
+	// is not clickable. The path is a trusted internal route, so cast to Pathname.
+	let href = $derived(notification.path ? resolve(notification.path as Pathname) : undefined);
+
+	let cardClass =
+		'flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm dark:border-gray-700 dark:bg-gray-800';
 </script>
 
 {#snippet content()}
@@ -44,13 +53,16 @@
 {/snippet}
 
 {#if compact}
-	<DropdownItem class="flex items-start gap-3 text-left">
+	<!-- DropdownItem renders an <a> when given an href, so the whole row deep-links. -->
+	<DropdownItem {href} class="flex items-start gap-3 text-left">
 		{@render content()}
 	</DropdownItem>
+{:else if href}
+	<a {href} class={cardClass}>
+		{@render content()}
+	</a>
 {:else}
-	<div
-		class="flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm dark:border-gray-700 dark:bg-gray-800"
-	>
+	<div class={cardClass}>
 		{@render content()}
 	</div>
 {/if}

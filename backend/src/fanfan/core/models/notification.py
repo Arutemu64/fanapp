@@ -14,6 +14,10 @@ class Notification(AggregateRoot):
     title: str
     body: str
     type: NotificationType
+    # In-app path the notification deep-links to (e.g. "/schedule"). Consumed by
+    # the web UI (clickable list items/toasts) and the push service worker, which
+    # navigates here on notification click. None falls back to the app root.
+    path: str | None
     mailing_id: MailingId | None
     seen_at: datetime | None
 
@@ -32,4 +36,6 @@ class NewNotification:
     title: str
     body: str
     type: NotificationType
+    # In-app deep-link path; see Notification.path above. None falls back to root.
+    path: str | None
     mailing_id: MailingId | None

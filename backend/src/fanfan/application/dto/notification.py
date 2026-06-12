@@ -13,6 +13,8 @@ class NotificationDTO(BaseModel):
     title: str
     body: str
     type: NotificationType
+    # In-app deep-link path; None falls back to the app root on click.
+    path: str | None
     mailing_id: MailingId | None
     created_at: datetime
     seen_at: datetime | None
@@ -24,6 +26,8 @@ class RealtimeNotificationDTO(BaseModel):
     title: str
     body: str
     type: NotificationType
+    # In-app deep-link path; None falls back to the app root on click.
+    path: str | None
     mailing_id: MailingId | None
     created_at: datetime
     seen_at: datetime | None

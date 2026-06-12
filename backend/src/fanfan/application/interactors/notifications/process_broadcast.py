@@ -49,6 +49,7 @@ class ProcessBroadcast:
                     user_id=u.id,
                     title="Рассылка от организаторов",
                     body=data.body,
+                    path="/notifications",
                     mailing_id=data.mailing_id,
                     type=NotificationType.BROADCAST,
                 )
