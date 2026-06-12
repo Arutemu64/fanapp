@@ -61,7 +61,7 @@ class SendEmailConfirmationCode:
             },
         )
         message = EmailMessage(
-            subject="Подтвердите email в FAN FAN",
+            subject=f"{code} — подтвердите email в FAN FAN",
             recipients=[
                 EmailRecipient(
                     name=user.username or "Пользователь",

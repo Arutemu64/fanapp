@@ -58,7 +58,7 @@ class SendLoginCodeEmail:
             },
         )
         message = EmailMessage(
-            subject="Код входа в FAN FAN",
+            subject=f"{code} — код входа в FAN FAN",
             recipients=[EmailRecipient(name=user.username or "", email=email_value)],
             html_body=message_body,
         )
