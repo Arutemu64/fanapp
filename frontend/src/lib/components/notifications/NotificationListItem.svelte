@@ -1,11 +1,11 @@
 <script lang="ts">
-	import type { components } from '$lib/api/v1';
+	import type { NotificationDTO } from '$lib/types/notifications';
 	import { formatRelativeTime } from '$lib/utils/formatters';
 	import { DropdownItem } from 'flowbite-svelte';
 	import { BellSolid } from 'flowbite-svelte-icons';
 
 	interface Props {
-		notification: components['schemas']['NotificationDTO'];
+		notification: NotificationDTO;
 		compact?: boolean;
 	}
 

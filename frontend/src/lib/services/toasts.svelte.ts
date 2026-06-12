@@ -1,6 +1,6 @@
 import { createContext } from 'svelte';
 import { getApiErrorDetail } from '$lib/api/errors';
-import type { components } from '$lib/api/v1';
+import type { NotificationDTO } from '$lib/types/notifications';
 
 export type ToastColor = 'green' | 'red' | 'yellow' | 'blue' | 'gray';
 export type ToastType = 'success' | 'info' | 'warning' | 'error' | 'push';
@@ -17,7 +17,7 @@ export interface ToastItem {
 	id: number;
 	message: string;
 	type: ToastType;
-	notification?: components['schemas']['NotificationDTO'];
+	notification?: NotificationDTO;
 	timeoutId?: ReturnType<typeof setTimeout>;
 }
 
@@ -65,7 +65,7 @@ export class ToastService {
 		this.add(message, 'error');
 	}
 
-	push(notification: components['schemas']['NotificationDTO']) {
+	push(notification: NotificationDTO) {
 		const id = Date.now();
 		const newToast: ToastItem = {
 			id,
