@@ -14,7 +14,18 @@ export function hasPermission(
 	objectType?: string,
 	objectId?: number
 ): boolean {
-	if (!user || !user.permissions) {
+	if (!user) {
+		return false;
+	}
+
+	// ORG is the staff admin role and implicitly holds every permission.
+	// This mirrors the backend bypass in PermissionService.ensure, otherwise
+	// ORG users (who carry no explicit permission rows) get locked out of the UI.
+	if (user.role === 'org') {
+		return true;
+	}
+
+	if (!user.permissions) {
 		return false;
 	}
 
