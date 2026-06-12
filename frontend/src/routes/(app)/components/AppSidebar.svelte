@@ -20,6 +20,7 @@
 		ClockArrowOutline,
 		FileImportOutline,
 		HomeOutline,
+		LockOutline,
 		MapPinAltOutline,
 		ShieldOutline,
 		ThumbsUpOutline,
@@ -27,6 +28,7 @@
 	} from 'flowbite-svelte-icons';
 	import ThemeToggle from './ThemeToggle.svelte';
 	import type { CurrentUserDTO } from '$lib/types/user';
+	import type { Snippet } from 'svelte';
 
 	let { user, activeUrl, isSidebarOpen, closeSidebar } = $props<{
 		user: CurrentUserDTO | null;
@@ -35,14 +37,51 @@
 		closeSidebar: () => void;
 	}>();
 
-	// Gate staff navigation by effective permissions (ORG resolves via the
-	// wildcard), matching the backend's per-permission checks. Show each
-	// dropdown only when the user can reach at least one item inside it.
-	let canSeeVolunteerMenu = $derived(canManageSchedule(user));
-	let canSeeOrganizerMenu = $derived(
-		canManageSettings(user) || canImportSchedule(user) || canSendNotifications(user)
-	);
+	// Staff (volunteers and organizers) see the staff dropdowns so they can
+	// discover what exists; individual items are unlocked per effective
+	// permission (ORG resolves via the wildcard). The backend still enforces
+	// every action — locked items are a UX affordance only.
+	let isStaff = $derived(user?.role === 'helper' || user?.role === 'org');
+	let iconClass =
+		'h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white';
 </script>
+
+<!-- A staff navigation entry: a real link when the user holds the permission,
+     otherwise a non-navigable, greyed-out row with a lock badge + tooltip. -->
+{#snippet staffLink(label: string, href: string, allowed: boolean, itemIcon: Snippet)}
+	{#if allowed}
+		<SidebarItem {label} {href}>
+			{#snippet icon()}
+				{@render itemIcon()}
+			{/snippet}
+		</SidebarItem>
+	{:else}
+		<li>
+			<div
+				class="flex cursor-not-allowed items-center rounded-lg p-2 text-gray-400 dark:text-gray-600"
+				aria-disabled="true"
+				title="Нужен доступ — попроси организатора"
+			>
+				{@render itemIcon()}
+				<span class="ms-3 flex-1">{label}</span>
+				<LockOutline class="h-4 w-4 shrink-0" />
+			</div>
+		</li>
+	{/if}
+{/snippet}
+
+{#snippet scheduleChangesIcon()}
+	<ClockArrowOutline class={iconClass} />
+{/snippet}
+{#snippet settingsIcon()}
+	<AdjustmentsHorizontalOutline class={iconClass} />
+{/snippet}
+{#snippet importScheduleIcon()}
+	<FileImportOutline class={iconClass} />
+{/snippet}
+{#snippet broadcastIcon()}
+	<BullhornOutline class={iconClass} />
+{/snippet}
 
 {#snippet sidebarLinks()}
 	<div class="flex h-full flex-col">
@@ -90,60 +129,41 @@
 					{/snippet}
 				</SidebarItem>
 			{/if}
-			{#if canSeeVolunteerMenu}
+			{#if isStaff}
 				<SidebarDropdownWrapper label="Для волонтеров" classes={{ btn: 'p-2' }}>
 					{#snippet icon()}
-						<UsersGroupOutline
-							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-						/>
+						<UsersGroupOutline class={iconClass} />
 					{/snippet}
-					{#if canManageSchedule(user)}
-						<SidebarItem label="Изменения расписания" href="/schedule/changes">
-							{#snippet icon()}
-								<ClockArrowOutline
-									class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-								/>
-							{/snippet}
-						</SidebarItem>
-					{/if}
+					{@render staffLink(
+						'Изменения расписания',
+						'/schedule/changes',
+						canManageSchedule(user),
+						scheduleChangesIcon
+					)}
 				</SidebarDropdownWrapper>
-			{/if}
-			{#if canSeeOrganizerMenu}
 				<SidebarDropdownWrapper label="Для организаторов" classes={{ btn: 'p-2' }}>
 					{#snippet icon()}
-						<ShieldOutline
-							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-						/>
+						<ShieldOutline class={iconClass} />
 					{/snippet}
 					<!-- Keep festival controls together so organizers can find them quickly on mobile. -->
-					{#if canManageSettings(user)}
-						<SidebarItem label="Настройки фестиваля" href="/org/settings">
-							{#snippet icon()}
-								<AdjustmentsHorizontalOutline
-									class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-								/>
-							{/snippet}
-						</SidebarItem>
-					{/if}
-					{#if canImportSchedule(user)}
-						<SidebarItem label="Импорт расписания" href="/org/import_schedule">
-							{#snippet icon()}
-								<!-- This matches the page action: importing a schedule file. -->
-								<FileImportOutline
-									class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-								/>
-							{/snippet}
-						</SidebarItem>
-					{/if}
-					{#if canSendNotifications(user)}
-						<SidebarItem label="Рассылка уведомлений" href="/org/broadcast">
-							{#snippet icon()}
-								<BullhornOutline
-									class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-								/>
-							{/snippet}
-						</SidebarItem>
-					{/if}
+					{@render staffLink(
+						'Настройки фестиваля',
+						'/org/settings',
+						canManageSettings(user),
+						settingsIcon
+					)}
+					{@render staffLink(
+						'Импорт расписания',
+						'/org/import_schedule',
+						canImportSchedule(user),
+						importScheduleIcon
+					)}
+					{@render staffLink(
+						'Рассылка уведомлений',
+						'/org/broadcast',
+						canSendNotifications(user),
+						broadcastIcon
+					)}
 				</SidebarDropdownWrapper>
 			{/if}
 		</SidebarGroup>
