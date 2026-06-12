@@ -328,8 +328,7 @@
 
 	<div class="rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
 		<p class="mb-3 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
-			Попробуй отправить себе пробное уведомление, чтобы убедиться, что всё работает. Придёт
-			системное пуш-уведомление, даже если сайт открыт.
+			Попробуй отправить себе пробное уведомление, чтобы убедиться, что всё работает.
 		</p>
 		<Button
 			color="light"
