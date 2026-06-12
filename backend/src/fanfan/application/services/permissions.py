@@ -8,6 +8,7 @@ from fanfan.core.vo.permission import (
     PermissionObjectId,
     PermissionObjectType,
 )
+from fanfan.core.vo.user import UserRole
 
 
 class PermissionService:
@@ -21,6 +22,10 @@ class PermissionService:
         object_type: PermissionObjectType | None = None,
         object_id: PermissionObjectId | None = None,
     ) -> None:
+        # ORG is the staff admin role and implicitly holds every permission,
+        # so it bypasses the granular permission lookup entirely.
+        if user.role is UserRole.ORG:
+            return
         user_perm = await self.perm_gateway.get_by_name(
             user_id=user.id,
             permission_name=perm_name,

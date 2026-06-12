@@ -8,10 +8,10 @@ from fanfan.application.ports.gateways.schedule_events import (
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
-from fanfan.core.exceptions.base import AccessDenied
+from fanfan.application.services.permissions import PermissionService
 from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.vo.permission import PermissionName, Permissions
 from fanfan.core.vo.schedule_event import generate_schedule_event_id
-from fanfan.core.vo.user import UserRole
 
 ORDER_INIT = 100.0
 ORDER_STEP = 100.0
@@ -38,16 +38,19 @@ class ImportSchedule:
         uow: UnitOfWork,
         current_user_provider: CurrentUserProvider,
         user_gateway: UserGateway,
+        perm_service: PermissionService,
     ):
         self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
         self.uow = uow
         self.schedule_gateway = schedule_gateway
+        self.perm_service = perm_service
 
     async def __call__(self, data: ImportScheduleInput) -> None:
         current_user = await self.current_user_provider.require_user()
-        if current_user.role is not UserRole.ORG:
-            raise AccessDenied
+        await self.perm_service.ensure(
+            user=current_user, perm_name=PermissionName(Permissions.SCHEDULE_IMPORT)
+        )
         orphaned_events = await self.schedule_gateway.list_all()
         order = ORDER_INIT
         for entry in data.schedule:
