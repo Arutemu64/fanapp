@@ -9,6 +9,7 @@ from fanfan.application.ports.gateways.push_subscriptions import (
 from fanfan.application.ports.notifier import Notifier
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.notification import Notification
+from fanfan.core.vo.notification import NotificationType
 
 
 class PushNotifier(Notifier):
@@ -46,6 +47,10 @@ class PushNotifier(Notifier):
             "title": self._sanitize_text(notification.title),
             "body": self._sanitize_text(notification.body),
             "url": "/",
+            # Test pushes must always render the OS notification, even when the
+            # app is in the foreground (the service worker otherwise suppresses
+            # it to avoid duplicating the in-app toast).
+            "test": notification.type == NotificationType.TEST,
         }
         push_subscription = WebPushSubscription.model_validate(subscription_info)
         message = self.wp.get(message=data, subscription=push_subscription, ttl=3600)
