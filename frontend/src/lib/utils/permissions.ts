@@ -52,8 +52,35 @@ export function hasPermission(
 /**
  * Check if user can manage schedule
  * @param user - The user object or null
- * @returns true if user has 'can_manage_schedule' permission
+ * @returns true if user has 'schedule:manage' permission
  */
 export function canManageSchedule(user: CurrentUserDTO | null): boolean {
 	return hasPermission(user, 'schedule:manage');
+}
+
+/**
+ * Check if user can import a schedule file.
+ * @param user - The user object or null
+ * @returns true if user has 'schedule:import' permission
+ */
+export function canImportSchedule(user: CurrentUserDTO | null): boolean {
+	return hasPermission(user, 'schedule:import');
+}
+
+/**
+ * Check if user can send notification broadcasts.
+ * @param user - The user object or null
+ * @returns true if user has 'notifications:send' permission
+ */
+export function canSendNotifications(user: CurrentUserDTO | null): boolean {
+	return hasPermission(user, 'notifications:send');
+}
+
+/**
+ * Check if user can manage festival settings.
+ * @param user - The user object or null
+ * @returns true if user has 'settings:manage' permission
+ */
+export function canManageSettings(user: CurrentUserDTO | null): boolean {
+	return hasPermission(user, 'settings:manage');
 }

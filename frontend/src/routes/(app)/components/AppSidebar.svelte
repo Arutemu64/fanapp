@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { canManageSchedule } from '$lib/utils/permissions';
+	import {
+		canManageSchedule,
+		canImportSchedule,
+		canSendNotifications,
+		canManageSettings
+	} from '$lib/utils/permissions';
 	import {
 		Sidebar,
 		SidebarBrand,
@@ -30,9 +35,13 @@
 		closeSidebar: () => void;
 	}>();
 
-	// Show helper/org navigation from the current SSR-loaded user role.
-	let canSeeVolunteerMenu = $derived(user?.role === 'helper' || user?.role === 'org');
-	let canSeeOrganizerMenu = $derived(user?.role === 'org');
+	// Gate staff navigation by effective permissions (ORG resolves via the
+	// wildcard), matching the backend's per-permission checks. Show each
+	// dropdown only when the user can reach at least one item inside it.
+	let canSeeVolunteerMenu = $derived(canManageSchedule(user));
+	let canSeeOrganizerMenu = $derived(
+		canManageSettings(user) || canImportSchedule(user) || canSendNotifications(user)
+	);
 </script>
 
 {#snippet sidebarLinks()}
@@ -107,29 +116,34 @@
 						/>
 					{/snippet}
 					<!-- Keep festival controls together so organizers can find them quickly on mobile. -->
-					<SidebarItem label="Настройки фестиваля" href="/org/settings">
-						{#snippet icon()}
-							<!-- This matches the page action: importing a schedule file. -->
-							<AdjustmentsHorizontalOutline
-								class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-							/>
-						{/snippet}
-					</SidebarItem>
-					<SidebarItem label="Импорт расписания" href="/org/import_schedule">
-						{#snippet icon()}
-							<!-- This matches the page action: importing a schedule file. -->
-							<FileImportOutline
-								class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-							/>
-						{/snippet}
-					</SidebarItem>
-					<SidebarItem label="Рассылка уведомлений" href="/org/broadcast">
-						{#snippet icon()}
-							<BullhornOutline
-								class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-							/>
-						{/snippet}
-					</SidebarItem>
+					{#if canManageSettings(user)}
+						<SidebarItem label="Настройки фестиваля" href="/org/settings">
+							{#snippet icon()}
+								<AdjustmentsHorizontalOutline
+									class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+								/>
+							{/snippet}
+						</SidebarItem>
+					{/if}
+					{#if canImportSchedule(user)}
+						<SidebarItem label="Импорт расписания" href="/org/import_schedule">
+							{#snippet icon()}
+								<!-- This matches the page action: importing a schedule file. -->
+								<FileImportOutline
+									class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+								/>
+							{/snippet}
+						</SidebarItem>
+					{/if}
+					{#if canSendNotifications(user)}
+						<SidebarItem label="Рассылка уведомлений" href="/org/broadcast">
+							{#snippet icon()}
+								<BullhornOutline
+									class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
+								/>
+							{/snippet}
+						</SidebarItem>
+					{/if}
 				</SidebarDropdownWrapper>
 			{/if}
 		</SidebarGroup>
