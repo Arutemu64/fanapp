@@ -6,12 +6,12 @@
 	import TicketIcon from '~icons/lucide/ticket';
 	import CalendarCheckIcon from '~icons/lucide/calendar-check';
 	import BellIcon from '~icons/lucide/bell';
-	import type { UserFullDTO } from '$lib/types/user';
+	import type { CurrentUserDTO } from '$lib/types/user';
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import GetReadyCard from './GetReadyCard.svelte';
 
 	interface Props {
-		user: UserFullDTO | null;
+		user: CurrentUserDTO | null;
 	}
 
 	let { user }: Props = $props();
