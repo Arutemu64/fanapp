@@ -18,7 +18,7 @@ import {
 	clearAuthCookies,
 	setRequestCookiesHeader
 } from '$lib/server/cookies';
-import type { UserFullDTO } from '$lib/types/user';
+import type { CurrentUserDTO } from '$lib/types/user';
 import type { Handle, HandleFetch, HandleServerError, RequestEvent } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
@@ -78,7 +78,7 @@ export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
  * Fetch the current user from the backend. Returns `null` for any "not logged
  * in" situation so callers never have to handle errors.
  */
-async function loadCurrentUser(event: RequestEvent): Promise<UserFullDTO | null> {
+async function loadCurrentUser(event: RequestEvent): Promise<CurrentUserDTO | null> {
 	try {
 		const client = createApiClient();
 		const result = await client.GET('/me/', { fetch: event.fetch });
