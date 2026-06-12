@@ -6,9 +6,10 @@ from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
-from fanfan.core.exceptions.base import AccessDenied
+from fanfan.application.services.permissions import PermissionService
 from fanfan.core.models.mailing import Mailing
 from fanfan.core.vo.mailing import MailingId
+from fanfan.core.vo.permission import PermissionName, Permissions
 from fanfan.core.vo.user import UserRole
 
 logger = logging.getLogger(__name__)
@@ -29,18 +30,20 @@ class SendBroadcast:
         current_user_provider: CurrentUserProvider,
         user_gateway: UserGateway,
         mailing_gateway: MailingGateway,
+        perm_service: PermissionService,
         uow: UnitOfWork,
     ):
         self.current_user_provider = current_user_provider
         self.user_gateway = user_gateway
         self.mailing_gateway = mailing_gateway
+        self.perm_service = perm_service
         self.uow = uow
 
     async def __call__(self, data: SendBroadcastInput) -> SendBroadcastOutput:
         current_user = await self.current_user_provider.require_user()
-        # TODO add proper permission
-        if current_user.role is not UserRole.ORG:
-            raise AccessDenied
+        await self.perm_service.ensure(
+            user=current_user, perm_name=PermissionName(Permissions.NOTIFICATIONS_SEND)
+        )
 
         # Record BroadcastQueued on the mailing so it lands in the outbox in the
         # same transaction as the row — no dual write between commit and publish.

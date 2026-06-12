@@ -5,12 +5,13 @@ from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.services.current_user import CurrentUserProvider
+from fanfan.application.services.permissions import PermissionService
 from fanfan.core.events.notifications import NotificationQueued
-from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.users import UserNotFound
 from fanfan.core.models.notification import NewNotification
 from fanfan.core.vo.notification import NotificationType, generate_notification_id
-from fanfan.core.vo.user import UserId, UserRole
+from fanfan.core.vo.permission import PermissionName, Permissions
+from fanfan.core.vo.user import UserId
 
 logger = logging.getLogger(__name__)
 
@@ -27,18 +28,20 @@ class SendPersonalNotification:
         user_gateway: UserGateway,
         mailing_gateway: MailingGateway,
         current_user_provider: CurrentUserProvider,
+        perm_service: PermissionService,
         events_broker: EventBroker,
     ):
         self.user_gateway = user_gateway
         self.mailing_gateway = mailing_gateway
         self.current_user_provider = current_user_provider
+        self.perm_service = perm_service
         self.events_broker = events_broker
 
     async def __call__(self, data: SendPersonalNotificationInput):
         current_user = await self.current_user_provider.require_user()
-        # TODO proper permission
-        if current_user.role != UserRole.ORG:
-            raise AccessDenied
+        await self.perm_service.ensure(
+            user=current_user, perm_name=PermissionName(Permissions.NOTIFICATIONS_SEND)
+        )
 
         user = await self.user_gateway.get_by_id(data.user_id)
         if user is None:

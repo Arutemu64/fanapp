@@ -7,11 +7,12 @@ from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
+from fanfan.application.services.permissions import PermissionService
 from fanfan.core.events.notifications import MailingCancelled
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.notifications import MailingNotFound
 from fanfan.core.vo.mailing import MailingId
-from fanfan.core.vo.user import UserRole
+from fanfan.core.vo.permission import PermissionName, Permissions
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +27,14 @@ class CancelMailing:
         mailing_gateway: MailingGateway,
         user_gateway: UserGateway,
         current_user_provider: CurrentUserProvider,
+        perm_service: PermissionService,
         events_broker: EventBroker,
         uow: UnitOfWork,
     ):
         self.mailing_gateway = mailing_gateway
         self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
+        self.perm_service = perm_service
         self.events_broker = events_broker
         self.uow = uow
 
@@ -40,10 +43,18 @@ class CancelMailing:
         if mailing is None:
             raise MailingNotFound
         current_user = await self.current_user_provider.require_user()
-        if (mailing.by_user_id != current_user.id) and (
-            current_user.role is not UserRole.ORG
-        ):
-            raise AccessDenied(details={"reason": "MAILING_DELETE_FORBIDDEN"})
+        # Owners can always cancel their own mailing; everyone else needs the
+        # broadcast permission to cancel someone else's.
+        if mailing.by_user_id != current_user.id:
+            try:
+                await self.perm_service.ensure(
+                    user=current_user,
+                    perm_name=PermissionName(Permissions.NOTIFICATIONS_SEND),
+                )
+            except AccessDenied:
+                raise AccessDenied(
+                    details={"reason": "MAILING_DELETE_FORBIDDEN"}
+                ) from None
         mailing.set_as_cancelled()
         await self.mailing_gateway.save(mailing)
         await self.uow.commit()
