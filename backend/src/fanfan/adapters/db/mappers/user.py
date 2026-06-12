@@ -11,6 +11,7 @@ from fanfan.application.dto.user import (
 from fanfan.core.models.user import User, UserSettings
 from fanfan.core.vo.email import Email
 from fanfan.core.vo.permission import (
+    WILDCARD_PERMISSION,
     PermissionName,
     PermissionObjectId,
     PermissionObjectType,
@@ -58,6 +59,32 @@ class UserMapper:
             role=orm.role,
         )
 
+    @staticmethod
+    def _resolve_permissions(orm: UserORM) -> list[UserPermissionDTO]:
+        # ORG implicitly holds every permission (see PermissionService.ensure),
+        # so it carries no explicit grant rows. Ship a single wildcard entry
+        # instead of the empty list so the frontend resolves it as full access.
+        if orm.role is UserRole.ORG:
+            return [
+                UserPermissionDTO(
+                    name=WILDCARD_PERMISSION,
+                    object_type=None,
+                    object_id=None,
+                )
+            ]
+        return [
+            UserPermissionDTO(
+                name=PermissionName(p.permission.name),
+                object_type=PermissionObjectType(p.object_type)
+                if p.object_type is not None
+                else None,
+                object_id=PermissionObjectId(p.object_id)
+                if p.object_id is not None
+                else None,
+            )
+            for p in orm.permissions
+        ]
+
     def parse_current_user_dto(self, orm: UserORM) -> CurrentUserDTO:
         return CurrentUserDTO(
             id=UserId(orm.id),
@@ -75,17 +102,6 @@ class UserMapper:
             )
             if orm.ticket
             else None,
-            permissions=[
-                UserPermissionDTO(
-                    name=PermissionName(p.permission.name),
-                    object_type=PermissionObjectType(p.object_type)
-                    if p.object_type is not None
-                    else None,
-                    object_id=PermissionObjectId(p.object_id)
-                    if p.object_id is not None
-                    else None,
-                )
-                for p in orm.permissions
-            ],
+            permissions=self._resolve_permissions(orm),
             settings=self.retort.load(orm.settings, UserSettingsDTO),
         )

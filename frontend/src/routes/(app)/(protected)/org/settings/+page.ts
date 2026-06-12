@@ -1,8 +1,17 @@
 import { error } from '@sveltejs/kit';
 import { createApiClient } from '$lib/api';
+import { canManageSettings } from '$lib/utils/permissions';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ fetch, depends }) => {
+export const load: PageLoad = async ({ fetch, depends, parent }) => {
+	const { user } = await parent();
+
+	// Mirror the backend SETTINGS_MANAGE check before hitting the API, so the
+	// page is not shown to users who would be rejected.
+	if (!canManageSettings(user)) {
+		error(403, 'У тебя нет доступа к настройкам фестиваля');
+	}
+
 	// The page reuses this key after saving so the SSR-loaded data stays fresh.
 	depends('app:festival-settings');
 
