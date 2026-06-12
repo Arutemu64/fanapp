@@ -28,7 +28,7 @@ class SendTestNotification:
                         "Проверка каналов уведомлений.\n"
                         "Если канал подключён, вы должны получить это сообщение."
                     ),
-                    type=NotificationType.DEFAULT,
+                    type=NotificationType.TEST,
                     mailing_id=None,
                 )
             )

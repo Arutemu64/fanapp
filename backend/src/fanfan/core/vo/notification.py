@@ -16,3 +16,7 @@ class NotificationType(StrEnum):
     MESSAGE = "message"
     POINTS_RECEIVED = "points_received"
     BROADCAST = "broadcast"
+    # Self-test triggered from the profile page. The service worker always shows
+    # the OS-level push for this type, even when the app is visible, so the user
+    # can verify push delivery without backgrounding the app.
+    TEST = "test"

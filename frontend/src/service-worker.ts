@@ -22,6 +22,10 @@ interface PushNotificationPayload {
 	// Set by the backend to `notification.id` — collapses re-pushes of the same
 	// notification while keeping distinct notifications separate.
 	tag?: string;
+	// Set by the backend for self-test pushes. Forces the OS-level notification
+	// even when the app is visible, so the user can verify push delivery without
+	// backgrounding the app.
+	test?: boolean;
 }
 
 interface NotificationClickData {
@@ -153,7 +157,8 @@ self.addEventListener('push', (event: PushEvent) => {
 		(async () => {
 			// When the app is already visible, the user will see the in-app toast and bell update.
 			// Skip the OS-level push notification to avoid duplicate alerts for the same message.
-			if (await hasVisibleAppClient()) {
+			// Test pushes are the exception: always show them so the user can confirm delivery.
+			if (!data.test && (await hasVisibleAppClient())) {
 				return;
 			}
 
