@@ -1,3 +1,4 @@
+import { WILDCARD_PERMISSION } from '$lib/constants/permissions';
 import type { CurrentUserDTO, UserPermissionDTO } from '$lib/types/user';
 
 /**
@@ -14,22 +15,17 @@ export function hasPermission(
 	objectType?: string,
 	objectId?: number
 ): boolean {
-	if (!user) {
-		return false;
-	}
-
-	// ORG is the staff admin role and implicitly holds every permission.
-	// This mirrors the backend bypass in PermissionService.ensure, otherwise
-	// ORG users (who carry no explicit permission rows) get locked out of the UI.
-	if (user.role === 'org') {
-		return true;
-	}
-
-	if (!user.permissions) {
+	if (!user || !user.permissions) {
 		return false;
 	}
 
 	return user.permissions.some((permission: UserPermissionDTO) => {
+		// The backend ships a wildcard for roles that implicitly hold every
+		// permission (e.g. ORG), so it satisfies any check regardless of object.
+		if (permission.name === WILDCARD_PERMISSION) {
+			return true;
+		}
+
 		if (permission.name !== permissionName) {
 			return false;
 		}
