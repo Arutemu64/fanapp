@@ -8,13 +8,34 @@
 	import IconSvelte from '~icons/simple-icons/svelte';
 	import IconFastapi from '~icons/simple-icons/fastapi';
 	import IconHeart from '~icons/lucide/heart';
+	import { ArrowRightToBracketOutline } from 'flowbite-svelte-icons';
+	import { Button } from 'flowbite-svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { getEventsClient } from '$lib/services/events.svelte';
+	import { createApiClient } from '$lib/api';
 	import type { PageProps } from './$types';
-	import { invalidate } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
+	import { resolve } from '$app/paths';
 
 	let { data }: PageProps = $props();
 	let user = $derived(data.user!);
 	const toastService = getToastService();
+	const eventsClient = getEventsClient();
+	const client = createApiClient();
+
+	// Logout used to live in the navbar avatar dropdown; it now lives on the
+	// profile page since that is where the bottom dock / sidebar entry leads.
+	async function handleLogout() {
+		const { error, response } = await client.POST('/auth/logout');
+
+		if (error || !response.ok) {
+			toastService.error(error);
+			return;
+		}
+
+		await goto(resolve('/'), { invalidateAll: true });
+		eventsClient?.restart();
+	}
 
 	const telegramLinkErrorMessages = {
 		linked_to_another_account: 'Этот Telegram уже подключён к другому аккаунту.',
@@ -73,6 +94,12 @@
 			/>
 		</div>
 	</div>
+
+	<!-- Logout action for the whole account; full-width and easy to reach on mobile. -->
+	<Button color="red" outline class="w-full" onclick={handleLogout}>
+		<ArrowRightToBracketOutline class="me-2 h-4 w-4" />
+		Выйти
+	</Button>
 </div>
 
 <footer class="mt-6 pb-4 text-center text-xs text-gray-400 dark:text-gray-500">

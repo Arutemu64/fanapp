@@ -45,5 +45,5 @@
 		</section>
 	</main>
 
-	<AppBottomNav {activeUrl} />
+	<AppBottomNav {activeUrl} {user} />
 </div>

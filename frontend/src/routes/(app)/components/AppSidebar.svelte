@@ -15,6 +15,7 @@
 	import {
 		AdjustmentsHorizontalOutline,
 		AnnotationOutline,
+		ArrowRightToBracketOutline,
 		BullhornOutline,
 		CalendarWeekOutline,
 		ClockArrowOutline,
@@ -24,6 +25,7 @@
 		MapPinAltOutline,
 		ShieldOutline,
 		ThumbsUpOutline,
+		UserCircleOutline,
 		UsersGroupOutline
 	} from 'flowbite-svelte-icons';
 	import ThemeToggle from './ThemeToggle.svelte';
@@ -126,6 +128,20 @@
 						<AnnotationOutline
 							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
 						/>
+					{/snippet}
+				</SidebarItem>
+			{/if}
+			<!-- Profile/login on desktop lives here since the bottom dock is mobile-only. -->
+			{#if user}
+				<SidebarItem label="Профиль" href="/profile">
+					{#snippet icon()}
+						<UserCircleOutline class={iconClass} />
+					{/snippet}
+				</SidebarItem>
+			{:else}
+				<SidebarItem label="Войти" href="/login">
+					{#snippet icon()}
+						<ArrowRightToBracketOutline class={iconClass} />
 					{/snippet}
 				</SidebarItem>
 			{/if}
