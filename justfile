@@ -47,11 +47,8 @@ backend-test:
 backend-test-integration:
     cd backend && uv run pytest tests/integration
 
-backend-sync-cosplay2:
-    cd backend && uv run python -m fanfan.main.cli sync cosplay2
-
-backend-sync-tcloud:
-    cd backend && uv run python -m fanfan.main.cli sync tcloud
+backend-sync TARGET:
+    cd backend && uv run python -m fanfan.main.cli sync {{ TARGET }}
 
 backend-typecheck:
     cd backend && uv run ty check src/fanfan
