@@ -57,6 +57,14 @@ Events are published via `EventBroker` (port: `application/ports/events_broker.p
 
 **Do not add a published event without a corresponding subscriber.**
 
+### Naming standard
+
+Event classes live in `core/events/<context>.py` and subclass `AppEvent` (`core/events/base.py`).
+
+* **Class name** — PascalCase, **past tense**, `<Entity><PastVerb>` (e.g. `VoteCreated`, `VoteDeleted`, `ScheduleChangeUndone`, `MailingCancelled`). An event records something that *already happened*, so the verb is always past tense; if you can't name it in the past tense it probably isn't an event (see the "keep domain events honest" note under [service events](#events-raised-directly-by-interactors-service-events)).
+* **`subject` ClassVar** — the NATS/JetStream subject the event is published and subscribed on, and the wire contract. Lowercase, **dot-separated** hierarchy, snake_case within a segment, with the **past-tense verb as the final segment**: `<context>[.<entity>].<verb>` — e.g. `votes.created`, `notifications.broadcast.queued`, `schedule.change.undone`, `users.email_login_code_requested`. The leading segment names the bounded context (`votes`, `notifications`, `schedule`, `users`). Unlike SSE event names (single token, no dots — see [Realtime (SSE)](#realtime-sse)), dots here are intentional: JetStream consumers bind with hierarchical wildcards (`notifications.>`).
+* **Stability** — a `subject` is a published contract. Renaming one orphans existing durable consumers and any outbox rows already written with the old subject, so treat changes as a migration, not a rename.
+
 ### Events raised by aggregates (preferred)
 
 When an event directly records a state change on an aggregate, raise it inside the aggregate method using `record_event()`. The interactor does **not** publish these — the `UnitOfWork` handles them automatically. The gateway registers the aggregate when it is added or loaded, and `uow.commit()` writes the recorded events to the **transactional outbox** in the same transaction as the state change (see [Transactional outbox](#transactional-outbox)):
