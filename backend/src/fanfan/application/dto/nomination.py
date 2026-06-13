@@ -11,6 +11,8 @@ class NominationBaseDTO(BaseModel):
     id: NominationId
     code: NominationCode
     title: str
+    # Optional external URL where users can preview the nominated works.
+    works_url: str | None = None
 
 
 class NominationVoteDTO(BaseModel):

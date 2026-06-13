@@ -51,6 +51,7 @@ class GetVotingNomination:
             id=nomination.id,
             code=nomination.code,
             title=nomination.title,
+            works_url=nomination.works_url,
             user_vote=nomination.user_vote,
             participants_count=nomination.participants_count,
             participants=participants,

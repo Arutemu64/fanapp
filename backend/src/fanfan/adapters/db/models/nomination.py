@@ -25,6 +25,8 @@ class NominationORM(BaseORM):
     code: Mapped[str] = mapped_column(unique=True)
     title: Mapped[str] = mapped_column(unique=True)
     is_votable: Mapped[bool] = mapped_column(server_default="False")
+    # Optional external URL where users can preview the nominated works.
+    works_url: Mapped[str | None] = mapped_column(default=None)
 
     participants: Mapped[list[ParticipantORM]] = relationship(
         back_populates="nomination"

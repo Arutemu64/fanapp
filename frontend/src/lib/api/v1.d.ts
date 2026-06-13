@@ -1030,6 +1030,8 @@ export interface components {
             code: string;
             /** Title */
             title: string;
+            /** Works Url */
+            works_url?: string | null;
             /** Participants Count */
             participants_count: number;
             user_vote: components["schemas"]["NominationVoteDTO"] | null;
@@ -1117,6 +1119,8 @@ export interface components {
             code: string;
             /** Title */
             title: string;
+            /** Works Url */
+            works_url?: string | null;
             /** Participants Count */
             participants_count: number;
             user_vote: components["schemas"]["NominationVoteDTO"] | null;
