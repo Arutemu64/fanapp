@@ -115,8 +115,10 @@
 	}
 
 	async function handleLoginCodeRequest() {
+		// The captcha runs invisibly, so there is nothing for the user to click.
+		// If the token isn't ready yet, ask them to retry in a moment.
 		if (captchaEnabled && !captchaToken) {
-			formError = 'Подтвердите, что вы не робот';
+			formError = 'Проверка ещё не завершена, попробуйте ещё раз через секунду';
 			return;
 		}
 
