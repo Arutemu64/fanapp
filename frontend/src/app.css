@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Unbounded:wght@600;700;800&display=swap');
+/* Self-hosted variable fonts via Fontsource (includes Cyrillic subsets). */
+@import '@fontsource-variable/inter/index.css';
+@import '@fontsource-variable/unbounded/index.css';
 @import 'tailwindcss';
 
 @plugin 'flowbite/plugin';
@@ -6,30 +8,37 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-	--font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-	--font-display: 'Unbounded', 'Inter', ui-sans-serif, system-ui, sans-serif;
+	--font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+	--font-display: 'Unbounded Variable', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
 
-	--color-primary-50: #fff5f2;
-	--color-primary-100: #fff1ee;
-	--color-primary-200: #ffe4de;
-	--color-primary-300: #ffd5cc;
-	--color-primary-400: #ffbcad;
-	--color-primary-500: #fe795d;
-	--color-primary-600: #ef562f;
-	--color-primary-700: #eb4f27;
-	--color-primary-800: #cc4522;
-	--color-primary-900: #a5371b;
+	/*
+	 * Brand palette derived from the "FAN FAN" watermelon key art:
+	 * primary = watermelon flesh pink/crimson, secondary = cyan/teal accent.
+	 * Lime-green (rind) and yellow accents come from Tailwind's default
+	 * green and yellow scales. Shades 600+ are darkened so white text on a
+	 * 600 fill clears WCAG AA (>=4.5:1) for buttons and links.
+	 */
+	--color-primary-50: #fff1f5;
+	--color-primary-100: #ffe3ea;
+	--color-primary-200: #ffccd9;
+	--color-primary-300: #ff9fb9;
+	--color-primary-400: #fb6491;
+	--color-primary-500: #f4316b;
+	--color-primary-600: #d61450;
+	--color-primary-700: #b30f43;
+	--color-primary-800: #960d3a;
+	--color-primary-900: #7d1035;
 
-	--color-secondary-50: #f0f9ff;
-	--color-secondary-100: #e0f2fe;
-	--color-secondary-200: #bae6fd;
-	--color-secondary-300: #7dd3fc;
-	--color-secondary-400: #38bdf8;
-	--color-secondary-500: #0ea5e9;
-	--color-secondary-600: #0284c7;
-	--color-secondary-700: #0369a1;
-	--color-secondary-800: #075985;
-	--color-secondary-900: #0c4a6e;
+	--color-secondary-50: #ecfdff;
+	--color-secondary-100: #cff7fc;
+	--color-secondary-200: #a3eef9;
+	--color-secondary-300: #66dfef;
+	--color-secondary-400: #1fc6d9;
+	--color-secondary-500: #0c9fb8;
+	--color-secondary-600: #07788c;
+	--color-secondary-700: #0a6173;
+	--color-secondary-800: #0e4f5e;
+	--color-secondary-900: #103f4c;
 }
 
 @source '../node_modules/flowbite-svelte/dist';

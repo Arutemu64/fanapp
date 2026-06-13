@@ -88,7 +88,7 @@
 				{@html notification.body}
 			</div>
 		{/if}
-		<span class="mt-1 block text-xs font-medium text-primary-600 dark:text-primary-500"
+		<span class="mt-1 block text-xs font-medium text-primary-600 dark:text-primary-400"
 			>{formatRelativeTime(notification.created_at)}</span
 		>
 	</div>
