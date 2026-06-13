@@ -57,33 +57,39 @@
 </Button>
 
 <SectionIntro>
-	<!-- Navbar shows the generic "Голосование"; the nomination name is the page's
-		own heading (h2) so long names stay readable instead of clipping in the navbar. -->
-	<h2 class="text-xl font-bold text-gray-900 dark:text-white">{nomination.title}</h2>
-	<p class="mt-1 text-sm text-gray-500 sm:text-base dark:text-gray-400">
-		{#if hasVoted}
-			<span class="flex items-center gap-1 text-green-600 dark:text-green-400">
-				<CheckCircleSolid class="h-3 w-3 sm:h-4 sm:w-4" />
-				Голос в этой номинации уже учтён
-			</span>
-		{:else}
-			Выбери участника, чтобы отдать голос
+	<!-- Title/description on the left, works-preview action on the right.
+		Stacks on narrow screens, sits side by side from sm up. -->
+	<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+		<div>
+			<!-- Navbar shows the generic "Голосование"; the nomination name is the page's
+				own heading (h2) so long names stay readable instead of clipping in the navbar. -->
+			<h2 class="text-xl font-bold text-gray-900 dark:text-white">{nomination.title}</h2>
+			<p class="mt-1 text-sm text-gray-500 sm:text-base dark:text-gray-400">
+				{#if hasVoted}
+					<span class="flex items-center gap-1 text-green-600 dark:text-green-400">
+						<CheckCircleSolid class="h-3 w-3 sm:h-4 sm:w-4" />
+						Голос в этой номинации уже учтён
+					</span>
+				{:else}
+					Выбери участника, чтобы отдать голос
+				{/if}
+			</p>
+		</div>
+		{#if nomination.works_url}
+			<!-- External gallery of the nominated works; opens in a new tab. -->
+			<Button
+				href={nomination.works_url}
+				rel="external noopener"
+				target="_blank"
+				size="sm"
+				color="primary"
+				class="shrink-0"
+			>
+				<ArrowUpRightFromSquareOutline class="mr-1 h-4 w-4" />
+				Смотреть работы
+			</Button>
 		{/if}
-	</p>
-	{#if nomination.works_url}
-		<!-- External gallery of the nominated works; opens in a new tab. -->
-		<Button
-			href={nomination.works_url}
-			rel="external noopener"
-			target="_blank"
-			size="sm"
-			color="primary"
-			class="mt-3"
-		>
-			<ArrowUpRightFromSquareOutline class="mr-1 h-4 w-4" />
-			Смотреть работы
-		</Button>
-	{/if}
+	</div>
 </SectionIntro>
 
 <VotingStatusAlert votingState={votingStatus} class="mb-4" />
