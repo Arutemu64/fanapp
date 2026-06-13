@@ -3659,6 +3659,17 @@
             "type": "string",
             "title": "Title"
           },
+          "works_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Works Url"
+          },
           "participants_count": {
             "type": "integer",
             "title": "Participants Count"
@@ -3868,6 +3879,17 @@
           "title": {
             "type": "string",
             "title": "Title"
+          },
+          "works_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Works Url"
           },
           "participants_count": {
             "type": "integer",

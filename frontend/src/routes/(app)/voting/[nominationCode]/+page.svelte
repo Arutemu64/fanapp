@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { Search, Card, Button } from 'flowbite-svelte';
-	import { ArrowLeftOutline, CheckCircleSolid, UsersGroupOutline } from 'flowbite-svelte-icons';
+	import {
+		ArrowLeftOutline,
+		ArrowUpRightFromSquareOutline,
+		CheckCircleSolid,
+		UsersGroupOutline
+	} from 'flowbite-svelte-icons';
 	import ParticipantCard from '../components/ParticipantCard.svelte';
 	import VotingStatusAlert from '../components/VotingStatusAlert.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
@@ -65,6 +70,20 @@
 			Выбери участника, чтобы отдать голос
 		{/if}
 	</p>
+	{#if nomination.works_url}
+		<!-- External gallery of the nominated works; opens in a new tab. -->
+		<Button
+			href={nomination.works_url}
+			rel="external noopener"
+			target="_blank"
+			size="sm"
+			color="primary"
+			class="mt-3"
+		>
+			<ArrowUpRightFromSquareOutline class="mr-1 h-4 w-4" />
+			Смотреть работы
+		</Button>
+	{/if}
 </SectionIntro>
 
 <VotingStatusAlert votingState={votingStatus} class="mb-4" />

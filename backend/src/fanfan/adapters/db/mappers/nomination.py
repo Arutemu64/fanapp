@@ -15,6 +15,7 @@ class NominationMapper:
             code=model.code,
             title=model.title,
             is_votable=model.is_votable,
+            works_url=model.works_url,
         )
 
     @staticmethod
@@ -25,6 +26,7 @@ class NominationMapper:
             code=orm.code,
             title=orm.title,
             is_votable=orm.is_votable,
+            works_url=orm.works_url,
         )
 
     @staticmethod
@@ -35,6 +37,7 @@ class NominationMapper:
             id=NominationId(nomination_orm.id),
             code=NominationCode(nomination_orm.code),
             title=nomination_orm.title,
+            works_url=nomination_orm.works_url,
             participants_count=nomination_orm.participants_count,
             user_vote=NominationVoteDTO(
                 id=VoteId(vote_orm.id),
