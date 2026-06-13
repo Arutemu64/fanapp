@@ -13,7 +13,7 @@
 </script>
 
 <svelte:head>
-	<title>Вход или регистрация — ФАН ФАН</title>
+	<title>Вход или регистрация · ФАН ФАН</title>
 </svelte:head>
 
 <Card class="w-full p-4 sm:p-6">

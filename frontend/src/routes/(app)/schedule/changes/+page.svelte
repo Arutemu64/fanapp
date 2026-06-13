@@ -7,7 +7,7 @@
 </script>
 
 <svelte:head>
-	<title>Изменения расписания</title>
+	<title>Изменения расписания · ФАН ФАН</title>
 </svelte:head>
 
 {#if scheduleChanges.length === 0}

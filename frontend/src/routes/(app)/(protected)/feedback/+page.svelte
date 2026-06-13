@@ -73,7 +73,7 @@
 </script>
 
 <svelte:head>
-	<title>Обратная связь</title>
+	<title>Обратная связь · ФАН ФАН</title>
 </svelte:head>
 
 <SectionIntro

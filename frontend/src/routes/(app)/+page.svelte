@@ -8,7 +8,7 @@
 </script>
 
 <svelte:head>
-	<title>ФАН ФАН — главная</title>
+	<title>ФАН ФАН</title>
 </svelte:head>
 
 <div class="mx-auto max-w-6xl space-y-5 sm:space-y-6">

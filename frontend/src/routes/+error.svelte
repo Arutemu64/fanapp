@@ -11,7 +11,7 @@
 </script>
 
 <svelte:head>
-	<title>{title} ({status})</title>
+	<title>{title} ({status}) · ФАН ФАН</title>
 </svelte:head>
 
 <!-- Global fallback: no app shell above this boundary, so render full screen. -->

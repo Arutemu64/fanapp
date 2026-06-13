@@ -164,7 +164,7 @@
 </script>
 
 <svelte:head>
-	<title>Расписание</title>
+	<title>Расписание · ФАН ФАН</title>
 </svelte:head>
 
 <div {@attach capturePageRoot} class="space-y-4">

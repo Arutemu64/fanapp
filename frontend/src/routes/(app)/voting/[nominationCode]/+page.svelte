@@ -41,7 +41,7 @@
 </script>
 
 <svelte:head>
-	<title>{nomination.title} - Голосование</title>
+	<title>{nomination.title} · Голосование · ФАН ФАН</title>
 </svelte:head>
 
 <Button
