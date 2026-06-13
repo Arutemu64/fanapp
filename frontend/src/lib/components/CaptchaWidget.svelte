@@ -23,10 +23,16 @@
 </script>
 
 {#if siteKey}
-	<div class="flex justify-center">
+	<!--
+		"interaction-only" keeps the widget invisible and auto-solves the managed
+		challenge in the background. A visible box only appears if Cloudflare decides
+		a real interaction is required, so the normal flow needs no manual solve.
+	-->
+	<div class="flex justify-center empty:hidden">
 		<Turnstile
 			{siteKey}
 			theme="auto"
+			appearance="interaction-only"
 			on:callback={(event: CustomEvent<{ token: string }>) => (token = event.detail.token)}
 			on:expired={() => (token = null)}
 			on:error={() => (token = null)}
