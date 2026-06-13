@@ -96,8 +96,8 @@ All commands run from the repo root via `just`.
 | `just backend-typecheck` | Run `ty` type checker |
 | `just frontend-lint` / `just frontend-check` | Lint / type-check frontend |
 | `just frontend-generate-api` | Regenerate frontend API types from the OpenAPI spec |
-| `just backend-sync-tcloud` | Sync tickets from TicketsCloud |
-| `just backend-sync-cosplay2` | Sync cosplay data from Cosplay2 |
+| `just backend-sync tcloud` | Sync tickets from TicketsCloud |
+| `just backend-sync cosplay2` | Sync cosplay data from Cosplay2 |
 
 > The frontend talks to the backend through generated types in `frontend/src/lib/api/v1.d.ts`. Whenever backend endpoints or schemas change, run `just frontend-generate-api` to keep the contract in sync.
 
