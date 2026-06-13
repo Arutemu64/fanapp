@@ -139,7 +139,9 @@ class SqlUserGateway(UserGateway):
         return [self.mapper.parse_base_dto(u) for u in users_orm]
 
     async def read_all_by_receive_all_announcements(self) -> list[UserBaseDTO]:
-        stmt = select(UserORM).where(UserORM.receive_all_announcements.is_(True))
+        # Bare boolean predicate (not .is_(True)) so it matches the partial
+        # index ix_users_receive_all_announcements WHERE clause and can use it.
+        stmt = select(UserORM).where(UserORM.receive_all_announcements)
         users_orm = await self.session.scalars(stmt)
         return [self.mapper.parse_base_dto(u) for u in users_orm]
 
