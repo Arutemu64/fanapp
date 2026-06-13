@@ -57,6 +57,14 @@ Events are published via `EventBroker` (port: `application/ports/events_broker.p
 
 **Do not add a published event without a corresponding subscriber.**
 
+### Naming standard
+
+Event classes live in `core/events/<context>.py` and subclass `AppEvent` (`core/events/base.py`).
+
+* **Class name** — PascalCase, **past tense**, `<Entity><PastVerb>` (e.g. `VoteCreated`, `VoteDeleted`, `ScheduleChangeUndone`, `MailingCancelled`). An event records something that *already happened*, so the verb is always past tense; if you can't name it in the past tense it probably isn't an event (see the "keep domain events honest" note under [service events](#events-raised-directly-by-interactors-service-events)).
+* **`subject` ClassVar** — the NATS/JetStream subject the event is published and subscribed on, and the wire contract. Lowercase, **dot-separated** hierarchy, snake_case within a segment, with the **past-tense verb as the final segment**: `<context>[.<entity>].<verb>` — e.g. `votes.created`, `notifications.broadcast.queued`, `schedule.change.undone`, `users.email_login_code_requested`. The leading segment names the bounded context (`votes`, `notifications`, `schedule`, `users`). Unlike SSE event names (single token, no dots — see [Realtime (SSE)](#realtime-sse)), dots here are intentional: JetStream consumers bind with hierarchical wildcards (`notifications.>`).
+* **Stability** — a `subject` is a published contract. Renaming one orphans existing durable consumers and any outbox rows already written with the old subject, so treat changes as a migration, not a rename.
+
 ### Events raised by aggregates (preferred)
 
 When an event directly records a state change on an aggregate, raise it inside the aggregate method using `record_event()`. The interactor does **not** publish these — the `UnitOfWork` handles them automatically. The gateway registers the aggregate when it is added or loaded, and `uow.commit()` writes the recorded events to the **transactional outbox** in the same transaction as the state change (see [Transactional outbox](#transactional-outbox)):
@@ -116,6 +124,17 @@ await self.events_broker.publish(
 > Keep domain events honest: a domain event must record an actual state change (past tense). Do **not** call `record_event()` for an action that mutates nothing — model it as a service event published by the interactor instead. `User.request_email_change()` is the counter-example that *is* a domain event: it sets `pending_email`, so it records `EmailConfirmationCodeRequested` and that event flows through `uow.commit()` (the `SqlUserGateway` registers every `User` it adds or loads).
 
 Rule of thumb: inject `EventBroker` into an interactor **only** for service events; aggregate state-change events flow through `uow.commit()`.
+
+## Realtime (SSE)
+
+Browser push goes over Server-Sent Events, separate from the domain-event/outbox path: interactors and FastStream consumers publish an `SSEMessage` via `RealtimeGateway` (`adapters/nats/realtime_gateway.py`), which fans out over NATS subjects to every open `/events` stream (`presentation/web/routes/sse.py`). It carries no committed state, so it never touches the `UnitOfWork` or the outbox.
+
+**Every SSE event name is a member of the `SSEEventName` `StrEnum`** (`application/dto/realtime.py`) — never a bare string literal. `SSEMessage.event_name` is typed to the enum, so a typo is a type error, not a silently dead event. To add an event: add a member here, then mirror it in the frontend `SSEEventMap` (`frontend/src/lib/services/events.svelte.ts`).
+
+Naming standard for new events:
+* **snake_case, single token — no dots.** The subject is built as `sse.broadcast.{event_name}` / `sse.user.{user_id}.{event_name}` and consumers subscribe with a single-token wildcard (`sse.broadcast.*`). A dot in the name splits into extra subject tokens and silently stops matching the wildcard. (`SSEEventName` being a `StrEnum` means it interpolates straight into the subject and into the SSE `event:` field as its value.)
+* Prefer `<entity>_<event>` for new names.
+* The backend enum and frontend `SSEEventMap` are kept in sync **by hand** — SSE events are not part of the OpenAPI spec, so `just frontend-generate-api` does not cover them. Every enum value must have a matching `SSEEventMap` key.
 
 ## Notification Formatting
 

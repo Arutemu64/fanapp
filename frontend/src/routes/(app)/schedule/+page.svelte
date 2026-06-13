@@ -154,11 +154,11 @@
 
 		updateScrollState();
 		scrollContainer?.addEventListener('scroll', updateScrollState, { passive: true });
-		eventsClient?.on('update_schedule', updateSchedule);
+		eventsClient?.on('schedule_updated', updateSchedule);
 
 		return () => {
 			scrollContainer?.removeEventListener('scroll', updateScrollState);
-			eventsClient?.off('update_schedule', updateSchedule);
+			eventsClient?.off('schedule_updated', updateSchedule);
 		};
 	});
 </script>

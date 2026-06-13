@@ -3,7 +3,7 @@ from dishka_faststream import inject
 from faststream import AckPolicy, Logger
 from faststream.nats import NatsMessage, NatsRouter, PullSub
 
-from fanfan.application.dto.realtime import SSEMessage
+from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.interactors.notifications.create_notification import (
     CreateNotification,
     CreateNotificationInput,
@@ -78,7 +78,7 @@ async def create_new_notification(
             )
             await realtime_gateway.publish(
                 SSEMessage(
-                    "new_notifications",
+                    SSEEventName.NOTIFICATION_CREATED,
                     data=notification.model_dump(mode="json"),
                 ),
                 user_id=data.notification.user_id,

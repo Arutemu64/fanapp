@@ -3,7 +3,7 @@ from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from fanfan.application.dto.realtime import SSE_CONNECTED_EVENT, SSEMessage
+from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.ports.realtime_gateway import RealtimeGateway
 from fanfan.application.services.current_user import CurrentUserProvider
 
@@ -24,7 +24,7 @@ class StreamEvents:
         connection_id = uuid4().hex
 
         handshake = SSEMessage(
-            event_name=SSE_CONNECTED_EVENT,
+            event_name=SSEEventName.CONNECTION_ESTABLISHED,
             data={
                 "server_time": datetime.now(UTC).isoformat(),
                 "authenticated": user_id is not None,

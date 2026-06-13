@@ -127,13 +127,13 @@
 			return;
 		}
 
-		eventsClient.on('new_notifications', addLiveNotification);
-		// 'connected' срабатывает при первом подключении и каждом переподключении.
-		eventsClient.on('connected', syncAfterReconnect);
+		eventsClient.on('notification_created', addLiveNotification);
+		// 'connection_established' fires on the first connect and on every reconnect.
+		eventsClient.on('connection_established', syncAfterReconnect);
 
 		return () => {
-			eventsClient.off('new_notifications', addLiveNotification);
-			eventsClient.off('connected', syncAfterReconnect);
+			eventsClient.off('notification_created', addLiveNotification);
+			eventsClient.off('connection_established', syncAfterReconnect);
 		};
 	});
 </script>

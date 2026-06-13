@@ -2,7 +2,7 @@ from dishka import FromDishka
 from dishka_faststream import inject
 from faststream.nats import NatsRouter, PullSub
 
-from fanfan.application.dto.realtime import SSEMessage
+from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.interactors.notifications.send_schedule_change_notifications import (  # noqa: E501
     SendScheduleChangeNotifications,
     SendScheduleChangeNotificationsInput,
@@ -34,7 +34,7 @@ async def process_schedule_change(
     await interactor(
         SendScheduleChangeNotificationsInput(schedule_change_id=data.schedule_change_id)
     )
-    await realtime_gateway.publish(SSEMessage("update_schedule"))
+    await realtime_gateway.publish(SSEMessage(SSEEventName.SCHEDULE_UPDATED))
 
 
 @schedule_router.subscriber(
@@ -51,4 +51,4 @@ async def undo_schedule_change(
 ) -> None:
     if data.mailing_id:
         await events_broker.publish(MailingCancelled(mailing_id=data.mailing_id))
-    await realtime_gateway.publish(SSEMessage("update_schedule"))
+    await realtime_gateway.publish(SSEMessage(SSEEventName.SCHEDULE_UPDATED))
