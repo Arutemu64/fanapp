@@ -27,38 +27,38 @@
 >
 	<BottomNavItem btnName="Главная" href="/">
 		{#if isActive('/')}
-			<HomeSolid class="mb-1 h-6 w-6 text-primary-600 dark:text-primary-500" />
+			<HomeSolid class="mb-1 h-6 w-6 text-primary-600 dark:text-primary-400" />
 		{:else}
 			<HomeOutline
-				class="mb-1 h-6 w-6 text-gray-500 group-hover:text-primary-600 dark:text-gray-400 dark:group-hover:text-primary-500"
+				class="mb-1 h-6 w-6 text-gray-500 group-hover:text-primary-600 dark:text-gray-400 dark:group-hover:text-primary-400"
 			/>
 		{/if}
 	</BottomNavItem>
 	<BottomNavItem btnName="Расписание" href="/schedule">
 		{#if isActive('/schedule')}
-			<CalendarWeekSolid class="mb-1 h-6 w-6 text-primary-600 dark:text-primary-500" />
+			<CalendarWeekSolid class="mb-1 h-6 w-6 text-primary-600 dark:text-primary-400" />
 		{:else}
 			<CalendarWeekOutline
-				class="mb-1 h-6 w-6 text-gray-500 group-hover:text-primary-600 dark:text-gray-400 dark:group-hover:text-primary-500"
+				class="mb-1 h-6 w-6 text-gray-500 group-hover:text-primary-600 dark:text-gray-400 dark:group-hover:text-primary-400"
 			/>
 		{/if}
 	</BottomNavItem>
 	<!-- Mirror the sidebar shortcut here so the map stays visible above the fixed mobile nav. -->
 	<BottomNavItem btnName="Карта" href="/map">
 		{#if isActive('/map')}
-			<MapPinAltSolid class="mb-1 h-6 w-6 text-primary-600 dark:text-primary-500" />
+			<MapPinAltSolid class="mb-1 h-6 w-6 text-primary-600 dark:text-primary-400" />
 		{:else}
 			<MapPinAltOutline
-				class="mb-1 h-6 w-6 text-gray-500 group-hover:text-primary-600 dark:text-gray-400 dark:group-hover:text-primary-500"
+				class="mb-1 h-6 w-6 text-gray-500 group-hover:text-primary-600 dark:text-gray-400 dark:group-hover:text-primary-400"
 			/>
 		{/if}
 	</BottomNavItem>
 	<BottomNavItem btnName="Голосование" href="/voting">
 		{#if isActive('/voting')}
-			<ThumbsUpSolid class="mb-1 h-6 w-6 text-primary-600 dark:text-primary-500" />
+			<ThumbsUpSolid class="mb-1 h-6 w-6 text-primary-600 dark:text-primary-400" />
 		{:else}
 			<ThumbsUpOutline
-				class="mb-1 h-6 w-6 text-gray-500 group-hover:text-primary-600 dark:text-gray-400 dark:group-hover:text-primary-500"
+				class="mb-1 h-6 w-6 text-gray-500 group-hover:text-primary-600 dark:text-gray-400 dark:group-hover:text-primary-400"
 			/>
 		{/if}
 	</BottomNavItem>

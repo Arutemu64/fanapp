@@ -46,7 +46,7 @@
 				<div class="mt-0.5 whitespace-pre-line">{@html notification.body}</div>
 			{/if}
 		</div>
-		<div class="text-xs text-primary-600 dark:text-primary-500">
+		<div class="text-xs text-primary-600 dark:text-primary-400">
 			{createdAt}
 		</div>
 	</div>
