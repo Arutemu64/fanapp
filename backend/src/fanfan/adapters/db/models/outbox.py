@@ -6,7 +6,7 @@ from sqlalchemy import DateTime, Index, Text, Uuid
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
-from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
+from fanfan.adapters.db.models.base import BaseORM
 
 
 class OutboxEventORM(BaseORM):
@@ -32,7 +32,6 @@ class OutboxEventORM(BaseORM):
         Uuid(as_uuid=True),
         primary_key=True,
         default=uuid7,
-        server_default=UUID_ID_SERVER_DEFAULT,
     )
     subject: Mapped[str] = mapped_column(Text())
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB())

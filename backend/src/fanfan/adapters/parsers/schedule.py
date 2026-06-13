@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 # Coerce each column to a known type on read. Numbers stored as floats in Excel
 # (e.g. 1.0) are cast to int, and empty cells become None instead of NaN.
 _SCHEMA_OVERRIDES = {
-    "public_number": pl.Int64,
+    "number": pl.Int64,
     "title": pl.String,
     "duration": pl.Int64,
     "nomination_title": pl.String,
@@ -24,7 +24,7 @@ def parse_schedule_from_excel(file: typing.BinaryIO) -> list[ScheduleEntry]:
     schedule_df = pl.read_excel(file.read(), schema_overrides=_SCHEMA_OVERRIDES)
     return [
         ScheduleEntry(
-            public_number=row["public_number"],
+            number=row["number"],
             title=row["title"],
             duration=row["duration"],
             block_title=row["block_title"],

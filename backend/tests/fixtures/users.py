@@ -4,7 +4,6 @@ import pytest_asyncio
 from dishka import AsyncContainer
 
 from fanfan.application.ports.gateways import (
-    PermissionGateway,
     UserPermissionGateway,
 )
 from fanfan.application.ports.gateways.tickets import TicketGateway
@@ -69,7 +68,6 @@ async def schedule_editor(dishka_request: AsyncContainer) -> User:
     Create a schedule manager
     """
     user_gateway = await dishka_request.get(UserGateway)
-    permission_gateway = await dishka_request.get(PermissionGateway)
     user_permission_gateway = await dishka_request.get(UserPermissionGateway)
     uow = await dishka_request.get(UnitOfWork)
 
@@ -80,14 +78,10 @@ async def schedule_editor(dishka_request: AsyncContainer) -> User:
         role=UserRole.ORG,
     )
     await user_gateway.add(schedule_editor)
-    schedule_manage_permission = await permission_gateway.get_by_name(
-        PermissionName(Permissions.SCHEDULE_MANAGE)
-    )
-    assert schedule_manage_permission is not None
     await user_permission_gateway.add(
         UserPermission(
             id=generate_user_permission_id(),
-            permission_id=schedule_manage_permission.id,
+            permission=PermissionName(Permissions.SCHEDULE_MANAGE),
             user_id=schedule_editor.id,
             object_type=None,
             object_id=None,

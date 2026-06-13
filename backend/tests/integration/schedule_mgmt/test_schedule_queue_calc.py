@@ -13,7 +13,7 @@ pytestmark = [
 
 
 def _schedule_event(
-    public_number: int,
+    number: int,
     order: float,
     *,
     duration: int,
@@ -21,8 +21,8 @@ def _schedule_event(
 ) -> ScheduleEvent:
     return ScheduleEvent(
         id=generate_schedule_event_id(),
-        public_number=public_number,
-        title=f"Событие {public_number}",
+        number=number,
+        title=f"Событие {number}",
         duration=duration,
         order=order,
         is_current=False,
@@ -51,7 +51,7 @@ async def test_queue_and_time_until_with_fractional_orders(
     await uow.commit()
 
     schedule = await schedule_gateway.read_list_schedule(user_id=None)
-    by_number = {e.public_number: e for e in schedule}
+    by_number = {e.number: e for e in schedule}
 
     # Skipped events are excluded from the queue numbering.
     assert by_number[1].queue == 1

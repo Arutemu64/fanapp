@@ -1214,8 +1214,8 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            /** Public Number */
-            public_number: number;
+            /** Number */
+            number: number;
             /** Title */
             title: string;
             /** Order */
@@ -1261,8 +1261,8 @@ export interface components {
              * Format: uuid
              */
             id: string;
-            /** Public Number */
-            public_number: number;
+            /** Number */
+            number: number;
             /** Title */
             title: string;
             /** Duration */

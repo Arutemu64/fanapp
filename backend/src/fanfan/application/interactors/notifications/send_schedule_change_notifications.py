@@ -61,21 +61,18 @@ class SendScheduleChangeNotifications:
         match schedule_change.type:
             case ScheduleChangeType.SET_AS_CURRENT:
                 if changed_event:
-                    return f"Выступление №{changed_event.public_number:03d} началось"
+                    return f"Выступление №{changed_event.number:03d} началось"
                 if argument_event:
-                    return (
-                        f"Выступление №{argument_event.public_number:03d} "
-                        f"больше не текущее"
-                    )
+                    return f"Выступление №{argument_event.number:03d} больше не текущее"
             case ScheduleChangeType.MOVED:
                 if changed_event:
-                    return f"Выступление №{changed_event.public_number:03d} перенесено"
+                    return f"Выступление №{changed_event.number:03d} перенесено"
             case ScheduleChangeType.SKIPPED:
                 if changed_event:
-                    return f"Выступление №{changed_event.public_number:03d} было снято"
+                    return f"Выступление №{changed_event.number:03d} было снято"
             case ScheduleChangeType.UNSKIPPED:
                 if changed_event:
-                    return f"Выступление №{changed_event.public_number:03d} вернулось"
+                    return f"Выступление №{changed_event.number:03d} вернулось"
         return None
 
     async def _build_editor_notifications(
@@ -112,13 +109,11 @@ class SendScheduleChangeNotifications:
         body = await self.template_renderer.render(
             "global_announcement.jinja2",
             {
-                "current_event_public_number": current_event.public_number,
+                "current_event_number": current_event.number,
                 "current_event_block_title": current_event.block_title,
                 "current_event_nomination_title": current_event.nomination_title,
                 "current_event_title": current_event.title,
-                "next_event_public_number": next_event.public_number
-                if next_event
-                else None,
+                "next_event_number": next_event.number if next_event else None,
                 "next_event_block_title": next_event.block_title
                 if next_event
                 else None,
@@ -167,7 +162,7 @@ class SendScheduleChangeNotifications:
                 body = await self.template_renderer.render(
                     "subscription_notification.jinja2",
                     {
-                        "event_public_number": s.event.public_number,
+                        "event_number": s.event.number,
                         "event_title": s.event.title,
                         "queue_difference": s.event.queue - current_event_queue,
                         "time_diff": s.event.time_until - current_event_queue,

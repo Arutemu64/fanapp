@@ -3,7 +3,7 @@ from uuid import UUID, uuid7
 from sqlalchemy import ForeignKey, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
-from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
+from fanfan.adapters.db.models.base import BaseORM
 
 
 class UserFlagORM(BaseORM):
@@ -15,7 +15,6 @@ class UserFlagORM(BaseORM):
         Uuid(as_uuid=True),
         primary_key=True,
         default=uuid7,
-        server_default=UUID_ID_SERVER_DEFAULT,
     )
     name: Mapped[str] = mapped_column()
     # No standalone index: user_id is the leading column of the unique

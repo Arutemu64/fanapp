@@ -17,7 +17,6 @@ from fanfan.adapters.db.gateways.notifications import SqlNotificationGateway
 from fanfan.adapters.db.gateways.outbox import SqlOutboxGateway
 from fanfan.adapters.db.gateways.participants import SqlParticipantGateway
 from fanfan.adapters.db.gateways.permissions import (
-    SqlPermissionGateway,
     SqlUserPermissionGateway,
 )
 from fanfan.adapters.db.gateways.push_subscriptions import (
@@ -34,7 +33,6 @@ from fanfan.adapters.db.gateways.votes import SqlVoteGateway
 from fanfan.adapters.db.uow import SqlUnitOfWork
 from fanfan.application.ports.gateways import (
     AppSettingsGateway,
-    PermissionGateway,
     ScheduleChangeGateway,
     ScheduleEventGateway,
     UserPermissionGateway,
@@ -95,7 +93,6 @@ class SqlGatewaysProvider(Provider):
     users = provide(SqlUserGateway, provides=UserGateway)
     votes = provide(SqlVoteGateway, provides=VoteGateway)
     flags = provide(SqlUserFlagGateway, provides=UserFlagGateway)
-    permissions = provide(SqlPermissionGateway, provides=PermissionGateway)
     user_permissions = provide(SqlUserPermissionGateway, provides=UserPermissionGateway)
     push_subscriptions = provide(
         SqlPushSubscriptionGateway, provides=PushSubscriptionGateway

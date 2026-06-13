@@ -6,7 +6,7 @@ from .nomination import NominationORM
 from .notification import NotificationORM
 from .outbox import OutboxEventORM
 from .participant import ParticipantORM
-from .permission import PermissionORM, UserPermissionORM
+from .permission import UserPermissionORM
 from .push_subscription import PushSubscriptionORM
 from .schedule_change import ScheduleChangeORM
 from .schedule_event import ScheduleEventORM
@@ -26,7 +26,6 @@ __all__ = [
     "NotificationORM",
     "OutboxEventORM",
     "ParticipantORM",
-    "PermissionORM",
     "PushSubscriptionORM",
     "ScheduleChangeORM",
     "ScheduleEventORM",

@@ -8,7 +8,7 @@ from fanfan.core.vo.user import UserId
 
 class ScheduleChangeEventDTO(BaseModel):
     id: ScheduleEventId
-    public_number: int
+    number: int
     title: str
     order: float
 

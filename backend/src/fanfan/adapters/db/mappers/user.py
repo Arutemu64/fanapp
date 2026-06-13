@@ -74,7 +74,7 @@ class UserMapper:
             ]
         return [
             UserPermissionDTO(
-                name=PermissionName(p.permission.name),
+                name=PermissionName(p.permission),
                 object_type=PermissionObjectType(p.object_type)
                 if p.object_type is not None
                 else None,

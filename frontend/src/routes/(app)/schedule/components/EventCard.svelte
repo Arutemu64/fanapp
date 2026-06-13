@@ -44,7 +44,7 @@
 	// Unique ID for this card's dropdown trigger
 	let dropdownId = $derived(`event-menu-${event.id}`);
 	// Pad the public number to three digits, e.g. 7 → "007".
-	let publicNumber = $derived(event.public_number.toString().padStart(3, '0'));
+	let eventNumber = $derived(event.number.toString().padStart(3, '0'));
 
 	// How far ahead this event is compared to the one on stage now.
 	// Returns null if either value is missing or the event has already passed.
@@ -144,8 +144,7 @@
 		<span class="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
 			№
 		</span>
-		<span class="text-base leading-none font-bold text-gray-900 dark:text-white"
-			>{publicNumber}</span
+		<span class="text-base leading-none font-bold text-gray-900 dark:text-white">{eventNumber}</span
 		>
 	</div>
 

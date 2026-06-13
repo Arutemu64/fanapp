@@ -7,7 +7,7 @@ from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.mappers.social_account import SocialIdentityMapper
 from fanfan.adapters.db.mappers.user import UserMapper
 from fanfan.adapters.db.models import SocialIdentityORM, UserORM
-from fanfan.adapters.db.models.permission import PermissionORM, UserPermissionORM
+from fanfan.adapters.db.models.permission import UserPermissionORM
 from fanfan.application.dto.user import CurrentUserDTO, UserBaseDTO
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
@@ -127,9 +127,7 @@ class SqlUserGateway(UserGateway):
             .where(UserORM.id == user_id)
             .options(
                 joinedload(UserORM.ticket),
-                joinedload(UserORM.permissions).joinedload(
-                    UserPermissionORM.permission
-                ),
+                joinedload(UserORM.permissions),
             )
         )
         user_orm = await self.session.scalar(stmt)
@@ -151,8 +149,7 @@ class SqlUserGateway(UserGateway):
         stmt = (
             select(UserORM)
             .join(UserPermissionORM)
-            .join(PermissionORM)
-            .where(PermissionORM.name == Permissions.SCHEDULE_MANAGE)
+            .where(UserPermissionORM.permission == Permissions.SCHEDULE_MANAGE)
         )
         users_orm = await self.session.scalars(stmt)
         return [self.mapper.parse_base_dto(u) for u in users_orm]

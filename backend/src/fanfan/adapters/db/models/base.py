@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, MetaData, func, text
-from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr, mapped_column
+from sqlalchemy import DateTime, MetaData, func
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 metadata = MetaData(
     naming_convention={
@@ -12,8 +12,6 @@ metadata = MetaData(
         "pk": "pk_%(table_name)s",
     },
 )
-
-UUID_ID_SERVER_DEFAULT = text("gen_random_uuid()")
 
 
 class BaseORM(DeclarativeBase):
@@ -30,15 +28,5 @@ class BaseORM(DeclarativeBase):
         onupdate=func.now(),
         server_default=func.now(),
     )
-
-    @classmethod
-    @declared_attr
-    def __tablename__(cls):
-        """Hooks __tablename__ attribute based on model name.
-
-        You can skip specifying this attribute in models, then name for table
-        will be got from the model's name.
-        """
-        return cls.__name__.lower()
 
     __allow_unmapped__ = False

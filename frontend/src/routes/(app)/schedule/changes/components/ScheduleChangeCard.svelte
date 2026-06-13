@@ -57,7 +57,7 @@
 
 	function formatEvent(event: ScheduleChangeEventDTO | null | undefined): string {
 		if (!event) return '';
-		return `#${event.public_number} ${event.title}`;
+		return `#${event.number} ${event.title}`;
 	}
 </script>
 

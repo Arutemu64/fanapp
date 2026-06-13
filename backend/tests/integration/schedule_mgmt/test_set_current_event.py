@@ -34,7 +34,7 @@ pytestmark = [
 
 
 def _schedule_event(
-    public_number: int,
+    number: int,
     title: str,
     order: float,
     *,
@@ -45,7 +45,7 @@ def _schedule_event(
 ) -> ScheduleEvent:
     return ScheduleEvent(
         id=generate_schedule_event_id(),
-        public_number=public_number,
+        number=number,
         title=title,
         duration=duration,
         order=order,

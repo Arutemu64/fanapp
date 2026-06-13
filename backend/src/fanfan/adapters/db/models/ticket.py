@@ -1,10 +1,9 @@
 from uuid import UUID, uuid7
 
-from sqlalchemy import ForeignKey, Uuid
-from sqlalchemy.dialects import postgresql
+from sqlalchemy import Enum, ForeignKey, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
+from fanfan.adapters.db.models.base import BaseORM
 from fanfan.adapters.db.models.user import UserORM
 from fanfan.core.vo.user import UserRole
 
@@ -16,11 +15,16 @@ class TicketORM(BaseORM):
         Uuid(as_uuid=True),
         primary_key=True,
         default=uuid7,
-        server_default=UUID_ID_SERVER_DEFAULT,
     )
     barcode: Mapped[str] = mapped_column(unique=True)
     role: Mapped[UserRole] = mapped_column(
-        postgresql.ENUM(UserRole),
+        Enum(
+            UserRole,
+            native_enum=False,
+            create_constraint=True,
+            name="userrole",
+            length=32,
+        ),
         default=UserRole.VISITOR,
         server_default="VISITOR",
     )
@@ -42,4 +46,4 @@ class TicketORM(BaseORM):
     )
 
     def __str__(self):
-        return self.id
+        return str(self.id)

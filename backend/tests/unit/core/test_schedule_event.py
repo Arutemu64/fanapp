@@ -12,7 +12,7 @@ pytestmark = pytest.mark.unit
 
 
 def _event(
-    public_number: int,
+    number: int,
     order: float,
     *,
     is_current: bool = False,
@@ -20,8 +20,8 @@ def _event(
 ) -> ScheduleEvent:
     return ScheduleEvent(
         id=generate_schedule_event_id(),
-        public_number=public_number,
-        title=f"Событие {public_number}",
+        number=number,
+        title=f"Событие {number}",
         duration=15,
         order=order,
         is_current=is_current,

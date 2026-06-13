@@ -1,13 +1,12 @@
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fanfan.adapters.db.mappers.permission import PermissionMapper, UserPermissionMapper
-from fanfan.adapters.db.models.permission import PermissionORM, UserPermissionORM
+from fanfan.adapters.db.mappers.permission import UserPermissionMapper
+from fanfan.adapters.db.models.permission import UserPermissionORM
 from fanfan.application.ports.gateways import (
-    PermissionGateway,
     UserPermissionGateway,
 )
-from fanfan.core.models.permission import Permission, UserPermission
+from fanfan.core.models.permission import UserPermission
 from fanfan.core.vo.permission import (
     PermissionName,
     PermissionObjectId,
@@ -16,23 +15,9 @@ from fanfan.core.vo.permission import (
 from fanfan.core.vo.user import UserId
 
 
-class SqlPermissionGateway(PermissionGateway):
-    def __init__(self, session: AsyncSession):
-        self.session = session
-        self.mapper = PermissionMapper()
-
-    async def get_by_name(self, permission_name: PermissionName) -> Permission | None:
-        # The permissions table stores definitions, so lookup only needs the name.
-        permission_orm = await self.session.scalar(
-            select(PermissionORM).where(PermissionORM.name == permission_name)
-        )
-        return self.mapper.to_model(permission_orm) if permission_orm else None
-
-
 class SqlUserPermissionGateway(UserPermissionGateway):
     def __init__(self, session: AsyncSession):
         self.session = session
-        self.permission_mapper = PermissionMapper()
         self.user_permission_mapper = UserPermissionMapper()
 
     async def add(self, user_permission: UserPermission) -> None:
@@ -48,12 +33,10 @@ class SqlUserPermissionGateway(UserPermissionGateway):
         object_type: PermissionObjectType | None,
     ) -> UserPermission | None:
         user_perm_orm = await self.session.scalar(
-            select(UserPermissionORM)
-            .join(PermissionORM)
-            .where(
+            select(UserPermissionORM).where(
                 and_(
                     UserPermissionORM.user_id == user_id,
-                    PermissionORM.name == permission_name,
+                    UserPermissionORM.permission == permission_name,
                     UserPermissionORM.object_id == object_id,
                     UserPermissionORM.object_type == object_type,
                 )

@@ -2,8 +2,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid7
 
-from sqlalchemy import DateTime, Uuid
-from sqlalchemy.dialects import postgresql
+from sqlalchemy import DateTime, Enum, Uuid
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
     Mapped,
@@ -11,7 +10,7 @@ from sqlalchemy.orm import (
     relationship,
 )
 
-from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
+from fanfan.adapters.db.models.base import BaseORM
 from fanfan.core.vo.user import UserRole
 
 if TYPE_CHECKING:
@@ -27,7 +26,6 @@ class UserORM(BaseORM):
         Uuid(as_uuid=True),
         primary_key=True,
         default=uuid7,
-        server_default=UUID_ID_SERVER_DEFAULT,
     )
     username: Mapped[str | None] = mapped_column(index=True, unique=True)
     hashed_password: Mapped[str | None] = mapped_column()
@@ -38,7 +36,13 @@ class UserORM(BaseORM):
 
     first_name: Mapped[str | None] = mapped_column()
     role: Mapped[UserRole] = mapped_column(
-        postgresql.ENUM(UserRole),
+        Enum(
+            UserRole,
+            native_enum=False,
+            create_constraint=True,
+            name="userrole",
+            length=32,
+        ),
         default=UserRole.VISITOR,
         server_default="VISITOR",
     )

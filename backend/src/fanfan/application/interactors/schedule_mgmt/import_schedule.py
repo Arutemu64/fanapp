@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class ScheduleEntry(BaseModel):
-    public_number: int
+    number: int
     title: str
     duration: int
     nomination_title: str
@@ -55,7 +55,7 @@ class ImportSchedule:
         order = ORDER_INIT
         for entry in data.schedule:
             existing_event = next(
-                (e for e in orphaned_events if e.public_number == entry.public_number),
+                (e for e in orphaned_events if e.number == entry.number),
                 None,
             )
             if existing_event:
@@ -77,7 +77,7 @@ class ImportSchedule:
                 # Create new event
                 new_event = ScheduleEvent(
                     id=generate_schedule_event_id(),
-                    public_number=entry.public_number,
+                    number=entry.number,
                     title=entry.title,
                     duration=entry.duration,
                     block_title=entry.block_title,

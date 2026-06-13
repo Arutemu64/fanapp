@@ -4122,9 +4122,9 @@
             "format": "uuid",
             "title": "Id"
           },
-          "public_number": {
+          "number": {
             "type": "integer",
-            "title": "Public Number"
+            "title": "Number"
           },
           "title": {
             "type": "string",
@@ -4138,7 +4138,7 @@
         "type": "object",
         "required": [
           "id",
-          "public_number",
+          "number",
           "title",
           "order"
         ],
@@ -4269,9 +4269,9 @@
             "format": "uuid",
             "title": "Id"
           },
-          "public_number": {
+          "number": {
             "type": "integer",
-            "title": "Public Number"
+            "title": "Number"
           },
           "title": {
             "type": "string",
@@ -4351,7 +4351,7 @@
         "type": "object",
         "required": [
           "id",
-          "public_number",
+          "number",
           "title",
           "duration",
           "order",

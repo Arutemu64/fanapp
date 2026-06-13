@@ -149,9 +149,9 @@ services:
       - backend-network
 
   db:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql
     environment:
       POSTGRES_USER: "${DB__USER}"
       POSTGRES_PASSWORD: "${DB__PASSWORD}"
@@ -187,7 +187,7 @@ services:
       - backend-network
 
   pgbackup:
-    image: prodrigestivill/postgres-backup-local:17-alpine
+    image: prodrigestivill/postgres-backup-local:18-alpine
     depends_on:
       - db
     volumes:
