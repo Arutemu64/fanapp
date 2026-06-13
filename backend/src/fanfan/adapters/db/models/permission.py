@@ -1,9 +1,10 @@
 from uuid import UUID, uuid7
 
-from sqlalchemy import ForeignKey, UniqueConstraint, Uuid
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Enum, ForeignKey, UniqueConstraint, Uuid
+from sqlalchemy.orm import Mapped, mapped_column
 
-from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
+from fanfan.adapters.db.models.base import BaseORM
+from fanfan.core.vo.permission import Permissions
 
 
 class UserPermissionORM(BaseORM):
@@ -14,7 +15,7 @@ class UserPermissionORM(BaseORM):
         # global (unscoped) permission any number of times. PG15+ required.
         UniqueConstraint(
             "user_id",
-            "permission_id",
+            "permission",
             "object_id",
             "object_type",
             postgresql_nulls_not_distinct=True,
@@ -25,20 +26,20 @@ class UserPermissionORM(BaseORM):
         Uuid(as_uuid=True),
         primary_key=True,
         default=uuid7,
-        server_default=UUID_ID_SERVER_DEFAULT,
     )
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-    permission_id: Mapped[int] = mapped_column(
-        ForeignKey("permissions.id", ondelete="CASCADE"), index=True
+    permission: Mapped[str] = mapped_column(
+        Enum(
+            Permissions,
+            native_enum=False,
+            create_constraint=True,
+            name="permissionname",
+            length=64,
+            # Domain stores the permission *value* ("schedule:manage"), not the
+            # enum member name, so emit values for both storage and the CHECK.
+            values_callable=lambda enum_cls: [m.value for m in enum_cls],
+        ),
+        index=True,
     )
     object_id: Mapped[int | None] = mapped_column()
     object_type: Mapped[str | None] = mapped_column()
-
-    permission: Mapped[PermissionORM] = relationship(lazy="joined")
-
-
-class PermissionORM(BaseORM):
-    __tablename__ = "permissions"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(unique=True)

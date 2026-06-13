@@ -11,7 +11,7 @@ class ScheduleEventSubscriptionDTO(BaseModel):
 
 class ScheduleEventFullDTO(BaseModel):
     id: ScheduleEventId
-    public_number: int
+    number: int
     title: str
     duration: int
     order: float

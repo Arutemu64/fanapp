@@ -39,7 +39,7 @@
 			const query = searchQuery.trim().toLowerCase();
 			const searchMatch =
 				query.length === 0 ||
-				event.public_number.toString().toLowerCase().includes(query) ||
+				event.number.toString().toLowerCase().includes(query) ||
 				event.title.toLowerCase().includes(query) ||
 				event.block_title?.toLowerCase().includes(query) ||
 				event.nomination_title?.toLowerCase().includes(query);

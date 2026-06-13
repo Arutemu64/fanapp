@@ -1,10 +1,9 @@
 from uuid import UUID, uuid7
 
-from sqlalchemy import ForeignKey, Uuid
-from sqlalchemy.dialects import postgresql
+from sqlalchemy import Enum, ForeignKey, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
+from fanfan.adapters.db.models.base import BaseORM
 from fanfan.adapters.db.models.schedule_event import ScheduleEventORM
 from fanfan.adapters.db.models.user import UserORM
 from fanfan.core.vo.schedule_change import ScheduleChangeType
@@ -17,11 +16,16 @@ class ScheduleChangeORM(BaseORM):
         Uuid(as_uuid=True),
         primary_key=True,
         default=uuid7,
-        server_default=UUID_ID_SERVER_DEFAULT,
     )
     # TODO should I use lookup table too?
     type: Mapped[ScheduleChangeType] = mapped_column(
-        postgresql.ENUM(ScheduleChangeType)
+        Enum(
+            ScheduleChangeType,
+            native_enum=False,
+            create_constraint=True,
+            name="schedulechangetype",
+            length=32,
+        )
     )
     changed_event_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("schedule.id", ondelete="CASCADE"), index=True

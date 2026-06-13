@@ -1,11 +1,10 @@
 from datetime import datetime
 from uuid import UUID, uuid7
 
-from sqlalchemy import DateTime, ForeignKey, Index, Uuid, text
-from sqlalchemy.dialects import postgresql
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
+from fanfan.adapters.db.models.base import BaseORM
 from fanfan.core.vo.notification import NotificationType
 
 
@@ -16,12 +15,19 @@ class NotificationORM(BaseORM):
         Uuid(as_uuid=True),
         primary_key=True,
         default=uuid7,
-        server_default=UUID_ID_SERVER_DEFAULT,
     )
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     title: Mapped[str] = mapped_column()
     body: Mapped[str] = mapped_column()
-    type: Mapped[NotificationType] = mapped_column(postgresql.ENUM(NotificationType))
+    type: Mapped[NotificationType] = mapped_column(
+        Enum(
+            NotificationType,
+            native_enum=False,
+            create_constraint=True,
+            name="notificationtype",
+            length=32,
+        )
+    )
     # In-app deep-link path the notification points to (e.g. "/schedule").
     # Nullable: legacy rows and notifications without a target fall back to root.
     path: Mapped[str | None] = mapped_column()

@@ -1,8 +1,8 @@
 """seed initial data
 
-Revision ID: 002
-Revises: 001
-Create Date: 2026-03-04 21:35:00.000000
+Revision ID: b0fbcd2bb975
+Revises: de6f670ed1ba
+Create Date: 2026-06-13 12:20:18.805744
 
 """
 
@@ -13,41 +13,29 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "002"
-down_revision = "001"
+revision = "b0fbcd2bb975"
+down_revision = "de6f670ed1ba"
 branch_labels = None
 depends_on = None
 
-SYSTEM_USER_ID = UUID("00000000-0000-0000-0000-000000000000")
-SYSTEM_USER_SETTINGS = {"items_per_page": 4, "receive_all_announcements": False}
+# Singleton row read by SqlAppSettingsGateway.get(), which raises if it is
+# missing — so the app cannot start without it. Shape mirrors AppSettings.
 DEFAULT_APP_SETTINGS = {
     "voting_enabled": False,
     "limits": {"announcement_timeout": 10},
 }
-PERMISSIONS = [
-    "schedule:manage",
-]
-USER_ROLE_ENUM = postgresql.ENUM(
-    "VISITOR",
-    "PARTICIPANT",
-    "HELPER",
-    "ORG",
-    name="userrole",
-    create_type=False,
-)
+
+# System user authenticated by RawIdProvider (adapters/auth/providers/raw.py).
+# ORG role, so it implicitly holds every permission — no explicit grants needed.
+SYSTEM_USER_ID = UUID("00000000-0000-0000-0000-000000000000")
+SYSTEM_USER_SETTINGS = {
+    "items_per_page": 4,
+    "receive_all_announcements": False,
+    "receive_telegram_notifications": True,
+}
 
 
 def upgrade() -> None:
-    permissions_table = sa.table(
-        "permissions",
-        sa.column("name", sa.String()),
-    )
-    op.execute(
-        postgresql.insert(permissions_table)
-        .values([{"name": name} for name in PERMISSIONS])
-        .on_conflict_do_nothing()
-    )
-
     app_settings_table = sa.table(
         "app_settings",
         sa.column("id", sa.Integer()),
@@ -65,10 +53,11 @@ def upgrade() -> None:
         sa.column("username", sa.String()),
         sa.column("hashed_password", sa.String()),
         sa.column("email", sa.String()),
-        sa.column("is_verified", sa.Boolean()),
+        sa.column("pending_email", sa.String()),
+        sa.column("email_verified_at", sa.DateTime(timezone=True)),
         sa.column("settings", postgresql.JSONB(astext_type=sa.Text())),
         sa.column("first_name", sa.String()),
-        sa.column("role", USER_ROLE_ENUM),
+        sa.column("role", sa.String()),
     )
     op.execute(
         postgresql.insert(users_table)
@@ -78,7 +67,8 @@ def upgrade() -> None:
                 "username": "system",
                 "hashed_password": None,
                 "email": None,
-                "is_verified": False,
+                "pending_email": None,
+                "email_verified_at": None,
                 "settings": SYSTEM_USER_SETTINGS,
                 "first_name": None,
                 "role": "ORG",
@@ -104,19 +94,5 @@ def downgrade() -> None:
     app_settings_table = sa.table(
         "app_settings",
         sa.column("id", sa.Integer()),
-        sa.column("config", postgresql.JSONB(astext_type=sa.Text())),
     )
-    op.execute(
-        sa.delete(app_settings_table).where(
-            app_settings_table.c.id == 1,
-            app_settings_table.c.config == DEFAULT_APP_SETTINGS,
-        )
-    )
-
-    permissions_table = sa.table(
-        "permissions",
-        sa.column("name", sa.String()),
-    )
-    op.execute(
-        sa.delete(permissions_table).where(permissions_table.c.name.in_(PERMISSIONS))
-    )
+    op.execute(sa.delete(app_settings_table).where(app_settings_table.c.id == 1))

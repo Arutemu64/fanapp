@@ -37,7 +37,7 @@
 		schedule.filter((ev) => {
 			const q = query.toLowerCase();
 			return (
-				ev.public_number.toString().toLowerCase().includes(q) ||
+				ev.number.toString().toLowerCase().includes(q) ||
 				ev.title.toLowerCase().includes(q) ||
 				ev.block_title?.toLowerCase().includes(q) ||
 				ev.nomination_title?.toLowerCase().includes(q)
@@ -121,7 +121,7 @@
 					]}
 					onclick={() => handleSelect(ev)}
 				>
-					<span class="font-medium text-gray-900 dark:text-white">№{ev.public_number}</span>
+					<span class="font-medium text-gray-900 dark:text-white">№{ev.number}</span>
 					<span class="text-gray-600 dark:text-gray-400"> — {ev.title}</span>
 				</button>
 			{:else}

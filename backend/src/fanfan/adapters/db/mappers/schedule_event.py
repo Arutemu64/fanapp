@@ -13,7 +13,7 @@ class ScheduleEventMapper:
     def from_model(model: ScheduleEvent):
         return ScheduleEventORM(
             id=model.id,
-            public_id=model.public_number,
+            number=model.number,
             title=model.title,
             duration=model.duration,
             is_current=model.is_current,
@@ -27,7 +27,7 @@ class ScheduleEventMapper:
     def to_model(orm: ScheduleEventORM) -> ScheduleEvent:
         return ScheduleEvent(
             id=ScheduleEventId(orm.id),
-            public_number=orm.public_id,
+            number=orm.number,
             title=orm.title,
             duration=orm.duration,
             is_current=orm.is_current,
@@ -50,7 +50,7 @@ class ScheduleEventMapper:
         # columns from its single joined ranking subquery.
         return ScheduleEventFullDTO(
             id=ScheduleEventId(event_orm.id),
-            public_number=event_orm.public_id,
+            number=event_orm.number,
             title=event_orm.title,
             duration=event_orm.duration,
             order=event_orm.order,

@@ -2,7 +2,6 @@ import enum
 from typing import NewType
 from uuid import UUID, uuid7
 
-PermissionId = NewType("PermissionId", int)
 PermissionName = NewType("PermissionName", str)
 UserPermissionId = NewType("UserPermissionId", UUID)
 PermissionObjectType = NewType("PermissionObjectType", str)

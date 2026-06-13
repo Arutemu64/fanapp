@@ -1,9 +1,15 @@
 from uuid import UUID, uuid7
 
 from sqlalchemy import Uuid, func, select
-from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
+from sqlalchemy.orm import (
+    Mapped,
+    column_property,
+    declared_attr,
+    mapped_column,
+    relationship,
+)
 
-from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
+from fanfan.adapters.db.models.base import BaseORM
 from fanfan.adapters.db.models.participant import ParticipantORM
 
 
@@ -14,7 +20,6 @@ class NominationORM(BaseORM):
         Uuid(as_uuid=True),
         primary_key=True,
         default=uuid7,
-        server_default=UUID_ID_SERVER_DEFAULT,
     )
     cosplay2_id: Mapped[int] = mapped_column(unique=True, index=True)
     code: Mapped[str] = mapped_column(unique=True)
@@ -25,13 +30,16 @@ class NominationORM(BaseORM):
         back_populates="nomination"
     )
 
-    participants_count = column_property(
-        select(func.count(ParticipantORM.id))
-        .where(ParticipantORM.nomination_id == id)  # noqa: A003
-        .correlate_except(ParticipantORM)
-        .scalar_subquery(),
-        deferred=True,
-    )
+    @declared_attr
+    @classmethod
+    def participants_count(cls):
+        return column_property(
+            select(func.count(ParticipantORM.id))
+            .where(ParticipantORM.nomination_id == cls.id)
+            .correlate_except(ParticipantORM)
+            .scalar_subquery(),
+            deferred=True,
+        )
 
     def __str__(self) -> str:
         return self.title

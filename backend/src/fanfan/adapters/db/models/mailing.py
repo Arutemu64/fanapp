@@ -1,10 +1,9 @@
 from uuid import UUID, uuid7
 
-from sqlalchemy import ForeignKey, Uuid
-from sqlalchemy.dialects import postgresql
+from sqlalchemy import Enum, ForeignKey, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
-from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
+from fanfan.adapters.db.models.base import BaseORM
 from fanfan.core.vo.mailing import MailingStatus
 
 
@@ -15,9 +14,16 @@ class MailingORM(BaseORM):
         Uuid(as_uuid=True),
         primary_key=True,
         default=uuid7,
-        server_default=UUID_ID_SERVER_DEFAULT,
     )
-    status: Mapped[MailingStatus] = mapped_column(postgresql.ENUM(MailingStatus))
+    status: Mapped[MailingStatus] = mapped_column(
+        Enum(
+            MailingStatus,
+            native_enum=False,
+            create_constraint=True,
+            name="mailingstatus",
+            length=32,
+        )
+    )
     by_user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), index=True
     )

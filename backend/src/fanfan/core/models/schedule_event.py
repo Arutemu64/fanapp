@@ -13,7 +13,7 @@ from fanfan.core.vo.schedule_event import ScheduleEventId
 @dataclass(slots=True, kw_only=True)
 class ScheduleEvent(AggregateRoot):  # noqa: PLW1641
     id: ScheduleEventId
-    public_number: int
+    number: int
     title: str
     duration: int
     order: float

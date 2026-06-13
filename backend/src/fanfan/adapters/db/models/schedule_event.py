@@ -8,7 +8,7 @@ from sqlalchemy.orm import (
     mapped_column,
 )
 
-from fanfan.adapters.db.models.base import UUID_ID_SERVER_DEFAULT, BaseORM
+from fanfan.adapters.db.models.base import BaseORM
 from fanfan.adapters.db.models.mixins.order import OrderMixin
 
 
@@ -19,9 +19,8 @@ class ScheduleEventORM(BaseORM, OrderMixin):
         Uuid(as_uuid=True),
         primary_key=True,
         default=uuid7,
-        server_default=UUID_ID_SERVER_DEFAULT,
     )
-    public_id: Mapped[int] = mapped_column(unique=True)
+    number: Mapped[int] = mapped_column(unique=True)
     title: Mapped[str] = mapped_column(index=True)
     duration: Mapped[int] = mapped_column(server_default="0")
     is_current: Mapped[bool] = mapped_column(server_default="False")
