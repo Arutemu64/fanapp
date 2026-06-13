@@ -29,11 +29,17 @@ export interface EventsHandshakePayload {
 /**
  * Maps each SSE event name to the shape of its parsed payload.
  * `void` means the event carries no usable data (handler called with `undefined`).
+ *
+ * This is the frontend source of truth for SSE event names; it mirrors the
+ * backend `SSEEventName` enum (backend/src/fanfan/application/dto/realtime.py).
+ * Keep the two in sync by hand — SSE events are not in the OpenAPI spec, so
+ * there is no code generation between them. Each key here must match an enum
+ * value exactly (snake_case, no dots).
  */
 export interface SSEEventMap {
-	connected: EventsHandshakePayload;
-	update_schedule: void;
-	new_notifications: NotificationDTO;
+	connection_established: EventsHandshakePayload;
+	schedule_updated: void;
+	notification_created: NotificationDTO;
 }
 
 export type SSEEventName = keyof SSEEventMap;
@@ -59,9 +65,9 @@ function parseEventData(raw: unknown): unknown {
  *
  * Usage:
  *   const client = getEventsClient();
- *   client?.on('update_schedule', handler);
+ *   client?.on('schedule_updated', handler);
  *   // cleanup:
- *   client?.off('update_schedule', handler);
+ *   client?.off('schedule_updated', handler);
  */
 export class EventsClient {
 	connectionStatus: ConnectionStatus = $state('disconnected');
@@ -113,7 +119,7 @@ export class EventsClient {
 			this.#failAndReconnect();
 		};
 
-		this.#source.addEventListener('connected', this.#handleHandshake);
+		this.#source.addEventListener('connection_established', this.#handleHandshake);
 
 		// Re-attach all registered listeners to the new EventSource instance.
 		for (const [event, handlers] of Object.entries(this.#listeners)) {
@@ -227,7 +233,7 @@ export class EventsClient {
 
 	#closeSource() {
 		if (!this.#source) return;
-		this.#source.removeEventListener('connected', this.#handleHandshake);
+		this.#source.removeEventListener('connection_established', this.#handleHandshake);
 		this.#source.close();
 		this.#source = null;
 	}

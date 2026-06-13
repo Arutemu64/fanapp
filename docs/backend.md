@@ -117,6 +117,17 @@ await self.events_broker.publish(
 
 Rule of thumb: inject `EventBroker` into an interactor **only** for service events; aggregate state-change events flow through `uow.commit()`.
 
+## Realtime (SSE)
+
+Browser push goes over Server-Sent Events, separate from the domain-event/outbox path: interactors and FastStream consumers publish an `SSEMessage` via `RealtimeGateway` (`adapters/nats/realtime_gateway.py`), which fans out over NATS subjects to every open `/events` stream (`presentation/web/routes/sse.py`). It carries no committed state, so it never touches the `UnitOfWork` or the outbox.
+
+**Every SSE event name is a member of the `SSEEventName` `StrEnum`** (`application/dto/realtime.py`) — never a bare string literal. `SSEMessage.event_name` is typed to the enum, so a typo is a type error, not a silently dead event. To add an event: add a member here, then mirror it in the frontend `SSEEventMap` (`frontend/src/lib/services/events.svelte.ts`).
+
+Naming standard for new events:
+* **snake_case, single token — no dots.** The subject is built as `sse.broadcast.{event_name}` / `sse.user.{user_id}.{event_name}` and consumers subscribe with a single-token wildcard (`sse.broadcast.*`). A dot in the name splits into extra subject tokens and silently stops matching the wildcard. (`SSEEventName` being a `StrEnum` means it interpolates straight into the subject and into the SSE `event:` field as its value.)
+* Prefer `<entity>_<event>` for new names.
+* The backend enum and frontend `SSEEventMap` are kept in sync **by hand** — SSE events are not part of the OpenAPI spec, so `just frontend-generate-api` does not cover them. Every enum value must have a matching `SSEEventMap` key.
+
 ## Notification Formatting
 
 A notification `body` is stored as a **small, safe HTML subset** so the same text can be highlighted across every delivery channel. The subset is the intersection of what Telegram's HTML parse mode accepts and what the web UI can render: `b`, `strong`, `i`, `em`, `u`, `s`, `a[href]`, `code`, `pre`, `blockquote`. Line breaks are stored as plain `\n` (no `<br>`/`<p>`), which Telegram treats as newlines and the web renders via CSS `white-space: pre-line`.

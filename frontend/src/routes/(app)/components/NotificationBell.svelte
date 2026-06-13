@@ -16,7 +16,7 @@
 	type Notification = NotificationDTO;
 
 	// Seed from the SSR-loaded layout preview so the unread badge is correct on the
-	// first paint. The SSE 'connected' handler refreshes this once the stream is up.
+	// first paint. The SSE 'connection_established' handler refreshes this once the stream is up.
 	let notifications = $state<Notification[]>(page.data.notificationPreview ?? []);
 	let unreadCount = $derived(notifications.filter((notification) => !notification.seen_at).length);
 	let dropdownOpen = $state(false);
@@ -82,13 +82,13 @@
 			return;
 		}
 
-		eventsClient.on('new_notifications', handleNewNotification);
-		// 'connected' fires on the first connect and on every reconnect.
-		eventsClient.on('connected', reloadAfterReconnect);
+		eventsClient.on('notification_created', handleNewNotification);
+		// 'connection_established' fires on the first connect and on every reconnect.
+		eventsClient.on('connection_established', reloadAfterReconnect);
 
 		return () => {
-			eventsClient.off('new_notifications', handleNewNotification);
-			eventsClient.off('connected', reloadAfterReconnect);
+			eventsClient.off('notification_created', handleNewNotification);
+			eventsClient.off('connection_established', reloadAfterReconnect);
 		};
 	});
 </script>
