@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid7
 
-from sqlalchemy import DateTime, Enum, Uuid
+from sqlalchemy import DateTime, Enum, Index, Uuid, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
     Mapped,
@@ -32,6 +32,13 @@ class UserORM(BaseORM):
     email: Mapped[str | None] = mapped_column(index=True, unique=True)
     pending_email: Mapped[str | None] = mapped_column(index=True, unique=True)
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Notification preferences live in columns (not the settings JSON) so they
+    # can be filtered on directly — see read_all_by_receive_all_announcements.
+    receive_all_announcements: Mapped[bool] = mapped_column(server_default=text("true"))
+    receive_telegram_notifications: Mapped[bool] = mapped_column(
+        server_default=text("true")
+    )
+    # Bag for non-queryable user preferences (e.g. items_per_page).
     settings: Mapped[dict] = mapped_column(JSONB)
 
     first_name: Mapped[str | None] = mapped_column()
@@ -55,6 +62,16 @@ class UserORM(BaseORM):
     )
     social_accounts: Mapped[list[SocialIdentityORM]] = relationship(
         back_populates="user"
+    )
+
+    __table_args__ = (
+        # Partial index: only TRUE rows are indexed, which is exactly the set
+        # the global-announcement fan-out query scans.
+        Index(
+            "ix_users_receive_all_announcements",
+            "receive_all_announcements",
+            postgresql_where=text("receive_all_announcements"),
+        ),
     )
 
     def __str__(self) -> str:
