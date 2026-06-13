@@ -7,6 +7,7 @@ from aiogram.exceptions import (
     TelegramForbiddenError,
     TelegramRetryAfter,
 )
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from fanfan.application.ports.gateways.social_ids import SocialIdentityGateway
 from fanfan.application.ports.gateways.users import UserGateway
@@ -16,6 +17,7 @@ from fanfan.core.exceptions.notifications import (
     UserNotReachable,
 )
 from fanfan.core.models.notification import Notification
+from fanfan.presentation.web.config import WebConfig
 
 logger = logging.getLogger(__name__)
 
@@ -26,17 +28,30 @@ class TelegramNotifier(Notifier):
         bot: Bot,
         user_gateway: UserGateway,
         social_id_gateway: SocialIdentityGateway,
+        web_config: WebConfig,
     ) -> None:
         self.social_id_gateway = social_id_gateway
         self.bot = bot
         self.user_gateway = user_gateway
+        self.web_config = web_config
 
     @staticmethod
     def _render_message_text(notification: Notification) -> str:
         # The body is already stored as a safe Telegram-compatible HTML subset
         # (see HtmlSanitizer). The title is plain text, so escape it before
-        # wrapping it in <b> to keep the message valid HTML.
-        return f"<b>{html.quote(notification.title.upper())}</b>\n\n{notification.body}"
+        # wrapping it in <b> to keep the message valid HTML. The bell emoji
+        # prefixes the title to flag it as a notification at a glance.
+        title = html.quote(notification.title.upper())
+        return f"<b>🔔 {title}</b>\n\n{notification.body}"
+
+    def _build_reply_markup(self, notification: Notification) -> InlineKeyboardMarkup:
+        # Deep-link the user to the relevant in-app page (root when path unset).
+        url = self.web_config.build_url(notification.path or "/")
+        return InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="🌐 Открыть приложение", url=url)]
+            ]
+        )
 
     async def send_notification(self, notification: Notification) -> None:
         user = await self.user_gateway.get_by_id(notification.user_id)
@@ -53,6 +68,7 @@ class TelegramNotifier(Notifier):
                 chat_id=int(social_id.provider_id),
                 text=self._render_message_text(notification),
                 parse_mode=ParseMode.HTML,
+                reply_markup=self._build_reply_markup(notification),
             )
         except TelegramRetryAfter as e:
             raise NotificationRetryAfter(retry_after=e.retry_after) from e
