@@ -37,11 +37,12 @@
 		closeSidebar: () => void;
 	}>();
 
-	// Staff (volunteers and organizers) see the staff dropdowns so they can
-	// discover what exists; individual items are unlocked per effective
-	// permission (ORG resolves via the wildcard). The backend still enforces
-	// every action — locked items are a UX affordance only.
+	// Volunteers and organizers see the volunteer dropdown so they can discover
+	// what exists; individual items are unlocked per effective permission. The
+	// backend still enforces every action — locked items are a UX affordance only.
 	let isStaff = $derived(user?.role === 'helper' || user?.role === 'org');
+	// The organizer dropdown is organizer-only — hidden from volunteers entirely.
+	let isOrg = $derived(user?.role === 'org');
 	let iconClass =
 		'h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white';
 </script>
@@ -56,17 +57,21 @@
 			{/snippet}
 		</SidebarItem>
 	{:else}
-		<li>
-			<div
-				class="flex cursor-not-allowed items-center rounded-lg p-2 text-gray-400 dark:text-gray-600"
-				aria-disabled="true"
-				title="Нужен доступ — попроси организатора"
-			>
+		<!-- No href keeps the row non-navigable; reusing SidebarItem keeps the
+		     markup identical to unlocked rows so the lock badge causes no drift. -->
+		<SidebarItem
+			{label}
+			aClass="flex items-center rounded-lg p-2 text-gray-400 cursor-not-allowed dark:text-gray-600"
+			aria-disabled="true"
+			title="Нужен доступ — попроси организатора"
+		>
+			{#snippet icon()}
 				{@render itemIcon()}
-				<span class="ms-3 flex-1">{label}</span>
+			{/snippet}
+			{#snippet subtext()}
 				<LockOutline class="h-4 w-4 shrink-0" />
-			</div>
-		</li>
+			{/snippet}
+		</SidebarItem>
 	{/if}
 {/snippet}
 
@@ -141,6 +146,8 @@
 						scheduleChangesIcon
 					)}
 				</SidebarDropdownWrapper>
+			{/if}
+			{#if isOrg}
 				<SidebarDropdownWrapper label="Для организаторов" classes={{ btn: 'p-2' }}>
 					{#snippet icon()}
 						<ShieldOutline class={iconClass} />
