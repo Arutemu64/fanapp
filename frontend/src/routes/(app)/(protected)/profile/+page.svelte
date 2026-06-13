@@ -45,7 +45,7 @@
 </script>
 
 <svelte:head>
-	<title>Профиль</title>
+	<title>Профиль · ФАН ФАН</title>
 </svelte:head>
 
 <div class="flex flex-col gap-4">

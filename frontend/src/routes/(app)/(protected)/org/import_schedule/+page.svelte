@@ -73,7 +73,7 @@
 </script>
 
 <svelte:head>
-	<title>Импорт расписания</title>
+	<title>Импорт расписания · ФАН ФАН</title>
 </svelte:head>
 
 <SectionIntro description="Загрузи Excel-файл, чтобы обновить расписание мероприятия." />

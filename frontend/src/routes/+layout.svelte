@@ -32,6 +32,11 @@
 	});
 </script>
 
+<!-- Fallback title; pages override via their own <svelte:head><title>. -->
+<svelte:head>
+	<title>ФАН ФАН</title>
+</svelte:head>
+
 {@render children()}
 
 <!--

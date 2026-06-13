@@ -95,7 +95,7 @@
 </script>
 
 <svelte:head>
-	<title>Рассылка уведомлений</title>
+	<title>Рассылка уведомлений · ФАН ФАН</title>
 </svelte:head>
 
 <SectionIntro

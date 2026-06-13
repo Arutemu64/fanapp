@@ -11,7 +11,7 @@
 </script>
 
 <svelte:head>
-	<title>Уведомления</title>
+	<title>Уведомления · ФАН ФАН</title>
 </svelte:head>
 
 {#key notificationsKey}

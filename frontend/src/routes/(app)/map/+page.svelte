@@ -48,7 +48,7 @@
 </script>
 
 <svelte:head>
-	<title>Карта площадки</title>
+	<title>Карта площадки · ФАН ФАН</title>
 </svelte:head>
 
 <SectionIntro description="Нажми на карту, чтобы открыть её на весь экран." />

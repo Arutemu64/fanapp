@@ -103,7 +103,7 @@
 </script>
 
 <svelte:head>
-	<title>Настройки фестиваля</title>
+	<title>Настройки фестиваля · ФАН ФАН</title>
 </svelte:head>
 
 <SectionIntro description="Управляй голосованием и таймаутом между анонсами расписания." />

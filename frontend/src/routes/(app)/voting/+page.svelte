@@ -12,7 +12,7 @@
 </script>
 
 <svelte:head>
-	<title>Голосование</title>
+	<title>Голосование · ФАН ФАН</title>
 </svelte:head>
 
 <VotingStatusAlert votingState={votingStatus} class="mb-4" />
