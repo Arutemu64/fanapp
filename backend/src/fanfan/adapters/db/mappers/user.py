@@ -34,7 +34,10 @@ class UserMapper:
             email_verified_at=model.email_verified_at,
             first_name=model.first_name,
             role=model.role,
-            settings=self.retort.dump(model.settings),
+            # Queryable notification flags go to columns; the rest stays in JSON.
+            receive_all_announcements=model.settings.receive_all_announcements,
+            receive_telegram_notifications=model.settings.receive_telegram_notifications,
+            settings={"items_per_page": model.settings.items_per_page},
         )
 
     def to_model(self, orm: UserORM) -> User:
@@ -47,7 +50,11 @@ class UserMapper:
             email_verified_at=orm.email_verified_at,
             first_name=orm.first_name,
             role=UserRole(orm.role),
-            settings=self.retort.load(orm.settings, UserSettings),
+            settings=UserSettings(
+                items_per_page=orm.settings.get("items_per_page", 4),
+                receive_all_announcements=orm.receive_all_announcements,
+                receive_telegram_notifications=orm.receive_telegram_notifications,
+            ),
         )
 
     @staticmethod
@@ -103,5 +110,8 @@ class UserMapper:
             if orm.ticket
             else None,
             permissions=self._resolve_permissions(orm),
-            settings=self.retort.load(orm.settings, UserSettingsDTO),
+            settings=UserSettingsDTO(
+                receive_all_announcements=orm.receive_all_announcements,
+                receive_telegram_notifications=orm.receive_telegram_notifications,
+            ),
         )

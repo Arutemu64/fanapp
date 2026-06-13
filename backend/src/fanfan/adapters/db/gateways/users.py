@@ -1,5 +1,5 @@
 from adaptix import Retort
-from sqlalchemy import Boolean, cast, func, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -139,9 +139,7 @@ class SqlUserGateway(UserGateway):
         return [self.mapper.parse_base_dto(u) for u in users_orm]
 
     async def read_all_by_receive_all_announcements(self) -> list[UserBaseDTO]:
-        stmt = select(UserORM).where(
-            cast(UserORM.settings["receive_all_announcements"].astext, Boolean)
-        )
+        stmt = select(UserORM).where(UserORM.receive_all_announcements.is_(True))
         users_orm = await self.session.scalars(stmt)
         return [self.mapper.parse_base_dto(u) for u in users_orm]
 
