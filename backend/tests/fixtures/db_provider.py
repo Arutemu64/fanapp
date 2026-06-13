@@ -18,16 +18,13 @@ class TestDbProvider(Provider):
 
     @provide
     def get_db_config(self) -> Iterable[DatabaseConfig]:
-        postgres = PostgresContainer("postgres:18.2")
+        postgres = PostgresContainer("postgres:18.2", driver="asyncpg")
         # TODO: workaround from testcontainers/testcontainers-python#108.
         if os.name == "nt":
             postgres.get_container_host_ip = lambda: "localhost"  # type: ignore  # noqa: PGH003
         try:
             postgres.start()
-            postgres_url = postgres.get_connection_url().replace(
-                "postgresql+psycopg2",
-                "postgresql+asyncpg",
-            )
+            postgres_url = postgres.get_connection_url()
             logger.info("postgres url %s", postgres_url)
             db_config = DatabaseConfig(url=PostgresDsn(postgres_url), echo=False)
             yield db_config
