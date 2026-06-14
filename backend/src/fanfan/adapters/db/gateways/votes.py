@@ -11,6 +11,7 @@ from fanfan.core.exceptions.votes import VoteAlreadyExists
 from fanfan.core.models.vote import Vote
 from fanfan.core.vo.nomination import NominationId
 from fanfan.core.vo.user import UserId
+from fanfan.core.vo.vote import VoteId
 
 
 class SqlVoteGateway(VoteGateway):
@@ -30,6 +31,16 @@ class SqlVoteGateway(VoteGateway):
             self.session.add(vote_orm)
             await self.session.flush([vote_orm])
         self.uow.register(vote)
+
+    async def get(self, vote_id: VoteId) -> Vote | None:
+        vote_orm = await self.session.scalar(
+            select(VoteORM).where(VoteORM.id == vote_id).with_for_update()
+        )
+        if vote_orm is None:
+            return None
+        vote = self.mapper.to_model(vote_orm)
+        self.uow.register(vote)
+        return vote
 
     async def get_user_vote_by_nomination(
         self, nomination_id: NominationId, user_id: UserId

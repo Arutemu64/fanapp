@@ -16,7 +16,6 @@
 	type VotingParticipant = GetVotingNominationResult['participants'][number];
 
 	let { data }: PageProps = $props();
-	let nominationId = $derived(data.nomination.id);
 	let nomination: GetVotingNominationResult = $derived(data.nomination);
 	let participants = $derived(nomination.participants);
 	let votingStatus = $derived(data.votingStatus);
@@ -122,7 +121,7 @@
 
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
 	{#each filtered as participant (participant.id)}
-		<ParticipantCard {participant} {nominationId} {hasVoted} {canVote} onVoted={handleVoted} />
+		<ParticipantCard {participant} {hasVoted} {canVote} onVoted={handleVoted} />
 	{:else}
 		<div class="col-span-full">
 			<Card class="py-8 text-center sm:py-12">

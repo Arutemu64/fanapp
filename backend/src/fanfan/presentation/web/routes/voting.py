@@ -4,15 +4,14 @@ from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Path
 
-from fanfan.application.dto.vote import VoteBaseDTO
 from fanfan.application.interactors.voting.add_vote import (
     AddVote,
     AddVoteInput,
     AddVoteOutput,
 )
-from fanfan.application.interactors.voting.cancel_vote_by_nomination import (
-    CancelVoteByNomination,
-    CancelVoteByNominationInput,
+from fanfan.application.interactors.voting.cancel_vote import (
+    CancelVote,
+    CancelVoteInput,
 )
 from fanfan.application.interactors.voting.get_voting_nomination import (
     GetVotingNomination,
@@ -27,7 +26,8 @@ from fanfan.application.interactors.voting.list_voting_nominations import (
     ListVotingNominations,
     ListVotingNominationsOutput,
 )
-from fanfan.core.vo.nomination import NominationCode, NominationId
+from fanfan.core.vo.nomination import NominationCode
+from fanfan.core.vo.vote import VoteId
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
 voting_router = APIRouter(tags=["Voting"], prefix="/voting")
@@ -85,20 +85,22 @@ async def list_voting_nominations(
 )
 @inject
 async def get_voting_nomination(
-    nomination_code: Annotated[str, Path(description="Voting nomination code.")],
+    nomination_code: Annotated[
+        NominationCode, Path(description="Voting nomination code.")
+    ],
     interactor: FromDishka[GetVotingNomination],
 ) -> GetVotingNominationOutput:
-    return await interactor(
-        GetVotingNominationInput(nomination_code=NominationCode(nomination_code))
-    )
+    return await interactor(GetVotingNominationInput(nomination_code=nomination_code))
 
 
-@voting_router.put(
-    "/nominations/{nomination_id}/vote",
+@voting_router.post(
+    "/votes",
+    status_code=201,
     summary="Cast a vote",
-    description="Submits a vote for a participant in the specified nomination.",
+    description="Submits a vote for the given participant. "
+    "The nomination is derived from the participant.",
     responses={
-        200: {"model": VoteBaseDTO, "description": "Vote successfully cast."},
+        201: {"model": AddVoteOutput, "description": "Vote successfully cast."},
         404: {"model": ErrorMessage, "description": "Participant not found."},
         409: {
             "model": ErrorMessage,
@@ -108,7 +110,6 @@ async def get_voting_nomination(
 )
 @inject
 async def add_vote(
-    nomination_id: Annotated[NominationId, Path(description="Voting nomination ID.")],
     data: AddVoteInput,
     interactor: FromDishka[AddVote],
 ) -> AddVoteOutput:
@@ -116,17 +117,18 @@ async def add_vote(
 
 
 @voting_router.delete(
-    "/nominations/{nomination_id}/vote",
+    "/votes/{vote_id}",
+    status_code=204,
     summary="Cancel a vote",
-    description="Removes a previously cast vote in the specified nomination.",
+    description="Removes a previously cast vote by its ID.",
     responses={
-        200: {"description": "Vote successfully cancelled."},
+        204: {"description": "Vote successfully cancelled."},
         404: {"model": ErrorMessage, "description": "No vote found to cancel."},
     },
 )
 @inject
 async def cancel_vote(
-    nomination_id: Annotated[NominationId, Path(description="Voting nomination ID.")],
-    interactor: FromDishka[CancelVoteByNomination],
+    vote_id: Annotated[VoteId, Path(description="ID of the vote to cancel.")],
+    interactor: FromDishka[CancelVote],
 ) -> None:
-    await interactor(CancelVoteByNominationInput(nomination_id=nomination_id))
+    await interactor(CancelVoteInput(vote_id=vote_id))
