@@ -9,13 +9,12 @@
 
 	interface Props {
 		participant: ParticipantFullDTO;
-		nominationId: string;
 		hasVoted: boolean;
 		canVote: boolean;
 		onVoted?: () => void;
 	}
 
-	let { participant, nominationId, hasVoted, canVote, onVoted }: Props = $props();
+	let { participant, hasVoted, canVote, onVoted }: Props = $props();
 	const toastService = getToastService();
 
 	let isLoading = $state(false);
@@ -26,17 +25,11 @@
 
 		isLoading = true;
 		try {
-			const { data, error, response } = await client.PUT(
-				'/voting/nominations/{nomination_id}/vote',
-				{
-					params: {
-						path: { nomination_id: nominationId }
-					},
-					body: {
-						participant_id: participant.id
-					}
+			const { data, error, response } = await client.POST('/voting/votes', {
+				body: {
+					participant_id: participant.id
 				}
-			);
+			});
 
 			if (error || !response.ok) {
 				toastService.error(error);
@@ -55,13 +48,14 @@
 	}
 
 	async function handleCancelVote() {
-		if (areActionsDisabled || participant.user_vote === null) return;
+		const vote = participant.user_vote;
+		if (areActionsDisabled || vote === null) return;
 
 		isLoading = true;
 		try {
-			const { error, response } = await client.DELETE('/voting/nominations/{nomination_id}/vote', {
+			const { error, response } = await client.DELETE('/voting/votes/{vote_id}', {
 				params: {
-					path: { nomination_id: nominationId }
+					path: { vote_id: vote.id }
 				}
 			});
 

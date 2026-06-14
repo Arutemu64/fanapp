@@ -701,7 +701,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/voting/nominations/{nomination_id}/vote": {
+    "/voting/votes": {
         parameters: {
             query?: never;
             header?: never;
@@ -709,17 +709,33 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
+        put?: never;
         /**
          * Cast a vote
-         * @description Submits a vote for a participant in the specified nomination.
+         * @description Submits a vote for the given participant. The nomination is derived from the participant.
          */
-        put: operations["add_vote_voting_nominations__nomination_id__vote_put"];
+        post: operations["add_vote_voting_votes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/voting/votes/{vote_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         post?: never;
         /**
          * Cancel a vote
-         * @description Removes a previously cast vote in the specified nomination.
+         * @description Removes a previously cast vote by its ID.
          */
-        delete: operations["cancel_vote_voting_nominations__nomination_id__vote_delete"];
+        delete: operations["cancel_vote_voting_votes__vote_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1425,24 +1441,6 @@ export interface components {
             details?: {
                 [key: string]: components["schemas"]["ValidationErrorDetail"][];
             };
-        };
-        /** VoteBaseDTO */
-        VoteBaseDTO: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /**
-             * User Id
-             * Format: uuid
-             */
-            user_id: string;
-            /**
-             * Participant Id
-             * Format: uuid
-             */
-            participant_id: string;
         };
         /**
          * VotingStatus
@@ -3666,14 +3664,11 @@ export interface operations {
             };
         };
     };
-    add_vote_voting_nominations__nomination_id__vote_put: {
+    add_vote_voting_votes_post: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description Voting nomination ID. */
-                nomination_id: string;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
@@ -3683,12 +3678,12 @@ export interface operations {
         };
         responses: {
             /** @description Vote successfully cast. */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["VoteBaseDTO"];
+                    "application/json": components["schemas"]["AddVoteOutput"];
                 };
             };
             /** @description Not authenticated. */
@@ -3738,26 +3733,24 @@ export interface operations {
             };
         };
     };
-    cancel_vote_voting_nominations__nomination_id__vote_delete: {
+    cancel_vote_voting_votes__vote_id__delete: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                /** @description Voting nomination ID. */
-                nomination_id: string;
+                /** @description ID of the vote to cancel. */
+                vote_id: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
             /** @description Vote successfully cancelled. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {

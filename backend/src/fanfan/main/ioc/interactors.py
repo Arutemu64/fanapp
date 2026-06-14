@@ -112,8 +112,8 @@ from fanfan.application.interactors.ticketscloud.process_tcloud_order import (
 )
 from fanfan.application.interactors.ticketscloud.sync_tcloud import SyncTCloud
 from fanfan.application.interactors.voting.add_vote import AddVote
-from fanfan.application.interactors.voting.cancel_vote_by_nomination import (
-    CancelVoteByNomination,
+from fanfan.application.interactors.voting.cancel_vote import (
+    CancelVote,
 )
 from fanfan.application.interactors.voting.check_voting_contest_entry import (
     CheckVotingContestEntry,
@@ -179,7 +179,7 @@ class InteractorsProvider(Provider):
 
     get_voting_nomination = provide(GetVotingNomination)
     add_vote = provide(AddVote)
-    cancel_vote_by_nomination = provide(CancelVoteByNomination)
+    cancel_vote = provide(CancelVote)
     get_voting_state = provide(GetVotingState)
     check_voting_contest_entry = provide(CheckVotingContestEntry)
 

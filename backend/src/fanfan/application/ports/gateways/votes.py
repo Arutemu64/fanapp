@@ -3,10 +3,12 @@ from typing import Protocol
 from fanfan.core.models.vote import Vote
 from fanfan.core.vo.nomination import NominationId
 from fanfan.core.vo.user import UserId
+from fanfan.core.vo.vote import VoteId
 
 
 class VoteGateway(Protocol):
     async def add(self, vote: Vote) -> None: ...
+    async def get(self, vote_id: VoteId) -> Vote | None: ...
     async def get_user_vote_by_nomination(
         self, nomination_id: NominationId, user_id: UserId
     ) -> Vote | None: ...

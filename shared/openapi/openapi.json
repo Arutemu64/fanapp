@@ -2538,45 +2538,31 @@
         }
       }
     },
-    "/voting/nominations/{nomination_id}/vote": {
-      "put": {
+    "/voting/votes": {
+      "post": {
         "tags": [
           "Voting"
         ],
         "summary": "Cast a vote",
-        "description": "Submits a vote for a participant in the specified nomination.",
-        "operationId": "add_vote_voting_nominations__nomination_id__vote_put",
-        "parameters": [
-          {
-            "name": "nomination_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "description": "Voting nomination ID.",
-              "title": "Nomination Id"
-            },
-            "description": "Voting nomination ID."
-          }
-        ],
+        "description": "Submits a vote for the given participant. The nomination is derived from the participant.",
+        "operationId": "add_vote_voting_votes_post",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/AddVoteInput"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "Vote successfully cast.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VoteBaseDTO"
+                  "$ref": "#/components/schemas/AddVoteOutput"
                 }
               }
             }
@@ -2632,36 +2618,33 @@
             }
           }
         }
-      },
+      }
+    },
+    "/voting/votes/{vote_id}": {
       "delete": {
         "tags": [
           "Voting"
         ],
         "summary": "Cancel a vote",
-        "description": "Removes a previously cast vote in the specified nomination.",
-        "operationId": "cancel_vote_voting_nominations__nomination_id__vote_delete",
+        "description": "Removes a previously cast vote by its ID.",
+        "operationId": "cancel_vote_voting_votes__vote_id__delete",
         "parameters": [
           {
-            "name": "nomination_id",
+            "name": "vote_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "description": "Voting nomination ID.",
-              "title": "Nomination Id"
+              "description": "ID of the vote to cancel.",
+              "title": "Vote Id"
             },
-            "description": "Voting nomination ID."
+            "description": "ID of the vote to cancel."
           }
         ],
         "responses": {
-          "200": {
-            "description": "Vote successfully cancelled.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "Vote successfully cancelled."
           },
           "401": {
             "description": "Not authenticated.",
@@ -4754,32 +4737,6 @@
         },
         "type": "object",
         "title": "ValidationErrorResponse"
-      },
-      "VoteBaseDTO": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "user_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "User Id"
-          },
-          "participant_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Participant Id"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "user_id",
-          "participant_id"
-        ],
-        "title": "VoteBaseDTO"
       },
       "VotingStatus": {
         "type": "string",
