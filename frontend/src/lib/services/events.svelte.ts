@@ -1,6 +1,6 @@
 import { createContext } from 'svelte';
 import { browser } from '$app/environment';
-import { env } from '$env/dynamic/public';
+import { PUBLIC_API_URL } from '$env/static/public';
 import type { NotificationDTO } from '$lib/types/notifications';
 
 const [getEvents, setEvents] = createContext<EventsClient | null>();
@@ -99,7 +99,7 @@ export class EventsClient {
 		this.handshake = null;
 		this.connectionStatus = 'connecting';
 
-		this.#source = new EventSource(`${env.PUBLIC_API_URL}/events`, {
+		this.#source = new EventSource(`${PUBLIC_API_URL}/events`, {
 			withCredentials: true
 		});
 

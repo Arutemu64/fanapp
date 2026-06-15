@@ -5,7 +5,7 @@
 	const client = createApiClient();
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { env } from '$env/dynamic/public';
+	import { PUBLIC_VAPID_KEY } from '$env/static/public';
 	import { onMount } from 'svelte';
 	import type { CurrentUserDTO, UserSocialAccountDTO } from '$lib/types/user';
 	import type { components } from '$lib/api/v1';
@@ -124,9 +124,9 @@
 				return;
 			}
 
-			// PUBLIC_VAPID_KEY comes from the runtime environment, so it may be
-			// missing if push notifications were not configured for this deployment.
-			const vapidKey = env.PUBLIC_VAPID_KEY;
+			// PUBLIC_VAPID_KEY is baked in at build time, so it may be empty if push
+			// notifications were not configured for this deployment.
+			const vapidKey = PUBLIC_VAPID_KEY;
 			if (!vapidKey) {
 				toastService.add('Уведомления сейчас недоступны', 'error');
 				return;
