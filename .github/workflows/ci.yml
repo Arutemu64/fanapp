@@ -61,6 +61,15 @@ jobs:
     # the slowest single task (the build) instead of the sum of all three.
     name: Frontend (${{ matrix.task.name }})
     runs-on: ubuntu-latest
+    # `check` and `build` read PUBLIC_* via `$env/static/public`, which errors on
+    # any referenced var that is undefined at build time. Supply them from the
+    # same repository variables the publish workflow bakes in (empty is fine — the
+    # vars just need to exist). `lint` ignores them.
+    env:
+      PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
+      PUBLIC_VAPID_KEY: ${{ vars.PUBLIC_VAPID_KEY }}
+      PUBLIC_SENTRY_DSN: ${{ vars.PUBLIC_SENTRY_DSN }}
+      PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
     strategy:
       # Don't cancel the other tasks when one fails: we want to see every
       # failure (lint, types and build) in a single CI run, not just the first.
