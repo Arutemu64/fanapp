@@ -25,7 +25,6 @@
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
 		"@tailwindcss/vite": "^4.3.1",
 		"@types/node": "^25.9.3",
-		"@types/set-cookie-parser": "^2.4.10",
 		"eslint": "^9.39.4",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.19.0",
@@ -51,8 +50,7 @@
 		"@fontsource-variable/unbounded": "^5.2.8",
 		"@khmyznikov/pwa-install": "^0.6.3",
 		"@sentry/sveltekit": "^8.55.2",
-		"openapi-fetch": "^0.17.0",
-		"set-cookie-parser": "^3.1.0"
+		"openapi-fetch": "^0.17.0"
 	},
 	"pnpm": {
 		"onlyBuiltDependencies": [

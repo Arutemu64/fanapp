@@ -6,7 +6,9 @@
 	import { setPwaService } from '$lib/services/pwa.svelte';
 	import { setThemeService } from '$lib/services/theme.svelte';
 	import type { PWAInstallElement } from '@khmyznikov/pwa-install';
-	import { onDestroy } from 'svelte';
+	import { navigating } from '$app/state';
+	import { Spinner } from 'flowbite-svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import * as Sentry from '@sentry/sveltekit';
 
 	let { children, data }: LayoutProps = $props();
@@ -15,6 +17,11 @@
 	setToastService();
 	const pwa = setPwaService();
 	setThemeService();
+
+	onMount(() => {
+		// Remove the static boot splash (in app.html) now that the app has mounted.
+		document.getElementById('app-splash')?.remove();
+	});
 
 	$effect(() => {
 		if (data?.user) {
@@ -38,6 +45,26 @@
 </svelte:head>
 
 {@render children()}
+
+<!--
+	Navigation indicator. SPA route changes wait for the target `load` to resolve
+	(e.g. fetching page data) before the new page paints; this floating spinner
+	gives feedback during that gap. `pointer-events-none` keeps the UI usable.
+-->
+{#if navigating.to}
+	<div
+		class="pointer-events-none fixed inset-x-0 top-0 z-[100] flex justify-center pt-[calc(env(safe-area-inset-top)+0.75rem)]"
+		role="status"
+		aria-live="polite"
+	>
+		<span
+			class="flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-medium text-gray-700 shadow-lg backdrop-blur dark:bg-gray-800/90 dark:text-gray-200"
+		>
+			<Spinner size="5" color="primary" />
+			Загрузка…
+		</span>
+	</div>
+{/if}
 
 <!--
 	Single instance of the install dialog. `manual-chrome`/`manual-apple` keep it

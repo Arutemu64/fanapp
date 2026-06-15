@@ -56,7 +56,7 @@ COPY --from=build --chown=node:node /app/package.json ./package.json
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD ["wget", "-qO-", "http://127.0.0.1:3000/healthz"]
+  CMD ["wget", "-qO-", "http://127.0.0.1:3000/"]
 
 USER node
 

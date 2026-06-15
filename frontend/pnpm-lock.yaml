@@ -23,9 +23,6 @@ importers:
       openapi-fetch:
         specifier: ^0.17.0
         version: 0.17.0
-      set-cookie-parser:
-        specifier: ^3.1.0
-        version: 3.1.0
     devDependencies:
       '@eslint/compat':
         specifier: ^2.1.0
@@ -54,9 +51,6 @@ importers:
       '@types/node':
         specifier: ^25.9.3
         version: 25.9.3
-      '@types/set-cookie-parser':
-        specifier: ^2.4.10
-        version: 2.4.10
       eslint:
         specifier: ^9.39.4
         version: 9.39.4(jiti@2.7.0)
@@ -1321,9 +1315,6 @@ packages:
 
   '@types/resolve@1.20.2':
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
-
-  '@types/set-cookie-parser@2.4.10':
-    resolution: {integrity: sha512-GGmQVGpQWUe5qglJozEjZV/5dyxbOOZ0LHe/lqyWssB88Y4svNfst0uqBVscdDeIKl5Jy5+aPSvy7mI9tYRguw==}
 
   '@types/shimmer@1.2.0':
     resolution: {integrity: sha512-UE7oxhQLLd9gub6JKIAhDq06T0F6FnztwMNRvYgjeQSBeMc1ZG/tA47EwfduvkuQS8apbkM/lpLpWsaCeYsXVg==}
@@ -3958,10 +3949,6 @@ snapshots:
       csstype: 3.2.3
 
   '@types/resolve@1.20.2': {}
-
-  '@types/set-cookie-parser@2.4.10':
-    dependencies:
-      '@types/node': 25.9.3
 
   '@types/shimmer@1.2.0': {}
 
