@@ -7,9 +7,8 @@ import type { CurrentUserDTO } from '$lib/types/user';
 
 declare global {
 	namespace App {
-		interface Locals {
-			user: CurrentUserDTO | null;
-		}
+		// SPA-only: no server-side auth load, so `locals` carries nothing.
+		// interface Locals {}
 		interface Error {
 			message: string;
 			code?: string;

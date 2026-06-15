@@ -14,29 +14,30 @@ This document outlines the codebase-specific constraints, SvelteKit SSR rules, s
 
 ---
 
-## 1. SSR Safety & Request Isolation
+## 1. Client Rendering (SPA) & State Isolation
 
-* **Server Evaluation**: Assume every route and component may render on the server first. Do not access browser-only globals (`window`, `document`, `localStorage`, etc.) during module evaluation.
-* **Strict State Isolation**: Never store user-specific or request-specific state in global/module-level variables, legacy stores, or reactive singletons.
-* **Context API for Shared State**: For state shared across Svelte 5 components, keep logic in classes with `$state` fields instanced per component/request. Use Svelte 5's type-safe `createContext` utility (rather than global stores or raw module variables) to scope state to the request-specific component tree, eliminating SSR data leakage.
-* **Browser Guards**: Guard browser-only execution paths with `browser` from `$app/environment` during rendering, or isolate them inside the client lifecycle. Prefer (in order) event handlers, `{@attach ...}` for external libs, `<svelte:window>`/`<svelte:document>` for global listeners, and `createSubscriber` for external sources; reach for `$effect` only as a last resort. See `svelte-core-bestpractices`.
+The app is a **client-rendered SPA**: `export const ssr = false` lives in the root `src/routes/+layout.ts`, so pages render only in the browser — there is no server render. The `adapter-node` server only serves the static shell.
+
+* **No SSR**: Browser globals (`window`, `document`, `localStorage`) are safe in component and module code, since nothing runs on the server. (Still guard with `browser` from `$app/environment` only if a module also runs under non-browser tooling, e.g. tests.)
+* **Strict State Isolation**: Do not store user/session state in global/module-level variables, legacy stores, or reactive singletons. In a SPA a module singleton persists across client-side navigations and across login/logout — scoping avoids stale data bleeding between sessions.
+* **Context API for Shared State**: For state shared across Svelte 5 components, keep logic in classes with `$state` fields instanced per component. Use Svelte 5's type-safe `createContext` utility (rather than global stores or raw module variables) to scope state to the component tree.
+* **Effect avoidance**: Prefer (in order) event handlers, `{@attach ...}` for external libs, `<svelte:window>`/`<svelte:document>` for global listeners, and `createSubscriber` for external sources; reach for `$effect` only as a last resort. See `svelte-core-bestpractices`.
 
 ---
 
 ## 2. Data Loading & SvelteKit Integration
 
-* **Data Fetching boundaries**: Move first-render data requirements into SvelteKit layout or page `load` functions.
-* **SSR fetch forwarding**: Always pass the SvelteKit-provided `fetch` (from load functions or server events) inside the request options block of your client calls (e.g., `client.GET('/route', { fetch })`) to preserve session headers, cookies, and correct relative routes.
-* **Server-Only Modules**: Server-only modules (e.g., `+page.server.ts`, `.server.ts` files) must be used when handling secure cookies, administrative privileges, or private environment variables. Do not import server-only environment modules in browser-reachable files.
+* **Data Fetching boundaries**: Move first-render data requirements into SvelteKit layout or page `load` functions. All loads are **universal** (`+page.ts`/`+layout.ts`) — there are no `.server.ts` loads in a SPA.
+* **Pass the load `fetch`**: Always pass the SvelteKit-provided `fetch` (from load functions) inside the request options block of your client calls (e.g., `client.GET('/route', { fetch })`). It gives request deduplication, relative-URL resolution, and integration with `invalidate()`. The session cookie is carried automatically by the browser (the API client uses `credentials: 'include'`).
 * **Typed `data`**: Always type page/layout props with the generated `PageProps`/`LayoutProps` (or `PageData`/`LayoutData`) from `./$types`. Never leave `$props()` untyped — typed `data` is what catches load/page mismatches at check time.
 
 ### Access Control (don't duplicate guards)
 
-Route access is enforced **once**, centrally, in `hooks.server.ts`:
+Guards run client-side in **universal `load`** functions (these are UX redirects only — the backend enforces real auth on every endpoint):
 
-* `authHandle` loads the current user into `locals.user`; the root `+layout.server.ts` exposes it to the client, so it flows down to **every** page. Do not re-return `user` from a nested layout — it is already inherited.
-* `guardHandle` gates by route-group name: `(protected)` requires a logged-in user (else → `/login`), `(auth)` is guests-only (else → `/`). Putting a route inside the group is the guard — do **not** re-check `locals.user` in that route's `load`.
-* A per-route `+page.server.ts`/`+layout.server.ts` should only add checks the group can't express — e.g. a finer-grained `error(403, …)` for a role. The whole `org/` section is already gated by `org/+layout.server.ts` (`role === 'org'`); never re-check the org role inside individual org pages.
+* The root `+layout.ts` fetches the current user from `/me/` and returns `user`, so it flows down to **every** page. Do not re-return `user` from a nested layout — it is already inherited.
+* Route-group layouts gate by membership: `(app)/(protected)/+layout.ts` requires a logged-in user (else → `/login`); `(auth)/+layout.ts` is guests-only (else → `/`). Putting a route inside the group is the guard — do **not** re-check `user` in that route's `load`.
+* A nested `+layout.ts` should only add checks the group can't express — e.g. a finer-grained `error(403, …)`. The whole `org/` section is already gated by `org/+layout.ts` via the `canManageSettings`/`canImportSchedule`/`canSendNotifications` permission helpers; never re-check organizer access inside individual org pages.
 
 ---
 
@@ -187,7 +188,7 @@ Never copy-paste class attribute values from rich-text sources. Unicode curly qu
 * Used by **one route subtree** → put it in a `components/` subfolder next to the page that uses it (e.g. `routes/(app)/schedule/components/EventCard.svelte`). Always the `components/` subfolder — never loose in the route folder.
 * Used across **different route subtrees** → promote it to `frontend/src/lib/components/` (e.g. `SectionIntro`, `OtpInput`, `ToastContainer`).
 * App-shell pieces used only once (navbar/sidebar/banner) stay colocated under `routes/(app)/components/` — single-use does **not** justify `lib/`.
-* `lib/` modules (`utils/`, `services/`, `server/`) follow the same spirit: only `export` what is consumed outside the file, and delete unused exports rather than letting them accumulate.
+* `lib/` modules (`utils/`, `services/`, etc.) follow the same spirit: only `export` what is consumed outside the file, and delete unused exports rather than letting them accumulate.
 
 Before writing any new component, check existing items in `frontend/src/lib/components/`:
 * **Page titles**: The screen title lives in the top `AppNavbar`, not in the page body. Each page sets it by returning `title` from its `load` (`page.data.title`); `AppNavbar` renders it as the page `<h1>`. For optional intro text or extra context below the navbar, use `$lib/components/SectionIntro.svelte` (description + children, no title).

@@ -1,6 +1,6 @@
 # API Integration Guide
 
-This guide details best practices for using `openapi-typescript` and `openapi-fetch` in the SvelteKit frontend to achieve type-safe communication with the FastAPI backend, absolute state isolation, and excellent SSR performance.
+This guide details best practices for using `openapi-typescript` and `openapi-fetch` in the SvelteKit frontend to achieve type-safe communication with the FastAPI backend and clean per-request state isolation. The frontend is a client-rendered SPA (`ssr = false`), so the browser talks to the backend directly.
 
 ---
 
@@ -11,13 +11,13 @@ This guide details best practices for using `openapi-typescript` and `openapi-fe
 
 ---
 
-## 🔒 Client Isolation & SSR Safety
-To prevent cross-request state leakage under concurrent requests during Server-Side Rendering (SSR), **never use a shared global/module singleton API client**.
+## 🔒 Client Isolation
+A shared global/module singleton API client can accumulate mutable state that bleeds across navigations and login/logout, so **never use one**.
 
 Instead, always instantiate a local client per context using `createApiClient()`.
 
-### 1. Universal & Server contexts (Load Functions, Actions, Hooks)
-Inside universal `+page.ts` load functions, server `+page.server.ts` loads, actions, or `hooks.server.ts`, initialize the client locally and **always inject the SvelteKit-provided `fetch`**:
+### 1. Universal load functions (`+page.ts` / `+layout.ts`)
+Inside universal load functions, initialize the client locally and **always inject the SvelteKit-provided `fetch`**:
 
 ```typescript
 import { createApiClient } from '$lib/api';
@@ -41,10 +41,10 @@ export const load: PageLoad = async ({ fetch, depends }) => {
 ```
 
 > [!IMPORTANT]
-> **Why must you inject the SvelteKit-provided `fetch`?**
-> * **Session Cookie Forwarding**: SvelteKit's `fetch` automatically carries authentication and session cookies from the client browser to the backend when executing on the server.
-> * **Relative URL Resolution**: SvelteKit resolves relative routes correctly during SSR.
-> * **Set-Cookie Mirroring**: SvelteKit automatically mirrors any `Set-Cookie` headers returned by the backend back to the client response.
+> **Why inject the SvelteKit-provided `fetch` in load functions?**
+> * **Request deduplication**: SvelteKit dedupes identical requests and lets `invalidate()` re-run the load when its data changes.
+> * **Relative URL Resolution**: SvelteKit resolves relative routes correctly.
+> * **Cookies**: The `session_id` cookie is carried automatically by the browser; the client uses `credentials: 'include'` and the frontend is served same-origin with the API (behind Caddy), so it stays first-party.
 
 ---
 

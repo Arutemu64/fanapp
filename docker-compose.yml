@@ -9,7 +9,6 @@ services:
     environment:
       HOST: "0.0.0.0"
       PORT: "3000"
-      PRIVATE_API_URL: "http://api:8000"
       # We sit behind Caddy, which terminates TLS and forwards plain HTTP to us.
       # Tell adapter-node to read the real public scheme/host from Caddy's
       # X-Forwarded-* headers when building event.url. Without these it assumes

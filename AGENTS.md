@@ -21,8 +21,7 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
 │           ├── types/        # Local TS interfaces and schema type overrides
 │           ├── services/     # Svelte 5 reactivity services (toasts, events, PWA)
 │           ├── utils/        # Shared helpers (formatters, permissions, validation)
-│           ├── constants/    # Frontend constants
-│           └── server/       # Server-only modules (cookies, etc.)
+│           └── constants/    # Frontend constants
 ├── shared/                   # Shared OpenAPI spec
 │   └── openapi/
 └── config/                   # Redis and infrastructure configuration files
