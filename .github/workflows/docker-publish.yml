@@ -8,6 +8,10 @@ on:
   push:
     branches: [main]
     tags: ['v*']
+  # Manual rebuild — use after changing a frontend PUBLIC_* repository variable,
+  # since those are baked in at build time and a variable change alone does not
+  # trigger a build. Run from the Actions tab on the `main` branch.
+  workflow_dispatch:
 
 # Cancel an in-progress publish for the same ref when a newer commit arrives.
 concurrency:
