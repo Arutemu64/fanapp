@@ -4,26 +4,26 @@ services:
     build:
       context: ./frontend
       target: prod
+      # PUBLIC_* are baked into the SPA bundle at build time ($env/static/public);
+      # the static NGINX container has no way to inject them at runtime. They are
+      # public, non-secret constants. SENTRY_AUTH_TOKEN uploads source maps only.
       args:
+        PUBLIC_API_URL: ${PUBLIC_API_URL}
+        PUBLIC_VAPID_KEY: ${PUBLIC_VAPID_KEY}
+        PUBLIC_SENTRY_DSN: ${PUBLIC_SENTRY_DSN}
+        PUBLIC_TURNSTILE_SITE_KEY: ${PUBLIC_TURNSTILE_SITE_KEY}
         SENTRY_AUTH_TOKEN: ${DEBUG__SENTRY_AUTH_TOKEN}
-    environment:
-      HOST: "0.0.0.0"
-      PORT: "3000"
-      # We sit behind Caddy, which terminates TLS and forwards plain HTTP to us.
-      # Tell adapter-node to read the real public scheme/host from Caddy's
-      # X-Forwarded-* headers when building event.url. Without these it assumes
-      # http:// during SSR, so a same-origin https://<site>/api call looks
-      # cross-origin and SvelteKit's SSR CORS simulation rejects it (the bug
-      # where pages fail only during server-side rendering).
-      PROTOCOL_HEADER: "x-forwarded-proto"
-      HOST_HEADER: "x-forwarded-host"
+    # env_file is kept for the dev overlay (vite dev reads PUBLIC_* at runtime).
+    # The prod NGINX container ignores these — its values are already baked in.
     env_file:
       - .env
     depends_on:
       api:
         condition: service_healthy
+    # Host port stays 3000 so the upstream Caddy reverse proxy is unchanged;
+    # NGINX listens on 80 inside the container.
     ports:
-      - '127.0.0.1:3000:3000'
+      - '127.0.0.1:3000:80'
     restart: unless-stopped
     profiles: [ "core" ]
     networks:

@@ -1,4 +1,4 @@
-import adapter from '@sveltejs/adapter-node';
+import adapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -8,20 +8,13 @@ const config = {
 	preprocess: vitePreprocess(),
 
 	kit: {
-		// adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.
-		// If your environment is not supported, or you settled on a specific environment, switch out the adapter.
-		// See https://svelte.dev/docs/kit/adapters for more information about adapters.
-		adapter: adapter(),
-
-		experimental: {
-			tracing: {
-				server: true
-			},
-
-			instrumentation: {
-				server: true
-			}
-		}
+		// SPA build: the app is client-rendered (`ssr = false` in the root layout),
+		// so there is no server. adapter-static emits a static bundle and a
+		// `fallback` page that an NGINX container serves for every unknown route,
+		// letting the client router take over. See https://svelte.dev/docs/kit/single-page-apps
+		adapter: adapter({
+			fallback: '200.html'
+		})
 	}
 };
 

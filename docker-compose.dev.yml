@@ -5,6 +5,12 @@ services:
     image: fanapp-frontend-dev
     environment:
       NODE_ENV: development
+    # The dev container runs `vite dev` on port 3000 (not the prod NGINX :80).
+    # `!override` REPLACES the base service's port list — without it Compose
+    # merges port lists additively, leaving a dead 3000:80 mapping alongside this
+    # one and a host-port-3000 collision (Compose 2.24+).
+    ports: !override
+      - '127.0.0.1:3000:3000'
     develop:
       watch:
         - action: sync

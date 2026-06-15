@@ -1,10 +1,10 @@
 import createClient from 'openapi-fetch';
 import type { paths } from '$lib/api/v1';
-import { env } from '$env/dynamic/public';
+import { PUBLIC_API_URL } from '$env/static/public';
 
 export function createApiClient() {
 	return createClient<paths>({
-		baseUrl: env.PUBLIC_API_URL,
+		baseUrl: PUBLIC_API_URL,
 		credentials: 'include'
 	});
 }

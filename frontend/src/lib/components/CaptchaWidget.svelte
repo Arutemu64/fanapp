@@ -1,10 +1,10 @@
 <script module lang="ts">
-	import { env } from '$env/dynamic/public';
+	import { PUBLIC_TURNSTILE_SITE_KEY } from '$env/static/public';
 
 	// Captcha is enabled only when a Turnstile site key is configured.
 	// Without the key the widget renders nothing and the flow works captcha-free,
 	// which lets us turn the feature off just by leaving the env var empty.
-	export const captchaEnabled = Boolean(env.PUBLIC_TURNSTILE_SITE_KEY);
+	export const captchaEnabled = Boolean(PUBLIC_TURNSTILE_SITE_KEY);
 </script>
 
 <script lang="ts">
@@ -19,7 +19,7 @@
 
 	let { token = $bindable(null), reset = $bindable() }: Props = $props();
 
-	const siteKey = env.PUBLIC_TURNSTILE_SITE_KEY;
+	const siteKey = PUBLIC_TURNSTILE_SITE_KEY;
 </script>
 
 {#if siteKey}

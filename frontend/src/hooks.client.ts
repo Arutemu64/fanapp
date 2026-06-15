@@ -1,8 +1,6 @@
 import * as Sentry from '@sentry/sveltekit';
-import { env } from '$env/dynamic/public';
+import { PUBLIC_SENTRY_DSN } from '$env/static/public';
 import type { HandleClientError } from '@sveltejs/kit';
-
-const { PUBLIC_SENTRY_DSN } = env;
 
 if (PUBLIC_SENTRY_DSN) {
 	Sentry.init({
