@@ -18,9 +18,10 @@ frontend-lint:
 
 # Run lint and type-check concurrently; fail if either fails.
 # Shebang recipe so the whole body runs in one shell (background jobs + wait).
+# Uses POSIX sh (no bashisms) so it works under Git Bash on Windows too.
 frontend-verify:
-    #!/usr/bin/env bash
-    set -uo pipefail
+    #!/usr/bin/env sh
+    set -u
     cd frontend
     pnpm lint & lint_pid=$!
     pnpm check & check_pid=$!
