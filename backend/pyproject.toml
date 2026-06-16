@@ -1,5 +1,5 @@
 [project]
-name = "fanfan-bot"
+name = "fanfan"
 version = "1.1.1"
 authors = [
     { name = "Arutemu64", email = "arutemu64@outlook.com" },
