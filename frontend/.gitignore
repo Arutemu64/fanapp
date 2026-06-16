@@ -14,5 +14,6 @@ dist
 pnpm-debug.log
 .turbo
 .idea/
+.eslintcache
 # Sentry Config File
 .env.sentry-build-plugin
