@@ -27,21 +27,10 @@
 
 	let changePasswordModalOpen = $state(false);
 	let changeEmailModalOpen = $state(false);
-	let changeEmailInitialStep = $state<'email' | 'verify'>('email');
 	let isUnlinkingTelegram = $state(false);
 	const toastService = getToastService();
-	let emailStatusColor = $derived.by((): 'green' | 'yellow' | 'gray' => {
-		if (user.pending_email) return 'yellow';
-		if (user.email && user.email_verified_at) return 'green';
-		if (user.email) return 'yellow';
-		return 'gray';
-	});
-	let emailStatusLabel = $derived.by(() => {
-		if (user.pending_email) return 'Ожидает подтверждения';
-		if (user.email && user.email_verified_at) return 'Подтверждена';
-		if (user.email) return 'Не подтверждена';
-		return 'Не добавлен';
-	});
+	let emailStatusColor = $derived<'green' | 'gray'>(user.email ? 'green' : 'gray');
+	let emailStatusLabel = $derived(user.email ? 'Подтверждена' : 'Не добавлена');
 
 	// Keep the connected Telegram account handy for status text and actions.
 	let telegramAccount = $derived(
@@ -92,27 +81,9 @@
 
 					{#if user.email}
 						<p class="mt-1.5 text-sm break-all text-gray-500 dark:text-gray-400">{user.email}</p>
-						{#if !user.email_verified_at}
-							<p class="mt-1 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
-								Подтверди адрес, чтобы защитить вход и восстановление доступа.
-							</p>
-						{/if}
-					{:else if user.pending_email}
-						<p class="mt-1.5 text-sm break-all text-gray-500 dark:text-gray-400">
-							{user.pending_email}
-						</p>
-						<p class="mt-1 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
-							Подтверди адрес, чтобы сделать его основной почтой для входа и восстановления доступа.
-						</p>
 					{:else}
 						<p class="mt-1.5 text-sm leading-5 text-gray-500 dark:text-gray-400">
 							Добавь email для восстановления доступа и важных уведомлений.
-						</p>
-					{/if}
-
-					{#if user.pending_email}
-						<p class="mt-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
-							Новый адрес ожидает подтверждения: {user.pending_email}
 						</p>
 					{/if}
 				</div>
@@ -122,28 +93,10 @@
 						color="alternative"
 						size="sm"
 						class="min-h-11 w-full sm:w-auto"
-						onclick={() => {
-							changeEmailInitialStep = 'email';
-							changeEmailModalOpen = true;
-						}}
+						onclick={() => (changeEmailModalOpen = true)}
 					>
-						{user.email || user.pending_email ? 'Изменить' : 'Добавить'}
+						{user.email ? 'Изменить' : 'Добавить'}
 					</Button>
-
-					{#if user.pending_email || (user.email && !user.email_verified_at)}
-						<Button
-							color="primary"
-							size="sm"
-							class="min-h-11 w-full sm:w-auto"
-							onclick={() => {
-								changeEmailInitialStep = 'verify';
-								changeEmailModalOpen = true;
-							}}
-						>
-							<EnvelopeSolid class="me-2 h-4 w-4" />
-							Подтвердить
-						</Button>
-					{/if}
 				</div>
 			</div>
 		</div>
@@ -240,7 +193,7 @@
 		</div>
 	</div>
 
-	{#if !user.email && !user.pending_email}
+	{#if !user.email}
 		<Alert color="yellow" class="text-sm">
 			<div class="flex items-start gap-2">
 				<ExclamationCircleSolid class="mt-0.5 h-4 w-4 shrink-0" />
@@ -259,10 +212,4 @@
 	onSuccess={onUpdate}
 />
 
-<ChangeEmailModal
-	bind:open={changeEmailModalOpen}
-	currentEmail={user.email}
-	pendingEmail={user.pending_email}
-	initialStep={changeEmailInitialStep}
-	onSuccess={onUpdate}
-/>
+<ChangeEmailModal bind:open={changeEmailModalOpen} currentEmail={user.email} onSuccess={onUpdate} />

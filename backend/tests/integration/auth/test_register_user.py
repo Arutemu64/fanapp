@@ -34,8 +34,6 @@ async def test_register_user_creates_visitor_with_hashed_password(
     assert saved_user.email == Email("new.visitor@example.com")
     assert saved_user.username is not None
     assert saved_user.role == UserRole.VISITOR
-    assert saved_user.pending_email is None
-    assert saved_user.email_verified_at is None
     assert saved_user.hashed_password is not None
     assert saved_user.hashed_password != "strong-password"
     assert password_hasher.verify("strong-password", saved_user.hashed_password)
@@ -69,33 +67,3 @@ async def test_register_user_with_existing_email_is_silent_noop(
     assert saved_user.id == existing_user.id
     # Password was never set on the existing account, so it must stay empty.
     assert saved_user.hashed_password is None
-
-
-async def test_register_user_with_email_pending_on_another_user_is_silent_noop(
-    dishka_request: AsyncContainer,
-    uow: UnitOfWork,
-):
-    interactor = await dishka_request.get(RegisterUser)
-    user_gateway = await dishka_request.get(UserGateway)
-
-    existing_user = User(
-        id=generate_user_id(),
-        username=Username("pending_email_user"),
-        email=Email("current@example.com"),
-        pending_email=Email("reserved@example.com"),
-        hashed_password=None,
-        role=UserRole.VISITOR,
-    )
-    await user_gateway.add(existing_user)
-    await uow.commit()
-
-    await interactor(
-        RegisterUserInput(email="Reserved@Example.COM", password="strong-password")
-    )
-
-    # The address is reserved as another account's pending email, so no new
-    # account is created and the reservation is left untouched.
-    assert (await user_gateway.get_by_email("reserved@example.com")) is None
-    reserved_owner = await user_gateway.get_by_pending_email("reserved@example.com")
-    assert reserved_owner is not None
-    assert reserved_owner.id == existing_user.id

@@ -8,9 +8,6 @@ from fanfan.application.interactors.auth.confirm_email_code import ConfirmEmailC
 from fanfan.application.interactors.auth.login_with_code import LoginWithCode
 from fanfan.application.interactors.auth.logout_user import LogoutUser
 from fanfan.application.interactors.auth.register_user import RegisterUser
-from fanfan.application.interactors.auth.request_email_code import (
-    RequestEmailCode,
-)
 from fanfan.application.interactors.auth.request_login_code import RequestLoginCode
 from fanfan.application.interactors.auth.send_email_confirmation_code import (
     SendEmailConfirmationCode,
@@ -169,7 +166,6 @@ class InteractorsProvider(Provider):
     change_password = provide(ChangePassword)
     send_email_confirmation_code = provide(SendEmailConfirmationCode)
     send_login_code_email = provide(SendLoginCodeEmail)
-    request_email_code = provide(RequestEmailCode)
     request_login_code = provide(RequestLoginCode)
     confirm_email_code = provide(ConfirmEmailCode)
     change_email = provide(ChangeEmail)

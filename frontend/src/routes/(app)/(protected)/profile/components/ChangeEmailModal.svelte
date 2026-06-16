@@ -6,7 +6,7 @@
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { components } from '$lib/api/v1';
-	import { onDestroy, untrack } from 'svelte';
+	import { onDestroy } from 'svelte';
 	import OtpInput from '$lib/components/OtpInput.svelte';
 
 	type ChangeEmailInput = components['schemas']['ChangeEmailInput'];
@@ -14,27 +14,16 @@
 	interface Props {
 		open: boolean;
 		currentEmail?: string | null;
-		pendingEmail?: string | null;
-		initialStep?: 'email' | 'verify';
 		onSuccess?: () => void;
 	}
 
-	let {
-		open = $bindable(false),
-		currentEmail,
-		pendingEmail,
-		initialStep = 'email',
-		onSuccess
-	}: Props = $props();
-
-	let hasExistingEmail = $derived(Boolean(currentEmail || pendingEmail));
+	let { open = $bindable(false), currentEmail, onSuccess }: Props = $props();
 
 	// State management
 	let step = $state<'email' | 'verify'>('email');
 	let newEmail = $state('');
 	let emailError = $state('');
 	let isLoading = $state(false);
-	let isResumed = $state(false);
 
 	let verificationCode = $state('');
 	let verificationCodeError = $state('');
@@ -47,33 +36,15 @@
 	const toastService = getToastService();
 	let formError = $state('');
 
-	// Computed value: where the code is sent
-	let emailSentTo = $derived.by(() => {
-		if (newEmail.trim()) {
-			return newEmail.trim().toLowerCase();
-		}
-		return pendingEmail || currentEmail || '';
-	});
-
 	function isValidEmail(value: string): boolean {
 		return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 	}
 
 	let emailColor = $derived.by((): 'green' | 'red' | undefined => {
-		if (emailError) {
-			return 'red';
-		}
-
-		if (!newEmail) {
-			return undefined;
-		}
-
+		if (emailError) return 'red';
+		if (!newEmail) return undefined;
 		return isValidEmail(newEmail) ? 'green' : 'red';
 	});
-
-	function isValid(): boolean {
-		return isValidEmail(newEmail);
-	}
 
 	function handleEmailInput() {
 		emailError = '';
@@ -92,8 +63,8 @@
 		}, 1000);
 	}
 
-	// Trigger verification code email
-	async function requestVerification() {
+	// Send OTP to the new email address (also used for resend)
+	async function sendOtp() {
 		if (isRequestingVerification) return;
 
 		isRequestingVerification = true;
@@ -101,17 +72,17 @@
 		formError = '';
 
 		try {
-			const { error, response } = await client.POST('/auth/request-email-code');
+			const body: ChangeEmailInput = { new_email: newEmail.trim().toLowerCase() };
+			const { error, response } = await client.POST('/me/email', { body });
 
 			if (error || !response.ok) {
-				formError = getApiErrorDetail(error) ?? 'Не удалось запросить новый код подтверждения';
+				formError = getApiErrorDetail(error) ?? 'Не удалось отправить код подтверждения';
 				return;
 			}
 
 			verificationCode = '';
 			toastService.add('Код для подтверждения отправлен на почту', 'success');
 			startCooldown();
-			isResumed = false;
 		} catch {
 			formError = 'Произошла непредвиденная ошибка';
 		} finally {
@@ -119,7 +90,40 @@
 		}
 	}
 
-	// Submit entered verification code
+	// Step 1: Save new email and send OTP
+	async function handleSubmit(e: Event) {
+		e.preventDefault();
+		emailError = '';
+
+		const trimmedEmail = newEmail.trim().toLowerCase();
+
+		if (!isValidEmail(trimmedEmail)) {
+			emailError = 'Введи адрес в формате name@example.com';
+			return;
+		}
+
+		isLoading = true;
+
+		const body: ChangeEmailInput = { new_email: trimmedEmail };
+		const { error, response } = await client.POST('/me/email', { body });
+
+		isLoading = false;
+
+		if (error) {
+			if (response.status === 409) {
+				emailError = getApiErrorDetail(error) ?? 'Этот адрес уже используется';
+				return;
+			}
+			formError = getApiErrorDetail(error) ?? 'Не удалось отправить код подтверждения';
+			return;
+		}
+
+		toastService.add('Код подтверждения отправлен на новый адрес.', 'success');
+		step = 'verify';
+		startCooldown();
+	}
+
+	// Step 2: Confirm OTP
 	async function submitVerificationCode() {
 		verificationCodeError = '';
 
@@ -145,7 +149,6 @@
 					verificationCodeError = getApiErrorDetail(error) ?? 'Неверный или устаревший код';
 					return;
 				}
-
 				formError = getApiErrorDetail(error) ?? 'Не удалось подтвердить код';
 				return;
 			}
@@ -153,7 +156,7 @@
 			toastService.add('Почта подтверждена', 'success');
 			verificationCode = '';
 			verificationCodeError = '';
-			open = false; // Close modal on success
+			open = false;
 			if (onSuccess) onSuccess();
 		} catch {
 			formError = 'Произошла непредвиденная ошибка';
@@ -162,66 +165,17 @@
 		}
 	}
 
-	// Step 1: Save new email address
-	async function handleSubmit(e: Event) {
-		e.preventDefault();
-		emailError = '';
-
-		const trimmedEmail = newEmail.trim().toLowerCase();
-
-		if (!isValidEmail(trimmedEmail)) {
-			emailError = 'Введи адрес в формате name@example.com';
-			return;
-		}
-
-		isLoading = true;
-
-		const body: ChangeEmailInput = {
-			new_email: trimmedEmail
-		};
-
-		const { error, response } = await client.POST('/me/email', {
-			body
-		});
-
-		isLoading = false;
-
-		if (error) {
-			if (response.status === 409) {
-				emailError = getApiErrorDetail(error) ?? 'Этот адрес уже используется';
-				return;
-			}
-
-			formError = getApiErrorDetail(error) ?? 'Не удалось сохранить адрес почты';
-			return;
-		}
-
-		toastService.add('Новый адрес сохранён. Код подтверждения отправлен на почту.', 'success');
-
-		// Transition to Step 2: Verification
-		step = 'verify';
-		startCooldown();
-	}
-
-	// Synchronize step when the modal is opened
 	$effect(() => {
 		if (open) {
-			untrack(() => {
-				step = initialStep;
-				isResumed = initialStep === 'verify';
-				// Reset inputs
-				newEmail = '';
-				emailError = '';
-				verificationCode = '';
-				verificationCodeError = '';
-				formError = '';
-			});
+			step = 'email';
+			newEmail = '';
+			emailError = '';
+			verificationCode = '';
+			verificationCodeError = '';
+			formError = '';
 		} else {
-			untrack(() => {
-				// Clear interval on modal close to prevent memory leaks
-				clearInterval(resendInterval);
-				resendCooldown = 0;
-			});
+			clearInterval(resendInterval);
+			resendCooldown = 0;
 		}
 	});
 
@@ -235,11 +189,7 @@
 		<div class="flex items-center gap-2">
 			<EnvelopeSolid class="h-5 w-5 text-gray-500 dark:text-gray-400" />
 			<h3 class="text-lg font-bold text-gray-900 dark:text-white">
-				{#if step === 'email'}
-					{hasExistingEmail ? 'Изменить эл. почту' : 'Добавить эл. почту'}
-				{:else}
-					Подтверждение эл. почты
-				{/if}
+				{currentEmail ? 'Изменить эл. почту' : 'Добавить эл. почту'}
 			</h3>
 		</div>
 	{/snippet}
@@ -270,25 +220,7 @@
 					</Input>
 				</div>
 			{/if}
-			{#if !currentEmail && pendingEmail}
-				<div>
-					<Label class="mb-2 block text-yellow-500 dark:text-yellow-400"
-						>Адрес ожидает подтверждения</Label
-					>
-					<Input
-						type="text"
-						name="pending_email"
-						value={pendingEmail}
-						disabled
-						autocomplete="email"
-						class="ps-9"
-					>
-						{#snippet left()}
-							<EnvelopeSolid class="h-5 w-5 text-yellow-500" />
-						{/snippet}
-					</Input>
-				</div>
-			{/if}
+
 			<div>
 				<Label for="new_email" color={emailColor} class="mb-2 block">Новая эл. почта</Label>
 				<Input
@@ -313,21 +245,26 @@
 					<Helper color="red" class="mt-1">{emailError}</Helper>
 				{:else}
 					<Helper class="mt-1">
-						{hasExistingEmail
-							? 'На новый адрес придёт письмо. Текущая почта останется активной до подтверждения.'
+						{currentEmail
+							? 'На новый адрес придёт код. Почта изменится только после подтверждения.'
 							: 'На этот адрес придёт письмо с кодом подтверждения.'}
 					</Helper>
 				{/if}
 			</div>
 
-			<Button type="submit" color="primary" class="w-full" disabled={isLoading || !isValid()}>
+			<Button
+				type="submit"
+				color="primary"
+				class="w-full"
+				disabled={isLoading || !isValidEmail(newEmail)}
+			>
 				{#if isLoading}
 					<span class="flex items-center gap-2">
 						<Spinner size="4" />
-						Сохранение…
+						Отправка кода…
 					</span>
 				{:else}
-					{hasExistingEmail ? 'Сохранить адрес' : 'Добавить адрес'}
+					{currentEmail ? 'Отправить код' : 'Добавить адрес'}
 				{/if}
 			</Button>
 		</form>
@@ -340,16 +277,15 @@
 				</Alert>
 			{/if}
 
-			{#if isResumed}
-				<Alert color="yellow" class="text-sm">
-					Для подтверждения адреса <span class="font-medium break-all">{emailSentTo}</span> введите 6-значный
-					код из письма. Если код устарел, вы можете запросить новый ниже.
-				</Alert>
-			{:else}
-				<Alert color="blue" class="text-sm">
-					Код подтверждения отправлен на <span class="font-medium break-all">{emailSentTo}</span>
-				</Alert>
-			{/if}
+			<div>
+				<Label class="mb-2 block text-gray-500 dark:text-gray-400">Новая эл. почта</Label>
+				<Input type="text" value={newEmail.trim().toLowerCase()} disabled class="ps-9">
+					{#snippet left()}
+						<EnvelopeSolid class="h-5 w-5 text-gray-400" />
+					{/snippet}
+				</Input>
+				<Helper class="mt-1">Код подтверждения отправлен на этот адрес.</Helper>
+			</div>
 
 			<div>
 				<Label class="mb-2 block text-center">Код подтверждения</Label>
@@ -390,7 +326,7 @@
 					color="alternative"
 					class="min-h-11 w-full rounded-xl font-medium"
 					disabled={isVerifying || isRequestingVerification || resendCooldown > 0}
-					onclick={requestVerification}
+					onclick={sendOtp}
 				>
 					{#if isRequestingVerification}
 						<Spinner size="4" class="me-2" />

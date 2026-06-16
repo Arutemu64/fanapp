@@ -30,7 +30,12 @@ async def send_email_confirmation_code_on_request(
     data: EmailConfirmationCodeRequested,
     interactor: FromDishka[SendEmailConfirmationCode],
 ):
-    await interactor(SendEmailConfirmationCodeInput(user_id=data.user_id))
+    await interactor(
+        SendEmailConfirmationCodeInput(
+            user_id=data.user_id,
+            target_email=data.target_email,
+        )
+    )
 
 
 @users_router.subscriber(

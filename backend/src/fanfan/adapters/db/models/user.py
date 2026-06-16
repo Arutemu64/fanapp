@@ -1,8 +1,7 @@
-from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid7
 
-from sqlalchemy import DateTime, Enum, Index, Uuid, text
+from sqlalchemy import Enum, Index, Uuid, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
     Mapped,
@@ -30,8 +29,6 @@ class UserORM(BaseORM):
     username: Mapped[str | None] = mapped_column(index=True, unique=True)
     hashed_password: Mapped[str | None] = mapped_column()
     email: Mapped[str | None] = mapped_column(index=True, unique=True)
-    pending_email: Mapped[str | None] = mapped_column(index=True, unique=True)
-    email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Notification preferences live in columns (not the settings JSON) so they
     # can be filtered on directly — see read_all_by_receive_all_announcements.
     receive_all_announcements: Mapped[bool] = mapped_column(server_default=text("true"))

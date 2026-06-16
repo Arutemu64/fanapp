@@ -1,5 +1,3 @@
-from datetime import UTC, datetime
-
 from pydantic import BaseModel, Field
 
 from fanfan.application.ports.gateways.users import UserGateway
@@ -46,16 +44,11 @@ class ConfirmEmailCode:
 
         target_email = Email(target_email_value)
 
-        if current_user.pending_email == target_email:
-            existing_user = await self.user_gateway.get_by_email(target_email.value)
-            if existing_user is not None and existing_user.id != current_user.id:
-                raise InvalidOtpCode
-
-            current_user.confirm_pending_email(datetime.now(UTC))
-        elif current_user.email != target_email:
+        existing_user = await self.user_gateway.get_by_email(target_email.value)
+        if existing_user is not None and existing_user.id != current_user.id:
             raise InvalidOtpCode
-        else:
-            current_user.verify_email(datetime.now(UTC))
+
+        current_user.set_email(target_email)
         try:
             await self.user_gateway.save(current_user)
             await self.uow.commit()
