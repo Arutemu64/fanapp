@@ -1,5 +1,14 @@
+import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 import { createApiClient } from '$lib/api';
+import { fetchWithCache } from '$lib/utils/offlineCache';
+import type { UserSocialAccountDTO } from '$lib/types/user';
+import type { components } from '$lib/api/v1';
+
+type ProfileConnections = {
+	pushSubscriptions: components['schemas']['PushSubscriptionDTO'][];
+	socialAccounts: UserSocialAccountDTO[];
+};
 
 const TELEGRAM_LINK_ERROR_QUERY_PARAM = 'telegramLinkError';
 const TELEGRAM_LINK_ERROR_CODES = [
@@ -19,20 +28,40 @@ function getTelegramLinkErrorCode(url: URL): TelegramLinkErrorCode | null {
 	return null;
 }
 
-export const load: PageLoad = async ({ fetch, depends, url }) => {
+export const load: PageLoad = async ({ fetch, depends, url, parent }) => {
 	depends('app:push-subscriptions');
 	depends('app:social-accounts');
 
+	const { user } = await parent();
+	// Per-user key: connections and push subscriptions are the viewer's own.
+	const cacheKey = `profile-connections:${user?.id ?? 'guest'}`;
+
 	const client = createApiClient();
-	const [{ data: pushSubscriptions }, { data: socialAccounts }] = await Promise.all([
-		client.GET('/push/', { fetch }),
-		client.GET('/me/connections/', { fetch })
-	]);
+
+	const { data, stale } = await fetchWithCache<ProfileConnections>({
+		key: cacheKey,
+		fetcher: async ({ signal }) => {
+			const [{ data: pushSubscriptions }, { data: socialAccounts }] = await Promise.all([
+				client.GET('/push/', { fetch, signal }),
+				client.GET('/me/connections/', { fetch, signal })
+			]);
+			return {
+				pushSubscriptions: pushSubscriptions ?? [],
+				socialAccounts: socialAccounts ?? []
+			};
+		}
+	});
+
+	// Complete miss (errored/offline with nothing cached): hard failure.
+	if (data === undefined) {
+		error(503, 'Не удалось загрузить профиль');
+	}
 
 	return {
 		title: 'Профиль',
 		telegramLinkError: getTelegramLinkErrorCode(url),
-		pushSubscriptions: pushSubscriptions ?? [],
-		socialAccounts: socialAccounts ?? []
+		pushSubscriptions: data.pushSubscriptions,
+		socialAccounts: data.socialAccounts,
+		stale
 	};
 };

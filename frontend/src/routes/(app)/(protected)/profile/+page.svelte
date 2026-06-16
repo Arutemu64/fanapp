@@ -9,12 +9,19 @@
 	import IconFastapi from '~icons/simple-icons/fastapi';
 	import IconHeart from '~icons/lucide/heart';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { getOfflineService } from '$lib/services/offline.svelte';
+	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import type { PageProps } from './$types';
 	import { invalidate } from '$app/navigation';
 
 	let { data }: PageProps = $props();
 	let user = $derived(data.user!);
 	const toastService = getToastService();
+
+	// Show the notice when the loaded copy is cached (data.stale) or the device went
+	// offline since open — what's on screen may be out of date until reconnect.
+	const offline = getOfflineService();
+	let showStaleNotice = $derived(data.stale || !offline.isOnline);
 
 	const telegramLinkErrorMessages = {
 		linked_to_another_account: 'Этот Telegram уже подключён к другому аккаунту.',
@@ -49,6 +56,12 @@
 </svelte:head>
 
 <div class="flex flex-col gap-4">
+	{#if showStaleNotice}
+		<StaleDataNotice
+			message="Нет связи. Показан сохранённый профиль — обновится при подключении."
+		/>
+	{/if}
+
 	<!-- Basic User Info Card -->
 	<BasicUserInfoCard {user} onUpdate={refreshProfile} />
 
