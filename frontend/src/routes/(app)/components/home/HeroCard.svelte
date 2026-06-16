@@ -129,18 +129,20 @@
 					class="rounded-xl border border-primary-100 bg-primary-50/60 p-3 dark:border-primary-800/40 dark:bg-primary-900/20"
 				>
 					<p
-						class="mb-2.5 text-xs font-medium tracking-wide text-primary-600/80 uppercase dark:text-primary-400/80"
+						class="mb-2.5 text-xs font-medium tracking-wide text-primary-600 uppercase dark:text-primary-400"
 					>
 						До начала фестиваля
 					</p>
-					<div class="grid grid-cols-4 gap-2">
+					<!-- Hide the live-ticking grid from screen readers; the static date below conveys it -->
+					<div class="grid grid-cols-4 gap-2" aria-hidden="true">
 						{#each units as unit, index (unit.id)}
 							<div
 								class="countdown-cell flex flex-col items-center rounded-lg bg-white px-1 py-2.5 shadow-sm dark:bg-gray-800"
 								class:countdown-cell--animated={!prefersReducedMotion.current}
 								style:--enter-delay="{index * 80}ms"
 							>
-								{#if prefersReducedMotion.current}
+								{#if prefersReducedMotion.current || unit.id === 'seconds'}
+									<!-- Seconds change every tick; flipping them constantly is distracting -->
 									<span
 										class="font-display text-xl leading-none font-bold text-gray-900 tabular-nums sm:text-2xl dark:text-white"
 									>
@@ -155,13 +157,13 @@
 										</span>
 									{/key}
 								{/if}
-								<span class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+								<span class="mt-1 text-xs text-gray-500 dark:text-gray-400">
 									{unit.label}
 								</span>
 							</div>
 						{/each}
 					</div>
-					<p class="mt-2 text-xs text-gray-400 dark:text-gray-500">22 августа 2026 · 11:30</p>
+					<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">22 августа 2026 · 11:30</p>
 				</div>
 			{/if}
 

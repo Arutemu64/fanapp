@@ -12,11 +12,22 @@
 		iconClass: string;
 		/** Полные классы ховера для рамки/фона карточки. */
 		hoverClass: string;
+		/** Текст действия внизу карточки. */
+		actionLabel?: string;
 		href?: Pathname;
 		onclick?: () => void;
 	}
 
-	let { title, description, icon: Icon, iconClass, hoverClass, href, onclick }: Props = $props();
+	let {
+		title,
+		description,
+		icon: Icon,
+		iconClass,
+		hoverClass,
+		actionLabel = 'Открыть',
+		href,
+		onclick
+	}: Props = $props();
 </script>
 
 {#snippet body()}
@@ -37,11 +48,14 @@
 	<span
 		class="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary-600 dark:text-primary-400"
 	>
-		Открыть
-		<ArrowRightIcon
-			class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
-			aria-hidden="true"
-		/>
+		{actionLabel}
+		<!-- Arrow implies navigation; only show it for link cards, not action buttons -->
+		{#if href}
+			<ArrowRightIcon
+				class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+				aria-hidden="true"
+			/>
+		{/if}
 	</span>
 {/snippet}
 

@@ -12,6 +12,7 @@
 	}
 
 	let { user, onUpdate }: Props = $props();
+	// Build avatar initials from the username (two parts -> two letters), falling back to the first name.
 	let avatarInitials = $derived.by(() => {
 		const rawUsername = user.username?.trim();
 

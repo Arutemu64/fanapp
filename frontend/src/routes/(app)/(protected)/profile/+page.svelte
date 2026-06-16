@@ -88,7 +88,7 @@
 	</div>
 </div>
 
-<footer class="mt-6 pb-4 text-center text-xs text-gray-400 dark:text-gray-500">
+<footer class="mt-6 pb-4 text-center text-xs text-gray-500 dark:text-gray-400">
 	<p class="flex items-center justify-center gap-1">
 		Работает на
 		<IconSvelte class="inline size-3.5 text-[#FF3E00]" />

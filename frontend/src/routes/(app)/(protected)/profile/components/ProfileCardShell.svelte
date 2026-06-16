@@ -16,10 +16,10 @@
 	<div class="p-5 sm:p-6">
 		<div class="flex flex-col gap-4">
 			<!-- Shared header keeps all profile cards visually aligned. -->
-			<div class="flex items-center gap-3">
+			<div class="flex items-start gap-3">
 				{#if icon}
 					<div
-						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+						class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
 					>
 						{@render icon()}
 					</div>
