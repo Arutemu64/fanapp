@@ -3,12 +3,14 @@
 	import { page } from '$app/state';
 	import EventCard from './components/EventCard.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
+	import { getOfflineService } from '$lib/services/offline.svelte';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import type { CurrentUserDTO } from '$lib/types/user';
 	import type { PageProps } from './$types';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
 	import { ChevronUpOutline, PlaySolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
+	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 
 	type ScheduleNominationGroup = {
 		title: string;
@@ -33,6 +35,12 @@
 	// We use the full schedule current event for countdown labels inside every row.
 	let currentEvent = $derived(schedule.find((event) => event.is_current) ?? null);
 	let user: CurrentUserDTO | null = $derived(page.data.user);
+
+	// Show the notice when the loaded copy is cached (data.stale) *or* the device
+	// has gone offline since the page opened — in both cases what's on screen may
+	// be out of date and will refresh once the connection returns.
+	const offline = getOfflineService();
+	let showStaleNotice = $derived(data.stale || !offline.isOnline);
 
 	let filtered: ScheduleEventFullDTO[] = $derived(
 		schedule.filter((event) => {
@@ -168,6 +176,12 @@
 </svelte:head>
 
 <div {@attach capturePageRoot} class="space-y-4">
+	{#if showStaleNotice}
+		<StaleDataNotice
+			message="Нет связи. Показано сохранённое расписание — обновится при подключении."
+		/>
+	{/if}
+
 	<!-- Keep filters compact and static so the schedule itself can use sticky headers. -->
 	<div
 		class="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800"

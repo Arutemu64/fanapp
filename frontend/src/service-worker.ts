@@ -11,9 +11,26 @@
 /// <reference types="../.svelte-kit/ambient.d.ts" />
 
 import { build, files, version } from '$service-worker';
+import { PUBLIC_API_URL } from '$env/static/public';
 
 // This gives `self` the correct types
 const self = globalThis.self as unknown as ServiceWorkerGlobalScope;
+
+// The backend is deployed under a path on the *same* origin as the app
+// (e.g. https://host/api), so an origin check can't tell API calls apart from
+// the app shell. Derive the API's origin + base path from PUBLIC_API_URL and
+// treat anything under it as network-only: the SW must never cache or replay
+// user-specific, dynamic API data — the app's own IndexedDB layer owns offline
+// caching, and a cached health/probe response would make us look online while
+// the device is offline.
+const API_URL = new URL(PUBLIC_API_URL);
+// Drop any trailing slash so the prefix match below is exact.
+const API_BASE_PATH = API_URL.pathname.replace(/\/+$/, '');
+
+function isApiRequest(url: URL): boolean {
+	if (url.origin !== API_URL.origin) return false;
+	return url.pathname === API_BASE_PATH || url.pathname.startsWith(`${API_BASE_PATH}/`);
+}
 
 interface PushNotificationPayload {
 	title: string;
@@ -54,20 +71,42 @@ self.addEventListener('install', (event) => {
 	async function addFilesToCache() {
 		const cache = await caches.open(CACHE);
 		await cache.addAll(ASSETS);
+
+		// Precache the app-shell entry so an offline navigation to any never-visited
+		// route can fall back to it (see the navigate handler below). Done separately
+		// and tolerantly: a failure here must not abort the whole install.
+		try {
+			await cache.add('/');
+		} catch {
+			// Best-effort — the opportunistic cache.put in the fetch handler still
+			// captures '/' on the first online visit.
+		}
 	}
 
 	event.waitUntil(addFilesToCache());
 });
 
 self.addEventListener('activate', (event) => {
-	// Remove previous cached data from disk
-	async function deleteOldCaches() {
+	async function activate() {
+		// Remove previous cached data from disk
 		for (const key of await caches.keys()) {
 			if (key !== CACHE) await caches.delete(key);
 		}
+		// Take control of open pages immediately after a controlled update
+		// (the in-app prompt reloads them on `controllerchange`).
+		await self.clients.claim();
 	}
 
-	event.waitUntil(deleteOldCaches());
+	event.waitUntil(activate());
+});
+
+// The new worker waits by default so the user is never interrupted mid-session.
+// The in-app "new version" prompt posts this message when the user accepts,
+// which activates the waiting worker and triggers a reload.
+self.addEventListener('message', (event) => {
+	if (event.data === 'skipWaiting') {
+		self.skipWaiting();
+	}
 });
 
 self.addEventListener('fetch', (event) => {
@@ -76,6 +115,11 @@ self.addEventListener('fetch', (event) => {
 
 	// Skip EventSource requests
 	if (event.request.headers.get('Accept') === 'text/event-stream') return;
+
+	// Never intercept API calls: let them hit the network directly so they fail
+	// honestly when offline. Serving a cached API response here would falsely
+	// report the server as reachable and replay stale data.
+	if (isApiRequest(new URL(event.request.url))) return;
 
 	async function respond() {
 		const url = new URL(event.request.url);
@@ -101,9 +145,11 @@ self.addEventListener('fetch', (event) => {
 				throw new Error('invalid response from fetch');
 			}
 
-			// Cache successful responses, but skip API calls — they return
-			// user-specific/dynamic data that must not be served stale offline.
-			if (response.status === 200 && !url.pathname.startsWith('/api')) {
+			// Only cache same-origin GETs (the app shell and static assets).
+			// API calls (same origin under PUBLIC_API_URL's base path) are
+			// filtered out before reaching here by `isApiRequest`, so they are
+			// never stored — the app layer owns their offline caching.
+			if (response.status === 200 && url.origin === self.location.origin) {
 				cache.put(event.request, response.clone());
 			}
 
@@ -113,6 +159,17 @@ self.addEventListener('fetch', (event) => {
 
 			if (response) {
 				return response;
+			}
+
+			// SPA: every route renders from the same client-built app shell, so a
+			// navigation to a URL we never cached (hard reload, deep link, or PWA
+			// cold start while offline) can still boot from the cached entry doc
+			// instead of hitting the browser's native error page.
+			if (event.request.mode === 'navigate') {
+				const shell = await cache.match('/');
+				if (shell) {
+					return shell;
+				}
 			}
 
 			// if there's no cache, then just error out

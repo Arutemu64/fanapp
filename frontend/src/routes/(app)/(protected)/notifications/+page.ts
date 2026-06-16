@@ -1,38 +1,51 @@
 import { error } from '@sveltejs/kit';
 import { createApiClient } from '$lib/api';
+import { fetchWithCache } from '$lib/utils/offlineCache';
 import {
 	NOTIFICATION_PAGE_REQUEST_LIMIT,
 	NOTIFICATION_PAGE_SIZE
 } from '$lib/constants/notifications';
+import type { NotificationDTO } from '$lib/types/notifications';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ fetch, depends }) => {
+export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	depends('app:notifications');
 
+	const { user } = await parent();
+	// Per-user key: notifications are the viewer's own feed.
+	const cacheKey = `notifications:${user?.id ?? 'guest'}`;
+
 	const client = createApiClient();
-	const {
-		data,
-		error: fetchError,
-		response
-	} = await client.GET('/notifications/', {
-		fetch,
-		params: {
-			query: {
-				limit: NOTIFICATION_PAGE_REQUEST_LIMIT,
-				offset: 0
-			}
+
+	// Cache the raw first page (request limit length) so hasMore stays computable offline.
+	const { data, stale } = await fetchWithCache<NotificationDTO[]>({
+		key: cacheKey,
+		fetcher: async ({ signal }) => {
+			const { data, error: fetchError } = await client.GET('/notifications/', {
+				fetch,
+				signal,
+				params: {
+					query: {
+						limit: NOTIFICATION_PAGE_REQUEST_LIMIT,
+						offset: 0
+					}
+				}
+			});
+			// Reachable but errored → fall back to cache.
+			if (fetchError || !data) return undefined;
+			return data.notifications ?? [];
 		}
 	});
 
-	if (fetchError) {
-		error(response.status, 'Не удалось загрузить уведомления');
+	// Complete miss (errored/offline with nothing cached): hard failure.
+	if (data === undefined) {
+		error(503, 'Не удалось загрузить уведомления');
 	}
-
-	const notifications = data?.notifications ?? [];
 
 	return {
 		title: 'Уведомления',
-		notifications: notifications.slice(0, NOTIFICATION_PAGE_SIZE),
-		hasMore: notifications.length > NOTIFICATION_PAGE_SIZE
+		notifications: data.slice(0, NOTIFICATION_PAGE_SIZE),
+		hasMore: data.length > NOTIFICATION_PAGE_SIZE,
+		stale
 	};
 };

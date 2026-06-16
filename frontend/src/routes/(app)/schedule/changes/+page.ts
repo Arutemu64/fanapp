@@ -17,20 +17,13 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	depends('app:schedule:changes');
 
 	const client = createApiClient();
-	const {
-		data,
-		error: fetchError,
-		response
-	} = await client.GET('/schedule/changes/', {
-		fetch
-	});
 
-	if (fetchError) {
-		error(response.status, 'Не удалось загрузить изменения расписания');
+	// Staff-only operational feed: stale data would misrepresent live state, so
+	// no offline cache here — fail hard when unreachable instead.
+	const { data, error: fetchError } = await client.GET('/schedule/changes/', { fetch });
+	if (fetchError || !data) {
+		error(503, 'Не удалось загрузить изменения расписания');
 	}
 
-	return {
-		title: 'Изменения расписания',
-		schedule_changes: data?.schedule_changes ?? []
-	};
+	return { title: 'Изменения расписания', schedule_changes: data.schedule_changes ?? [] };
 };
