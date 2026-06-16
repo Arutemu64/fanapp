@@ -5,13 +5,13 @@
       "source": "ccheney/robust-skills",
       "sourceType": "github",
       "skillPath": "skills/clean-ddd-hexagonal/SKILL.md",
-      "computedHash": "223df951adb9adf655b139221d4a3b68a314f5a0c24c8bc137a754ce9dee5713"
+      "computedHash": "3e2bcc45e58cd714b336e04c96544859d6577c4c6faf762cdf8ce3d02dbf9a79"
     },
     "docker-expert": {
       "source": "sickn33/antigravity-awesome-skills",
       "sourceType": "github",
       "skillPath": "skills/docker-expert/SKILL.md",
-      "computedHash": "0974b5f64fcd284c1bd662810e2388f7beb9be6784c597de4d0ad4213ccbd6af"
+      "computedHash": "7be30b1c18b91628dcd8437a89e7e20acce76bae4349533e4ebdeb376a660bcb"
     },
     "documentation-writer": {
       "source": "github/awesome-copilot",
@@ -23,19 +23,19 @@
       "source": "fastapi/fastapi",
       "sourceType": "github",
       "skillPath": "fastapi/.agents/skills/fastapi/SKILL.md",
-      "computedHash": "ee23d5285caf055cf164ff45dd34888d381143564666baacab8aa786f22e413a"
+      "computedHash": "9feb517089c269af4fdab5031dea1100a92fd50081e906ccfaf8a971858e39f9"
     },
     "find-docs": {
       "source": "upstash/context7",
       "sourceType": "github",
       "skillPath": "skills/find-docs/SKILL.md",
-      "computedHash": "0210767e57873317edc8b91783a2f1b74eb9bbdd2139bd14e9129e9a0bbc2dd6"
+      "computedHash": "d0321f889edc54a338b22615d6b00ace35f73f5879558e7183d0a70ceb819aa7"
     },
     "pwa-development": {
       "source": "alinaqi/claude-bootstrap",
       "sourceType": "github",
       "skillPath": "skills/pwa-development/SKILL.md",
-      "computedHash": "356d9a26a8435778bb3bb906f5198814c48872ae87485ae97f4da3c10a0cfcc5"
+      "computedHash": "2219041ce92f6361ba77eb06c9a927dc7a1ba48f40ff5132321a29c4154ebc7a"
     },
     "svelte-code-writer": {
       "source": "sveltejs/ai-tools",
@@ -53,13 +53,13 @@
       "source": "giuseppe-trisciuoglio/developer-kit",
       "sourceType": "github",
       "skillPath": "plugins/developer-kit-typescript/skills/tailwind-css-patterns/SKILL.md",
-      "computedHash": "6092620c3af955a46ea2b94ca8a40197ac8392e6bbdc8c7515659328b186c770"
+      "computedHash": "2fa1b2d4e0bc020dcbaa1e65af6f7ba75715116686e0fd663a4b268c8ace22d4"
     },
     "ui-ux-pro-max": {
       "source": "nextlevelbuilder/ui-ux-pro-max-skill",
       "sourceType": "github",
       "skillPath": ".claude/skills/ui-ux-pro-max/SKILL.md",
-      "computedHash": "0a413bf988d06481f69bb81df2070741c3ba12dd9f1be2706d57f259c905992d"
+      "computedHash": "6337038fe1fe6bbe1b9f252ab678ee575859190bab6f0f246f4061824eb40875"
     }
   }
 }
