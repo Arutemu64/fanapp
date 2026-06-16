@@ -1,8 +1,6 @@
 import { error, redirect } from '@sveltejs/kit';
 import { createApiClient } from '$lib/api';
 import { canManageSchedule } from '$lib/utils/permissions';
-import { fetchWithCache } from '$lib/utils/offlineCache';
-import type { ScheduleChangeFullDTO } from '$lib/types/schedule';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ fetch, depends, parent }) => {
@@ -18,24 +16,14 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 
 	depends('app:schedule:changes');
 
-	const cacheKey = `schedule-changes:${user.id}`;
-
 	const client = createApiClient();
 
-	const { data, stale } = await fetchWithCache<ScheduleChangeFullDTO[]>({
-		key: cacheKey,
-		fetcher: async ({ signal }) => {
-			const { data, error: fetchError } = await client.GET('/schedule/changes/', { fetch, signal });
-			// Reachable but errored → fall back to cache.
-			if (fetchError || !data) return undefined;
-			return data.schedule_changes ?? [];
-		}
-	});
-
-	// Complete miss (errored/offline with nothing cached): hard failure.
-	if (data === undefined) {
+	// Staff-only operational feed: stale data would misrepresent live state, so
+	// no offline cache here — fail hard when unreachable instead.
+	const { data, error: fetchError } = await client.GET('/schedule/changes/', { fetch });
+	if (fetchError || !data) {
 		error(503, 'Не удалось загрузить изменения расписания');
 	}
 
-	return { title: 'Изменения расписания', schedule_changes: data, stale };
+	return { title: 'Изменения расписания', schedule_changes: data.schedule_changes ?? [] };
 };

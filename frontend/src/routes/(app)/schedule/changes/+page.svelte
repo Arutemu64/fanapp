@@ -1,6 +1,5 @@
 <script lang="ts">
 	import ScheduleChangeCard from './components/ScheduleChangeCard.svelte';
-	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -10,14 +9,6 @@
 <svelte:head>
 	<title>Изменения расписания · ФАН ФАН</title>
 </svelte:head>
-
-{#if data.stale}
-	<div class="mb-3">
-		<StaleDataNotice
-			message="Нет связи. Показаны сохранённые изменения — обновятся при подключении."
-		/>
-	</div>
-{/if}
 
 {#if scheduleChanges.length === 0}
 	<div
