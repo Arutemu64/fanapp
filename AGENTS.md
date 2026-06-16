@@ -37,7 +37,6 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
   * `just backend-migrate` / `just backend-generate <name>` - Run / generate Alembic migration
   * `just frontend-generate-api` - Update SvelteKit types from OpenAPI spec
   * `just backend-lint` / `just frontend-lint` - Lint & format (`backend-lint` also runs the import-linter boundary check)
-  * `just frontend-verify` - Run `frontend-lint` and `frontend-check` concurrently (one command, fails if either fails)
   * `just backend-typecheck` - Run `ty` type checker on backend
   * `just backend-import-lint` - Enforce layer boundaries (import-linter); see [docs/backend.md](docs/backend.md)
 
@@ -58,7 +57,7 @@ On-demand CLI (not the always-on MCP server), so it costs no context until invok
 1. **Russian Copy**: All user-facing labels, placeholders, errors, and toast notifications must be in Russian.
 2. **English Comments**: All code comments (inline `#`, `//`, `<!-- -->`, docstrings) must be in English — never Russian or any other language.
 3. **Mobile First**: UI must fit narrow layouts; add bottom padding for floating navigation bars. See [docs/frontend.md](docs/frontend.md).
-4. **Lint & Type-Check After Changes**: After backend Python changes, run `just backend-lint` and `just backend-typecheck`. After frontend changes, run `just frontend-verify` (runs `frontend-lint` and `frontend-check` in parallel). Fix all errors before marking the task complete. Tests are optional but allowed — run them when useful; see [docs/testing.md](docs/testing.md).
+4. **Lint & Type-Check After Changes**: After backend Python changes, run `just backend-lint` and `just backend-typecheck`. After frontend changes, run `just frontend-lint` and `just frontend-check`. Fix all errors before marking the task complete. Tests are optional but allowed — run them when useful; see [docs/testing.md](docs/testing.md).
 5. **Architectural Isolation**: The inner layers (`core/`, `application/`) must stay pure — never import from outer layers. No ORM models, concrete adapters (DB gateways, Redis, Telegram, NATS), presentation routers, or external frameworks (no FastAPI/SQLAlchemy in `core/`). All infra goes through abstract ports (`application/ports/`). See [docs/backend.md](docs/backend.md).
 6. **SSR & Frontend State Safety**: Never save request-specific state in global/module singletons. Follow the SvelteKit SSR and component guidelines in [docs/frontend.md](docs/frontend.md).
 7. **Required Skills by Domain**: Before making changes in a domain, the LLM MUST load its skills:

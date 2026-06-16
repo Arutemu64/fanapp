@@ -16,19 +16,6 @@ frontend-check:
 frontend-lint:
     cd frontend && pnpm lint
 
-# Run lint and type-check concurrently; fail if either fails.
-# Shebang recipe so the whole body runs in one shell (background jobs + wait).
-# Uses POSIX sh (no bashisms) so it works under Git Bash on Windows too.
-frontend-verify:
-    #!/usr/bin/env sh
-    set -u
-    cd frontend
-    pnpm lint & lint_pid=$!
-    pnpm check & check_pid=$!
-    wait $lint_pid; lint_rc=$?
-    wait $check_pid; check_rc=$?
-    exit $(( lint_rc || check_rc ))
-
 frontend-build:
     cd frontend && pnpm build
 
