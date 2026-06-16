@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { getEventsClient, type ConnectionStatus } from '$lib/services/events.svelte';
+	import { getOfflineService } from '$lib/services/offline.svelte';
 	import { ExclamationCircleOutline, RefreshOutline } from 'flowbite-svelte-icons';
 
 	// Wait this long before showing the "reconnecting" strip, so a quick blip
@@ -23,6 +24,12 @@
 	const client = getEventsClient();
 	let health = $derived<Health>(client ? HEALTH_BY_STATUS[client.connectionStatus] : 'healthy');
 
+	// Browser-level connectivity. When the device is offline, show a dedicated
+	// strip instead of the SSE "connection lost" one — it is the real cause and
+	// the clearer message for the user.
+	const offline = getOfflineService();
+	let isOnline = $derived(offline.isOnline);
+
 	// Latches true only after the connection has stayed in `recovering` past the
 	// grace window. Recovery (or hard failure) clears it immediately.
 	let recoveringVisible = $state(false);
@@ -43,7 +50,16 @@
 	}
 </script>
 
-{#if health === 'down'}
+{#if !isOnline}
+	<div
+		role="status"
+		aria-live="polite"
+		class="flex min-h-14 items-center gap-3 border-b border-yellow-200 bg-yellow-50 px-4 py-2.5 text-sm text-yellow-800 sm:px-6 dark:border-yellow-900/50 dark:bg-yellow-950/50 dark:text-yellow-200"
+	>
+		<ExclamationCircleOutline class="h-5 w-5 shrink-0" aria-hidden="true" />
+		<p class="flex-1 leading-snug">Нет подключения к интернету</p>
+	</div>
+{:else if health === 'down'}
 	<div
 		role="alert"
 		class="flex min-h-14 items-center gap-3 border-b border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-800 sm:px-6 dark:border-red-900/50 dark:bg-red-950/60 dark:text-red-200"
@@ -65,6 +81,8 @@
 		class="flex min-h-14 items-center gap-2.5 border-b border-yellow-200 bg-yellow-50 px-4 py-2 text-sm text-yellow-800 sm:px-6 dark:border-yellow-900/50 dark:bg-yellow-950/50 dark:text-yellow-200"
 	>
 		<RefreshOutline class="h-4 w-4 shrink-0 motion-safe:animate-spin" aria-hidden="true" />
-		<p class="leading-snug">Восстанавливаем соединение…</p>
+		<!-- Honest wording: covers both a real reconnect and an offline device whose
+			navigator.onLine wrongly reports online (common in installed PWAs). -->
+		<p class="leading-snug">Нет соединения. Переподключаемся…</p>
 	</div>
 {/if}

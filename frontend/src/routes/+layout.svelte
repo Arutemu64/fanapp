@@ -5,6 +5,8 @@
 	import { setEventsClient } from '$lib/services/events.svelte';
 	import { setPwaService } from '$lib/services/pwa.svelte';
 	import { setThemeService } from '$lib/services/theme.svelte';
+	import { setOfflineService } from '$lib/services/offline.svelte';
+	import UpdatePrompt from '$lib/components/UpdatePrompt.svelte';
 	import type { PWAInstallElement } from '@khmyznikov/pwa-install';
 	import { navigating } from '$app/state';
 	import { Spinner } from 'flowbite-svelte';
@@ -17,6 +19,7 @@
 	setToastService();
 	const pwa = setPwaService();
 	setThemeService();
+	setOfflineService();
 
 	onMount(() => {
 		// Remove the static boot splash (in app.html) now that the app has mounted.
@@ -79,3 +82,6 @@
 	name="ФАН ФАН"
 	icon="/icons/icon-512x512.png"
 ></pwa-install>
+
+<!-- Prompts the user to reload when a new build has been cached by the SW. -->
+<UpdatePrompt />

@@ -41,6 +41,13 @@ Guards run client-side in **universal `load`** functions (these are UX redirects
 * Route-group layouts gate by membership: `(app)/(protected)/+layout.ts` requires a logged-in user (else → `/login`); `(auth)/+layout.ts` is guests-only (else → `/`). Putting a route inside the group is the guard — do **not** re-check `user` in that route's `load`.
 * A nested `+layout.ts` should only add checks the group can't express — e.g. a finer-grained `error(403, …)`. The whole `org/` section is already gated by `org/+layout.ts` via the `canManageSettings`/`canImportSchedule`/`canSendNotifications` permission helpers; never re-check organizer access inside individual org pages.
 
+### PWA & Offline Support
+
+The app is an installable PWA: `static/manifest.json` (icons, standalone display) + a service worker (`src/service-worker.ts`, the SvelteKit `$service-worker` template) that SvelteKit auto-registers in production. The SW precaches the app shell (`build` + everything in `static/`, so the SPA and the venue maps work offline), handles web-push, and **only caches same-origin GETs** — the API is a separate origin (`PUBLIC_API_URL`), and its user-specific data is cached by the app layer, never the SW. `UpdatePrompt.svelte` (mounted in the root layout) surfaces a "new version" banner when a fresh build is waiting and reloads on `controllerchange`; the SW activates the waiting worker only when it receives a `'skipWaiting'` message.
+
+* **Read-only offline data**: For pages worth viewing offline (schedule), wrap the load in `try/catch` and persist the last good response with `writeCache`/`readCache` (`$lib/utils/offlineCache.ts`, IndexedDB via `idb-keyval`). On a failed fetch, return the cached copy with `stale: true` instead of `error()`; render `StaleDataNotice` when `data.stale`. Key the cache per user (`schedule:${user.id}`) so one device's account never serves another's data. Mutations (votes, settings) stay online-only.
+* **Connectivity vs. stream health**: `OfflineService` (`$lib/services/offline.svelte.ts`) tracks `navigator.onLine` via `createSubscriber`; `ConnectionBanner` shows the offline strip from it, distinct from the SSE `EventsClient` reconnect state.
+
 ---
 
 ## 3. Styling & Custom UI Rules

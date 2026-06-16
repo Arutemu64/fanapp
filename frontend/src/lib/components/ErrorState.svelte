@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { isReachable, onReachableChange } from '$lib/services/reachability';
 	import { Card, Button } from 'flowbite-svelte';
 	import {
 		ArrowLeftOutline,
@@ -20,13 +21,25 @@
 	let status = $derived(page.status);
 	let errorMessage = $derived(page.error?.message);
 
+	// Most load failures while offline surface here as a 500/503. Detect the real
+	// cause (backend unreachable) and show a calm "you're offline" page instead of
+	// a scary server-error screen. Read straight from the reachability module so
+	// this works without the OfflineService context too.
+	let online = $state(isReachable());
+	$effect(() => onReachableChange(() => (online = isReachable())));
+	// A genuine 403/404 is a real server answer — never reframe it as offline.
+	let offline = $derived(!online && status !== 403 && status !== 404);
+
 	let title = $derived.by(() => {
+		if (offline) return 'Нет подключения к интернету';
 		if (status === 403) return 'Доступ ограничен';
 		if (status === 404) return 'Страница не найдена';
 		return 'Что-то пошло не так';
 	});
 
 	let description = $derived.by(() => {
+		if (offline)
+			return 'Проверь интернет-соединение и попробуй снова. Часть данных доступна офлайн.';
 		if (errorMessage) return errorMessage;
 		if (status === 403) return 'У тебя нет прав для просмотра этой страницы.';
 		if (status === 404) return 'Похоже, эта страница не существует, была удалена или перенесена.';
@@ -57,7 +70,13 @@
 	<Card class="w-full max-w-md rounded-2xl p-6 text-center sm:p-8">
 		<div class="flex flex-col items-center justify-center">
 			<!-- Visual Icon -->
-			{#if status === 403}
+			{#if offline}
+				<div
+					class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100 text-yellow-500 dark:bg-yellow-900/30 dark:text-yellow-400"
+				>
+					<ExclamationCircleSolid class="h-8 w-8" />
+				</div>
+			{:else if status === 403}
 				<div
 					class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400"
 				>
@@ -75,7 +94,7 @@
 			<span
 				class="mb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500"
 			>
-				Ошибка {status}
+				{offline ? 'Офлайн' : `Ошибка ${status}`}
 			</span>
 
 			<!-- Title -->
@@ -90,7 +109,7 @@
 
 			<!-- Action Buttons -->
 			<div class="flex w-full flex-col gap-2">
-				{#if status >= 500}
+				{#if offline || status >= 500}
 					<Button
 						color="primary"
 						class="min-h-11 w-full rounded-xl font-medium"
@@ -103,7 +122,7 @@
 
 				<Button
 					href="/"
-					color={status >= 500 ? 'alternative' : 'primary'}
+					color={offline || status >= 500 ? 'alternative' : 'primary'}
 					class="min-h-11 w-full rounded-xl font-medium"
 				>
 					<HomeOutline class="me-2 h-4 w-4" />

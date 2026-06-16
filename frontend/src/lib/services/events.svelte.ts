@@ -1,6 +1,12 @@
 import { createContext } from 'svelte';
 import { browser } from '$app/environment';
 import { PUBLIC_API_URL } from '$env/static/public';
+import {
+	isReachable,
+	markReachable,
+	onReachableChange,
+	probeReachability
+} from '$lib/services/reachability';
 import type { NotificationDTO } from '$lib/types/notifications';
 
 const [getEvents, setEvents] = createContext<EventsClient | null>();
@@ -86,6 +92,17 @@ export class EventsClient {
 	#listeners: Record<string, RegisteredListener[]> = {};
 
 	constructor() {
+		// React to OS network changes: pause the stream when the browser goes
+		// offline (stops the reconnect churn and the "reconnecting" banner) and
+		// re-dial when it comes back.
+		if (browser) {
+			window.addEventListener('offline', this.#handleOffline);
+			window.addEventListener('online', this.#handleOnline);
+			// Recover when connectivity returns after the stream gave up retrying.
+			// While the reconnect loop is still running it handles recovery itself,
+			// so we only step in once it has reached the terminal 'failed' state.
+			onReachableChange(this.#handleReachableChange);
+		}
 		this.connect();
 	}
 
@@ -97,6 +114,14 @@ export class EventsClient {
 		this.#clearHandshakeTimer();
 		this.#manualDisconnect = false;
 		this.handshake = null;
+
+		// Don't dial while the browser reports no network — wait for the `online`
+		// event instead of looping failed connection attempts.
+		if (browser && !navigator.onLine) {
+			this.connectionStatus = 'disconnected';
+			return;
+		}
+
 		this.connectionStatus = 'connecting';
 
 		this.#source = new EventSource(`${PUBLIC_API_URL}/events`, {
@@ -187,6 +212,32 @@ export class EventsClient {
 		this.#reconnectAttempts = 0;
 	}
 
+	// Browser lost the network: stop reconnect attempts and go quiet. The offline
+	// banner (OfflineService) covers the UI; SSE resumes on the `online` event.
+	#handleOffline = () => {
+		this.#manualDisconnect = true;
+		this.#clearReconnectTimer();
+		this.#clearRestartTimer();
+		this.#clearHandshakeTimer();
+		this.#closeSource();
+		this.handshake = null;
+		this.connectionStatus = 'disconnected';
+	};
+
+	// Network is back: re-dial from a clean slate.
+	#handleOnline = () => {
+		this.restart();
+	};
+
+	// Reachability recovered (e.g. the offline recovery poll or a load succeeded).
+	// If the stream already exhausted its retries, its reconnect loop is no longer
+	// running — restart it so the live stream returns without a manual refresh.
+	#handleReachableChange = () => {
+		if (this.connectionStatus === 'failed' && isReachable()) {
+			this.restart();
+		}
+	};
+
 	#handleHandshake = (event: Event) => {
 		if (!(event instanceof MessageEvent)) return;
 
@@ -199,6 +250,8 @@ export class EventsClient {
 
 		this.#clearHandshakeTimer();
 		this.connectionStatus = 'connected';
+		// A live stream proves the backend is reachable — feed that to the probe.
+		markReachable(true);
 		// Connection is fully online; reset backoff so the next blip starts fresh.
 		this.#reconnectAttempts = 0;
 	};
@@ -216,6 +269,11 @@ export class EventsClient {
 		this.#closeSource();
 		this.handshake = null;
 		this.connectionStatus = 'error';
+
+		// A stream failure may mean the network died, not just an SSE hiccup. Probe
+		// the health endpoint so reachability (and the offline banner) reflect reality
+		// even when no `load` is running to report an outcome.
+		void probeReachability();
 
 		if (this.#reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
 			this.connectionStatus = 'failed';
