@@ -30,8 +30,6 @@ class UserMapper:
             username=model.username,
             hashed_password=model.hashed_password,
             email=model.email.value if model.email else None,
-            pending_email=model.pending_email.value if model.pending_email else None,
-            email_verified_at=model.email_verified_at,
             first_name=model.first_name,
             role=model.role,
             # Queryable notification flags go to columns; the rest stays in JSON.
@@ -46,8 +44,6 @@ class UserMapper:
             username=Username(orm.username) if orm.username is not None else None,
             hashed_password=orm.hashed_password,
             email=Email(orm.email) if orm.email else None,
-            pending_email=Email(orm.pending_email) if orm.pending_email else None,
-            email_verified_at=orm.email_verified_at,
             first_name=orm.first_name,
             role=UserRole(orm.role),
             settings=UserSettings(
@@ -99,8 +95,6 @@ class UserMapper:
             first_name=orm.first_name,
             role=orm.role,
             email=orm.email,
-            pending_email=orm.pending_email,
-            email_verified_at=orm.email_verified_at,
             has_password=bool(orm.hashed_password),
             ticket=UserTicketDTO(
                 id=TicketId(orm.ticket.id),

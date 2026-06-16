@@ -78,26 +78,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/request-email-code": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Request a new email confirmation code
-         * @description Sends a new confirmation code to the current user's email address.
-         */
-        post: operations["request_email_code_auth_request_email_code_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/auth/confirm-email-code": {
         parameters: {
             query?: never;
@@ -994,10 +974,6 @@ export interface components {
             role: components["schemas"]["UserRole"];
             /** Email */
             email: string | null;
-            /** Pending Email */
-            pending_email: string | null;
-            /** Email Verified At */
-            email_verified_at: string | null;
             /** Has Password */
             has_password: boolean;
             ticket: components["schemas"]["UserTicketDTO"] | null;
@@ -1641,62 +1617,6 @@ export interface operations {
             };
             /** @description Access denied. */
             403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Request validation error. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ValidationErrorResponse"];
-                };
-            };
-        };
-    };
-    request_email_code_auth_request_email_code_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Confirmation code sent. */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description User not found. */
-            404: {
                 headers: {
                     [name: string]: unknown;
                 };

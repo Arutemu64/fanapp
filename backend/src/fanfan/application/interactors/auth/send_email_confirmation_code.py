@@ -8,7 +8,7 @@ from fanfan.application.ports.email_sender import (
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.template_renderer import TemplateRenderer
 from fanfan.application.ports.token_registry import TokenRegistry
-from fanfan.core.exceptions.users import UserHasNoEmail, UserNotFound
+from fanfan.core.exceptions.users import UserNotFound
 from fanfan.core.services.email_login import (
     EMAIL_CONFIRMATION_CODE_MAX_AGE_SECONDS,
     generate_numeric_code,
@@ -18,6 +18,7 @@ from fanfan.core.vo.user import UserId
 
 class SendEmailConfirmationCodeInput(BaseModel):
     user_id: UserId
+    target_email: str
 
 
 class SendEmailConfirmationCode:
@@ -37,15 +38,11 @@ class SendEmailConfirmationCode:
         user = await self.user_gateway.get_by_id(data.user_id)
         if user is None:
             raise UserNotFound
-        target_email = user.pending_email or user.email
-        if target_email is None:
-            raise UserHasNoEmail
-        email_value = target_email.value
 
         code = generate_numeric_code()
         await self.token_registry.issue_email_confirmation_code(
             user_id=user.id,
-            email=email_value,
+            email=data.target_email,
             code=code,
             ttl_seconds=EMAIL_CONFIRMATION_CODE_MAX_AGE_SECONDS,
         )
@@ -65,7 +62,7 @@ class SendEmailConfirmationCode:
             recipients=[
                 EmailRecipient(
                     name=user.username or "Пользователь",
-                    email=email_value,
+                    email=data.target_email,
                 )
             ],
             html_body=message_body,

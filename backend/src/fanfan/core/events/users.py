@@ -8,6 +8,7 @@ class EmailConfirmationCodeRequested(AppEvent):
     subject: ClassVar[str] = "users.email_confirmation_code_requested"
 
     user_id: UserId
+    target_email: str
 
 
 class EmailLoginCodeRequested(AppEvent):

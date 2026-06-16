@@ -53,13 +53,6 @@ class RequestLoginCode:
             async with lock:
                 user = await self.user_gateway.get_by_email(email.value)
 
-                # Do not provision a second account if the address is
-                # already reserved as another user's pending
-                # replacement email.
-                reserved_user = await self.user_gateway.get_by_any_email(email.value)
-                if user is None and reserved_user is not None:
-                    return
-
                 # New emails are provisioned immediately so the same flow can both
                 # register the account and send the one-time sign-in code.
                 if user is None:

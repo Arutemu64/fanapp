@@ -44,7 +44,6 @@ class SqlUserGateway(UserGateway):
             {
                 "ix_users_email": UserAlreadyExists,
                 "ix_users_username": UserAlreadyExists,
-                "ix_users_pending_email": UserAlreadyExists,
             }
         ):
             self.session.add(user_orm)
@@ -73,25 +72,6 @@ class SqlUserGateway(UserGateway):
         user_orm = await self.session.scalar(stmt)
         return self._to_model(user_orm)
 
-    async def get_by_pending_email(self, email: str) -> User | None:
-        normalized_email = normalize_email(email)
-        stmt = (
-            select(UserORM)
-            .where(UserORM.pending_email == normalized_email)
-            .with_for_update()
-        )
-        user_orm = await self.session.scalar(stmt)
-        return self._to_model(user_orm)
-
-    async def get_by_any_email(self, email: str) -> User | None:
-        # Check the active address first, then the pending replacement address,
-        # so conflicts stay explicit and deterministic.
-        user = await self.get_by_email(email)
-        if user is not None:
-            return user
-
-        return await self.get_by_pending_email(email)
-
     async def get_by_social_id(
         self, provider_name: str, provider_account_id: str
     ) -> User | None:
@@ -113,7 +93,6 @@ class SqlUserGateway(UserGateway):
             {
                 "ix_users_username": UsernameAlreadyTaken,
                 "ix_users_email": EmailAlreadyExists,
-                "ix_users_pending_email": EmailAlreadyExists,
             }
         ):
             user_orm = await self.session.merge(user_orm)

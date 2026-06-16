@@ -1,5 +1,3 @@
-from datetime import UTC, datetime
-
 from pydantic import BaseModel, EmailStr, Field
 
 from fanfan.application.ports.gateways.users import UserGateway
@@ -51,10 +49,5 @@ class LoginWithCode:
         # The one-time email code proves mailbox ownership for this login.
         if user.email is None or user.email != target_email:
             raise InvalidOtpCode
-
-        if user.email_verified_at is None:
-            user.email_verified_at = datetime.now(UTC)
-            await self.user_gateway.save(user)
-            await self.uow.commit()
 
         return await self.session_store.create_session(user.id)

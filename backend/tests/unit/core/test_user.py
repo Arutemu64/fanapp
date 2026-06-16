@@ -1,8 +1,5 @@
-from datetime import UTC, datetime, timezone
-
 import pytest
 
-from fanfan.core.events.users import EmailConfirmationCodeRequested
 from fanfan.core.models.user import User
 from fanfan.core.vo.email import Email
 from fanfan.core.vo.user import Username, UserRole, generate_user_id
@@ -37,28 +34,14 @@ def test_create_sets_given_fields():
     assert user.hashed_password == "hash"
     assert user.role == UserRole.ORG
     assert user.email == Email("alice@example.com")
-    assert user.pending_email is None
-    assert user.email_verified_at is None
 
 
-def test_request_email_change_sets_pending_and_records_event():
+def test_set_email_updates_email():
     user = _user()
 
-    user.request_email_change(Email("new@example.com"))
-
-    assert user.pending_email == Email("new@example.com")
-    assert user.pull_events() == [EmailConfirmationCodeRequested(user_id=user.id)]
-
-
-def test_confirm_pending_email_promotes_pending_to_email():
-    verified_at = datetime(2026, 6, 8, tzinfo=UTC)
-    user = _user(email=Email("old@example.com"), pending_email=Email("new@example.com"))
-
-    user.confirm_pending_email(verified_at)
+    user.set_email(Email("new@example.com"))
 
     assert user.email == Email("new@example.com")
-    assert user.pending_email is None
-    assert user.email_verified_at == verified_at
 
 
 def test_users_are_equal_by_id():

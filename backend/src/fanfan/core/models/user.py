@@ -1,15 +1,9 @@
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Self
+from typing import Any, Self
 
-from fanfan.core.events.users import (
-    EmailConfirmationCodeRequested,
-)
 from fanfan.core.models.base import AggregateRoot
 from fanfan.core.vo.email import Email
 from fanfan.core.vo.user import UserId, Username, UserRole
-
-if TYPE_CHECKING:
-    from datetime import datetime
 
 
 @dataclass(slots=True, kw_only=True)
@@ -28,8 +22,6 @@ class User(AggregateRoot):
     role: UserRole
 
     email: Email | None = None
-    pending_email: Email | None = None
-    email_verified_at: datetime | None = None
 
     first_name: str | None = None
 
@@ -44,8 +36,6 @@ class User(AggregateRoot):
         hashed_password: str | None,
         role: UserRole,
         email: Email | None = None,
-        pending_email: Email | None = None,
-        email_verified_at: datetime | None = None,
         first_name: str | None = None,
     ) -> Self:
         return cls(
@@ -54,8 +44,6 @@ class User(AggregateRoot):
             hashed_password=hashed_password,
             role=role,
             email=email,
-            pending_email=pending_email,
-            email_verified_at=email_verified_at,
             first_name=first_name,
         )
 
@@ -87,17 +75,8 @@ class User(AggregateRoot):
                 receive_telegram_notifications
             )
 
-    def request_email_change(self, email: Email) -> None:
-        self.pending_email = email
-        self.record_event(EmailConfirmationCodeRequested(user_id=self.id))
-
-    def confirm_pending_email(self, verified_at: datetime) -> None:
-        self.email = self.pending_email
-        self.pending_email = None
-        self.email_verified_at = verified_at
-
-    def verify_email(self, verified_at: datetime) -> None:
-        self.email_verified_at = verified_at
+    def set_email(self, email: Email) -> None:
+        self.email = email
 
     def set_password_hash(self, hashed_password: str) -> None:
         self.hashed_password = hashed_password

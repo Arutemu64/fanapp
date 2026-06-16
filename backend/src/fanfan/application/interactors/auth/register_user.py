@@ -36,7 +36,7 @@ class RegisterUser:
         # (prevents account enumeration) and never touch the existing account
         # (overwriting its password would be account takeover). The caller
         # always sees the same neutral success.
-        existing_user = await self.user_gateway.get_by_any_email(email.value)
+        existing_user = await self.user_gateway.get_by_email(email.value)
         if existing_user is not None:
             return
 
