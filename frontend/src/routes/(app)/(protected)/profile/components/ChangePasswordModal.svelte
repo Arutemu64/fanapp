@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { Modal, Input, Label, Button, Spinner, Alert } from 'flowbite-svelte';
-	import { LockSolid, EyeOutline, EyeSlashOutline } from 'flowbite-svelte-icons';
+	import {
+		LockSolid,
+		EyeOutline,
+		EyeSlashOutline,
+		CheckCircleSolid,
+		CloseCircleOutline
+	} from 'flowbite-svelte-icons';
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
@@ -25,6 +31,14 @@
 	let showNewPassword = $state(false);
 	let formError = $state('');
 
+	// Password rules mirror the backend PASSWORD_FIELD (10-128 chars, no complexity rule).
+	const MIN_PASSWORD_LENGTH = 10;
+	const MAX_PASSWORD_LENGTH = 128;
+
+	let hasMinLength = $derived(newPassword.length >= MIN_PASSWORD_LENGTH);
+	let withinMaxLength = $derived(newPassword.length <= MAX_PASSWORD_LENGTH);
+	let isValid = $derived(hasMinLength && withinMaxLength);
+
 	$effect(() => {
 		if (open) {
 			oldPassword = '';
@@ -33,15 +47,11 @@
 		}
 	});
 
-	function isValid(): boolean {
-		return newPassword.length >= 6;
-	}
-
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
 
-		if (!isValid()) {
-			formError = 'Новый пароль должен быть не короче 6 символов';
+		if (!isValid) {
+			formError = `Новый пароль должен быть от ${MIN_PASSWORD_LENGTH} до ${MAX_PASSWORD_LENGTH} символов`;
 			return;
 		}
 
@@ -86,7 +96,7 @@
 
 	<form onsubmit={handleSubmit} class="space-y-4">
 		{#if formError}
-			<Alert color="red" class="rounded-xl text-sm">
+			<Alert role="alert" color="red" class="rounded-xl text-sm">
 				{formError}
 			</Alert>
 		{/if}
@@ -133,6 +143,7 @@
 				type={showNewPassword ? 'text' : 'password'}
 				placeholder="••••••••"
 				autocomplete="new-password"
+				maxlength={MAX_PASSWORD_LENGTH}
 				bind:value={newPassword}
 				oninput={() => (formError = '')}
 				class="ps-9"
@@ -156,14 +167,25 @@
 					</button>
 				{/snippet}
 			</Input>
+
+			<!-- Live password requirements; reflects the backend PASSWORD_FIELD rules. -->
+			<ul class="mt-2 space-y-1">
+				<li
+					class="flex items-center gap-2 text-sm {hasMinLength
+						? 'text-green-600 dark:text-green-400'
+						: 'text-gray-500 dark:text-gray-400'}"
+				>
+					{#if hasMinLength}
+						<CheckCircleSolid class="h-4 w-4 shrink-0" />
+					{:else}
+						<CloseCircleOutline class="h-4 w-4 shrink-0" />
+					{/if}
+					Минимум {MIN_PASSWORD_LENGTH} символов
+				</li>
+			</ul>
 		</div>
 
-		<Button
-			type="submit"
-			color="primary"
-			class="w-full"
-			disabled={isLoading || newPassword.length < 6}
-		>
+		<Button type="submit" color="primary" class="w-full" disabled={isLoading || !isValid}>
 			{#if isLoading}
 				<span class="flex items-center gap-2">
 					<Spinner size="4" />

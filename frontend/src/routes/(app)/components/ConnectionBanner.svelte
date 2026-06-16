@@ -69,7 +69,7 @@
 		<button
 			type="button"
 			onclick={reconnect}
-			class="inline-flex h-9 shrink-0 items-center rounded-lg bg-red-600 px-3 text-sm font-medium text-white hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-red-50 focus-visible:outline-none dark:focus-visible:ring-offset-red-950"
+			class="inline-flex min-h-11 shrink-0 items-center rounded-lg bg-red-600 px-3 text-sm font-medium text-white hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-red-50 focus-visible:outline-none dark:focus-visible:ring-offset-red-950"
 		>
 			Обновить
 		</button>

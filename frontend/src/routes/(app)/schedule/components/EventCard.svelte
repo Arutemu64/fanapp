@@ -130,7 +130,8 @@
 <div
 	class={[
 		'flex items-start gap-3 border-l-4 border-transparent px-3 py-3 transition-colors sm:px-4',
-		event.is_current && 'border-green-500 bg-green-100 dark:bg-green-900/40',
+		event.is_current &&
+			'border-green-500 bg-gradient-to-r from-green-100 to-green-50/40 dark:from-green-900/40 dark:to-green-900/10',
 		event.is_skipped && !event.is_current && 'bg-gray-50/70 dark:bg-gray-900/40'
 	]}
 >
@@ -143,10 +144,15 @@
 				: 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900'
 		]}
 	>
-		<span class="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
+		<!-- Signature element: scrolls past hundreds of times, so it carries the brand. -->
+		<span
+			class="text-xs font-bold tracking-widest text-primary-500 uppercase dark:text-primary-400"
+		>
 			№
 		</span>
-		<span class="text-base leading-none font-bold text-gray-900 dark:text-white">{eventNumber}</span
+		<span
+			class="font-display text-base leading-none font-bold text-gray-900 tabular-nums dark:text-white"
+			>{eventNumber}</span
 		>
 	</div>
 
@@ -167,9 +173,15 @@
 						<Badge
 							color="green"
 							border
-							class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium"
+							class="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium"
 						>
-							<PlayOutline class="h-3.5 w-3.5" />
+							<!-- Pulsing live dot reads as "on stage now" at a glance. animate-ping is muted under reduced-motion via global CSS. -->
+							<span class="relative flex h-2 w-2" aria-hidden="true">
+								<span
+									class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75"
+								></span>
+								<span class="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+							</span>
 							Сейчас
 						</Badge>
 					{/if}
@@ -212,20 +224,49 @@
 							class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium"
 						>
 							<BellActiveSolid class="h-3.5 w-3.5" />
-							{event.user_subscription.counter}
-							{pluralize(event.user_subscription.counter, 'событие', 'события', 'событий')}
+							За {event.user_subscription.counter}
+							{pluralize(
+								event.user_subscription.counter,
+								'выступление',
+								'выступления',
+								'выступлений'
+							)}
 						</Badge>
 					{/if}
 				</div>
 			</div>
 
-			<button
-				id={dropdownId}
-				class="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none dark:text-gray-400 dark:hover:bg-gray-700"
-				aria-label="Меню действий"
-			>
-				<DotsVerticalOutline class="h-5 w-5" />
-			</button>
+			<div class="ml-auto flex shrink-0 items-center gap-0.5">
+				<!-- Inline bell: subscribe/unsubscribe in one tap instead of opening the menu. -->
+				<button
+					onclick={event.user_subscription ? handleUnsubscribe : handleSubscribe}
+					class={[
+						'flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none',
+						event.user_subscription
+							? 'text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/20'
+							: 'text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300'
+					]}
+					aria-label={event.user_subscription ? 'Отписаться' : 'Подписаться'}
+					aria-pressed={event.user_subscription !== null}
+				>
+					{#if event.user_subscription}
+						<BellActiveSolid class="h-5 w-5" />
+					{:else}
+						<BellActiveOutline class="h-5 w-5" />
+					{/if}
+				</button>
+
+				<!-- Staff-only management actions stay tucked behind the overflow menu. -->
+				{#if canManageSchedule(user)}
+					<button
+						id={dropdownId}
+						class="flex h-11 w-11 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none dark:text-gray-400 dark:hover:bg-gray-700"
+						aria-label="Меню действий"
+					>
+						<DotsVerticalOutline class="h-5 w-5" />
+					</button>
+				{/if}
+			</div>
 		</div>
 	</div>
 </div>
@@ -235,60 +276,45 @@
 <MoveEventModal bind:open={moveModal} {event} {schedule} />
 
 {#snippet menuItems()}
-	{#if event.user_subscription}
-		<DropdownItem onclick={handleUnsubscribe}>
+	{#if event.is_current}
+		<DropdownItem onclick={handleUnmarkCurrent}>
 			<span class="flex items-center gap-2">
-				<BellActiveOutline class="h-4 w-4" />
-				Отписаться
+				<PlayOutline class="h-4 w-4" />
+				Снять отметку
 			</span>
 		</DropdownItem>
 	{:else}
-		<DropdownItem onclick={handleSubscribe}>
+		<DropdownItem onclick={handleMarkCurrent}>
 			<span class="flex items-center gap-2">
-				<BellActiveOutline class="h-4 w-4" />
-				Подписаться
+				<PlayOutline class="h-4 w-4" />
+				Отметить текущим
 			</span>
 		</DropdownItem>
 	{/if}
 
-	{#if canManageSchedule(user)}
-		{#if event.is_current}
-			<DropdownItem onclick={handleUnmarkCurrent}>
-				<span class="flex items-center gap-2">
-					<PlayOutline class="h-4 w-4" />
-					Снять отметку
-				</span>
-			</DropdownItem>
-		{:else}
-			<DropdownItem onclick={handleMarkCurrent}>
-				<span class="flex items-center gap-2">
-					<PlayOutline class="h-4 w-4" />
-					Отметить текущим
-				</span>
-			</DropdownItem>
-		{/if}
+	<DropdownItem onclick={() => (moveModal = true)}>
+		<span class="flex items-center gap-2">
+			<ShuffleOutline class="h-4 w-4" />
+			Перенести
+		</span>
+	</DropdownItem>
 
-		<DropdownItem onclick={() => (moveModal = true)}>
-			<span class="flex items-center gap-2">
-				<ShuffleOutline class="h-4 w-4" />
-				Перенести
-			</span>
-		</DropdownItem>
-
-		<DropdownItem onclick={handleToggleSkip}>
-			<span class="flex items-center gap-2">
-				{#if event.is_skipped}
-					<EyeOutline class="h-4 w-4" />
-					Вернуть
-				{:else}
-					<EyeSlashOutline class="h-4 w-4" />
-					Пропустить
-				{/if}
-			</span>
-		</DropdownItem>
-	{/if}
+	<DropdownItem onclick={handleToggleSkip}>
+		<span class="flex items-center gap-2">
+			{#if event.is_skipped}
+				<EyeOutline class="h-4 w-4" />
+				Вернуть
+			{:else}
+				<EyeSlashOutline class="h-4 w-4" />
+				Пропустить
+			{/if}
+		</span>
+	</DropdownItem>
 {/snippet}
 
-<Dropdown simple triggeredBy={`#${dropdownId}`} bind:isOpen={dropdownOpen}>
-	{@render menuItems()}
-</Dropdown>
+<!-- Only staff get the overflow trigger, so only render its menu for them. -->
+{#if canManageSchedule(user)}
+	<Dropdown simple triggeredBy={`#${dropdownId}`} bind:isOpen={dropdownOpen}>
+		{@render menuItems()}
+	</Dropdown>
+{/if}

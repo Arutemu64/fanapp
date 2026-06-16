@@ -93,30 +93,23 @@
 
 <VotingStatusAlert votingState={votingStatus} class="mb-4" />
 
-<!-- Search controls -->
-<div class="mx-auto mb-4 max-w-2xl">
-	<!-- Keep the filter visually calm, matching the style of the schedule page. -->
-	<div
-		class="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800"
-	>
-		<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-			<div class="flex-1">
-				<Search
-					bind:value={searchQuery}
-					clearableOnClick={() => {
-						searchQuery = '';
-					}}
-					name="participant_search"
-					aria-label="Поиск участников в номинации"
-					placeholder="Поиск по имени или номеру…"
-					autocomplete="off"
-					spellcheck={false}
-					clearable
-					size="sm"
-				/>
-			</div>
-		</div>
-	</div>
+<!-- Search controls: single calm bordered row, full width to match the grid below. -->
+<div
+	class="mb-4 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+>
+	<Search
+		bind:value={searchQuery}
+		clearableOnClick={() => {
+			searchQuery = '';
+		}}
+		name="participant_search"
+		aria-label="Поиск участников в номинации"
+		placeholder="Поиск по имени или номеру…"
+		autocomplete="off"
+		spellcheck={false}
+		clearable
+		size="sm"
+	/>
 </div>
 
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">

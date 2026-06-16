@@ -10,6 +10,6 @@ USERNAME_FIELD = Field(
 )
 PASSWORD_FIELD = Field(
     ...,
-    min_length=8,
+    min_length=10,
     max_length=128,
 )
