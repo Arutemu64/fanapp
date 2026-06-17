@@ -35,9 +35,16 @@ class ProcessTCloudOrder:
         # cannot mint tickets from a forged payload.
         order = await self.client.get_order(data.order_id)
         if order is None:
-            logger.warning("TCloud order %s not found, ignoring", data.order_id)
+            logger.warning(
+                "TicketsCloud order not found, ignoring",
+                extra={"order_id": data.order_id},
+            )
             return ProcessTCloudOrderOutput(new_tickets_count=0)
 
         new_tickets_count = await self.tcloud_service.proceed_order(order)
         await self.uow.commit()
+        logger.info(
+            "TicketsCloud order processed",
+            extra={"order_id": data.order_id, "new_tickets": new_tickets_count},
+        )
         return ProcessTCloudOrderOutput(new_tickets_count=new_tickets_count)
