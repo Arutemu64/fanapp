@@ -98,7 +98,7 @@
 					<p>
 						<span class="font-bold text-gray-700 dark:text-gray-300">Пользователь:</span>
 						<span class="text-gray-900 dark:text-white">
-							{change.user.username ?? `ID: ${change.user.id}`}
+							{change.user.username}
 						</span>
 					</p>
 				{/if}

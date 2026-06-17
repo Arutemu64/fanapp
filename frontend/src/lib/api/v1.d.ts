@@ -89,7 +89,7 @@ export interface paths {
         put?: never;
         /**
          * Confirm user email with code
-         * @description Confirms the current user's email address using a one-time code received via email.
+         * @description Confirms the new email address using a one-time code received at that address.
          */
         post: operations["confirm_email_code_auth_confirm_email_code_post"];
         delete?: never;
@@ -968,7 +968,7 @@ export interface components {
              */
             id: string;
             /** Username */
-            username: string | null;
+            username: string;
             /** First Name */
             first_name: string | null;
             role: components["schemas"]["UserRole"];
@@ -1248,7 +1248,7 @@ export interface components {
              */
             id: string;
             /** Username */
-            username: string | null;
+            username: string;
         };
         /** ScheduleEventFullDTO */
         ScheduleEventFullDTO: {
