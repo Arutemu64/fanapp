@@ -134,6 +134,20 @@ self.addEventListener('fetch', (event) => {
 			}
 		}
 
+		// App-shell, cache-first: every route renders from the same client-built
+		// shell, which is immutable per deploy and versioned by `version` (updates
+		// ride the in-app prompt + skipWaiting, never the network). Serving the
+		// precached shell for navigations means startup never depends on the
+		// origin being healthy — a reachable-but-broken upstream (502/503/504) can
+		// no longer block the app from booting, where a network-first navigation
+		// would return the gateway error page instead.
+		if (event.request.mode === 'navigate') {
+			const shell = (await cache.match('/')) ?? (await cache.match('/200.html'));
+			if (shell) {
+				return shell;
+			}
+		}
+
 		// for everything else, try the network first, but
 		// fall back to the cache if we're offline
 		try {
