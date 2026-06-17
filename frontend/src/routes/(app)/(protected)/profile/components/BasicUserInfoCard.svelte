@@ -13,16 +13,10 @@
 
 	let { user, onUpdate }: Props = $props();
 	let avatarInitials = $derived.by(() => {
-		const rawUsername = user.username?.trim();
-
-		if (!rawUsername) {
-			return (user.first_name?.trim()?.[0] || 'П').toUpperCase();
-		}
-
-		const username = rawUsername.replace(/^@/, '');
+		const username = user.username?.trim().replace(/^@/, '');
 
 		if (!username) {
-			return (user.first_name?.trim()?.[0] || 'П').toUpperCase();
+			return 'П';
 		}
 
 		const parts = username.split(/[\s._-]+/).filter(Boolean);
@@ -45,35 +39,31 @@
 		<UserCircleSolid class="h-5 w-5" />
 	{/snippet}
 
-	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-		<div class="flex min-w-0 items-center gap-4">
-			<Avatar size="lg">{avatarInitials}</Avatar>
+	<div class="flex min-w-0 items-center gap-4">
+		<Avatar size="lg">{avatarInitials}</Avatar>
 
-			<div class="min-w-0">
-				<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-					<h4 class="truncate text-lg font-semibold text-gray-900 dark:text-white">
-						{user.first_name || 'Пользователь'}
-					</h4>
-					<Badge color={getRoleColor(user.role)} border class="text-xs">
-						{getRoleLabel(user.role)}
-					</Badge>
-				</div>
+		<div class="min-w-0">
+			<div class="flex items-center gap-2">
+				<h4 class="truncate text-lg font-semibold text-gray-900 dark:text-white">
+					{user.username ? `@${user.username}` : 'Без псевдонима'}
+				</h4>
+				<Button
+					color="alternative"
+					size="sm"
+					class="min-h-9 shrink-0 !p-2"
+					aria-label="Редактировать псевдоним"
+					onclick={() => (editProfileModalOpen = true)}
+				>
+					<PenSolid class="h-4 w-4" />
+				</Button>
+			</div>
 
-				{#if user.username}
-					<p class="mt-1 truncate text-sm text-gray-500 dark:text-gray-400">@{user.username}</p>
-				{/if}
+			<div class="mt-2">
+				<Badge color={getRoleColor(user.role)} border class="text-xs">
+					{getRoleLabel(user.role)}
+				</Badge>
 			</div>
 		</div>
-
-		<Button
-			color="alternative"
-			size="sm"
-			class="min-h-11 w-full shrink-0 sm:w-auto"
-			onclick={() => (editProfileModalOpen = true)}
-		>
-			<PenSolid class="me-2 h-4 w-4" />
-			Редактировать профиль
-		</Button>
 	</div>
 </ProfileCardShell>
 
