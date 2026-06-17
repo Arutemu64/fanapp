@@ -70,8 +70,9 @@
 			return;
 		}
 
-		// No success toast: the card's inline state (green border + badge) updates
-		// via the schedule_updated SSE reload, which is feedback enough.
+		// Instant ack: the inline state only updates after the schedule_updated
+		// SSE reload round-trips, so a toast confirms the action immediately.
+		toastService.add('Событие отмечено как текущее', 'success');
 		dropdownOpen = false;
 	}
 
@@ -84,7 +85,7 @@
 			return;
 		}
 
-		// Inline state reverts via the schedule_updated SSE reload — no toast needed.
+		toastService.add('Отметка снята', 'success');
 		dropdownOpen = false;
 	}
 
@@ -105,9 +106,11 @@
 			return;
 		}
 
-		// Skip/unskip is reflected inline (line-through + badge) via the
-		// schedule_updated SSE reload, so a success toast would be redundant.
 		dropdownOpen = false;
+		const toastMessage = newIsSkipped
+			? 'Событие помечено как пропущенное'
+			: 'Событие возвращено в расписание';
+		toastService.add(toastMessage, 'success');
 	}
 
 	function handleSubscribe() {
