@@ -44,7 +44,7 @@
 
 	function validateUsername(value: string): string {
 		if (!value) {
-			return '';
+			return 'Псевдоним обязателен';
 		}
 
 		if (value.length < USERNAME_MIN_LENGTH) {

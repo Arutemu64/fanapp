@@ -45,7 +45,7 @@
 		<div class="min-w-0">
 			<div class="flex items-center gap-2">
 				<h4 class="truncate text-lg font-semibold text-gray-900 dark:text-white">
-					{user.username ? `@${user.username}` : 'Без псевдонима'}
+					@{user.username}
 				</h4>
 				<Button
 					color="alternative"

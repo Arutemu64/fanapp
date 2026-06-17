@@ -31,23 +31,20 @@ class UpdateCurrentUser:
         self.user_gateway = user_gateway
         self.uow = uow
 
-    async def _update_username(
-        self, current_user: User, new_username: str | None
-    ) -> None:
-        if new_username:
-            user = await self.user_gateway.get_by_username(new_username)
-            if user and (current_user.id != user.id):
-                raise UsernameAlreadyTaken
-            current_user.set_username(Username(new_username))
-        else:
-            current_user.set_username(None)
+    async def _update_username(self, current_user: User, new_username: str) -> None:
+        user = await self.user_gateway.get_by_username(new_username)
+        if user and (current_user.id != user.id):
+            raise UsernameAlreadyTaken
+        current_user.set_username(Username(new_username))
 
     async def __call__(self, data: UpdateCurrentUserInput) -> None:
         current_user = await self.current_user_provider.require_user()
         data_to_update = data.model_dump(exclude_unset=True)
         user_updated_flag = False
+        # Username is required: a truthy, changed value is the only case that
+        # updates it. Empty / null values are ignored so it can never be cleared.
         if (
-            "username" in data_to_update
+            data_to_update.get("username")
             and data_to_update["username"] != current_user.username
         ):
             await self._update_username(current_user, data_to_update["username"])

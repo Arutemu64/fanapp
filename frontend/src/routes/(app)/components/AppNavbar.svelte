@@ -102,12 +102,9 @@
 			<Avatar id="avatar-menu" class="cursor-pointer">{avatarInitials}</Avatar>
 			<Dropdown placement="bottom-end" triggeredBy="#avatar-menu">
 				<DropdownHeader>
-					<span class="block text-sm text-gray-900 dark:text-white"
-						>{user.first_name || 'Пользователь'}</span
+					<span class="block truncate text-sm font-medium text-gray-900 dark:text-white"
+						>@{user.username}</span
 					>
-					{#if user.username}
-						<span class="block truncate text-sm font-medium">@{user.username}</span>
-					{/if}
 				</DropdownHeader>
 				<DropdownGroup>
 					<DropdownItem href="/profile">Профиль</DropdownItem>
