@@ -118,13 +118,11 @@ class MoveScheduleEvent:
                 await self.uow.commit()
 
                 logger.info(
-                    "Event %s was placed after event %s by user %s",
-                    data.event_id,
-                    data.place_after_event_id,
-                    current_user.id,
+                    "Schedule event moved",
                     extra={
-                        "moved_event": event,
-                        "place_after_event": place_after_event,
+                        "event_id": str(data.event_id),
+                        "place_after_event_id": str(data.place_after_event_id),
+                        "actor_id": str(current_user.id),
                     },
                 )
                 return

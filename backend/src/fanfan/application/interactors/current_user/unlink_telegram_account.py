@@ -39,7 +39,6 @@ class UnlinkTelegramAccount:
             await self.social_id_gateway.delete(telegram_id)
             await self.uow.commit()
             logger.info(
-                "Telegram account was unlinked from user %s",
-                current_user.id,
-                extra={"user_id": str(current_user.id)},
+                "Telegram account unlinked",
+                extra={"actor_id": str(current_user.id)},
             )

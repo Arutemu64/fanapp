@@ -121,7 +121,9 @@ class UndoScheduleChange:
         await self.uow.commit()
 
         logger.info(
-            "User %s reverted schedule change %s",
-            current_user.id,
-            data.schedule_change_id,
+            "Schedule change reverted",
+            extra={
+                "schedule_change_id": str(data.schedule_change_id),
+                "actor_id": str(current_user.id),
+            },
         )

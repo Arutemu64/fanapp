@@ -53,8 +53,10 @@ class SendBroadcast:
         await self.uow.commit()
 
         logger.info(
-            "New broadcast %s initiated by user %s",
-            mailing.id,
-            current_user.id,
+            "Broadcast initiated",
+            extra={
+                "mailing_id": str(mailing.id),
+                "actor_id": str(current_user.id),
+            },
         )
         return SendBroadcastOutput(mailing_id=mailing.id)

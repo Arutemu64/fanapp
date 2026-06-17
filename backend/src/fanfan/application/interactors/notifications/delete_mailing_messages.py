@@ -26,5 +26,8 @@ class DeleteMailingMessages:
         # TODO try to delete as much as possible
         await self.notification_gateway.delete_all_by_mailing_id(data.mailing_id)
         await self.uow.commit()
-        logger.info("Mailing %s notifications were deleted", data.mailing_id)
+        logger.info(
+            "Mailing notifications deleted",
+            extra={"mailing_id": str(data.mailing_id)},
+        )
         return

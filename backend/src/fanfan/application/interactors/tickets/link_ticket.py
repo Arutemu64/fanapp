@@ -41,7 +41,9 @@ class LinkTicket:
         await self.tickets_service.link_ticket(ticket=ticket, user=current_user)
         await self.uow.commit()
         logger.info(
-            "Ticket %s was linked to user %s",
-            ticket.id,
-            current_user.id,
+            "Ticket linked",
+            extra={
+                "ticket_id": str(ticket.id),
+                "actor_id": str(current_user.id),
+            },
         )

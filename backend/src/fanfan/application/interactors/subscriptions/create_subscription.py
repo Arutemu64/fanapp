@@ -56,8 +56,11 @@ class CreateSubscription:
         await self.subscription_gateway.add(subscription)
         await self.uow.commit()
         logger.info(
-            "Subscription %s created",
-            subscription.id,
-            extra={"user_subscription": subscription},
+            "Subscription created",
+            extra={
+                "subscription_id": str(subscription.id),
+                "actor_id": str(current_user.id),
+                "event_id": str(subscription.event_id),
+            },
         )
         return CreateSubscriptionOutput(subscription_id=subscription.id)
