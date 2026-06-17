@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { Modal, Input, Label, Helper, Button, Spinner, Alert } from 'flowbite-svelte';
-	import { UserCircleSolid, UserSolid, EditOutline } from 'flowbite-svelte-icons';
+	import { UserCircleSolid, UserSolid } from 'flowbite-svelte-icons';
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
@@ -21,7 +21,6 @@
 	const toastService = getToastService();
 
 	let username = $state('');
-	let firstName = $state('');
 	let isLoading = $state(false);
 
 	// Validation & form state
@@ -32,7 +31,6 @@
 		if (open) {
 			untrack(() => {
 				username = user.username ?? '';
-				firstName = user.first_name ?? '';
 				usernameError = '';
 				formError = '';
 			});
@@ -46,7 +44,7 @@
 
 	function validateUsername(value: string): string {
 		if (!value) {
-			return '';
+			return 'Псевдоним обязателен';
 		}
 
 		if (value.length < USERNAME_MIN_LENGTH) {
@@ -72,9 +70,7 @@
 	}
 
 	function hasChanges(): boolean {
-		return (
-			(!!username && username !== user.username) || (!!firstName && firstName !== user.first_name)
-		);
+		return !!username && username !== user.username;
 	}
 
 	function isValid(): boolean {
@@ -100,7 +96,6 @@
 
 		const body: UpdateCurrentUserInput = {};
 		if (username && username !== user.username) body.username = username;
-		if (firstName && firstName !== user.first_name) body.first_name = firstName;
 
 		const { error, response } = await client.PATCH('/me/', {
 			body
@@ -118,7 +113,6 @@
 
 		// reset form
 		username = '';
-		firstName = '';
 
 		// Update local user state via callback
 		if (onUpdate) {
@@ -163,30 +157,12 @@
 			</Input>
 			{#if usernameError}
 				<Helper class="mt-1" color="red">{usernameError}</Helper>
-			{:else}
-				<Helper class="mt-1"
-					>3–25 символов, начинается с буквы; далее буквы (латиница/кириллица), цифры и
-					подчёркивание</Helper
-				>
 			{/if}
-		</div>
-
-		<div>
-			<Label for="firstName" class="mb-2 block">Настоящее имя</Label>
-			<Input
-				id="firstName"
-				name="first_name"
-				type="text"
-				placeholder="Настоящее имя"
-				autocomplete="given-name"
-				bind:value={firstName}
-				oninput={() => (formError = '')}
-				class="ps-9"
-			>
-				{#snippet left()}
-					<EditOutline class="h-5 w-5" />
-				{/snippet}
-			</Input>
+			<ul class="mt-2 space-y-1 text-xs text-gray-500 dark:text-gray-400">
+				<li>от 3 до 25 символов</li>
+				<li>начинается с буквы (латиница или кириллица)</li>
+				<li>далее буквы, цифры и подчёркивание</li>
+			</ul>
 		</div>
 
 		<Button type="submit" color="primary" class="w-full" disabled={!isValid() || isLoading}>

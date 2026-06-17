@@ -17,7 +17,7 @@ class UserSettings:
 class User(AggregateRoot):
     id: UserId
 
-    username: Username | None
+    username: Username
     hashed_password: str | None
     role: UserRole
 
@@ -32,7 +32,7 @@ class User(AggregateRoot):
         cls,
         *,
         id: UserId,  # noqa: A002
-        username: Username | None,
+        username: Username,
         hashed_password: str | None,
         role: UserRole,
         email: Email | None = None,
@@ -47,7 +47,7 @@ class User(AggregateRoot):
             first_name=first_name,
         )
 
-    def set_username(self, username: Username | None) -> None:
+    def set_username(self, username: Username) -> None:
         self.username = username
 
     def set_role(self, role: UserRole) -> None:

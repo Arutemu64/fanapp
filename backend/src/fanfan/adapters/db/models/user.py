@@ -26,7 +26,7 @@ class UserORM(BaseORM):
         primary_key=True,
         default=uuid7,
     )
-    username: Mapped[str | None] = mapped_column(index=True, unique=True)
+    username: Mapped[str] = mapped_column(index=True, unique=True)
     hashed_password: Mapped[str | None] = mapped_column()
     email: Mapped[str | None] = mapped_column(index=True, unique=True)
     # Notification preferences live in columns (not the settings JSON) so they

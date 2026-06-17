@@ -41,7 +41,7 @@ class UserMapper:
     def to_model(self, orm: UserORM) -> User:
         return User(
             id=UserId(orm.id),
-            username=Username(orm.username) if orm.username is not None else None,
+            username=Username(orm.username),
             hashed_password=orm.hashed_password,
             email=Email(orm.email) if orm.email else None,
             first_name=orm.first_name,

@@ -15,7 +15,7 @@ class ScheduleChangeEventDTO(BaseModel):
 
 class ScheduleChangeUserDTO(BaseModel):
     id: UserId
-    username: str | None
+    username: str
 
 
 class ScheduleChangeFullDTO(BaseModel):

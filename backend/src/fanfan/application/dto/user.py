@@ -13,7 +13,7 @@ class UserBaseDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UserId
-    username: str | None
+    username: str
     first_name: str | None
     role: UserRole
 
