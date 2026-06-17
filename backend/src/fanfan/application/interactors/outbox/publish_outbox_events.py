@@ -40,4 +40,7 @@ class PublishOutboxEvents:
             )
         await self.outbox_gateway.mark_published([m.id for m in messages])
         await self.uow.commit()
-        logger.info("Outbox relay published %d event(s)", len(messages))
+        logger.info(
+            "Outbox relay published events",
+            extra={"event_count": len(messages)},
+        )

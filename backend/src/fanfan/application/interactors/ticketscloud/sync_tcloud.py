@@ -31,8 +31,8 @@ class SyncTCloud:
         new_tickets_count, removed_tickets_count = 0, 0
         orders_init = await self.client.get_orders(page=1, page_size=DEFAULT_PAGE_SIZE)
         logger.info(
-            "About to process %s orders",
-            orders_init.total_count,
+            "TicketsCloud sync started",
+            extra={"order_count": orders_init.total_count},
         )
         # Orders. Reuse the page we already fetched above and request the rest
         # starting from page 2, so page 1 is not fetched twice.
@@ -47,9 +47,11 @@ class SyncTCloud:
                 new_tickets_count += await self.tcloud_service.proceed_order(order_data)
             await self.uow.commit()
             logger.info(
-                "Ongoing import: %s new tickets, %s removed tickets",
-                new_tickets_count,
-                removed_tickets_count,
+                "TicketsCloud sync progress",
+                extra={
+                    "new_tickets": new_tickets_count,
+                    "removed_tickets": removed_tickets_count,
+                },
             )
         # TODO Find a way to correctly proceed refunds
         return SyncTCloudOutput(

@@ -25,4 +25,7 @@ class PurgeOutboxEvents:
             self.config.retention_days
         )
         await self.uow.commit()
-        logger.info("Outbox retention purged %d delivered event(s)", deleted)
+        logger.info(
+            "Outbox retention purged delivered events",
+            extra={"event_count": deleted},
+        )

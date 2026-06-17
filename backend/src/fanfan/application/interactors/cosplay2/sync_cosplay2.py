@@ -43,7 +43,9 @@ class SyncCosplay2:
         if nomination:
             nomination = replace(nomination, code=topic.card_code, title=topic.title)
             await self.nomination_gateway.save(nomination)
-            logger.info("Nomination %s updated", nomination.cosplay2_id)
+            logger.info(
+                "Nomination updated", extra={"cosplay2_id": nomination.cosplay2_id}
+            )
         else:
             nomination = Nomination(
                 id=generate_nomination_id(),
@@ -53,7 +55,13 @@ class SyncCosplay2:
                 is_votable=False,
             )
             await self.nomination_gateway.add(nomination)
-            logger.info("Nomination %s added", nomination.id)
+            logger.info(
+                "Nomination added",
+                extra={
+                    "nomination_id": str(nomination.id),
+                    "cosplay2_id": nomination.cosplay2_id,
+                },
+            )
 
         return nomination
 
@@ -74,12 +82,18 @@ class SyncCosplay2:
             if participant:
                 await self.participant_gateway.delete(participant)
                 logger.warning(
-                    "Participant %s deleted due to non-approved request",
-                    participant.cosplay2_id,
+                    "Participant deleted",
+                    extra={
+                        "cosplay2_id": participant.cosplay2_id,
+                        "reason": "non_approved_request",
+                    },
                 )
             else:
                 # A non-approved request with no stored participant is routine.
-                logger.info("Request %s is not approved, skipping", request.id)
+                logger.info(
+                    "Request skipped",
+                    extra={"request_id": request.id, "reason": "not_approved"},
+                )
             return None
 
         # Check voting title
@@ -90,18 +104,27 @@ class SyncCosplay2:
             if participant:
                 await self.participant_gateway.delete(participant)
                 logger.warning(
-                    "Participant %s deleted due to missing voting title",
-                    participant.cosplay2_id,
+                    "Participant deleted",
+                    extra={
+                        "cosplay2_id": participant.cosplay2_id,
+                        "reason": "missing_voting_title",
+                    },
                 )
             else:
-                logger.info("Request %s has no voting title, skipping", request.id)
+                logger.info(
+                    "Request skipped",
+                    extra={"request_id": request.id, "reason": "no_voting_title"},
+                )
             return None
 
         # Look up the nomination in the map built from this sync's topics
         # instead of querying per request (avoids an N+1 over all requests).
         nomination = nominations_by_cosplay2_id.get(request.topic_id)
         if nomination is None:
-            logger.error("Nomination with Cosplay2 id=%s not found", request.topic_id)
+            logger.error(
+                "Nomination not found for request",
+                extra={"request_id": request.id, "topic_id": request.topic_id},
+            )
             return None
 
         # Convert request values to participant values
@@ -120,7 +143,9 @@ class SyncCosplay2:
                 values=participant_values,
             )
             await self.participant_gateway.save(participant)
-            logger.info("Request %s updated", participant.cosplay2_id)
+            logger.info(
+                "Participant updated", extra={"cosplay2_id": participant.cosplay2_id}
+            )
         else:
             participant = Participant(
                 id=generate_participant_id(),
@@ -131,7 +156,13 @@ class SyncCosplay2:
                 values=participant_values,
             )
             await self.participant_gateway.add(participant)
-            logger.info("Request %s added", participant.cosplay2_id)
+            logger.info(
+                "Participant added",
+                extra={
+                    "participant_id": str(participant.id),
+                    "cosplay2_id": participant.cosplay2_id,
+                },
+            )
 
         return participant
 
