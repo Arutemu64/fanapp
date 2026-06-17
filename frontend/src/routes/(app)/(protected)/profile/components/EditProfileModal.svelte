@@ -88,7 +88,8 @@
 		}
 
 		if (!hasChanges()) {
-			toastService.add('Нет изменений для сохранения', 'info');
+			// Nothing to save — close silently instead of nagging with a toast.
+			open = false;
 			return;
 		}
 

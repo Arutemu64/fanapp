@@ -66,6 +66,14 @@ export class ToastService {
 	}
 
 	push(notification: NotificationDTO) {
+		// Multiple components (navbar bell + notifications feed) listen to the same
+		// SSE stream and each call push(). Skip if a toast for this notification is
+		// already on screen so the user never sees it twice.
+		const alreadyShown = this.#toasts.some(
+			(toast) => toast.type === 'push' && toast.notification?.id === notification.id
+		);
+		if (alreadyShown) return;
+
 		const id = Date.now();
 		const newToast: ToastItem = {
 			id,

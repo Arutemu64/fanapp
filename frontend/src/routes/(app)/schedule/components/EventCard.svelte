@@ -70,6 +70,8 @@
 			return;
 		}
 
+		// Instant ack: the inline state only updates after the schedule_updated
+		// SSE reload round-trips, so a toast confirms the action immediately.
 		toastService.add('Событие отмечено как текущее', 'success');
 		dropdownOpen = false;
 	}
