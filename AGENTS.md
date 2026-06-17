@@ -76,6 +76,7 @@ On-demand CLI (not the always-on MCP server), so it costs no context until invok
 9. **Clear, Simple Code**: Write straightforward code a junior developer can read unaided. Favor explicit, obvious solutions over clever tricks or dense one-liners. Use descriptive names, small focused functions, and a short comment when intent isn't obvious. If a clever approach is unavoidable, explain why in a comment.
 10. **Verify Jinja Templates by Rendering**: After creating or editing a Jinja template, render it with all expected context values and confirm the output before marking the task complete — do not assume it renders correctly.
 11. **codegraph Before Grep/Read for Symbols**: With 550+ files, try codegraph before Grep/Glob/Read for any structural question. Triggers: "Where is `X`?" → `query`; "What calls `X`?" → `callers`; "What does `X` call?" → `callees`; "What breaks if I change `X`?" → `impact`; "Show source of `X`" → `node --source`; unfamiliar dir → `files --path <dir>`. Fall back to Grep/Read only when codegraph returns nothing or the question isn't symbol-based (string literal, regex, config value).
+12. **Update PR on Subsequent Commits**: After pushing additional commits to an open PR, update the PR title and description to reflect the current cumulative state of all changes — not just the latest commit. Title must stay accurate; description must summarize what the PR now does as a whole.
 
 Respond terse like smart caveman. All technical substance stay. Only fluff die.
 
