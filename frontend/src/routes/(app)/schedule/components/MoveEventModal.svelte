@@ -20,9 +20,12 @@
 	let selectedId: string | null = $state(null);
 	let formError = $state('');
 
+	// Reset the picker each time the modal opens so a cancelled selection never lingers.
 	$effect(() => {
 		if (open) {
 			formError = '';
+			selectedId = null;
+			query = '';
 		}
 	});
 
@@ -82,7 +85,7 @@
 	{#snippet header()}
 		<div class="flex items-center gap-2">
 			<ArrowUpDownOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-			<h3 class="text-lg font-bold text-gray-900 dark:text-white">Переместить событие</h3>
+			<h3 class="text-lg font-bold text-gray-900 dark:text-white">Перенести выступление</h3>
 		</div>
 	{/snippet}
 
@@ -94,16 +97,16 @@
 		{/if}
 
 		<p class="text-sm text-gray-600 sm:text-base dark:text-gray-400">
-			Выбери событие, <strong class="text-gray-900 dark:text-white">после</strong> которого будет
-			размещено:
+			Выбери выступление, <strong class="text-gray-900 dark:text-white">после</strong> которого
+			разместить:
 			<strong class="text-primary-600 dark:text-primary-400">{event.title}</strong>
 		</p>
 
 		<Search
 			name="schedule_move_search"
 			size="md"
-			aria-label="Поиск события для переноса"
-			placeholder="Поиск события…"
+			aria-label="Поиск выступления для переноса"
+			placeholder="Поиск выступления…"
 			autocomplete="off"
 			spellcheck={false}
 			clearable
@@ -133,8 +136,7 @@
 	</div>
 
 	{#snippet footer()}
-		<Button type="button" onclick={handleSubmit} class="w-full" size="lg" disabled={!selectedId}>
-			Переместить
-		</Button>
+		<Button type="button" color="alternative" onclick={() => (open = false)}>Отмена</Button>
+		<Button type="button" onclick={handleSubmit} disabled={!selectedId}>Перенести</Button>
 	{/snippet}
 </Modal>

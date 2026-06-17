@@ -25,18 +25,24 @@
 		}
 	});
 
+	// Clamp to the valid 1–100 range, snapping a cleared/NaN input back to the min
+	// so +/- never dead-locks and submit never POSTs null.
+	function clampCounter() {
+		counter = Number.isFinite(counter) ? Math.max(1, Math.min(100, Math.floor(counter))) : 1;
+	}
+
 	function increment() {
-		if (counter < 100) counter++;
+		counter = Number.isFinite(counter) ? Math.min(100, Math.floor(counter) + 1) : 1;
 		formError = '';
 	}
 
 	function decrement() {
-		if (counter > 1) counter--;
+		counter = Number.isFinite(counter) ? Math.max(1, Math.floor(counter) - 1) : 1;
 		formError = '';
 	}
 
 	async function handleSubmit() {
-		counter = Math.max(1, Math.min(100, Math.floor(counter)));
+		clampCounter();
 		formError = '';
 		const { error, response } = await client.POST('/schedule/subscriptions/', {
 			body: {
@@ -71,9 +77,8 @@
 	{/if}
 
 	<p class="text-gray-600 dark:text-gray-400">
-		За сколько выступлений до начала <strong class="text-gray-900 dark:text-white"
-			>{event.title}</strong
-		> начать присылать уведомления?
+		За сколько выступлений до <strong class="text-gray-900 dark:text-white">{event.title}</strong>
+		начать присылать тебе уведомления?
 	</p>
 
 	<div class="my-4 flex items-center justify-center">
@@ -100,6 +105,7 @@
 					inputmode="numeric"
 					autocomplete="off"
 					bind:value={counter}
+					onblur={clampCounter}
 					class="h-full w-full border-0 bg-transparent pb-5 text-center font-bold text-gray-900 [-moz-appearance:textfield] focus:ring-0 focus:outline-none dark:text-white [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 				/>
 				<div
@@ -122,9 +128,7 @@
 	</div>
 
 	{#snippet footer()}
-		<Button type="button" onclick={handleSubmit} class="w-full">
-			<BellActiveSolid class="me-2 h-4 w-4" />
-			Подписаться
-		</Button>
+		<Button type="button" color="alternative" onclick={() => (open = false)}>Отмена</Button>
+		<Button type="button" onclick={handleSubmit}>Подписаться</Button>
 	{/snippet}
 </Modal>
