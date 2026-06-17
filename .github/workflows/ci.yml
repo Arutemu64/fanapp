@@ -13,9 +13,41 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# dorny/paths-filter reads changed files via the GitHub API on pull_request
+# events; without these read scopes the default GITHUB_TOKEN gets
+# "Resource not accessible by integration".
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
+  # Detect which areas changed so we skip CI for unrelated edits (e.g. docs,
+  # AGENTS.md). Downstream jobs gate on these outputs. The workflow file itself
+  # is in both filters so changes to CI always re-run everything.
+  changes:
+    name: Detect changed areas
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - '.github/workflows/ci.yml'
+            frontend:
+              - 'frontend/**'
+              - 'shared/**'
+              - '.github/workflows/ci.yml'
+
   backend:
     name: Backend (lint, types, tests)
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     # Docker is preinstalled and running on ubuntu-latest, which is all the
     # testcontainers-based integration tests (Postgres + Redis) need.
@@ -60,6 +92,8 @@ jobs:
     # parallel jobs instead of three sequential steps. Wall-clock time drops to
     # the slowest single task (the build) instead of the sum of all three.
     name: Frontend (${{ matrix.task.name }})
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     # `check` and `build` read PUBLIC_* via `$env/static/public`, which errors on
     # any referenced var that is undefined at build time. Supply them from the
