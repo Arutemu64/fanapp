@@ -126,7 +126,7 @@
 				</div>
 				<Toggle
 					bind:checked={votingEnabled}
-					color="green"
+					color="primary"
 					disabled={isSaving}
 					onchange={() => (submitError = '')}
 				/>

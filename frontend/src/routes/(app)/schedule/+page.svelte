@@ -221,14 +221,19 @@
 		{#each groupedSchedule as block, blockIndex (`${block.title}-${blockIndex}`)}
 			<section class="space-y-2">
 				<!-- Keep the active block visible while the user scrolls through dense rows. -->
+				<!-- Watermelon-pink left bar + display font make the block the branded spine of the list. -->
 				<div class="sticky top-0 z-20">
 					<div
-						class="flex min-h-11 items-center justify-between rounded-xl border border-gray-200 bg-gray-50/95 px-3 py-2 shadow-sm backdrop-blur dark:border-gray-700 dark:bg-gray-900/95"
+						class="flex min-h-11 items-center justify-between gap-3 overflow-hidden rounded-xl border border-l-4 border-gray-200 border-l-primary-500 bg-white/95 px-3 py-2 shadow-sm backdrop-blur dark:border-gray-700 dark:border-l-primary-500 dark:bg-gray-900/95"
 					>
-						<h2 class="text-sm font-semibold text-gray-900 sm:text-base dark:text-white">
+						<h2
+							class="truncate font-display text-sm font-semibold tracking-tight text-gray-900 sm:text-base dark:text-white"
+						>
 							{block.title}
 						</h2>
-						<span class="text-xs font-medium text-gray-500 dark:text-gray-400">
+						<span
+							class="shrink-0 rounded-full bg-primary-50 px-2 py-0.5 text-xs font-bold text-primary-600 tabular-nums dark:bg-primary-900/30 dark:text-primary-300"
+						>
 							{block.eventCount}
 						</span>
 					</div>
@@ -245,11 +250,16 @@
 						>
 							<div class="flex items-center justify-between gap-3">
 								<h3
-									class="text-xs font-semibold tracking-wide text-gray-700 uppercase sm:text-sm dark:text-gray-300"
+									class="flex min-w-0 items-center gap-2 text-xs font-semibold tracking-wide text-gray-700 uppercase sm:text-sm dark:text-gray-300"
 								>
-									{nomination.title}
+									<!-- Cyan marker sets nominations one tier below the pink block spine. -->
+									<span
+										class="h-1.5 w-1.5 shrink-0 rounded-full bg-secondary-400"
+										aria-hidden="true"
+									></span>
+									<span class="truncate">{nomination.title}</span>
 								</h3>
-								<span class="text-xs text-gray-500 dark:text-gray-400">
+								<span class="shrink-0 text-xs text-gray-500 tabular-nums dark:text-gray-400">
 									{nomination.eventCount}
 								</span>
 							</div>
@@ -267,9 +277,21 @@
 			</section>
 		{:else}
 			<div
-				class="rounded-xl border border-dashed border-gray-300 bg-white px-4 py-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 sm:py-10"
+				class="relative overflow-hidden rounded-2xl border border-dashed border-gray-300 bg-white px-4 py-10 text-center dark:border-gray-700 dark:bg-gray-800 sm:py-14"
 			>
-				<p>События не найдены</p>
+				<!-- Atmospheric watermelon glow ties the empty state back to the hero. -->
+				<div
+					aria-hidden="true"
+					class="pointer-events-none absolute -top-16 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-primary-200/40 blur-3xl dark:bg-primary-900/20"
+				></div>
+				<p class="relative font-display text-base font-bold text-gray-900 dark:text-white">
+					{hasActiveFilters ? 'Ничего не нашлось' : 'Расписание пока пусто'}
+				</p>
+				<p class="relative mt-1 text-sm text-gray-500 dark:text-gray-400">
+					{hasActiveFilters
+						? 'Попробуйте изменить поиск или фильтры'
+						: 'Программа появится ближе к фестивалю'}
+				</p>
 			</div>
 		{/each}
 	</div>

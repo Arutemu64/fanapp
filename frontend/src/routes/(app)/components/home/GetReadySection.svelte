@@ -25,6 +25,7 @@
 		icon: Component;
 		iconClass: string;
 		hoverClass: string;
+		actionLabel?: string;
 		href?: Pathname;
 		onclick?: () => void;
 	}
@@ -67,7 +68,7 @@
 			list.push({
 				key: 'account',
 				title: 'Создать аккаунт',
-				description: 'Нужен для голосования и подписки на события программы.',
+				description: 'Нужен для голосования и подписки на выступления программы.',
 				icon: UserPlusIcon,
 				iconClass: accent.primary.icon,
 				hoverClass: accent.primary.hover,
@@ -79,10 +80,11 @@
 			list.push({
 				key: 'pwa',
 				title: 'Установить приложение',
-				description: 'Быстрый доступ с главного экрана и push-уведомления.',
+				description: 'Быстрый доступ с главного экрана и пуш-уведомления.',
 				icon: DownloadIcon,
 				iconClass: accent.secondary.icon,
 				hoverClass: accent.secondary.hover,
+				actionLabel: 'Установить',
 				// Open the install dialog directly; the library handles per-platform UX.
 				onclick: () => pwa.showInstallDialog()
 			});
@@ -92,7 +94,7 @@
 			list.push({
 				key: 'ticket',
 				title: 'Привязать билет',
-				description: 'Открывает голосование за участников фестиваля.',
+				description: 'Открывает доступ к голосованию в конкурсных номинациях.',
 				icon: TicketIcon,
 				iconClass: accent.amber.icon,
 				hoverClass: accent.amber.hover,
@@ -104,7 +106,7 @@
 			list.push({
 				key: 'schedule',
 				title: 'Посмотреть программу',
-				description: 'Подпишись на номера, чтобы не пропустить любимые выступления.',
+				description: 'Подпишись на номера, чтобы не пропустить интересные выступления.',
 				icon: CalendarCheckIcon,
 				iconClass: accent.green.icon,
 				hoverClass: accent.green.hover,
@@ -114,7 +116,7 @@
 			list.push({
 				key: 'notifications',
 				title: 'Настроить уведомления',
-				description: 'Получай напоминания о начале событий и изменениях.',
+				description: 'Получай напоминания о начале выступлений и изменениях в расписании.',
 				icon: BellIcon,
 				iconClass: accent.blue.icon,
 				hoverClass: accent.blue.hover,
@@ -145,6 +147,7 @@
 					icon={card.icon}
 					iconClass={card.iconClass}
 					hoverClass={card.hoverClass}
+					actionLabel={card.actionLabel}
 					href={card.href}
 					onclick={card.onclick}
 				/>

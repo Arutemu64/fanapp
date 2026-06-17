@@ -5,7 +5,7 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { CurrentUserDTO } from '$lib/types/user';
 	import { Alert, Button, Input, Label, Spinner } from 'flowbite-svelte';
-	import { CheckCircleOutline, TicketSolid } from 'flowbite-svelte-icons';
+	import { CheckCircleOutline, TicketOutline, TicketSolid } from 'flowbite-svelte-icons';
 	import ProfileCardShell from './ProfileCardShell.svelte';
 
 	interface Props {
@@ -55,7 +55,7 @@
 
 <ProfileCardShell title="Билет" description="Привяжи билет, чтобы получить доступ к голосованию.">
 	{#snippet icon()}
-		<TicketSolid class="h-5 w-5" />
+		<TicketOutline class="h-5 w-5" />
 	{/snippet}
 
 	{#if user.ticket}
@@ -71,29 +71,28 @@
 	{:else}
 		<div class="space-y-3 rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
 			{#if submitError}
-				<Alert color="red" class="rounded-xl text-sm">
+				<Alert role="alert" color="red" class="rounded-xl text-sm">
 					{submitError}
 				</Alert>
 			{/if}
 
 			<Label for="ticket-barcode">Номер билета</Label>
+			<p class="text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+				Введи цифры штрихкода с бумажного или электронного билета. Если билета нет — попроси
+				специальный код у оргкомитета или волонтёра.
+			</p>
 			<Input
 				id="ticket-barcode"
 				name="ticket_barcode"
 				bind:value={barcode}
-				placeholder="Введи номер билета"
+				placeholder="Например, 1234567890"
 				autocomplete="off"
 				autocapitalize="off"
 				spellcheck={false}
 				disabled={isSubmitting}
 				size="md"
-				class="ps-9"
 				oninput={() => (submitError = '')}
-			>
-				{#snippet left()}
-					<TicketSolid class="h-5 w-5" />
-				{/snippet}
-			</Input>
+			/>
 			<Button onclick={handleLinkTicket} class="min-h-11 w-full" disabled={isSubmitting} size="md">
 				{#if isSubmitting}
 					<Spinner class="me-2 h-4 w-4" />

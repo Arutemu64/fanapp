@@ -260,30 +260,35 @@
 
 <ProfileCardShell
 	title="Уведомления"
-	description="Выбери каналы, чтобы не пропустить расписание, анонсы и сервисные сообщения."
+	description="Настрой уведомления, чтобы не пропустить анонсы и важные сообщения."
 >
 	{#snippet icon()}
 		<BellOutline class="h-5 w-5" />
 	{/snippet}
 
 	<div class="rounded-lg border border-gray-200 dark:border-gray-700">
+		<div class="border-b border-gray-200 px-3 py-2 sm:px-4 dark:border-gray-700">
+			<span class="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+				Каналы
+			</span>
+		</div>
+
 		<div class="flex items-start justify-between gap-3 p-3 sm:p-4">
 			<div class="min-w-0">
-				<span class="text-sm font-medium text-gray-900 dark:text-gray-300">
-					Уведомления в браузере
-				</span>
+				<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Пуш-уведомления</span>
 				<p class="mt-1 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
-					Получать пуш-уведомления на этом устройстве.
+					Получать на этом устройстве.
 				</p>
 			</div>
 			<Toggle
 				checked={isSubscribed}
+				aria-label="Включить пуш-уведомления на этом устройстве"
 				disabled={isLoading}
 				onclick={(e) => {
 					e.preventDefault();
 					toggleSubscription();
 				}}
-				color="green"
+				color="primary"
 			/>
 		</div>
 
@@ -301,14 +306,23 @@
 				</div>
 				<Toggle
 					bind:checked={receiveTelegram}
+					aria-label="Получать уведомления в Telegram"
 					disabled={isSavingSettings || !hasTelegramAccount}
 					onchange={toggleReceiveTelegram}
-					color="green"
+					color="primary"
 				/>
 			</div>
 		</div>
+	</div>
 
-		<div class="border-t border-gray-200 p-3 sm:p-4 dark:border-gray-700">
+	<div class="rounded-lg border border-gray-200 dark:border-gray-700">
+		<div class="border-b border-gray-200 px-3 py-2 sm:px-4 dark:border-gray-700">
+			<span class="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+				Типы уведомлений
+			</span>
+		</div>
+
+		<div class="p-3 sm:p-4">
 			<div class="flex items-start justify-between gap-3">
 				<div class="min-w-0">
 					<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Все анонсы</span>
@@ -318,9 +332,10 @@
 				</div>
 				<Toggle
 					bind:checked={receiveAll}
+					aria-label="Получать уведомления обо всех анонсах"
 					disabled={isSavingSettings}
 					onchange={toggleReceiveAll}
-					color="green"
+					color="primary"
 				/>
 			</div>
 		</div>
@@ -331,7 +346,7 @@
 			Попробуй отправить себе пробное уведомление, чтобы убедиться, что всё работает.
 		</p>
 		<Button
-			color="light"
+			color="alternative"
 			class="min-h-11 w-full sm:w-auto"
 			disabled={isSendingTest}
 			onclick={sendTestNotification}

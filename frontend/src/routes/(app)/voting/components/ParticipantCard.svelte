@@ -76,15 +76,14 @@
 
 <Card
 	class={[
-		'relative flex w-full max-w-none flex-col overflow-hidden p-4 transition-[box-shadow,border-color,background-color]',
+		'relative flex w-full max-w-none flex-col overflow-hidden p-4 transition-[box-shadow,border-color,background-color] hover:shadow-md',
 		participant.user_vote !== null ? 'ring-2 ring-green-600 dark:ring-green-500' : ''
 	]}
 >
 	<!-- Watermark number -->
 	{#if participant.voting_number}
 		<div
-			class="pointer-events-none absolute right-2 bottom-0 leading-none font-black text-gray-900/[0.04] select-none dark:text-white/[0.06]"
-			style="font-size: 6rem; line-height: 1;"
+			class="pointer-events-none absolute right-2 bottom-0 text-8xl leading-none font-black text-gray-900/[0.04] select-none dark:text-white/[0.06]"
 			aria-hidden="true"
 		>
 			{participant.voting_number}
