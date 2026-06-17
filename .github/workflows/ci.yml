@@ -13,6 +13,13 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# dorny/paths-filter reads changed files via the GitHub API on pull_request
+# events; without these read scopes the default GITHUB_TOKEN gets
+# "Resource not accessible by integration".
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   # Detect which areas changed so we skip CI for unrelated edits (e.g. docs,
   # AGENTS.md). Downstream jobs gate on these outputs. The workflow file itself
