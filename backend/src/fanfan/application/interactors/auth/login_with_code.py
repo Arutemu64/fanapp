@@ -1,3 +1,5 @@
+import logging
+
 from pydantic import BaseModel, EmailStr, Field
 
 from fanfan.application.ports.gateways.users import UserGateway
@@ -11,6 +13,8 @@ from fanfan.core.services.email_login import (
     EMAIL_OTP_MAX_ATTEMPTS,
 )
 from fanfan.core.vo.email import Email
+
+logger = logging.getLogger(__name__)
 
 
 class LoginWithCodeInput(BaseModel):
@@ -40,6 +44,7 @@ class LoginWithCode:
             window_seconds=EMAIL_OTP_LOCKOUT_SECONDS,
         )
         if user_id is None:
+            logger.warning("Email code login failed", extra={"reason": "invalid_code"})
             raise InvalidOtpCode
 
         user = await self.user_gateway.get_by_id(user_id)
@@ -48,6 +53,14 @@ class LoginWithCode:
 
         # The one-time email code proves mailbox ownership for this login.
         if user.email is None or user.email != target_email:
+            logger.warning(
+                "Email code login failed",
+                extra={"reason": "email_mismatch", "actor_id": str(user.id)},
+            )
             raise InvalidOtpCode
 
+        logger.info(
+            "User authenticated via email code",
+            extra={"actor_id": str(user.id)},
+        )
         return await self.session_store.create_session(user.id)

@@ -103,10 +103,11 @@ class SetCurrentScheduleEvent:
                 await self.uow.commit()
 
                 logger.info(
-                    "Event %s was set as current by user %s",
-                    data.event_id,
-                    current_user.id,
-                    extra={"current_event": event},
+                    "Schedule event set as current",
+                    extra={
+                        "event_id": str(data.event_id) if data.event_id else None,
+                        "actor_id": str(current_user.id),
+                    },
                 )
                 return
         except RateLimitCooldown as e:

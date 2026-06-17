@@ -60,8 +60,10 @@ class CancelMailing:
         await self.uow.commit()
         await self.events_broker.publish(MailingCancelled(mailing_id=data.mailing_id))
         logger.info(
-            "Mailing %s deleted by user %s",
-            data.mailing_id,
-            current_user.id,
+            "Mailing cancelled",
+            extra={
+                "mailing_id": str(data.mailing_id),
+                "actor_id": str(current_user.id),
+            },
         )
         return

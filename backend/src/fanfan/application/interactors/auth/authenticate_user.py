@@ -1,3 +1,5 @@
+import logging
+
 from pydantic import BaseModel, EmailStr
 
 from fanfan.application.ports.gateways.users import UserGateway
@@ -7,6 +9,8 @@ from fanfan.application.ports.session_store import SessionStore
 from fanfan.core.exceptions.auth import InvalidCredentials
 from fanfan.core.exceptions.rate_limit import TooManyAttempts, TooManyLoginAttempts
 from fanfan.core.utils.email import normalize_email
+
+logger = logging.getLogger(__name__)
 
 # Per-email limit stops a targeted brute-force of one account's password.
 LOGIN_EMAIL_MAX_ATTEMPTS = 5
@@ -49,17 +53,43 @@ class AuthenticateUser:
         if user is None:
             # Prevent timing attack
             self.password_hasher.verify(data.password, self.dummy_hash)
+            # Email is omitted from the log on purpose to avoid storing PII;
+            # client_ip is kept so repeated failures can be correlated.
+            logger.warning(
+                "Password login failed",
+                extra={"reason": "user_not_found", "client_ip": data.client_ip},
+            )
             raise InvalidCredentials
         # Social-only accounts may have no password yet.
         # Return a normal auth failure instead of crashing on password verification.
         if user.hashed_password is None:
+            logger.warning(
+                "Password login failed",
+                extra={
+                    "reason": "no_password_set",
+                    "actor_id": str(user.id),
+                    "client_ip": data.client_ip,
+                },
+            )
             raise InvalidCredentials
         if not self.password_hasher.verify(data.password, user.hashed_password):
+            logger.warning(
+                "Password login failed",
+                extra={
+                    "reason": "invalid_password",
+                    "actor_id": str(user.id),
+                    "client_ip": data.client_ip,
+                },
+            )
             raise InvalidCredentials
 
         # Successful login: clear the counters so a legitimate user is never
         # locked out by their own earlier typos.
         await self._reset_attempts(normalized_email, data.client_ip)
+        logger.info(
+            "User authenticated via password",
+            extra={"actor_id": str(user.id), "client_ip": data.client_ip},
+        )
         return await self.session_store.create_session(user.id)
 
     async def _register_attempt(self, email: str, client_ip: str | None) -> None:
@@ -76,6 +106,10 @@ class AuthenticateUser:
                     window_seconds=LOGIN_ATTEMPTS_WINDOW_SECONDS,
                 )
         except TooManyAttempts as e:
+            logger.warning(
+                "Login blocked: too many attempts",
+                extra={"client_ip": client_ip},
+            )
             raise TooManyLoginAttempts(retry_after=e.details["retry_after"]) from e
 
     async def _reset_attempts(self, email: str, client_ip: str | None) -> None:

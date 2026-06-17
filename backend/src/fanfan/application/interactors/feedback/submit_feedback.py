@@ -43,8 +43,10 @@ class SubmitFeedback:
         await self.feedback_gateway.add(feedback)
         await self.uow.commit()
         logger.info(
-            "Feedback %s submitted",
-            feedback.id,
-            extra={"user_feedback": feedback},
+            "Feedback submitted",
+            extra={
+                "feedback_id": str(feedback.id),
+                "actor_id": str(current_user.id),
+            },
         )
         return SubmitFeedbackOutput(feedback_id=feedback.id)

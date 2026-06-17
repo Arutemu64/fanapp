@@ -38,7 +38,10 @@ class CancelVote:
         await self.vote_gateway.delete(vote)
         await self.uow.commit()
         logger.info(
-            "User %s cancelled their vote for %s",
-            vote.user_id,
-            vote.participant_id,
+            "Vote cancelled",
+            extra={
+                "vote_id": str(vote.id),
+                "actor_id": str(current_user.id),
+                "participant_id": str(vote.participant_id),
+            },
         )

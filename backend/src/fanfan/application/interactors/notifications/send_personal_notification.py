@@ -62,7 +62,9 @@ class SendPersonalNotification:
         )
 
         logger.info(
-            "Org %s sent message to user %s",
-            current_user.id,
-            user.id,
+            "Personal notification sent",
+            extra={
+                "actor_id": str(current_user.id),
+                "target_user_id": str(user.id),
+            },
         )

@@ -62,7 +62,6 @@ class UpdateSettings:
         await self.settings_gateway.save(settings)
         await self.uow.commit()
         logger.info(
-            "Festival settings updated by user %s",
-            current_user.id,
-            extra={"settings": settings},
+            "Festival settings updated",
+            extra={"actor_id": str(current_user.id)},
         )

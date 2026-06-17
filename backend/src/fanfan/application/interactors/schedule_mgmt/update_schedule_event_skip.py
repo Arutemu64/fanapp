@@ -109,10 +109,12 @@ class UpdateScheduleEventSkip:
                 event = await self.schedule_gateway.get_by_id(data.event_id)
 
                 logger.info(
-                    "Event %s was skipped by user %s",
-                    data.event_id,
-                    current_user.id,
-                    extra={"skipped_event": event},
+                    "Schedule event skip updated",
+                    extra={
+                        "event_id": str(data.event_id),
+                        "is_skipped": data.is_skipped,
+                        "actor_id": str(current_user.id),
+                    },
                 )
                 return
         except RateLimitCooldown as e:

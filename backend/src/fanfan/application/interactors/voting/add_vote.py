@@ -67,8 +67,11 @@ class AddVote:
         await self.uow.commit()
 
         logger.info(
-            "User %s voted for participant %s",
-            current_user.id,
-            data.participant_id,
+            "Vote added",
+            extra={
+                "vote_id": str(vote.id),
+                "actor_id": str(current_user.id),
+                "participant_id": str(data.participant_id),
+            },
         )
         return AddVoteOutput(vote_id=vote.id)

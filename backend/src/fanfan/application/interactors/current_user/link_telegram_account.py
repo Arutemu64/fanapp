@@ -61,8 +61,6 @@ class LinkTelegramAccount:
         )
         await self.uow.commit()
         logger.info(
-            "Telegram %s was linked to user %s",
-            provider_id,
-            current_user.id,
-            extra={"user_id": str(current_user.id), "provider_id": provider_id},
+            "Telegram account linked",
+            extra={"actor_id": str(current_user.id), "provider_id": provider_id},
         )

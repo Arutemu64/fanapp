@@ -42,6 +42,9 @@ class DeleteSubscription:
         await self.subscription_gateway.delete(subscription)
         await self.uow.commit()
         logger.info(
-            "Subscription %s deleted",
-            subscription.id,
+            "Subscription deleted",
+            extra={
+                "subscription_id": str(subscription.id),
+                "actor_id": str(current_user.id),
+            },
         )

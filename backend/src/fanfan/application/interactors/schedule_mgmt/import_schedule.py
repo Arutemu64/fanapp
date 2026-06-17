@@ -70,8 +70,11 @@ class ImportSchedule:
                 await self.schedule_gateway.save(existing_event)
                 orphaned_events.remove(existing_event)
                 logger.info(
-                    "Existing event was updated",
-                    extra={"existing_event": existing_event},
+                    "Schedule event updated during import",
+                    extra={
+                        "event_id": str(existing_event.id),
+                        "actor_id": str(current_user.id),
+                    },
                 )
             else:
                 # Create new event
@@ -87,9 +90,21 @@ class ImportSchedule:
                     is_skipped=False,
                 )
                 await self.schedule_gateway.add(new_event)
-                logger.info("New event was added", extra={"new_event": new_event})
+                logger.info(
+                    "Schedule event added during import",
+                    extra={
+                        "event_id": str(new_event.id),
+                        "actor_id": str(current_user.id),
+                    },
+                )
             order += ORDER_STEP
         for e in orphaned_events:
             await self.schedule_gateway.delete(e)
-            logger.info("Orphaned event was deleted", extra={"deleted_event": e})
+            logger.info(
+                "Orphaned schedule event deleted during import",
+                extra={
+                    "event_id": str(e.id),
+                    "actor_id": str(current_user.id),
+                },
+            )
         await self.uow.commit()
