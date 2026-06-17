@@ -42,7 +42,7 @@
 	// Map change types to Russian labels
 	const changeTypeLabels: Record<ScheduleChangeType, string> = {
 		set_as_current: 'Установлено текущим',
-		moved: 'Перемещено',
+		moved: 'Перенесено',
 		skipped: 'Пропущено',
 		unskipped: 'Восстановлено'
 	};
@@ -76,7 +76,7 @@
 			<div class="space-y-1 text-sm">
 				{#if change.changed_event}
 					<p>
-						<span class="font-bold text-gray-700 dark:text-gray-300">Событие:</span>
+						<span class="font-bold text-gray-700 dark:text-gray-300">Выступление:</span>
 						<span class="text-gray-900 dark:text-white">
 							{formatEvent(change.changed_event)}
 						</span>
@@ -86,7 +86,7 @@
 				{#if change.argument_event}
 					<p>
 						<span class="font-bold text-gray-700 dark:text-gray-300">
-							{change.type === 'moved' ? 'После:' : 'Связанное событие:'}
+							{change.type === 'moved' ? 'После:' : 'Связанное выступление:'}
 						</span>
 						<span class="text-gray-900 dark:text-white">
 							{formatEvent(change.argument_event)}

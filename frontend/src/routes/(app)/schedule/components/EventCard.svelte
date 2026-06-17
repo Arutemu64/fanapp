@@ -46,6 +46,20 @@
 	// Pad the public number to three digits, e.g. 7 → "007".
 	let eventNumber = $derived(event.number.toString().padStart(3, '0'));
 
+	// Optimistic skip flag: the row reflects the toggle instantly instead of waiting
+	// for the schedule_updated SSE reload (flaky con wifi can delay it for seconds).
+	// null = trust the server-loaded prop; otherwise show our pending guess.
+	let optimisticSkipped = $state<boolean | null>(null);
+	let isSkipped = $derived(optimisticSkipped ?? event.is_skipped);
+
+	// Once the reloaded schedule confirms our guess, drop the override so external
+	// changes (another staffer skipping the same event) flow through again.
+	$effect(() => {
+		if (optimisticSkipped !== null && event.is_skipped === optimisticSkipped) {
+			optimisticSkipped = null;
+		}
+	});
+
 	// How far ahead this event is compared to the one on stage now.
 	// Returns null if either value is missing or the event has already passed.
 	function aheadOf(value: number | null, currentValue: number | null): number | null {
@@ -72,7 +86,7 @@
 
 		// Instant ack: the inline state only updates after the schedule_updated
 		// SSE reload round-trips, so a toast confirms the action immediately.
-		toastService.add('Событие отмечено как текущее', 'success');
+		toastService.add('Выступление отмечено как текущее', 'success');
 		dropdownOpen = false;
 	}
 
@@ -90,7 +104,10 @@
 	}
 
 	async function handleToggleSkip() {
-		const newIsSkipped = !event.is_skipped;
+		const newIsSkipped = !isSkipped;
+		// Flip the row immediately; revert below if the request fails.
+		optimisticSkipped = newIsSkipped;
+		dropdownOpen = false;
 
 		const { error, response } = newIsSkipped
 			? await client.PATCH('/schedule/{event_id}/skip', {
@@ -101,21 +118,20 @@
 				});
 
 		if (error || !response.ok) {
+			optimisticSkipped = null;
 			toastService.error(error);
-			dropdownOpen = false;
 			return;
 		}
 
-		dropdownOpen = false;
 		const toastMessage = newIsSkipped
-			? 'Событие помечено как пропущенное'
-			: 'Событие возвращено в расписание';
+			? 'Выступление помечено как пропущенное'
+			: 'Выступление возвращено в расписание';
 		toastService.add(toastMessage, 'success');
 	}
 
 	function handleSubscribe() {
 		if (!user) {
-			toastService.add('Необходимо войти в аккаунт для подписки', 'error');
+			toastService.add('Войди в аккаунт, чтобы подписаться', 'error');
 			dropdownOpen = false;
 			return;
 		}
@@ -129,10 +145,9 @@
 
 <div
 	class={[
-		'flex items-start gap-3 border-l-4 border-transparent px-3 py-3 transition-colors sm:px-4',
-		event.is_current &&
-			'border-green-500 bg-gradient-to-r from-green-100 to-green-50/40 dark:from-green-900/40 dark:to-green-900/10',
-		event.is_skipped && !event.is_current && 'bg-gray-50/70 dark:bg-gray-900/40'
+		'flex items-start gap-3 px-3 py-3 transition-colors sm:px-4',
+		event.is_current && 'bg-green-50 dark:bg-green-900/20',
+		isSkipped && !event.is_current && 'bg-gray-50/70 dark:bg-gray-900/40'
 	]}
 >
 	<!-- Keep the public number visible so the list stays easy to scan on mobile. -->
@@ -162,76 +177,77 @@
 				<h3
 					class={[
 						'text-sm leading-snug font-semibold text-gray-900 sm:text-base dark:text-white',
-						event.is_skipped && 'line-through'
+						isSkipped && 'line-through'
 					]}
 				>
 					{event.title}
 				</h3>
 
-				<div class="mt-1.5 flex flex-wrap items-center gap-1.5">
-					{#if event.is_current}
-						<Badge
-							color="green"
-							border
-							class="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium"
-						>
-							<!-- Pulsing live dot reads as "on stage now" at a glance. animate-ping is muted under reduced-motion via global CSS. -->
-							<span class="relative flex h-2 w-2" aria-hidden="true">
-								<span
-									class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75"
-								></span>
-								<span class="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
-							</span>
-							Сейчас
-						</Badge>
-					{/if}
+				<!-- Colored state badges get their own row so they read as a distinct tier above the quiet meta, and wrap predictably on narrow screens. Rendered only when a state is present, so the common no-badge row stays single-line. -->
+				{#if event.is_current || isSkipped}
+					<div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+						{#if event.is_current}
+							<Badge
+								color="green"
+								border
+								class="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium"
+							>
+								<!-- Pulsing live dot reads as "on stage now" at a glance. animate-ping is muted under reduced-motion via global CSS. -->
+								<span class="relative flex h-2 w-2" aria-hidden="true">
+									<span
+										class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75"
+									></span>
+									<span class="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+								</span>
+								Сейчас
+							</Badge>
+						{/if}
 
-					{#if event.is_skipped}
-						<Badge
-							color="red"
-							border
-							class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium"
-						>
-							<BanOutline class="h-3.5 w-3.5" />
-							Пропущено
-						</Badge>
-					{/if}
+						{#if isSkipped}
+							<Badge
+								color="red"
+								border
+								class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium"
+							>
+								<BanOutline class="h-3.5 w-3.5" />
+								Пропущено
+							</Badge>
+						{/if}
+					</div>
+				{/if}
 
-					<Badge
-						color="gray"
-						border
-						class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium"
+				<!-- Quiet meta row: duration, countdown, subscription — muted text, no colored chip. -->
+				<div class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+					<span
+						class="inline-flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400"
 					>
 						<ClockOutline class="h-3.5 w-3.5" />
 						{formatDuration(event.duration)}
-					</Badge>
+					</span>
 
 					{#if timeUntil !== null && timeUntil !== 0}
-						<Badge
-							color="yellow"
-							border
-							class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium"
+						<span
+							class="inline-flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400"
 						>
 							<HourglassOutline class="h-3.5 w-3.5" />
 							{formatUntil(queueUntil ?? 0, timeUntil)}
-						</Badge>
+						</span>
 					{/if}
 
 					{#if event.user_subscription}
-						<Badge
-							color="blue"
-							border
-							class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium"
+						<!-- Subscription threshold is personal meta, not event state: muted text like duration. The right-side bell carries the colored "subscribed" marker. -->
+						<span
+							class="inline-flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400"
 						>
 							<BellActiveSolid class="h-3.5 w-3.5" />
-							За {event.user_subscription.counter}
+							Напомним за {event.user_subscription.counter}
 							{pluralize(
 								event.user_subscription.counter,
 								'выступление',
 								'выступления',
 								'выступлений'
 							)}
-						</Badge>
+						</span>
 					{/if}
 				</div>
 			</div>
@@ -301,7 +317,7 @@
 
 	<DropdownItem onclick={handleToggleSkip}>
 		<span class="flex items-center gap-2">
-			{#if event.is_skipped}
+			{#if isSkipped}
 				<EyeOutline class="h-4 w-4" />
 				Вернуть
 			{:else}

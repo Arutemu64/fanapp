@@ -8,7 +8,7 @@
 	import type { CurrentUserDTO } from '$lib/types/user';
 	import type { PageProps } from './$types';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
-	import { ChevronUpOutline, PlaySolid } from 'flowbite-svelte-icons';
+	import { ChevronUpOutline, CloseOutline, PlaySolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 
@@ -100,11 +100,18 @@
 
 	let resultsSummary = $derived(
 		filtered.length === schedule.length
-			? `Всего событий: ${schedule.length}`
+			? `Всего выступлений: ${schedule.length}`
 			: `Показано ${filtered.length} из ${schedule.length}`
 	);
 
 	let hasActiveFilters = $derived(showOnlySubscribed || searchQuery.trim().length > 0);
+
+	// Recovery for the no-results state: clear search + subscription filter in one tap
+	// so a user mid-event isn't stuck hunting back to two separate controls.
+	function resetFilters() {
+		searchQuery = '';
+		showOnlySubscribed = false;
+	}
 
 	let pageRoot: HTMLDivElement | null = null;
 	let showScrollTopButton = $state(false);
@@ -184,7 +191,7 @@
 
 	<!-- Keep filters compact and static so the schedule itself can use sticky headers. -->
 	<div
-		class="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+		class="rounded-2xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
 	>
 		<div class="flex flex-col gap-3">
 			<Search
@@ -194,7 +201,7 @@
 				}}
 				name="schedule_search"
 				aria-label="Поиск по расписанию"
-				placeholder="Поиск по номеру, выступлению, блоку или номинации…"
+				placeholder="Поиск по номеру или названию…"
 				autocomplete="off"
 				spellcheck={false}
 				clearable
@@ -207,11 +214,10 @@
 					<span class="text-sm font-medium text-gray-700 dark:text-gray-200">Только подписки</span>
 				</Toggle>
 
-				<p class="text-xs text-gray-500 dark:text-gray-400">
+				<!-- Announce filter result changes to screen readers, which otherwise get no
+				     feedback that the list shrank/grew. -->
+				<p class="text-xs text-gray-500 dark:text-gray-400" aria-live="polite" role="status">
 					{resultsSummary}
-					{#if hasActiveFilters}
-						<span class="ml-1">• фильтр включён</span>
-					{/if}
 				</p>
 			</div>
 		</div>
@@ -221,13 +227,13 @@
 		{#each groupedSchedule as block, blockIndex (`${block.title}-${blockIndex}`)}
 			<section class="space-y-2">
 				<!-- Keep the active block visible while the user scrolls through dense rows. -->
-				<!-- Watermelon-pink left bar + display font make the block the branded spine of the list. -->
+				<!-- Inter (not display): block headers are repeated structural data, and DESIGN reserves Unbounded for rare identity moments. Size/weight + filled count chip carry the hierarchy; no accent stripe. -->
 				<div class="sticky top-0 z-20">
 					<div
-						class="flex min-h-11 items-center justify-between gap-3 overflow-hidden rounded-xl border border-l-4 border-gray-200 border-l-primary-500 bg-white/95 px-3 py-2 shadow-sm backdrop-blur dark:border-gray-700 dark:border-l-primary-500 dark:bg-gray-900/95"
+						class="flex min-h-11 items-center justify-between gap-3 overflow-hidden rounded-xl border border-gray-200 bg-white/95 px-3 py-2 shadow-sm backdrop-blur dark:border-gray-700 dark:bg-gray-900/95"
 					>
 						<h2
-							class="truncate font-display text-sm font-semibold tracking-tight text-gray-900 sm:text-base dark:text-white"
+							class="truncate text-sm font-semibold tracking-tight text-gray-900 sm:text-base dark:text-white"
 						>
 							{block.title}
 						</h2>
@@ -242,7 +248,7 @@
 				{#each block.nominations as nomination, nominationIndex (`${block.title}-${nomination.title}-${nominationIndex}`)}
 					<!-- Clip the card edges without creating a new scroll container, so sticky headers keep working. -->
 					<div
-						class="relative overflow-clip rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800/80"
+						class="relative overflow-clip rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800/80"
 					>
 						<!-- Stick the nomination header below the block header for better context. -->
 						<div
@@ -250,14 +256,9 @@
 						>
 							<div class="flex items-center justify-between gap-3">
 								<h3
-									class="flex min-w-0 items-center gap-2 text-xs font-semibold tracking-wide text-gray-700 uppercase sm:text-sm dark:text-gray-300"
+									class="min-w-0 truncate text-xs font-semibold text-gray-700 sm:text-sm dark:text-gray-300"
 								>
-									<!-- Cyan marker sets nominations one tier below the pink block spine. -->
-									<span
-										class="h-1.5 w-1.5 shrink-0 rounded-full bg-secondary-400"
-										aria-hidden="true"
-									></span>
-									<span class="truncate">{nomination.title}</span>
+									{nomination.title}
 								</h3>
 								<span class="shrink-0 text-xs text-gray-500 tabular-nums dark:text-gray-400">
 									{nomination.eventCount}
@@ -277,21 +278,25 @@
 			</section>
 		{:else}
 			<div
-				class="relative overflow-hidden rounded-2xl border border-dashed border-gray-300 bg-white px-4 py-10 text-center dark:border-gray-700 dark:bg-gray-800 sm:py-14"
+				class="rounded-2xl border border-dashed border-gray-300 bg-white px-4 py-10 text-center dark:border-gray-700 dark:bg-gray-800 sm:py-14"
 			>
-				<!-- Atmospheric watermelon glow ties the empty state back to the hero. -->
-				<div
-					aria-hidden="true"
-					class="pointer-events-none absolute -top-16 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-primary-200/40 blur-3xl dark:bg-primary-900/20"
-				></div>
-				<p class="relative font-display text-base font-bold text-gray-900 dark:text-white">
+				<p class="text-base font-bold text-gray-900 dark:text-white">
 					{hasActiveFilters ? 'Ничего не нашлось' : 'Расписание пока пусто'}
 				</p>
-				<p class="relative mt-1 text-sm text-gray-500 dark:text-gray-400">
+				<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
 					{hasActiveFilters
-						? 'Попробуйте изменить поиск или фильтры'
+						? 'Попробуй изменить поиск или фильтры'
 						: 'Программа появится ближе к фестивалю'}
 				</p>
+
+				<!-- No-results recovery: one tap clears every active filter. Hidden on the
+				     first-use empty state, where there's nothing to reset. -->
+				{#if hasActiveFilters}
+					<Button color="light" size="sm" class="mt-4" onclick={resetFilters}>
+						<CloseOutline class="me-1.5 h-4 w-4" />
+						Сбросить фильтры
+					</Button>
+				{/if}
 			</div>
 		{/each}
 	</div>
@@ -321,7 +326,7 @@
 						pill
 						class="pointer-events-auto h-12 w-12 rounded-full px-0 shadow-lg shadow-green-500/15 lg:w-32 lg:px-3"
 						onclick={scrollToCurrentEvent}
-						aria-label="Перейти к текущему событию"
+						aria-label="Перейти к текущему выступлению"
 					>
 						<PlaySolid class="h-4 w-4 shrink-0" />
 						<span class="sr-only lg:not-sr-only lg:ml-2">Текущее</span>
