@@ -20,6 +20,10 @@
 
 	let now = $state(Date.now());
 
+	// Key art can fail to load on flaky con-venue wifi; fall back to a branded bed
+	// instead of the browser's broken-image icon.
+	let imageFailed = $state(false);
+
 	onMount(() => {
 		const interval = setInterval(() => {
 			now = Date.now();
@@ -76,16 +80,39 @@
 	></div>
 
 	<div class="relative grid lg:grid-cols-2 lg:items-stretch">
-		<!-- Ключевой арт: сверху на мобильных (full-bleed), справа на десктопе (full-bleed) -->
-		<div class="aspect-[16/9] w-full sm:aspect-[4/3] lg:order-2 lg:aspect-auto">
-			<img
-				src="/main.webp"
-				alt="Участники фестиваля ФАН ФАН на сцене"
-				width="1500"
-				height="844"
-				loading="eager"
-				class="h-full w-full object-cover"
-			/>
+		<!-- Ключевой арт: сверху на мобильных (full-bleed), справа на десктопе (full-bleed).
+			 Брендовая подложка держит блок осмысленным, пока тяжёлая картинка
+			 догружается на слабом фестивальном Wi-Fi, и заменяет «битую» иконку,
+			 если арт не загрузился вовсе. -->
+		<div
+			class="dark:from-primary-950/40 dark:to-secondary-950/40 relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-primary-100 via-primary-50 to-secondary-100 sm:aspect-[4/3] lg:order-2 lg:aspect-auto dark:via-gray-900"
+		>
+			{#if imageFailed}
+				<!-- Keep the alt available to screen readers even when the image is gone -->
+				<span class="sr-only">Участники фестиваля ФАН ФАН на сцене</span>
+				<div
+					aria-hidden="true"
+					class="absolute inset-0 flex items-center justify-center px-4 text-center"
+				>
+					<span
+						class="font-display text-2xl font-bold text-primary-600/70 sm:text-3xl dark:text-primary-300/60"
+					>
+						ФАН ФАН
+					</span>
+				</div>
+			{:else}
+				<img
+					src="/main.webp"
+					alt="Участники фестиваля ФАН ФАН на сцене"
+					width="1500"
+					height="844"
+					loading="eager"
+					decoding="async"
+					fetchpriority="high"
+					onerror={() => (imageFailed = true)}
+					class="h-full w-full object-cover"
+				/>
+			{/if}
 		</div>
 
 		<!-- Текстовый блок -->
