@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { Avatar, Badge, Button } from 'flowbite-svelte';
-	import { PenSolid, UserCircleSolid } from 'flowbite-svelte-icons';
+	import { Avatar, Badge, Button, Card } from 'flowbite-svelte';
+	import { PenSolid } from 'flowbite-svelte-icons';
 	import type { CurrentUserDTO } from '$lib/types/user';
 	import { getRoleLabel, getRoleColor } from '$lib/utils/users';
 	import EditProfileModal from './EditProfileModal.svelte';
-	import ProfileCardShell from './ProfileCardShell.svelte';
 
 	interface Props {
 		user: CurrentUserDTO;
@@ -35,19 +34,22 @@
 	let editProfileModalOpen = $state(false);
 </script>
 
-<ProfileCardShell title="Основные данные" description="Всё о тебе.">
-	{#snippet icon()}
-		<UserCircleSolid class="h-5 w-5" />
-	{/snippet}
+<!--
+	Identity banner. Deliberately NOT a ProfileCardShell: it skips the icon-chip header the
+	settings cards share and leads with the avatar + name, so it reads as "who you are" and
+	anchors the page above the settings group rather than looking like a fifth settings panel.
+-->
+<Card
+	class="w-full max-w-none rounded-2xl border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+>
+	<div class="flex items-center gap-4 p-5 sm:gap-5 sm:p-6">
+		<Avatar size="xl" class="shrink-0">{avatarInitials}</Avatar>
 
-	<div class="flex min-w-0 items-center gap-4">
-		<Avatar size="lg">{avatarInitials}</Avatar>
-
-		<div class="min-w-0">
+		<div class="min-w-0 flex-1">
 			<div class="flex items-center gap-2">
-				<h4 class="truncate text-lg font-semibold text-gray-900 dark:text-white">
+				<h2 class="truncate text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
 					@{user.username}
-				</h4>
+				</h2>
 				<Button
 					color="alternative"
 					size="sm"
@@ -66,6 +68,6 @@
 			</div>
 		</div>
 	</div>
-</ProfileCardShell>
+</Card>
 
 <EditProfileModal {user} bind:open={editProfileModalOpen} {onUpdate} />

@@ -55,17 +55,17 @@
 	<title>Профиль · ФАН ФАН</title>
 </svelte:head>
 
-<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-4 sm:gap-5">
 	{#if showStaleNotice}
 		<StaleDataNotice
 			message="Нет связи. Показан сохранённый профиль — обновится при подключении."
 		/>
 	{/if}
 
-	<!-- Basic User Info Card -->
+	<!-- Identity banner anchors the page; the settings group sits below it. -->
 	<BasicUserInfoCard {user} onUpdate={refreshProfile} />
 
-	<div class="grid items-start gap-4 sm:grid-cols-2">
+	<div class="grid items-start gap-4 sm:grid-cols-2 sm:gap-5">
 		<div class="flex flex-col gap-4">
 			<!-- Ticket Link Card -->
 			<TicketLinkCard {user} onTicketLinked={refreshProfile} />

@@ -12,7 +12,11 @@
 	let { title, description, icon, children }: Props = $props();
 </script>
 
-<Card class="w-full max-w-none rounded-2xl bg-white shadow-sm dark:bg-gray-800">
+<!-- Border + tonal step separate the card from the recessed page bg; no resting shadow
+	(shadow is reserved for genuinely floating layers, per the Border-Before-Shadow rule). -->
+<Card
+	class="w-full max-w-none rounded-2xl border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+>
 	<div class="p-5 sm:p-6">
 		<div class="flex flex-col gap-4">
 			<!-- Shared header keeps all profile cards visually aligned. -->
