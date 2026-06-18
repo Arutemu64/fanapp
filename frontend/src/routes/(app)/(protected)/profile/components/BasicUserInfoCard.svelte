@@ -42,32 +42,34 @@
 <Card
 	class="w-full max-w-none rounded-2xl border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
 >
-	<div class="flex items-center gap-4 p-5 sm:gap-5 sm:p-6">
+	<!--
+		Mobile: centered vertical stack (avatar / name / role / edit) so the full username gets
+		the card's width and never clips. sm+: the horizontal banner — avatar left, name + role
+		in the middle, edit action on the right.
+	-->
+	<div
+		class="flex flex-col items-center gap-3 p-5 text-center sm:flex-row sm:gap-5 sm:p-6 sm:text-left"
+	>
 		<Avatar size="xl" class="shrink-0">{avatarInitials}</Avatar>
 
-		<div class="min-w-0 flex-1">
-			<div class="flex items-start gap-2">
-				<!-- Wrap (don't truncate) so the full handle stays visible; the 25-char cap fits in 2 lines. -->
-				<h2 class="min-w-0 text-xl font-bold break-words text-gray-900 sm:text-2xl dark:text-white">
-					@{user.username}
-				</h2>
-				<Button
-					color="alternative"
-					size="sm"
-					class="min-h-11 min-w-11 shrink-0 !p-2"
-					aria-label="Редактировать псевдоним"
-					onclick={() => (editProfileModalOpen = true)}
-				>
-					<PenSolid class="h-4 w-4" />
-				</Button>
-			</div>
-
-			<div class="mt-2">
-				<Badge color={getRoleColor(user.role)} border class="text-xs">
-					{getRoleLabel(user.role)}
-				</Badge>
-			</div>
+		<div class="flex min-w-0 flex-col items-center gap-2 sm:flex-1 sm:items-start">
+			<h2 class="min-w-0 text-xl font-bold break-words text-gray-900 sm:text-2xl dark:text-white">
+				@{user.username}
+			</h2>
+			<Badge color={getRoleColor(user.role)} border class="text-xs">
+				{getRoleLabel(user.role)}
+			</Badge>
 		</div>
+
+		<Button
+			color="alternative"
+			size="sm"
+			class="min-h-11 shrink-0"
+			onclick={() => (editProfileModalOpen = true)}
+		>
+			<PenSolid class="me-2 h-4 w-4" />
+			Редактировать
+		</Button>
 	</div>
 </Card>
 
