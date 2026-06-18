@@ -25,7 +25,7 @@
 
 	let filtered = $derived(
 		participants.filter((p: VotingParticipant) => {
-			const q = searchQuery.toLowerCase();
+			const q = searchQuery.trim().toLowerCase();
 			return (
 				p.title.toLowerCase().includes(q) || p.voting_number?.toString().toLowerCase().includes(q)
 			);
@@ -69,7 +69,7 @@
 						<CheckCircleSolid class="h-3 w-3 sm:h-4 sm:w-4" />
 						Голос в этой номинации уже учтён
 					</span>
-				{:else}
+				{:else if canVote}
 					Выбери участника, чтобы отдать голос
 				{/if}
 			</p>
@@ -93,24 +93,20 @@
 
 <VotingStatusAlert votingState={votingStatus} class="mb-4" />
 
-<!-- Search controls: single calm bordered row, full width to match the grid below. -->
-<div
-	class="mb-4 rounded-2xl border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800"
->
-	<Search
-		bind:value={searchQuery}
-		clearableOnClick={() => {
-			searchQuery = '';
-		}}
-		name="participant_search"
-		aria-label="Поиск участников в номинации"
-		placeholder="Поиск по имени или номеру…"
-		autocomplete="off"
-		spellcheck={false}
-		clearable
-		size="sm"
-	/>
-</div>
+<Search
+	bind:value={searchQuery}
+	clearableOnClick={() => {
+		searchQuery = '';
+	}}
+	name="participant_search"
+	aria-label="Поиск участников в номинации"
+	placeholder="Поиск по имени или номеру…"
+	autocomplete="off"
+	spellcheck={false}
+	clearable
+	size="sm"
+	class="mb-4"
+/>
 
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
 	{#each filtered as participant (participant.id)}
@@ -122,6 +118,12 @@
 					class="mx-auto h-10 w-10 text-gray-300 sm:h-12 sm:w-12 dark:text-gray-600"
 				/>
 				<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Участники не найдены</p>
+				<button
+					onclick={() => (searchQuery = '')}
+					class="mt-3 text-sm font-medium text-primary-600 hover:underline dark:text-primary-400"
+				>
+					Очистить поиск
+				</button>
 			</Card>
 		</div>
 	{/each}
