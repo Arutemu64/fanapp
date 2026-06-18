@@ -50,7 +50,7 @@
 	<div
 		class="flex flex-col items-center gap-3 p-5 text-center sm:flex-row sm:gap-5 sm:p-6 sm:text-left"
 	>
-		<Avatar size="xl" class="shrink-0">{avatarInitials}</Avatar>
+		<Avatar size="lg" class="shrink-0">{avatarInitials}</Avatar>
 
 		<div class="flex min-w-0 flex-col items-center gap-2 sm:flex-1 sm:items-start">
 			<h2 class="min-w-0 text-xl font-bold break-words text-gray-900 sm:text-2xl dark:text-white">
