@@ -148,13 +148,9 @@
 					</div>
 
 					{#if telegramAccount}
-						<p class="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
-							ID аккаунта:
-							<span class="font-mono text-gray-700 dark:text-gray-200">
-								{telegramAccount.provider_id}
-							</span>
-						</p>
-						<p class="mt-1 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+						<!-- The raw provider id is meaningless to attendees; the badge already says it's
+							connected, so we only explain what the connection does. -->
+						<p class="mt-1.5 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
 							Через Telegram можно быстро входить и получать уведомления от бота.
 						</p>
 					{:else}
