@@ -47,13 +47,13 @@
 
 		<div class="min-w-0 flex-1">
 			<div class="flex items-center gap-2">
-				<h2 class="truncate text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
+				<h2 class="min-w-0 truncate text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
 					@{user.username}
 				</h2>
 				<Button
 					color="alternative"
 					size="sm"
-					class="min-h-9 shrink-0 !p-2"
+					class="min-h-11 min-w-11 shrink-0 !p-2"
 					aria-label="Редактировать псевдоним"
 					onclick={() => (editProfileModalOpen = true)}
 				>
