@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Alert } from 'flowbite-svelte';
-	import { CheckCircleSolid, ExclamationCircleSolid } from 'flowbite-svelte-icons';
+	import { ExclamationCircleSolid } from 'flowbite-svelte-icons';
 	import type { GetVotingStateResult, VotingStatus } from '$lib/types/voting';
 
 	interface Props {
@@ -42,14 +42,10 @@
 	}
 </script>
 
-{#if votingState}
+{#if votingState && votingState.status !== 'open'}
 	<Alert color={getStatusColor(votingState.status)} class={className}>
 		<div class="flex items-center gap-2">
-			{#if votingState.status === 'open'}
-				<CheckCircleSolid class="h-5 w-5" />
-			{:else}
-				<ExclamationCircleSolid class="h-5 w-5" />
-			{/if}
+			<ExclamationCircleSolid class="h-5 w-5" />
 			<span>{getStatusMessage(votingState.status)}</span>
 		</div>
 	</Alert>
