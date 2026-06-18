@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { Avatar, Badge, Button } from 'flowbite-svelte';
-	import { PenSolid, UserCircleSolid } from 'flowbite-svelte-icons';
+	import { Avatar, Badge, Button, Card } from 'flowbite-svelte';
+	import { PenSolid } from 'flowbite-svelte-icons';
 	import type { CurrentUserDTO } from '$lib/types/user';
 	import { getRoleLabel, getRoleColor } from '$lib/utils/users';
 	import EditProfileModal from './EditProfileModal.svelte';
-	import ProfileCardShell from './ProfileCardShell.svelte';
 
 	interface Props {
 		user: CurrentUserDTO;
@@ -35,37 +34,43 @@
 	let editProfileModalOpen = $state(false);
 </script>
 
-<ProfileCardShell title="Основные данные" description="Всё о тебе.">
-	{#snippet icon()}
-		<UserCircleSolid class="h-5 w-5" />
-	{/snippet}
+<!--
+	Identity banner. Deliberately NOT a ProfileCardShell: it skips the icon-chip header the
+	settings cards share and leads with the avatar + name, so it reads as "who you are" and
+	anchors the page above the settings group rather than looking like a fifth settings panel.
+-->
+<Card
+	class="w-full max-w-none rounded-2xl border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+>
+	<!--
+		Mobile: centered vertical stack (avatar / name / role / edit) so the full username gets
+		the card's width and never clips. sm+: the horizontal banner — avatar left, name + role
+		in the middle, edit action on the right.
+	-->
+	<div
+		class="flex flex-col items-center gap-3 p-5 text-center sm:flex-row sm:gap-5 sm:p-6 sm:text-left"
+	>
+		<Avatar size="xl" class="shrink-0">{avatarInitials}</Avatar>
 
-	<div class="flex min-w-0 items-center gap-4">
-		<Avatar size="lg">{avatarInitials}</Avatar>
-
-		<div class="min-w-0">
-			<div class="flex items-center gap-2">
-				<h4 class="truncate text-lg font-semibold text-gray-900 dark:text-white">
-					@{user.username}
-				</h4>
-				<Button
-					color="alternative"
-					size="sm"
-					class="min-h-9 shrink-0 !p-2"
-					aria-label="Редактировать псевдоним"
-					onclick={() => (editProfileModalOpen = true)}
-				>
-					<PenSolid class="h-4 w-4" />
-				</Button>
-			</div>
-
-			<div class="mt-2">
-				<Badge color={getRoleColor(user.role)} border class="text-xs">
-					{getRoleLabel(user.role)}
-				</Badge>
-			</div>
+		<div class="flex min-w-0 flex-col items-center gap-2 sm:flex-1 sm:items-start">
+			<h2 class="min-w-0 text-xl font-bold break-words text-gray-900 sm:text-2xl dark:text-white">
+				@{user.username}
+			</h2>
+			<Badge color={getRoleColor(user.role)} border class="text-xs">
+				{getRoleLabel(user.role)}
+			</Badge>
 		</div>
+
+		<Button
+			color="alternative"
+			size="sm"
+			class="min-h-11 shrink-0"
+			onclick={() => (editProfileModalOpen = true)}
+		>
+			<PenSolid class="me-2 h-4 w-4" />
+			Редактировать
+		</Button>
 	</div>
-</ProfileCardShell>
+</Card>
 
 <EditProfileModal {user} bind:open={editProfileModalOpen} {onUpdate} />

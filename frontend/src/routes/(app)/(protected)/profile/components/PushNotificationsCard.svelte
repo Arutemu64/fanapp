@@ -267,10 +267,8 @@
 	{/snippet}
 
 	<div class="rounded-lg border border-gray-200 dark:border-gray-700">
-		<div class="border-b border-gray-200 px-3 py-2 sm:px-4 dark:border-gray-700">
-			<span class="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
-				Каналы
-			</span>
+		<div class="border-b border-gray-200 px-3 py-2.5 sm:px-4 dark:border-gray-700">
+			<h4 class="text-sm font-semibold text-gray-900 dark:text-white">Каналы</h4>
 		</div>
 
 		<div class="flex items-start justify-between gap-3 p-3 sm:p-4">
@@ -316,10 +314,8 @@
 	</div>
 
 	<div class="rounded-lg border border-gray-200 dark:border-gray-700">
-		<div class="border-b border-gray-200 px-3 py-2 sm:px-4 dark:border-gray-700">
-			<span class="text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
-				Типы уведомлений
-			</span>
+		<div class="border-b border-gray-200 px-3 py-2.5 sm:px-4 dark:border-gray-700">
+			<h4 class="text-sm font-semibold text-gray-900 dark:text-white">Типы уведомлений</h4>
 		</div>
 
 		<div class="p-3 sm:p-4">
