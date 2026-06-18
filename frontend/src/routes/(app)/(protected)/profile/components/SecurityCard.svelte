@@ -28,6 +28,8 @@
 	let changePasswordModalOpen = $state(false);
 	let changeEmailModalOpen = $state(false);
 	let isUnlinkingTelegram = $state(false);
+	// Gate the destructive unlink behind a deliberate second tap (inline, no modal).
+	let isConfirmingUnlink = $state(false);
 	const toastService = getToastService();
 	let emailStatusColor = $derived<'green' | 'gray'>(user.email ? 'green' : 'gray');
 	let emailStatusLabel = $derived(user.email ? 'Подтверждена' : 'Не добавлена');
@@ -56,6 +58,8 @@
 			toastService.error(err);
 		} finally {
 			isUnlinkingTelegram = false;
+			// Drop back to the resting state whether it succeeded or failed.
+			isConfirmingUnlink = false;
 		}
 	}
 </script>
@@ -162,22 +166,50 @@
 
 				<div class="flex w-full flex-col gap-2 sm:w-auto">
 					{#if telegramAccount}
-						<!-- Unlink is blocked without email so the user does not lose a recovery path. -->
-						<Button
-							color="red"
-							size="sm"
-							class="min-h-11 w-full sm:w-auto"
-							disabled={isUnlinkingTelegram || !user.email}
-							onclick={handleTelegramUnlink}
-						>
-							{#if isUnlinkingTelegram}
-								<Spinner class="me-2 h-4 w-4" />
-								Отвязка…
-							{:else}
+						{#if isConfirmingUnlink}
+							<!-- Inline confirm: a destructive account change should cost a deliberate second tap. -->
+							<p class="text-sm font-medium text-gray-900 sm:text-right dark:text-white">
+								Отвязать Telegram?
+							</p>
+							<div class="flex gap-2">
+								<Button
+									color="red"
+									size="sm"
+									class="min-h-11 flex-1 sm:flex-initial"
+									disabled={isUnlinkingTelegram || !user.email}
+									onclick={handleTelegramUnlink}
+								>
+									{#if isUnlinkingTelegram}
+										<Spinner class="me-2 h-4 w-4" />
+										Отвязка…
+									{:else}
+										<TrashBinOutline class="me-2 h-4 w-4" />
+										Отвязать
+									{/if}
+								</Button>
+								<Button
+									color="alternative"
+									size="sm"
+									class="min-h-11 flex-1 sm:flex-initial"
+									disabled={isUnlinkingTelegram}
+									onclick={() => (isConfirmingUnlink = false)}
+								>
+									Отмена
+								</Button>
+							</div>
+						{:else}
+							<!-- Unlink is blocked without email so the user does not lose a recovery path. -->
+							<Button
+								color="red"
+								size="sm"
+								class="min-h-11 w-full sm:w-auto"
+								disabled={!user.email}
+								onclick={() => (isConfirmingUnlink = true)}
+							>
 								<TrashBinOutline class="me-2 h-4 w-4" />
 								Отвязать
-							{/if}
-						</Button>
+							</Button>
+						{/if}
 					{:else}
 						<!-- Use the configured API base so linking works in every deployment setup. -->
 						<Button
