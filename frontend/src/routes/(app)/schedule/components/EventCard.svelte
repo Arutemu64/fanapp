@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { Badge, Dropdown, DropdownItem } from 'flowbite-svelte';
+	import { Badge } from 'flowbite-svelte';
 	import {
 		ClockOutline,
 		HourglassOutline,
 		BellActiveSolid,
-		DotsVerticalOutline,
 		PlayOutline,
 		BellActiveOutline,
 		ShuffleOutline,
@@ -21,6 +20,7 @@
 	import MoveEventModal from './MoveEventModal.svelte';
 	import SubscribeModal from './SubscribeModal.svelte';
 	import UnsubscribeModal from './UnsubscribeModal.svelte';
+	import ConfirmActionModal from './ConfirmActionModal.svelte';
 
 	const client = createApiClient();
 
@@ -38,11 +38,18 @@
 	let subscribeModal = $state(false);
 	let unsubscribeModal = $state(false);
 
-	// Dropdown state
-	let dropdownOpen = $state(false);
+	// Confirmation dialog for management actions. Each one broadcasts an
+	// irreversible push, so the action only runs after the staffer confirms.
+	type ConfirmConfig = {
+		title: string;
+		message: string;
+		confirmLabel: string;
+		color: 'primary' | 'red';
+		run: () => void;
+	};
+	let confirmOpen = $state(false);
+	let confirmConfig = $state<ConfirmConfig | null>(null);
 
-	// Unique ID for this card's dropdown trigger
-	let dropdownId = $derived(`event-menu-${event.id}`);
 	// Pad the public number to three digits, e.g. 7 → "007".
 	let eventNumber = $derived(event.number.toString().padStart(3, '0'));
 
@@ -80,14 +87,12 @@
 
 		if (error || !response.ok) {
 			toastService.error(error);
-			dropdownOpen = false;
 			return;
 		}
 
 		// Instant ack: the inline state only updates after the schedule_updated
 		// SSE reload round-trips, so a toast confirms the action immediately.
 		toastService.add('Выступление отмечено как текущее', 'success');
-		dropdownOpen = false;
 	}
 
 	async function handleUnmarkCurrent() {
@@ -95,19 +100,16 @@
 
 		if (error || !response.ok) {
 			toastService.error(error);
-			dropdownOpen = false;
 			return;
 		}
 
 		toastService.add('Отметка снята', 'success');
-		dropdownOpen = false;
 	}
 
 	async function handleToggleSkip() {
 		const newIsSkipped = !isSkipped;
 		// Flip the row immediately; revert below if the request fails.
 		optimisticSkipped = newIsSkipped;
-		dropdownOpen = false;
 
 		const { error, response } = newIsSkipped
 			? await client.PATCH('/schedule/{event_id}/skip', {
@@ -132,7 +134,6 @@
 	function handleSubscribe() {
 		if (!user) {
 			toastService.add('Войди в аккаунт, чтобы подписаться', 'error');
-			dropdownOpen = false;
 			return;
 		}
 		subscribeModal = true;
@@ -140,6 +141,46 @@
 
 	function handleUnsubscribe() {
 		unsubscribeModal = true;
+	}
+
+	// Open the confirm dialog for marking / unmarking the current event.
+	function askToggleCurrent() {
+		confirmConfig = event.is_current
+			? {
+					title: 'Снять отметку',
+					message: 'Снять отметку текущего выступления?',
+					confirmLabel: 'Снять',
+					color: 'primary',
+					run: handleUnmarkCurrent
+				}
+			: {
+					title: 'Отметить текущим',
+					message: `Отметить «${event.title}» как текущее выступление?`,
+					confirmLabel: 'Отметить',
+					color: 'primary',
+					run: handleMarkCurrent
+				};
+		confirmOpen = true;
+	}
+
+	// Open the confirm dialog for skipping / restoring the event.
+	function askToggleSkip() {
+		confirmConfig = isSkipped
+			? {
+					title: 'Вернуть выступление',
+					message: `Вернуть «${event.title}» в расписание?`,
+					confirmLabel: 'Вернуть',
+					color: 'primary',
+					run: handleToggleSkip
+				}
+			: {
+					title: 'Пропустить выступление',
+					message: `Пропустить «${event.title}»? Оно будет помечено как пропущенное.`,
+					confirmLabel: 'Пропустить',
+					color: 'red',
+					run: handleToggleSkip
+				};
+		confirmOpen = true;
 	}
 </script>
 
@@ -252,8 +293,9 @@
 				</div>
 			</div>
 
-			<div class="ml-auto flex shrink-0 items-center gap-0.5">
-				<!-- Inline bell: subscribe/unsubscribe in one tap instead of opening the menu. -->
+			<!-- Personal action: the bell stays top-right for every user, separate from the staff strip below. -->
+			<div class="ml-auto shrink-0">
+				<!-- Inline bell: subscribe/unsubscribe in one tap. -->
 				<button
 					onclick={event.user_subscription ? handleUnsubscribe : handleSubscribe}
 					class={[
@@ -271,19 +313,52 @@
 						<BellActiveOutline class="h-5 w-5" />
 					{/if}
 				</button>
-
-				<!-- Staff-only management actions stay tucked behind the overflow menu. -->
-				{#if canManageSchedule(user)}
-					<button
-						id={dropdownId}
-						class="flex h-11 w-11 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none dark:text-gray-400 dark:hover:bg-gray-700"
-						aria-label="Меню действий"
-					>
-						<DotsVerticalOutline class="h-5 w-5" />
-					</button>
-				{/if}
 			</div>
 		</div>
+
+		<!-- Staff management strip: broadcast actions live on their own row so they never crowd the title, and read as "changes the show for everyone" distinct from the personal bell above. -->
+		{#if canManageSchedule(user)}
+			<div
+				class="mt-3 flex flex-wrap items-center justify-end gap-1.5 border-t border-gray-100 pt-2.5 dark:border-gray-800"
+			>
+				<button
+					type="button"
+					onclick={askToggleCurrent}
+					class="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none dark:text-gray-300 dark:hover:bg-gray-700"
+				>
+					<PlayOutline class="h-4 w-4" />
+					{event.is_current ? 'Снять отметку' : 'Отметить текущим'}
+				</button>
+
+				<button
+					type="button"
+					onclick={() => (moveModal = true)}
+					class="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none dark:text-gray-300 dark:hover:bg-gray-700"
+				>
+					<ShuffleOutline class="h-4 w-4" />
+					Перенести
+				</button>
+
+				<button
+					type="button"
+					onclick={askToggleSkip}
+					class={[
+						'inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none',
+						isSkipped
+							? 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+							: 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20'
+					]}
+				>
+					{#if isSkipped}
+						<EyeOutline class="h-4 w-4" />
+						Вернуть
+					{:else}
+						<EyeSlashOutline class="h-4 w-4" />
+						Пропустить
+					{/if}
+				</button>
+			</div>
+		{/if}
 	</div>
 </div>
 
@@ -291,46 +366,12 @@
 <UnsubscribeModal bind:open={unsubscribeModal} {event} />
 <MoveEventModal bind:open={moveModal} {event} {schedule} />
 
-{#snippet menuItems()}
-	{#if event.is_current}
-		<DropdownItem onclick={handleUnmarkCurrent}>
-			<span class="flex items-center gap-2">
-				<PlayOutline class="h-4 w-4" />
-				Снять отметку
-			</span>
-		</DropdownItem>
-	{:else}
-		<DropdownItem onclick={handleMarkCurrent}>
-			<span class="flex items-center gap-2">
-				<PlayOutline class="h-4 w-4" />
-				Отметить текущим
-			</span>
-		</DropdownItem>
-	{/if}
-
-	<DropdownItem onclick={() => (moveModal = true)}>
-		<span class="flex items-center gap-2">
-			<ShuffleOutline class="h-4 w-4" />
-			Перенести
-		</span>
-	</DropdownItem>
-
-	<DropdownItem onclick={handleToggleSkip}>
-		<span class="flex items-center gap-2">
-			{#if isSkipped}
-				<EyeOutline class="h-4 w-4" />
-				Вернуть
-			{:else}
-				<EyeSlashOutline class="h-4 w-4" />
-				Пропустить
-			{/if}
-		</span>
-	</DropdownItem>
-{/snippet}
-
-<!-- Only staff get the overflow trigger, so only render its menu for them. -->
-{#if canManageSchedule(user)}
-	<Dropdown simple triggeredBy={`#${dropdownId}`} bind:isOpen={dropdownOpen}>
-		{@render menuItems()}
-	</Dropdown>
-{/if}
+<!-- Shared confirm dialog for the staff strip's broadcast actions. -->
+<ConfirmActionModal
+	bind:open={confirmOpen}
+	title={confirmConfig?.title ?? ''}
+	message={confirmConfig?.message ?? ''}
+	confirmLabel={confirmConfig?.confirmLabel ?? ''}
+	confirmColor={confirmConfig?.color ?? 'primary'}
+	onconfirm={() => confirmConfig?.run()}
+/>

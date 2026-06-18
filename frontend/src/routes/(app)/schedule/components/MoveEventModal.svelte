@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button, Modal, Search, Alert } from 'flowbite-svelte';
-	import { ArrowUpDownOutline } from 'flowbite-svelte-icons';
+	import { ArrowUpDownOutline, BellActiveOutline } from 'flowbite-svelte-icons';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
@@ -101,6 +101,14 @@
 			разместить:
 			<strong class="text-primary-600 dark:text-primary-400">{event.title}</strong>
 		</p>
+
+		<!-- Moving an event broadcasts a mailing to every subscriber. Push notifications cannot be recalled, so warn before sending. -->
+		<div
+			class="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
+		>
+			<BellActiveOutline class="mt-0.5 h-4 w-4 shrink-0" />
+			<span>Все подписчики получат уведомление. Push-уведомление нельзя будет отозвать.</span>
+		</div>
 
 		<Search
 			name="schedule_move_search"
