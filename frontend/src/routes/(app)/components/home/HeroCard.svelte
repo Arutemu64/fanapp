@@ -190,7 +190,7 @@
 							</div>
 						{/each}
 					</div>
-					<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">22 августа 2026 · 11:30</p>
+					<p class="mt-2 text-xs text-gray-600 dark:text-gray-400">22 августа 2026 · 11:30</p>
 				</div>
 			{/if}
 

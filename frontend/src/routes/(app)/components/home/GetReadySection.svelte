@@ -44,6 +44,7 @@
 				description: 'Нужен для голосования и подписки на выступления программы.',
 				icon: UserPlusIcon,
 				accent: 'primary',
+				actionLabel: 'Создать',
 				href: '/login'
 			});
 		}
@@ -55,6 +56,7 @@
 				description: 'Открывает доступ к голосованию в конкурсных номинациях.',
 				icon: TicketIcon,
 				accent: 'amber',
+				actionLabel: 'Привязать',
 				href: '/profile'
 			});
 		}
@@ -66,6 +68,7 @@
 				description: 'Подпишись на номера, чтобы не пропустить интересные выступления.',
 				icon: CalendarCheckIcon,
 				accent: 'green',
+				actionLabel: 'Смотреть',
 				href: '/schedule'
 			});
 
@@ -75,6 +78,7 @@
 				description: 'Получай напоминания о начале выступлений и изменениях в расписании.',
 				icon: BellIcon,
 				accent: 'blue',
+				actionLabel: 'Настроить',
 				href: '/profile'
 			});
 		}

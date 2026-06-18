@@ -11,7 +11,7 @@
 	<title>ФАН ФАН</title>
 </svelte:head>
 
-<div class="mx-auto max-w-6xl space-y-5 sm:space-y-6">
+<div class="space-y-5 sm:space-y-6">
 	<HeroCard />
 	<GetReadySection {user} />
 </div>
