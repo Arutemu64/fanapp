@@ -5,6 +5,7 @@
 		HourglassOutline,
 		BellActiveSolid,
 		PlayOutline,
+		CloseCircleOutline,
 		BellActiveOutline,
 		ShuffleOutline,
 		EyeOutline,
@@ -45,6 +46,8 @@
 		message: string;
 		confirmLabel: string;
 		color: 'primary' | 'red';
+		// 'warning' for actions that push new info; 'muted' for reverting actions.
+		notifyTone: 'warning' | 'muted';
 		run: () => void;
 	};
 	let confirmOpen = $state(false);
@@ -151,6 +154,7 @@
 					message: 'Снять отметку текущего выступления?',
 					confirmLabel: 'Снять',
 					color: 'primary',
+					notifyTone: 'muted',
 					run: handleUnmarkCurrent
 				}
 			: {
@@ -158,6 +162,7 @@
 					message: `Отметить «${event.title}» как текущее выступление?`,
 					confirmLabel: 'Отметить',
 					color: 'primary',
+					notifyTone: 'warning',
 					run: handleMarkCurrent
 				};
 		confirmOpen = true;
@@ -171,6 +176,7 @@
 					message: `Вернуть «${event.title}» в расписание?`,
 					confirmLabel: 'Вернуть',
 					color: 'primary',
+					notifyTone: 'muted',
 					run: handleToggleSkip
 				}
 			: {
@@ -178,6 +184,7 @@
 					message: `Пропустить «${event.title}»? Оно будет помечено как пропущенное.`,
 					confirmLabel: 'Пропустить',
 					color: 'red',
+					notifyTone: 'warning',
 					run: handleToggleSkip
 				};
 		confirmOpen = true;
@@ -321,19 +328,25 @@
 			<div
 				class="mt-3 flex flex-wrap items-center justify-end gap-1.5 border-t border-gray-100 pt-2.5 dark:border-gray-800"
 			>
+				<!-- Mark-current is the hot, repeated live-show action, so it carries a primary tint while move/skip stay quiet ghosts. -->
 				<button
 					type="button"
 					onclick={askToggleCurrent}
-					class="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none dark:text-gray-300 dark:hover:bg-gray-700"
+					class="inline-flex h-11 items-center gap-1.5 rounded-lg bg-primary-50 px-3 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/50"
 				>
-					<PlayOutline class="h-4 w-4" />
-					{event.is_current ? 'Снять отметку' : 'Отметить текущим'}
+					{#if event.is_current}
+						<CloseCircleOutline class="h-4 w-4" />
+						Снять отметку
+					{:else}
+						<PlayOutline class="h-4 w-4" />
+						Отметить текущим
+					{/if}
 				</button>
 
 				<button
 					type="button"
 					onclick={() => (moveModal = true)}
-					class="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none dark:text-gray-300 dark:hover:bg-gray-700"
+					class="inline-flex h-11 items-center gap-1.5 rounded-lg px-3 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none dark:text-gray-300 dark:hover:bg-gray-700"
 				>
 					<ShuffleOutline class="h-4 w-4" />
 					Перенести
@@ -343,7 +356,7 @@
 					type="button"
 					onclick={askToggleSkip}
 					class={[
-						'inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none',
+						'inline-flex h-11 items-center gap-1.5 rounded-lg px-3 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none',
 						isSkipped
 							? 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
 							: 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20'
@@ -373,5 +386,6 @@
 	message={confirmConfig?.message ?? ''}
 	confirmLabel={confirmConfig?.confirmLabel ?? ''}
 	confirmColor={confirmConfig?.color ?? 'primary'}
+	notifyTone={confirmConfig?.notifyTone ?? 'warning'}
 	onconfirm={() => confirmConfig?.run()}
 />

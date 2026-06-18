@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Button, Modal } from 'flowbite-svelte';
 	import { ExclamationCircleOutline, BellActiveOutline } from 'flowbite-svelte-icons';
+	import NoticeCallout from '$lib/components/NoticeCallout.svelte';
 
 	interface Props {
 		open: boolean;
@@ -9,10 +10,13 @@
 		confirmLabel: string;
 		// Destructive actions (e.g. skipping) use the red button; everything else stays primary.
 		confirmColor?: 'primary' | 'red';
-		// Whether to show the "subscribers will be notified" warning. Schedule
-		// management actions broadcast a push that cannot be recalled, so it is on
-		// by default.
+		// Whether to show the notification note. Schedule management actions
+		// broadcast to every subscriber, so it is on by default.
 		notify?: boolean;
+		// 'warning' for actions that push new info (a loud yellow note about the
+		// un-recallable push); 'muted' for reverting actions, where the broadcast
+		// is just an update and a quiet FYI is enough.
+		notifyTone?: 'warning' | 'muted';
 		onconfirm: () => void;
 	}
 
@@ -23,8 +27,16 @@
 		confirmLabel,
 		confirmColor = 'primary',
 		notify = true,
+		notifyTone = 'warning',
 		onconfirm
 	}: Props = $props();
+
+	// Loud for new broadcasts (push can't be undone); quiet for reverting actions.
+	let notifyMessage = $derived(
+		notifyTone === 'warning'
+			? 'Все подписчики получат уведомление. Push-уведомление нельзя будет отозвать.'
+			: 'Подписчики получат уведомление об изменении.'
+	);
 
 	function handleConfirm() {
 		// Close first so a slow request never leaves the dialog hanging open.
@@ -46,12 +58,12 @@
 
 		{#if notify}
 			<!-- These actions fan out a mailing to every subscriber. Telegram messages can be undone, but delivered push notifications cannot, so warn before sending. -->
-			<div
-				class="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
-			>
-				<BellActiveOutline class="mt-0.5 h-4 w-4 shrink-0" />
-				<span>Все подписчики получат уведомление. Push-уведомление нельзя будет отозвать.</span>
-			</div>
+			<NoticeCallout
+				tone={notifyTone}
+				icon={BellActiveOutline}
+				message={notifyMessage}
+				role="alert"
+			/>
 		{/if}
 	</div>
 
