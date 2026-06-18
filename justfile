@@ -69,11 +69,13 @@ backend-check-migrations:
     cd backend && uv run pytest tests/integration/test_migrations.py
 
 # ---- Docker infra helpers ----
-run-dev:
-    docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile core up --build --watch
+# Pass build="" to skip image rebuild (default rebuilds)
+run-dev build="--build":
+    docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile core up {{build}} --watch
 
-run-prod:
-    docker compose -f docker-compose.yml --profile core --profile ops up --build
+# Pass build="" to skip image rebuild (default rebuilds)
+run-prod build="--build":
+    docker compose -f docker-compose.yml --profile core --profile ops up {{build}}
 
 # Pulls prebuilt GHCR images (docker-compose.prod.yml), builds nothing on the host.
 # Requires `docker login ghcr.io` first. Pin a build via IMAGE_TAG in .env.
