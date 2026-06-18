@@ -19,7 +19,7 @@
 		{ label: 'TikTok', href: 'https://www.tiktok.com/@fan_fan_official', icon: TiktokIcon }
 	];
 
-	// Старт программы — 22 августа 2026, 11:30 по московскому времени (UTC+3).
+	// Program start — 22 August 2026, 11:30 Moscow time (UTC+3).
 	const TARGET = new Date('2026-08-22T11:30:00+03:00').getTime();
 
 	let now = $state(Date.now());
@@ -51,7 +51,7 @@
 	let minutes = $derived(Math.floor((remaining % HOUR) / MINUTE));
 	let seconds = $derived(Math.floor((remaining % MINUTE) / SECOND));
 
-	// Русское склонение единиц («1 день», «2 дня», «5 дней»).
+	// Russian unit declension ("1 день", "2 дня", "5 дней").
 	function plural(value: number, forms: [string, string, string]): string {
 		const mod100 = value % 100;
 		const mod10 = value % 10;
@@ -77,7 +77,7 @@
 	aria-labelledby="hero-title"
 	class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900"
 >
-	<!-- Атмосферное свечение по краям, декоративное -->
+	<!-- Decorative atmospheric glow along the edges -->
 	<div
 		aria-hidden="true"
 		class="pointer-events-none absolute -top-24 -left-20 h-64 w-64 rounded-full bg-primary-200/40 blur-3xl dark:bg-primary-900/20"
@@ -119,7 +119,7 @@
 			{/if}
 		</div>
 
-		<!-- Текстовый блок -->
+		<!-- Text block -->
 		<div class="space-y-4 p-5 sm:p-7 lg:order-1 lg:p-9">
 			<div class="space-y-2">
 				<h1
