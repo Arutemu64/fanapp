@@ -65,7 +65,7 @@
 				{#if hasVoted}
 					<span class="flex items-center gap-1 text-green-600 dark:text-green-400">
 						<CheckCircleSolid class="h-3 w-3 sm:h-4 sm:w-4" />
-						Голос в этой номинации уже учтён
+						Голос в этой номинации учтён
 					</span>
 				{:else if canVote}
 					Выбери участника, чтобы отдать голос
