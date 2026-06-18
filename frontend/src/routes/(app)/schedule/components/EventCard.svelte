@@ -201,7 +201,7 @@
 
 <div
 	class={[
-		'flex items-start gap-3 px-3 py-3 transition-colors sm:px-4',
+		'flex items-start gap-3 px-3 py-4 transition-colors sm:px-4',
 		event.is_current && 'bg-green-50 dark:bg-green-900/20',
 		isSkipped && !event.is_current && 'bg-gray-50/70 dark:bg-gray-900/40'
 	]}
@@ -232,7 +232,7 @@
 			<div class="min-w-0 flex-1">
 				<h3
 					class={[
-						'text-sm leading-snug font-semibold text-gray-900 sm:text-base dark:text-white',
+						'text-base leading-snug font-semibold text-gray-900 dark:text-white',
 						isSkipped && 'line-through'
 					]}
 				>
@@ -336,46 +336,48 @@
 			<div
 				class="mt-3 flex flex-wrap items-center justify-end gap-1.5 border-t border-gray-100 pt-2.5 dark:border-gray-800"
 			>
+				<!-- Icon-only staff actions: 44px square tap targets keep mobile usable while the strip stays compact on dense rows. Labels live in aria-label/title. -->
 				<!-- Mark-current is the hot, repeated live-show action, so it carries a primary tint while move/skip stay quiet ghosts. -->
 				<button
 					type="button"
 					onclick={askToggleCurrent}
-					class="inline-flex h-11 items-center gap-1.5 rounded-lg bg-primary-50 px-3 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/50"
+					aria-label={event.is_current ? 'Снять отметку' : 'Отметить текущим'}
+					title={event.is_current ? 'Снять отметку' : 'Отметить текущим'}
+					class="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-primary-50 text-primary-700 transition-colors hover:bg-primary-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/50"
 				>
 					{#if event.is_current}
-						<CloseCircleOutline class="h-4 w-4" />
-						Снять отметку
+						<CloseCircleOutline class="h-5 w-5" />
 					{:else}
-						<PlayOutline class="h-4 w-4" />
-						Отметить текущим
+						<PlayOutline class="h-5 w-5" />
 					{/if}
 				</button>
 
 				<button
 					type="button"
 					onclick={() => (moveModal = true)}
-					class="inline-flex h-11 items-center gap-1.5 rounded-lg px-3 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none dark:text-gray-300 dark:hover:bg-gray-700"
+					aria-label="Перенести"
+					title="Перенести"
+					class="inline-flex h-11 w-11 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none dark:text-gray-300 dark:hover:bg-gray-700"
 				>
-					<ShuffleOutline class="h-4 w-4" />
-					Перенести
+					<ShuffleOutline class="h-5 w-5" />
 				</button>
 
 				<button
 					type="button"
 					onclick={askToggleSkip}
+					aria-label={isSkipped ? 'Вернуть' : 'Пропустить'}
+					title={isSkipped ? 'Вернуть' : 'Пропустить'}
 					class={[
-						'inline-flex h-11 items-center gap-1.5 rounded-lg px-3 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none',
+						'inline-flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none',
 						isSkipped
 							? 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
 							: 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20'
 					]}
 				>
 					{#if isSkipped}
-						<EyeOutline class="h-4 w-4" />
-						Вернуть
+						<EyeOutline class="h-5 w-5" />
 					{:else}
-						<EyeSlashOutline class="h-4 w-4" />
-						Пропустить
+						<EyeSlashOutline class="h-5 w-5" />
 					{/if}
 				</button>
 			</div>

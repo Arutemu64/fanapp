@@ -34,7 +34,7 @@
 	// Loud for new broadcasts (push can't be undone); quiet for reverting actions.
 	let notifyMessage = $derived(
 		notifyTone === 'warning'
-			? 'Все подписчики получат уведомление. Push-уведомление нельзя будет отозвать.'
+			? 'Все подписчики получат уведомление. Пуш-уведомление нельзя будет отозвать.'
 			: 'Подписчики получат уведомление об изменении.'
 	);
 

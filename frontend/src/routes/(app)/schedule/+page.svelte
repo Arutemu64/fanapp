@@ -255,9 +255,7 @@
 							class="sticky top-12 z-10 rounded-t-xl border-b border-gray-100 bg-white/95 px-3 py-2 backdrop-blur dark:border-gray-700 dark:bg-gray-800/95"
 						>
 							<div class="flex items-center justify-between gap-3">
-								<h3
-									class="min-w-0 truncate text-xs font-semibold text-gray-700 sm:text-sm dark:text-gray-300"
-								>
+								<h3 class="min-w-0 truncate text-sm font-semibold text-gray-700 dark:text-gray-300">
 									{nomination.title}
 								</h3>
 								<span class="shrink-0 text-xs text-gray-500 tabular-nums dark:text-gray-400">
@@ -266,7 +264,10 @@
 							</div>
 						</div>
 
-						<div class="divide-y divide-gray-100 dark:divide-gray-700/80">
+						<!-- Row divider sits one step stronger than the in-card staff-strip
+						     border (gray-100 / gray-800), so event boundaries read as the
+						     primary split and the strip separator stays subordinate. -->
+						<div class="divide-y divide-gray-200 dark:divide-gray-700">
 							{#each nomination.events as event (event.id)}
 								<div data-event-id={event.id} class="scroll-mt-28">
 									<EventCard {event} {schedule} {currentEvent} {user} />
