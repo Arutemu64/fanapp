@@ -19,6 +19,11 @@
 	// first paint. The SSE 'connection_established' handler refreshes this once the stream is up.
 	let notifications = $state<Notification[]>(page.data.notificationPreview ?? []);
 	let unreadCount = $derived(notifications.filter((notification) => !notification.seen_at).length);
+	// Announce the count to screen readers so the unread state isn't conveyed by
+	// the badge color alone.
+	let bellLabel = $derived(
+		unreadCount > 0 ? `Открыть уведомления, непрочитанных: ${unreadCount}` : 'Открыть уведомления'
+	);
 	let dropdownOpen = $state(false);
 	const eventsClient = getEventsClient();
 	const toastService = getToastService();
@@ -95,15 +100,19 @@
 
 <button
 	id="notification-bell"
-	aria-label="Открыть уведомления"
+	aria-label={bellLabel}
 	class="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none dark:text-gray-400 dark:hover:bg-gray-700 dark:focus-visible:ring-gray-500 dark:focus-visible:ring-offset-gray-900"
 >
 	<BellSolid class="h-5 w-5" aria-hidden="true" />
 	{#if unreadCount > 0}
-		<div
-			class="absolute top-1 right-1 inline-flex h-2.5 w-2.5 items-center justify-center rounded-full border-2 border-white bg-red-500 dark:border-gray-900"
+		<!-- Watermelon-primary badge per the design system (unseen dots are primary,
+			not red — red reads as an error). The label is announced via aria-label. -->
+		<span
+			class="absolute top-0.5 right-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-primary-600 px-1 text-[10px] leading-none font-semibold text-white dark:border-gray-900 dark:bg-primary-500"
 			aria-hidden="true"
-		></div>
+		>
+			{unreadCount > 9 ? '9+' : unreadCount}
+		</span>
 	{/if}
 </button>
 

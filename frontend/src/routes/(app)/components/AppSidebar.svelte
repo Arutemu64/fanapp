@@ -15,20 +15,25 @@
 	import {
 		AdjustmentsHorizontalOutline,
 		AnnotationOutline,
+		AnnotationSolid,
 		BullhornOutline,
 		CalendarWeekOutline,
+		CalendarWeekSolid,
 		ClockArrowOutline,
 		FileImportOutline,
 		HomeOutline,
+		HomeSolid,
 		LockOutline,
 		MapPinAltOutline,
+		MapPinAltSolid,
 		ShieldOutline,
 		ThumbsUpOutline,
+		ThumbsUpSolid,
 		UsersGroupOutline
 	} from 'flowbite-svelte-icons';
 	import ThemeToggle from './ThemeToggle.svelte';
 	import type { CurrentUserDTO } from '$lib/types/user';
-	import type { Snippet } from 'svelte';
+	import type { Component, Snippet } from 'svelte';
 
 	let { user, activeUrl, isSidebarOpen, closeSidebar } = $props<{
 		user: CurrentUserDTO | null;
@@ -45,13 +50,37 @@
 	let isOrg = $derived(user?.role === 'org');
 	let iconClass =
 		'h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white';
+
+	// Match the bottom nav's active rule (exact for "/", prefix for nested
+	// routes) so both navigation surfaces agree on the current location.
+	function isActive(href: string): boolean {
+		if (href === '/') return activeUrl === '/';
+		return activeUrl === href || activeUrl.startsWith(href + '/');
+	}
 </script>
+
+<!-- A primary destination row. Active state mirrors the bottom nav: solid icon
+     in primary, idle outline icon in gray with a primary hover. -->
+{#snippet navLink(label: string, href: string, OutlineIcon: Component, SolidIcon: Component)}
+	{@const active = isActive(href)}
+	<SidebarItem {label} {href} {active}>
+		{#snippet icon()}
+			{#if active}
+				<SolidIcon class="h-5 w-5 shrink-0 text-primary-600 dark:text-primary-400" />
+			{:else}
+				<OutlineIcon
+					class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-primary-600 dark:text-gray-400 dark:group-hover:text-primary-400"
+				/>
+			{/if}
+		{/snippet}
+	</SidebarItem>
+{/snippet}
 
 <!-- A staff navigation entry: a real link when the user holds the permission,
      otherwise a non-navigable, greyed-out row with a lock badge + tooltip. -->
 {#snippet staffLink(label: string, href: string, allowed: boolean, itemIcon: Snippet)}
 	{#if allowed}
-		<SidebarItem {label} {href}>
+		<SidebarItem {label} {href} active={isActive(href)}>
 			{#snippet icon()}
 				{@render itemIcon()}
 			{/snippet}
@@ -88,7 +117,11 @@
 	<BullhornOutline class={iconClass} />
 {/snippet}
 
-{#snippet sidebarLinks()}
+<!-- `isMobile` slims the hamburger sheet: on phones the four primary
+     destinations live in the bottom nav, so the drawer only carries what the
+     bottom nav can't (feedback, staff/org sections, theme). Desktop has no
+     bottom nav, so its static sidebar keeps the full set. -->
+{#snippet sidebarLinks(isMobile: boolean)}
 	<div class="flex h-full flex-col">
 		<SidebarBrand>
 			<span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">
@@ -96,43 +129,15 @@
 			</span>
 		</SidebarBrand>
 		<SidebarGroup>
-			<SidebarItem label="Главная" href="/">
-				{#snippet icon()}
-					<HomeOutline
-						class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-					/>
-				{/snippet}
-			</SidebarItem>
-			<SidebarItem label="Расписание" href="/schedule">
-				{#snippet icon()}
-					<CalendarWeekOutline
-						class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-					/>
-				{/snippet}
-			</SidebarItem>
-			<!-- Keep the venue map in the main navigation so it is reachable in one tap on mobile. -->
-			<SidebarItem label="Карта" href="/map">
-				{#snippet icon()}
-					<MapPinAltOutline
-						class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-					/>
-				{/snippet}
-			</SidebarItem>
-			<SidebarItem label="Голосование" href="/voting">
-				{#snippet icon()}
-					<ThumbsUpOutline
-						class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-					/>
-				{/snippet}
-			</SidebarItem>
+			{#if !isMobile}
+				{@render navLink('Главная', '/', HomeOutline, HomeSolid)}
+				{@render navLink('Расписание', '/schedule', CalendarWeekOutline, CalendarWeekSolid)}
+				<!-- Keep the venue map in the main navigation so it is reachable in one tap. -->
+				{@render navLink('Карта', '/map', MapPinAltOutline, MapPinAltSolid)}
+				{@render navLink('Голосование', '/voting', ThumbsUpOutline, ThumbsUpSolid)}
+			{/if}
 			{#if user}
-				<SidebarItem label="Обратная связь" href="/feedback">
-					{#snippet icon()}
-						<AnnotationOutline
-							class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"
-						/>
-					{/snippet}
-				</SidebarItem>
+				{@render navLink('Обратная связь', '/feedback', AnnotationOutline, AnnotationSolid)}
 			{/if}
 			{#if isStaff}
 				<SidebarDropdownWrapper label="Для волонтеров" classes={{ btn: 'p-2' }}>
@@ -188,14 +193,14 @@
 	position="fixed"
 	class="z-50 h-full md:hidden"
 >
-	{@render sidebarLinks()}
+	{@render sidebarLinks(true)}
 </Sidebar>
 
 <Sidebar
 	{activeUrl}
 	backdrop={false}
 	position="static"
-	class="hidden h-full shrink-0 border-r border-gray-200 md:block dark:border-gray-800"
+	class="hidden h-full shrink-0 border-r border-gray-200 md:block dark:border-gray-700"
 >
-	{@render sidebarLinks()}
+	{@render sidebarLinks(false)}
 </Sidebar>
