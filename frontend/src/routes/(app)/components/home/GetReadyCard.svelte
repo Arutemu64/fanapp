@@ -15,9 +15,9 @@
 		description: string;
 		icon: Component;
 		accent: ReadyAccent;
-		/** Главный следующий шаг: крупнее, горизонтально, на акцентной подложке. */
+		/** The primary next step: larger, horizontal, on an accent-tinted surface. */
 		featured?: boolean;
-		/** Текст действия внизу карточки. */
+		/** Action text shown at the bottom of the card. */
 		actionLabel?: string;
 		href?: Pathname;
 		onclick?: () => void;

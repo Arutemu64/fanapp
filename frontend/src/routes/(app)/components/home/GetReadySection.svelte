@@ -29,7 +29,7 @@
 		onclick?: () => void;
 	}
 
-	// Установку показываем, пока библиотека сообщает, что она доступна на платформе.
+	// Show the install card while the library reports it's available on this platform.
 	let showPwa = $derived(pwa.canInstall);
 
 	// Built in priority order so the first card is always the user's single most

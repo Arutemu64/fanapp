@@ -84,10 +84,10 @@
 	></div>
 
 	<div class="relative grid lg:grid-cols-2 lg:items-stretch">
-		<!-- Ключевой арт: сверху на мобильных (full-bleed), справа на десктопе (full-bleed).
-			 Брендовая подложка держит блок осмысленным, пока тяжёлая картинка
-			 догружается на слабом фестивальном Wi-Fi, и заменяет «битую» иконку,
-			 если арт не загрузился вовсе. -->
+		<!-- Key art: full-bleed on top for mobile, full-bleed on the right for desktop.
+			 The branded bed keeps the block meaningful while the heavy image streams
+			 in on weak con-venue wifi, and replaces the broken-image icon if the art
+			 fails to load at all. -->
 		<div
 			class="relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-primary-100 via-primary-50 to-secondary-100 sm:aspect-[4/3] lg:order-2 lg:aspect-auto dark:from-primary-900/40 dark:via-gray-900 dark:to-secondary-900/40"
 		>
