@@ -46,8 +46,9 @@
 		<Avatar size="xl" class="shrink-0">{avatarInitials}</Avatar>
 
 		<div class="min-w-0 flex-1">
-			<div class="flex items-center gap-2">
-				<h2 class="min-w-0 truncate text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
+			<div class="flex items-start gap-2">
+				<!-- Wrap (don't truncate) so the full handle stays visible; the 25-char cap fits in 2 lines. -->
+				<h2 class="min-w-0 text-xl font-bold break-words text-gray-900 sm:text-2xl dark:text-white">
 					@{user.username}
 				</h2>
 				<Button
