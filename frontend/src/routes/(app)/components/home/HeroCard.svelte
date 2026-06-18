@@ -85,7 +85,7 @@
 			 догружается на слабом фестивальном Wi-Fi, и заменяет «битую» иконку,
 			 если арт не загрузился вовсе. -->
 		<div
-			class="dark:from-primary-950/40 dark:to-secondary-950/40 relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-primary-100 via-primary-50 to-secondary-100 sm:aspect-[4/3] lg:order-2 lg:aspect-auto dark:via-gray-900"
+			class="relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-primary-100 via-primary-50 to-secondary-100 sm:aspect-[4/3] lg:order-2 lg:aspect-auto dark:from-primary-900/40 dark:via-gray-900 dark:to-secondary-900/40"
 		>
 			{#if imageFailed}
 				<!-- Keep the alt available to screen readers even when the image is gone -->
