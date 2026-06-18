@@ -7,6 +7,10 @@
 	import TelegramIcon from '~icons/simple-icons/telegram';
 	import VkIcon from '~icons/simple-icons/vk';
 	import TiktokIcon from '~icons/simple-icons/tiktok';
+	// Bundled (not static/) so Vite content-hashes the file: swapping the art
+	// busts every cache — including the precached PWA copy — with no stale-image
+	// risk. It's emitted into `build`, which the service worker already precaches.
+	import heroArt from './main.webp';
 
 	const socials = [
 		{ label: 'Официальный сайт fancom.info', href: 'https://fancom.info', icon: GlobeIcon },
@@ -102,7 +106,7 @@
 				</div>
 			{:else}
 				<img
-					src="/main.webp"
+					src={heroArt}
 					alt="Участники фестиваля ФАН ФАН на сцене"
 					width="1500"
 					height="844"
