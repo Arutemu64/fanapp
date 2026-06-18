@@ -8,7 +8,7 @@
 	import BellIcon from '~icons/lucide/bell';
 	import type { CurrentUserDTO } from '$lib/types/user';
 	import { getPwaService } from '$lib/services/pwa.svelte';
-	import GetReadyCard from './GetReadyCard.svelte';
+	import GetReadyCard, { type ReadyAccent } from './GetReadyCard.svelte';
 
 	interface Props {
 		user: CurrentUserDTO | null;
@@ -23,44 +23,17 @@
 		title: string;
 		description: string;
 		icon: Component;
-		iconClass: string;
-		hoverClass: string;
+		accent: ReadyAccent;
 		actionLabel?: string;
 		href?: Pathname;
 		onclick?: () => void;
 	}
 
-	const accent = {
-		primary: {
-			icon: 'bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400',
-			hover:
-				'hover:border-primary-300 hover:bg-primary-50/40 dark:hover:border-primary-500 dark:hover:bg-primary-900/10'
-		},
-		secondary: {
-			icon: 'bg-secondary-50 text-secondary-600 dark:bg-secondary-900/30 dark:text-secondary-400',
-			hover:
-				'hover:border-secondary-300 hover:bg-secondary-50/40 dark:hover:border-secondary-500 dark:hover:bg-secondary-900/10'
-		},
-		amber: {
-			icon: 'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
-			hover:
-				'hover:border-amber-300 hover:bg-amber-50/40 dark:hover:border-amber-500 dark:hover:bg-amber-900/10'
-		},
-		green: {
-			icon: 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400',
-			hover:
-				'hover:border-green-300 hover:bg-green-50/40 dark:hover:border-green-500 dark:hover:bg-green-900/10'
-		},
-		blue: {
-			icon: 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
-			hover:
-				'hover:border-blue-300 hover:bg-blue-50/40 dark:hover:border-blue-500 dark:hover:bg-blue-900/10'
-		}
-	};
-
-	// Установку показываем, пока библиотека сообщает, что она доступна на платформе.
+	// Show the install card while the library reports it's available on this platform.
 	let showPwa = $derived(pwa.canInstall);
 
+	// Built in priority order so the first card is always the user's single most
+	// important next step (account → ticket → schedule); the PWA nudge trails last.
 	let cards = $derived.by<ReadyCard[]>(() => {
 		const list: ReadyCard[] = [];
 
@@ -70,23 +43,9 @@
 				title: 'Создать аккаунт',
 				description: 'Нужен для голосования и подписки на выступления программы.',
 				icon: UserPlusIcon,
-				iconClass: accent.primary.icon,
-				hoverClass: accent.primary.hover,
+				accent: 'primary',
+				actionLabel: 'Создать',
 				href: '/login'
-			});
-		}
-
-		if (showPwa) {
-			list.push({
-				key: 'pwa',
-				title: 'Установить приложение',
-				description: 'Быстрый доступ с главного экрана и пуш-уведомления.',
-				icon: DownloadIcon,
-				iconClass: accent.secondary.icon,
-				hoverClass: accent.secondary.hover,
-				actionLabel: 'Установить',
-				// Open the install dialog directly; the library handles per-platform UX.
-				onclick: () => pwa.showInstallDialog()
 			});
 		}
 
@@ -96,8 +55,8 @@
 				title: 'Привязать билет',
 				description: 'Открывает доступ к голосованию в конкурсных номинациях.',
 				icon: TicketIcon,
-				iconClass: accent.amber.icon,
-				hoverClass: accent.amber.hover,
+				accent: 'amber',
+				actionLabel: 'Привязать',
 				href: '/profile'
 			});
 		}
@@ -108,8 +67,8 @@
 				title: 'Посмотреть программу',
 				description: 'Подпишись на номера, чтобы не пропустить интересные выступления.',
 				icon: CalendarCheckIcon,
-				iconClass: accent.green.icon,
-				hoverClass: accent.green.hover,
+				accent: 'green',
+				actionLabel: 'Смотреть',
 				href: '/schedule'
 			});
 
@@ -118,40 +77,71 @@
 				title: 'Настроить уведомления',
 				description: 'Получай напоминания о начале выступлений и изменениях в расписании.',
 				icon: BellIcon,
-				iconClass: accent.blue.icon,
-				hoverClass: accent.blue.hover,
+				accent: 'blue',
+				actionLabel: 'Настроить',
 				href: '/profile'
+			});
+		}
+
+		if (showPwa) {
+			list.push({
+				key: 'pwa',
+				title: 'Установить приложение',
+				description: 'Быстрый доступ с главного экрана и пуш-уведомления.',
+				icon: DownloadIcon,
+				accent: 'secondary',
+				actionLabel: 'Установить',
+				// Open the install dialog directly; the library handles per-platform UX.
+				onclick: () => pwa.showInstallDialog()
 			});
 		}
 
 		return list;
 	});
+
+	// Lead with the top step as a prominent card; the rest fill a compact grid.
+	let featured = $derived(cards[0]);
+	let rest = $derived(cards.slice(1));
 </script>
 
-{#if cards.length > 0}
+{#if featured}
 	<section aria-labelledby="get-ready-heading" class="space-y-3">
 		<div class="max-w-3xl space-y-1">
 			<h2 id="get-ready-heading" class="text-lg font-semibold text-gray-900 dark:text-white">
 				Подготовься к фестивалю
 			</h2>
-			<p class="text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+			<p class="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
 				Несколько шагов, чтобы получить максимум от приложения на мероприятии.
 			</p>
 		</div>
 
-		<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-			{#each cards as card (card.key)}
-				<GetReadyCard
-					title={card.title}
-					description={card.description}
-					icon={card.icon}
-					iconClass={card.iconClass}
-					hoverClass={card.hoverClass}
-					actionLabel={card.actionLabel}
-					href={card.href}
-					onclick={card.onclick}
-				/>
-			{/each}
+		<div class="space-y-3">
+			<GetReadyCard
+				featured
+				title={featured.title}
+				description={featured.description}
+				icon={featured.icon}
+				accent={featured.accent}
+				actionLabel={featured.actionLabel}
+				href={featured.href}
+				onclick={featured.onclick}
+			/>
+
+			{#if rest.length > 0}
+				<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+					{#each rest as card (card.key)}
+						<GetReadyCard
+							title={card.title}
+							description={card.description}
+							icon={card.icon}
+							accent={card.accent}
+							actionLabel={card.actionLabel}
+							href={card.href}
+							onclick={card.onclick}
+						/>
+					{/each}
+				</div>
+			{/if}
 		</div>
 	</section>
 {/if}

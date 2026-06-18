@@ -7,6 +7,10 @@
 	import TelegramIcon from '~icons/simple-icons/telegram';
 	import VkIcon from '~icons/simple-icons/vk';
 	import TiktokIcon from '~icons/simple-icons/tiktok';
+	// Bundled (not static/) so Vite content-hashes the file: swapping the art
+	// busts every cache — including the precached PWA copy — with no stale-image
+	// risk. It's emitted into `build`, which the service worker already precaches.
+	import heroArt from './main.webp';
 
 	const socials = [
 		{ label: 'Официальный сайт fancom.info', href: 'https://fancom.info', icon: GlobeIcon },
@@ -15,10 +19,14 @@
 		{ label: 'TikTok', href: 'https://www.tiktok.com/@fan_fan_official', icon: TiktokIcon }
 	];
 
-	// Старт программы — 22 августа 2026, 11:30 по московскому времени (UTC+3).
+	// Program start — 22 August 2026, 11:30 Moscow time (UTC+3).
 	const TARGET = new Date('2026-08-22T11:30:00+03:00').getTime();
 
 	let now = $state(Date.now());
+
+	// Key art can fail to load on flaky con-venue wifi; fall back to a branded bed
+	// instead of the browser's broken-image icon.
+	let imageFailed = $state(false);
 
 	onMount(() => {
 		const interval = setInterval(() => {
@@ -43,7 +51,7 @@
 	let minutes = $derived(Math.floor((remaining % HOUR) / MINUTE));
 	let seconds = $derived(Math.floor((remaining % MINUTE) / SECOND));
 
-	// Русское склонение единиц («1 день», «2 дня», «5 дней»).
+	// Russian unit declension ("1 день", "2 дня", "5 дней").
 	function plural(value: number, forms: [string, string, string]): string {
 		const mod100 = value % 100;
 		const mod10 = value % 10;
@@ -69,26 +77,49 @@
 	aria-labelledby="hero-title"
 	class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900"
 >
-	<!-- Атмосферное свечение по краям, декоративное -->
+	<!-- Decorative atmospheric glow along the edges -->
 	<div
 		aria-hidden="true"
 		class="pointer-events-none absolute -top-24 -left-20 h-64 w-64 rounded-full bg-primary-200/40 blur-3xl dark:bg-primary-900/20"
 	></div>
 
 	<div class="relative grid lg:grid-cols-2 lg:items-stretch">
-		<!-- Ключевой арт: сверху на мобильных (full-bleed), справа на десктопе (full-bleed) -->
-		<div class="aspect-[16/9] w-full sm:aspect-[4/3] lg:order-2 lg:aspect-auto">
-			<img
-				src="/main.webp"
-				alt="Участники фестиваля ФАН ФАН на сцене"
-				width="1500"
-				height="844"
-				loading="eager"
-				class="h-full w-full object-cover"
-			/>
+		<!-- Key art: full-bleed on top for mobile, full-bleed on the right for desktop.
+			 The branded bed keeps the block meaningful while the heavy image streams
+			 in on weak con-venue wifi, and replaces the broken-image icon if the art
+			 fails to load at all. -->
+		<div
+			class="relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-primary-100 via-primary-50 to-secondary-100 sm:aspect-[4/3] lg:order-2 lg:aspect-auto dark:from-primary-900/40 dark:via-gray-900 dark:to-secondary-900/40"
+		>
+			{#if imageFailed}
+				<!-- Keep the alt available to screen readers even when the image is gone -->
+				<span class="sr-only">Участники фестиваля ФАН ФАН на сцене</span>
+				<div
+					aria-hidden="true"
+					class="absolute inset-0 flex items-center justify-center px-4 text-center"
+				>
+					<span
+						class="font-display text-2xl font-bold text-primary-600/70 sm:text-3xl dark:text-primary-300/60"
+					>
+						ФАН ФАН
+					</span>
+				</div>
+			{:else}
+				<img
+					src={heroArt}
+					alt="Участники фестиваля ФАН ФАН на сцене"
+					width="1500"
+					height="844"
+					loading="eager"
+					decoding="async"
+					fetchpriority="high"
+					onerror={() => (imageFailed = true)}
+					class="h-full w-full object-cover"
+				/>
+			{/if}
 		</div>
 
-		<!-- Текстовый блок -->
+		<!-- Text block -->
 		<div class="space-y-4 p-5 sm:p-7 lg:order-1 lg:p-9">
 			<div class="space-y-2">
 				<h1
@@ -163,7 +194,7 @@
 							</div>
 						{/each}
 					</div>
-					<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">22 августа 2026 · 11:30</p>
+					<p class="mt-2 text-xs text-gray-600 dark:text-gray-400">22 августа 2026 · 11:30</p>
 				</div>
 			{/if}
 
