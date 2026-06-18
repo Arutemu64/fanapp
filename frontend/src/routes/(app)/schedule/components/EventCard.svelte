@@ -112,12 +112,15 @@
 		toastService.add('Отметка снята', 'success');
 	}
 
-	async function handleToggleSkip() {
-		const newIsSkipped = !isSkipped;
+	// `skip` is captured when the confirm dialog opens, not recomputed here: if
+	// another staffer flips this event while the modal is open, the schedule_updated
+	// reload could change `isSkipped` under us and make a generic toggle broadcast
+	// the opposite action from what the dialog promised.
+	async function handleSkip(skip: boolean) {
 		// Flip the row immediately; revert below if the request fails.
-		optimisticSkipped = newIsSkipped;
+		optimisticSkipped = skip;
 
-		const { error, response } = newIsSkipped
+		const { error, response } = skip
 			? await client.PATCH('/schedule/{event_id}/skip', {
 					params: { path: { event_id: event.id } }
 				})
@@ -131,7 +134,7 @@
 			return;
 		}
 
-		const toastMessage = newIsSkipped
+		const toastMessage = skip
 			? 'Выступление помечено как пропущенное'
 			: 'Выступление возвращено в расписание';
 		toastService.add(toastMessage, 'success');
@@ -180,7 +183,9 @@
 					confirmLabel: 'Вернуть',
 					color: 'primary',
 					notifyTone: 'muted',
-					run: handleToggleSkip
+					// Lock the direction to what the dialog shows now, so a concurrent
+					// schedule_updated reload can't flip it before the staffer confirms.
+					run: () => handleSkip(false)
 				}
 			: {
 					title: 'Пропустить выступление',
@@ -188,7 +193,7 @@
 					confirmLabel: 'Пропустить',
 					color: 'red',
 					notifyTone: 'warning',
-					run: handleToggleSkip
+					run: () => handleSkip(true)
 				};
 		confirmOpen = true;
 	}
