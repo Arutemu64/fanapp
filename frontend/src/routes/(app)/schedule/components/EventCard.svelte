@@ -50,6 +50,9 @@
 		notifyTone: 'warning' | 'muted';
 		run: () => void;
 	};
+	// Two pieces of state, set together when a staff button is tapped:
+	// confirmOpen drives the modal's visibility (bound two-way so Esc/backdrop
+	// can close it), and confirmConfig holds what that modal should show.
 	let confirmOpen = $state(false);
 	let confirmConfig = $state<ConfirmConfig | null>(null);
 

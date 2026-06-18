@@ -13,6 +13,8 @@
 		children?: Snippet;
 	}
 
+	// Rename the `icon` prop to a capitalized `Icon` so it can be rendered as a
+	// component below (Svelte only treats capitalized names as components).
 	let { tone = 'warning', icon: Icon, message, role = 'status', children }: Props = $props();
 </script>
 
