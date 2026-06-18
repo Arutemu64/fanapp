@@ -11,6 +11,7 @@
 	import { ChevronUpOutline, CloseOutline, PlaySolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
+	import { matchesSearch } from '$lib/utils/search';
 
 	type ScheduleNominationGroup = {
 		title: string;
@@ -44,13 +45,12 @@
 
 	let filtered: ScheduleEventFullDTO[] = $derived(
 		schedule.filter((event) => {
-			const query = searchQuery.trim().toLowerCase();
-			const searchMatch =
-				query.length === 0 ||
-				event.number.toString().toLowerCase().includes(query) ||
-				event.title.toLowerCase().includes(query) ||
-				event.block_title?.toLowerCase().includes(query) ||
-				event.nomination_title?.toLowerCase().includes(query);
+			const searchMatch = matchesSearch(searchQuery, [
+				event.number,
+				event.title,
+				event.block_title,
+				event.nomination_title
+			]);
 
 			const subscriptionMatch = !showOnlySubscribed || event.user_subscription !== null;
 

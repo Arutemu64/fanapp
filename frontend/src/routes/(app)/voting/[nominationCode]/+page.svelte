@@ -12,6 +12,7 @@
 	import { invalidate } from '$app/navigation';
 	import type { PageProps } from './$types';
 	import type { GetVotingNominationResult } from '$lib/types/voting';
+	import { matchesSearch } from '$lib/utils/search';
 
 	type VotingParticipant = GetVotingNominationResult['participants'][number];
 
@@ -24,12 +25,9 @@
 	let searchQuery = $state('');
 
 	let filtered = $derived(
-		participants.filter((p: VotingParticipant) => {
-			const q = searchQuery.trim().toLowerCase();
-			return (
-				p.title.toLowerCase().includes(q) || p.voting_number?.toString().toLowerCase().includes(q)
-			);
-		})
+		participants.filter((p: VotingParticipant) =>
+			matchesSearch(searchQuery, [p.title, p.voting_number])
+		)
 	);
 
 	let hasVoted = $derived(participants.some((p: VotingParticipant) => p.user_vote !== null));
