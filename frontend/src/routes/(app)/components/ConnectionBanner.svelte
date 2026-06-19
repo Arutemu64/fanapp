@@ -57,7 +57,7 @@
 		class="flex min-h-14 items-center gap-3 border-b border-yellow-200 bg-yellow-50 px-4 py-2.5 text-sm text-yellow-800 sm:px-6 dark:border-yellow-900/50 dark:bg-yellow-950/50 dark:text-yellow-200"
 	>
 		<ExclamationCircleOutline class="h-5 w-5 shrink-0" aria-hidden="true" />
-		<p class="flex-1 leading-snug">Нет подключения к интернету</p>
+		<p class="flex-1 leading-snug">Нет соединения</p>
 	</div>
 {:else if health === 'down'}
 	<div
