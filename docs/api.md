@@ -121,5 +121,4 @@ export type NominationsList =
 ---
 
 ## 🇷🇺 Russian Localization & Error Handling
-* **No Raw Stack Traces**: Log or normalize API failures before presenting them. Never expose raw backend stack traces or internal identifiers to users.
-* **User-friendly Russian Messages**: Show friendly Russian messages in the UI explaining how the user can recover or retry the action.
+Russian copy is mandatory (AGENTS.md #1). API-specific rule: normalize failures before presenting them — never expose raw backend stack traces or internal identifiers, and show a friendly Russian message explaining how to recover or retry.

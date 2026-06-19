@@ -137,7 +137,7 @@ By default `just deploy` tracks the latest `main` build. Pin a specific build (o
 
 ### Reverse proxy (Caddy): HTTPS and HTTP testing
 
-The app is meant to run behind a reverse proxy that puts the frontend and the API on **one origin**: [`Caddyfile.example`](Caddyfile.example) routes `/api*` to the backend and everything else to the SvelteKit frontend. Because the API is same-origin (`https://<site>/api`), the browser and SSR never make a cross-origin request, so **no CORS config is needed**. Caddy's `X-Forwarded-Proto`/`X-Forwarded-Host` headers are already honoured — the frontend container reads them via `PROTOCOL_HEADER`/`HOST_HEADER` in [`docker-compose.yml`](docker-compose.yml), so `adapter-node` builds the correct public origin during SSR in either mode.
+The app is meant to run behind a reverse proxy that puts the frontend and the API on **one origin**: [`Caddyfile.example`](Caddyfile.example) routes `/api*` to the backend and everything else to the SvelteKit frontend. Because the API is same-origin (`https://<site>/api`), the browser never makes a cross-origin request, so **no CORS config is needed**. The frontend is a static SPA (`adapter-static`, no SSR) served by NGINX, so there is no server-side origin to derive — `PUBLIC_API_URL` is baked into the bundle at build time (see [`docs/frontend.md`](docs/frontend.md)).
 
 `just run-prod` exposes the apps on `127.0.0.1:3000` (frontend) and `127.0.0.1:8000` (API); run Caddy with `Caddyfile.example` in front to reach them on a single origin (e.g. `http://localhost`).
 
@@ -165,5 +165,5 @@ Optional, enabled via `.env`:
 
 - [`AGENTS.md`](AGENTS.md) — monorepo guidelines and core constraints
 - [`docs/backend.md`](docs/backend.md) — backend architecture (domain, ports, DI, events)
-- [`docs/frontend.md`](docs/frontend.md) — SvelteKit SSR rules, styling, components
+- [`docs/frontend.md`](docs/frontend.md) — SvelteKit SPA rules, styling, components
 - [`docs/api.md`](docs/api.md) — type-safe API integration
