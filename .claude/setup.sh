@@ -75,20 +75,23 @@ export PATH="$PNPM_HOME:$PATH"
 pnpm add -g @colbymchenry/codegraph@latest \
   || echo "[setup] WARN: codegraph install failed; continuing without it."
 
-# Prepull the external Docker images the project uses. Image layers are files,
-# so a pull here persists in the cached snapshot and every session starts with
-# them on disk; only the daemon (a process) is restarted per session by the
-# SessionStart hook. We start dockerd here purely to pull - it is not expected
-# to survive the snapshot.
+# Prepull the single Docker image the cloud flow needs: a Postgres matching
+# production (postgres:18-alpine), used to autogenerate Alembic migrations
+# against a throwaway database (see `just backend-generate-auto`). Image layers
+# are files, so a pull here persists in the cached snapshot and every session
+# starts with it on disk; only the daemon (a process) is restarted per session
+# by the SessionStart hook. We start dockerd here purely to pull - it is not
+# expected to survive the snapshot.
+#
+# Integration-test and image-build deps are deliberately NOT prepulled: the
+# cloud agent flow relies on CI (.github/workflows/ci.yml) to run the full test
+# suite and docker-publish.yml to build images. Local fast checks (ruff, ty)
+# need no containers and still run per AGENTS.md.
 #
 # Best-effort: a rate-limited or unreachable image must not fail environment
-# creation, so the block runs under `if` (suppresses set -e) and each failed
-# pull degrades to a lazy pull at first use. Docker Hub caps anonymous pulls
-# (~100 / 6h per egress IP), so the integration-test images are listed first -
-# the test path stays cached even if a later pull hits the cap. (In this env no
-# image 403s; the allowlist already permits the Docker Hub / GHCR blob CDNs -
-# see docs/testing.md. The project's own ghcr.io/arutemu64/fanapp-* images and
-# the locally built fanapp-* compose images are intentionally not prepulled.)
+# creation, so the block runs under `if` (suppresses set -e) and a failed pull
+# degrades to a lazy pull at first use. (In this env no image 403s; the
+# allowlist already permits the Docker Hub blob CDN - see docs/claude-cloud.md.)
 echo "[setup] Prepulling Docker images..."
 if command -v dockerd >/dev/null 2>&1; then
   if ! docker info >/dev/null 2>&1; then
@@ -116,27 +119,12 @@ if command -v dockerd >/dev/null 2>&1; then
       echo "[setup] Note: DOCKERHUB_USER/DOCKERHUB_TOKEN not set; pulling anonymously (rate-limited)."
     fi
 
-    # Format: "<image>  # comment". `read img _` keeps the image, drops the rest.
-    PREPULL_IMAGES="
-      postgres:18.2                                    # testcontainers (integration tests)
-      redis:6.2.13-alpine                              # testcontainers (integration tests)
-      postgres:18-alpine                               # docker-compose: db
-      nats:2.14-alpine                                 # docker-compose: nats
-      valkey/valkey:9.1-alpine                         # docker-compose: redis/valkey
-      prodrigestivill/postgres-backup-local:18-alpine  # docker-compose: db backup
-      ghcr.io/astral-sh/uv:0.11.19-trixie-slim         # backend Dockerfile: builder
-      debian:trixie-slim                               # backend Dockerfile: runtime
-      node:22.22-alpine                                # frontend Dockerfile: base
-      nginx:1.27-alpine                                # frontend Dockerfile: prod
-    "
-    echo "$PREPULL_IMAGES" | while read -r img _; do
-      [ -z "$img" ] && continue
-      if docker pull "$img" >/dev/null 2>&1; then
-        echo "[setup]   pulled $img"
-      else
-        echo "[setup]   WARN: could not prepull $img (will lazy-pull at first use)"
-      fi
-    done
+    # Single image: production-matching Postgres for Alembic autogenerate.
+    if docker pull postgres:18-alpine >/dev/null 2>&1; then
+      echo "[setup]   pulled postgres:18-alpine"
+    else
+      echo "[setup]   WARN: could not prepull postgres:18-alpine (will lazy-pull at first use)"
+    fi
   else
     echo "[setup] WARN: dockerd did not start; skipping image prepull."
   fi

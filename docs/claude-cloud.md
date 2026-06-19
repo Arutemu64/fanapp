@@ -49,7 +49,7 @@ prepulls (all persist in the snapshot):
 * `just` (apt), an upgraded `uv` (PyPI), Python 3.14 — the base image's `uv` is
   too old for stable 3.14 and can't self-update here (GitHub installer 403s).
 * the `codegraph` binary (the index itself is built in the hook).
-* `docker login` + a Docker image prepull (see below).
+* `docker login` + a single Docker image prepull (`postgres:18-alpine`, see below).
 
 **`.claude/hooks/session-start.sh`** — work that must run each session because it
 does not survive the snapshot:
@@ -59,8 +59,7 @@ does not survive the snapshot:
 * starting `dockerd` — a process, never cached; restarted every session.
 * building/refreshing the `codegraph` index — `.codegraph/` is gitignored and the
   code is pulled fresh each session.
-* per-session env vars written to `$CLAUDE_ENV_FILE` (`PATH`,
-  `TESTCONTAINERS_RYUK_DISABLED`).
+* per-session env vars written to `$CLAUDE_ENV_FILE` (`PATH`).
 
 ## Network access
 
@@ -80,18 +79,26 @@ Docker Hub rate-limit below.)
 
 ## Docker images
 
-The setup script prepulls every external image the project uses so they are baked
-into the snapshot and on disk at session start. Only the daemon (a process) is
-restarted per session by the hook. Prepulled:
+The cloud agent flow does one container-bound task: autogenerating Alembic
+migrations against a throwaway Postgres. So the setup script prepulls a **single**
+image — `postgres:18-alpine`, matching production (`docker-compose.yml`) and the
+CI drift gate — baked into the snapshot and on disk at session start. Only the
+daemon (a process) is restarted per session by the hook; the container itself is
+booted and torn down on demand by `just backend-generate-auto` (see
+[backend.md](backend.md)).
 
-* **testcontainers** (integration tests): `postgres:18.2`, `redis:6.2.13-alpine`
-* **docker-compose** stack: `postgres:18-alpine`, `nats:2.14-alpine`,
-  `valkey/valkey:9.1-alpine`, `prodrigestivill/postgres-backup-local:18-alpine`
-* **Dockerfile** bases: `ghcr.io/astral-sh/uv:…`, `debian:trixie-slim`,
-  `node:…-alpine`, `nginx:…-alpine`
+Everything else is deliberately **not** prepulled and left to CI:
 
-The project's own published `ghcr.io/arutemu64/fanapp-*` images and the locally
-built `fanapp-*` compose images are not prepulled.
+* integration-test images (`postgres:18.2`, `redis:…` via testcontainers) — the
+  full `pytest` suite runs in `.github/workflows/ci.yml`, not in cloud sessions.
+* the rest of the compose stack (`nats`, `valkey`, db-backup) — not needed to
+  generate a schema diff.
+* Dockerfile bases (`uv`, `debian`, `node`, `nginx`) and the project's own
+  `ghcr.io/arutemu64/fanapp-*` images — image builds run in
+  `docker-publish.yml`.
+
+Fast local checks (`just backend-lint`, `backend-typecheck`, `frontend-lint`)
+need no containers and still run in-session per AGENTS.md.
 
 ### Docker Hub authentication
 
@@ -105,8 +112,8 @@ sessions' own lazy pulls are authenticated too.
 > A token in an env var is **not** used until something runs `docker login` —
 > setting the variable alone does nothing.
 
-The prepull is **best-effort** and lists the integration-test images first, so a
-remaining cap or a bad token degrades to a lazy pull at first use rather than
+The prepull is **best-effort**, so a remaining cap or a bad token degrades the
+single `postgres:18-alpine` pull to a lazy pull at first use rather than
 failing environment creation.
 
 > Cloud environments have no secrets store yet; environment variables are visible

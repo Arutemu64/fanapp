@@ -35,7 +35,8 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
   * `just run-dev` / `just run-prod` - Start full env (dev / local prod build) via Docker Compose
   * `just deploy` - Server deploy: pull prebuilt GHCR images (`docker-compose.prod.yml`) & restart
   * `just backend-dev` / `just frontend-dev` - Start dev locally
-  * `just backend-migrate` / `just backend-generate <name>` - Run / generate Alembic migration
+  * `just backend-migrate` / `just backend-generate <name>` - Run / generate Alembic migration (prefer autogenerate; always review output)
+  * `just backend-generate-auto <name>` - Autogenerate a migration against a throwaway Postgres 18 (needs Docker; for when no app DB is running, e.g. cloud)
   * `just frontend-generate-api` - Update SvelteKit types from OpenAPI spec
   * `just backend-lint` / `just frontend-lint` - Lint & format (`backend-lint` also runs the import-linter boundary check)
   * `just backend-typecheck` - Run `ty` type checker on backend

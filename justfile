@@ -64,6 +64,12 @@ backend-migrate:
 backend-generate MIGRATION_NAME:
     cd backend && uv run alembic revision --autogenerate -m "{{ MIGRATION_NAME }}"
 
+# Autogenerate a migration against a throwaway Postgres 18 (matches prod + CI).
+# Needs Docker; use where no app database is running (e.g. Claude Code on the
+# web). Always REVIEW the result — autogenerate misses renames. See script.
+backend-generate-auto MIGRATION_NAME:
+    cd backend && ./scripts/generate-migration.sh "{{ MIGRATION_NAME }}"
+
 # Fail if ORM models drift from migrations (spins a throwaway Postgres via testcontainers)
 backend-check-migrations:
     cd backend && uv run pytest tests/integration/test_migrations.py
