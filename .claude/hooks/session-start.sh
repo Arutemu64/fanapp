@@ -8,11 +8,11 @@
 #     re-runs on config change or cache expiry, so it would miss a dependency
 #     bump on the branch; running the syncs here keeps deps in step with the
 #     code. They are near-instant when the lockfile is unchanged.
-#   * the Docker daemon - a process; never survives between sessions
+#   * the Docker daemon - a process; never survives between sessions. Used to
+#     boot a throwaway Postgres for Alembic autogenerate (not for testing).
 #   * the codegraph index - .codegraph/ is gitignored and the code is pulled
 #     fresh each session, so the index must be (re)built/synced here
-#   * per-session environment variables (PATH, testcontainers) written to
-#     $CLAUDE_ENV_FILE
+#   * per-session environment variables (PATH) written to $CLAUDE_ENV_FILE
 #
 # The cloud-missing tooling (just, uv, Python 3.14, the codegraph binary) lives
 # in .claude/setup.sh, which runs once at environment creation and is baked into
@@ -26,7 +26,9 @@ if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0
 fi
 
-REPO_ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel)}"
+# Fall back through git, then pwd, so a non-repo cwd can't abort the hook under
+# `set -e` (CLAUDE_PROJECT_DIR is normally set by Claude Code).
+REPO_ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 
 # Make the snapshot's upgraded uv (~/.local/bin) and the global codegraph binary
 # ($PNPM_HOME) reachable for the steps below.
@@ -45,10 +47,12 @@ echo "[session-start] Syncing backend dependencies (uv sync)..."
 echo "[session-start] Syncing frontend dependencies (pnpm install)..."
 (cd "$REPO_ROOT/frontend" && pnpm install)
 
-# Start the Docker daemon so integration tests (testcontainers) can run. The
-# daemon is not started by the base image and does not survive between sessions,
-# so we (re)start it each time. Best-effort: warn and keep going rather than
-# abort session setup (so `if` suppresses `set -e`).
+# Start the Docker daemon so `just backend-generate-auto` can boot a throwaway
+# Postgres to autogenerate Alembic migrations against. The daemon is not started
+# by the base image and does not survive between sessions, so we (re)start it
+# each time. (Integration tests and image builds are left to CI - see
+# docs/claude-cloud.md.) Best-effort: warn and keep going rather than abort
+# session setup (so `if` suppresses `set -e`).
 echo "[session-start] Starting Docker daemon..."
 if docker info >/dev/null 2>&1; then
   echo "[session-start] Docker daemon already running."
@@ -66,14 +70,7 @@ elif command -v dockerd >/dev/null 2>&1; then
     echo "[session-start] WARN: Docker daemon did not start (see /tmp/dockerd.log); integration tests unavailable."
   fi
 else
-  echo "[session-start] WARN: dockerd not found; integration tests unavailable."
-fi
-
-# testcontainers' Ryuk reaper container is unreliable in this sandbox (it needs
-# the docker socket and elevated privileges), so disable it for the session.
-# Containers are still torn down by the fixtures' own finally: blocks.
-if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
-  echo 'export TESTCONTAINERS_RYUK_DISABLED=true' >> "$CLAUDE_ENV_FILE"
+  echo "[session-start] WARN: dockerd not found; Alembic autogenerate (just backend-generate-auto) unavailable."
 fi
 
 # Build (or refresh) the codegraph index so symbol/call-graph queries are ready.

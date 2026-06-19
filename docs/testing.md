@@ -29,14 +29,17 @@ PostgreSQL and Redis). They cannot run in environments without a Docker daemon.
 
 ### Running them on Claude Code on the web
 
-Integration tests need a running Docker daemon and the testcontainers images on
-disk. In cloud sessions both are provided by the environment setup — the
-SessionStart hook starts `dockerd` and disables the Ryuk reaper
-(`TESTCONTAINERS_RYUK_DISABLED=true`; the fixtures stop their own containers in
-`finally:` blocks), and the setup script prepulls `postgres:18.2` /
-`redis:6.2.13-alpine`. See [claude-cloud.md](claude-cloud.md) for how that
-environment is provisioned (setup script vs. hook, image prepull, Docker Hub
-auth, and network access).
+The cloud agent flow does **not** run integration tests in-session: they're left
+to CI (`.github/workflows/ci.yml`), which runs the full `pytest` suite on every
+push. Cloud sessions prepull only `postgres:18-alpine` (for Alembic
+autogenerate), not the testcontainers images, and keep running the fast,
+container-free checks (`just backend-lint`, `backend-typecheck`). If you do need
+an ad-hoc integration run in a cloud session, the SessionStart hook starts
+`dockerd`, but you must lazy-pull the testcontainers images and set
+`TESTCONTAINERS_RYUK_DISABLED=true` yourself (the fixtures stop their own
+containers in `finally:` blocks). See [claude-cloud.md](claude-cloud.md) for how
+that environment is provisioned (setup script vs. hook, image prepull, Docker
+Hub auth, and network access).
 
 ## Unit tests — for `core/`
 

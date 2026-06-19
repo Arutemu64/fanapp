@@ -1,4 +1,5 @@
 import asyncio
+import os
 from logging.config import fileConfig
 
 from alembic import context
@@ -35,6 +36,13 @@ DEFAULT_ALEMBIC_DATABASE_URL = "driver://user:pass@localhost/dbname"
 
 
 def get_database_url() -> str:
+    # Explicit override for tooling that has no full app config to load (e.g.
+    # the throwaway-DB autogenerate flow in `just backend-generate-auto`). Only
+    # used when set; runtime migrations still fall through to app settings.
+    override = os.getenv("ALEMBIC_DATABASE_URL")
+    if override:
+        return override
+
     alembic_url = config.get_main_option("sqlalchemy.url")
     if alembic_url and alembic_url != DEFAULT_ALEMBIC_DATABASE_URL:
         return alembic_url
