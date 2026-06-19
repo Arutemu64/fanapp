@@ -75,6 +75,58 @@ export PATH="$PNPM_HOME:$PATH"
 pnpm add -g @colbymchenry/codegraph@latest \
   || echo "[setup] WARN: codegraph install failed; continuing without it."
 
+# Prepull the external Docker images the project uses. Image layers are files,
+# so a pull here persists in the cached snapshot and every session starts with
+# them on disk; only the daemon (a process) is restarted per session by the
+# SessionStart hook. We start dockerd here purely to pull - it is not expected
+# to survive the snapshot.
+#
+# Best-effort: a rate-limited or unreachable image must not fail environment
+# creation, so the block runs under `if` (suppresses set -e) and each failed
+# pull degrades to a lazy pull at first use. Docker Hub caps anonymous pulls
+# (~100 / 6h per egress IP), so the integration-test images are listed first -
+# the test path stays cached even if a later pull hits the cap. (In this env no
+# image 403s; the allowlist already permits the Docker Hub / GHCR blob CDNs -
+# see docs/testing.md. The project's own ghcr.io/arutemu64/fanapp-* images and
+# the locally built fanapp-* compose images are intentionally not prepulled.)
+echo "[setup] Prepulling Docker images..."
+if command -v dockerd >/dev/null 2>&1; then
+  if ! docker info >/dev/null 2>&1; then
+    $SUDO sh -c 'dockerd >/tmp/dockerd-setup.log 2>&1 &'
+    for _ in $(seq 1 15); do
+      if docker info >/dev/null 2>&1; then break; fi
+      sleep 1
+    done
+  fi
+  if docker info >/dev/null 2>&1; then
+    # Format: "<image>  # comment". `read img _` keeps the image, drops the rest.
+    PREPULL_IMAGES="
+      postgres:18.2                                    # testcontainers (integration tests)
+      redis:6.2.13-alpine                              # testcontainers (integration tests)
+      postgres:18-alpine                               # docker-compose: db
+      nats:2.14-alpine                                 # docker-compose: nats
+      valkey/valkey:9.1-alpine                         # docker-compose: redis/valkey
+      prodrigestivill/postgres-backup-local:18-alpine  # docker-compose: db backup
+      ghcr.io/astral-sh/uv:0.11.19-trixie-slim         # backend Dockerfile: builder
+      debian:trixie-slim                               # backend Dockerfile: runtime
+      node:22.22-alpine                                # frontend Dockerfile: base
+      nginx:1.27-alpine                                # frontend Dockerfile: prod
+    "
+    echo "$PREPULL_IMAGES" | while read -r img _; do
+      [ -z "$img" ] && continue
+      if docker pull "$img" >/dev/null 2>&1; then
+        echo "[setup]   pulled $img"
+      else
+        echo "[setup]   WARN: could not prepull $img (will lazy-pull at first use)"
+      fi
+    done
+  else
+    echo "[setup] WARN: dockerd did not start; skipping image prepull."
+  fi
+else
+  echo "[setup] WARN: dockerd not found; skipping image prepull."
+fi
+
 # Set caveman default to lite mode (save tokens while keeping explanations readable).
 mkdir -p "$HOME/.config/caveman"
 echo '{"defaultMode": "lite"}' > "$HOME/.config/caveman/config.json"

@@ -51,12 +51,19 @@ next fresh session.
 
 testcontainers pulls `postgres:18.2`, `redis:6.2.13-alpine`, and (when Ryuk is
 enabled) `testcontainers/ryuk` — all from Docker Hub. To avoid re-pulling on
-every session, add a prepull to the environment's **setup script** (cloud UI),
-whose output is baked into the cached snapshot:
+every session, the environment's **setup script** (`.claude/setup.sh`) prepulls
+these — along with the `docker-compose` stack (`postgres`, `nats`, `valkey`, the
+backup image) and the `Dockerfile` base images — so they are baked into the
+cached snapshot. The setup script starts `dockerd` only to pull; the layers are
+files and persist, while the daemon does not (the SessionStart hook restarts it
+each session).
 
-```bash
-docker pull postgres:18.2 && docker pull redis:6.2.13-alpine
-```
+The prepull is **best-effort** and ordered with the integration-test images
+first: Docker Hub caps anonymous pulls (~100 / 6h per egress IP), so if a later
+pull hits the cap it degrades to a lazy pull at first use rather than failing
+environment creation. A rate-limit error (`unauthenticated pull rate limit`) is
+distinct from the 403 that a missing **network allowlist** entry produces — the
+former is transient, the latter is fixed by the Custom-access hosts above.
 
 ## Unit tests — for `core/`
 
