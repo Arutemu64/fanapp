@@ -43,6 +43,9 @@ docs/       Architecture guides (backend.md, frontend.md, api.md)
 - Node.js + [`pnpm`](https://pnpm.io/)
 - [`just`](https://github.com/casey/just)
 - Docker + Docker Compose (for the full environment)
+- On **Windows**, run `just` from **Git Bash** or **WSL** (not cmd/PowerShell): the
+  recipes are POSIX shell and `bootstrap.sh` is a bash script. Git Bash ships with
+  [Git for Windows](https://git-scm.com/download/win).
 
 > Optional: [`mise`](https://mise.jdx.dev) (or `asdf`) reads the pinned
 > versions from [`mise.toml`](mise.toml) — run `mise install` to get the exact
