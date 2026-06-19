@@ -44,19 +44,29 @@ docs/       Architecture guides (backend.md, frontend.md, api.md)
 - [`just`](https://github.com/casey/just)
 - Docker + Docker Compose (for the full environment)
 
+> Optional: [`mise`](https://mise.jdx.dev) (or `asdf`) reads the pinned
+> versions from [`mise.toml`](mise.toml) — run `mise install` to get the exact
+> Python / Node / pnpm / uv / just this repo expects in one step. Docker is not
+> managed by mise; install it separately.
+
 ## Getting started
 
 ### 1. Configure
 
 ```sh
-cp .env.example .env
-# Edit .env — replace every `change-me-*` placeholder (DB / Redis / NATS passwords,
-# WEB__SECRET_KEY, bot token, mail, etc.)
+just bootstrap
 ```
 
-For local (non-Docker) frontend dev, also copy `frontend/.env.example` → `frontend/.env`.
+This creates `.env` from the template, fills the generated secrets (DB / Redis /
+NATS passwords, `WEB__SECRET_KEY`), and generates the Web Push VAPID keys
+(`config/private_key.pem`, `config/public_key.pem`, `PUBLIC_VAPID_KEY`). It is
+idempotent — re-run anytime; it never overwrites values you've already set.
 
-Generate VAPID keys for Web Push (`config/private_key.pem`, `config/public_key.pem`) with `vapid-gen` and set `PUSH__*` / `PUBLIC_VAPID_KEY` accordingly.
+Then fill the real third-party credentials it can't generate: `BOT__*` (create a
+bot via [@BotFather](https://t.me/BotFather)), `MAIL__*` (SMTP), and
+`PUSH__SUBSCRIBER`. The optional integration blocks stay commented out.
+
+For local (non-Docker) frontend dev, also copy `frontend/.env.example` → `frontend/.env`.
 
 ### 2. Run with Docker (full environment)
 

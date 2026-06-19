@@ -3,6 +3,13 @@
 # =========================
 # No workspaces: frontend and backend keep isolated dependency trees.
 
+# ---- Setup ----
+# One-command local setup: create .env from the template, fill generated
+# secrets (DB/Redis/NATS passwords, WEB__SECRET_KEY), and generate VAPID keys.
+# Idempotent — re-run anytime; it never overwrites values you've already set.
+bootstrap:
+    ./scripts/bootstrap.sh
+
 # ---- Frontend (SvelteKit + pnpm) ----
 frontend-install:
     cd frontend && pnpm install
