@@ -59,6 +59,7 @@
 	{#if showStaleNotice}
 		<StaleDataNotice
 			message="Нет связи. Показан сохранённый профиль — обновится при подключении."
+			cachedAt={data.cachedAt}
 		/>
 	{/if}
 

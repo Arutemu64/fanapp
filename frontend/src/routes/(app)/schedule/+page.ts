@@ -13,7 +13,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 
 	const client = createApiClient();
 
-	const { data, stale } = await fetchWithCache<ScheduleEventFullDTO[]>({
+	const { data, stale, cachedAt } = await fetchWithCache<ScheduleEventFullDTO[]>({
 		key: cacheKey,
 		fetcher: async ({ signal }) => {
 			const { data, error: fetchError } = await client.GET('/schedule/', { fetch, signal });
@@ -28,5 +28,5 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 		error(503, 'Не удалось загрузить расписание');
 	}
 
-	return { title: 'Расписание', schedule: data, stale };
+	return { title: 'Расписание', schedule: data, stale, cachedAt };
 };

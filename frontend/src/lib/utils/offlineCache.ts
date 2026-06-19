@@ -40,12 +40,50 @@ export async function clearCache(): Promise<void> {
 	}
 }
 
+/**
+ * Stored shape for {@link fetchWithCache} entries: the cached value plus the
+ * epoch-millis moment it was persisted, so pages can show "synced at …".
+ */
+interface CachedEnvelope<T> {
+	value: T;
+	cachedAt: number;
+}
+
+/** True when a read-back value is a {@link CachedEnvelope} (vs a legacy raw value). */
+function isEnvelope<T>(raw: unknown): raw is CachedEnvelope<T> {
+	return (
+		typeof raw === 'object' &&
+		raw !== null &&
+		'value' in raw &&
+		typeof (raw as { cachedAt?: unknown }).cachedAt === 'number'
+	);
+}
+
+/**
+ * Read an entry written by {@link fetchWithCache}, unwrapping the envelope.
+ * Entries cached before the envelope migration are bare values — treat them as a
+ * value with an unknown timestamp; the next online write upgrades them.
+ */
+async function readEnvelope<T>(key: string): Promise<{ value: T; cachedAt?: number } | undefined> {
+	const raw = await readCache<unknown>(key);
+	if (raw === undefined) return undefined;
+	if (isEnvelope<T>(raw)) return { value: raw.value, cachedAt: raw.cachedAt };
+	// Legacy raw value (incl. `null`, a valid "logged out" cache) — no timestamp.
+	return { value: raw as T };
+}
+
 /** Result of a {@link fetchWithCache} call. */
 export interface FetchWithCacheResult<T> {
 	/** Fresh value, last cached copy, or `undefined` on a complete miss. */
 	data: T | undefined;
 	/** `true` when served from cache (the live fetch was skipped or failed). */
 	stale: boolean;
+	/**
+	 * Epoch millis of when the returned copy was persisted. Present for fresh data
+	 * (just now) and for cached copies written after the envelope migration;
+	 * `undefined` for a complete miss or a legacy entry.
+	 */
+	cachedAt?: number;
 }
 
 /** Options for {@link fetchWithCache}. */
@@ -84,7 +122,8 @@ export async function fetchWithCache<T>({
 }: FetchWithCacheOptions<T>): Promise<FetchWithCacheResult<T>> {
 	// Known unreachable: serve the cached copy without a dead network wait.
 	if (!isReachable()) {
-		return { data: await readCache<T>(key), stale: true };
+		const cached = await readEnvelope<T>(key);
+		return { data: cached?.value, cachedAt: cached?.cachedAt, stale: true };
 	}
 
 	try {
@@ -94,14 +133,56 @@ export async function fetchWithCache<T>({
 
 		if (value === undefined) {
 			// Reachable but errored/empty — prefer the cached copy over a hard failure.
-			return { data: await readCache<T>(key), stale: true };
+			const cached = await readEnvelope<T>(key);
+			return { data: cached?.value, cachedAt: cached?.cachedAt, stale: true };
 		}
 
-		void writeCache<T>(key, value);
-		return { data: value, stale: false };
+		const cachedAt = Date.now();
+		void writeCache<CachedEnvelope<T>>(key, { value, cachedAt });
+		return { data: value, cachedAt, stale: false };
 	} catch {
 		// Network failure / timeout: serve the last synced copy.
 		markReachable(false);
-		return { data: await readCache<T>(key), stale: true };
+		const cached = await readEnvelope<T>(key);
+		return { data: cached?.value, cachedAt: cached?.cachedAt, stale: true };
+	}
+}
+
+/** Options for {@link warmCache}. */
+export interface WarmCacheOptions<T> {
+	/** IndexedDB key; must match the key the page's `load` reads (per-user). */
+	key: string;
+	/** Runs the network request; return the value to cache, or `undefined` to skip. */
+	fetcher: (ctx: { signal: AbortSignal }) => Promise<T | undefined>;
+	/** Fetch timeout budget; defaults to {@link FIRST_PAINT_TIMEOUT_MS}. */
+	timeoutMs?: number;
+}
+
+/**
+ * Proactively populate a cache entry for a page the user hasn't opened yet, so it
+ * is viewable offline from the first run (e.g. warming the schedule on boot).
+ *
+ * Fire-and-forget: callers must not `await` it inside a `load`, so it never blocks
+ * first paint. It is a no-op when the server is unreachable or an entry already
+ * exists — once warmed, the normal `load` + SSE refresh keep it fresh, so this
+ * never refetches on its own. Swallows every error (offline / timeout / storage).
+ */
+export async function warmCache<T>({
+	key,
+	fetcher,
+	timeoutMs = FIRST_PAINT_TIMEOUT_MS
+}: WarmCacheOptions<T>): Promise<void> {
+	try {
+		if (!isReachable()) return;
+		// Already cached: leave refresh to the page's own load and SSE updates.
+		if ((await readCache<unknown>(key)) !== undefined) return;
+
+		const value = await fetcher({ signal: timeoutSignal(timeoutMs) });
+		markReachable(true);
+		if (value === undefined) return;
+
+		void writeCache<CachedEnvelope<T>>(key, { value, cachedAt: Date.now() });
+	} catch {
+		// Best-effort warm — ignore failures.
 	}
 }

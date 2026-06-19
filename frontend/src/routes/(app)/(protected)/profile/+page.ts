@@ -38,7 +38,7 @@ export const load: PageLoad = async ({ fetch, depends, url, parent }) => {
 
 	const client = createApiClient();
 
-	const { data, stale } = await fetchWithCache<ProfileConnections>({
+	const { data, stale, cachedAt } = await fetchWithCache<ProfileConnections>({
 		key: cacheKey,
 		fetcher: async ({ signal }) => {
 			const [{ data: pushSubscriptions }, { data: socialAccounts }] = await Promise.all([
@@ -62,6 +62,7 @@ export const load: PageLoad = async ({ fetch, depends, url, parent }) => {
 		telegramLinkError: getTelegramLinkErrorCode(url),
 		pushSubscriptions: data.pushSubscriptions,
 		socialAccounts: data.socialAccounts,
-		stale
+		stale,
+		cachedAt
 	};
 };

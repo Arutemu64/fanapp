@@ -38,6 +38,50 @@ export function formatRelativeTime(value: string | number | Date): string {
 	return formatMoscowDateTime(date);
 }
 
+const MOSCOW_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+	hour: '2-digit',
+	minute: '2-digit',
+	timeZone: 'Europe/Moscow'
+});
+
+const MOSCOW_DAY_MONTH_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+	day: '2-digit',
+	month: '2-digit',
+	timeZone: 'Europe/Moscow'
+});
+
+// Y-M-D in Moscow time, used only to compare calendar days regardless of the
+// device's own timezone (en-CA gives a stable "2026-06-19" shape).
+const MOSCOW_DAY_KEY_FORMATTER = new Intl.DateTimeFormat('en-CA', {
+	year: 'numeric',
+	month: '2-digit',
+	day: '2-digit',
+	timeZone: 'Europe/Moscow'
+});
+
+/**
+ * Format when cached data was last synced, for the offline stale notice. Caching
+ * may have happened days earlier (installed at home, opened at the venue), so the
+ * day is always shown unless it is today/yesterday. Moscow time, like the rest of
+ * the app.
+ */
+export function formatSyncedAt(timestamp: number): string {
+	const target = new Date(timestamp);
+	const time = MOSCOW_TIME_FORMATTER.format(target);
+
+	const now = new Date();
+	const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+	const targetDay = MOSCOW_DAY_KEY_FORMATTER.format(target);
+
+	if (targetDay === MOSCOW_DAY_KEY_FORMATTER.format(now)) {
+		return `сегодня в ${time}`;
+	}
+	if (targetDay === MOSCOW_DAY_KEY_FORMATTER.format(yesterday)) {
+		return `вчера в ${time}`;
+	}
+	return `${MOSCOW_DAY_MONTH_FORMATTER.format(target)} в ${time}`;
+}
+
 export function formatUntil(queueUntil: number, timeUntil: number): string {
 	const h = Math.floor(timeUntil / 3600);
 	const m = Math.ceil((timeUntil % 3600) / 60);
