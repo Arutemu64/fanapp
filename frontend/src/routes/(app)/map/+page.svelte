@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { asset } from '$app/paths';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { CloseOutline, DownloadOutline } from 'flowbite-svelte-icons';
 
@@ -13,25 +12,43 @@
 		filename: string;
 	}
 
-	// Держите этот список в sync с файлами внутри frontend/static/map.
-	const maps: MapEntry[] = [
-		{
-			id: 'map_1',
-			src: asset('/map/map_1.jpg'),
-			alt: 'Карта площадки 1',
-			width: 1280,
-			height: 831,
-			filename: 'map_1.jpg'
-		},
-		{
-			id: 'map_2_3',
-			src: asset('/map/map_2_3.jpg'),
-			alt: 'Карта площадки 2 и 3',
-			width: 1280,
-			height: 787,
-			filename: 'map_2_3.jpg'
-		}
-	];
+	// Per-file metadata keyed by the source file name. Image URLs are discovered
+	// from the bundle below, so adding a map needs only a new file in
+	// $lib/assets/map plus an entry here (alt text + intrinsic dimensions, which
+	// keep the layout stable while the image loads).
+	const META: Record<string, { alt: string; width: number; height: number }> = {
+		'map_1.jpg': { alt: 'Карта площадки 1', width: 1280, height: 831 },
+		'map_2_3.jpg': { alt: 'Карта площадки 2 и 3', width: 1280, height: 787 }
+	};
+
+	// Vite resolves these imports to content-hashed URLs at build time, so a
+	// swapped map busts every cache layer (browser, CDN, service worker)
+	// automatically. eager = inline the URL strings; ?url = the asset URL rather
+	// than the decoded module.
+	const modules = import.meta.glob('$lib/assets/map/*.jpg', {
+		eager: true,
+		query: '?url',
+		import: 'default'
+	}) as Record<string, string>;
+
+	// Build the gallery from the discovered files, attaching metadata by name and
+	// sorting by id so the order is stable regardless of glob iteration order.
+	const maps: MapEntry[] = Object.entries(modules)
+		.map(([path, src]) => {
+			const filename = path.split('/').pop() ?? '';
+			const meta = META[filename];
+			if (!meta) return null;
+			return {
+				id: filename.replace(/\.[^.]+$/, ''),
+				src,
+				alt: meta.alt,
+				width: meta.width,
+				height: meta.height,
+				filename
+			};
+		})
+		.filter((entry): entry is MapEntry => entry !== null)
+		.sort((a, b) => a.id.localeCompare(b.id));
 
 	// Currently opened map for the fullscreen viewer, or null when closed.
 	let active = $state<MapEntry | null>(null);

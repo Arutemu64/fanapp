@@ -16,6 +16,7 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
 │   └── src/
 │       ├── routes/           # Pages & layout files
 │       └── lib/
+│           ├── assets/       # Bundled, Vite-processed assets (content-hashed; e.g. map/ venue maps)
 │           ├── components/   # Reusable UI (SectionIntro, ToastContainer, etc.)
 │           ├── api/          # Shared openapi-fetch client & generated types (v1.d.ts)
 │           ├── types/        # Local TS interfaces and schema type overrides
