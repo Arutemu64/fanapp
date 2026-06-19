@@ -1,0 +1,16 @@
+Profanity word lists in this directory.
+
+ldnoobw_ru.txt, ldnoobw_en.txt
+------------------------------
+Source: "List of Dirty, Naughty, Obscene, and Otherwise Bad Words" (LDNOOBW)
+        https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words
+License: Creative Commons Attribution 4.0 International (CC BY 4.0)
+        https://creativecommons.org/licenses/by/4.0/
+The files are vendored verbatim and used for exact (whole-token) matching only.
+
+roots_ru.txt
+------------
+Hand-curated list of unambiguous Russian profanity (mat) roots, written for this
+project. Used for substring matching to catch inflected / obfuscated forms that
+the verbatim LDNOOBW list misses. Kept deliberately conservative to avoid false
+positives on ordinary words.

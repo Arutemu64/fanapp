@@ -13,6 +13,7 @@ from fanfan.main.ioc.id_provider import SystemAuthProvider, WebAuthProvider
 from fanfan.main.ioc.interactors import InteractorsProvider
 from fanfan.main.ioc.jinja import JinjaProvider
 from fanfan.main.ioc.mail import MailProvider
+from fanfan.main.ioc.profanity import ProfanityProvider
 from fanfan.main.ioc.push import PushProvider
 from fanfan.main.ioc.redis import RedisProvider
 from fanfan.main.ioc.security import SecurityProvider
@@ -40,6 +41,7 @@ def get_common_providers() -> list[Provider]:
         Cosplay2Provider(),
         JinjaProvider(),
         HtmlProvider(),
+        ProfanityProvider(),
         PushProvider(),
         MailProvider(),
         OAuthProvider(),

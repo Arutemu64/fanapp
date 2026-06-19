@@ -52,6 +52,7 @@ from fanfan.core.exceptions.users import (
     UserAlreadyHasTelegramLinked,
     UserHasNoEmail,
     UsernameAlreadyTaken,
+    UsernameProfanity,
     UserNotFound,
 )
 from fanfan.core.exceptions.votes import VoteAlreadyExists, VoteNotFound
@@ -68,6 +69,7 @@ EXCEPTION_STATUS_MAP: dict[type[AppException], int] = {
     CurrentEventNotAllowed: status.HTTP_400_BAD_REQUEST,
     SameEventsAreNotAllowed: status.HTTP_400_BAD_REQUEST,
     SkippedEventNotAllowed: status.HTTP_400_BAD_REQUEST,
+    UsernameProfanity: status.HTTP_400_BAD_REQUEST,
     # 401 Unauthorized
     UserNotAuthenticated: status.HTTP_401_UNAUTHORIZED,
     InvalidCredentials: status.HTTP_401_UNAUTHORIZED,

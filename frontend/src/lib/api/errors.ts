@@ -103,7 +103,8 @@ const ERROR_MESSAGES: Record<string, string> = {
 	USER_ALREADY_HAS_TICKET_LINKED: 'У тебя уже привязан билет',
 	USER_NOT_AUTHENTICATED: 'Нужно войти в аккаунт',
 	USER_NOT_FOUND: 'Аккаунт не найден',
-	USERNAME_ALREADY_TAKEN: 'Это имя пользователя уже занято'
+	USERNAME_ALREADY_TAKEN: 'Это имя пользователя уже занято',
+	USERNAME_PROFANITY: 'Псевдоним содержит недопустимые слова'
 };
 
 export function getApiErrorDetail(error: unknown): string | null {

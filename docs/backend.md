@@ -145,6 +145,12 @@ A notification `body` is stored as a **small, safe HTML subset** so the same tex
 * **Templates**: Jinja notification templates (`adapters/jinja/templates/`) may use the subset tags directly (e.g. `<b>`) to highlight key details. `autoescape=True` keeps `{{ variables }}` escaped, and the central sanitizer is the final safety net, so template-interpolated DB values can never inject markup.
 * **Deep-link path**: each notification carries an optional in-app `path` (e.g. `/schedule`), set by the interactor that builds the `NewNotification` (the originating use case knows the target — `PushNotifier` cannot infer it from title/body). It is persisted on `Notification` and flows through both DTOs. The push notifier sends it as the payload `url`, which the service worker navigates to on click (`frontend/src/service-worker.ts`); the web UI makes notification list items and push toasts link to it. `None` falls back to the app root (`/`).
 
+## Profanity Filtering
+
+User-chosen **public** text is screened for profanity behind the `ProfanityFilter` port (`application/ports/profanity_filter.py`, word-list adapter `adapters/profanity/filter.py`). Currently only the username is filtered: `UpdateCurrentUser._update_username` calls `contains_profanity` and raises `UsernameProfanity` (HTTP 400, code `USERNAME_PROFANITY`) before persisting. Feedback text is **intentionally not** filtered — it is private (org-only), so users may vent freely.
+
+The adapter normalizes input before matching (casefold, fold Latin/leet look-alikes to Cyrillic, strip non-letters, collapse repeats), so obfuscated forms (`х.у.й`, `пизд@`, `хуууй`) are still caught. It combines two static word lists under `adapters/profanity/data/`: the vendored CC-BY [LDNOOBW](https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words) ru/en lists (used for **exact** normalized-token matches, see `NOTICE`) plus a curated `roots_ru.txt` of unambiguous mat stems (used for **substring** matches to catch inflections). To filter another field, inject the port and call it in that interactor.
+
 ## Rate Limiting
 
 Two distinct rate-limiting ports exist — pick by semantics, do not overload one for the other:

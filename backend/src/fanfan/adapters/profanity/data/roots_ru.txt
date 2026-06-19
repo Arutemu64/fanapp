@@ -1,0 +1,63 @@
+# Curated Russian profanity (mat) roots for substring matching.
+#
+# Each non-empty, non-comment line is a root. After normalization (see
+# adapters/profanity/filter.py) a username is flagged when it CONTAINS any of
+# these roots as a substring. Roots are chosen to be unambiguous: they must not
+# appear inside ordinary Russian words, so the substring match stays precise.
+# Lines are normalized the same way as input, so write them in plain Cyrillic.
+
+# хуй and derivatives (covers нахуй, похуй, охуел, хуёво, ...)
+хуй
+хуя
+хуе
+хуё
+хуи
+
+# пизда and derivatives
+пизд
+
+# блядь and derivatives
+бляд
+блят
+
+# ебать and derivatives
+ебал
+ебат
+ебан
+ебуч
+ебло
+ебни
+ебну
+ебыр
+ебарь
+наеб
+уеб
+заеб
+проеб
+съеб
+выеб
+доеб
+взъеб
+разъеб
+долбоеб
+долбаеб
+
+# охуеть / ахуеть
+охуе
+охуи
+ахуе
+
+# misc unambiguous mat
+залуп
+дроч
+гандон
+гондон
+мудак
+мудил
+мудоз
+пидор
+пидар
+пидрил
+шлюх
+шалав
+сучар
