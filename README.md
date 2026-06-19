@@ -62,11 +62,18 @@ NATS passwords, `WEB__SECRET_KEY`), and generates the Web Push VAPID keys
 (`config/private_key.pem`, `config/public_key.pem`, `PUBLIC_VAPID_KEY`). It is
 idempotent — re-run anytime; it never overwrites values you've already set.
 
-Then fill the real third-party credentials it can't generate: `BOT__*` (create a
-bot via [@BotFather](https://t.me/BotFather)) and `PUSH__SUBSCRIBER`. `MAIL__*`
-(SMTP) is optional — leave it unset and outgoing emails are logged instead of
-sent (email login/confirmation codes appear in the app logs). The optional
-integration blocks stay commented out.
+Both the web API and the bootstrap defaults are designed to boot with no real
+third-party credentials, so you can start exploring immediately:
+
+- `BOT__*` — the placeholder values are format-valid, so the web API starts with
+  them. Telegram login and Telegram notifications stay disabled until you set a
+  real bot (create one via [@BotFather](https://t.me/BotFather)); email and
+  credentials login work without it. The bot *process* needs a real token to run.
+- `MAIL__*` (SMTP) — optional; leave unset and outgoing emails are logged instead
+  of sent (email login/confirmation codes appear in the app logs).
+- `PUSH__SUBSCRIBER` — your contact email for Web Push.
+
+The optional integration blocks stay commented out.
 
 For local (non-Docker) frontend dev, also copy `frontend/.env.example` → `frontend/.env`.
 
