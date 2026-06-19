@@ -27,6 +27,37 @@ uv run pytest --cov             # with coverage (config in pyproject.toml)
 Integration tests need Docker available (testcontainers spins up real
 PostgreSQL and Redis). They cannot run in environments without a Docker daemon.
 
+### Running them on Claude Code on the web
+
+Cloud sessions ship the Docker CLI + `dockerd` but don't start the daemon, and
+the environment cache stores files, not processes. The repo's SessionStart hook
+(`.claude/hooks/session-start.sh`) therefore starts `dockerd` on every session
+and sets `TESTCONTAINERS_RYUK_DISABLED=true` (the Ryuk reaper is unreliable in
+the sandbox; the test fixtures stop their own containers in `finally:` blocks).
+
+The one thing the hook can't do is open network egress. Image **manifests** come
+from allowlisted hosts, but image **layers** are served from registry blob CDNs
+that aren't in the default **Trusted** list, so pulls authenticate and then 403
+mid-download. Set the environment's network access to **Custom** (keep the
+default package-manager list checked) and add:
+
+```text
+production.cloudfront.docker.com      # Docker Hub layer blobs (postgres, redis, …)
+pkg-containers.githubusercontent.com  # GHCR layer blobs (prod images)
+```
+
+Or use **Full** access. Changing the allowlist rebuilds the env cache on the
+next fresh session.
+
+testcontainers pulls `postgres:18.2`, `redis:6.2.13-alpine`, and (when Ryuk is
+enabled) `testcontainers/ryuk` — all from Docker Hub. To avoid re-pulling on
+every session, add a prepull to the environment's **setup script** (cloud UI),
+whose output is baked into the cached snapshot:
+
+```bash
+docker pull postgres:18.2 && docker pull redis:6.2.13-alpine
+```
+
 ## Unit tests — for `core/`
 
 Pure domain logic (`core/models/`, `core/vo/`, `core/services/`, `core/utils/`)
