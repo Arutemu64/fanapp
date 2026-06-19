@@ -16,6 +16,18 @@
 #   * just - The repo drives every workflow through `just`, which is not
 #           preinstalled. Its official installer also pulls from GitHub (403),
 #           so we use the native Ubuntu package instead (`apt-get install just`).
+#   * docker - The web image ships the docker CLI + dockerd but does NOT start
+#           the daemon, and the env cache stores files, not running processes, so
+#           the daemon has to be (re)started on every session. Integration tests
+#           (`just backend-test-integration`) use testcontainers, which needs a
+#           live daemon to spin up throwaway PostgreSQL/Redis. We also disable the
+#           testcontainers Ryuk reaper, which is unreliable in this sandbox.
+#           NOTE: pulling images additionally needs the registry blob-CDN hosts
+#           on the environment's network allowlist (Custom access). Docker Hub
+#           serves layers from production.cloudfront.docker.com and GHCR from
+#           pkg-containers.githubusercontent.com; neither is in the default
+#           Trusted list, so without them every layer download 403s. See
+#           docs/testing.md.
 #   * codegraph - Code-intelligence CLI used to navigate this 550+ file codebase
 #           with fewer tokens (symbol search, call graph, change-impact) instead
 #           of reading whole files. Not preinstalled and not a project dependency
@@ -63,6 +75,37 @@ echo "[session-start] Installing backend dependencies (uv sync)..."
 
 echo "[session-start] Installing frontend dependencies (pnpm install)..."
 (cd "$REPO_ROOT/frontend" && pnpm install)
+
+# Start the Docker daemon so integration tests (testcontainers) can run. The
+# daemon is not started by the base image and does not survive between sessions,
+# so we (re)start it each time. This is best-effort: if it fails we warn and keep
+# going rather than abort session setup (so `if` suppresses `set -e`).
+echo "[session-start] Starting Docker daemon..."
+if docker info >/dev/null 2>&1; then
+  echo "[session-start] Docker daemon already running."
+elif command -v dockerd >/dev/null 2>&1; then
+  # dockerd is a long-running root process; launch it detached and poll the
+  # socket (it usually comes up in ~1s). Logs go to a file for inspection.
+  $SUDO sh -c 'dockerd >/tmp/dockerd.log 2>&1 &'
+  for _ in $(seq 1 15); do
+    if docker info >/dev/null 2>&1; then break; fi
+    sleep 1
+  done
+  if docker info >/dev/null 2>&1; then
+    echo "[session-start] Docker daemon ready."
+  else
+    echo "[session-start] WARN: Docker daemon did not start (see /tmp/dockerd.log); integration tests unavailable."
+  fi
+else
+  echo "[session-start] WARN: dockerd not found; integration tests unavailable."
+fi
+
+# testcontainers' Ryuk reaper container is unreliable in this sandbox (it needs
+# the docker socket and elevated privileges), so disable it for the session.
+# Containers are still torn down by the fixtures' own finally: blocks.
+if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
+  echo 'export TESTCONTAINERS_RYUK_DISABLED=true' >> "$CLAUDE_ENV_FILE"
+fi
 
 # codegraph is a global pnpm package. pnpm needs a global bin directory; point
 # it at the standard PNPM_HOME and add that to PATH so the `codegraph` binary is
