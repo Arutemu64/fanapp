@@ -17,6 +17,10 @@ class UsernameAlreadyTaken(UserException):
     code = "USERNAME_ALREADY_TAKEN"
 
 
+class UsernameProfanity(UserException):
+    code = "USERNAME_PROFANITY"
+
+
 class UserHasNoEmail(UserException):
     code = "USER_HAS_NO_EMAIL"
 
