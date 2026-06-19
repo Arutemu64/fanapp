@@ -42,7 +42,7 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
   * `just backend-import-lint` - Enforce layer boundaries (import-linter); see [docs/backend.md](docs/backend.md)
 
 ## Code Navigation (`codegraph`)
-This 550+ file codebase is indexed by [`codegraph`](https://www.npmjs.com/package/@colbymchenry/codegraph), a code-intelligence CLI. Web sessions auto-install and index it via the SessionStart hook (`.claude/hooks/session-start.sh`); locally, install once with `pnpm add -g @colbymchenry/codegraph && codegraph init`.
+This 550+ file codebase is indexed by [`codegraph`](https://www.npmjs.com/package/@colbymchenry/codegraph), a code-intelligence CLI. On the web, the binary is installed once by the environment **setup script** (`.claude/setup.sh`, baked into the cached snapshot) and the index is (re)built each session by the **SessionStart hook** (`.claude/hooks/session-start.sh`); locally, install once with `pnpm add -g @colbymchenry/codegraph && codegraph init`.
 
 **Use codegraph first** for any navigation question — one call, no whole-file reads:
   * `codegraph query <name>` - Find a symbol's definition(s) with `file:line`
