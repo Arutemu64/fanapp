@@ -31,15 +31,14 @@
 	let offline = $derived(!online && status !== 403 && status !== 404);
 
 	let title = $derived.by(() => {
-		if (offline) return 'Нет подключения к интернету';
+		if (offline) return 'Нет соединения';
 		if (status === 403) return 'Доступ ограничен';
 		if (status === 404) return 'Страница не найдена';
 		return 'Что-то пошло не так';
 	});
 
 	let description = $derived.by(() => {
-		if (offline)
-			return 'Проверь интернет-соединение и попробуй снова. Часть данных доступна офлайн.';
+		if (offline) return 'Проверь соединение и попробуй снова. Часть данных доступна офлайн.';
 		if (errorMessage) return errorMessage;
 		if (status === 403) return 'У тебя нет прав для просмотра этой страницы.';
 		if (status === 404) return 'Похоже, эта страница не существует, была удалена или перенесена.';
