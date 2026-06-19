@@ -38,7 +38,6 @@ class UserORM(BaseORM):
     # Bag for non-queryable user preferences (e.g. items_per_page).
     settings: Mapped[dict] = mapped_column(JSONB)
 
-    first_name: Mapped[str | None] = mapped_column()
     role: Mapped[UserRole] = mapped_column(
         Enum(
             UserRole,

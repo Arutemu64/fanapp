@@ -23,8 +23,6 @@ class User(AggregateRoot):
 
     email: Email | None = None
 
-    first_name: str | None = None
-
     settings: UserSettings = field(default_factory=UserSettings)
 
     @classmethod
@@ -36,7 +34,6 @@ class User(AggregateRoot):
         hashed_password: str | None,
         role: UserRole,
         email: Email | None = None,
-        first_name: str | None = None,
     ) -> Self:
         return cls(
             id=id,
@@ -44,7 +41,6 @@ class User(AggregateRoot):
             hashed_password=hashed_password,
             role=role,
             email=email,
-            first_name=first_name,
         )
 
     def set_username(self, username: Username) -> None:
@@ -55,9 +51,6 @@ class User(AggregateRoot):
 
     def reset_ticket_role(self) -> None:
         self.role = UserRole.VISITOR
-
-    def set_first_name(self, first_name: str | None) -> None:
-        self.first_name = first_name
 
     def update_settings(
         self,
