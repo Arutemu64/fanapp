@@ -58,12 +58,20 @@ cached snapshot. The setup script starts `dockerd` only to pull; the layers are
 files and persist, while the daemon does not (the SessionStart hook restarts it
 each session).
 
-The prepull is **best-effort** and ordered with the integration-test images
-first: Docker Hub caps anonymous pulls (~100 / 6h per egress IP), so if a later
-pull hits the cap it degrades to a lazy pull at first use rather than failing
-environment creation. A rate-limit error (`unauthenticated pull rate limit`) is
-distinct from the 403 that a missing **network allowlist** entry produces — the
-former is transient, the latter is fixed by the Custom-access hosts above.
+Docker Hub caps **anonymous** pulls (~100 / 6h per egress IP), which a shared
+cloud egress hits quickly. Set `DOCKERHUB_USER` and `DOCKERHUB_TOKEN` in the
+environment's variables and the setup script runs `docker login` before pulling,
+which raises the cap; the resulting `~/.docker/config.json` persists in the
+snapshot so sessions' own lazy pulls are authenticated too. A token in an env
+var is **not** used until something runs `docker login` — setting it alone does
+nothing.
+
+The prepull is still **best-effort** and ordered with the integration-test
+images first, so a remaining cap or a bad token degrades to a lazy pull rather
+than failing environment creation. A rate-limit error (`unauthenticated pull
+rate limit`) is distinct from the 403 that a missing **network allowlist** entry
+produces — the former is fixed by authenticating, the latter by the
+Custom-access hosts above.
 
 ## Unit tests — for `core/`
 

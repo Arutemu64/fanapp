@@ -99,6 +99,23 @@ if command -v dockerd >/dev/null 2>&1; then
     done
   fi
   if docker info >/dev/null 2>&1; then
+    # Authenticate to Docker Hub if credentials are provided as environment
+    # variables (set in the cloud environment config). Anonymous pulls are
+    # capped at ~100 / 6h per egress IP, which a shared cloud egress hits fast;
+    # an authenticated account raises that substantially. The token is passed on
+    # stdin (never on the command line), and the resulting ~/.docker/config.json
+    # persists in the snapshot, so sessions' own lazy pulls are authenticated
+    # too. Best-effort: a bad/expired token must not fail environment creation.
+    if [ -n "${DOCKERHUB_USER:-}" ] && [ -n "${DOCKERHUB_TOKEN:-}" ]; then
+      if printf '%s' "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin >/dev/null 2>&1; then
+        echo "[setup] Authenticated to Docker Hub as $DOCKERHUB_USER."
+      else
+        echo "[setup] WARN: Docker Hub login failed; pulling anonymously (rate-limited)."
+      fi
+    else
+      echo "[setup] Note: DOCKERHUB_USER/DOCKERHUB_TOKEN not set; pulling anonymously (rate-limited)."
+    fi
+
     # Format: "<image>  # comment". `read img _` keeps the image, drops the rest.
     PREPULL_IMAGES="
       postgres:18.2                                    # testcontainers (integration tests)
