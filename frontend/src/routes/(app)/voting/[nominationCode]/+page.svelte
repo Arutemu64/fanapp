@@ -9,6 +9,8 @@
 	import ParticipantCard from '../components/ParticipantCard.svelte';
 	import VotingStatusAlert from '../components/VotingStatusAlert.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
+	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
+	import { getOfflineService } from '$lib/services/offline.svelte';
 	import { invalidate } from '$app/navigation';
 	import type { PageProps } from './$types';
 	import type { GetVotingNominationResult } from '$lib/types/voting';
@@ -21,6 +23,11 @@
 	let participants = $derived(nomination.participants);
 	let votingStatus = $derived(data.votingStatus);
 	let canVote = $derived(votingStatus?.can_vote ?? false);
+
+	// Show the notice when the loaded copy is cached (data.stale) or the device went
+	// offline since open — what's on screen may be out of date until reconnect.
+	const offline = getOfflineService();
+	let showStaleNotice = $derived(data.stale || !offline.isOnline);
 
 	let searchQuery = $state('');
 
@@ -40,6 +47,10 @@
 <svelte:head>
 	<title>{nomination.title} · Голосование · ФАН ФАН</title>
 </svelte:head>
+
+{#if showStaleNotice}
+	<StaleDataNotice message="Нет связи. Показаны сохранённые данные — обновятся при подключении." />
+{/if}
 
 <Button
 	href="/voting"

@@ -4,16 +4,29 @@
 	import { ThumbsUpOutline } from 'flowbite-svelte-icons';
 	import NominationCard from './components/NominationCard.svelte';
 	import VotingStatusAlert from './components/VotingStatusAlert.svelte';
+	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
+	import { getOfflineService } from '$lib/services/offline.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 	let nominations: NominationVotingDTO[] = $derived(data.nominations);
 	let votingStatus = $derived(data.votingStatus);
+
+	// Show the notice when the loaded copy is cached (data.stale) or the device went
+	// offline since open — what's on screen may be out of date until reconnect.
+	const offline = getOfflineService();
+	let showStaleNotice = $derived(data.stale || !offline.isOnline);
 </script>
 
 <svelte:head>
 	<title>Голосование · ФАН ФАН</title>
 </svelte:head>
+
+{#if showStaleNotice}
+	<StaleDataNotice
+		message="Нет связи. Показаны сохранённые номинации — обновятся при подключении."
+	/>
+{/if}
 
 <VotingStatusAlert votingState={votingStatus} class="mb-4" />
 
