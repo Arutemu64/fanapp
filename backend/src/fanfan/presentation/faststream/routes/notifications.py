@@ -33,6 +33,7 @@ from fanfan.core.events.notifications import (
 )
 from fanfan.core.exceptions.notifications import (
     MailingAlreadyCancelled,
+    NotificationChannelUnavailable,
     NotificationNotFound,
     NotificationRetryAfter,
     UserNotReachable,
@@ -159,6 +160,15 @@ async def send_push_notification(
         )
     except MailingAlreadyCancelled:
         logger.info("Mailing for notification %s was cancelled", data.notification_id)
+        await msg.reject()
+        return
+    except NotificationChannelUnavailable:
+        # Push channel is misconfigured (missing/invalid VAPID keys). Retrying
+        # can't fix it, so drop the message instead of redelivering forever.
+        logger.warning(
+            "Push channel unavailable — dropping notification %s",
+            data.notification_id,
+        )
         await msg.reject()
         return
     else:

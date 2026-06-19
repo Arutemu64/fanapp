@@ -1,6 +1,9 @@
+import logging
+
 import aiohttp
 import nh3
 from webpush import WebPush, WebPushSubscription
+from webpush.vapid import VAPIDException
 
 from fanfan.adapters.push.config import PushConfig
 from fanfan.application.ports.gateways.push_subscriptions import (
@@ -8,8 +11,11 @@ from fanfan.application.ports.gateways.push_subscriptions import (
 )
 from fanfan.application.ports.notifier import Notifier
 from fanfan.application.ports.uow import UnitOfWork
+from fanfan.core.exceptions.notifications import NotificationChannelUnavailable
 from fanfan.core.models.notification import Notification
 from fanfan.core.vo.notification import NotificationType
+
+logger = logging.getLogger(__name__)
 
 
 class PushNotifier(Notifier):
@@ -21,11 +27,27 @@ class PushNotifier(Notifier):
     ) -> None:
         self.push_sub_gateway = push_sub_gateway
         self.uow = uow
-        self.wp = WebPush(
-            private_key=push_config.private_key_path,
-            public_key=push_config.public_key_path,
-            subscriber=push_config.subscriber,
-        )
+        self.push_config = push_config
+        self._wp: WebPush | None = None
+
+    def _get_web_push(self) -> WebPush:
+        # Build WebPush lazily (and cache it) so missing or invalid VAPID keys
+        # surface here, at send time inside the consumer's try/except, rather
+        # than at DI-resolution time where the error can't be caught and the
+        # NATS message would be redelivered forever.
+        if self._wp is None:
+            try:
+                self._wp = WebPush(
+                    private_key=self.push_config.private_key_path,
+                    public_key=self.push_config.public_key_path,
+                    subscriber=self.push_config.subscriber,
+                )
+            except (VAPIDException, ValueError) as e:
+                logger.error(  # noqa: TRY400
+                    "VAPID keys are missing or invalid — cannot send push notifications"
+                )
+                raise NotificationChannelUnavailable from e
+        return self._wp
 
     @staticmethod
     def _sanitize_text(text: str) -> str:
@@ -54,10 +76,15 @@ class PushNotifier(Notifier):
             "test": notification.type == NotificationType.TEST,
         }
         push_subscription = WebPushSubscription.model_validate(subscription_info)
-        message = self.wp.get(message=data, subscription=push_subscription, ttl=3600)
+        message = self._get_web_push().get(
+            message=data, subscription=push_subscription, ttl=3600
+        )
         return push_subscription, message
 
     async def send_notification(self, notification: Notification) -> None:
+        # Resolve WebPush up front so a misconfigured channel fails fast (and is
+        # caught by the consumer) before we open a session or hit the gateway.
+        self._get_web_push()
         push_subs = await self.push_sub_gateway.list_by_user(notification.user_id)
         async with aiohttp.ClientSession() as session:
             for sub in push_subs:
