@@ -63,8 +63,10 @@ NATS passwords, `WEB__SECRET_KEY`), and generates the Web Push VAPID keys
 idempotent — re-run anytime; it never overwrites values you've already set.
 
 Then fill the real third-party credentials it can't generate: `BOT__*` (create a
-bot via [@BotFather](https://t.me/BotFather)), `MAIL__*` (SMTP), and
-`PUSH__SUBSCRIBER`. The optional integration blocks stay commented out.
+bot via [@BotFather](https://t.me/BotFather)) and `PUSH__SUBSCRIBER`. `MAIL__*`
+(SMTP) is optional — leave it unset and outgoing emails are logged instead of
+sent (email login/confirmation codes appear in the app logs). The optional
+integration blocks stay commented out.
 
 For local (non-Docker) frontend dev, also copy `frontend/.env.example` → `frontend/.env`.
 

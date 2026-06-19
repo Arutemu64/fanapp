@@ -79,8 +79,11 @@ cat <<'EOF'
 
 Bootstrap complete. Still set by hand in .env (real credentials, can't generate):
   • BOT__TOKEN / BOT__CLIENT_ID / BOT__CLIENT_SECRET — create a bot via @BotFather
-  • MAIL__*       — SMTP credentials (defaults point at Mailtrap sandbox)
   • PUSH__SUBSCRIBER — your contact email for Web Push
+
+Optional:
+  • MAIL__* — SMTP credentials. Unset = emails are logged, not sent (email
+    login/confirmation codes appear in the app logs).
 
 Then start the full environment:
   just run-dev

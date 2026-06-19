@@ -27,7 +27,7 @@ class ConfigProvider(Provider):
         return config.debug
 
     @provide
-    def get_mail_config(self, config: EnvConfig) -> MailConfig:
+    def get_mail_config(self, config: EnvConfig) -> MailConfig | None:
         return config.mail
 
     @provide
