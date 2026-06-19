@@ -68,6 +68,7 @@ On-demand CLI (not the always-on MCP server), so it costs no context until invok
    * Docker / Infra → `docker-expert`
    * Docs / Writing → `documentation-writer`
    * Third-party library APIs → web-search current docs; never rely on training data for signatures
+   * Docker / Infra in cloud (web) sessions → read [docs/claude-cloud.md](docs/claude-cloud.md) (setup script vs. SessionStart hook, image prepull, network access).
    * Read the relevant architecture guide in [docs/](docs/) (`backend.md`, `frontend.md`, `api.md`, `testing.md`) before implementing.
 8. **Keep Documentation in Sync**: After any structural, architectural, or path-level change, verify and update `AGENTS.md` and relevant `docs/*.md` before marking the task complete.
    * Added/renamed/deleted a `lib/` submodule (`services/`, `utils/`, etc.)? Update the **Codebase Map**.

@@ -29,49 +29,14 @@ PostgreSQL and Redis). They cannot run in environments without a Docker daemon.
 
 ### Running them on Claude Code on the web
 
-Cloud sessions ship the Docker CLI + `dockerd` but don't start the daemon, and
-the environment cache stores files, not processes. The repo's SessionStart hook
-(`.claude/hooks/session-start.sh`) therefore starts `dockerd` on every session
-and sets `TESTCONTAINERS_RYUK_DISABLED=true` (the Ryuk reaper is unreliable in
-the sandbox; the test fixtures stop their own containers in `finally:` blocks).
-
-The one thing the hook can't do is open network egress. Image **manifests** come
-from allowlisted hosts, but image **layers** are served from registry blob CDNs
-that aren't in the default **Trusted** list, so pulls authenticate and then 403
-mid-download. Set the environment's network access to **Custom** (keep the
-default package-manager list checked) and add:
-
-```text
-production.cloudfront.docker.com      # Docker Hub layer blobs (postgres, redis, …)
-pkg-containers.githubusercontent.com  # GHCR layer blobs (prod images)
-```
-
-Or use **Full** access. Changing the allowlist rebuilds the env cache on the
-next fresh session.
-
-testcontainers pulls `postgres:18.2`, `redis:6.2.13-alpine`, and (when Ryuk is
-enabled) `testcontainers/ryuk` — all from Docker Hub. To avoid re-pulling on
-every session, the environment's **setup script** (`.claude/setup.sh`) prepulls
-these — along with the `docker-compose` stack (`postgres`, `nats`, `valkey`, the
-backup image) and the `Dockerfile` base images — so they are baked into the
-cached snapshot. The setup script starts `dockerd` only to pull; the layers are
-files and persist, while the daemon does not (the SessionStart hook restarts it
-each session).
-
-Docker Hub caps **anonymous** pulls (~100 / 6h per egress IP), which a shared
-cloud egress hits quickly. Set `DOCKERHUB_USER` and `DOCKERHUB_TOKEN` in the
-environment's variables and the setup script runs `docker login` before pulling,
-which raises the cap; the resulting `~/.docker/config.json` persists in the
-snapshot so sessions' own lazy pulls are authenticated too. A token in an env
-var is **not** used until something runs `docker login` — setting it alone does
-nothing.
-
-The prepull is still **best-effort** and ordered with the integration-test
-images first, so a remaining cap or a bad token degrades to a lazy pull rather
-than failing environment creation. A rate-limit error (`unauthenticated pull
-rate limit`) is distinct from the 403 that a missing **network allowlist** entry
-produces — the former is fixed by authenticating, the latter by the
-Custom-access hosts above.
+Integration tests need a running Docker daemon and the testcontainers images on
+disk. In cloud sessions both are provided by the environment setup — the
+SessionStart hook starts `dockerd` and disables the Ryuk reaper
+(`TESTCONTAINERS_RYUK_DISABLED=true`; the fixtures stop their own containers in
+`finally:` blocks), and the setup script prepulls `postgres:18.2` /
+`redis:6.2.13-alpine`. See [claude-cloud.md](claude-cloud.md) for how that
+environment is provisioned (setup script vs. hook, image prepull, Docker Hub
+auth, and network access).
 
 ## Unit tests — for `core/`
 
