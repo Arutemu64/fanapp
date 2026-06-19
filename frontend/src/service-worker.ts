@@ -61,6 +61,14 @@ async function hasVisibleAppClient() {
 // Create a unique cache name for this deployment
 const CACHE = `cache-${version}`;
 
+// `build` lists the Vite-generated app files: empty during `vite dev` (the app is
+// not bundled) and populated in production builds. We use that as a reliable dev
+// signal to disable the fetch/caching handler in dev — its cache-first app shell
+// goes stale across HMR rebuilds and serves an outdated shell on hard navigations,
+// 404ing deep links the live dev server actually has. Push notifications still work
+// in dev because the `push`/`notificationclick` handlers below stay registered.
+const dev = build.length === 0;
+
 const ASSETS = [
 	...build, // the app itself
 	...files // everything in `static`
@@ -110,6 +118,11 @@ self.addEventListener('message', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+	// In dev, never intercept: let every request hit the network (vite) directly so
+	// the browser always gets a fresh shell. The cache-first strategy below assumes
+	// an immutable, versioned shell — an invariant only production builds satisfy.
+	if (dev) return;
+
 	// ignore POST requests etc
 	if (event.request.method !== 'GET') return;
 
