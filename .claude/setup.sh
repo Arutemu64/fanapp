@@ -57,11 +57,13 @@ python3 -m pip install --quiet --upgrade --user uv
 echo "[setup] Installing stable Python 3.14..."
 uv python install 3.14
 
-echo "[setup] Installing backend dependencies (uv sync)..."
-(cd "$REPO_ROOT/backend" && uv sync --all-groups)
-
-echo "[setup] Installing frontend dependencies (pnpm install)..."
-(cd "$REPO_ROOT/frontend" && pnpm install)
+# Note: project dependency installs (uv sync / pnpm install) deliberately live
+# in the SessionStart hook, not here. The setup script only re-runs when the
+# environment config changes or the cache expires (~7 days), so it would not
+# pick up a pyproject.toml / package.json bump on the branch. Running the syncs
+# each session keeps deps in step with the code; they are near-instant when the
+# lockfile is unchanged and only fetch the delta after a real bump (the uv/pnpm
+# caches persist in the snapshot).
 
 # codegraph is a global pnpm package. pnpm needs a global bin directory; point
 # it at the standard PNPM_HOME. We track @latest so each rebuild gets upstream

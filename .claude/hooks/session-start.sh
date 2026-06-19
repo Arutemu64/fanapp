@@ -2,18 +2,22 @@
 #
 # SessionStart hook for Claude Code on the web.
 #
-# This runs at the start of EVERY web session (startup + resume). It only does
-# the work that does NOT survive in the cached environment snapshot:
+# This runs at the start of EVERY web session (startup + resume). It does the
+# work that must run each session rather than once at environment creation:
+#   * project dependency syncs (uv sync / pnpm install) - the setup script only
+#     re-runs on config change or cache expiry, so it would miss a dependency
+#     bump on the branch; running the syncs here keeps deps in step with the
+#     code. They are near-instant when the lockfile is unchanged.
 #   * the Docker daemon - a process; never survives between sessions
 #   * the codegraph index - .codegraph/ is gitignored and the code is pulled
 #     fresh each session, so the index must be (re)built/synced here
 #   * per-session environment variables (PATH, testcontainers) written to
 #     $CLAUDE_ENV_FILE
 #
-# The slow, filesystem-persistent installs (just, uv, Python 3.14, backend +
-# frontend deps, the codegraph binary) live in .claude/setup.sh, which runs once
-# at environment creation and is baked into the snapshot this hook starts from.
-# Keep the two in sync: this hook assumes setup.sh already ran.
+# The cloud-missing tooling (just, uv, Python 3.14, the codegraph binary) lives
+# in .claude/setup.sh, which runs once at environment creation and is baked into
+# the snapshot this hook starts from. Keep the two in sync: this hook assumes
+# setup.sh already ran.
 set -euo pipefail
 
 # Only do remote setup in the Claude Code web environment. Local developers
@@ -30,6 +34,16 @@ export PATH="$HOME/.local/bin:$HOME/.local/share/pnpm:$PATH"
 
 # Run sudo correctly whether or not we are already root.
 if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo"; fi
+
+# Sync project dependencies against the current branch code. These are fast when
+# the lockfile is unchanged (uv/pnpm short-circuit) and only fetch the delta
+# after a real bump, since the caches persist in the snapshot. Kept here rather
+# than in setup.sh so a dependency change is picked up without an env rebuild.
+echo "[session-start] Syncing backend dependencies (uv sync)..."
+(cd "$REPO_ROOT/backend" && uv sync --all-groups)
+
+echo "[session-start] Syncing frontend dependencies (pnpm install)..."
+(cd "$REPO_ROOT/frontend" && pnpm install)
 
 # Start the Docker daemon so integration tests (testcontainers) can run. The
 # daemon is not started by the base image and does not survive between sessions,
