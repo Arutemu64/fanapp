@@ -36,8 +36,6 @@
 # everything is already present.
 set -euo pipefail
 
-REPO_ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel)}"
-
 # The image's uv lives in ~/.local/bin; keep it (and pip --user installs)
 # reachable for the rest of this script.
 export PATH="$HOME/.local/bin:$PATH"

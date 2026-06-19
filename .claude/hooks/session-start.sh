@@ -26,7 +26,9 @@ if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0
 fi
 
-REPO_ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel)}"
+# Fall back through git, then pwd, so a non-repo cwd can't abort the hook under
+# `set -e` (CLAUDE_PROJECT_DIR is normally set by Claude Code).
+REPO_ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 
 # Make the snapshot's upgraded uv (~/.local/bin) and the global codegraph binary
 # ($PNPM_HOME) reachable for the steps below.
