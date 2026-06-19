@@ -186,6 +186,7 @@
 	{#if showStaleNotice}
 		<StaleDataNotice
 			message="Нет связи. Показано сохранённое расписание — обновится при подключении."
+			cachedAt={data.cachedAt}
 		/>
 	{/if}
 

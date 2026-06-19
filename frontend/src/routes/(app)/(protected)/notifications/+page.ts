@@ -18,7 +18,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	const client = createApiClient();
 
 	// Cache the raw first page (request limit length) so hasMore stays computable offline.
-	const { data, stale } = await fetchWithCache<NotificationDTO[]>({
+	const { data, stale, cachedAt } = await fetchWithCache<NotificationDTO[]>({
 		key: cacheKey,
 		fetcher: async ({ signal }) => {
 			const { data, error: fetchError } = await client.GET('/notifications/', {
@@ -46,6 +46,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 		title: 'Уведомления',
 		notifications: data.slice(0, NOTIFICATION_PAGE_SIZE),
 		hasMore: data.length > NOTIFICATION_PAGE_SIZE,
-		stale
+		stale,
+		cachedAt
 	};
 };
