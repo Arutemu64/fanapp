@@ -969,8 +969,6 @@ export interface components {
             id: string;
             /** Username */
             username: string;
-            /** First Name */
-            first_name: string | null;
             role: components["schemas"]["UserRole"];
             /** Email */
             email: string | null;
@@ -1344,8 +1342,6 @@ export interface components {
         UpdateCurrentUserInput: {
             /** Username */
             username?: string | null;
-            /** First Name */
-            first_name?: string | null;
         };
         /** UpdateUserSettingsInput */
         UpdateUserSettingsInput: {

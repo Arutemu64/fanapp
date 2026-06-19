@@ -30,7 +30,6 @@ class UserMapper:
             username=model.username,
             hashed_password=model.hashed_password,
             email=model.email.value if model.email else None,
-            first_name=model.first_name,
             role=model.role,
             # Queryable notification flags go to columns; the rest stays in JSON.
             receive_all_announcements=model.settings.receive_all_announcements,
@@ -44,7 +43,6 @@ class UserMapper:
             username=Username(orm.username),
             hashed_password=orm.hashed_password,
             email=Email(orm.email) if orm.email else None,
-            first_name=orm.first_name,
             role=UserRole(orm.role),
             settings=UserSettings(
                 items_per_page=orm.settings.get("items_per_page", 4),
@@ -58,7 +56,6 @@ class UserMapper:
         return UserBaseDTO(
             id=UserId(orm.id),
             username=orm.username,
-            first_name=orm.first_name,
             role=orm.role,
         )
 
@@ -92,7 +89,6 @@ class UserMapper:
         return CurrentUserDTO(
             id=UserId(orm.id),
             username=orm.username,
-            first_name=orm.first_name,
             role=orm.role,
             email=orm.email,
             has_password=bool(orm.hashed_password),

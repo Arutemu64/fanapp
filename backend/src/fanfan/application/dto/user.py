@@ -14,7 +14,6 @@ class UserBaseDTO(BaseModel):
 
     id: UserId
     username: str
-    first_name: str | None
     role: UserRole
 
 

@@ -18,7 +18,6 @@ class UpdateCurrentUserInput(BaseModel):
     username: str | None = Field(
         None, min_length=3, max_length=25, pattern=USERNAME_PATTERN
     )
-    first_name: str | None = Field(None, max_length=50)
 
 
 class UpdateCurrentUser:
@@ -55,12 +54,6 @@ class UpdateCurrentUser:
             and data_to_update["username"] != current_user.username
         ):
             await self._update_username(current_user, data_to_update["username"])
-            user_updated_flag = True
-        if (
-            "first_name" in data_to_update
-            and data_to_update["first_name"] != current_user.first_name
-        ):
-            current_user.set_first_name(data_to_update["first_name"])
             user_updated_flag = True
         if user_updated_flag:
             await self.user_gateway.save(current_user)
