@@ -23,9 +23,7 @@ const self = globalThis.self as unknown as ServiceWorkerGlobalScope;
 // user-specific, dynamic API data — the app's own IndexedDB layer owns offline
 // caching, and a cached health/probe response would make us look online while
 // the device is offline.
-// PUBLIC_API_URL is same-origin and may be a relative path (e.g. "/api"), so
-// resolve it against the worker's own origin to get a valid absolute URL.
-const API_URL = new URL(PUBLIC_API_URL, self.location.origin);
+const API_URL = new URL(PUBLIC_API_URL);
 // Drop any trailing slash so the prefix match below is exact.
 const API_BASE_PATH = API_URL.pathname.replace(/\/+$/, '');
 
