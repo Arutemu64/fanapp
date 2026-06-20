@@ -32,7 +32,8 @@ class EnvConfig(BaseSettings):
     db: DatabaseConfig
     redis: RedisConfig
     nats: NatsConfig
-    mail: MailConfig
+    # Optional — when unset, outgoing emails are logged instead of sent.
+    mail: MailConfig | None = None
 
     # Notifications
     bot: TelegramConfig

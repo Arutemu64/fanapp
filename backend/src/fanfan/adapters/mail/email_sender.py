@@ -26,3 +26,19 @@ class FastEmailSender(EmailSender):
             subtype=MessageType.html,
         )
         await self.mail.send_message(fast_mail_message)
+
+
+class LogOnlyEmailSender(EmailSender):
+    """Used when no SMTP is configured: logs the message instead of sending it.
+
+    In development this surfaces login and confirmation codes in the app logs,
+    so the email-based auth flows remain usable without a real mail server.
+    """
+
+    async def send(self, message: EmailMessage) -> None:
+        logger.warning(
+            "Mail is not configured — email NOT sent. Subject %r to %s\n%s",
+            message.subject,
+            [recipient.email for recipient in message.recipients],
+            message.html_body,
+        )

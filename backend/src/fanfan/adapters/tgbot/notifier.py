@@ -6,6 +6,7 @@ from aiogram.exceptions import (
     TelegramBadRequest,
     TelegramForbiddenError,
     TelegramRetryAfter,
+    TelegramUnauthorizedError,
 )
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
@@ -73,5 +74,18 @@ class TelegramNotifier(Notifier):
         except TelegramRetryAfter as e:
             raise NotificationRetryAfter(retry_after=e.retry_after) from e
         except (TelegramBadRequest, TelegramForbiddenError) as e:
+            raise UserNotReachable from e
+        except TelegramUnauthorizedError as e:
+            # Invalid bot token (e.g. the placeholder used when no real bot is
+            # configured). This is a global misconfiguration, not a per-user
+            # problem, so log it loudly. Treat as unreachable so the consumer
+            # drops the message instead of redelivering it forever.
+            # A concise one-liner, not a traceback: this fires on every
+            # notification while the token is a placeholder, and the cause is
+            # already chained onto the raised UserNotReachable.
+            logger.error(  # noqa: TRY400
+                "Telegram bot token is invalid or unauthorized — "
+                "cannot deliver notifications via Telegram"
+            )
             raise UserNotReachable from e
         return

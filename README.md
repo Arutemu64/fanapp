@@ -43,20 +43,42 @@ docs/       Architecture guides (backend.md, frontend.md, api.md)
 - Node.js + [`pnpm`](https://pnpm.io/)
 - [`just`](https://github.com/casey/just)
 - Docker + Docker Compose (for the full environment)
+- On **Windows**, run `just` from **Git Bash** or **WSL** (not cmd/PowerShell): the
+  recipes are POSIX shell and `bootstrap.sh` is a bash script. Git Bash ships with
+  [Git for Windows](https://git-scm.com/download/win).
+
+> Optional: [`mise`](https://mise.jdx.dev) (or `asdf`) reads the pinned
+> versions from [`mise.toml`](mise.toml) — run `mise install` to get the exact
+> Python / Node / pnpm / uv / just this repo expects in one step. Docker is not
+> managed by mise; install it separately.
 
 ## Getting started
 
 ### 1. Configure
 
 ```sh
-cp .env.example .env
-# Edit .env — replace every `change-me-*` placeholder (DB / Redis / NATS passwords,
-# WEB__SECRET_KEY, bot token, mail, etc.)
+just bootstrap
 ```
 
-For local (non-Docker) frontend dev, also copy `frontend/.env.example` → `frontend/.env`.
+This creates `.env` from the template, fills the generated secrets (DB / Redis /
+NATS passwords, `WEB__SECRET_KEY`), and generates the Web Push VAPID keys
+(`config/private_key.pem`, `config/public_key.pem`, `PUBLIC_VAPID_KEY`). It is
+idempotent — re-run anytime; it never overwrites values you've already set.
 
-Generate VAPID keys for Web Push (`config/private_key.pem`, `config/public_key.pem`) with `vapid-gen` and set `PUSH__*` / `PUBLIC_VAPID_KEY` accordingly.
+Both the web API and the bootstrap defaults are designed to boot with no real
+third-party credentials, so you can start exploring immediately:
+
+- `BOT__*` — the placeholder values are format-valid, so the web API starts with
+  them. Telegram login and Telegram notifications stay disabled until you set a
+  real bot (create one via [@BotFather](https://t.me/BotFather)); email and
+  credentials login work without it. The bot *process* needs a real token to run.
+- `MAIL__*` (SMTP) — optional; leave unset and outgoing emails are logged instead
+  of sent (email login/confirmation codes appear in the app logs).
+- `PUSH__SUBSCRIBER` — your contact email for Web Push.
+
+The optional integration blocks stay commented out.
+
+For local (non-Docker) frontend dev, also copy `frontend/.env.example` → `frontend/.env`.
 
 ### 2. Run with Docker (full environment)
 

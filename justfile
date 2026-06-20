@@ -3,6 +3,18 @@
 # =========================
 # No workspaces: frontend and backend keep isolated dependency trees.
 
+# On Windows, run recipes through Git Bash (or WSL) instead of cmd/PowerShell:
+# the recipes are POSIX shell and bootstrap.sh is a bash script. Requires
+# `bash` on PATH (ships with Git for Windows). Unix uses just's default `sh`.
+set windows-shell := ["bash", "-cu"]
+
+# ---- Setup ----
+# One-command local setup: create .env from the template, fill generated
+# secrets (DB/Redis/NATS passwords, WEB__SECRET_KEY), and generate VAPID keys.
+# Idempotent — re-run anytime; it never overwrites values you've already set.
+bootstrap:
+    ./scripts/bootstrap.sh
+
 # ---- Frontend (SvelteKit + pnpm) ----
 frontend-install:
     cd frontend && pnpm install

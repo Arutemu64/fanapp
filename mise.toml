@@ -1,0 +1,12 @@
+# Toolchain pins for the FAN FAN monorepo. Install everything with `mise install`
+# (https://mise.jdx.dev) so every contributor gets the same runtimes — no
+# version drift. asdf reads the same versions via the generated .tool-versions.
+#
+# Docker + Docker Compose are NOT managed here (system-level); install them
+# separately for the full `just run-dev` environment.
+[tools]
+python = "3.14"   # backend requires-python >= 3.14
+node = "22"       # LTS
+pnpm = "10.15.1"  # matches frontend/package.json "packageManager"
+uv = "latest"
+just = "latest"

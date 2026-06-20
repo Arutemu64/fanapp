@@ -32,6 +32,7 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
 * **Frontend**: SvelteKit (Svelte 5 Runes) + Flowbite-Svelte + Tailwind CSS v4 | `pnpm`
 * **Backend**: FastAPI + PostgreSQL (SQLAlchemy + Alembic) + Redis + NATS (FastStream) | `uv`
 * **Command Runner**: `justfile` (run from root):
+  * `just bootstrap` - One-command local setup: create `.env`, fill generated secrets (DB/Redis/NATS/`WEB__SECRET_KEY`) + VAPID keys; idempotent
   * `just run-dev` / `just run-prod` - Start full env (dev / local prod build) via Docker Compose
   * `just deploy` - Server deploy: pull prebuilt GHCR images (`docker-compose.prod.yml`) & restart
   * `just backend-dev` / `just frontend-dev` - Start dev locally
