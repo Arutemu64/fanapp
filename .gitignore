@@ -24,9 +24,9 @@ build/
 !.env.test
 !**/.env.test
 
-# Local secrets (VAPID PEM keys etc.) — ignore the whole dir so any new
-# secret dropped here is never accidentally committed.
-/secrets/
+# Local secrets (VAPID PEM keys etc.) live in secrets/. That dir is kept in
+# the repo (empty) via its own secrets/.gitignore, which ignores everything
+# inside except itself — so no secret is ever accidentally committed.
 
 # Local tools and scratch files
 /etc/

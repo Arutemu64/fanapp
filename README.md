@@ -143,9 +143,8 @@ One-time server setup:
 ```sh
 docker login ghcr.io          # use a read-only PAT / deploy token, not a password
 cp .env.example .env          # fill in placeholders (see Getting started)
-# Put the VAPID keys in secrets/ and make them readable by the container user
-# (backend runs as uid 999):
-mkdir -p secrets   # place private_key.pem / public_key.pem here
+# Put the VAPID keys in secrets/ (the dir ships empty in the repo) and make
+# them readable by the container user (backend runs as uid 999):
 chmod 600 secrets/private_key.pem
 sudo chown 999:999 secrets/*.pem
 ```
