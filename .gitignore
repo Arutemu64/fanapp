@@ -24,10 +24,9 @@ build/
 !.env.test
 !**/.env.test
 
-# Local secrets
-/config/private_key.pem
-/config/public_key.pem
-/config/applicationServerKey
+# Local secrets (VAPID PEM keys etc.) live in secrets/. That dir is kept in
+# the repo (empty) via its own secrets/.gitignore, which ignores everything
+# inside except itself — so no secret is ever accidentally committed.
 
 # Local tools and scratch files
 /etc/
