@@ -62,7 +62,7 @@ just bootstrap
 
 This creates `.env` from the template, fills the generated secrets (DB / Redis /
 NATS passwords, `WEB__SECRET_KEY`), and generates the Web Push VAPID keys
-(`config/private_key.pem`, `config/public_key.pem`, `PUBLIC_VAPID_KEY`). It is
+(`secrets/private_key.pem`, `secrets/public_key.pem`, `PUBLIC_VAPID_KEY`). It is
 idempotent — re-run anytime; it never overwrites values you've already set.
 
 Both the web API and the bootstrap defaults are designed to boot with no real
@@ -143,10 +143,11 @@ One-time server setup:
 ```sh
 docker login ghcr.io          # use a read-only PAT / deploy token, not a password
 cp .env.example .env          # fill in placeholders (see Getting started)
-# Put the VAPID keys in config/ and make them readable by the container user
+# Put the VAPID keys in secrets/ and make them readable by the container user
 # (backend runs as uid 999):
-chmod 600 config/private_key.pem
-sudo chown 999:999 config/*.pem
+mkdir -p secrets   # place private_key.pem / public_key.pem here
+chmod 600 secrets/private_key.pem
+sudo chown 999:999 secrets/*.pem
 ```
 
 Deploy (pulls the images and restarts, builds nothing on the host):

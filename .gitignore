@@ -24,10 +24,9 @@ build/
 !.env.test
 !**/.env.test
 
-# Local secrets
-/config/private_key.pem
-/config/public_key.pem
-/config/applicationServerKey
+# Local secrets (VAPID PEM keys etc.) — ignore the whole dir so any new
+# secret dropped here is never accidentally committed.
+/secrets/
 
 # Local tools and scratch files
 /etc/

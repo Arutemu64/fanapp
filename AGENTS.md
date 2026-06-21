@@ -25,7 +25,8 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
 │           └── constants/    # Frontend constants
 ├── shared/                   # Shared OpenAPI spec
 │   └── openapi/
-└── config/                   # Redis and infrastructure configuration files
+├── config/                   # Committed, non-secret infra config (e.g. redis/)
+└── secrets/                  # Gitignored runtime secrets (VAPID PEM keys); mounted read-only into backend
 ```
 
 ## Stack & Core Commands
