@@ -26,6 +26,19 @@ export default defineConfig({
 	],
 	server: {
 		host: true,
-		allowedHosts: true
+		allowedHosts: true,
+		// In dev the frontend and backend run on different origins, but the app
+		// calls the API with a relative base (`PUBLIC_API_URL=/api`). Proxy `/api`
+		// to the backend so dev mirrors the same-origin prod setup (Caddy) and
+		// needs no CORS. http-proxy streams responses, so SSE (`/api/events`) works.
+		proxy: {
+			'/api': {
+				// Mirror Caddy's `handle_path /api*` — strip the prefix; the backend
+				// serves routes at root (uvicorn root_path="/api" is informational).
+				target: process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:8000',
+				changeOrigin: true,
+				rewrite: (path) => path.replace(/^\/api/, '')
+			}
+		}
 	}
 });
