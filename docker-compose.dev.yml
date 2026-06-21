@@ -5,8 +5,6 @@ services:
     image: fanapp-frontend-dev
     environment:
       NODE_ENV: development
-      # Vite dev server proxies /api here (same-origin parity with prod NGINX).
-      BACKEND_ORIGIN: "http://api:8000"
     # The dev container runs `vite dev` on port 3000 (not the prod NGINX :80).
     # `!override` REPLACES the base service's port list — without it Compose
     # merges port lists additively, leaving a dead 3000:80 mapping alongside this

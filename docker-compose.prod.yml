@@ -2,12 +2,10 @@
 # (GHCR) instead of building from source on the server.
 #
 # NOTE for forks / self-hosters: the prebuilt frontend image is a static SPA with
-# its PUBLIC_* values baked in at build time. The API URL is now same-origin and
-# relative (the frontend NGINX reverse-proxies /api to the backend), so it no
-# longer locks the image to a domain — but the other baked PUBLIC_* values
-# (VAPID, Turnstile, Sentry) are still the maintainer's. To run with your own
-# config, do NOT use this overlay — build from source with your own root `.env`
-# instead (`just run-prod`). See the Frontend section of `.env.example`.
+# its PUBLIC_* values (incl. the domain / API URL) baked in at build time, so
+# these images are domain-locked to the maintainer's deployment. To run on your
+# own domain, do NOT use this overlay — build from source with your own root
+# `.env` instead (`just run-prod`). See the Frontend section of `.env.example`.
 #
 # Usage on the server (always together with the base file):
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile core --profile ops pull

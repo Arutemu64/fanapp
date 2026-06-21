@@ -26,20 +26,6 @@ export default defineConfig({
 	],
 	server: {
 		host: true,
-		allowedHosts: true,
-		// Dev runs Vite (not the prod NGINX), so proxy /api to the backend here to
-		// keep the same single-origin contract as production. Target is the local
-		// backend by default; the dev container overrides it to the api service.
-		proxy: {
-			'/api': {
-				target: process.env.BACKEND_ORIGIN ?? 'http://localhost:8000',
-				changeOrigin: true,
-				// Strip the /api prefix; the backend is mounted at root with
-				// UVICORN_ROOT_PATH=/api handling public URL generation.
-				rewrite: (path) => path.replace(/^\/api/, ''),
-				// Keep SSE (/api/events) streaming instead of buffered.
-				ws: true
-			}
-		}
+		allowedHosts: true
 	}
 });

@@ -20,9 +20,8 @@ services:
     depends_on:
       api:
         condition: service_healthy
-    # Single web edge: NGINX serves the SPA and reverse-proxies /api to the api
-    # service, so the upstream Caddy points at one origin (this port). Host port
-    # stays 3000; NGINX listens on 80 inside the container.
+    # Host port stays 3000 so the upstream Caddy reverse proxy is unchanged;
+    # NGINX listens on 80 inside the container.
     ports:
       - '127.0.0.1:3000:80'
     restart: unless-stopped
