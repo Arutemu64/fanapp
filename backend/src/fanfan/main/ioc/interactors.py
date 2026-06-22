@@ -106,6 +106,9 @@ from fanfan.application.interactors.subscriptions.create_subscription import (
 from fanfan.application.interactors.subscriptions.delete_subscription import (
     DeleteSubscription,
 )
+from fanfan.application.interactors.subscriptions.get_subscriptions import (
+    GetSubscriptions,
+)
 from fanfan.application.interactors.tickets.link_ticket import LinkTicket
 from fanfan.application.interactors.tickets.process_ticket_order import (
     ProcessTicketOrder,
@@ -153,6 +156,7 @@ class InteractorsProvider(Provider):
 
     create_subscription = provide(CreateSubscription)
     delete_subscription = provide(DeleteSubscription)
+    get_subscriptions = provide(GetSubscriptions)
 
     link_ticket = provide(LinkTicket)
 

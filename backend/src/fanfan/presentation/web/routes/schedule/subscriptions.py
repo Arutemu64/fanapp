@@ -13,10 +13,28 @@ from fanfan.application.interactors.subscriptions.delete_subscription import (
     DeleteSubscription,
     DeleteSubscriptionInput,
 )
+from fanfan.application.interactors.subscriptions.get_subscriptions import (
+    GetSubscriptions,
+    GetSubscriptionsOutput,
+)
 from fanfan.core.vo.subscription import SubscriptionId
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
 subscriptions_router = APIRouter(prefix="/subscriptions")
+
+
+@subscriptions_router.get(
+    "/",
+    summary="List the current user's subscriptions",
+    description="Returns every schedule event the current user is subscribed to. "
+    "Served separately from the schedule so the schedule itself stays universal "
+    "and cacheable offline.",
+)
+@inject
+async def get_subscriptions(
+    interactor: FromDishka[GetSubscriptions],
+) -> GetSubscriptionsOutput:
+    return await interactor()
 
 
 @subscriptions_router.post(

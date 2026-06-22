@@ -2,7 +2,7 @@ import { browser } from '$app/environment';
 import { createApiClient } from '$lib/api';
 import { clearCache, fetchWithCache, warmCache } from '$lib/utils/offlineCache';
 import type { CurrentUserDTO } from '$lib/types/user';
-import type { ScheduleEventFullDTO } from '$lib/types/schedule';
+import type { ScheduleEventFullDTO, SubscriptionFullDTO } from '$lib/types/schedule';
 import type { LayoutLoad } from './$types';
 
 // SPA-only: render entirely on the client. No SSR, no server load.
@@ -46,15 +46,16 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 	// A complete cache miss (offline first boot) is also "not logged in".
 	const user = data ?? null;
 
-	// Warm the schedule cache on the first online boot so it is viewable offline
-	// even if the user never opens the schedule page. Fire-and-forget: a no-op when
+	// Warm the offline caches on the first online boot so they're viewable even if
+	// the user never opens the schedule page. Fire-and-forget: each is a no-op when
 	// offline or already cached, so it never blocks first paint or refetches once
-	// warmed (the schedule page's own load + SSE keep it fresh after that). Uses the
-	// same per-user key the schedule page reads, and its own client so it isn't tied
-	// to this load's tracked `fetch`.
+	// warmed (the schedule page's own load + SSE keep them fresh after that). Uses
+	// the same keys the schedule page reads, and its own client so it isn't tied to
+	// this load's tracked `fetch`.
 	if (browser) {
+		// Schedule is universal — one shared key for guests and every account.
 		void warmCache<ScheduleEventFullDTO[]>({
-			key: `schedule:${user?.id ?? 'guest'}`,
+			key: 'schedule',
 			fetcher: async ({ signal }) => {
 				const warmClient = createApiClient();
 				const { data: schedule, error } = await warmClient.GET('/schedule/', { signal });
@@ -62,6 +63,19 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 				return schedule.schedule ?? [];
 			}
 		});
+
+		// Subscriptions are per-user; only logged-in users have them.
+		if (user) {
+			void warmCache<SubscriptionFullDTO[]>({
+				key: `subscriptions:${user.id}`,
+				fetcher: async ({ signal }) => {
+					const warmClient = createApiClient();
+					const { data, error } = await warmClient.GET('/schedule/subscriptions/', { signal });
+					if (error || !data) return undefined;
+					return data.subscriptions ?? [];
+				}
+			});
+		}
 	}
 
 	return { user };

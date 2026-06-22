@@ -1,41 +1,21 @@
-from sqlalchemy import Select, and_, delete, false, select
+from sqlalchemy import Select, and_, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import undefer
 
 from fanfan.adapters.db.mappers.schedule_event import ScheduleEventMapper
-from fanfan.adapters.db.models import (
-    ScheduleEventORM,
-    SubscriptionORM,
-)
+from fanfan.adapters.db.models import ScheduleEventORM
 from fanfan.application.dto.schedule import ScheduleEventFullDTO
 from fanfan.application.ports.gateways import ScheduleEventGateway
 from fanfan.core.models.schedule_event import (
     ScheduleEvent,
 )
 from fanfan.core.vo.schedule_event import ScheduleEventId
-from fanfan.core.vo.user import UserId
 
 
-def _select_schedule_event_full_dto(user_id: UserId | None) -> Select:
-    # If user_id is None, we want the join condition to always be false
-    # so that the outer join returns NULL for all Subscription columns.
-    user_condition = (
-        (SubscriptionORM.user_id == user_id) if user_id is not None else false()
-    )
-
-    return (
-        select(ScheduleEventORM, SubscriptionORM)
-        .options(
-            undefer(ScheduleEventORM.queue),
-            undefer(ScheduleEventORM.time_until),
-        )
-        .outerjoin(
-            SubscriptionORM,
-            and_(
-                SubscriptionORM.event_id == ScheduleEventORM.id,
-                user_condition,
-            ),
-        )
+def _select_schedule_event_full_dto() -> Select:
+    return select(ScheduleEventORM).options(
+        undefer(ScheduleEventORM.queue),
+        undefer(ScheduleEventORM.time_until),
     )
 
 
@@ -141,7 +121,7 @@ class SqlScheduleEventGateway(ScheduleEventGateway):
             .scalar_subquery()
         )
         stmt = (
-            _select_schedule_event_full_dto(None)
+            _select_schedule_event_full_dto()
             .order_by(ScheduleEventORM.order)
             .where(
                 and_(
@@ -151,64 +131,45 @@ class SqlScheduleEventGateway(ScheduleEventGateway):
             )
             .limit(1)
         )
-        result = (await self.session.execute(stmt)).first()
-        if result:
-            event_orm, subscription_orm = result
+        event_orm = await self.session.scalar(stmt)
+        if event_orm:
             return self.mapper.parse_full_dto(
                 event_orm=event_orm,
-                subscription_orm=subscription_orm,
                 queue=event_orm.queue,
                 time_until=event_orm.time_until,
             )
         return None
 
     async def read_current_event(self) -> ScheduleEventFullDTO | None:
-        stmt = _select_schedule_event_full_dto(None).where(
+        stmt = _select_schedule_event_full_dto().where(
             ScheduleEventORM.is_current.is_(True)
         )
-        result = (await self.session.execute(stmt)).first()
-        if result:
-            event_orm, subscription_orm = result
+        event_orm = await self.session.scalar(stmt)
+        if event_orm:
             return self.mapper.parse_full_dto(
                 event_orm=event_orm,
-                subscription_orm=subscription_orm,
                 queue=event_orm.queue,
                 time_until=event_orm.time_until,
             )
         return None
 
-    async def read_list_schedule(
-        self, user_id: UserId | None
-    ) -> list[ScheduleEventFullDTO]:
-        # The whole schedule is read per user and uncached, so queue/time_until
-        # come from a single ranking subquery joined once here, rather than the
-        # per-row correlated column_properties (which would re-run the window
-        # for every one of the ~hundreds of rows).
+    async def read_list_schedule(self) -> list[ScheduleEventFullDTO]:
+        # The whole schedule is read uncached, so queue/time_until come from a
+        # single ranking subquery joined once here, rather than the per-row
+        # correlated column_properties (which would re-run the window for every
+        # one of the ~hundreds of rows).
         ranked = ScheduleEventORM.ranking_subquery()
-        user_condition = (
-            (SubscriptionORM.user_id == user_id) if user_id is not None else false()
-        )
         stmt = (
-            select(
-                ScheduleEventORM, SubscriptionORM, ranked.c.queue, ranked.c.time_until
-            )
+            select(ScheduleEventORM, ranked.c.queue, ranked.c.time_until)
             .outerjoin(ranked, ScheduleEventORM.id == ranked.c.id)
-            .outerjoin(
-                SubscriptionORM,
-                and_(
-                    SubscriptionORM.event_id == ScheduleEventORM.id,
-                    user_condition,
-                ),
-            )
             .order_by(ScheduleEventORM.order)
         )
         results = (await self.session.execute(stmt)).all()
         return [
             self.mapper.parse_full_dto(
                 event_orm=event_orm,
-                subscription_orm=subscription_orm,
                 queue=queue,
                 time_until=time_until,
             )
-            for event_orm, subscription_orm, queue, time_until in results
+            for event_orm, queue, time_until in results
         ]

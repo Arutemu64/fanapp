@@ -571,7 +571,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List the current user's subscriptions
+         * @description Returns every schedule event the current user is subscribed to. Served separately from the schedule so the schedule itself stays universal and cacheable offline.
+         */
+        get: operations["get_subscriptions_schedule_subscriptions__get"];
         put?: never;
         /**
          * Create a new event subscription
@@ -1009,6 +1013,11 @@ export interface components {
             /** Schedule */
             schedule: components["schemas"]["ScheduleEventFullDTO"][];
         };
+        /** GetSubscriptionsOutput */
+        GetSubscriptionsOutput: {
+            /** Subscriptions */
+            subscriptions: components["schemas"]["SubscriptionFullDTO"][];
+        };
         /** GetVotingNominationOutput */
         GetVotingNominationOutput: {
             /**
@@ -1271,17 +1280,6 @@ export interface components {
             queue: number | null;
             /** Time Until */
             time_until: number | null;
-            user_subscription: components["schemas"]["ScheduleEventSubscriptionDTO"] | null;
-        };
-        /** ScheduleEventSubscriptionDTO */
-        ScheduleEventSubscriptionDTO: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Counter */
-            counter: number;
         };
         /** SendBroadcastInput */
         SendBroadcastInput: {
@@ -1310,6 +1308,40 @@ export interface components {
              * Format: uuid
              */
             feedback_id: string;
+        };
+        /** SubscriptionEventDTO */
+        SubscriptionEventDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Number */
+            number: number;
+            /** Title */
+            title: string;
+            /** Order */
+            order: number;
+            /** Queue */
+            queue: number | null;
+            /** Time Until */
+            time_until: number | null;
+        };
+        /** SubscriptionFullDTO */
+        SubscriptionFullDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Counter */
+            counter: number;
+            event: components["schemas"]["SubscriptionEventDTO"];
         };
         /** TCloudWebhookOrderRef */
         TCloudWebhookOrderRef: {
@@ -3231,6 +3263,53 @@ export interface operations {
             };
             /** @description Schedule change ID not found. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    get_subscriptions_schedule_subscriptions__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetSubscriptionsOutput"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

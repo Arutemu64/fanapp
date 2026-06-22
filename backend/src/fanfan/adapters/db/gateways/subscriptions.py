@@ -13,6 +13,7 @@ from fanfan.core.models.subscription import (
     Subscription,
 )
 from fanfan.core.vo.subscription import SubscriptionId
+from fanfan.core.vo.user import UserId
 
 
 def _select_subscription_full_dto():
@@ -73,6 +74,19 @@ class SqlSubscriptionGateway(SubscriptionGateway):
 
         results = await self.session.scalars(stmt)
 
+        return [
+            self.mapper.parse_full_dto(subscription_orm) for subscription_orm in results
+        ]
+
+    async def read_subscriptions_by_user(
+        self, user_id: UserId
+    ) -> list[SubscriptionFullDTO]:
+        stmt = (
+            _select_subscription_full_dto()
+            .where(SubscriptionORM.user_id == user_id)
+            .order_by(ScheduleEventORM.order)
+        )
+        results = await self.session.scalars(stmt)
         return [
             self.mapper.parse_full_dto(subscription_orm) for subscription_orm in results
         ]
