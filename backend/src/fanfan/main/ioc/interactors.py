@@ -68,14 +68,14 @@ from fanfan.application.interactors.outbox.publish_outbox_events import (
 from fanfan.application.interactors.outbox.purge_outbox_events import (
     PurgeOutboxEvents,
 )
+from fanfan.application.interactors.push_sub.check_push_subscription import (
+    CheckPushSubscription,
+)
 from fanfan.application.interactors.push_sub.create_push_subscription import (
     CreatePushSubscription,
 )
 from fanfan.application.interactors.push_sub.delete_push_subscription import (
     DeletePushSubscription,
-)
-from fanfan.application.interactors.push_sub.list_user_push_subscriptions import (
-    ListUserPushSubscriptions,
 )
 from fanfan.application.interactors.schedule.get_schedule import GetSchedule
 from fanfan.application.interactors.schedule_mgmt.import_schedule import ImportSchedule
@@ -187,7 +187,7 @@ class InteractorsProvider(Provider):
     stream_events = provide(StreamEvents)
 
     create_push_subscription = provide(CreatePushSubscription)
-    list_user_push_subscriptions = provide(ListUserPushSubscriptions)
+    check_push_subscription = provide(CheckPushSubscription)
     delete_push_subscription = provide(DeletePushSubscription)
 
     publish_outbox_events = provide(PublishOutboxEvents)

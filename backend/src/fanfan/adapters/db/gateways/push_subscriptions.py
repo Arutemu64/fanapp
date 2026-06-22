@@ -1,4 +1,4 @@
-from sqlalchemy import delete, select
+from sqlalchemy import delete, exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.constraints import translate_integrity_error
@@ -35,6 +35,15 @@ class SqlPushSubscriptionGateway(PushSubscriptionGateway):
         )
         push_sub_orm = await self.session.scalar(stmt)
         return self.mapper.to_model(push_sub_orm) if push_sub_orm else None
+
+    async def exists_for_user(self, user_id: UserId, endpoint: str) -> bool:
+        stmt = select(
+            exists().where(
+                PushSubscriptionORM.user_id == user_id,
+                PushSubscriptionORM.endpoint == endpoint,
+            )
+        )
+        return bool(await self.session.scalar(stmt))
 
     async def list_by_user(self, user_id: UserId) -> list[PushSubscription]:
         stmt = select(PushSubscriptionORM).where(PushSubscriptionORM.user_id == user_id)

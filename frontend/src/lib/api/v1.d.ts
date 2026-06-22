@@ -829,10 +829,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List push subscriptions
-         * @description Returns a list of push subscriptions for the authenticated user.
+         * Check push subscription
+         * @description Reports whether the given endpoint is registered for the authenticated user. The client only needs this yes/no answer for its own device, so the full subscription list (incl. its keys) is not exposed.
          */
-        get: operations["list_subscriptions_push__get"];
+        get: operations["check_subscription_push__get"];
         put?: never;
         /**
          * Subscribe to push notifications
@@ -1172,14 +1172,10 @@ export interface components {
              */
             id: string;
         };
-        /** PushSubscriptionDTO */
-        PushSubscriptionDTO: {
-            /** Endpoint */
-            endpoint: string;
-            /** P256Dh */
-            p256dh: string;
-            /** Auth */
-            auth: string;
+        /** PushSubscriptionStatus */
+        PushSubscriptionStatus: {
+            /** Subscribed */
+            subscribed: boolean;
         };
         /** RegisterUserInput */
         RegisterUserInput: {
@@ -3970,22 +3966,24 @@ export interface operations {
             };
         };
     };
-    list_subscriptions_push__get: {
+    check_subscription_push__get: {
         parameters: {
-            query?: never;
+            query: {
+                endpoint: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description List of push subscriptions. */
+            /** @description Subscription status for the endpoint. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PushSubscriptionDTO"][];
+                    "application/json": components["schemas"]["PushSubscriptionStatus"];
                 };
             };
             /** @description User not authenticated. */
