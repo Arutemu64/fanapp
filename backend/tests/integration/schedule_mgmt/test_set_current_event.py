@@ -4,6 +4,7 @@ from uuid import UUID
 import pytest
 from dishka import AsyncContainer
 
+from fanfan.application.dto.page import Pagination
 from fanfan.application.interactors.schedule_mgmt.set_current_schedule_event import (
     SetCurrentScheduleEvent,
     SetCurrentScheduleEventInput,
@@ -93,7 +94,9 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     assert saved_previous_event.is_current is False
     assert saved_new_event.is_current is True
 
-    changes = await changes_gateway.read_list_schedule_changes()
+    changes = await changes_gateway.read_list_schedule_changes(
+        pagination=Pagination(limit=100, offset=0)
+    )
     assert len(changes) == 1
     change = changes[0]
     assert change.type == ScheduleChangeType.SET_AS_CURRENT
@@ -140,7 +143,9 @@ async def test_set_current_event_sets_current_when_none_was_current(
     assert saved_event is not None
     assert saved_event.is_current is True
 
-    changes = await changes_gateway.read_list_schedule_changes()
+    changes = await changes_gateway.read_list_schedule_changes(
+        pagination=Pagination(limit=100, offset=0)
+    )
     assert len(changes) == 1
     change = changes[0]
     assert change.type == ScheduleChangeType.SET_AS_CURRENT
@@ -178,7 +183,9 @@ async def test_set_current_event_can_unset_current_event(
     assert saved_previous_event is not None
     assert saved_previous_event.is_current is False
 
-    changes = await changes_gateway.read_list_schedule_changes()
+    changes = await changes_gateway.read_list_schedule_changes(
+        pagination=Pagination(limit=100, offset=0)
+    )
     assert len(changes) == 1
     change = changes[0]
     assert change.type == ScheduleChangeType.SET_AS_CURRENT
@@ -223,7 +230,12 @@ async def test_set_current_event_raises_when_event_not_found(
     saved_previous_event = await schedule_gateway.get_by_id(previous_current_event.id)
     assert saved_previous_event is not None
     assert saved_previous_event.is_current is True
-    assert await changes_gateway.read_list_schedule_changes() == []
+    assert (
+        await changes_gateway.read_list_schedule_changes(
+            pagination=Pagination(limit=100, offset=0)
+        )
+        == []
+    )
     assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
 
 
@@ -250,7 +262,12 @@ async def test_set_current_event_without_permission_raises_access_denied(
     saved_event = await schedule_gateway.get_by_id(event.id)
     assert saved_event is not None
     assert saved_event.is_current is False
-    assert await changes_gateway.read_list_schedule_changes() == []
+    assert (
+        await changes_gateway.read_list_schedule_changes(
+            pagination=Pagination(limit=100, offset=0)
+        )
+        == []
+    )
     assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
 
 
@@ -288,7 +305,9 @@ async def test_set_current_event_twice_in_a_row_raises_too_fast(
     assert saved_second_event is not None
     assert saved_second_event.is_current is False
 
-    changes = await changes_gateway.read_list_schedule_changes()
+    changes = await changes_gateway.read_list_schedule_changes(
+        pagination=Pagination(limit=100, offset=0)
+    )
     assert len(changes) == 1
     assert [
         (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)

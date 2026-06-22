@@ -23,7 +23,6 @@
 	let username = $state('');
 	let isLoading = $state(false);
 
-	// Validation & form state
 	let usernameError = $state('');
 	let formError = $state('');
 
@@ -80,7 +79,6 @@
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
 
-		// Validate all fields
 		usernameError = validateUsername(username);
 
 		if (!isValid()) {
@@ -110,12 +108,9 @@
 		}
 
 		toastService.add('Профиль обновлён', 'success');
-		open = false; // close modal
-
-		// reset form
+		open = false;
 		username = '';
 
-		// Update local user state via callback
 		if (onUpdate) {
 			onUpdate();
 		}

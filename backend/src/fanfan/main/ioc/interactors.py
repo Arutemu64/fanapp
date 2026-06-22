@@ -34,8 +34,8 @@ from fanfan.application.interactors.feedback.submit_feedback import SubmitFeedba
 from fanfan.application.interactors.notifications.create_notification import (
     CreateNotification,
 )
-from fanfan.application.interactors.notifications.delete_mailing_messages import (
-    DeleteMailingMessages,
+from fanfan.application.interactors.notifications.delete_mailing_notifications import (
+    DeleteMailingNotifications,
 )
 from fanfan.application.interactors.notifications.get_notification import (
     GetNotification,
@@ -46,6 +46,9 @@ from fanfan.application.interactors.notifications.list_user_notifications import
 from fanfan.application.interactors.notifications.mark_all_read import MarkAllRead
 from fanfan.application.interactors.notifications.process_broadcast import (
     ProcessBroadcast,
+)
+from fanfan.application.interactors.notifications.purge_notifications import (
+    PurgeNotifications,
 )
 from fanfan.application.interactors.notifications.send_broadcast import (
     SendBroadcast,
@@ -68,14 +71,14 @@ from fanfan.application.interactors.outbox.publish_outbox_events import (
 from fanfan.application.interactors.outbox.purge_outbox_events import (
     PurgeOutboxEvents,
 )
+from fanfan.application.interactors.push_sub.check_push_subscription import (
+    CheckPushSubscription,
+)
 from fanfan.application.interactors.push_sub.create_push_subscription import (
     CreatePushSubscription,
 )
 from fanfan.application.interactors.push_sub.delete_push_subscription import (
     DeletePushSubscription,
-)
-from fanfan.application.interactors.push_sub.list_user_push_subscriptions import (
-    ListUserPushSubscriptions,
 )
 from fanfan.application.interactors.schedule.get_schedule import GetSchedule
 from fanfan.application.interactors.schedule_mgmt.import_schedule import ImportSchedule
@@ -138,7 +141,7 @@ class InteractorsProvider(Provider):
 
     send_broadcast = provide(SendBroadcast)
     get_notification = provide(GetNotification)
-    delete_mailing_messages = provide(DeleteMailingMessages)
+    delete_mailing_notifications = provide(DeleteMailingNotifications)
     send_notification = provide(SendNotification)
     send_personal_notification = provide(SendPersonalNotification)
     process_broadcast = provide(ProcessBroadcast)
@@ -187,11 +190,12 @@ class InteractorsProvider(Provider):
     stream_events = provide(StreamEvents)
 
     create_push_subscription = provide(CreatePushSubscription)
-    list_user_push_subscriptions = provide(ListUserPushSubscriptions)
+    check_push_subscription = provide(CheckPushSubscription)
     delete_push_subscription = provide(DeletePushSubscription)
 
     publish_outbox_events = provide(PublishOutboxEvents)
     purge_outbox_events = provide(PurgeOutboxEvents)
+    purge_notifications = provide(PurgeNotifications)
 
     create_notification = provide(CreateNotification)
     list_user_notifications = provide(ListUserNotifications)

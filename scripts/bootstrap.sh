@@ -2,7 +2,7 @@
 #
 # One-command local setup: create .env from the template, fill every generated
 # secret (DB / Redis / NATS passwords, WEB__SECRET_KEY), and generate the Web
-# Push VAPID keys (config/*.pem + PUBLIC_VAPID_KEY). Driven by `just bootstrap`.
+# Push VAPID keys (secrets/*.pem + PUBLIC_VAPID_KEY). Driven by `just bootstrap`.
 #
 # Idempotent: re-running never clobbers an existing .env value or existing VAPID
 # keys — it only fills placeholders that are still untouched. Real third-party
@@ -51,20 +51,20 @@ set_if_placeholder NATS__PASSWORD  "change-me-nats-password"   "$(gen_secret)"
 set_if_placeholder WEB__SECRET_KEY "change-me-long-random-string" "$(gen_secret)"
 
 # --- 3. VAPID keys for Web Push ----------------------------------------------
-mkdir -p config
-if [[ -f config/private_key.pem && -f config/public_key.pem ]]; then
+mkdir -p secrets
+if [[ -f secrets/private_key.pem && -f secrets/public_key.pem ]]; then
   echo "• VAPID keys exist — skipping"
 else
   # vapid-gen writes private_key.pem/public_key.pem into the current directory
   # and prints application_server_key='<base64url>'. Run it in a temp dir, then
-  # move the keys into config/. vapid-gen lives in the backend's uv environment.
+  # move the keys into secrets/. vapid-gen lives in the backend's uv environment.
   tmp_dir="$(mktemp -d)"
   trap 'rm -rf "$tmp_dir"' EXIT
   vapid_out="$(cd "$tmp_dir" && uv run --project "$ROOT/backend" vapid-gen 2>&1)"
-  mv "$tmp_dir/private_key.pem" config/private_key.pem
-  mv "$tmp_dir/public_key.pem" config/public_key.pem
-  chmod 600 config/private_key.pem
-  echo "✓ generated VAPID keys in config/"
+  mv "$tmp_dir/private_key.pem" secrets/private_key.pem
+  mv "$tmp_dir/public_key.pem" secrets/public_key.pem
+  chmod 600 secrets/private_key.pem
+  echo "✓ generated VAPID keys in secrets/"
 
   app_key="$(echo "$vapid_out" | sed -n "s/^application_server_key='\(.*\)'$/\1/p")"
   if [[ -n "$app_key" ]]; then

@@ -54,6 +54,12 @@ docs/       Architecture guides (backend.md, frontend.md, api.md)
 
 ## Getting started
 
+> **GitHub Codespaces:** click **Code → Codespaces → Create codespace** and skip
+> the steps below. The [`.devcontainer`](.devcontainer/) provisions the pinned
+> toolchain (via `mise`), installs dependencies, and runs `just bootstrap`
+> automatically. When it finishes, run `just run-dev` (or `just backend-dev` /
+> `just frontend-dev`). Ports 3000 / 8000 are auto-forwarded.
+
 ### 1. Configure
 
 ```sh
@@ -62,7 +68,7 @@ just bootstrap
 
 This creates `.env` from the template, fills the generated secrets (DB / Redis /
 NATS passwords, `WEB__SECRET_KEY`), and generates the Web Push VAPID keys
-(`config/private_key.pem`, `config/public_key.pem`, `PUBLIC_VAPID_KEY`). It is
+(`secrets/private_key.pem`, `secrets/public_key.pem`, `PUBLIC_VAPID_KEY`). It is
 idempotent — re-run anytime; it never overwrites values you've already set.
 
 Both the web API and the bootstrap defaults are designed to boot with no real
@@ -143,10 +149,10 @@ One-time server setup:
 ```sh
 docker login ghcr.io          # use a read-only PAT / deploy token, not a password
 cp .env.example .env          # fill in placeholders (see Getting started)
-# Put the VAPID keys in config/ and make them readable by the container user
-# (backend runs as uid 999):
-chmod 600 config/private_key.pem
-sudo chown 999:999 config/*.pem
+# Put the VAPID keys in secrets/ (the dir ships empty in the repo) and make
+# them readable by the container user (backend runs as uid 999):
+chmod 600 secrets/private_key.pem
+sudo chown 999:999 secrets/*.pem
 ```
 
 Deploy (pulls the images and restarts, builds nothing on the host):

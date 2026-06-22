@@ -9,11 +9,11 @@ from fanfan.core.vo.mailing import MailingId
 logger = logging.getLogger(__name__)
 
 
-class DeleteMailingMessagesInput(BaseModel):
+class DeleteMailingNotificationsInput(BaseModel):
     mailing_id: MailingId
 
 
-class DeleteMailingMessages:
+class DeleteMailingNotifications:
     def __init__(
         self,
         notification_gateway: NotificationGateway,
@@ -22,8 +22,7 @@ class DeleteMailingMessages:
         self.notification_gateway = notification_gateway
         self.uow = uow
 
-    async def __call__(self, data: DeleteMailingMessagesInput) -> None:
-        # TODO try to delete as much as possible
+    async def __call__(self, data: DeleteMailingNotificationsInput) -> None:
         await self.notification_gateway.delete_all_by_mailing_id(data.mailing_id)
         await self.uow.commit()
         logger.info(

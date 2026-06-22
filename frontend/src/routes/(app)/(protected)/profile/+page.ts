@@ -3,10 +3,8 @@ import type { PageLoad } from './$types';
 import { createApiClient } from '$lib/api';
 import { fetchWithCache } from '$lib/utils/offlineCache';
 import type { UserSocialAccountDTO } from '$lib/types/user';
-import type { components } from '$lib/api/v1';
 
 type ProfileConnections = {
-	pushSubscriptions: components['schemas']['PushSubscriptionDTO'][];
 	socialAccounts: UserSocialAccountDTO[];
 };
 
@@ -29,11 +27,10 @@ function getTelegramLinkErrorCode(url: URL): TelegramLinkErrorCode | null {
 }
 
 export const load: PageLoad = async ({ fetch, depends, url, parent }) => {
-	depends('app:push-subscriptions');
 	depends('app:social-accounts');
 
 	const { user } = await parent();
-	// Per-user key: connections and push subscriptions are the viewer's own.
+	// Per-user key: connections are the viewer's own.
 	const cacheKey = `profile-connections:${user?.id ?? 'guest'}`;
 
 	const client = createApiClient();
@@ -41,12 +38,8 @@ export const load: PageLoad = async ({ fetch, depends, url, parent }) => {
 	const { data, stale, cachedAt } = await fetchWithCache<ProfileConnections>({
 		key: cacheKey,
 		fetcher: async ({ signal }) => {
-			const [{ data: pushSubscriptions }, { data: socialAccounts }] = await Promise.all([
-				client.GET('/push/', { fetch, signal }),
-				client.GET('/me/connections/', { fetch, signal })
-			]);
+			const { data: socialAccounts } = await client.GET('/me/connections/', { fetch, signal });
 			return {
-				pushSubscriptions: pushSubscriptions ?? [],
 				socialAccounts: socialAccounts ?? []
 			};
 		}
@@ -60,7 +53,6 @@ export const load: PageLoad = async ({ fetch, depends, url, parent }) => {
 	return {
 		title: 'Профиль',
 		telegramLinkError: getTelegramLinkErrorCode(url),
-		pushSubscriptions: data.pushSubscriptions,
 		socialAccounts: data.socialAccounts,
 		stale,
 		cachedAt

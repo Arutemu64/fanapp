@@ -1,6 +1,10 @@
 import { error, redirect } from '@sveltejs/kit';
 import { createApiClient } from '$lib/api';
 import { canManageSchedule } from '$lib/utils/permissions';
+import {
+	SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT,
+	SCHEDULE_CHANGES_PAGE_SIZE
+} from '$lib/constants/schedule_changes';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ fetch, depends, parent }) => {
@@ -20,10 +24,19 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 
 	// Staff-only operational feed: stale data would misrepresent live state, so
 	// no offline cache here — fail hard when unreachable instead.
-	const { data, error: fetchError } = await client.GET('/schedule/changes/', { fetch });
+	// Over-fetch one item so the client can tell whether a next page exists.
+	const { data, error: fetchError } = await client.GET('/schedule/changes/', {
+		fetch,
+		params: { query: { limit: SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT, offset: 0 } }
+	});
 	if (fetchError || !data) {
 		error(503, 'Не удалось загрузить изменения расписания');
 	}
 
-	return { title: 'Изменения расписания', schedule_changes: data.schedule_changes ?? [] };
+	const changes = data.schedule_changes ?? [];
+	return {
+		title: 'Изменения расписания',
+		schedule_changes: changes.slice(0, SCHEDULE_CHANGES_PAGE_SIZE),
+		hasMore: changes.length > SCHEDULE_CHANGES_PAGE_SIZE
+	};
 };

@@ -14,11 +14,10 @@
 	interface Props {
 		user: CurrentUserDTO;
 		socialAccounts?: UserSocialAccountDTO[];
-		pushSubscriptions?: components['schemas']['PushSubscriptionDTO'][];
 		onSettingsUpdate?: () => void;
 	}
 
-	let { user, socialAccounts = [], pushSubscriptions = [], onSettingsUpdate }: Props = $props();
+	let { user, socialAccounts = [], onSettingsUpdate }: Props = $props();
 
 	let isSubscribed = $state(false);
 	const toastService = getToastService();
@@ -61,14 +60,13 @@
 				return;
 			}
 
-			// Compare the browser subscription with what the server knows about this device.
-			const serverSub = pushSubscriptions.find((s) => s.endpoint === subscription.endpoint);
-
-			if (serverSub) {
-				isSubscribed = true;
-			} else {
-				isSubscribed = false;
-			}
+			// The browser has a local subscription; confirm the server still knows
+			// about this exact endpoint, otherwise treat it as not subscribed so the
+			// user can re-register (e.g. after the server lost the subscription).
+			const { data } = await client.GET('/push/', {
+				params: { query: { endpoint: subscription.endpoint } }
+			});
+			isSubscribed = data?.subscribed ?? false;
 		} catch (error) {
 			console.error('Error checking push subscription:', error);
 		} finally {

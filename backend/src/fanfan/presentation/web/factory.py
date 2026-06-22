@@ -20,14 +20,11 @@ from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
 
 
 def create_app() -> FastAPI:
-    # Init
     init(service_name="web")
 
-    # Setup FastAPI app
     config = get_config()
     app = FastAPI(debug=config.debug.enabled)
 
-    # Setup DI
     setup_dishka(container=create_web_container(), app=app)
 
     @app.middleware("http")
@@ -41,15 +38,12 @@ def create_app() -> FastAPI:
             set_auth_cookie(response, session_id, config.web)
         return response
 
-    # Include routers
     app.include_router(setup_api_router())
 
-    # Register error handlers
     app.add_exception_handler(AppException, app_exception_handler)  # type: ignore  # noqa: PGH003
     app.add_exception_handler(HTTPException, auth_exception_handler)  # type: ignore  # noqa: PGH003
     app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore  # noqa: PGH003
 
-    # Setup FastAPI middlewares
     # This session cookie holds the Telegram OAuth state/nonce (authlib). Mark it
     # Secure only when the rest of the app is (cookie_secure), so a plain-HTTP
     # deploy can still complete the OAuth flow — a Secure cookie is never sent

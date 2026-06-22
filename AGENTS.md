@@ -25,7 +25,9 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
 │           └── constants/    # Frontend constants
 ├── shared/                   # Shared OpenAPI spec
 │   └── openapi/
-└── config/                   # Redis and infrastructure configuration files
+├── config/                   # Committed, non-secret infra config (e.g. redis/)
+├── secrets/                  # Gitignored runtime secrets (VAPID PEM keys); mounted read-only into backend
+└── .devcontainer/            # GitHub Codespaces / Dev Container (mise toolchain + post-create provisioning)
 ```
 
 ## Stack & Core Commands
@@ -81,6 +83,15 @@ On-demand CLI (not the always-on MCP server), so it costs no context until invok
 10. **Verify Jinja Templates by Rendering**: After creating or editing a Jinja template, render it with all expected context values and confirm the output before marking the task complete — do not assume it renders correctly.
 11. **codegraph Before Grep/Read for Symbols**: With 550+ files, try codegraph before Grep/Glob/Read for any structural question. Triggers: "Where is `X`?" → `query`; "What calls `X`?" → `callers`; "What does `X` call?" → `callees`; "What breaks if I change `X`?" → `impact`; "Show source of `X`" → `node --source`; unfamiliar dir → `files --path <dir>`. Fall back to Grep/Read only when codegraph returns nothing or the question isn't symbol-based (string literal, regex, config value).
 12. **Update PR on Subsequent Commits**: After pushing additional commits to an open PR, update the PR title and description to reflect the current cumulative state of all changes — not just the latest commit. Title must stay accurate; description must summarize what the PR now does as a whole.
+13. **Comment the Why, Not the What**: Code shows *what* and *how* through clear names and structure; comments exist to explain *why*. Follow these rules (extends #2 English Comments and #9 Clear, Simple Code):
+    * **Self-documenting code first.** Reach for a descriptive name, a named constant, or an extracted function *before* a comment. A comment is never an excuse for unclear code — if you can't write a clear comment, the code itself probably needs fixing.
+    * **Never restate the code.** Delete comments that merely echo the adjacent line or the symbol's name (`# Setup DI`, `// close modal`, `# Save schedule change` above a `save()` call). Step-by-step narration of self-evident calls is noise.
+    * **Do comment the non-obvious:** business-rule reasoning and domain constraints, workarounds / hacks / unidiomatic code, footgun warnings ("don't reorder — deferred constraint relies on this"), performance trade-offs (why not the obvious approach), security rationale (fail-closed, constant-time), and the reason behind a bug fix.
+    * **A comment must dispel confusion, not add it.** If it's vague or could mislead, rewrite it precisely or remove it.
+    * **No commented-out code.** Delete it — git history is the archive. Keep a snippet only with an explicit note on why it stays.
+    * **No untracked TODOs.** Prefer a tracked issue. If a marker is unavoidable, format it `# TODO(<issue-ref>): ...` so it is greppable and owned.
+    * **Keep comments in sync with the code.** Update or delete the comment in the *same* change as the code it describes — a stale comment is worse than none.
+    * Add links to issues/PRs or external sources when they save the next reader a search.
 
 Respond terse like smart caveman. All technical substance stay. Only fluff die.
 

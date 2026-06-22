@@ -35,7 +35,6 @@ class ChangePassword:
     ) -> str:
         current_user = await self.current_user_provider.require_user()
         if current_user.hashed_password:
-            # User has password set
             if data.old_password:
                 if not self.password_hasher.verify(
                     data.old_password, current_user.hashed_password

@@ -39,7 +39,6 @@ class SyncCosplay2:
     async def _process_topic(self, topic: Topic) -> Nomination:
         nomination = await self.nomination_gateway.get_by_cosplay2_id(topic.id)
 
-        # Update or create nomination
         if nomination:
             nomination = replace(nomination, code=topic.card_code, title=topic.title)
             await self.nomination_gateway.save(nomination)
@@ -71,7 +70,6 @@ class SyncCosplay2:
         request_values: list[RequestValueDTO],
         nominations_by_cosplay2_id: dict[int, Nomination],
     ) -> Participant | None:
-        # Query existing participant
         participant = await self.participant_gateway.get_by_cosplay2_id(
             cosplay2_id=request.id
         )
@@ -96,7 +94,6 @@ class SyncCosplay2:
                 )
             return None
 
-        # Check voting title
         if not request.voting_title:
             # An approved request that lost its voting title can no longer be
             # represented as a participant. Drop any stale participant so it
@@ -127,13 +124,11 @@ class SyncCosplay2:
             )
             return None
 
-        # Convert request values to participant values
         participant_values = [
             ParticipantValue(title=r.title, type=r.type, value=r.value)
             for r in request_values
         ]
 
-        # Update or create participant
         if participant:
             participant = replace(
                 participant,
@@ -167,7 +162,6 @@ class SyncCosplay2:
         return participant
 
     async def __call__(self) -> None:
-        # Sync topics
         topics = await self.client.get_topics_list()
         topic_ids = {topic.id for topic in topics}
         # Keep the upserted nominations in memory so request processing can
@@ -191,7 +185,6 @@ class SyncCosplay2:
         else:
             logger.warning("Cosplay2 returned no topics, skipping nomination cleanup")
 
-        # Sync requests and values
         requests = await self.client.get_all_requests()
         values = await self.client.get_all_values()
         request_ids = {request.id for request in requests}

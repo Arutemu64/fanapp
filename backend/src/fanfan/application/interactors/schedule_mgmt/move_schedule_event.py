@@ -75,7 +75,6 @@ class MoveScheduleEvent:
 
         try:
             async with lock:
-                # Get and check events
                 event = await self.schedule_gateway.get_by_id(data.event_id)
                 if event is None:
                     raise EventNotFound
@@ -94,13 +93,11 @@ class MoveScheduleEvent:
 
                 next_event_before_change = await self.schedule_gateway.get_next()
 
-                # Update event order through the domain model.
                 event.place_after(place_after_event, place_before_event)
                 await self.schedule_gateway.save(event)
 
                 next_event_after_change = await self.schedule_gateway.get_next()
 
-                # Save schedule change
                 mailing = Mailing.create(by_user_id=current_user.id)
                 await self.mailing_gateway.add(mailing)
                 schedule_change = ScheduleChange.moved(
@@ -114,7 +111,6 @@ class MoveScheduleEvent:
                 )
                 await self.changes_gateway.add(schedule_change)
 
-                # Commit and proceed
                 await self.uow.commit()
 
                 logger.info(

@@ -1,0 +1,47 @@
+{
+  // GitHub Codespaces / Dev Container for the FAN FAN monorepo.
+  // Mirrors the documented local dev flow (mise toolchain + `just` workflows +
+  // Docker Compose infra), so a Codespace matches a laptop checkout.
+  "name": "FAN FAN",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+
+  "features": {
+    // The app talks to Postgres/Redis/NATS via Docker Compose (`just run-dev`)
+    // and `just backend-generate-auto` boots a throwaway Postgres. Both need a
+    // Docker daemon inside the Codespace.
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+
+  // Forward the app ports (frontend dev server, API) and the infra ports the
+  // Compose stack exposes, so they are reachable from the browser / tools.
+  "forwardPorts": [3000, 8000, 5432, 6379, 4222],
+  "portsAttributes": {
+    "3000": { "label": "Frontend (SvelteKit)", "onAutoForward": "openPreview" },
+    "8000": { "label": "Backend API (FastAPI)", "onAutoForward": "notify" },
+    "5432": { "label": "PostgreSQL", "onAutoForward": "silent" },
+    "6379": { "label": "Redis (Valkey)", "onAutoForward": "silent" },
+    "4222": { "label": "NATS", "onAutoForward": "silent" }
+  },
+
+  // One-time provisioning: install the pinned toolchain, project deps, and seed
+  // .env / secrets. Kept in a script so it stays readable and re-runnable.
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "charliermarsh.ruff",
+        "svelte.svelte-vscode",
+        "bradlc.vscode-tailwindcss",
+        "tamasfe.even-better-toml",
+        "ms-azuretools.vscode-docker",
+        "nefrob.vscode-just-syntax"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python"
+      }
+    }
+  }
+}
