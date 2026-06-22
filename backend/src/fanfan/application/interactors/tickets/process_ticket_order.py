@@ -9,15 +9,15 @@ from fanfan.application.services.tickets_import import TicketImportService
 logger = logging.getLogger(__name__)
 
 
-class ProcessTCloudOrderInput(BaseModel):
+class ProcessTicketOrderInput(BaseModel):
     order_id: str
 
 
-class ProcessTCloudOrderOutput(BaseModel):
+class ProcessTicketOrderOutput(BaseModel):
     new_tickets_count: int
 
 
-class ProcessTCloudOrder:
+class ProcessTicketOrder:
     def __init__(
         self,
         source: TicketsSource,
@@ -28,7 +28,7 @@ class ProcessTCloudOrder:
         self.ticket_import_service = ticket_import_service
         self.uow = uow
 
-    async def __call__(self, data: ProcessTCloudOrderInput) -> ProcessTCloudOrderOutput:
+    async def __call__(self, data: ProcessTicketOrderInput) -> ProcessTicketOrderOutput:
         # The webhook body is untrusted, so the source re-fetches the
         # authoritative order from the authenticated API by id.
         tickets = await self.source.fetch_order_tickets(data.order_id)
@@ -41,4 +41,4 @@ class ProcessTCloudOrder:
             "TicketsCloud order processed",
             extra={"order_id": data.order_id, "new_tickets": new_tickets_count},
         )
-        return ProcessTCloudOrderOutput(new_tickets_count=new_tickets_count)
+        return ProcessTicketOrderOutput(new_tickets_count=new_tickets_count)

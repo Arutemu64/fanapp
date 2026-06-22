@@ -5,7 +5,7 @@ import click
 from dishka.integrations.click import CONTAINER_NAME
 
 from fanfan.adapters.parsers.schedule import parse_schedule_from_excel
-from fanfan.application.interactors.cosplay2.sync_cosplay2 import SyncCosplay2
+from fanfan.application.interactors.cosplay.sync_cosplay import SyncCosplay
 from fanfan.application.interactors.schedule_mgmt.import_schedule import (
     ImportSchedule,
     ImportScheduleInput,
@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 async def sync_cosplay2_command(context: click.Context):
     container: AsyncContainer = context.meta[CONTAINER_NAME]
     async with container() as r_container:
-        sync_cosplay2 = await r_container.get(SyncCosplay2)
-        await sync_cosplay2()
+        sync_cosplay = await r_container.get(SyncCosplay)
+        await sync_cosplay()
         logger.info("Importing from C2 done!")
 
 

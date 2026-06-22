@@ -17,7 +17,7 @@ from fanfan.core.vo.participant import generate_participant_id
 logger = logging.getLogger(__name__)
 
 
-class SyncCosplay2:
+class SyncCosplay:
     def __init__(
         self,
         source: CosplaySource,
