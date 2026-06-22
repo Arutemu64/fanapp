@@ -1,6 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+from typing import cast
 
-from sqlalchemy import and_, delete, select, update
+from sqlalchemy import CursorResult, and_, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.mappers.notification import NotificationMapper
@@ -52,6 +53,14 @@ class SqlNotificationGateway(NotificationGateway):
     async def delete_all_by_mailing_id(self, mailing_id: MailingId) -> None:
         stmt = delete(NotificationORM).where(NotificationORM.mailing_id == mailing_id)
         await self.session.execute(stmt)
+
+    async def delete_created_before(self, days: int) -> int:
+        cutoff = func.now() - timedelta(days=days)
+        result = await self.session.execute(
+            delete(NotificationORM).where(NotificationORM.created_at < cutoff)
+        )
+        # execute() is typed as Result, but a DELETE yields a CursorResult.
+        return cast("CursorResult", result).rowcount
 
     # Read projections (return DTOs, not aggregates)
     async def read_realtime_notification(

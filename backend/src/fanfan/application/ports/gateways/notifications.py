@@ -17,6 +17,10 @@ class NotificationGateway(Protocol):
     ) -> None: ...
     async def delete_all_by_mailing_id(self, mailing_id: MailingId) -> None: ...
 
+    async def delete_created_before(self, days: int) -> int:
+        """Delete notifications older than ``days``; return the row count."""
+        ...
+
     # Read projections (return DTOs, not aggregates)
     async def read_realtime_notification(
         self, notification_id: NotificationId

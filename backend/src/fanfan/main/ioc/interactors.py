@@ -47,6 +47,9 @@ from fanfan.application.interactors.notifications.mark_all_read import MarkAllRe
 from fanfan.application.interactors.notifications.process_broadcast import (
     ProcessBroadcast,
 )
+from fanfan.application.interactors.notifications.purge_notifications import (
+    PurgeNotifications,
+)
 from fanfan.application.interactors.notifications.send_broadcast import (
     SendBroadcast,
 )
@@ -192,6 +195,7 @@ class InteractorsProvider(Provider):
 
     publish_outbox_events = provide(PublishOutboxEvents)
     purge_outbox_events = provide(PurgeOutboxEvents)
+    purge_notifications = provide(PurgeNotifications)
 
     create_notification = provide(CreateNotification)
     list_user_notifications = provide(ListUserNotifications)
