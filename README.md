@@ -54,6 +54,12 @@ docs/       Architecture guides (backend.md, frontend.md, api.md)
 
 ## Getting started
 
+> **GitHub Codespaces:** click **Code → Codespaces → Create codespace** and skip
+> the steps below. The [`.devcontainer`](.devcontainer/) provisions the pinned
+> toolchain (via `mise`), installs dependencies, and runs `just bootstrap`
+> automatically. When it finishes, run `just run-dev` (or `just backend-dev` /
+> `just frontend-dev`). Ports 3000 / 8000 are auto-forwarded.
+
 ### 1. Configure
 
 ```sh
