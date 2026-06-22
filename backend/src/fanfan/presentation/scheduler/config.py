@@ -8,3 +8,5 @@ class SchedulerConfig(BaseModel):
     sync_cosplay2_cron: str | None = None
     # When to purge delivered outbox rows (retention age lives in OutboxConfig).
     outbox_retention_cron: str | None = None
+    # When to purge old notifications (retention age lives in NotificationConfig).
+    notification_retention_cron: str | None = None
