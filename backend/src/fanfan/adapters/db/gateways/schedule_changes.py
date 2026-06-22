@@ -4,6 +4,7 @@ from sqlalchemy.orm import joinedload
 
 from fanfan.adapters.db.mappers.schedule_change import ScheduleChangeMapper
 from fanfan.adapters.db.models import ScheduleChangeORM
+from fanfan.application.dto.page import Pagination
 from fanfan.application.dto.schedule_change import (
     ScheduleChangeFullDTO,
 )
@@ -60,8 +61,9 @@ class SqlScheduleChangeGateway(ScheduleChangeGateway):
         result = await self.session.scalar(stmt)
         return self.mapper.parse_full_dto(result) if result else None
 
-    async def read_list_schedule_changes(self) -> list[ScheduleChangeFullDTO]:
-        # TODO Add pagination
+    async def read_list_schedule_changes(
+        self, pagination: Pagination
+    ) -> list[ScheduleChangeFullDTO]:
         stmt = (
             select(ScheduleChangeORM)
             .order_by(ScheduleChangeORM.created_at.desc())
@@ -70,6 +72,8 @@ class SqlScheduleChangeGateway(ScheduleChangeGateway):
                 joinedload(ScheduleChangeORM.argument_event),
                 joinedload(ScheduleChangeORM.user),
             )
+            .limit(pagination.limit)
+            .offset(pagination.offset)
         )
         result = (await self.session.scalars(stmt)).unique()
         return [self.mapper.parse_full_dto(s) for s in result]

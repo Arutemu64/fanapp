@@ -1,5 +1,6 @@
 from typing import Protocol
 
+from fanfan.application.dto.page import Pagination
 from fanfan.application.dto.schedule_change import ScheduleChangeFullDTO
 from fanfan.core.models.schedule_change import ScheduleChange
 from fanfan.core.vo.schedule_change import ScheduleChangeId
@@ -15,4 +16,6 @@ class ScheduleChangeGateway(Protocol):
         self, change_id: ScheduleChangeId
     ) -> ScheduleChangeFullDTO | None: ...
 
-    async def read_list_schedule_changes(self) -> list[ScheduleChangeFullDTO]: ...
+    async def read_list_schedule_changes(
+        self, pagination: Pagination
+    ) -> list[ScheduleChangeFullDTO]: ...

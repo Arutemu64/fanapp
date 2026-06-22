@@ -1976,6 +1976,31 @@
         "summary": "List schedule audit log",
         "description": "Returns a history of all modifications made to the schedule, including skips, moves, and status changes.",
         "operationId": "list_schedule_changes_schedule_changes__get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Schedule changes retrieved successfully.",
