@@ -71,15 +71,14 @@ class UpdateScheduleEventSkip:
 
         try:
             async with lock:
-                # Get and check event
                 event = await self.schedule_gateway.get_by_id(data.event_id)
                 if event is None:
                     raise EventNotFound
 
-                # Get next event at this point
+                # Snapshot the next event before and after the change so the
+                # mailing can tell subscribers whether their next event moved.
                 next_event_before = await self.schedule_gateway.get_next()
 
-                # Update event skip state through domain methods.
                 if data.is_skipped:
                     event.skip()
                 else:
@@ -88,7 +87,6 @@ class UpdateScheduleEventSkip:
 
                 next_event_after = await self.schedule_gateway.get_next()
 
-                # Save schedule change
                 mailing = Mailing.create(by_user_id=current_user.id)
                 await self.mailing_gateway.add(mailing)
                 factory = ScheduleChange.skipped
@@ -102,10 +100,9 @@ class UpdateScheduleEventSkip:
                 )
                 await self.changes_gateway.add(schedule_change)
 
-                # Commit and proceed
                 await self.uow.commit()
 
-                # Update event after commit
+                # Re-read so the logged event carries its post-commit state.
                 event = await self.schedule_gateway.get_by_id(data.event_id)
 
                 logger.info(

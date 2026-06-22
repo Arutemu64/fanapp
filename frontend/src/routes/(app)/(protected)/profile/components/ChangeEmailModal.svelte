@@ -19,7 +19,6 @@
 
 	let { open = $bindable(false), currentEmail, onSuccess }: Props = $props();
 
-	// State management
 	let step = $state<'email' | 'verify'>('email');
 	let newEmail = $state('');
 	let emailError = $state('');

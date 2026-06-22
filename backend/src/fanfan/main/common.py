@@ -6,7 +6,6 @@ from fanfan.adapters.debug.telemetry import setup_telemetry
 def init(service_name: str) -> None:
     config = get_config()
 
-    # Setup logging
     setup_logging(
         level=config.debug.logging_level,
         json_logs=config.debug.json_logs,

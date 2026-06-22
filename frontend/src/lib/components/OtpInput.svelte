@@ -75,7 +75,7 @@
 		const windowClipboard = window.clipboardData;
 		const pasteData =
 			event.clipboardData?.getData('text') || windowClipboard?.getData('text') || '';
-		const digits = pasteData.replace(/\D/g, '').slice(0, 6); // Extract up to 6 numeric digits
+		const digits = pasteData.replace(/\D/g, '').slice(0, 6);
 
 		if (!digits) return;
 

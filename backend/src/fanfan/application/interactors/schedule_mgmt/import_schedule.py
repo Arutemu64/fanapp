@@ -59,7 +59,6 @@ class ImportSchedule:
                 None,
             )
             if existing_event:
-                # Update event
                 existing_event.update_details(
                     title=entry.title,
                     duration=entry.duration,
@@ -77,7 +76,6 @@ class ImportSchedule:
                     },
                 )
             else:
-                # Create new event
                 new_event = ScheduleEvent(
                     id=generate_schedule_event_id(),
                     number=entry.number,

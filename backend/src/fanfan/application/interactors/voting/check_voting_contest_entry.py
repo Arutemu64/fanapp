@@ -28,17 +28,15 @@ class CheckVotingContestEntry:
         self.uow = uow
 
     async def __call__(self, data: CheckVotingContestEntryInput) -> None:
-        # Get count of current user votes and total votable nominations
         user_votes_count = await self.vote_gateway.count_user_votes(data.user_id)
         votable_nominations_count = await self.nomination_gateway.count_votable()
 
-        # Check existing user flag
         flag = await self.user_flag_gateway.get_by_user(
             user_id=data.user_id, flag_name=VOTING_CONTEST_FLAG_NAME
         )
 
-        # If it exists, let's check if it's still valid
-        # If it's not - check if we can create it
+        # Drop a now-invalid flag (user no longer has every nomination voted),
+        # or set it once they have voted in all votable nominations.
         if flag and user_votes_count < votable_nominations_count:
             await self.user_flag_gateway.delete(flag)
             await self.uow.commit()

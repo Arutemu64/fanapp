@@ -61,7 +61,6 @@
 			const { error, response } = await client.POST('/notifications/broadcast', {
 				body: {
 					body: bodyText.trim(),
-					// Cast string roles to appropriate UserRole values
 					roles: selectedRoles as ('visitor' | 'participant' | 'helper' | 'org')[]
 				}
 			});
@@ -80,7 +79,6 @@
 			}
 
 			toastService.add('Рассылка успешно запущена!', 'success');
-			// Reset form
 			bodyText = '';
 			selectedRoles = [];
 			bodyError = '';

@@ -30,17 +30,14 @@ export function hasPermission(
 			return false;
 		}
 
-		// If no object type/id specified, just check permission name
 		if (objectType === undefined && objectId === undefined) {
 			return true;
 		}
 
-		// Check object type if specified
 		if (objectType !== undefined && permission.object_type !== objectType) {
 			return false;
 		}
 
-		// Check object id if specified
 		if (objectId !== undefined && permission.object_id !== objectId) {
 			return false;
 		}
