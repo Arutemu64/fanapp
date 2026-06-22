@@ -1,5 +1,5 @@
 from fanfan.application.ports.notifier import PushNotifierPort, TelegramNotifierPort
-from fanfan.core.models.notification import Notification
+from fanfan.core.models.notification import Notification, NotificationRevocation
 
 
 class FakeTelegramNotifier(TelegramNotifierPort):
@@ -7,9 +7,13 @@ class FakeTelegramNotifier(TelegramNotifierPort):
 
     def __init__(self) -> None:
         self.sent_notifications: list[Notification] = []
+        self.revocations: list[NotificationRevocation] = []
 
     async def send_notification(self, notification: Notification) -> None:
         self.sent_notifications.append(notification)
+
+    async def revoke_notification(self, revocation: NotificationRevocation) -> None:
+        self.revocations.append(revocation)
 
 
 class FakePushNotifier(PushNotifierPort):
@@ -17,6 +21,10 @@ class FakePushNotifier(PushNotifierPort):
 
     def __init__(self) -> None:
         self.sent_notifications: list[Notification] = []
+        self.revocations: list[NotificationRevocation] = []
 
     async def send_notification(self, notification: Notification) -> None:
         self.sent_notifications.append(notification)
+
+    async def revoke_notification(self, revocation: NotificationRevocation) -> None:
+        self.revocations.append(revocation)

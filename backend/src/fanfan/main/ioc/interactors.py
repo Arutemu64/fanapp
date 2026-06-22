@@ -50,6 +50,9 @@ from fanfan.application.interactors.notifications.process_broadcast import (
 from fanfan.application.interactors.notifications.purge_notifications import (
     PurgeNotifications,
 )
+from fanfan.application.interactors.notifications.revoke_notification import (
+    RevokeNotification,
+)
 from fanfan.application.interactors.notifications.send_broadcast import (
     SendBroadcast,
 )
@@ -145,6 +148,7 @@ class InteractorsProvider(Provider):
     send_notification = provide(SendNotification)
     send_personal_notification = provide(SendPersonalNotification)
     process_broadcast = provide(ProcessBroadcast)
+    revoke_notification = provide(RevokeNotification)
 
     list_voting_nominations = provide(ListVotingNominations)
 

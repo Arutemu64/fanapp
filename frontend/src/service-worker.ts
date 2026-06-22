@@ -43,6 +43,9 @@ interface PushNotificationPayload {
 	// even when the app is visible, so the user can verify push delivery without
 	// backgrounding the app.
 	test?: boolean;
+	// Set by the backend to recall a notification (e.g. an undone schedule
+	// change): close the OS notification carrying `tag` instead of showing one.
+	revoke?: boolean;
 }
 
 interface NotificationClickData {
@@ -239,6 +242,13 @@ self.addEventListener('push', (event: PushEvent) => {
 
 	event.waitUntil(
 		(async () => {
+			// Recall: close any OS notification with this tag and show nothing new.
+			if (data.revoke) {
+				const existing = await self.registration.getNotifications({ tag: data.tag });
+				existing.forEach((notification) => notification.close());
+				return;
+			}
+
 			// When the app is already visible, the user will see the in-app toast and bell update.
 			// Skip the OS-level push notification to avoid duplicate alerts for the same message.
 			// Test pushes are the exception: always show them so the user can confirm delivery.

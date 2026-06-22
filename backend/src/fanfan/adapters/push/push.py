@@ -12,8 +12,9 @@ from fanfan.application.ports.gateways.push_subscriptions import (
 from fanfan.application.ports.notifier import Notifier
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import NotificationChannelUnavailable
-from fanfan.core.models.notification import Notification
+from fanfan.core.models.notification import Notification, NotificationRevocation
 from fanfan.core.vo.notification import NotificationType
+from fanfan.core.vo.user import UserId
 
 logger = logging.getLogger(__name__)
 
@@ -56,14 +57,34 @@ class PushNotifier(Notifier):
         # Remove rest HTML tags
         return nh3.clean(text, tags=set())
 
-    def _build_message(self, subscription_info: dict, notification: Notification):
-        subscription_info = {
-            "endpoint": subscription_info["endpoint"],
-            "keys": {
-                "auth": subscription_info["auth"],
-                "p256dh": subscription_info["p256dh"],
-            },
-        }
+    async def _deliver_to_user(self, user_id: UserId, data: dict) -> None:
+        # Resolve WebPush up front so a misconfigured channel fails fast (and is
+        # caught by the consumer) before we open a session or hit the gateway.
+        self._get_web_push()
+        push_subs = await self.push_sub_gateway.list_by_user(user_id)
+        async with aiohttp.ClientSession() as session:
+            for sub in push_subs:
+                subscription = WebPushSubscription.model_validate(
+                    {
+                        "endpoint": sub.endpoint,
+                        "keys": {"auth": sub.auth, "p256dh": sub.p256dh},
+                    }
+                )
+                message = self._get_web_push().get(
+                    message=data, subscription=subscription, ttl=3600
+                )
+                async with session.post(
+                    url=str(subscription.endpoint),
+                    data=message.encrypted,
+                    # WebPushHeaders is an all-str TypedDict; the checker won't
+                    # narrow its values to str, so it rejects the Mapping type.
+                    headers=message.headers,  # type: ignore  # noqa: PGH003
+                ) as response:
+                    if response.status in [404, 410]:
+                        await self.push_sub_gateway.delete(sub)
+                        await self.uow.commit()
+
+    async def send_notification(self, notification: Notification) -> None:
         data = {
             "tag": str(notification.id),
             "title": self._sanitize_text(notification.title),
@@ -75,32 +96,11 @@ class PushNotifier(Notifier):
             # it to avoid duplicating the in-app toast).
             "test": notification.type == NotificationType.TEST,
         }
-        push_subscription = WebPushSubscription.model_validate(subscription_info)
-        message = self._get_web_push().get(
-            message=data, subscription=push_subscription, ttl=3600
-        )
-        return push_subscription, message
+        await self._deliver_to_user(notification.user_id, data)
 
-    async def send_notification(self, notification: Notification) -> None:
-        # Resolve WebPush up front so a misconfigured channel fails fast (and is
-        # caught by the consumer) before we open a session or hit the gateway.
-        self._get_web_push()
-        push_subs = await self.push_sub_gateway.list_by_user(notification.user_id)
-        async with aiohttp.ClientSession() as session:
-            for sub in push_subs:
-                subscription, message = self._build_message(
-                    {
-                        "endpoint": sub.endpoint,
-                        "auth": sub.auth,
-                        "p256dh": sub.p256dh,
-                    },
-                    notification,
-                )
-                async with session.post(
-                    url=str(subscription.endpoint),
-                    data=message.encrypted,
-                    headers=message.headers,
-                ) as response:
-                    if response.status in [404, 410]:
-                        await self.push_sub_gateway.delete(sub)
-                        await self.uow.commit()
+    async def revoke_notification(self, revocation: NotificationRevocation) -> None:
+        # Silent revoke: the service worker closes the OS notification carrying
+        # this tag without rendering anything new. Best-effort — only reaches
+        # devices that are online to receive the push.
+        data = {"tag": str(revocation.notification_id), "revoke": True}
+        await self._deliver_to_user(revocation.user_id, data)

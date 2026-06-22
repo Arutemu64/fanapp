@@ -117,7 +117,7 @@ await self.events_broker.publish(
 )
 ```
 
-`NotificationQueued` and `MailingCancelled` follow this pattern, as do the user email-code events `EmailLoginCodeRequested` (`request_login_code.py`) and `EmailConfirmationCodeRequested` when sent as a standalone "resend a code" (`request_email_code.py`). These represent "send a code" commands, not aggregate state changes — `request_login_code` / `request_email_code` change no persistent state and may run with no commit at all — so they are **not** recorded on the `User` aggregate. The interactor constructs and publishes them directly via `EventBroker`.
+`NotificationQueued`, `MailingCancelled`, and `NotificationRevoked` follow this pattern, as do the user email-code events `EmailLoginCodeRequested` (`request_login_code.py`) and `EmailConfirmationCodeRequested` when sent as a standalone "resend a code" (`request_email_code.py`). These represent "send a code" commands, not aggregate state changes — `request_login_code` / `request_email_code` change no persistent state and may run with no commit at all — so they are **not** recorded on the `User` aggregate. The interactor constructs and publishes them directly via `EventBroker`.
 
 > `BroadcastQueued` used to be published here too, but it guards a committed `Mailing` row, so it now flows through the outbox via `Mailing.queue_broadcast()` (see [Domain Events](#domain-events)).
 

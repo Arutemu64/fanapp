@@ -39,3 +39,18 @@ class NewNotification:
     # In-app deep-link path; see Notification.path above. None falls back to root.
     path: str | None
     mailing_id: MailingId | None
+
+
+@dataclass(slots=True, kw_only=True)
+class NotificationRevocation:
+    """Data required to recall an already-sent notification from its channels.
+
+    Carried by the NotificationRevoked service event and passed to
+    Notifier.revoke_notification. Each channel uses only the fields it needs:
+    push keys off notification_id (the push tag), Telegram needs
+    telegram_message_id (None when it was never delivered to Telegram).
+    """
+
+    notification_id: NotificationId
+    user_id: UserId
+    telegram_message_id: int | None

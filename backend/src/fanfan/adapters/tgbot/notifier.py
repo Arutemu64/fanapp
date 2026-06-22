@@ -10,14 +10,16 @@ from aiogram.exceptions import (
 )
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from fanfan.application.ports.gateways.notifications import NotificationGateway
 from fanfan.application.ports.gateways.social_ids import SocialIdentityGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.notifier import Notifier
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import (
     NotificationRetryAfter,
     UserNotReachable,
 )
-from fanfan.core.models.notification import Notification
+from fanfan.core.models.notification import Notification, NotificationRevocation
 from fanfan.presentation.web.config import WebConfig
 
 logger = logging.getLogger(__name__)
@@ -29,11 +31,15 @@ class TelegramNotifier(Notifier):
         bot: Bot,
         user_gateway: UserGateway,
         social_id_gateway: SocialIdentityGateway,
+        notification_gateway: NotificationGateway,
+        uow: UnitOfWork,
         web_config: WebConfig,
     ) -> None:
         self.social_id_gateway = social_id_gateway
         self.bot = bot
         self.user_gateway = user_gateway
+        self.notification_gateway = notification_gateway
+        self.uow = uow
         self.web_config = web_config
 
     @staticmethod
@@ -65,7 +71,7 @@ class TelegramNotifier(Notifier):
         if social_id is None:
             raise UserNotReachable
         try:
-            await self.bot.send_message(
+            message = await self.bot.send_message(
                 chat_id=int(social_id.provider_id),
                 text=self._render_message_text(notification),
                 parse_mode=ParseMode.HTML,
@@ -86,6 +92,45 @@ class TelegramNotifier(Notifier):
             logger.error(  # noqa: TRY400
                 "Telegram bot token is invalid or unauthorized — "
                 "cannot deliver notifications via Telegram"
+            )
+            raise UserNotReachable from e
+
+        # Persist the message id so the message can be deleted if the mailing is
+        # later recalled.
+        await self.notification_gateway.set_telegram_message_id(
+            notification.id, message.message_id
+        )
+        await self.uow.commit()
+        return
+
+    async def revoke_notification(self, revocation: NotificationRevocation) -> None:
+        # Nothing was delivered to Telegram for this notification.
+        if revocation.telegram_message_id is None:
+            return
+
+        social_id = await self.social_id_gateway.get_by_provider(
+            user_id=revocation.user_id, provider="telegram"
+        )
+        if social_id is None:
+            raise UserNotReachable
+
+        try:
+            await self.bot.delete_message(
+                chat_id=int(social_id.provider_id),
+                message_id=revocation.telegram_message_id,
+            )
+        except TelegramRetryAfter as e:
+            raise NotificationRetryAfter(retry_after=e.retry_after) from e
+        except TelegramBadRequest:
+            # Message is already gone or too old to delete (Telegram only lets
+            # bots delete within 48h). Best-effort recall — treat as done.
+            return
+        except TelegramForbiddenError as e:
+            raise UserNotReachable from e
+        except TelegramUnauthorizedError as e:
+            logger.error(  # noqa: TRY400
+                "Telegram bot token is invalid or unauthorized — "
+                "cannot revoke notifications via Telegram"
             )
             raise UserNotReachable from e
         return

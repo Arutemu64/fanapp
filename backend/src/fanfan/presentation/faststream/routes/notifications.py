@@ -20,6 +20,9 @@ from fanfan.application.interactors.notifications.process_broadcast import (
     ProcessBroadcast,
     ProcessBroadcastInput,
 )
+from fanfan.application.interactors.notifications.revoke_notification import (
+    RevokeNotification,
+)
 from fanfan.application.interactors.notifications.send_notification import (
     SendNotification,
     SendNotificationInput,
@@ -30,6 +33,7 @@ from fanfan.core.events.notifications import (
     MailingCancelled,
     NotificationCreated,
     NotificationQueued,
+    NotificationRevoked,
 )
 from fanfan.core.exceptions.notifications import (
     MailingAlreadyCancelled,
@@ -212,4 +216,78 @@ async def cancel_mailing(
 ) -> None:
 
     await interactor(DeleteMailingMessagesInput(mailing_id=data.mailing_id))
+    return
+
+
+@notifications_router.subscriber(
+    NotificationRevoked.subject,
+    stream=stream,
+    pull_sub=PullSub(),
+    durable="revoke_notification_from_telegram",
+    ack_policy=AckPolicy.MANUAL,
+)
+@inject
+async def revoke_notification_from_telegram(
+    data: NotificationRevoked,
+    interactor: FromDishka[RevokeNotification],
+    msg: NatsMessage,
+    logger: Logger,
+) -> None:
+    try:
+        await interactor.revoke_from_telegram(data.revocation)
+    except NotificationRetryAfter as e:
+        logger.warning(
+            "Retry revoking notification %s from Telegram in %s",
+            data.revocation.notification_id,
+            e.retry_after,
+        )
+        await msg.nack(delay=e.retry_after)
+        return
+    except UserNotReachable:
+        logger.info(
+            "Skip revoking notification %s from Telegram",
+            data.revocation.notification_id,
+        )
+        await msg.reject()
+        return
+    else:
+        await msg.ack()
+        logger.info(
+            "Revoked notification %s from Telegram", data.revocation.notification_id
+        )
+
+    return
+
+
+@notifications_router.subscriber(
+    NotificationRevoked.subject,
+    stream=stream,
+    pull_sub=PullSub(),
+    durable="revoke_push_notification",
+    ack_policy=AckPolicy.MANUAL,
+)
+@inject
+async def revoke_push_notification(
+    data: NotificationRevoked,
+    interactor: FromDishka[RevokeNotification],
+    msg: NatsMessage,
+    logger: Logger,
+) -> None:
+    try:
+        await interactor.revoke_from_push(data.revocation)
+    except NotificationChannelUnavailable:
+        # Push channel is misconfigured (missing/invalid VAPID keys). Retrying
+        # can't fix it, so drop the message instead of redelivering forever.
+        logger.warning(
+            "Push channel unavailable — dropping revoke for notification %s",
+            data.revocation.notification_id,
+        )
+        await msg.reject()
+        return
+    else:
+        await msg.ack()
+        logger.info(
+            "Revoked notification %s from push", data.revocation.notification_id
+        )
+
     return

@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID, uuid7
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, Uuid, text
+from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, Index, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from fanfan.adapters.db.models.base import BaseORM
@@ -36,6 +36,11 @@ class NotificationORM(BaseORM):
         index=True,
     )
     seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Telegram message id of the delivered notification, kept so the message can
+    # be deleted when the mailing is recalled. Null until sent to Telegram (or
+    # when the user has Telegram notifications disabled). BigInteger: Telegram
+    # ids can exceed 32 bits.
+    telegram_message_id: Mapped[int | None] = mapped_column(BigInteger())
 
     __table_args__ = (
         # Covers "list user notifications newest first" filter + sort.

@@ -9,7 +9,7 @@ from fanfan.adapters.db.models import NotificationORM
 from fanfan.application.dto.notification import NotificationDTO, RealtimeNotificationDTO
 from fanfan.application.dto.page import Pagination
 from fanfan.application.ports.gateways.notifications import NotificationGateway
-from fanfan.core.models.notification import Notification
+from fanfan.core.models.notification import Notification, NotificationRevocation
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.notification import NotificationId
 from fanfan.core.vo.user import UserId
@@ -53,6 +53,34 @@ class SqlNotificationGateway(NotificationGateway):
     async def delete_all_by_mailing_id(self, mailing_id: MailingId) -> None:
         stmt = delete(NotificationORM).where(NotificationORM.mailing_id == mailing_id)
         await self.session.execute(stmt)
+
+    async def set_telegram_message_id(
+        self, notification_id: NotificationId, message_id: int
+    ) -> None:
+        stmt = (
+            update(NotificationORM)
+            .where(NotificationORM.id == notification_id)
+            .values({"telegram_message_id": message_id})
+        )
+        await self.session.execute(stmt)
+
+    async def read_revocations_by_mailing_id(
+        self, mailing_id: MailingId
+    ) -> list[NotificationRevocation]:
+        stmt = select(
+            NotificationORM.id,
+            NotificationORM.user_id,
+            NotificationORM.telegram_message_id,
+        ).where(NotificationORM.mailing_id == mailing_id)
+        rows = await self.session.execute(stmt)
+        return [
+            NotificationRevocation(
+                notification_id=NotificationId(row.id),
+                user_id=UserId(row.user_id),
+                telegram_message_id=row.telegram_message_id,
+            )
+            for row in rows
+        ]
 
     async def delete_created_before(self, days: int) -> int:
         cutoff = func.now() - timedelta(days=days)
