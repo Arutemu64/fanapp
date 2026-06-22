@@ -1,6 +1,6 @@
 import { browser } from '$app/environment';
 import { createApiClient } from '$lib/api';
-import { clearCache, fetchWithCache, warmCache } from '$lib/utils/offlineCache';
+import { clearUserCache, fetchWithCache, warmCache } from '$lib/utils/offlineCache';
 import type { CurrentUserDTO } from '$lib/types/user';
 import type { ScheduleEventFullDTO, SubscriptionFullDTO } from '$lib/types/schedule';
 import type { LayoutLoad } from './$types';
@@ -23,11 +23,12 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 		fetcher: async ({ signal }) => {
 			const { data, response, error } = await client.GET('/me/', { fetch, signal });
 
-			// Authoritative "session ended": cache logged-out AND wipe per-user caches
+			// Authoritative "session ended": cache logged-out AND drop per-user caches
 			// so no orphaned entries linger for the next account on a shared device.
-			// Mirrors explicit logout (AppNavbar.handleLogout).
+			// Universal caches (e.g. schedule) are kept warm. Mirrors explicit logout
+			// (AppNavbar.handleLogout).
 			if (response.status === 401 || response.status === 403) {
-				void clearCache();
+				void clearUserCache();
 				return null;
 			}
 

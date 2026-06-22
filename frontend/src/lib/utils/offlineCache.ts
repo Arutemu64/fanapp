@@ -1,4 +1,4 @@
-import { clear, get, set } from 'idb-keyval';
+import { delMany, get, keys, set } from 'idb-keyval';
 import { isReachable, markReachable } from '$lib/services/reachability';
 import { timeoutSignal, FIRST_PAINT_TIMEOUT_MS } from '$lib/utils/fetchTimeout';
 
@@ -27,16 +27,31 @@ export async function writeCache<T>(key: string, value: T): Promise<void> {
 	}
 }
 
+// Keys whose values belong to the signed-in user and MUST be dropped on logout /
+// session loss so the next account never reads them on a shared device. Add every
+// new per-user cache key here — this is the only list logout consults.
+const USER_CACHE_EXACT_KEYS = ['me:user'];
+const USER_CACHE_KEY_PREFIXES = ['subscriptions:', 'profile-connections:', 'notifications:'];
+
 /**
- * Drop every cached entry. Called on logout so the next account never reads the
- * previous user's cached data (e.g. their schedule subscriptions) on a shared
- * device. Swallows storage errors like the other helpers.
+ * Drop the signed-in user's cached entries on logout / session loss so the next
+ * account never reads the previous user's data (e.g. their schedule subscriptions)
+ * on a shared device. Universal caches like `schedule` carry no per-user data and
+ * are intentionally left warm so they survive a logout and serve the next viewer.
+ * Swallows storage errors like the other helpers.
  */
-export async function clearCache(): Promise<void> {
+export async function clearUserCache(): Promise<void> {
 	try {
-		await clear();
+		const allKeys = await keys();
+		const toDelete = allKeys.filter(
+			(k): k is string =>
+				typeof k === 'string' &&
+				(USER_CACHE_EXACT_KEYS.includes(k) ||
+					USER_CACHE_KEY_PREFIXES.some((prefix) => k.startsWith(prefix)))
+		);
+		if (toDelete.length > 0) await delMany(toDelete);
 	} catch {
-		// Ignore — storage may be unavailable.
+		// Ignore — storage may be unavailable. Best-effort like the other helpers.
 	}
 }
 

@@ -6,7 +6,7 @@
 	import NotificationBell from './NotificationBell.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { clearCache } from '$lib/utils/offlineCache';
+	import { clearUserCache } from '$lib/utils/offlineCache';
 	import {
 		Avatar,
 		Button,
@@ -67,8 +67,9 @@
 		}
 
 		// Drop the previous user's cached data so it can't surface for the next
-		// account (or offline) on a shared device.
-		await clearCache();
+		// account (or offline) on a shared device. Universal caches (e.g. schedule)
+		// stay warm by design.
+		await clearUserCache();
 
 		await goto(resolve('/'), { invalidateAll: true });
 		eventsClient?.restart();
