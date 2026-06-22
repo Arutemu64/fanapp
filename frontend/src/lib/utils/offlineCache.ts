@@ -1,4 +1,4 @@
-import { clear, get, set } from 'idb-keyval';
+import { clear, createStore, get, set, type UseStore } from 'idb-keyval';
 import { isReachable, markReachable } from '$lib/services/reachability';
 import { timeoutSignal, FIRST_PAINT_TIMEOUT_MS } from '$lib/utils/fetchTimeout';
 
@@ -6,37 +6,56 @@ import { timeoutSignal, FIRST_PAINT_TIMEOUT_MS } from '$lib/utils/fetchTimeout';
  * Thin wrappers over IndexedDB (via idb-keyval) for persisting the last good
  * copy of read-only API data, so pages can serve it when the network is down.
  *
- * Both helpers swallow storage errors (private mode, disabled storage, quota)
- * and degrade to a cache miss / no-op — offline caching is best-effort and must
- * never break a normal online load.
+ * Cached data is split across two stores so logout can wipe the user's data
+ * without re-deriving a list of per-user keys:
+ *
+ *   - `universalStore`: data identical for everyone (e.g. the public schedule).
+ *     Survives logout and is reused by guests and the next account.
+ *   - `userStore`: data belonging to the signed-in user (identity, subscriptions,
+ *     notifications, connections). Cleared on logout so it can never surface for
+ *     the next account on a shared device.
+ *
+ * idb-keyval cannot put two object stores in one database, so each store is its
+ * own IndexedDB database — the maintainer-recommended pattern. Every helper takes
+ * an explicit `store` so each call site declares its data's scope.
+ *
+ * All helpers swallow storage errors (private mode, disabled storage, quota) and
+ * degrade to a cache miss / no-op — offline caching is best-effort and must never
+ * break a normal online load.
  */
 
-export async function readCache<T>(key: string): Promise<T | undefined> {
+export const universalStore: UseStore = createStore('fanfan-cache-universal', 'keyval');
+export const userStore: UseStore = createStore('fanfan-cache-user', 'keyval');
+
+export async function readCache<T>(key: string, store: UseStore): Promise<T | undefined> {
 	try {
-		return await get<T>(key);
+		return await get<T>(key, store);
 	} catch {
 		return undefined;
 	}
 }
 
-export async function writeCache<T>(key: string, value: T): Promise<void> {
+export async function writeCache<T>(key: string, value: T, store: UseStore): Promise<void> {
 	try {
-		await set(key, value);
+		await set(key, value, store);
 	} catch {
 		// Ignore — storage may be unavailable or full.
 	}
 }
 
 /**
- * Drop every cached entry. Called on logout so the next account never reads the
- * previous user's cached data (e.g. their schedule subscriptions) on a shared
- * device. Swallows storage errors like the other helpers.
+ * Drop every entry in {@link userStore} on logout / session loss so the next
+ * account never reads the previous user's data (e.g. their schedule subscriptions)
+ * on a shared device. {@link universalStore} (e.g. the public schedule) is left
+ * untouched so it survives a logout and serves the next viewer. Clearing the whole
+ * store means no per-user key list to maintain. Swallows storage errors like the
+ * other helpers.
  */
-export async function clearCache(): Promise<void> {
+export async function clearUserCache(): Promise<void> {
 	try {
-		await clear();
+		await clear(userStore);
 	} catch {
-		// Ignore — storage may be unavailable.
+		// Ignore — storage may be unavailable. Best-effort like the other helpers.
 	}
 }
 
@@ -64,8 +83,11 @@ function isEnvelope<T>(raw: unknown): raw is CachedEnvelope<T> {
  * Entries cached before the envelope migration are bare values — treat them as a
  * value with an unknown timestamp; the next online write upgrades them.
  */
-async function readEnvelope<T>(key: string): Promise<{ value: T; cachedAt?: number } | undefined> {
-	const raw = await readCache<unknown>(key);
+async function readEnvelope<T>(
+	key: string,
+	store: UseStore
+): Promise<{ value: T; cachedAt?: number } | undefined> {
+	const raw = await readCache<unknown>(key, store);
 	if (raw === undefined) return undefined;
 	if (isEnvelope<T>(raw)) return { value: raw.value, cachedAt: raw.cachedAt };
 	// Legacy raw value (incl. `null`, a valid "logged out" cache) — no timestamp.
@@ -88,8 +110,10 @@ export interface FetchWithCacheResult<T> {
 
 /** Options for {@link fetchWithCache}. */
 export interface FetchWithCacheOptions<T> {
-	/** IndexedDB key; should be per-user when the data is user-specific. */
+	/** IndexedDB key within {@link store}. */
 	key: string;
+	/** Which store holds this entry: {@link universalStore} or {@link userStore}. */
+	store: UseStore;
 	/**
 	 * Runs the network request, given a timeout `signal` to pass to the API call.
 	 * Return the value to cache, or `undefined` to signal "reachable but no usable
@@ -117,12 +141,13 @@ export interface FetchWithCacheOptions<T> {
  */
 export async function fetchWithCache<T>({
 	key,
+	store,
 	fetcher,
 	timeoutMs = FIRST_PAINT_TIMEOUT_MS
 }: FetchWithCacheOptions<T>): Promise<FetchWithCacheResult<T>> {
 	// Known unreachable: serve the cached copy without a dead network wait.
 	if (!isReachable()) {
-		const cached = await readEnvelope<T>(key);
+		const cached = await readEnvelope<T>(key, store);
 		return { data: cached?.value, cachedAt: cached?.cachedAt, stale: true };
 	}
 
@@ -133,25 +158,27 @@ export async function fetchWithCache<T>({
 
 		if (value === undefined) {
 			// Reachable but errored/empty — prefer the cached copy over a hard failure.
-			const cached = await readEnvelope<T>(key);
+			const cached = await readEnvelope<T>(key, store);
 			return { data: cached?.value, cachedAt: cached?.cachedAt, stale: true };
 		}
 
 		const cachedAt = Date.now();
-		void writeCache<CachedEnvelope<T>>(key, { value, cachedAt });
+		void writeCache<CachedEnvelope<T>>(key, { value, cachedAt }, store);
 		return { data: value, cachedAt, stale: false };
 	} catch {
 		// Network failure / timeout: serve the last synced copy.
 		markReachable(false);
-		const cached = await readEnvelope<T>(key);
+		const cached = await readEnvelope<T>(key, store);
 		return { data: cached?.value, cachedAt: cached?.cachedAt, stale: true };
 	}
 }
 
 /** Options for {@link warmCache}. */
 export interface WarmCacheOptions<T> {
-	/** IndexedDB key; must match the key the page's `load` reads (per-user). */
+	/** IndexedDB key; must match the key (and store) the page's `load` reads. */
 	key: string;
+	/** Which store holds this entry: {@link universalStore} or {@link userStore}. */
+	store: UseStore;
 	/** Runs the network request; return the value to cache, or `undefined` to skip. */
 	fetcher: (ctx: { signal: AbortSignal }) => Promise<T | undefined>;
 	/** Fetch timeout budget; defaults to {@link FIRST_PAINT_TIMEOUT_MS}. */
@@ -169,19 +196,20 @@ export interface WarmCacheOptions<T> {
  */
 export async function warmCache<T>({
 	key,
+	store,
 	fetcher,
 	timeoutMs = FIRST_PAINT_TIMEOUT_MS
 }: WarmCacheOptions<T>): Promise<void> {
 	try {
 		if (!isReachable()) return;
 		// Already cached: leave refresh to the page's own load and SSE updates.
-		if ((await readCache<unknown>(key)) !== undefined) return;
+		if ((await readCache<unknown>(key, store)) !== undefined) return;
 
 		const value = await fetcher({ signal: timeoutSignal(timeoutMs) });
 		markReachable(true);
 		if (value === undefined) return;
 
-		void writeCache<CachedEnvelope<T>>(key, { value, cachedAt: Date.now() });
+		void writeCache<CachedEnvelope<T>>(key, { value, cachedAt: Date.now() }, store);
 	} catch {
 		// Best-effort warm — ignore failures.
 	}

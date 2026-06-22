@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { createApiClient } from '$lib/api';
-import { fetchWithCache } from '$lib/utils/offlineCache';
+import { fetchWithCache, universalStore, userStore } from '$lib/utils/offlineCache';
 import { isReachable } from '$lib/services/reachability';
 import type {
 	ScheduleEventFullDTO,
@@ -9,8 +9,8 @@ import type {
 } from '$lib/types/schedule';
 import type { PageLoad } from './$types';
 
-// Shared across every viewer: the schedule carries no per-user data, so a single
-// cache entry serves guests and all accounts (no per-user key, no logout wipe).
+// Shared across every viewer: the schedule carries no per-user data, so it lives in
+// the universal store — one entry serves guests and all accounts, surviving logout.
 const SCHEDULE_CACHE_KEY = 'schedule';
 
 export const load: PageLoad = async ({ fetch, depends, parent }) => {
@@ -25,6 +25,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	const [scheduleResult, subscriptions] = await Promise.all([
 		fetchWithCache<ScheduleEventFullDTO[]>({
 			key: SCHEDULE_CACHE_KEY,
+			store: universalStore,
 			fetcher: async ({ signal }) => {
 				const { data, error: fetchError } = await client.GET('/schedule/', { fetch, signal });
 				// Reachable but errored → fall back to cache.
@@ -75,6 +76,7 @@ async function fetchSubscriptions(
 
 	const { data } = await fetchWithCache<SubscriptionFullDTO[]>({
 		key: `subscriptions:${userId}`,
+		store: userStore,
 		fetcher: async ({ signal }) => {
 			const { data, error: fetchError } = await client.GET('/schedule/subscriptions/', {
 				fetch,

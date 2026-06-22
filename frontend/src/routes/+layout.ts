@@ -1,6 +1,12 @@
 import { browser } from '$app/environment';
 import { createApiClient } from '$lib/api';
-import { clearCache, fetchWithCache, warmCache } from '$lib/utils/offlineCache';
+import {
+	clearUserCache,
+	fetchWithCache,
+	universalStore,
+	userStore,
+	warmCache
+} from '$lib/utils/offlineCache';
 import type { CurrentUserDTO } from '$lib/types/user';
 import type { ScheduleEventFullDTO, SubscriptionFullDTO } from '$lib/types/schedule';
 import type { LayoutLoad } from './$types';
@@ -20,14 +26,16 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 	// no verdict, keep the cached user" (see fetcher below), so the type spans both.
 	const { data } = await fetchWithCache<CurrentUserDTO | null>({
 		key: USER_CACHE_KEY,
+		store: userStore,
 		fetcher: async ({ signal }) => {
 			const { data, response, error } = await client.GET('/me/', { fetch, signal });
 
-			// Authoritative "session ended": cache logged-out AND wipe per-user caches
+			// Authoritative "session ended": cache logged-out AND drop per-user caches
 			// so no orphaned entries linger for the next account on a shared device.
-			// Mirrors explicit logout (AppNavbar.handleLogout).
+			// Universal caches (e.g. schedule) are kept warm. Mirrors explicit logout
+			// (AppNavbar.handleLogout).
 			if (response.status === 401 || response.status === 403) {
-				void clearCache();
+				void clearUserCache();
 				return null;
 			}
 
@@ -56,6 +64,7 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 		// Schedule is universal — one shared key for guests and every account.
 		void warmCache<ScheduleEventFullDTO[]>({
 			key: 'schedule',
+			store: universalStore,
 			fetcher: async ({ signal }) => {
 				const warmClient = createApiClient();
 				const { data: schedule, error } = await warmClient.GET('/schedule/', { signal });
@@ -68,6 +77,7 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 		if (user) {
 			void warmCache<SubscriptionFullDTO[]>({
 				key: `subscriptions:${user.id}`,
+				store: userStore,
 				fetcher: async ({ signal }) => {
 					const warmClient = createApiClient();
 					const { data, error } = await warmClient.GET('/schedule/subscriptions/', { signal });
