@@ -18,10 +18,17 @@
 	let user = $derived(data.user!);
 	const toastService = getToastService();
 
-	// Show the notice when the loaded copy is cached (data.stale) or the device went
-	// offline since open — what's on screen may be out of date until reconnect.
+	// Show the notice when the loaded copy is cached (data.stale), the device went
+	// offline since open, or connections cold-missed offline (offlineMiss) — in each
+	// case what's on screen may be incomplete or out of date until reconnect. The
+	// identity card still renders from the cached user; only connections are absent.
 	const offline = getOfflineService();
-	let showStaleNotice = $derived(data.stale || !offline.isOnline);
+	let showStaleNotice = $derived(data.offlineMiss || data.stale || !offline.isOnline);
+	let staleNoticeMessage = $derived(
+		data.offlineMiss
+			? 'Нет связи. Часть данных профиля недоступна офлайн — обновится при подключении.'
+			: 'Нет связи. Показан сохранённый профиль — обновится при подключении.'
+	);
 
 	const telegramLinkErrorMessages = {
 		linked_to_another_account: 'Этот Telegram уже подключён к другому аккаунту.',
@@ -53,10 +60,7 @@
 
 <div class="flex flex-col gap-4 sm:gap-5">
 	{#if showStaleNotice}
-		<StaleDataNotice
-			message="Нет связи. Показан сохранённый профиль — обновится при подключении."
-			cachedAt={data.cachedAt}
-		/>
+		<StaleDataNotice message={staleNoticeMessage} cachedAt={data.cachedAt} />
 	{/if}
 
 	<!-- Identity banner anchors the page; the settings group sits below it. -->

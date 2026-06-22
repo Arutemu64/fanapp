@@ -41,7 +41,9 @@
 	// has gone offline since the page opened — in both cases what's on screen may
 	// be out of date and will refresh once the connection returns.
 	const offline = getOfflineService();
-	let showStaleNotice = $derived(data.stale || !offline.isOnline);
+	// On an offline cold miss there's no saved copy to caveat — the empty state
+	// itself explains the situation, so skip the "showing cached data" notice.
+	let showStaleNotice = $derived(!data.offlineMiss && (data.stale || !offline.isOnline));
 
 	let filtered: ScheduleEventFullDTO[] = $derived(
 		schedule.filter((event) => {
@@ -283,12 +285,22 @@
 				class="rounded-2xl border border-dashed border-gray-300 bg-white px-4 py-10 text-center dark:border-gray-700 dark:bg-gray-800 sm:py-14"
 			>
 				<p class="text-base font-bold text-gray-900 dark:text-white">
-					{hasActiveFilters ? 'Ничего не нашлось' : 'Расписание пока пусто'}
+					{#if data.offlineMiss}
+						Расписание недоступно офлайн
+					{:else if hasActiveFilters}
+						Ничего не нашлось
+					{:else}
+						Расписание пока пусто
+					{/if}
 				</p>
 				<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-					{hasActiveFilters
-						? 'Попробуй изменить поиск или фильтры'
-						: 'Программа появится ближе к фестивалю'}
+					{#if data.offlineMiss}
+						Появится после подключения к интернету
+					{:else if hasActiveFilters}
+						Попробуй изменить поиск или фильтры
+					{:else}
+						Программа появится ближе к фестивалю
+					{/if}
 				</p>
 
 				<!-- No-results recovery: one tap clears every active filter. Hidden on the
