@@ -34,8 +34,8 @@ from fanfan.application.interactors.feedback.submit_feedback import SubmitFeedba
 from fanfan.application.interactors.notifications.create_notification import (
     CreateNotification,
 )
-from fanfan.application.interactors.notifications.delete_mailing_messages import (
-    DeleteMailingMessages,
+from fanfan.application.interactors.notifications.delete_mailing_notifications import (
+    DeleteMailingNotifications,
 )
 from fanfan.application.interactors.notifications.get_notification import (
     GetNotification,
@@ -141,7 +141,7 @@ class InteractorsProvider(Provider):
 
     send_broadcast = provide(SendBroadcast)
     get_notification = provide(GetNotification)
-    delete_mailing_messages = provide(DeleteMailingMessages)
+    delete_mailing_notifications = provide(DeleteMailingNotifications)
     send_notification = provide(SendNotification)
     send_personal_notification = provide(SendPersonalNotification)
     process_broadcast = provide(ProcessBroadcast)
