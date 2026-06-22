@@ -5,6 +5,9 @@ services:
     image: fanapp-frontend-dev
     environment:
       NODE_ENV: development
+      # The app calls the API with a relative base (`/api`); vite proxies it to
+      # the `api` container on the Compose network (see frontend/vite.config.ts).
+      VITE_API_PROXY_TARGET: "http://api:8000"
     # The dev container runs `vite dev` on port 3000 (not the prod NGINX :80).
     # `!override` REPLACES the base service's port list — without it Compose
     # merges port lists additively, leaving a dead 3000:80 mapping alongside this

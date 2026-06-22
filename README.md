@@ -165,21 +165,23 @@ By default `just deploy` tracks the latest `main` build. Pin a specific build (o
 
 ### Reverse proxy (Caddy): HTTPS and HTTP testing
 
-The app is meant to run behind a reverse proxy that puts the frontend and the API on **one origin**: [`Caddyfile.example`](Caddyfile.example) routes `/api*` to the backend and everything else to the SvelteKit frontend. Because the API is same-origin (`https://<site>/api`), the browser never makes a cross-origin request, so **no CORS config is needed**. The frontend is a static SPA (`adapter-static`, no SSR) served by NGINX, so there is no server-side origin to derive — `PUBLIC_API_URL` is baked into the bundle at build time (see [`docs/frontend.md`](docs/frontend.md)).
+The app is meant to run behind a reverse proxy that puts the frontend and the API on **one origin**: [`Caddyfile.example`](Caddyfile.example) routes `/api*` to the backend and everything else to the SvelteKit frontend. Because the API is same-origin, the browser never makes a cross-origin request, so **no CORS config is needed**. The frontend is a static SPA (`adapter-static`, no SSR) served by NGINX, and it calls the API with a **relative base** (`PUBLIC_API_URL=/api`, the default), which resolves against whatever origin serves the app. That keeps the bundle domain-agnostic — the same build (and the prebuilt GHCR image) works on any domain with no rebuild (see [`docs/frontend.md`](docs/frontend.md)).
 
 `just run-prod` exposes the apps on `127.0.0.1:3000` (frontend) and `127.0.0.1:8000` (API); run Caddy with `Caddyfile.example` in front to reach them on a single origin (e.g. `http://localhost`).
 
-Set these `.env` values to match exactly how the browser reaches the site (same scheme + host + port as the address bar):
+With the relative default you only set the origin-dependent values to match how the browser reaches the site:
 
 | `.env` / Caddy | HTTPS (production) | HTTP (local / insecure testing) |
 |---|---|---|
 | Caddy site block | your domain, e.g. `example.com { … }` (auto-TLS) | `:80 { … }` (as shipped) |
 | `WEB__BASE_URL` | `https://example.com/` | `http://localhost/` |
-| `PUBLIC_API_URL` | `https://example.com/api` | `http://localhost/api` |
+| `PUBLIC_API_URL` | `/api` (relative — domain-agnostic) | `/api` |
 | `WEB__COOKIE_SECURE` | `True` | `False` |
 | `WEB__CORS_ALLOW_ORIGINS` | unset (same-origin) | unset (same-origin) |
 
-`WEB__COOKIE_SECURE=False` is **required** over plain HTTP — a `Secure` cookie is never sent over HTTP, which would otherwise break login (including the Telegram OAuth callback, whose state cookie follows the same flag). When you switch a host between HTTP and HTTPS, clear its cookies first, or stale `Secure` cookies look like an auth bug. Only set `WEB__CORS_ALLOW_ORIGINS` if you deliberately serve the API on a *different* origin than the site; if so, list the public app origin exactly (scheme + host, no trailing slash, no path).
+`WEB__COOKIE_SECURE=False` is **required** over plain HTTP — a `Secure` cookie is never sent over HTTP, which would otherwise break login (including the Telegram OAuth callback, whose state cookie follows the same flag). When you switch a host between HTTP and HTTPS, clear its cookies first, or stale `Secure` cookies look like an auth bug.
+
+**Split-origin (optional):** to serve the API on a *different* origin than the site, set `PUBLIC_API_URL` to that absolute URL (e.g. `https://api.example.com`) — this requires a rebuild, since `PUBLIC_API_URL` is baked into the bundle at build time — and set `WEB__CORS_ALLOW_ORIGINS` to the public app origin exactly (scheme + host, no trailing slash, no path).
 
 ## External integrations
 
