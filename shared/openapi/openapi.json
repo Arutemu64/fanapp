@@ -2955,60 +2955,6 @@
       }
     },
     "/push/": {
-      "get": {
-        "tags": [
-          "Push"
-        ],
-        "summary": "List push subscriptions",
-        "description": "Returns a list of push subscriptions for the authenticated user.",
-        "operationId": "list_subscriptions_push__get",
-        "responses": {
-          "200": {
-            "description": "List of push subscriptions.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/PushSubscriptionDTO"
-                  },
-                  "type": "array",
-                  "title": "Response List Subscriptions Push  Get"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "User not authenticated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      },
       "post": {
         "tags": [
           "Push"
@@ -3017,14 +2963,14 @@
         "description": "Registers a push subscription endpoint for the authenticated user's device.",
         "operationId": "subscribe_push__post",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CreatePushSubscriptionInput"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -3077,6 +3023,67 @@
           }
         }
       },
+      "get": {
+        "tags": [
+          "Push"
+        ],
+        "summary": "Check push subscription",
+        "description": "Reports whether the given endpoint is registered for the authenticated user. The client only needs this yes/no answer for its own device, so the full subscription list (incl. its keys) is not exposed.",
+        "operationId": "check_subscription_push__get",
+        "parameters": [
+          {
+            "name": "endpoint",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Endpoint"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subscription status for the endpoint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushSubscriptionStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "tags": [
           "Push"
@@ -3085,14 +3092,14 @@
         "description": "Removes a push subscription endpoint for the authenticated user.",
         "operationId": "unsubscribe_push__delete",
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/DeletePushSubscriptionInput"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "204": {
@@ -3946,28 +3953,18 @@
         ],
         "title": "ParticipantVoteDTO"
       },
-      "PushSubscriptionDTO": {
+      "PushSubscriptionStatus": {
         "properties": {
-          "endpoint": {
-            "type": "string",
-            "title": "Endpoint"
-          },
-          "p256dh": {
-            "type": "string",
-            "title": "P256Dh"
-          },
-          "auth": {
-            "type": "string",
-            "title": "Auth"
+          "subscribed": {
+            "type": "boolean",
+            "title": "Subscribed"
           }
         },
         "type": "object",
         "required": [
-          "endpoint",
-          "p256dh",
-          "auth"
+          "subscribed"
         ],
-        "title": "PushSubscriptionDTO"
+        "title": "PushSubscriptionStatus"
       },
       "RegisterUserInput": {
         "properties": {

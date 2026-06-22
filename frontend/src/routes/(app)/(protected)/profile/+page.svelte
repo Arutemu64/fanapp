@@ -29,11 +29,7 @@
 	} as const;
 
 	async function refreshProfile() {
-		await Promise.all([
-			invalidate('app:current-user'),
-			invalidate('app:push-subscriptions'),
-			invalidate('app:social-accounts')
-		]);
+		await Promise.all([invalidate('app:current-user'), invalidate('app:social-accounts')]);
 	}
 
 	onMount(() => {
@@ -82,7 +78,6 @@
 			<PushNotificationsCard
 				{user}
 				socialAccounts={data.socialAccounts}
-				pushSubscriptions={data.pushSubscriptions}
 				onSettingsUpdate={refreshProfile}
 			/>
 		</div>

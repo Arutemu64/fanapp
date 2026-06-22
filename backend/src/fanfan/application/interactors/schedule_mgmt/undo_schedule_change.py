@@ -13,12 +13,14 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
 from fanfan.core.exceptions.schedule import (
+    EventNotFound,
     OutdatedScheduleChange,
     ScheduleChangeNotFound,
 )
 from fanfan.core.models.schedule_event import ScheduleEvent
 from fanfan.core.vo.permission import PermissionName, Permissions
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
+from fanfan.core.vo.schedule_event import ScheduleEventId
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +83,19 @@ class UndoScheduleChange:
 
         await self.schedule_gateway.save(changed_event)
 
+    async def _require_event(
+        self, event_id: ScheduleEventId | None
+    ) -> ScheduleEvent | None:
+        # A null id means the change simply had no event in that slot. A non-null
+        # id that resolves to nothing is an inconsistent state, so fail loud
+        # instead of silently skipping the revert below.
+        if event_id is None:
+            return None
+        event = await self.schedule_gateway.get_by_id(event_id)
+        if event is None:
+            raise EventNotFound
+        return event
+
     async def __call__(self, data: UndoScheduleChangeInput) -> None:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
@@ -90,17 +105,8 @@ class UndoScheduleChange:
         if schedule_change is None:
             raise ScheduleChangeNotFound
 
-        # TODO check for None
-        changed_event = (
-            await self.schedule_gateway.get_by_id(schedule_change.changed_event_id)
-            if schedule_change.changed_event_id
-            else None
-        )
-        argument_event = (
-            await self.schedule_gateway.get_by_id(schedule_change.argument_event_id)
-            if schedule_change.argument_event_id
-            else None
-        )
+        changed_event = await self._require_event(schedule_change.changed_event_id)
+        argument_event = await self._require_event(schedule_change.argument_event_id)
 
         if schedule_change.type is ScheduleChangeType.SET_AS_CURRENT:
             await self._handle_set_as_current(changed_event, argument_event)

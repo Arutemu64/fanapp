@@ -1,8 +1,14 @@
+from typing import Annotated
+
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
+from pydantic import BaseModel
 
-from fanfan.application.dto.push_sub import PushSubscriptionDTO
+from fanfan.application.interactors.push_sub.check_push_subscription import (
+    CheckPushSubscription,
+    CheckPushSubscriptionInput,
+)
 from fanfan.application.interactors.push_sub.create_push_subscription import (
     CreatePushSubscription,
     CreatePushSubscriptionInput,
@@ -11,12 +17,13 @@ from fanfan.application.interactors.push_sub.delete_push_subscription import (
     DeletePushSubscription,
     DeletePushSubscriptionInput,
 )
-from fanfan.application.interactors.push_sub.list_user_push_subscriptions import (
-    ListUserPushSubscriptions,
-)
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
 push_router = APIRouter(tags=["Push"], prefix="/push")
+
+
+class PushSubscriptionStatus(BaseModel):
+    subscribed: bool
 
 
 @push_router.post(
@@ -42,18 +49,22 @@ async def subscribe(
 
 @push_router.get(
     "/",
-    summary="List push subscriptions",
-    description="Returns a list of push subscriptions for the authenticated user.",
+    summary="Check push subscription",
+    description="Reports whether the given endpoint is registered for the "
+    "authenticated user. The client only needs this yes/no answer for its own "
+    "device, so the full subscription list (incl. its keys) is not exposed.",
     responses={
-        200: {"description": "List of push subscriptions."},
+        200: {"description": "Subscription status for the endpoint."},
         401: {"model": ErrorMessage, "description": "User not authenticated."},
     },
 )
 @inject
-async def list_subscriptions(
-    interactor: FromDishka[ListUserPushSubscriptions],
-) -> list[PushSubscriptionDTO]:
-    return await interactor()
+async def check_subscription(
+    endpoint: Annotated[str, Query()],
+    interactor: FromDishka[CheckPushSubscription],
+) -> PushSubscriptionStatus:
+    subscribed = await interactor(CheckPushSubscriptionInput(endpoint=endpoint))
+    return PushSubscriptionStatus(subscribed=subscribed)
 
 
 @push_router.delete(
