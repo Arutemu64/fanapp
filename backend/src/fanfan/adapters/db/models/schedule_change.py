@@ -17,7 +17,6 @@ class ScheduleChangeORM(BaseORM):
         primary_key=True,
         default=uuid7,
     )
-    # TODO should I use lookup table too?
     type: Mapped[ScheduleChangeType] = mapped_column(
         Enum(
             ScheduleChangeType,
