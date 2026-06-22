@@ -3144,7 +3144,10 @@ export interface operations {
     };
     list_schedule_changes_schedule_changes__get: {
         parameters: {
-            query?: never;
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;

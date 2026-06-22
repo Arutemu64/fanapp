@@ -2,10 +2,12 @@ from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, Path
+from fastapi import APIRouter, Path, Query
 
+from fanfan.application.dto.page import Pagination
 from fanfan.application.interactors.schedule_mgmt.list_schedule_changes import (
     ListScheduleChanges,
+    ListScheduleChangesInput,
     ListScheduleChangesResult,
 )
 from fanfan.application.interactors.schedule_mgmt.undo_schedule_change import (
@@ -33,8 +35,11 @@ changes_router = APIRouter(prefix="/changes")
 @inject
 async def list_schedule_changes(
     interactor: FromDishka[ListScheduleChanges],
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
 ) -> ListScheduleChangesResult:
-    return await interactor()
+    data = ListScheduleChangesInput(pagination=Pagination(limit=limit, offset=offset))
+    return await interactor(data)
 
 
 @changes_router.delete(
