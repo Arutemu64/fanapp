@@ -6,9 +6,9 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
 from fanfan.adapters.api.ticketscloud.config import TCloudConfig
-from fanfan.application.interactors.ticketscloud.process_tcloud_order import (
-    ProcessTCloudOrder,
-    ProcessTCloudOrderInput,
+from fanfan.application.interactors.tickets.process_ticket_order import (
+    ProcessTicketOrder,
+    ProcessTicketOrderInput,
 )
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
@@ -45,7 +45,7 @@ async def process_tcloud_order(
     token: str,
     data: TCloudWebhookPayload,
     config: FromDishka[TCloudConfig],
-    proceed_tcloud_order: FromDishka[ProcessTCloudOrder],
+    proceed_tcloud_order: FromDishka[ProcessTicketOrder],
 ) -> TCloudWebhookResponse:
     # TicketsCloud cannot sign or authenticate its webhook requests, so the only
     # gate is an unguessable token in the URL it POSTs to. Compare in constant
@@ -59,5 +59,5 @@ async def process_tcloud_order(
 
     # Only the order id is trusted; the interactor re-fetches the order from the
     # authenticated API, so a leaked token alone cannot mint tickets.
-    result = await proceed_tcloud_order(ProcessTCloudOrderInput(order_id=data.data.id))
+    result = await proceed_tcloud_order(ProcessTicketOrderInput(order_id=data.data.id))
     return TCloudWebhookResponse(new_tickets_count=result.new_tickets_count)

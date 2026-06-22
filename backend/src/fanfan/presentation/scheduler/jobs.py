@@ -6,14 +6,14 @@ from typing import Any
 import sentry_sdk
 from dishka import AsyncContainer
 
-from fanfan.application.interactors.cosplay2.sync_cosplay2 import SyncCosplay2
+from fanfan.application.interactors.cosplay.sync_cosplay import SyncCosplay
 from fanfan.application.interactors.notifications.purge_notifications import (
     PurgeNotifications,
 )
 from fanfan.application.interactors.outbox.purge_outbox_events import (
     PurgeOutboxEvents,
 )
-from fanfan.application.interactors.ticketscloud.sync_tcloud import SyncTCloud
+from fanfan.application.interactors.tickets.sync_tickets import SyncTickets
 from fanfan.presentation.scheduler.config import SchedulerConfig
 
 logger = logging.getLogger(__name__)
@@ -31,12 +31,12 @@ def get_job_definitions(config: SchedulerConfig) -> list[JobDefinition]:
         JobDefinition(
             id="sync_tcloud",
             cron=config.sync_tcloud_cron,
-            interactor=SyncTCloud,
+            interactor=SyncTickets,
         ),
         JobDefinition(
             id="sync_cosplay2",
             cron=config.sync_cosplay2_cron,
-            interactor=SyncCosplay2,
+            interactor=SyncCosplay,
         ),
         JobDefinition(
             id="outbox_retention",

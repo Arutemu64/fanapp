@@ -13,7 +13,7 @@ from fanfan.application.interactors.auth.send_email_confirmation_code import (
     SendEmailConfirmationCode,
 )
 from fanfan.application.interactors.auth.send_login_code_email import SendLoginCodeEmail
-from fanfan.application.interactors.cosplay2.sync_cosplay2 import SyncCosplay2
+from fanfan.application.interactors.cosplay.sync_cosplay import SyncCosplay
 from fanfan.application.interactors.current_user.get_current_user import GetCurrentUser
 from fanfan.application.interactors.current_user.get_current_user_social_ids import (
     GetCurrentUserSocialIds,
@@ -107,10 +107,10 @@ from fanfan.application.interactors.subscriptions.delete_subscription import (
     DeleteSubscription,
 )
 from fanfan.application.interactors.tickets.link_ticket import LinkTicket
-from fanfan.application.interactors.ticketscloud.process_tcloud_order import (
-    ProcessTCloudOrder,
+from fanfan.application.interactors.tickets.process_ticket_order import (
+    ProcessTicketOrder,
 )
-from fanfan.application.interactors.ticketscloud.sync_tcloud import SyncTCloud
+from fanfan.application.interactors.tickets.sync_tickets import SyncTickets
 from fanfan.application.interactors.voting.add_vote import AddVote
 from fanfan.application.interactors.voting.cancel_vote import (
     CancelVote,
@@ -182,10 +182,10 @@ class InteractorsProvider(Provider):
     get_voting_state = provide(GetVotingState)
     check_voting_contest_entry = provide(CheckVotingContestEntry)
 
-    sync_tcloud = provide(SyncTCloud)
-    process_tcloud_order = provide(ProcessTCloudOrder)
+    sync_tickets = provide(SyncTickets)
+    process_ticket_order = provide(ProcessTicketOrder)
 
-    sync_cosplay2 = provide(SyncCosplay2)
+    sync_cosplay = provide(SyncCosplay)
 
     stream_events = provide(StreamEvents)
 
