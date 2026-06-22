@@ -7,11 +7,15 @@ from dishka import Provider, Scope, provide
 from fanfan.adapters.api.cosplay2.client import Cosplay2Client
 from fanfan.adapters.api.cosplay2.config import Cosplay2Config
 from fanfan.adapters.api.cosplay2.exceptions import NoCosplay2ConfigProvided
+from fanfan.adapters.api.cosplay2.source import Cosplay2Source
 from fanfan.adapters.config.models import EnvConfig
+from fanfan.application.ports.sources.cosplay import CosplaySource
 
 
 class Cosplay2Provider(Provider):
     scope = Scope.REQUEST
+
+    cosplay2_source = provide(Cosplay2Source, provides=CosplaySource)
 
     @provide(scope=Scope.APP)
     def get_cosplay2_config(self, config: EnvConfig) -> Cosplay2Config:

@@ -2,9 +2,9 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.adapters.api.ticketscloud.client import TCloudClient
+from fanfan.application.ports.sources.tickets import TicketsSource
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.application.services.ticketscloud import TCloudService
+from fanfan.application.services.tickets_import import TicketImportService
 
 logger = logging.getLogger(__name__)
 
@@ -20,28 +20,22 @@ class ProcessTCloudOrderOutput(BaseModel):
 class ProcessTCloudOrder:
     def __init__(
         self,
-        client: TCloudClient,
-        tcloud_service: TCloudService,
+        source: TicketsSource,
+        ticket_import_service: TicketImportService,
         uow: UnitOfWork,
     ):
-        self.client = client
-        self.tcloud_service = tcloud_service
+        self.source = source
+        self.ticket_import_service = ticket_import_service
         self.uow = uow
 
     async def __call__(self, data: ProcessTCloudOrderInput) -> ProcessTCloudOrderOutput:
-        # The webhook body is untrusted: TicketsCloud cannot sign its requests,
-        # so we only take the order id from it and fetch the authoritative order
-        # from the authenticated API. A leaked webhook token alone therefore
-        # cannot mint tickets from a forged payload.
-        order = await self.client.get_order(data.order_id)
-        if order is None:
-            logger.warning(
-                "TicketsCloud order not found, ignoring",
-                extra={"order_id": data.order_id},
-            )
-            return ProcessTCloudOrderOutput(new_tickets_count=0)
-
-        new_tickets_count = await self.tcloud_service.proceed_order(order)
+        # The webhook body is untrusted, so the source re-fetches the
+        # authoritative order from the authenticated API by id.
+        tickets = await self.source.fetch_order_tickets(data.order_id)
+        new_tickets_count = 0
+        for external in tickets:
+            if await self.ticket_import_service.import_ticket(external):
+                new_tickets_count += 1
         await self.uow.commit()
         logger.info(
             "TicketsCloud order processed",

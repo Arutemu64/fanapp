@@ -1,20 +1,16 @@
 import logging
-from collections import defaultdict
 from dataclasses import replace
 
-from fanfan.adapters.api.cosplay2.client import Cosplay2Client
-from fanfan.adapters.api.cosplay2.config import Cosplay2Config
-from fanfan.adapters.api.cosplay2.dto.requests import (
-    Request,
-    RequestStatus,
-    RequestValueDTO,
-)
-from fanfan.adapters.api.cosplay2.dto.topics import Topic
 from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.application.ports.gateways.participants import ParticipantGateway
+from fanfan.application.ports.sources.cosplay import (
+    CosplaySource,
+    ExternalNomination,
+    ExternalParticipant,
+)
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.nomination import Nomination
-from fanfan.core.models.participant import Participant, ParticipantValue
+from fanfan.core.models.participant import Participant
 from fanfan.core.vo.nomination import generate_nomination_id
 from fanfan.core.vo.participant import generate_participant_id
 
@@ -24,23 +20,22 @@ logger = logging.getLogger(__name__)
 class SyncCosplay2:
     def __init__(
         self,
-        client: Cosplay2Client,
-        config: Cosplay2Config,
+        source: CosplaySource,
         uow: UnitOfWork,
         nomination_gateway: NominationGateway,
         participant_gateway: ParticipantGateway,
     ):
-        self.participant_gateway = participant_gateway
-        self.nomination_gateway = nomination_gateway
-        self.client = client
-        self.config = config
+        self.source = source
         self.uow = uow
+        self.nomination_gateway = nomination_gateway
+        self.participant_gateway = participant_gateway
 
-    async def _process_topic(self, topic: Topic) -> Nomination:
-        nomination = await self.nomination_gateway.get_by_cosplay2_id(topic.id)
-
+    async def _upsert_nomination(self, external: ExternalNomination) -> Nomination:
+        nomination = await self.nomination_gateway.get_by_cosplay2_id(
+            external.external_id
+        )
         if nomination:
-            nomination = replace(nomination, code=topic.card_code, title=topic.title)
+            nomination = replace(nomination, code=external.code, title=external.title)
             await self.nomination_gateway.save(nomination)
             logger.info(
                 "Nomination updated", extra={"cosplay2_id": nomination.cosplay2_id}
@@ -48,9 +43,9 @@ class SyncCosplay2:
         else:
             nomination = Nomination(
                 id=generate_nomination_id(),
-                cosplay2_id=topic.id,
-                code=topic.card_code,
-                title=topic.title,
+                cosplay2_id=external.external_id,
+                code=external.code,
+                title=external.title,
                 is_votable=False,
             )
             await self.nomination_gateway.add(nomination)
@@ -61,81 +56,36 @@ class SyncCosplay2:
                     "cosplay2_id": nomination.cosplay2_id,
                 },
             )
-
         return nomination
 
-    async def _process_request(
+    async def _upsert_participant(
         self,
-        request: Request,
-        request_values: list[RequestValueDTO],
-        nominations_by_cosplay2_id: dict[int, Nomination],
-    ) -> Participant | None:
-        participant = await self.participant_gateway.get_by_cosplay2_id(
-            cosplay2_id=request.id
-        )
-
-        # Non APPROVED participants are denied...
-        if request.status != RequestStatus.APPROVED:
-            # ...and deleted if they are already in database
-            if participant:
-                await self.participant_gateway.delete(participant)
-                logger.warning(
-                    "Participant deleted",
-                    extra={
-                        "cosplay2_id": participant.cosplay2_id,
-                        "reason": "non_approved_request",
-                    },
-                )
-            else:
-                # A non-approved request with no stored participant is routine.
-                logger.info(
-                    "Request skipped",
-                    extra={"request_id": request.id, "reason": "not_approved"},
-                )
-            return None
-
-        if not request.voting_title:
-            # An approved request that lost its voting title can no longer be
-            # represented as a participant. Drop any stale participant so it
-            # does not linger with outdated data, then skip it.
-            if participant:
-                await self.participant_gateway.delete(participant)
-                logger.warning(
-                    "Participant deleted",
-                    extra={
-                        "cosplay2_id": participant.cosplay2_id,
-                        "reason": "missing_voting_title",
-                    },
-                )
-            else:
-                logger.info(
-                    "Request skipped",
-                    extra={"request_id": request.id, "reason": "no_voting_title"},
-                )
-            return None
-
-        # Look up the nomination in the map built from this sync's topics
-        # instead of querying per request (avoids an N+1 over all requests).
-        nomination = nominations_by_cosplay2_id.get(request.topic_id)
+        external: ExternalParticipant,
+        nominations_by_external_id: dict[int, Nomination],
+    ) -> None:
+        # Resolve the participant's nomination from the map built this sync,
+        # avoiding a DB query per participant.
+        nomination = nominations_by_external_id.get(external.nomination_external_id)
         if nomination is None:
             logger.error(
-                "Nomination not found for request",
-                extra={"request_id": request.id, "topic_id": request.topic_id},
+                "Nomination not found for participant",
+                extra={
+                    "cosplay2_id": external.external_id,
+                    "nomination_external_id": external.nomination_external_id,
+                },
             )
-            return None
+            return
 
-        participant_values = [
-            ParticipantValue(title=r.title, type=r.type, value=r.value)
-            for r in request_values
-        ]
-
+        participant = await self.participant_gateway.get_by_cosplay2_id(
+            cosplay2_id=external.external_id
+        )
         if participant:
             participant = replace(
                 participant,
-                title=request.voting_title,
+                title=external.voting_title,
                 nomination_id=nomination.id,
-                voting_number=request.voting_number,
-                values=participant_values,
+                voting_number=external.voting_number,
+                values=external.values,
             )
             await self.participant_gateway.save(participant)
             logger.info(
@@ -144,11 +94,11 @@ class SyncCosplay2:
         else:
             participant = Participant(
                 id=generate_participant_id(),
-                cosplay2_id=request.id,
-                title=request.voting_title,
+                cosplay2_id=external.external_id,
+                title=external.voting_title,
                 nomination_id=nomination.id,
-                voting_number=request.voting_number,
-                values=participant_values,
+                voting_number=external.voting_number,
+                values=external.values,
             )
             await self.participant_gateway.add(participant)
             logger.info(
@@ -159,65 +109,48 @@ class SyncCosplay2:
                 },
             )
 
-        return participant
-
     async def __call__(self) -> None:
-        topics = await self.client.get_topics_list()
-        topic_ids = {topic.id for topic in topics}
-        # Keep the upserted nominations in memory so request processing can
-        # resolve a request's nomination without a DB query per request.
-        nominations_by_cosplay2_id: dict[int, Nomination] = {}
-        for topic in topics:
-            nominations_by_cosplay2_id[topic.id] = await self._process_topic(topic)
+        nominations = await self.source.fetch_nominations()
+        nomination_ids = {nomination.external_id for nomination in nominations}
+        # Keep the upserted nominations in memory so participant processing can
+        # resolve a participant's nomination without a DB query per participant.
+        nominations_by_external_id: dict[int, Nomination] = {}
+        for external in nominations:
+            nominations_by_external_id[
+                external.external_id
+            ] = await self._upsert_nomination(external)
 
-        # Prune nominations the upstream no longer has. Guard against a
-        # successful-but-empty API response (a vendor hiccup returning 200 with
-        # []): without this an empty topic list marks every stored nomination as
-        # stale and wipes the table. Leaving stale rows is recoverable; a mass
-        # delete is not.
-        if topics:
+        # Prune nominations the source no longer has. Guard against a
+        # successful-but-empty response (a vendor hiccup): without this an empty
+        # list marks every stored nomination as stale and wipes the table.
+        # Leaving stale rows is recoverable; a mass delete is not.
+        if nominations:
             stale_nomination_ids = (
-                set(await self.nomination_gateway.list_cosplay2_ids()) - topic_ids
+                set(await self.nomination_gateway.list_cosplay2_ids()) - nomination_ids
             )
             await self.nomination_gateway.delete_by_cosplay2_ids(
                 list(stale_nomination_ids)
             )
         else:
-            logger.warning("Cosplay2 returned no topics, skipping nomination cleanup")
+            logger.warning("Cosplay2 returned no nominations, skipping cleanup")
 
-        requests = await self.client.get_all_requests()
-        values = await self.client.get_all_values()
-        request_ids = {request.id for request in requests}
+        participants = await self.source.fetch_participants()
+        participant_ids = {participant.external_id for participant in participants}
+        for external in participants:
+            await self._upsert_participant(external, nominations_by_external_id)
 
-        # Group values by request id once, so each request lookup is O(1)
-        # instead of rescanning the full values list per request.
-        values_by_request: dict[int, list[RequestValueDTO]] = defaultdict(list)
-        for value in values:
-            values_by_request[value.request_id].append(value)
-
-        for request in requests:
-            # Requests that cannot be turned into a participant (non-approved,
-            # missing voting title, or unknown nomination) return None and are
-            # skipped. Stale participants are pruned below by id, so skipping
-            # here is enough.
-            await self._process_request(
-                request,
-                values_by_request.get(request.id, []),
-                nominations_by_cosplay2_id,
-            )
-
-        # Same empty-response guard as topics above: never let an empty request
-        # list delete every stored participant.
-        if requests:
+        # Same empty-response guard as nominations above. The source returns only
+        # participants the domain recognizes, so this sweep also removes anyone
+        # whose source record is gone or is no longer a valid participant.
+        if participants:
             stale_participant_ids = (
-                set(await self.participant_gateway.list_cosplay2_ids()) - request_ids
+                set(await self.participant_gateway.list_cosplay2_ids())
+                - participant_ids
             )
             await self.participant_gateway.delete_by_cosplay2_ids(
                 list(stale_participant_ids)
             )
         else:
-            logger.warning(
-                "Cosplay2 returned no requests, skipping participant cleanup"
-            )
+            logger.warning("Cosplay2 returned no participants, skipping cleanup")
 
         await self.uow.commit()
