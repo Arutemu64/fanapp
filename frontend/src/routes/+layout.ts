@@ -1,6 +1,6 @@
 import { browser } from '$app/environment';
 import { createApiClient } from '$lib/api';
-import { fetchWithCache, warmCache } from '$lib/utils/offlineCache';
+import { clearCache, fetchWithCache, warmCache } from '$lib/utils/offlineCache';
 import type { CurrentUserDTO } from '$lib/types/user';
 import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 import type { LayoutLoad } from './$types';
@@ -16,16 +16,29 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 
 	const client = createApiClient();
 
-	// `null` is a real cached value here (logged out), distinct from a cache miss,
-	// so the type is `CurrentUserDTO | null`. The fetcher never returns `undefined`.
+	// `null` is a real cached value (logged out); `undefined` means "reachable but
+	// no verdict, keep the cached user" (see fetcher below), so the type spans both.
 	const { data } = await fetchWithCache<CurrentUserDTO | null>({
 		key: USER_CACHE_KEY,
 		fetcher: async ({ signal }) => {
 			const { data, response, error } = await client.GET('/me/', { fetch, signal });
-			// Guest, or stale/invalid session → cache and return "logged out".
-			if (response.status === 401 || response.status === 403 || error || !data) {
+
+			// Authoritative "session ended": cache logged-out AND wipe per-user caches
+			// so no orphaned entries linger for the next account on a shared device.
+			// Mirrors explicit logout (AppNavbar.handleLogout).
+			if (response.status === 401 || response.status === 403) {
+				void clearCache();
 				return null;
 			}
+
+			// Reachable but not an auth verdict (5xx / parse error / empty body): do NOT
+			// downgrade identity. Returning `undefined` keeps the last-good cached user
+			// instead of overwriting it with `null` — a transient error must not flip a
+			// logged-in user to guest (which would orphan their per-user caches).
+			if (error || !data) {
+				return undefined;
+			}
+
 			return data;
 		}
 	});

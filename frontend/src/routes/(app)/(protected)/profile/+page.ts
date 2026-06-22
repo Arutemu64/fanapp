@@ -2,6 +2,7 @@ import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 import { createApiClient } from '$lib/api';
 import { fetchWithCache } from '$lib/utils/offlineCache';
+import { isReachable } from '$lib/services/reachability';
 import type { UserSocialAccountDTO } from '$lib/types/user';
 
 type ProfileConnections = {
@@ -45,8 +46,19 @@ export const load: PageLoad = async ({ fetch, depends, url, parent }) => {
 		}
 	});
 
-	// Complete miss (errored/offline with nothing cached): hard failure.
 	if (data === undefined) {
+		// Offline with nothing cached: degrade to a calm inline state so the app shell
+		// and bottom nav stay usable. A real online failure is still a hard error.
+		if (!isReachable()) {
+			return {
+				title: 'Профиль',
+				telegramLinkError: getTelegramLinkErrorCode(url),
+				socialAccounts: [],
+				stale: true,
+				cachedAt: undefined,
+				offlineMiss: true
+			};
+		}
 		error(503, 'Не удалось загрузить профиль');
 	}
 
@@ -55,6 +67,7 @@ export const load: PageLoad = async ({ fetch, depends, url, parent }) => {
 		telegramLinkError: getTelegramLinkErrorCode(url),
 		socialAccounts: data.socialAccounts,
 		stale,
-		cachedAt
+		cachedAt,
+		offlineMiss: false
 	};
 };
