@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 import { createApiClient } from '$lib/api';
-import { fetchWithCache } from '$lib/utils/offlineCache';
+import { fetchWithCache, userStore } from '$lib/utils/offlineCache';
 import { isReachable } from '$lib/services/reachability';
 import type { UserSocialAccountDTO } from '$lib/types/user';
 
@@ -38,6 +38,7 @@ export const load: PageLoad = async ({ fetch, depends, url, parent }) => {
 
 	const { data, stale, cachedAt } = await fetchWithCache<ProfileConnections>({
 		key: cacheKey,
+		store: userStore,
 		fetcher: async ({ signal }) => {
 			const { data: socialAccounts } = await client.GET('/me/connections/', { fetch, signal });
 			return {
