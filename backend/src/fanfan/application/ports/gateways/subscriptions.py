@@ -5,6 +5,7 @@ from fanfan.core.models.subscription import (
     Subscription,
 )
 from fanfan.core.vo.subscription import SubscriptionId
+from fanfan.core.vo.user import UserId
 
 
 class SubscriptionGateway(Protocol):
@@ -17,4 +18,8 @@ class SubscriptionGateway(Protocol):
     # Read projections (return DTOs, not aggregates)
     async def read_upcoming_subscriptions(
         self, current_event_queue: int
+    ) -> list[SubscriptionFullDTO]: ...
+
+    async def read_subscriptions_by_user(
+        self, user_id: UserId
     ) -> list[SubscriptionFullDTO]: ...

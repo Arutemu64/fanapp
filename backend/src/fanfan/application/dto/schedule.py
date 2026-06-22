@@ -1,12 +1,6 @@
 from pydantic import BaseModel
 
 from fanfan.core.vo.schedule_event import ScheduleEventId
-from fanfan.core.vo.subscription import SubscriptionId
-
-
-class ScheduleEventSubscriptionDTO(BaseModel):
-    id: SubscriptionId
-    counter: int
 
 
 class ScheduleEventFullDTO(BaseModel):
@@ -23,6 +17,3 @@ class ScheduleEventFullDTO(BaseModel):
     # Calculated values
     queue: int | None
     time_until: int | None
-
-    # User-specific values
-    user_subscription: ScheduleEventSubscriptionDTO | None

@@ -17,7 +17,7 @@
 	import { canManageSchedule } from '$lib/utils/permissions';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { createApiClient } from '$lib/api';
-	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
+	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
 	import MoveEventModal from './MoveEventModal.svelte';
 	import SubscribeModal from './SubscribeModal.svelte';
 	import UnsubscribeModal from './UnsubscribeModal.svelte';
@@ -26,9 +26,9 @@
 	const client = createApiClient();
 
 	interface Props {
-		event: ScheduleEventFullDTO;
-		schedule: ScheduleEventFullDTO[];
-		currentEvent: ScheduleEventFullDTO | null;
+		event: ScheduleEventWithSubscription;
+		schedule: ScheduleEventWithSubscription[];
+		currentEvent: ScheduleEventWithSubscription | null;
 		user: CurrentUserDTO | null;
 	}
 

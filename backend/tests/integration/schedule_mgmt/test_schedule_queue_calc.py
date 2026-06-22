@@ -50,7 +50,7 @@ async def test_queue_and_time_until_with_fractional_orders(
         await schedule_gateway.add(event)
     await uow.commit()
 
-    schedule = await schedule_gateway.read_list_schedule(user_id=None)
+    schedule = await schedule_gateway.read_list_schedule()
     by_number = {e.number: e for e in schedule}
 
     # Skipped events are excluded from the queue numbering.

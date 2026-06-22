@@ -2115,6 +2115,56 @@
       }
     },
     "/schedule/subscriptions/": {
+      "get": {
+        "tags": [
+          "Schedule"
+        ],
+        "summary": "List the current user's subscriptions",
+        "description": "Returns every schedule event the current user is subscribed to. Served separately from the schedule so the schedule itself stays universal and cacheable offline.",
+        "operationId": "get_subscriptions_schedule_subscriptions__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSubscriptionsOutput"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "Schedule"
@@ -3554,6 +3604,22 @@
         ],
         "title": "GetScheduleOutput"
       },
+      "GetSubscriptionsOutput": {
+        "properties": {
+          "subscriptions": {
+            "items": {
+              "$ref": "#/components/schemas/SubscriptionFullDTO"
+            },
+            "type": "array",
+            "title": "Subscriptions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subscriptions"
+        ],
+        "title": "GetSubscriptionsOutput"
+      },
       "GetVotingNominationOutput": {
         "properties": {
           "id": {
@@ -4251,16 +4317,6 @@
               }
             ],
             "title": "Time Until"
-          },
-          "user_subscription": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ScheduleEventSubscriptionDTO"
-              },
-              {
-                "type": "null"
-              }
-            ]
           }
         },
         "type": "object",
@@ -4275,29 +4331,9 @@
           "nomination_title",
           "block_title",
           "queue",
-          "time_until",
-          "user_subscription"
+          "time_until"
         ],
         "title": "ScheduleEventFullDTO"
-      },
-      "ScheduleEventSubscriptionDTO": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "counter": {
-            "type": "integer",
-            "title": "Counter"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "counter"
-        ],
-        "title": "ScheduleEventSubscriptionDTO"
       },
       "SendBroadcastInput": {
         "properties": {
@@ -4362,6 +4398,88 @@
           "feedback_id"
         ],
         "title": "SubmitFeedbackOutput"
+      },
+      "SubscriptionEventDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "order": {
+            "type": "number",
+            "title": "Order"
+          },
+          "queue": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue"
+          },
+          "time_until": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Until"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "number",
+          "title",
+          "order",
+          "queue",
+          "time_until"
+        ],
+        "title": "SubscriptionEventDTO"
+      },
+      "SubscriptionFullDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "counter": {
+            "type": "integer",
+            "title": "Counter"
+          },
+          "event": {
+            "$ref": "#/components/schemas/SubscriptionEventDTO"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "counter",
+          "event"
+        ],
+        "title": "SubscriptionFullDTO"
       },
       "TCloudWebhookOrderRef": {
         "properties": {

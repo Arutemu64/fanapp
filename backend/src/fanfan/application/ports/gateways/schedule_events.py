@@ -3,7 +3,6 @@ from typing import Protocol
 from fanfan.application.dto.schedule import ScheduleEventFullDTO
 from fanfan.core.models.schedule_event import ScheduleEvent
 from fanfan.core.vo.schedule_event import ScheduleEventId
-from fanfan.core.vo.user import UserId
 
 
 class ScheduleEventGateway(Protocol):
@@ -23,6 +22,4 @@ class ScheduleEventGateway(Protocol):
 
     async def read_current_event(self) -> ScheduleEventFullDTO | None: ...
 
-    async def read_list_schedule(
-        self, user_id: UserId | None
-    ) -> list[ScheduleEventFullDTO]: ...
+    async def read_list_schedule(self) -> list[ScheduleEventFullDTO]: ...

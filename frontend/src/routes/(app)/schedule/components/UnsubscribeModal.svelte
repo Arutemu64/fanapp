@@ -4,13 +4,13 @@
 	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
+	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
 	import { Button, Modal, Alert } from 'flowbite-svelte';
 	import { BellOutline } from 'flowbite-svelte-icons';
 
 	interface Props {
 		open: boolean;
-		event: ScheduleEventFullDTO;
+		event: ScheduleEventWithSubscription;
 	}
 	let { open = $bindable(), event }: Props = $props();
 	const toastService = getToastService();

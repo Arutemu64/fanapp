@@ -4,7 +4,7 @@
 	import EventCard from './components/EventCard.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService } from '$lib/services/offline.svelte';
-	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
+	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
 	import type { CurrentUserDTO } from '$lib/types/user';
 	import type { PageProps } from './$types';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
@@ -16,7 +16,7 @@
 	type ScheduleNominationGroup = {
 		title: string;
 		eventCount: number;
-		events: ScheduleEventFullDTO[];
+		events: ScheduleEventWithSubscription[];
 	};
 
 	type ScheduleBlockGroup = {
@@ -27,7 +27,7 @@
 
 	// Keep the schedule source close to the page data so it stays SSR-friendly.
 	let { data }: PageProps = $props();
-	let schedule: ScheduleEventFullDTO[] = $derived(data.schedule);
+	let schedule: ScheduleEventWithSubscription[] = $derived(data.schedule);
 
 	// Store filter state locally because it only affects this page view.
 	let searchQuery: string = $state('');
@@ -45,7 +45,7 @@
 	// itself explains the situation, so skip the "showing cached data" notice.
 	let showStaleNotice = $derived(!data.offlineMiss && (data.stale || !offline.isOnline));
 
-	let filtered: ScheduleEventFullDTO[] = $derived(
+	let filtered: ScheduleEventWithSubscription[] = $derived(
 		schedule.filter((event) => {
 			const searchMatch = matchesSearch(searchQuery, [
 				event.number,
