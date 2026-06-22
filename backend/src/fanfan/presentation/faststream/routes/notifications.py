@@ -8,9 +8,9 @@ from fanfan.application.interactors.notifications.create_notification import (
     CreateNotification,
     CreateNotificationInput,
 )
-from fanfan.application.interactors.notifications.delete_mailing_messages import (
-    DeleteMailingMessages,
-    DeleteMailingMessagesInput,
+from fanfan.application.interactors.notifications.delete_mailing_notifications import (
+    DeleteMailingNotifications,
+    DeleteMailingNotificationsInput,
 )
 from fanfan.application.interactors.notifications.get_notification import (
     GetNotification,
@@ -208,8 +208,8 @@ async def create_new_broadcast(
 @inject
 async def cancel_mailing(
     data: MailingCancelled,
-    interactor: FromDishka[DeleteMailingMessages],
+    interactor: FromDishka[DeleteMailingNotifications],
 ) -> None:
 
-    await interactor(DeleteMailingMessagesInput(mailing_id=data.mailing_id))
+    await interactor(DeleteMailingNotificationsInput(mailing_id=data.mailing_id))
     return
