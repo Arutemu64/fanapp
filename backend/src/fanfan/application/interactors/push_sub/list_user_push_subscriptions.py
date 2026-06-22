@@ -6,7 +6,6 @@ from fanfan.application.services.current_user import CurrentUserProvider
 
 
 class ListUserPushSubscriptions:
-    # TODO Do I need this?
     def __init__(
         self,
         push_sub_gateway: PushSubscriptionGateway,
