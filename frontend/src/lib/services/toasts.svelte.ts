@@ -24,11 +24,9 @@ export interface ToastItem {
 const [getToast, setToast] = createContext<ToastService>();
 
 export class ToastService {
-	// Private state within the instance
 	#toasts = $state<ToastItem[]>([]);
 	readonly MAX_TOASTS = 3;
 
-	// Getter to access the state reactively
 	get items() {
 		return this.#toasts;
 	}
@@ -53,7 +51,6 @@ export class ToastService {
 	error(err: unknown) {
 		let message = getApiErrorDetail(err) ?? 'Не удалось выполнить действие. Попробуй ещё раз.';
 
-		// Handle string directly
 		if (typeof err === 'string') {
 			message = err;
 		}

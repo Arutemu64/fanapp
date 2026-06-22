@@ -10,5 +10,5 @@ class PushConfig(BaseModel):
     private_key_path: Path
     public_key_path: Path
 
-    # Claims email
+    # VAPID "sub" claim — a mailto/contact address for the push service.
     subscriber: str

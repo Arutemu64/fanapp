@@ -79,7 +79,7 @@
 		);
 		oldPassword = '';
 		newPassword = '';
-		open = false; // close modal
+		open = false;
 		if (onSuccess) onSuccess();
 	}
 </script>

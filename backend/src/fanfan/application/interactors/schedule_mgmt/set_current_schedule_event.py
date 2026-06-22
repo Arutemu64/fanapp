@@ -70,13 +70,11 @@ class SetCurrentScheduleEvent:
 
         try:
             async with lock:
-                # Unset current event
                 previous_current_event = await self.schedule_gateway.get_current()
                 if previous_current_event:
                     previous_current_event.unset_current()
                     await self.schedule_gateway.save(previous_current_event)
 
-                # Get event and set as current
                 if data.event_id is not None:
                     event = await self.schedule_gateway.get_by_id(data.event_id)
                     if event is None:
@@ -86,7 +84,6 @@ class SetCurrentScheduleEvent:
                 else:
                     event = None
 
-                # Save schedule change
                 mailing = Mailing.create(by_user_id=current_user.id)
                 await self.mailing_gateway.add(mailing)
                 schedule_change = ScheduleChange.set_as_current(
@@ -99,7 +96,6 @@ class SetCurrentScheduleEvent:
                 )
                 await self.changes_gateway.add(schedule_change)
 
-                # Commit and proceed
                 await self.uow.commit()
 
                 logger.info(
