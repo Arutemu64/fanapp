@@ -1,7 +1,8 @@
-from fanfan.core.exceptions.base import AppException
+from fanfan.core.exceptions.base import AppException, ConstraintViolation
 
 
 class AuthenticationError(AppException):
+    # 401 marker: the request lacks valid credentials.
     code = "AUTHENTICATION_ERROR"
 
 
@@ -17,9 +18,11 @@ class IncorrectPassword(AuthenticationError):
     code = "INCORRECT_PASSWORD"
 
 
-class InvalidOtpCode(AuthenticationError):
+# An invalid/expired OTP is treated as bad input (400), not an auth failure, so
+# it carries the ConstraintViolation marker rather than AuthenticationError.
+class InvalidOtpCode(ConstraintViolation):
     code = "INVALID_OTP_CODE"
 
 
-class InvalidTelegramAuthPayload(AppException):
+class InvalidTelegramAuthPayload(ConstraintViolation):
     code = "INVALID_TELEGRAM_AUTH_PAYLOAD"

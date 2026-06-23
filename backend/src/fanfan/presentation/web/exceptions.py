@@ -6,58 +6,15 @@ from fastapi import HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from starlette.responses import JSONResponse
 
-from fanfan.core.exceptions.auth import (
-    AuthenticationError,
-    IncorrectPassword,
-    InvalidCredentials,
-    InvalidOtpCode,
-    InvalidTelegramAuthPayload,
-    UserNotAuthenticated,
+from fanfan.core.exceptions.auth import AuthenticationError
+from fanfan.core.exceptions.base import (
+    AccessDenied,
+    AppException,
+    Conflict,
+    ConstraintViolation,
+    NotFound,
+    RateLimited,
 )
-from fanfan.core.exceptions.base import AccessDenied, AppException
-from fanfan.core.exceptions.captcha import CaptchaVerificationFailed
-from fanfan.core.exceptions.nominations import NominationNotFound
-from fanfan.core.exceptions.participants import ParticipantNotFound
-from fanfan.core.exceptions.push_sub import (
-    PushSubscriptionAlreadyExists,
-    PushSubscriptionNotFound,
-)
-from fanfan.core.exceptions.rate_limit import (
-    EmailCodeRequestTooFast,
-    TooManyAttempts,
-)
-from fanfan.core.exceptions.schedule import (
-    CurrentEventNotAllowed,
-    EventNotFound,
-    OutdatedScheduleChange,
-    SameEventsAreNotAllowed,
-    ScheduleChangeNotFound,
-    ScheduleEditTooFast,
-    SkippedEventNotAllowed,
-)
-from fanfan.core.exceptions.settings import AppSettingsNotFound
-from fanfan.core.exceptions.subscriptions import (
-    SubscriptionAlreadyExists,
-    SubscriptionNotFound,
-)
-from fanfan.core.exceptions.tickets import (
-    TicketAlreadyUsed,
-    TicketNotFound,
-    UserAlreadyHasTicketLinked,
-)
-from fanfan.core.exceptions.users import (
-    EmailAlreadyExists,
-    InvalidEmail,
-    TelegramAlreadyLinkedToAnotherUser,
-    TelegramCannotBeUnlinkedWithoutEmail,
-    UserAlreadyExists,
-    UserAlreadyHasTelegramLinked,
-    UserHasNoEmail,
-    UsernameAlreadyTaken,
-    UsernameProfanity,
-    UserNotFound,
-)
-from fanfan.core.exceptions.votes import VoteAlreadyExists, VoteNotFound
 from fanfan.presentation.web.schemas.error import (
     ErrorMessage,
     ValidationErrorDetail,
@@ -66,56 +23,18 @@ from fanfan.presentation.web.schemas.error import (
 
 logger = logging.getLogger(__name__)
 
+# Keyed on semantic marker base classes (defined in core), not on individual
+# leaf exceptions. Each concrete exception inherits the marker that fits its
+# meaning, and _resolve_status_code() walks the MRO to find it. Adding an
+# exception means picking the right marker, not editing this map; a completeness
+# test (tests/.../test_exception_status_map.py) fails if anything slips through.
 EXCEPTION_STATUS_MAP: dict[type[AppException], int] = {
-    # 400 Bad Request
-    InvalidOtpCode: status.HTTP_400_BAD_REQUEST,
-    InvalidTelegramAuthPayload: status.HTTP_400_BAD_REQUEST,
-    CurrentEventNotAllowed: status.HTTP_400_BAD_REQUEST,
-    SameEventsAreNotAllowed: status.HTTP_400_BAD_REQUEST,
-    SkippedEventNotAllowed: status.HTTP_400_BAD_REQUEST,
-    UsernameProfanity: status.HTTP_400_BAD_REQUEST,
-    # Defensive: format validation normally happens at the Pydantic boundary
-    # (EmailStr), but the Email value object enforces its own invariant. Map it
-    # so any path that builds an Email from looser input fails as 400, not 500.
-    InvalidEmail: status.HTTP_400_BAD_REQUEST,
-    # 401 Unauthorized
-    UserNotAuthenticated: status.HTTP_401_UNAUTHORIZED,
-    InvalidCredentials: status.HTTP_401_UNAUTHORIZED,
-    IncorrectPassword: status.HTTP_401_UNAUTHORIZED,
+    ConstraintViolation: status.HTTP_400_BAD_REQUEST,
     AuthenticationError: status.HTTP_401_UNAUTHORIZED,
-    # 403 Forbidden
     AccessDenied: status.HTTP_403_FORBIDDEN,
-    CaptchaVerificationFailed: status.HTTP_403_FORBIDDEN,
-    # 404 Not Found
-    UserNotFound: status.HTTP_404_NOT_FOUND,
-    EventNotFound: status.HTTP_404_NOT_FOUND,
-    NominationNotFound: status.HTTP_404_NOT_FOUND,
-    ParticipantNotFound: status.HTTP_404_NOT_FOUND,
-    PushSubscriptionNotFound: status.HTTP_404_NOT_FOUND,
-    SubscriptionNotFound: status.HTTP_404_NOT_FOUND,
-    TicketNotFound: status.HTTP_404_NOT_FOUND,
-    VoteNotFound: status.HTTP_404_NOT_FOUND,
-    ScheduleChangeNotFound: status.HTTP_404_NOT_FOUND,
-    AppSettingsNotFound: status.HTTP_404_NOT_FOUND,
-    # 409 Conflict
-    UserAlreadyExists: status.HTTP_409_CONFLICT,
-    UsernameAlreadyTaken: status.HTTP_409_CONFLICT,
-    EmailAlreadyExists: status.HTTP_409_CONFLICT,
-    OutdatedScheduleChange: status.HTTP_409_CONFLICT,
-    VoteAlreadyExists: status.HTTP_409_CONFLICT,
-    SubscriptionAlreadyExists: status.HTTP_409_CONFLICT,
-    PushSubscriptionAlreadyExists: status.HTTP_409_CONFLICT,
-    TicketAlreadyUsed: status.HTTP_409_CONFLICT,
-    UserAlreadyHasTicketLinked: status.HTTP_409_CONFLICT,
-    UserHasNoEmail: status.HTTP_409_CONFLICT,
-    TelegramCannotBeUnlinkedWithoutEmail: status.HTTP_409_CONFLICT,
-    TelegramAlreadyLinkedToAnotherUser: status.HTTP_409_CONFLICT,
-    UserAlreadyHasTelegramLinked: status.HTTP_409_CONFLICT,
-    # 429 Too Many Requests
-    ScheduleEditTooFast: status.HTTP_429_TOO_MANY_REQUESTS,
-    EmailCodeRequestTooFast: status.HTTP_429_TOO_MANY_REQUESTS,
-    # Covers every subclass (OTP and login) via the exception MRO lookup.
-    TooManyAttempts: status.HTTP_429_TOO_MANY_REQUESTS,
+    NotFound: status.HTTP_404_NOT_FOUND,
+    Conflict: status.HTTP_409_CONFLICT,
+    RateLimited: status.HTTP_429_TOO_MANY_REQUESTS,
 }
 
 
