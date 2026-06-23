@@ -122,3 +122,8 @@ export type NominationsList =
 
 ## 🇷🇺 Russian Localization & Error Handling
 Russian copy is mandatory (AGENTS.md #1). API-specific rule: normalize failures before presenting them — never expose raw backend stack traces or internal identifiers, and show a friendly Russian message explaining how to recover or retry.
+
+* **Error shape**: every error response is `ErrorMessage { code, details }` (see backend `presentation/web/exceptions.py`). Map failures by the machine-readable `code`, not by HTTP status or message text.
+* **Single funnel**: `getApiErrorDetail(error)` (`lib/api/errors.ts`) turns a payload into Russian copy; `toastService.error(err)` wraps it for toasts. Add new copy to the `ERROR_MESSAGES` dictionary there.
+* **`code` is a typed union**: the backend stamps the closed set of client-facing codes onto `ErrorMessage.code` as an OpenAPI enum (`presentation/web/error_codes.py`), so `frontend-generate-api` regenerates it as a string-literal union. Dictionary keys are checked against it — a typo is a compile error.
+* **Drift guard**: a compile-time exhaustiveness check in `errors.ts` fails `pnpm check` if the backend adds a client-facing code that is neither given copy nor listed in `GENERIC_FALLBACK_CODES`. After changing backend error codes, run `just frontend-generate-api` and resolve any new code the guard reports.

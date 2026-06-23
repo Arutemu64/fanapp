@@ -1,3 +1,10 @@
+import type { components } from '$lib/api/v1';
+
+// The closed set of error codes the API can return, generated from the backend
+// OpenAPI spec (ErrorMessage.code enum). Drives both typo safety on the message
+// dictionary and the compile-time drift guard at the bottom of this file.
+type ApiErrorCode = components['schemas']['ErrorMessage']['code'];
+
 type ApiErrorDetails = Record<string, unknown>;
 
 interface ApiErrorPayload {
@@ -125,8 +132,10 @@ function getAccessDeniedMessage(details: ApiErrorDetails): string {
 	}
 }
 
-// Simple dictionary: error code -> user-facing message
-const ERROR_MESSAGES: Record<string, string> = {
+// Dictionary: error code -> user-facing message. `satisfies` keeps the literal
+// keys (so the drift guard below can see which codes are covered) while checking
+// every key is a real ApiErrorCode — a typo'd code is a compile error.
+const ERROR_MESSAGES = {
 	ALREADY_VOTED_IN_THIS_NOMINATION: 'Ты уже голосовал в этой номинации',
 	CAPTCHA_VERIFICATION_FAILED: 'Не удалось пройти проверку. Попробуй ещё раз.',
 	CURRENT_EVENT_NOT_ALLOWED: 'Это выступление нельзя отметить как текущее',
@@ -134,6 +143,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 	EVENT_NOT_FOUND: 'Выступление не найдено',
 	INCORRECT_PASSWORD: 'Неверная почта или пароль',
 	INVALID_CREDENTIALS: 'Неверная почта или пароль',
+	INVALID_EMAIL: 'Неверный адрес эл. почты',
 	INVALID_OTP_CODE: 'Неверный или устаревший код',
 	INVALID_TELEGRAM_AUTH_PAYLOAD: 'Не удалось подтвердить Telegram',
 	OUTDATED_SCHEDULE_CHANGE: 'Расписание уже изменилось, обнови страницу',
@@ -156,7 +166,33 @@ const ERROR_MESSAGES: Record<string, string> = {
 	USERNAME_ALREADY_TAKEN: 'Это имя пользователя уже занято',
 	USERNAME_PROFANITY: 'Псевдоним содержит недопустимые слова',
 	VOTE_NOT_FOUND: 'Голос не найден'
-};
+} satisfies Partial<Record<ApiErrorCode, string>>;
+
+// Codes carrying a `retry_after` detail; all share the same formatted message.
+const RETRY_AFTER_CODES = [
+	'EMAIL_CODE_REQUEST_TOO_FAST',
+	'SCHEDULE_EDIT_TOO_FAST',
+	'TOO_MANY_ATTEMPTS',
+	'TOO_MANY_OTP_ATTEMPTS',
+	'TOO_MANY_LOGIN_ATTEMPTS'
+] as const satisfies readonly ApiErrorCode[];
+
+// Codes intentionally left to the generic fallback toast: not individually
+// actionable by the user (server/internal errors) or surfaced by dedicated UI
+// elsewhere (not-found states). Listed explicitly so the drift guard passes.
+// Consumed only by the type-level guard below, hence not read at runtime.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const GENERIC_FALLBACK_CODES = [
+	'AUTHENTICATION_ERROR',
+	'HTTP_ERROR',
+	'INTERNAL_ERROR',
+	'APP_SETTINGS_NOT_FOUND',
+	'NOMINATION_NOT_FOUND',
+	'PARTICIPANT_NOT_FOUND',
+	'PUSH_SUBSCRIPTION_NOT_FOUND',
+	'SCHEDULE_CHANGE_NOT_FOUND',
+	'SUBSCRIPTION_NOT_FOUND'
+] as const satisfies readonly ApiErrorCode[];
 
 export function getApiErrorDetail(error: unknown): string | null {
 	const payload = getApiErrorPayload(error);
@@ -164,27 +200,38 @@ export function getApiErrorDetail(error: unknown): string | null {
 		return null;
 	}
 
-	// Dictionary lookup covers most codes
-	const simple = ERROR_MESSAGES[payload.code];
+	// Dictionary covers most codes. Cast because payload.code is an unverified
+	// wire string, not a known ApiErrorCode.
+	const simple = (ERROR_MESSAGES as Record<string, string | undefined>)[payload.code];
 	if (simple) {
 		return simple;
 	}
 
-	// Codes that need extra logic
 	const details = payload.details ?? {};
-	switch (payload.code) {
-		case 'EMAIL_CODE_REQUEST_TOO_FAST':
-		case 'SCHEDULE_EDIT_TOO_FAST':
-		case 'NOTIFICATION_RETRY_AFTER':
-		case 'TOO_MANY_ATTEMPTS':
-		case 'TOO_MANY_OTP_ATTEMPTS':
-		case 'TOO_MANY_LOGIN_ATTEMPTS':
-			return formatRetryAfter(details.retry_after);
-		case 'ACCESS_DENIED':
-			return getAccessDeniedMessage(details);
-		case 'VALIDATION_ERROR':
-			return getValidationMessage(details);
-		default:
-			return null;
+	if ((RETRY_AFTER_CODES as readonly string[]).includes(payload.code)) {
+		return formatRetryAfter(details.retry_after);
 	}
+	if (payload.code === 'ACCESS_DENIED') {
+		return getAccessDeniedMessage(details);
+	}
+	if (payload.code === 'VALIDATION_ERROR') {
+		return getValidationMessage(details);
+	}
+	return null;
 }
+
+// Compile-time drift guard: every client-facing code must be covered by the
+// dictionary, the retry-after / access-denied / validation handling, or the
+// explicit generic-fallback list. If the backend adds a new code that is none of
+// these, UnhandledCode stops being `never` and this line fails `pnpm check` —
+// naming the missing code(s). Resolve by adding copy to ERROR_MESSAGES or
+// listing the code in GENERIC_FALLBACK_CODES.
+type HandledCode =
+	| keyof typeof ERROR_MESSAGES
+	| (typeof RETRY_AFTER_CODES)[number]
+	| (typeof GENERIC_FALLBACK_CODES)[number]
+	| 'ACCESS_DENIED'
+	| 'VALIDATION_ERROR';
+type UnhandledCode = Exclude<ApiErrorCode, HandledCode>;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _exhaustiveErrorCodes: UnhandledCode extends never ? true : UnhandledCode = true;

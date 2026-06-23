@@ -23,6 +23,11 @@ from fanfan.presentation.web.schemas.error import (
 
 logger = logging.getLogger(__name__)
 
+# Codes the handlers synthesize (not tied to a domain exception). Exposed here so
+# the OpenAPI code-enum builder can include them in the client-facing union.
+HTTP_ERROR_CODE = "HTTP_ERROR"
+INTERNAL_ERROR_CODE = "INTERNAL_ERROR"
+
 # Keyed on semantic marker base classes (defined in core), not on individual
 # leaf exceptions. Each concrete exception inherits the marker that fits its
 # meaning, and _resolve_status_code() walks the MRO to find it. Adding an
@@ -114,7 +119,7 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
     return JSONResponse(
         status_code=exc.status_code,
         content=_build_error_content(
-            code="HTTP_ERROR",
+            code=HTTP_ERROR_CODE,
             details={"status_code": exc.status_code},
         ),
         headers=exc.headers,
@@ -133,5 +138,5 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=_build_error_content(code="INTERNAL_ERROR"),
+        content=_build_error_content(code=INTERNAL_ERROR_CODE),
     )

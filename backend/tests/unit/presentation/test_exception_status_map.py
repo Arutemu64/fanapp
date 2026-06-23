@@ -1,18 +1,16 @@
-import importlib
-import pkgutil
-
 import pytest
 
-import fanfan.core.exceptions as exceptions_pkg
-from fanfan.core.exceptions.base import AppException
-from fanfan.presentation.web.exceptions import EXCEPTION_STATUS_MAP
+from fanfan.presentation.web.error_codes import (
+    all_concrete_exceptions,
+    resolves_to_status,
+)
 
 pytestmark = pytest.mark.unit
 
 # Concrete exceptions that intentionally resolve to HTTP 500 (no 4xx marker):
 # they are raised in non-HTTP contexts (Telegram/NATS/scheduler), caught and
 # re-raised as a flow-specific error, or signal a server misconfiguration. If
-# any of these ever needs to surface to an HTTP client, give it a semantic
+# one of these ever needs to surface to an HTTP client, give it a semantic
 # marker instead of adding it here.
 INTERNAL_ONLY: set[str] = {
     # Notification delivery — handled inside the NATS consumer, never HTTP.
@@ -30,50 +28,16 @@ INTERNAL_ONLY: set[str] = {
     "TCLOUD_CONFIG_NOT_PROVIDED",
 }
 
-# Domain exceptions also live in a couple of adapter packages; import them so
-# their subclasses are registered for discovery below.
-_EXTRA_EXCEPTION_MODULES = (
-    "fanfan.adapters.api.cosplay2.exceptions",
-    "fanfan.adapters.api.ticketscloud.exceptions",
-)
-
-
-def _import_all_exception_modules() -> None:
-    for module in pkgutil.iter_modules(exceptions_pkg.__path__):
-        importlib.import_module(f"{exceptions_pkg.__name__}.{module.name}")
-    for name in _EXTRA_EXCEPTION_MODULES:
-        importlib.import_module(name)
-
-
-def _all_subclasses(cls: type) -> set[type]:
-    result = set(cls.__subclasses__())
-    for sub in cls.__subclasses__():
-        result |= _all_subclasses(sub)
-    return result
-
-
-def _resolves_to_status(cls: type[AppException]) -> bool:
-    return any(base in EXCEPTION_STATUS_MAP for base in cls.__mro__)
-
 
 def test_every_concrete_exception_resolves_or_is_internal():
-    _import_all_exception_modules()
-
-    # A concrete, raisable domain error overrides `code`; abstract bases and
-    # semantic markers keep the inherited "UNKNOWN" and are skipped.
-    concrete = {
-        cls for cls in _all_subclasses(AppException) if cls.code != AppException.code
+    unmapped = {
+        cls.code for cls in all_concrete_exceptions() if not resolves_to_status(cls)
     }
 
-    unclassified = sorted(
-        cls.__name__
-        for cls in concrete
-        if not _resolves_to_status(cls) and cls.code not in INTERNAL_ONLY
-    )
-
-    assert not unclassified, (
-        "These exceptions resolve to HTTP 500. Give each one a semantic marker "
-        "(NotFound/Conflict/ConstraintViolation/RateLimited/AccessDenied/"
-        "AuthenticationError) or, if it never reaches an HTTP client, add its "
-        f"code to INTERNAL_ONLY: {unclassified}"
+    assert unmapped == INTERNAL_ONLY, (
+        "Mismatch between exceptions that resolve to HTTP 500 and INTERNAL_ONLY.\n"
+        f"  Newly unmapped (give them a semantic marker, or add to INTERNAL_ONLY): "
+        f"{sorted(unmapped - INTERNAL_ONLY)}\n"
+        f"  Stale INTERNAL_ONLY entries (now mapped or removed): "
+        f"{sorted(INTERNAL_ONLY - unmapped)}"
     )
