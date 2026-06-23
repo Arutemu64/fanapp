@@ -8,10 +8,10 @@ const config = {
 	preprocess: vitePreprocess(),
 
 	kit: {
-		// SPA build: the app is client-rendered (`ssr = false` in the root layout),
-		// so there is no server. adapter-static emits a static bundle and a
-		// `fallback` page that an NGINX container serves for every unknown route,
-		// letting the client router take over. See https://svelte.dev/docs/kit/single-page-apps
+		// SPA build: the app is client-rendered, so there is no server.
+		// adapter-static emits a static bundle and a `fallback` page that an
+		// NGINX container serves for every unknown route, letting the client
+		// router take over. See https://svelte.dev/docs/kit/single-page-apps
 		adapter: adapter({
 			fallback: '200.html'
 		})

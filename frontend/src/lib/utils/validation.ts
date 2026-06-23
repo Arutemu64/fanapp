@@ -1,6 +1,6 @@
 /**
  * Shared validation helpers for forms.
- * Keep functions pure and SSR-safe.
+ * Keep functions pure and free of side effects.
  */
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

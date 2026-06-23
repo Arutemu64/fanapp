@@ -6,7 +6,7 @@ SESSION_COOKIE_NAME = "session_id"
 
 
 def set_auth_cookie(response: Response, session_id: str, config: WebConfig) -> None:
-    """Persist session identifier in an HttpOnly cookie for browser + SSR flows."""
+    """Persist session identifier in an HttpOnly cookie for browser requests."""
     response.set_cookie(
         key=SESSION_COOKIE_NAME,
         value=session_id,

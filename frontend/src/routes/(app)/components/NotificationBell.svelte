@@ -15,7 +15,7 @@
 
 	type Notification = NotificationDTO;
 
-	// Seed from the SSR-loaded layout preview so the unread badge is correct on the
+	// Seed from the layout-loaded preview so the unread badge is correct on the
 	// first paint. The SSE 'connection_established' handler refreshes this once the stream is up.
 	let notifications = $state<Notification[]>(page.data.notificationPreview ?? []);
 	let unreadCount = $derived(notifications.filter((notification) => !notification.seen_at).length);
@@ -82,7 +82,7 @@
 
 	onMount(() => {
 		if (!eventsClient) {
-			// No live stream: the SSR seed is all we have, so refresh once on mount.
+			// No live stream: the initial seed is all we have, so refresh once on mount.
 			void loadNotifications();
 			return;
 		}

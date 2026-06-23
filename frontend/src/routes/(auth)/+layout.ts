@@ -3,7 +3,7 @@ import type { LayoutLoad, LayoutLoadEvent } from './$types';
 
 export const load: LayoutLoad = async ({ parent }: LayoutLoadEvent) => {
 	// Reuse the user from the root layout data so this guard works
-	// for both the first SSR render and later client-side navigations.
+	// on first load and on later client-side navigations.
 	const { user } = await parent();
 
 	if (user) {

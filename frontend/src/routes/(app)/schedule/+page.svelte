@@ -25,7 +25,7 @@
 		nominations: ScheduleNominationGroup[];
 	};
 
-	// Keep the schedule source close to the page data so it stays SSR-friendly.
+	// Mirror the loaded page data so the component reads schedule from one local source.
 	let { data }: PageProps = $props();
 	let schedule: ScheduleEventWithSubscription[] = $derived(data.schedule);
 

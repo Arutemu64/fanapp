@@ -25,7 +25,7 @@ export class PwaService {
 			this.#isInstalled = this.#detectStandalone();
 
 			// Registers the <pwa-install> custom element. Browser-only because the
-			// module touches `window` at import time and would break SSR.
+			// module touches `window` at import time, so it must not load elsewhere.
 			import('@khmyznikov/pwa-install').catch(() => {
 				// Chunk failed to load; the install card just stays hidden.
 			});
