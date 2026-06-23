@@ -1,9 +1,9 @@
-from fanfan.core.exceptions.base import AppException
+from fanfan.core.exceptions.base import AppException, NotFound
 
 
 class ParticipantException(AppException):
     pass
 
 
-class ParticipantNotFound(ParticipantException):
+class ParticipantNotFound(NotFound, ParticipantException):
     code = "PARTICIPANT_NOT_FOUND"

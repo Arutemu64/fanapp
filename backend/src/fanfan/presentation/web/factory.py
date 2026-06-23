@@ -11,7 +11,8 @@ from fanfan.main.common import init
 from fanfan.main.di import create_web_container
 from fanfan.presentation.web.exceptions import (
     app_exception_handler,
-    auth_exception_handler,
+    http_exception_handler,
+    unhandled_exception_handler,
     validation_exception_handler,
 )
 from fanfan.presentation.web.middlewares import bind_request_context
@@ -41,8 +42,11 @@ def create_app() -> FastAPI:
     app.include_router(setup_api_router())
 
     app.add_exception_handler(AppException, app_exception_handler)  # type: ignore  # noqa: PGH003
-    app.add_exception_handler(HTTPException, auth_exception_handler)  # type: ignore  # noqa: PGH003
+    app.add_exception_handler(HTTPException, http_exception_handler)  # type: ignore  # noqa: PGH003
     app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore  # noqa: PGH003
+    # Catch-all for unanticipated errors so every response keeps the ErrorMessage
+    # shape; more specific handlers above take precedence by exception type.
+    app.add_exception_handler(Exception, unhandled_exception_handler)
 
     # This session cookie holds the Telegram OAuth state/nonce (authlib). Mark it
     # Secure only when the rest of the app is (cookie_secure), so a plain-HTTP

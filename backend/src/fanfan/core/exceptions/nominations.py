@@ -1,9 +1,9 @@
-from fanfan.core.exceptions.base import AppException
+from fanfan.core.exceptions.base import AppException, NotFound
 
 
 class NominationException(AppException):
     pass
 
 
-class NominationNotFound(NominationException):
+class NominationNotFound(NotFound, NominationException):
     code = "NOMINATION_NOT_FOUND"

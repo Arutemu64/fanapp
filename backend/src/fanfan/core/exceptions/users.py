@@ -1,45 +1,50 @@
-from fanfan.core.exceptions.base import AppException
+from fanfan.core.exceptions.base import (
+    AppException,
+    Conflict,
+    ConstraintViolation,
+    NotFound,
+)
 
 
 class UserException(AppException):
     pass
 
 
-class UserNotFound(UserException):
+class UserNotFound(NotFound, UserException):
     code = "USER_NOT_FOUND"
 
 
-class UserAlreadyExists(UserException):
+class UserAlreadyExists(Conflict, UserException):
     code = "USER_ALREADY_EXISTS"
 
 
-class UsernameAlreadyTaken(UserException):
+class UsernameAlreadyTaken(Conflict, UserException):
     code = "USERNAME_ALREADY_TAKEN"
 
 
-class UsernameProfanity(UserException):
+class UsernameProfanity(ConstraintViolation, UserException):
     code = "USERNAME_PROFANITY"
 
 
-class UserHasNoEmail(UserException):
+class UserHasNoEmail(Conflict, UserException):
     code = "USER_HAS_NO_EMAIL"
 
 
-class EmailAlreadyExists(UserException):
+class EmailAlreadyExists(Conflict, UserException):
     code = "EMAIL_ALREADY_EXISTS"
 
 
-class InvalidEmail(UserException):
+class InvalidEmail(ConstraintViolation, UserException):
     code = "INVALID_EMAIL"
 
 
-class TelegramAlreadyLinkedToAnotherUser(UserException):
+class TelegramAlreadyLinkedToAnotherUser(Conflict, UserException):
     code = "TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER"
 
 
-class UserAlreadyHasTelegramLinked(UserException):
+class UserAlreadyHasTelegramLinked(Conflict, UserException):
     code = "USER_ALREADY_HAS_TELEGRAM_LINKED"
 
 
-class TelegramCannotBeUnlinkedWithoutEmail(UserException):
+class TelegramCannotBeUnlinkedWithoutEmail(Conflict, UserException):
     code = "TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL"

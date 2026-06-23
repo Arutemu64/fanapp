@@ -1,13 +1,13 @@
-from fanfan.core.exceptions.base import AppException
+from fanfan.core.exceptions.base import AppException, Conflict, NotFound
 
 
 class PushSubscriptionException(AppException):
     pass
 
 
-class PushSubscriptionAlreadyExists(PushSubscriptionException):
+class PushSubscriptionAlreadyExists(Conflict, PushSubscriptionException):
     code = "PUSH_SUBSCRIPTION_ALREADY_EXISTS"
 
 
-class PushSubscriptionNotFound(PushSubscriptionException):
+class PushSubscriptionNotFound(NotFound, PushSubscriptionException):
     code = "PUSH_SUBSCRIPTION_NOT_FOUND"

@@ -2,6 +2,10 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+# The code the validation handler emits; referenced from the OpenAPI code-enum
+# builder so it appears in the client-facing union alongside domain codes.
+VALIDATION_ERROR_CODE = "VALIDATION_ERROR"
+
 
 class ErrorMessage(BaseModel):
     code: str
@@ -14,5 +18,5 @@ class ValidationErrorDetail(BaseModel):
 
 
 class ValidationErrorResponse(BaseModel):
-    code: str = "VALIDATION_ERROR"
+    code: str = VALIDATION_ERROR_CODE
     details: dict[str, list[ValidationErrorDetail]] = Field(default_factory=dict)
