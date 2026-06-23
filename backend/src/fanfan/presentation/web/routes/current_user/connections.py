@@ -53,7 +53,6 @@ def _build_profile_redirect(error_code: str | None = None) -> RedirectResponse:
             "model": list[UserSocialAccountDTO],
             "description": "User social accounts retrieved successfully.",
         },
-        401: {"model": ErrorMessage, "description": "User not authenticated."},
         404: {"model": ErrorMessage, "description": "User not found."},
     },
 )
@@ -71,7 +70,6 @@ async def get_current_user_social_accounts(
     responses={
         200: {"description": "Telegram account linked successfully."},
         400: {"model": ErrorMessage, "description": "Invalid Telegram auth payload."},
-        401: {"model": ErrorMessage, "description": "User not authenticated."},
         404: {"model": ErrorMessage, "description": "User not found."},
         409: {
             "model": ErrorMessage,
@@ -96,7 +94,6 @@ async def link_telegram(
     responses={
         200: {"description": "Telegram account linked successfully."},
         400: {"model": ErrorMessage, "description": "Invalid Telegram auth payload."},
-        401: {"model": ErrorMessage, "description": "User not authenticated."},
         404: {"model": ErrorMessage, "description": "User not found."},
         409: {
             "model": ErrorMessage,
@@ -130,7 +127,6 @@ async def link_telegram_callback(
     description="Unlinks the Telegram account from the currently authenticated user.",
     responses={
         200: {"description": "Telegram account unlinked successfully."},
-        401: {"model": ErrorMessage, "description": "User not authenticated."},
         404: {"model": ErrorMessage, "description": "User not found."},
         409: {
             "model": ErrorMessage,

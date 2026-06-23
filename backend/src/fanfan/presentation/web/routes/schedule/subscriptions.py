@@ -18,9 +18,15 @@ from fanfan.application.interactors.subscriptions.get_subscriptions import (
     GetSubscriptionsOutput,
 )
 from fanfan.core.vo.subscription import SubscriptionId
+from fanfan.presentation.web.responses import AUTH_RESPONSES
 from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.security import require_session_docs
 
-subscriptions_router = APIRouter(prefix="/subscriptions")
+subscriptions_router = APIRouter(
+    prefix="/subscriptions",
+    dependencies=[require_session_docs],
+    responses=AUTH_RESPONSES,
+)
 
 
 @subscriptions_router.get(

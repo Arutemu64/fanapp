@@ -21,8 +21,15 @@ from fanfan.application.interactors.notifications.send_broadcast import (
 from fanfan.application.interactors.notifications.send_test_notification import (
     SendTestNotification,
 )
+from fanfan.presentation.web.responses import AUTH_RESPONSES
+from fanfan.presentation.web.security import require_session_docs
 
-notifications_router = APIRouter(tags=["Notifications"], prefix="/notifications")
+notifications_router = APIRouter(
+    tags=["Notifications"],
+    prefix="/notifications",
+    dependencies=[require_session_docs],
+    responses=AUTH_RESPONSES,
+)
 
 
 @notifications_router.get(

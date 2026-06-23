@@ -8,9 +8,16 @@ from fanfan.application.interactors.settings.update_settings import (
     UpdateAppSettingsInput,
     UpdateSettings,
 )
+from fanfan.presentation.web.responses import AUTH_RESPONSES
 from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.security import require_session_docs
 
-settings_router = APIRouter(tags=["Settings"], prefix="/settings")
+settings_router = APIRouter(
+    tags=["Settings"],
+    prefix="/settings",
+    dependencies=[require_session_docs],
+    responses=AUTH_RESPONSES,
+)
 
 
 @settings_router.get(

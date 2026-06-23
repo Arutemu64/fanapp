@@ -17,10 +17,15 @@ from fanfan.application.interactors.schedule_mgmt.update_schedule_event_skip imp
     UpdateScheduleEventSkipInput,
 )
 from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.presentation.web.responses import AUTH_RESPONSES
 from fanfan.presentation.web.schemas.error import ErrorMessage
 from fanfan.presentation.web.schemas.schedule import MoveScheduleEventRequest
+from fanfan.presentation.web.security import require_session_docs
 
-management_router = APIRouter()
+management_router = APIRouter(
+    dependencies=[require_session_docs],
+    responses=AUTH_RESPONSES,
+)
 
 
 @management_router.patch(
