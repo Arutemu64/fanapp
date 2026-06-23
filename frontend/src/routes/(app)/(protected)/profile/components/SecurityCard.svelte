@@ -3,7 +3,7 @@
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import type { CurrentUserDTO, UserSocialAccountDTO } from '$lib/types/user';
+	import type { CurrentUserDTO } from '$lib/types/user';
 	import { Alert, Badge, Button, Spinner } from 'flowbite-svelte';
 	import {
 		EnvelopeSolid,
@@ -19,11 +19,10 @@
 
 	interface Props {
 		user: CurrentUserDTO;
-		socialAccounts: UserSocialAccountDTO[];
 		onUpdate?: () => void | Promise<void>;
 	}
 
-	let { user, socialAccounts, onUpdate }: Props = $props();
+	let { user, onUpdate }: Props = $props();
 
 	let changePasswordModalOpen = $state(false);
 	let changeEmailModalOpen = $state(false);
@@ -36,7 +35,7 @@
 
 	// Keep the connected Telegram account handy for status text and actions.
 	let telegramAccount = $derived(
-		socialAccounts.find((socialAccount) => socialAccount.provider === 'telegram') ?? null
+		user.social_accounts.find((socialAccount) => socialAccount.provider === 'telegram') ?? null
 	);
 
 	async function handleTelegramUnlink() {

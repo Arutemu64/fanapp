@@ -7,17 +7,16 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { PUBLIC_VAPID_KEY } from '$env/static/public';
 	import { onMount } from 'svelte';
-	import type { CurrentUserDTO, UserSocialAccountDTO } from '$lib/types/user';
+	import type { CurrentUserDTO } from '$lib/types/user';
 	import type { components } from '$lib/api/v1';
 	import ProfileCardShell from './ProfileCardShell.svelte';
 
 	interface Props {
 		user: CurrentUserDTO;
-		socialAccounts?: UserSocialAccountDTO[];
 		onSettingsUpdate?: () => void;
 	}
 
-	let { user, socialAccounts = [], onSettingsUpdate }: Props = $props();
+	let { user, onSettingsUpdate }: Props = $props();
 
 	let isSubscribed = $state(false);
 	const toastService = getToastService();
@@ -29,7 +28,7 @@
 	const pwa = getPwaService();
 	let showIosPwaModal = $state(false);
 	let hasTelegramAccount = $derived(
-		socialAccounts.some((socialAccount) => socialAccount.provider === 'telegram')
+		user.social_accounts.some((socialAccount) => socialAccount.provider === 'telegram')
 	);
 
 	// Convert base64 VAPID key to Uint8Array required by pushManager.

@@ -52,3 +52,4 @@ class CurrentUserDTO(UserBaseDTO):
     ticket: UserTicketDTO | None
     permissions: list[UserPermissionDTO]
     settings: UserSettingsDTO
+    social_accounts: list[UserSocialAccountDTO]

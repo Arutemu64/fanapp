@@ -1,13 +1,4 @@
-import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
-import { createApiClient } from '$lib/api';
-import { fetchWithCache, userStore } from '$lib/utils/offlineCache';
-import { isReachable } from '$lib/services/reachability';
-import type { UserSocialAccountDTO } from '$lib/types/user';
-
-type ProfileConnections = {
-	socialAccounts: UserSocialAccountDTO[];
-};
 
 const TELEGRAM_LINK_ERROR_QUERY_PARAM = 'telegramLinkError';
 const TELEGRAM_LINK_ERROR_CODES = [
@@ -27,48 +18,12 @@ function getTelegramLinkErrorCode(url: URL): TelegramLinkErrorCode | null {
 	return null;
 }
 
-export const load: PageLoad = async ({ fetch, depends, url, parent }) => {
-	depends('app:social-accounts');
-
-	const { user } = await parent();
-	// Per-user key: connections are the viewer's own.
-	const cacheKey = `profile-connections:${user?.id ?? 'guest'}`;
-
-	const client = createApiClient();
-
-	const { data, stale, cachedAt } = await fetchWithCache<ProfileConnections>({
-		key: cacheKey,
-		store: userStore,
-		fetcher: async ({ signal }) => {
-			const { data: socialAccounts } = await client.GET('/me/connections/', { fetch, signal });
-			return {
-				socialAccounts: socialAccounts ?? []
-			};
-		}
-	});
-
-	if (data === undefined) {
-		// Offline with nothing cached: degrade to a calm inline state so the app shell
-		// and bottom nav stay usable. A real online failure is still a hard error.
-		if (!isReachable()) {
-			return {
-				title: 'Профиль',
-				telegramLinkError: getTelegramLinkErrorCode(url),
-				socialAccounts: [],
-				stale: true,
-				cachedAt: undefined,
-				offlineMiss: true
-			};
-		}
-		error(503, 'Не удалось загрузить профиль');
-	}
-
+// Social accounts now arrive with the current user from the root layout's `/me/`
+// load, so this page fetches nothing — it only reads the one-time Telegram link
+// error code off the URL.
+export const load: PageLoad = ({ url }) => {
 	return {
 		title: 'Профиль',
-		telegramLinkError: getTelegramLinkErrorCode(url),
-		socialAccounts: data.socialAccounts,
-		stale,
-		cachedAt,
-		offlineMiss: false
+		telegramLinkError: getTelegramLinkErrorCode(url)
 	};
 };
