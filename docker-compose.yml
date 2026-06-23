@@ -17,9 +17,12 @@ services:
     # The prod NGINX container ignores these — its values are already baked in.
     env_file:
       - .env
-    depends_on:
-      api:
-        condition: service_healthy
+    # No depends_on the API: the frontend is a static SPA (NGINX in prod, vite in
+    # dev) that never talks to the API at boot — browser /api calls are routed to
+    # the api container by the upstream Caddy, not by this container. Gating the
+    # frontend on API health would turn any backend outage into a total blackout
+    # (even the static shell wouldn't serve); decoupled, the UI stays up and
+    # degrades gracefully while the backend recovers.
     # Host port stays 3000 so the upstream Caddy reverse proxy is unchanged;
     # NGINX listens on 80 inside the container.
     ports:
