@@ -1,9 +1,8 @@
 from dishka.integrations.fastapi import setup_dishka
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
-from starlette.responses import Response
 
 from fanfan.adapters.config.parsers import get_config
 from fanfan.core.exceptions.base import AppException
@@ -15,9 +14,12 @@ from fanfan.presentation.web.exceptions import (
     unhandled_exception_handler,
     validation_exception_handler,
 )
-from fanfan.presentation.web.middlewares import bind_request_context
+from fanfan.presentation.web.middlewares import (
+    bind_request_context,
+    no_store_cache_control,
+    refresh_session_cookie,
+)
 from fanfan.presentation.web.routes import setup_api_router
-from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
 
 
 def create_app() -> FastAPI:
@@ -28,16 +30,7 @@ def create_app() -> FastAPI:
 
     setup_dishka(container=create_web_container(), app=app)
 
-    @app.middleware("http")
-    async def refresh_session_cookie_middleware(
-        request: Request,
-        call_next,
-    ) -> Response:
-        response = await call_next(request)
-        session_id: str | None = getattr(request.state, "renew_session_id", None)
-        if session_id:
-            set_auth_cookie(response, session_id, config.web)
-        return response
+    app.middleware("http")(refresh_session_cookie(config.web))
 
     app.include_router(setup_api_router())
 
@@ -68,6 +61,9 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Default-deny caching on every response, including CORS/error responses.
+    app.middleware("http")(no_store_cache_control)
 
     # Registered last so it runs first (outermost): the request id is bound
     # before any other middleware or route handler, so all of their logs
