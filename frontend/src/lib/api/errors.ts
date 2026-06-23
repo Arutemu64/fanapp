@@ -91,6 +91,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 	INVALID_OTP_CODE: 'Неверный или устаревший код',
 	INVALID_TELEGRAM_AUTH_PAYLOAD: 'Не удалось подтвердить Telegram',
 	PUSH_SUBSCRIPTION_ALREADY_EXISTS: 'Это устройство уже подключено к push-уведомлениям',
+	SKIPPED_EVENT_NOT_ALLOWED: 'Пропущенное выступление нельзя отметить как текущее',
 	SUBSCRIPTION_ALREADY_EXISTS: 'Ты уже подписан на это выступление',
 	TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER: 'Этот Telegram уже привязан к другому аккаунту',
 	TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL:
