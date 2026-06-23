@@ -276,26 +276,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/me/connections/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get current user social accounts
-         * @description Retrieves the currently authenticated user's linked social accounts.
-         */
-        get: operations["get_current_user_social_accounts_me_connections__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/me/connections/telegram": {
         parameters: {
             query?: never;
@@ -982,6 +962,8 @@ export interface components {
             /** Permissions */
             permissions: components["schemas"]["UserPermissionDTO"][];
             settings: components["schemas"]["UserSettingsDTO"];
+            /** Social Accounts */
+            social_accounts: components["schemas"]["UserSocialAccountDTO"][];
         };
         /** DebugResponse */
         DebugResponse: {
@@ -2113,62 +2095,6 @@ export interface operations {
             };
             /** @description Email already in use by another account. */
             409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Request validation error. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ValidationErrorResponse"];
-                };
-            };
-        };
-    };
-    get_current_user_social_accounts_me_connections__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description User social accounts retrieved successfully. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserSocialAccountDTO"][];
-                };
-            };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description User not found. */
-            404: {
                 headers: {
                     [name: string]: unknown;
                 };

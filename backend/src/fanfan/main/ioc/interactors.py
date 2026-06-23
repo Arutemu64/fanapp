@@ -15,9 +15,6 @@ from fanfan.application.interactors.auth.send_email_confirmation_code import (
 from fanfan.application.interactors.auth.send_login_code_email import SendLoginCodeEmail
 from fanfan.application.interactors.cosplay.sync_cosplay import SyncCosplay
 from fanfan.application.interactors.current_user.get_current_user import GetCurrentUser
-from fanfan.application.interactors.current_user.get_current_user_social_ids import (
-    GetCurrentUserSocialIds,
-)
 from fanfan.application.interactors.current_user.link_telegram_account import (
     LinkTelegramAccount,
 )
@@ -165,7 +162,6 @@ class InteractorsProvider(Provider):
     authenticate_user = provide(AuthenticateUser)
     register_user = provide(RegisterUser)
     get_current_user = provide(GetCurrentUser)
-    get_current_user_social_ids = provide(GetCurrentUserSocialIds)
     link_telegram_account = provide(LinkTelegramAccount)
     unlink_telegram_account = provide(UnlinkTelegramAccount)
     update_current_user = provide(UpdateCurrentUser)

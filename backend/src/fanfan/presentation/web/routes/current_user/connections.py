@@ -7,10 +7,6 @@ from fastapi import APIRouter, Request
 from starlette import status
 from starlette.responses import RedirectResponse, Response
 
-from fanfan.application.dto.user import UserSocialAccountDTO
-from fanfan.application.interactors.current_user.get_current_user_social_ids import (
-    GetCurrentUserSocialIds,
-)
 from fanfan.application.interactors.current_user.link_telegram_account import (
     LinkTelegramAccount,
     LinkTelegramAccountInput,
@@ -42,25 +38,6 @@ def _build_profile_redirect(error_code: str | None = None) -> RedirectResponse:
         )
 
     return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
-
-
-@connections_router.get(
-    "/",
-    summary="Get current user social accounts",
-    description="Retrieves the currently authenticated user's linked social accounts.",
-    responses={
-        200: {
-            "model": list[UserSocialAccountDTO],
-            "description": "User social accounts retrieved successfully.",
-        },
-        404: {"model": ErrorMessage, "description": "User not found."},
-    },
-)
-@inject
-async def get_current_user_social_accounts(
-    interactor: FromDishka[GetCurrentUserSocialIds],
-) -> list[UserSocialAccountDTO]:
-    return await interactor()
 
 
 @connections_router.get(

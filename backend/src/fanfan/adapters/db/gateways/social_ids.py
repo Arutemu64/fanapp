@@ -4,7 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.mappers.social_account import SocialIdentityMapper
 from fanfan.adapters.db.models import SocialIdentityORM
-from fanfan.application.dto.user import UserSocialAccountDTO
 from fanfan.application.ports.gateways.social_ids import SocialIdentityGateway
 from fanfan.core.exceptions.users import TelegramAlreadyLinkedToAnotherUser
 from fanfan.core.models.social_account import SocialIdentity
@@ -47,17 +46,3 @@ class SqlSocialIdentityGateway(SocialIdentityGateway):
             delete(SocialIdentityORM).where(SocialIdentityORM.id == social_identity.id)
         )
         await self.session.flush()
-
-    # Read projections (return DTOs, not aggregates)
-    async def read_user_social_accounts(
-        self, user_id: UserId
-    ) -> list[UserSocialAccountDTO]:
-        stmt = select(SocialIdentityORM).where(SocialIdentityORM.user_id == user_id)
-        social_accounts_orm = await self.session.scalars(stmt)
-        return [
-            UserSocialAccountDTO(
-                provider=social_account.provider,
-                provider_id=social_account.provider_id,
-            )
-            for social_account in social_accounts_orm
-        ]

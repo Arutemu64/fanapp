@@ -18,25 +18,20 @@
 	let user = $derived(data.user!);
 	const toastService = getToastService();
 
-	// Show the notice when the loaded copy is cached (data.stale), the device went
-	// offline since open, or connections cold-missed offline (offlineMiss) — in each
-	// case what's on screen may be incomplete or out of date until reconnect. The
-	// identity card still renders from the cached user; only connections are absent.
+	// The whole profile (identity + connections) renders from the layout-cached
+	// user, so the only "out of date" state left is being offline.
 	const offline = getOfflineService();
-	let showStaleNotice = $derived(data.offlineMiss || data.stale || !offline.isOnline);
-	let staleNoticeMessage = $derived(
-		data.offlineMiss
-			? 'Нет связи. Часть данных профиля недоступна офлайн — обновится при подключении.'
-			: 'Нет связи. Показан сохранённый профиль — обновится при подключении.'
-	);
+	let showStaleNotice = $derived(!offline.isOnline);
+	const staleNoticeMessage = 'Нет связи. Показан сохранённый профиль — обновится при подключении.';
 
 	const telegramLinkErrorMessages = {
 		linked_to_another_account: 'Этот Telegram уже подключён к другому аккаунту.',
 		user_already_has_telegram: 'К вашему аккаунту уже подключён другой Telegram.'
 	} as const;
 
+	// Refreshing the current user also refreshes connections — they ship together now.
 	async function refreshProfile() {
-		await Promise.all([invalidate('app:current-user'), invalidate('app:social-accounts')]);
+		await invalidate('app:current-user');
 	}
 
 	onMount(() => {
@@ -60,7 +55,7 @@
 
 <div class="flex flex-col gap-4 sm:gap-5">
 	{#if showStaleNotice}
-		<StaleDataNotice message={staleNoticeMessage} cachedAt={data.cachedAt} />
+		<StaleDataNotice message={staleNoticeMessage} />
 	{/if}
 
 	<!-- Identity banner anchors the page; the settings group sits below it. -->
@@ -71,7 +66,7 @@
 			<!-- Ticket Link Card -->
 			<TicketLinkCard {user} onTicketLinked={refreshProfile} />
 			<!-- Login Methods Card -->
-			<SecurityCard {user} socialAccounts={data.socialAccounts} onUpdate={refreshProfile} />
+			<SecurityCard {user} onUpdate={refreshProfile} />
 		</div>
 
 		<div class="flex flex-col gap-4">
@@ -79,11 +74,7 @@
 			<PwaInstallCard />
 
 			<!-- Push Notifications Card -->
-			<PushNotificationsCard
-				{user}
-				socialAccounts={data.socialAccounts}
-				onSettingsUpdate={refreshProfile}
-			/>
+			<PushNotificationsCard {user} onSettingsUpdate={refreshProfile} />
 		</div>
 	</div>
 </div>

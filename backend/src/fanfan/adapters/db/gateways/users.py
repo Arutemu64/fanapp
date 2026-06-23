@@ -107,6 +107,7 @@ class SqlUserGateway(UserGateway):
             .options(
                 joinedload(UserORM.ticket),
                 joinedload(UserORM.permissions),
+                joinedload(UserORM.social_accounts),
             )
         )
         user_orm = await self.session.scalar(stmt)
