@@ -8,6 +8,12 @@ services:
       # The app calls the API with a relative base (`/api`); vite proxies it to
       # the `api` container on the Compose network (see frontend/vite.config.ts).
       VITE_API_PROXY_TARGET: "http://api:8000"
+    # Don't block the UI on the whole backend health chain (db -> migration ->
+    # redis/nats -> api). Vite's `/api` proxy connects lazily per request, so the
+    # frontend needs nothing from the API at boot — start it in parallel and let
+    # API calls succeed once the backend is up. `!reset` drops the base file's
+    # `depends_on: api` (Compose 2.24+).
+    depends_on: !reset null
     # The dev container runs `vite dev` on port 3000 (not the prod NGINX :80).
     # `!override` REPLACES the base service's port list — without it Compose
     # merges port lists additively, leaving a dead 3000:80 mapping alongside this
