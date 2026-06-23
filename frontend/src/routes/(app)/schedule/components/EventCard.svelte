@@ -338,19 +338,22 @@
 			>
 				<!-- Icon-only staff actions: 44px square tap targets keep mobile usable while the strip stays compact on dense rows. Labels live in aria-label/title. -->
 				<!-- Mark-current is the hot, repeated live-show action, so it carries a primary tint while move/skip stay quiet ghosts. -->
-				<button
-					type="button"
-					onclick={askToggleCurrent}
-					aria-label={event.is_current ? 'Снять отметку' : 'Отметить текущим'}
-					title={event.is_current ? 'Снять отметку' : 'Отметить текущим'}
-					class="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-primary-50 text-primary-700 transition-colors hover:bg-primary-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/50"
-				>
-					{#if event.is_current}
-						<CloseCircleOutline class="h-5 w-5" />
-					{:else}
-						<PlayOutline class="h-5 w-5" />
-					{/if}
-				</button>
+				<!-- Hidden on skipped events: a skipped event can't go on stage (backend rejects it), so don't offer the action. Still shown when it's somehow current, to keep the unmark affordance available. -->
+				{#if event.is_current || !isSkipped}
+					<button
+						type="button"
+						onclick={askToggleCurrent}
+						aria-label={event.is_current ? 'Снять отметку' : 'Отметить текущим'}
+						title={event.is_current ? 'Снять отметку' : 'Отметить текущим'}
+						class="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-primary-50 text-primary-700 transition-colors hover:bg-primary-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/50"
+					>
+						{#if event.is_current}
+							<CloseCircleOutline class="h-5 w-5" />
+						{:else}
+							<PlayOutline class="h-5 w-5" />
+						{/if}
+					</button>
+				{/if}
 
 				<button
 					type="button"
