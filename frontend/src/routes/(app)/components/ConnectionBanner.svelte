@@ -20,7 +20,7 @@
 		failed: 'down'
 	};
 
-	// The client is null during SSR; treat that as healthy so nothing renders.
+	// The client is null outside the browser; treat that as healthy so nothing renders.
 	const client = getEventsClient();
 	let health = $derived<Health>(client ? HEALTH_BY_STATUS[client.connectionStatus] : 'healthy');
 

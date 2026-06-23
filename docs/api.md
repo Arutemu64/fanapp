@@ -1,6 +1,6 @@
 # API Integration Guide
 
-This guide details best practices for using `openapi-typescript` and `openapi-fetch` in the SvelteKit frontend to achieve type-safe communication with the FastAPI backend and clean per-request state isolation. The frontend is a client-rendered SPA (`ssr = false`), so the browser talks to the backend directly.
+This guide details best practices for using `openapi-typescript` and `openapi-fetch` in the SvelteKit frontend to achieve type-safe communication with the FastAPI backend and clean per-request state isolation. The frontend is a client-rendered SPA, so the browser talks to the backend directly.
 
 ---
 

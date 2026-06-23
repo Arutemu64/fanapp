@@ -11,7 +11,7 @@ import type { CurrentUserDTO } from '$lib/types/user';
 import type { ScheduleEventFullDTO, SubscriptionFullDTO } from '$lib/types/schedule';
 import type { LayoutLoad } from './$types';
 
-// SPA-only: render entirely on the client. No SSR, no server load.
+// SPA-only: render entirely on the client. There is no server render.
 export const ssr = false;
 
 // Single current-session user; cached so the app can still boot offline.
