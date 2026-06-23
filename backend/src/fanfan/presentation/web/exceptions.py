@@ -1,7 +1,7 @@
+import logging
 from collections.abc import Mapping
 from typing import cast
 
-import structlog
 from fastapi import HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from starlette.responses import JSONResponse
@@ -64,7 +64,7 @@ from fanfan.presentation.web.schemas.error import (
     ValidationErrorResponse,
 )
 
-logger = structlog.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 EXCEPTION_STATUS_MAP: dict[type[AppException], int] = {
     # 400 Bad Request
