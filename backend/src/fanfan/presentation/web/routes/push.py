@@ -19,12 +19,12 @@ from fanfan.application.interactors.push_sub.delete_push_subscription import (
 )
 from fanfan.presentation.web.responses import AUTH_RESPONSES
 from fanfan.presentation.web.schemas.error import ErrorMessage
-from fanfan.presentation.web.security import require_session_docs
+from fanfan.presentation.web.security import session_security
 
 push_router = APIRouter(
     tags=["Push"],
     prefix="/push",
-    dependencies=[require_session_docs],
+    dependencies=[session_security],
     responses=AUTH_RESPONSES,
 )
 

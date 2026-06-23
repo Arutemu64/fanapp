@@ -17,11 +17,11 @@ from fanfan.application.interactors.schedule_mgmt.undo_schedule_change import (
 from fanfan.core.vo.schedule_change import ScheduleChangeId
 from fanfan.presentation.web.responses import AUTH_RESPONSES
 from fanfan.presentation.web.schemas.error import ErrorMessage
-from fanfan.presentation.web.security import require_session_docs
+from fanfan.presentation.web.security import session_security
 
 changes_router = APIRouter(
     prefix="/changes",
-    dependencies=[require_session_docs],
+    dependencies=[session_security],
     responses=AUTH_RESPONSES,
 )
 

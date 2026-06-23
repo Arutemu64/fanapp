@@ -12,10 +12,10 @@ _session_cookie_scheme = APIKeyCookie(
     name=SESSION_COOKIE_NAME,
     scheme_name="SessionCookie",
     auto_error=False,
-    description="Session cookie set after login.",
+    description="Session cookie set after login. Documentation only; enforced in the application layer.",  # noqa: E501
 )
 
-# Attach via route/router `dependencies=[require_session_docs]`. The resolved
-# value is intentionally unused; its presence is what registers the scheme and
-# the per-operation security requirement in OpenAPI.
-require_session_docs = Security(_session_cookie_scheme)
+# Attach via route/router `dependencies=[session_security]`. This does NOT gate the
+# route (despite the FastAPI Security() convention) — its only effect is to register
+# the SessionCookie scheme and the per-operation security requirement in OpenAPI.
+session_security = Security(_session_cookie_scheme)

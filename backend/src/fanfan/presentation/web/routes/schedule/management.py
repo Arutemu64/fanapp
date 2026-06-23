@@ -20,10 +20,10 @@ from fanfan.core.vo.schedule_event import ScheduleEventId
 from fanfan.presentation.web.responses import AUTH_RESPONSES
 from fanfan.presentation.web.schemas.error import ErrorMessage
 from fanfan.presentation.web.schemas.schedule import MoveScheduleEventRequest
-from fanfan.presentation.web.security import require_session_docs
+from fanfan.presentation.web.security import session_security
 
 management_router = APIRouter(
-    dependencies=[require_session_docs],
+    dependencies=[session_security],
     responses=AUTH_RESPONSES,
 )
 

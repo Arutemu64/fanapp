@@ -22,12 +22,12 @@ from fanfan.application.interactors.notifications.send_test_notification import 
     SendTestNotification,
 )
 from fanfan.presentation.web.responses import AUTH_RESPONSES
-from fanfan.presentation.web.security import require_session_docs
+from fanfan.presentation.web.security import session_security
 
 notifications_router = APIRouter(
     tags=["Notifications"],
     prefix="/notifications",
-    dependencies=[require_session_docs],
+    dependencies=[session_security],
     responses=AUTH_RESPONSES,
 )
 

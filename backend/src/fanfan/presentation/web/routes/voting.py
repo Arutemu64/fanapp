@@ -30,7 +30,7 @@ from fanfan.core.vo.nomination import NominationCode
 from fanfan.core.vo.vote import VoteId
 from fanfan.presentation.web.responses import AUTH_RESPONSES
 from fanfan.presentation.web.schemas.error import ErrorMessage
-from fanfan.presentation.web.security import require_session_docs
+from fanfan.presentation.web.security import session_security
 
 voting_router = APIRouter(tags=["Voting"], prefix="/voting")
 
@@ -101,7 +101,7 @@ async def get_voting_nomination(
     summary="Cast a vote",
     description="Submits a vote for the given participant. "
     "The nomination is derived from the participant.",
-    dependencies=[require_session_docs],
+    dependencies=[session_security],
     responses={
         **AUTH_RESPONSES,
         201: {"model": AddVoteOutput, "description": "Vote successfully cast."},
@@ -125,7 +125,7 @@ async def add_vote(
     status_code=204,
     summary="Cancel a vote",
     description="Removes a previously cast vote by its ID.",
-    dependencies=[require_session_docs],
+    dependencies=[session_security],
     responses={
         **AUTH_RESPONSES,
         204: {"description": "Vote successfully cancelled."},

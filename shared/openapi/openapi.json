@@ -4648,7 +4648,7 @@
     "securitySchemes": {
       "SessionCookie": {
         "type": "apiKey",
-        "description": "Session cookie set after login.",
+        "description": "Session cookie set after login. Documentation only; enforced in the application layer.",
         "in": "cookie",
         "name": "session_id"
       }

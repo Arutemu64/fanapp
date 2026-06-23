@@ -8,7 +8,7 @@ from fanfan.application.interactors.auth.confirm_email_code import (
 )
 from fanfan.presentation.web.responses import AUTH_RESPONSES
 from fanfan.presentation.web.schemas.error import ErrorMessage
-from fanfan.presentation.web.security import require_session_docs
+from fanfan.presentation.web.security import session_security
 
 email_code_router = APIRouter()
 
@@ -17,7 +17,7 @@ email_code_router = APIRouter()
     "/confirm-email-code",
     summary="Confirm user email with code",
     description="Confirms the new email address using a one-time code received at that address.",  # noqa: E501
-    dependencies=[require_session_docs],
+    dependencies=[session_security],
     responses={
         **AUTH_RESPONSES,
         200: {"description": "Email successfully confirmed."},

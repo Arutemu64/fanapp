@@ -11,10 +11,10 @@ from fanfan.application.interactors.schedule_mgmt.import_schedule import (
     ImportScheduleInput,
 )
 from fanfan.presentation.web.responses import AUTH_RESPONSES
-from fanfan.presentation.web.security import require_session_docs
+from fanfan.presentation.web.security import session_security
 
 importing_router = APIRouter(
-    dependencies=[require_session_docs],
+    dependencies=[session_security],
     responses=AUTH_RESPONSES,
 )
 

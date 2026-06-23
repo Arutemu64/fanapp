@@ -8,11 +8,11 @@ from fanfan.application.interactors.feedback.submit_feedback import (
     SubmitFeedbackOutput,
 )
 from fanfan.presentation.web.responses import AUTH_RESPONSES
-from fanfan.presentation.web.security import require_session_docs
+from fanfan.presentation.web.security import session_security
 
 feedback_router = APIRouter(
     prefix="/feedback",
-    dependencies=[require_session_docs],
+    dependencies=[session_security],
     responses=AUTH_RESPONSES,
 )
 
