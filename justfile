@@ -87,8 +87,11 @@ backend-check-migrations:
     cd backend && uv run pytest tests/integration/test_migrations.py
 
 # ---- Docker infra helpers ----
-# Pass build="" to skip image rebuild (default rebuilds)
-run-dev build="--build":
+# Dev: Compose auto-builds any image that doesn't exist yet, and `--watch`
+# live-syncs source + rebuilds only when package.json/pnpm-lock/uv.lock change —
+# so no forced rebuild is needed per start (that just slows startup). Pass
+# build="--build" to force a rebuild (e.g. after editing a Dockerfile).
+run-dev build="":
     docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile core up {{build}} --watch
 
 # Pass build="" to skip image rebuild (default rebuilds)
