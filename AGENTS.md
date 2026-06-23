@@ -92,6 +92,7 @@ On-demand CLI (not the always-on MCP server), so it costs no context until invok
     * **No untracked TODOs.** Prefer a tracked issue. If a marker is unavoidable, format it `# TODO(<issue-ref>): ...` so it is greppable and owned.
     * **Keep comments in sync with the code.** Update or delete the comment in the *same* change as the code it describes — a stale comment is worse than none.
     * Add links to issues/PRs or external sources when they save the next reader a search.
+14. **Verify Best Practice Before Asserting**: Before recommending an approach, HTTP header, config default, caching/security/auth policy, framework convention, or claiming "X is best practice", confirm it with a current web/docs lookup — never from training memory alone. Cite the sources. Scope: applies to recommendations and "best practice" claims, not routine edits (don't web-search every change). Extends #7 (third-party API signatures already require a docs lookup).
 
 Respond terse like smart caveman. All technical substance stay. Only fluff die.
 
