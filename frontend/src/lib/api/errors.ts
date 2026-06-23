@@ -82,15 +82,20 @@ function getAccessDeniedMessage(details: ApiErrorDetails): string {
 	}
 }
 
-// -- Простой словарь: код ошибки → сообщение для пользователя --
+// Simple dictionary: error code -> user-facing message
 const ERROR_MESSAGES: Record<string, string> = {
 	ALREADY_VOTED_IN_THIS_NOMINATION: 'Ты уже голосовал в этой номинации',
+	CAPTCHA_VERIFICATION_FAILED: 'Не удалось пройти проверку. Попробуй ещё раз.',
+	CURRENT_EVENT_NOT_ALLOWED: 'Это выступление нельзя отметить как текущее',
 	EMAIL_ALREADY_EXISTS: 'Этот адрес уже используется',
+	EVENT_NOT_FOUND: 'Выступление не найдено',
 	INCORRECT_PASSWORD: 'Неверная почта или пароль',
 	INVALID_CREDENTIALS: 'Неверная почта или пароль',
 	INVALID_OTP_CODE: 'Неверный или устаревший код',
 	INVALID_TELEGRAM_AUTH_PAYLOAD: 'Не удалось подтвердить Telegram',
+	OUTDATED_SCHEDULE_CHANGE: 'Расписание уже изменилось, обнови страницу',
 	PUSH_SUBSCRIPTION_ALREADY_EXISTS: 'Это устройство уже подключено к push-уведомлениям',
+	SAME_EVENTS_ARE_NOT_ALLOWED: 'Нельзя выбрать одно и то же выступление',
 	SKIPPED_EVENT_NOT_ALLOWED: 'Пропущенное выступление нельзя отметить как текущее',
 	SUBSCRIPTION_ALREADY_EXISTS: 'Ты уже подписан на это выступление',
 	TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER: 'Этот Telegram уже привязан к другому аккаунту',
@@ -102,10 +107,12 @@ const ERROR_MESSAGES: Record<string, string> = {
 	USER_ALREADY_EXISTS: 'Этот адрес уже используется',
 	USER_ALREADY_HAS_TELEGRAM_LINKED: 'К аккаунту уже привязан Telegram',
 	USER_ALREADY_HAS_TICKET_LINKED: 'У тебя уже привязан билет',
+	USER_HAS_NO_EMAIL: 'Сначала добавь почту к аккаунту',
 	USER_NOT_AUTHENTICATED: 'Нужно войти в аккаунт',
 	USER_NOT_FOUND: 'Аккаунт не найден',
 	USERNAME_ALREADY_TAKEN: 'Это имя пользователя уже занято',
-	USERNAME_PROFANITY: 'Псевдоним содержит недопустимые слова'
+	USERNAME_PROFANITY: 'Псевдоним содержит недопустимые слова',
+	VOTE_NOT_FOUND: 'Голос не найден'
 };
 
 export function getApiErrorDetail(error: unknown): string | null {
@@ -114,18 +121,21 @@ export function getApiErrorDetail(error: unknown): string | null {
 		return null;
 	}
 
-	// Простой словарь — большинство кодов
+	// Dictionary lookup covers most codes
 	const simple = ERROR_MESSAGES[payload.code];
 	if (simple) {
 		return simple;
 	}
 
-	// Коды, требующие дополнительной логики
+	// Codes that need extra logic
 	const details = payload.details ?? {};
 	switch (payload.code) {
 		case 'EMAIL_CODE_REQUEST_TOO_FAST':
 		case 'SCHEDULE_EDIT_TOO_FAST':
 		case 'NOTIFICATION_RETRY_AFTER':
+		case 'TOO_MANY_ATTEMPTS':
+		case 'TOO_MANY_OTP_ATTEMPTS':
+		case 'TOO_MANY_LOGIN_ATTEMPTS':
 			return formatRetryAfter(details.retry_after);
 		case 'ACCESS_DENIED':
 			return getAccessDeniedMessage(details);

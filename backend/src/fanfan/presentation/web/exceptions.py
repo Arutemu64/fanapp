@@ -1,6 +1,7 @@
 from collections.abc import Mapping
 from typing import cast
 
+import structlog
 from fastapi import HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from starlette.responses import JSONResponse
@@ -46,6 +47,7 @@ from fanfan.core.exceptions.tickets import (
 )
 from fanfan.core.exceptions.users import (
     EmailAlreadyExists,
+    InvalidEmail,
     TelegramAlreadyLinkedToAnotherUser,
     TelegramCannotBeUnlinkedWithoutEmail,
     UserAlreadyExists,
@@ -62,6 +64,8 @@ from fanfan.presentation.web.schemas.error import (
     ValidationErrorResponse,
 )
 
+logger = structlog.get_logger(__name__)
+
 EXCEPTION_STATUS_MAP: dict[type[AppException], int] = {
     # 400 Bad Request
     InvalidOtpCode: status.HTTP_400_BAD_REQUEST,
@@ -70,6 +74,10 @@ EXCEPTION_STATUS_MAP: dict[type[AppException], int] = {
     SameEventsAreNotAllowed: status.HTTP_400_BAD_REQUEST,
     SkippedEventNotAllowed: status.HTTP_400_BAD_REQUEST,
     UsernameProfanity: status.HTTP_400_BAD_REQUEST,
+    # Defensive: format validation normally happens at the Pydantic boundary
+    # (EmailStr), but the Email value object enforces its own invariant. Map it
+    # so any path that builds an Email from looser input fails as 400, not 500.
+    InvalidEmail: status.HTTP_400_BAD_REQUEST,
     # 401 Unauthorized
     UserNotAuthenticated: status.HTTP_401_UNAUTHORIZED,
     InvalidCredentials: status.HTTP_401_UNAUTHORIZED,
@@ -168,7 +176,7 @@ async def validation_exception_handler(
     )
 
 
-async def auth_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
     _ = request
 
     if isinstance(exc.detail, Mapping):
@@ -191,4 +199,20 @@ async def auth_exception_handler(request: Request, exc: HTTPException) -> JSONRe
             details={"status_code": exc.status_code},
         ),
         headers=exc.headers,
+    )
+
+
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Last-resort handler so unexpected errors still match the ErrorMessage shape.
+
+    Domain (AppException), HTTP, and validation errors are handled above; anything
+    that reaches here is an unanticipated bug. We log it (the request id is bound
+    by middleware) and return a generic 500 instead of leaking a traceback.
+    """
+    _ = request
+    logger.exception("Unhandled exception while handling request", exc_info=exc)
+
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content=_build_error_content(code="INTERNAL_ERROR"),
     )

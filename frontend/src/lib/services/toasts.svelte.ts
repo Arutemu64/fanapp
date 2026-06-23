@@ -54,8 +54,10 @@ export class ToastService {
 		if (typeof err === 'string') {
 			message = err;
 		}
-		// Keep network and unexpected runtime errors user-friendly.
-		else if (err instanceof Error) {
+		// A failed fetch surfaces as a TypeError, so treat that as a connectivity
+		// problem. Any other Error is an unexpected client-side bug, not a network
+		// issue, so keep its message generic instead of blaming the server.
+		else if (err instanceof TypeError) {
 			message = 'Не удалось связаться с сервером. Попробуй ещё раз.';
 		}
 
