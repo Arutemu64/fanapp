@@ -132,9 +132,10 @@
 			{#if !isMobile}
 				{@render navLink('Главная', '/', HomeOutline, HomeSolid)}
 				{@render navLink('Расписание', '/schedule', CalendarWeekOutline, CalendarWeekSolid)}
+				<!-- Order matches the bottom nav: voting before the map. -->
+				{@render navLink('Голосование', '/voting', ThumbsUpOutline, ThumbsUpSolid)}
 				<!-- Keep the venue map in the main navigation so it is reachable in one tap. -->
 				{@render navLink('Карта', '/map', MapPinAltOutline, MapPinAltSolid)}
-				{@render navLink('Голосование', '/voting', ThumbsUpOutline, ThumbsUpSolid)}
 			{/if}
 			{#if user}
 				{@render navLink('Обратная связь', '/feedback', AnnotationOutline, AnnotationSolid)}
