@@ -1,5 +1,6 @@
 import { error, redirect } from '@sveltejs/kit';
 import { createApiClient } from '$lib/api';
+import { throwApiError } from '$lib/api/errors';
 import { canManageSchedule } from '$lib/utils/permissions';
 import {
 	SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT,
@@ -25,12 +26,16 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	// Staff-only operational feed: stale data would misrepresent live state, so
 	// no offline cache here — fail hard when unreachable instead.
 	// Over-fetch one item so the client can tell whether a next page exists.
-	const { data, error: fetchError } = await client.GET('/schedule/changes/', {
+	const {
+		data,
+		error: fetchError,
+		response
+	} = await client.GET('/schedule/changes/', {
 		fetch,
 		params: { query: { limit: SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT, offset: 0 } }
 	});
 	if (fetchError || !data) {
-		error(503, 'Не удалось загрузить изменения расписания');
+		throwApiError(fetchError, response, 'Не удалось загрузить изменения расписания');
 	}
 
 	const changes = data.schedule_changes ?? [];

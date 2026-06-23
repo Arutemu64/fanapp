@@ -1,3 +1,4 @@
+import { error as kitError } from '@sveltejs/kit';
 import type { components } from '$lib/api/v1';
 
 // The closed set of error codes the API can return, generated from the backend
@@ -218,6 +219,30 @@ export function getApiErrorDetail(error: unknown): string | null {
 		return getValidationMessage(details);
 	}
 	return null;
+}
+
+export function getApiErrorCode(error: unknown): string | null {
+	return getApiErrorPayload(error)?.code ?? null;
+}
+
+/**
+ * Throw a SvelteKit error from a failed openapi-fetch call, so a `load` failure
+ * speaks the same language as a form/toast failure. Maps the API error `code` to
+ * the shared Russian copy and reuses the real HTTP status; `code` rides along on
+ * `App.Error` for the error page and Sentry. Usage:
+ * `if (apiError) throwApiError(apiError, response, 'Не удалось загрузить …');`
+ */
+export function throwApiError(
+	apiError: unknown,
+	response: { status: number } | undefined,
+	fallback: string
+): never {
+	// Clamp to an error status: a non-error response here means data was missing
+	// without an HTTP error, which we treat as a server-side problem.
+	const status = response && response.status >= 400 ? response.status : 500;
+	const message = getApiErrorDetail(apiError) ?? fallback;
+	const code = getApiErrorCode(apiError);
+	return kitError(status, code ? { message, code } : { message });
 }
 
 // Compile-time drift guard: every client-facing code must be covered by the
