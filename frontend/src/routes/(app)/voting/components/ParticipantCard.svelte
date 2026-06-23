@@ -20,10 +20,17 @@
 	let isLoading = $state(false);
 	let areActionsDisabled = $derived(isLoading || !canVote);
 
+	// Optimistic count so a vote/cancel moves the number instantly on flaky con-wifi,
+	// before the full refetch lands. A writable $derived lets us reassign it on click
+	// and snaps it back to the authoritative server value whenever fresh data arrives
+	// (after onVoted -> invalidate), so there's no double-counting to reconcile.
+	let votesCount = $derived(participant.votes_count);
+
 	async function handleVote() {
 		if (areActionsDisabled || participant.user_vote !== null) return;
 
 		isLoading = true;
+		votesCount += 1; // optimistic
 		try {
 			const { data, error, response } = await client.POST('/voting/votes', {
 				body: {
@@ -32,6 +39,7 @@
 			});
 
 			if (error || !response.ok) {
+				votesCount -= 1; // revert
 				toastService.error(error);
 				return;
 			}
@@ -41,6 +49,7 @@
 				onVoted?.();
 			}
 		} catch (err) {
+			votesCount -= 1; // revert
 			toastService.error(err);
 		} finally {
 			isLoading = false;
@@ -52,6 +61,7 @@
 		if (areActionsDisabled || vote === null) return;
 
 		isLoading = true;
+		votesCount -= 1; // optimistic
 		try {
 			const { error, response } = await client.DELETE('/voting/votes/{vote_id}', {
 				params: {
@@ -60,6 +70,7 @@
 			});
 
 			if (error || !response.ok) {
+				votesCount += 1; // revert
 				toastService.error(error);
 				return;
 			}
@@ -67,6 +78,7 @@
 			toastService.add('Голос отменён', 'success');
 			onVoted?.();
 		} catch (err) {
+			votesCount += 1; // revert
 			toastService.error(err);
 		} finally {
 			isLoading = false;
@@ -76,21 +88,11 @@
 
 <Card
 	class={[
-		'relative flex w-full max-w-none flex-col overflow-hidden p-4 transition-[box-shadow,border-color,background-color] hover:shadow-md',
+		'flex w-full max-w-none flex-col p-4 transition-[box-shadow,border-color,background-color]',
 		participant.user_vote !== null ? 'ring-2 ring-green-600 dark:ring-green-500' : ''
 	]}
 >
-	<!-- Watermark number -->
-	{#if participant.voting_number}
-		<div
-			class="pointer-events-none absolute right-2 bottom-0 text-8xl leading-none font-black text-gray-900/[0.04] select-none dark:text-white/[0.06]"
-			aria-hidden="true"
-		>
-			{participant.voting_number}
-		</div>
-	{/if}
-
-	<!-- Header row: number + badge -->
+	<!-- Header row: number + voted badge -->
 	<div class="mb-2 flex min-h-6 items-center justify-between gap-2">
 		{#if participant.voting_number}
 			<span class="text-xs font-semibold tracking-wide text-primary-600 dark:text-primary-400">
@@ -111,27 +113,35 @@
 	</div>
 
 	<!-- Title -->
-	<h3 class="relative z-10 flex-1 text-base leading-snug font-bold text-gray-900 dark:text-white">
+	<h3 class="flex-1 text-base leading-snug font-bold break-words text-gray-900 dark:text-white">
 		{participant.title}
 	</h3>
 
-	<!-- Footer row: vote count + action button -->
+	<!-- Footer row: vote count + action button.
+	     min-h reserves the action area height (pt-3 12px + 44px button = 56px) so the vote
+	     count stays vertically anchored when no button is shown — e.g. after voting elsewhere
+	     in the nomination, other cards drop the button and the row would otherwise collapse
+	     and make the count jump. Both buttons share the same 44px height below so toggling
+	     vote<->cancel doesn't shift either. -->
 	<div
-		class="relative z-10 mt-3 flex items-center justify-between gap-2 border-t border-gray-100 pt-3 dark:border-gray-700"
+		class="mt-3 flex min-h-14 items-center justify-between gap-2 border-t border-gray-100 pt-3 dark:border-gray-700"
 	>
 		<div class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
-			<HeartSolid class="h-3.5 w-3.5 shrink-0 text-red-400" />
-			<span>
-				{participant.votes_count}
-				{pluralize(participant.votes_count, 'голос', 'голоса', 'голосов')}
+			<HeartSolid
+				class="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
+				aria-hidden="true"
+			/>
+			<span aria-live="polite">
+				{votesCount}
+				{pluralize(votesCount, 'голос', 'голоса', 'голосов')}
 			</span>
 		</div>
 
 		{#if participant.user_vote !== null}
 			<Button
 				size="sm"
-				color="red"
-				outline
+				color="alternative"
+				class="min-h-11"
 				loading={isLoading}
 				disabled={areActionsDisabled}
 				onclick={handleCancelVote}
@@ -144,6 +154,7 @@
 			<Button
 				size="sm"
 				color="primary"
+				class="min-h-11"
 				loading={isLoading}
 				disabled={areActionsDisabled}
 				onclick={handleVote}
