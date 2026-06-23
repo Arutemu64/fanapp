@@ -61,6 +61,49 @@ function getFieldLabel(path: Array<string | number>): string | null {
 	return labels[lastSegment] ?? null;
 }
 
+// Pydantic error "type" -> short Russian reason. Kept lowercase so it reads
+// naturally when appended after a field label ("поле «пароль»: ...").
+const VALIDATION_TYPE_MESSAGES: Record<string, string> = {
+	missing: 'не заполнено',
+	string_too_short: 'слишком короткое значение',
+	string_too_long: 'слишком длинное значение',
+	string_pattern_mismatch: 'неверный формат',
+	value_error: 'неверный формат',
+	greater_than: 'значение слишком маленькое',
+	greater_than_equal: 'значение слишком маленькое',
+	less_than: 'значение слишком большое',
+	less_than_equal: 'значение слишком большое',
+	int_parsing: 'нужно число',
+	int_type: 'нужно число',
+	float_parsing: 'нужно число',
+	float_type: 'нужно число'
+};
+
+function capitalize(text: string): string {
+	return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function getValidationMessage(details: ApiErrorDetails): string {
+	const firstError = getValidationErrors(details)[0];
+	if (!firstError) {
+		return 'Проверь заполнение формы';
+	}
+
+	const fieldLabel = getFieldLabel(firstError.loc);
+	const reason = VALIDATION_TYPE_MESSAGES[firstError.type];
+
+	if (fieldLabel && reason) {
+		return `Проверь поле «${fieldLabel}»: ${reason}`;
+	}
+	if (fieldLabel) {
+		return `Проверь поле «${fieldLabel}»`;
+	}
+	if (reason) {
+		return capitalize(reason);
+	}
+	return 'Проверь заполнение формы';
+}
+
 function formatRetryAfter(value: unknown): string {
 	if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
 		return `Попробуй ещё раз через ${Math.ceil(value)} сек.`;
@@ -139,11 +182,8 @@ export function getApiErrorDetail(error: unknown): string | null {
 			return formatRetryAfter(details.retry_after);
 		case 'ACCESS_DENIED':
 			return getAccessDeniedMessage(details);
-		case 'VALIDATION_ERROR': {
-			const firstError = getValidationErrors(details)[0];
-			const fieldLabel = firstError ? getFieldLabel(firstError.loc) : null;
-			return fieldLabel ? `Проверь поле «${fieldLabel}»` : 'Проверь заполнение формы';
-		}
+		case 'VALIDATION_ERROR':
+			return getValidationMessage(details);
 		default:
 			return null;
 	}
