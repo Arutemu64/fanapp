@@ -115,9 +115,14 @@
 		{participant.title}
 	</h3>
 
-	<!-- Footer row: vote count + action button -->
+	<!-- Footer row: vote count + action button.
+	     min-h reserves the action area height (pt-3 12px + 38px button = 50px) so the vote
+	     count stays vertically anchored when no button is shown — e.g. after voting elsewhere
+	     in the nomination, other cards drop the button and the row would otherwise collapse
+	     and make the count jump. Both buttons are pinned to the same 38px height below so
+	     toggling vote<->cancel doesn't shift either. -->
 	<div
-		class="relative z-10 mt-3 flex items-center justify-between gap-2 border-t border-gray-100 pt-3 dark:border-gray-700"
+		class="relative z-10 mt-3 flex min-h-[3.125rem] items-center justify-between gap-2 border-t border-gray-100 pt-3 dark:border-gray-700"
 	>
 		<div class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
 			<HeartSolid class="h-3.5 w-3.5 shrink-0 text-red-400" />
@@ -132,6 +137,7 @@
 				size="sm"
 				color="red"
 				outline
+				class="min-h-[2.375rem]"
 				loading={isLoading}
 				disabled={areActionsDisabled}
 				onclick={handleCancelVote}
@@ -144,6 +150,7 @@
 			<Button
 				size="sm"
 				color="primary"
+				class="min-h-[2.375rem]"
 				loading={isLoading}
 				disabled={areActionsDisabled}
 				onclick={handleVote}
