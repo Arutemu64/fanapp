@@ -24,7 +24,6 @@ security_router = APIRouter()
     "Requires the current password for verification when one is already set.",
     responses={
         200: {"description": "Password changed successfully."},
-        401: {"model": ErrorMessage, "description": "User not authenticated."},
         404: {"model": ErrorMessage, "description": "User not found."},
         409: {"model": ErrorMessage, "description": "Current password is incorrect."},
     },
@@ -47,7 +46,6 @@ async def change_current_user_password(
     "and sends a confirmation code to the new email.",
     responses={
         200: {"description": "Email changed and confirmation code requested."},
-        401: {"model": ErrorMessage, "description": "User not authenticated."},
         404: {"model": ErrorMessage, "description": "User not found."},
         409: {
             "model": ErrorMessage,

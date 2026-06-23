@@ -1,8 +1,6 @@
-from typing import Any
-
 from fastapi import APIRouter
-from starlette import status
 
+from fanfan.presentation.web.responses import VALIDATION_RESPONSES
 from fanfan.presentation.web.routes.auth import auth_router
 from fanfan.presentation.web.routes.current_user import current_user_router
 from fanfan.presentation.web.routes.debug import debug_router
@@ -14,37 +12,23 @@ from fanfan.presentation.web.routes.settings import settings_router
 from fanfan.presentation.web.routes.sse import sse_router
 from fanfan.presentation.web.routes.voting import voting_router
 from fanfan.presentation.web.routes.webhooks import webhooks_router
-from fanfan.presentation.web.schemas.error import ErrorMessage, ValidationErrorResponse
 
 
 def setup_api_router() -> APIRouter:
     router = APIRouter()
 
-    common_responses: dict[int | str, dict[str, Any]] = {
-        status.HTTP_401_UNAUTHORIZED: {
-            "model": ErrorMessage,
-            "description": "Not authenticated.",
-        },
-        status.HTTP_403_FORBIDDEN: {
-            "model": ErrorMessage,
-            "description": "Access denied.",
-        },
-        status.HTTP_422_UNPROCESSABLE_CONTENT: {
-            "model": ValidationErrorResponse,
-            "description": "Request validation error.",
-        },
-    }
-
-    router.include_router(debug_router, responses=common_responses)
-    router.include_router(auth_router, responses=common_responses)
-    router.include_router(current_user_router, responses=common_responses)
-    router.include_router(settings_router, responses=common_responses)
-    router.include_router(sse_router, responses=common_responses)
-    router.include_router(schedule_router, responses=common_responses)
-    router.include_router(voting_router, responses=common_responses)
-    router.include_router(webhooks_router, responses=common_responses)
-    router.include_router(notifications_router, responses=common_responses)
-    router.include_router(push_router, responses=common_responses)
-    router.include_router(feedback_router, responses=common_responses)
+    # 401/403 are not global: routes that need a session declare the SessionCookie
+    # security marker and AUTH_RESPONSES themselves, so public routes stay clean.
+    router.include_router(debug_router, responses=VALIDATION_RESPONSES)
+    router.include_router(auth_router, responses=VALIDATION_RESPONSES)
+    router.include_router(current_user_router, responses=VALIDATION_RESPONSES)
+    router.include_router(settings_router, responses=VALIDATION_RESPONSES)
+    router.include_router(sse_router, responses=VALIDATION_RESPONSES)
+    router.include_router(schedule_router, responses=VALIDATION_RESPONSES)
+    router.include_router(voting_router, responses=VALIDATION_RESPONSES)
+    router.include_router(webhooks_router, responses=VALIDATION_RESPONSES)
+    router.include_router(notifications_router, responses=VALIDATION_RESPONSES)
+    router.include_router(push_router, responses=VALIDATION_RESPONSES)
+    router.include_router(feedback_router, responses=VALIDATION_RESPONSES)
 
     return router

@@ -7,8 +7,14 @@ from fanfan.application.interactors.feedback.submit_feedback import (
     SubmitFeedbackInput,
     SubmitFeedbackOutput,
 )
+from fanfan.presentation.web.responses import AUTH_RESPONSES
+from fanfan.presentation.web.security import session_security
 
-feedback_router = APIRouter(prefix="/feedback")
+feedback_router = APIRouter(
+    prefix="/feedback",
+    dependencies=[session_security],
+    responses=AUTH_RESPONSES,
+)
 
 
 @feedback_router.post(

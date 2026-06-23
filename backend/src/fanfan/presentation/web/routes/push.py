@@ -17,9 +17,16 @@ from fanfan.application.interactors.push_sub.delete_push_subscription import (
     DeletePushSubscription,
     DeletePushSubscriptionInput,
 )
+from fanfan.presentation.web.responses import AUTH_RESPONSES
 from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.security import session_security
 
-push_router = APIRouter(tags=["Push"], prefix="/push")
+push_router = APIRouter(
+    tags=["Push"],
+    prefix="/push",
+    dependencies=[session_security],
+    responses=AUTH_RESPONSES,
+)
 
 
 class PushSubscriptionStatus(BaseModel):
@@ -33,7 +40,6 @@ class PushSubscriptionStatus(BaseModel):
     "for the authenticated user's device.",
     responses={
         200: {"description": "Push subscription registered successfully."},
-        401: {"model": ErrorMessage, "description": "User not authenticated."},
         409: {
             "model": ErrorMessage,
             "description": "Push subscription already exists.",
@@ -55,7 +61,6 @@ async def subscribe(
     "device, so the full subscription list (incl. its keys) is not exposed.",
     responses={
         200: {"description": "Subscription status for the endpoint."},
-        401: {"model": ErrorMessage, "description": "User not authenticated."},
     },
 )
 @inject
@@ -74,8 +79,6 @@ async def check_subscription(
     status_code=204,
     responses={
         204: {"description": "Push subscription removed successfully."},
-        401: {"model": ErrorMessage, "description": "User not authenticated."},
-        403: {"model": ErrorMessage, "description": "Access denied."},
     },
 )
 @inject

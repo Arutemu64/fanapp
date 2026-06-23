@@ -1474,24 +1474,6 @@ export interface operations {
                     "application/json": components["schemas"]["DebugResponse"];
                 };
             };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
             /** @description Request validation error. */
             422: {
                 headers: {
@@ -1519,24 +1501,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthCheckResponse"];
-                };
-            };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
                 };
             };
             /** @description Request validation error. */
@@ -1572,15 +1536,6 @@ export interface operations {
             };
             /** @description Invalid email or password. */
             401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1630,24 +1585,6 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
             /** @description Request validation error. */
             422: {
                 headers: {
@@ -1690,7 +1627,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorMessage"];
                 };
             };
-            /** @description User not authenticated. */
+            /** @description Not authenticated. */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -1750,24 +1687,6 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
             /** @description Request validation error. */
             422: {
                 headers: {
@@ -1801,24 +1720,6 @@ export interface operations {
             };
             /** @description Email code is invalid or has already been used. */
             400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1862,24 +1763,6 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
             /** @description Request validation error. */
             422: {
                 headers: {
@@ -1909,24 +1792,6 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
             /** @description Request validation error. */
             422: {
                 headers: {
@@ -1954,24 +1819,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
-                };
-            };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
                 };
             };
             /** @description Request validation error. */
@@ -2165,7 +2012,7 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description User not authenticated. */
+            /** @description Not authenticated. */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -2234,7 +2081,7 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description User not authenticated. */
+            /** @description Not authenticated. */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -2299,7 +2146,7 @@ export interface operations {
                     "application/json": components["schemas"]["UserSocialAccountDTO"][];
                 };
             };
-            /** @description User not authenticated. */
+            /** @description Not authenticated. */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -2364,7 +2211,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorMessage"];
                 };
             };
-            /** @description User not authenticated. */
+            /** @description Not authenticated. */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -2429,7 +2276,7 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description User not authenticated. */
+            /** @description Not authenticated. */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -2503,7 +2350,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorMessage"];
                 };
             };
-            /** @description User not authenticated. */
+            /** @description Not authenticated. */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -2753,24 +2600,6 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
             /** @description Request validation error. */
             422: {
                 headers: {
@@ -2798,24 +2627,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GetScheduleOutput"];
-                };
-            };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
                 };
             };
             /** @description Request validation error. */
@@ -3523,24 +3334,6 @@ export interface operations {
                     "application/json": components["schemas"]["GetVotingStateOutput"];
                 };
             };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
             /** @description Request validation error. */
             422: {
                 headers: {
@@ -3568,24 +3361,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListVotingNominationsOutput"];
-                };
-            };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
                 };
             };
             /** @description Request validation error. */
@@ -3618,24 +3393,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GetVotingNominationOutput"];
-                };
-            };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
                 };
             };
             /** @description Nomination not found. */
@@ -3810,24 +3567,6 @@ export interface operations {
             };
             /** @description Invalid webhook payload. */
             400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4068,7 +3807,7 @@ export interface operations {
                     "application/json": components["schemas"]["PushSubscriptionStatus"];
                 };
             };
-            /** @description User not authenticated. */
+            /** @description Not authenticated. */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -4119,7 +3858,7 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description User not authenticated. */
+            /** @description Not authenticated. */
             401: {
                 headers: {
                     [name: string]: unknown;
@@ -4177,7 +3916,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description User not authenticated. */
+            /** @description Not authenticated. */
             401: {
                 headers: {
                     [name: string]: unknown;
