@@ -10,11 +10,30 @@
 	let waitingWorker = $state<ServiceWorker | null>(null);
 	let reloading = false;
 
+	// Held so we can poll for new builds ourselves (see checkForUpdate). SvelteKit's
+	// auto-registration registers the worker once on load and never re-checks, so
+	// without this an installed PWA kept open all event day would not notice a
+	// hot-fix deploy until a manual reload.
+	let registration: ServiceWorkerRegistration | null = null;
+
+	// How often to ask the browser to re-check the worker script while the app is
+	// open. Tuned for a live event where a fix may ship mid-session; the request is
+	// a cheap conditional GET that 304s when nothing changed.
+	const UPDATE_POLL_MS = 15 * 60 * 1000;
+
 	function promptFor(registration: ServiceWorkerRegistration) {
 		const worker = registration.waiting;
 		if (worker) {
 			waitingWorker = worker;
 		}
+	}
+
+	// Ask the browser to re-fetch the worker script; if it changed, the normal
+	// updatefound/statechange flow below surfaces the prompt. Errors (offline) are
+	// ignored — the next check retries.
+	function checkForUpdate() {
+		if (document.visibilityState !== 'visible') return;
+		registration?.update().catch(() => undefined);
 	}
 
 	function applyUpdate() {
@@ -26,24 +45,29 @@
 	onMount(() => {
 		if (!browser || !('serviceWorker' in navigator)) return;
 
-		navigator.serviceWorker.getRegistration().then((registration) => {
-			if (!registration) return;
+		navigator.serviceWorker.getRegistration().then((reg) => {
+			if (!reg) return;
+			registration = reg;
 
 			// A build may already be waiting from a previous visit.
-			promptFor(registration);
+			promptFor(reg);
 
 			// Or one finishes installing while this tab is open.
-			registration.addEventListener('updatefound', () => {
-				const installing = registration.installing;
+			reg.addEventListener('updatefound', () => {
+				const installing = reg.installing;
 				if (!installing) return;
 				installing.addEventListener('statechange', () => {
 					// `installed` + an existing controller means it's an update,
 					// not the first install — only then do we prompt.
 					if (installing.state === 'installed' && navigator.serviceWorker.controller) {
-						promptFor(registration);
+						promptFor(reg);
 					}
 				});
 			});
+
+			// Re-check immediately in case a deploy landed while the app was closed,
+			// then keep polling for the rest of the session.
+			checkForUpdate();
 		});
 
 		const onControllerChange = () => {
@@ -53,11 +77,18 @@
 		};
 		navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
 
+		const pollId = setInterval(checkForUpdate, UPDATE_POLL_MS);
+
 		return () => {
 			navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+			clearInterval(pollId);
 		};
 	});
 </script>
+
+<!-- Re-check on foreground so reopening the installed PWA picks up a deploy that
+	landed while it was backgrounded, without waiting for the poll interval. -->
+<svelte:document onvisibilitychange={checkForUpdate} />
 
 {#if waitingWorker}
 	<div
