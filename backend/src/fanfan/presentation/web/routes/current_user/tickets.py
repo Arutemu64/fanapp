@@ -13,10 +13,11 @@ tickets_router = APIRouter()
 
 @tickets_router.post(
     "/ticket",
+    status_code=204,
     summary="Link ticket",
     description="Links provided ticket to current user.",
     responses={
-        200: {"description": "Ticket linked successfully."},
+        204: {"description": "Ticket linked successfully."},
         404: {"model": ErrorMessage, "description": "Ticket not found."},
         409: {
             "model": ErrorMessage,

@@ -37,10 +37,11 @@ async def get_current_user(
 
 @profile_router.patch(
     "/",
+    status_code=204,
     summary="Update current user",
     description="Updates the currently authenticated user's profile information.",
     responses={
-        200: {"description": "User updated successfully."},
+        204: {"description": "User updated successfully."},
         409: {"model": ErrorMessage, "description": "Username already taken."},
     },
 )
@@ -54,9 +55,10 @@ async def update_current_user(
 
 @profile_router.patch(
     "/settings",
+    status_code=204,
     summary="Update current user settings",
     description="Updates the currently authenticated user's profile settings.",
-    responses={200: {"description": "User settings updated successfully."}},
+    responses={204: {"description": "User settings updated successfully."}},
 )
 @inject
 async def update_current_user_settings(

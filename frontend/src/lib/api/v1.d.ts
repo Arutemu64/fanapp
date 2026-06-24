@@ -1601,13 +1601,11 @@ export interface operations {
         };
         responses: {
             /** @description Email successfully confirmed. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Code is invalid or expired. */
             400: {
@@ -1898,13 +1896,11 @@ export interface operations {
         };
         responses: {
             /** @description User updated successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -1958,13 +1954,11 @@ export interface operations {
         };
         responses: {
             /** @description User settings updated successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -2009,13 +2003,11 @@ export interface operations {
         };
         responses: {
             /** @description Password changed successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -2078,13 +2070,11 @@ export interface operations {
         };
         responses: {
             /** @description Email changed and confirmation code requested. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -2197,13 +2187,11 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Telegram account unlinked successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -2329,13 +2317,11 @@ export interface operations {
         };
         responses: {
             /** @description Ticket linked successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -2454,13 +2440,11 @@ export interface operations {
         };
         responses: {
             /** @description Festival settings updated successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -2571,13 +2555,11 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Event set as current successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Event is skipped or invalid for this operation. */
             400: {
@@ -2647,13 +2629,11 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Current event cleared successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -2712,13 +2692,11 @@ export interface operations {
         };
         responses: {
             /** @description Event moved successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Invalid move: target and destination are the same. */
             400: {
@@ -2791,13 +2769,11 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Event marked as skipped. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Cannot skip the current active event. */
             400: {
@@ -2870,13 +2846,11 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Event restored to active schedule. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Event state cannot be modified in its current context. */
             400: {
@@ -3603,13 +3577,11 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description All notifications marked as read. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -3650,13 +3622,11 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Test notification created successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -3801,7 +3771,7 @@ export interface operations {
         };
         responses: {
             /** @description Push subscription registered successfully. */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };

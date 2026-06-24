@@ -32,11 +32,12 @@ management_router = APIRouter(
 
 @management_router.patch(
     "/{event_id}/current",
+    status_code=204,
     summary="Set specific event as current",
     description="Updates the schedule state to mark a specific event as active. "
     "Validates timing and event status.",
     responses={
-        200: {"description": "Event set as current successfully."},
+        204: {"description": "Event set as current successfully."},
         400: {
             "model": ErrorMessage,
             "description": "Event is skipped or invalid for this operation.",
@@ -54,11 +55,12 @@ async def set_event_as_current(
 
 @management_router.delete(
     "/current",
+    status_code=204,
     summary="Unset current schedule event",
     description="Clears the currently active event from the schedule. "
     "Subject to rate limiting.",
     responses={
-        200: {"description": "Current event cleared successfully."},
+        204: {"description": "Current event cleared successfully."},
     },
 )
 @inject
@@ -70,11 +72,12 @@ async def uncheck_current_event(
 
 @management_router.patch(
     "/{event_id}/move",
+    status_code=204,
     summary="Reorder schedule event",
     description="Moves an event to a new position in the sequence, "
     "specifically after the provided event ID.",
     responses={
-        200: {"description": "Event moved successfully."},
+        204: {"description": "Event moved successfully."},
         400: {
             "model": ErrorMessage,
             "description": "Invalid move: target and destination are the same.",
@@ -100,11 +103,12 @@ async def move_schedule_event(
 
 @management_router.patch(
     "/{event_id}/skip",
+    status_code=204,
     summary="Skip a schedule event",
     description="Marks a specific event as skipped. "
     "Note: the currently active event cannot be skipped.",
     responses={
-        200: {"description": "Event marked as skipped."},
+        204: {"description": "Event marked as skipped."},
         400: {
             "model": ErrorMessage,
             "description": "Cannot skip the current active event.",
@@ -122,11 +126,12 @@ async def skip_schedule_event(
 
 @management_router.patch(
     "/{event_id}/unskip",
+    status_code=204,
     summary="Unskip a schedule event",
     description="Restores a previously skipped event back into "
     "the active schedule sequence.",
     responses={
-        200: {"description": "Event restored to active schedule."},
+        204: {"description": "Event restored to active schedule."},
         400: {
             "model": ErrorMessage,
             "description": "Event state cannot be modified in its current context.",

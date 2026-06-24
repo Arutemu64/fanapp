@@ -98,10 +98,11 @@ async def link_telegram_callback(
 
 @connections_router.delete(
     "/telegram",
+    status_code=204,
     summary="Unlink Telegram account",
     description="Unlinks the Telegram account from the currently authenticated user.",
     responses={
-        200: {"description": "Telegram account unlinked successfully."},
+        204: {"description": "Telegram account unlinked successfully."},
         404: {"model": ErrorMessage, "description": "User not found."},
         409: {
             "model": ErrorMessage,

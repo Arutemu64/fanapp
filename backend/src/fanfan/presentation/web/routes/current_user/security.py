@@ -19,11 +19,12 @@ security_router = APIRouter()
 
 @security_router.post(
     "/password",
+    status_code=204,
     summary="Change current user password",
     description="Changes the authenticated user's password. "
     "Requires the current password for verification when one is already set.",
     responses={
-        200: {"description": "Password changed successfully."},
+        204: {"description": "Password changed successfully."},
         404: {"model": ErrorMessage, "description": "User not found."},
         409: {"model": ErrorMessage, "description": "Current password is incorrect."},
     },
@@ -41,11 +42,12 @@ async def change_current_user_password(
 
 @security_router.post(
     "/email",
+    status_code=204,
     summary="Change current user email",
     description="Changes the authenticated user's email address "
     "and sends a confirmation code to the new email.",
     responses={
-        200: {"description": "Email changed and confirmation code requested."},
+        204: {"description": "Email changed and confirmation code requested."},
         404: {"model": ErrorMessage, "description": "User not found."},
         409: {
             "model": ErrorMessage,

@@ -181,13 +181,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "Email successfully confirmed.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "Email successfully confirmed."
           },
           "422": {
             "description": "Request validation error.",
@@ -507,13 +502,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "User updated successfully.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "User updated successfully."
           },
           "422": {
             "description": "Request validation error.",
@@ -582,13 +572,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "User settings updated successfully.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "User settings updated successfully."
           },
           "422": {
             "description": "Request validation error.",
@@ -647,13 +632,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "Password changed successfully.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "Password changed successfully."
           },
           "422": {
             "description": "Request validation error.",
@@ -732,13 +712,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "Email changed and confirmation code requested.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "Email changed and confirmation code requested."
           },
           "422": {
             "description": "Request validation error.",
@@ -863,13 +838,8 @@
         "description": "Unlinks the Telegram account from the currently authenticated user.",
         "operationId": "unlink_telegram_account",
         "responses": {
-          "200": {
-            "description": "Telegram account unlinked successfully.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "Telegram account unlinked successfully."
           },
           "422": {
             "description": "Request validation error.",
@@ -1016,13 +986,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "Ticket linked successfully.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "Ticket linked successfully."
           },
           "422": {
             "description": "Request validation error.",
@@ -1166,13 +1131,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "Festival settings updated successfully.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "Festival settings updated successfully."
           },
           "422": {
             "description": "Request validation error.",
@@ -1312,13 +1272,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Event set as current successfully.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "Event set as current successfully."
           },
           "422": {
             "description": "Request validation error.",
@@ -1400,13 +1355,8 @@
         "description": "Clears the currently active event from the schedule. Subject to rate limiting.",
         "operationId": "uncheck_current_event",
         "responses": {
-          "200": {
-            "description": "Current event cleared successfully.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "Current event cleared successfully."
           },
           "422": {
             "description": "Request validation error.",
@@ -1502,13 +1452,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Event moved successfully.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "Event moved successfully."
           },
           "422": {
             "description": "Request validation error.",
@@ -1609,13 +1554,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Event marked as skipped.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "Event marked as skipped."
           },
           "422": {
             "description": "Request validation error.",
@@ -1716,13 +1656,8 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Event restored to active schedule.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "Event restored to active schedule."
           },
           "422": {
             "description": "Request validation error.",
@@ -2668,13 +2603,8 @@
         "description": "Marks all unread notifications for the authenticated user as read.",
         "operationId": "mark_all_notifications_read",
         "responses": {
-          "200": {
-            "description": "All notifications marked as read.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "All notifications marked as read."
           },
           "422": {
             "description": "Request validation error.",
@@ -2723,13 +2653,8 @@
         "description": "Creates a test notification for the authenticated user and sends it through all connected channels.",
         "operationId": "send_test_notification",
         "responses": {
-          "200": {
-            "description": "Test notification created successfully.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "Test notification created successfully."
           },
           "422": {
             "description": "Request validation error.",
@@ -2860,7 +2785,7 @@
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "Push subscription registered successfully.",
             "content": {
               "application/json": {

@@ -15,12 +15,13 @@ email_code_router = APIRouter()
 
 @email_code_router.post(
     "/confirm-email-code",
+    status_code=204,
     summary="Confirm user email with code",
     description="Confirms the new email address using a one-time code received at that address.",  # noqa: E501
     dependencies=[session_security],
     responses={
         **AUTH_RESPONSES,
-        200: {"description": "Email successfully confirmed."},
+        204: {"description": "Email successfully confirmed."},
         400: {"model": ErrorMessage, "description": "Code is invalid or expired."},
         404: {"model": ErrorMessage, "description": "User not found."},
     },
