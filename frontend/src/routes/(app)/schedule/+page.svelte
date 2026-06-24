@@ -181,13 +181,13 @@
 </script>
 
 <svelte:head>
-	<title>Расписание · ФАН ФАН</title>
+	<title>Программа · ФАН ФАН</title>
 </svelte:head>
 
 <div {@attach capturePageRoot} class="space-y-4">
 	{#if showStaleNotice}
 		<StaleDataNotice
-			message="Нет связи. Показано сохранённое расписание — обновится при подключении."
+			message="Нет связи. Показана сохранённая программа — обновится при подключении."
 			cachedAt={data.cachedAt}
 		/>
 	{/if}
@@ -286,11 +286,11 @@
 			>
 				<p class="text-base font-bold text-gray-900 dark:text-white">
 					{#if data.offlineMiss}
-						Расписание недоступно офлайн
+						Программа недоступна офлайн
 					{:else if hasActiveFilters}
 						Ничего не нашлось
 					{:else}
-						Расписание пока пусто
+						Программа пока пуста
 					{/if}
 				</p>
 				<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">

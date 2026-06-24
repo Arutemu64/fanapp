@@ -34,7 +34,7 @@
 			/>
 		{/if}
 	</BottomNavItem>
-	<BottomNavItem btnName="Расписание" href="/schedule">
+	<BottomNavItem btnName="Программа" href="/schedule">
 		{#if isActive('/schedule')}
 			<CalendarWeekSolid class="mb-1 h-6 w-6 text-primary-600 dark:text-primary-400" />
 		{:else}

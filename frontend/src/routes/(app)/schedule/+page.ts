@@ -43,18 +43,18 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 		// and bottom nav stay usable. A real online failure is still a hard error.
 		if (!isReachable()) {
 			return {
-				title: 'Расписание',
+				title: 'Программа',
 				schedule: [],
 				stale: true,
 				cachedAt: undefined,
 				offlineMiss: true
 			};
 		}
-		error(503, 'Не удалось загрузить расписание');
+		error(503, 'Не удалось загрузить программу');
 	}
 
 	return {
-		title: 'Расписание',
+		title: 'Программа',
 		schedule: mergeSubscriptions(schedule, subscriptions),
 		stale,
 		cachedAt,

@@ -133,7 +133,7 @@
 
 		const toastMessage = skip
 			? 'Выступление помечено как пропущенное'
-			: 'Выступление возвращено в расписание';
+			: 'Выступление возвращено в программу';
 		toastService.add(toastMessage, 'success');
 	}
 
@@ -176,7 +176,7 @@
 		confirmConfig = isSkipped
 			? {
 					title: 'Вернуть выступление',
-					message: `Вернуть «${event.title}» в расписание?`,
+					message: `Вернуть «${event.title}» в программу?`,
 					confirmLabel: 'Вернуть',
 					color: 'primary',
 					notifyTone: 'muted',
