@@ -5,8 +5,7 @@
 	import CaptchaWidget, { captchaEnabled } from '$lib/components/CaptchaWidget.svelte';
 	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
 	import { Alert, Button, Helper, Input, Label, Spinner } from 'flowbite-svelte';
-	import { EnvelopeSolid, LockSolid } from 'flowbite-svelte-icons';
-	import { tick } from 'svelte';
+	import { EnvelopeSolid } from 'flowbite-svelte-icons';
 	import VerifyCodeForm from './VerifyCodeForm.svelte';
 
 	let {
@@ -32,12 +31,38 @@
 	let captchaToken = $state<string | null>(null);
 	let resetCaptcha = $state<(() => void) | undefined>(undefined);
 
+	// Set when the user submits before the invisible captcha has produced a token.
+	// We hold the request and let the effect below fire it once the token lands,
+	// so the user never has to tap "Продолжить" a second time.
+	let awaitingCaptcha = $state(false);
+
+	// Safety net: if the invisible captcha never resolves (widget/network error),
+	// don't spin forever — fall back to a retryable error after this long.
+	const CAPTCHA_WAIT_TIMEOUT_MS = 10000;
+	let captchaWaitTimer: ReturnType<typeof setTimeout> | undefined;
+
+	function clearCaptchaWait() {
+		clearTimeout(captchaWaitTimer);
+		captchaWaitTimer = undefined;
+	}
+
+	// In flight from the user's point of view: the request is running, or we're
+	// holding it until the background captcha resolves.
+	let isRequesting = $derived(activeAction === 'code-request' || awaitingCaptcha);
+
 	$effect(() => {
-		isBusy = activeAction !== null;
+		isBusy = isRequesting;
 	});
 
 	$effect(() => {
 		isWaitingForCode = !!codeSentTo;
+	});
+
+	// Fulfill a deferred submit the moment the invisible captcha solves.
+	$effect(() => {
+		if (awaitingCaptcha && captchaToken) {
+			void handleLoginCodeRequest();
+		}
 	});
 
 	let normalizedEmail = $derived(normalizeEmail(email));
@@ -52,6 +77,9 @@
 		emailError = '';
 		formError = '';
 		codeSentTo = '';
+		// Editing the email cancels any submit we were holding for the captcha.
+		awaitingCaptcha = false;
+		clearCaptchaWait();
 	}
 
 	function validateEmailCodeRequestForm(): boolean {
@@ -76,16 +104,27 @@
 		}
 
 		if (!validateEmailCodeRequestForm()) {
+			awaitingCaptcha = false;
+			clearCaptchaWait();
 			return;
 		}
 
-		// The captcha runs invisibly, so there is nothing for the user to click.
-		// If the token isn't ready yet, ask them to retry in a moment.
+		// The captcha runs invisibly. If its token isn't ready yet, hold the
+		// request; the effect above re-runs this once the token arrives.
 		if (captchaEnabled && !captchaToken) {
-			formError = 'Проверка ещё не завершена, попробуйте ещё раз через секунду';
+			awaitingCaptcha = true;
+			clearCaptchaWait();
+			captchaWaitTimer = setTimeout(() => {
+				if (awaitingCaptcha) {
+					awaitingCaptcha = false;
+					formError = 'Не удалось пройти проверку. Попробуй ещё раз';
+				}
+			}, CAPTCHA_WAIT_TIMEOUT_MS);
 			return;
 		}
 
+		awaitingCaptcha = false;
+		clearCaptchaWait();
 		const trimmedEmail = normalizedEmail;
 
 		activeAction = 'code-request';
@@ -105,12 +144,11 @@
 				return;
 			}
 
+			// OtpInput auto-focuses its first box on mount, so no manual focus here.
 			codeSentTo = trimmedEmail;
-			await tick();
-			document.getElementById('code-0')?.focus();
 		} catch (err) {
 			console.error('Login code request exception:', err);
-			formError = 'Произошла непредвиденная ошибка';
+			formError = 'Произошла непредвиденная ошибка. Попробуй ещё раз';
 			resetCaptcha?.();
 			captchaToken = null;
 		} finally {
@@ -148,7 +186,7 @@
 				autocapitalize="off"
 				spellcheck={false}
 				required
-				disabled={isBusy && activeAction === null}
+				disabled={isRequesting}
 				class="ps-9"
 				color={emailColor}
 				oninput={resetEmailFeedback}
@@ -170,31 +208,30 @@
 
 		<CaptchaWidget bind:token={captchaToken} bind:reset={resetCaptcha} />
 
-		<div class="flex flex-col space-y-2">
-			<Button
-				type="submit"
-				color="primary"
-				class="min-h-11 w-full rounded-xl font-medium"
-				disabled={isBusy && activeAction === null}
-			>
-				{#if activeAction === 'code-request'}
-					<Spinner size="4" class="mr-2" color="primary" />
-					Отправляем…
-				{:else}
-					Продолжить
-				{/if}
-			</Button>
+		<Button
+			type="submit"
+			color="primary"
+			class="min-h-11 w-full rounded-xl font-medium"
+			disabled={isRequesting}
+		>
+			{#if isRequesting}
+				<Spinner size="4" class="mr-2" color="primary" />
+				Отправляем…
+			{:else}
+				Продолжить
+			{/if}
+		</Button>
 
-			<Button
+		<!-- Password login is the minority path, so it's a quiet link, not a third button. -->
+		<div class="text-center">
+			<button
 				type="button"
-				color="light"
-				class="min-h-11 w-full rounded-xl font-medium"
-				disabled={isBusy && activeAction === null}
+				class="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium text-primary-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-50 dark:text-primary-400"
 				onclick={() => (showPasswordForm = true)}
+				disabled={isRequesting}
 			>
-				<LockSolid class="me-2 h-4 w-4" />
 				Войти с паролем
-			</Button>
+			</button>
 		</div>
 	</form>
 {/if}

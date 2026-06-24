@@ -36,12 +36,36 @@
 	let captchaToken = $state<string | null>(null);
 	let resetCaptcha = $state<(() => void) | undefined>(undefined);
 
+	// Set when the user taps resend before the invisible captcha has a token.
+	let awaitingCaptcha = $state(false);
+
+	// Safety net: if the invisible captcha never resolves (widget/network error),
+	// don't spin forever — fall back to a retryable error after this long.
+	const CAPTCHA_WAIT_TIMEOUT_MS = 10000;
+	let captchaWaitTimer: ReturnType<typeof setTimeout> | undefined;
+
+	function clearCaptchaWait() {
+		clearTimeout(captchaWaitTimer);
+		captchaWaitTimer = undefined;
+	}
+
+	// Resend is in flight when its request runs or we're holding it for the captcha.
+	let isResending = $derived(activeAction === 'code-request' || awaitingCaptcha);
+	// Any in-flight work in this form (verifying the code, or resending it).
+	let busy = $derived(activeAction !== null || awaitingCaptcha);
+
 	const eventsClient = getEventsClient();
 	const toastService = getToastService();
 
-	// Update parent isBusy state
 	$effect(() => {
-		isBusy = activeAction !== null;
+		isBusy = busy;
+	});
+
+	// Fulfill a deferred resend the moment the invisible captcha solves.
+	$effect(() => {
+		if (awaitingCaptcha && captchaToken) {
+			void handleLoginCodeRequest();
+		}
 	});
 
 	function startCooldown() {
@@ -58,7 +82,10 @@
 
 	onMount(() => {
 		startCooldown();
-		return () => clearInterval(resendInterval);
+		return () => {
+			clearInterval(resendInterval);
+			clearCaptchaWait();
+		};
 	});
 
 	function resetLoginCodeFeedback() {
@@ -108,20 +135,29 @@
 			await finishLogin('Вход выполнен');
 		} catch (err) {
 			console.error('Login code submit exception:', err);
-			formError = 'Произошла непредвиденная ошибка';
+			formError = 'Произошла непредвиденная ошибка. Попробуй ещё раз';
 		} finally {
 			activeAction = null;
 		}
 	}
 
 	async function handleLoginCodeRequest() {
-		// The captcha runs invisibly, so there is nothing for the user to click.
-		// If the token isn't ready yet, ask them to retry in a moment.
+		// The captcha runs invisibly. If its token isn't ready yet, hold the
+		// resend; the effect above re-runs this once the token arrives.
 		if (captchaEnabled && !captchaToken) {
-			formError = 'Проверка ещё не завершена, попробуйте ещё раз через секунду';
+			awaitingCaptcha = true;
+			clearCaptchaWait();
+			captchaWaitTimer = setTimeout(() => {
+				if (awaitingCaptcha) {
+					awaitingCaptcha = false;
+					formError = 'Не удалось пройти проверку. Попробуй ещё раз';
+				}
+			}, CAPTCHA_WAIT_TIMEOUT_MS);
 			return;
 		}
 
+		awaitingCaptcha = false;
+		clearCaptchaWait();
 		activeAction = 'code-request';
 		loginCodeError = '';
 		formError = '';
@@ -178,7 +214,7 @@
 		<Label class="mb-2 block text-center">Код подтверждения</Label>
 		<OtpInput
 			bind:value={loginCode}
-			disabled={isBusy && activeAction === null}
+			disabled={busy}
 			hasError={Boolean(loginCodeError)}
 			onInput={resetLoginCodeFeedback}
 			onComplete={submitLoginCode}
@@ -186,7 +222,9 @@
 		{#if loginCodeError}
 			<Helper color="red" class="mt-1 block text-center">{loginCodeError}</Helper>
 		{:else}
-			<Helper class="mt-1 block text-center">Введи 6 цифр из письма.</Helper>
+			<Helper class="mt-1 block text-center">
+				Введи 6 цифр из письма. Не пришло — проверь папку «Спам».
+			</Helper>
 		{/if}
 	</div>
 
@@ -194,7 +232,7 @@
 		type="submit"
 		color="primary"
 		class="min-h-11 w-full rounded-xl font-medium"
-		disabled={(isBusy && activeAction === null) || loginCode.length < 6}
+		disabled={busy || loginCode.length < 6}
 	>
 		{#if activeAction === 'code-login'}
 			<Spinner size="4" class="mr-2" color="primary" />
@@ -211,10 +249,10 @@
 			type="button"
 			color="alternative"
 			class="min-h-11 w-full rounded-xl font-medium"
-			disabled={(isBusy && activeAction === null) || resendCooldown > 0}
+			disabled={busy || resendCooldown > 0}
 			onclick={() => void handleLoginCodeRequest()}
 		>
-			{#if activeAction === 'code-request'}
+			{#if isResending}
 				<Spinner size="4" class="mr-2" color="primary" />
 				Отправляем…
 			{:else if resendCooldown > 0}
@@ -229,7 +267,7 @@
 			type="button"
 			color="light"
 			class="min-h-11 w-full rounded-xl font-medium"
-			disabled={isBusy && activeAction === null}
+			disabled={busy}
 			onclick={() => onBack?.()}
 		>
 			<ArrowLeftOutline class="me-2 h-4 w-4" />

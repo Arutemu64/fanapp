@@ -8,11 +8,22 @@
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Alert, Button, Helper, Input, Label, Spinner } from 'flowbite-svelte';
-	import { EnvelopeSolid, EyeOutline, EyeSlashOutline, LockSolid } from 'flowbite-svelte-icons';
+	import {
+		ArrowLeftOutline,
+		EnvelopeSolid,
+		EyeOutline,
+		EyeSlashOutline,
+		LockSolid
+	} from 'flowbite-svelte-icons';
 
-	let { email = $bindable(''), isBusy = $bindable(false) } = $props<{
+	let {
+		email = $bindable(''),
+		isBusy = $bindable(false),
+		onBack
+	} = $props<{
 		email: string;
 		isBusy?: boolean;
+		onBack?: () => void;
 	}>();
 
 	type ActiveAction = 'password' | null;
@@ -27,9 +38,10 @@
 	const eventsClient = getEventsClient();
 	const toastService = getToastService();
 
-	// Update parent isBusy state based on local activeAction
+	let busy = $derived(activeAction !== null);
+
 	$effect(() => {
-		isBusy = activeAction !== null;
+		isBusy = busy;
 	});
 
 	let normalizedEmail = $derived(normalizeEmail(email));
@@ -146,7 +158,7 @@
 			autocapitalize="off"
 			spellcheck={false}
 			required
-			disabled={isBusy && activeAction === null}
+			disabled={busy}
 			class="ps-9"
 			color={emailColor}
 			oninput={resetEmailFeedback}
@@ -172,7 +184,7 @@
 			placeholder="••••••••"
 			autocomplete="current-password"
 			required
-			disabled={isBusy && activeAction === null}
+			disabled={busy}
 			class="ps-9"
 			color={passwordColor}
 			oninput={resetPasswordFeedback}
@@ -205,7 +217,7 @@
 		type="submit"
 		color="primary"
 		class="min-h-11 w-full rounded-xl font-medium"
-		disabled={isBusy && activeAction === null}
+		disabled={busy}
 	>
 		{#if activeAction === 'password'}
 			<Spinner size="4" class="mr-2" color="primary" />
@@ -213,5 +225,16 @@
 		{:else}
 			Войти
 		{/if}
+	</Button>
+
+	<Button
+		type="button"
+		color="light"
+		class="min-h-11 w-full rounded-xl font-medium"
+		disabled={busy}
+		onclick={() => onBack?.()}
+	>
+		<ArrowLeftOutline class="me-2 h-4 w-4" />
+		Назад
 	</Button>
 </form>
