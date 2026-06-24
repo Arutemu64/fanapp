@@ -75,7 +75,7 @@
 			list.push({
 				key: 'notifications',
 				title: 'Настроить уведомления',
-				description: 'Получай напоминания о начале выступлений и изменениях в расписании.',
+				description: 'Получай напоминания о начале выступлений и изменениях в программе.',
 				icon: BellIcon,
 				accent: 'blue',
 				actionLabel: 'Настроить',

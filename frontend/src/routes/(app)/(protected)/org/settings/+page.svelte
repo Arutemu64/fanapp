@@ -106,7 +106,7 @@
 	<title>Настройки фестиваля · ФАН ФАН</title>
 </svelte:head>
 
-<SectionIntro description="Управляй голосованием и таймаутом между анонсами расписания." />
+<SectionIntro description="Управляй голосованием и таймаутом между анонсами программы." />
 
 <Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
 	<form class="space-y-5" onsubmit={handleSubmit}>

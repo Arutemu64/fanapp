@@ -59,7 +59,7 @@
 			});
 
 			if (error || !result) {
-				toastService.error('Не удалось загрузить изменения расписания');
+				toastService.error('Не удалось загрузить изменения программы');
 				return;
 			}
 
@@ -70,7 +70,7 @@
 			extraOffset += nextChanges.length;
 		} catch (error) {
 			console.error('Failed to load more schedule changes', error);
-			toastService.error('Не удалось загрузить изменения расписания');
+			toastService.error('Не удалось загрузить изменения программы');
 		} finally {
 			isLoadingMore = false;
 		}

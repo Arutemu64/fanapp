@@ -8,10 +8,10 @@ export const load: PageLoad = async ({ parent }) => {
 	// Mirror the backend SCHEDULE_IMPORT check so the page is not shown to users
 	// who would be rejected on submit.
 	if (!canImportSchedule(user)) {
-		error(403, 'У тебя нет доступа к импорту расписания');
+		error(403, 'У тебя нет доступа к импорту программы');
 	}
 
 	return {
-		title: 'Импорт расписания'
+		title: 'Импорт программы'
 	};
 };

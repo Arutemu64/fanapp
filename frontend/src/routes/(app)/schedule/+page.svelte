@@ -212,7 +212,7 @@
 					searchQuery = '';
 				}}
 				name="schedule_search"
-				aria-label="Поиск по расписанию"
+				aria-label="Поиск по программе"
 				placeholder="Поиск по номеру или названию…"
 				autocomplete="off"
 				spellcheck={false}
