@@ -17,7 +17,7 @@
 	import { canManageSchedule } from '$lib/utils/permissions';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { createApiClient } from '$lib/api';
-	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
+	import type { ScheduleItemWithSubscription } from '$lib/types/schedule';
 	import MoveEventModal from './MoveEventModal.svelte';
 	import SubscribeModal from './SubscribeModal.svelte';
 	import UnsubscribeModal from './UnsubscribeModal.svelte';
@@ -26,9 +26,9 @@
 	const client = createApiClient();
 
 	interface Props {
-		event: ScheduleEventWithSubscription;
-		schedule: ScheduleEventWithSubscription[];
-		currentEvent: ScheduleEventWithSubscription | null;
+		event: ScheduleItemWithSubscription;
+		schedule: ScheduleItemWithSubscription[];
+		currentEvent: ScheduleItemWithSubscription | null;
 		user: CurrentUserDTO | null;
 	}
 
@@ -87,8 +87,8 @@
 	);
 
 	async function handleMarkCurrent() {
-		const { error, response } = await client.PATCH('/schedule/{event_id}/current', {
-			params: { path: { event_id: event.id } }
+		const { error, response } = await client.PATCH('/schedule/{schedule_item_id}/current', {
+			params: { path: { schedule_item_id: event.id } }
 		});
 
 		if (error || !response.ok) {
@@ -120,8 +120,8 @@
 		// Flip the row immediately; revert below if the request fails.
 		optimisticSkipped = skip;
 
-		const { error, response } = await client.PATCH('/schedule/{event_id}', {
-			params: { path: { event_id: event.id } },
+		const { error, response } = await client.PATCH('/schedule/{schedule_item_id}', {
+			params: { path: { schedule_item_id: event.id } },
 			body: { is_skipped: skip }
 		});
 
@@ -133,7 +133,7 @@
 
 		const toastMessage = skip
 			? 'Выступление помечено как пропущенное'
-			: 'Выступление возвращено в расписание';
+			: 'Выступление возвращено в программу';
 		toastService.add(toastMessage, 'success');
 	}
 
@@ -176,7 +176,7 @@
 		confirmConfig = isSkipped
 			? {
 					title: 'Вернуть выступление',
-					message: `Вернуть «${event.title}» в расписание?`,
+					message: `Вернуть «${event.title}» в программу?`,
 					confirmLabel: 'Вернуть',
 					color: 'primary',
 					notifyTone: 'muted',

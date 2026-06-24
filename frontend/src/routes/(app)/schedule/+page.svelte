@@ -4,7 +4,7 @@
 	import EventCard from './components/EventCard.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService } from '$lib/services/offline.svelte';
-	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
+	import type { ScheduleItemWithSubscription } from '$lib/types/schedule';
 	import type { CurrentUserDTO } from '$lib/types/user';
 	import type { PageProps } from './$types';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
@@ -16,7 +16,7 @@
 	type ScheduleNominationGroup = {
 		title: string;
 		eventCount: number;
-		events: ScheduleEventWithSubscription[];
+		events: ScheduleItemWithSubscription[];
 	};
 
 	type ScheduleBlockGroup = {
@@ -27,7 +27,7 @@
 
 	// Mirror the loaded page data so the component reads schedule from one local source.
 	let { data }: PageProps = $props();
-	let schedule: ScheduleEventWithSubscription[] = $derived(data.schedule);
+	let schedule: ScheduleItemWithSubscription[] = $derived(data.schedule);
 
 	// Store filter state locally because it only affects this page view.
 	let searchQuery: string = $state('');
@@ -45,7 +45,7 @@
 	// itself explains the situation, so skip the "showing cached data" notice.
 	let showStaleNotice = $derived(!data.offlineMiss && (data.stale || !offline.isOnline));
 
-	let filtered: ScheduleEventWithSubscription[] = $derived(
+	let filtered: ScheduleItemWithSubscription[] = $derived(
 		schedule.filter((event) => {
 			const searchMatch = matchesSearch(searchQuery, [
 				event.number,
@@ -181,13 +181,13 @@
 </script>
 
 <svelte:head>
-	<title>Расписание · ФАН ФАН</title>
+	<title>Программа · ФАН ФАН</title>
 </svelte:head>
 
 <div {@attach capturePageRoot} class="space-y-4">
 	{#if showStaleNotice}
 		<StaleDataNotice
-			message="Нет связи. Показано сохранённое расписание — обновится при подключении."
+			message="Нет связи. Показана сохранённая программа — обновится при подключении."
 			cachedAt={data.cachedAt}
 		/>
 	{/if}
@@ -203,7 +203,7 @@
 					searchQuery = '';
 				}}
 				name="schedule_search"
-				aria-label="Поиск по расписанию"
+				aria-label="Поиск по программе"
 				placeholder="Поиск по номеру или названию…"
 				autocomplete="off"
 				spellcheck={false}
@@ -286,11 +286,11 @@
 			>
 				<p class="text-base font-bold text-gray-900 dark:text-white">
 					{#if data.offlineMiss}
-						Расписание недоступно офлайн
+						Программа недоступна офлайн
 					{:else if hasActiveFilters}
 						Ничего не нашлось
 					{:else}
-						Расписание пока пусто
+						Программа пока пуста
 					{/if}
 				</p>
 				<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">

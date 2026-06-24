@@ -48,24 +48,24 @@
 				if (response.status === 401) {
 					inlineError = 'Нужно войти в аккаунт заново';
 				} else if (response.status === 403) {
-					inlineError = 'У тебя нет доступа к импорту расписания';
+					inlineError = 'У тебя нет доступа к импорту программы';
 				} else if (response.status === 422) {
 					inlineError = 'Проверь формат файла и попробуй снова';
 				} else {
-					inlineError = 'Не удалось импортировать расписание';
+					inlineError = 'Не удалось импортировать программу';
 				}
 
 				return;
 			}
 
-			successMessage = 'Файл загружен. Расписание обновлено.';
+			successMessage = 'Файл загружен. Программа обновлена.';
 			selectedFiles = null;
 			form.reset();
 
 			await invalidate('app:schedule');
 		} catch (submitError) {
 			console.error('Schedule import failed:', submitError);
-			inlineError = 'Не удалось импортировать расписание';
+			inlineError = 'Не удалось импортировать программу';
 		} finally {
 			isUploading = false;
 		}
@@ -73,10 +73,10 @@
 </script>
 
 <svelte:head>
-	<title>Импорт расписания · ФАН ФАН</title>
+	<title>Импорт программы · ФАН ФАН</title>
 </svelte:head>
 
-<SectionIntro description="Загрузи Excel-файл, чтобы обновить расписание мероприятия." />
+<SectionIntro description="Загрузи Excel-файл, чтобы обновить программу мероприятия." />
 
 <Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
 	<form class="space-y-4" onsubmit={handleSubmit}>

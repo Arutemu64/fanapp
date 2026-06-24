@@ -8,7 +8,7 @@ import {
 	warmCache
 } from '$lib/utils/offlineCache';
 import type { CurrentUserDTO } from '$lib/types/user';
-import type { ScheduleEventFullDTO, SubscriptionFullDTO } from '$lib/types/schedule';
+import type { ScheduleItemFullDTO, SubscriptionFullDTO } from '$lib/types/schedule';
 import type { LayoutLoad } from './$types';
 
 // SPA-only: render entirely on the client. There is no server render.
@@ -62,7 +62,7 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 	// this load's tracked `fetch`.
 	if (browser) {
 		// Schedule is universal — one shared key for guests and every account.
-		void warmCache<ScheduleEventFullDTO[]>({
+		void warmCache<ScheduleItemFullDTO[]>({
 			key: 'schedule',
 			store: universalStore,
 			fetcher: async ({ signal }) => {

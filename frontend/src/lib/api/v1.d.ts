@@ -410,7 +410,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/schedule/{event_id}/current": {
+    "/schedule/{schedule_item_id}/current": {
         parameters: {
             query?: never;
             header?: never;
@@ -450,7 +450,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/schedule/{event_id}/move": {
+    "/schedule/{schedule_item_id}/move": {
         parameters: {
             query?: never;
             header?: never;
@@ -467,10 +467,10 @@ export interface paths {
          * Reorder schedule event
          * @description Moves an event to a new position in the sequence, specifically after the provided event ID.
          */
-        patch: operations["move_schedule_event"];
+        patch: operations["move_schedule_item"];
         trace?: never;
     };
-    "/schedule/{event_id}": {
+    "/schedule/{schedule_item_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -487,7 +487,7 @@ export interface paths {
          * Update a schedule event
          * @description Updates a schedule event's skip state. Set `is_skipped` to true to skip the event or false to restore it. Note: the currently active event cannot be skipped.
          */
-        patch: operations["update_schedule_event"];
+        patch: operations["update_schedule_item"];
         trace?: never;
     };
     "/schedule/changes/": {
@@ -915,10 +915,10 @@ export interface components {
         /** CreateSubscriptionInput */
         CreateSubscriptionInput: {
             /**
-             * Event Id
+             * Schedule Item Id
              * Format: uuid
              */
-            event_id: string;
+            schedule_item_id: string;
             /** Counter */
             counter: number;
         };
@@ -973,7 +973,7 @@ export interface components {
              * Code
              * @enum {string}
              */
-            code: "ACCESS_DENIED" | "ALREADY_VOTED_IN_THIS_NOMINATION" | "APP_SETTINGS_NOT_FOUND" | "AUTHENTICATION_ERROR" | "CAPTCHA_VERIFICATION_FAILED" | "CURRENT_EVENT_NOT_ALLOWED" | "EMAIL_ALREADY_EXISTS" | "EMAIL_CODE_REQUEST_TOO_FAST" | "EVENT_NOT_FOUND" | "HTTP_ERROR" | "INCORRECT_PASSWORD" | "INTERNAL_ERROR" | "INVALID_CREDENTIALS" | "INVALID_EMAIL" | "INVALID_OTP_CODE" | "INVALID_TELEGRAM_AUTH_PAYLOAD" | "NOMINATION_NOT_FOUND" | "OUTDATED_SCHEDULE_CHANGE" | "PARTICIPANT_NOT_FOUND" | "PUSH_SUBSCRIPTION_ALREADY_EXISTS" | "PUSH_SUBSCRIPTION_NOT_FOUND" | "SAME_EVENTS_ARE_NOT_ALLOWED" | "SCHEDULE_CHANGE_NOT_FOUND" | "SCHEDULE_EDIT_TOO_FAST" | "SKIPPED_EVENT_NOT_ALLOWED" | "SUBSCRIPTION_ALREADY_EXISTS" | "SUBSCRIPTION_NOT_FOUND" | "TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER" | "TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL" | "TICKET_ALREADY_USED" | "TICKET_NOT_FOUND" | "TICKET_NOT_LINKED" | "TOO_MANY_ATTEMPTS" | "TOO_MANY_LOGIN_ATTEMPTS" | "TOO_MANY_OTP_ATTEMPTS" | "USERNAME_ALREADY_TAKEN" | "USERNAME_PROFANITY" | "USER_ALREADY_EXISTS" | "USER_ALREADY_HAS_TELEGRAM_LINKED" | "USER_ALREADY_HAS_TICKET_LINKED" | "USER_HAS_NO_EMAIL" | "USER_NOT_AUTHENTICATED" | "USER_NOT_FOUND" | "VALIDATION_ERROR" | "VOTE_NOT_FOUND";
+            code: "ACCESS_DENIED" | "ALREADY_VOTED_IN_THIS_NOMINATION" | "APP_SETTINGS_NOT_FOUND" | "AUTHENTICATION_ERROR" | "CAPTCHA_VERIFICATION_FAILED" | "CURRENT_SCHEDULE_ITEM_NOT_ALLOWED" | "EMAIL_ALREADY_EXISTS" | "EMAIL_CODE_REQUEST_TOO_FAST" | "HTTP_ERROR" | "INCORRECT_PASSWORD" | "INTERNAL_ERROR" | "INVALID_CREDENTIALS" | "INVALID_EMAIL" | "INVALID_OTP_CODE" | "INVALID_TELEGRAM_AUTH_PAYLOAD" | "NOMINATION_NOT_FOUND" | "OUTDATED_SCHEDULE_CHANGE" | "PARTICIPANT_NOT_FOUND" | "PUSH_SUBSCRIPTION_ALREADY_EXISTS" | "PUSH_SUBSCRIPTION_NOT_FOUND" | "SAME_SCHEDULE_ITEMS_ARE_NOT_ALLOWED" | "SCHEDULE_CHANGE_NOT_FOUND" | "SCHEDULE_EDIT_TOO_FAST" | "SCHEDULE_ITEM_NOT_FOUND" | "SKIPPED_SCHEDULE_ITEM_NOT_ALLOWED" | "SUBSCRIPTION_ALREADY_EXISTS" | "SUBSCRIPTION_NOT_FOUND" | "TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER" | "TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL" | "TICKET_ALREADY_USED" | "TICKET_NOT_FOUND" | "TICKET_NOT_LINKED" | "TOO_MANY_ATTEMPTS" | "TOO_MANY_LOGIN_ATTEMPTS" | "TOO_MANY_OTP_ATTEMPTS" | "USERNAME_ALREADY_TAKEN" | "USERNAME_PROFANITY" | "USER_ALREADY_EXISTS" | "USER_ALREADY_HAS_TELEGRAM_LINKED" | "USER_ALREADY_HAS_TICKET_LINKED" | "USER_HAS_NO_EMAIL" | "USER_NOT_AUTHENTICATED" | "USER_NOT_FOUND" | "VALIDATION_ERROR" | "VOTE_NOT_FOUND";
             /** Details */
             details?: {
                 [key: string]: unknown;
@@ -982,7 +982,7 @@ export interface components {
         /** GetScheduleOutput */
         GetScheduleOutput: {
             /** Schedule */
-            schedule: components["schemas"]["ScheduleEventFullDTO"][];
+            schedule: components["schemas"]["ScheduleItemFullDTO"][];
         };
         /** GetSubscriptionsOutput */
         GetSubscriptionsOutput: {
@@ -1057,13 +1057,13 @@ export interface components {
             /** Code */
             code: string;
         };
-        /** MoveScheduleEventRequest */
-        MoveScheduleEventRequest: {
+        /** MoveScheduleItemRequest */
+        MoveScheduleItemRequest: {
             /**
-             * Place After Event Id
+             * Place After Schedule Item Id
              * Format: uuid
              */
-            place_after_event_id: string;
+            place_after_schedule_item_id: string;
         };
         /** NominationVoteDTO */
         NominationVoteDTO: {
@@ -1224,8 +1224,8 @@ export interface components {
             /** Username */
             username: string;
         };
-        /** ScheduleEventFullDTO */
-        ScheduleEventFullDTO: {
+        /** ScheduleItemFullDTO */
+        ScheduleItemFullDTO: {
             /**
              * Id
              * Format: uuid
@@ -1342,8 +1342,8 @@ export interface components {
             /** Username */
             username?: string | null;
         };
-        /** UpdateScheduleEventRequest */
-        UpdateScheduleEventRequest: {
+        /** UpdateScheduleItemRequest */
+        UpdateScheduleItemRequest: {
             /** Is Skipped */
             is_skipped: boolean;
         };
@@ -2532,8 +2532,8 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description Schedule event ID. */
-                event_id: string;
+                /** @description Schedule item ID. */
+                schedule_item_id: string;
             };
             cookie?: never;
         };
@@ -2660,19 +2660,19 @@ export interface operations {
             };
         };
     };
-    move_schedule_event: {
+    move_schedule_item: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                /** @description Schedule event ID. */
-                event_id: string;
+                /** @description Schedule item ID. */
+                schedule_item_id: string;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["MoveScheduleEventRequest"];
+                "application/json": components["schemas"]["MoveScheduleItemRequest"];
             };
         };
         responses: {
@@ -2741,19 +2741,19 @@ export interface operations {
             };
         };
     };
-    update_schedule_event: {
+    update_schedule_item: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                /** @description Schedule event ID. */
-                event_id: string;
+                /** @description Schedule item ID. */
+                schedule_item_id: string;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateScheduleEventRequest"];
+                "application/json": components["schemas"]["UpdateScheduleItemRequest"];
             };
         };
         responses: {

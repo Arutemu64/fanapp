@@ -2,7 +2,7 @@
 	import { Button, Modal, Search, Alert } from 'flowbite-svelte';
 	import { ArrowUpDownOutline, BellActiveOutline } from 'flowbite-svelte-icons';
 	import NoticeCallout from '$lib/components/NoticeCallout.svelte';
-	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
+	import type { ScheduleItemFullDTO } from '$lib/types/schedule';
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
@@ -10,8 +10,8 @@
 
 	interface Props {
 		open: boolean;
-		event: ScheduleEventFullDTO;
-		schedule: ScheduleEventFullDTO[];
+		event: ScheduleItemFullDTO;
+		schedule: ScheduleItemFullDTO[];
 	}
 
 	let { open = $bindable(), event, schedule }: Props = $props();
@@ -49,7 +49,7 @@
 		})
 	);
 
-	function handleSelect(ev: ScheduleEventFullDTO) {
+	function handleSelect(ev: ScheduleItemFullDTO) {
 		selectedId = selectedId === ev.id ? null : ev.id;
 	}
 
@@ -57,9 +57,9 @@
 		if (selectedId) {
 			formError = '';
 			try {
-				const { error, response } = await client.PATCH('/schedule/{event_id}/move', {
-					params: { path: { event_id: event.id } },
-					body: { place_after_event_id: selectedId }
+				const { error, response } = await client.PATCH('/schedule/{schedule_item_id}/move', {
+					params: { path: { schedule_item_id: event.id } },
+					body: { place_after_schedule_item_id: selectedId }
 				});
 
 				if (error || !response.ok) {

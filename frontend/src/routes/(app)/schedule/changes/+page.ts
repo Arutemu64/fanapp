@@ -35,12 +35,12 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 		params: { query: { limit: SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT, offset: 0 } }
 	});
 	if (fetchError || !data) {
-		throwApiError(fetchError, response, 'Не удалось загрузить изменения расписания');
+		throwApiError(fetchError, response, 'Не удалось загрузить изменения программы');
 	}
 
 	const changes = data.schedule_changes ?? [];
 	return {
-		title: 'Изменения расписания',
+		title: 'Изменения программы',
 		schedule_changes: changes.slice(0, SCHEDULE_CHANGES_PAGE_SIZE),
 		hasMore: changes.length > SCHEDULE_CHANGES_PAGE_SIZE
 	};

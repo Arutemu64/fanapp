@@ -131,7 +131,7 @@
 		<SidebarGroup>
 			{#if !isMobile}
 				{@render navLink('Главная', '/', HomeOutline, HomeSolid)}
-				{@render navLink('Расписание', '/schedule', CalendarWeekOutline, CalendarWeekSolid)}
+				{@render navLink('Программа', '/schedule', CalendarWeekOutline, CalendarWeekSolid)}
 				<!-- Order matches the bottom nav: voting before the map. -->
 				{@render navLink('Голосование', '/voting', ThumbsUpOutline, ThumbsUpSolid)}
 				<!-- Keep the venue map in the main navigation so it is reachable in one tap. -->
@@ -146,7 +146,7 @@
 						<UsersGroupOutline class={iconClass} />
 					{/snippet}
 					{@render staffLink(
-						'Изменения расписания',
+						'Изменения программы',
 						'/schedule/changes',
 						canManageSchedule(user),
 						scheduleChangesIcon
@@ -166,7 +166,7 @@
 						settingsIcon
 					)}
 					{@render staffLink(
-						'Импорт расписания',
+						'Импорт программы',
 						'/org/import_schedule',
 						canImportSchedule(user),
 						importScheduleIcon

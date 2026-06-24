@@ -11,7 +11,7 @@
 </script>
 
 <svelte:head>
-	<title>Изменения расписания · ФАН ФАН</title>
+	<title>Изменения программы · ФАН ФАН</title>
 </svelte:head>
 
 {#key changesKey}

@@ -3,8 +3,8 @@ import { createApiClient } from '$lib/api';
 import { fetchWithCache, universalStore, userStore } from '$lib/utils/offlineCache';
 import { isReachable } from '$lib/services/reachability';
 import type {
-	ScheduleEventFullDTO,
-	ScheduleEventWithSubscription,
+	ScheduleItemFullDTO,
+	ScheduleItemWithSubscription,
 	SubscriptionFullDTO
 } from '$lib/types/schedule';
 import type { PageLoad } from './$types';
@@ -23,7 +23,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	// each caches on its own. Fetch them concurrently — total latency is the slower
 	// of the two, not the sum. Guests skip the subscriptions request entirely.
 	const [scheduleResult, subscriptions] = await Promise.all([
-		fetchWithCache<ScheduleEventFullDTO[]>({
+		fetchWithCache<ScheduleItemFullDTO[]>({
 			key: SCHEDULE_CACHE_KEY,
 			store: universalStore,
 			fetcher: async ({ signal }) => {
@@ -43,18 +43,18 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 		// and bottom nav stay usable. A real online failure is still a hard error.
 		if (!isReachable()) {
 			return {
-				title: 'Расписание',
+				title: 'Программа',
 				schedule: [],
 				stale: true,
 				cachedAt: undefined,
 				offlineMiss: true
 			};
 		}
-		error(503, 'Не удалось загрузить расписание');
+		error(503, 'Не удалось загрузить программу');
 	}
 
 	return {
-		title: 'Расписание',
+		title: 'Программа',
 		schedule: mergeSubscriptions(schedule, subscriptions),
 		stale,
 		cachedAt,
@@ -92,9 +92,9 @@ async function fetchSubscriptions(
 
 /** Attach each event's subscription (matched by event id) to reproduce the merged row shape. */
 function mergeSubscriptions(
-	schedule: ScheduleEventFullDTO[],
+	schedule: ScheduleItemFullDTO[],
 	subscriptions: SubscriptionFullDTO[]
-): ScheduleEventWithSubscription[] {
+): ScheduleItemWithSubscription[] {
 	const byEventId = new Map(
 		subscriptions.map((sub) => [sub.event.id, { id: sub.id, counter: sub.counter }])
 	);
