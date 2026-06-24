@@ -1,10 +1,10 @@
-import json
 import logging
+from collections.abc import AsyncIterable
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, Request
-from sse_starlette import EventSourceResponse
+from fastapi import APIRouter
+from fastapi.sse import EventSourceResponse, ServerSentEvent
 
 from fanfan.application.interactors.sse.stream_events import StreamEvents
 
@@ -18,37 +18,21 @@ logger = logging.getLogger(__name__)
     description=(
         "Opens a Server-Sent Events connection to receive real-time event updates."
     ),
+    response_class=EventSourceResponse,
     responses={
         200: {"description": "SSE stream established. Returns text/event-stream."},
     },
 )
 @inject
 async def stream_events(
-    request: Request,
     interactor: FromDishka[StreamEvents],
-) -> EventSourceResponse:
-    logger.info(
-        "SSE request accepted",
-        extra={"client": request.client.host if request.client else None},
-    )
-
-    async def event_generator():
-        async for message in interactor():
-            if await request.is_disconnected():
-                logger.info(
-                    "SSE request disconnected",
-                    extra={"client": request.client.host if request.client else None},
-                )
-                break
-
-            data = message.data
-            if data is not None and not isinstance(data, str):
-                data = json.dumps(data)
-
-            yield {
-                "event": message.event_name,
-                "data": data if data is not None else "",
-            }
-
-    # Send periodic pings so idle streams stay visibly alive through proxies.
-    return EventSourceResponse(event_generator(), ping=10)
+) -> AsyncIterable[ServerSentEvent]:
+    # Native FastAPI SSE: routing layer handles encoding, keepalive pings and
+    # client-disconnect detection, so the generator only maps domain messages.
+    async for message in interactor():
+        if message.data is None:
+            # Empty data line, matching the prior wire format.
+            yield ServerSentEvent(event=message.event_name, raw_data="")
+        else:
+            # dict payloads are JSON-serialized by the router.
+            yield ServerSentEvent(event=message.event_name, data=message.data)
