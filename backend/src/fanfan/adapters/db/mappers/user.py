@@ -1,5 +1,3 @@
-from adaptix import Retort
-
 from fanfan.adapters.db.models import UserORM
 from fanfan.application.dto.user import (
     CurrentUserDTO,
@@ -22,9 +20,6 @@ from fanfan.core.vo.user import UserId, Username, UserRole
 
 
 class UserMapper:
-    def __init__(self, retort: Retort):
-        self.retort = retort
-
     def from_model(self, model: User):
         return UserORM(
             id=model.id,

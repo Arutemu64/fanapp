@@ -1,7 +1,6 @@
-from adaptix import Retort
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.mappers.social_account import SocialIdentityMapper
@@ -23,10 +22,10 @@ from fanfan.core.vo.user import UserId, UserRole
 
 
 class SqlUserGateway(UserGateway):
-    def __init__(self, session: AsyncSession, uow: UnitOfWork, retort: Retort):
+    def __init__(self, session: AsyncSession, uow: UnitOfWork):
         self.session = session
         self.uow = uow
-        self.mapper = UserMapper(retort)
+        self.mapper = UserMapper()
         self.social_mapper = SocialIdentityMapper()
 
     def _to_model(self, user_orm: UserORM | None) -> User | None:
@@ -105,9 +104,13 @@ class SqlUserGateway(UserGateway):
             select(UserORM)
             .where(UserORM.id == user_id)
             .options(
+                # ticket is many-to-one (single row) -> joinedload.
+                # permissions and social_accounts are independent collections;
+                # joining both in one query multiplies rows (cartesian product),
+                # so load each with a separate IN query instead.
                 joinedload(UserORM.ticket),
-                joinedload(UserORM.permissions),
-                joinedload(UserORM.social_accounts),
+                selectinload(UserORM.permissions),
+                selectinload(UserORM.social_accounts),
             )
         )
         user_orm = await self.session.scalar(stmt)
