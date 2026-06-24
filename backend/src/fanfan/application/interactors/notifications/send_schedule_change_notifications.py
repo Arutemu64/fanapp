@@ -5,8 +5,8 @@ from pydantic import BaseModel
 
 from fanfan.application.dto.schedule import ScheduleItemFullDTO
 from fanfan.application.dto.schedule_change import (
-    ScheduleChangeEventDTO,
     ScheduleChangeFullDTO,
+    ScheduleChangeScheduleItemDTO,
 )
 from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.gateways.mailings import MailingGateway
@@ -56,23 +56,23 @@ class SendScheduleChangeNotifications:
     def _resolve_reason_msg(
         schedule_change: ScheduleChangeFullDTO,
     ) -> str | None:
-        changed_event = schedule_change.changed_event
-        argument_event = schedule_change.argument_event
+        changed_item = schedule_change.changed_schedule_item
+        argument_item = schedule_change.argument_schedule_item
         match schedule_change.type:
             case ScheduleChangeType.SET_AS_CURRENT:
-                if changed_event:
-                    return f"Выступление №{changed_event.number:03d} началось"
-                if argument_event:
-                    return f"Выступление №{argument_event.number:03d} больше не текущее"
+                if changed_item:
+                    return f"Выступление №{changed_item.number:03d} началось"
+                if argument_item:
+                    return f"Выступление №{argument_item.number:03d} больше не текущее"
             case ScheduleChangeType.MOVED:
-                if changed_event:
-                    return f"Выступление №{changed_event.number:03d} перенесено"
+                if changed_item:
+                    return f"Выступление №{changed_item.number:03d} перенесено"
             case ScheduleChangeType.SKIPPED:
-                if changed_event:
-                    return f"Выступление №{changed_event.number:03d} было снято"
+                if changed_item:
+                    return f"Выступление №{changed_item.number:03d} было снято"
             case ScheduleChangeType.UNSKIPPED:
-                if changed_event:
-                    return f"Выступление №{changed_event.number:03d} вернулось"
+                if changed_item:
+                    return f"Выступление №{changed_item.number:03d} вернулось"
         return None
 
     async def _build_editor_notifications(
@@ -143,7 +143,7 @@ class SendScheduleChangeNotifications:
         self,
         schedule_change: ScheduleChangeFullDTO,
         current_event: ScheduleItemFullDTO,
-        changed_event: ScheduleChangeEventDTO,
+        changed_schedule_item: ScheduleChangeScheduleItemDTO,
         reason_msg: str | None,
     ) -> list[NotificationQueued]:
         events: list[NotificationQueued] = []
@@ -156,16 +156,20 @@ class SendScheduleChangeNotifications:
             )
         )
         for s in upcoming_subscriptions:
-            if s.event.queue is None or s.event.time_until is None:
+            if s.schedule_item.queue is None or s.schedule_item.time_until is None:
                 continue
-            if current_event.order <= changed_event.order <= s.event.order:
+            if (
+                current_event.order
+                <= changed_schedule_item.order
+                <= s.schedule_item.order
+            ):
                 body = await self.template_renderer.render(
                     "subscription_notification.jinja2",
                     {
-                        "event_number": s.event.number,
-                        "event_title": s.event.title,
-                        "queue_difference": s.event.queue - current_event_queue,
-                        "time_diff": s.event.time_until - current_event_queue,
+                        "event_number": s.schedule_item.number,
+                        "event_title": s.schedule_item.title,
+                        "queue_difference": s.schedule_item.queue - current_event_queue,
+                        "time_diff": s.schedule_item.time_until - current_event_queue,
                         "reason_msg": reason_msg,
                     },
                 )
@@ -190,9 +194,9 @@ class SendScheduleChangeNotifications:
         )
         if schedule_change is None:
             raise ScheduleChangeNotFound
-        current_event = await self.schedule_gateway.read_current_event()
-        next_event = await self.schedule_gateway.read_next_event()
-        changed_event = schedule_change.changed_event
+        current_event = await self.schedule_gateway.read_current_schedule_item()
+        next_event = await self.schedule_gateway.read_next_schedule_item()
+        changed_schedule_item = schedule_change.changed_schedule_item
         reason_msg = self._resolve_reason_msg(schedule_change)
 
         notification_events: list[NotificationQueued] = []
@@ -207,12 +211,12 @@ class SendScheduleChangeNotifications:
                     next_event=next_event,
                 )
             )
-        if current_event and changed_event:
+        if current_event and changed_schedule_item:
             notification_events.extend(
                 await self._build_subscription_notifications(
                     schedule_change=schedule_change,
                     current_event=current_event,
-                    changed_event=changed_event,
+                    changed_schedule_item=changed_schedule_item,
                     reason_msg=reason_msg,
                 )
             )

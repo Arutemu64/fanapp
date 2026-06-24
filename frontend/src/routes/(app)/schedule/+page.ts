@@ -90,17 +90,17 @@ async function fetchSubscriptions(
 	return data ?? [];
 }
 
-/** Attach each event's subscription (matched by event id) to reproduce the merged row shape. */
+/** Attach each schedule item's subscription (matched by item id) to reproduce the merged row shape. */
 function mergeSubscriptions(
 	schedule: ScheduleItemFullDTO[],
 	subscriptions: SubscriptionFullDTO[]
 ): ScheduleItemWithSubscription[] {
-	const byEventId = new Map(
-		subscriptions.map((sub) => [sub.event.id, { id: sub.id, counter: sub.counter }])
+	const bySubscribedItemId = new Map(
+		subscriptions.map((sub) => [sub.schedule_item.id, { id: sub.id, counter: sub.counter }])
 	);
 
-	return schedule.map((event) => ({
-		...event,
-		user_subscription: byEventId.get(event.id) ?? null
+	return schedule.map((item) => ({
+		...item,
+		user_subscription: bySubscribedItemId.get(item.id) ?? null
 	}));
 }

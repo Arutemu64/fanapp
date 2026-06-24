@@ -6,7 +6,7 @@ from fanfan.core.vo.schedule_item import ScheduleItemId
 from fanfan.core.vo.user import UserId
 
 
-class ScheduleChangeEventDTO(BaseModel):
+class ScheduleChangeScheduleItemDTO(BaseModel):
     id: ScheduleItemId
     number: int
     title: str
@@ -24,6 +24,6 @@ class ScheduleChangeFullDTO(BaseModel):
     mailing_id: MailingId | None
     user_id: UserId | None
     next_event_changed: bool
-    changed_event: ScheduleChangeEventDTO | None
-    argument_event: ScheduleChangeEventDTO | None
+    changed_schedule_item: ScheduleChangeScheduleItemDTO | None
+    argument_schedule_item: ScheduleChangeScheduleItemDTO | None
     user: ScheduleChangeUserDTO | None

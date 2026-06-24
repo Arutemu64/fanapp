@@ -21,7 +21,7 @@ def _select_subscription_full_dto():
         select(SubscriptionORM)
         .join(ScheduleItemORM)
         .options(
-            joinedload(SubscriptionORM.event).options(
+            joinedload(SubscriptionORM.schedule_item).options(
                 undefer(ScheduleItemORM.queue),
                 undefer(ScheduleItemORM.time_until),
             )

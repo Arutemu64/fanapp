@@ -114,7 +114,7 @@ class SqlScheduleItemGateway(ScheduleItemGateway):
         )
 
     # Read projections (return DTOs, not aggregates)
-    async def read_next_event(self) -> ScheduleItemFullDTO | None:
+    async def read_next_schedule_item(self) -> ScheduleItemFullDTO | None:
         current_event_order = (
             select(ScheduleItemORM.order)
             .where(ScheduleItemORM.is_current.is_(True))
@@ -140,7 +140,7 @@ class SqlScheduleItemGateway(ScheduleItemGateway):
             )
         return None
 
-    async def read_current_event(self) -> ScheduleItemFullDTO | None:
+    async def read_current_schedule_item(self) -> ScheduleItemFullDTO | None:
         stmt = _select_schedule_item_full_dto().where(
             ScheduleItemORM.is_current.is_(True)
         )

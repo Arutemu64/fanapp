@@ -53,8 +53,8 @@ class SqlScheduleChangeGateway(ScheduleChangeGateway):
             select(ScheduleChangeORM)
             .where(ScheduleChangeORM.id == change_id)
             .options(
-                joinedload(ScheduleChangeORM.changed_event),
-                joinedload(ScheduleChangeORM.argument_event),
+                joinedload(ScheduleChangeORM.changed_schedule_item),
+                joinedload(ScheduleChangeORM.argument_schedule_item),
                 joinedload(ScheduleChangeORM.user),
             )
         )
@@ -68,8 +68,8 @@ class SqlScheduleChangeGateway(ScheduleChangeGateway):
             select(ScheduleChangeORM)
             .order_by(ScheduleChangeORM.created_at.desc())
             .options(
-                joinedload(ScheduleChangeORM.changed_event),
-                joinedload(ScheduleChangeORM.argument_event),
+                joinedload(ScheduleChangeORM.changed_schedule_item),
+                joinedload(ScheduleChangeORM.argument_schedule_item),
                 joinedload(ScheduleChangeORM.user),
             )
             .limit(pagination.limit)

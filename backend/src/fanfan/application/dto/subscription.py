@@ -5,7 +5,7 @@ from fanfan.core.vo.subscription import SubscriptionId
 from fanfan.core.vo.user import UserId
 
 
-class SubscriptionEventDTO(BaseModel):
+class SubscriptionScheduleItemDTO(BaseModel):
     id: ScheduleItemId
     number: int
     title: str
@@ -20,4 +20,4 @@ class SubscriptionFullDTO(BaseModel):
     id: SubscriptionId
     user_id: UserId
     counter: int
-    event: SubscriptionEventDTO
+    schedule_item: SubscriptionScheduleItemDTO

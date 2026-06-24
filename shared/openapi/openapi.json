@@ -3830,35 +3830,6 @@
         ],
         "title": "RequestLoginCodeInput"
       },
-      "ScheduleChangeEventDTO": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "number": {
-            "type": "integer",
-            "title": "Number"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "order": {
-            "type": "number",
-            "title": "Order"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "number",
-          "title",
-          "order"
-        ],
-        "title": "ScheduleChangeEventDTO"
-      },
       "ScheduleChangeFullDTO": {
         "properties": {
           "id": {
@@ -3897,20 +3868,20 @@
             "type": "boolean",
             "title": "Next Event Changed"
           },
-          "changed_event": {
+          "changed_schedule_item": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/ScheduleChangeEventDTO"
+                "$ref": "#/components/schemas/ScheduleChangeScheduleItemDTO"
               },
               {
                 "type": "null"
               }
             ]
           },
-          "argument_event": {
+          "argument_schedule_item": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/ScheduleChangeEventDTO"
+                "$ref": "#/components/schemas/ScheduleChangeScheduleItemDTO"
               },
               {
                 "type": "null"
@@ -3935,11 +3906,40 @@
           "mailing_id",
           "user_id",
           "next_event_changed",
-          "changed_event",
-          "argument_event",
+          "changed_schedule_item",
+          "argument_schedule_item",
           "user"
         ],
         "title": "ScheduleChangeFullDTO"
+      },
+      "ScheduleChangeScheduleItemDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "order": {
+            "type": "number",
+            "title": "Order"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "number",
+          "title",
+          "order"
+        ],
+        "title": "ScheduleChangeScheduleItemDTO"
       },
       "ScheduleChangeType": {
         "type": "string",
@@ -4126,7 +4126,36 @@
         ],
         "title": "SubmitFeedbackOutput"
       },
-      "SubscriptionEventDTO": {
+      "SubscriptionFullDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "counter": {
+            "type": "integer",
+            "title": "Counter"
+          },
+          "schedule_item": {
+            "$ref": "#/components/schemas/SubscriptionScheduleItemDTO"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "counter",
+          "schedule_item"
+        ],
+        "title": "SubscriptionFullDTO"
+      },
+      "SubscriptionScheduleItemDTO": {
         "properties": {
           "id": {
             "type": "string",
@@ -4177,36 +4206,7 @@
           "queue",
           "time_until"
         ],
-        "title": "SubscriptionEventDTO"
-      },
-      "SubscriptionFullDTO": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "user_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "User Id"
-          },
-          "counter": {
-            "type": "integer",
-            "title": "Counter"
-          },
-          "event": {
-            "$ref": "#/components/schemas/SubscriptionEventDTO"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "user_id",
-          "counter",
-          "event"
-        ],
-        "title": "SubscriptionFullDTO"
+        "title": "SubscriptionScheduleItemDTO"
       },
       "TCloudWebhookOrderRef": {
         "properties": {

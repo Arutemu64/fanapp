@@ -100,10 +100,10 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     assert len(changes) == 1
     change = changes[0]
     assert change.type == ScheduleChangeType.SET_AS_CURRENT
-    assert change.changed_event is not None
-    assert change.changed_event.id == new_current_event.id
-    assert change.argument_event is not None
-    assert change.argument_event.id == previous_current_event.id
+    assert change.changed_schedule_item is not None
+    assert change.changed_schedule_item.id == new_current_event.id
+    assert change.argument_schedule_item is not None
+    assert change.argument_schedule_item.id == previous_current_event.id
     assert change.user is not None
     assert change.user.id == schedule_editor.id
     assert change.user.username == schedule_editor.username
@@ -149,10 +149,10 @@ async def test_set_current_event_sets_current_when_none_was_current(
     assert len(changes) == 1
     change = changes[0]
     assert change.type == ScheduleChangeType.SET_AS_CURRENT
-    assert change.changed_event is not None
-    assert change.changed_event.id == event.id
+    assert change.changed_schedule_item is not None
+    assert change.changed_schedule_item.id == event.id
     # There was no previous current event.
-    assert change.argument_event is None
+    assert change.argument_schedule_item is None
     assert change.user is not None
     assert change.user.id == schedule_editor.id
 
@@ -189,9 +189,9 @@ async def test_set_current_event_can_unset_current_event(
     assert len(changes) == 1
     change = changes[0]
     assert change.type == ScheduleChangeType.SET_AS_CURRENT
-    assert change.changed_event is None
-    assert change.argument_event is not None
-    assert change.argument_event.id == previous_current_event.id
+    assert change.changed_schedule_item is None
+    assert change.argument_schedule_item is not None
+    assert change.argument_schedule_item.id == previous_current_event.id
     assert change.user is not None
     assert change.user.id == schedule_editor.id
     assert change.next_event_changed is True

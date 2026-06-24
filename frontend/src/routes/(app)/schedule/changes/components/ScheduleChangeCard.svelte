@@ -6,7 +6,7 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { invalidate } from '$app/navigation';
 	import type {
-		ScheduleChangeEventDTO,
+		ScheduleChangeScheduleItemDTO,
 		ScheduleChangeFullDTO,
 		ScheduleChangeType
 	} from '$lib/types/schedule';
@@ -55,9 +55,9 @@
 		unskipped: 'purple'
 	};
 
-	function formatEvent(event: ScheduleChangeEventDTO | null | undefined): string {
-		if (!event) return '';
-		return `#${event.number} ${event.title}`;
+	function formatScheduleItem(item: ScheduleChangeScheduleItemDTO | null | undefined): string {
+		if (!item) return '';
+		return `#${item.number} ${item.title}`;
 	}
 </script>
 
@@ -74,22 +74,22 @@
 			</div>
 
 			<div class="space-y-1 text-sm">
-				{#if change.changed_event}
+				{#if change.changed_schedule_item}
 					<p>
 						<span class="font-bold text-gray-700 dark:text-gray-300">Выступление:</span>
 						<span class="text-gray-900 dark:text-white">
-							{formatEvent(change.changed_event)}
+							{formatScheduleItem(change.changed_schedule_item)}
 						</span>
 					</p>
 				{/if}
 
-				{#if change.argument_event}
+				{#if change.argument_schedule_item}
 					<p>
 						<span class="font-bold text-gray-700 dark:text-gray-300">
 							{change.type === 'moved' ? 'После:' : 'Связанное выступление:'}
 						</span>
 						<span class="text-gray-900 dark:text-white">
-							{formatEvent(change.argument_event)}
+							{formatScheduleItem(change.argument_schedule_item)}
 						</span>
 					</p>
 				{/if}

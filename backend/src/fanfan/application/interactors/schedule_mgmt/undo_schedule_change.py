@@ -48,17 +48,17 @@ class UndoScheduleChange:
 
     async def _handle_set_as_current(
         self,
-        changed_event: ScheduleItem | None,
+        changed_schedule_item: ScheduleItem | None,
         previous_event: ScheduleItem | None,
     ) -> None:
         current_event = await self.schedule_gateway.get_current()
 
-        if changed_event != current_event:
+        if changed_schedule_item != current_event:
             raise OutdatedScheduleChange
 
-        if changed_event:
-            changed_event.unset_current()
-            await self.schedule_gateway.save(changed_event)
+        if changed_schedule_item:
+            changed_schedule_item.unset_current()
+            await self.schedule_gateway.save(changed_schedule_item)
 
         if previous_event:
             previous_event.set_current()
@@ -66,7 +66,7 @@ class UndoScheduleChange:
 
     async def _handle_moved(
         self,
-        changed_event: ScheduleItem,
+        changed_schedule_item: ScheduleItem,
         place_after_event: ScheduleItem | None,
     ) -> None:
         if place_after_event:
@@ -74,14 +74,14 @@ class UndoScheduleChange:
                 place_after_event.order
             )
             if place_before_event:
-                changed_event.place_after(place_after_event, place_before_event)
+                changed_schedule_item.place_after(place_after_event, place_before_event)
             else:
-                changed_event.place_after(place_after_event, None)
+                changed_schedule_item.place_after(place_after_event, None)
         else:
             first_event = await self.schedule_gateway.get_by_queue(1)
-            changed_event.place_before_first(first_event)
+            changed_schedule_item.place_before_first(first_event)
 
-        await self.schedule_gateway.save(changed_event)
+        await self.schedule_gateway.save(changed_schedule_item)
 
     async def _require_event(
         self, schedule_item_id: ScheduleItemId | None
@@ -105,26 +105,31 @@ class UndoScheduleChange:
         if schedule_change is None:
             raise ScheduleChangeNotFound
 
-        changed_event = await self._require_event(
+        changed_schedule_item = await self._require_event(
             schedule_change.changed_schedule_item_id
         )
-        argument_event = await self._require_event(
+        argument_schedule_item = await self._require_event(
             schedule_change.argument_schedule_item_id
         )
 
         if schedule_change.type is ScheduleChangeType.SET_AS_CURRENT:
-            await self._handle_set_as_current(changed_event, argument_event)
+            await self._handle_set_as_current(
+                changed_schedule_item, argument_schedule_item
+            )
 
-        if schedule_change.type is ScheduleChangeType.MOVED and changed_event:
-            await self._handle_moved(changed_event, argument_event)
+        if schedule_change.type is ScheduleChangeType.MOVED and changed_schedule_item:
+            await self._handle_moved(changed_schedule_item, argument_schedule_item)
 
-        if schedule_change.type is ScheduleChangeType.SKIPPED and changed_event:
-            changed_event.unskip()
-            await self.schedule_gateway.save(changed_event)
+        if schedule_change.type is ScheduleChangeType.SKIPPED and changed_schedule_item:
+            changed_schedule_item.unskip()
+            await self.schedule_gateway.save(changed_schedule_item)
 
-        if schedule_change.type is ScheduleChangeType.UNSKIPPED and changed_event:
-            changed_event.skip()
-            await self.schedule_gateway.save(changed_event)
+        if (
+            schedule_change.type is ScheduleChangeType.UNSKIPPED
+            and changed_schedule_item
+        ):
+            changed_schedule_item.skip()
+            await self.schedule_gateway.save(changed_schedule_item)
 
         schedule_change.mark_undone()
         await self.changes_gateway.delete(schedule_change)

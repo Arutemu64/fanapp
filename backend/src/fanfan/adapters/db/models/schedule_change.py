@@ -40,10 +40,10 @@ class ScheduleChangeORM(BaseORM):
         ForeignKey("mailings.id", ondelete="SET NULL"), index=True
     )
 
-    changed_event: Mapped[ScheduleItemORM | None] = relationship(
+    changed_schedule_item: Mapped[ScheduleItemORM | None] = relationship(
         foreign_keys=[changed_schedule_item_id]
     )
-    argument_event: Mapped[ScheduleItemORM | None] = relationship(
+    argument_schedule_item: Mapped[ScheduleItemORM | None] = relationship(
         foreign_keys=[argument_schedule_item_id]
     )
     user: Mapped[UserORM | None] = relationship(foreign_keys=user_id)

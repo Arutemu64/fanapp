@@ -1177,20 +1177,6 @@ export interface components {
             /** Turnstile Token */
             turnstile_token?: string | null;
         };
-        /** ScheduleChangeEventDTO */
-        ScheduleChangeEventDTO: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Number */
-            number: number;
-            /** Title */
-            title: string;
-            /** Order */
-            order: number;
-        };
         /** ScheduleChangeFullDTO */
         ScheduleChangeFullDTO: {
             /**
@@ -1205,9 +1191,23 @@ export interface components {
             user_id: string | null;
             /** Next Event Changed */
             next_event_changed: boolean;
-            changed_event: components["schemas"]["ScheduleChangeEventDTO"] | null;
-            argument_event: components["schemas"]["ScheduleChangeEventDTO"] | null;
+            changed_schedule_item: components["schemas"]["ScheduleChangeScheduleItemDTO"] | null;
+            argument_schedule_item: components["schemas"]["ScheduleChangeScheduleItemDTO"] | null;
             user: components["schemas"]["ScheduleChangeUserDTO"] | null;
+        };
+        /** ScheduleChangeScheduleItemDTO */
+        ScheduleChangeScheduleItemDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Number */
+            number: number;
+            /** Title */
+            title: string;
+            /** Order */
+            order: number;
         };
         /**
          * ScheduleChangeType
@@ -1280,8 +1280,24 @@ export interface components {
              */
             feedback_id: string;
         };
-        /** SubscriptionEventDTO */
-        SubscriptionEventDTO: {
+        /** SubscriptionFullDTO */
+        SubscriptionFullDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Counter */
+            counter: number;
+            schedule_item: components["schemas"]["SubscriptionScheduleItemDTO"];
+        };
+        /** SubscriptionScheduleItemDTO */
+        SubscriptionScheduleItemDTO: {
             /**
              * Id
              * Format: uuid
@@ -1297,22 +1313,6 @@ export interface components {
             queue: number | null;
             /** Time Until */
             time_until: number | null;
-        };
-        /** SubscriptionFullDTO */
-        SubscriptionFullDTO: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /**
-             * User Id
-             * Format: uuid
-             */
-            user_id: string;
-            /** Counter */
-            counter: number;
-            event: components["schemas"]["SubscriptionEventDTO"];
         };
         /** TCloudWebhookOrderRef */
         TCloudWebhookOrderRef: {

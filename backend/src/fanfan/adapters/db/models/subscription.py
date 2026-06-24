@@ -24,4 +24,4 @@ class SubscriptionORM(BaseORM):
     )
     counter: Mapped[int] = mapped_column()
 
-    event: Mapped[ScheduleItemORM] = relationship()
+    schedule_item: Mapped[ScheduleItemORM] = relationship()

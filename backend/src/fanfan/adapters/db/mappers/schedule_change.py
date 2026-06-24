@@ -1,7 +1,7 @@
 from fanfan.adapters.db.models import ScheduleChangeORM
 from fanfan.application.dto.schedule_change import (
-    ScheduleChangeEventDTO,
     ScheduleChangeFullDTO,
+    ScheduleChangeScheduleItemDTO,
     ScheduleChangeUserDTO,
 )
 from fanfan.core.models.schedule_change import ScheduleChange
@@ -56,21 +56,21 @@ class ScheduleChangeMapper:
             if schedule_change_orm.user_id is not None
             else None,
             next_event_changed=schedule_change_orm.next_event_changed,
-            changed_event=ScheduleChangeEventDTO(
-                id=ScheduleItemId(schedule_change_orm.changed_event.id),
-                number=schedule_change_orm.changed_event.number,
-                title=schedule_change_orm.changed_event.title,
-                order=schedule_change_orm.changed_event.order,
+            changed_schedule_item=ScheduleChangeScheduleItemDTO(
+                id=ScheduleItemId(schedule_change_orm.changed_schedule_item.id),
+                number=schedule_change_orm.changed_schedule_item.number,
+                title=schedule_change_orm.changed_schedule_item.title,
+                order=schedule_change_orm.changed_schedule_item.order,
             )
-            if schedule_change_orm.changed_event
+            if schedule_change_orm.changed_schedule_item
             else None,
-            argument_event=ScheduleChangeEventDTO(
-                id=ScheduleItemId(schedule_change_orm.argument_event.id),
-                number=schedule_change_orm.argument_event.number,
-                title=schedule_change_orm.argument_event.title,
-                order=schedule_change_orm.argument_event.order,
+            argument_schedule_item=ScheduleChangeScheduleItemDTO(
+                id=ScheduleItemId(schedule_change_orm.argument_schedule_item.id),
+                number=schedule_change_orm.argument_schedule_item.number,
+                title=schedule_change_orm.argument_schedule_item.title,
+                order=schedule_change_orm.argument_schedule_item.order,
             )
-            if schedule_change_orm.argument_event
+            if schedule_change_orm.argument_schedule_item
             else None,
             user=ScheduleChangeUserDTO(
                 id=UserId(schedule_change_orm.user.id),
