@@ -14,7 +14,7 @@ from fanfan.core.vo.user import UserRole
 
 if TYPE_CHECKING:
     from fanfan.adapters.db.models.permission import UserPermissionORM
-    from fanfan.adapters.db.models.social_account import SocialIdentityORM
+    from fanfan.adapters.db.models.social_identity import SocialIdentityORM
     from fanfan.adapters.db.models.ticket import TicketORM
 
 
@@ -57,7 +57,7 @@ class UserORM(BaseORM):
     permissions: Mapped[list[UserPermissionORM]] = relationship(
         cascade="all, delete-orphan"
     )
-    social_accounts: Mapped[list[SocialIdentityORM]] = relationship(
+    social_identities: Mapped[list[SocialIdentityORM]] = relationship(
         back_populates="user"
     )
 

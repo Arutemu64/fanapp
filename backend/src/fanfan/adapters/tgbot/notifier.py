@@ -10,7 +10,7 @@ from aiogram.exceptions import (
 )
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from fanfan.application.ports.gateways.social_ids import SocialIdentityGateway
+from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.notifier import Notifier
 from fanfan.core.exceptions.notifications import (
@@ -28,10 +28,10 @@ class TelegramNotifier(Notifier):
         self,
         bot: Bot,
         user_gateway: UserGateway,
-        social_id_gateway: SocialIdentityGateway,
+        social_identity_gateway: SocialIdentityGateway,
         web_config: WebConfig,
     ) -> None:
-        self.social_id_gateway = social_id_gateway
+        self.social_identity_gateway = social_identity_gateway
         self.bot = bot
         self.user_gateway = user_gateway
         self.web_config = web_config
@@ -59,14 +59,14 @@ class TelegramNotifier(Notifier):
         if user is None or not user.settings.receive_telegram_notifications:
             raise UserNotReachable
 
-        social_id = await self.social_id_gateway.get_by_provider(
+        social_identity = await self.social_identity_gateway.get_by_provider(
             user_id=notification.user_id, provider="telegram"
         )
-        if social_id is None:
+        if social_identity is None:
             raise UserNotReachable
         try:
             await self.bot.send_message(
-                chat_id=int(social_id.provider_id),
+                chat_id=int(social_identity.provider_id),
                 text=self._render_message_text(notification),
                 parse_mode=ParseMode.HTML,
                 reply_markup=self._build_reply_markup(notification),

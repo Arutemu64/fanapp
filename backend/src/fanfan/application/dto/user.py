@@ -32,7 +32,7 @@ class UserSettingsDTO(BaseModel):
     receive_telegram_notifications: bool = True
 
 
-class UserSocialAccountDTO(BaseModel):
+class UserSocialIdentityDTO(BaseModel):
     provider: str
     provider_id: str
 
@@ -44,4 +44,4 @@ class CurrentUserDTO(UserBaseDTO):
     ticket: UserTicketDTO | None
     permissions: list[UserPermissionDTO]
     settings: UserSettingsDTO
-    social_accounts: list[UserSocialAccountDTO]
+    social_identities: list[UserSocialIdentityDTO]

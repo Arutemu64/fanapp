@@ -35,7 +35,7 @@
 
 	// Keep the connected Telegram account handy for status text and actions.
 	let telegramAccount = $derived(
-		user.social_accounts.find((socialAccount) => socialAccount.provider === 'telegram') ?? null
+		user.social_identities.find((socialIdentity) => socialIdentity.provider === 'telegram') ?? null
 	);
 
 	async function handleTelegramUnlink() {

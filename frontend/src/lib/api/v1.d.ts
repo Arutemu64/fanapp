@@ -948,8 +948,8 @@ export interface components {
             /** Permissions */
             permissions: components["schemas"]["UserPermissionDTO"][];
             settings: components["schemas"]["UserSettingsDTO"];
-            /** Social Accounts */
-            social_accounts: components["schemas"]["UserSocialAccountDTO"][];
+            /** Social Identities */
+            social_identities: components["schemas"]["UserSocialIdentityDTO"][];
         };
         /** DebugResponse */
         DebugResponse: {
@@ -1381,8 +1381,8 @@ export interface components {
              */
             receive_telegram_notifications: boolean;
         };
-        /** UserSocialAccountDTO */
-        UserSocialAccountDTO: {
+        /** UserSocialIdentityDTO */
+        UserSocialIdentityDTO: {
             /** Provider */
             provider: string;
             /** Provider Id */
@@ -2484,7 +2484,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "text/event-stream": unknown;
                 };
             };
             /** @description Request validation error. */
@@ -2493,7 +2493,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                    "text/event-stream": components["schemas"]["ValidationErrorResponse"];
                 };
             };
         };

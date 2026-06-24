@@ -1,5 +1,5 @@
 from fanfan.adapters.db.models import SocialIdentityORM
-from fanfan.core.models.social_account import SocialIdentity
+from fanfan.core.models.social_identity import SocialIdentity
 from fanfan.core.vo.social_identity import SocialIdentityId
 from fanfan.core.vo.user import UserId
 

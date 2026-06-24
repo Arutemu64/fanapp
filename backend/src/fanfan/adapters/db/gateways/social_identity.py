@@ -2,11 +2,11 @@ from sqlalchemy import and_, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.constraints import translate_integrity_error
-from fanfan.adapters.db.mappers.social_account import SocialIdentityMapper
+from fanfan.adapters.db.mappers.social_identity import SocialIdentityMapper
 from fanfan.adapters.db.models import SocialIdentityORM
-from fanfan.application.ports.gateways.social_ids import SocialIdentityGateway
+from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
 from fanfan.core.exceptions.users import TelegramAlreadyLinkedToAnotherUser
-from fanfan.core.models.social_account import SocialIdentity
+from fanfan.core.models.social_identity import SocialIdentity
 from fanfan.core.vo.user import UserId
 
 
@@ -16,14 +16,14 @@ class SqlSocialIdentityGateway(SocialIdentityGateway):
         self.social_mapper = SocialIdentityMapper()
 
     async def add(self, social_identity: SocialIdentity) -> None:
-        social_id_orm = self.social_mapper.from_model(social_identity)
+        social_identity_orm = self.social_mapper.from_model(social_identity)
         with translate_integrity_error(
             {
-                "uq_social_accounts_provider": TelegramAlreadyLinkedToAnotherUser,
+                "uq_social_identities_provider": TelegramAlreadyLinkedToAnotherUser,
             }
         ):
-            self.session.add(social_id_orm)
-            await self.session.flush([social_id_orm])
+            self.session.add(social_identity_orm)
+            await self.session.flush([social_identity_orm])
 
     async def get_by_provider(
         self, user_id: UserId, provider: str
@@ -38,8 +38,12 @@ class SqlSocialIdentityGateway(SocialIdentityGateway):
             )
             .with_for_update()
         )
-        social_id_orm = await self.session.scalar(stmt)
-        return self.social_mapper.to_model(social_id_orm) if social_id_orm else None
+        social_identity_orm = await self.session.scalar(stmt)
+        return (
+            self.social_mapper.to_model(social_identity_orm)
+            if social_identity_orm
+            else None
+        )
 
     async def delete(self, social_identity: SocialIdentity) -> None:
         await self.session.execute(

@@ -28,7 +28,7 @@
 	const pwa = getPwaService();
 	let showIosPwaModal = $state(false);
 	let hasTelegramAccount = $derived(
-		user.social_accounts.some((socialAccount) => socialAccount.provider === 'telegram')
+		user.social_identities.some((socialIdentity) => socialIdentity.provider === 'telegram')
 	);
 
 	// Convert base64 VAPID key to Uint8Array required by pushManager.

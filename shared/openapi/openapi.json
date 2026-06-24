@@ -1194,15 +1194,32 @@
           "200": {
             "description": "SSE stream established. Returns text/event-stream.",
             "content": {
-              "application/json": {
-                "schema": {}
+              "text/event-stream": {
+                "itemSchema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "string"
+                    },
+                    "event": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "retry": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  }
+                }
               }
             }
           },
           "422": {
             "description": "Request validation error.",
             "content": {
-              "application/json": {
+              "text/event-stream": {
                 "schema": {
                   "$ref": "#/components/schemas/ValidationErrorResponse"
                 }
@@ -3172,12 +3189,12 @@
           "settings": {
             "$ref": "#/components/schemas/UserSettingsDTO"
           },
-          "social_accounts": {
+          "social_identities": {
             "items": {
-              "$ref": "#/components/schemas/UserSocialAccountDTO"
+              "$ref": "#/components/schemas/UserSocialIdentityDTO"
             },
             "type": "array",
-            "title": "Social Accounts"
+            "title": "Social Identities"
           }
         },
         "type": "object",
@@ -3190,7 +3207,7 @@
           "ticket",
           "permissions",
           "settings",
-          "social_accounts"
+          "social_identities"
         ],
         "title": "CurrentUserDTO"
       },
@@ -4387,7 +4404,7 @@
         "type": "object",
         "title": "UserSettingsDTO"
       },
-      "UserSocialAccountDTO": {
+      "UserSocialIdentityDTO": {
         "properties": {
           "provider": {
             "type": "string",
@@ -4403,7 +4420,7 @@
           "provider",
           "provider_id"
         ],
-        "title": "UserSocialAccountDTO"
+        "title": "UserSocialIdentityDTO"
       },
       "UserTicketDTO": {
         "properties": {

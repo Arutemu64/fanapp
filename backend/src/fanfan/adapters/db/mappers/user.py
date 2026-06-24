@@ -4,7 +4,7 @@ from fanfan.application.dto.user import (
     UserBaseDTO,
     UserPermissionDTO,
     UserSettingsDTO,
-    UserSocialAccountDTO,
+    UserSocialIdentityDTO,
     UserTicketDTO,
 )
 from fanfan.core.models.user import User, UserSettings
@@ -100,11 +100,11 @@ class UserMapper:
                 receive_all_announcements=orm.receive_all_announcements,
                 receive_telegram_notifications=orm.receive_telegram_notifications,
             ),
-            social_accounts=[
-                UserSocialAccountDTO(
-                    provider=social_account.provider,
-                    provider_id=social_account.provider_id,
+            social_identities=[
+                UserSocialIdentityDTO(
+                    provider=social_identity.provider,
+                    provider_id=social_identity.provider_id,
                 )
-                for social_account in orm.social_accounts
+                for social_identity in orm.social_identities
             ],
         )
