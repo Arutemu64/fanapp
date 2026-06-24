@@ -169,13 +169,22 @@
 			await invalidate('app:schedule');
 		};
 
+		// Refetch on every (re)connect so a 'schedule_updated' missed while the SSE
+		// stream was down doesn't leave a stale schedule. Fires on first connect too,
+		// which just refetches the freshly loaded data once — harmless and idempotent.
+		const reloadOnReconnect = () => {
+			void invalidate('app:schedule');
+		};
+
 		updateScrollState();
 		scrollContainer?.addEventListener('scroll', updateScrollState, { passive: true });
 		eventsClient?.on('schedule_updated', updateSchedule);
+		eventsClient?.on('connection_established', reloadOnReconnect);
 
 		return () => {
 			scrollContainer?.removeEventListener('scroll', updateScrollState);
 			eventsClient?.off('schedule_updated', updateSchedule);
+			eventsClient?.off('connection_established', reloadOnReconnect);
 		};
 	});
 </script>
