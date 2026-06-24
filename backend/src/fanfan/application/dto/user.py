@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, EmailStr
 
 from fanfan.core.vo.permission import (
     PermissionName,
@@ -10,24 +10,18 @@ from fanfan.core.vo.user import UserId, UserRole
 
 
 class UserBaseDTO(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     id: UserId
     username: str
     role: UserRole
 
 
 class UserPermissionDTO(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     name: PermissionName
     object_type: PermissionObjectType | None
     object_id: PermissionObjectId | None
 
 
 class UserTicketDTO(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     id: TicketId
     barcode: str
     role: UserRole
@@ -39,8 +33,6 @@ class UserSettingsDTO(BaseModel):
 
 
 class UserSocialAccountDTO(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     provider: str
     provider_id: str
 

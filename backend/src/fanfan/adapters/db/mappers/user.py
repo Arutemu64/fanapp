@@ -1,5 +1,3 @@
-from adaptix import Retort
-
 from fanfan.adapters.db.models import UserORM
 from fanfan.application.dto.user import (
     CurrentUserDTO,
@@ -22,9 +20,6 @@ from fanfan.core.vo.user import UserId, Username, UserRole
 
 
 class UserMapper:
-    def __init__(self, retort: Retort):
-        self.retort = retort
-
     def from_model(self, model: User):
         return UserORM(
             id=model.id,
@@ -32,10 +27,11 @@ class UserMapper:
             hashed_password=model.hashed_password,
             email=model.email.value if model.email else None,
             role=model.role,
-            # Queryable notification flags go to columns; the rest stays in JSON.
+            # Queryable notification flags go to columns; the JSON bag is an
+            # extension point for future non-queryable prefs (currently empty).
             receive_all_announcements=model.settings.receive_all_announcements,
             receive_telegram_notifications=model.settings.receive_telegram_notifications,
-            settings={"items_per_page": model.settings.items_per_page},
+            settings={},
         )
 
     def to_model(self, orm: UserORM) -> User:
@@ -46,7 +42,6 @@ class UserMapper:
             email=Email(orm.email) if orm.email else None,
             role=UserRole(orm.role),
             settings=UserSettings(
-                items_per_page=orm.settings.get("items_per_page", 4),
                 receive_all_announcements=orm.receive_all_announcements,
                 receive_telegram_notifications=orm.receive_telegram_notifications,
             ),
