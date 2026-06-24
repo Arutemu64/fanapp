@@ -8,8 +8,8 @@ from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.schedule_changes import (
     ScheduleChangeGateway,
 )
-from fanfan.application.ports.gateways.schedule_events import (
-    ScheduleEventGateway,
+from fanfan.application.ports.gateways.schedule_items import (
+    ScheduleItemGateway,
 )
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.rate_lock import RateLockFactory
@@ -18,26 +18,25 @@ from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
 from fanfan.core.exceptions.rate_limit import RateLimitCooldown
 from fanfan.core.exceptions.schedule import (
-    EventNotFound,
     ScheduleEditTooFast,
+    ScheduleItemNotFound,
 )
 from fanfan.core.models.mailing import Mailing
 from fanfan.core.models.schedule_change import ScheduleChange
 from fanfan.core.vo.permission import PermissionName, Permissions
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.schedule_item import ScheduleItemId
 
 logger = logging.getLogger(__name__)
 
 
-class UpdateScheduleEventSkipInput(BaseModel):
-    event_id: ScheduleEventId
-    is_skipped: bool
+class SetCurrentScheduleItemInput(BaseModel):
+    schedule_item_id: ScheduleItemId | None
 
 
-class UpdateScheduleEventSkip:
+class SetCurrentScheduleItem:
     def __init__(
         self,
-        schedule_gateway: ScheduleEventGateway,
+        schedule_gateway: ScheduleItemGateway,
         settings_gateway: AppSettingsGateway,
         changes_gateway: ScheduleChangeGateway,
         user_gateway: UserGateway,
@@ -49,15 +48,15 @@ class UpdateScheduleEventSkip:
     ) -> None:
         self.schedule_gateway = schedule_gateway
         self.settings_gateway = settings_gateway
-        self.changes_gateway = changes_gateway
         self.user_gateway = user_gateway
         self.perm_service = perm_service
         self.uow = uow
         self.rate_lock_factory = rate_lock_factory
         self.current_user_provider = current_user_provider
         self.mailing_gateway = mailing_gateway
+        self.changes_gateway = changes_gateway
 
-    async def __call__(self, data: UpdateScheduleEventSkipInput) -> None:
+    async def __call__(self, data: SetCurrentScheduleItemInput) -> None:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
             user=current_user, perm_name=PermissionName(Permissions.SCHEDULE_MANAGE)
@@ -71,45 +70,40 @@ class UpdateScheduleEventSkip:
 
         try:
             async with lock:
-                event = await self.schedule_gateway.get_by_id(data.event_id)
-                if event is None:
-                    raise EventNotFound
+                previous_current_event = await self.schedule_gateway.get_current()
+                if previous_current_event:
+                    previous_current_event.unset_current()
+                    await self.schedule_gateway.save(previous_current_event)
 
-                # Snapshot the next event before and after the change so the
-                # mailing can tell subscribers whether their next event moved.
-                next_event_before = await self.schedule_gateway.get_next()
-
-                if data.is_skipped:
-                    event.skip()
+                if data.schedule_item_id is not None:
+                    event = await self.schedule_gateway.get_by_id(data.schedule_item_id)
+                    if event is None:
+                        raise ScheduleItemNotFound
+                    event.set_current()
+                    await self.schedule_gateway.save(event)
                 else:
-                    event.unskip()
-                await self.schedule_gateway.save(event)
-
-                next_event_after = await self.schedule_gateway.get_next()
+                    event = None
 
                 mailing = Mailing.create(by_user_id=current_user.id)
                 await self.mailing_gateway.add(mailing)
-                factory = ScheduleChange.skipped
-                if not event.is_skipped:
-                    factory = ScheduleChange.unskipped
-                schedule_change = factory(
-                    event_id=event.id,
+                schedule_change = ScheduleChange.set_as_current(
+                    changed_schedule_item_id=event.id if event else None,
+                    previous_schedule_item_id=previous_current_event.id
+                    if previous_current_event
+                    else None,
                     mailing_id=mailing.id,
                     user_id=current_user.id,
-                    next_event_changed=(next_event_before != next_event_after),
                 )
                 await self.changes_gateway.add(schedule_change)
 
                 await self.uow.commit()
 
-                # Re-read so the logged event carries its post-commit state.
-                event = await self.schedule_gateway.get_by_id(data.event_id)
-
                 logger.info(
-                    "Schedule event skip updated",
+                    "Schedule event set as current",
                     extra={
-                        "event_id": str(data.event_id),
-                        "is_skipped": data.is_skipped,
+                        "schedule_item_id": str(data.schedule_item_id)
+                        if data.schedule_item_id
+                        else None,
                         "actor_id": str(current_user.id),
                     },
                 )

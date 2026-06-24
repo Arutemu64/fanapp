@@ -4,24 +4,24 @@ from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Path
 
-from fanfan.application.interactors.schedule_mgmt.move_schedule_event import (
-    MoveScheduleEvent,
-    MoveScheduleEventInput,
+from fanfan.application.interactors.schedule_mgmt.move_schedule_item import (
+    MoveScheduleItem,
+    MoveScheduleItemInput,
 )
-from fanfan.application.interactors.schedule_mgmt.set_current_schedule_event import (
-    SetCurrentScheduleEvent,
-    SetCurrentScheduleEventInput,
+from fanfan.application.interactors.schedule_mgmt.set_current_schedule_item import (
+    SetCurrentScheduleItem,
+    SetCurrentScheduleItemInput,
 )
-from fanfan.application.interactors.schedule_mgmt.update_schedule_event_skip import (
-    UpdateScheduleEventSkip,
-    UpdateScheduleEventSkipInput,
+from fanfan.application.interactors.schedule_mgmt.update_schedule_item_skip import (
+    UpdateScheduleItemSkip,
+    UpdateScheduleItemSkipInput,
 )
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.schedule_item import ScheduleItemId
 from fanfan.presentation.web.responses import AUTH_RESPONSES, RATE_LIMIT_RESPONSES
 from fanfan.presentation.web.schemas.error import ErrorMessage
 from fanfan.presentation.web.schemas.schedule import (
-    MoveScheduleEventRequest,
-    UpdateScheduleEventRequest,
+    MoveScheduleItemRequest,
+    UpdateScheduleItemRequest,
 )
 from fanfan.presentation.web.security import session_security
 
@@ -34,7 +34,7 @@ management_router = APIRouter(
 
 
 @management_router.patch(
-    "/{event_id}/current",
+    "/{schedule_item_id}/current",
     status_code=204,
     summary="Set specific event as current",
     description="Updates the schedule state to mark a specific event as active. "
@@ -50,10 +50,10 @@ management_router = APIRouter(
 )
 @inject
 async def set_event_as_current(
-    event_id: Annotated[ScheduleEventId, Path(description="Schedule event ID.")],
-    interactor: FromDishka[SetCurrentScheduleEvent],
+    schedule_item_id: Annotated[ScheduleItemId, Path(description="Schedule item ID.")],
+    interactor: FromDishka[SetCurrentScheduleItem],
 ) -> None:
-    await interactor(SetCurrentScheduleEventInput(event_id=event_id))
+    await interactor(SetCurrentScheduleItemInput(schedule_item_id=schedule_item_id))
 
 
 @management_router.delete(
@@ -68,13 +68,13 @@ async def set_event_as_current(
 )
 @inject
 async def uncheck_current_event(
-    interactor: FromDishka[SetCurrentScheduleEvent],
+    interactor: FromDishka[SetCurrentScheduleItem],
 ) -> None:
-    await interactor(SetCurrentScheduleEventInput(event_id=None))
+    await interactor(SetCurrentScheduleItemInput(schedule_item_id=None))
 
 
 @management_router.patch(
-    "/{event_id}/move",
+    "/{schedule_item_id}/move",
     status_code=204,
     summary="Reorder schedule event",
     description="Moves an event to a new position in the sequence, "
@@ -92,20 +92,21 @@ async def uncheck_current_event(
     },
 )
 @inject
-async def move_schedule_event(
-    event_id: Annotated[ScheduleEventId, Path(description="Schedule event ID.")],
-    data: MoveScheduleEventRequest,
-    interactor: FromDishka[MoveScheduleEvent],
+async def move_schedule_item(
+    schedule_item_id: Annotated[ScheduleItemId, Path(description="Schedule item ID.")],
+    data: MoveScheduleItemRequest,
+    interactor: FromDishka[MoveScheduleItem],
 ) -> None:
     await interactor(
-        MoveScheduleEventInput(
-            event_id=event_id, place_after_event_id=data.place_after_event_id
+        MoveScheduleItemInput(
+            schedule_item_id=schedule_item_id,
+            place_after_schedule_item_id=data.place_after_schedule_item_id,
         )
     )
 
 
 @management_router.patch(
-    "/{event_id}",
+    "/{schedule_item_id}",
     status_code=204,
     summary="Update a schedule event",
     description="Updates a schedule event's skip state. Set `is_skipped` to true to "
@@ -121,11 +122,13 @@ async def move_schedule_event(
     },
 )
 @inject
-async def update_schedule_event(
-    event_id: Annotated[ScheduleEventId, Path(description="Schedule event ID.")],
-    data: UpdateScheduleEventRequest,
-    interactor: FromDishka[UpdateScheduleEventSkip],
+async def update_schedule_item(
+    schedule_item_id: Annotated[ScheduleItemId, Path(description="Schedule item ID.")],
+    data: UpdateScheduleItemRequest,
+    interactor: FromDishka[UpdateScheduleItemSkip],
 ) -> None:
     await interactor(
-        UpdateScheduleEventSkipInput(event_id=event_id, is_skipped=data.is_skipped)
+        UpdateScheduleItemSkipInput(
+            schedule_item_id=schedule_item_id, is_skipped=data.is_skipped
+        )
     )

@@ -1,10 +1,10 @@
 import pytest
 from dishka import AsyncContainer
 
-from fanfan.application.ports.gateways import ScheduleEventGateway
+from fanfan.application.ports.gateways import ScheduleItemGateway
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.core.models.schedule_event import ScheduleEvent
-from fanfan.core.vo.schedule_event import generate_schedule_event_id
+from fanfan.core.models.schedule_item import ScheduleItem
+from fanfan.core.vo.schedule_item import generate_schedule_item_id
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -12,15 +12,15 @@ pytestmark = [
 ]
 
 
-def _schedule_event(
+def _schedule_item(
     number: int,
     order: float,
     *,
     duration: int,
     is_skipped: bool = False,
-) -> ScheduleEvent:
-    return ScheduleEvent(
-        id=generate_schedule_event_id(),
+) -> ScheduleItem:
+    return ScheduleItem(
+        id=generate_schedule_item_id(),
         number=number,
         title=f"Событие {number}",
         duration=duration,
@@ -40,12 +40,12 @@ async def test_queue_and_time_until_with_fractional_orders(
     # smaller than 1. queue must stay a dense 1..N rank and time_until must
     # sum every preceding non-skipped duration regardless of those gaps
     # (a RANGE window frame would frame by the order value and drop events).
-    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    schedule_gateway = await dishka_request.get(ScheduleItemGateway)
 
-    first = _schedule_event(1, order=1.0, duration=10)
-    second = _schedule_event(2, order=1.5, duration=20)
-    skipped = _schedule_event(3, order=1.7, duration=99, is_skipped=True)
-    third = _schedule_event(4, order=2.0, duration=30)
+    first = _schedule_item(1, order=1.0, duration=10)
+    second = _schedule_item(2, order=1.5, duration=20)
+    skipped = _schedule_item(3, order=1.7, duration=99, is_skipped=True)
+    third = _schedule_item(4, order=2.0, duration=30)
     for event in (first, second, skipped, third):
         await schedule_gateway.add(event)
     await uow.commit()

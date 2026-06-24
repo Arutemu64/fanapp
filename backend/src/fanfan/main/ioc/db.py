@@ -23,7 +23,7 @@ from fanfan.adapters.db.gateways.push_subscriptions import (
     SqlPushSubscriptionGateway,
 )
 from fanfan.adapters.db.gateways.schedule_changes import SqlScheduleChangeGateway
-from fanfan.adapters.db.gateways.schedule_events import SqlScheduleEventGateway
+from fanfan.adapters.db.gateways.schedule_items import SqlScheduleItemGateway
 from fanfan.adapters.db.gateways.social_identity import SqlSocialIdentityGateway
 from fanfan.adapters.db.gateways.subscriptions import SqlSubscriptionGateway
 from fanfan.adapters.db.gateways.tickets import SqlTicketGateway
@@ -34,7 +34,7 @@ from fanfan.adapters.db.uow import SqlUnitOfWork
 from fanfan.application.ports.gateways import (
     AppSettingsGateway,
     ScheduleChangeGateway,
-    ScheduleEventGateway,
+    ScheduleItemGateway,
     UserPermissionGateway,
 )
 from fanfan.application.ports.gateways.feedback import FeedbackGateway
@@ -84,7 +84,7 @@ class SqlGatewaysProvider(Provider):
     # so one binding per aggregate is enough.
     nominations = provide(SqlNominationGateway, provides=NominationGateway)
     participants = provide(SqlParticipantGateway, provides=ParticipantGateway)
-    schedule_events = provide(SqlScheduleEventGateway, provides=ScheduleEventGateway)
+    schedule_items = provide(SqlScheduleItemGateway, provides=ScheduleItemGateway)
     schedule_changes = provide(SqlScheduleChangeGateway, provides=ScheduleChangeGateway)
     settings = provide(SqlAppSettingsGateway, provides=AppSettingsGateway)
     subscriptions = provide(SqlSubscriptionGateway, provides=SubscriptionGateway)

@@ -3,13 +3,13 @@ from uuid import UUID, uuid7
 from sqlalchemy import ForeignKey, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from fanfan.adapters.db.models import ScheduleEventORM
+from fanfan.adapters.db.models import ScheduleItemORM
 from fanfan.adapters.db.models.base import BaseORM
 
 
 class SubscriptionORM(BaseORM):
     __tablename__ = "subscriptions"
-    __table_args__ = (UniqueConstraint("event_id", "user_id"),)
+    __table_args__ = (UniqueConstraint("schedule_item_id", "user_id"),)
 
     id: Mapped[UUID] = mapped_column(
         Uuid(as_uuid=True),
@@ -19,9 +19,9 @@ class SubscriptionORM(BaseORM):
     user_id: Mapped[UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
-    event_id: Mapped[UUID] = mapped_column(
+    schedule_item_id: Mapped[UUID] = mapped_column(
         ForeignKey("schedule.id", ondelete="CASCADE")
     )
     counter: Mapped[int] = mapped_column()
 
-    event: Mapped[ScheduleEventORM] = relationship()
+    event: Mapped[ScheduleItemORM] = relationship()

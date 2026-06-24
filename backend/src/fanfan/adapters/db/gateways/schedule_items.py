@@ -2,72 +2,72 @@ from sqlalchemy import Select, and_, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import undefer
 
-from fanfan.adapters.db.mappers.schedule_event import ScheduleEventMapper
-from fanfan.adapters.db.models import ScheduleEventORM
-from fanfan.application.dto.schedule import ScheduleEventFullDTO
-from fanfan.application.ports.gateways import ScheduleEventGateway
-from fanfan.core.models.schedule_event import (
-    ScheduleEvent,
+from fanfan.adapters.db.mappers.schedule_item import ScheduleItemMapper
+from fanfan.adapters.db.models import ScheduleItemORM
+from fanfan.application.dto.schedule import ScheduleItemFullDTO
+from fanfan.application.ports.gateways import ScheduleItemGateway
+from fanfan.core.models.schedule_item import (
+    ScheduleItem,
 )
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.schedule_item import ScheduleItemId
 
 
-def _select_schedule_event_full_dto() -> Select:
-    return select(ScheduleEventORM).options(
-        undefer(ScheduleEventORM.queue),
-        undefer(ScheduleEventORM.time_until),
+def _select_schedule_item_full_dto() -> Select:
+    return select(ScheduleItemORM).options(
+        undefer(ScheduleItemORM.queue),
+        undefer(ScheduleItemORM.time_until),
     )
 
 
-class SqlScheduleEventGateway(ScheduleEventGateway):
+class SqlScheduleItemGateway(ScheduleItemGateway):
     def __init__(self, session: AsyncSession):
         self.session = session
-        self.mapper = ScheduleEventMapper()
+        self.mapper = ScheduleItemMapper()
 
-    async def add(self, event: ScheduleEvent) -> None:
+    async def add(self, event: ScheduleItem) -> None:
         event_orm = self.mapper.from_model(event)
         self.session.add(event_orm)
 
-    async def get_by_id(self, event_id: ScheduleEventId) -> ScheduleEvent | None:
+    async def get_by_id(self, schedule_item_id: ScheduleItemId) -> ScheduleItem | None:
         stmt = (
-            select(ScheduleEventORM)
-            .where(ScheduleEventORM.id == event_id)
+            select(ScheduleItemORM)
+            .where(ScheduleItemORM.id == schedule_item_id)
             .with_for_update()
         )
         event_orm = await self.session.scalar(stmt)
         return self.mapper.to_model(event_orm) if event_orm else None
 
-    async def get_by_queue(self, queue: int) -> ScheduleEvent | None:
+    async def get_by_queue(self, queue: int) -> ScheduleItem | None:
         stmt = (
-            select(ScheduleEventORM)
-            .where(ScheduleEventORM.queue == queue)
+            select(ScheduleItemORM)
+            .where(ScheduleItemORM.queue == queue)
             .with_for_update()
         )
         event_orm = await self.session.scalar(stmt)
         return self.mapper.to_model(event_orm) if event_orm else None
 
-    async def get_current(self) -> ScheduleEvent | None:
+    async def get_current(self) -> ScheduleItem | None:
         stmt = (
-            select(ScheduleEventORM)
-            .where(ScheduleEventORM.is_current.is_(True))
+            select(ScheduleItemORM)
+            .where(ScheduleItemORM.is_current.is_(True))
             .with_for_update()
         )
         event_orm = await self.session.scalar(stmt)
         return self.mapper.to_model(event_orm) if event_orm else None
 
-    async def get_next(self) -> ScheduleEvent | None:
+    async def get_next(self) -> ScheduleItem | None:
         current_event_order = (
-            select(ScheduleEventORM.order)
-            .where(ScheduleEventORM.is_current.is_(True))
+            select(ScheduleItemORM.order)
+            .where(ScheduleItemORM.is_current.is_(True))
             .scalar_subquery()
         )
         stmt = (
-            select(ScheduleEventORM)
-            .order_by(ScheduleEventORM.order)
+            select(ScheduleItemORM)
+            .order_by(ScheduleItemORM.order)
             .where(
                 and_(
-                    ScheduleEventORM.order > current_event_order,
-                    ScheduleEventORM.is_skipped.is_not(True),
+                    ScheduleItemORM.order > current_event_order,
+                    ScheduleItemORM.is_skipped.is_not(True),
                 )
             )
             .limit(1)
@@ -76,57 +76,57 @@ class SqlScheduleEventGateway(ScheduleEventGateway):
         event_orm = await self.session.scalar(stmt)
         return self.mapper.to_model(event_orm) if event_orm else None
 
-    async def list_all(self) -> list[ScheduleEvent]:
-        stmt = select(ScheduleEventORM).with_for_update()
+    async def list_all(self) -> list[ScheduleItem]:
+        stmt = select(ScheduleItemORM).with_for_update()
         event_orm = await self.session.scalars(stmt)
         return [self.mapper.to_model(e) for e in event_orm]
 
-    async def get_next_by_order(self, order: float) -> ScheduleEvent | None:
+    async def get_next_by_order(self, order: float) -> ScheduleItem | None:
         stmt = (
-            select(ScheduleEventORM)
-            .order_by(ScheduleEventORM.order)
-            .where(ScheduleEventORM.order > order)
+            select(ScheduleItemORM)
+            .order_by(ScheduleItemORM.order)
+            .where(ScheduleItemORM.order > order)
             .limit(1)
             .with_for_update()
         )
         event_orm = await self.session.scalar(stmt)
         return self.mapper.to_model(event_orm) if event_orm else None
 
-    async def get_previous_by_order(self, order: float) -> ScheduleEvent | None:
+    async def get_previous_by_order(self, order: float) -> ScheduleItem | None:
         stmt = (
-            select(ScheduleEventORM)
-            .order_by(ScheduleEventORM.order)
-            .where(ScheduleEventORM.order < order)
+            select(ScheduleItemORM)
+            .order_by(ScheduleItemORM.order)
+            .where(ScheduleItemORM.order < order)
             .limit(1)
             .with_for_update()
         )
         event_orm = await self.session.scalar(stmt)
         return self.mapper.to_model(event_orm) if event_orm else None
 
-    async def save(self, event: ScheduleEvent) -> None:
+    async def save(self, event: ScheduleItem) -> None:
         event_orm = await self.session.merge(self.mapper.from_model(event))
         await self.session.flush([event_orm])
         return
 
-    async def delete(self, event: ScheduleEvent) -> None:
+    async def delete(self, event: ScheduleItem) -> None:
         await self.session.execute(
-            delete(ScheduleEventORM).where(ScheduleEventORM.id == event.id)
+            delete(ScheduleItemORM).where(ScheduleItemORM.id == event.id)
         )
 
     # Read projections (return DTOs, not aggregates)
-    async def read_next_event(self) -> ScheduleEventFullDTO | None:
+    async def read_next_event(self) -> ScheduleItemFullDTO | None:
         current_event_order = (
-            select(ScheduleEventORM.order)
-            .where(ScheduleEventORM.is_current.is_(True))
+            select(ScheduleItemORM.order)
+            .where(ScheduleItemORM.is_current.is_(True))
             .scalar_subquery()
         )
         stmt = (
-            _select_schedule_event_full_dto()
-            .order_by(ScheduleEventORM.order)
+            _select_schedule_item_full_dto()
+            .order_by(ScheduleItemORM.order)
             .where(
                 and_(
-                    ScheduleEventORM.order > current_event_order,
-                    ScheduleEventORM.is_skipped.is_not(True),
+                    ScheduleItemORM.order > current_event_order,
+                    ScheduleItemORM.is_skipped.is_not(True),
                 )
             )
             .limit(1)
@@ -140,9 +140,9 @@ class SqlScheduleEventGateway(ScheduleEventGateway):
             )
         return None
 
-    async def read_current_event(self) -> ScheduleEventFullDTO | None:
-        stmt = _select_schedule_event_full_dto().where(
-            ScheduleEventORM.is_current.is_(True)
+    async def read_current_event(self) -> ScheduleItemFullDTO | None:
+        stmt = _select_schedule_item_full_dto().where(
+            ScheduleItemORM.is_current.is_(True)
         )
         event_orm = await self.session.scalar(stmt)
         if event_orm:
@@ -153,16 +153,16 @@ class SqlScheduleEventGateway(ScheduleEventGateway):
             )
         return None
 
-    async def read_list_schedule(self) -> list[ScheduleEventFullDTO]:
+    async def read_list_schedule(self) -> list[ScheduleItemFullDTO]:
         # The whole schedule is read uncached, so queue/time_until come from a
         # single ranking subquery joined once here, rather than the per-row
         # correlated column_properties (which would re-run the window for every
         # one of the ~hundreds of rows).
-        ranked = ScheduleEventORM.ranking_subquery()
+        ranked = ScheduleItemORM.ranking_subquery()
         stmt = (
-            select(ScheduleEventORM, ranked.c.queue, ranked.c.time_until)
-            .outerjoin(ranked, ScheduleEventORM.id == ranked.c.id)
-            .order_by(ScheduleEventORM.order)
+            select(ScheduleItemORM, ranked.c.queue, ranked.c.time_until)
+            .outerjoin(ranked, ScheduleItemORM.id == ranked.c.id)
+            .order_by(ScheduleItemORM.order)
         )
         results = (await self.session.execute(stmt)).all()
         return [

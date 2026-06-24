@@ -3,7 +3,7 @@ from typing import cast
 
 from pydantic import BaseModel
 
-from fanfan.application.dto.schedule import ScheduleEventFullDTO
+from fanfan.application.dto.schedule import ScheduleItemFullDTO
 from fanfan.application.dto.schedule_change import (
     ScheduleChangeEventDTO,
     ScheduleChangeFullDTO,
@@ -13,8 +13,8 @@ from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.schedule_changes import (
     ScheduleChangeGateway,
 )
-from fanfan.application.ports.gateways.schedule_events import (
-    ScheduleEventGateway,
+from fanfan.application.ports.gateways.schedule_items import (
+    ScheduleItemGateway,
 )
 from fanfan.application.ports.gateways.subscriptions import SubscriptionGateway
 from fanfan.application.ports.gateways.users import UserGateway
@@ -36,7 +36,7 @@ class SendScheduleChangeNotifications:
         self,
         template_renderer: TemplateRenderer,
         changes_gateway: ScheduleChangeGateway,
-        schedule_gateway: ScheduleEventGateway,
+        schedule_gateway: ScheduleItemGateway,
         user_gateway: UserGateway,
         subscription_gateway: SubscriptionGateway,
         mailing_gateway: MailingGateway,
@@ -87,9 +87,9 @@ class SendScheduleChangeNotifications:
                     notification=NewNotification(
                         id=generate_notification_id(),
                         user_id=e.id,
-                        title="Изменение расписания",
+                        title="Изменение программы",
                         body=f"@{editor.username} сделал изменение "
-                        f"в расписании: {reason_msg}",
+                        f"в программе: {reason_msg}",
                         type=NotificationType.SCHEDULE_CHANGE,
                         path="/schedule/changes",
                         mailing_id=schedule_change.mailing_id,
@@ -102,8 +102,8 @@ class SendScheduleChangeNotifications:
     async def _build_global_announcement_notifications(
         self,
         schedule_change: ScheduleChangeFullDTO,
-        current_event: ScheduleEventFullDTO,
-        next_event: ScheduleEventFullDTO | None,
+        current_event: ScheduleItemFullDTO,
+        next_event: ScheduleItemFullDTO | None,
     ) -> list[NotificationQueued]:
         events: list[NotificationQueued] = []
         body = await self.template_renderer.render(
@@ -142,7 +142,7 @@ class SendScheduleChangeNotifications:
     async def _build_subscription_notifications(
         self,
         schedule_change: ScheduleChangeFullDTO,
-        current_event: ScheduleEventFullDTO,
+        current_event: ScheduleItemFullDTO,
         changed_event: ScheduleChangeEventDTO,
         reason_msg: str | None,
     ) -> list[NotificationQueued]:

@@ -1261,7 +1261,7 @@
         }
       }
     },
-    "/schedule/{event_id}/current": {
+    "/schedule/{schedule_item_id}/current": {
       "patch": {
         "tags": [
           "Schedule"
@@ -1276,16 +1276,16 @@
         ],
         "parameters": [
           {
-            "name": "event_id",
+            "name": "schedule_item_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "description": "Schedule event ID.",
-              "title": "Event Id"
+              "description": "Schedule item ID.",
+              "title": "Schedule Item Id"
             },
-            "description": "Schedule event ID."
+            "description": "Schedule item ID."
           }
         ],
         "responses": {
@@ -1431,14 +1431,14 @@
         ]
       }
     },
-    "/schedule/{event_id}/move": {
+    "/schedule/{schedule_item_id}/move": {
       "patch": {
         "tags": [
           "Schedule"
         ],
         "summary": "Reorder schedule event",
         "description": "Moves an event to a new position in the sequence, specifically after the provided event ID.",
-        "operationId": "move_schedule_event",
+        "operationId": "move_schedule_item",
         "security": [
           {
             "SessionCookie": []
@@ -1446,16 +1446,16 @@
         ],
         "parameters": [
           {
-            "name": "event_id",
+            "name": "schedule_item_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "description": "Schedule event ID.",
-              "title": "Event Id"
+              "description": "Schedule item ID.",
+              "title": "Schedule Item Id"
             },
-            "description": "Schedule event ID."
+            "description": "Schedule item ID."
           }
         ],
         "requestBody": {
@@ -1463,7 +1463,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MoveScheduleEventRequest"
+                "$ref": "#/components/schemas/MoveScheduleItemRequest"
               }
             }
           }
@@ -1543,14 +1543,14 @@
         }
       }
     },
-    "/schedule/{event_id}": {
+    "/schedule/{schedule_item_id}": {
       "patch": {
         "tags": [
           "Schedule"
         ],
         "summary": "Update a schedule event",
         "description": "Updates a schedule event's skip state. Set `is_skipped` to true to skip the event or false to restore it. Note: the currently active event cannot be skipped.",
-        "operationId": "update_schedule_event",
+        "operationId": "update_schedule_item",
         "security": [
           {
             "SessionCookie": []
@@ -1558,16 +1558,16 @@
         ],
         "parameters": [
           {
-            "name": "event_id",
+            "name": "schedule_item_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "description": "Schedule event ID.",
-              "title": "Event Id"
+              "description": "Schedule item ID.",
+              "title": "Schedule Item Id"
             },
-            "description": "Schedule event ID."
+            "description": "Schedule item ID."
           }
         ],
         "requestBody": {
@@ -1575,7 +1575,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateScheduleEventRequest"
+                "$ref": "#/components/schemas/UpdateScheduleItemRequest"
               }
             }
           }
@@ -3108,10 +3108,10 @@
       },
       "CreateSubscriptionInput": {
         "properties": {
-          "event_id": {
+          "schedule_item_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Event Id"
+            "title": "Schedule Item Id"
           },
           "counter": {
             "type": "integer",
@@ -3120,7 +3120,7 @@
         },
         "type": "object",
         "required": [
-          "event_id",
+          "schedule_item_id",
           "counter"
         ],
         "title": "CreateSubscriptionInput"
@@ -3261,10 +3261,9 @@
               "APP_SETTINGS_NOT_FOUND",
               "AUTHENTICATION_ERROR",
               "CAPTCHA_VERIFICATION_FAILED",
-              "CURRENT_EVENT_NOT_ALLOWED",
+              "CURRENT_SCHEDULE_ITEM_NOT_ALLOWED",
               "EMAIL_ALREADY_EXISTS",
               "EMAIL_CODE_REQUEST_TOO_FAST",
-              "EVENT_NOT_FOUND",
               "HTTP_ERROR",
               "INCORRECT_PASSWORD",
               "INTERNAL_ERROR",
@@ -3277,10 +3276,11 @@
               "PARTICIPANT_NOT_FOUND",
               "PUSH_SUBSCRIPTION_ALREADY_EXISTS",
               "PUSH_SUBSCRIPTION_NOT_FOUND",
-              "SAME_EVENTS_ARE_NOT_ALLOWED",
+              "SAME_SCHEDULE_ITEMS_ARE_NOT_ALLOWED",
               "SCHEDULE_CHANGE_NOT_FOUND",
               "SCHEDULE_EDIT_TOO_FAST",
-              "SKIPPED_EVENT_NOT_ALLOWED",
+              "SCHEDULE_ITEM_NOT_FOUND",
+              "SKIPPED_SCHEDULE_ITEM_NOT_ALLOWED",
               "SUBSCRIPTION_ALREADY_EXISTS",
               "SUBSCRIPTION_NOT_FOUND",
               "TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER",
@@ -3319,7 +3319,7 @@
         "properties": {
           "schedule": {
             "items": {
-              "$ref": "#/components/schemas/ScheduleEventFullDTO"
+              "$ref": "#/components/schemas/ScheduleItemFullDTO"
             },
             "type": "array",
             "title": "Schedule"
@@ -3534,19 +3534,19 @@
         ],
         "title": "LoginWithCodeInput"
       },
-      "MoveScheduleEventRequest": {
+      "MoveScheduleItemRequest": {
         "properties": {
-          "place_after_event_id": {
+          "place_after_schedule_item_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Place After Event Id"
+            "title": "Place After Schedule Item Id"
           }
         },
         "type": "object",
         "required": [
-          "place_after_event_id"
+          "place_after_schedule_item_id"
         ],
-        "title": "MoveScheduleEventRequest"
+        "title": "MoveScheduleItemRequest"
       },
       "NominationVoteDTO": {
         "properties": {
@@ -3970,7 +3970,7 @@
         ],
         "title": "ScheduleChangeUserDTO"
       },
-      "ScheduleEventFullDTO": {
+      "ScheduleItemFullDTO": {
         "properties": {
           "id": {
             "type": "string",
@@ -4060,7 +4060,7 @@
           "queue",
           "time_until"
         ],
-        "title": "ScheduleEventFullDTO"
+        "title": "ScheduleItemFullDTO"
       },
       "SendBroadcastInput": {
         "properties": {
@@ -4300,7 +4300,7 @@
         "type": "object",
         "title": "UpdateCurrentUserInput"
       },
-      "UpdateScheduleEventRequest": {
+      "UpdateScheduleItemRequest": {
         "properties": {
           "is_skipped": {
             "type": "boolean",
@@ -4311,7 +4311,7 @@
         "required": [
           "is_skipped"
         ],
-        "title": "UpdateScheduleEventRequest"
+        "title": "UpdateScheduleItemRequest"
       },
       "UpdateUserSettingsInput": {
         "properties": {

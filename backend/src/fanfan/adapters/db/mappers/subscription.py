@@ -4,7 +4,7 @@ from fanfan.application.dto.subscription import (
     SubscriptionFullDTO,
 )
 from fanfan.core.models.subscription import Subscription
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.schedule_item import ScheduleItemId
 from fanfan.core.vo.subscription import SubscriptionId
 from fanfan.core.vo.user import UserId
 
@@ -15,7 +15,7 @@ class SubscriptionMapper:
         return SubscriptionORM(
             id=model.id,
             user_id=model.user_id,
-            event_id=model.event_id,
+            schedule_item_id=model.schedule_item_id,
             counter=model.counter,
         )
 
@@ -24,7 +24,7 @@ class SubscriptionMapper:
         return Subscription(
             id=SubscriptionId(orm.id),
             user_id=UserId(orm.user_id),
-            event_id=ScheduleEventId(orm.event_id),
+            schedule_item_id=ScheduleItemId(orm.schedule_item_id),
             counter=orm.counter,
         )
 
@@ -37,7 +37,7 @@ class SubscriptionMapper:
             user_id=UserId(subscription_orm.user_id),
             counter=subscription_orm.counter,
             event=SubscriptionEventDTO(
-                id=ScheduleEventId(subscription_orm.event.id),
+                id=ScheduleItemId(subscription_orm.event.id),
                 number=subscription_orm.event.number,
                 title=subscription_orm.event.title,
                 order=subscription_orm.event.order,

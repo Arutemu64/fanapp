@@ -1,19 +1,19 @@
 from pydantic import BaseModel
 
-from fanfan.application.dto.schedule import ScheduleEventFullDTO
-from fanfan.application.ports.gateways.schedule_events import (
-    ScheduleEventGateway,
+from fanfan.application.dto.schedule import ScheduleItemFullDTO
+from fanfan.application.ports.gateways.schedule_items import (
+    ScheduleItemGateway,
 )
 
 
 class GetScheduleOutput(BaseModel):
-    schedule: list[ScheduleEventFullDTO]
+    schedule: list[ScheduleItemFullDTO]
 
 
 class GetSchedule:
     def __init__(
         self,
-        schedule_gateway: ScheduleEventGateway,
+        schedule_gateway: ScheduleItemGateway,
     ) -> None:
         self.schedule_gateway = schedule_gateway
 

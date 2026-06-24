@@ -7,7 +7,7 @@ from fanfan.application.dto.schedule_change import (
 from fanfan.core.models.schedule_change import ScheduleChange
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.schedule_change import ScheduleChangeId
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.schedule_item import ScheduleItemId
 from fanfan.core.vo.user import UserId
 
 
@@ -19,8 +19,8 @@ class ScheduleChangeMapper:
             type=model.type,
             mailing_id=model.mailing_id,
             user_id=model.user_id,
-            changed_event_id=model.changed_event_id,
-            argument_event_id=model.argument_event_id,
+            changed_schedule_item_id=model.changed_schedule_item_id,
+            argument_schedule_item_id=model.argument_schedule_item_id,
             next_event_changed=model.next_event_changed,
         )
 
@@ -33,11 +33,11 @@ class ScheduleChangeMapper:
             if orm.mailing_id is not None
             else None,
             user_id=UserId(orm.user_id) if orm.user_id is not None else None,
-            changed_event_id=ScheduleEventId(orm.changed_event_id)
-            if orm.changed_event_id is not None
+            changed_schedule_item_id=ScheduleItemId(orm.changed_schedule_item_id)
+            if orm.changed_schedule_item_id is not None
             else None,
-            argument_event_id=ScheduleEventId(orm.argument_event_id)
-            if orm.argument_event_id is not None
+            argument_schedule_item_id=ScheduleItemId(orm.argument_schedule_item_id)
+            if orm.argument_schedule_item_id is not None
             else None,
             next_event_changed=orm.next_event_changed,
         )
@@ -57,7 +57,7 @@ class ScheduleChangeMapper:
             else None,
             next_event_changed=schedule_change_orm.next_event_changed,
             changed_event=ScheduleChangeEventDTO(
-                id=ScheduleEventId(schedule_change_orm.changed_event.id),
+                id=ScheduleItemId(schedule_change_orm.changed_event.id),
                 number=schedule_change_orm.changed_event.number,
                 title=schedule_change_orm.changed_event.title,
                 order=schedule_change_orm.changed_event.order,
@@ -65,7 +65,7 @@ class ScheduleChangeMapper:
             if schedule_change_orm.changed_event
             else None,
             argument_event=ScheduleChangeEventDTO(
-                id=ScheduleEventId(schedule_change_orm.argument_event.id),
+                id=ScheduleItemId(schedule_change_orm.argument_event.id),
                 number=schedule_change_orm.argument_event.number,
                 title=schedule_change_orm.argument_event.title,
                 order=schedule_change_orm.argument_event.order,

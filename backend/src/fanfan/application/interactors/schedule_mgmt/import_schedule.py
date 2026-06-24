@@ -2,16 +2,16 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.ports.gateways.schedule_events import (
-    ScheduleEventGateway,
+from fanfan.application.ports.gateways.schedule_items import (
+    ScheduleItemGateway,
 )
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
-from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.models.schedule_item import ScheduleItem
 from fanfan.core.vo.permission import PermissionName, Permissions
-from fanfan.core.vo.schedule_event import generate_schedule_event_id
+from fanfan.core.vo.schedule_item import generate_schedule_item_id
 
 ORDER_INIT = 100.0
 ORDER_STEP = 100.0
@@ -19,7 +19,7 @@ ORDER_STEP = 100.0
 logger = logging.getLogger(__name__)
 
 
-class ScheduleEntry(BaseModel):
+class ScheduleImportRow(BaseModel):
     number: int
     title: str
     duration: int
@@ -28,13 +28,13 @@ class ScheduleEntry(BaseModel):
 
 
 class ImportScheduleInput(BaseModel):
-    schedule: list[ScheduleEntry]
+    schedule: list[ScheduleImportRow]
 
 
 class ImportSchedule:
     def __init__(
         self,
-        schedule_gateway: ScheduleEventGateway,
+        schedule_gateway: ScheduleItemGateway,
         uow: UnitOfWork,
         current_user_provider: CurrentUserProvider,
         user_gateway: UserGateway,
@@ -71,13 +71,13 @@ class ImportSchedule:
                 logger.info(
                     "Schedule event updated during import",
                     extra={
-                        "event_id": str(existing_event.id),
+                        "schedule_item_id": str(existing_event.id),
                         "actor_id": str(current_user.id),
                     },
                 )
             else:
-                new_event = ScheduleEvent(
-                    id=generate_schedule_event_id(),
+                new_event = ScheduleItem(
+                    id=generate_schedule_item_id(),
                     number=entry.number,
                     title=entry.title,
                     duration=entry.duration,
@@ -91,7 +91,7 @@ class ImportSchedule:
                 logger.info(
                     "Schedule event added during import",
                     extra={
-                        "event_id": str(new_event.id),
+                        "schedule_item_id": str(new_event.id),
                         "actor_id": str(current_user.id),
                     },
                 )
@@ -101,7 +101,7 @@ class ImportSchedule:
             logger.info(
                 "Orphaned schedule event deleted during import",
                 extra={
-                    "event_id": str(e.id),
+                    "schedule_item_id": str(e.id),
                     "actor_id": str(current_user.id),
                 },
             )

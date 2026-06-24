@@ -12,7 +12,7 @@ from fanfan.adapters.db.models.base import BaseORM
 from fanfan.adapters.db.models.mixins.order import OrderMixin
 
 
-class ScheduleEventORM(BaseORM, OrderMixin):
+class ScheduleItemORM(BaseORM, OrderMixin):
     __tablename__ = "schedule"
 
     id: Mapped[UUID] = mapped_column(

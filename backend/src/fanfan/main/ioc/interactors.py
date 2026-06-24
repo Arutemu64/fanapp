@@ -82,17 +82,17 @@ from fanfan.application.interactors.schedule_mgmt.import_schedule import ImportS
 from fanfan.application.interactors.schedule_mgmt.list_schedule_changes import (
     ListScheduleChanges,
 )
-from fanfan.application.interactors.schedule_mgmt.move_schedule_event import (
-    MoveScheduleEvent,
+from fanfan.application.interactors.schedule_mgmt.move_schedule_item import (
+    MoveScheduleItem,
 )
-from fanfan.application.interactors.schedule_mgmt.set_current_schedule_event import (
-    SetCurrentScheduleEvent,
+from fanfan.application.interactors.schedule_mgmt.set_current_schedule_item import (
+    SetCurrentScheduleItem,
 )
 from fanfan.application.interactors.schedule_mgmt.undo_schedule_change import (
     UndoScheduleChange,
 )
-from fanfan.application.interactors.schedule_mgmt.update_schedule_event_skip import (
-    UpdateScheduleEventSkip,
+from fanfan.application.interactors.schedule_mgmt.update_schedule_item_skip import (
+    UpdateScheduleItemSkip,
 )
 from fanfan.application.interactors.settings.get_settings import GetSettings
 from fanfan.application.interactors.settings.update_settings import UpdateSettings
@@ -131,9 +131,9 @@ class InteractorsProvider(Provider):
     scope = Scope.REQUEST
 
     get_schedule = provide(GetSchedule)
-    move_schedule_event = provide(MoveScheduleEvent)
-    set_current_schedule_event = provide(SetCurrentScheduleEvent)
-    update_schedule_event_skip = provide(UpdateScheduleEventSkip)
+    move_schedule_item = provide(MoveScheduleItem)
+    set_current_schedule_item = provide(SetCurrentScheduleItem)
+    update_schedule_item_skip = provide(UpdateScheduleItemSkip)
     undo_schedule_change = provide(UndoScheduleChange)
     send_schedule_change_notifications = provide(SendScheduleChangeNotifications)
     list_schedule_changes = provide(ListScheduleChanges)

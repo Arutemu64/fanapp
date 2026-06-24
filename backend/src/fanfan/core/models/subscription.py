@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from fanfan.core.models.base import AggregateRoot
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.schedule_item import ScheduleItemId
 from fanfan.core.vo.subscription import SubscriptionId
 from fanfan.core.vo.user import UserId
 
@@ -10,5 +10,5 @@ from fanfan.core.vo.user import UserId
 class Subscription(AggregateRoot):
     id: SubscriptionId
     user_id: UserId
-    event_id: ScheduleEventId
+    schedule_item_id: ScheduleItemId
     counter: int

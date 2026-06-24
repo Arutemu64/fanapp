@@ -5,22 +5,22 @@ from pydantic import BaseModel
 from fanfan.application.ports.gateways.schedule_changes import (
     ScheduleChangeGateway,
 )
-from fanfan.application.ports.gateways.schedule_events import (
-    ScheduleEventGateway,
+from fanfan.application.ports.gateways.schedule_items import (
+    ScheduleItemGateway,
 )
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
 from fanfan.core.exceptions.schedule import (
-    EventNotFound,
     OutdatedScheduleChange,
     ScheduleChangeNotFound,
+    ScheduleItemNotFound,
 )
-from fanfan.core.models.schedule_event import ScheduleEvent
+from fanfan.core.models.schedule_item import ScheduleItem
 from fanfan.core.vo.permission import PermissionName, Permissions
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.schedule_item import ScheduleItemId
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ class UndoScheduleChange:
         uow: UnitOfWork,
         changes_gateway: ScheduleChangeGateway,
         user_gateway: UserGateway,
-        schedule_gateway: ScheduleEventGateway,
+        schedule_gateway: ScheduleItemGateway,
         current_user_provider: CurrentUserProvider,
         perm_service: PermissionService,
     ):
@@ -48,8 +48,8 @@ class UndoScheduleChange:
 
     async def _handle_set_as_current(
         self,
-        changed_event: ScheduleEvent | None,
-        previous_event: ScheduleEvent | None,
+        changed_event: ScheduleItem | None,
+        previous_event: ScheduleItem | None,
     ) -> None:
         current_event = await self.schedule_gateway.get_current()
 
@@ -66,8 +66,8 @@ class UndoScheduleChange:
 
     async def _handle_moved(
         self,
-        changed_event: ScheduleEvent,
-        place_after_event: ScheduleEvent | None,
+        changed_event: ScheduleItem,
+        place_after_event: ScheduleItem | None,
     ) -> None:
         if place_after_event:
             place_before_event = await self.schedule_gateway.get_next_by_order(
@@ -84,16 +84,16 @@ class UndoScheduleChange:
         await self.schedule_gateway.save(changed_event)
 
     async def _require_event(
-        self, event_id: ScheduleEventId | None
-    ) -> ScheduleEvent | None:
+        self, schedule_item_id: ScheduleItemId | None
+    ) -> ScheduleItem | None:
         # A null id means the change simply had no event in that slot. A non-null
         # id that resolves to nothing is an inconsistent state, so fail loud
         # instead of silently skipping the revert below.
-        if event_id is None:
+        if schedule_item_id is None:
             return None
-        event = await self.schedule_gateway.get_by_id(event_id)
+        event = await self.schedule_gateway.get_by_id(schedule_item_id)
         if event is None:
-            raise EventNotFound
+            raise ScheduleItemNotFound
         return event
 
     async def __call__(self, data: UndoScheduleChangeInput) -> None:
@@ -105,8 +105,12 @@ class UndoScheduleChange:
         if schedule_change is None:
             raise ScheduleChangeNotFound
 
-        changed_event = await self._require_event(schedule_change.changed_event_id)
-        argument_event = await self._require_event(schedule_change.argument_event_id)
+        changed_event = await self._require_event(
+            schedule_change.changed_schedule_item_id
+        )
+        argument_event = await self._require_event(
+            schedule_change.argument_schedule_item_id
+        )
 
         if schedule_change.type is ScheduleChangeType.SET_AS_CURRENT:
             await self._handle_set_as_current(changed_event, argument_event)

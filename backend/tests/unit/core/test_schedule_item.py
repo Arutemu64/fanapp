@@ -1,12 +1,12 @@
 import pytest
 
 from fanfan.core.exceptions.schedule import (
-    CurrentEventNotAllowed,
-    SameEventsAreNotAllowed,
-    SkippedEventNotAllowed,
+    CurrentScheduleItemNotAllowed,
+    SameScheduleItemsAreNotAllowed,
+    SkippedScheduleItemNotAllowed,
 )
-from fanfan.core.models.schedule_event import ScheduleEvent
-from fanfan.core.vo.schedule_event import generate_schedule_event_id
+from fanfan.core.models.schedule_item import ScheduleItem
+from fanfan.core.vo.schedule_item import generate_schedule_item_id
 
 pytestmark = pytest.mark.unit
 
@@ -17,9 +17,9 @@ def _event(
     *,
     is_current: bool = False,
     is_skipped: bool = False,
-) -> ScheduleEvent:
-    return ScheduleEvent(
-        id=generate_schedule_event_id(),
+) -> ScheduleItem:
+    return ScheduleItem(
+        id=generate_schedule_item_id(),
         number=number,
         title=f"Событие {number}",
         duration=15,
@@ -42,14 +42,14 @@ def test_set_current_on_normal_event():
 def test_set_current_on_skipped_event_raises():
     event = _event(1, 1, is_skipped=True)
 
-    with pytest.raises(SkippedEventNotAllowed):
+    with pytest.raises(SkippedScheduleItemNotAllowed):
         event.set_current()
 
 
 def test_skip_on_current_event_raises():
     event = _event(1, 1, is_current=True)
 
-    with pytest.raises(CurrentEventNotAllowed):
+    with pytest.raises(CurrentScheduleItemNotAllowed):
         event.skip()
 
 
@@ -85,7 +85,7 @@ def test_place_after_appends_when_no_next():
 def test_place_after_self_raises():
     event = _event(1, 1)
 
-    with pytest.raises(SameEventsAreNotAllowed):
+    with pytest.raises(SameScheduleItemsAreNotAllowed):
         event.place_after(event, None)
 
 

@@ -4,10 +4,10 @@ from sqlalchemy.orm import joinedload, undefer
 
 from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.mappers.subscription import SubscriptionMapper
-from fanfan.adapters.db.models import ScheduleEventORM, SubscriptionORM
+from fanfan.adapters.db.models import ScheduleItemORM, SubscriptionORM
 from fanfan.application.dto.subscription import SubscriptionFullDTO
 from fanfan.application.ports.gateways.subscriptions import SubscriptionGateway
-from fanfan.core.exceptions.schedule import EventNotFound
+from fanfan.core.exceptions.schedule import ScheduleItemNotFound
 from fanfan.core.exceptions.subscriptions import SubscriptionAlreadyExists
 from fanfan.core.models.subscription import (
     Subscription,
@@ -19,11 +19,11 @@ from fanfan.core.vo.user import UserId
 def _select_subscription_full_dto():
     return (
         select(SubscriptionORM)
-        .join(ScheduleEventORM)
+        .join(ScheduleItemORM)
         .options(
             joinedload(SubscriptionORM.event).options(
-                undefer(ScheduleEventORM.queue),
-                undefer(ScheduleEventORM.time_until),
+                undefer(ScheduleItemORM.queue),
+                undefer(ScheduleItemORM.time_until),
             )
         )
     )
@@ -39,8 +39,8 @@ class SqlSubscriptionGateway(SubscriptionGateway):
         self.session.add(subscription_orm)
         with translate_integrity_error(
             {
-                "fk_subscriptions_event_id_schedule": EventNotFound,
-                "uq_subscriptions_event_id": SubscriptionAlreadyExists,
+                "fk_subscriptions_schedule_item_id_schedule": ScheduleItemNotFound,
+                "uq_subscriptions_schedule_item_id": SubscriptionAlreadyExists,
             }
         ):
             await self.session.flush([subscription_orm])
@@ -65,11 +65,11 @@ class SqlSubscriptionGateway(SubscriptionGateway):
     ) -> list[SubscriptionFullDTO]:
         stmt = _select_subscription_full_dto().where(
             # Ignore skipped events
-            ScheduleEventORM.is_skipped.isnot(True),
+            ScheduleItemORM.is_skipped.isnot(True),
             # Fire once the event is within `counter` positions of the stage.
-            SubscriptionORM.counter >= (ScheduleEventORM.queue - current_event_queue),
+            SubscriptionORM.counter >= (ScheduleItemORM.queue - current_event_queue),
             # Ignore past events due to previous clause
-            (ScheduleEventORM.queue - current_event_queue) >= 0,
+            (ScheduleItemORM.queue - current_event_queue) >= 0,
         )
 
         results = await self.session.scalars(stmt)
@@ -84,7 +84,7 @@ class SqlSubscriptionGateway(SubscriptionGateway):
         stmt = (
             _select_subscription_full_dto()
             .where(SubscriptionORM.user_id == user_id)
-            .order_by(ScheduleEventORM.order)
+            .order_by(ScheduleItemORM.order)
         )
         results = await self.session.scalars(stmt)
         return [

@@ -3,7 +3,9 @@ import typing
 
 import polars as pl
 
-from fanfan.application.interactors.schedule_mgmt.import_schedule import ScheduleEntry
+from fanfan.application.interactors.schedule_mgmt.import_schedule import (
+    ScheduleImportRow,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -18,12 +20,12 @@ _SCHEMA_OVERRIDES = {
 }
 
 
-def parse_schedule_from_excel(file: typing.BinaryIO) -> list[ScheduleEntry]:
+def parse_schedule_from_excel(file: typing.BinaryIO) -> list[ScheduleImportRow]:
     # fastexcel (the calamine engine) only accepts a path or raw bytes, not a
     # file object, so read the upload into memory before handing it to polars.
     schedule_df = pl.read_excel(file.read(), schema_overrides=_SCHEMA_OVERRIDES)
     return [
-        ScheduleEntry(
+        ScheduleImportRow(
             number=row["number"],
             title=row["title"],
             duration=row["duration"],

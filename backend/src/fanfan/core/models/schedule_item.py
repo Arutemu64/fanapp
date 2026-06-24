@@ -2,17 +2,17 @@ from dataclasses import dataclass
 from typing import Any
 
 from fanfan.core.exceptions.schedule import (
-    CurrentEventNotAllowed,
-    SameEventsAreNotAllowed,
-    SkippedEventNotAllowed,
+    CurrentScheduleItemNotAllowed,
+    SameScheduleItemsAreNotAllowed,
+    SkippedScheduleItemNotAllowed,
 )
 from fanfan.core.models.base import AggregateRoot
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.schedule_item import ScheduleItemId
 
 
 @dataclass(slots=True, kw_only=True)
-class ScheduleEvent(AggregateRoot):  # noqa: PLW1641
-    id: ScheduleEventId
+class ScheduleItem(AggregateRoot):  # noqa: PLW1641
+    id: ScheduleItemId
     number: int
     title: str
     duration: int
@@ -25,7 +25,7 @@ class ScheduleEvent(AggregateRoot):  # noqa: PLW1641
     def set_current(self) -> None:
         # A skipped event cannot be announced as currently on stage.
         if self.is_skipped:
-            raise SkippedEventNotAllowed
+            raise SkippedScheduleItemNotAllowed
         self.is_current = True
 
     def unset_current(self) -> None:
@@ -34,7 +34,7 @@ class ScheduleEvent(AggregateRoot):  # noqa: PLW1641
     def skip(self) -> None:
         # The current stage event must be unset before it can be skipped.
         if self.is_current:
-            raise CurrentEventNotAllowed
+            raise CurrentScheduleItemNotAllowed
         self.is_skipped = True
 
     def unskip(self) -> None:
@@ -42,18 +42,18 @@ class ScheduleEvent(AggregateRoot):  # noqa: PLW1641
 
     def place_after(
         self,
-        previous_event: ScheduleEvent,
-        next_event: ScheduleEvent | None,
+        previous_event: ScheduleItem,
+        next_event: ScheduleItem | None,
     ) -> None:
         if self == previous_event:
-            raise SameEventsAreNotAllowed
+            raise SameScheduleItemsAreNotAllowed
         self.order = (
             (previous_event.order + next_event.order) / 2
             if next_event
             else previous_event.order + 1
         )
 
-    def place_before_first(self, first_event: ScheduleEvent | None) -> None:
+    def place_before_first(self, first_event: ScheduleItem | None) -> None:
         self.order = first_event.order - 1 if first_event else 1
 
     def update_details(
@@ -71,5 +71,5 @@ class ScheduleEvent(AggregateRoot):  # noqa: PLW1641
         self.nomination_title = nomination_title
         self.order = order
 
-    def __eq__(self, other: ScheduleEvent | Any) -> bool:
-        return isinstance(other, ScheduleEvent) and self.id == other.id
+    def __eq__(self, other: ScheduleItem | Any) -> bool:
+        return isinstance(other, ScheduleItem) and self.id == other.id

@@ -1,10 +1,10 @@
 from pydantic import BaseModel
 
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.core.vo.schedule_item import ScheduleItemId
 
 
-class ScheduleEventFullDTO(BaseModel):
-    id: ScheduleEventId
+class ScheduleItemFullDTO(BaseModel):
+    id: ScheduleItemId
     number: int
     title: str
     duration: int

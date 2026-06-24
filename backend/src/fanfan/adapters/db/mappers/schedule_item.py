@@ -1,13 +1,13 @@
-from fanfan.adapters.db.models import ScheduleEventORM
-from fanfan.application.dto.schedule import ScheduleEventFullDTO
-from fanfan.core.models.schedule_event import ScheduleEvent
-from fanfan.core.vo.schedule_event import ScheduleEventId
+from fanfan.adapters.db.models import ScheduleItemORM
+from fanfan.application.dto.schedule import ScheduleItemFullDTO
+from fanfan.core.models.schedule_item import ScheduleItem
+from fanfan.core.vo.schedule_item import ScheduleItemId
 
 
-class ScheduleEventMapper:
+class ScheduleItemMapper:
     @staticmethod
-    def from_model(model: ScheduleEvent):
-        return ScheduleEventORM(
+    def from_model(model: ScheduleItem):
+        return ScheduleItemORM(
             id=model.id,
             number=model.number,
             title=model.title,
@@ -20,9 +20,9 @@ class ScheduleEventMapper:
         )
 
     @staticmethod
-    def to_model(orm: ScheduleEventORM) -> ScheduleEvent:
-        return ScheduleEvent(
-            id=ScheduleEventId(orm.id),
+    def to_model(orm: ScheduleItemORM) -> ScheduleItem:
+        return ScheduleItem(
+            id=ScheduleItemId(orm.id),
             number=orm.number,
             title=orm.title,
             duration=orm.duration,
@@ -35,16 +35,16 @@ class ScheduleEventMapper:
 
     @staticmethod
     def parse_full_dto(
-        event_orm: ScheduleEventORM,
+        event_orm: ScheduleItemORM,
         *,
         queue: int | None,
         time_until: int | None,
-    ) -> ScheduleEventFullDTO:
+    ) -> ScheduleItemFullDTO:
         # queue/time_until are passed in explicitly: single-row reads supply the
         # undeferred column_property values, while the list query supplies the
         # columns from its single joined ranking subquery.
-        return ScheduleEventFullDTO(
-            id=ScheduleEventId(event_orm.id),
+        return ScheduleItemFullDTO(
+            id=ScheduleItemId(event_orm.id),
             number=event_orm.number,
             title=event_orm.title,
             duration=event_orm.duration,

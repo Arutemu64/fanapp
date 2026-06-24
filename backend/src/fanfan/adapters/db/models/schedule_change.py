@@ -4,7 +4,7 @@ from sqlalchemy import Enum, ForeignKey, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fanfan.adapters.db.models.base import BaseORM
-from fanfan.adapters.db.models.schedule_event import ScheduleEventORM
+from fanfan.adapters.db.models.schedule_item import ScheduleItemORM
 from fanfan.adapters.db.models.user import UserORM
 from fanfan.core.vo.schedule_change import ScheduleChangeType
 
@@ -26,10 +26,10 @@ class ScheduleChangeORM(BaseORM):
             length=32,
         )
     )
-    changed_event_id: Mapped[UUID | None] = mapped_column(
+    changed_schedule_item_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("schedule.id", ondelete="CASCADE"), index=True
     )
-    argument_event_id: Mapped[UUID | None] = mapped_column(
+    argument_schedule_item_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("schedule.id", ondelete="CASCADE"), index=True
     )
     user_id: Mapped[UUID | None] = mapped_column(
@@ -40,10 +40,10 @@ class ScheduleChangeORM(BaseORM):
         ForeignKey("mailings.id", ondelete="SET NULL"), index=True
     )
 
-    changed_event: Mapped[ScheduleEventORM | None] = relationship(
-        foreign_keys=[changed_event_id]
+    changed_event: Mapped[ScheduleItemORM | None] = relationship(
+        foreign_keys=[changed_schedule_item_id]
     )
-    argument_event: Mapped[ScheduleEventORM | None] = relationship(
-        foreign_keys=[argument_event_id]
+    argument_event: Mapped[ScheduleItemORM | None] = relationship(
+        foreign_keys=[argument_schedule_item_id]
     )
     user: Mapped[UserORM | None] = relationship(foreign_keys=user_id)

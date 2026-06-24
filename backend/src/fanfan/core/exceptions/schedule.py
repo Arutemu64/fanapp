@@ -11,8 +11,8 @@ class ScheduleException(AppException):
     pass
 
 
-class EventNotFound(NotFound, ScheduleException):
-    code = "EVENT_NOT_FOUND"
+class ScheduleItemNotFound(NotFound, ScheduleException):
+    code = "SCHEDULE_ITEM_NOT_FOUND"
 
 
 class ScheduleEditTooFast(RateLimited, ScheduleException):
@@ -22,16 +22,16 @@ class ScheduleEditTooFast(RateLimited, ScheduleException):
         super().__init__(details={"retry_after": retry_after})
 
 
-class CurrentEventNotAllowed(ConstraintViolation, ScheduleException):
-    code = "CURRENT_EVENT_NOT_ALLOWED"
+class CurrentScheduleItemNotAllowed(ConstraintViolation, ScheduleException):
+    code = "CURRENT_SCHEDULE_ITEM_NOT_ALLOWED"
 
 
-class SkippedEventNotAllowed(ConstraintViolation, ScheduleException):
-    code = "SKIPPED_EVENT_NOT_ALLOWED"
+class SkippedScheduleItemNotAllowed(ConstraintViolation, ScheduleException):
+    code = "SKIPPED_SCHEDULE_ITEM_NOT_ALLOWED"
 
 
-class SameEventsAreNotAllowed(ConstraintViolation, ScheduleException):
-    code = "SAME_EVENTS_ARE_NOT_ALLOWED"
+class SameScheduleItemsAreNotAllowed(ConstraintViolation, ScheduleException):
+    code = "SAME_SCHEDULE_ITEMS_ARE_NOT_ALLOWED"
 
 
 class ScheduleChangeNotFound(NotFound, ScheduleException):
