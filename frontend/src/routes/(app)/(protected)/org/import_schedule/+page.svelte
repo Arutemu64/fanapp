@@ -65,7 +65,7 @@
 			await invalidate('app:schedule');
 		} catch (submitError) {
 			console.error('Schedule import failed:', submitError);
-			inlineError = 'Не удалось импортировать расписание';
+			inlineError = 'Не удалось импортировать программу';
 		} finally {
 			isUploading = false;
 		}
