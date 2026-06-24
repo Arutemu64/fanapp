@@ -4,7 +4,6 @@ from fastapi import APIRouter, Request, Response
 from starlette import status
 
 from fanfan.application.interactors.auth.logout_user import LogoutUser
-from fanfan.presentation.web.config import WebConfig
 from fanfan.presentation.web.routes.auth.cookies import (
     SESSION_COOKIE_NAME,
     delete_auth_cookie,
@@ -25,11 +24,7 @@ async def logout_user(
     request: Request,
     response: Response,
     interactor: FromDishka[LogoutUser],
-    config: FromDishka[WebConfig],
 ) -> None:
     session_id = request.cookies.get(SESSION_COOKIE_NAME)
     await interactor(session_id)
-
-    # config is intentionally kept in the signature for DI consistency.
-    _ = config
     delete_auth_cookie(response)

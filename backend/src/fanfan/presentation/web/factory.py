@@ -19,6 +19,7 @@ from fanfan.presentation.web.middlewares import (
     no_store_cache_control,
     refresh_session_cookie,
 )
+from fanfan.presentation.web.openapi import generate_operation_id
 from fanfan.presentation.web.routes import setup_api_router
 
 
@@ -26,7 +27,10 @@ def create_app() -> FastAPI:
     init(service_name="web")
 
     config = get_config()
-    app = FastAPI(debug=config.debug.enabled)
+    app = FastAPI(
+        debug=config.debug.enabled,
+        generate_unique_id_function=generate_operation_id,
+    )
 
     setup_dishka(container=create_web_container(), app=app)
 

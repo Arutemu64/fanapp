@@ -1,6 +1,6 @@
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 
 from fanfan.application.dto.user import CurrentUserDTO
 from fanfan.application.interactors.current_user.get_current_user import GetCurrentUser
@@ -30,10 +30,8 @@ profile_router = APIRouter()
 )
 @inject
 async def get_current_user(
-    request: Request,
     interactor: FromDishka[GetCurrentUser],
 ) -> CurrentUserDTO:
-    _ = request
     return await interactor()
 
 

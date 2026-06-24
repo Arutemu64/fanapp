@@ -25,3 +25,19 @@ AUTH_RESPONSES: dict[int | str, dict[str, Any]] = {
         "description": "Access denied.",
     },
 }
+
+# Attached to routes whose interactor takes a rate lock (e.g. schedule edits share
+# the announcement cooldown), so the 429 + Retry-After contract is documented in
+# one place instead of being repeated per route.
+RATE_LIMIT_RESPONSES: dict[int | str, dict[str, Any]] = {
+    status.HTTP_429_TOO_MANY_REQUESTS: {
+        "model": ErrorMessage,
+        "description": "Rate limited — editing too fast.",
+        "headers": {
+            "Retry-After": {
+                "schema": {"type": "integer"},
+                "description": "Seconds to wait before retrying.",
+            }
+        },
+    },
+}
