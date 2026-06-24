@@ -32,6 +32,7 @@
 		UsersGroupOutline
 	} from 'flowbite-svelte-icons';
 	import ThemeToggle from './ThemeToggle.svelte';
+	import { isActivePath } from '$lib/utils/nav';
 	import type { CurrentUserDTO } from '$lib/types/user';
 	import type { Component, Snippet } from 'svelte';
 
@@ -50,19 +51,12 @@
 	let isOrg = $derived(user?.role === 'org');
 	let iconClass =
 		'h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white';
-
-	// Match the bottom nav's active rule (exact for "/", prefix for nested
-	// routes) so both navigation surfaces agree on the current location.
-	function isActive(href: string): boolean {
-		if (href === '/') return activeUrl === '/';
-		return activeUrl === href || activeUrl.startsWith(href + '/');
-	}
 </script>
 
 <!-- A primary destination row. Active state mirrors the bottom nav: solid icon
      in primary, idle outline icon in gray with a primary hover. -->
 {#snippet navLink(label: string, href: string, OutlineIcon: Component, SolidIcon: Component)}
-	{@const active = isActive(href)}
+	{@const active = isActivePath(activeUrl, href)}
 	<SidebarItem {label} {href} {active}>
 		{#snippet icon()}
 			{#if active}
@@ -80,7 +74,7 @@
      otherwise a non-navigable, greyed-out row with a lock badge + tooltip. -->
 {#snippet staffLink(label: string, href: string, allowed: boolean, itemIcon: Snippet)}
 	{#if allowed}
-		<SidebarItem {label} {href} active={isActive(href)}>
+		<SidebarItem {label} {href} active={isActivePath(activeUrl, href)}>
 			{#snippet icon()}
 				{@render itemIcon()}
 			{/snippet}

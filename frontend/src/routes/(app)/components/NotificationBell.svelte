@@ -3,8 +3,6 @@
 	import { page } from '$app/state';
 	import { createApiClient } from '$lib/api';
 	import type { NotificationDTO } from '$lib/types/notifications';
-
-	const client = createApiClient();
 	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
 	import { NOTIFICATION_PREVIEW_LIMIT } from '$lib/constants/notifications';
 	import { getEventsClient } from '$lib/services/events.svelte';
@@ -13,11 +11,11 @@
 	import { BellSolid, EyeSolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
 
-	type Notification = NotificationDTO;
+	const client = createApiClient();
 
 	// Seed from the layout-loaded preview so the unread badge is correct on the
 	// first paint. The SSE 'connection_established' handler refreshes this once the stream is up.
-	let notifications = $state<Notification[]>(page.data.notificationPreview ?? []);
+	let notifications = $state<NotificationDTO[]>(page.data.notificationPreview ?? []);
 	let unreadCount = $derived(notifications.filter((notification) => !notification.seen_at).length);
 	// Announce the count to screen readers so the unread state isn't conveyed by
 	// the badge color alone.
@@ -42,7 +40,7 @@
 		}
 	}
 
-	function addNotificationToPreview(notification: Notification) {
+	function addNotificationToPreview(notification: NotificationDTO) {
 		const alreadyExists = notifications.some(
 			(existingNotification) => existingNotification.id === notification.id
 		);
@@ -55,7 +53,7 @@
 		return !alreadyExists;
 	}
 
-	function handleNewNotification(notification: Notification) {
+	function handleNewNotification(notification: NotificationDTO) {
 		const isNewNotification = addNotificationToPreview(notification);
 		if (isNewNotification) {
 			toastService.push(notification);

@@ -11,6 +11,7 @@
 	import { ArrowLeftOutline, RefreshOutline } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
 	import OtpInput from '$lib/components/OtpInput.svelte';
+	import { isValidOtp } from '$lib/utils/validation';
 
 	let {
 		email,
@@ -109,7 +110,7 @@
 			return;
 		}
 
-		if (!/^\d{6}$/.test(loginCode)) {
+		if (!isValidOtp(loginCode)) {
 			loginCodeError = 'Код должен состоять из 6 цифр';
 			return;
 		}

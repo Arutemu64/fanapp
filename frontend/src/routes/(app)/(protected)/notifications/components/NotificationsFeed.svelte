@@ -3,8 +3,6 @@
 	import { onMount } from 'svelte';
 	import { createApiClient } from '$lib/api';
 	import type { NotificationDTO } from '$lib/types/notifications';
-
-	const client = createApiClient();
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import {
@@ -14,10 +12,10 @@
 	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 
-	type Notification = NotificationDTO;
+	const client = createApiClient();
 
 	interface Props {
-		initialNotifications: Array<Notification>;
+		initialNotifications: Array<NotificationDTO>;
 		initialHasMore: boolean;
 	}
 
@@ -26,16 +24,16 @@
 	const toastService = getToastService();
 	const eventsClient = getEventsClient();
 
-	// Сервер отдает первую порцию, а в состоянии храним только то, что догрузили после нее.
-	let extraNotifications = $state.raw<Array<Notification>>([]);
+	// Server provides the first page; state holds only pages loaded afterwards.
+	let extraNotifications = $state.raw<Array<NotificationDTO>>([]);
 	let extraHasMore = $state<boolean | null>(null);
 	let extraOffset = $state(0);
 	let isLoadingMore = $state(false);
-	// Уведомления, прилетевшие по SSE — держим их сверху, новейшие первыми.
-	let liveNotifications = $state.raw<Array<Notification>>([]);
+	// Notifications pushed over SSE — kept on top, newest first.
+	let liveNotifications = $state.raw<Array<NotificationDTO>>([]);
 
 	let notifications = $derived.by(() => {
-		// Порядок: свежие из SSE сверху, затем серверная страница и догруженное.
+		// Order: fresh SSE items on top, then the server page and anything loaded after it.
 		const serverNotifications = appendUniqueNotifications(initialNotifications, extraNotifications);
 		return appendUniqueNotifications(liveNotifications, serverNotifications);
 	});
@@ -44,10 +42,10 @@
 	let unreadCount = $derived(notifications.filter((notification) => !notification.seen_at).length);
 
 	function appendUniqueNotifications(
-		existingNotifications: Array<Notification>,
-		nextNotifications: Array<Notification>
+		existingNotifications: Array<NotificationDTO>,
+		nextNotifications: Array<NotificationDTO>
 	) {
-		// Защищаемся от дублей, если список обновился между запросами.
+		// Guard against duplicates if the list shifted between requests.
 		const existingIds = new Set(existingNotifications.map((notification) => notification.id));
 
 		return [
@@ -91,13 +89,13 @@
 		}
 	}
 
-	function addLiveNotification(notification: Notification) {
+	function addLiveNotification(notification: NotificationDTO) {
 		liveNotifications = appendUniqueNotifications([notification], liveNotifications);
 		toastService.push(notification);
 	}
 
-	// Догружаем первую страницу и поднимаем наверх всё, чего ещё нет в списке —
-	// так не теряем уведомления, пришедшие пока SSE-канал был отключён.
+	// Refetch the first page and lift anything not yet in the list to the top, so we
+	// don't lose notifications that arrived while the SSE channel was disconnected.
 	async function syncLatestNotifications() {
 		try {
 			const { data: result, error } = await client.GET('/notifications/', {

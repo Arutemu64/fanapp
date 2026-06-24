@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { createApiClient } from '$lib/api';
-	const client = createApiClient();
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { CurrentUserDTO } from '$lib/types/user';
 	import { Alert, Badge, Button, Spinner } from 'flowbite-svelte';
@@ -16,6 +15,8 @@
 	import ChangePasswordModal from './ChangePasswordModal.svelte';
 	import ChangeEmailModal from './ChangeEmailModal.svelte';
 	import ProfileCardShell from './ProfileCardShell.svelte';
+
+	const client = createApiClient();
 
 	interface Props {
 		user: CurrentUserDTO;

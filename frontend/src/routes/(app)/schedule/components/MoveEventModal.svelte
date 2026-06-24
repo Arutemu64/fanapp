@@ -4,9 +4,10 @@
 	import NoticeCallout from '$lib/components/NoticeCallout.svelte';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 	import { createApiClient } from '$lib/api';
-	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
+
+	const client = createApiClient();
 
 	interface Props {
 		open: boolean;

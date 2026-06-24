@@ -1,12 +1,16 @@
 <script lang="ts">
 	import ScheduleChangesFeed from './components/ScheduleChangesFeed.svelte';
+	import { feedSnapshotKey } from '$lib/utils/feed';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
 	// Re-seed the feed with the fresh first page after undo triggers invalidate().
 	let changesKey = $derived(
-		`${data.hasMore}:${data.schedule_changes.map((change) => change.id).join(':')}`
+		feedSnapshotKey(
+			data.hasMore,
+			data.schedule_changes.map((change) => change.id)
+		)
 	);
 </script>
 
