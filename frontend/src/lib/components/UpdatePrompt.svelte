@@ -45,6 +45,14 @@
 	onMount(() => {
 		if (!browser || !('serviceWorker' in navigator)) return;
 
+		// Whether a worker already controls this page at startup. On a first-ever
+		// visit there is no controller: the SW installs, activates, and calls
+		// `clients.claim()`, which fires `controllerchange` even though nothing was
+		// updated. Without this guard that initial claim would trigger a needless
+		// full reload right after first paint. A genuine update always has a prior
+		// controller, so gating the reload on this keeps the update flow working.
+		const hadController = !!navigator.serviceWorker.controller;
+
 		navigator.serviceWorker.getRegistration().then((reg) => {
 			if (!reg) return;
 			registration = reg;
@@ -71,7 +79,9 @@
 		});
 
 		const onControllerChange = () => {
-			if (reloading) return;
+			// Ignore the first-install claim (no prior controller) — only reload when
+			// an existing worker was swapped out by an accepted update.
+			if (reloading || !hadController) return;
 			reloading = true;
 			window.location.reload();
 		};
