@@ -470,7 +470,7 @@ export interface paths {
         patch: operations["move_schedule_event"];
         trace?: never;
     };
-    "/schedule/{event_id}/skip": {
+    "/schedule/{event_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -484,30 +484,10 @@ export interface paths {
         options?: never;
         head?: never;
         /**
-         * Skip a schedule event
-         * @description Marks a specific event as skipped. Note: the currently active event cannot be skipped.
+         * Update a schedule event
+         * @description Updates a schedule event's skip state. Set `is_skipped` to true to skip the event or false to restore it. Note: the currently active event cannot be skipped.
          */
-        patch: operations["skip_schedule_event"];
-        trace?: never;
-    };
-    "/schedule/{event_id}/unskip": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Unskip a schedule event
-         * @description Restores a previously skipped event back into the active schedule sequence.
-         */
-        patch: operations["unskip_schedule_event"];
+        patch: operations["update_schedule_event"];
         trace?: never;
     };
     "/schedule/changes/": {
@@ -1361,6 +1341,11 @@ export interface components {
         UpdateCurrentUserInput: {
             /** Username */
             username?: string | null;
+        };
+        /** UpdateScheduleEventRequest */
+        UpdateScheduleEventRequest: {
+            /** Is Skipped */
+            is_skipped: boolean;
         };
         /** UpdateUserSettingsInput */
         UpdateUserSettingsInput: {
@@ -2756,7 +2741,7 @@ export interface operations {
             };
         };
     };
-    skip_schedule_event: {
+    update_schedule_event: {
         parameters: {
             query?: never;
             header?: never;
@@ -2766,9 +2751,13 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateScheduleEventRequest"];
+            };
+        };
         responses: {
-            /** @description Event marked as skipped. */
+            /** @description Event updated successfully. */
             204: {
                 headers: {
                     [name: string]: unknown;
@@ -2776,83 +2765,6 @@ export interface operations {
                 content?: never;
             };
             /** @description Cannot skip the current active event. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Event ID not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Request validation error. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ValidationErrorResponse"];
-                };
-            };
-            /** @description Rate limited — editing too fast. */
-            429: {
-                headers: {
-                    /** @description Seconds to wait before retrying. */
-                    "Retry-After"?: number;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    unskip_schedule_event: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Schedule event ID. */
-                event_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Event restored to active schedule. */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Event state cannot be modified in its current context. */
             400: {
                 headers: {
                     [name: string]: unknown;

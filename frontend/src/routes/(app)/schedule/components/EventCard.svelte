@@ -120,13 +120,10 @@
 		// Flip the row immediately; revert below if the request fails.
 		optimisticSkipped = skip;
 
-		const { error, response } = skip
-			? await client.PATCH('/schedule/{event_id}/skip', {
-					params: { path: { event_id: event.id } }
-				})
-			: await client.PATCH('/schedule/{event_id}/unskip', {
-					params: { path: { event_id: event.id } }
-				});
+		const { error, response } = await client.PATCH('/schedule/{event_id}', {
+			params: { path: { event_id: event.id } },
+			body: { is_skipped: skip }
+		});
 
 		if (error || !response.ok) {
 			optimisticSkipped = null;

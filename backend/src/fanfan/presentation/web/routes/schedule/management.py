@@ -19,7 +19,10 @@ from fanfan.application.interactors.schedule_mgmt.update_schedule_event_skip imp
 from fanfan.core.vo.schedule_event import ScheduleEventId
 from fanfan.presentation.web.responses import AUTH_RESPONSES, RATE_LIMIT_RESPONSES
 from fanfan.presentation.web.schemas.error import ErrorMessage
-from fanfan.presentation.web.schemas.schedule import MoveScheduleEventRequest
+from fanfan.presentation.web.schemas.schedule import (
+    MoveScheduleEventRequest,
+    UpdateScheduleEventRequest,
+)
 from fanfan.presentation.web.security import session_security
 
 # Every interactor here takes the shared announcement rate lock, so 429 is a
@@ -102,13 +105,14 @@ async def move_schedule_event(
 
 
 @management_router.patch(
-    "/{event_id}/skip",
+    "/{event_id}",
     status_code=204,
-    summary="Skip a schedule event",
-    description="Marks a specific event as skipped. "
-    "Note: the currently active event cannot be skipped.",
+    summary="Update a schedule event",
+    description="Updates a schedule event's skip state. Set `is_skipped` to true to "
+    "skip the event or false to restore it. Note: the currently active event cannot "
+    "be skipped.",
     responses={
-        204: {"description": "Event marked as skipped."},
+        204: {"description": "Event updated successfully."},
         400: {
             "model": ErrorMessage,
             "description": "Cannot skip the current active event.",
@@ -117,31 +121,11 @@ async def move_schedule_event(
     },
 )
 @inject
-async def skip_schedule_event(
+async def update_schedule_event(
     event_id: Annotated[ScheduleEventId, Path(description="Schedule event ID.")],
+    data: UpdateScheduleEventRequest,
     interactor: FromDishka[UpdateScheduleEventSkip],
 ) -> None:
-    await interactor(UpdateScheduleEventSkipInput(event_id=event_id, is_skipped=True))
-
-
-@management_router.patch(
-    "/{event_id}/unskip",
-    status_code=204,
-    summary="Unskip a schedule event",
-    description="Restores a previously skipped event back into "
-    "the active schedule sequence.",
-    responses={
-        204: {"description": "Event restored to active schedule."},
-        400: {
-            "model": ErrorMessage,
-            "description": "Event state cannot be modified in its current context.",
-        },
-        404: {"model": ErrorMessage, "description": "Event ID not found."},
-    },
-)
-@inject
-async def unskip_schedule_event(
-    event_id: Annotated[ScheduleEventId, Path(description="Schedule event ID.")],
-    interactor: FromDishka[UpdateScheduleEventSkip],
-) -> None:
-    await interactor(UpdateScheduleEventSkipInput(event_id=event_id, is_skipped=False))
+    await interactor(
+        UpdateScheduleEventSkipInput(event_id=event_id, is_skipped=data.is_skipped)
+    )

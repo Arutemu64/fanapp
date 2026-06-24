@@ -1526,14 +1526,14 @@
         }
       }
     },
-    "/schedule/{event_id}/skip": {
+    "/schedule/{event_id}": {
       "patch": {
         "tags": [
           "Schedule"
         ],
-        "summary": "Skip a schedule event",
-        "description": "Marks a specific event as skipped. Note: the currently active event cannot be skipped.",
-        "operationId": "skip_schedule_event",
+        "summary": "Update a schedule event",
+        "description": "Updates a schedule event's skip state. Set `is_skipped` to true to skip the event or false to restore it. Note: the currently active event cannot be skipped.",
+        "operationId": "update_schedule_event",
         "security": [
           {
             "SessionCookie": []
@@ -1553,9 +1553,19 @@
             "description": "Schedule event ID."
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateScheduleEventRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "204": {
-            "description": "Event marked as skipped."
+            "description": "Event updated successfully."
           },
           "422": {
             "description": "Request validation error.",
@@ -1607,108 +1617,6 @@
           },
           "400": {
             "description": "Cannot skip the current active event.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Event ID not found.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/schedule/{event_id}/unskip": {
-      "patch": {
-        "tags": [
-          "Schedule"
-        ],
-        "summary": "Unskip a schedule event",
-        "description": "Restores a previously skipped event back into the active schedule sequence.",
-        "operationId": "unskip_schedule_event",
-        "security": [
-          {
-            "SessionCookie": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "event_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "description": "Schedule event ID.",
-              "title": "Event Id"
-            },
-            "description": "Schedule event ID."
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Event restored to active schedule."
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limited — editing too fast.",
-            "headers": {
-              "Retry-After": {
-                "schema": {
-                  "type": "integer"
-                },
-                "description": "Seconds to wait before retrying."
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Event state cannot be modified in its current context.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4379,6 +4287,19 @@
         },
         "type": "object",
         "title": "UpdateCurrentUserInput"
+      },
+      "UpdateScheduleEventRequest": {
+        "properties": {
+          "is_skipped": {
+            "type": "boolean",
+            "title": "Is Skipped"
+          }
+        },
+        "type": "object",
+        "required": [
+          "is_skipped"
+        ],
+        "title": "UpdateScheduleEventRequest"
       },
       "UpdateUserSettingsInput": {
         "properties": {
