@@ -31,8 +31,12 @@ async def stream_events(
     # client-disconnect detection, so the generator only maps domain messages.
     async for message in interactor():
         if message.data is None:
-            # Empty data line, matching the prior wire format.
-            yield ServerSentEvent(event=message.event_name, raw_data="")
+            # SSE spec: EventSource drops an event whose data buffer is empty, even
+            # when `event:` is set, so a payload-less signal (e.g. schedule_updated)
+            # never fires its named listener. Emit "{}" so the data line is non-empty
+            # and the frontend JSON.parse stays happy.
+            # https://html.spec.whatwg.org/multipage/server-sent-events.html#dispatchMessage
+            yield ServerSentEvent(event=message.event_name, data="{}")
         else:
             # dict payloads are JSON-serialized by the router.
             yield ServerSentEvent(event=message.event_name, data=message.data)
