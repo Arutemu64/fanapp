@@ -12,7 +12,7 @@ export interface paths {
             cookie?: never;
         };
         /** Debug */
-        get: operations["debug_debug__get"];
+        get: operations["debug"];
         put?: never;
         post?: never;
         delete?: never;
@@ -29,7 +29,7 @@ export interface paths {
             cookie?: never;
         };
         /** Health Check */
-        get: operations["health_check_debug_health_get"];
+        get: operations["health_check"];
         put?: never;
         post?: never;
         delete?: never;
@@ -51,7 +51,7 @@ export interface paths {
          * Login and create session
          * @description Authenticates user with email and password. Sets an HttpOnly cookie with a Redis-backed session id.
          */
-        post: operations["login_auth_login_post"];
+        post: operations["login"];
         delete?: never;
         options?: never;
         head?: never;
@@ -71,7 +71,7 @@ export interface paths {
          * Register a new user
          * @description Creates a new user account with an email and password. A username is generated automatically. To avoid leaking which emails already have an account, the response is the same whether the account was created or the email was already taken.
          */
-        post: operations["register_user_auth_register_post"];
+        post: operations["register_user"];
         delete?: never;
         options?: never;
         head?: never;
@@ -91,7 +91,7 @@ export interface paths {
          * Confirm user email with code
          * @description Confirms the new email address using a one-time code received at that address.
          */
-        post: operations["confirm_email_code_auth_confirm_email_code_post"];
+        post: operations["confirm_email_code"];
         delete?: never;
         options?: never;
         head?: never;
@@ -111,7 +111,7 @@ export interface paths {
          * Request email login code
          * @description Sends a one-time six-digit sign-in code to the requested email address. Creates an account automatically when the email is new.
          */
-        post: operations["request_login_code_auth_request_login_code_post"];
+        post: operations["request_login_code"];
         delete?: never;
         options?: never;
         head?: never;
@@ -131,7 +131,7 @@ export interface paths {
          * Login with email code
          * @description Consumes a one-time email code and sets session cookie.
          */
-        post: operations["login_with_code_auth_login_with_code_post"];
+        post: operations["login_with_code"];
         delete?: never;
         options?: never;
         head?: never;
@@ -151,7 +151,7 @@ export interface paths {
          * Logout user
          * @description Clears session cookie and removes Redis session state.
          */
-        post: operations["logout_user_auth_logout_post"];
+        post: operations["logout_user"];
         delete?: never;
         options?: never;
         head?: never;
@@ -165,8 +165,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Login Telegram */
-        get: operations["login_telegram_auth_login_telegram_get"];
+        /**
+         * Start Telegram login
+         * @description Redirects the browser to Telegram's OAuth authorization page. Telegram then calls back to the authorize endpoint to finish the login.
+         */
+        get: operations["login_telegram"];
         put?: never;
         post?: never;
         delete?: never;
@@ -182,8 +185,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Authorize Telegram */
-        get: operations["authorize_telegram_auth_auth_telegram_get"];
+        /**
+         * Finish Telegram login
+         * @description OAuth callback for Telegram login. Authenticates the user from the Telegram payload, sets the session cookie and redirects to the app root. Invoked by Telegram, not called directly by the frontend.
+         */
+        get: operations["authorize_telegram"];
         put?: never;
         post?: never;
         delete?: never;
@@ -203,7 +209,7 @@ export interface paths {
          * Get current user
          * @description Retrieves the currently authenticated user's profile information.
          */
-        get: operations["get_current_user_me__get"];
+        get: operations["get_current_user"];
         put?: never;
         post?: never;
         delete?: never;
@@ -213,7 +219,7 @@ export interface paths {
          * Update current user
          * @description Updates the currently authenticated user's profile information.
          */
-        patch: operations["update_current_user_me__patch"];
+        patch: operations["update_current_user"];
         trace?: never;
     };
     "/me/settings": {
@@ -233,7 +239,7 @@ export interface paths {
          * Update current user settings
          * @description Updates the currently authenticated user's profile settings.
          */
-        patch: operations["update_current_user_settings_me_settings_patch"];
+        patch: operations["update_current_user_settings"];
         trace?: never;
     };
     "/me/password": {
@@ -249,7 +255,7 @@ export interface paths {
          * Change current user password
          * @description Changes the authenticated user's password. Requires the current password for verification when one is already set.
          */
-        post: operations["change_current_user_password_me_password_post"];
+        post: operations["change_current_user_password"];
         delete?: never;
         options?: never;
         head?: never;
@@ -269,7 +275,7 @@ export interface paths {
          * Change current user email
          * @description Changes the authenticated user's email address and sends a confirmation code to the new email.
          */
-        post: operations["change_current_user_email_me_email_post"];
+        post: operations["change_current_user_email"];
         delete?: never;
         options?: never;
         head?: never;
@@ -284,17 +290,17 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Link Telegram account
-         * @description Links a Telegram account to the currently authenticated user.
+         * Start Telegram linking
+         * @description Redirects the browser to Telegram's OAuth page to begin linking a Telegram account to the current user. Telegram then calls back to the callback endpoint to finish.
          */
-        get: operations["link_telegram_me_connections_telegram_get"];
+        get: operations["link_telegram"];
         put?: never;
         post?: never;
         /**
          * Unlink Telegram account
          * @description Unlinks the Telegram account from the currently authenticated user.
          */
-        delete: operations["unlink_telegram_account_me_connections_telegram_delete"];
+        delete: operations["unlink_telegram_account"];
         options?: never;
         head?: never;
         patch?: never;
@@ -308,10 +314,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Link Telegram account
-         * @description Links a Telegram account to the currently authenticated user.
+         * Finish Telegram linking
+         * @description OAuth callback for Telegram linking. On success, links the account and redirects to the profile page. Recoverable errors (already linked to this or another account) also redirect to the profile page with a `telegramLinkError` query param the frontend turns into a toast. Invoked by Telegram, not called directly by the frontend.
          */
-        get: operations["link_telegram_callback_me_connections_telegram_callback_get"];
+        get: operations["link_telegram_callback"];
         put?: never;
         post?: never;
         delete?: never;
@@ -333,7 +339,7 @@ export interface paths {
          * Link ticket
          * @description Links provided ticket to current user.
          */
-        post: operations["link_ticket_me_ticket_post"];
+        post: operations["link_ticket"];
         delete?: never;
         options?: never;
         head?: never;
@@ -351,7 +357,7 @@ export interface paths {
          * Get festival settings
          * @description Returns the current festival settings that organizers can manage.
          */
-        get: operations["get_settings_settings_get"];
+        get: operations["get_settings"];
         put?: never;
         post?: never;
         delete?: never;
@@ -361,7 +367,7 @@ export interface paths {
          * Update festival settings
          * @description Updates festival settings that are available to organizers.
          */
-        patch: operations["update_settings_settings_patch"];
+        patch: operations["update_settings"];
         trace?: never;
     };
     "/events": {
@@ -375,7 +381,7 @@ export interface paths {
          * Stream events via SSE
          * @description Opens a Server-Sent Events connection to receive real-time event updates.
          */
-        get: operations["stream_events_events_get"];
+        get: operations["stream_events"];
         put?: never;
         post?: never;
         delete?: never;
@@ -395,7 +401,7 @@ export interface paths {
          * Get current schedule
          * @description Retrieves the full schedule using the GetSchedule interactor.
          */
-        get: operations["get_schedule_schedule__get"];
+        get: operations["get_schedule"];
         put?: never;
         post?: never;
         delete?: never;
@@ -421,7 +427,7 @@ export interface paths {
          * Set specific event as current
          * @description Updates the schedule state to mark a specific event as active. Validates timing and event status.
          */
-        patch: operations["set_event_as_current_schedule__event_id__current_patch"];
+        patch: operations["set_event_as_current"];
         trace?: never;
     };
     "/schedule/current": {
@@ -438,7 +444,7 @@ export interface paths {
          * Unset current schedule event
          * @description Clears the currently active event from the schedule. Subject to rate limiting.
          */
-        delete: operations["uncheck_current_event_schedule_current_delete"];
+        delete: operations["uncheck_current_event"];
         options?: never;
         head?: never;
         patch?: never;
@@ -461,10 +467,10 @@ export interface paths {
          * Reorder schedule event
          * @description Moves an event to a new position in the sequence, specifically after the provided event ID.
          */
-        patch: operations["move_schedule_event_schedule__event_id__move_patch"];
+        patch: operations["move_schedule_event"];
         trace?: never;
     };
-    "/schedule/{event_id}/skip": {
+    "/schedule/{event_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -478,30 +484,10 @@ export interface paths {
         options?: never;
         head?: never;
         /**
-         * Skip a schedule event
-         * @description Marks a specific event as skipped. Note: the currently active event cannot be skipped.
+         * Update a schedule event
+         * @description Updates a schedule event's skip state. Set `is_skipped` to true to skip the event or false to restore it. Note: the currently active event cannot be skipped.
          */
-        patch: operations["skip_schedule_event_schedule__event_id__skip_patch"];
-        trace?: never;
-    };
-    "/schedule/{event_id}/unskip": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Unskip a schedule event
-         * @description Restores a previously skipped event back into the active schedule sequence.
-         */
-        patch: operations["unskip_schedule_event_schedule__event_id__unskip_patch"];
+        patch: operations["update_schedule_event"];
         trace?: never;
     };
     "/schedule/changes/": {
@@ -515,7 +501,7 @@ export interface paths {
          * List schedule audit log
          * @description Returns a history of all modifications made to the schedule, including skips, moves, and status changes.
          */
-        get: operations["list_schedule_changes_schedule_changes__get"];
+        get: operations["list_schedule_changes"];
         put?: never;
         post?: never;
         delete?: never;
@@ -538,7 +524,7 @@ export interface paths {
          * Undo a specific schedule change
          * @description Reverts a previously made change to the schedule using its unique change ID.
          */
-        delete: operations["undo_schedule_change_schedule_changes__schedule_change_id__delete"];
+        delete: operations["undo_schedule_change"];
         options?: never;
         head?: never;
         patch?: never;
@@ -555,13 +541,13 @@ export interface paths {
          * List the current user's subscriptions
          * @description Returns every schedule event the current user is subscribed to. Served separately from the schedule so the schedule itself stays universal and cacheable offline.
          */
-        get: operations["get_subscriptions_schedule_subscriptions__get"];
+        get: operations["get_subscriptions"];
         put?: never;
         /**
          * Create a new event subscription
          * @description Subscribes the current user to a specific schedule event. Prevents duplicate subscriptions.
          */
-        post: operations["new_subscription_schedule_subscriptions__post"];
+        post: operations["new_subscription"];
         delete?: never;
         options?: never;
         head?: never;
@@ -582,7 +568,7 @@ export interface paths {
          * Remove a subscription
          * @description Deletes an existing subscription by its unique ID.
          */
-        delete: operations["delete_subscription_schedule_subscriptions__subscription_id__delete"];
+        delete: operations["delete_subscription"];
         options?: never;
         head?: never;
         patch?: never;
@@ -598,7 +584,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Import Schedule */
-        post: operations["import_schedule_schedule_import_post"];
+        post: operations["import_schedule"];
         delete?: never;
         options?: never;
         head?: never;
@@ -616,7 +602,7 @@ export interface paths {
          * Get current voting state
          * @description Retrieves the current phase of the voting process (e.g., active, closed) and reasoning.
          */
-        get: operations["get_voting_status_voting_status_get"];
+        get: operations["get_voting_status"];
         put?: never;
         post?: never;
         delete?: never;
@@ -636,7 +622,7 @@ export interface paths {
          * List all nominations for the current vote
          * @description Retrieves a list of all candidates or items eligible for voting in the current session.
          */
-        get: operations["list_voting_nominations_voting_nominations_get"];
+        get: operations["list_voting_nominations"];
         put?: never;
         post?: never;
         delete?: never;
@@ -656,7 +642,7 @@ export interface paths {
          * Get voting nomination details
          * @description Retrieves detailed information about a specific nomination.
          */
-        get: operations["get_voting_nomination_voting_nominations__nomination_code__get"];
+        get: operations["get_voting_nomination"];
         put?: never;
         post?: never;
         delete?: never;
@@ -678,7 +664,7 @@ export interface paths {
          * Cast a vote
          * @description Submits a vote for the given participant. The nomination is derived from the participant.
          */
-        post: operations["add_vote_voting_votes_post"];
+        post: operations["add_vote"];
         delete?: never;
         options?: never;
         head?: never;
@@ -699,7 +685,7 @@ export interface paths {
          * Cancel a vote
          * @description Removes a previously cast vote by its ID.
          */
-        delete: operations["cancel_vote_voting_votes__vote_id__delete"];
+        delete: operations["cancel_vote"];
         options?: never;
         head?: never;
         patch?: never;
@@ -718,7 +704,7 @@ export interface paths {
          * Process TicketsCloud webhook
          * @description Handles incoming webhook events from TicketsCloud ticketing system.
          */
-        post: operations["process_tcloud_order_webhooks_tcloud__token__post"];
+        post: operations["process_tcloud_order"];
         delete?: never;
         options?: never;
         head?: never;
@@ -736,7 +722,7 @@ export interface paths {
          * List user notifications
          * @description Returns a paginated list of notifications for the authenticated user.
          */
-        get: operations["list_user_notifications_notifications__get"];
+        get: operations["list_user_notifications"];
         put?: never;
         post?: never;
         delete?: never;
@@ -758,7 +744,7 @@ export interface paths {
          * Mark all notifications as read
          * @description Marks all unread notifications for the authenticated user as read.
          */
-        post: operations["mark_all_notifications_read_notifications_mark_all_read_post"];
+        post: operations["mark_all_notifications_read"];
         delete?: never;
         options?: never;
         head?: never;
@@ -778,7 +764,7 @@ export interface paths {
          * Send test notification
          * @description Creates a test notification for the authenticated user and sends it through all connected channels.
          */
-        post: operations["send_test_notification_notifications_test_post"];
+        post: operations["send_test_notification"];
         delete?: never;
         options?: never;
         head?: never;
@@ -798,7 +784,7 @@ export interface paths {
          * Send broadcast notification
          * @description Creates a new mailing broadcast for specified user roles.
          */
-        post: operations["send_broadcast_notifications_broadcast_post"];
+        post: operations["send_broadcast"];
         delete?: never;
         options?: never;
         head?: never;
@@ -816,18 +802,18 @@ export interface paths {
          * Check push subscription
          * @description Reports whether the given endpoint is registered for the authenticated user. The client only needs this yes/no answer for its own device, so the full subscription list (incl. its keys) is not exposed.
          */
-        get: operations["check_subscription_push__get"];
+        get: operations["check_subscription"];
         put?: never;
         /**
          * Subscribe to push notifications
          * @description Registers a push subscription endpoint for the authenticated user's device.
          */
-        post: operations["subscribe_push__post"];
+        post: operations["subscribe"];
         /**
          * Unsubscribe from push notifications
          * @description Removes a push subscription endpoint for the authenticated user.
          */
-        delete: operations["unsubscribe_push__delete"];
+        delete: operations["unsubscribe"];
         options?: never;
         head?: never;
         patch?: never;
@@ -846,7 +832,7 @@ export interface paths {
          * Submit app feedback
          * @description Submits free-text feedback about the app from the current user.
          */
-        post: operations["submit_feedback_feedback__post"];
+        post: operations["submit_feedback"];
         delete?: never;
         options?: never;
         head?: never;
@@ -879,16 +865,16 @@ export interface components {
             voting_enabled: boolean;
             limits: components["schemas"]["LimitsConfigDTO"];
         };
-        /** Body_import_schedule_schedule_import_post */
-        Body_import_schedule_schedule_import_post: {
+        /** Body_import_schedule */
+        Body_import_schedule: {
             /**
              * File
              * @description Excel file with schedule data.
              */
             file: Blob;
         };
-        /** Body_login_auth_login_post */
-        Body_login_auth_login_post: {
+        /** Body_login */
+        Body_login: {
             /**
              * Email
              * Format: email
@@ -1356,6 +1342,11 @@ export interface components {
             /** Username */
             username?: string | null;
         };
+        /** UpdateScheduleEventRequest */
+        UpdateScheduleEventRequest: {
+            /** Is Skipped */
+            is_skipped: boolean;
+        };
         /** UpdateUserSettingsInput */
         UpdateUserSettingsInput: {
             /** Receive All Announcements */
@@ -1441,7 +1432,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    debug_debug__get: {
+    debug: {
         parameters: {
             query?: never;
             header?: never;
@@ -1470,7 +1461,7 @@ export interface operations {
             };
         };
     };
-    health_check_debug_health_get: {
+    health_check: {
         parameters: {
             query?: never;
             header?: never;
@@ -1499,7 +1490,7 @@ export interface operations {
             };
         };
     };
-    login_auth_login_post: {
+    login: {
         parameters: {
             query?: never;
             header?: never;
@@ -1508,7 +1499,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/x-www-form-urlencoded": components["schemas"]["Body_login_auth_login_post"];
+                "application/x-www-form-urlencoded": components["schemas"]["Body_login"];
             };
         };
         responses: {
@@ -1548,7 +1539,7 @@ export interface operations {
             };
         };
     };
-    register_user_auth_register_post: {
+    register_user: {
         parameters: {
             query?: never;
             header?: never;
@@ -1581,7 +1572,7 @@ export interface operations {
             };
         };
     };
-    confirm_email_code_auth_confirm_email_code_post: {
+    confirm_email_code: {
         parameters: {
             query?: never;
             header?: never;
@@ -1595,13 +1586,11 @@ export interface operations {
         };
         responses: {
             /** @description Email successfully confirmed. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Code is invalid or expired. */
             400: {
@@ -1650,7 +1639,7 @@ export interface operations {
             };
         };
     };
-    request_login_code_auth_request_login_code_post: {
+    request_login_code: {
         parameters: {
             query?: never;
             header?: never;
@@ -1683,7 +1672,7 @@ export interface operations {
             };
         };
     };
-    login_with_code_auth_login_with_code_post: {
+    login_with_code: {
         parameters: {
             query?: never;
             header?: never;
@@ -1732,7 +1721,7 @@ export interface operations {
             };
         };
     };
-    logout_user_auth_logout_post: {
+    logout_user: {
         parameters: {
             query?: never;
             header?: never;
@@ -1759,7 +1748,7 @@ export interface operations {
             };
         };
     };
-    login_telegram_auth_login_telegram_get: {
+    login_telegram: {
         parameters: {
             query?: never;
             header?: never;
@@ -1777,6 +1766,13 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
+            /** @description Redirect to Telegram's OAuth authorization page. */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Request validation error. */
             422: {
                 headers: {
@@ -1788,7 +1784,7 @@ export interface operations {
             };
         };
     };
-    authorize_telegram_auth_auth_telegram_get: {
+    authorize_telegram: {
         parameters: {
             query?: never;
             header?: never;
@@ -1806,6 +1802,13 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
+            /** @description Login successful. Session cookie set, redirect to app. */
+            303: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Request validation error. */
             422: {
                 headers: {
@@ -1817,7 +1820,7 @@ export interface operations {
             };
         };
     };
-    get_current_user_me__get: {
+    get_current_user: {
         parameters: {
             query?: never;
             header?: never;
@@ -1864,7 +1867,7 @@ export interface operations {
             };
         };
     };
-    update_current_user_me__patch: {
+    update_current_user: {
         parameters: {
             query?: never;
             header?: never;
@@ -1878,13 +1881,11 @@ export interface operations {
         };
         responses: {
             /** @description User updated successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -1924,7 +1925,7 @@ export interface operations {
             };
         };
     };
-    update_current_user_settings_me_settings_patch: {
+    update_current_user_settings: {
         parameters: {
             query?: never;
             header?: never;
@@ -1938,13 +1939,11 @@ export interface operations {
         };
         responses: {
             /** @description User settings updated successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -1975,7 +1974,7 @@ export interface operations {
             };
         };
     };
-    change_current_user_password_me_password_post: {
+    change_current_user_password: {
         parameters: {
             query?: never;
             header?: never;
@@ -1989,13 +1988,11 @@ export interface operations {
         };
         responses: {
             /** @description Password changed successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -2044,7 +2041,7 @@ export interface operations {
             };
         };
     };
-    change_current_user_email_me_email_post: {
+    change_current_user_email: {
         parameters: {
             query?: never;
             header?: never;
@@ -2058,13 +2055,11 @@ export interface operations {
         };
         responses: {
             /** @description Email changed and confirmation code requested. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -2113,7 +2108,7 @@ export interface operations {
             };
         };
     };
-    link_telegram_me_connections_telegram_get: {
+    link_telegram: {
         parameters: {
             query?: never;
             header?: never;
@@ -2122,7 +2117,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Telegram account linked successfully. */
+            /** @description Successful Response */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -2131,14 +2126,12 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description Invalid Telegram auth payload. */
-            400: {
+            /** @description Redirect to Telegram's OAuth authorization page. */
+            302: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -2158,24 +2151,6 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorMessage"];
                 };
             };
-            /** @description User not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Telegram is already linked to this or another account. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
             /** @description Request validation error. */
             422: {
                 headers: {
@@ -2187,7 +2162,7 @@ export interface operations {
             };
         };
     };
-    unlink_telegram_account_me_connections_telegram_delete: {
+    unlink_telegram_account: {
         parameters: {
             query?: never;
             header?: never;
@@ -2197,13 +2172,11 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Telegram account unlinked successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -2252,7 +2225,7 @@ export interface operations {
             };
         };
     };
-    link_telegram_callback_me_connections_telegram_callback_get: {
+    link_telegram_callback: {
         parameters: {
             query?: never;
             header?: never;
@@ -2261,7 +2234,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Telegram account linked successfully. */
+            /** @description Successful Response */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -2269,6 +2242,13 @@ export interface operations {
                 content: {
                     "application/json": unknown;
                 };
+            };
+            /** @description Linking finished. Redirects to the profile page; on a recoverable error a `telegramLinkError` query param is included. */
+            303: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Invalid Telegram auth payload. */
             400: {
@@ -2297,24 +2277,6 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorMessage"];
                 };
             };
-            /** @description User not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Telegram is already linked to this or another account. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
             /** @description Request validation error. */
             422: {
                 headers: {
@@ -2326,7 +2288,7 @@ export interface operations {
             };
         };
     };
-    link_ticket_me_ticket_post: {
+    link_ticket: {
         parameters: {
             query?: never;
             header?: never;
@@ -2340,13 +2302,11 @@ export interface operations {
         };
         responses: {
             /** @description Ticket linked successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -2395,7 +2355,7 @@ export interface operations {
             };
         };
     };
-    get_settings_settings_get: {
+    get_settings: {
         parameters: {
             query?: never;
             header?: never;
@@ -2451,7 +2411,7 @@ export interface operations {
             };
         };
     };
-    update_settings_settings_patch: {
+    update_settings: {
         parameters: {
             query?: never;
             header?: never;
@@ -2465,13 +2425,11 @@ export interface operations {
         };
         responses: {
             /** @description Festival settings updated successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -2511,7 +2469,7 @@ export interface operations {
             };
         };
     };
-    stream_events_events_get: {
+    stream_events: {
         parameters: {
             query?: never;
             header?: never;
@@ -2540,7 +2498,7 @@ export interface operations {
             };
         };
     };
-    get_schedule_schedule__get: {
+    get_schedule: {
         parameters: {
             query?: never;
             header?: never;
@@ -2569,7 +2527,7 @@ export interface operations {
             };
         };
     };
-    set_event_as_current_schedule__event_id__current_patch: {
+    set_event_as_current: {
         parameters: {
             query?: never;
             header?: never;
@@ -2582,13 +2540,11 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Event set as current successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Event is skipped or invalid for this operation. */
             400: {
@@ -2648,7 +2604,7 @@ export interface operations {
             };
         };
     };
-    uncheck_current_event_schedule_current_delete: {
+    uncheck_current_event: {
         parameters: {
             query?: never;
             header?: never;
@@ -2658,13 +2614,11 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Current event cleared successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -2706,7 +2660,7 @@ export interface operations {
             };
         };
     };
-    move_schedule_event_schedule__event_id__move_patch: {
+    move_schedule_event: {
         parameters: {
             query?: never;
             header?: never;
@@ -2723,13 +2677,11 @@ export interface operations {
         };
         responses: {
             /** @description Event moved successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Invalid move: target and destination are the same. */
             400: {
@@ -2776,9 +2728,20 @@ export interface operations {
                     "application/json": components["schemas"]["ValidationErrorResponse"];
                 };
             };
+            /** @description Rate limited — editing too fast. */
+            429: {
+                headers: {
+                    /** @description Seconds to wait before retrying. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
         };
     };
-    skip_schedule_event_schedule__event_id__skip_patch: {
+    update_schedule_event: {
         parameters: {
             query?: never;
             header?: never;
@@ -2788,16 +2751,18 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateScheduleEventRequest"];
+            };
+        };
         responses: {
-            /** @description Event marked as skipped. */
-            200: {
+            /** @description Event updated successfully. */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Cannot skip the current active event. */
             400: {
@@ -2844,77 +2809,20 @@ export interface operations {
                     "application/json": components["schemas"]["ValidationErrorResponse"];
                 };
             };
-        };
-    };
-    unskip_schedule_event_schedule__event_id__unskip_patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Schedule event ID. */
-                event_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Event restored to active schedule. */
-            200: {
+            /** @description Rate limited — editing too fast. */
+            429: {
                 headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Event state cannot be modified in its current context. */
-            400: {
-                headers: {
+                    /** @description Seconds to wait before retrying. */
+                    "Retry-After"?: number;
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Event ID not found. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Request validation error. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ValidationErrorResponse"];
                 };
             };
         };
     };
-    list_schedule_changes_schedule_changes__get: {
+    list_schedule_changes: {
         parameters: {
             query?: {
                 limit?: number;
@@ -2964,7 +2872,7 @@ export interface operations {
             };
         };
     };
-    undo_schedule_change_schedule_changes__schedule_change_id__delete: {
+    undo_schedule_change: {
         parameters: {
             query?: never;
             header?: never;
@@ -3021,7 +2929,7 @@ export interface operations {
             };
         };
     };
-    get_subscriptions_schedule_subscriptions__get: {
+    get_subscriptions: {
         parameters: {
             query?: never;
             header?: never;
@@ -3068,7 +2976,7 @@ export interface operations {
             };
         };
     };
-    new_subscription_schedule_subscriptions__post: {
+    new_subscription: {
         parameters: {
             query?: never;
             header?: never;
@@ -3137,7 +3045,7 @@ export interface operations {
             };
         };
     };
-    delete_subscription_schedule_subscriptions__subscription_id__delete: {
+    delete_subscription: {
         parameters: {
             query?: never;
             header?: never;
@@ -3194,7 +3102,7 @@ export interface operations {
             };
         };
     };
-    import_schedule_schedule_import_post: {
+    import_schedule: {
         parameters: {
             query?: never;
             header?: never;
@@ -3203,7 +3111,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "multipart/form-data": components["schemas"]["Body_import_schedule_schedule_import_post"];
+                "multipart/form-data": components["schemas"]["Body_import_schedule"];
             };
         };
         responses: {
@@ -3245,7 +3153,7 @@ export interface operations {
             };
         };
     };
-    get_voting_status_voting_status_get: {
+    get_voting_status: {
         parameters: {
             query?: never;
             header?: never;
@@ -3274,7 +3182,7 @@ export interface operations {
             };
         };
     };
-    list_voting_nominations_voting_nominations_get: {
+    list_voting_nominations: {
         parameters: {
             query?: never;
             header?: never;
@@ -3303,7 +3211,7 @@ export interface operations {
             };
         };
     };
-    get_voting_nomination_voting_nominations__nomination_code__get: {
+    get_voting_nomination: {
         parameters: {
             query?: never;
             header?: never;
@@ -3344,7 +3252,7 @@ export interface operations {
             };
         };
     };
-    add_vote_voting_votes_post: {
+    add_vote: {
         parameters: {
             query?: never;
             header?: never;
@@ -3413,7 +3321,7 @@ export interface operations {
             };
         };
     };
-    cancel_vote_voting_votes__vote_id__delete: {
+    cancel_vote: {
         parameters: {
             query?: never;
             header?: never;
@@ -3470,7 +3378,7 @@ export interface operations {
             };
         };
     };
-    process_tcloud_order_webhooks_tcloud__token__post: {
+    process_tcloud_order: {
         parameters: {
             query?: never;
             header?: never;
@@ -3521,7 +3429,7 @@ export interface operations {
             };
         };
     };
-    list_user_notifications_notifications__get: {
+    list_user_notifications: {
         parameters: {
             query?: {
                 limit?: number;
@@ -3571,7 +3479,7 @@ export interface operations {
             };
         };
     };
-    mark_all_notifications_read_notifications_mark_all_read_post: {
+    mark_all_notifications_read: {
         parameters: {
             query?: never;
             header?: never;
@@ -3581,13 +3489,11 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description All notifications marked as read. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -3618,7 +3524,7 @@ export interface operations {
             };
         };
     };
-    send_test_notification_notifications_test_post: {
+    send_test_notification: {
         parameters: {
             query?: never;
             header?: never;
@@ -3628,13 +3534,11 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Test notification created successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -3665,7 +3569,7 @@ export interface operations {
             };
         };
     };
-    send_broadcast_notifications_broadcast_post: {
+    send_broadcast: {
         parameters: {
             query?: never;
             header?: never;
@@ -3716,7 +3620,7 @@ export interface operations {
             };
         };
     };
-    check_subscription_push__get: {
+    check_subscription: {
         parameters: {
             query: {
                 endpoint: string;
@@ -3765,7 +3669,7 @@ export interface operations {
             };
         };
     };
-    subscribe_push__post: {
+    subscribe: {
         parameters: {
             query?: never;
             header?: never;
@@ -3779,13 +3683,11 @@ export interface operations {
         };
         responses: {
             /** @description Push subscription registered successfully. */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {
@@ -3825,7 +3727,7 @@ export interface operations {
             };
         };
     };
-    unsubscribe_push__delete: {
+    unsubscribe: {
         parameters: {
             query?: never;
             header?: never;
@@ -3874,7 +3776,7 @@ export interface operations {
             };
         };
     };
-    submit_feedback_feedback__post: {
+    submit_feedback: {
         parameters: {
             query?: never;
             header?: never;

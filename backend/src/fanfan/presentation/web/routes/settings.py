@@ -47,10 +47,11 @@ __all__ = ["settings_router"]
 
 @settings_router.patch(
     "",
+    status_code=204,
     summary="Update festival settings",
     description="Updates festival settings that are available to organizers.",
     responses={
-        200: {"description": "Festival settings updated successfully."},
+        204: {"description": "Festival settings updated successfully."},
         404: {
             "model": ErrorMessage,
             "description": "Festival settings were not found.",

@@ -42,16 +42,12 @@ def _build_profile_redirect(error_code: str | None = None) -> RedirectResponse:
 
 @connections_router.get(
     "/telegram",
-    summary="Link Telegram account",
-    description="Links a Telegram account to the currently authenticated user.",
+    summary="Start Telegram linking",
+    description="Redirects the browser to Telegram's OAuth page to begin linking a "
+    "Telegram account to the current user. Telegram then calls back to the callback "
+    "endpoint to finish.",
     responses={
-        200: {"description": "Telegram account linked successfully."},
-        400: {"model": ErrorMessage, "description": "Invalid Telegram auth payload."},
-        404: {"model": ErrorMessage, "description": "User not found."},
-        409: {
-            "model": ErrorMessage,
-            "description": "Telegram is already linked to this or another account.",
-        },
+        302: {"description": "Redirect to Telegram's OAuth authorization page."},
     },
 )
 @inject
@@ -66,16 +62,18 @@ async def link_telegram(
 
 @connections_router.get(
     "/telegram/callback",
-    summary="Link Telegram account",
-    description="Links a Telegram account to the currently authenticated user.",
+    summary="Finish Telegram linking",
+    description="OAuth callback for Telegram linking. On success, links the account "
+    "and redirects to the profile page. Recoverable errors (already linked to this "
+    "or another account) also redirect to the profile page with a "
+    "`telegramLinkError` query param the frontend turns into a toast. Invoked by "
+    "Telegram, not called directly by the frontend.",
     responses={
-        200: {"description": "Telegram account linked successfully."},
-        400: {"model": ErrorMessage, "description": "Invalid Telegram auth payload."},
-        404: {"model": ErrorMessage, "description": "User not found."},
-        409: {
-            "model": ErrorMessage,
-            "description": "Telegram is already linked to this or another account.",
+        303: {
+            "description": "Linking finished. Redirects to the profile page; on a "
+            "recoverable error a `telegramLinkError` query param is included."
         },
+        400: {"model": ErrorMessage, "description": "Invalid Telegram auth payload."},
     },
 )
 @inject
@@ -100,10 +98,11 @@ async def link_telegram_callback(
 
 @connections_router.delete(
     "/telegram",
+    status_code=204,
     summary="Unlink Telegram account",
     description="Unlinks the Telegram account from the currently authenticated user.",
     responses={
-        200: {"description": "Telegram account unlinked successfully."},
+        204: {"description": "Telegram account unlinked successfully."},
         404: {"model": ErrorMessage, "description": "User not found."},
         409: {
             "model": ErrorMessage,

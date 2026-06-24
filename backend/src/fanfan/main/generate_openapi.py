@@ -4,6 +4,7 @@ from pathlib import Path
 from fastapi import FastAPI
 
 from fanfan.presentation.web.error_codes import client_facing_error_codes
+from fanfan.presentation.web.openapi import generate_operation_id
 from fanfan.presentation.web.routes import setup_api_router
 
 OPENAPI_PATH = (
@@ -12,7 +13,9 @@ OPENAPI_PATH = (
 
 
 def build_openapi_schema() -> dict:
-    app = FastAPI()
+    # Mirror the runtime app's operationId scheme so the committed spec matches
+    # what create_app() serves.
+    app = FastAPI(generate_unique_id_function=generate_operation_id)
     app.include_router(setup_api_router())
     return app.openapi()
 

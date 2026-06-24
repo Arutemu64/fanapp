@@ -15,7 +15,15 @@ from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
 telegram_router = APIRouter()
 
 
-@telegram_router.get("/login/telegram")
+@telegram_router.get(
+    "/login/telegram",
+    summary="Start Telegram login",
+    description="Redirects the browser to Telegram's OAuth authorization page. "
+    "Telegram then calls back to the authorize endpoint to finish the login.",
+    responses={
+        302: {"description": "Redirect to Telegram's OAuth authorization page."},
+    },
+)
 @inject
 async def login_telegram(
     request: Request,
@@ -26,7 +34,16 @@ async def login_telegram(
     return await telegram.authorize_redirect(request, redirect_uri)
 
 
-@telegram_router.get("/auth/telegram")
+@telegram_router.get(
+    "/auth/telegram",
+    summary="Finish Telegram login",
+    description="OAuth callback for Telegram login. Authenticates the user from the "
+    "Telegram payload, sets the session cookie and redirects to the app root. "
+    "Invoked by Telegram, not called directly by the frontend.",
+    responses={
+        303: {"description": "Login successful. Session cookie set, redirect to app."},
+    },
+)
 @inject
 async def authorize_telegram(
     request: Request,

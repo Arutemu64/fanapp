@@ -55,10 +55,11 @@ async def list_user_notifications(
 
 @notifications_router.post(
     "/mark-all-read",
+    status_code=204,
     summary="Mark all notifications as read",
     description="Marks all unread notifications for the authenticated user as read.",
     responses={
-        200: {"description": "All notifications marked as read."},
+        204: {"description": "All notifications marked as read."},
     },
 )
 @inject
@@ -66,18 +67,18 @@ async def mark_all_notifications_read(
     interactor: FromDishka[MarkAllRead],
 ) -> None:
     await interactor()
-    return
 
 
 @notifications_router.post(
     "/test",
+    status_code=204,
     summary="Send test notification",
     description=(
         "Creates a test notification for the authenticated user and sends it through "
         "all connected channels."
     ),
     responses={
-        200: {"description": "Test notification created successfully."},
+        204: {"description": "Test notification created successfully."},
     },
 )
 @inject
@@ -85,7 +86,6 @@ async def send_test_notification(
     interactor: FromDishka[SendTestNotification],
 ) -> None:
     await interactor()
-    return
 
 
 @notifications_router.post(
