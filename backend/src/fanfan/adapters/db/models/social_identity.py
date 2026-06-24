@@ -11,8 +11,7 @@ if typing.TYPE_CHECKING:
 
 
 class SocialIdentityORM(BaseORM):
-    # TODO Rename table
-    __tablename__ = "social_accounts"
+    __tablename__ = "social_identities"
     __table_args__ = (UniqueConstraint("provider", "provider_id"),)
 
     id: Mapped[UUID] = mapped_column(
@@ -26,4 +25,4 @@ class SocialIdentityORM(BaseORM):
     provider: Mapped[str] = mapped_column()
     provider_id: Mapped[str] = mapped_column()
 
-    user: Mapped[UserORM] = relationship(back_populates="social_accounts")
+    user: Mapped[UserORM] = relationship(back_populates="social_identities")

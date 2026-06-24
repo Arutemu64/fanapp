@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from fanfan.core.models.social_account import SocialIdentity
+from fanfan.core.models.social_identity import SocialIdentity
 from fanfan.core.vo.user import UserId
 
 

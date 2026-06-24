@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from fanfan.adapters.db.constraints import translate_integrity_error
-from fanfan.adapters.db.mappers.social_account import SocialIdentityMapper
+from fanfan.adapters.db.mappers.social_identity import SocialIdentityMapper
 from fanfan.adapters.db.mappers.user import UserMapper
 from fanfan.adapters.db.models import SocialIdentityORM, UserORM
 from fanfan.adapters.db.models.permission import UserPermissionORM
@@ -71,12 +71,12 @@ class SqlUserGateway(UserGateway):
         user_orm = await self.session.scalar(stmt)
         return self._to_model(user_orm)
 
-    async def get_by_social_id(
+    async def get_by_social_identity(
         self, provider_name: str, provider_account_id: str
     ) -> User | None:
         stmt = (
             select(UserORM)
-            .join(UserORM.social_accounts)
+            .join(UserORM.social_identities)
             .where(
                 SocialIdentityORM.provider == provider_name,
                 SocialIdentityORM.provider_id == provider_account_id,
@@ -105,12 +105,12 @@ class SqlUserGateway(UserGateway):
             .where(UserORM.id == user_id)
             .options(
                 # ticket is many-to-one (single row) -> joinedload.
-                # permissions and social_accounts are independent collections;
+                # permissions and social_identities are independent collections;
                 # joining both in one query multiplies rows (cartesian product),
                 # so load each with a separate IN query instead.
                 joinedload(UserORM.ticket),
                 selectinload(UserORM.permissions),
-                selectinload(UserORM.social_accounts),
+                selectinload(UserORM.social_identities),
             )
         )
         user_orm = await self.session.scalar(stmt)
