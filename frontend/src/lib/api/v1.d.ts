@@ -3683,13 +3683,11 @@ export interface operations {
         };
         responses: {
             /** @description Push subscription registered successfully. */
-            201: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": unknown;
-                };
+                content?: never;
             };
             /** @description Not authenticated. */
             401: {

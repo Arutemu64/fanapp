@@ -2693,13 +2693,8 @@
           }
         },
         "responses": {
-          "201": {
-            "description": "Push subscription registered successfully.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+          "204": {
+            "description": "Push subscription registered successfully."
           },
           "422": {
             "description": "Request validation error.",

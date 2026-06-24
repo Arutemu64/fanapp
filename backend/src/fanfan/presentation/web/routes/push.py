@@ -35,12 +35,12 @@ class PushSubscriptionStatus(BaseModel):
 
 @push_router.post(
     "/",
-    status_code=201,
+    status_code=204,
     summary="Subscribe to push notifications",
     description="Registers a push subscription endpoint "
     "for the authenticated user's device.",
     responses={
-        201: {"description": "Push subscription registered successfully."},
+        204: {"description": "Push subscription registered successfully."},
         409: {
             "model": ErrorMessage,
             "description": "Push subscription already exists.",
