@@ -11,12 +11,9 @@
 		ThumbsUpSolid
 	} from 'flowbite-svelte-icons';
 
-	let { activeUrl } = $props<{ activeUrl: string }>();
+	import { isActivePath } from '$lib/utils/nav';
 
-	function isActive(href: string): boolean {
-		if (href === '/') return activeUrl === '/';
-		return activeUrl === href || activeUrl.startsWith(href + '/');
-	}
+	let { activeUrl } = $props<{ activeUrl: string }>();
 </script>
 
 <BottomNav
@@ -26,7 +23,7 @@
 	classes={{ inner: 'grid-cols-4' }}
 >
 	<BottomNavItem btnName="Главная" href="/">
-		{#if isActive('/')}
+		{#if isActivePath(activeUrl, '/')}
 			<HomeSolid class="mb-1 h-6 w-6 text-primary-600 dark:text-primary-400" />
 		{:else}
 			<HomeOutline
@@ -35,7 +32,7 @@
 		{/if}
 	</BottomNavItem>
 	<BottomNavItem btnName="Программа" href="/schedule">
-		{#if isActive('/schedule')}
+		{#if isActivePath(activeUrl, '/schedule')}
 			<CalendarWeekSolid class="mb-1 h-6 w-6 text-primary-600 dark:text-primary-400" />
 		{:else}
 			<CalendarWeekOutline
@@ -46,7 +43,7 @@
 	<!-- Voting sits before the map so its long "Голосование" label lands in an inner
 	     column, away from rounded screen corners that clip the edge items. -->
 	<BottomNavItem btnName="Голосование" href="/voting">
-		{#if isActive('/voting')}
+		{#if isActivePath(activeUrl, '/voting')}
 			<ThumbsUpSolid class="mb-1 h-6 w-6 text-primary-600 dark:text-primary-400" />
 		{:else}
 			<ThumbsUpOutline
@@ -56,7 +53,7 @@
 	</BottomNavItem>
 	<!-- Mirror the sidebar shortcut here so the map stays visible above the fixed mobile nav. -->
 	<BottomNavItem btnName="Карта" href="/map">
-		{#if isActive('/map')}
+		{#if isActivePath(activeUrl, '/map')}
 			<MapPinAltSolid class="mb-1 h-6 w-6 text-primary-600 dark:text-primary-400" />
 		{:else}
 			<MapPinAltOutline

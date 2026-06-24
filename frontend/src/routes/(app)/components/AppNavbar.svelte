@@ -7,6 +7,7 @@
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { clearUserCache } from '$lib/utils/offlineCache';
+	import { getAvatarInitials } from '$lib/utils/users';
 	import {
 		Avatar,
 		Button,
@@ -30,30 +31,7 @@
 		toggleSidebar: () => void;
 	}>();
 
-	let avatarInitials = $derived.by(() => {
-		const rawUsername = user?.username?.trim();
-
-		if (!rawUsername) {
-			return 'П';
-		}
-
-		const username = rawUsername.replace(/^@/, '');
-
-		if (!username) {
-			return 'П';
-		}
-
-		const parts = username.split(/[\s._-]+/).filter(Boolean);
-
-		if (parts.length >= 2) {
-			const firstInitial = parts[0]?.[0] ?? '';
-			const secondInitial = parts[1]?.[0] ?? '';
-
-			return `${firstInitial}${secondInitial}`.toUpperCase();
-		}
-
-		return username.slice(0, 2).toUpperCase();
-	});
+	let avatarInitials = $derived(getAvatarInitials(user?.username));
 
 	const toastService = getToastService();
 	const eventsClient = getEventsClient();

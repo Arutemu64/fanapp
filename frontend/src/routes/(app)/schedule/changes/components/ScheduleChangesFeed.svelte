@@ -9,10 +9,8 @@
 	import type { ScheduleChangeFullDTO } from '$lib/types/schedule';
 	import ScheduleChangeCard from './ScheduleChangeCard.svelte';
 
-	type ScheduleChange = ScheduleChangeFullDTO;
-
 	interface Props {
-		initialChanges: Array<ScheduleChange>;
+		initialChanges: Array<ScheduleChangeFullDTO>;
 		initialHasMore: boolean;
 	}
 
@@ -22,7 +20,7 @@
 	const toastService = getToastService();
 
 	// Server provides the first page; state holds only pages loaded afterwards.
-	let extraChanges = $state.raw<Array<ScheduleChange>>([]);
+	let extraChanges = $state.raw<Array<ScheduleChangeFullDTO>>([]);
 	let extraHasMore = $state<boolean | null>(null);
 	let extraOffset = $state(0);
 	let isLoadingMore = $state(false);
@@ -32,8 +30,8 @@
 	let nextOffset = $derived(initialChanges.length + extraOffset);
 
 	function appendUniqueChanges(
-		existingChanges: Array<ScheduleChange>,
-		nextChanges: Array<ScheduleChange>
+		existingChanges: Array<ScheduleChangeFullDTO>,
+		nextChanges: Array<ScheduleChangeFullDTO>
 	) {
 		// Guard against duplicates if the list shifted between requests.
 		const existingIds = new Set(existingChanges.map((change) => change.id));

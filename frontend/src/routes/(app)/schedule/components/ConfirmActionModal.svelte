@@ -10,9 +10,6 @@
 		confirmLabel: string;
 		// Destructive actions (e.g. skipping) use the red button; everything else stays primary.
 		confirmColor?: 'primary' | 'red';
-		// Whether to show the notification note. Schedule management actions
-		// broadcast to every subscriber, so it is on by default.
-		notify?: boolean;
 		// 'warning' for actions that push new info (a loud yellow note about the
 		// un-recallable push); 'muted' for reverting actions, where the broadcast
 		// is just an update and a quiet FYI is enough.
@@ -26,7 +23,6 @@
 		message,
 		confirmLabel,
 		confirmColor = 'primary',
-		notify = true,
 		notifyTone = 'warning',
 		onconfirm
 	}: Props = $props();
@@ -56,15 +52,13 @@
 	<div class="flex flex-col gap-3">
 		<p class="text-sm text-gray-600 sm:text-base dark:text-gray-400">{message}</p>
 
-		{#if notify}
-			<!-- These actions fan out a mailing to every subscriber. Telegram messages can be undone, but delivered push notifications cannot, so warn before sending. -->
-			<NoticeCallout
-				tone={notifyTone}
-				icon={BellActiveOutline}
-				message={notifyMessage}
-				role="alert"
-			/>
-		{/if}
+		<!-- These actions fan out a mailing to every subscriber. Telegram messages can be undone, but delivered push notifications cannot, so warn before sending. -->
+		<NoticeCallout
+			tone={notifyTone}
+			icon={BellActiveOutline}
+			message={notifyMessage}
+			role="alert"
+		/>
 	</div>
 
 	{#snippet footer()}

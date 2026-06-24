@@ -165,26 +165,22 @@
 			showScrollTopButton = (scrollContainer?.scrollTop ?? 0) > 320;
 		};
 
-		const updateSchedule = async () => {
-			await invalidate('app:schedule');
-		};
-
-		// Refetch on every (re)connect so a 'schedule_updated' missed while the SSE
-		// stream was down doesn't leave a stale schedule. Fires on first connect too,
-		// which just refetches the freshly loaded data once — harmless and idempotent.
-		const reloadOnReconnect = () => {
+		// Refetch on a schedule update and on every (re)connect, so a 'schedule_updated'
+		// missed while the SSE stream was down doesn't leave a stale schedule. Firing on
+		// first connect just refetches the freshly loaded data once — harmless and idempotent.
+		const reloadSchedule = () => {
 			void invalidate('app:schedule');
 		};
 
 		updateScrollState();
 		scrollContainer?.addEventListener('scroll', updateScrollState, { passive: true });
-		eventsClient?.on('schedule_updated', updateSchedule);
-		eventsClient?.on('connection_established', reloadOnReconnect);
+		eventsClient?.on('schedule_updated', reloadSchedule);
+		eventsClient?.on('connection_established', reloadSchedule);
 
 		return () => {
 			scrollContainer?.removeEventListener('scroll', updateScrollState);
-			eventsClient?.off('schedule_updated', updateSchedule);
-			eventsClient?.off('connection_established', reloadOnReconnect);
+			eventsClient?.off('schedule_updated', reloadSchedule);
+			eventsClient?.off('connection_established', reloadSchedule);
 		};
 	});
 </script>

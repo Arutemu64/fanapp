@@ -2,12 +2,14 @@
 	import { Modal, Input, Label, Button, Spinner, Helper, Alert } from 'flowbite-svelte';
 	import { EnvelopeSolid } from 'flowbite-svelte-icons';
 	import { createApiClient } from '$lib/api';
-	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { components } from '$lib/api/v1';
 	import { onDestroy } from 'svelte';
 	import OtpInput from '$lib/components/OtpInput.svelte';
+	import { isValidEmail, normalizeEmail, isValidOtp } from '$lib/utils/validation';
+
+	const client = createApiClient();
 
 	type ChangeEmailInput = components['schemas']['ChangeEmailInput'];
 
@@ -35,14 +37,10 @@
 	const toastService = getToastService();
 	let formError = $state('');
 
-	function isValidEmail(value: string): boolean {
-		return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-	}
-
 	let emailColor = $derived.by((): 'green' | 'red' | undefined => {
 		if (emailError) return 'red';
 		if (!newEmail) return undefined;
-		return isValidEmail(newEmail) ? 'green' : 'red';
+		return isValidEmail(normalizeEmail(newEmail)) ? 'green' : 'red';
 	});
 
 	function handleEmailInput() {
@@ -71,7 +69,7 @@
 		formError = '';
 
 		try {
-			const body: ChangeEmailInput = { new_email: newEmail.trim().toLowerCase() };
+			const body: ChangeEmailInput = { new_email: normalizeEmail(newEmail) };
 			const { error, response } = await client.POST('/me/email', { body });
 
 			if (error || !response.ok) {
@@ -94,7 +92,7 @@
 		e.preventDefault();
 		emailError = '';
 
-		const trimmedEmail = newEmail.trim().toLowerCase();
+		const trimmedEmail = normalizeEmail(newEmail);
 
 		if (!isValidEmail(trimmedEmail)) {
 			emailError = 'Введи адрес в формате name@example.com';
@@ -131,7 +129,7 @@
 			return;
 		}
 
-		if (!/^\d{6}$/.test(verificationCode)) {
+		if (!isValidOtp(verificationCode)) {
 			verificationCodeError = 'Код должен состоять из 6 цифр';
 			return;
 		}
@@ -255,7 +253,7 @@
 				type="submit"
 				color="primary"
 				class="w-full"
-				disabled={isLoading || !isValidEmail(newEmail)}
+				disabled={isLoading || !isValidEmail(normalizeEmail(newEmail))}
 			>
 				{#if isLoading}
 					<span class="flex items-center gap-2">
@@ -278,7 +276,7 @@
 
 			<div>
 				<Label class="mb-2 block text-gray-500 dark:text-gray-400">Новая эл. почта</Label>
-				<Input type="text" value={newEmail.trim().toLowerCase()} disabled class="ps-9">
+				<Input type="text" value={normalizeEmail(newEmail)} disabled class="ps-9">
 					{#snippet left()}
 						<EnvelopeSolid class="h-5 w-5 text-gray-400" />
 					{/snippet}

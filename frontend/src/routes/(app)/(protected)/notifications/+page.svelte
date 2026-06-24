@@ -2,13 +2,17 @@
 	import NotificationsFeed from './components/NotificationsFeed.svelte';
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { getOfflineService } from '$lib/services/offline.svelte';
+	import { feedSnapshotKey } from '$lib/utils/feed';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
-	// Ключ нужен, чтобы после обновления route data компонент списка пересоздался с новым серверным снимком.
+	// Remount the feed with the fresh server snapshot whenever route data changes.
 	let notificationsKey = $derived(
-		`${data.hasMore}:${data.notifications.map((notification) => notification.id).join(':')}`
+		feedSnapshotKey(
+			data.hasMore,
+			data.notifications.map((notification) => notification.id)
+		)
 	);
 
 	// Show the notice when the loaded copy is cached (data.stale) or the device went

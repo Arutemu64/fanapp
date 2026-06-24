@@ -3,9 +3,10 @@
 	import { CheckCircleSolid, CheckOutline, CloseOutline, HeartSolid } from 'flowbite-svelte-icons';
 	import { pluralize } from '$lib/utils/formatters';
 	import { createApiClient } from '$lib/api';
-	const client = createApiClient();
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import type { ParticipantFullDTO } from '$lib/types/participant';
+
+	const client = createApiClient();
 
 	interface Props {
 		participant: ParticipantFullDTO;

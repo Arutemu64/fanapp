@@ -11,6 +11,7 @@
 	// busts every cache — including the precached PWA copy — with no stale-image
 	// risk. It's emitted into `build`, which the service worker already precaches.
 	import heroArt from './main.webp';
+	import { pluralize } from '$lib/utils/formatters';
 
 	const socials = [
 		{ label: 'Официальный сайт fancom.info', href: 'https://fancom.info', icon: GlobeIcon },
@@ -51,21 +52,11 @@
 	let minutes = $derived(Math.floor((remaining % HOUR) / MINUTE));
 	let seconds = $derived(Math.floor((remaining % MINUTE) / SECOND));
 
-	// Russian unit declension ("1 день", "2 дня", "5 дней").
-	function plural(value: number, forms: [string, string, string]): string {
-		const mod100 = value % 100;
-		const mod10 = value % 10;
-		if (mod100 >= 11 && mod100 <= 14) return forms[2];
-		if (mod10 === 1) return forms[0];
-		if (mod10 >= 2 && mod10 <= 4) return forms[1];
-		return forms[2];
-	}
-
 	let units = $derived([
-		{ id: 'days', value: days, label: plural(days, ['день', 'дня', 'дней']) },
-		{ id: 'hours', value: hours, label: plural(hours, ['час', 'часа', 'часов']) },
-		{ id: 'minutes', value: minutes, label: plural(minutes, ['минута', 'минуты', 'минут']) },
-		{ id: 'seconds', value: seconds, label: plural(seconds, ['секунда', 'секунды', 'секунд']) }
+		{ id: 'days', value: days, label: pluralize(days, 'день', 'дня', 'дней') },
+		{ id: 'hours', value: hours, label: pluralize(hours, 'час', 'часа', 'часов') },
+		{ id: 'minutes', value: minutes, label: pluralize(minutes, 'минута', 'минуты', 'минут') },
+		{ id: 'seconds', value: seconds, label: pluralize(seconds, 'секунда', 'секунды', 'секунд') }
 	]);
 
 	function pad(value: number): string {

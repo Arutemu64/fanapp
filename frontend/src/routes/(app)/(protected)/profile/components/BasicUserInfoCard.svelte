@@ -2,7 +2,7 @@
 	import { Avatar, Badge, Button, Card } from 'flowbite-svelte';
 	import { PenSolid } from 'flowbite-svelte-icons';
 	import type { CurrentUserDTO } from '$lib/types/user';
-	import { getRoleLabel, getRoleColor } from '$lib/utils/users';
+	import { getRoleLabel, getRoleColor, getAvatarInitials } from '$lib/utils/users';
 	import EditProfileModal from './EditProfileModal.svelte';
 
 	interface Props {
@@ -11,25 +11,7 @@
 	}
 
 	let { user, onUpdate }: Props = $props();
-	// Build avatar initials from the username (two parts -> two letters), falling back to the first name.
-	let avatarInitials = $derived.by(() => {
-		const username = user.username?.trim().replace(/^@/, '');
-
-		if (!username) {
-			return 'П';
-		}
-
-		const parts = username.split(/[\s._-]+/).filter(Boolean);
-
-		if (parts.length >= 2) {
-			const firstInitial = parts[0]?.[0] ?? '';
-			const secondInitial = parts[1]?.[0] ?? '';
-
-			return `${firstInitial}${secondInitial}`.toUpperCase();
-		}
-
-		return username.slice(0, 2).toUpperCase();
-	});
+	let avatarInitials = $derived(getAvatarInitials(user.username));
 
 	let editProfileModalOpen = $state(false);
 </script>
