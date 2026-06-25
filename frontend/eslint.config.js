@@ -76,10 +76,9 @@ export default defineConfig(
 			}
 		},
 		rules: {
-			// ESLint can't see template-side reads of $bindable() props, so this
-			// rule produces false positives for every $bindable() default in a
-			// destructuring. Disable it for Svelte files where template bindings
-			// satisfy the "used" requirement that ESLint can't verify.
+			// Known false positive with $bindable props: ESLint sees the write-out to the
+			// parent but not the parent-side bind read, and flags it incorrectly.
+			// Tracked: sveltejs/eslint-plugin-svelte#1478 — re-enable once fixed.
 			'no-useless-assignment': 'off'
 		}
 	},
