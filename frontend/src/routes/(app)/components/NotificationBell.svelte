@@ -16,7 +16,9 @@
 
 	// Seed from the layout-loaded preview so the unread badge is correct on the
 	// first paint. The SSE 'connection_established' handler refreshes this once the stream is up.
-	let notifications = $state<NotificationDTO[]>(page.data.notificationPreview ?? []);
+	// `page.data` is loosely typed (any), so narrow the preview back to its load type.
+	const notificationPreview = page.data.notificationPreview as NotificationDTO[] | undefined;
+	let notifications = $state<NotificationDTO[]>(notificationPreview ?? []);
 	let unreadCount = $derived(notifications.filter((notification) => !notification.seen_at).length);
 	// Announce the count to screen readers so the unread state isn't conveyed by
 	// the badge color alone.

@@ -29,7 +29,7 @@
 		eager: true,
 		query: '?url',
 		import: 'default'
-	}) as Record<string, string>;
+	});
 
 	// Build the gallery from the discovered files, attaching metadata by name and
 	// sorting by id so the order is stable regardless of glob iteration order.

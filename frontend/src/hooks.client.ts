@@ -4,11 +4,14 @@ import { PUBLIC_SENTRY_DSN } from '$env/static/public';
 import * as Sentry from '@sentry/sveltekit';
 
 if (PUBLIC_SENTRY_DSN) {
+	// These build-time Sentry vars aren't in Vite's typed env, so they come
+	// through as `any`; read them through a narrowed view to keep types safe.
+	const buildEnv = import.meta.env as Record<string, string | undefined>;
 	Sentry.init({
 		dsn: PUBLIC_SENTRY_DSN,
-		environment: import.meta.env.SENTRY_ENVIRONMENT || 'production',
-		release: import.meta.env.SENTRY_RELEASE,
-		tracesSampleRate: parseFloat(import.meta.env.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
+		environment: buildEnv.SENTRY_ENVIRONMENT || 'production',
+		release: buildEnv.SENTRY_RELEASE,
+		tracesSampleRate: parseFloat(buildEnv.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
 		beforeSend(event) {
 			// Scrub potential PII from request headers and cookies
 			if (event.request) {

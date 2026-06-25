@@ -283,7 +283,7 @@
 				disabled={isLoading}
 				onclick={(e) => {
 					e.preventDefault();
-					toggleSubscription();
+					void toggleSubscription();
 				}}
 				color="primary"
 			/>

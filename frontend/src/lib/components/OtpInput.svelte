@@ -71,10 +71,11 @@
 	// Handle clipboard paste across all 6 input fields
 	function handlePinPaste(event: ClipboardEvent) {
 		event.preventDefault();
-		// @ts-expect-error - clipboardData is not standard on older browsers but standard today
-		const windowClipboard = window.clipboardData;
+		// `window.clipboardData` is a legacy IE fallback that isn't in the DOM
+		// lib types; narrow it explicitly instead of suppressing the error.
+		const legacyClipboard = (window as unknown as { clipboardData?: DataTransfer }).clipboardData;
 		const pasteData =
-			event.clipboardData?.getData('text') || windowClipboard?.getData('text') || '';
+			event.clipboardData?.getData('text') || legacyClipboard?.getData('text') || '';
 		const digits = pasteData.replace(/\D/g, '').slice(0, 6);
 
 		if (!digits) return;

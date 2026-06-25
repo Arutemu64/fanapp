@@ -82,12 +82,15 @@ export class OfflineService {
 	// recovering probe flips #online via onReachableChange, which clears the
 	// timer through #syncPolling, so the `!this.#online` guard stops the loop.
 	#scheduleNextPoll() {
-		this.#pollId = setTimeout(async () => {
-			await probeReachability();
-			if (browser && !this.#online) {
-				this.#pollDelay = Math.min(this.#pollDelay * 2, RECOVERY_POLL_MAX_MS);
-				this.#scheduleNextPoll();
-			}
+		this.#pollId = setTimeout(() => {
+			// setTimeout wants a void callback; run the async probe fire-and-forget.
+			void (async () => {
+				await probeReachability();
+				if (browser && !this.#online) {
+					this.#pollDelay = Math.min(this.#pollDelay * 2, RECOVERY_POLL_MAX_MS);
+					this.#scheduleNextPoll();
+				}
+			})();
 		}, this.#pollDelay);
 	}
 

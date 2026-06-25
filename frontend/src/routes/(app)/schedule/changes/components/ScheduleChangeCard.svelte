@@ -12,7 +12,7 @@
 	import { invalidate } from '$app/navigation';
 	import { getToastService } from '$lib/services/toasts.svelte';
 
-	let { change } = $props<{ change: ScheduleChangeFullDTO }>();
+	let { change }: { change: ScheduleChangeFullDTO } = $props();
 
 	const toastService = getToastService();
 	let isUndoing = $state(false);
@@ -66,10 +66,12 @@
 	<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 		<div class="flex-1">
 			<div class="mb-2 flex flex-wrap items-center gap-2">
-				<Badge color={changeTypeColors[change.type as ScheduleChangeType]} border class="text-sm">
-					{changeTypeLabels[change.type as ScheduleChangeType]}
+				<Badge color={changeTypeColors[change.type]} border class="text-sm">
+					{changeTypeLabels[change.type]}
 				</Badge>
-				{#if change.send_global_announcement}
+				<!-- The backend broadcasts a global announcement exactly when the
+				     next event changed, so use that flag to flag the change here. -->
+				{#if change.next_event_changed}
 					<Badge color="red" border class="text-sm">Объявление</Badge>
 				{/if}
 			</div>

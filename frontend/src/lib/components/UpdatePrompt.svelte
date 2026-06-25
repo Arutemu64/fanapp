@@ -53,7 +53,7 @@
 		// controller, so gating the reload on this keeps the update flow working.
 		const hadController = !!navigator.serviceWorker.controller;
 
-		navigator.serviceWorker.getRegistration().then((reg) => {
+		void navigator.serviceWorker.getRegistration().then((reg) => {
 			if (!reg) return;
 			registration = reg;
 

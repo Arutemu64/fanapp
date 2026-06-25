@@ -50,7 +50,8 @@
 		color: 'primary' | 'red';
 		// 'warning' for actions that push new info; 'muted' for reverting actions.
 		notifyTone: 'warning' | 'muted';
-		run: () => void;
+		// The confirm handlers are async; the modal fires them and doesn't await.
+		run: () => void | Promise<void>;
 	};
 	// Two pieces of state, set together when a staff button is tapped:
 	// confirmOpen drives the modal's visibility (bound two-way so Esc/backdrop
@@ -399,5 +400,5 @@
 	confirmLabel={confirmConfig?.confirmLabel ?? ''}
 	confirmColor={confirmConfig?.color ?? 'primary'}
 	notifyTone={confirmConfig?.notifyTone ?? 'warning'}
-	onconfirm={() => confirmConfig?.run()}
+	onconfirm={() => void confirmConfig?.run()}
 />
