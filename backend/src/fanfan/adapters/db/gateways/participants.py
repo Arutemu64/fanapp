@@ -39,7 +39,6 @@ class SqlParticipantGateway(ParticipantGateway):
         participant_orm = self.mapper.from_model(participant)
         self.session.add(participant_orm)
         await self.session.flush([participant_orm])
-        return
 
     async def get(self, participant_id: ParticipantId) -> Participant | None:
         stmt = (
@@ -64,7 +63,6 @@ class SqlParticipantGateway(ParticipantGateway):
     async def save(self, participant: Participant) -> None:
         participant_orm = await self.session.merge(self.mapper.from_model(participant))
         await self.session.flush([participant_orm])
-        return
 
     async def list_cosplay2_ids(self) -> list[int]:
         stmt = select(ParticipantORM.cosplay2_id)

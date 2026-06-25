@@ -38,9 +38,11 @@ def create_app() -> FastAPI:
 
     app.include_router(setup_api_router())
 
-    app.add_exception_handler(AppException, app_exception_handler)  # type: ignore  # noqa: PGH003
-    app.add_exception_handler(HTTPException, http_exception_handler)  # type: ignore  # noqa: PGH003
-    app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore  # noqa: PGH003
+    # Handlers narrow `exc` to a concrete exception subtype, which Starlette's
+    # broad `ExceptionHandler` signature doesn't model — a known false positive.
+    app.add_exception_handler(AppException, app_exception_handler)  # ty: ignore[invalid-argument-type]
+    app.add_exception_handler(HTTPException, http_exception_handler)  # ty: ignore[invalid-argument-type]
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)  # ty: ignore[invalid-argument-type]
     # Catch-all for unanticipated errors so every response keeps the ErrorMessage
     # shape; more specific handlers above take precedence by exception type.
     app.add_exception_handler(Exception, unhandled_exception_handler)

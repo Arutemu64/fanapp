@@ -23,7 +23,6 @@ class SqlMailingGateway(MailingGateway):
         # Register so any event recorded on the mailing (e.g. BroadcastQueued)
         # is written to the outbox when the unit of work commits.
         self.uow.register(mailing)
-        return
 
     async def get(self, mailing_id: MailingId) -> Mailing | None:
         stmt = select(MailingORM).where(MailingORM.id == mailing_id).with_for_update()
@@ -37,7 +36,6 @@ class SqlMailingGateway(MailingGateway):
     async def save(self, mailing: Mailing) -> None:
         mailing_orm = self.mapper.from_model(mailing)
         await self.session.merge(mailing_orm)
-        return
 
     async def set_total(self, mailing_id: MailingId, total_count: int) -> None:
         stmt = (

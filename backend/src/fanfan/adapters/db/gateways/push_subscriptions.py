@@ -53,4 +53,3 @@ class SqlPushSubscriptionGateway(PushSubscriptionGateway):
     async def delete(self, model: PushSubscription) -> None:
         stmt = delete(PushSubscriptionORM).where(PushSubscriptionORM.id == model.id)
         await self.session.execute(stmt)
-        return

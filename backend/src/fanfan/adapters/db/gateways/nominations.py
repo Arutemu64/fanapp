@@ -37,7 +37,6 @@ class SqlNominationGateway(NominationGateway):
         nomination_orm = self.mapper.from_model(nomination)
         self.session.add(nomination_orm)
         await self.session.flush([nomination_orm])
-        return
 
     async def get_by_cosplay2_id(self, cosplay2_id: int) -> Nomination | None:
         stmt = (
@@ -57,7 +56,6 @@ class SqlNominationGateway(NominationGateway):
     async def save(self, nomination: Nomination) -> None:
         nomination_orm = await self.session.merge(self.mapper.from_model(nomination))
         await self.session.flush([nomination_orm])
-        return
 
     async def list_cosplay2_ids(self) -> list[int]:
         stmt = select(NominationORM.cosplay2_id)

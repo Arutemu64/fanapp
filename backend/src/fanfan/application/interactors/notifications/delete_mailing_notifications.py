@@ -29,4 +29,3 @@ class DeleteMailingNotifications:
             "Mailing notifications deleted",
             extra={"mailing_id": str(data.mailing_id)},
         )
-        return

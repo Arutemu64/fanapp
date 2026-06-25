@@ -21,7 +21,7 @@ class TestDbProvider(Provider):
         postgres = PostgresContainer("postgres:18.2", driver="asyncpg")
         # TODO: workaround from testcontainers/testcontainers-python#108.
         if os.name == "nt":
-            postgres.get_container_host_ip = lambda: "localhost"  # type: ignore  # noqa: PGH003
+            postgres.get_container_host_ip = lambda: "localhost"
         try:
             postgres.start()
             postgres_url = postgres.get_connection_url()
@@ -36,7 +36,7 @@ class TestDbProvider(Provider):
         redis_container = RedisContainer("redis:6.2.13-alpine")
         # TODO: workaround from testcontainers/testcontainers-python#108.
         if os.name == "nt":
-            redis_container.get_container_host_ip = lambda: "localhost"  # type: ignore  # noqa: PGH003
+            redis_container.get_container_host_ip = lambda: "localhost"
         try:
             redis_container.start()
             host = redis_container.get_container_host_ip()

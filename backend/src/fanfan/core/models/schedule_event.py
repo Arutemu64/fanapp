@@ -11,7 +11,7 @@ from fanfan.core.vo.schedule_event import ScheduleEventId
 
 
 @dataclass(slots=True, kw_only=True)
-class ScheduleEvent(AggregateRoot):  # noqa: PLW1641
+class ScheduleEvent(AggregateRoot):
     id: ScheduleEventId
     number: int
     title: str
@@ -73,3 +73,6 @@ class ScheduleEvent(AggregateRoot):  # noqa: PLW1641
 
     def __eq__(self, other: ScheduleEvent | Any) -> bool:
         return isinstance(other, ScheduleEvent) and self.id == other.id
+
+    def __hash__(self) -> int:
+        return hash(self.id)

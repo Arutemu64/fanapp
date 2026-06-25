@@ -52,7 +52,6 @@ class SqlTicketGateway(TicketGateway):
         ):
             ticket_orm = await self.session.merge(self.mapper.from_model(ticket))
             await self.session.flush([ticket_orm])
-        return
 
     async def delete(self, ticket: Ticket) -> None:
         await self.session.execute(delete(TicketORM).where(TicketORM.id == ticket.id))
