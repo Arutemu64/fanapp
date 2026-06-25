@@ -38,12 +38,14 @@
 
 	import ThemeToggle from './ThemeToggle.svelte';
 
-	let { user, activeUrl, isSidebarOpen, closeSidebar } = $props<{
+	interface Props {
 		user: CurrentUserDTO | null;
 		activeUrl: string;
 		isSidebarOpen: boolean;
 		closeSidebar: () => void;
-	}>();
+	}
+
+	let { user, activeUrl, isSidebarOpen, closeSidebar }: Props = $props();
 
 	// Volunteers and organizers see the volunteer dropdown so they can discover
 	// what exists; individual items are unlocked per effective permission. The

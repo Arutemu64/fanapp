@@ -47,7 +47,7 @@ export class PwaService {
 		// The element upgrades asynchronously after the dynamic import resolves;
 		// read its state once it is defined, then again on every lifecycle event.
 		if (browser) {
-			customElements.whenDefined(ELEMENT_TAG).then(this.#syncState);
+			void customElements.whenDefined(ELEMENT_TAG).then(this.#syncState);
 		}
 
 		return () => {

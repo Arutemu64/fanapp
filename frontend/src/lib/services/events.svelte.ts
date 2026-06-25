@@ -243,7 +243,7 @@ export class EventsClient {
 		if (!(event instanceof MessageEvent)) return;
 
 		try {
-			this.handshake = JSON.parse(event.data) as EventsHandshakePayload;
+			this.handshake = JSON.parse(event.data as string) as EventsHandshakePayload;
 		} catch (error) {
 			console.warn('Failed to parse SSE handshake payload', error);
 			this.handshake = null;

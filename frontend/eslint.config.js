@@ -16,12 +16,20 @@ export default defineConfig(
 	includeIgnoreFile(gitignorePath),
 	{ ignores: ['src/lib/api/v1.d.ts'] },
 	js.configs.recommended,
-	ts.configs.recommended,
+	ts.configs.recommendedTypeChecked,
 	svelte.configs.recommended,
 	prettier,
 	svelte.configs.prettier,
 	{
-		languageOptions: { globals: { ...globals.browser, ...globals.node } },
+		// Type-checked rules need type information; point the parser at the
+		// nearest tsconfig via the project service for every linted TS file.
+		languageOptions: {
+			globals: { ...globals.browser, ...globals.node },
+			parserOptions: {
+				projectService: true,
+				tsconfigRootDir: import.meta.dirname
+			}
+		},
 		rules: {
 			// typescript-eslint strongly recommend that you do not use the no-undef lint rule on TypeScript projects.
 			// see: https://typescript-eslint.io/troubleshooting/faqs/eslint/#i-get-errors-from-the-no-undef-rule-about-global-variables-not-being-defined-even-though-there-are-no-typescript-errors
@@ -67,5 +75,13 @@ export default defineConfig(
 				svelteConfig
 			}
 		}
+	},
+	{
+		// These files live outside the SvelteKit TS project: root config files,
+		// build scripts, and the service worker (which SvelteKit deliberately
+		// excludes from the app tsconfig). The project service can't resolve
+		// them, so turn off type-aware linting here to avoid parser errors.
+		files: ['eslint.config.js', 'svelte.config.js', 'scripts/**', 'src/service-worker.ts'],
+		extends: [ts.configs.disableTypeChecked]
 	}
 );

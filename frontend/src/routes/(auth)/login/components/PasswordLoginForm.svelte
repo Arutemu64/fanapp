@@ -16,15 +16,13 @@
 		LockSolid
 	} from 'flowbite-svelte-icons';
 
-	let {
-		email = $bindable(''),
-		isBusy = $bindable(false),
-		onBack
-	} = $props<{
+	interface Props {
 		email: string;
 		isBusy?: boolean;
 		onBack?: () => void;
-	}>();
+	}
+
+	let { email = $bindable(''), isBusy = $bindable(false), onBack }: Props = $props();
 
 	type ActiveAction = 'password' | null;
 
