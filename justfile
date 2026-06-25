@@ -8,7 +8,7 @@
 # secrets (DB/Redis/NATS passwords, WEB__SECRET_KEY), and generate VAPID keys.
 # Idempotent — re-run anytime; it never overwrites values you've already set.
 bootstrap:
-    uv run --project backend python scripts/bootstrap.py
+    cd backend && uv run python scripts/bootstrap.py
 
 # ---- Frontend (SvelteKit + pnpm) ----
 frontend-install:
@@ -46,18 +46,11 @@ backend-generate-openapi:
 backend-generate-vapid:
     cd backend && uv run generate-vapid
 
-# Two calls on purpose: ruff resolves config (and per-file-ignore globs) per
-# file via hierarchical discovery, relative to each config's own directory. The
-# backend tree resolves to backend/ruff.toml; the repo-root scripts/ resolves to
-# the root ruff.toml (which extends the backend rules). Linting them in one call
-# with a path above the cwd, or via --config, misresolves those ignores.
 backend-format:
-    cd backend && uv run ruff format src/fanfan tests --respect-gitignore
-    uv run --project backend ruff format scripts --respect-gitignore
+    cd backend && uv run ruff format src/fanfan tests scripts --respect-gitignore
 
 backend-check:
-    cd backend && uv run ruff check src/fanfan tests --respect-gitignore --fix --unsafe-fixes
-    uv run --project backend ruff check scripts --respect-gitignore --fix --unsafe-fixes
+    cd backend && uv run ruff check src/fanfan tests scripts --respect-gitignore --fix --unsafe-fixes
 
 backend-test:
     cd backend && uv run pytest tests

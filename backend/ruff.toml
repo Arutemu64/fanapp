@@ -121,6 +121,11 @@ docstring-code-line-length = "dynamic"
 "src/fanfan/main/generate_vapid.py" = [
     "T201",    # standalone keygen CLI — printing the keys/app key to stdout is the point
 ]
+# Repo-level setup scripts (bootstrap.py etc.); not part of the fanfan package.
+"scripts/*.py" = [
+    "T201",    # setup CLIs print progress/next-steps to stdout — that's the point
+    "INP001",  # standalone scripts, not an importable package
+]
 "tests/**/*.py" = [
     "S101",    # asserts are standard in tests
     "S105",    # hardcoded passwords in tests are fine

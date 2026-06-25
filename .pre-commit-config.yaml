@@ -18,16 +18,13 @@ repos:
     # Matches the version of Ruff installed in your environment
     rev: v0.15.14
     hooks:
-      # Linter + formatter cover backend/ and scripts/. No --config: ruff's
-      # config discovery resolves backend/ files to backend/ruff.toml and
-      # scripts/ to the repo-root ruff.toml (which extends the backend rules).
-      # An explicit --config would break per-file-ignores, which ruff matches
-      # relative to the cwd.
+      # Run the linter
       - id: ruff-check
         args: [ --fix ]
-        files: ^(backend|scripts)/
+        files: ^backend/
+      # Run the formatter
       - id: ruff-format
-        files: ^(backend|scripts)/
+        files: ^backend/
 
   - repo: local
     hooks:
