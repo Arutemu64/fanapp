@@ -6,7 +6,7 @@ import {
 	NOTIFICATION_PAGE_SIZE
 } from '$lib/constants/notifications';
 import { isReachable } from '$lib/services/reachability';
-import { fetchWithCache, userStore } from '$lib/utils/offlineCache';
+import { fetchWithCache, userScope } from '$lib/utils/offlineCache';
 import { error } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
@@ -23,7 +23,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	// Cache the raw first page (request limit length) so hasMore stays computable offline.
 	const { data, stale, cachedAt } = await fetchWithCache<NotificationDTO[]>({
 		key: cacheKey,
-		store: userStore,
+		scope: userScope,
 		fetcher: async ({ signal }) => {
 			const { data, error: fetchError } = await client.GET('/notifications/', {
 				fetch,

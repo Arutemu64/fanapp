@@ -6,7 +6,7 @@ import type {
 
 import { createApiClient } from '$lib/api';
 import { isReachable } from '$lib/services/reachability';
-import { fetchWithCache, universalStore, userStore } from '$lib/utils/offlineCache';
+import { fetchWithCache, universalScope, userScope } from '$lib/utils/offlineCache';
 import { error } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
@@ -27,7 +27,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	const [scheduleResult, subscriptions] = await Promise.all([
 		fetchWithCache<ScheduleEventFullDTO[]>({
 			key: SCHEDULE_CACHE_KEY,
-			store: universalStore,
+			scope: universalScope,
 			fetcher: async ({ signal }) => {
 				const { data, error: fetchError } = await client.GET('/schedule/', { fetch, signal });
 				// Reachable but errored → fall back to cache.
@@ -78,7 +78,7 @@ async function fetchSubscriptions(
 
 	const { data } = await fetchWithCache<SubscriptionFullDTO[]>({
 		key: `subscriptions:${userId}`,
-		store: userStore,
+		scope: userScope,
 		fetcher: async ({ signal }) => {
 			const { data, error: fetchError } = await client.GET('/schedule/subscriptions/', {
 				fetch,
