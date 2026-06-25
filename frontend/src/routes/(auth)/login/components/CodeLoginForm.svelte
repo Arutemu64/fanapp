@@ -3,9 +3,11 @@
 	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import CaptchaWidget, { captchaEnabled } from '$lib/components/CaptchaWidget.svelte';
+	import { CaptchaGate } from '$lib/utils/captcha.svelte';
 	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
 	import { Alert, Button, Helper, Input, Label, Spinner } from 'flowbite-svelte';
 	import { EnvelopeSolid } from 'flowbite-svelte-icons';
+	import { onDestroy } from 'svelte';
 
 	import VerifyCodeForm from './VerifyCodeForm.svelte';
 
@@ -34,24 +36,14 @@
 	let captchaToken = $state<string | null>(null);
 	let resetCaptcha = $state<(() => void) | undefined>(undefined);
 
-	// Set when the user submits before the invisible captcha has produced a token.
-	// We hold the request and let the effect below fire it once the token lands,
-	// so the user never has to tap "Продолжить" a second time.
-	let awaitingCaptcha = $state(false);
-
-	// Safety net: if the invisible captcha never resolves (widget/network error),
-	// don't spin forever — fall back to a retryable error after this long.
-	const CAPTCHA_WAIT_TIMEOUT_MS = 10000;
-	let captchaWaitTimer: ReturnType<typeof setTimeout> | undefined;
-
-	function clearCaptchaWait() {
-		clearTimeout(captchaWaitTimer);
-		captchaWaitTimer = undefined;
-	}
+	// Holds the request when the user submits before the invisible captcha has a
+	// token; the effect below fires it once the token lands, so the user never
+	// has to tap "Продолжить" a second time.
+	const captchaGate = new CaptchaGate();
 
 	// In flight from the user's point of view: the request is running, or we're
 	// holding it until the background captcha resolves.
-	let isRequesting = $derived(activeAction === 'code-request' || awaitingCaptcha);
+	let isRequesting = $derived(activeAction === 'code-request' || captchaGate.awaitingCaptcha);
 
 	$effect(() => {
 		isBusy = isRequesting;
@@ -63,10 +55,12 @@
 
 	// Fulfill a deferred submit the moment the invisible captcha solves.
 	$effect(() => {
-		if (awaitingCaptcha && captchaToken) {
+		if (captchaGate.awaitingCaptcha && captchaToken) {
 			void handleLoginCodeRequest();
 		}
 	});
+
+	onDestroy(() => captchaGate.clear());
 
 	let normalizedEmail = $derived(normalizeEmail(email));
 	let isEmailValid = $derived(email ? isValidEmail(normalizedEmail) : null);
@@ -81,8 +75,7 @@
 		formError = '';
 		codeSentTo = '';
 		// Editing the email cancels any submit we were holding for the captcha.
-		awaitingCaptcha = false;
-		clearCaptchaWait();
+		captchaGate.release();
 	}
 
 	function validateEmailCodeRequestForm(): boolean {
@@ -107,27 +100,20 @@
 		}
 
 		if (!validateEmailCodeRequestForm()) {
-			awaitingCaptcha = false;
-			clearCaptchaWait();
+			captchaGate.release();
 			return;
 		}
 
 		// The captcha runs invisibly. If its token isn't ready yet, hold the
 		// request; the effect above re-runs this once the token arrives.
 		if (captchaEnabled && !captchaToken) {
-			awaitingCaptcha = true;
-			clearCaptchaWait();
-			captchaWaitTimer = setTimeout(() => {
-				if (awaitingCaptcha) {
-					awaitingCaptcha = false;
-					formError = 'Не удалось пройти проверку. Попробуй ещё раз';
-				}
-			}, CAPTCHA_WAIT_TIMEOUT_MS);
+			captchaGate.hold(() => {
+				formError = 'Не удалось пройти проверку. Попробуй ещё раз';
+			});
 			return;
 		}
 
-		awaitingCaptcha = false;
-		clearCaptchaWait();
+		captchaGate.release();
 		const trimmedEmail = normalizedEmail;
 
 		activeAction = 'code-request';

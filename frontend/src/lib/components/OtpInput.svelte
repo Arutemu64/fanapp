@@ -22,7 +22,12 @@
 	let codeDigits = $state(['', '', '', '', '', '']);
 	let container = $state<HTMLDivElement | undefined>(undefined);
 
-	// Synchronize external changes of `value` (e.g., reset from parent) down to individual digit inputs
+	// Two-way bridge between the single `value` prop and the six digit boxes.
+	// An $effect (not $derived) is the right escape hatch here: the boxes are
+	// independently writable local state, and we only mirror `value` → boxes for
+	// external changes (a parent reset to ''); the boxes → `value` direction goes
+	// through updateValue() on input. Syncing external changes of `value` down to
+	// the individual digit inputs:
 	$effect(() => {
 		const val = value || '';
 		for (let i = 0; i < 6; i++) {

@@ -5,6 +5,7 @@
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import OtpInput from '$lib/components/OtpInput.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { ResendCooldown } from '$lib/utils/cooldown.svelte';
 	import { isValidEmail, isValidOtp, normalizeEmail } from '$lib/utils/validation';
 	import { Alert, Button, Helper, Input, Label, Modal, Spinner } from 'flowbite-svelte';
 	import { EnvelopeSolid } from 'flowbite-svelte-icons';
@@ -32,8 +33,7 @@
 	let isVerifying = $state(false);
 	let isRequestingVerification = $state(false);
 
-	let resendCooldown = $state(0);
-	let resendInterval: ReturnType<typeof setInterval>;
+	const cooldown = new ResendCooldown();
 
 	const toastService = getToastService();
 	let formError = $state('');
@@ -47,18 +47,6 @@
 	function handleEmailInput() {
 		emailError = '';
 		formError = '';
-	}
-
-	function startCooldown() {
-		resendCooldown = 60;
-		clearInterval(resendInterval);
-		resendInterval = setInterval(() => {
-			if (resendCooldown > 0) {
-				resendCooldown -= 1;
-			} else {
-				clearInterval(resendInterval);
-			}
-		}, 1000);
 	}
 
 	// Send OTP to the new email address (also used for resend)
@@ -80,7 +68,7 @@
 
 			verificationCode = '';
 			toastService.add('Код для подтверждения отправлен на почту', 'success');
-			startCooldown();
+			cooldown.start();
 		} catch {
 			formError = 'Произошла непредвиденная ошибка';
 		} finally {
@@ -118,7 +106,7 @@
 
 		toastService.add('Код подтверждения отправлен на новый адрес.', 'success');
 		step = 'verify';
-		startCooldown();
+		cooldown.start();
 	}
 
 	// Step 2: Confirm OTP
@@ -172,13 +160,12 @@
 			verificationCodeError = '';
 			formError = '';
 		} else {
-			clearInterval(resendInterval);
-			resendCooldown = 0;
+			cooldown.reset();
 		}
 	});
 
 	onDestroy(() => {
-		clearInterval(resendInterval);
+		cooldown.stop();
 	});
 </script>
 
@@ -323,14 +310,14 @@
 					type="button"
 					color="alternative"
 					class="min-h-11 w-full rounded-xl font-medium"
-					disabled={isVerifying || isRequestingVerification || resendCooldown > 0}
+					disabled={isVerifying || isRequestingVerification || cooldown.remaining > 0}
 					onclick={sendOtp}
 				>
 					{#if isRequestingVerification}
 						<Spinner size="4" class="me-2" />
 						Отправляем…
-					{:else if resendCooldown > 0}
-						Отправить код ещё раз ({resendCooldown} сек.)
+					{:else if cooldown.remaining > 0}
+						Отправить код ещё раз ({cooldown.remaining} сек.)
 					{:else}
 						Отправить код ещё раз
 					{/if}

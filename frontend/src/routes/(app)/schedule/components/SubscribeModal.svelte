@@ -29,22 +29,12 @@
 
 	// Clamp to the valid 1–100 range, snapping a cleared/NaN input back to the min
 	// so +/- never dead-locks and submit never POSTs null.
-	function clampCounter() {
-		counter = Number.isFinite(counter) ? Math.max(1, Math.min(100, Math.floor(counter))) : 1;
-	}
-
-	function increment() {
-		counter = Number.isFinite(counter) ? Math.min(100, Math.floor(counter) + 1) : 1;
-		formError = '';
-	}
-
-	function decrement() {
-		counter = Number.isFinite(counter) ? Math.max(1, Math.floor(counter) - 1) : 1;
-		formError = '';
+	function setCounter(next: number) {
+		counter = Number.isFinite(next) ? Math.max(1, Math.min(100, Math.floor(next))) : 1;
 	}
 
 	async function handleSubmit() {
-		clampCounter();
+		setCounter(counter);
 		formError = '';
 		const { error, response } = await client.POST('/schedule/subscriptions/', {
 			body: {
@@ -89,7 +79,10 @@
 		>
 			<button
 				type="button"
-				onclick={decrement}
+				onclick={() => {
+					setCounter(counter - 1);
+					formError = '';
+				}}
 				class="flex h-11 w-12 items-center justify-center border-r border-gray-200 bg-gray-50 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600"
 				disabled={counter <= 1}
 				aria-label="Уменьшить"
@@ -107,7 +100,7 @@
 					inputmode="numeric"
 					autocomplete="off"
 					bind:value={counter}
-					onblur={clampCounter}
+					onblur={() => setCounter(counter)}
 					class="h-full w-full border-0 bg-transparent pb-5 text-center font-bold text-gray-900 [-moz-appearance:textfield] focus:ring-0 focus:outline-none dark:text-white [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 				/>
 				<div
@@ -119,7 +112,10 @@
 
 			<button
 				type="button"
-				onclick={increment}
+				onclick={() => {
+					setCounter(counter + 1);
+					formError = '';
+				}}
 				class="flex h-11 w-12 items-center justify-center border-l border-gray-200 bg-gray-50 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600"
 				disabled={counter >= 100}
 				aria-label="Увеличить"

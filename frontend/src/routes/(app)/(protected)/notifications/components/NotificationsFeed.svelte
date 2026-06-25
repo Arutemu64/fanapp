@@ -2,6 +2,8 @@
 	import type { NotificationDTO } from '$lib/types/notifications';
 
 	import { createApiClient } from '$lib/api';
+	import EmptyState from '$lib/components/EmptyState.svelte';
+	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
 	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import {
@@ -10,7 +12,8 @@
 	} from '$lib/constants/notifications';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { Button, Spinner } from 'flowbite-svelte';
+	import { dedupeById } from '$lib/utils/feed';
+	import { PaginatedFeed } from '$lib/utils/feed.svelte';
 	import { onMount } from 'svelte';
 
 	const client = createApiClient();
@@ -25,73 +28,29 @@
 	const toastService = getToastService();
 	const eventsClient = getEventsClient();
 
-	// Server provides the first page; state holds only pages loaded afterwards.
-	let extraNotifications = $state.raw<Array<NotificationDTO>>([]);
-	let extraHasMore = $state<boolean | null>(null);
-	let extraOffset = $state(0);
-	let isLoadingMore = $state(false);
+	const feed = new PaginatedFeed<NotificationDTO>({
+		pageSize: NOTIFICATION_PAGE_SIZE,
+		requestLimit: NOTIFICATION_PAGE_REQUEST_LIMIT,
+		getInitialItems: () => initialNotifications,
+		getInitialHasMore: () => initialHasMore,
+		fetchPage: async (limit, offset) => {
+			const { data, error } = await client.GET('/notifications/', {
+				params: { query: { limit, offset } }
+			});
+			return error || !data ? null : data.notifications;
+		},
+		onError: () => toastService.error('Не удалось загрузить уведомления')
+	});
+
 	// Notifications pushed over SSE — kept on top, newest first.
 	let liveNotifications = $state.raw<Array<NotificationDTO>>([]);
 
-	let notifications = $derived.by(() => {
-		// Order: fresh SSE items on top, then the server page and anything loaded after it.
-		const serverNotifications = appendUniqueNotifications(initialNotifications, extraNotifications);
-		return appendUniqueNotifications(liveNotifications, serverNotifications);
-	});
-	let hasMore = $derived(extraHasMore ?? initialHasMore);
-	let nextOffset = $derived(initialNotifications.length + extraOffset);
+	// Fresh SSE items on top, then the server page and anything loaded after it.
+	let notifications = $derived(dedupeById(liveNotifications, feed.items));
 	let unreadCount = $derived(notifications.filter((notification) => !notification.seen_at).length);
 
-	function appendUniqueNotifications(
-		existingNotifications: Array<NotificationDTO>,
-		nextNotifications: Array<NotificationDTO>
-	) {
-		// Guard against duplicates if the list shifted between requests.
-		const existingIds = new Set(existingNotifications.map((notification) => notification.id));
-
-		return [
-			...existingNotifications,
-			...nextNotifications.filter((notification) => !existingIds.has(notification.id))
-		];
-	}
-
-	async function loadMoreNotifications() {
-		if (!hasMore || isLoadingMore) {
-			return;
-		}
-
-		isLoadingMore = true;
-
-		try {
-			const { data: result, error } = await client.GET('/notifications/', {
-				params: {
-					query: {
-						limit: NOTIFICATION_PAGE_REQUEST_LIMIT,
-						offset: nextOffset
-					}
-				}
-			});
-
-			if (error || !result) {
-				toastService.error('Не удалось загрузить уведомления');
-				return;
-			}
-
-			const nextNotifications = result.notifications.slice(0, NOTIFICATION_PAGE_SIZE);
-
-			extraNotifications = appendUniqueNotifications(extraNotifications, nextNotifications);
-			extraHasMore = result.notifications.length > NOTIFICATION_PAGE_SIZE;
-			extraOffset += nextNotifications.length;
-		} catch (error) {
-			console.error('Failed to load more notifications', error);
-			toastService.error('Не удалось загрузить уведомления');
-		} finally {
-			isLoadingMore = false;
-		}
-	}
-
 	function addLiveNotification(notification: NotificationDTO) {
-		liveNotifications = appendUniqueNotifications([notification], liveNotifications);
+		liveNotifications = dedupeById([notification], liveNotifications);
 		toastService.push(notification);
 	}
 
@@ -107,11 +66,9 @@
 				return;
 			}
 
-			const knownIds = new Set(
-				[...initialNotifications, ...extraNotifications].map((notification) => notification.id)
-			);
+			const knownIds = new Set(feed.items.map((notification) => notification.id));
 			const fresh = result.notifications.filter((notification) => !knownIds.has(notification.id));
-			liveNotifications = appendUniqueNotifications(fresh, liveNotifications);
+			liveNotifications = dedupeById(fresh, liveNotifications);
 		} catch (error) {
 			console.error('Failed to sync notifications', error);
 		}
@@ -150,11 +107,7 @@
 </SectionIntro>
 
 {#if notifications.length === 0}
-	<div
-		class="rounded-lg border border-gray-200 bg-white p-6 text-center dark:border-gray-700 dark:bg-gray-800"
-	>
-		<p class="text-gray-500 dark:text-gray-400">Уведомлений пока нет</p>
-	</div>
+	<EmptyState message="Уведомлений пока нет" />
 {:else}
 	<div class="space-y-3">
 		{#each notifications as notification (notification.id)}
@@ -162,19 +115,7 @@
 		{/each}
 	</div>
 
-	{#if hasMore}
-		<div class="mt-4 flex justify-center">
-			<Button
-				color="light"
-				class="w-full sm:w-auto"
-				onclick={loadMoreNotifications}
-				disabled={isLoadingMore}
-			>
-				{#if isLoadingMore}
-					<Spinner size="4" class="me-2" />
-				{/if}
-				{isLoadingMore ? 'Загрузка…' : 'Показать ещё'}
-			</Button>
-		</div>
+	{#if feed.hasMore}
+		<LoadMoreButton loading={feed.isLoadingMore} onclick={feed.loadMore} />
 	{/if}
 {/if}

@@ -1,20 +1,14 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { resolve } from '$app/paths';
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
+	import PasswordInput from '$lib/components/PasswordInput.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { completeLogin } from '$lib/utils/auth';
 	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
 	import { Alert, Button, Helper, Input, Label, Spinner } from 'flowbite-svelte';
-	import {
-		ArrowLeftOutline,
-		EnvelopeSolid,
-		EyeOutline,
-		EyeSlashOutline,
-		LockSolid
-	} from 'flowbite-svelte-icons';
+	import { ArrowLeftOutline, EnvelopeSolid } from 'flowbite-svelte-icons';
 
 	interface Props {
 		email: string;
@@ -28,7 +22,6 @@
 
 	let password = $state('');
 	let activeAction = $state<ActiveAction>(null);
-	let showPassword = $state(false);
 	let emailError = $state('');
 	let passwordError = $state('');
 	let formError = $state('');
@@ -80,12 +73,6 @@
 		return !emailError && !passwordError;
 	}
 
-	async function finishLogin(successMessage: string) {
-		toastService.add(successMessage, 'success');
-		await goto(resolve('/'), { invalidateAll: true });
-		eventsClient?.restart();
-	}
-
 	async function submitPasswordLogin() {
 		if (activeAction !== null) {
 			return;
@@ -116,7 +103,7 @@
 				return;
 			}
 
-			await finishLogin('Вход выполнен');
+			await completeLogin(toastService, eventsClient, 'Вход выполнен');
 		} catch (err) {
 			console.error('Password login exception:', err);
 			formError = 'Произошла непредвиденная ошибка';
@@ -174,38 +161,16 @@
 
 	<div>
 		<Label for="password" class="mb-2">Пароль</Label>
-		<Input
+		<PasswordInput
 			id="password"
 			name="password"
-			type={showPassword ? 'text' : 'password'}
 			bind:value={password}
-			placeholder="••••••••"
 			autocomplete="current-password"
 			required
 			disabled={busy}
-			class="ps-9"
 			color={passwordColor}
 			oninput={resetPasswordFeedback}
-		>
-			{#snippet left()}
-				<LockSolid class="h-5 w-5" />
-			{/snippet}
-			{#snippet right()}
-				<button
-					type="button"
-					class="pointer-events-auto -mr-2 flex min-h-11 min-w-11 items-center justify-center rounded-lg hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-700"
-					onclick={() => (showPassword = !showPassword)}
-					aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
-					aria-pressed={showPassword}
-				>
-					{#if showPassword}
-						<EyeOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-					{:else}
-						<EyeSlashOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-					{/if}
-				</button>
-			{/snippet}
-		</Input>
+		/>
 		{#if passwordError}
 			<Helper color="red" class="mt-1">{passwordError}</Helper>
 		{/if}

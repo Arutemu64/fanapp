@@ -38,6 +38,11 @@ class ThemeService {
 	}
 }
 
+// Module-global singleton (the odd one out vs. the createContext-based services).
+// Theme is a device-wide preference, not request- or user-scoped, so there's no
+// cross-request leak to worry about: it's read from localStorage and only mutated
+// in the browser. Kept global so any component can read/toggle the theme without
+// threading context through every layout.
 let instance: ThemeService | null = null;
 
 export function setThemeService(): ThemeService {

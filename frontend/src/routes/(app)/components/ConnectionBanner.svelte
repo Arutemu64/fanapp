@@ -48,41 +48,82 @@
 		// restart() resets the attempt counter and re-dials the stream.
 		client?.restart();
 	}
+
+	type BannerTone = 'yellow' | 'red';
+
+	const TONE_CLASSES: Record<BannerTone, string> = {
+		yellow:
+			'border-yellow-200 bg-yellow-50 text-yellow-800 dark:border-yellow-900/50 dark:bg-yellow-950/50 dark:text-yellow-200',
+		red: 'border-red-200 bg-red-50 text-red-800 dark:border-red-900/50 dark:bg-red-950/60 dark:text-red-200'
+	};
+
+	interface Banner {
+		tone: BannerTone;
+		role: 'status' | 'alert';
+		icon: typeof ExclamationCircleOutline;
+		iconClass: string;
+		message: string;
+		showRetry: boolean;
+	}
+
+	// Pick at most one banner; offline (real cause) outranks a lost SSE stream,
+	// which outranks the delayed "reconnecting" strip. Honest reconnecting wording
+	// covers an offline device whose navigator.onLine wrongly reports online
+	// (common in installed PWAs).
+	let banner = $derived.by<Banner | null>(() => {
+		if (!isOnline) {
+			return {
+				tone: 'yellow',
+				role: 'status',
+				icon: ExclamationCircleOutline,
+				iconClass: 'h-5 w-5',
+				message: 'Нет соединения',
+				showRetry: false
+			};
+		}
+		if (health === 'down') {
+			return {
+				tone: 'red',
+				role: 'alert',
+				icon: ExclamationCircleOutline,
+				iconClass: 'h-5 w-5',
+				message: 'Соединение потеряно',
+				showRetry: true
+			};
+		}
+		if (recoveringVisible) {
+			return {
+				tone: 'yellow',
+				role: 'status',
+				icon: RefreshOutline,
+				iconClass: 'h-4 w-4 motion-safe:animate-spin',
+				message: 'Нет соединения. Переподключаемся…',
+				showRetry: false
+			};
+		}
+		return null;
+	});
 </script>
 
-{#if !isOnline}
+{#if banner}
+	{@const Icon = banner.icon}
 	<div
-		role="status"
-		aria-live="polite"
-		class="flex min-h-14 items-center gap-3 border-b border-yellow-200 bg-yellow-50 px-4 py-2.5 text-sm text-yellow-800 sm:px-6 dark:border-yellow-900/50 dark:bg-yellow-950/50 dark:text-yellow-200"
+		role={banner.role}
+		aria-live={banner.role === 'status' ? 'polite' : undefined}
+		class="flex min-h-14 items-center gap-3 border-b px-4 py-2.5 text-sm sm:px-6 {TONE_CLASSES[
+			banner.tone
+		]}"
 	>
-		<ExclamationCircleOutline class="h-5 w-5 shrink-0" aria-hidden="true" />
-		<p class="flex-1 leading-snug">Нет соединения</p>
-	</div>
-{:else if health === 'down'}
-	<div
-		role="alert"
-		class="flex min-h-14 items-center gap-3 border-b border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-800 sm:px-6 dark:border-red-900/50 dark:bg-red-950/60 dark:text-red-200"
-	>
-		<ExclamationCircleOutline class="h-5 w-5 shrink-0" aria-hidden="true" />
-		<p class="flex-1 leading-snug">Соединение потеряно</p>
-		<button
-			type="button"
-			onclick={reconnect}
-			class="inline-flex min-h-11 shrink-0 items-center rounded-lg bg-red-600 px-3 text-sm font-medium text-white hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-red-50 focus-visible:outline-none dark:focus-visible:ring-offset-red-950"
-		>
-			Обновить
-		</button>
-	</div>
-{:else if recoveringVisible}
-	<div
-		role="status"
-		aria-live="polite"
-		class="flex min-h-14 items-center gap-2.5 border-b border-yellow-200 bg-yellow-50 px-4 py-2 text-sm text-yellow-800 sm:px-6 dark:border-yellow-900/50 dark:bg-yellow-950/50 dark:text-yellow-200"
-	>
-		<RefreshOutline class="h-4 w-4 shrink-0 motion-safe:animate-spin" aria-hidden="true" />
-		<!-- Honest wording: covers both a real reconnect and an offline device whose
-			navigator.onLine wrongly reports online (common in installed PWAs). -->
-		<p class="leading-snug">Нет соединения. Переподключаемся…</p>
+		<Icon class="shrink-0 {banner.iconClass}" aria-hidden="true" />
+		<p class="flex-1 leading-snug">{banner.message}</p>
+		{#if banner.showRetry}
+			<button
+				type="button"
+				onclick={reconnect}
+				class="inline-flex min-h-11 shrink-0 items-center rounded-lg bg-red-600 px-3 text-sm font-medium text-white hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-red-50 focus-visible:outline-none dark:focus-visible:ring-offset-red-950"
+			>
+				Обновить
+			</button>
+		{/if}
 	</div>
 {/if}

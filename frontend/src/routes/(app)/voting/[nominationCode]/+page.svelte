@@ -2,9 +2,10 @@
 	import type { GetVotingNominationResult } from '$lib/types/voting';
 
 	import { invalidate } from '$app/navigation';
+	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { matchesSearch } from '$lib/utils/search';
-	import { Button, Card, Search } from 'flowbite-svelte';
+	import { Button, Search } from 'flowbite-svelte';
 	import {
 		ArrowLeftOutline,
 		ArrowUpRightFromSquareOutline,
@@ -114,18 +115,14 @@
 		<ParticipantCard {participant} {hasVoted} {canVote} onVoted={handleVoted} />
 	{:else}
 		<div class="col-span-full">
-			<Card class="py-8 text-center sm:py-12">
-				<UsersGroupOutline
-					class="mx-auto h-10 w-10 text-gray-300 sm:h-12 sm:w-12 dark:text-gray-600"
-				/>
-				<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Участники не найдены</p>
+			<EmptyState icon={UsersGroupOutline} message="Участники не найдены">
 				<button
 					onclick={() => (searchQuery = '')}
 					class="mt-3 text-sm font-medium text-primary-600 hover:underline dark:text-primary-400"
 				>
 					Очистить поиск
 				</button>
-			</Card>
+			</EmptyState>
 		</div>
 	{/each}
 </div>
