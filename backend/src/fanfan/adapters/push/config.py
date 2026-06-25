@@ -4,9 +4,9 @@ from pydantic import BaseModel
 
 
 class PushConfig(BaseModel):
-    # Generate a private/public pair of VAPID keys
-    # using `vapid-gen` and put them into the `secrets/`
-    # directory in the root
+    # Generate a private/public pair of VAPID keys with
+    # `just backend-generate-vapid` (or `just bootstrap`); they land in the
+    # `secrets/` directory at the repo root.
     private_key_path: Path
     public_key_path: Path
 

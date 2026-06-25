@@ -44,8 +44,10 @@ docs/       Architecture guides (backend.md, frontend.md, api.md)
 - [`just`](https://github.com/casey/just)
 - Docker + Docker Compose (for the full environment)
 - On **Windows**, run `just` from **Git Bash** or **WSL** (not cmd/PowerShell): the
-  recipes are POSIX shell and `bootstrap.sh` is a bash script. Git Bash ships with
-  [Git for Windows](https://git-scm.com/download/win).
+  recipes are POSIX shell. Git Bash ships with
+  [Git for Windows](https://git-scm.com/download/win). (`just bootstrap` itself is a
+  pure-Python script — no bash/openssl needed — but the other recipes still expect a
+  POSIX shell.)
 
 > Optional: [`mise`](https://mise.jdx.dev) (or `asdf`) reads the pinned
 > versions from [`mise.toml`](mise.toml) — run `mise install` to get the exact
