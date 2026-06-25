@@ -76,7 +76,7 @@ ignore = [
     "RUF002",
     "RUF003",
 
-    "S101",
+    "S101",   # assert statements used for invariants; security checks never rely on them
 ]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
