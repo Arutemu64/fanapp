@@ -12,7 +12,10 @@ _session_cookie_scheme = APIKeyCookie(
     name=SESSION_COOKIE_NAME,
     scheme_name="SessionCookie",
     auto_error=False,
-    description="Session cookie set after login. Documentation only; enforced in the application layer.",  # noqa: E501
+    description=(
+        "Session cookie set after login. "
+        "Documentation only; enforced in the application layer."
+    ),
 )
 
 # Attach via route/router `dependencies=[session_security]`. This does NOT gate the

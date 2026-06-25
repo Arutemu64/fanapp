@@ -17,7 +17,9 @@ email_code_router = APIRouter()
     "/confirm-email-code",
     status_code=204,
     summary="Confirm user email with code",
-    description="Confirms the new email address using a one-time code received at that address.",  # noqa: E501
+    description=(
+        "Confirms the new email address using a one-time code received at that address."
+    ),
     dependencies=[session_security],
     responses={
         **AUTH_RESPONSES,
