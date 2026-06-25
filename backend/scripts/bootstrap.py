@@ -10,8 +10,8 @@
 #
 # Pure Python (stdlib + the backend's webpush dep) so setup runs the same on
 # Linux, macOS and Windows — no bash/openssl/awk/sed required. Run it through the
-# backend venv (`uv run --project backend python scripts/bootstrap.py`) so the
-# `fanfan` import below resolves.
+# backend venv (`just bootstrap`, i.e. `cd backend && uv run python
+# scripts/bootstrap.py`) so the `fanfan` import below resolves.
 import secrets
 import shutil
 from pathlib import Path
@@ -22,7 +22,9 @@ from fanfan.main.generate_vapid import (
     write_vapid_keys,
 )
 
-ROOT = Path(__file__).resolve().parent.parent
+# This file lives at backend/scripts/bootstrap.py; the repo root (home of .env
+# and secrets/) is three levels up.
+ROOT = Path(__file__).resolve().parents[2]
 ENV_FILE = ROOT / ".env"
 ENV_EXAMPLE = ROOT / ".env.example"
 SECRETS_DIR = ROOT / "secrets"
