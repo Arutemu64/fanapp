@@ -46,14 +46,18 @@ backend-generate-openapi:
 backend-generate-vapid:
     cd backend && uv run generate-vapid
 
-# `--config ruff.toml` forces the backend ruleset onto ../scripts too: those
-# repo-level scripts (e.g. bootstrap.py) live above this config, so ruff's
-# per-file discovery would otherwise fall back to defaults for them.
+# Two calls on purpose: ruff resolves config (and per-file-ignore globs) per
+# file via hierarchical discovery, relative to each config's own directory. The
+# backend tree resolves to backend/ruff.toml; the repo-root scripts/ resolves to
+# the root ruff.toml (which extends the backend rules). Linting them in one call
+# with a path above the cwd, or via --config, misresolves those ignores.
 backend-format:
-    cd backend && uv run ruff format --config ruff.toml src/fanfan tests ../scripts --respect-gitignore
+    cd backend && uv run ruff format src/fanfan tests --respect-gitignore
+    uv run --project backend ruff format scripts --respect-gitignore
 
 backend-check:
-    cd backend && uv run ruff check --config ruff.toml src/fanfan tests ../scripts --respect-gitignore --fix --unsafe-fixes
+    cd backend && uv run ruff check src/fanfan tests --respect-gitignore --fix --unsafe-fixes
+    uv run --project backend ruff check scripts --respect-gitignore --fix --unsafe-fixes
 
 backend-test:
     cd backend && uv run pytest tests

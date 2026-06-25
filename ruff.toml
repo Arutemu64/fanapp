@@ -1,0 +1,19 @@
+# Repo-root Ruff config. Its only job: give the standalone scripts under
+# ./scripts the same ruleset as the backend, via Ruff's config discovery.
+#
+# Those scripts (e.g. bootstrap.py) sit above backend/ruff.toml, so without a
+# config here Ruff would lint them with its defaults instead. `extend` pulls in
+# the full backend ruleset; backend files are unaffected because hierarchical
+# discovery picks the nearer backend/ruff.toml for them.
+#
+# Always reach these scripts via discovery, never `--config <file>`: under
+# discovery Ruff resolves the per-file-ignore globs below relative to THIS
+# file's directory (correct), but with `--config` it resolves them relative to
+# the cwd instead, which silently breaks them.
+extend = "backend/ruff.toml"
+
+[lint.per-file-ignores]
+"scripts/*.py" = [
+    "T201",    # setup CLIs print progress/next-steps to stdout — that's the point
+    "INP001",  # not an importable package, just standalone scripts
+]
