@@ -3,12 +3,6 @@
 # =========================
 # No workspaces: frontend and backend keep isolated dependency trees.
 
-# On Windows, run recipes through Git Bash (or WSL) instead of cmd/PowerShell:
-# the recipes are POSIX shell (`cd x && ...`). Requires `bash` on PATH (ships
-# with Git for Windows). Unix uses just's default `sh`. (`just bootstrap` itself
-# is pure Python, so its setup logic is shell-agnostic.)
-set windows-shell := ["bash", "-cu"]
-
 # ---- Setup ----
 # One-command local setup: create .env from the template, fill generated
 # secrets (DB/Redis/NATS passwords, WEB__SECRET_KEY), and generate VAPID keys.
@@ -52,11 +46,14 @@ backend-generate-openapi:
 backend-generate-vapid:
     cd backend && uv run generate-vapid
 
+# `--config ruff.toml` forces the backend ruleset onto ../scripts too: those
+# repo-level scripts (e.g. bootstrap.py) live above this config, so ruff's
+# per-file discovery would otherwise fall back to defaults for them.
 backend-format:
-    cd backend && uv run ruff format src/fanfan tests --respect-gitignore
+    cd backend && uv run ruff format --config ruff.toml src/fanfan tests ../scripts --respect-gitignore
 
 backend-check:
-    cd backend && uv run ruff check src/fanfan tests --respect-gitignore --fix --unsafe-fixes
+    cd backend && uv run ruff check --config ruff.toml src/fanfan tests ../scripts --respect-gitignore --fix --unsafe-fixes
 
 backend-test:
     cd backend && uv run pytest tests
