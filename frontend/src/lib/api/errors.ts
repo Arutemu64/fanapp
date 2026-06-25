@@ -259,5 +259,5 @@ type HandledCode =
 	| 'ACCESS_DENIED'
 	| 'VALIDATION_ERROR';
 type UnhandledCode = Exclude<ApiErrorCode, HandledCode>;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
 const _exhaustiveErrorCodes: UnhandledCode extends never ? true : UnhandledCode = true;
