@@ -1,6 +1,7 @@
 import type { NotificationDTO } from '$lib/types/notifications';
 
 import { browser } from '$app/environment';
+import { invalidateAll } from '$app/navigation';
 import { PUBLIC_API_URL } from '$env/static/public';
 import {
 	isReachable,
@@ -18,6 +19,13 @@ const MAX_RECONNECT_ATTEMPTS = 10;
 const RESTART_DEBOUNCE_MS = 250;
 /** If the handshake never arrives, treat the stream as unhealthy and reconnect. */
 const HANDSHAKE_TIMEOUT_MS = 5000;
+/**
+ * Pause the stream once the app has been backgrounded this long. Web Push covers
+ * notifications while hidden, so holding SSE open only churns the mobile radio.
+ * The grace window avoids thrashing on quick app-switches (following a link out
+ * and straight back).
+ */
+const HIDDEN_PAUSE_GRACE_MS = 60000;
 
 export type ConnectionStatus =
 	| 'disconnected'
@@ -84,7 +92,10 @@ export class EventsClient {
 	#reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
 	#handshakeTimeoutId: ReturnType<typeof setTimeout> | null = null;
 	#restartTimeoutId: ReturnType<typeof setTimeout> | null = null;
+	#visibilityTimeoutId: ReturnType<typeof setTimeout> | null = null;
 	#manualDisconnect = false;
+	// True while the stream is intentionally paused because the app is backgrounded.
+	#pausedForVisibility = false;
 
 	// Tracks registered listeners so they survive reconnects.
 	// When EventSource reconnects, we re-attach all listeners to the new instance.
@@ -103,6 +114,9 @@ export class EventsClient {
 			// While the reconnect loop is still running it handles recovery itself,
 			// so we only step in once it has reached the terminal 'failed' state.
 			onReachableChange(this.#handleReachableChange);
+			// Pause the stream while the app is backgrounded and resume on return;
+			// Web Push keeps notifications flowing while it is down.
+			document.addEventListener('visibilitychange', this.#handleVisibilityChange);
 		}
 		this.connect();
 	}
@@ -207,27 +221,62 @@ export class EventsClient {
 		this.#clearReconnectTimer();
 		this.#clearRestartTimer();
 		this.#clearHandshakeTimer();
+		this.#clearVisibilityTimer();
 		this.#closeSource();
 		this.handshake = null;
 		this.connectionStatus = 'disconnected';
 		this.#reconnectAttempts = 0;
+		this.#pausedForVisibility = false;
 	}
 
 	// Browser lost the network: stop reconnect attempts and go quiet. The offline
 	// banner (OfflineService) covers the UI; SSE resumes on the `online` event.
 	#handleOffline = () => {
+		this.#suspend();
+	};
+
+	// Tear down the live stream without the terminal semantics of disconnect():
+	// keeps the backoff counter, ready to be resumed by an online/visibility event.
+	#suspend() {
 		this.#manualDisconnect = true;
 		this.#clearReconnectTimer();
 		this.#clearRestartTimer();
 		this.#clearHandshakeTimer();
+		this.#clearVisibilityTimer();
 		this.#closeSource();
 		this.handshake = null;
 		this.connectionStatus = 'disconnected';
+	}
+
+	// Network is back: re-dial from a clean slate — unless we're paused because the
+	// app is backgrounded, in which case the visibility resume handles the redial.
+	#handleOnline = () => {
+		if (this.#pausedForVisibility) return;
+		this.restart();
 	};
 
-	// Network is back: re-dial from a clean slate.
-	#handleOnline = () => {
-		this.restart();
+	// App backgrounded: after a grace window, drop the stream to stop radio churn.
+	// Foregrounding clears the pending timer and, if we did pause, redials and
+	// refreshes the page to catch anything that changed while the stream was down.
+	#handleVisibilityChange = () => {
+		if (document.visibilityState === 'hidden') {
+			if (this.#pausedForVisibility || this.#visibilityTimeoutId) return;
+			this.#visibilityTimeoutId = setTimeout(() => {
+				this.#visibilityTimeoutId = null;
+				this.#pausedForVisibility = true;
+				this.#suspend();
+			}, HIDDEN_PAUSE_GRACE_MS);
+			return;
+		}
+
+		this.#clearVisibilityTimer();
+		if (this.#pausedForVisibility) {
+			this.#pausedForVisibility = false;
+			this.restart();
+			// Live events only carry server-side *changes*; a full refresh catches
+			// whatever updated while the stream was paused.
+			void invalidateAll();
+		}
 	};
 
 	// Reachability recovered (e.g. the offline recovery poll or a load succeeded).
@@ -313,6 +362,12 @@ export class EventsClient {
 		if (!this.#handshakeTimeoutId) return;
 		clearTimeout(this.#handshakeTimeoutId);
 		this.#handshakeTimeoutId = null;
+	}
+
+	#clearVisibilityTimer() {
+		if (!this.#visibilityTimeoutId) return;
+		clearTimeout(this.#visibilityTimeoutId);
+		this.#visibilityTimeoutId = null;
 	}
 }
 

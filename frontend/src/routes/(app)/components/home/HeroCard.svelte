@@ -25,20 +25,11 @@
 	const TARGET = new Date('2026-08-22T11:30:00+03:00').getTime();
 
 	let now = $state(Date.now());
+	let intervalId: ReturnType<typeof setInterval> | null = null;
 
 	// Key art can fail to load on flaky con-venue wifi; fall back to a branded bed
 	// instead of the browser's broken-image icon.
 	let imageFailed = $state(false);
-
-	onMount(() => {
-		const interval = setInterval(() => {
-			now = Date.now();
-		}, 1000);
-
-		return () => {
-			clearInterval(interval);
-		};
-	});
 
 	let remaining = $derived(Math.max(0, TARGET - now));
 	let hasStarted = $derived(remaining <= 0);
@@ -63,7 +54,40 @@
 	function pad(value: number): string {
 		return value.toString().padStart(2, '0');
 	}
+
+	// Stop the 1s ticker. Safe to call when already stopped.
+	function stopTicking() {
+		if (intervalId === null) return;
+		clearInterval(intervalId);
+		intervalId = null;
+	}
+
+	// Start the 1s ticker, unless the countdown is already over.
+	function startTicking() {
+		if (intervalId !== null || hasStarted) return;
+		now = Date.now(); // resync after any pause so the time doesn't jump visibly
+		intervalId = setInterval(() => {
+			now = Date.now();
+			// Countdown reached zero — nothing left to tick, so stop for good.
+			if (remaining <= 0) stopTicking();
+		}, 1000);
+	}
+
+	// Pause the ticker while the tab is hidden to save battery: background timers
+	// aren't reliably throttled (an open SSE stream can keep the tab awake), so we
+	// stop it explicitly and resume when the user returns.
+	function handleVisibility() {
+		if (document.visibilityState === 'visible') startTicking();
+		else stopTicking();
+	}
+
+	onMount(() => {
+		startTicking();
+		return stopTicking;
+	});
 </script>
+
+<svelte:document onvisibilitychange={handleVisibility} />
 
 <section
 	aria-labelledby="hero-title"
