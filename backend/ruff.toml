@@ -51,8 +51,13 @@ ignore = [
     "TD003",   # missing-todo-link (flake8-todos)
     "TD004",   # missing-todo-description (flake8-todos)
 
-    # ⚠️ CRITICAL: Moving imports to TYPE_CHECKING blocks breaks runtime resolution of
-    # DI containers (Dishka) and ORMs/Schemas (SQLAlchemy, Pydantic). Keep disabled!
+    # ⚠️ CRITICAL: Project evaluates annotations at runtime (no `from __future__
+    # import annotations`), and SQLAlchemy (Mapped[...]), Pydantic, and Dishka DI
+    # all resolve type hints at runtime. Moving these imports under TYPE_CHECKING
+    # breaks that. Ruff's runtime-evaluated-base-classes can't save us: it has no
+    # cross-file analysis (ruff#7866) — our custom BaseORM/AppEvent/*Config bases
+    # live in other modules — and Dishka constructor injection has no base-class
+    # knob at all. Keep disabled.
     "TC001",
     "TC002",
     "TC003",
