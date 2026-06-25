@@ -1,5 +1,6 @@
-import { WILDCARD_PERMISSION } from '$lib/constants/permissions';
 import type { CurrentUserDTO, UserPermissionDTO } from '$lib/types/user';
+
+import { WILDCARD_PERMISSION } from '$lib/constants/permissions';
 
 /**
  * Check if user has a specific permission.

@@ -1,9 +1,13 @@
 <script lang="ts">
+	import type { CurrentUserDTO } from '$lib/types/user';
+	import type { Component, Snippet } from 'svelte';
+
+	import { isActivePath } from '$lib/utils/nav';
 	import {
-		canManageSchedule,
 		canImportSchedule,
-		canSendNotifications,
-		canManageSettings
+		canManageSchedule,
+		canManageSettings,
+		canSendNotifications
 	} from '$lib/utils/permissions';
 	import {
 		Sidebar,
@@ -31,10 +35,8 @@
 		ThumbsUpSolid,
 		UsersGroupOutline
 	} from 'flowbite-svelte-icons';
+
 	import ThemeToggle from './ThemeToggle.svelte';
-	import { isActivePath } from '$lib/utils/nav';
-	import type { CurrentUserDTO } from '$lib/types/user';
-	import type { Component, Snippet } from 'svelte';
 
 	let { user, activeUrl, isSidebarOpen, closeSidebar } = $props<{
 		user: CurrentUserDTO | null;

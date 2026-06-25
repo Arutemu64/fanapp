@@ -1,8 +1,9 @@
 <script lang="ts">
+	import type { CurrentUserDTO } from '$lib/types/user';
+
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { createApiClient } from '$lib/api';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import type { CurrentUserDTO } from '$lib/types/user';
 	import { Alert, Badge, Button, Spinner } from 'flowbite-svelte';
 	import {
 		EnvelopeSolid,
@@ -12,8 +13,9 @@
 		TrashBinOutline
 	} from 'flowbite-svelte-icons';
 	import IconTelegram from '~icons/simple-icons/telegram';
-	import ChangePasswordModal from './ChangePasswordModal.svelte';
+
 	import ChangeEmailModal from './ChangeEmailModal.svelte';
+	import ChangePasswordModal from './ChangePasswordModal.svelte';
 	import ProfileCardShell from './ProfileCardShell.svelte';
 
 	const client = createApiClient();

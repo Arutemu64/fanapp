@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { Button, Modal } from 'flowbite-svelte';
-	import { ExclamationCircleOutline, BellActiveOutline } from 'flowbite-svelte-icons';
 	import NoticeCallout from '$lib/components/NoticeCallout.svelte';
+	import { Button, Modal } from 'flowbite-svelte';
+	import { BellActiveOutline, ExclamationCircleOutline } from 'flowbite-svelte-icons';
 
 	interface Props {
 		open: boolean;

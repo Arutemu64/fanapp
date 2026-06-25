@@ -1,17 +1,18 @@
 <script lang="ts">
+	import { pluralize } from '$lib/utils/formatters';
 	import { onMount } from 'svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import CalendarIcon from '~icons/lucide/calendar';
-	import PinDropIcon from '~icons/lucide/map-pin';
 	import GlobeIcon from '~icons/lucide/globe';
+	import PinDropIcon from '~icons/lucide/map-pin';
 	import TelegramIcon from '~icons/simple-icons/telegram';
-	import VkIcon from '~icons/simple-icons/vk';
 	import TiktokIcon from '~icons/simple-icons/tiktok';
+	import VkIcon from '~icons/simple-icons/vk';
+
 	// Bundled (not static/) so Vite content-hashes the file: swapping the art
 	// busts every cache — including the precached PWA copy — with no stale-image
 	// risk. It's emitted into `build`, which the service worker already precaches.
 	import heroArt from './main.webp';
-	import { pluralize } from '$lib/utils/formatters';
 
 	const socials = [
 		{ label: 'Официальный сайт fancom.info', href: 'https://fancom.info', icon: GlobeIcon },

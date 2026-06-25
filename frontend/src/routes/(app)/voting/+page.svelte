@@ -1,10 +1,13 @@
 <script lang="ts">
 	import type { NominationVotingDTO } from '$lib/types/nominations';
+
 	import { Card } from 'flowbite-svelte';
 	import { ThumbsUpOutline } from 'flowbite-svelte-icons';
+
+	import type { PageProps } from './$types';
+
 	import NominationCard from './components/NominationCard.svelte';
 	import VotingStatusAlert from './components/VotingStatusAlert.svelte';
-	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 	let nominations: NominationVotingDTO[] = $derived(data.nominations);

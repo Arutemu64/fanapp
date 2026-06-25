@@ -1,5 +1,6 @@
-import { error } from '@sveltejs/kit';
 import { canImportSchedule } from '$lib/utils/permissions';
+import { error } from '@sveltejs/kit';
+
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ parent }) => {

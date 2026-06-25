@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getEventsClient, type ConnectionStatus } from '$lib/services/events.svelte';
+	import { type ConnectionStatus, getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService } from '$lib/services/offline.svelte';
 	import { ExclamationCircleOutline, RefreshOutline } from 'flowbite-svelte-icons';
 

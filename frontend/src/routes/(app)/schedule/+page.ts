@@ -1,12 +1,14 @@
-import { error } from '@sveltejs/kit';
-import { createApiClient } from '$lib/api';
-import { fetchWithCache, universalStore, userStore } from '$lib/utils/offlineCache';
-import { isReachable } from '$lib/services/reachability';
 import type {
 	ScheduleEventFullDTO,
 	ScheduleEventWithSubscription,
 	SubscriptionFullDTO
 } from '$lib/types/schedule';
+
+import { createApiClient } from '$lib/api';
+import { isReachable } from '$lib/services/reachability';
+import { fetchWithCache, universalStore, userStore } from '$lib/utils/offlineCache';
+import { error } from '@sveltejs/kit';
+
 import type { PageLoad } from './$types';
 
 // Shared across every viewer: the schedule carries no per-user data, so it lives in

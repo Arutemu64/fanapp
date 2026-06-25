@@ -1,4 +1,5 @@
-import { createContext } from 'svelte';
+import type { NotificationDTO } from '$lib/types/notifications';
+
 import { browser } from '$app/environment';
 import { PUBLIC_API_URL } from '$env/static/public';
 import {
@@ -7,7 +8,7 @@ import {
 	onReachableChange,
 	probeReachability
 } from '$lib/services/reachability';
-import type { NotificationDTO } from '$lib/types/notifications';
+import { createContext } from 'svelte';
 
 const [getEvents, setEvents] = createContext<EventsClient | null>();
 

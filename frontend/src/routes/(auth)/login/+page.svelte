@@ -2,6 +2,7 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { Button, Card } from 'flowbite-svelte';
 	import IconTelegram from '~icons/simple-icons/telegram';
+
 	import CodeLoginForm from './components/CodeLoginForm.svelte';
 	import PasswordLoginForm from './components/PasswordLoginForm.svelte';
 

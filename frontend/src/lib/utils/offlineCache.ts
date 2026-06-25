@@ -1,6 +1,6 @@
-import { clear, createStore, get, set, type UseStore } from 'idb-keyval';
 import { isReachable, markReachable } from '$lib/services/reachability';
-import { timeoutSignal, FIRST_PAINT_TIMEOUT_MS } from '$lib/utils/fetchTimeout';
+import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
+import { clear, createStore, get, set, type UseStore } from 'idb-keyval';
 
 /**
  * Thin wrappers over IndexedDB (via idb-keyval) for persisting the last good

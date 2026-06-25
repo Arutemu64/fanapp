@@ -1,7 +1,8 @@
 <script lang="ts">
-	import HeroCard from './components/home/HeroCard.svelte';
-	import GetReadySection from './components/home/GetReadySection.svelte';
 	import type { PageProps } from './$types';
+
+	import GetReadySection from './components/home/GetReadySection.svelte';
+	import HeroCard from './components/home/HeroCard.svelte';
 
 	let { data }: PageProps = $props();
 	let user = $derived(data.user);

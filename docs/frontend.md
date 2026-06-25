@@ -229,3 +229,16 @@ Everything generic — contrast ratios, keyboard/tab order, `aria-label` on icon
 Generic patterns (skeletons for >~300ms loads, empty-state layouts, error-recovery affordances, toast auto-dismiss timing) → `ui-ux-pro-max`. Project bindings only, and they already live elsewhere:
 * Copy is Russian; never surface raw backend exceptions — §6.
 * Toasts are for action results, not field validation — §4 (Feedback Scopes).
+
+---
+
+## 11. Linting, Formatting & Imports
+
+Stock SvelteKit flat-config tooling (`frontend/eslint.config.js`, `frontend/.prettierrc`); run via `just frontend-lint` (Prettier `--check` + ESLint); auto-format with `pnpm --dir frontend format`.
+
+* **Prettier** owns formatting (tabs, single quotes, `printWidth` 100, `endOfLine` `lf`). `prettier-plugin-svelte` formats `.svelte`; `prettier-plugin-tailwindcss` sorts class lists against `src/app.css`. `eslint-config-prettier` disables conflicting ESLint formatting rules — don't re-add them.
+* **Editor baseline**: the repo-root `.editorconfig` mirrors these per tree (frontend tabs/width 2, Python 4-space/88-col, YAML 2-space) and pins `end_of_line = lf`, so editors match the formatters before a commit. `.gitattributes` enforces LF in the repo itself.
+* **Import order is autofixed by ESLint**, not Prettier — `eslint-plugin-perfectionist` (`sort-imports` / `sort-named-imports` / `sort-exports` / `sort-named-exports`, `type: 'natural'`). Works inside `.svelte` `<script>` via the Svelte parser. Don't hand-order imports; `eslint --fix` (or save-on-fix in editor) handles it. We deliberately enable only the import/export rules, **not** perfectionist's full `recommended-*` preset, to avoid reordering object keys, union members and JSX/Svelte attributes repo-wide.
+* **Type-only imports** use a separate `import type` — `@typescript-eslint/consistent-type-imports` (autofix). Required because `verbatimModuleSyntax` is on (a value import of a type would emit a broken runtime import).
+* **Unused bindings**: prefix with `_` (`argsIgnorePattern`/`varsIgnorePattern`/`caughtErrorsIgnorePattern` = `^_`) to intentionally keep an unused param/var/catch binding without a lint error.
+* **Type-aware rules** (`typescript-eslint` `recommendedTypeChecked`) are **not** enabled yet — only the syntactic `recommended` preset runs. Adding them is deferred (needs `projectService` wiring for `.ts`, a service-worker carve-out, and a cleanup pass for ~24 pre-existing Promise/`any`-safety findings).

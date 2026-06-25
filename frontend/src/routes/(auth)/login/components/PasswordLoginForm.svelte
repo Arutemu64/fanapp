@@ -4,9 +4,9 @@
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
-	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
 	import { Alert, Button, Helper, Input, Label, Spinner } from 'flowbite-svelte';
 	import {
 		ArrowLeftOutline,

@@ -1,8 +1,10 @@
 <script lang="ts">
+	import type { CurrentUserDTO } from '$lib/types/user';
+
+	import { getAvatarInitials, getRoleColor, getRoleLabel } from '$lib/utils/users';
 	import { Avatar, Badge, Button, Card } from 'flowbite-svelte';
 	import { PenSolid } from 'flowbite-svelte-icons';
-	import type { CurrentUserDTO } from '$lib/types/user';
-	import { getRoleLabel, getRoleColor, getAvatarInitials } from '$lib/utils/users';
+
 	import EditProfileModal from './EditProfileModal.svelte';
 
 	interface Props {

@@ -27,6 +27,7 @@
 		"@types/node": "^25.9.3",
 		"eslint": "^9.39.4",
 		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-perfectionist": "^5.9.1",
 		"eslint-plugin-svelte": "^3.19.0",
 		"flowbite": "^4.0.2",
 		"flowbite-svelte": "^1.33.1",

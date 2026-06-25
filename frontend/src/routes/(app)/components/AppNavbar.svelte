@@ -1,9 +1,10 @@
 <script lang="ts">
+	import type { CurrentUserDTO } from '$lib/types/user';
+
 	import { goto } from '$app/navigation';
-	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import { createApiClient } from '$lib/api';
-	import NotificationBell from './NotificationBell.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { clearUserCache } from '$lib/utils/offlineCache';
@@ -19,7 +20,8 @@
 		SidebarButton
 	} from 'flowbite-svelte';
 	import { ArrowRightToBracketOutline } from 'flowbite-svelte-icons';
-	import type { CurrentUserDTO } from '$lib/types/user';
+
+	import NotificationBell from './NotificationBell.svelte';
 
 	const client = createApiClient();
 

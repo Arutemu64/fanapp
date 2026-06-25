@@ -6,6 +6,7 @@
 	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
 	import { Alert, Button, Helper, Input, Label, Spinner } from 'flowbite-svelte';
 	import { EnvelopeSolid } from 'flowbite-svelte-icons';
+
 	import VerifyCodeForm from './VerifyCodeForm.svelte';
 
 	let {

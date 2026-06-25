@@ -4,9 +4,10 @@
 	const client = createApiClient();
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import type { PageProps } from './$types';
 	import { Alert, Button, Card, Helper, Input, Label, Spinner, Toggle } from 'flowbite-svelte';
 	import { untrack } from 'svelte';
+
+	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 	const toastService = getToastService();

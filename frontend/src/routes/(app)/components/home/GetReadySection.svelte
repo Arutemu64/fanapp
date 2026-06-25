@@ -1,13 +1,15 @@
 <script lang="ts">
-	import type { Component } from 'svelte';
 	import type { Pathname } from '$app/types';
-	import UserPlusIcon from '~icons/lucide/user-plus';
+	import type { CurrentUserDTO } from '$lib/types/user';
+	import type { Component } from 'svelte';
+
+	import { getPwaService } from '$lib/services/pwa.svelte';
+	import BellIcon from '~icons/lucide/bell';
+	import CalendarCheckIcon from '~icons/lucide/calendar-check';
 	import DownloadIcon from '~icons/lucide/download';
 	import TicketIcon from '~icons/lucide/ticket';
-	import CalendarCheckIcon from '~icons/lucide/calendar-check';
-	import BellIcon from '~icons/lucide/bell';
-	import type { CurrentUserDTO } from '$lib/types/user';
-	import { getPwaService } from '$lib/services/pwa.svelte';
+	import UserPlusIcon from '~icons/lucide/user-plus';
+
 	import GetReadyCard, { type ReadyAccent } from './GetReadyCard.svelte';
 
 	interface Props {

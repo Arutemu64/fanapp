@@ -1,5 +1,6 @@
-import { error as kitError } from '@sveltejs/kit';
 import type { components } from '$lib/api/v1';
+
+import { error as kitError } from '@sveltejs/kit';
 
 // The closed set of error codes the API can return, generated from the backend
 // OpenAPI spec (ErrorMessage.code enum). Drives both typo safety on the message
@@ -258,5 +259,5 @@ type HandledCode =
 	| 'ACCESS_DENIED'
 	| 'VALIDATION_ERROR';
 type UnhandledCode = Exclude<ApiErrorCode, HandledCode>;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
 const _exhaustiveErrorCodes: UnhandledCode extends never ? true : UnhandledCode = true;

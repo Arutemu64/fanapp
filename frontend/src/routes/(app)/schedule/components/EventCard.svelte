@@ -1,27 +1,29 @@
 <script lang="ts">
-	import { Badge } from 'flowbite-svelte';
-	import {
-		ClockOutline,
-		HourglassOutline,
-		BellActiveSolid,
-		PlayOutline,
-		CloseCircleOutline,
-		BellActiveOutline,
-		ShuffleOutline,
-		EyeOutline,
-		EyeSlashOutline,
-		BanOutline
-	} from 'flowbite-svelte-icons';
+	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
 	import type { CurrentUserDTO } from '$lib/types/user';
+
+	import { createApiClient } from '$lib/api';
+	import { getToastService } from '$lib/services/toasts.svelte';
 	import { formatDuration, formatUntil, pluralize } from '$lib/utils/formatters';
 	import { canManageSchedule } from '$lib/utils/permissions';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { createApiClient } from '$lib/api';
-	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
+	import { Badge } from 'flowbite-svelte';
+	import {
+		BanOutline,
+		BellActiveOutline,
+		BellActiveSolid,
+		ClockOutline,
+		CloseCircleOutline,
+		EyeOutline,
+		EyeSlashOutline,
+		HourglassOutline,
+		PlayOutline,
+		ShuffleOutline
+	} from 'flowbite-svelte-icons';
+
+	import ConfirmActionModal from './ConfirmActionModal.svelte';
 	import MoveEventModal from './MoveEventModal.svelte';
 	import SubscribeModal from './SubscribeModal.svelte';
 	import UnsubscribeModal from './UnsubscribeModal.svelte';
-	import ConfirmActionModal from './ConfirmActionModal.svelte';
 
 	const client = createApiClient();
 

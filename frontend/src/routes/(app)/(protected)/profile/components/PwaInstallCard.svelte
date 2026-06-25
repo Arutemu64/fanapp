@@ -1,7 +1,8 @@
 <script lang="ts">
+	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { Button } from 'flowbite-svelte';
 	import { DownloadSolid } from 'flowbite-svelte-icons';
-	import { getPwaService } from '$lib/services/pwa.svelte';
+
 	import ProfileCardShell from './ProfileCardShell.svelte';
 
 	const pwa = getPwaService();

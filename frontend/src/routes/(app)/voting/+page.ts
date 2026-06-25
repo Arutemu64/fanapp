@@ -1,5 +1,6 @@
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
+
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ fetch }) => {

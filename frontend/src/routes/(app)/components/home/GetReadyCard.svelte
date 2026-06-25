@@ -5,8 +5,9 @@
 </script>
 
 <script lang="ts">
-	import type { Component } from 'svelte';
 	import type { Pathname } from '$app/types';
+	import type { Component } from 'svelte';
+
 	import { resolve } from '$app/paths';
 	import ArrowRightIcon from '~icons/lucide/arrow-right';
 

@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { Pathname } from '$app/types';
-	import { resolve } from '$app/paths';
 	import type { NotificationDTO } from '$lib/types/notifications';
+
+	import { resolve } from '$app/paths';
 	import { formatRelativeTime } from '$lib/utils/formatters';
 	import { DropdownItem } from 'flowbite-svelte';
 	import { BellSolid } from 'flowbite-svelte-icons';

@@ -1,17 +1,20 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
-	import { page } from '$app/state';
-	import EventCard from './components/EventCard.svelte';
-	import { getEventsClient } from '$lib/services/events.svelte';
-	import { getOfflineService } from '$lib/services/offline.svelte';
 	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
 	import type { CurrentUserDTO } from '$lib/types/user';
-	import type { PageProps } from './$types';
+
+	import { invalidate } from '$app/navigation';
+	import { page } from '$app/state';
+	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
+	import { getEventsClient } from '$lib/services/events.svelte';
+	import { getOfflineService } from '$lib/services/offline.svelte';
+	import { matchesSearch } from '$lib/utils/search';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
 	import { ChevronUpOutline, CloseOutline, PlaySolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
-	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
-	import { matchesSearch } from '$lib/utils/search';
+
+	import type { PageProps } from './$types';
+
+	import EventCard from './components/EventCard.svelte';
 
 	type ScheduleNominationGroup = {
 		title: string;

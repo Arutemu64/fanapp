@@ -1,5 +1,6 @@
-import { error } from '@sveltejs/kit';
 import { canImportSchedule, canManageSettings, canSendNotifications } from '$lib/utils/permissions';
+import { error } from '@sveltejs/kit';
+
 import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = async ({ parent }) => {

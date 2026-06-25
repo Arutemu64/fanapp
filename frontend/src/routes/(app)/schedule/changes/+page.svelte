@@ -1,7 +1,9 @@
 <script lang="ts">
-	import ScheduleChangesFeed from './components/ScheduleChangesFeed.svelte';
 	import { feedSnapshotKey } from '$lib/utils/feed';
+
 	import type { PageProps } from './$types';
+
+	import ScheduleChangesFeed from './components/ScheduleChangesFeed.svelte';
 
 	let { data }: PageProps = $props();
 

@@ -1,8 +1,9 @@
 <script lang="ts">
+	import type { NotificationDTO } from '$lib/types/notifications';
+
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { createApiClient } from '$lib/api';
-	import type { NotificationDTO } from '$lib/types/notifications';
 	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
 	import { NOTIFICATION_PREVIEW_LIMIT } from '$lib/constants/notifications';
 	import { getEventsClient } from '$lib/services/events.svelte';

@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
+	import type { CurrentUserDTO } from '$lib/types/user';
+
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import type { CurrentUserDTO } from '$lib/types/user';
 	import { Alert, Button, Input, Label, Spinner } from 'flowbite-svelte';
 	import { CheckCircleOutline, TicketOutline, TicketSolid } from 'flowbite-svelte-icons';
+
 	import ProfileCardShell from './ProfileCardShell.svelte';
 
 	interface Props {

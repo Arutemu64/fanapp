@@ -1,18 +1,21 @@
 <script lang="ts">
-	import { Search, Card, Button } from 'flowbite-svelte';
+	import type { GetVotingNominationResult } from '$lib/types/voting';
+
+	import { invalidate } from '$app/navigation';
+	import SectionIntro from '$lib/components/SectionIntro.svelte';
+	import { matchesSearch } from '$lib/utils/search';
+	import { Button, Card, Search } from 'flowbite-svelte';
 	import {
 		ArrowLeftOutline,
 		ArrowUpRightFromSquareOutline,
 		CheckCircleSolid,
 		UsersGroupOutline
 	} from 'flowbite-svelte-icons';
+
+	import type { PageProps } from './$types';
+
 	import ParticipantCard from '../components/ParticipantCard.svelte';
 	import VotingStatusAlert from '../components/VotingStatusAlert.svelte';
-	import SectionIntro from '$lib/components/SectionIntro.svelte';
-	import { invalidate } from '$app/navigation';
-	import type { PageProps } from './$types';
-	import type { GetVotingNominationResult } from '$lib/types/voting';
-	import { matchesSearch } from '$lib/utils/search';
 
 	type VotingParticipant = GetVotingNominationResult['participants'][number];
 

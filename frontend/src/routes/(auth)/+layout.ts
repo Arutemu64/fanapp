@@ -1,4 +1,5 @@
 import { redirect } from '@sveltejs/kit';
+
 import type { LayoutLoad, LayoutLoadEvent } from './$types';
 
 export const load: LayoutLoad = async ({ parent }: LayoutLoadEvent) => {

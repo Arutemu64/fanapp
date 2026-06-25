@@ -1,3 +1,6 @@
+import type { ScheduleEventFullDTO, SubscriptionFullDTO } from '$lib/types/schedule';
+import type { CurrentUserDTO } from '$lib/types/user';
+
 import { browser } from '$app/environment';
 import { createApiClient } from '$lib/api';
 import {
@@ -7,8 +10,7 @@ import {
 	userStore,
 	warmCache
 } from '$lib/utils/offlineCache';
-import type { CurrentUserDTO } from '$lib/types/user';
-import type { ScheduleEventFullDTO, SubscriptionFullDTO } from '$lib/types/schedule';
+
 import type { LayoutLoad } from './$types';
 
 // SPA-only: render entirely on the client. There is no server render.

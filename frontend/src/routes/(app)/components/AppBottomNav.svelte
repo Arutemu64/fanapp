@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { isActivePath } from '$lib/utils/nav';
 	import { BottomNav, BottomNavItem } from 'flowbite-svelte';
 	import {
 		CalendarWeekOutline,
@@ -10,8 +11,6 @@
 		ThumbsUpOutline,
 		ThumbsUpSolid
 	} from 'flowbite-svelte-icons';
-
-	import { isActivePath } from '$lib/utils/nav';
 
 	let { activeUrl } = $props<{ activeUrl: string }>();
 </script>

@@ -10,8 +10,8 @@
 // Only necessary if you have an import from `$env/static/public`
 /// <reference types="../.svelte-kit/ambient.d.ts" />
 
-import { build, files, version } from '$service-worker';
 import { PUBLIC_API_URL } from '$env/static/public';
+import { build, files, version } from '$service-worker';
 
 // This gives `self` the correct types
 const self = globalThis.self as unknown as ServiceWorkerGlobalScope;

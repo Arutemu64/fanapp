@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { onMount } from 'svelte';
 	import { Button } from 'flowbite-svelte';
 	import { RefreshOutline } from 'flowbite-svelte-icons';
+	import { onMount } from 'svelte';
 
 	// A waiting service worker means a newer build is cached and ready. We never
 	// activate it mid-session (that could swap assets under the user); instead we

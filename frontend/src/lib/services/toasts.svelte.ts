@@ -1,6 +1,7 @@
-import { createContext } from 'svelte';
-import { getApiErrorDetail } from '$lib/api/errors';
 import type { NotificationDTO } from '$lib/types/notifications';
+
+import { getApiErrorDetail } from '$lib/api/errors';
+import { createContext } from 'svelte';
 
 export type ToastColor = 'green' | 'red' | 'yellow' | 'blue' | 'gray';
 export type ToastType = 'success' | 'info' | 'warning' | 'error' | 'push';

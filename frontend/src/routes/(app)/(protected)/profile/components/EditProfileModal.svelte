@@ -1,13 +1,14 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
-	import { Modal, Input, Label, Helper, Button, Spinner, Alert } from 'flowbite-svelte';
-	import { UserCircleSolid, UserSolid } from 'flowbite-svelte-icons';
 	import { createApiClient } from '$lib/api';
+	import { Alert, Button, Helper, Input, Label, Modal, Spinner } from 'flowbite-svelte';
+	import { UserCircleSolid, UserSolid } from 'flowbite-svelte-icons';
+	import { untrack } from 'svelte';
 	const client = createApiClient();
+	import type { components } from '$lib/api/v1';
+	import type { CurrentUserDTO } from '$lib/types/user';
+
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import type { CurrentUserDTO } from '$lib/types/user';
-	import type { components } from '$lib/api/v1';
 
 	type UpdateCurrentUserInput = components['schemas']['UpdateCurrentUserInput'];
 

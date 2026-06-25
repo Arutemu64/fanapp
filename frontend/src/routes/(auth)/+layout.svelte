@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import ToastContainer from '$lib/components/ToastContainer.svelte';
 	import SkipLink from '$lib/components/SkipLink.svelte';
+	import ToastContainer from '$lib/components/ToastContainer.svelte';
+
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();

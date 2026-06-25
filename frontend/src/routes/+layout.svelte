@@ -1,17 +1,19 @@
 <script lang="ts">
-	import type { LayoutProps } from './$types';
+	import type { PWAInstallElement } from '@khmyznikov/pwa-install';
+
 	import '../app.css';
-	import { setToastService } from '$lib/services/toasts.svelte';
+	import { navigating } from '$app/state';
+	import UpdatePrompt from '$lib/components/UpdatePrompt.svelte';
 	import { setEventsClient } from '$lib/services/events.svelte';
+	import { setOfflineService } from '$lib/services/offline.svelte';
 	import { setPwaService } from '$lib/services/pwa.svelte';
 	import { setThemeService } from '$lib/services/theme.svelte';
-	import { setOfflineService } from '$lib/services/offline.svelte';
-	import UpdatePrompt from '$lib/components/UpdatePrompt.svelte';
-	import type { PWAInstallElement } from '@khmyznikov/pwa-install';
-	import { navigating } from '$app/state';
+	import { setToastService } from '$lib/services/toasts.svelte';
+	import * as Sentry from '@sentry/sveltekit';
 	import { Spinner } from 'flowbite-svelte';
 	import { onDestroy, onMount } from 'svelte';
-	import * as Sentry from '@sentry/sveltekit';
+
+	import type { LayoutProps } from './$types';
 
 	let { children, data }: LayoutProps = $props();
 

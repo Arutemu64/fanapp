@@ -1,7 +1,8 @@
 import { createApiClient } from '$lib/api';
 import { NOTIFICATION_PREVIEW_LIMIT } from '$lib/constants/notifications';
-import { timeoutSignal, FIRST_PAINT_TIMEOUT_MS } from '$lib/utils/fetchTimeout';
 import { isReachable, markReachable } from '$lib/services/reachability';
+import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
+
 import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = async ({ fetch, depends, parent }) => {
