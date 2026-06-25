@@ -74,6 +74,12 @@ export default defineConfig(
 				parser: ts.parser,
 				svelteConfig
 			}
+		},
+		rules: {
+			// Known false positive with $bindable props: ESLint sees the write-out to the
+			// parent but not the parent-side bind read, and flags it incorrectly.
+			// Tracked: sveltejs/eslint-plugin-svelte#1478 — re-enable once fixed.
+			'no-useless-assignment': 'off'
 		}
 	},
 	{
