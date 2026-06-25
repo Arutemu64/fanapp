@@ -51,9 +51,8 @@ class PushNotifier(Notifier):
 
     @staticmethod
     def _sanitize_text(text: str) -> str:
-        # Replace HTML line breaks with \n
+        # Push uses plain text; convert <br> to newlines then strip all HTML.
         text = text.replace("<br>", "\n")
-        # Remove rest HTML tags
         return nh3.clean(text, tags=set())
 
     def _build_message(self, subscription_info: dict, notification: Notification):

@@ -42,16 +42,16 @@ ignore = [
     "ANN",     # flake8-annotations (type-checking is handled statically by mypy/pyright)
     "N",       # pep8-naming (occasionally conflicts with external schemas or webhook models)
     "FBT",     # flake8-boolean-trap (perfectly fine for query params/arguments in web routes)
-    # pylint-refactor: ignore only the code-metric rules (arg/return/branch/
-    # statement/method counts), which are noisy in DDD controllers, plus magic-value
-    # comparison (intrinsic constants in pluralize.py). Keep the rest enabled — e.g.
-    # PLR1711 useless-return.
-    "PLR0904",
-    "PLR0911",
-    "PLR0912",
-    "PLR0913",
-    "PLR0915",
-    "PLR2004",
+    # pylint-refactor code-metric rules: noisy in DDD interactors/controllers where
+    # many arguments and branches are structurally expected. PLR1711 (useless-return)
+    # stays enabled; PLR2004 magic-value comparison is suppressed only because the
+    # constants in pluralize.py are intrinsic Russian plural-rule numbers.
+    "PLR0904",  # too-many-public-methods
+    "PLR0911",  # too-many-return-statements
+    "PLR0912",  # too-many-branches
+    "PLR0913",  # too-many-arguments
+    "PLR0915",  # too-many-statements
+    "PLR2004",  # magic-value-comparison
     "COM812",  # missing-trailing-comma (formatter compatibility)
     "ISC001",  # single-line-implicit-string-concatenation (formatter compatibility)
     "ARG001",  # unused-function-argument (standard in web routers / dependency injections)
@@ -67,16 +67,16 @@ ignore = [
     # cross-file analysis (ruff#7866) — our custom BaseORM/AppEvent/*Config bases
     # live in other modules — and Dishka constructor injection has no base-class
     # knob at all. Keep disabled.
-    "TC001",
-    "TC002",
-    "TC003",
+    "TC001",  # typing-only-first-party-import
+    "TC002",  # typing-only-third-party-import
+    "TC003",  # typing-only-standard-library-import
 
     # Allow Cyrillic characters (Russian language project)
-    "RUF001",
-    "RUF002",
-    "RUF003",
+    "RUF001",  # ambiguous-unicode-character-string
+    "RUF002",  # ambiguous-unicode-character-docstring
+    "RUF003",  # ambiguous-unicode-character-comment
 
-    "S101",
+    "S101",   # assert statements used for invariants; security checks never rely on them
 ]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
