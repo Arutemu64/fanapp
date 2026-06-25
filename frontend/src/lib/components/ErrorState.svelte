@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { isReachable, onReachableChange } from '$lib/services/reachability';
+	import { statusTitle } from '$lib/utils/errorTitle';
 	import { Button, Card } from 'flowbite-svelte';
 	import {
 		ArrowLeftOutline,
@@ -30,12 +31,17 @@
 	// A genuine 403/404 is a real server answer — never reframe it as offline.
 	let offline = $derived(!online && status !== 403 && status !== 404);
 
-	let title = $derived.by(() => {
-		if (offline) return 'Нет соединения';
-		if (status === 403) return 'Доступ ограничен';
-		if (status === 404) return 'Страница не найдена';
-		return 'Что-то пошло не так';
-	});
+	let title = $derived(offline ? 'Нет соединения' : statusTitle(status));
+
+	// A genuine 403 gets the lock icon; everything else (including offline, which
+	// is never a 403) gets the generic alert icon. Offline is the only yellow
+	// state; all others are red.
+	let StatusIcon = $derived(status === 403 ? LockSolid : ExclamationCircleSolid);
+	let iconColorClass = $derived(
+		offline
+			? 'bg-yellow-100 text-yellow-500 dark:bg-yellow-900/30 dark:text-yellow-400'
+			: 'bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400'
+	);
 
 	let description = $derived.by(() => {
 		if (offline) return 'Проверь соединение и попробуй снова. Часть данных доступна офлайн.';
@@ -69,25 +75,9 @@
 	<Card class="w-full max-w-md rounded-2xl p-6 text-center sm:p-8">
 		<div class="flex flex-col items-center justify-center">
 			<!-- Visual Icon -->
-			{#if offline}
-				<div
-					class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100 text-yellow-500 dark:bg-yellow-900/30 dark:text-yellow-400"
-				>
-					<ExclamationCircleSolid class="h-8 w-8" />
-				</div>
-			{:else if status === 403}
-				<div
-					class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400"
-				>
-					<LockSolid class="h-8 w-8" />
-				</div>
-			{:else}
-				<div
-					class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400"
-				>
-					<ExclamationCircleSolid class="h-8 w-8" />
-				</div>
-			{/if}
+			<div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full {iconColorClass}">
+				<StatusIcon class="h-8 w-8" />
+			</div>
 
 			<!-- Status Code -->
 			<span

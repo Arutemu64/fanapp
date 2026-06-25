@@ -12,7 +12,11 @@
 	import { invalidate } from '$app/navigation';
 	import { getToastService } from '$lib/services/toasts.svelte';
 
-	let { change }: { change: ScheduleChangeFullDTO } = $props();
+	interface Props {
+		change: ScheduleChangeFullDTO;
+	}
+
+	let { change }: Props = $props();
 
 	const toastService = getToastService();
 	let isUndoing = $state(false);

@@ -6,7 +6,7 @@
 	import { page } from '$app/state';
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
-	import { getOfflineService } from '$lib/services/offline.svelte';
+	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
 	import { matchesSearch } from '$lib/utils/search';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
 	import { ChevronUpOutline, CloseOutline, PlaySolid } from 'flowbite-svelte-icons';
@@ -40,13 +40,14 @@
 	let currentEvent = $derived(schedule.find((event) => event.is_current) ?? null);
 	let user: CurrentUserDTO | null = $derived(page.data.user);
 
-	// Show the notice when the loaded copy is cached (data.stale) *or* the device
-	// has gone offline since the page opened — in both cases what's on screen may
-	// be out of date and will refresh once the connection returns.
 	const offline = getOfflineService();
-	// On an offline cold miss there's no saved copy to caveat — the empty state
-	// itself explains the situation, so skip the "showing cached data" notice.
-	let showStaleNotice = $derived(!data.offlineMiss && (data.stale || !offline.isOnline));
+	let showStaleNotice = $derived(
+		shouldShowStaleNotice({
+			offlineMiss: data.offlineMiss,
+			stale: data.stale,
+			isOnline: offline.isOnline
+		})
+	);
 
 	let filtered: ScheduleEventWithSubscription[] = $derived(
 		schedule.filter((event) => {

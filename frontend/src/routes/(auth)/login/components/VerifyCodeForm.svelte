@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { resolve } from '$app/paths';
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
@@ -8,6 +6,9 @@
 	import OtpInput from '$lib/components/OtpInput.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { completeLogin } from '$lib/utils/auth';
+	import { CaptchaGate } from '$lib/utils/captcha.svelte';
+	import { ResendCooldown } from '$lib/utils/cooldown.svelte';
 	import { isValidOtp } from '$lib/utils/validation';
 	import { Alert, Button, Helper, Label, Spinner } from 'flowbite-svelte';
 	import { ArrowLeftOutline, RefreshOutline } from 'flowbite-svelte-icons';
@@ -28,30 +29,19 @@
 	let loginCodeError = $state('');
 	let formError = $state('');
 
-	let resendCooldown = $state(60);
-	let resendInterval: ReturnType<typeof setInterval>;
+	const cooldown = new ResendCooldown();
 
 	// Captcha state for the "resend code" request (same endpoint as the first one).
 	let captchaToken = $state<string | null>(null);
 	let resetCaptcha = $state<(() => void) | undefined>(undefined);
 
-	// Set when the user taps resend before the invisible captcha has a token.
-	let awaitingCaptcha = $state(false);
-
-	// Safety net: if the invisible captcha never resolves (widget/network error),
-	// don't spin forever — fall back to a retryable error after this long.
-	const CAPTCHA_WAIT_TIMEOUT_MS = 10000;
-	let captchaWaitTimer: ReturnType<typeof setTimeout> | undefined;
-
-	function clearCaptchaWait() {
-		clearTimeout(captchaWaitTimer);
-		captchaWaitTimer = undefined;
-	}
+	// Holds a resend the user tapped before the invisible captcha had a token.
+	const captchaGate = new CaptchaGate();
 
 	// Resend is in flight when its request runs or we're holding it for the captcha.
-	let isResending = $derived(activeAction === 'code-request' || awaitingCaptcha);
+	let isResending = $derived(activeAction === 'code-request' || captchaGate.awaitingCaptcha);
 	// Any in-flight work in this form (verifying the code, or resending it).
-	let busy = $derived(activeAction !== null || awaitingCaptcha);
+	let busy = $derived(activeAction !== null || captchaGate.awaitingCaptcha);
 
 	const eventsClient = getEventsClient();
 	const toastService = getToastService();
@@ -62,40 +52,22 @@
 
 	// Fulfill a deferred resend the moment the invisible captcha solves.
 	$effect(() => {
-		if (awaitingCaptcha && captchaToken) {
+		if (captchaGate.awaitingCaptcha && captchaToken) {
 			void handleLoginCodeRequest();
 		}
 	});
 
-	function startCooldown() {
-		resendCooldown = 60;
-		clearInterval(resendInterval);
-		resendInterval = setInterval(() => {
-			if (resendCooldown > 0) {
-				resendCooldown -= 1;
-			} else {
-				clearInterval(resendInterval);
-			}
-		}, 1000);
-	}
-
 	onMount(() => {
-		startCooldown();
+		cooldown.start();
 		return () => {
-			clearInterval(resendInterval);
-			clearCaptchaWait();
+			cooldown.stop();
+			captchaGate.clear();
 		};
 	});
 
 	function resetLoginCodeFeedback() {
 		loginCodeError = '';
 		formError = '';
-	}
-
-	async function finishLogin(successMessage: string) {
-		toastService.add(successMessage, 'success');
-		await goto(resolve('/'), { invalidateAll: true });
-		eventsClient?.restart();
 	}
 
 	async function submitLoginCode() {
@@ -131,7 +103,7 @@
 				return;
 			}
 
-			await finishLogin('Вход выполнен');
+			await completeLogin(toastService, eventsClient, 'Вход выполнен');
 		} catch (err) {
 			console.error('Login code submit exception:', err);
 			formError = 'Произошла непредвиденная ошибка. Попробуй ещё раз';
@@ -144,19 +116,13 @@
 		// The captcha runs invisibly. If its token isn't ready yet, hold the
 		// resend; the effect above re-runs this once the token arrives.
 		if (captchaEnabled && !captchaToken) {
-			awaitingCaptcha = true;
-			clearCaptchaWait();
-			captchaWaitTimer = setTimeout(() => {
-				if (awaitingCaptcha) {
-					awaitingCaptcha = false;
-					formError = 'Не удалось пройти проверку. Попробуй ещё раз';
-				}
-			}, CAPTCHA_WAIT_TIMEOUT_MS);
+			captchaGate.hold(() => {
+				formError = 'Не удалось пройти проверку. Попробуй ещё раз';
+			});
 			return;
 		}
 
-		awaitingCaptcha = false;
-		clearCaptchaWait();
+		captchaGate.release();
 		activeAction = 'code-request';
 		loginCodeError = '';
 		formError = '';
@@ -180,7 +146,7 @@
 			// Each resend needs its own fresh token.
 			resetCaptcha?.();
 			captchaToken = null;
-			startCooldown();
+			cooldown.start();
 		} catch (err) {
 			console.error('Login code request exception:', err);
 			formError = 'Произошла ошибка при повторной отправке кода';
@@ -248,14 +214,14 @@
 			type="button"
 			color="alternative"
 			class="min-h-11 w-full rounded-xl font-medium"
-			disabled={busy || resendCooldown > 0}
+			disabled={busy || cooldown.remaining > 0}
 			onclick={() => void handleLoginCodeRequest()}
 		>
 			{#if isResending}
 				<Spinner size="4" class="mr-2" color="primary" />
 				Отправляем…
-			{:else if resendCooldown > 0}
-				Отправить код ещё раз ({resendCooldown} сек.)
+			{:else if cooldown.remaining > 0}
+				Отправить код ещё раз ({cooldown.remaining} сек.)
 			{:else}
 				<RefreshOutline class="me-2 h-4 w-4" />
 				Отправить код ещё раз

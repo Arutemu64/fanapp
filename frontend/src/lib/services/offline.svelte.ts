@@ -112,3 +112,18 @@ export function setOfflineService() {
 export function getOfflineService() {
 	return getOffline();
 }
+
+/**
+ * Whether a page should show the "showing cached/stale data" notice. True when
+ * the loaded copy is cached (`stale`) or the device went offline since open —
+ * in both cases what's on screen may be out of date until reconnect. Suppressed
+ * on an offline cold miss (`offlineMiss`): there's no saved copy to caveat, so
+ * the page's dedicated empty state explains the situation instead.
+ */
+export function shouldShowStaleNotice(opts: {
+	offlineMiss: boolean;
+	stale: boolean;
+	isOnline: boolean;
+}): boolean {
+	return !opts.offlineMiss && (opts.stale || !opts.isOnline);
+}

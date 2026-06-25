@@ -5,6 +5,7 @@
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import NoticeCallout from '$lib/components/NoticeCallout.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { matchesSearch } from '$lib/utils/search';
 	import { Alert, Button, Modal, Search } from 'flowbite-svelte';
 	import { ArrowUpDownOutline, BellActiveOutline } from 'flowbite-svelte-icons';
 
@@ -39,16 +40,11 @@
 		}
 	});
 
+	// Shared matcher folds ё/е and matches space-separated tokens in any order.
 	let filtered = $derived(
-		schedule.filter((ev) => {
-			const q = query.toLowerCase();
-			return (
-				ev.number.toString().toLowerCase().includes(q) ||
-				ev.title.toLowerCase().includes(q) ||
-				ev.block_title?.toLowerCase().includes(q) ||
-				ev.nomination_title?.toLowerCase().includes(q)
-			);
-		})
+		schedule.filter((ev) =>
+			matchesSearch(query, [ev.number, ev.title, ev.block_title, ev.nomination_title])
+		)
 	);
 
 	function handleSelect(ev: ScheduleEventFullDTO) {

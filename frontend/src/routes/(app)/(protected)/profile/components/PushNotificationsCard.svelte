@@ -23,6 +23,9 @@
 	let isSubscribed = $state(false);
 	const toastService = getToastService();
 	let isLoading = $state(true);
+	// Writable $derived: the toggles bind to these and flip them optimistically,
+	// then the rollback in updateSettings reassigns from `user.settings` on failure.
+	// Because they derive from the prop, a successful refetch re-syncs them for free.
 	let receiveAll = $derived(user.settings.receive_all_announcements);
 	let receiveTelegram = $derived(user.settings.receive_telegram_notifications);
 	let isSavingSettings = $state(false);

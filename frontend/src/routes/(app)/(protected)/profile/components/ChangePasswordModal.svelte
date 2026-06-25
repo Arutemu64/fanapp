@@ -3,15 +3,10 @@
 
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
+	import PasswordInput from '$lib/components/PasswordInput.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { Alert, Button, Input, Label, Modal, Spinner } from 'flowbite-svelte';
-	import {
-		CheckCircleSolid,
-		CloseCircleOutline,
-		EyeOutline,
-		EyeSlashOutline,
-		LockSolid
-	} from 'flowbite-svelte-icons';
+	import { Alert, Button, Label, Modal, Spinner } from 'flowbite-svelte';
+	import { CheckCircleSolid, CloseCircleOutline, LockSolid } from 'flowbite-svelte-icons';
 
 	const client = createApiClient();
 
@@ -29,8 +24,6 @@
 	const toastService = getToastService();
 	let newPassword = $state('');
 	let isLoading = $state(false);
-	let showOldPassword = $state(false);
-	let showNewPassword = $state(false);
 	let formError = $state('');
 
 	// Password rules mirror the backend PASSWORD_FIELD (10-128 chars, no complexity rule).
@@ -106,69 +99,27 @@
 		{#if hasPassword}
 			<div>
 				<Label for="old_password" class="mb-2 block">Старый пароль</Label>
-				<Input
+				<PasswordInput
 					id="old_password"
 					name="current_password"
-					type={showOldPassword ? 'text' : 'password'}
-					placeholder="••••••••"
 					autocomplete="current-password"
+					revealLabel="старый пароль"
 					bind:value={oldPassword}
 					oninput={() => (formError = '')}
-					class="ps-9"
-				>
-					{#snippet left()}
-						<LockSolid class="h-5 w-5" />
-					{/snippet}
-					{#snippet right()}
-						<button
-							type="button"
-							class="pointer-events-auto -m-1 rounded-lg p-1 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-700"
-							onclick={() => (showOldPassword = !showOldPassword)}
-							aria-label={showOldPassword ? 'Скрыть старый пароль' : 'Показать старый пароль'}
-							aria-pressed={showOldPassword}
-						>
-							{#if showOldPassword}
-								<EyeOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-							{:else}
-								<EyeSlashOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-							{/if}
-						</button>
-					{/snippet}
-				</Input>
+				/>
 			</div>
 		{/if}
 		<div>
 			<Label for="new_password" class="mb-2 block">Новый пароль</Label>
-			<Input
+			<PasswordInput
 				id="new_password"
 				name="new_password"
-				type={showNewPassword ? 'text' : 'password'}
-				placeholder="••••••••"
 				autocomplete="new-password"
+				revealLabel="новый пароль"
 				maxlength={MAX_PASSWORD_LENGTH}
 				bind:value={newPassword}
 				oninput={() => (formError = '')}
-				class="ps-9"
-			>
-				{#snippet left()}
-					<LockSolid class="h-5 w-5" />
-				{/snippet}
-				{#snippet right()}
-					<button
-						type="button"
-						class="pointer-events-auto -m-1 rounded-lg p-1 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-700"
-						onclick={() => (showNewPassword = !showNewPassword)}
-						aria-label={showNewPassword ? 'Скрыть новый пароль' : 'Показать новый пароль'}
-						aria-pressed={showNewPassword}
-					>
-						{#if showNewPassword}
-							<EyeOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-						{:else}
-							<EyeSlashOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-						{/if}
-					</button>
-				{/snippet}
-			</Input>
+			/>
 
 			<!-- Live password requirements; reflects the backend PASSWORD_FIELD rules. -->
 			<ul class="mt-2 space-y-1">

@@ -1,13 +1,10 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import ErrorState from '$lib/components/ErrorState.svelte';
+	import { statusTitle } from '$lib/utils/errorTitle';
 
 	let status = $derived(page.status);
-	let title = $derived.by(() => {
-		if (status === 403) return 'Доступ ограничен';
-		if (status === 404) return 'Страница не найдена';
-		return 'Что-то пошло не так';
-	});
+	let title = $derived(statusTitle(status));
 </script>
 
 <svelte:head>

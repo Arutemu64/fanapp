@@ -69,9 +69,9 @@
 				if (response.status === 401) {
 					submitError = 'Нужно войти в аккаунт заново';
 				} else if (response.status === 403) {
-					submitError = 'У вас нет доступа к отправке уведомлений';
+					submitError = 'У тебя нет доступа к отправке уведомлений';
 				} else if (response.status === 422) {
-					submitError = 'Проверьте правильность заполнения полей';
+					submitError = 'Проверь правильность заполнения полей';
 				} else {
 					submitError = 'Не удалось запустить рассылку';
 				}
