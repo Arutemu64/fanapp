@@ -42,7 +42,16 @@ ignore = [
     "ANN",     # flake8-annotations (type-checking is handled statically by mypy/pyright)
     "N",       # pep8-naming (occasionally conflicts with external schemas or webhook models)
     "FBT",     # flake8-boolean-trap (perfectly fine for query params/arguments in web routes)
-    "PLR",     # pylint-refactor (too many arguments/returns; noisy in DDD controllers)
+    # pylint-refactor: ignore only the code-metric rules (arg/return/branch/
+    # statement/method counts), which are noisy in DDD controllers, plus magic-value
+    # comparison (intrinsic constants in pluralize.py). Keep the rest enabled — e.g.
+    # PLR1711 useless-return.
+    "PLR0904",
+    "PLR0911",
+    "PLR0912",
+    "PLR0913",
+    "PLR0915",
+    "PLR2004",
     "COM812",  # missing-trailing-comma (formatter compatibility)
     "ISC001",  # single-line-implicit-string-concatenation (formatter compatibility)
     "ARG001",  # unused-function-argument (standard in web routers / dependency injections)

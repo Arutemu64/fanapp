@@ -88,4 +88,3 @@ class TelegramNotifier(Notifier):
                 "cannot deliver notifications via Telegram"
             )
             raise UserNotReachable from e
-        return

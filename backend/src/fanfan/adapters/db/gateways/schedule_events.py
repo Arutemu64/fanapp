@@ -106,7 +106,6 @@ class SqlScheduleEventGateway(ScheduleEventGateway):
     async def save(self, event: ScheduleEvent) -> None:
         event_orm = await self.session.merge(self.mapper.from_model(event))
         await self.session.flush([event_orm])
-        return
 
     async def delete(self, event: ScheduleEvent) -> None:
         await self.session.execute(

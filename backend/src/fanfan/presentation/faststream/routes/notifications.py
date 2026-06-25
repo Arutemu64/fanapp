@@ -196,7 +196,6 @@ async def create_new_broadcast(
             mailing_id=data.mailing_id,
         )
     )
-    return
 
 
 @notifications_router.subscriber(
@@ -212,4 +211,3 @@ async def cancel_mailing(
 ) -> None:
 
     await interactor(DeleteMailingNotificationsInput(mailing_id=data.mailing_id))
-    return

@@ -66,4 +66,3 @@ class CancelMailing:
                 "actor_id": str(current_user.id),
             },
         )
-        return
