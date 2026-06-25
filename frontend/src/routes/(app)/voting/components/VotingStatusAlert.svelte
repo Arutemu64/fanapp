@@ -1,7 +1,8 @@
 <script lang="ts">
+	import type { GetVotingStateResult, VotingStatus } from '$lib/types/voting';
+
 	import { Alert } from 'flowbite-svelte';
 	import { ExclamationCircleSolid } from 'flowbite-svelte-icons';
-	import type { GetVotingStateResult, VotingStatus } from '$lib/types/voting';
 
 	interface Props {
 		votingState?: GetVotingStateResult;

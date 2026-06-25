@@ -1,5 +1,6 @@
-import { error as kitError } from '@sveltejs/kit';
 import type { components } from '$lib/api/v1';
+
+import { error as kitError } from '@sveltejs/kit';
 
 // The closed set of error codes the API can return, generated from the backend
 // OpenAPI spec (ErrorMessage.code enum). Drives both typo safety on the message

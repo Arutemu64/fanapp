@@ -1,18 +1,19 @@
 <script lang="ts">
 	import type { Pathname } from '$app/types';
+	import type { NotificationDTO } from '$lib/types/notifications';
+
 	import { resolve } from '$app/paths';
 	import { getToastService, ToastTypeColors } from '$lib/services/toasts.svelte';
+	import { formatRelativeTime } from '$lib/utils/formatters';
 	import { Toast, ToastContainer } from 'flowbite-svelte';
 	import {
+		BellSolid,
 		CheckCircleSolid,
 		CloseCircleSolid,
-		ExclamationCircleSolid,
-		BellSolid
+		ExclamationCircleSolid
 	} from 'flowbite-svelte-icons';
-	import { fly } from 'svelte/transition';
 	import { prefersReducedMotion } from 'svelte/motion';
-	import { formatRelativeTime } from '$lib/utils/formatters';
-	import type { NotificationDTO } from '$lib/types/notifications';
+	import { fly } from 'svelte/transition';
 
 	const toastService = getToastService();
 

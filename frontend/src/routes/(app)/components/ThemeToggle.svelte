@@ -1,7 +1,8 @@
 <script lang="ts">
+	import type { Component } from 'svelte';
+
 	import { getThemeService, type ThemeMode } from '$lib/services/theme.svelte';
 	import { DesktopPcOutline, MoonOutline, SunOutline } from 'flowbite-svelte-icons';
-	import type { Component } from 'svelte';
 
 	const theme = getThemeService();
 

@@ -1,9 +1,11 @@
 <script lang="ts">
-	import NotificationsFeed from './components/NotificationsFeed.svelte';
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { getOfflineService } from '$lib/services/offline.svelte';
 	import { feedSnapshotKey } from '$lib/utils/feed';
+
 	import type { PageProps } from './$types';
+
+	import NotificationsFeed from './components/NotificationsFeed.svelte';
 
 	let { data }: PageProps = $props();
 

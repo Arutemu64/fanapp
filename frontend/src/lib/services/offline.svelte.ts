@@ -1,6 +1,7 @@
-import { createContext } from 'svelte';
 import { browser } from '$app/environment';
 import { invalidateAll } from '$app/navigation';
+import { createContext } from 'svelte';
+
 import { isReachable, markReachable, onReachableChange, probeReachability } from './reachability';
 
 // While offline, poll for recovery so the banner clears on its own. We don't

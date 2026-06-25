@@ -1,6 +1,7 @@
-import { createContext } from 'svelte';
-import { browser } from '$app/environment';
 import type { PWAInstallElement } from '@khmyznikov/pwa-install';
+
+import { browser } from '$app/environment';
+import { createContext } from 'svelte';
 
 const ELEMENT_TAG = 'pwa-install';
 

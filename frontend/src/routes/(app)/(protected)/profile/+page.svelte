@@ -1,18 +1,20 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import BasicUserInfoCard from './components/BasicUserInfoCard.svelte';
-	import TicketLinkCard from './components/TicketLinkCard.svelte';
-	import PushNotificationsCard from './components/PushNotificationsCard.svelte';
-	import SecurityCard from './components/SecurityCard.svelte';
-	import PwaInstallCard from './components/PwaInstallCard.svelte';
-	import IconSvelte from '~icons/simple-icons/svelte';
-	import IconFastapi from '~icons/simple-icons/fastapi';
-	import IconHeart from '~icons/lucide/heart';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { getOfflineService } from '$lib/services/offline.svelte';
-	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
-	import type { PageProps } from './$types';
 	import { invalidate } from '$app/navigation';
+	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
+	import { getOfflineService } from '$lib/services/offline.svelte';
+	import { getToastService } from '$lib/services/toasts.svelte';
+	import { onMount } from 'svelte';
+	import IconHeart from '~icons/lucide/heart';
+	import IconFastapi from '~icons/simple-icons/fastapi';
+	import IconSvelte from '~icons/simple-icons/svelte';
+
+	import type { PageProps } from './$types';
+
+	import BasicUserInfoCard from './components/BasicUserInfoCard.svelte';
+	import PushNotificationsCard from './components/PushNotificationsCard.svelte';
+	import PwaInstallCard from './components/PwaInstallCard.svelte';
+	import SecurityCard from './components/SecurityCard.svelte';
+	import TicketLinkCard from './components/TicketLinkCard.svelte';
 
 	let { data }: PageProps = $props();
 	let user = $derived(data.user!);

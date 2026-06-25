@@ -1,12 +1,14 @@
-import { error } from '@sveltejs/kit';
+import type { NotificationDTO } from '$lib/types/notifications';
+
 import { createApiClient } from '$lib/api';
-import { fetchWithCache, userStore } from '$lib/utils/offlineCache';
-import { isReachable } from '$lib/services/reachability';
 import {
 	NOTIFICATION_PAGE_REQUEST_LIMIT,
 	NOTIFICATION_PAGE_SIZE
 } from '$lib/constants/notifications';
-import type { NotificationDTO } from '$lib/types/notifications';
+import { isReachable } from '$lib/services/reachability';
+import { fetchWithCache, userStore } from '$lib/utils/offlineCache';
+import { error } from '@sveltejs/kit';
+
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ fetch, depends, parent }) => {

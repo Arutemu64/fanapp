@@ -1,14 +1,16 @@
 <script lang="ts">
+	import { createApiClient } from '$lib/api';
 	import { Button, Modal, Toggle } from 'flowbite-svelte';
 	import { ArrowDownToBracketOutline, BellOutline, BellSolid } from 'flowbite-svelte-icons';
-	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
+	import type { components } from '$lib/api/v1';
+	import type { CurrentUserDTO } from '$lib/types/user';
+
+	import { PUBLIC_VAPID_KEY } from '$env/static/public';
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { PUBLIC_VAPID_KEY } from '$env/static/public';
 	import { onMount } from 'svelte';
-	import type { CurrentUserDTO } from '$lib/types/user';
-	import type { components } from '$lib/api/v1';
+
 	import ProfileCardShell from './ProfileCardShell.svelte';
 
 	interface Props {

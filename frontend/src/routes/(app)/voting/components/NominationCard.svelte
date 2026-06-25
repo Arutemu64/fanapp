@@ -1,8 +1,9 @@
 <script lang="ts">
 	import type { NominationVotingDTO } from '$lib/types/nominations';
-	import { Card, Badge } from 'flowbite-svelte';
-	import { ArrowRightOutline, CheckCircleSolid } from 'flowbite-svelte-icons';
+
 	import { pluralize } from '$lib/utils/formatters';
+	import { Badge, Card } from 'flowbite-svelte';
+	import { ArrowRightOutline, CheckCircleSolid } from 'flowbite-svelte-icons';
 
 	interface Props {
 		nomination: NominationVotingDTO;

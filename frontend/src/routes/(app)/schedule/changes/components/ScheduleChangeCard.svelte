@@ -1,15 +1,16 @@
 <script lang="ts">
-	import { Badge, Button, Spinner, type BadgeProps } from 'flowbite-svelte';
-	import { UndoOutline } from 'flowbite-svelte-icons';
 	import { createApiClient } from '$lib/api';
+	import { Badge, type BadgeProps, Button, Spinner } from 'flowbite-svelte';
+	import { UndoOutline } from 'flowbite-svelte-icons';
 	const client = createApiClient();
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { invalidate } from '$app/navigation';
 	import type {
 		ScheduleChangeEventDTO,
 		ScheduleChangeFullDTO,
 		ScheduleChangeType
 	} from '$lib/types/schedule';
+
+	import { invalidate } from '$app/navigation';
+	import { getToastService } from '$lib/services/toasts.svelte';
 
 	let { change } = $props<{ change: ScheduleChangeFullDTO }>();
 

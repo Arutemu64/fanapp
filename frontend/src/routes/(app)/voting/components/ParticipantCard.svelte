@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { Card, Badge, Button } from 'flowbite-svelte';
-	import { CheckCircleSolid, CheckOutline, CloseOutline, HeartSolid } from 'flowbite-svelte-icons';
-	import { pluralize } from '$lib/utils/formatters';
+	import type { ParticipantFullDTO } from '$lib/types/participant';
+
 	import { createApiClient } from '$lib/api';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import type { ParticipantFullDTO } from '$lib/types/participant';
+	import { pluralize } from '$lib/utils/formatters';
+	import { Badge, Button, Card } from 'flowbite-svelte';
+	import { CheckCircleSolid, CheckOutline, CloseOutline, HeartSolid } from 'flowbite-svelte-icons';
 
 	const client = createApiClient();
 

@@ -5,13 +5,13 @@
 	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import CaptchaWidget, { captchaEnabled } from '$lib/components/CaptchaWidget.svelte';
+	import OtpInput from '$lib/components/OtpInput.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { isValidOtp } from '$lib/utils/validation';
 	import { Alert, Button, Helper, Label, Spinner } from 'flowbite-svelte';
 	import { ArrowLeftOutline, RefreshOutline } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
-	import OtpInput from '$lib/components/OtpInput.svelte';
-	import { isValidOtp } from '$lib/utils/validation';
 
 	let {
 		email,

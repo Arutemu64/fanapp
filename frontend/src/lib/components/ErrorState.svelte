@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { isReachable, onReachableChange } from '$lib/services/reachability';
-	import { Card, Button } from 'flowbite-svelte';
+	import { Button, Card } from 'flowbite-svelte';
 	import {
 		ArrowLeftOutline,
 		ExclamationCircleSolid,

@@ -1,10 +1,11 @@
 <script lang="ts">
+	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
+
 	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
-	import { Button, Modal, Alert } from 'flowbite-svelte';
+	import { Alert, Button, Modal } from 'flowbite-svelte';
 	import { BellActiveSolid, MinusOutline, PlusOutline } from 'flowbite-svelte-icons';
 
 	const client = createApiClient();

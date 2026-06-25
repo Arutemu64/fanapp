@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { Button, Modal, Search, Alert } from 'flowbite-svelte';
-	import { ArrowUpDownOutline, BellActiveOutline } from 'flowbite-svelte-icons';
-	import NoticeCallout from '$lib/components/NoticeCallout.svelte';
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
+
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
+	import NoticeCallout from '$lib/components/NoticeCallout.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { Alert, Button, Modal, Search } from 'flowbite-svelte';
+	import { ArrowUpDownOutline, BellActiveOutline } from 'flowbite-svelte-icons';
 
 	const client = createApiClient();
 

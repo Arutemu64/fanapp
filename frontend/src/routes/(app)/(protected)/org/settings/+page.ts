@@ -1,7 +1,8 @@
-import { error } from '@sveltejs/kit';
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
 import { canManageSettings } from '$lib/utils/permissions';
+import { error } from '@sveltejs/kit';
+
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ fetch, depends, parent }) => {

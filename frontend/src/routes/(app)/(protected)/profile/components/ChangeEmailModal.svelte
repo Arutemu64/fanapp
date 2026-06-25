@@ -1,13 +1,14 @@
 <script lang="ts">
-	import { Modal, Input, Label, Button, Spinner, Helper, Alert } from 'flowbite-svelte';
-	import { EnvelopeSolid } from 'flowbite-svelte-icons';
+	import type { components } from '$lib/api/v1';
+
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import type { components } from '$lib/api/v1';
-	import { onDestroy } from 'svelte';
 	import OtpInput from '$lib/components/OtpInput.svelte';
-	import { isValidEmail, normalizeEmail, isValidOtp } from '$lib/utils/validation';
+	import { getToastService } from '$lib/services/toasts.svelte';
+	import { isValidEmail, isValidOtp, normalizeEmail } from '$lib/utils/validation';
+	import { Alert, Button, Helper, Input, Label, Modal, Spinner } from 'flowbite-svelte';
+	import { EnvelopeSolid } from 'flowbite-svelte-icons';
+	import { onDestroy } from 'svelte';
 
 	const client = createApiClient();
 

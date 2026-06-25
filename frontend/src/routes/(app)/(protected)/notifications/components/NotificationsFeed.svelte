@@ -1,16 +1,17 @@
 <script lang="ts">
-	import { Button, Spinner } from 'flowbite-svelte';
-	import { onMount } from 'svelte';
-	import { createApiClient } from '$lib/api';
 	import type { NotificationDTO } from '$lib/types/notifications';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { getEventsClient } from '$lib/services/events.svelte';
+
+	import { createApiClient } from '$lib/api';
+	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
+	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import {
 		NOTIFICATION_PAGE_REQUEST_LIMIT,
 		NOTIFICATION_PAGE_SIZE
 	} from '$lib/constants/notifications';
-	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
-	import SectionIntro from '$lib/components/SectionIntro.svelte';
+	import { getEventsClient } from '$lib/services/events.svelte';
+	import { getToastService } from '$lib/services/toasts.svelte';
+	import { Button, Spinner } from 'flowbite-svelte';
+	import { onMount } from 'svelte';
 
 	const client = createApiClient();
 

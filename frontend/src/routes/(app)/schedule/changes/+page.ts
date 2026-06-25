@@ -1,11 +1,12 @@
-import { error, redirect } from '@sveltejs/kit';
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
-import { canManageSchedule } from '$lib/utils/permissions';
 import {
 	SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT,
 	SCHEDULE_CHANGES_PAGE_SIZE
 } from '$lib/constants/schedule_changes';
+import { canManageSchedule } from '$lib/utils/permissions';
+import { error, redirect } from '@sveltejs/kit';
+
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ fetch, depends, parent }) => {

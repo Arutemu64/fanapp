@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { ClockOutline } from 'flowbite-svelte-icons';
-	import NoticeCallout from './NoticeCallout.svelte';
 	import { formatSyncedAt } from '$lib/utils/formatters';
+	import { ClockOutline } from 'flowbite-svelte-icons';
+
+	import NoticeCallout from './NoticeCallout.svelte';
 
 	// Shown when a page is rendering a cached copy because the network was down.
 	let {
