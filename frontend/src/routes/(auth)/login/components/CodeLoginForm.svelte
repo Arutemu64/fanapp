@@ -9,17 +9,19 @@
 
 	import VerifyCodeForm from './VerifyCodeForm.svelte';
 
+	interface Props {
+		email: string;
+		isBusy?: boolean;
+		showPasswordForm?: boolean;
+		isWaitingForCode?: boolean;
+	}
+
 	let {
 		email = $bindable(''),
 		isBusy = $bindable(false),
 		showPasswordForm = $bindable(false),
 		isWaitingForCode = $bindable(false)
-	} = $props<{
-		email: string;
-		isBusy?: boolean;
-		showPasswordForm?: boolean;
-		isWaitingForCode?: boolean;
-	}>();
+	}: Props = $props();
 
 	type ActiveAction = 'code-request' | null;
 

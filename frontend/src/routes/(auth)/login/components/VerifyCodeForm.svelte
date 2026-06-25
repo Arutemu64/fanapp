@@ -13,15 +13,13 @@
 	import { ArrowLeftOutline, RefreshOutline } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
 
-	let {
-		email,
-		isBusy = $bindable(false),
-		onBack
-	} = $props<{
+	interface Props {
 		email: string;
 		isBusy?: boolean;
 		onBack?: () => void;
-	}>();
+	}
+
+	let { email, isBusy = $bindable(false), onBack }: Props = $props();
 
 	type ActiveAction = 'code-request' | 'code-login' | null;
 

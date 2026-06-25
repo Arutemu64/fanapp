@@ -28,10 +28,12 @@
 	// Pages expose their heading through `load` -> `page.data.title`.
 	let pageTitle = $derived(page.data.title);
 
-	let { user, toggleSidebar } = $props<{
+	interface Props {
 		user: CurrentUserDTO | null;
 		toggleSidebar: () => void;
-	}>();
+	}
+
+	let { user, toggleSidebar }: Props = $props();
 
 	let avatarInitials = $derived(getAvatarInitials(user?.username));
 

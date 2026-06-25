@@ -12,7 +12,11 @@
 		ThumbsUpSolid
 	} from 'flowbite-svelte-icons';
 
-	let { activeUrl } = $props<{ activeUrl: string }>();
+	interface Props {
+		activeUrl: string;
+	}
+
+	let { activeUrl }: Props = $props();
 </script>
 
 <BottomNav
