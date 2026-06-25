@@ -1,5 +1,3 @@
-# Replace with your generated VAPID keys
-
 from typing import Annotated
 
 from dishka import FromDishka

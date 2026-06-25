@@ -137,8 +137,6 @@ async def send_notification_to_telegram(
         await msg.ack()
         logger.info("Sent notification %s to Telegram", data.notification_id)
 
-    return
-
 
 @notifications_router.subscriber(
     NotificationCreated.subject,
@@ -175,8 +173,6 @@ async def send_push_notification(
         await msg.ack()
         logger.info("Sent notification %s to push", data.notification_id)
 
-    return
-
 
 @notifications_router.subscriber(
     BroadcastQueued.subject,
@@ -209,5 +205,4 @@ async def cancel_mailing(
     data: MailingCancelled,
     interactor: FromDishka[DeleteMailingNotifications],
 ) -> None:
-
     await interactor(DeleteMailingNotificationsInput(mailing_id=data.mailing_id))
