@@ -74,6 +74,13 @@ export default defineConfig(
 				parser: ts.parser,
 				svelteConfig
 			}
+		},
+		rules: {
+			// ESLint can't see template-side reads of $bindable() props, so this
+			// rule produces false positives for every $bindable() default in a
+			// destructuring. Disable it for Svelte files where template bindings
+			// satisfy the "used" requirement that ESLint can't verify.
+			'no-useless-assignment': 'off'
 		}
 	},
 	{
