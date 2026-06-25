@@ -70,9 +70,12 @@ npm install -g npm@latest
 # it at the standard PNPM_HOME. We track @latest so each rebuild gets upstream
 # fixes for this fast-moving (pre-1.0) tool. Best-effort: a bad upstream release
 # or transient network error must not fail environment creation.
-echo "[setup] Installing codegraph (code-intelligence CLI)..."
+echo "[setup] Upgrading pnpm to latest..."
 export PNPM_HOME="$HOME/.local/share/pnpm"
 export PATH="$PNPM_HOME:$PATH"
+npm install -g pnpm@latest
+
+echo "[setup] Installing codegraph (code-intelligence CLI)..."
 pnpm add -g @colbymchenry/codegraph@latest \
   || echo "[setup] WARN: codegraph install failed; continuing without it."
 
