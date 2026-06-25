@@ -1,59 +1,80 @@
 import { isReachable, markReachable } from '$lib/services/reachability';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
-import { clear, createStore, get, set, type UseStore } from 'idb-keyval';
+import { createStore, delMany, get, keys, set, type UseStore } from 'idb-keyval';
 
 /**
  * Thin wrappers over IndexedDB (via idb-keyval) for persisting the last good
  * copy of read-only API data, so pages can serve it when the network is down.
  *
- * Cached data is split across two stores so logout can wipe the user's data
- * without re-deriving a list of per-user keys:
+ * Everything lives in ONE IndexedDB database with ONE object store. Data is
+ * scoped by a key prefix rather than by a separate store/database:
  *
- *   - `universalStore`: data identical for everyone (e.g. the public schedule).
+ *   - `'universal'`: data identical for everyone (e.g. the public schedule).
  *     Survives logout and is reused by guests and the next account.
- *   - `userStore`: data belonging to the signed-in user (identity, subscriptions,
+ *   - `'user'`: data belonging to the signed-in user (identity, subscriptions,
  *     notifications, connections). Cleared on logout so it can never surface for
  *     the next account on a shared device.
  *
- * idb-keyval cannot put two object stores in one database, so each store is its
- * own IndexedDB database — the maintainer-recommended pattern. Every helper takes
- * an explicit `store` so each call site declares its data's scope.
+ * Why one database, not two: opening two idb-keyval databases concurrently (each
+ * triggering its own first-time upgrade) races in Firefox — it loses the upgrade
+ * on the second database, leaving it permanently unusable so every write throws
+ * and is silently swallowed. A single database has a single open/upgrade, so
+ * there is no race. See idb-keyval issue #32.
  *
  * All helpers swallow storage errors (private mode, disabled storage, quota) and
  * degrade to a cache miss / no-op — offline caching is best-effort and must never
  * break a normal online load.
  */
 
-export const universalStore: UseStore = createStore('fanfan-cache-universal', 'keyval');
-export const userStore: UseStore = createStore('fanfan-cache-user', 'keyval');
+const cacheStore: UseStore = createStore('fanfan-cache', 'keyval');
 
-export async function readCache<T>(key: string, store: UseStore): Promise<T | undefined> {
+/** Scope a cache entry: per-user data is wiped on logout; universal data survives. */
+export type CacheScope = 'user' | 'universal';
+
+export const userScope: CacheScope = 'user';
+export const universalScope: CacheScope = 'universal';
+
+// Per-user keys carry this prefix so {@link clearUserCache} can find and drop
+// exactly them on logout, leaving universal entries untouched.
+const USER_KEY_PREFIX = 'u:';
+const UNIVERSAL_KEY_PREFIX = 'g:';
+
+function scopedKey(scope: CacheScope, key: string): string {
+	return `${scope === 'user' ? USER_KEY_PREFIX : UNIVERSAL_KEY_PREFIX}${key}`;
+}
+
+export async function readCache<T>(key: string, scope: CacheScope): Promise<T | undefined> {
 	try {
-		return await get<T>(key, store);
+		return await get<T>(scopedKey(scope, key), cacheStore);
 	} catch {
 		return undefined;
 	}
 }
 
-export async function writeCache<T>(key: string, value: T, store: UseStore): Promise<void> {
+export async function writeCache<T>(key: string, value: T, scope: CacheScope): Promise<void> {
 	try {
-		await set(key, value, store);
+		await set(scopedKey(scope, key), value, cacheStore);
 	} catch {
 		// Ignore — storage may be unavailable or full.
 	}
 }
 
 /**
- * Drop every entry in {@link userStore} on logout / session loss so the next
- * account never reads the previous user's data (e.g. their schedule subscriptions)
- * on a shared device. {@link universalStore} (e.g. the public schedule) is left
- * untouched so it survives a logout and serves the next viewer. Clearing the whole
- * store means no per-user key list to maintain. Swallows storage errors like the
- * other helpers.
+ * Drop every per-user entry on logout / session loss so the next account never
+ * reads the previous user's data (e.g. their schedule subscriptions) on a shared
+ * device. Universal entries (e.g. the public schedule) are left untouched so they
+ * survive a logout and serve the next viewer. Deletes exactly the keys carrying
+ * the user prefix. Swallows storage errors like the other helpers.
  */
 export async function clearUserCache(): Promise<void> {
 	try {
-		await clear(userStore);
+		const allKeys = await keys(cacheStore);
+		const userKeys = allKeys.filter(
+			(key): key is string => typeof key === 'string' && key.startsWith(USER_KEY_PREFIX)
+		);
+		if (userKeys.length > 0) {
+			await delMany(userKeys, cacheStore);
+		}
 	} catch {
 		// Ignore — storage may be unavailable. Best-effort like the other helpers.
 	}
@@ -85,9 +106,9 @@ function isEnvelope<T>(raw: unknown): raw is CachedEnvelope<T> {
  */
 async function readEnvelope<T>(
 	key: string,
-	store: UseStore
+	scope: CacheScope
 ): Promise<{ value: T; cachedAt?: number } | undefined> {
-	const raw = await readCache<unknown>(key, store);
+	const raw = await readCache<unknown>(key, scope);
 	if (raw === undefined) return undefined;
 	if (isEnvelope<T>(raw)) return { value: raw.value, cachedAt: raw.cachedAt };
 	// Legacy raw value (incl. `null`, a valid "logged out" cache) — no timestamp.
@@ -110,10 +131,10 @@ export interface FetchWithCacheResult<T> {
 
 /** Options for {@link fetchWithCache}. */
 export interface FetchWithCacheOptions<T> {
-	/** IndexedDB key within {@link store}. */
+	/** Cache key within {@link scope}. */
 	key: string;
-	/** Which store holds this entry: {@link universalStore} or {@link userStore}. */
-	store: UseStore;
+	/** Whether this entry is per-user ({@link userScope}) or shared ({@link universalScope}). */
+	scope: CacheScope;
 	/**
 	 * Runs the network request, given a timeout `signal` to pass to the API call.
 	 * Return the value to cache, or `undefined` to signal "reachable but no usable
@@ -141,13 +162,13 @@ export interface FetchWithCacheOptions<T> {
  */
 export async function fetchWithCache<T>({
 	key,
-	store,
+	scope,
 	fetcher,
 	timeoutMs = FIRST_PAINT_TIMEOUT_MS
 }: FetchWithCacheOptions<T>): Promise<FetchWithCacheResult<T>> {
 	// Known unreachable: serve the cached copy without a dead network wait.
 	if (!isReachable()) {
-		const cached = await readEnvelope<T>(key, store);
+		const cached = await readEnvelope<T>(key, scope);
 		return { data: cached?.value, cachedAt: cached?.cachedAt, stale: true };
 	}
 
@@ -158,27 +179,27 @@ export async function fetchWithCache<T>({
 
 		if (value === undefined) {
 			// Reachable but errored/empty — prefer the cached copy over a hard failure.
-			const cached = await readEnvelope<T>(key, store);
+			const cached = await readEnvelope<T>(key, scope);
 			return { data: cached?.value, cachedAt: cached?.cachedAt, stale: true };
 		}
 
 		const cachedAt = Date.now();
-		void writeCache<CachedEnvelope<T>>(key, { value, cachedAt }, store);
+		void writeCache<CachedEnvelope<T>>(key, { value, cachedAt }, scope);
 		return { data: value, cachedAt, stale: false };
 	} catch {
 		// Network failure / timeout: serve the last synced copy.
 		markReachable(false);
-		const cached = await readEnvelope<T>(key, store);
+		const cached = await readEnvelope<T>(key, scope);
 		return { data: cached?.value, cachedAt: cached?.cachedAt, stale: true };
 	}
 }
 
 /** Options for {@link warmCache}. */
 export interface WarmCacheOptions<T> {
-	/** IndexedDB key; must match the key (and store) the page's `load` reads. */
+	/** Cache key; must match the key (and scope) the page's `load` reads. */
 	key: string;
-	/** Which store holds this entry: {@link universalStore} or {@link userStore}. */
-	store: UseStore;
+	/** Whether this entry is per-user ({@link userScope}) or shared ({@link universalScope}). */
+	scope: CacheScope;
 	/** Runs the network request; return the value to cache, or `undefined` to skip. */
 	fetcher: (ctx: { signal: AbortSignal }) => Promise<T | undefined>;
 	/** Fetch timeout budget; defaults to {@link FIRST_PAINT_TIMEOUT_MS}. */
@@ -196,20 +217,20 @@ export interface WarmCacheOptions<T> {
  */
 export async function warmCache<T>({
 	key,
-	store,
+	scope,
 	fetcher,
 	timeoutMs = FIRST_PAINT_TIMEOUT_MS
 }: WarmCacheOptions<T>): Promise<void> {
 	try {
 		if (!isReachable()) return;
 		// Already cached: leave refresh to the page's own load and SSE updates.
-		if ((await readCache<unknown>(key, store)) !== undefined) return;
+		if ((await readCache<unknown>(key, scope)) !== undefined) return;
 
 		const value = await fetcher({ signal: timeoutSignal(timeoutMs) });
 		markReachable(true);
 		if (value === undefined) return;
 
-		void writeCache<CachedEnvelope<T>>(key, { value, cachedAt: Date.now() }, store);
+		void writeCache<CachedEnvelope<T>>(key, { value, cachedAt: Date.now() }, scope);
 	} catch {
 		// Best-effort warm — ignore failures.
 	}

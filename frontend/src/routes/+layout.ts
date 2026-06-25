@@ -6,8 +6,8 @@ import { createApiClient } from '$lib/api';
 import {
 	clearUserCache,
 	fetchWithCache,
-	universalStore,
-	userStore,
+	universalScope,
+	userScope,
 	warmCache
 } from '$lib/utils/offlineCache';
 
@@ -28,7 +28,7 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 	// no verdict, keep the cached user" (see fetcher below), so the type spans both.
 	const { data } = await fetchWithCache<CurrentUserDTO | null>({
 		key: USER_CACHE_KEY,
-		store: userStore,
+		scope: userScope,
 		fetcher: async ({ signal }) => {
 			const { data, response, error } = await client.GET('/me/', { fetch, signal });
 
@@ -66,7 +66,7 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 		// Schedule is universal — one shared key for guests and every account.
 		void warmCache<ScheduleEventFullDTO[]>({
 			key: 'schedule',
-			store: universalStore,
+			scope: universalScope,
 			fetcher: async ({ signal }) => {
 				const warmClient = createApiClient();
 				const { data: schedule, error } = await warmClient.GET('/schedule/', { signal });
@@ -79,7 +79,7 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 		if (user) {
 			void warmCache<SubscriptionFullDTO[]>({
 				key: `subscriptions:${user.id}`,
-				store: userStore,
+				scope: userScope,
 				fetcher: async ({ signal }) => {
 					const warmClient = createApiClient();
 					const { data, error } = await warmClient.GET('/schedule/subscriptions/', { signal });
