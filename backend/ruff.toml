@@ -118,6 +118,9 @@ docstring-code-format = false
 docstring-code-line-length = "dynamic"
 
 [lint.per-file-ignores]
+"src/fanfan/main/generate_vapid.py" = [
+    "T201",    # standalone keygen CLI — printing the keys/app key to stdout is the point
+]
 "tests/**/*.py" = [
     "S101",    # asserts are standard in tests
     "S105",    # hardcoded passwords in tests are fine

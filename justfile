@@ -4,8 +4,9 @@
 # No workspaces: frontend and backend keep isolated dependency trees.
 
 # On Windows, run recipes through Git Bash (or WSL) instead of cmd/PowerShell:
-# the recipes are POSIX shell and bootstrap.sh is a bash script. Requires
-# `bash` on PATH (ships with Git for Windows). Unix uses just's default `sh`.
+# the recipes are POSIX shell (`cd x && ...`). Requires `bash` on PATH (ships
+# with Git for Windows). Unix uses just's default `sh`. (`just bootstrap` itself
+# is pure Python, so its setup logic is shell-agnostic.)
 set windows-shell := ["bash", "-cu"]
 
 # ---- Setup ----
@@ -13,7 +14,7 @@ set windows-shell := ["bash", "-cu"]
 # secrets (DB/Redis/NATS passwords, WEB__SECRET_KEY), and generate VAPID keys.
 # Idempotent — re-run anytime; it never overwrites values you've already set.
 bootstrap:
-    ./scripts/bootstrap.sh
+    uv run --project backend python scripts/bootstrap.py
 
 # ---- Frontend (SvelteKit + pnpm) ----
 frontend-install:
@@ -46,6 +47,10 @@ backend-dev:
 
 backend-generate-openapi:
     cd backend && uv run python -m fanfan.main.generate_openapi
+
+# Generate a VAPID keypair into secrets/ (overwrites existing keys)
+backend-generate-vapid:
+    cd backend && uv run generate-vapid
 
 backend-format:
     cd backend && uv run ruff format src/fanfan tests --respect-gitignore
