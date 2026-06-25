@@ -1,3 +1,7 @@
+import logging
+from enum import StrEnum
+
+from pydantic import model_validator
 from pydantic_extra_types.timezone_name import TimeZoneName
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -15,6 +19,14 @@ from fanfan.application.interactors.outbox.config import OutboxConfig
 from fanfan.presentation.scheduler.config import SchedulerConfig
 from fanfan.presentation.tgbot.config import TelegramConfig
 from fanfan.presentation.web.config import WebConfig
+
+
+class Environment(StrEnum):
+    """Deployment environment. Single source of truth for dev/prod posture."""
+
+    DEV = "dev"
+    STAGING = "staging"
+    PROD = "prod"
 
 
 class EnvConfig(BaseSettings):
@@ -41,8 +53,9 @@ class EnvConfig(BaseSettings):
     push: PushConfig
 
     # Debug
-    env: str
-    debug: DebugConfig
+    env: Environment
+    # Defaults to production-safe values; relaxed for ENV=dev (see validator).
+    debug: DebugConfig = DebugConfig()
 
     # External
     cosplay2: Cosplay2Config | None = None
@@ -59,3 +72,30 @@ class EnvConfig(BaseSettings):
 
     # Notification retention (age before old notifications are purged)
     notification: NotificationConfig = NotificationConfig()
+
+    @model_validator(mode="after")
+    def _apply_environment_posture(self) -> EnvConfig:
+        """Derive debug defaults from ENV, then fail closed in production.
+
+        DebugConfig ships production-safe defaults. In dev we relax them for a
+        better local experience, but only for flags the user did NOT set
+        explicitly (an explicit DEBUG__* always wins). staging/prod keep the
+        safe defaults untouched.
+        """
+        explicit = self.debug.model_fields_set
+        if self.env is Environment.DEV:
+            if "enabled" not in explicit:
+                self.debug.enabled = True
+            if "logging_level" not in explicit:
+                self.debug.logging_level = logging.DEBUG
+            if "json_logs" not in explicit:
+                self.debug.json_logs = False
+        elif self.env is Environment.PROD and self.debug.enabled:
+            # FastAPI debug mode leaks stack traces in HTTP responses, so it
+            # must never reach production — refuse to start rather than leak.
+            msg = (
+                "DEBUG__ENABLED must be False when ENV=prod "
+                "(FastAPI debug mode leaks stack traces in HTTP responses)."
+            )
+            raise ValueError(msg)
+        return self
