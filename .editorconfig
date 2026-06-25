@@ -1,0 +1,41 @@
+# EditorConfig — editor-agnostic baseline. https://EditorConfig.org
+# Mirrors the formatters that own each tree: Prettier (frontend) and ruff
+# (backend). .gitattributes already pins LF in the repo; this enforces it in
+# the editor before a commit so Prettier/ESLint never flag CRLF.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Frontend: Prettier formats with tabs (useTabs), tab shown 2 wide.
+[*.{js,mjs,cjs,ts,mts,cts,svelte,css,html,json,jsonc}]
+indent_style = tab
+tab_width = 2
+
+# Backend: ruff uses 4-space indent, 88-col lines.
+[*.py]
+indent_style = space
+indent_size = 4
+max_line_length = 88
+
+# YAML disallows tabs.
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# TOML (pyproject, ruff, mise) — Python ecosystem convention.
+[*.toml]
+indent_style = space
+indent_size = 4
+
+# Shell scripts (hooks, setup).
+[*.sh]
+indent_style = space
+indent_size = 2
+
+# Markdown: trailing spaces are meaningful (hard line breaks).
+[*.md]
+trim_trailing_whitespace = false
