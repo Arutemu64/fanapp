@@ -55,6 +55,9 @@ python3 -m pip install --quiet --upgrade --user uv
 echo "[setup] Installing stable Python 3.14..."
 uv python install 3.14
 
+echo "[setup] Upgrading npm to latest..."
+npm install -g npm@latest
+
 # Note: project dependency installs (uv sync / pnpm install) deliberately live
 # in the SessionStart hook, not here. The setup script only re-runs when the
 # environment config changes or the cache expires (~7 days), so it would not
