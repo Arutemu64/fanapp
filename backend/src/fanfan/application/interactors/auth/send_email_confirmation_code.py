@@ -47,15 +47,16 @@ class SendEmailConfirmationCode:
             ttl_seconds=EMAIL_CONFIRMATION_CODE_MAX_AGE_SECONDS,
         )
 
-        message_body = await self.template_renderer.render(
-            "email_confirmation_code.jinja2",
-            {
-                "username": user.username,
-                "confirmation_code": code,
-                "expires_in_minutes": max(
-                    1, EMAIL_CONFIRMATION_CODE_MAX_AGE_SECONDS // 60
-                ),
-            },
+        template_context = {
+            "username": user.username,
+            "confirmation_code": code,
+            "expires_in_minutes": max(1, EMAIL_CONFIRMATION_CODE_MAX_AGE_SECONDS // 60),
+        }
+        html_body = await self.template_renderer.render(
+            "email_confirmation_code.jinja2", template_context
+        )
+        text_body = await self.template_renderer.render(
+            "email_confirmation_code.txt.jinja2", template_context
         )
         message = EmailMessage(
             subject=f"{code} — подтвердите почту в ФАН ФАН",
@@ -65,6 +66,7 @@ class SendEmailConfirmationCode:
                     email=data.target_email,
                 )
             ],
-            html_body=message_body,
+            html_body=html_body,
+            text_body=text_body,
         )
         await self.email_sender.send(message)
