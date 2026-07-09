@@ -247,10 +247,7 @@
 	{#if currentEvent}
 		<p class="flex items-start gap-1.5 px-1 text-xs text-gray-500 dark:text-gray-400">
 			<InfoCircleOutline class="mt-px h-3.5 w-3.5 shrink-0" />
-			<span
-				>Время начала примерное — программа может сдвигаться. Точнее всего показывает очередь
-				выступлений.</span
-			>
+			<span>Время начала примерное — программа может сдвигаться.</span>
 		</p>
 	{/if}
 
