@@ -31,6 +31,13 @@
 #           per-session index build lives in the SessionStart hook because the
 #           .codegraph/ db is gitignored and the code is pulled fresh each
 #           session. Usage is documented in AGENTS.md.
+#   * npm  - Self-upgrading npm via itself (`npm install -g npm@latest`) is
+#           best-effort: Node 22.22.2's bundled npm 10.9.7 has a known upstream
+#           bug where the live rebuild of its own module tree loses
+#           `promise-retry`, aborting with MODULE_NOT_FOUND before it ever
+#           reaches the pnpm install below (nodejs/node#62430, npm/cli#9151).
+#           The bundled npm installs pnpm/codegraph fine on its own, so a
+#           failed self-upgrade must not fail environment creation.
 #
 # Idempotent and safe to re-run: apt, pip, uv and pnpm all short-circuit when
 # everything is already present.
@@ -56,7 +63,8 @@ echo "[setup] Installing stable Python 3.14..."
 uv python install 3.14
 
 echo "[setup] Upgrading npm to latest..."
-npm install -g npm@latest
+npm install -g npm@latest \
+  || echo "[setup] WARN: npm self-upgrade failed (see install-channel notes above); continuing with bundled npm $(npm --version)."
 
 # Note: project dependency installs (uv sync / pnpm install) deliberately live
 # in the SessionStart hook, not here. The setup script only re-runs when the
