@@ -47,24 +47,17 @@ class ScheduleEventORM(BaseORM, OrderMixin):
     @classmethod
     def ranking_subquery(cls):
         # Single window pass over the non-skipped events, producing each row's
-        # dense 1..N ``queue`` position and cumulative ``time_until`` (sum of all
-        # preceding non-skipped durations). This is the one source of truth for
-        # the ranking logic: the queue/time_until column_properties correlate it
-        # per row (cheap for single-row reads and reusable as a WHERE expression
-        # in get_by_queue / subscription-distance filters), while the schedule
-        # list query joins it once to avoid re-running it per row.
-        #
-        # ROWS frame = "all preceding non-skipped rows". A RANGE frame would
-        # frame by the float ``order`` value (which has gaps from place_after
-        # averaging) and drop events.
+        # dense 1..N ``queue`` position. This is the one source of truth for the
+        # ranking: the ``queue`` column_property correlates it per row (cheap for
+        # single-row reads and reusable as a WHERE expression in get_by_queue /
+        # subscription-distance filters), while the schedule list query joins it
+        # once to avoid re-running it per row. Absolute event times are no longer
+        # derived here — they depend on wall-clock ``now`` and live in the
+        # schedule timing application service (see ADR-0008).
         return (
             select(
                 cls.id,
                 func.row_number().over(order_by=cls.order).label("queue"),
-                func.coalesce(
-                    func.sum(cls.duration).over(order_by=cls.order, rows=(None, -1)),
-                    0,
-                ).label("time_until"),
             )
             .where(cls.is_skipped.isnot(True))
             .subquery()
@@ -75,17 +68,6 @@ class ScheduleEventORM(BaseORM, OrderMixin):
     def queue(cls) -> Mapped[int | None]:
         ranked = cls.ranking_subquery()
         stmt = select(ranked.c.queue).where(cls.id == ranked.c.id)
-        return column_property(
-            stmt.scalar_subquery(),
-            expire_on_flush=True,
-            deferred=True,
-        )
-
-    @declared_attr
-    @classmethod
-    def time_until(cls) -> Mapped[int | None]:
-        ranked = cls.ranking_subquery()
-        stmt = select(ranked.c.time_until).where(cls.id == ranked.c.id)
         return column_property(
             stmt.scalar_subquery(),
             expire_on_flush=True,

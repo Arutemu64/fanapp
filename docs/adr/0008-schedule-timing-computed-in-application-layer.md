@@ -15,9 +15,12 @@ filters), so keeping them in SQL earns its place.
 
 What was missing is any **real-world anchor**. Nothing recorded when an event
 actually went on stage, so predicted times could not reflect show *drift* — an
-act starting late or overrunning. The frontend approximated "how far ahead"
-purely by subtracting cumulative `time_until` values, which shifts only when a
-staffer advances the current-event pointer, never while an act runs long.
+act starting late or overrunning. Both the schedule screen and the subscription
+push approximated "how far ahead" from the static, drift-blind `time_until`
+(cumulative planned duration from the schedule start), which shifts only when a
+staffer advances the current-event pointer, never while an act runs long. That
+overloaded, easy-to-misread value had already produced a unit bug (subtracting a
+queue index from a duration).
 
 Handling drift needs an absolute predicted start (`≈ 14:35`) anchored to the
 *actual* start of the current event and clamped to the wall clock. That value
@@ -40,17 +43,25 @@ core domain.
 - The domain stays clock-free: `ScheduleEvent.set_current(now)` receives the
   timestamp from the interactor (per ADR-0002), rather than reading the clock
   itself.
-- `queue` and `time_until` stay exactly as they are in SQL. This ADR **adds** a
-  request-time-dependent value; it does not relocate the existing static ones.
+- `queue` stays in SQL — it is drift-proof (an exact 1..N position), and its
+  correlated subquery is reused as a `WHERE` expression (`get_by_queue`,
+  subscription-distance filters). `time_until` is **removed** entirely: once the
+  schedule screen and the subscription push both read `expected_start_time`,
+  nothing consumes it, and keeping a drift-blind duplicate of the timing model
+  invites the class of bug it already caused.
 
 ## Consequences
 
-- Derived read values that depend on **request-time state** (`now`) are computed
-  in the application layer; SQL projections remain the source for values derived
-  purely from stored columns (`queue`, `time_until`). This split is the rule a
-  future reader should follow, not undo without a superseding ADR.
+- Timing has a **single source of truth** — the application service. Derived
+  read values that depend on **request-time state** (`now`) are computed there;
+  SQL projections remain the source only for values derived purely from stored
+  columns (`queue`). This split is the rule a future reader should follow, not
+  undo without a superseding ADR.
 - The schedule read does one extra in-memory pass over the event list, which is
   already fully loaded by `read_list_schedule` — negligible cost, no extra query.
+  The subscription-notification path loads and projects the schedule once per
+  schedule change (an infrequent, rate-limited operator action) to show the same
+  `≈ HH:MM` the screen does.
 - `expected_start_time` is exposed on the schedule DTO/API as an absolute anchor
   so clients can run their own live countdowns instead of relying on values that
   only refresh on the next poll.

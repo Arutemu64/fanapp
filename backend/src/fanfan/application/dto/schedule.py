@@ -21,7 +21,6 @@ class ScheduleEventFullDTO(BaseModel):
 
     # Calculated values
     queue: int | None
-    time_until: int | None
     # Absolute drift-aware predicted start, filled by the schedule timing service
     # (ADR-0008). None for past/skipped events and when nothing is on stage yet.
     expected_start_time: datetime | None = None

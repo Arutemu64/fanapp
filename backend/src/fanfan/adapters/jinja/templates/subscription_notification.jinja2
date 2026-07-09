@@ -10,15 +10,8 @@
 {% if queue_difference == 0 -%}
 <b>Выступление №{{ '%03d' % event_number }} «{{ event_title }}» началось!</b>
 {%- else -%}
-{% set hours_diff = time_diff // 3600 -%}
-{% set rounded_minutes = ((time_diff % 3600) / 60) | round -%}
-{% if rounded_minutes == 60 -%}
-{% set hours_diff = hours_diff + 1 -%}
-{% set minutes_diff = 0 -%}
-{% else -%}
-{% set minutes_diff = rounded_minutes -%}
-{% endif -%}
-До начала выступления <b>№{{ '%03d' % event_number }} «{{ event_title }}»</b> осталось <b>{{ queue_difference }} {{ events_pluralize(queue_difference) }}</b> (примерно {{ '%01d'|format(hours_diff) }}:{{ '%02d'|format(minutes_diff) }} ч.)
+{% set time_suffix = (' (примерно в ' ~ (expected_start_time | event_time) ~ ')') if expected_start_time else '' -%}
+До начала выступления <b>№{{ '%03d' % event_number }} «{{ event_title }}»</b> осталось <b>{{ queue_difference }} {{ events_pluralize(queue_difference) }}</b>{{ time_suffix }}
 {% if reason_msg %}
 {{ reason_msg }}
 {%- endif %}

@@ -33,7 +33,6 @@ def _event(
         block_title=None,
         actual_start_time=actual_start_time,
         queue=number,
-        time_until=None,
     )
 
 

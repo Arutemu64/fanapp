@@ -4046,17 +4046,6 @@
             ],
             "title": "Queue"
           },
-          "time_until": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Time Until"
-          },
           "expected_start_time": {
             "anyOf": [
               {
@@ -4081,8 +4070,7 @@
           "is_skipped",
           "nomination_title",
           "block_title",
-          "queue",
-          "time_until"
+          "queue"
         ],
         "title": "ScheduleEventFullDTO"
       },
@@ -4179,17 +4167,6 @@
               }
             ],
             "title": "Queue"
-          },
-          "time_until": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Time Until"
           }
         },
         "type": "object",
@@ -4198,8 +4175,7 @@
           "number",
           "title",
           "order",
-          "queue",
-          "time_until"
+          "queue"
         ],
         "title": "SubscriptionEventDTO"
       },
