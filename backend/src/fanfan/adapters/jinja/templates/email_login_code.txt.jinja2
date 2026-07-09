@@ -1,0 +1,17 @@
+{# Plain-text alternative for the login-code email. The Jinja env has autoescape on
+   globally (it is HTML-first); disable it here so text output stays literal. #}
+{% autoescape false %}
+{% if username %}Здравствуйте, {{ username }}!{% else %}Здравствуйте!{% endif %}
+
+Введите этот код на экране входа, чтобы войти в приложение ФАН ФАН:
+
+    {{ login_code }}
+
+Код действует {{ expires_in_minutes }} минут. Никому не сообщайте его.
+
+Если вы не запрашивали это письмо, просто проигнорируйте его.
+
+—
+Помощник фестиваля ФАН ФАН
+Это автоматическое письмо, отвечать на него не нужно.
+{% endautoescape %}

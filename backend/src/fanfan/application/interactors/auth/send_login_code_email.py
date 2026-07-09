@@ -49,17 +49,21 @@ class SendLoginCodeEmail:
             ttl_seconds=EMAIL_LOGIN_CODE_MAX_AGE_SECONDS,
         )
 
-        message_body = await self.template_renderer.render(
-            "email_login_code.jinja2",
-            {
-                "username": user.username,
-                "login_code": code,
-                "expires_in_minutes": max(1, EMAIL_LOGIN_CODE_MAX_AGE_SECONDS // 60),
-            },
+        template_context = {
+            "username": user.username,
+            "login_code": code,
+            "expires_in_minutes": max(1, EMAIL_LOGIN_CODE_MAX_AGE_SECONDS // 60),
+        }
+        html_body = await self.template_renderer.render(
+            "email_login_code.jinja2", template_context
+        )
+        text_body = await self.template_renderer.render(
+            "email_login_code.txt.jinja2", template_context
         )
         message = EmailMessage(
             subject=f"{code} — код входа в ФАН ФАН",
             recipients=[EmailRecipient(name=user.username or "", email=email_value)],
-            html_body=message_body,
+            html_body=html_body,
+            text_body=text_body,
         )
         await self.email_sender.send(message)
