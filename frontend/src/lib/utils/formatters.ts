@@ -44,6 +44,11 @@ const MOSCOW_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
 	timeZone: 'Europe/Moscow'
 });
 
+/** Wall-clock HH:MM in the festival timezone, e.g. an event's expected start. */
+export function formatMoscowTime(value: string | number | Date): string {
+	return MOSCOW_TIME_FORMATTER.format(new Date(value));
+}
+
 const MOSCOW_DAY_MONTH_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
 	day: '2-digit',
 	month: '2-digit',
@@ -82,10 +87,18 @@ export function formatSyncedAt(timestamp: number): string {
 	return `${MOSCOW_DAY_MONTH_FORMATTER.format(target)} в ${time}`;
 }
 
-export function formatUntil(queueUntil: number, timeUntil: number): string {
-	const h = Math.floor(timeUntil / 3600);
-	const m = Math.ceil((timeUntil % 3600) / 60);
-	return `Через ${queueUntil} ${pluralize(queueUntil, 'выступление', 'выступления', 'выступлений')} (${h} ч. ${m.toString().padStart(2, '0')} мин.)`;
+/**
+ * Countdown label for an upcoming event: how many acts away (drift-proof) plus
+ * the absolute expected start time as an anchor when known. On a schedule that
+ * drifts, the queue distance is always exact, while the "≈ HH:MM" survives being
+ * read minutes later — see ADR-0008.
+ */
+export function formatUntil(queueUntil: number, expectedStartTime: string | null): string {
+	const base = `Через ${queueUntil} ${pluralize(queueUntil, 'выступление', 'выступления', 'выступлений')}`;
+	if (!expectedStartTime) {
+		return base;
+	}
+	return `${base} · ≈ ${formatMoscowTime(expectedStartTime)}`;
 }
 
 /**

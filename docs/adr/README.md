@@ -52,3 +52,4 @@ permanent — it is how other ADRs and commits reference the decision.
 | [0005](0005-ports-as-protocol-with-explicit-adapter-subclassing.md) | Ports as `Protocol` with explicit adapter subclassing | Accepted |
 | [0006](0006-dishka-for-dependency-injection.md) | Dishka for dependency injection | Accepted |
 | [0007](0007-client-rendered-spa-frontend.md) | Client-rendered SvelteKit SPA frontend | Accepted |
+| [0008](0008-schedule-timing-computed-in-application-layer.md) | Absolute schedule times computed in the application layer | Accepted |

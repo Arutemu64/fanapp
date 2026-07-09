@@ -32,13 +32,12 @@ def _schedule_event(
     )
 
 
-async def test_queue_and_time_until_with_fractional_orders(
+async def test_queue_with_fractional_orders(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
 ):
     # place_after averages neighbour orders, so orders are floats with gaps
-    # smaller than 1. queue must stay a dense 1..N rank and time_until must
-    # sum every preceding non-skipped duration regardless of those gaps
+    # smaller than 1. queue must stay a dense 1..N rank regardless of those gaps
     # (a RANGE window frame would frame by the order value and drop events).
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
 
@@ -58,9 +57,3 @@ async def test_queue_and_time_until_with_fractional_orders(
     assert by_number[2].queue == 2
     assert by_number[4].queue == 3
     assert by_number[3].queue is None
-
-    # time_until = sum of all preceding non-skipped durations.
-    assert by_number[1].time_until == 0
-    assert by_number[2].time_until == 10
-    assert by_number[4].time_until == 30  # 10 + 20, skipped 99 not counted
-    assert by_number[3].time_until is None

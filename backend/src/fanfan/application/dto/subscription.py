@@ -13,7 +13,6 @@ class SubscriptionEventDTO(BaseModel):
 
     # Calculated values
     queue: int | None
-    time_until: int | None
 
 
 class SubscriptionFullDTO(BaseModel):

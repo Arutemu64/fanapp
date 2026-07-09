@@ -23,7 +23,6 @@ def _select_subscription_full_dto():
         .options(
             joinedload(SubscriptionORM.event).options(
                 undefer(ScheduleEventORM.queue),
-                undefer(ScheduleEventORM.time_until),
             )
         )
     )

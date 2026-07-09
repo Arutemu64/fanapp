@@ -9,7 +9,12 @@
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
 	import { matchesSearch } from '$lib/utils/search';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
-	import { ChevronUpOutline, CloseOutline, PlaySolid } from 'flowbite-svelte-icons';
+	import {
+		ChevronUpOutline,
+		CloseOutline,
+		InfoCircleOutline,
+		PlaySolid
+	} from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
 
 	import type { PageProps } from './$types';
@@ -234,6 +239,17 @@
 			</div>
 		</div>
 	</div>
+
+	<!-- Estimate disclaimer: the "≈ HH:MM" times are drift-projected, not
+	     guaranteed. Kept as a quiet inline note (no border/panel) so it reads as
+	     guidance rather than a promo banner the eye skips. Shown only while an
+	     event is live, since that's the only time projected start times appear. -->
+	{#if currentEvent}
+		<p class="flex items-start gap-1.5 px-1 text-xs text-gray-500 dark:text-gray-400">
+			<InfoCircleOutline class="mt-px h-3.5 w-3.5 shrink-0" />
+			<span>Время начала примерное — программа может сдвигаться.</span>
+		</p>
+	{/if}
 
 	<div class="space-y-4">
 		{#each groupedSchedule as block, blockIndex (`${block.title}-${blockIndex}`)}

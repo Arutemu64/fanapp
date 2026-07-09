@@ -17,6 +17,7 @@ class ScheduleEventMapper:
             order=model.order,
             nomination_title=model.nomination_title,
             block_title=model.block_title,
+            actual_start_time=model.actual_start_time,
         )
 
     @staticmethod
@@ -31,6 +32,7 @@ class ScheduleEventMapper:
             order=orm.order,
             nomination_title=orm.nomination_title,
             block_title=orm.block_title,
+            actual_start_time=orm.actual_start_time,
         )
 
     @staticmethod
@@ -38,11 +40,10 @@ class ScheduleEventMapper:
         event_orm: ScheduleEventORM,
         *,
         queue: int | None,
-        time_until: int | None,
     ) -> ScheduleEventFullDTO:
-        # queue/time_until are passed in explicitly: single-row reads supply the
-        # undeferred column_property values, while the list query supplies the
-        # columns from its single joined ranking subquery.
+        # queue is passed in explicitly: single-row reads supply the undeferred
+        # column_property value, while the list query supplies it from its single
+        # joined ranking subquery.
         return ScheduleEventFullDTO(
             id=ScheduleEventId(event_orm.id),
             number=event_orm.number,
@@ -53,6 +54,6 @@ class ScheduleEventMapper:
             is_skipped=event_orm.is_skipped,
             nomination_title=event_orm.nomination_title,
             block_title=event_orm.block_title,
+            actual_start_time=event_orm.actual_start_time,
             queue=queue,
-            time_until=time_until,
         )

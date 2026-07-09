@@ -15,7 +15,6 @@ from fanfan.core.vo.schedule_event import ScheduleEventId
 def _select_schedule_event_full_dto() -> Select:
     return select(ScheduleEventORM).options(
         undefer(ScheduleEventORM.queue),
-        undefer(ScheduleEventORM.time_until),
     )
 
 
@@ -135,7 +134,6 @@ class SqlScheduleEventGateway(ScheduleEventGateway):
             return self.mapper.parse_full_dto(
                 event_orm=event_orm,
                 queue=event_orm.queue,
-                time_until=event_orm.time_until,
             )
         return None
 
@@ -148,18 +146,18 @@ class SqlScheduleEventGateway(ScheduleEventGateway):
             return self.mapper.parse_full_dto(
                 event_orm=event_orm,
                 queue=event_orm.queue,
-                time_until=event_orm.time_until,
             )
         return None
 
     async def read_list_schedule(self) -> list[ScheduleEventFullDTO]:
-        # The whole schedule is read uncached, so queue/time_until come from a
-        # single ranking subquery joined once here, rather than the per-row
-        # correlated column_properties (which would re-run the window for every
-        # one of the ~hundreds of rows).
+        # The whole schedule is read uncached, so queue comes from a single
+        # ranking subquery joined once here, rather than the per-row correlated
+        # column_property (which would re-run the window for every one of the
+        # ~hundreds of rows). Absolute expected times are filled afterwards by
+        # the schedule timing service (ADR-0008).
         ranked = ScheduleEventORM.ranking_subquery()
         stmt = (
-            select(ScheduleEventORM, ranked.c.queue, ranked.c.time_until)
+            select(ScheduleEventORM, ranked.c.queue)
             .outerjoin(ranked, ScheduleEventORM.id == ranked.c.id)
             .order_by(ScheduleEventORM.order)
         )
@@ -168,7 +166,6 @@ class SqlScheduleEventGateway(ScheduleEventGateway):
             self.mapper.parse_full_dto(
                 event_orm=event_orm,
                 queue=queue,
-                time_until=time_until,
             )
-            for event_orm, queue, time_until in results
+            for event_orm, queue in results
         ]

@@ -1,4 +1,5 @@
 import logging
+from datetime import UTC, datetime
 
 from pydantic import BaseModel
 
@@ -61,7 +62,13 @@ class UndoScheduleChange:
             await self.schedule_gateway.save(changed_event)
 
         if previous_event:
-            previous_event.set_current()
+            # Undo puts the previously-current event back on stage. It already
+            # ran, so keep its original actual_start_time anchor instead of
+            # stamping the undo moment (set_current stamps on any False->True
+            # transition, which this is).
+            original_anchor = previous_event.actual_start_time
+            previous_event.set_current(now=datetime.now(UTC))
+            previous_event.actual_start_time = original_anchor
             await self.schedule_gateway.save(previous_event)
 
     async def _handle_moved(

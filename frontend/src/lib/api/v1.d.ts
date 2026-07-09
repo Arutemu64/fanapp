@@ -1247,10 +1247,12 @@ export interface components {
             nomination_title: string | null;
             /** Block Title */
             block_title: string | null;
+            /** Actual Start Time */
+            actual_start_time?: string | null;
             /** Queue */
             queue: number | null;
-            /** Time Until */
-            time_until: number | null;
+            /** Expected Start Time */
+            expected_start_time?: string | null;
         };
         /** SendBroadcastInput */
         SendBroadcastInput: {
@@ -1295,8 +1297,6 @@ export interface components {
             order: number;
             /** Queue */
             queue: number | null;
-            /** Time Until */
-            time_until: number | null;
         };
         /** SubscriptionFullDTO */
         SubscriptionFullDTO: {
@@ -1336,6 +1336,8 @@ export interface components {
             voting_enabled?: boolean | null;
             /** Announcement Timeout */
             announcement_timeout?: number | null;
+            /** Transition Buffer */
+            transition_buffer?: number | null;
         };
         /** UpdateCurrentUserInput */
         UpdateCurrentUserInput: {

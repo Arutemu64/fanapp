@@ -85,9 +85,6 @@
 	}
 
 	let queueUntil = $derived(currentEvent ? aheadOf(event.queue, currentEvent.queue) : null);
-	let timeUntil = $derived(
-		currentEvent ? aheadOf(event.time_until, currentEvent.time_until) : null
-	);
 
 	async function handleMarkCurrent() {
 		const { error, response } = await client.PATCH('/schedule/{event_id}/current', {
@@ -281,12 +278,12 @@
 						{formatDuration(event.duration)}
 					</span>
 
-					{#if timeUntil !== null && timeUntil !== 0}
+					{#if queueUntil !== null && queueUntil > 0}
 						<span
 							class="inline-flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400"
 						>
 							<HourglassOutline class="h-3.5 w-3.5" />
-							{formatUntil(queueUntil ?? 0, timeUntil)}
+							{formatUntil(queueUntil, event.expected_start_time ?? null)}
 						</span>
 					{/if}
 
