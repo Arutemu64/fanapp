@@ -78,6 +78,7 @@ On-demand CLI (not the always-on MCP server), so it costs no context until invok
    * Added/renamed/deleted a `lib/` submodule (`services/`, `utils/`, etc.)? Update the **Codebase Map**.
    * Changed an important file path referenced in docs (toast store, CLI commands, layout paths)? Update that doc.
    * Introduced a new architectural pattern (DI provider, ports folder, adapter type)? Update the relevant `docs/*.md`.
+   * Made an architecturally significant decision (new external dependency, changed deployment topology, or an expensive-to-reverse choice)? Add an immutable Architecture Decision Record under [`docs/adr/`](docs/adr/README.md) — `docs/*.md` guides say *how it works now*, ADRs record *why we chose it*.
    * Prefer **documenting patterns and rules** over exact file lists that rot. Keep the Codebase Map high-level.
 9. **Clear, Simple Code**: Write straightforward code a junior developer can read unaided. Favor explicit, obvious solutions over clever tricks or dense one-liners. Use descriptive names, small focused functions, and a short comment when intent isn't obvious. If a clever approach is unavoidable, explain why in a comment.
 10. **Verify Jinja Templates by Rendering**: After creating or editing a Jinja template, render it with all expected context values and confirm the output before marking the task complete — do not assume it renders correctly.
