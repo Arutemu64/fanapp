@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 from fanfan.core.exceptions.schedule import (
@@ -21,11 +22,19 @@ class ScheduleEvent(AggregateRoot):
     is_skipped: bool
     nomination_title: str | None
     block_title: str | None
+    # Wall-clock moment the event actually went on stage; the anchor for
+    # drift-aware expected-time projection (ADR-0008). None until first set.
+    actual_start_time: datetime | None = None
 
-    def set_current(self) -> None:
+    def set_current(self, now: datetime) -> None:
         # A skipped event cannot be announced as currently on stage.
         if self.is_skipped:
             raise SkippedEventNotAllowed
+        # Stamp the real start only on the False->True transition so a repeated
+        # call (or re-marking an already-current event) never overwrites the
+        # genuine anchor with a later timestamp.
+        if not self.is_current:
+            self.actual_start_time = now
         self.is_current = True
 
     def unset_current(self) -> None:

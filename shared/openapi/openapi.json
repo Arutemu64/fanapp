@@ -4023,6 +4023,18 @@
             ],
             "title": "Block Title"
           },
+          "actual_start_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Start Time"
+          },
           "queue": {
             "anyOf": [
               {
@@ -4044,6 +4056,18 @@
               }
             ],
             "title": "Time Until"
+          },
+          "expected_start_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Start Time"
           }
         },
         "type": "object",
@@ -4275,6 +4299,18 @@
               }
             ],
             "title": "Announcement Timeout"
+          },
+          "transition_buffer": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transition Buffer"
           }
         },
         "type": "object",

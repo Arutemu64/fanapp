@@ -147,8 +147,9 @@ class SendScheduleChangeNotifications:
         reason_msg: str | None,
     ) -> list[NotificationQueued]:
         events: list[NotificationQueued] = []
-        # Queue always exists for current event
+        # Queue and time_until always exist for the (non-skipped) current event.
         current_event_queue = cast("int", current_event.queue)
+        current_event_time_until = cast("int", current_event.time_until)
 
         upcoming_subscriptions = (
             await self.subscription_gateway.read_upcoming_subscriptions(
@@ -165,7 +166,9 @@ class SendScheduleChangeNotifications:
                         "event_number": s.event.number,
                         "event_title": s.event.title,
                         "queue_difference": s.event.queue - current_event_queue,
-                        "time_diff": s.event.time_until - current_event_queue,
+                        # Planned seconds from the on-stage event to this one;
+                        # both time_until values are cumulative-second offsets.
+                        "time_diff": s.event.time_until - current_event_time_until,
                         "reason_msg": reason_msg,
                     },
                 )

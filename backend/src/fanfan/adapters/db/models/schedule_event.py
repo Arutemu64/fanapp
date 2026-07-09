@@ -1,6 +1,7 @@
+from datetime import datetime
 from uuid import UUID, uuid7
 
-from sqlalchemy import Index, Uuid, func, select
+from sqlalchemy import DateTime, Index, Uuid, func, select
 from sqlalchemy.orm import (
     Mapped,
     column_property,
@@ -27,6 +28,9 @@ class ScheduleEventORM(BaseORM, OrderMixin):
     is_skipped: Mapped[bool] = mapped_column(server_default="False")
     nomination_title: Mapped[str | None] = mapped_column()
     block_title: Mapped[str | None] = mapped_column()
+    # Timezone-aware anchor for drift-aware projection (ADR-0008); we store and
+    # compare in UTC, so the column must be tz-aware to avoid naive/aware mixups.
+    actual_start_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (
         Index(

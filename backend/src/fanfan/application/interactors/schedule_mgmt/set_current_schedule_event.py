@@ -1,4 +1,5 @@
 import logging
+from datetime import UTC, datetime
 
 from pydantic import BaseModel
 
@@ -79,7 +80,7 @@ class SetCurrentScheduleEvent:
                     event = await self.schedule_gateway.get_by_id(data.event_id)
                     if event is None:
                         raise EventNotFound
-                    event.set_current()
+                    event.set_current(now=datetime.now(UTC))
                     await self.schedule_gateway.save(event)
                 else:
                     event = None

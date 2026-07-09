@@ -1,3 +1,5 @@
+from datetime import UTC, datetime, timedelta
+
 import pytest
 
 from fanfan.core.exceptions.schedule import (
@@ -33,17 +35,31 @@ def _event(
 
 def test_set_current_on_normal_event():
     event = _event(1, 1)
+    now = datetime.now(UTC)
 
-    event.set_current()
+    event.set_current(now=now)
 
     assert event.is_current is True
+    assert event.actual_start_time == now
 
 
 def test_set_current_on_skipped_event_raises():
     event = _event(1, 1, is_skipped=True)
 
     with pytest.raises(SkippedEventNotAllowed):
-        event.set_current()
+        event.set_current(now=datetime.now(UTC))
+
+
+def test_set_current_preserves_anchor_when_already_current():
+    # Re-marking an already-current event must not overwrite the real anchor
+    # with a later timestamp.
+    event = _event(1, 1)
+    first = datetime.now(UTC)
+    event.set_current(now=first)
+
+    event.set_current(now=first + timedelta(minutes=5))
+
+    assert event.actual_start_time == first
 
 
 def test_skip_on_current_event_raises():
