@@ -10,14 +10,11 @@
 #     code. They are near-instant when the lockfile is unchanged.
 #   * the Docker daemon - a process; never survives between sessions. Used to
 #     boot a throwaway Postgres for Alembic autogenerate (not for testing).
-#   * the codegraph index - .codegraph/ is gitignored and the code is pulled
-#     fresh each session, so the index must be (re)built/synced here
 #   * per-session environment variables (PATH) written to $CLAUDE_ENV_FILE
 #
-# The cloud-missing tooling (just, uv, Python 3.14, the codegraph binary) lives
-# in .claude/setup.sh, which runs once at environment creation and is baked into
-# the snapshot this hook starts from. Keep the two in sync: this hook assumes
-# setup.sh already ran.
+# The cloud-missing tooling (just, uv, Python 3.14) lives in .claude/setup.sh,
+# which runs once at environment creation and is baked into the snapshot this
+# hook starts from. Keep the two in sync: this hook assumes setup.sh already ran.
 set -euo pipefail
 
 # Only do remote setup in the Claude Code web environment. Local developers
@@ -30,9 +27,8 @@ fi
 # `set -e` (CLAUDE_PROJECT_DIR is normally set by Claude Code).
 REPO_ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 
-# Make the snapshot's upgraded uv (~/.local/bin) and the global codegraph binary
-# ($PNPM_HOME) reachable for the steps below.
-export PATH="$HOME/.local/bin:$HOME/.local/share/pnpm:$PATH"
+# Make the snapshot's upgraded uv reachable for the steps below.
+export PATH="$HOME/.local/bin:$PATH"
 
 # Run sudo correctly whether or not we are already root.
 if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo"; fi
@@ -83,26 +79,10 @@ else
   echo "[session-start] WARN: dockerd not found; Alembic autogenerate (just backend-generate-auto) unavailable."
 fi
 
-# Build (or refresh) the codegraph index so symbol/call-graph queries are ready.
-# The binary is installed by setup.sh; only the index lives here because the
-# .codegraph/ db is gitignored and the code is pulled fresh each session. A
-# present db means a resume - an incremental `sync` is enough; otherwise a full
-# `init`. Best-effort: never abort session setup on failure.
-if command -v codegraph >/dev/null 2>&1; then
-  echo "[session-start] Building codegraph index..."
-  if [ -f "$REPO_ROOT/.codegraph/codegraph.db" ]; then
-    codegraph sync "$REPO_ROOT" || echo "[session-start] WARN: codegraph sync failed; skipping."
-  else
-    codegraph init "$REPO_ROOT" || echo "[session-start] WARN: codegraph init failed; skipping."
-  fi
-else
-  echo "[session-start] WARN: codegraph not found (setup.sh may not have run); skipping index."
-fi
-
-# Persist PATH additions so the upgraded uv (~/.local/bin) and the codegraph
-# binary ($PNPM_HOME) are used throughout the session.
+# Persist PATH additions so the upgraded uv (~/.local/bin) is used throughout
+# the session.
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
-  echo 'export PATH="$HOME/.local/bin:$HOME/.local/share/pnpm:$PATH"' >> "$CLAUDE_ENV_FILE"
+  echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$CLAUDE_ENV_FILE"
 fi
 
 echo "[session-start] Setup complete."
