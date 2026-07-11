@@ -5,6 +5,9 @@
 	}
 }
 
+# The upstream ports below must match the host ports Compose publishes
+# (API_PORT / FRONTEND_PORT in .env, default 8000 / 3000). If you override
+# either var, update the matching reverse_proxy target here.
 :80 {
     # Route all requests starting with /api to FastAPI
 	handle_path /api* {

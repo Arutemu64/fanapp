@@ -8,12 +8,17 @@ services:
       # The app calls the API with a relative base (`/api`); vite proxies it to
       # the `api` container on the Compose network (see frontend/vite.config.ts).
       VITE_API_PROXY_TARGET: "http://api:8000"
-    # The dev container runs `vite dev` on port 3000 (not the prod NGINX :80).
-    # `!override` REPLACES the base service's port list — without it Compose
-    # merges port lists additively, leaving a dead 3000:80 mapping alongside this
-    # one and a host-port-3000 collision (Compose 2.24+).
+      # vite reads FRONTEND_PORT (see vite.config.ts) so the dev server listens on
+      # exactly the port published below. Default 3000 keeps the upstream Caddy
+      # config unchanged.
+      FRONTEND_PORT: "${FRONTEND_PORT:-3000}"
+    # The dev container runs `vite dev` on FRONTEND_PORT (not the prod NGINX :80).
+    # Host and container side use the same port so the mapping stays valid for any
+    # override. `!override` REPLACES the base service's port list — without it
+    # Compose merges port lists additively, leaving a dead :80 mapping alongside
+    # this one and a host-port collision (Compose 2.24+).
     ports: !override
-      - '127.0.0.1:3000:3000'
+      - '127.0.0.1:${FRONTEND_PORT:-3000}:${FRONTEND_PORT:-3000}'
     # Persist Vite's dependency pre-bundle cache (node_modules/.vite) across
     # container recreations so `vite dev` doesn't cold-rebundle deps on every
     # start. The watch sync excludes node_modules/, so this named volume is the

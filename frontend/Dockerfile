@@ -21,9 +21,12 @@ ENV NODE_ENV=development
 
 COPY . .
 
+# Default dev port; the actual port comes from FRONTEND_PORT via vite.config.ts.
 EXPOSE 3000
 
-CMD ["sh", "-c", "pnpm exec svelte-kit sync && pnpm dev --host 0.0.0.0 --port 3000"]
+# No --port flag: vite.config.ts reads FRONTEND_PORT (compose passes it in), so a
+# single var drives the port and the flag can't silently override it.
+CMD ["sh", "-c", "pnpm exec svelte-kit sync && pnpm dev --host 0.0.0.0"]
 
 # ── Build stage ──────────────────────────────────────────────────────────────
 FROM base AS build
