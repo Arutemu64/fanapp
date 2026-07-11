@@ -59,6 +59,10 @@ dev = [
 requires = ["uv_build>=0.11.19,<0.12"]
 build-backend = "uv_build"
 
+[tool.uv]
+# Matches mise.toml and backend/Dockerfile; bump all three together.
+required-version = "==0.11.28"
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 # Change both to session-scope so one loop is used for the whole run
