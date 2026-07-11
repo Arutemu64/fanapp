@@ -33,7 +33,12 @@ class TestDbProvider(Provider):
 
     @provide
     def get_redis_config(self) -> Iterable[RedisConfig]:
-        redis_container = RedisContainer("redis:8.8.0-alpine")
+        # Match the prod/dev image (docker-compose.yml). RedisContainer pings
+        # over the RESP wire with a redis-py client, so Valkey works unchanged.
+        # TODO(testcontainers>=4.15.0): switch to the dedicated ValkeyContainer
+        # (testcontainers/testcontainers-python#947) once it ships in a stable
+        # release; it also drops the deprecated wait-decorator filterwarning.
+        redis_container = RedisContainer("valkey/valkey:9.1-alpine")
         # TODO: workaround from testcontainers/testcontainers-python#108.
         if os.name == "nt":
             redis_container.get_container_host_ip = lambda: "localhost"
