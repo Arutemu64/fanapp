@@ -26,8 +26,7 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
 ├── shared/                   # Shared OpenAPI spec
 │   └── openapi/
 ├── config/                   # Committed, non-secret infra config (e.g. redis/)
-├── secrets/                  # Gitignored runtime secrets (VAPID PEM keys); mounted read-only into backend
-└── .devcontainer/            # GitHub Codespaces / Dev Container (mise toolchain + post-create provisioning)
+└── secrets/                  # Gitignored runtime secrets (VAPID PEM keys); mounted read-only into backend
 ```
 
 ## Stack & Core Commands
