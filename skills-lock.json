@@ -5,13 +5,13 @@
       "source": "ccheney/robust-skills",
       "sourceType": "github",
       "skillPath": "skills/clean-ddd-hexagonal/SKILL.md",
-      "computedHash": "3e2bcc45e58cd714b336e04c96544859d6577c4c6faf762cdf8ce3d02dbf9a79"
+      "computedHash": "4a48fdb1461f8f62d3f477bd7958582bc47ac98044f9ac8f0940324f20027663"
     },
     "docker-expert": {
       "source": "sickn33/antigravity-awesome-skills",
       "sourceType": "github",
       "skillPath": "skills/docker-expert/SKILL.md",
-      "computedHash": "7be30b1c18b91628dcd8437a89e7e20acce76bae4349533e4ebdeb376a660bcb"
+      "computedHash": "0974b5f64fcd284c1bd662810e2388f7beb9be6784c597de4d0ad4213ccbd6af"
     },
     "documentation-writer": {
       "source": "github/awesome-copilot",
@@ -23,25 +23,25 @@
       "source": "fastapi/fastapi",
       "sourceType": "github",
       "skillPath": "fastapi/.agents/skills/fastapi/SKILL.md",
-      "computedHash": "9feb517089c269af4fdab5031dea1100a92fd50081e906ccfaf8a971858e39f9"
+      "computedHash": "e85d9e223fbc3183b1a599bbe8b02d2edf275d046ff5bcfd14352c92cdff52b3"
     },
     "find-docs": {
       "source": "upstash/context7",
       "sourceType": "github",
       "skillPath": "skills/find-docs/SKILL.md",
-      "computedHash": "d0321f889edc54a338b22615d6b00ace35f73f5879558e7183d0a70ceb819aa7"
+      "computedHash": "a6ef6cee00e9ae9b18dce7133edc403d0ba8750ef1ac5f02af80431e060dd007"
     },
     "pwa-development": {
       "source": "alinaqi/claude-bootstrap",
       "sourceType": "github",
       "skillPath": "skills/pwa-development/SKILL.md",
-      "computedHash": "2219041ce92f6361ba77eb06c9a927dc7a1ba48f40ff5132321a29c4154ebc7a"
+      "computedHash": "356d9a26a8435778bb3bb906f5198814c48872ae87485ae97f4da3c10a0cfcc5"
     },
     "simplify": {
       "source": "brianlovin/claude-config",
       "sourceType": "github",
       "skillPath": "skills/simplify/SKILL.md",
-      "computedHash": "80ddf9f6ae4ad33f03b4e84e183c9458e19f6e13d85129261394634529aeb4b8"
+      "computedHash": "322a20071306ede626dc73ac05182b08c97b60781e23ec3fbf23f85a4d27d111"
     },
     "svelte-code-writer": {
       "source": "sveltejs/ai-tools",
@@ -59,13 +59,13 @@
       "source": "giuseppe-trisciuoglio/developer-kit",
       "sourceType": "github",
       "skillPath": "plugins/developer-kit-typescript/skills/tailwind-css-patterns/SKILL.md",
-      "computedHash": "2fa1b2d4e0bc020dcbaa1e65af6f7ba75715116686e0fd663a4b268c8ace22d4"
+      "computedHash": "6092620c3af955a46ea2b94ca8a40197ac8392e6bbdc8c7515659328b186c770"
     },
     "ui-ux-pro-max": {
       "source": "nextlevelbuilder/ui-ux-pro-max-skill",
       "sourceType": "github",
       "skillPath": ".claude/skills/ui-ux-pro-max/SKILL.md",
-      "computedHash": "6337038fe1fe6bbe1b9f252ab678ee575859190bab6f0f246f4061824eb40875"
+      "computedHash": "a55c93594689ff54fc12a1c40b8c5a418470e306392014667378f8633df105f0"
     }
   }
 }
