@@ -27,7 +27,13 @@ export default defineConfig(
 			globals: { ...globals.browser, ...globals.node },
 			parserOptions: {
 				projectService: true,
-				tsconfigRootDir: import.meta.dirname
+				tsconfigRootDir: import.meta.dirname,
+				// Declare `.svelte` here, globally, not only in the Svelte override.
+				// With projectService, differing extraFileExtensions across files in
+				// the same TS project forces a full project reload per file, turning
+				// a cold lint of this repo from ~2min into ~15s once made consistent.
+				// https://typescript-eslint.io/troubleshooting/typed-linting/performance/
+				extraFileExtensions: ['.svelte']
 			}
 		},
 		rules: {
