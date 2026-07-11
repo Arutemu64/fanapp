@@ -14,20 +14,29 @@ repos:
         args: [--unsafe]
       - id: check-added-large-files
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    # Matches the version of Ruff installed in your environment
-    rev: v0.15.21
-    hooks:
-      # Run the linter
-      - id: ruff-check
-        args: [ --fix ]
-        files: ^backend/
-      # Run the formatter
-      - id: ruff-format
-        files: ^backend/
-
   - repo: local
     hooks:
+      # Ruff runs as a local hook (not the astral-sh/ruff-pre-commit mirror) so
+      # its version has a single source of truth: backend/uv.lock. This avoids
+      # drift between a mirror `rev` and the pinned ruff. Same targets as CI
+      # (src/fanfan tests); pass_filenames is off because `uv run --directory
+      # backend` changes cwd, which would break repo-root-relative file args.
+      - id: ruff-check
+        name: ruff check
+        entry: uv run --directory backend ruff check --fix src/fanfan tests
+        language: system
+        files: ^backend/
+        types: [ python ]
+        pass_filenames: false
+
+      - id: ruff-format
+        name: ruff format
+        entry: uv run --directory backend ruff format src/fanfan tests
+        language: system
+        files: ^backend/
+        types: [ python ]
+        pass_filenames: false
+
       - id: ty
         name: ty
         entry: uv run --directory backend ty check src/fanfan
