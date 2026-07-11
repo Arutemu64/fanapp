@@ -28,12 +28,7 @@ const HANDSHAKE_TIMEOUT_MS = 5000;
 const HIDDEN_PAUSE_GRACE_MS = 60000;
 
 export type ConnectionStatus =
-	| 'disconnected'
-	| 'connecting'
-	| 'transport_open'
-	| 'connected'
-	| 'error'
-	| 'failed';
+	'disconnected' | 'connecting' | 'transport_open' | 'connected' | 'error' | 'failed';
 
 export interface EventsHandshakePayload {
 	server_time: string;

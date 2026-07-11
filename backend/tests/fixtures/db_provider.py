@@ -18,7 +18,7 @@ class TestDbProvider(Provider):
 
     @provide
     def get_db_config(self) -> Iterable[DatabaseConfig]:
-        postgres = PostgresContainer("postgres:18.2", driver="asyncpg")
+        postgres = PostgresContainer("postgres:18.4", driver="asyncpg")
         # TODO: workaround from testcontainers/testcontainers-python#108.
         if os.name == "nt":
             postgres.get_container_host_ip = lambda: "localhost"
@@ -33,7 +33,7 @@ class TestDbProvider(Provider):
 
     @provide
     def get_redis_config(self) -> Iterable[RedisConfig]:
-        redis_container = RedisContainer("redis:6.2.13-alpine")
+        redis_container = RedisContainer("redis:8.8.0-alpine")
         # TODO: workaround from testcontainers/testcontainers-python#108.
         if os.name == "nt":
             redis_container.get_container_host_ip = lambda: "localhost"

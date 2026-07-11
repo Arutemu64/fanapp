@@ -4,7 +4,7 @@ exclude: '^(\.agent|\.agents|\.claude)/'
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -16,7 +16,7 @@ repos:
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Matches the version of Ruff installed in your environment
-    rev: v0.15.14
+    rev: v0.15.21
     hooks:
       # Run the linter
       - id: ruff-check
