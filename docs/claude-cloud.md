@@ -89,7 +89,7 @@ booted and torn down on demand by `just backend-generate-auto` (see
 
 Everything else is deliberately **not** prepulled and left to CI:
 
-* integration-test images (`postgres:18.2`, `redis:…` via testcontainers) — the
+* integration-test images (`postgres:18.4`, `redis:…` via testcontainers) — the
   full `pytest` suite runs in `.github/workflows/ci.yml`, not in cloud sessions.
 * the rest of the compose stack (`nats`, `valkey`, db-backup) — not needed to
   generate a schema diff.
