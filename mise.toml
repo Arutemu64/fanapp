@@ -6,7 +6,7 @@
 # separately for the full `just run-dev` environment.
 [tools]
 python = "3.14"   # backend requires-python >= 3.14
-node = "22"       # LTS
-pnpm = "10.15.1"  # matches frontend/package.json "packageManager"
+node = "24"       # LTS
+pnpm = "11.11.0"  # matches frontend/package.json "packageManager"
 uv = "latest"
 just = "latest"

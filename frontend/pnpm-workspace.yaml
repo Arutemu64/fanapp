@@ -1,2 +1,6 @@
-onlyBuiltDependencies:
-  - esbuild
+allowBuilds:
+  # Matches the pre-pnpm-11 default: its build script (downloading the
+  # sentry-cli binary) was already an ignored/unapproved postinstall, so this
+  # keeps behavior unchanged rather than opting in to running it.
+  '@sentry/cli': false
+  esbuild: true

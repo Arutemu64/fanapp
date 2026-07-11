@@ -2,7 +2,7 @@
 	"name": "fanapp",
 	"private": true,
 	"version": "0.0.1",
-	"packageManager": "pnpm@10.15.1",
+	"packageManager": "pnpm@11.11.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
@@ -53,10 +53,5 @@
 		"@sentry/sveltekit": "^10.61.0",
 		"idb-keyval": "^6.2.5",
 		"openapi-fetch": "^0.17.0"
-	},
-	"pnpm": {
-		"onlyBuiltDependencies": [
-			"esbuild"
-		]
 	}
 }
