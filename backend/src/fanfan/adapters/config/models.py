@@ -1,7 +1,7 @@
 import logging
 from enum import StrEnum
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_extra_types.timezone_name import TimeZoneName
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -53,8 +53,11 @@ class EnvConfig(BaseSettings):
     push: PushConfig
 
     # Debug
-    env: Environment
-    # Defaults to production-safe values; relaxed for ENV=dev (see validator).
+    # Read from APP_ENV, not bare ENV: pydantic-settings also reads os.environ,
+    # and `ENV` is a common ambient shell var that could silently shadow the
+    # .env value. The Python attribute stays `env`.
+    env: Environment = Field(validation_alias="APP_ENV")
+    # Defaults to production-safe values; relaxed for APP_ENV=dev (see validator).
     debug: DebugConfig = DebugConfig()
 
     # External
@@ -94,7 +97,7 @@ class EnvConfig(BaseSettings):
             # FastAPI debug mode leaks stack traces in HTTP responses, so it
             # must never reach production — refuse to start rather than leak.
             msg = (
-                "DEBUG__ENABLED must be False when ENV=prod "
+                "DEBUG__ENABLED must be False when APP_ENV=prod "
                 "(FastAPI debug mode leaks stack traces in HTTP responses)."
             )
             raise ValueError(msg)
