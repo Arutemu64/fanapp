@@ -94,6 +94,8 @@ This brings up the frontend, API, FastStream consumer, scheduler, Postgres, Redi
 - Frontend: http://localhost:3000
 - API: http://localhost:8000
 
+Both host ports are overridable if 3000/8000 are taken — set `FRONTEND_PORT` / `API_PORT` in `.env` (see `.env.example`). Update `Caddyfile.example` to match if you use it.
+
 ### 3. Run locally (without Docker)
 
 Install dependencies, then start each side in its own terminal:
@@ -103,8 +105,8 @@ just backend-install
 just frontend-install
 
 just backend-migrate     # apply DB migrations (needs Postgres reachable)
-just backend-dev         # FastAPI on :8000
-just frontend-dev        # SvelteKit dev server
+just backend-dev         # FastAPI on :8000 (WEB__PORT)
+just frontend-dev        # SvelteKit dev server on :3000 (FRONTEND_PORT)
 ```
 
 ## Common commands

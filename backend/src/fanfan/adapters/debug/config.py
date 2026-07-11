@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 class DebugConfig(BaseModel):
     # Defaults are production-safe (fail-closed): debug off, INFO logs, JSON on.
-    # When ENV=dev these are relaxed to developer-friendly values unless a
+    # When APP_ENV=dev these are relaxed to developer-friendly values unless a
     # DEBUG__* var is set explicitly. See EnvConfig._apply_environment_posture.
     #
     # `enabled` turns on FastAPI's debug mode (stack traces in HTTP responses)

@@ -23,10 +23,11 @@ services:
     # frontend on API health would turn any backend outage into a total blackout
     # (even the static shell wouldn't serve); decoupled, the UI stays up and
     # degrades gracefully while the backend recovers.
-    # Host port stays 3000 so the upstream Caddy reverse proxy is unchanged;
-    # NGINX listens on 80 inside the container.
+    # Host port defaults to 3000 so the upstream Caddy reverse proxy is unchanged;
+    # override with FRONTEND_PORT in .env to avoid a collision. NGINX listens on
+    # 80 inside the container regardless (only the host side is remapped).
     ports:
-      - '127.0.0.1:3000:80'
+      - '127.0.0.1:${FRONTEND_PORT:-3000}:80'
     restart: unless-stopped
     profiles: [ "core" ]
     networks:
@@ -55,8 +56,11 @@ services:
       UVICORN_ROOT_PATH: "/api"
       PUSH__PRIVATE_KEY_PATH: "/app/secrets/private_key.pem"
       PUSH__PUBLIC_KEY_PATH: "/app/secrets/public_key.pem"
+    # Host port defaults to 8000; override with API_PORT in .env to avoid a
+    # collision. The container always listens on 8000 (UVICORN_PORT above) — only
+    # the host side is remapped. If you change this, update Caddyfile too.
     ports:
-      - '127.0.0.1:8000:8000'
+      - '127.0.0.1:${API_PORT:-8000}:8000'
     restart: unless-stopped
     stop_signal: SIGINT
     read_only: true

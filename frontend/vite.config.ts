@@ -27,6 +27,13 @@ export default defineConfig({
 	server: {
 		host: true,
 		allowedHosts: true,
+		// Dev server port. Read from FRONTEND_PORT so a single var drives the port
+		// both with Docker (compose passes it in) and without (`just frontend-dev`).
+		// Default 3000 to match the documented URL. strictPort fails fast if the
+		// port is taken instead of silently drifting to 3001 — the Caddy/vite proxy
+		// contract assumes a fixed port, so a silent change would break it.
+		port: Number(process.env.FRONTEND_PORT ?? 3000),
+		strictPort: true,
 		// In dev the frontend and backend run on different origins, but the app
 		// calls the API with a relative base (`PUBLIC_API_URL=/api`). Proxy `/api`
 		// to the backend so dev mirrors the same-origin prod setup (Caddy) and
