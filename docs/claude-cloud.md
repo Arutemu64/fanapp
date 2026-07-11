@@ -48,6 +48,8 @@ prepulls (all persist in the snapshot):
 
 * `just` (apt), an upgraded `uv` (PyPI), Python 3.14 — the base image's `uv` is
   too old for stable 3.14 and can't self-update here (GitHub installer 403s).
+* Node 24 via `nvm` (already on the image) — the base image's system Node is
+  22; the official Node/nvm installers both 403 here.
 * `docker login` + a single Docker image prepull (`postgres:18-alpine`, see below).
 
 **`.claude/hooks/session-start.sh`** — work that must run each session because it
@@ -56,7 +58,8 @@ does not survive the snapshot:
 * `uv sync` / `pnpm install` — kept here so a dependency bump is picked up
   without an environment rebuild; near-instant when the lockfile is unchanged.
 * starting `dockerd` — a process, never cached; restarted every session.
-* per-session env vars written to `$CLAUDE_ENV_FILE` (`PATH`).
+* per-session env vars written to `$CLAUDE_ENV_FILE` (`PATH`, including
+  activating the nvm-installed Node 24 over the base image's system Node 22).
 
 ## Network access
 

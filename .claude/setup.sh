@@ -24,16 +24,20 @@
 #   * just - The repo drives every workflow through `just`, which is not
 #           preinstalled. Its official installer pulls from GitHub (403), so we
 #           use the native Ubuntu package (`apt-get install just`).
+#   * node - The base web image ships Node 22 as the system Node (outside nvm,
+#           at /opt/node22/bin). mise.toml now pins Node 24, so we install it
+#           with nvm, which the image already has at $NVM_DIR - the official
+#           nodejs.org/nvm-sh installers both pull from GitHub (403).
 #   * npm  - Self-upgrading npm via itself (`npm install -g npm@latest`) is
-#           best-effort: Node 22.22.2's bundled npm 10.9.7 has a known upstream
-#           bug where the live rebuild of its own module tree loses
+#           best-effort: some bundled npm builds have hit a known upstream bug
+#           where the live rebuild of its own module tree loses
 #           `promise-retry`, aborting with MODULE_NOT_FOUND before it ever
 #           reaches the pnpm install below (nodejs/node#62430, npm/cli#9151).
 #           The bundled npm installs pnpm fine on its own, so a failed
 #           self-upgrade must not fail environment creation.
 #
-# Idempotent and safe to re-run: apt, pip, uv and pnpm all short-circuit when
-# everything is already present.
+# Idempotent and safe to re-run: apt, pip, uv, nvm and pnpm all short-circuit
+# when everything is already present.
 set -euo pipefail
 
 # The image's uv lives in ~/.local/bin; keep it (and pip --user installs)
@@ -55,6 +59,19 @@ python3 -m pip install --quiet --upgrade --user uv
 echo "[setup] Installing stable Python 3.14..."
 uv python install 3.14
 
+echo "[setup] Installing Node.js 24 (nvm)..."
+export NVM_DIR="/opt/nvm"
+# shellcheck disable=SC1091
+. "$NVM_DIR/nvm.sh"
+nvm install 24
+nvm alias default 24
+# `nvm alias default` only affects PATH once something calls `nvm use`; put
+# Node 24's bin dir first now so the rest of this script picks it up instead
+# of the base image's system Node 22 at /opt/node22/bin, which is earlier on
+# PATH by default (/etc/profile.d/nodejs.sh). session-start.sh resolves the
+# same "default" alias the same way each session.
+export PATH="$(dirname "$(nvm which default)"):$PATH"
+
 echo "[setup] Upgrading npm to latest..."
 npm install -g npm@latest \
   || echo "[setup] WARN: npm self-upgrade failed (see install-channel notes above); continuing with bundled npm $(npm --version)."
@@ -67,8 +84,8 @@ npm install -g npm@latest \
 # lockfile is unchanged and only fetch the delta after a real bump (the uv/pnpm
 # caches persist in the snapshot).
 
-echo "[setup] Upgrading pnpm to latest..."
-npm install -g pnpm@latest
+echo "[setup] Installing pnpm 11 (matches mise.toml / frontend/package.json)..."
+npm install -g pnpm@11.11.0
 
 # Prepull the single Docker image the cloud flow needs: a Postgres matching
 # production (postgres:18-alpine), used to autogenerate Alembic migrations

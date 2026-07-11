@@ -12,9 +12,10 @@
 #     boot a throwaway Postgres for Alembic autogenerate (not for testing).
 #   * per-session environment variables (PATH) written to $CLAUDE_ENV_FILE
 #
-# The cloud-missing tooling (just, uv, Python 3.14) lives in .claude/setup.sh,
-# which runs once at environment creation and is baked into the snapshot this
-# hook starts from. Keep the two in sync: this hook assumes setup.sh already ran.
+# The cloud-missing tooling (just, uv, Python 3.14, Node 24 via nvm) lives in
+# .claude/setup.sh, which runs once at environment creation and is baked into
+# the snapshot this hook starts from. Keep the two in sync: this hook assumes
+# setup.sh already ran.
 set -euo pipefail
 
 # Only do remote setup in the Claude Code web environment. Local developers
@@ -29,6 +30,18 @@ REPO_ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || 
 
 # Make the snapshot's upgraded uv reachable for the steps below.
 export PATH="$HOME/.local/bin:$PATH"
+
+# Activate the Node 24 setup.sh installed via nvm, so the `pnpm install` below
+# (and anything else this session runs) uses it instead of the base image's
+# system Node 22 at /opt/node22/bin, which is otherwise earlier on PATH
+# (/etc/profile.d/nodejs.sh). nvm.sh alone doesn't switch PATH - only `nvm use`
+# does - so resolve and prepend Node 24's bin dir explicitly.
+export NVM_DIR="/opt/nvm"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  # shellcheck disable=SC1091
+  . "$NVM_DIR/nvm.sh"
+  export PATH="$(dirname "$(nvm which default)"):$PATH"
+fi
 
 # Run sudo correctly whether or not we are already root.
 if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo"; fi
@@ -79,10 +92,14 @@ else
   echo "[session-start] WARN: dockerd not found; Alembic autogenerate (just backend-generate-auto) unavailable."
 fi
 
-# Persist PATH additions so the upgraded uv (~/.local/bin) is used throughout
-# the session.
+# Persist PATH additions so the upgraded uv (~/.local/bin) and nvm's Node 24
+# are used throughout the session, not just in this hook's own shell.
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
-  echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$CLAUDE_ENV_FILE"
+  {
+    echo 'export PATH="$HOME/.local/bin:$PATH"'
+    echo 'export NVM_DIR="/opt/nvm"'
+    echo '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && export PATH="$(dirname "$(nvm which default)"):$PATH"'
+  } >> "$CLAUDE_ENV_FILE"
 fi
 
 echo "[session-start] Setup complete."

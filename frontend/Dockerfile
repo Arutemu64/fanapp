@@ -1,9 +1,9 @@
-FROM node:22.23-alpine AS base
+FROM node:24.18-alpine AS base
 
 ENV PNPM_HOME=/pnpm
 ENV PATH=/pnpm:$PATH
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
-ENV PNPM_VERSION=10.15.1
+ENV PNPM_VERSION=11.11.0
 
 RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
 
