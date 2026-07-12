@@ -32,7 +32,12 @@ class Environment(StrEnum):
 class EnvConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_nested_delimiter="__",
-        extra="allow",
+        # "ignore", not "forbid": the backend reads the same root `.env` that also
+        # holds Compose/frontend vars (IMAGE_TAG, FRONTEND_PORT, PUBLIC_*, ...),
+        # which are not backend fields — "forbid" would crash the app on them.
+        # "ignore" drops those silently; a renamed/typo'd BACKEND key is caught by
+        # the .env.example drift check instead (see AGENTS.md config-drift rule).
+        extra="ignore",
         env_file=".env",
         env_file_encoding="utf-8",
     )
