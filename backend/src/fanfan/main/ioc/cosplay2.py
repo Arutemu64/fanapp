@@ -1,6 +1,6 @@
 from collections.abc import AsyncIterable
 
-import httpx
+import httpx2
 from adaptix import Retort
 from dishka import Provider, Scope, provide
 
@@ -31,7 +31,7 @@ class Cosplay2Provider(Provider):
             "X-API-Key": config.api_key,
             "X-API-Secret": config.api_secret.get_secret_value(),
         }
-        async with httpx.AsyncClient(
+        async with httpx2.AsyncClient(
             base_url=config.build_api_base_url(), headers=headers
         ) as client:
             yield Cosplay2Client(client=client, retort=retort)

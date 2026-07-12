@@ -1,6 +1,6 @@
 from collections.abc import AsyncIterable
 
-import httpx
+import httpx2
 from dishka import Provider, Scope, provide
 
 from fanfan.adapters.captcha.turnstile import (
@@ -23,5 +23,5 @@ class CaptchaProvider(Provider):
             yield NoOpCaptchaVerifier()
             return
 
-        async with httpx.AsyncClient() as client:
+        async with httpx2.AsyncClient() as client:
             yield TurnstileCaptchaVerifier(config=config.turnstile, client=client)

@@ -1,16 +1,16 @@
 from typing import Any
 
-import httpx
+import httpx2
 from adaptix import Retort
 
 
 class BaseApiClient:
-    # Thin wrapper over an httpx.AsyncClient that loads JSON responses into
-    # plain dataclass DTOs via adaptix. The httpx client carries the base URL
+    # Thin wrapper over an httpx2.AsyncClient that loads JSON responses into
+    # plain dataclass DTOs via adaptix. The httpx2 client carries the base URL
     # and auth headers (configured in the DI provider), so subclasses only
-    # declare endpoint methods. httpx raises httpx.HTTPStatusError on non-2xx
+    # declare endpoint methods. httpx2 raises httpx2.HTTPStatusError on non-2xx
     # responses (status available via error.response.status_code).
-    def __init__(self, client: httpx.AsyncClient, retort: Retort):
+    def __init__(self, client: httpx2.AsyncClient, retort: Retort):
         self._client = client
         self._retort = retort
 

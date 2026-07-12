@@ -1,6 +1,6 @@
 from collections.abc import AsyncIterable
 
-import httpx
+import httpx2
 from adaptix import Retort
 from dishka import Provider, Scope, provide
 
@@ -28,7 +28,7 @@ class TCloudProvider(Provider):
         self, config: TCloudConfig, retort: Retort
     ) -> AsyncIterable[TCloudClient]:
         headers = {"Authorization": f"key {config.api_key.get_secret_value()}"}
-        async with httpx.AsyncClient(
+        async with httpx2.AsyncClient(
             base_url="https://ticketscloud.com/v2/", headers=headers
         ) as client:
             yield TCloudClient(client=client, retort=retort)

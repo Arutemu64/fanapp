@@ -1,6 +1,6 @@
 import logging
 
-import httpx
+import httpx2
 
 from fanfan.adapters.captcha.config import TurnstileConfig
 from fanfan.application.ports.captcha import CaptchaVerifier
@@ -15,7 +15,7 @@ SITEVERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
 class TurnstileCaptchaVerifier(CaptchaVerifier):
     """Validates Turnstile tokens against Cloudflare's siteverify endpoint."""
 
-    def __init__(self, config: TurnstileConfig, client: httpx.AsyncClient):
+    def __init__(self, config: TurnstileConfig, client: httpx2.AsyncClient):
         self.config = config
         self.client = client
 
@@ -31,7 +31,7 @@ class TurnstileCaptchaVerifier(CaptchaVerifier):
         }
         try:
             response = await self.client.post(SITEVERIFY_URL, data=payload)
-        except httpx.RequestError:
+        except httpx2.RequestError:
             # Cloudflare is unreachable (DNS / connection / timeout). Fail open:
             # a network blip or Cloudflare outage shouldn't lock everyone out of
             # login. The per-email rate lock still caps abuse in the meantime.

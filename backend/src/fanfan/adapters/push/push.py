@@ -1,6 +1,6 @@
 import logging
 
-import aiohttp
+import httpx2
 import nh3
 from webpush import WebPush, WebPushSubscription
 from webpush.vapid import VAPIDException
@@ -85,7 +85,7 @@ class PushNotifier(Notifier):
         # caught by the consumer) before we open a session or hit the gateway.
         self._get_web_push()
         push_subs = await self.push_sub_gateway.list_by_user(notification.user_id)
-        async with aiohttp.ClientSession() as session:
+        async with httpx2.AsyncClient() as client:
             for sub in push_subs:
                 subscription, message = self._build_message(
                     {
@@ -95,11 +95,11 @@ class PushNotifier(Notifier):
                     },
                     notification,
                 )
-                async with session.post(
+                response = await client.post(
                     url=str(subscription.endpoint),
-                    data=message.encrypted,
+                    content=message.encrypted,
                     headers=message.headers,
-                ) as response:
-                    if response.status in [404, 410]:
-                        await self.push_sub_gateway.delete(sub)
-                        await self.uow.commit()
+                )
+                if response.status_code in [404, 410]:
+                    await self.push_sub_gateway.delete(sub)
+                    await self.uow.commit()
