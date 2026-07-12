@@ -29,6 +29,40 @@ ENV_FILE = ROOT / ".env"
 ENV_EXAMPLE = ROOT / ".env.example"
 SECRETS_DIR = ROOT / "secrets"
 
+# Keys bootstrap auto-fills with a generated secret, mapped to the exact
+# placeholder they carry in .env.example. This is the ONLY thing bootstrap owns:
+# which keys are generated vs. set by hand. The template stays the single source
+# of truth for structure — check_template_drift() below fails loud if any of
+# these placeholders no longer matches the template, so a renamed placeholder can
+# never silently skip its secret.
+GENERATED_SECRETS = {
+    "DB__PASSWORD": "change-me-db-password",
+    "REDIS__PASSWORD": "change-me-redis-password",
+    "NATS__PASSWORD": "change-me-nats-password",
+    "WEB__SECRET_KEY": "change-me-long-random-string",
+}
+
+
+def check_template_drift() -> None:
+    """Fail fast if .env.example drifted from what bootstrap expects to fill.
+
+    set_if_placeholder() couples to the template by exact `key=placeholder`
+    match; without this guard a placeholder edit in .env.example would make
+    bootstrap silently print "already set" and ship an unfilled secret.
+    """
+    template = ENV_EXAMPLE.read_text(encoding="utf-8")
+    missing = [
+        f"{key}={placeholder}"
+        for key, placeholder in GENERATED_SECRETS.items()
+        if f"{key}={placeholder}" not in template
+    ]
+    if missing:
+        raise SystemExit(
+            "bootstrap: .env.example drifted — these expected lines are gone:\n"
+            + "\n".join(f"  {line}" for line in missing)
+            + "\nUpdate GENERATED_SECRETS in this script or restore the template."
+        )
+
 
 def set_if_placeholder(key: str, placeholder: str, value: str) -> None:
     """Replace `key=placeholder` with `key=value`, but only while the line still
@@ -55,6 +89,9 @@ def gen_secret() -> str:
 
 
 def main() -> None:
+    # --- 0. Guard against template drift before touching anything ------------
+    check_template_drift()
+
     # --- 1. Create .env from the template (never clobber an existing one) -----
     if ENV_FILE.exists():
         print(f"✓ {ENV_FILE.name} exists — keeping it")
@@ -63,10 +100,8 @@ def main() -> None:
         print(f"✓ created {ENV_FILE.name} from {ENV_EXAMPLE.name}")
 
     # --- 2. Generate secrets -------------------------------------------------
-    set_if_placeholder("DB__PASSWORD", "change-me-db-password", gen_secret())
-    set_if_placeholder("REDIS__PASSWORD", "change-me-redis-password", gen_secret())
-    set_if_placeholder("NATS__PASSWORD", "change-me-nats-password", gen_secret())
-    set_if_placeholder("WEB__SECRET_KEY", "change-me-long-random-string", gen_secret())
+    for key, placeholder in GENERATED_SECRETS.items():
+        set_if_placeholder(key, placeholder, gen_secret())
 
     # --- 3. VAPID keys for Web Push ------------------------------------------
     private_key = SECRETS_DIR / PRIVATE_KEY_NAME
