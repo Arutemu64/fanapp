@@ -46,6 +46,18 @@ fi
 # Run sudo correctly whether or not we are already root.
 if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo"; fi
 
+# Drift check: setup.sh is pasted into the cloud environment UI by hand, so the
+# branch's copy can silently move ahead of what this environment's snapshot was
+# built from. setup.sh records its own hash at environment creation; compare it
+# against the repo copy and nag until the UI copy is refreshed. A missing hash
+# file also means the snapshot predates the recording step - same remedy.
+SETUP_HASH_FILE="$HOME/.cache/fanfan-setup.hash"
+if [ -f "$REPO_ROOT/.claude/setup.sh" ]; then
+  if [ ! -f "$SETUP_HASH_FILE" ] || [ "$(sha256sum "$REPO_ROOT/.claude/setup.sh" | awk '{print $1}')" != "$(cat "$SETUP_HASH_FILE")" ]; then
+    echo "[session-start] WARN: .claude/setup.sh differs from what this environment ran at creation - refresh the Setup script field in the cloud environment UI to rebuild the snapshot (see docs/claude-cloud.md)."
+  fi
+fi
+
 # Sync project dependencies against the current branch code. These are fast when
 # the lockfile is unchanged (uv/pnpm short-circuit) and only fetch the delta
 # after a real bump, since the caches persist in the snapshot. Kept here rather
@@ -86,16 +98,20 @@ elif command -v dockerd >/dev/null 2>&1; then
   if docker info >/dev/null 2>&1; then
     echo "[session-start] Docker daemon ready."
   else
-    echo "[session-start] WARN: Docker daemon did not start (see /tmp/dockerd.log); integration tests unavailable."
+    echo "[session-start] WARN: Docker daemon did not start (see /tmp/dockerd.log); Alembic autogenerate (just backend-generate-auto) unavailable."
   fi
 else
   echo "[session-start] WARN: dockerd not found; Alembic autogenerate (just backend-generate-auto) unavailable."
 fi
 
 # Persist PATH additions so the upgraded uv (~/.local/bin) and nvm's Node 24
-# are used throughout the session, not just in this hook's own shell.
-if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
+# are used throughout the session, not just in this hook's own shell. The hook
+# re-runs on resume against the same env file, so guard with a marker line to
+# avoid stacking duplicate PATH entries.
+ENV_MARKER="# fanfan session-start PATH"
+if [ -n "${CLAUDE_ENV_FILE:-}" ] && ! grep -qsF "$ENV_MARKER" "$CLAUDE_ENV_FILE"; then
   {
+    echo "$ENV_MARKER"
     echo 'export PATH="$HOME/.local/bin:$PATH"'
     echo 'export NVM_DIR="/opt/nvm"'
     echo '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && export PATH="$(dirname "$(nvm which default)"):$PATH"'
