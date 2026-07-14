@@ -92,10 +92,14 @@ export function formatSyncedAt(timestamp: number): string {
  * the absolute expected start time as an anchor when known. On a schedule that
  * drifts, the queue distance is always exact, while the "≈ HH:MM" survives being
  * read minutes later — see ADR-0008.
+ *
+ * An expected time already in the past means the data is a stale snapshot (the
+ * show drifted since the last poll), so showing it would be visibly wrong —
+ * fall back to the queue distance alone.
  */
 export function formatUntil(queueUntil: number, expectedStartTime: string | null): string {
 	const base = `Через ${queueUntil} ${pluralize(queueUntil, 'выступление', 'выступления', 'выступлений')}`;
-	if (!expectedStartTime) {
+	if (!expectedStartTime || new Date(expectedStartTime).getTime() <= Date.now()) {
 		return base;
 	}
 	return `${base} · ≈ ${formatMoscowTime(expectedStartTime)}`;
