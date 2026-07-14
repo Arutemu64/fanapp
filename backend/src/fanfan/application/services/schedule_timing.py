@@ -14,8 +14,8 @@ def apply_expected_start_times(
     See ADR-0008. The current event's real ``actual_start_time`` is the anchor;
     every later non-skipped event is projected forward by its predecessors'
     ``duration`` plus a ``transition_buffer`` gap. Each projection is floored at
-    ``now`` so an overrunning current act pushes the whole tail forward instead
-    of predicting times already in the past.
+    ``now + transition_buffer`` so an overrunning current act pushes the whole
+    tail forward instead of predicting times already in the past.
 
     ``events`` must be ordered by ``order`` (as ``read_list_schedule`` returns
     them). Events before the current one, skipped events, and the case where
@@ -46,10 +46,13 @@ def apply_expected_start_times(
             # Skipped events consume no stage time and get no projected start.
             continue
         running = running + timedelta(seconds=previous_duration + transition_buffer)
-        # Floor at now so an overrunning current act pushes the tail forward
-        # instead of predicting a start already in the past; carry the clamped
-        # value forward so that drift cascades to later events.
-        running = max(running, now)
+        # Floor at now + buffer so an overrunning current act pushes the tail
+        # forward instead of predicting a start already in the past. The floor
+        # keeps the buffer because even if the overrunning act ended this
+        # instant, the transition would still have to happen. Carrying the
+        # clamped value forward cascades the drift to later events (where the
+        # floor can no longer bind, since each step already adds the buffer).
+        running = max(running, now + timedelta(seconds=transition_buffer))
         event.expected_start_time = running
         previous_duration = event.duration
 

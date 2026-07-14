@@ -75,7 +75,7 @@ def test_past_and_skipped_events_get_no_projection():
     assert upcoming.expected_start_time == ANCHOR + timedelta(seconds=660)
 
 
-def test_overrun_clamps_next_event_to_now_and_cascades():
+def test_overrun_clamps_next_event_to_now_plus_buffer_and_cascades():
     current = _event(1, 1.0, duration=600, is_current=True, actual_start_time=ANCHOR)
     second = _event(2, 2.0, duration=300)
     third = _event(3, 3.0, duration=120)
@@ -86,7 +86,9 @@ def test_overrun_clamps_next_event_to_now_and_cascades():
 
     apply_expected_start_times(events, transition_buffer=BUFFER, now=now)
 
-    # Raw projection for second (anchor + 660s) is in the past, so it floors to now.
-    assert second.expected_start_time == now
+    # Raw projection for second (anchor + 660s) is in the past, so it floors to
+    # now + buffer: even if the overrunning act ended this instant, the
+    # transition would still take the buffer.
+    assert second.expected_start_time == now + timedelta(seconds=BUFFER)
     # Third then cascades from the clamped value, not the stale raw anchor.
-    assert third.expected_start_time == now + timedelta(seconds=360)
+    assert third.expected_start_time == now + timedelta(seconds=BUFFER + 300 + BUFFER)
