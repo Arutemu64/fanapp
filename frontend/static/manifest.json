@@ -35,6 +35,23 @@
     ],
     "start_url": "/",
     "display": "standalone",
+    "launch_handler": {
+        "client_mode": "navigate-existing"
+    },
+    "shortcuts": [
+        {
+            "name": "Программа",
+            "url": "/schedule"
+        },
+        {
+            "name": "Уведомления",
+            "url": "/notifications"
+        },
+        {
+            "name": "Карта",
+            "url": "/map"
+        }
+    ],
     "theme_color": "#d61450",
     "background_color": "white"
 }

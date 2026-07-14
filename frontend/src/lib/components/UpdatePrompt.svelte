@@ -53,8 +53,11 @@
 		// controller, so gating the reload on this keeps the update flow working.
 		const hadController = !!navigator.serviceWorker.controller;
 
-		void navigator.serviceWorker.getRegistration().then((reg) => {
-			if (!reg) return;
+		// `ready` (unlike getRegistration()) waits until the registration has an
+		// active worker. On a first-ever visit SvelteKit's auto-registration may
+		// still be in flight when this mounts — getRegistration() would resolve
+		// `undefined` and silently disable update polling for the whole session.
+		void navigator.serviceWorker.ready.then((reg) => {
 			registration = reg;
 
 			// A build may already be waiting from a previous visit.

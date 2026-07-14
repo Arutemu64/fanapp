@@ -140,8 +140,11 @@ self.addEventListener('fetch', (event) => {
 		const url = new URL(event.request.url);
 		const cache = await caches.open(CACHE);
 
-		// `build`/`files` can always be served from the cache
-		if (ASSETS.includes(url.pathname)) {
+		// `build`/`files` can always be served from the cache. The origin check
+		// matters: ASSETS holds bare pathnames, so without it a cross-origin GET
+		// whose path happens to match a precached file (e.g. any host's
+		// /robots.txt) would be answered with our local copy.
+		if (url.origin === self.location.origin && ASSETS.includes(url.pathname)) {
 			const response = await cache.match(url.pathname);
 
 			if (response) {
@@ -157,7 +160,7 @@ self.addEventListener('fetch', (event) => {
 		// no longer block the app from booting, where a network-first navigation
 		// would return the gateway error page instead.
 		if (event.request.mode === 'navigate') {
-			const shell = (await cache.match('/')) ?? (await cache.match('/200.html'));
+			const shell = await cache.match('/');
 			if (shell) {
 				return shell;
 			}
@@ -184,21 +187,12 @@ self.addEventListener('fetch', (event) => {
 
 			return response;
 		} catch (err) {
+			// No shell fallback here: navigations already tried the cached shell
+			// before hitting the network, so re-matching it now can never succeed.
 			const response = await cache.match(event.request);
 
 			if (response) {
 				return response;
-			}
-
-			// SPA: every route renders from the same client-built app shell, so a
-			// navigation to a URL we never cached (hard reload, deep link, or PWA
-			// cold start while offline) can still boot from the cached entry doc
-			// instead of hitting the browser's native error page.
-			if (event.request.mode === 'navigate') {
-				const shell = await cache.match('/');
-				if (shell) {
-					return shell;
-				}
 			}
 
 			// if there's no cache, then just error out
@@ -246,6 +240,14 @@ self.addEventListener('push', (event: PushEvent) => {
 			// Test pushes are the exception: always show them so the user can confirm delivery.
 			if (!data.test && (await hasVisibleAppClient())) {
 				return;
+			}
+
+			// Mirror the push onto the app-icon badge (Badging API, no-op where
+			// unsupported). The payload carries no unread count, so set the
+			// count-less "flag" badge; the in-app bell replaces it with the exact
+			// number (or clears it) once the app opens.
+			if ('setAppBadge' in self.navigator) {
+				await self.navigator.setAppBadge().catch(() => undefined);
 			}
 
 			await self.registration.showNotification(data.title, options);
