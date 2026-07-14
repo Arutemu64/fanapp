@@ -18,7 +18,9 @@ class SqlOutboxGateway(OutboxGateway):
         rows = await self.session.scalars(
             select(OutboxEventORM)
             .where(OutboxEventORM.published_at.is_(None))
-            .order_by(OutboxEventORM.created_at)
+            # created_at is the transaction timestamp, so every row from one
+            # commit ties on it; the uuid7 id breaks the tie in creation order.
+            .order_by(OutboxEventORM.created_at, OutboxEventORM.id)
             .limit(limit)
             # SKIP LOCKED: a concurrent relay tick skips rows we already hold
             # instead of blocking, so ticks never double-send the same row.
