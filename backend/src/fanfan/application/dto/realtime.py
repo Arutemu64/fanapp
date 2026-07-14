@@ -22,6 +22,10 @@ class SSEEventName(StrEnum):
 
     # Handshake sent once when a stream opens (see StreamEvents interactor).
     CONNECTION_ESTABLISHED = "connection_established"
+    # Liveness heartbeat injected by the SSE route when the stream is idle.
+    # Never published via RealtimeGateway — it exists so the frontend watchdog
+    # can tell a quiet-but-healthy stream from a silently dead one.
+    PING = "ping"
     # Schedule changed; clients should refetch the schedule.
     SCHEDULE_UPDATED = "schedule_updated"
     # A new notification was created for the target user.
