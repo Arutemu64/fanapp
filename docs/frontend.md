@@ -139,7 +139,7 @@ Contrast targets and dark-mode mechanics → `tailwind-css-patterns` / `ui-ux-pr
 
 ## 6. Language & Copy
 
-Russian copy is mandatory for all user-facing text — buttons, placeholders, errors, toasts, empty states (AGENTS.md #1). Keep sentences brief, direct, and actionable; never surface raw backend exceptions or stack traces.
+Russian copy is mandatory for all user-facing text — buttons, placeholders, errors, toasts, empty states (AGENTS.md, Core Constraints). Keep sentences brief, direct, and actionable; never surface raw backend exceptions or stack traces.
 
 ---
 
