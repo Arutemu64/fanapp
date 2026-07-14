@@ -28,13 +28,12 @@
 #           at /opt/node22/bin). mise.toml now pins Node 24, so we install it
 #           with nvm, which the image already has at $NVM_DIR - the official
 #           nodejs.org/nvm-sh installers both pull from GitHub (403).
-#   * npm  - Self-upgrading npm via itself (`npm install -g npm@latest`) is
-#           best-effort: some bundled npm builds have hit a known upstream bug
-#           where the live rebuild of its own module tree loses
-#           `promise-retry`, aborting with MODULE_NOT_FOUND before it ever
-#           reaches the pnpm install below (nodejs/node#62430, npm/cli#9151).
-#           The bundled npm installs pnpm fine on its own, so a failed
-#           self-upgrade must not fail environment creation.
+#   * npm  - Used as-is (bundled with Node 24) purely to install pnpm below.
+#           Deliberately NOT self-upgraded: `npm install -g npm@latest` has a
+#           known upstream bug where the live rebuild of its own module tree
+#           loses `promise-retry` and aborts with MODULE_NOT_FOUND
+#           (nodejs/node#62430, npm/cli#9151), and the bundled npm installs
+#           pnpm fine on its own.
 #
 # Idempotent and safe to re-run: apt, pip, uv, nvm and pnpm all short-circuit
 # when everything is already present.
@@ -71,10 +70,6 @@ nvm alias default 24
 # PATH by default (/etc/profile.d/nodejs.sh). session-start.sh resolves the
 # same "default" alias the same way each session.
 export PATH="$(dirname "$(nvm which default)"):$PATH"
-
-echo "[setup] Upgrading npm to latest..."
-npm install -g npm@latest \
-  || echo "[setup] WARN: npm self-upgrade failed (see install-channel notes above); continuing with bundled npm $(npm --version)."
 
 # Note: project dependency installs (uv sync / pnpm install) deliberately live
 # in the SessionStart hook, not here. The setup script only re-runs when the
@@ -147,5 +142,20 @@ fi
 # Set caveman default to lite mode (save tokens while keeping explanations readable).
 mkdir -p "$HOME/.config/caveman"
 echo '{"defaultMode": "lite"}' > "$HOME/.config/caveman/config.json"
+
+# Record the hash of the repo's setup.sh so the SessionStart hook can detect
+# drift: this script is pasted into the cloud environment UI by hand, and
+# nothing else notices when the repo copy moves ahead of the snapshot. The
+# repo is cloned before the setup script runs, but cwd is not guaranteed to
+# be inside it, so fall through the same candidates the hook uses.
+# Best-effort: skipping the hash only disables the drift warning.
+REPO_ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+if [ -f "$REPO_ROOT/.claude/setup.sh" ]; then
+  mkdir -p "$HOME/.cache"
+  sha256sum "$REPO_ROOT/.claude/setup.sh" | awk '{print $1}' > "$HOME/.cache/fanfan-setup.hash"
+  echo "[setup] Recorded setup.sh hash for drift detection."
+else
+  echo "[setup] Note: repo setup.sh not found from cwd; drift detection disabled."
+fi
 
 echo "[setup] Setup complete."

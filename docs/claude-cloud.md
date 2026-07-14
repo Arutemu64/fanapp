@@ -39,7 +39,11 @@ does not trigger a rebuild** — which is why dependency installs live in the ho
 > The setup script lives in the cloud environment UI, not the repo. `.claude/setup.sh`
 > is tracked here for review and as the source of truth; you must paste/refresh
 > it into the environment's **Setup script** field for it to run. Keep the two in
-> sync.
+> sync — drift is detected automatically: at environment creation the setup
+> script records a hash of the repo's `.claude/setup.sh`
+> (`~/.cache/fanfan-setup.hash`), and the SessionStart hook warns at session
+> start whenever the branch's copy no longer matches. On that warning, repaste
+> the file into the **Setup script** field (which rebuilds the snapshot).
 
 ## What runs where
 
