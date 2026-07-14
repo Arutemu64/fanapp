@@ -189,6 +189,8 @@ Naming standard for new events:
 * Prefer `<entity>_<event>` for new names.
 * The backend enum and frontend `SSEEventMap` are kept in sync **by hand** — SSE events are not part of the OpenAPI spec, so `just frontend-generate-api` does not cover them. Every enum value must have a matching `SSEEventMap` key.
 
+**Liveness heartbeat**: the `/events` route injects a named `ping` event after `HEARTBEAT_INTERVAL_SECONDS` (30s) of stream silence — `ping` is the one `SSEEventName` never published via `RealtimeGateway`. Comment-based keepalives are invisible to the browser `EventSource` API, so the frontend watchdog (`HEARTBEAT_TIMEOUT_MS`, 3x the interval, in `events.svelte.ts`) relies on these pings to detect silently dead connections (Wi-Fi roaming, NAT timeouts) and reconnect. If you change the interval, keep it below common proxy idle timeouts (60s) and update the frontend timeout to match.
+
 ## Notification Formatting
 
 A notification `body` is stored as a **small, safe HTML subset** so the same text can be highlighted across every delivery channel. The subset is the intersection of what Telegram's HTML parse mode accepts and what the web UI can render: `b`, `strong`, `i`, `em`, `u`, `s`, `a[href]`, `code`, `pre`, `blockquote`. Line breaks are stored as plain `\n` (no `<br>`/`<p>`), which Telegram treats as newlines and the web renders via CSS `white-space: pre-line`.

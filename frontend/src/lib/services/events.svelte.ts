@@ -17,8 +17,23 @@ const [getEvents, setEvents] = createContext<EventsClient | null>();
 const MAX_RECONNECT_ATTEMPTS = 10;
 /** Wait briefly before reconnecting after auth changes to avoid flicker during navigation. */
 const RESTART_DEBOUNCE_MS = 250;
-/** If the handshake never arrives, treat the stream as unhealthy and reconnect. */
+/**
+ * If the dial or the handshake stalls this long, treat the attempt as failed
+ * and reconnect. Armed when dialing (a server that accepts the connection but
+ * never responds would otherwise leave us in 'connecting' forever) and re-armed
+ * once the transport opens to give the handshake its own window.
+ */
 const HANDSHAKE_TIMEOUT_MS = 5000;
+/**
+ * Reconnect when nothing arrives on the stream for this long. The backend emits
+ * a named `ping` event after 30s of idle time (HEARTBEAT_INTERVAL_SECONDS in
+ * backend/src/fanfan/presentation/web/routes/sse.py), so a healthy connection
+ * always delivers *something* within that window. The browser cannot see the
+ * transport die without a clean close (Wi-Fi roaming, NAT timeouts), so this
+ * watchdog is the only thing that notices a silently dead stream. 3x the ping
+ * interval tolerates slow networks and timer jitter.
+ */
+const HEARTBEAT_TIMEOUT_MS = 90000;
 /**
  * Pause the stream once the app has been backgrounded this long. Web Push covers
  * notifications while hidden, so holding SSE open only churns the mobile radio.
@@ -50,9 +65,22 @@ export interface SSEEventMap {
 	connection_established: EventsHandshakePayload;
 	schedule_updated: void;
 	notification_created: NotificationDTO;
+	ping: void;
 }
 
 export type SSEEventName = keyof SSEEventMap;
+
+// Runtime list of every SSE event name. EventSource only surfaces events that
+// have a listener attached, so the client attaches a watchdog-feeding listener
+// for all known names even when no page subscribed — otherwise traffic the
+// client isn't listening for would look like silence and trip the watchdog.
+// The `satisfies` check forces this list to stay exhaustive against SSEEventMap.
+const ALL_SSE_EVENTS = Object.keys({
+	connection_established: true,
+	schedule_updated: true,
+	notification_created: true,
+	ping: true
+} satisfies Record<SSEEventName, true>) as SSEEventName[];
 export type SSEHandler<K extends SSEEventName> = (data: SSEEventMap[K]) => void;
 
 interface RegisteredListener {
@@ -66,6 +94,9 @@ function parseEventData(raw: unknown): unknown {
 	try {
 		return JSON.parse(raw);
 	} catch {
+		// A non-JSON payload means the backend broke the event contract; surface
+		// it here instead of letting a typed handler fail somewhere downstream.
+		console.warn('SSE event payload is not valid JSON', raw);
 		return raw;
 	}
 }
@@ -88,9 +119,13 @@ export class EventsClient {
 	#handshakeTimeoutId: ReturnType<typeof setTimeout> | null = null;
 	#restartTimeoutId: ReturnType<typeof setTimeout> | null = null;
 	#visibilityTimeoutId: ReturnType<typeof setTimeout> | null = null;
+	#heartbeatTimeoutId: ReturnType<typeof setTimeout> | null = null;
 	#manualDisconnect = false;
 	// True while the stream is intentionally paused because the app is backgrounded.
 	#pausedForVisibility = false;
+	// Terminal flag set by destroy(); a destroyed client never reconnects.
+	#destroyed = false;
+	#unsubscribeReachable: (() => void) | null = null;
 
 	// Tracks registered listeners so they survive reconnects.
 	// When EventSource reconnects, we re-attach all listeners to the new instance.
@@ -108,7 +143,7 @@ export class EventsClient {
 			// Recover when connectivity returns after the stream gave up retrying.
 			// While the reconnect loop is still running it handles recovery itself,
 			// so we only step in once it has reached the terminal 'failed' state.
-			onReachableChange(this.#handleReachableChange);
+			this.#unsubscribeReachable = onReachableChange(this.#handleReachableChange);
 			// Pause the stream while the app is backgrounded and resume on return;
 			// Web Push keeps notifications flowing while it is down.
 			document.addEventListener('visibilitychange', this.#handleVisibilityChange);
@@ -117,11 +152,12 @@ export class EventsClient {
 	}
 
 	connect() {
-		if (this.#source) return;
+		if (this.#destroyed || this.#source) return;
 
 		this.#clearReconnectTimer();
 		this.#clearRestartTimer();
 		this.#clearHandshakeTimer();
+		this.#clearHeartbeatTimer();
 		this.#manualDisconnect = false;
 		this.handshake = null;
 
@@ -138,6 +174,11 @@ export class EventsClient {
 			withCredentials: true
 		});
 
+		// Covers a hung dial: a server (or proxy) that accepts the connection but
+		// never sends headers fires neither onopen nor onerror for minutes, which
+		// would leave the status stuck in 'connecting' with no retry scheduled.
+		this.#armHandshakeTimeout();
+
 		this.#source.onopen = () => {
 			// The stream transport is open. We wait for the backend handshake
 			// before calling the connection fully online. The attempt counter is
@@ -150,11 +191,17 @@ export class EventsClient {
 
 		this.#source.onerror = () => {
 			if (this.#manualDisconnect) return;
-			console.log('EventSource error, attempting to reconnect...');
+			console.warn('EventSource error, attempting to reconnect...');
 			this.#failAndReconnect();
 		};
 
 		this.#source.addEventListener('connection_established', this.#handleHandshake);
+
+		// Feed the liveness watchdog from every known event (incl. server pings),
+		// so any traffic proves the stream alive — see ALL_SSE_EVENTS.
+		for (const event of ALL_SSE_EVENTS) {
+			this.#source.addEventListener(event, this.#handleAnyEvent);
+		}
 
 		// Re-attach all registered listeners to the new EventSource instance.
 		for (const [event, handlers] of Object.entries(this.#listeners)) {
@@ -202,6 +249,7 @@ export class EventsClient {
 
 	/** Disconnect and immediately reconnect (e.g. after login/logout). */
 	restart() {
+		if (this.#destroyed) return;
 		this.disconnect();
 		this.connectionStatus = 'connecting';
 		this.#restartTimeoutId = setTimeout(() => {
@@ -216,12 +264,31 @@ export class EventsClient {
 		this.#clearReconnectTimer();
 		this.#clearRestartTimer();
 		this.#clearHandshakeTimer();
+		this.#clearHeartbeatTimer();
 		this.#clearVisibilityTimer();
 		this.#closeSource();
 		this.handshake = null;
 		this.connectionStatus = 'disconnected';
 		this.#reconnectAttempts = 0;
 		this.#pausedForVisibility = false;
+	}
+
+	/**
+	 * Permanently tear down the client: close the stream and unhook the global
+	 * window/document listeners registered in the constructor. Without this, a
+	 * disconnected client would resurrect on the next `online` event. Call from
+	 * the root layout's onDestroy; the client is unusable afterwards.
+	 */
+	destroy() {
+		this.disconnect();
+		this.#destroyed = true;
+		if (browser) {
+			window.removeEventListener('offline', this.#handleOffline);
+			window.removeEventListener('online', this.#handleOnline);
+			document.removeEventListener('visibilitychange', this.#handleVisibilityChange);
+		}
+		this.#unsubscribeReachable?.();
+		this.#unsubscribeReachable = null;
 	}
 
 	// Browser lost the network: stop reconnect attempts and go quiet. The offline
@@ -237,6 +304,7 @@ export class EventsClient {
 		this.#clearReconnectTimer();
 		this.#clearRestartTimer();
 		this.#clearHandshakeTimer();
+		this.#clearHeartbeatTimer();
 		this.#clearVisibilityTimer();
 		this.#closeSource();
 		this.handshake = null;
@@ -309,8 +377,22 @@ export class EventsClient {
 		}, HANDSHAKE_TIMEOUT_MS);
 	}
 
+	// Resets the liveness watchdog; fires on every observed event (see connect()).
+	#handleAnyEvent = () => {
+		this.#armHeartbeatTimeout();
+	};
+
+	#armHeartbeatTimeout() {
+		this.#clearHeartbeatTimer();
+		this.#heartbeatTimeoutId = setTimeout(() => {
+			console.warn('SSE stream went silent, reconnecting...');
+			this.#failAndReconnect();
+		}, HEARTBEAT_TIMEOUT_MS);
+	}
+
 	#failAndReconnect() {
 		this.#clearHandshakeTimer();
+		this.#clearHeartbeatTimer();
 		this.#closeSource();
 		this.handshake = null;
 		this.connectionStatus = 'error';
@@ -325,8 +407,10 @@ export class EventsClient {
 			return;
 		}
 
-		// Exponential backoff: 1s, 2s, 4s, 8s, ... capped at 30s.
-		const timeout = Math.min(1000 * 2 ** this.#reconnectAttempts, 30000);
+		// Exponential backoff with full jitter: a random delay up to 1s, 2s, 4s,
+		// ... capped at 30s. The randomness spreads re-dials out when a backend
+		// restart drops every client at the same moment (thundering herd).
+		const timeout = Math.random() * Math.min(1000 * 2 ** this.#reconnectAttempts, 30000);
 		this.#reconnectTimeoutId = setTimeout(() => {
 			this.#reconnectTimeoutId = null;
 			this.connect();
@@ -337,6 +421,9 @@ export class EventsClient {
 	#closeSource() {
 		if (!this.#source) return;
 		this.#source.removeEventListener('connection_established', this.#handleHandshake);
+		for (const event of ALL_SSE_EVENTS) {
+			this.#source.removeEventListener(event, this.#handleAnyEvent);
+		}
 		this.#source.close();
 		this.#source = null;
 	}
@@ -363,6 +450,12 @@ export class EventsClient {
 		if (!this.#visibilityTimeoutId) return;
 		clearTimeout(this.#visibilityTimeoutId);
 		this.#visibilityTimeoutId = null;
+	}
+
+	#clearHeartbeatTimer() {
+		if (!this.#heartbeatTimeoutId) return;
+		clearTimeout(this.#heartbeatTimeoutId);
+		this.#heartbeatTimeoutId = null;
 	}
 }
 

@@ -40,7 +40,10 @@
 	});
 
 	onDestroy(() => {
-		eventsClient?.disconnect();
+		// destroy() (not disconnect()) also unhooks the client's global
+		// window/document listeners, so no zombie stream can resurrect —
+		// matters mostly for dev HMR, which re-creates the layout.
+		eventsClient?.destroy();
 	});
 </script>
 
