@@ -80,15 +80,17 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           # Frontend build args. PUBLIC_* are baked into the static SPA bundle at
           # build time ($env/static/public) — they come from public, non-secret
-          # repository variables. SENTRY_AUTH_TOKEN (a secret) uploads source maps
-          # and is consumed only in the discarded `build` stage, so it never
-          # reaches the published image. For the backend each line evaluates to an
-          # empty string, which build-push-action ignores.
+          # repository variables. For the backend each line evaluates to an empty
+          # string, which build-push-action ignores.
           build-args: |
             ${{ matrix.name == 'frontend' && format('PUBLIC_API_URL={0}', vars.PUBLIC_API_URL) || '' }}
             ${{ matrix.name == 'frontend' && format('PUBLIC_VAPID_KEY={0}', vars.PUBLIC_VAPID_KEY) || '' }}
             ${{ matrix.name == 'frontend' && format('PUBLIC_SENTRY_DSN={0}', vars.PUBLIC_SENTRY_DSN) || '' }}
             ${{ matrix.name == 'frontend' && format('PUBLIC_TURNSTILE_SITE_KEY={0}', vars.PUBLIC_TURNSTILE_SITE_KEY) || '' }}
-            ${{ matrix.name == 'frontend' && format('SENTRY_AUTH_TOKEN={0}', secrets.SENTRY_AUTH_TOKEN) || '' }}
+          # SENTRY_AUTH_TOKEN (a secret) uploads source maps in the `build` stage.
+          # It is passed as a BuildKit secret — unlike a build arg, it never lands
+          # in image layer metadata or the exported GHA build cache below.
+          secrets: |
+            ${{ matrix.name == 'frontend' && format('sentry_auth_token={0}', secrets.SENTRY_AUTH_TOKEN) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

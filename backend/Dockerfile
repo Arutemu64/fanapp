@@ -13,8 +13,10 @@ ENV UV_PYTHON_INSTALL_DIR=/python
 # Only use the managed Python version
 ENV UV_PYTHON_PREFERENCE=only-managed
 
-# Install Python before the project for caching
-RUN uv python install 3.14
+# Install Python before the project for caching. The patch version is pinned
+# for reproducible images; it must be one this uv release ships (check with
+# `uv python list --managed-python`), so bump it together with the uv tag above.
+RUN uv python install 3.14.6
 
 WORKDIR /app
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -46,6 +48,10 @@ COPY --from=builder --chown=nonroot:nonroot /app /app
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
+
+# Without a TTY, Python block-buffers stdout, so print() diagnostics can lag or
+# vanish on crash; unbuffered output reaches the container log immediately.
+ENV PYTHONUNBUFFERED=1
 
 # Use the non-root user to run our application
 USER nonroot

@@ -6,13 +6,17 @@ services:
       target: prod
       # PUBLIC_* are baked into the SPA bundle at build time ($env/static/public);
       # the static NGINX container has no way to inject them at runtime. They are
-      # public, non-secret constants. SENTRY_AUTH_TOKEN uploads source maps only.
+      # public, non-secret constants.
       args:
         PUBLIC_API_URL: ${PUBLIC_API_URL}
         PUBLIC_VAPID_KEY: ${PUBLIC_VAPID_KEY}
         PUBLIC_SENTRY_DSN: ${PUBLIC_SENTRY_DSN}
         PUBLIC_TURNSTILE_SITE_KEY: ${PUBLIC_TURNSTILE_SITE_KEY}
-        SENTRY_AUTH_TOKEN: ${DEBUG__SENTRY_AUTH_TOKEN}
+      # The Sentry token (source-map upload) is a real secret, so it enters the
+      # build as a BuildKit secret (never stored in layers or build caches)
+      # instead of a build arg. Empty token = upload skipped.
+      secrets:
+        - sentry_auth_token
     # env_file is kept for the dev overlay (vite dev reads PUBLIC_* at runtime).
     # The prod NGINX container ignores these — its values are already baked in.
     env_file:
@@ -29,6 +33,14 @@ services:
     ports:
       - '127.0.0.1:${FRONTEND_PORT:-3000}:80'
     restart: unless-stopped
+    init: true
+    # Limits are conservative defaults sized for a small VPS — tune to the host.
+    # A hit limit shows up as throttling (CPU) or an OOM kill (memory).
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
     profiles: [ "core" ]
     networks:
       - frontend-network
@@ -63,6 +75,7 @@ services:
       - '127.0.0.1:${API_PORT:-8000}:8000'
     restart: unless-stopped
     stop_signal: SIGINT
+    init: true
     read_only: true
     tmpfs:
       - /tmp
@@ -100,9 +113,18 @@ services:
       PUSH__PUBLIC_KEY_PATH: "/app/secrets/public_key.pem"
     command: [ "faststream", "run", "--factory", "fanfan.main.faststream:create_app" ]
     restart: unless-stopped
+    init: true
     read_only: true
     tmpfs:
       - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
     healthcheck:
       disable: true
     profiles: [ "core" ]
@@ -128,9 +150,18 @@ services:
       NATS__HOST: "nats"
     command: [ "scheduler" ]
     restart: unless-stopped
+    init: true
     read_only: true
     tmpfs:
       - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
     healthcheck:
       disable: true
     profiles: [ "core" ]
@@ -150,6 +181,7 @@ services:
       - ./backend/alembic.ini:/app/alembic.ini:ro
     command: [ "alembic", "upgrade", "head" ]
     restart: on-failure
+    init: true
     profiles: [ "core" ]
     networks:
       - backend-network
@@ -162,8 +194,19 @@ services:
       POSTGRES_USER: "${DB__USER}"
       POSTGRES_PASSWORD: "${DB__PASSWORD}"
       POSTGRES_DB: "${DB__NAME}"
+    # Published on loopback only — unreachable from the internet, but reachable
+    # through an SSH tunnel so desktop DB clients (DBeaver etc.) can connect:
+    #   ssh -L 5433:127.0.0.1:5432 <server>  →  client connects to localhost:5433
     ports:
       - "127.0.0.1:5432:5432"
+    # Postgres uses /dev/shm for parallel workers; Docker's 64M default is too
+    # small and surfaces as "no space left on device" under load.
+    shm_size: 128mb
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
@@ -182,6 +225,11 @@ services:
     command: "--js --sd=/data -m 8222 --user ${NATS__USER} --pass ${NATS__PASSWORD}"
     ports:
       - "127.0.0.1:4222:4222"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8222/healthz?js-enabled-only=true"]
@@ -194,8 +242,11 @@ services:
 
   pgbackup:
     image: prodrigestivill/postgres-backup-local:18-alpine
+    # BACKUP_ON_START fires immediately, so wait for a ready Postgres instead of
+    # a merely started container.
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     volumes:
       - pgbackup-data:/backups
     environment:
@@ -209,6 +260,11 @@ services:
       - BACKUP_KEEP_DAYS=7
       - BACKUP_KEEP_WEEKS=4
       - BACKUP_KEEP_MONTHS=6
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
     restart: unless-stopped
     profiles: [ "ops" ]
     networks:
@@ -224,6 +280,13 @@ services:
     command: "valkey-server /usr/local/etc/valkey/valkey.conf --requirepass ${REDIS__PASSWORD}"
     ports:
       - "127.0.0.1:6379:6379"
+    # No maxmemory in valkey.conf, so this limit is the only memory ceiling;
+    # sized with headroom for the copy-on-write spike during RDB saves.
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "REDISCLI_AUTH=\"$${REDIS__PASSWORD}\" valkey-cli ping | grep PONG" ]
@@ -233,6 +296,12 @@ services:
     profiles: [ "core" ]
     networks:
       - backend-network
+
+# Build-time secret for the frontend image, sourced from .env. Present but
+# empty in most setups (the upload is skipped); see .env.example.
+secrets:
+  sentry_auth_token:
+    environment: DEBUG__SENTRY_AUTH_TOKEN
 
 volumes:
   db-data: {}
