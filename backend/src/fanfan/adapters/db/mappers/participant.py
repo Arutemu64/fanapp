@@ -1,7 +1,6 @@
 from fanfan.adapters.db.models import ParticipantORM, VoteORM
-from fanfan.adapters.db.models.participant import ParticipantValueORM
 from fanfan.application.dto.participant import ParticipantFullDTO, ParticipantVoteDTO
-from fanfan.core.models.participant import Participant, ParticipantValue
+from fanfan.core.models.participant import Participant
 from fanfan.core.vo.nomination import NominationId
 from fanfan.core.vo.participant import ParticipantId
 from fanfan.core.vo.vote import VoteId
@@ -16,9 +15,6 @@ class ParticipantMapper:
             title=model.title,
             nomination_id=model.nomination_id,
             voting_number=model.voting_number,
-            values=[
-                ParticipantMapper.value_from_model(value) for value in model.values
-            ],
         )
 
     @staticmethod
@@ -29,23 +25,6 @@ class ParticipantMapper:
             title=orm.title,
             nomination_id=NominationId(orm.nomination_id),
             voting_number=orm.voting_number,
-            values=[ParticipantMapper.value_to_model(value) for value in orm.values],
-        )
-
-    @staticmethod
-    def value_from_model(model: ParticipantValue) -> ParticipantValueORM:
-        return ParticipantValueORM(
-            title=model.title,
-            type=model.type,
-            value=model.value,
-        )
-
-    @staticmethod
-    def value_to_model(orm: ParticipantValueORM) -> ParticipantValue:
-        return ParticipantValue(
-            title=orm.title,
-            type=orm.type,
-            value=orm.value,
         )
 
     @staticmethod

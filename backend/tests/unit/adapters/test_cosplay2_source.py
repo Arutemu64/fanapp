@@ -1,13 +1,8 @@
 import pytest
 
-from fanfan.adapters.api.cosplay2.dto.requests import (
-    Request,
-    RequestStatus,
-    RequestValueDTO,
-)
+from fanfan.adapters.api.cosplay2.dto.requests import Request, RequestStatus
 from fanfan.adapters.api.cosplay2.dto.topics import Topic
 from fanfan.adapters.api.cosplay2.source import Cosplay2Source
-from fanfan.core.vo.participant import ValueType
 
 pytestmark = pytest.mark.unit
 
@@ -19,20 +14,15 @@ class FakeCosplay2Client:
         self,
         topics: list[Topic],
         requests: list[Request],
-        values: list[RequestValueDTO],
     ) -> None:
         self._topics = topics
         self._requests = requests
-        self._values = values
 
     async def get_topics_list(self) -> list[Topic]:
         return self._topics
 
     async def get_all_requests(self) -> list[Request]:
         return self._requests
-
-    async def get_all_values(self) -> list[RequestValueDTO]:
-        return self._values
 
 
 def _request(
@@ -56,7 +46,6 @@ async def test_fetch_nominations_maps_topics() -> None:
         FakeCosplay2Client(
             topics=[Topic(id=1, card_code="A1", title="Best Costume")],
             requests=[],
-            values=[],
         )
     )
 
@@ -78,7 +67,6 @@ async def test_fetch_participants_keeps_only_approved_with_voting_title() -> Non
                 _request(3, voting_title=None),  # no voting title -> dropped
                 _request(4, voting_title=""),  # empty title is falsy -> dropped
             ],
-            values=[],
         )
     )
 
@@ -87,23 +75,11 @@ async def test_fetch_participants_keeps_only_approved_with_voting_title() -> Non
     assert [p.external_id for p in participants] == [1]
 
 
-async def test_fetch_participants_groups_values_by_request() -> None:
+async def test_fetch_participants_maps_request_fields() -> None:
     source = Cosplay2Source(
         FakeCosplay2Client(
             topics=[],
             requests=[_request(1, topic_id=7)],
-            values=[
-                RequestValueDTO(
-                    request_id=1, title="City", type=ValueType.TEXT, value="Moscow"
-                ),
-                RequestValueDTO(
-                    request_id=1, title="Link", type=ValueType.LINK, value="http://x"
-                ),
-                # Belongs to another request, must not leak into request 1.
-                RequestValueDTO(
-                    request_id=99, title="Other", type=ValueType.TEXT, value="nope"
-                ),
-            ],
         )
     )
 
@@ -112,4 +88,5 @@ async def test_fetch_participants_groups_values_by_request() -> None:
     assert len(participants) == 1
     participant = participants[0]
     assert participant.nomination_external_id == 7
-    assert [v.title for v in participant.values] == ["City", "Link"]
+    assert participant.voting_title == "Title"
+    assert participant.voting_number == 1

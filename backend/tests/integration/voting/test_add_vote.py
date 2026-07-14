@@ -64,7 +64,6 @@ async def test_add_vote_creates_vote_and_publishes_event(
         title="Тестовый участник",
         nomination_id=nomination.id,
         voting_number=1,
-        values=[],
     )
     await nomination_gateway.add(nomination)
     await participant_gateway.add(participant)
@@ -121,7 +120,6 @@ async def test_add_vote_without_linked_ticket_raises_access_denied(
         title="Тестовый участник без билета",
         nomination_id=nomination.id,
         voting_number=1,
-        values=[],
     )
     await nomination_gateway.add(nomination)
     await participant_gateway.add(participant)
@@ -171,7 +169,6 @@ async def test_add_vote_when_voting_disabled_raises_access_denied(
         title="Тестовый участник при выключенном голосовании",
         nomination_id=nomination.id,
         voting_number=1,
-        values=[],
     )
     await nomination_gateway.add(nomination)
     await participant_gateway.add(participant)
@@ -243,7 +240,6 @@ async def test_add_vote_twice_in_same_nomination_raises_already_voted(
         title="Первый участник",
         nomination_id=nomination.id,
         voting_number=1,
-        values=[],
     )
     second_participant = Participant(
         id=generate_participant_id(),
@@ -251,7 +247,6 @@ async def test_add_vote_twice_in_same_nomination_raises_already_voted(
         title="Второй участник",
         nomination_id=nomination.id,
         voting_number=2,
-        values=[],
     )
     await nomination_gateway.add(nomination)
     await participant_gateway.add(first_participant)
@@ -310,7 +305,6 @@ async def test_add_vote_allows_votes_in_different_nominations(
         title="Участник первой номинации",
         nomination_id=first_nomination.id,
         voting_number=1,
-        values=[],
     )
     second_nomination = Nomination(
         id=generate_nomination_id(),
@@ -325,7 +319,6 @@ async def test_add_vote_allows_votes_in_different_nominations(
         title="Участник второй номинации",
         nomination_id=second_nomination.id,
         voting_number=1,
-        values=[],
     )
     await nomination_gateway.add(first_nomination)
     await nomination_gateway.add(second_nomination)

@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid7
 
-from sqlalchemy import Enum, ForeignKey, UniqueConstraint, Uuid, func, select
+from sqlalchemy import ForeignKey, UniqueConstraint, Uuid, func, select
 from sqlalchemy.orm import (
     Mapped,
     column_property,
@@ -12,7 +12,6 @@ from sqlalchemy.orm import (
 
 from fanfan.adapters.db.models.base import BaseORM
 from fanfan.adapters.db.models.vote import VoteORM
-from fanfan.core.vo.participant import ValueType
 
 if TYPE_CHECKING:
     from fanfan.adapters.db.models.nomination import NominationORM
@@ -34,10 +33,6 @@ class ParticipantORM(BaseORM):
         ForeignKey("nominations.id", ondelete="CASCADE"),
     )
 
-    values: Mapped[list[ParticipantValueORM]] = relationship(
-        back_populates="participant",
-        cascade="all, delete-orphan",
-    )
     nomination: Mapped[NominationORM] = relationship()
 
     @declared_attr
@@ -53,29 +48,3 @@ class ParticipantORM(BaseORM):
 
     def __str__(self) -> str:
         return self.title
-
-
-class ParticipantValueORM(BaseORM):
-    __tablename__ = "participant_values"
-
-    id: Mapped[UUID] = mapped_column(
-        Uuid(as_uuid=True),
-        primary_key=True,
-        default=uuid7,
-    )
-    participant_id: Mapped[UUID] = mapped_column(
-        ForeignKey("participants.id", ondelete="CASCADE"), index=True
-    )
-    title: Mapped[str] = mapped_column()
-    type: Mapped[ValueType] = mapped_column(
-        Enum(
-            ValueType,
-            native_enum=False,
-            create_constraint=True,
-            name="valuetype",
-            length=32,
-        )
-    )
-    value: Mapped[str | None] = mapped_column()
-
-    participant: Mapped[ParticipantORM] = relationship(back_populates="values")
