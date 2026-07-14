@@ -85,7 +85,7 @@ npm install -g npm@latest \
 # caches persist in the snapshot).
 
 echo "[setup] Installing pnpm 11 (matches mise.toml / frontend/package.json)..."
-npm install -g pnpm@11.12.0
+npm install -g pnpm@11.11.0
 
 # Prepull the single Docker image the cloud flow needs: a Postgres matching
 # production (postgres:18-alpine), used to autogenerate Alembic migrations
