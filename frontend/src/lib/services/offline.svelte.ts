@@ -30,11 +30,12 @@ export class OfflineService {
 	#pollId: ReturnType<typeof setTimeout> | null = null;
 	#pollDelay = RECOVERY_POLL_MIN_MS;
 	#lastReconnectRefresh = 0;
+	#unsubscribeReachable: (() => void) | null = null;
 
 	constructor() {
 		if (!browser) return;
 
-		onReachableChange(() => {
+		this.#unsubscribeReachable = onReachableChange(() => {
 			const wasOnline = this.#online;
 			this.#online = isReachable();
 			this.#syncPolling();
@@ -54,15 +55,39 @@ export class OfflineService {
 
 		// The `offline` event firing is a trustworthy negative; `online` only means
 		// an interface appeared, so verify it with a probe.
-		window.addEventListener('offline', () => markReachable(false));
-		window.addEventListener('online', () => void probeReachability());
-		document.addEventListener('visibilitychange', () => {
-			if (document.visibilityState === 'visible') void probeReachability();
-		});
+		window.addEventListener('offline', this.#handleOffline);
+		window.addEventListener('online', this.#handleOnline);
+		document.addEventListener('visibilitychange', this.#handleVisibilityChange);
 
 		// Initial check, then poll only if it turns out we're offline.
 		void probeReachability();
 		this.#syncPolling();
+	}
+
+	// Arrow functions so they keep `this` and stay removable by reference.
+	#handleOffline = () => markReachable(false);
+	#handleOnline = () => void probeReachability();
+	#handleVisibilityChange = () => {
+		if (document.visibilityState === 'visible') void probeReachability();
+	};
+
+	/**
+	 * Remove the global listeners and stop the recovery poll. The root layout
+	 * lives for the app's lifetime in production, but dev HMR re-creates it —
+	 * without this each cycle would stack another set of listeners (same reason
+	 * EventsClient has destroy()).
+	 */
+	destroy() {
+		if (!browser) return;
+		this.#unsubscribeReachable?.();
+		this.#unsubscribeReachable = null;
+		window.removeEventListener('offline', this.#handleOffline);
+		window.removeEventListener('online', this.#handleOnline);
+		document.removeEventListener('visibilitychange', this.#handleVisibilityChange);
+		if (this.#pollId) {
+			clearTimeout(this.#pollId);
+			this.#pollId = null;
+		}
 	}
 
 	// Start the recovery poll while offline; stop it once we're back.
