@@ -41,23 +41,27 @@ async def dishka() -> AsyncIterable[AsyncContainer]:
     # Fakes for ports that would otherwise reach external systems
     # (NATS, SMTP, Telegram, WebPush). REQUEST scope so each test gets a
     # fresh instance and the interactor under test shares it with the test.
-    mock_provider = Provider(scope=Scope.REQUEST)
-    mock_provider.provide(FakeEventBroker, provides=AnyOf[EventBroker, FakeEventBroker])
-    mock_provider.provide(FakeIdProvider, provides=AnyOf[IdProvider, FakeIdProvider])
-    mock_provider.provide(FakeEmailSender, provides=AnyOf[EmailSender, FakeEmailSender])
-    mock_provider.provide(
+    fakes_provider = Provider(scope=Scope.REQUEST)
+    fakes_provider.provide(
+        FakeEventBroker, provides=AnyOf[EventBroker, FakeEventBroker]
+    )
+    fakes_provider.provide(FakeIdProvider, provides=AnyOf[IdProvider, FakeIdProvider])
+    fakes_provider.provide(
+        FakeEmailSender, provides=AnyOf[EmailSender, FakeEmailSender]
+    )
+    fakes_provider.provide(
         FakeTelegramNotifier,
         provides=AnyOf[TelegramNotifierPort, FakeTelegramNotifier],
     )
-    mock_provider.provide(
+    fakes_provider.provide(
         FakePushNotifier, provides=AnyOf[PushNotifierPort, FakePushNotifier]
     )
-    mock_provider.provide(
+    fakes_provider.provide(
         FakeRealtimeGateway, provides=AnyOf[RealtimeGateway, FakeRealtimeGateway]
     )
     container = make_async_container(
         # Test providers
-        mock_provider,
+        fakes_provider,
         TestDbProvider(),
         # Real providers
         InteractorsProvider(),
