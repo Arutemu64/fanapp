@@ -1,4 +1,5 @@
 import logging
+from uuid import UUID
 
 from fanfan.application.interactors.outbox.config import OutboxConfig
 from fanfan.application.ports.events_broker import EventBroker
@@ -32,15 +33,24 @@ class PublishOutboxEvents:
         messages = await self.outbox_gateway.fetch_unpublished(self.config.batch_size)
         if not messages:
             return
-        for message in messages:
-            await self.events_broker.publish_raw(
-                subject=message.subject,
-                payload=message.payload,
-                message_id=str(message.id),
-            )
-        await self.outbox_gateway.mark_published([m.id for m in messages])
-        await self.uow.commit()
-        logger.info(
-            "Outbox relay published events",
-            extra={"event_count": len(messages)},
-        )
+        published_ids: list[UUID] = []
+        try:
+            for message in messages:
+                await self.events_broker.publish_raw(
+                    subject=message.subject,
+                    payload=message.payload,
+                    message_id=str(message.id),
+                )
+                published_ids.append(message.id)
+        finally:
+            # Mark the delivered prefix even when a publish fails mid-batch.
+            # Otherwise the already-acked rows are republished every tick, and
+            # JetStream only dedups them inside its duplicate window (~2 min) —
+            # a persistent failure would flood consumers with repeats.
+            if published_ids:
+                await self.outbox_gateway.mark_published(published_ids)
+                await self.uow.commit()
+                logger.info(
+                    "Outbox relay published events",
+                    extra={"event_count": len(published_ids)},
+                )
