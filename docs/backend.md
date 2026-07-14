@@ -5,11 +5,62 @@
 
 > Layer boundaries are enforced, not just documented: `just backend-import-lint` (import-linter, config in `backend/pyproject.toml`) fails the build if `core/` imports any outer layer, or if `application/` imports `adapters/`/`presentation/` outside the sanctioned exceptions listed below. Run it after touching imports; it is part of `just backend-lint`.
 
+## Rules at a glance
+
+Everything below this section is detail; these rules alone prevent most mistakes.
+
+1. `core/` is pure domain: plain dataclasses, no I/O frameworks. Pydantic is allowed
+   only in `core/events/base.py` and `core/vo/fields.py`.
+2. `application/` orchestrates through ports (`application/ports/`) — never ORM
+   models or concrete adapters.
+3. One gateway port per aggregate (`XGateway`): writes first, then `read_*` DTO
+   projections under a `# Read projections (return DTOs, not aggregates)` divider.
+4. Ports are `typing.Protocol` (no `@abstractmethod`); adapters explicitly subclass
+   their port so the type checker catches signature drift.
+5. Authorize via `PermissionService.ensure(...)` — never hardcoded role checks.
+   Authenticate inside interactors via `CurrentUserProvider.require_user()` — never
+   FastAPI `Depends`.
+6. Commit only via `uow.commit()`. Aggregate state-change events: `record_event()`
+   inside the aggregate (delivered through the outbox). Service events (no state
+   change): publish via `EventBroker` in the interactor.
+7. Translate known `IntegrityError`s to domain exceptions at the gateway with
+   `translate_integrity_error` — do not pre-`SELECT` to dodge the race.
+8. New domain exception: inherit the semantic marker (`NotFound`, `Conflict`, …)
+   listed *first* in the bases; never edit the status map.
+9. Migrations: prefer autogenerate; always review the output (renames emit as
+   drop+create; enum member changes need hand-written migrations).
+10. Logging: stdlib `logging.getLogger(__name__)`; short static message + scalar ids
+    in `extra`; `str(...)` UUIDs; never log secrets, codes, or PII.
+
+## Common task recipes
+
+### Add a persisted aggregate
+1. Domain model in `core/models/` (dataclass; subclass `AggregateRoot` if it records events).
+2. ORM model in `adapters/db/models/` — storage types only, no VO-typed columns.
+3. Mapper in `adapters/db/mappers/` — the only place VO ↔ storage conversion happens.
+4. Port `XGateway` in `application/ports/gateways/`; implementation in `adapters/db/gateways/` explicitly subclassing it. If the aggregate records events, call `self.uow.register(aggregate)` in every `add`/`get`.
+5. Wire providers in `main/ioc/`; generate a migration (`just backend-generate-auto <name>`) and review it.
+
+### Add a domain event
+1. Class in `core/events/<context>.py`, subclassing `AppEvent`; PascalCase past tense (`VoteCreated`); `subject` ClassVar `<context>[.<entity>].<past-verb>` (`votes.created`).
+2. Records an aggregate state change → `record_event()` inside the aggregate method; the outbox delivers it on `uow.commit()`. Application-level trigger with no state change → publish directly via `EventBroker` in the interactor.
+3. Add a FastStream subscriber in `presentation/faststream/routes/` — never add a published event without a subscriber.
+4. `subject` is a published contract: renaming one is a migration, not a rename.
+
+### Add a client-facing domain exception / error code
+1. Define the exception with the semantic marker first in its bases (`class UserNotFound(NotFound, UserException)`).
+2. If it never reaches an HTTP client, list it in `INTERNAL_ONLY` in `tests/unit/presentation/test_exception_status_map.py` — the drift test fails otherwise.
+3. Run `just frontend-generate-api`, then add Russian copy for the new code to `ERROR_MESSAGES` in `frontend/src/lib/api/errors.ts` (a compile-time exhaustiveness guard reports it until you do).
+
+### Add an SSE event
+1. Add a member to `SSEEventName` (`application/dto/realtime.py`) — snake_case, single token, **no dots**.
+2. Mirror it in `SSEEventMap` (`frontend/src/lib/services/events.svelte.ts`) — the two are kept in sync by hand.
+
 ## Core Domain & Interactors
 * **Core Layer (`core/`)**: Pure domain entities, value objects, and domain exceptions. Must be free of all I/O frameworks and outer layers — no FastAPI, SQLAlchemy, no `adapters/`/`application/`/`presentation/` imports. **Pydantic is the one allowed exception, and only in two narrow spots**: `core/events/base.py` (`AppEvent` is a `BaseModel` so domain events serialize cleanly over NATS) and `core/vo/fields.py` (validation helpers for value objects). Do not reach for Pydantic elsewhere in `core/` — plain dataclasses are the default for entities and value objects.
 * **Application Layer (`application/`)**: Orchestrates interactors and business use cases. Must never import database ORM models directly. Communication with infrastructure happens via abstract interfaces (ports under `application/ports/`) and schemas/DTOs.
-* **One gateway port per aggregate**: Each aggregate has a single port under `application/ports/gateways/`, named `XGateway`, that carries both writes (loading and persisting aggregates) and reads (DTO projections returned to callers). Group the read methods at the bottom of the port under a `# Read projections (return DTOs, not aggregates)` comment and prefix them with `read_`. We call these ports **gateways, not repositories, on purpose**: a strict DDD repository returns only aggregates, but these ports also serve read DTOs, so they are persistence *gateways* — which also matches their `SqlXGateway` implementations. We deliberately do **not** split reads and writes into separate repository + query ports; that CQRS-style split was pure ceremony at this scale (one gateway implemented both, then DI aliased it twice). Reach for a dedicated read port only if a read model ever genuinely diverges from its aggregate (different store, independent scaling).
-* **Ports are `Protocol`, never `ABC`**: Define every port in `application/ports/` as a `typing.Protocol` (structural typing keeps the application layer free of any inward dependency from adapters). Do not decorate port methods with `@abstractmethod` — it does not catch signature drift and is redundant with the type checker. Adapters in `adapters/` **must explicitly subclass** the port they implement (e.g. `class SqlUserGateway(UserGateway): ...`); the explicit inheritance turns structural typing into checked nominal typing, so `just backend-typecheck` (`ty`) flags any method that drifts from its port — missing method, changed parameters, or a changed return type.
+* **One gateway port per aggregate**: Each aggregate has a single port under `application/ports/gateways/`, named `XGateway`, that carries both writes (loading and persisting aggregates) and reads (DTO projections returned to callers). Group the read methods at the bottom of the port under a `# Read projections (return DTOs, not aggregates)` comment and prefix them with `read_`. These are **gateways, not repositories, on purpose** — they also serve read DTOs, and we deliberately do **not** split reads into separate CQRS-style query ports; the rationale and the conditions for revisiting live in [ADR-0003](adr/0003-persistence-gateways-over-repositories.md).
+* **Ports are `Protocol`, never `ABC`**: Define every port in `application/ports/` as a `typing.Protocol`; do not decorate port methods with `@abstractmethod`. Adapters in `adapters/` **must explicitly subclass** the port they implement (e.g. `class SqlUserGateway(UserGateway): ...`), so `just backend-typecheck` (`ty`) flags any method that drifts from its port — missing method, changed parameters, or a changed return type. Rationale: [ADR-0005](adr/0005-ports-as-protocol-with-explicit-adapter-subclassing.md).
 
 ## Services
 
@@ -99,7 +150,7 @@ await self.uow.commit()  # writes the vote + a VoteCreated outbox row atomically
 
 ### Transactional outbox
 
-Aggregate events are **not** published to NATS on commit. Publishing to a separate system after the DB commits is a dual write — if the process dies between the two, the state is persisted but the event is lost. Instead, `uow.commit()` serializes each recorded event into an `OutboxEventORM` row (`adapters/db/models/outbox.py`) committed in the **same transaction** as the aggregate change, and a relay delivers it asynchronously:
+Aggregate events are **not** published to NATS on commit — that would be a dual write: if the process dies between the DB commit and the publish, state is persisted but the event is lost ([ADR-0004](adr/0004-transactional-outbox-for-domain-events.md)). Instead, `uow.commit()` serializes each recorded event into an `OutboxEventORM` row (`adapters/db/models/outbox.py`) committed in the **same transaction** as the aggregate change, and a relay delivers it asynchronously:
 
 * **Relay** — `PublishOutboxEvents` (`application/interactors/outbox/`), run as an `IntervalTrigger` job (~seconds) in the scheduler (`main/scheduler.py`). It reads unpublished rows `FOR UPDATE SKIP LOCKED`, calls `EventBroker.publish_raw(subject, payload, message_id)`, marks them published, and commits.
 * **Delivery guarantee** — at-least-once: a row is marked published only after NATS acks it. Consumers stay idempotent; the row id is sent as `Nats-Msg-Id` so JetStream dedups redeliveries within its window.
