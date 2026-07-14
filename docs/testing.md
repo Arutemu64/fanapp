@@ -7,6 +7,36 @@ adding tests. Tests live under `backend/tests/` and run with `pytest` + `uv`.
 > on request, or in CI. After backend code changes you still always run
 > `just backend-lint` and `just backend-typecheck`.
 
+## Rules at a glance
+
+Everything below this section is detail; these rules alone are enough to add a
+correct test.
+
+1. **Pure domain logic** (`core/`) → `@pytest.mark.unit` test in `tests/unit/`.
+   Instantiate the object, call the method, assert. No mocks, no database, no
+   DI container.
+2. **An interactor** (`application/interactors/`) → `@pytest.mark.integration`
+   test in `tests/integration/<feature>/`. Runs against real PostgreSQL and
+   Redis. Resolve the interactor from `dishka_request`, assert on persisted
+   state and enqueued/published events. **Never unit-test an interactor with
+   mocked gateways** — its behavior lives in SQL.
+3. **Copy the reference example**:
+   `tests/integration/schedule_mgmt/test_set_current_event.py` (happy path,
+   permission failure, rate limit, rollback on error).
+4. **Real vs fake**: everything behind PostgreSQL/Redis is real (gateways,
+   `UnitOfWork`, rate limiter, sessions), and so are deterministic ports
+   (hasher, Jinja). Ports that reach *other* external systems (NATS, SMTP,
+   Telegram, WebPush, realtime) are faked. New side-effecting port? Add a
+   recording fake in `tests/fakes/` and register it in
+   `tests/integration/conftest.py` via `AnyOf[ThePort, TheFake]`.
+5. **Fixtures are for plumbing only** (`login`, `outbox`, `uow`, user
+   personas like `visitor` / `schedule_editor`). The interactor
+   under test and the gateways you assert on are resolved explicitly with
+   `dishka_request.get(...)` in the test body — never hidden in a fixture.
+6. **No cleanup code.** Database writes roll back automatically after every
+   test; Redis is flushed automatically. Don't truncate tables or hand-pick
+   unique ids.
+
 ## Two layers
 
 | Layer | Location | Marker | Infrastructure | Speed |
@@ -70,7 +100,7 @@ instead of verifying behavior.
 
 A test resolves what it needs from `dishka_request`, sets up state through
 gateways, runs the interactor, and asserts on persisted state and
-published events. The shared plumbing (acting user, event broker, unit of
+enqueued events. The shared plumbing (acting user, outbox, unit of
 work) comes in as fixtures; the interactor under test and the
 gateways it asserts on stay explicit so a reader sees the test's
 surface at a glance:
@@ -82,14 +112,16 @@ async def test_add_vote_creates_vote_and_publishes_event(
     dishka_request: AsyncContainer,
     visitor_with_ticket: User,
     login: Callable[[User], None],
-    events_broker: FakeEventBroker,
+    outbox: OutboxGateway,
     uow: UnitOfWork,
 ):
     login(visitor_with_ticket)              # set the acting user
     interactor = await dishka_request.get(AddVote)
     vote_gateway = await dishka_request.get(VoteGateway)
     ...
-    assert events_broker.published_events == [VoteCreated(...)]
+    assert [
+        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
+    ] == as_outbox(VoteCreated(...))
 ```
 
 `tests/integration/schedule_mgmt/test_set_current_event.py` is the reference
@@ -105,7 +137,7 @@ repeat:
 | Fixture | Type | Use |
 |---------|------|-----|
 | `login` | `Callable[[User], None]` | `login(user)` sets the acting user (wraps `FakeIdProvider`) |
-| `events_broker` | `FakeEventBroker` | assert on `events_broker.published_events` |
+| `outbox` | `OutboxGateway` | assert on enqueued aggregate events: compare `fetch_unpublished(...)` against the `as_outbox(...)` helper |
 | `uow` | `UnitOfWork` | commit setup state; `uow.rollback()` after an expected error |
 
 Rule of thumb: take the plumbing you need from fixtures, but resolve the
@@ -173,17 +205,7 @@ providers plus test overrides:
 
 Reusable user fixtures (`visitor`, `visitor_with_ticket`, `schedule_editor`)
 live in `tests/fixtures/users.py` and are registered as a plugin in
-`tests/conftest.py`. The shared plumbing fixtures (`login`, `events_broker`,
+`tests/conftest.py`. The shared plumbing fixtures (`login`, `outbox`,
 `uow`) live in `tests/integration/conftest.py` — see *Shared plumbing
 fixtures* above. Add shared setup in these places rather than copying it
 between tests.
-
-## Adding a test — checklist
-
-1. Pure domain logic? Add a `@pytest.mark.unit` test under `tests/unit/`.
-2. An interactor? Add a `@pytest.mark.integration` test under
-   `tests/integration/<feature>/`, resolve it from `dishka_request`, assert on
-   persisted state and `FakeEventBroker.published_events`.
-3. Needs a new side-effecting port? Add a fake in `tests/fakes/` and wire it
-   in `conftest.py`.
-4. No manual DB cleanup — rollback isolation handles it.
