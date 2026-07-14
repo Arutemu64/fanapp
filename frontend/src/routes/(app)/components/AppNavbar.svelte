@@ -7,6 +7,7 @@
 	import { createApiClient } from '$lib/api';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { setAppBadgeCount } from '$lib/utils/appBadge';
 	import { clearUserCache } from '$lib/utils/offlineCache';
 	import { getAvatarInitials } from '$lib/utils/users';
 	import {
@@ -52,6 +53,9 @@
 		// account (or offline) on a shared device. Universal caches (e.g. schedule)
 		// stay warm by design.
 		await clearUserCache();
+		// The bell unmounts with the session, so clear its app-icon badge here —
+		// otherwise the previous user's unread count would linger on the icon.
+		setAppBadgeCount(0);
 
 		await goto(resolve('/'), { invalidateAll: true });
 		eventsClient?.restart();

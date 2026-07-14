@@ -242,6 +242,14 @@ self.addEventListener('push', (event: PushEvent) => {
 				return;
 			}
 
+			// Mirror the push onto the app-icon badge (Badging API, no-op where
+			// unsupported). The payload carries no unread count, so set the
+			// count-less "flag" badge; the in-app bell replaces it with the exact
+			// number (or clears it) once the app opens.
+			if ('setAppBadge' in self.navigator) {
+				await self.navigator.setAppBadge().catch(() => undefined);
+			}
+
 			await self.registration.showNotification(data.title, options);
 		})()
 	);

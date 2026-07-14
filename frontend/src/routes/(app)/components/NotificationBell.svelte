@@ -8,6 +8,7 @@
 	import { NOTIFICATION_PREVIEW_LIMIT } from '$lib/constants/notifications';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { setAppBadgeCount } from '$lib/utils/appBadge';
 	import { Dropdown, DropdownGroup } from 'flowbite-svelte';
 	import { BellSolid, EyeSolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
@@ -28,6 +29,13 @@
 	let dropdownOpen = $state(false);
 	const eventsClient = getEventsClient();
 	const toastService = getToastService();
+
+	// Mirror the unread count onto the installed app's icon (Badging API). This
+	// also replaces the count-less "flag" badge the service worker sets on push
+	// with the exact number once the app opens; logout clears it (AppNavbar).
+	$effect(() => {
+		setAppBadgeCount(unreadCount);
+	});
 
 	async function loadNotifications() {
 		try {
