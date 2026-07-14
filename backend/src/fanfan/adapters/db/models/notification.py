@@ -31,8 +31,12 @@ class NotificationORM(BaseORM):
     # In-app deep-link path the notification points to (e.g. "/schedule").
     # Nullable: legacy rows and notifications without a target fall back to root.
     path: Mapped[str | None] = mapped_column()
+    # SET NULL, not CASCADE: cancelling a mailing already deletes its
+    # undelivered notifications explicitly (DeleteMailingNotifications), so a
+    # hard delete of an old mailing row must not wipe delivered notifications
+    # out of users' inboxes.
     mailing_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("mailings.id", ondelete="CASCADE"),
+        ForeignKey("mailings.id", ondelete="SET NULL"),
         index=True,
     )
     seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

@@ -43,14 +43,30 @@ def upgrade() -> None:
         ondelete="SET NULL",
     )
 
-    # 3. app_settings is a singleton table (the app only ever touches id=1).
+    # 3. Delivered notifications must survive a hard delete of their mailing;
+    # cancellation already deletes undelivered ones explicitly in the app.
+    op.drop_constraint(
+        op.f("fk_notifications_mailing_id_mailings"),
+        "notifications",
+        type_="foreignkey",
+    )
+    op.create_foreign_key(
+        op.f("fk_notifications_mailing_id_mailings"),
+        "notifications",
+        "mailings",
+        ["mailing_id"],
+        ["id"],
+        ondelete="SET NULL",
+    )
+
+    # 4. app_settings is a singleton table (the app only ever touches id=1).
     op.create_check_constraint(
         op.f("ck_app_settings_single_row"),
         "app_settings",
         "id = 1",
     )
 
-    # 4. One identity per provider per user. The (user_id, provider) unique
+    # 5. One identity per provider per user. The (user_id, provider) unique
     # also covers user_id lookups, so the standalone user_id index goes away.
     op.create_unique_constraint(
         op.f("uq_social_identities_user_id"),
@@ -59,7 +75,7 @@ def upgrade() -> None:
     )
     op.drop_index(op.f("ix_social_identities_user_id"), table_name="social_identities")
 
-    # 5. Participant values are no longer used by the app; drop the EAV table.
+    # 6. Participant values are no longer used by the app; drop the EAV table.
     op.drop_index(
         op.f("ix_participant_values_participant_id"), table_name="participant_values"
     )
@@ -133,6 +149,20 @@ def downgrade() -> None:
 
     op.drop_constraint(
         op.f("ck_app_settings_single_row"), "app_settings", type_="check"
+    )
+
+    op.drop_constraint(
+        op.f("fk_notifications_mailing_id_mailings"),
+        "notifications",
+        type_="foreignkey",
+    )
+    op.create_foreign_key(
+        op.f("fk_notifications_mailing_id_mailings"),
+        "notifications",
+        "mailings",
+        ["mailing_id"],
+        ["id"],
+        ondelete="CASCADE",
     )
 
     op.drop_constraint(
