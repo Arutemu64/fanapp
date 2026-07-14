@@ -85,7 +85,6 @@ class SyncCosplay:
                 title=external.voting_title,
                 nomination_id=nomination.id,
                 voting_number=external.voting_number,
-                values=external.values,
             )
             await self.participant_gateway.save(participant)
             logger.info(
@@ -98,7 +97,6 @@ class SyncCosplay:
                 title=external.voting_title,
                 nomination_id=nomination.id,
                 voting_number=external.voting_number,
-                values=external.values,
             )
             await self.participant_gateway.add(participant)
             logger.info(

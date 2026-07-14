@@ -31,8 +31,10 @@ class TicketORM(BaseORM):
     issued_by_user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), index=True
     )
+    # SET NULL, not CASCADE: a ticket is an imported/issued artifact that must
+    # survive account deletion — the barcode is simply freed for re-linking.
     used_by_user_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"),
+        ForeignKey("users.id", ondelete="SET NULL"),
         unique=True,
     )
 

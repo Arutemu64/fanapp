@@ -1,6 +1,6 @@
 from sqlalchemy import Select, and_, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, undefer
+from sqlalchemy.orm import undefer
 
 from fanfan.adapters.db.mappers.participant import ParticipantMapper
 from fanfan.adapters.db.models import (
@@ -44,7 +44,6 @@ class SqlParticipantGateway(ParticipantGateway):
         stmt = (
             select(ParticipantORM)
             .where(ParticipantORM.id == participant_id)
-            .options(joinedload(ParticipantORM.values))
             .with_for_update(of=ParticipantORM)
         )
         participant_orm = await self.session.scalar(stmt)
@@ -54,7 +53,6 @@ class SqlParticipantGateway(ParticipantGateway):
         stmt = (
             select(ParticipantORM)
             .where(ParticipantORM.cosplay2_id == cosplay2_id)
-            .options(joinedload(ParticipantORM.values))
             .with_for_update(of=ParticipantORM)
         )
         participant_orm = await self.session.scalar(stmt)

@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from typing import Protocol
 
-from fanfan.core.models.participant import ParticipantValue
-
 
 # external_id is the port's neutral vocabulary for "the id in the source system".
 # The adapter maps the vendor id onto it; the interactor maps it onto the domain
@@ -20,7 +18,6 @@ class ExternalParticipant:
     nomination_external_id: int  # matches an ExternalNomination.external_id
     voting_number: int | None
     voting_title: str  # guaranteed present; the source filters out the None case
-    values: list[ParticipantValue]
 
 
 class CosplaySource(Protocol):

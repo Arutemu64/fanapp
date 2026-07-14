@@ -42,7 +42,7 @@ class SqlUserGateway(UserGateway):
         with translate_integrity_error(
             {
                 "ix_users_email": UserAlreadyExists,
-                "ix_users_username": UserAlreadyExists,
+                "ix_users_username_lower": UserAlreadyExists,
             }
         ):
             self.session.add(user_orm)
@@ -90,7 +90,7 @@ class SqlUserGateway(UserGateway):
         user_orm = self.mapper.from_model(user)
         with translate_integrity_error(
             {
-                "ix_users_username": UsernameAlreadyTaken,
+                "ix_users_username_lower": UsernameAlreadyTaken,
                 "ix_users_email": EmailAlreadyExists,
             }
         ):

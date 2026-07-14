@@ -5,7 +5,10 @@ from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.mappers.social_identity import SocialIdentityMapper
 from fanfan.adapters.db.models import SocialIdentityORM
 from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
-from fanfan.core.exceptions.users import TelegramAlreadyLinkedToAnotherUser
+from fanfan.core.exceptions.users import (
+    TelegramAlreadyLinkedToAnotherUser,
+    UserAlreadyHasTelegramLinked,
+)
 from fanfan.core.models.social_identity import SocialIdentity
 from fanfan.core.vo.user import UserId
 
@@ -20,6 +23,7 @@ class SqlSocialIdentityGateway(SocialIdentityGateway):
         with translate_integrity_error(
             {
                 "uq_social_identities_provider": TelegramAlreadyLinkedToAnotherUser,
+                "uq_social_identities_user_id": UserAlreadyHasTelegramLinked,
             }
         ):
             self.session.add(social_identity_orm)

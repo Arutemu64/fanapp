@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid7
 
-from sqlalchemy import Enum, Index, Uuid, text
+from sqlalchemy import Enum, Index, Uuid, func, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
     Mapped,
@@ -26,7 +26,10 @@ class UserORM(BaseORM):
         primary_key=True,
         default=uuid7,
     )
-    username: Mapped[str] = mapped_column(index=True, unique=True)
+    # Uniqueness is enforced case-insensitively via ix_users_username_lower
+    # (see __table_args__) so lookups by lower(username) hit an index and
+    # "Alice" / "alice" can never coexist.
+    username: Mapped[str] = mapped_column()
     hashed_password: Mapped[str | None] = mapped_column()
     email: Mapped[str | None] = mapped_column(index=True, unique=True)
     # Notification preferences live in columns (not the settings JSON) so they
@@ -62,6 +65,9 @@ class UserORM(BaseORM):
     )
 
     __table_args__ = (
+        # Case-insensitive uniqueness; get_by_username compares lower(username),
+        # so this expression index is also what makes login lookups indexed.
+        Index("ix_users_username_lower", func.lower(username), unique=True),
         # Partial index: only TRUE rows are indexed, which is exactly the set
         # the global-announcement fan-out query scans.
         Index(
