@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # An example of using standalone Python builds with multistage images.
 
 # First, build the application in the `/app` directory
