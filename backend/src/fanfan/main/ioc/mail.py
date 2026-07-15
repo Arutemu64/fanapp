@@ -3,6 +3,7 @@ import logging
 from dishka import Provider, Scope, provide
 from fastapi_mail import ConnectionConfig, FastMail
 
+from fanfan.adapters.config.models import EnvConfig
 from fanfan.adapters.mail.config import MailConfig
 from fanfan.adapters.mail.email_sender import FastEmailSender, LogOnlyEmailSender
 from fanfan.application.ports.email_sender import EmailSender
@@ -12,6 +13,11 @@ logger = logging.getLogger(__name__)
 
 class MailProvider(Provider):
     scope = Scope.APP
+
+    @provide
+    def get_mail_config(self, config: EnvConfig) -> MailConfig | None:
+        # Optional — when unset, get_email_sender falls back to a log-only sender.
+        return config.mail
 
     @provide
     def get_email_sender(self, config: MailConfig | None) -> EmailSender:
