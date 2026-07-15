@@ -4,10 +4,9 @@ from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.application.ports.gateways.user_flags import UserFlagGateway
 from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.core.constants.flags import VOTING_CONTEST_FLAG_NAME
 from fanfan.core.models.user_flag import UserFlag
 from fanfan.core.vo.user import UserId
-from fanfan.core.vo.user_flag import generate_user_flag_id
+from fanfan.core.vo.user_flag import UserFlagName, generate_user_flag_id
 
 
 class CheckVotingContestEntryInput(BaseModel):
@@ -32,7 +31,7 @@ class CheckVotingContestEntry:
         votable_nominations_count = await self.nomination_gateway.count_votable()
 
         flag = await self.user_flag_gateway.get_by_user(
-            user_id=data.user_id, flag_name=VOTING_CONTEST_FLAG_NAME
+            user_id=data.user_id, flag_name=UserFlagName.VOTING_CONTEST
         )
 
         # Drop a now-invalid flag (user no longer has every nomination voted),
@@ -43,7 +42,7 @@ class CheckVotingContestEntry:
         elif not flag and user_votes_count >= votable_nominations_count:
             flag = UserFlag(
                 id=generate_user_flag_id(),
-                name=VOTING_CONTEST_FLAG_NAME,
+                name=UserFlagName.VOTING_CONTEST,
                 user_id=data.user_id,
             )
             await self.user_flag_gateway.add(flag)

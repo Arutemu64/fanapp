@@ -7,6 +7,7 @@ from fanfan.adapters.db.models import UserFlagORM
 from fanfan.application.ports.gateways.user_flags import UserFlagGateway
 from fanfan.core.models.user_flag import UserFlag
 from fanfan.core.vo.user import UserId
+from fanfan.core.vo.user_flag import UserFlagName
 
 
 class SqlUserFlagGateway(UserFlagGateway):
@@ -27,7 +28,9 @@ class SqlUserFlagGateway(UserFlagGateway):
         )
         await self.session.execute(stmt)
 
-    async def get_by_user(self, user_id: UserId, flag_name: str) -> UserFlag | None:
+    async def get_by_user(
+        self, user_id: UserId, flag_name: UserFlagName
+    ) -> UserFlag | None:
         stmt = (
             select(UserFlagORM)
             .where(
