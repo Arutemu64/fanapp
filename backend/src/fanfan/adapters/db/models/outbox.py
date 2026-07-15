@@ -1,15 +1,15 @@
 from datetime import datetime
 from typing import Any
-from uuid import UUID, uuid7
 
-from sqlalchemy import DateTime, Index, Text, Uuid
+from sqlalchemy import DateTime, Index, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from fanfan.adapters.db.models.base import BaseORM
+from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
 
 
-class OutboxEventORM(BaseORM):
+class OutboxEventORM(UUIDPrimaryKeyMixin, BaseORM):
     """A domain event awaiting delivery to NATS.
 
     Rows are written inside the same transaction as the aggregate change, then
@@ -28,11 +28,6 @@ class OutboxEventORM(BaseORM):
         ),
     )
 
-    id: Mapped[UUID] = mapped_column(
-        Uuid(as_uuid=True),
-        primary_key=True,
-        default=uuid7,
-    )
     subject: Mapped[str] = mapped_column(Text())
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB())
     published_at: Mapped[datetime | None] = mapped_column(

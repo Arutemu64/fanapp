@@ -1,7 +1,9 @@
 from datetime import datetime
+from enum import Enum as PyEnum
+from typing import Any
 
-from sqlalchemy import DateTime, MetaData, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import DateTime, Enum, MetaData, func
+from sqlalchemy.orm import DeclarativeBase, Mapped, MappedColumn, mapped_column
 
 metadata = MetaData(
     naming_convention={
@@ -14,8 +16,43 @@ metadata = MetaData(
 )
 
 
+def str_enum_column(
+    enum_cls: type[PyEnum],
+    *,
+    name: str,
+    length: int = 32,
+    **kwargs: Any,
+) -> MappedColumn:
+    """Map a StrEnum to a VARCHAR column guarded by a CHECK constraint.
+
+    We deliberately avoid a native PostgreSQL ENUM type (``native_enum=False``):
+    a CHECK constraint is far cheaper to evolve than ``ALTER TYPE ... ADD VALUE``.
+    We store the enum *value* ("visitor"), not the member name, via
+    ``values_callable`` so the DB matches the value used across the API, DTOs and
+    frontend — both for the stored data and the generated CHECK constraint.
+
+    Extra ``kwargs`` (``default``, ``server_default``, ``index``, ...) pass
+    through to ``mapped_column``.
+    """
+    return mapped_column(
+        Enum(
+            enum_cls,
+            native_enum=False,
+            create_constraint=True,
+            name=name,
+            length=length,
+            values_callable=lambda cls: [m.value for m in cls],
+        ),
+        **kwargs,
+    )
+
+
 class BaseORM(DeclarativeBase):
-    """Abstract model with declarative base functionality."""
+    """Declarative base carrying the shared metadata and audit timestamps.
+
+    Every table inherits ``created_at`` / ``updated_at``; append-only tables
+    simply never see ``updated_at`` move.
+    """
 
     metadata = metadata
 
@@ -29,4 +66,7 @@ class BaseORM(DeclarativeBase):
         server_default=func.now(),
     )
 
-    __allow_unmapped__ = False
+    def __repr__(self) -> str:
+        pk = self.__mapper__.primary_key_from_instance(self)
+        pk_repr = ", ".join(map(repr, pk))
+        return f"<{type(self).__name__}({pk_repr})>"

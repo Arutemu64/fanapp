@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
-from uuid import UUID, uuid7
+from uuid import UUID
 
-from sqlalchemy import ForeignKey, UniqueConstraint, Uuid, func, select
+from sqlalchemy import ForeignKey, UniqueConstraint, func, select
 from sqlalchemy.orm import (
     Mapped,
     column_property,
@@ -11,21 +11,17 @@ from sqlalchemy.orm import (
 )
 
 from fanfan.adapters.db.models.base import BaseORM
+from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
 from fanfan.adapters.db.models.vote import VoteORM
 
 if TYPE_CHECKING:
     from fanfan.adapters.db.models.nomination import NominationORM
 
 
-class ParticipantORM(BaseORM):
+class ParticipantORM(UUIDPrimaryKeyMixin, BaseORM):
     __tablename__ = "participants"
     __table_args__ = (UniqueConstraint("nomination_id", "voting_number"),)
 
-    id: Mapped[UUID] = mapped_column(
-        Uuid(as_uuid=True),
-        primary_key=True,
-        default=uuid7,
-    )
     cosplay2_id: Mapped[int] = mapped_column(unique=True, index=True)
     title: Mapped[str] = mapped_column(index=True)
     voting_number: Mapped[int | None] = mapped_column()

@@ -1,7 +1,6 @@
 from typing import TYPE_CHECKING
-from uuid import UUID, uuid7
 
-from sqlalchemy import Enum, Index, Uuid, func, text
+from sqlalchemy import Index, func, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import (
     Mapped,
@@ -9,7 +8,8 @@ from sqlalchemy.orm import (
     relationship,
 )
 
-from fanfan.adapters.db.models.base import BaseORM
+from fanfan.adapters.db.models.base import BaseORM, str_enum_column
+from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
 from fanfan.core.vo.user import UserRole
 
 if TYPE_CHECKING:
@@ -18,14 +18,9 @@ if TYPE_CHECKING:
     from fanfan.adapters.db.models.ticket import TicketORM
 
 
-class UserORM(BaseORM):
+class UserORM(UUIDPrimaryKeyMixin, BaseORM):
     __tablename__ = "users"
 
-    id: Mapped[UUID] = mapped_column(
-        Uuid(as_uuid=True),
-        primary_key=True,
-        default=uuid7,
-    )
     # Uniqueness is enforced case-insensitively via ix_users_username_lower
     # (see __table_args__) so lookups by lower(username) hit an index and
     # "Alice" / "alice" can never coexist.
@@ -42,17 +37,9 @@ class UserORM(BaseORM):
     # extension point so new prefs need no schema migration.
     settings: Mapped[dict] = mapped_column(JSONB)
 
-    role: Mapped[UserRole] = mapped_column(
-        Enum(
-            UserRole,
-            native_enum=False,
-            create_constraint=True,
-            name="userrole",
-            length=32,
-            # Store the StrEnum *value* ("visitor"), not the member name, so the
-            # DB matches the value used across the API, DTOs and frontend.
-            values_callable=lambda enum_cls: [m.value for m in enum_cls],
-        ),
+    role: Mapped[UserRole] = str_enum_column(
+        UserRole,
+        name="userrole",
         default=UserRole.VISITOR,
         server_default=UserRole.VISITOR.value,
     )

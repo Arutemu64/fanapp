@@ -1,7 +1,6 @@
 from datetime import datetime
-from uuid import UUID, uuid7
 
-from sqlalchemy import DateTime, Index, Uuid, func, select
+from sqlalchemy import DateTime, Index, func, select
 from sqlalchemy.orm import (
     Mapped,
     column_property,
@@ -11,16 +10,12 @@ from sqlalchemy.orm import (
 
 from fanfan.adapters.db.models.base import BaseORM
 from fanfan.adapters.db.models.mixins.order import OrderMixin
+from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
 
 
-class ScheduleEventORM(BaseORM, OrderMixin):
+class ScheduleEventORM(UUIDPrimaryKeyMixin, BaseORM, OrderMixin):
     __tablename__ = "schedule"
 
-    id: Mapped[UUID] = mapped_column(
-        Uuid(as_uuid=True),
-        primary_key=True,
-        default=uuid7,
-    )
     number: Mapped[int] = mapped_column(unique=True)
     title: Mapped[str] = mapped_column(index=True)
     duration: Mapped[int] = mapped_column(server_default="0")
