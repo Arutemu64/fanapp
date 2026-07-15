@@ -1,4 +1,4 @@
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import (
     Mapped,
     column_property,
@@ -19,9 +19,9 @@ class NominationORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     cosplay2_id: Mapped[int] = mapped_column(unique=True, index=True)
     code: Mapped[str] = mapped_column(unique=True)
     title: Mapped[str] = mapped_column(unique=True)
-    is_votable: Mapped[bool] = mapped_column(server_default="False")
+    is_votable: Mapped[bool] = mapped_column(server_default=text("false"))
     # Optional external URL where users can preview the nominated works.
-    works_url: Mapped[str | None] = mapped_column(default=None)
+    works_url: Mapped[str | None] = mapped_column()
 
     participants: Mapped[list[ParticipantORM]] = relationship(
         back_populates="nomination"

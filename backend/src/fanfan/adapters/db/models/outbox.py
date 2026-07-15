@@ -31,6 +31,4 @@ class OutboxEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
 
     subject: Mapped[str] = mapped_column(Text())
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB())
-    published_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), default=None
-    )
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

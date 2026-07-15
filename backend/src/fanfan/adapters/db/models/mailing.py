@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from fanfan.adapters.db.models.base import BaseORM, str_enum_column
@@ -20,5 +20,5 @@ class MailingORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
         ForeignKey("users.id", ondelete="SET NULL"), index=True
     )
 
-    sent_count: Mapped[int] = mapped_column(default=0)
-    total_count: Mapped[int] = mapped_column(default=0)
+    sent_count: Mapped[int] = mapped_column(server_default=text("0"))
+    total_count: Mapped[int] = mapped_column(server_default=text("0"))

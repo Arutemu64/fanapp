@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, Index, func, select
+from sqlalchemy import DateTime, Index, func, select, text
 from sqlalchemy.orm import (
     Mapped,
     column_property,
@@ -19,9 +19,9 @@ class ScheduleEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM, OrderMixin)
 
     number: Mapped[int] = mapped_column(unique=True)
     title: Mapped[str] = mapped_column(index=True)
-    duration: Mapped[int] = mapped_column(server_default="0")
-    is_current: Mapped[bool] = mapped_column(server_default="False")
-    is_skipped: Mapped[bool] = mapped_column(server_default="False")
+    duration: Mapped[int] = mapped_column(server_default=text("0"))
+    is_current: Mapped[bool] = mapped_column(server_default=text("false"))
+    is_skipped: Mapped[bool] = mapped_column(server_default=text("false"))
     nomination_title: Mapped[str | None] = mapped_column()
     block_title: Mapped[str | None] = mapped_column()
     # Timezone-aware anchor for drift-aware projection (ADR-0008); we store and
