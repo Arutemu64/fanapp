@@ -157,7 +157,8 @@ adapters for real; fake the ports that reach other external systems.**
 | `EventBroker` | **fake** (`FakeEventBroker`) | assert *what* was published, not NATS delivery |
 | `IdProvider` | **fake** (`FakeIdProvider`) | the test sets the acting user |
 | `EmailSender`, `TelegramNotifierPort`, `PushNotifierPort`, `RealtimeGateway` | **fake** | external side-effects (SMTP / Telegram / WebPush / NATS) |
-| TicketsCloud / Cosplay2 HTTP clients | not wired yet | concrete clients, no port seam (see below) |
+| `TicketsSource` (TicketsCloud) | **fake** (`FakeTicketsSource`) | external HTTP; test supplies the tickets a sync should see |
+| Cosplay2 HTTP client | not wired yet | concrete client, no port seam (see below) |
 
 Fakes live in `tests/fakes/` and record what they received so tests can assert
 on it. When you make a new side-effecting port testable, add a fake there and
@@ -196,9 +197,11 @@ providers plus test overrides:
 * Test: `TestDbProvider` (testcontainers config), `TestSessionProvider`
   (rollback session), and the fakes above.
 * `skip_validation=True` is intentional: external integrations (NATS broker,
-  Telegram bot, SMTP, OAuth, the TicketsCloud/Cosplay2 HTTP clients) are not
-  wired, so interactors needing them are not yet resolvable. Everything else
-  resolves. When those gain a port + fake, register them and the flag can
+  Telegram bot, SMTP, OAuth, the Cosplay2 HTTP client) are not wired, so
+  interactors needing them are not yet resolvable. Everything else resolves.
+  TicketsCloud now sits behind the `TicketsSource` port with a
+  `FakeTicketsSource`, so ticket-sync interactors are testable. When the
+  remaining integrations gain a port + fake, register them and the flag can
   eventually be dropped.
 
 ## Fixtures
