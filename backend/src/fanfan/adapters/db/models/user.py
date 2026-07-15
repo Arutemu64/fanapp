@@ -49,9 +49,12 @@ class UserORM(BaseORM):
             create_constraint=True,
             name="userrole",
             length=32,
+            # Store the StrEnum *value* ("visitor"), not the member name, so the
+            # DB matches the value used across the API, DTOs and frontend.
+            values_callable=lambda enum_cls: [m.value for m in enum_cls],
         ),
         default=UserRole.VISITOR,
-        server_default="VISITOR",
+        server_default=UserRole.VISITOR.value,
     )
 
     ticket: Mapped[TicketORM | None] = relationship(

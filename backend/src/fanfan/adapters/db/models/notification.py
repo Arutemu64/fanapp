@@ -26,6 +26,9 @@ class NotificationORM(BaseORM):
             create_constraint=True,
             name="notificationtype",
             length=32,
+            # Store the StrEnum *value* ("schedule_change"), not the member name,
+            # so the DB matches the value used across the API, DTOs and frontend.
+            values_callable=lambda enum_cls: [m.value for m in enum_cls],
         )
     )
     # In-app deep-link path the notification points to (e.g. "/schedule").

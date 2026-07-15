@@ -22,6 +22,9 @@ class MailingORM(BaseORM):
             create_constraint=True,
             name="mailingstatus",
             length=32,
+            # Store the StrEnum *value* ("pending"), not the member name, so the
+            # DB matches the value used across the API, DTOs and frontend.
+            values_callable=lambda enum_cls: [m.value for m in enum_cls],
         )
     )
     by_user_id: Mapped[UUID | None] = mapped_column(
