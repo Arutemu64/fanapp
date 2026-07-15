@@ -9,8 +9,6 @@ from fanfan.application.ports.gateways import (
 from fanfan.core.models.permission import UserPermission
 from fanfan.core.vo.permission import (
     PermissionName,
-    PermissionObjectId,
-    PermissionObjectType,
 )
 from fanfan.core.vo.user import UserId
 
@@ -29,16 +27,12 @@ class SqlUserPermissionGateway(UserPermissionGateway):
         self,
         user_id: UserId,
         permission_name: PermissionName,
-        object_id: PermissionObjectId | None,
-        object_type: PermissionObjectType | None,
     ) -> UserPermission | None:
         user_perm_orm = await self.session.scalar(
             select(UserPermissionORM).where(
                 and_(
                     UserPermissionORM.user_id == user_id,
                     UserPermissionORM.permission == permission_name,
-                    UserPermissionORM.object_id == object_id,
-                    UserPermissionORM.object_type == object_type,
                 )
             )
         )

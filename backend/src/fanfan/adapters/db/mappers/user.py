@@ -12,8 +12,6 @@ from fanfan.core.vo.email import Email
 from fanfan.core.vo.permission import (
     WILDCARD_PERMISSION,
     PermissionName,
-    PermissionObjectId,
-    PermissionObjectType,
 )
 from fanfan.core.vo.ticket import TicketId
 from fanfan.core.vo.user import UserId, Username, UserRole
@@ -61,23 +59,9 @@ class UserMapper:
         # so it carries no explicit grant rows. Ship a single wildcard entry
         # instead of the empty list so the frontend resolves it as full access.
         if orm.role is UserRole.ORG:
-            return [
-                UserPermissionDTO(
-                    name=WILDCARD_PERMISSION,
-                    object_type=None,
-                    object_id=None,
-                )
-            ]
+            return [UserPermissionDTO(name=WILDCARD_PERMISSION)]
         return [
-            UserPermissionDTO(
-                name=PermissionName(p.permission),
-                object_type=PermissionObjectType(p.object_type)
-                if p.object_type is not None
-                else None,
-                object_id=PermissionObjectId(p.object_id)
-                if p.object_id is not None
-                else None,
-            )
+            UserPermissionDTO(name=PermissionName(p.permission))
             for p in orm.permissions
         ]
 

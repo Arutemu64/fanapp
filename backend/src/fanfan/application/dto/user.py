@@ -2,8 +2,6 @@ from pydantic import BaseModel, EmailStr
 
 from fanfan.core.vo.permission import (
     PermissionName,
-    PermissionObjectId,
-    PermissionObjectType,
 )
 from fanfan.core.vo.ticket import TicketId
 from fanfan.core.vo.user import UserId, UserRole
@@ -17,8 +15,6 @@ class UserBaseDTO(BaseModel):
 
 class UserPermissionDTO(BaseModel):
     name: PermissionName
-    object_type: PermissionObjectType | None
-    object_id: PermissionObjectId | None
 
 
 class UserTicketDTO(BaseModel):

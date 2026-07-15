@@ -4358,35 +4358,11 @@
           "name": {
             "type": "string",
             "title": "Name"
-          },
-          "object_type": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Object Type"
-          },
-          "object_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Object Id"
           }
         },
         "type": "object",
         "required": [
-          "name",
-          "object_type",
-          "object_id"
+          "name"
         ],
         "title": "UserPermissionDTO"
       },

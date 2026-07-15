@@ -1360,10 +1360,6 @@ export interface components {
         UserPermissionDTO: {
             /** Name */
             name: string;
-            /** Object Type */
-            object_type: string | null;
-            /** Object Id */
-            object_id: number | null;
         };
         /**
          * UserRole
