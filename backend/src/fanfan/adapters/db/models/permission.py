@@ -10,18 +10,7 @@ from fanfan.core.vo.permission import Permissions
 
 class UserPermissionORM(UUIDPrimaryKeyMixin, BaseORM):
     __tablename__ = "user_permissions"
-    __table_args__ = (
-        # object_id / object_type are nullable; without NULLS NOT DISTINCT
-        # Postgres treats NULL != NULL, so a user could be granted the same
-        # global (unscoped) permission any number of times. PG15+ required.
-        UniqueConstraint(
-            "user_id",
-            "permission",
-            "object_id",
-            "object_type",
-            postgresql_nulls_not_distinct=True,
-        ),
-    )
+    __table_args__ = (UniqueConstraint("user_id", "permission"),)
 
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     permission: Mapped[str] = str_enum_column(
@@ -30,5 +19,3 @@ class UserPermissionORM(UUIDPrimaryKeyMixin, BaseORM):
         length=64,
         index=True,
     )
-    object_id: Mapped[int | None] = mapped_column()
-    object_type: Mapped[str | None] = mapped_column()

@@ -83,8 +83,6 @@ async def schedule_editor(dishka_request: AsyncContainer) -> User:
             id=generate_user_permission_id(),
             permission=PermissionName(Permissions.SCHEDULE_MANAGE),
             user_id=schedule_editor.id,
-            object_type=None,
-            object_id=None,
         )
     )
     await uow.commit()
