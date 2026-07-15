@@ -1,18 +1,21 @@
 from dishka import Provider, Scope, provide
+from pydantic_extra_types.timezone_name import TimeZoneName
 
-from fanfan.adapters.config.models import (
-    EnvConfig,
-)
+from fanfan.adapters.config.models import EnvConfig
 from fanfan.adapters.config.parsers import get_config
 from fanfan.adapters.debug.config import DebugConfig
-from fanfan.adapters.mail.config import MailConfig
-from fanfan.adapters.push.config import PushConfig
-from fanfan.application.interactors.notifications.config import NotificationConfig
-from fanfan.application.interactors.outbox.config import OutboxConfig
 from fanfan.presentation.web.config import WebConfig
 
 
 class ConfigProvider(Provider):
+    """Root config plus the cross-cutting slices consumed app-wide.
+
+    Domain-specific slices are unpacked by the provider that owns the domain
+    (mail -> MailProvider, push -> PushProvider, nats -> StreamProvider, ...),
+    so a factory never depends on the whole EnvConfig aggregate. Only genuinely
+    cross-cutting leaves (web, debug, timezone) stay here alongside the root.
+    """
+
     scope = Scope.APP
 
     @provide
@@ -28,17 +31,5 @@ class ConfigProvider(Provider):
         return config.debug
 
     @provide
-    def get_mail_config(self, config: EnvConfig) -> MailConfig | None:
-        return config.mail
-
-    @provide
-    def get_push_config(self, config: EnvConfig) -> PushConfig:
-        return config.push
-
-    @provide
-    def get_outbox_config(self, config: EnvConfig) -> OutboxConfig:
-        return config.outbox
-
-    @provide
-    def get_notification_config(self, config: EnvConfig) -> NotificationConfig:
-        return config.notification
+    def get_timezone(self, config: EnvConfig) -> TimeZoneName:
+        return config.timezone

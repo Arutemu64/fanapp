@@ -1,5 +1,6 @@
 from dishka import Provider, Scope, provide
 
+from fanfan.adapters.config.models import EnvConfig
 from fanfan.application.interactors.auth.authenticate_user import AuthenticateUser
 from fanfan.application.interactors.auth.authorize_telegram import AuthorizeTelegram
 from fanfan.application.interactors.auth.change_email import ChangeEmail
@@ -28,6 +29,7 @@ from fanfan.application.interactors.current_user.update_user_settings import (
     UpdateUserSettings,
 )
 from fanfan.application.interactors.feedback.submit_feedback import SubmitFeedback
+from fanfan.application.interactors.notifications.config import NotificationConfig
 from fanfan.application.interactors.notifications.create_notification import (
     CreateNotification,
 )
@@ -62,6 +64,7 @@ from fanfan.application.interactors.notifications.send_schedule_change_notificat
 from fanfan.application.interactors.notifications.send_test_notification import (
     SendTestNotification,
 )
+from fanfan.application.interactors.outbox.config import OutboxConfig
 from fanfan.application.interactors.outbox.publish_outbox_events import (
     PublishOutboxEvents,
 )
@@ -129,6 +132,16 @@ from fanfan.application.interactors.voting.list_voting_nominations import (
 
 class InteractorsProvider(Provider):
     scope = Scope.REQUEST
+
+    # Tuning slices consumed only by the interactors below (outbox relay/purge,
+    # notification purge), unpacked here so they live with their consumers.
+    @provide(scope=Scope.APP)
+    def get_outbox_config(self, config: EnvConfig) -> OutboxConfig:
+        return config.outbox
+
+    @provide(scope=Scope.APP)
+    def get_notification_config(self, config: EnvConfig) -> NotificationConfig:
+        return config.notification
 
     get_schedule = provide(GetSchedule)
     move_schedule_event = provide(MoveScheduleEvent)
