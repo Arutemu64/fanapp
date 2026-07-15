@@ -18,10 +18,10 @@ class ScheduleChangeORM(UUIDPrimaryKeyMixin, BaseORM):
         name="schedulechangetype",
     )
     changed_event_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("schedule.id", ondelete="CASCADE"), index=True
+        ForeignKey("schedule_events.id", ondelete="CASCADE"), index=True
     )
     argument_event_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("schedule.id", ondelete="CASCADE"), index=True
+        ForeignKey("schedule_events.id", ondelete="CASCADE"), index=True
     )
     user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), index=True

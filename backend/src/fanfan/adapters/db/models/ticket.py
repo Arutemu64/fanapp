@@ -5,11 +5,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from fanfan.adapters.db.models.base import BaseORM, str_enum_column
 from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
+from fanfan.adapters.db.models.mixins.timestamps import UpdatedAtMixin
 from fanfan.adapters.db.models.user import UserORM
 from fanfan.core.vo.user import UserRole
 
 
-class TicketORM(UUIDPrimaryKeyMixin, BaseORM):
+class TicketORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     __tablename__ = "tickets"
 
     barcode: Mapped[str] = mapped_column(unique=True)

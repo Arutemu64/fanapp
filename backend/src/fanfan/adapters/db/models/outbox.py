@@ -7,9 +7,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from fanfan.adapters.db.models.base import BaseORM
 from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
+from fanfan.adapters.db.models.mixins.timestamps import UpdatedAtMixin
 
 
-class OutboxEventORM(UUIDPrimaryKeyMixin, BaseORM):
+class OutboxEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     """A domain event awaiting delivery to NATS.
 
     Rows are written inside the same transaction as the aggregate change, then

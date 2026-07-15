@@ -5,10 +5,11 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from fanfan.adapters.db.models.base import BaseORM, str_enum_column
 from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
+from fanfan.adapters.db.models.mixins.timestamps import UpdatedAtMixin
 from fanfan.core.vo.mailing import MailingStatus
 
 
-class MailingORM(UUIDPrimaryKeyMixin, BaseORM):
+class MailingORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     __tablename__ = "mailings"
 
     status: Mapped[MailingStatus] = str_enum_column(

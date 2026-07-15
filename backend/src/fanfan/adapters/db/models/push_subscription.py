@@ -8,7 +8,7 @@ from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
 
 
 class PushSubscriptionORM(UUIDPrimaryKeyMixin, BaseORM):
-    __tablename__ = "push_subs"
+    __tablename__ = "push_subscriptions"
 
     user_id: Mapped[UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True

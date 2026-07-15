@@ -9,10 +9,11 @@ from sqlalchemy.orm import (
 
 from fanfan.adapters.db.models.base import BaseORM
 from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
+from fanfan.adapters.db.models.mixins.timestamps import UpdatedAtMixin
 from fanfan.adapters.db.models.participant import ParticipantORM
 
 
-class NominationORM(UUIDPrimaryKeyMixin, BaseORM):
+class NominationORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     __tablename__ = "nominations"
 
     cosplay2_id: Mapped[int] = mapped_column(unique=True, index=True)

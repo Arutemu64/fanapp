@@ -48,21 +48,18 @@ def str_enum_column(
 
 
 class BaseORM(DeclarativeBase):
-    """Declarative base carrying the shared metadata and audit timestamps.
+    """Declarative base carrying the shared metadata and the ``created_at`` audit
+    column.
 
-    Every table inherits ``created_at`` / ``updated_at``; append-only tables
-    simply never see ``updated_at`` move.
+    ``created_at`` is universal — knowing when a row was inserted is useful on
+    every table. ``updated_at`` is opt-in via ``UpdatedAtMixin`` (mixins/
+    timestamps.py), applied only to tables that actually receive UPDATEs.
     """
 
     metadata = metadata
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now(),
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        onupdate=func.now(),
         server_default=func.now(),
     )
 

@@ -11,10 +11,11 @@ from sqlalchemy.orm import (
 from fanfan.adapters.db.models.base import BaseORM
 from fanfan.adapters.db.models.mixins.order import OrderMixin
 from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
+from fanfan.adapters.db.models.mixins.timestamps import UpdatedAtMixin
 
 
-class ScheduleEventORM(UUIDPrimaryKeyMixin, BaseORM, OrderMixin):
-    __tablename__ = "schedule"
+class ScheduleEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM, OrderMixin):
+    __tablename__ = "schedule_events"
 
     number: Mapped[int] = mapped_column(unique=True)
     title: Mapped[str] = mapped_column(index=True)

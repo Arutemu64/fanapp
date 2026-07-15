@@ -12,13 +12,14 @@ from sqlalchemy.orm import (
 
 from fanfan.adapters.db.models.base import BaseORM
 from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
+from fanfan.adapters.db.models.mixins.timestamps import UpdatedAtMixin
 from fanfan.adapters.db.models.vote import VoteORM
 
 if TYPE_CHECKING:
     from fanfan.adapters.db.models.nomination import NominationORM
 
 
-class ParticipantORM(UUIDPrimaryKeyMixin, BaseORM):
+class ParticipantORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     __tablename__ = "participants"
     __table_args__ = (UniqueConstraint("nomination_id", "voting_number"),)
 
