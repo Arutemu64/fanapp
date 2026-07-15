@@ -31,7 +31,10 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Then, use a final image without uv
 FROM debian:trixie-slim
 
-# ca-certificates are necessary for web pushes
+# ca-certificates are necessary for web pushes. Deliberately left unpinned: we
+# want the newest CA bundle on every rebuild, so pinning a version (DL3008)
+# would freeze the trust store and defeat the point.
+# hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates \
     && update-ca-certificates \

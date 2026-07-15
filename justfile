@@ -85,6 +85,14 @@ backend-generate-auto MIGRATION_NAME:
 backend-check-migrations:
     cd backend && uv run pytest tests/integration/test_migrations.py
 
+# ---- Docker (hadolint) ----
+# Lint both Dockerfiles with hadolint. Runs via Docker so no local install is
+# needed; hadolint reads .hadolint.yaml from the repo root. Same check as the
+# CI hadolint job and the pre-commit hadolint-docker hook.
+docker-lint:
+    docker run --rm -v {{justfile_directory()}}:/repo -w /repo \
+        hadolint/hadolint:v2.14.0-alpine hadolint backend/Dockerfile frontend/Dockerfile
+
 # ---- Docker infra helpers ----
 # Dev: Compose auto-builds any image that doesn't exist yet, and `--watch`
 # live-syncs source + rebuilds only when package.json/pnpm-lock/uv.lock change —

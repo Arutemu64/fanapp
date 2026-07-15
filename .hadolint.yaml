@@ -1,0 +1,13 @@
+# Hadolint configuration — Dockerfile linter (https://github.com/hadolint/hadolint).
+# Shared by every entry point that lints our Dockerfiles: `just docker-lint`,
+# the pre-commit `hadolint-docker` hook, and the CI `hadolint` job. Hadolint
+# discovers this file from the repo root (its current working directory), so all
+# three read the same rules.
+
+# Only allow base images pulled from registries we actually use. A FROM that
+# points anywhere else fails DL3026 — a guard against typo-squatted or
+# unexpected image sources. Our images come from Docker Hub (debian, node,
+# nginx) and GHCR (astral-sh/uv).
+trustedRegistries:
+  - docker.io
+  - ghcr.io

@@ -14,6 +14,14 @@ repos:
         args: [--unsafe]
       - id: check-added-large-files
 
+  # Lint Dockerfiles with hadolint via its Docker image, so contributors need no
+  # local hadolint binary. Reads .hadolint.yaml from the repo root, matching the
+  # CI hadolint job and `just docker-lint`. Requires a running Docker daemon.
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.14.0
+    hooks:
+      - id: hadolint-docker
+
   - repo: local
     hooks:
       # Ruff runs as a local hook (not the astral-sh/ruff-pre-commit mirror) so

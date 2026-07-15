@@ -41,6 +41,7 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
   * `just backend-generate-auto <name>` - Autogenerate a migration against a throwaway Postgres 18 (needs Docker; for when no app DB is running, e.g. cloud)
   * `just frontend-generate-api` - Update SvelteKit types from OpenAPI spec
   * `just backend-lint` / `just frontend-lint` - Lint & format (`backend-lint` also runs the import-linter boundary check)
+  * `just docker-lint` - Lint the Dockerfiles with hadolint (config: `.hadolint.yaml`; runs via Docker, no local install). Also enforced in CI and as a pre-commit hook.
   * `just backend-typecheck` - Run `ty` type checker on backend
   * `just backend-import-lint` - Enforce layer boundaries (import-linter); see [docs/backend.md](docs/backend.md)
 
@@ -63,7 +64,7 @@ Gate on one observable fact: does a `.codegraph/` directory exist at the repo ro
 1. **Russian Copy**: All user-facing labels, placeholders, errors, and toast notifications must be in Russian.
 2. **English Comments**: All code comments (inline `#`, `//`, `<!-- -->`, docstrings) must be in English — never Russian or any other language.
 3. **Mobile First**: UI must fit narrow layouts; add bottom padding for floating navigation bars. See [docs/frontend.md](docs/frontend.md).
-4. **Lint & Type-Check After Changes**: After backend Python changes, run `just backend-lint` and `just backend-typecheck`. After frontend changes, run `just frontend-lint` and `just frontend-check`. Fix all errors before marking the task complete. Tests are optional — run them when useful; see [docs/testing.md](docs/testing.md).
+4. **Lint & Type-Check After Changes**: After backend Python changes, run `just backend-lint` and `just backend-typecheck`. After frontend changes, run `just frontend-lint` and `just frontend-check`. After editing a `Dockerfile`, run `just docker-lint` (hadolint). Fix all errors before marking the task complete. Tests are optional — run them when useful; see [docs/testing.md](docs/testing.md).
 5. **Architectural Isolation**: The inner layers (`core/`, `application/`) must stay pure — never import from outer layers. No ORM models, concrete adapters (DB gateways, Redis, Telegram, NATS), presentation routers, or external frameworks (no FastAPI/SQLAlchemy in `core/`). All infra goes through abstract ports (`application/ports/`). Enforced by `just backend-import-lint`. See [docs/backend.md](docs/backend.md).
 6. **Frontend State Safety**: Never save request-specific state in global/module singletons. Follow the SvelteKit SPA and component guidelines in [docs/frontend.md](docs/frontend.md).
 7. **Required Skills by Domain**: Before making changes in a domain, load its skills:

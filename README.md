@@ -133,6 +133,9 @@ Every pull request and every push to `main` runs [`.github/workflows/ci.yml`](.g
 
 - **Backend** — Ruff lint + format check, `ty` type check, and the full `pytest` suite. Integration tests spin up Postgres and Redis automatically via testcontainers (Docker is preinstalled on the runner).
 - **Frontend** — Prettier + ESLint, `svelte-check`, and a production build.
+- **Dockerfiles** — [hadolint](https://github.com/hadolint/hadolint) best-practice linting (config in [`.hadolint.yaml`](.hadolint.yaml)). Run locally with `just docker-lint` or via the pre-commit hook.
+
+Each job runs only when its area changed (`dorny/paths-filter`), so unrelated edits skip the gates they don't affect.
 
 CI is check-only: unlike `just backend-lint`, it never auto-fixes — a violation fails the run. Run the local `just` commands before pushing to get the same result faster.
 
