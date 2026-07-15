@@ -24,6 +24,9 @@ class ScheduleChangeORM(BaseORM):
             create_constraint=True,
             name="schedulechangetype",
             length=32,
+            # Store the StrEnum *value* ("set_as_current"), not the member name,
+            # so the DB matches the value used across the API, DTOs and frontend.
+            values_callable=lambda enum_cls: [m.value for m in enum_cls],
         )
     )
     changed_event_id: Mapped[UUID | None] = mapped_column(
