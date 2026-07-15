@@ -15,6 +15,7 @@ from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.notifier import PushNotifierPort, TelegramNotifierPort
 from fanfan.application.ports.realtime_gateway import RealtimeGateway
+from fanfan.application.ports.sources.tickets import TicketsSource
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.base import AppEvent
 from fanfan.core.models.user import User
@@ -30,6 +31,7 @@ from tests.fakes.event_broker import FakeEventBroker
 from tests.fakes.id_provider import FakeIdProvider
 from tests.fakes.notifier import FakePushNotifier, FakeTelegramNotifier
 from tests.fakes.realtime_gateway import FakeRealtimeGateway
+from tests.fakes.tickets_source import FakeTicketsSource
 from tests.fixtures.db_provider import TestDbProvider
 from tests.fixtures.db_session import TestSessionProvider
 
@@ -39,8 +41,8 @@ BACKEND_DIR = Path(__file__).resolve().parents[2]
 @pytest_asyncio.fixture(scope="session")
 async def dishka() -> AsyncIterable[AsyncContainer]:
     # Fakes for ports that would otherwise reach external systems
-    # (NATS, SMTP, Telegram, WebPush). REQUEST scope so each test gets a
-    # fresh instance and the interactor under test shares it with the test.
+    # (NATS, SMTP, Telegram, WebPush, TicketsCloud). REQUEST scope so each test
+    # gets a fresh instance and the interactor under test shares it with the test.
     fakes_provider = Provider(scope=Scope.REQUEST)
     fakes_provider.provide(
         FakeEventBroker, provides=AnyOf[EventBroker, FakeEventBroker]
@@ -59,6 +61,9 @@ async def dishka() -> AsyncIterable[AsyncContainer]:
     fakes_provider.provide(
         FakeRealtimeGateway, provides=AnyOf[RealtimeGateway, FakeRealtimeGateway]
     )
+    fakes_provider.provide(
+        FakeTicketsSource, provides=AnyOf[TicketsSource, FakeTicketsSource]
+    )
     container = make_async_container(
         # Test providers
         fakes_provider,
@@ -76,9 +81,10 @@ async def dishka() -> AsyncIterable[AsyncContainer]:
         # Must come after DbProvider so it wins the AsyncSession key.
         TestSessionProvider(),
         # External integrations (NATS broker, Telegram bot, SMTP, OAuth,
-        # TicketsCloud/Cosplay2 HTTP clients) are intentionally NOT wired.
-        # Interactors that need them are not yet testable here; everything
-        # else resolves, so we skip eager dependency validation.
+        # Cosplay2 HTTP client) are intentionally NOT wired. Interactors that
+        # need them are not yet testable here; everything else resolves, so we
+        # skip eager dependency validation. (TicketsCloud now has a port + fake,
+        # so ticket-sync interactors are testable — see FakeTicketsSource.)
         skip_validation=True,
     )
     yield container
