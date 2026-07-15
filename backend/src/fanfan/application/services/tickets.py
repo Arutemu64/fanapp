@@ -2,11 +2,11 @@ from fanfan.application.ports.gateways.tickets import TicketGateway
 from fanfan.application.ports.gateways.user_flags import UserFlagGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.gateways.votes import VoteGateway
-from fanfan.core.constants.flags import VOTING_CONTEST_FLAG_NAME
 from fanfan.core.exceptions.tickets import UserAlreadyHasTicketLinked
 from fanfan.core.exceptions.users import UserNotFound
 from fanfan.core.models.ticket import Ticket
 from fanfan.core.models.user import User
+from fanfan.core.vo.user_flag import UserFlagName
 
 
 class TicketService:
@@ -47,7 +47,7 @@ class TicketService:
 
             await self.vote_gateway.delete_all_user_votes(user_id)
             contest_flag = await self.flag_gateway.get_by_user(
-                user_id=user_id, flag_name=VOTING_CONTEST_FLAG_NAME
+                user_id=user_id, flag_name=UserFlagName.VOTING_CONTEST
             )
             if contest_flag:
                 await self.flag_gateway.delete(contest_flag)
