@@ -32,6 +32,9 @@ MIGRATIONS_DIR = BACKEND_DIR / "src" / "fanfan" / "adapters" / "db" / "migration
 # the cloud session reuses the prepulled image instead of lazy-pulling another.
 POSTGRES_IMAGE = "postgres:18-alpine"
 
+# argv is [script_path, migration_name] — exactly two entries when called right.
+EXPECTED_ARGC = 2
+
 
 def build_alembic_config(connection_url: str) -> AlembicConfig:
     # Mirrors the alembic_config test fixture: load alembic.ini, then point it
@@ -44,7 +47,7 @@ def build_alembic_config(connection_url: str) -> AlembicConfig:
 
 
 def main() -> None:
-    if len(sys.argv) != 2 or not sys.argv[1].strip():
+    if len(sys.argv) != EXPECTED_ARGC or not sys.argv[1].strip():
         sys.exit("usage: generate_migration.py <migration_name>")
     migration_name = sys.argv[1]
 

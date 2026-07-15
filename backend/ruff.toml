@@ -44,14 +44,14 @@ ignore = [
     "FBT",     # flake8-boolean-trap (perfectly fine for query params/arguments in web routes)
     # pylint-refactor code-metric rules: noisy in DDD interactors/controllers where
     # many arguments and branches are structurally expected. PLR1711 (useless-return)
-    # stays enabled; PLR2004 magic-value comparison is suppressed only because the
-    # constants in pluralize.py are intrinsic Russian plural-rule numbers.
+    # and PLR2004 (magic-value-comparison) both stay enabled; PLR2004 is scoped off
+    # only in pluralize.py (per-file-ignores below), whose constants are intrinsic
+    # Russian plural-rule numbers, not stray magic values.
     "PLR0904",  # too-many-public-methods
     "PLR0911",  # too-many-return-statements
     "PLR0912",  # too-many-branches
     "PLR0913",  # too-many-arguments
     "PLR0915",  # too-many-statements
-    "PLR2004",  # magic-value-comparison
     "COM812",  # missing-trailing-comma (formatter compatibility)
     "ISC001",  # single-line-implicit-string-concatenation (formatter compatibility)
     "ARG001",  # unused-function-argument (standard in web routers / dependency injections)
@@ -118,6 +118,9 @@ docstring-code-format = false
 docstring-code-line-length = "dynamic"
 
 [lint.per-file-ignores]
+"src/fanfan/core/utils/pluralize.py" = [
+    "PLR2004", # the 1/10/11/20/100 literals are intrinsic Russian plural-rule numbers, not magic values
+]
 "src/fanfan/main/generate_vapid.py" = [
     "T201",    # standalone keygen CLI — printing the keys/app key to stdout is the point
 ]
