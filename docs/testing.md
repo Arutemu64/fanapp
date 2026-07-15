@@ -194,8 +194,10 @@ providers plus test overrides:
 
 * Real: `InteractorsProvider`, `DbProvider`, `SqlGatewaysProvider`,
   `RedisProvider`, `ServicesProvider`, `SecurityProvider`, `JinjaProvider`.
-* Test: `TestDbProvider` (testcontainers config), `TestSessionProvider`
-  (rollback session), and the fakes above.
+* Test: `TestDbProvider` (testcontainers config), `TestConfigProvider`
+  (fixed test `WebConfig` for the session store and token registry — the full
+  `EnvConfig` is not built in tests), `TestSessionProvider` (rollback session),
+  and the fakes above.
 * `skip_validation=True` is intentional: external integrations (NATS broker,
   Telegram bot, SMTP, OAuth, the Cosplay2 HTTP client) are not wired, so
   interactors needing them are not yet resolvable. Everything else resolves.

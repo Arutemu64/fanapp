@@ -32,6 +32,7 @@ from tests.fakes.id_provider import FakeIdProvider
 from tests.fakes.notifier import FakePushNotifier, FakeTelegramNotifier
 from tests.fakes.realtime_gateway import FakeRealtimeGateway
 from tests.fakes.tickets_source import FakeTicketsSource
+from tests.fixtures.config import TestConfigProvider
 from tests.fixtures.db_provider import TestDbProvider
 from tests.fixtures.db_session import TestSessionProvider
 
@@ -68,6 +69,7 @@ async def dishka() -> AsyncIterable[AsyncContainer]:
         # Test providers
         fakes_provider,
         TestDbProvider(),
+        TestConfigProvider(),
         # Real providers
         InteractorsProvider(),
         DbProvider(),
