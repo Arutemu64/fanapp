@@ -1,33 +1,22 @@
-from uuid import UUID, uuid7
+from uuid import UUID
 
-from sqlalchemy import Enum, ForeignKey, Uuid
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from fanfan.adapters.db.models.base import BaseORM
+from fanfan.adapters.db.models.base import BaseORM, str_enum_column
+from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
+from fanfan.adapters.db.models.mixins.timestamps import UpdatedAtMixin
 from fanfan.adapters.db.models.user import UserORM
 from fanfan.core.vo.user import UserRole
 
 
-class TicketORM(BaseORM):
+class TicketORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     __tablename__ = "tickets"
 
-    id: Mapped[UUID] = mapped_column(
-        Uuid(as_uuid=True),
-        primary_key=True,
-        default=uuid7,
-    )
     barcode: Mapped[str] = mapped_column(unique=True)
-    role: Mapped[UserRole] = mapped_column(
-        Enum(
-            UserRole,
-            native_enum=False,
-            create_constraint=True,
-            name="userrole",
-            length=32,
-            # Store the StrEnum *value* ("visitor"), not the member name, so the
-            # DB matches the value used across the API, DTOs and frontend.
-            values_callable=lambda enum_cls: [m.value for m in enum_cls],
-        ),
+    role: Mapped[UserRole] = str_enum_column(
+        UserRole,
+        name="userrole",
         default=UserRole.VISITOR,
         server_default=UserRole.VISITOR.value,
     )

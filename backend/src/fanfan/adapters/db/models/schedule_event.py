@@ -1,7 +1,6 @@
 from datetime import datetime
-from uuid import UUID, uuid7
 
-from sqlalchemy import DateTime, Index, Uuid, func, select
+from sqlalchemy import DateTime, Index, func, select, text
 from sqlalchemy.orm import (
     Mapped,
     column_property,
@@ -11,21 +10,18 @@ from sqlalchemy.orm import (
 
 from fanfan.adapters.db.models.base import BaseORM
 from fanfan.adapters.db.models.mixins.order import OrderMixin
+from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
+from fanfan.adapters.db.models.mixins.timestamps import UpdatedAtMixin
 
 
-class ScheduleEventORM(BaseORM, OrderMixin):
-    __tablename__ = "schedule"
+class ScheduleEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM, OrderMixin):
+    __tablename__ = "schedule_events"
 
-    id: Mapped[UUID] = mapped_column(
-        Uuid(as_uuid=True),
-        primary_key=True,
-        default=uuid7,
-    )
     number: Mapped[int] = mapped_column(unique=True)
     title: Mapped[str] = mapped_column(index=True)
-    duration: Mapped[int] = mapped_column(server_default="0")
-    is_current: Mapped[bool] = mapped_column(server_default="False")
-    is_skipped: Mapped[bool] = mapped_column(server_default="False")
+    duration: Mapped[int] = mapped_column(server_default=text("0"))
+    is_current: Mapped[bool] = mapped_column(server_default=text("false"))
+    is_skipped: Mapped[bool] = mapped_column(server_default=text("false"))
     nomination_title: Mapped[str | None] = mapped_column()
     block_title: Mapped[str | None] = mapped_column()
     # Timezone-aware anchor for drift-aware projection (ADR-0008); we store and

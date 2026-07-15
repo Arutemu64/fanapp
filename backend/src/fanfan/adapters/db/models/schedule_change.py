@@ -1,39 +1,27 @@
-from uuid import UUID, uuid7
+from uuid import UUID
 
-from sqlalchemy import Enum, ForeignKey, Uuid
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from fanfan.adapters.db.models.base import BaseORM
+from fanfan.adapters.db.models.base import BaseORM, str_enum_column
+from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
 from fanfan.adapters.db.models.schedule_event import ScheduleEventORM
 from fanfan.adapters.db.models.user import UserORM
 from fanfan.core.vo.schedule_change import ScheduleChangeType
 
 
-class ScheduleChangeORM(BaseORM):
+class ScheduleChangeORM(UUIDPrimaryKeyMixin, BaseORM):
     __tablename__ = "schedule_changes"
 
-    id: Mapped[UUID] = mapped_column(
-        Uuid(as_uuid=True),
-        primary_key=True,
-        default=uuid7,
-    )
-    type: Mapped[ScheduleChangeType] = mapped_column(
-        Enum(
-            ScheduleChangeType,
-            native_enum=False,
-            create_constraint=True,
-            name="schedulechangetype",
-            length=32,
-            # Store the StrEnum *value* ("set_as_current"), not the member name,
-            # so the DB matches the value used across the API, DTOs and frontend.
-            values_callable=lambda enum_cls: [m.value for m in enum_cls],
-        )
+    type: Mapped[ScheduleChangeType] = str_enum_column(
+        ScheduleChangeType,
+        name="schedulechangetype",
     )
     changed_event_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("schedule.id", ondelete="CASCADE"), index=True
+        ForeignKey("schedule_events.id", ondelete="CASCADE"), index=True
     )
     argument_event_id: Mapped[UUID | None] = mapped_column(
-        ForeignKey("schedule.id", ondelete="CASCADE"), index=True
+        ForeignKey("schedule_events.id", ondelete="CASCADE"), index=True
     )
     user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), index=True

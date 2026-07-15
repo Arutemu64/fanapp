@@ -1,35 +1,24 @@
 from datetime import datetime
-from uuid import UUID, uuid7
+from uuid import UUID
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, Uuid, text
+from sqlalchemy import DateTime, ForeignKey, Index, text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from fanfan.adapters.db.models.base import BaseORM
+from fanfan.adapters.db.models.base import BaseORM, str_enum_column
+from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
+from fanfan.adapters.db.models.mixins.timestamps import UpdatedAtMixin
 from fanfan.core.vo.notification import NotificationType
 
 
-class NotificationORM(BaseORM):
+class NotificationORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     __tablename__ = "notifications"
 
-    id: Mapped[UUID] = mapped_column(
-        Uuid(as_uuid=True),
-        primary_key=True,
-        default=uuid7,
-    )
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     title: Mapped[str] = mapped_column()
     body: Mapped[str] = mapped_column()
-    type: Mapped[NotificationType] = mapped_column(
-        Enum(
-            NotificationType,
-            native_enum=False,
-            create_constraint=True,
-            name="notificationtype",
-            length=32,
-            # Store the StrEnum *value* ("schedule_change"), not the member name,
-            # so the DB matches the value used across the API, DTOs and frontend.
-            values_callable=lambda enum_cls: [m.value for m in enum_cls],
-        )
+    type: Mapped[NotificationType] = str_enum_column(
+        NotificationType,
+        name="notificationtype",
     )
     # In-app deep-link path the notification points to (e.g. "/schedule").
     # Nullable: legacy rows and notifications without a target fall back to root.

@@ -1,19 +1,15 @@
-from uuid import UUID, uuid7
+from uuid import UUID
 
-from sqlalchemy import ForeignKey, Uuid
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from fanfan.adapters.db.models.base import BaseORM
+from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
 
 
-class PushSubscriptionORM(BaseORM):
-    __tablename__ = "push_subs"
+class PushSubscriptionORM(UUIDPrimaryKeyMixin, BaseORM):
+    __tablename__ = "push_subscriptions"
 
-    id: Mapped[UUID] = mapped_column(
-        Uuid(as_uuid=True),
-        primary_key=True,
-        default=uuid7,
-    )
     user_id: Mapped[UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )

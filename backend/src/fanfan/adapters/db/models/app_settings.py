@@ -3,9 +3,10 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from fanfan.adapters.db.models.base import BaseORM
+from fanfan.adapters.db.models.mixins.timestamps import UpdatedAtMixin
 
 
-class AppSettingsORM(BaseORM):
+class AppSettingsORM(UpdatedAtMixin, BaseORM):
     __tablename__ = "app_settings"
     # Singleton table: the app reads/writes the one row with id=1, so make it
     # impossible to insert a second row that would then be silently ignored.

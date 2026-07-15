@@ -12,9 +12,9 @@ class OrderMixin:
     column default references the sequence, so create it BEFORE create_table::
 
         # upgrade(), before create_table:
-        op.execute("CREATE SEQUENCE schedule_order_seq START 1")
+        op.execute("CREATE SEQUENCE schedule_events_order_seq START 1")
         # downgrade(), after drop_table:
-        op.execute("DROP SEQUENCE schedule_order_seq")
+        op.execute("DROP SEQUENCE schedule_events_order_seq")
 
     IMPORTANT: a model that declares its OWN ``__table_args__`` must merge in
     ``order_table_args()`` explicitly — SQLAlchemy does not merge

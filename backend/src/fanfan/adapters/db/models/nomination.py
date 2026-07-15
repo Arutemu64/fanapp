@@ -1,6 +1,4 @@
-from uuid import UUID, uuid7
-
-from sqlalchemy import Uuid, func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import (
     Mapped,
     column_property,
@@ -10,23 +8,20 @@ from sqlalchemy.orm import (
 )
 
 from fanfan.adapters.db.models.base import BaseORM
+from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
+from fanfan.adapters.db.models.mixins.timestamps import UpdatedAtMixin
 from fanfan.adapters.db.models.participant import ParticipantORM
 
 
-class NominationORM(BaseORM):
+class NominationORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     __tablename__ = "nominations"
 
-    id: Mapped[UUID] = mapped_column(
-        Uuid(as_uuid=True),
-        primary_key=True,
-        default=uuid7,
-    )
     cosplay2_id: Mapped[int] = mapped_column(unique=True, index=True)
     code: Mapped[str] = mapped_column(unique=True)
     title: Mapped[str] = mapped_column(unique=True)
-    is_votable: Mapped[bool] = mapped_column(server_default="False")
+    is_votable: Mapped[bool] = mapped_column(server_default=text("false"))
     # Optional external URL where users can preview the nominated works.
-    works_url: Mapped[str | None] = mapped_column(default=None)
+    works_url: Mapped[str | None] = mapped_column()
 
     participants: Mapped[list[ParticipantORM]] = relationship(
         back_populates="nomination"

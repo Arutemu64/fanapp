@@ -21,7 +21,7 @@ class SqlPushSubscriptionGateway(PushSubscriptionGateway):
         push_sub_orm = self.mapper.from_model(model)
         with translate_integrity_error(
             {
-                "uq_push_subs_endpoint": PushSubscriptionAlreadyExists,
+                "uq_push_subscriptions_endpoint": PushSubscriptionAlreadyExists,
             }
         ):
             self.session.add(push_sub_orm)

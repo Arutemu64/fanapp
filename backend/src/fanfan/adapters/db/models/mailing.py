@@ -1,35 +1,24 @@
-from uuid import UUID, uuid7
+from uuid import UUID
 
-from sqlalchemy import Enum, ForeignKey, Uuid
+from sqlalchemy import ForeignKey, text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from fanfan.adapters.db.models.base import BaseORM
+from fanfan.adapters.db.models.base import BaseORM, str_enum_column
+from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
+from fanfan.adapters.db.models.mixins.timestamps import UpdatedAtMixin
 from fanfan.core.vo.mailing import MailingStatus
 
 
-class MailingORM(BaseORM):
+class MailingORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     __tablename__ = "mailings"
 
-    id: Mapped[UUID] = mapped_column(
-        Uuid(as_uuid=True),
-        primary_key=True,
-        default=uuid7,
-    )
-    status: Mapped[MailingStatus] = mapped_column(
-        Enum(
-            MailingStatus,
-            native_enum=False,
-            create_constraint=True,
-            name="mailingstatus",
-            length=32,
-            # Store the StrEnum *value* ("pending"), not the member name, so the
-            # DB matches the value used across the API, DTOs and frontend.
-            values_callable=lambda enum_cls: [m.value for m in enum_cls],
-        )
+    status: Mapped[MailingStatus] = str_enum_column(
+        MailingStatus,
+        name="mailingstatus",
     )
     by_user_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), index=True
     )
 
-    sent_count: Mapped[int] = mapped_column(default=0)
-    total_count: Mapped[int] = mapped_column(default=0)
+    sent_count: Mapped[int] = mapped_column(server_default=text("0"))
+    total_count: Mapped[int] = mapped_column(server_default=text("0"))

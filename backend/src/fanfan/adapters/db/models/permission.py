@@ -1,13 +1,14 @@
-from uuid import UUID, uuid7
+from uuid import UUID
 
-from sqlalchemy import Enum, ForeignKey, UniqueConstraint, Uuid
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
-from fanfan.adapters.db.models.base import BaseORM
+from fanfan.adapters.db.models.base import BaseORM, str_enum_column
+from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
 from fanfan.core.vo.permission import Permissions
 
 
-class UserPermissionORM(BaseORM):
+class UserPermissionORM(UUIDPrimaryKeyMixin, BaseORM):
     __tablename__ = "user_permissions"
     __table_args__ = (
         # object_id / object_type are nullable; without NULLS NOT DISTINCT
@@ -22,23 +23,11 @@ class UserPermissionORM(BaseORM):
         ),
     )
 
-    id: Mapped[UUID] = mapped_column(
-        Uuid(as_uuid=True),
-        primary_key=True,
-        default=uuid7,
-    )
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-    permission: Mapped[str] = mapped_column(
-        Enum(
-            Permissions,
-            native_enum=False,
-            create_constraint=True,
-            name="permissionname",
-            length=64,
-            # Domain stores the permission *value* ("schedule:manage"), not the
-            # enum member name, so emit values for both storage and the CHECK.
-            values_callable=lambda enum_cls: [m.value for m in enum_cls],
-        ),
+    permission: Mapped[str] = str_enum_column(
+        Permissions,
+        name="permissionname",
+        length=64,
         index=True,
     )
     object_id: Mapped[int | None] = mapped_column()
