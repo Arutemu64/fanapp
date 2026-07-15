@@ -30,6 +30,7 @@ jobs:
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
+      dockerfiles: ${{ steps.filter.outputs.dockerfiles }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v4
@@ -43,6 +44,25 @@ jobs:
               - 'frontend/**'
               - 'shared/**'
               - '.github/workflows/ci.yml'
+            dockerfiles:
+              - '**/Dockerfile'
+              - '.hadolint.yaml'
+              - '.github/workflows/ci.yml'
+
+  # Lint the Dockerfiles against best practices with hadolint. `recursive`
+  # scans every Dockerfile from the repo root, so new ones are covered without
+  # touching this workflow. Reads .hadolint.yaml (trusted registries) by default.
+  hadolint:
+    name: Dockerfiles (hadolint)
+    needs: changes
+    if: needs.changes.outputs.dockerfiles == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Lint Dockerfiles
+        uses: hadolint/hadolint-action@v3.3.0
+        with:
+          recursive: true
 
   backend:
     name: Backend (lint, types, tests)
