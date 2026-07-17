@@ -42,7 +42,7 @@ class SendBroadcast:
     async def __call__(self, data: SendBroadcastInput) -> SendBroadcastOutput:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
-            user=current_user, perm_name=Permission.NOTIFICATIONS_SEND
+            user=current_user, permission=Permission.NOTIFICATIONS_SEND
         )
 
         # Record BroadcastQueued on the mailing so it lands in the outbox in the

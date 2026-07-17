@@ -946,7 +946,7 @@ export interface components {
             has_password: boolean;
             ticket: components["schemas"]["UserTicketDTO"] | null;
             /** Permissions */
-            permissions: components["schemas"]["UserPermissionDTO"][];
+            permissions: components["schemas"]["Permission"][];
             settings: components["schemas"]["UserSettingsDTO"];
             /** Social Identities */
             social_identities: components["schemas"]["UserSocialIdentityDTO"][];
@@ -1360,10 +1360,6 @@ export interface components {
             receive_all_announcements?: boolean | null;
             /** Receive Telegram Notifications */
             receive_telegram_notifications?: boolean | null;
-        };
-        /** UserPermissionDTO */
-        UserPermissionDTO: {
-            name: components["schemas"]["Permission"];
         };
         /**
          * UserRole

@@ -106,7 +106,7 @@ class UndoScheduleChange:
     async def __call__(self, data: UndoScheduleChangeInput) -> None:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
-            user=current_user, perm_name=Permission.SCHEDULE_MANAGE
+            user=current_user, permission=Permission.SCHEDULE_MANAGE
         )
         schedule_change = await self.changes_gateway.get_by_id(data.schedule_change_id)
         if schedule_change is None:

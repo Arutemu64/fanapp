@@ -13,13 +13,6 @@ class UserBaseDTO(BaseModel):
     role: UserRole
 
 
-class UserPermissionDTO(BaseModel):
-    # Typed as the Permission enum (a StrEnum) so the OpenAPI spec exposes a
-    # Permission enum schema, giving the frontend a generated, drift-guarded
-    # union instead of hand-copied literals.
-    name: Permission
-
-
 class UserTicketDTO(BaseModel):
     id: TicketId
     barcode: str
@@ -41,6 +34,9 @@ class CurrentUserDTO(UserBaseDTO):
     has_password: bool
 
     ticket: UserTicketDTO | None
-    permissions: list[UserPermissionDTO]
+    # Bare list of granted permissions (a StrEnum, so it surfaces as a
+    # Permission enum schema in OpenAPI): the frontend derives its literals from
+    # that generated union with a compile-time drift guard.
+    permissions: list[Permission]
     settings: UserSettingsDTO
     social_identities: list[UserSocialIdentityDTO]

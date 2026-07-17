@@ -10,8 +10,8 @@ from fanfan.core.vo.user import UserId
 class UserPermissionGateway(Protocol):
     async def add(self, user_permission: UserPermission) -> None: ...
 
-    async def get_by_name(
+    async def get_by_permission(
         self,
         user_id: UserId,
-        permission_name: Permission,
+        permission: Permission,
     ) -> UserPermission | None: ...

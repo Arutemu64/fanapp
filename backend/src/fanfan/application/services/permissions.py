@@ -15,11 +15,11 @@ class PermissionService:
     async def ensure(
         self,
         user: User,
-        perm_name: Permission,
+        permission: Permission,
     ) -> None:
-        user_perm = await self.perm_gateway.get_by_name(
+        user_perm = await self.perm_gateway.get_by_permission(
             user_id=user.id,
-            permission_name=perm_name,
+            permission=permission,
         )
         if user_perm is None:
             raise AccessDenied

@@ -1,37 +1,31 @@
 import type { components } from '$lib/api/v1';
-import type { CurrentUserDTO, UserPermissionDTO } from '$lib/types/user';
+import type { CurrentUserDTO } from '$lib/types/user';
 
 // Permission identifiers, generated from the backend `Permission` enum via the
-// OpenAPI spec (just frontend-generate-api). Typing each constant as
-// PermissionName is the drift guard: if the backend renames or removes a
-// permission, its literal stops being assignable to this union and `pnpm check`
-// fails here — instead of silently shipping a stale string that fails every
-// permission check at runtime.
-export type PermissionName = components['schemas']['Permission'];
+// OpenAPI spec (just frontend-generate-api). Typing each constant as Permission
+// is the drift guard: if the backend renames or removes a permission, its
+// literal stops being assignable to this union and `pnpm check` fails here —
+// instead of silently shipping a stale string that fails every permission check
+// at runtime.
+export type Permission = components['schemas']['Permission'];
 
-const SCHEDULE_MANAGE: PermissionName = 'schedule:manage';
-const SCHEDULE_IMPORT: PermissionName = 'schedule:import';
-const NOTIFICATIONS_SEND: PermissionName = 'notifications:send';
-const SETTINGS_MANAGE: PermissionName = 'settings:manage';
+const SCHEDULE_MANAGE: Permission = 'schedule:manage';
+const SCHEDULE_IMPORT: Permission = 'schedule:import';
+const NOTIFICATIONS_SEND: Permission = 'notifications:send';
+const SETTINGS_MANAGE: Permission = 'settings:manage';
 
 /**
  * Check if user has a specific permission.
  * @param user - The user object or null
- * @param permissionName - The permission name to check
+ * @param permission - The permission to check
  * @returns true if user has the permission, false otherwise
  */
-export function hasPermission(
-	user: CurrentUserDTO | null,
-	permissionName: PermissionName
-): boolean {
+export function hasPermission(user: CurrentUserDTO | null, permission: Permission): boolean {
 	if (!user) {
 		return false;
 	}
 
-	return (
-		user.permissions?.some((permission: UserPermissionDTO) => permission.name === permissionName) ??
-		false
-	);
+	return user.permissions?.includes(permission) ?? false;
 }
 
 /**

@@ -49,7 +49,7 @@ class ImportSchedule:
     async def __call__(self, data: ImportScheduleInput) -> None:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
-            user=current_user, perm_name=Permission.SCHEDULE_IMPORT
+            user=current_user, permission=Permission.SCHEDULE_IMPORT
         )
         orphaned_events = await self.schedule_gateway.list_all()
         order = ORDER_INIT

@@ -22,7 +22,7 @@ class GetSettings:
     async def __call__(self) -> AppSettingsDTO:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
-            user=current_user, perm_name=Permission.SETTINGS_MANAGE
+            user=current_user, permission=Permission.SETTINGS_MANAGE
         )
 
         return AppSettingsDTO.model_validate(await self.app_settings_gateway.get())

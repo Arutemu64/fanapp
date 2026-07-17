@@ -49,7 +49,7 @@ class CancelMailing:
             try:
                 await self.perm_service.ensure(
                     user=current_user,
-                    perm_name=Permission.NOTIFICATIONS_SEND,
+                    permission=Permission.NOTIFICATIONS_SEND,
                 )
             except AccessDenied:
                 raise AccessDenied(

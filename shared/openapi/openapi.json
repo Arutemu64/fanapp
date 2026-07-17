@@ -3181,7 +3181,7 @@
           },
           "permissions": {
             "items": {
-              "$ref": "#/components/schemas/UserPermissionDTO"
+              "$ref": "#/components/schemas/Permission"
             },
             "type": "array",
             "title": "Permissions"
@@ -4362,18 +4362,6 @@
         },
         "type": "object",
         "title": "UpdateUserSettingsInput"
-      },
-      "UserPermissionDTO": {
-        "properties": {
-          "name": {
-            "$ref": "#/components/schemas/Permission"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name"
-        ],
-        "title": "UserPermissionDTO"
       },
       "UserRole": {
         "type": "string",

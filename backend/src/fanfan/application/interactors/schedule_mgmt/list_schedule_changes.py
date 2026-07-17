@@ -34,7 +34,7 @@ class ListScheduleChanges:
     ) -> ListScheduleChangesResult:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
-            user=current_user, perm_name=Permission.SCHEDULE_MANAGE
+            user=current_user, permission=Permission.SCHEDULE_MANAGE
         )
         schedule_changes = (
             await self.schedule_change_gateway.read_list_schedule_changes(
