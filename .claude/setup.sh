@@ -150,10 +150,6 @@ else
   echo "[setup] WARN: dockerd not found; skipping image prepull."
 fi
 
-# Set caveman default to lite mode (save tokens while keeping explanations readable).
-mkdir -p "$HOME/.config/caveman"
-echo '{"defaultMode": "lite"}' > "$HOME/.config/caveman/config.json"
-
 # Record the hash of the repo's setup.sh so the SessionStart hook can detect
 # drift: this script is pasted into the cloud environment UI by hand, and
 # nothing else notices when the repo copy moves ahead of the snapshot. The
