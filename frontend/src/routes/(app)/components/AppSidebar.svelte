@@ -158,25 +158,25 @@
 						<!-- Organizer-only festival controls; hidden from volunteers entirely. -->
 						{@render staffLink(
 							'Настройки фестиваля',
-							'/org/settings',
+							'/tools/settings',
 							canManageSettings(user),
 							settingsIcon
 						)}
 						{@render staffLink(
 							'Импорт программы',
-							'/org/import_schedule',
+							'/tools/import_schedule',
 							canImportSchedule(user),
 							importScheduleIcon
 						)}
 						{@render staffLink(
 							'Рассылка уведомлений',
-							'/org/broadcast',
+							'/tools/broadcast',
 							canSendNotifications(user),
 							broadcastIcon
 						)}
 						{@render staffLink(
 							'Генерация билетов',
-							'/org/generate_tickets',
+							'/tools/generate_tickets',
 							canGenerateTickets(user),
 							generateTicketsIcon
 						)}
