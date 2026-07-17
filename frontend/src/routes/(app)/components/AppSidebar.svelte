@@ -4,6 +4,7 @@
 
 	import { isActivePath } from '$lib/utils/nav';
 	import {
+		canGenerateTickets,
 		canImportSchedule,
 		canManageSchedule,
 		canManageSettings,
@@ -33,6 +34,7 @@
 		ShieldOutline,
 		ThumbsUpOutline,
 		ThumbsUpSolid,
+		TicketOutline,
 		UsersGroupOutline
 	} from 'flowbite-svelte-icons';
 
@@ -114,6 +116,9 @@
 {#snippet broadcastIcon()}
 	<BullhornOutline class={iconClass} />
 {/snippet}
+{#snippet generateTicketsIcon()}
+	<TicketOutline class={iconClass} />
+{/snippet}
 
 <!-- `isMobile` slims the hamburger sheet: on phones the four primary
      destinations live in the bottom nav, so the drawer only carries what the
@@ -174,6 +179,12 @@
 						'/org/broadcast',
 						canSendNotifications(user),
 						broadcastIcon
+					)}
+					{@render staffLink(
+						'Генерация билетов',
+						'/org/generate_tickets',
+						canGenerateTickets(user),
+						generateTicketsIcon
 					)}
 				</SidebarDropdownWrapper>
 			{/if}

@@ -1,4 +1,9 @@
-import { canImportSchedule, canManageSettings, canSendNotifications } from '$lib/utils/permissions';
+import {
+	canGenerateTickets,
+	canImportSchedule,
+	canManageSettings,
+	canSendNotifications
+} from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
 
 import type { LayoutLoad } from './$types';
@@ -9,7 +14,10 @@ export const load: LayoutLoad = async ({ parent }) => {
 	// Gate the organizer section by effective permissions, matching the
 	// backend's per-permission checks. Each page enforces its own too.
 	const canSeeOrganizerSection =
-		canManageSettings(user) || canImportSchedule(user) || canSendNotifications(user);
+		canManageSettings(user) ||
+		canImportSchedule(user) ||
+		canSendNotifications(user) ||
+		canGenerateTickets(user);
 
 	if (!canSeeOrganizerSection) {
 		error(403, 'У тебя нет доступа к разделу организаторов');

@@ -2943,6 +2943,83 @@
           }
         ]
       }
+    },
+    "/tickets/generate": {
+      "post": {
+        "tags": [
+          "Tickets"
+        ],
+        "summary": "Generate tickets",
+        "description": "Generates a batch of new tickets for the given role. Requires the 'tickets:generate' permission. Returns the created barcodes.",
+        "operationId": "generate_tickets",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateTicketsInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Tickets generated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateTicketsOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A generated barcode collided; retry the request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -3286,6 +3363,7 @@
               "TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER",
               "TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL",
               "TICKET_ALREADY_USED",
+              "TICKET_BARCODE_COLLISION",
               "TICKET_NOT_FOUND",
               "TICKET_NOT_LINKED",
               "TOO_MANY_ATTEMPTS",
@@ -3314,6 +3392,41 @@
           "code"
         ],
         "title": "ErrorMessage"
+      },
+      "GenerateTicketsInput": {
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "amount": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Amount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "amount"
+        ],
+        "title": "GenerateTicketsInput"
+      },
+      "GenerateTicketsOutput": {
+        "properties": {
+          "barcodes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Barcodes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "barcodes"
+        ],
+        "title": "GenerateTicketsOutput"
       },
       "GetScheduleOutput": {
         "properties": {
@@ -3777,7 +3890,8 @@
           "schedule:manage",
           "schedule:import",
           "notifications:send",
-          "settings:manage"
+          "settings:manage",
+          "tickets:generate"
         ],
         "title": "Permission"
       },

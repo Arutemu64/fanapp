@@ -21,3 +21,10 @@ class TicketAlreadyUsed(Conflict, TicketException):
 # Conflict (precondition not met) so it returns 409, not 500, once it is used.
 class TicketNotLinked(Conflict, TicketException):
     code = "TICKET_NOT_LINKED"
+
+
+# Raised when a generated barcode happens to already exist. The unique DB
+# constraint is the race-safe guard; this turns that collision into a clean 409
+# ("just try again") instead of a leaked 500. Practically never happens.
+class TicketBarcodeCollision(Conflict, TicketException):
+    code = "TICKET_BARCODE_COLLISION"

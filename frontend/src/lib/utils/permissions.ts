@@ -13,6 +13,7 @@ const SCHEDULE_MANAGE: Permission = 'schedule:manage';
 const SCHEDULE_IMPORT: Permission = 'schedule:import';
 const NOTIFICATIONS_SEND: Permission = 'notifications:send';
 const SETTINGS_MANAGE: Permission = 'settings:manage';
+const TICKETS_GENERATE: Permission = 'tickets:generate';
 
 /**
  * Check if user has a specific permission.
@@ -62,4 +63,13 @@ export function canSendNotifications(user: CurrentUserDTO | null): boolean {
  */
 export function canManageSettings(user: CurrentUserDTO | null): boolean {
 	return hasPermission(user, SETTINGS_MANAGE);
+}
+
+/**
+ * Check if user can generate tickets.
+ * @param user - The user object or null
+ * @returns true if user has 'tickets:generate' permission
+ */
+export function canGenerateTickets(user: CurrentUserDTO | null): boolean {
+	return hasPermission(user, TICKETS_GENERATE);
 }
