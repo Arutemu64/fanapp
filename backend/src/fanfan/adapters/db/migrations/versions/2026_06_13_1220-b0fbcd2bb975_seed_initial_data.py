@@ -25,8 +25,9 @@ DEFAULT_APP_SETTINGS = {
     "limits": {"announcement_timeout": 10},
 }
 
-# System user authenticated by RawIdProvider (adapters/auth/providers/raw.py).
-# ORG role, so it implicitly holds every permission — no explicit grants needed.
+# System user authenticated by RawIdProvider (adapters/auth/providers/raw.py),
+# acting as the current user for CLI/scheduler/NATS-consumer interactors. Like
+# any other user, it holds no permissions until explicitly granted one.
 SYSTEM_USER_ID = UUID("00000000-0000-0000-0000-000000000000")
 SYSTEM_USER_SETTINGS = {
     "items_per_page": 4,

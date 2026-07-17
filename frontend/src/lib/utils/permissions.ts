@@ -11,12 +11,6 @@ export function hasPermission(user: CurrentUserDTO | null, permissionName: strin
 		return false;
 	}
 
-	// ORG is the staff admin role and implicitly holds every permission,
-	// mirroring the bypass in the backend's PermissionService.ensure.
-	if (user.role === 'org') {
-		return true;
-	}
-
 	return (
 		user.permissions?.some((permission: UserPermissionDTO) => permission.name === permissionName) ??
 		false

@@ -52,16 +52,6 @@ class UserMapper:
             role=orm.role,
         )
 
-    @staticmethod
-    def _resolve_permissions(orm: UserORM) -> list[UserPermissionDTO]:
-        # ORG implicitly holds every permission (see PermissionService.ensure)
-        # and carries no explicit grant rows; the frontend checks the ORG role
-        # directly rather than looking for a permission entry here.
-        return [
-            UserPermissionDTO(name=PermissionName(p.permission))
-            for p in orm.permissions
-        ]
-
     def parse_current_user_dto(self, orm: UserORM) -> CurrentUserDTO:
         return CurrentUserDTO(
             id=UserId(orm.id),
@@ -76,7 +66,10 @@ class UserMapper:
             )
             if orm.ticket
             else None,
-            permissions=self._resolve_permissions(orm),
+            permissions=[
+                UserPermissionDTO(name=PermissionName(p.permission))
+                for p in orm.permissions
+            ],
             settings=UserSettingsDTO(
                 receive_all_announcements=orm.receive_all_announcements,
                 receive_telegram_notifications=orm.receive_telegram_notifications,
