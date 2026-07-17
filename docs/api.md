@@ -111,6 +111,9 @@ export type NominationsList =
 	paths['/voting/nominations']['get']['responses']['200']['content']['application/json'];
 ```
 
+### 4. Enum schemas are the single source of truth
+Backend `StrEnum`s that appear on a DTO field (`UserRole`, `Permissions` in `core/vo/`) are emitted as OpenAPI enum schemas, so `frontend-generate-api` regenerates them as string-literal unions (`components['schemas']['Permissions']`). Never hand-copy enum values on the frontend — derive them. Permission literals in `lib/utils/permissions.ts` are typed as `PermissionName = components['schemas']['Permissions']`, so a backend rename/removal makes the stale literal fail `pnpm check` instead of silently breaking permission checks (same drift-guard idea as the error `code` union below). To expose a new enum on the wire, type a DTO field with the enum (not a plain `NewType` str) and run `just frontend-generate-api`.
+
 ---
 
 ## 🔄 Mutations & Data Recovery

@@ -3771,6 +3771,16 @@
         ],
         "title": "ParticipantVoteDTO"
       },
+      "Permissions": {
+        "type": "string",
+        "enum": [
+          "schedule:manage",
+          "schedule:import",
+          "notifications:send",
+          "settings:manage"
+        ],
+        "title": "Permissions"
+      },
       "PushSubscriptionStatus": {
         "properties": {
           "subscribed": {
@@ -4356,8 +4366,7 @@
       "UserPermissionDTO": {
         "properties": {
           "name": {
-            "type": "string",
-            "title": "Name"
+            "$ref": "#/components/schemas/Permissions"
           }
         },
         "type": "object",
