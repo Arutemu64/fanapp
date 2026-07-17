@@ -31,11 +31,10 @@
 		LockOutline,
 		MapPinAltOutline,
 		MapPinAltSolid,
-		ShieldOutline,
 		ThumbsUpOutline,
 		ThumbsUpSolid,
 		TicketOutline,
-		UsersGroupOutline
+		ToolsOutline
 	} from 'flowbite-svelte-icons';
 
 	import ThemeToggle from './ThemeToggle.svelte';
@@ -49,11 +48,12 @@
 
 	let { user, activeUrl, isSidebarOpen, closeSidebar }: Props = $props();
 
-	// Volunteers and organizers see the volunteer dropdown so they can discover
-	// what exists; individual items are unlocked per effective permission. The
-	// backend still enforces every action — locked items are a UX affordance only.
+	// All staff see the shared "Инструменты" dropdown so they can discover what
+	// exists; individual items are unlocked per effective permission. The backend
+	// still enforces every action — locked items are a UX affordance only.
 	let isStaff = $derived(user?.role === 'helper' || user?.role === 'org');
-	// The organizer dropdown is organizer-only — hidden from volunteers entirely.
+	// Organizer-only tools stay hidden from volunteers entirely; this gates the
+	// organizer subset within the shared dropdown.
 	let isOrg = $derived(user?.role === 'org');
 	let iconClass =
 		'h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white';
@@ -144,9 +144,9 @@
 				{@render navLink('Обратная связь', '/feedback', AnnotationOutline, AnnotationSolid)}
 			{/if}
 			{#if isStaff}
-				<SidebarDropdownWrapper label="Для волонтеров" classes={{ btn: 'p-2' }}>
+				<SidebarDropdownWrapper label="Инструменты" classes={{ btn: 'p-2' }}>
 					{#snippet icon()}
-						<UsersGroupOutline class={iconClass} />
+						<ToolsOutline class={iconClass} />
 					{/snippet}
 					{@render staffLink(
 						'Изменения программы',
@@ -154,38 +154,33 @@
 						canManageSchedule(user),
 						scheduleChangesIcon
 					)}
-				</SidebarDropdownWrapper>
-			{/if}
-			{#if isOrg}
-				<SidebarDropdownWrapper label="Для организаторов" classes={{ btn: 'p-2' }}>
-					{#snippet icon()}
-						<ShieldOutline class={iconClass} />
-					{/snippet}
-					<!-- Keep festival controls together so organizers can find them quickly on mobile. -->
-					{@render staffLink(
-						'Настройки фестиваля',
-						'/org/settings',
-						canManageSettings(user),
-						settingsIcon
-					)}
-					{@render staffLink(
-						'Импорт программы',
-						'/org/import_schedule',
-						canImportSchedule(user),
-						importScheduleIcon
-					)}
-					{@render staffLink(
-						'Рассылка уведомлений',
-						'/org/broadcast',
-						canSendNotifications(user),
-						broadcastIcon
-					)}
-					{@render staffLink(
-						'Генерация билетов',
-						'/org/generate_tickets',
-						canGenerateTickets(user),
-						generateTicketsIcon
-					)}
+					{#if isOrg}
+						<!-- Organizer-only festival controls; hidden from volunteers entirely. -->
+						{@render staffLink(
+							'Настройки фестиваля',
+							'/org/settings',
+							canManageSettings(user),
+							settingsIcon
+						)}
+						{@render staffLink(
+							'Импорт программы',
+							'/org/import_schedule',
+							canImportSchedule(user),
+							importScheduleIcon
+						)}
+						{@render staffLink(
+							'Рассылка уведомлений',
+							'/org/broadcast',
+							canSendNotifications(user),
+							broadcastIcon
+						)}
+						{@render staffLink(
+							'Генерация билетов',
+							'/org/generate_tickets',
+							canGenerateTickets(user),
+							generateTicketsIcon
+						)}
+					{/if}
 				</SidebarDropdownWrapper>
 			{/if}
 		</SidebarGroup>
