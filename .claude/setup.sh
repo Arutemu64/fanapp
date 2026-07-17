@@ -52,8 +52,12 @@ if ! command -v just >/dev/null 2>&1; then
     || { $SUDO apt-get update -qq && $SUDO apt-get install -y -qq just; }
 fi
 
-echo "[setup] Upgrading uv (for stable Python 3.14 support)..."
-python3 -m pip install --quiet --upgrade --user uv
+echo "[setup] Installing pinned uv (for stable Python 3.14 support)..."
+# Pinned to match mise.toml, backend/pyproject.toml [tool.uv], and
+# backend/Dockerfile - bump all four together. An unpinned `--upgrade` would
+# grab whatever is newest on PyPI, which drifts from the repo's pin and makes
+# `uv sync`/`uv run` fail its own required-version check.
+python3 -m pip install --quiet --user "uv==0.11.29"
 
 echo "[setup] Installing stable Python 3.14..."
 uv python install 3.14
