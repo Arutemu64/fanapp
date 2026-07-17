@@ -22,7 +22,7 @@ class SqlTicketGateway(TicketGateway):
         ticket_orm = self.mapper.from_model(ticket)
         self.session.add(ticket_orm)
 
-    async def add_generated(self, tickets: list[Ticket]) -> None:
+    async def add_all(self, tickets: list[Ticket]) -> None:
         ticket_orms = [self.mapper.from_model(ticket) for ticket in tickets]
         self.session.add_all(ticket_orms)
         # Flush here so a duplicate barcode surfaces as a domain exception at the

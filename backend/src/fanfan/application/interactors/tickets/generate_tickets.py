@@ -50,7 +50,7 @@ class GenerateTickets:
             amount=data.amount,
             issued_by_user_id=current_user.id,
         )
-        await self.ticket_gateway.add_generated(tickets)
+        await self.ticket_gateway.add_all(tickets)
         await self.uow.commit()
 
         logger.info(
