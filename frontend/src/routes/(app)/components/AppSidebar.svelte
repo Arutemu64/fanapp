@@ -31,11 +31,10 @@
 		LockOutline,
 		MapPinAltOutline,
 		MapPinAltSolid,
-		ShieldOutline,
 		ThumbsUpOutline,
 		ThumbsUpSolid,
 		TicketOutline,
-		UsersGroupOutline
+		ToolsOutline
 	} from 'flowbite-svelte-icons';
 
 	import ThemeToggle from './ThemeToggle.svelte';
@@ -49,12 +48,14 @@
 
 	let { user, activeUrl, isSidebarOpen, closeSidebar }: Props = $props();
 
-	// Volunteers and organizers see the volunteer dropdown so they can discover
-	// what exists; individual items are unlocked per effective permission. The
-	// backend still enforces every action — locked items are a UX affordance only.
+	// The "Инструменты" dropdown is the staff toolbox. Role decides only whether to
+	// show the toolbox at all — a visitor/participant can never hold these and would
+	// just see a wall of locks. Every item inside is gated purely by effective
+	// permission (incl. the former org-only tools), so helpers can discover what
+	// they'd need access to. Permissions are not role-bound: any staff member can
+	// hold any of them, and the backend enforces each action — locked rows are a
+	// discovery affordance only.
 	let isStaff = $derived(user?.role === 'helper' || user?.role === 'org');
-	// The organizer dropdown is organizer-only — hidden from volunteers entirely.
-	let isOrg = $derived(user?.role === 'org');
 	let iconClass =
 		'h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white';
 </script>
@@ -144,9 +145,9 @@
 				{@render navLink('Обратная связь', '/feedback', AnnotationOutline, AnnotationSolid)}
 			{/if}
 			{#if isStaff}
-				<SidebarDropdownWrapper label="Для волонтеров" classes={{ btn: 'p-2' }}>
+				<SidebarDropdownWrapper label="Инструменты" classes={{ btn: 'p-2' }}>
 					{#snippet icon()}
-						<UsersGroupOutline class={iconClass} />
+						<ToolsOutline class={iconClass} />
 					{/snippet}
 					{@render staffLink(
 						'Изменения программы',
@@ -154,35 +155,27 @@
 						canManageSchedule(user),
 						scheduleChangesIcon
 					)}
-				</SidebarDropdownWrapper>
-			{/if}
-			{#if isOrg}
-				<SidebarDropdownWrapper label="Для организаторов" classes={{ btn: 'p-2' }}>
-					{#snippet icon()}
-						<ShieldOutline class={iconClass} />
-					{/snippet}
-					<!-- Keep festival controls together so organizers can find them quickly on mobile. -->
 					{@render staffLink(
 						'Настройки фестиваля',
-						'/org/settings',
+						'/tools/settings',
 						canManageSettings(user),
 						settingsIcon
 					)}
 					{@render staffLink(
 						'Импорт программы',
-						'/org/import_schedule',
+						'/tools/import_schedule',
 						canImportSchedule(user),
 						importScheduleIcon
 					)}
 					{@render staffLink(
 						'Рассылка уведомлений',
-						'/org/broadcast',
+						'/tools/broadcast',
 						canSendNotifications(user),
 						broadcastIcon
 					)}
 					{@render staffLink(
 						'Генерация билетов',
-						'/org/generate_tickets',
+						'/tools/generate_tickets',
 						canGenerateTickets(user),
 						generateTicketsIcon
 					)}

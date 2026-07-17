@@ -11,15 +11,16 @@ import type { LayoutLoad } from './$types';
 export const load: LayoutLoad = async ({ parent }) => {
 	const { user } = await parent();
 
-	// Gate the organizer section by effective permissions, matching the
-	// backend's per-permission checks. Each page enforces its own too.
-	const canSeeOrganizerSection =
+	// Gate the tools section by effective permissions, matching the backend's
+	// per-permission checks. These are not role-bound: any staff member holding
+	// one of these permissions may enter. Each page enforces its own too.
+	const canSeeToolsSection =
 		canManageSettings(user) ||
 		canImportSchedule(user) ||
 		canSendNotifications(user) ||
 		canGenerateTickets(user);
 
-	if (!canSeeOrganizerSection) {
-		error(403, 'У тебя нет доступа к разделу организаторов');
+	if (!canSeeToolsSection) {
+		error(403, 'У тебя нет доступа к этому разделу');
 	}
 };
