@@ -58,7 +58,7 @@ The app is an installable PWA: `static/manifest.json` (icons, standalone display
 
 * **Tailwind CSS v4**: Theme styling is configured directly in `frontend/src/app.css`. Avoid adding Tailwind v3 style configurations or tailwind.config files.
 * **Component Preference**: Always prioritize official Flowbite-Svelte components instead of writing custom elements.
-* **Icons**: Use `flowbite-svelte-icons` for iconography. Add icons only when they improve navigation or scanning.
+* **Icons**: Use `flowbite-svelte-icons` as the single UI icon set — don't add a second general-purpose icon pack (Lucide, Heroicons, etc.); pick the closest Flowbite equivalent instead. The one exception is brand logos (Telegram, TikTok, VK, and framework marks), which come from `@iconify-json/simple-icons` via `~icons/simple-icons/*` — those official marks have no Flowbite equivalent. Add icons only when they improve navigation or scanning.
 
 ### Typography Scale
 

@@ -1,10 +1,8 @@
 <script lang="ts">
 	import { pluralize } from '$lib/utils/formatters';
+	import { CalendarMonthOutline, GlobeOutline, MapPinAltOutline } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
-	import CalendarIcon from '~icons/lucide/calendar';
-	import GlobeIcon from '~icons/lucide/globe';
-	import PinDropIcon from '~icons/lucide/map-pin';
 	import TelegramIcon from '~icons/simple-icons/telegram';
 	import TiktokIcon from '~icons/simple-icons/tiktok';
 	import VkIcon from '~icons/simple-icons/vk';
@@ -15,7 +13,7 @@
 	import heroArt from './main.webp';
 
 	const socials = [
-		{ label: 'Официальный сайт fancom.info', href: 'https://fancom.info', icon: GlobeIcon },
+		{ label: 'Официальный сайт fancom.info', href: 'https://fancom.info', icon: GlobeOutline },
 		{ label: 'Telegram', href: 'https://t.me/fanfan_fest_news', icon: TelegramIcon },
 		{ label: 'ВКонтакте', href: 'https://vk.com/fan_fest', icon: VkIcon },
 		{ label: 'TikTok', href: 'https://www.tiktok.com/@fan_fan_official', icon: TiktokIcon }
@@ -158,7 +156,7 @@
 						<span
 							class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
 						>
-							<CalendarIcon class="h-5 w-5" aria-hidden="true" />
+							<CalendarMonthOutline class="h-5 w-5" aria-hidden="true" />
 						</span>
 						<div>
 							<dt class="sr-only">Когда</dt>
@@ -219,7 +217,7 @@
 					<span
 						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-secondary-50 text-secondary-600 dark:bg-secondary-900/30 dark:text-secondary-400"
 					>
-						<PinDropIcon class="h-5 w-5" aria-hidden="true" />
+						<MapPinAltOutline class="h-5 w-5" aria-hidden="true" />
 					</span>
 					<div>
 						<dt class="sr-only">Где</dt>
