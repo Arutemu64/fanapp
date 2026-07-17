@@ -67,13 +67,15 @@ does not survive the snapshot:
 
 ## Network access
 
-Package registries (npm, PyPI, …) are on the default **Trusted** allowlist.
-Docker image **layers** are served from registry blob CDNs that may not be — if
-a pull authenticates and then 403s mid-download, set the environment's network
-access to **Custom** (keep the default list checked) and add:
+Package registries (npm, PyPI, …) and Docker Hub — including its blob CDN,
+`production.cloudflare.docker.com` — are on the default **Trusted** allowlist
+([current list](https://code.claude.com/docs/en/claude-code-on-the-web#default-allowed-domains)).
+`ghcr.io` itself is Trusted too, but its blob CDN,
+`pkg-containers.githubusercontent.com`, is not — if a `ghcr.io` pull
+authenticates and then 403s mid-download, set the environment's network access
+to **Custom** (keep the default list checked) and add:
 
 ```text
-production.cloudfront.docker.com      # Docker Hub layer blobs
 pkg-containers.githubusercontent.com  # GHCR layer blobs
 ```
 
