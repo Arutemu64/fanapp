@@ -78,12 +78,14 @@ fi
 echo "[session-start] Syncing frontend dependencies (pnpm install)..."
 (cd "$REPO_ROOT/frontend" && pnpm install)
 
-# Start the Docker daemon so `just backend-generate-auto` can boot a throwaway
-# Postgres to autogenerate Alembic migrations against. The daemon is not started
-# by the base image and does not survive between sessions, so we (re)start it
-# each time. (Integration tests and image builds are left to CI - see
-# docs/claude-cloud.md.) Best-effort: warn and keep going rather than abort
-# session setup (so `if` suppresses `set -e`).
+# Start the Docker daemon: `just backend-generate-auto` boots a throwaway
+# Postgres against it to autogenerate Alembic migrations, and
+# `@pytest.mark.integration` tests boot Postgres + Valkey via testcontainers
+# (see docs/testing.md). The daemon is not started by the base image and does
+# not survive between sessions, so we (re)start it each time. (Image builds
+# are still left to docker-publish.yml - see docs/claude-cloud.md.)
+# Best-effort: warn and keep going rather than abort session setup (so `if`
+# suppresses `set -e`).
 echo "[session-start] Starting Docker daemon..."
 if docker info >/dev/null 2>&1; then
   echo "[session-start] Docker daemon already running."
@@ -105,9 +107,14 @@ else
 fi
 
 # Persist PATH additions so the upgraded uv (~/.local/bin) and nvm's Node 24
-# are used throughout the session, not just in this hook's own shell. The hook
-# re-runs on resume against the same env file, so guard with a marker line to
-# avoid stacking duplicate PATH entries.
+# are used throughout the session, not just in this hook's own shell. Also
+# disable the testcontainers Ryuk reaper, matching CI (.github/workflows/ci.yml):
+# the integration test fixtures already stop their own containers in `finally`
+# blocks (backend/tests/fixtures/db_provider.py), and dockerd itself is
+# restarted fresh every session, so Ryuk's crash-cleanup role isn't needed here
+# - skipping it avoids pulling/running an extra container per test session. The
+# hook re-runs on resume against the same env file, so guard with a marker line
+# to avoid stacking duplicate entries.
 ENV_MARKER="# fanfan session-start PATH"
 if [ -n "${CLAUDE_ENV_FILE:-}" ] && ! grep -qsF "$ENV_MARKER" "$CLAUDE_ENV_FILE"; then
   {
@@ -115,6 +122,7 @@ if [ -n "${CLAUDE_ENV_FILE:-}" ] && ! grep -qsF "$ENV_MARKER" "$CLAUDE_ENV_FILE"
     echo 'export PATH="$HOME/.local/bin:$PATH"'
     echo 'export NVM_DIR="/opt/nvm"'
     echo '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && export PATH="$(dirname "$(nvm which default)"):$PATH"'
+    echo 'export TESTCONTAINERS_RYUK_DISABLED="true"'
   } >> "$CLAUDE_ENV_FILE"
 fi
 

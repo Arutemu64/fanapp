@@ -52,8 +52,12 @@ if ! command -v just >/dev/null 2>&1; then
     || { $SUDO apt-get update -qq && $SUDO apt-get install -y -qq just; }
 fi
 
-echo "[setup] Upgrading uv (for stable Python 3.14 support)..."
-python3 -m pip install --quiet --upgrade --user uv
+echo "[setup] Installing pinned uv (for stable Python 3.14 support)..."
+# Pinned to match mise.toml, backend/pyproject.toml [tool.uv], and
+# backend/Dockerfile - bump all four together. An unpinned `--upgrade` would
+# grab whatever is newest on PyPI, which drifts from the repo's pin and makes
+# `uv sync`/`uv run` fail its own required-version check.
+python3 -m pip install --quiet --user "uv==0.11.29"
 
 echo "[setup] Installing stable Python 3.14..."
 uv python install 3.14
@@ -82,18 +86,24 @@ export PATH="$(dirname "$(nvm which default)"):$PATH"
 echo "[setup] Installing pnpm 11 (matches mise.toml / frontend/package.json)..."
 npm install -g pnpm@11.11.0
 
-# Prepull the single Docker image the cloud flow needs: a Postgres matching
-# production (postgres:18-alpine), used to autogenerate Alembic migrations
-# against a throwaway database (see `just backend-generate-auto`). Image layers
-# are files, so a pull here persists in the cached snapshot and every session
-# starts with it on disk; only the daemon (a process) is restarted per session
-# by the SessionStart hook. We start dockerd here purely to pull - it is not
-# expected to survive the snapshot.
+# Prepull the Docker images the cloud flow needs. Image layers are files, so a
+# pull here persists in the cached snapshot and every session starts with them
+# on disk; only the daemon (a process) is restarted per session by the
+# SessionStart hook. We start dockerd here purely to pull - it is not expected
+# to survive the snapshot.
 #
-# Integration-test and image-build deps are deliberately NOT prepulled: the
-# cloud agent flow relies on CI (.github/workflows/ci.yml) to run the full test
-# suite and docker-publish.yml to build images. Local fast checks (ruff, ty)
-# need no containers and still run per AGENTS.md.
+#   * postgres:18.4-alpine     - pinned to match production (docker-compose.yml)
+#                                 exactly; used both to autogenerate Alembic
+#                                 migrations (`just backend-generate-auto`) and
+#                                 by the testcontainers integration suite (see
+#                                 backend/tests/fixtures/db_provider.py).
+#   * valkey/valkey:9.1-alpine - testcontainers image for `@pytest.mark.integration`
+#     (both let `just backend-test` / `backend-test-integration` run in-session
+#     instead of only in CI).
+#
+# Image builds (docker-publish.yml) and the rest of the compose stack (nats,
+# db-backup) are still left to CI - not needed for either autogenerate or the
+# test suite.
 #
 # Best-effort: a rate-limited or unreachable image must not fail environment
 # creation, so the block runs under `if` (suppresses set -e) and a failed pull
@@ -126,12 +136,13 @@ if command -v dockerd >/dev/null 2>&1; then
       echo "[setup] Note: DOCKERHUB_USER/DOCKERHUB_TOKEN not set; pulling anonymously (rate-limited)."
     fi
 
-    # Single image: production-matching Postgres for Alembic autogenerate.
-    if docker pull postgres:18-alpine >/dev/null 2>&1; then
-      echo "[setup]   pulled postgres:18-alpine"
-    else
-      echo "[setup]   WARN: could not prepull postgres:18-alpine (will lazy-pull at first use)"
-    fi
+    for image in postgres:18.4-alpine valkey/valkey:9.1-alpine; do
+      if docker pull "$image" >/dev/null 2>&1; then
+        echo "[setup]   pulled $image"
+      else
+        echo "[setup]   WARN: could not prepull $image (will lazy-pull at first use)"
+      fi
+    done
   else
     echo "[setup] WARN: dockerd did not start; skipping image prepull."
   fi

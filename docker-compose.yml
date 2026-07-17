@@ -187,7 +187,11 @@ services:
       - backend-network
 
   db:
-    image: postgres:18-alpine
+    # Pinned (not a floating minor tag) so dev/prod, the Alembic autogenerate
+    # script, and the integration test suite all run the exact same image —
+    # see backend/scripts/generate_migration.py and
+    # backend/tests/fixtures/db_provider.py.
+    image: postgres:18.4-alpine
     volumes:
       - db-data:/var/lib/postgresql
     environment:

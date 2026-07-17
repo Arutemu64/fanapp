@@ -60,8 +60,9 @@ requires = ["uv_build>=0.11.19,<0.12"]
 build-backend = "uv_build"
 
 [tool.uv]
-# Matches mise.toml and backend/Dockerfile; bump all three together.
-required-version = "==0.11.28"
+# Matches mise.toml, backend/Dockerfile, .claude/setup.sh, and
+# .github/workflows/ci.yml; bump all five together.
+required-version = "==0.11.29"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

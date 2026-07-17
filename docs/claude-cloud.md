@@ -54,7 +54,7 @@ prepulls (all persist in the snapshot):
   too old for stable 3.14 and can't self-update here (GitHub installer 403s).
 * Node 24 via `nvm` (already on the image) — the base image's system Node is
   22; the official Node/nvm installers both 403 here.
-* `docker login` + a single Docker image prepull (`postgres:18-alpine`, see below).
+* `docker login` + Docker image prepulls (`postgres:18.4-alpine`, `valkey/valkey:9.1-alpine`, see below).
 
 **`.claude/hooks/session-start.sh`** — work that must run each session because it
 does not survive the snapshot:
@@ -67,13 +67,15 @@ does not survive the snapshot:
 
 ## Network access
 
-Package registries (npm, PyPI, …) are on the default **Trusted** allowlist.
-Docker image **layers** are served from registry blob CDNs that may not be — if
-a pull authenticates and then 403s mid-download, set the environment's network
-access to **Custom** (keep the default list checked) and add:
+Package registries (npm, PyPI, …) and Docker Hub — including its blob CDN,
+`production.cloudflare.docker.com` — are on the default **Trusted** allowlist
+([current list](https://code.claude.com/docs/en/claude-code-on-the-web#default-allowed-domains)).
+`ghcr.io` itself is Trusted too, but its blob CDN,
+`pkg-containers.githubusercontent.com`, is not — if a `ghcr.io` pull
+authenticates and then 403s mid-download, set the environment's network access
+to **Custom** (keep the default list checked) and add:
 
 ```text
-production.cloudfront.docker.com      # Docker Hub layer blobs
 pkg-containers.githubusercontent.com  # GHCR layer blobs
 ```
 
@@ -83,20 +85,35 @@ Docker Hub rate-limit below.)
 
 ## Docker images
 
-The cloud agent flow does one container-bound task: autogenerating Alembic
-migrations against a throwaway Postgres. So the setup script prepulls a **single**
-image — `postgres:18-alpine`, matching production (`docker-compose.yml`) and the
-CI drift gate — baked into the snapshot and on disk at session start. Only the
-daemon (a process) is restarted per session by the hook; the container itself is
-booted and torn down on demand by `just backend-generate-auto` (see
-[backend.md](backend.md)).
+The cloud agent flow does two container-bound tasks: autogenerating Alembic
+migrations against a throwaway Postgres, and running the `@pytest.mark.integration`
+suite against real Postgres + Valkey via testcontainers (see
+[testing.md](testing.md)). So the setup script prepulls two images, baked into
+the snapshot and on disk at session start:
+
+* `postgres:18.4-alpine` — pinned (not a floating minor tag) to match
+  production (`docker-compose.yml`) exactly; used both by
+  `just backend-generate-auto` and by the testcontainers integration suite
+  (`backend/tests/fixtures/db_provider.py`). One image everywhere avoids
+  running tests against a different Postgres build than production — Alpine's
+  musl libc has different collation/locale behavior than glibc-based images,
+  so a mismatched variant could hide or fabricate sorting bugs.
+* `valkey/valkey:9.1-alpine` — the testcontainers image
+  `backend/tests/fixtures/db_provider.py` boots for `@pytest.mark.integration`
+  tests, matching what CI (`.github/workflows/ci.yml`) uses.
+
+Only the daemon (a process) is restarted per session by the hook; containers
+themselves are booted and torn down on demand by `just backend-generate-auto`
+or a test run (`just backend-test` / `backend-test-integration`). The hook
+also sets `TESTCONTAINERS_RYUK_DISABLED=true`, matching CI — dockerd itself
+doesn't survive between sessions and the fixtures stop their own containers in
+`finally:` blocks, so the Ryuk cleanup reaper isn't needed and skipping it
+avoids pulling/running an extra container per session.
 
 Everything else is deliberately **not** prepulled and left to CI:
 
-* integration-test images (`postgres:18.4`, `redis:…` via testcontainers) — the
-  full `pytest` suite runs in `.github/workflows/ci.yml`, not in cloud sessions.
-* the rest of the compose stack (`nats`, `valkey`, db-backup) — not needed to
-  generate a schema diff.
+* the rest of the compose stack (`nats`, db-backup) — not needed for Alembic
+  autogenerate or the test suite.
 * Dockerfile bases (`uv`, `debian`, `node`, `nginx`) and the project's own
   `ghcr.io/arutemu64/fanapp-*` images — image builds run in
   `docker-publish.yml`.
@@ -116,9 +133,8 @@ sessions' own lazy pulls are authenticated too.
 > A token in an env var is **not** used until something runs `docker login` —
 > setting the variable alone does nothing.
 
-The prepull is **best-effort**, so a remaining cap or a bad token degrades the
-single `postgres:18-alpine` pull to a lazy pull at first use rather than
-failing environment creation.
+The prepull is **best-effort**, so a remaining cap or a bad token degrades a
+pull to a lazy pull at first use rather than failing environment creation.
 
 > Cloud environments have no secrets store yet; environment variables are visible
 > to anyone who can edit the environment. Use a revocable, least-privilege token.
