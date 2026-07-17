@@ -88,13 +88,14 @@ npm install -g pnpm@11.11.0
 # SessionStart hook. We start dockerd here purely to pull - it is not expected
 # to survive the snapshot.
 #
-#   * postgres:18-alpine       - matches production (docker-compose.yml) and
-#                                 the CI drift gate; used to autogenerate
-#                                 Alembic migrations (`just backend-generate-auto`).
-#   * postgres:18.4            - testcontainers image for `@pytest.mark.integration`
+#   * postgres:18.4-alpine     - pinned to match production (docker-compose.yml)
+#                                 exactly; used both to autogenerate Alembic
+#                                 migrations (`just backend-generate-auto`) and
+#                                 by the testcontainers integration suite (see
+#                                 backend/tests/fixtures/db_provider.py).
 #   * valkey/valkey:9.1-alpine - testcontainers image for `@pytest.mark.integration`
-#     (see backend/tests/fixtures/db_provider.py; both let `just backend-test` /
-#     `backend-test-integration` run in-session instead of only in CI).
+#     (both let `just backend-test` / `backend-test-integration` run in-session
+#     instead of only in CI).
 #
 # Image builds (docker-publish.yml) and the rest of the compose stack (nats,
 # db-backup) are still left to CI - not needed for either autogenerate or the
@@ -131,7 +132,7 @@ if command -v dockerd >/dev/null 2>&1; then
       echo "[setup] Note: DOCKERHUB_USER/DOCKERHUB_TOKEN not set; pulling anonymously (rate-limited)."
     fi
 
-    for image in postgres:18-alpine postgres:18.4 valkey/valkey:9.1-alpine; do
+    for image in postgres:18.4-alpine valkey/valkey:9.1-alpine; do
       if docker pull "$image" >/dev/null 2>&1; then
         echo "[setup]   pulled $image"
       else

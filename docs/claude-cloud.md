@@ -54,7 +54,7 @@ prepulls (all persist in the snapshot):
   too old for stable 3.14 and can't self-update here (GitHub installer 403s).
 * Node 24 via `nvm` (already on the image) — the base image's system Node is
   22; the official Node/nvm installers both 403 here.
-* `docker login` + a single Docker image prepull (`postgres:18-alpine`, see below).
+* `docker login` + Docker image prepulls (`postgres:18.4-alpine`, `valkey/valkey:9.1-alpine`, see below).
 
 **`.claude/hooks/session-start.sh`** — work that must run each session because it
 does not survive the snapshot:
@@ -88,12 +88,17 @@ Docker Hub rate-limit below.)
 The cloud agent flow does two container-bound tasks: autogenerating Alembic
 migrations against a throwaway Postgres, and running the `@pytest.mark.integration`
 suite against real Postgres + Valkey via testcontainers (see
-[testing.md](testing.md)). So the setup script prepulls three images, baked
-into the snapshot and on disk at session start:
+[testing.md](testing.md)). So the setup script prepulls two images, baked into
+the snapshot and on disk at session start:
 
-* `postgres:18-alpine` — matches production (`docker-compose.yml`) and the CI
-  drift gate; used by `just backend-generate-auto`.
-* `postgres:18.4` and `valkey/valkey:9.1-alpine` — the testcontainers images
+* `postgres:18.4-alpine` — pinned (not a floating minor tag) to match
+  production (`docker-compose.yml`) exactly; used both by
+  `just backend-generate-auto` and by the testcontainers integration suite
+  (`backend/tests/fixtures/db_provider.py`). One image everywhere avoids
+  running tests against a different Postgres build than production — Alpine's
+  musl libc has different collation/locale behavior than glibc-based images,
+  so a mismatched variant could hide or fabricate sorting bugs.
+* `valkey/valkey:9.1-alpine` — the testcontainers image
   `backend/tests/fixtures/db_provider.py` boots for `@pytest.mark.integration`
   tests, matching what CI (`.github/workflows/ci.yml`) uses.
 
@@ -128,9 +133,8 @@ sessions' own lazy pulls are authenticated too.
 > A token in an env var is **not** used until something runs `docker login` —
 > setting the variable alone does nothing.
 
-The prepull is **best-effort**, so a remaining cap or a bad token degrades the
-single `postgres:18-alpine` pull to a lazy pull at first use rather than
-failing environment creation.
+The prepull is **best-effort**, so a remaining cap or a bad token degrades a
+pull to a lazy pull at first use rather than failing environment creation.
 
 > Cloud environments have no secrets store yet; environment variables are visible
 > to anyone who can edit the environment. Use a revocable, least-privilege token.

@@ -61,9 +61,9 @@ PostgreSQL and Redis). They cannot run in environments without a Docker daemon.
 
 Cloud sessions run integration tests in-session (`just backend-test` /
 `backend-test-integration`), same as CI (`.github/workflows/ci.yml`). The
-setup script prepulls the testcontainers images (`postgres:18.4`,
-`valkey/valkey:9.1-alpine`, alongside `postgres:18-alpine` for Alembic
-autogenerate) and the SessionStart hook starts `dockerd` and sets
+setup script prepulls the testcontainers images (`postgres:18.4-alpine` —
+pinned, and shared with Alembic autogenerate and production — and
+`valkey/valkey:9.1-alpine`) and the SessionStart hook starts `dockerd` and sets
 `TESTCONTAINERS_RYUK_DISABLED=true` (matching CI — the fixtures already stop
 their own containers in `finally:` blocks, so the Ryuk reaper isn't needed).
 Provisioning details — setup script vs. hook, image prepull, Docker Hub auth,

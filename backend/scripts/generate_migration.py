@@ -26,11 +26,12 @@ BACKEND_DIR = Path(__file__).resolve().parents[1]
 ALEMBIC_INI = BACKEND_DIR / "alembic.ini"
 MIGRATIONS_DIR = BACKEND_DIR / "src" / "fanfan" / "adapters" / "db" / "migrations"
 
-# Match production (docker-compose.yml) and the cloud prepull (.claude/setup.sh)
-# so autogenerate runs against the same Postgres major the schema actually uses
-# — a different version risks false diffs (e.g. server-default rendering) — and
-# the cloud session reuses the prepulled image instead of lazy-pulling another.
-POSTGRES_IMAGE = "postgres:18-alpine"
+# Pinned (not a floating minor tag) to match production (docker-compose.yml),
+# the integration test suite (tests/fixtures/db_provider.py), and the cloud
+# prepull (.claude/setup.sh) exactly — a different image risks false diffs
+# (e.g. server-default rendering) — and the cloud session reuses the prepulled
+# image instead of lazy-pulling another.
+POSTGRES_IMAGE = "postgres:18.4-alpine"
 
 # argv is [script_path, migration_name] — exactly two entries when called right.
 EXPECTED_ARGC = 2
