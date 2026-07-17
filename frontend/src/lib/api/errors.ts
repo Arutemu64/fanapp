@@ -157,6 +157,7 @@ const ERROR_MESSAGES = {
 	TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL:
 		'Сначала добавь почту, чтобы не потерять доступ к аккаунту',
 	TICKET_ALREADY_USED: 'Этот билет уже использован',
+	TICKET_BARCODE_COLLISION: 'Не удалось создать билеты, попробуй ещё раз',
 	TICKET_NOT_FOUND: 'Билет не найден',
 	TICKET_NOT_LINKED: 'Сначала привяжи билет',
 	USER_ALREADY_EXISTS: 'Этот адрес уже используется',

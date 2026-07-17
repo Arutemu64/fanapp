@@ -5,7 +5,10 @@ from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.mappers.ticket import TicketMapper
 from fanfan.adapters.db.models import TicketORM
 from fanfan.application.ports.gateways.tickets import TicketGateway
-from fanfan.core.exceptions.tickets import UserAlreadyHasTicketLinked
+from fanfan.core.exceptions.tickets import (
+    TicketBarcodeCollision,
+    UserAlreadyHasTicketLinked,
+)
 from fanfan.core.models.ticket import Ticket
 from fanfan.core.vo.user import UserId
 
@@ -18,6 +21,14 @@ class SqlTicketGateway(TicketGateway):
     async def add(self, ticket: Ticket) -> None:
         ticket_orm = self.mapper.from_model(ticket)
         self.session.add(ticket_orm)
+
+    async def add_generated(self, tickets: list[Ticket]) -> None:
+        ticket_orms = [self.mapper.from_model(ticket) for ticket in tickets]
+        self.session.add_all(ticket_orms)
+        # Flush here so a duplicate barcode surfaces as a domain exception at the
+        # gateway (not later at uow.commit()); the caller regenerates and retries.
+        with translate_integrity_error({"uq_tickets_barcode": TicketBarcodeCollision}):
+            await self.session.flush(ticket_orms)
 
     async def get_by_barcode(self, barcode: str) -> Ticket | None:
         stmt = select(TicketORM).where(TicketORM.barcode == barcode).with_for_update()
