@@ -27,7 +27,12 @@ DEFAULT_APP_SETTINGS = {
 
 # System user authenticated by RawIdProvider (adapters/auth/providers/raw.py),
 # acting as the current user for CLI/scheduler/NATS-consumer interactors. Like
-# any other user, it holds no permissions until explicitly granted one.
+# any other user, it holds no permissions until explicitly granted one — there
+# is no role-based bypass (see PermissionService.ensure). If a future
+# system-triggered interactor adds a perm_service.ensure(...) check, grant
+# this exact user_id the one Permissions member it needs via a migration
+# (a user_permissions row), least-privilege, same as granting any other user.
+# Do not special-case this id or its role in PermissionService.
 SYSTEM_USER_ID = UUID("00000000-0000-0000-0000-000000000000")
 SYSTEM_USER_SETTINGS = {
     "items_per_page": 4,
