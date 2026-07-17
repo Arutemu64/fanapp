@@ -12,7 +12,7 @@ from fanfan.core.events.notifications import MailingCancelled
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.notifications import MailingNotFound
 from fanfan.core.vo.mailing import MailingId
-from fanfan.core.vo.permission import PermissionName, Permissions
+from fanfan.core.vo.permission import Permission
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ class CancelMailing:
             try:
                 await self.perm_service.ensure(
                     user=current_user,
-                    perm_name=PermissionName(Permissions.NOTIFICATIONS_SEND),
+                    permission=Permission.NOTIFICATIONS_SEND,
                 )
             except AccessDenied:
                 raise AccessDenied(

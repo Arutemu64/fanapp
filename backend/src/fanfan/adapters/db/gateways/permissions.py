@@ -8,7 +8,7 @@ from fanfan.application.ports.gateways import (
 )
 from fanfan.core.models.permission import UserPermission
 from fanfan.core.vo.permission import (
-    PermissionName,
+    Permission,
 )
 from fanfan.core.vo.user import UserId
 
@@ -23,16 +23,16 @@ class SqlUserPermissionGateway(UserPermissionGateway):
         self.session.add(user_perm_orm)
         await self.session.flush()
 
-    async def get_by_name(
+    async def get_by_permission(
         self,
         user_id: UserId,
-        permission_name: PermissionName,
+        permission: Permission,
     ) -> UserPermission | None:
         user_perm_orm = await self.session.scalar(
             select(UserPermissionORM).where(
                 and_(
                     UserPermissionORM.user_id == user_id,
-                    UserPermissionORM.permission == permission_name,
+                    UserPermissionORM.permission == permission,
                 )
             )
         )

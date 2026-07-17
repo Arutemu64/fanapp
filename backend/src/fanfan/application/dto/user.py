@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 
 from fanfan.core.vo.permission import (
-    PermissionName,
+    Permission,
 )
 from fanfan.core.vo.ticket import TicketId
 from fanfan.core.vo.user import UserId, UserRole
@@ -11,10 +11,6 @@ class UserBaseDTO(BaseModel):
     id: UserId
     username: str
     role: UserRole
-
-
-class UserPermissionDTO(BaseModel):
-    name: PermissionName
 
 
 class UserTicketDTO(BaseModel):
@@ -38,6 +34,9 @@ class CurrentUserDTO(UserBaseDTO):
     has_password: bool
 
     ticket: UserTicketDTO | None
-    permissions: list[UserPermissionDTO]
+    # Bare list of granted permissions (a StrEnum, so it surfaces as a
+    # Permission enum schema in OpenAPI): the frontend derives its literals from
+    # that generated union with a compile-time drift guard.
+    permissions: list[Permission]
     settings: UserSettingsDTO
     social_identities: list[UserSocialIdentityDTO]

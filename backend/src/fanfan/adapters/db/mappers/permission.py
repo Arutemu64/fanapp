@@ -1,7 +1,7 @@
 from fanfan.adapters.db.models import UserPermissionORM
 from fanfan.core.models.permission import UserPermission
 from fanfan.core.vo.permission import (
-    PermissionName,
+    Permission,
     UserPermissionId,
 )
 from fanfan.core.vo.user import UserId
@@ -20,6 +20,6 @@ class UserPermissionMapper:
     def to_model(orm: UserPermissionORM) -> UserPermission:
         return UserPermission(
             id=UserPermissionId(orm.id),
-            permission=PermissionName(orm.permission),
+            permission=Permission(orm.permission),
             user_id=UserId(orm.user_id),
         )

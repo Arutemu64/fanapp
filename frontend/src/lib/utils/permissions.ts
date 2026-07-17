@@ -1,20 +1,31 @@
-import type { CurrentUserDTO, UserPermissionDTO } from '$lib/types/user';
+import type { components } from '$lib/api/v1';
+import type { CurrentUserDTO } from '$lib/types/user';
+
+// Permission identifiers, generated from the backend `Permission` enum via the
+// OpenAPI spec (just frontend-generate-api). Typing each constant as Permission
+// is the drift guard: if the backend renames or removes a permission, its
+// literal stops being assignable to this union and `pnpm check` fails here —
+// instead of silently shipping a stale string that fails every permission check
+// at runtime.
+export type Permission = components['schemas']['Permission'];
+
+const SCHEDULE_MANAGE: Permission = 'schedule:manage';
+const SCHEDULE_IMPORT: Permission = 'schedule:import';
+const NOTIFICATIONS_SEND: Permission = 'notifications:send';
+const SETTINGS_MANAGE: Permission = 'settings:manage';
 
 /**
  * Check if user has a specific permission.
  * @param user - The user object or null
- * @param permissionName - The permission name to check (e.g., 'schedule:manage')
+ * @param permission - The permission to check
  * @returns true if user has the permission, false otherwise
  */
-export function hasPermission(user: CurrentUserDTO | null, permissionName: string): boolean {
+export function hasPermission(user: CurrentUserDTO | null, permission: Permission): boolean {
 	if (!user) {
 		return false;
 	}
 
-	return (
-		user.permissions?.some((permission: UserPermissionDTO) => permission.name === permissionName) ??
-		false
-	);
+	return user.permissions?.includes(permission) ?? false;
 }
 
 /**
@@ -23,7 +34,7 @@ export function hasPermission(user: CurrentUserDTO | null, permissionName: strin
  * @returns true if user has 'schedule:manage' permission
  */
 export function canManageSchedule(user: CurrentUserDTO | null): boolean {
-	return hasPermission(user, 'schedule:manage');
+	return hasPermission(user, SCHEDULE_MANAGE);
 }
 
 /**
@@ -32,7 +43,7 @@ export function canManageSchedule(user: CurrentUserDTO | null): boolean {
  * @returns true if user has 'schedule:import' permission
  */
 export function canImportSchedule(user: CurrentUserDTO | null): boolean {
-	return hasPermission(user, 'schedule:import');
+	return hasPermission(user, SCHEDULE_IMPORT);
 }
 
 /**
@@ -41,7 +52,7 @@ export function canImportSchedule(user: CurrentUserDTO | null): boolean {
  * @returns true if user has 'notifications:send' permission
  */
 export function canSendNotifications(user: CurrentUserDTO | null): boolean {
-	return hasPermission(user, 'notifications:send');
+	return hasPermission(user, NOTIFICATIONS_SEND);
 }
 
 /**
@@ -50,5 +61,5 @@ export function canSendNotifications(user: CurrentUserDTO | null): boolean {
  * @returns true if user has 'settings:manage' permission
  */
 export function canManageSettings(user: CurrentUserDTO | null): boolean {
-	return hasPermission(user, 'settings:manage');
+	return hasPermission(user, SETTINGS_MANAGE);
 }

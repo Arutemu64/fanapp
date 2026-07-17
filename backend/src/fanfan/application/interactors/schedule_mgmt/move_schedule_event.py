@@ -27,7 +27,7 @@ from fanfan.core.models.mailing import Mailing
 from fanfan.core.models.schedule_change import (
     ScheduleChange,
 )
-from fanfan.core.vo.permission import PermissionName, Permissions
+from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.schedule_event import ScheduleEventId
 
 logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ class MoveScheduleEvent:
     async def __call__(self, data: MoveScheduleEventInput) -> None:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
-            user=current_user, perm_name=PermissionName(Permissions.SCHEDULE_MANAGE)
+            user=current_user, permission=Permission.SCHEDULE_MANAGE
         )
 
         settings = await self.settings_gateway.get()

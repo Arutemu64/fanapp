@@ -17,7 +17,7 @@ from fanfan.core.exceptions.users import (
 )
 from fanfan.core.models.user import User
 from fanfan.core.utils.email import normalize_email
-from fanfan.core.vo.permission import Permissions
+from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.user import UserId, UserRole
 
 
@@ -132,7 +132,7 @@ class SqlUserGateway(UserGateway):
         stmt = (
             select(UserORM)
             .join(UserPermissionORM)
-            .where(UserPermissionORM.permission == Permissions.SCHEDULE_MANAGE)
+            .where(UserPermissionORM.permission == Permission.SCHEDULE_MANAGE)
         )
         users_orm = await self.session.scalars(stmt)
         return [self.mapper.parse_base_dto(u) for u in users_orm]

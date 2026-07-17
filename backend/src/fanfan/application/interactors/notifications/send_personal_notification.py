@@ -10,7 +10,7 @@ from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.users import UserNotFound
 from fanfan.core.models.notification import NewNotification
 from fanfan.core.vo.notification import NotificationType, generate_notification_id
-from fanfan.core.vo.permission import PermissionName, Permissions
+from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.user import UserId
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ class SendPersonalNotification:
     async def __call__(self, data: SendPersonalNotificationInput):
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
-            user=current_user, perm_name=PermissionName(Permissions.NOTIFICATIONS_SEND)
+            user=current_user, permission=Permission.NOTIFICATIONS_SEND
         )
 
         user = await self.user_gateway.get_by_id(data.user_id)

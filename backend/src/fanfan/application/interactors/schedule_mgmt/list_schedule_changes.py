@@ -7,7 +7,7 @@ from fanfan.application.ports.gateways.schedule_changes import (
 )
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
-from fanfan.core.vo.permission import PermissionName, Permissions
+from fanfan.core.vo.permission import Permission
 
 
 class ListScheduleChangesInput(BaseModel):
@@ -34,7 +34,7 @@ class ListScheduleChanges:
     ) -> ListScheduleChangesResult:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
-            user=current_user, perm_name=PermissionName(Permissions.SCHEDULE_MANAGE)
+            user=current_user, permission=Permission.SCHEDULE_MANAGE
         )
         schedule_changes = (
             await self.schedule_change_gateway.read_list_schedule_changes(

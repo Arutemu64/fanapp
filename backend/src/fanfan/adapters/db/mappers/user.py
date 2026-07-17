@@ -2,16 +2,13 @@ from fanfan.adapters.db.models import UserORM
 from fanfan.application.dto.user import (
     CurrentUserDTO,
     UserBaseDTO,
-    UserPermissionDTO,
     UserSettingsDTO,
     UserSocialIdentityDTO,
     UserTicketDTO,
 )
 from fanfan.core.models.user import User, UserSettings
 from fanfan.core.vo.email import Email
-from fanfan.core.vo.permission import (
-    PermissionName,
-)
+from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.ticket import TicketId
 from fanfan.core.vo.user import UserId, Username, UserRole
 
@@ -66,10 +63,7 @@ class UserMapper:
             )
             if orm.ticket
             else None,
-            permissions=[
-                UserPermissionDTO(name=PermissionName(p.permission))
-                for p in orm.permissions
-            ],
+            permissions=[Permission(p.permission) for p in orm.permissions],
             settings=UserSettingsDTO(
                 receive_all_announcements=orm.receive_all_announcements,
                 receive_telegram_notifications=orm.receive_telegram_notifications,

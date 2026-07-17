@@ -3181,7 +3181,7 @@
           },
           "permissions": {
             "items": {
-              "$ref": "#/components/schemas/UserPermissionDTO"
+              "$ref": "#/components/schemas/Permission"
             },
             "type": "array",
             "title": "Permissions"
@@ -3771,6 +3771,16 @@
         ],
         "title": "ParticipantVoteDTO"
       },
+      "Permission": {
+        "type": "string",
+        "enum": [
+          "schedule:manage",
+          "schedule:import",
+          "notifications:send",
+          "settings:manage"
+        ],
+        "title": "Permission"
+      },
       "PushSubscriptionStatus": {
         "properties": {
           "subscribed": {
@@ -4352,19 +4362,6 @@
         },
         "type": "object",
         "title": "UpdateUserSettingsInput"
-      },
-      "UserPermissionDTO": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name"
-        ],
-        "title": "UserPermissionDTO"
       },
       "UserRole": {
         "type": "string",

@@ -13,8 +13,7 @@ from fanfan.core.models.permission import UserPermission
 from fanfan.core.models.ticket import Ticket
 from fanfan.core.models.user import User
 from fanfan.core.vo.permission import (
-    PermissionName,
-    Permissions,
+    Permission,
     generate_user_permission_id,
 )
 from fanfan.core.vo.ticket import TicketId, generate_ticket_id
@@ -78,11 +77,11 @@ async def schedule_editor(dishka_request: AsyncContainer) -> User:
         role=UserRole.ORG,
     )
     await user_gateway.add(schedule_editor)
-    for permission in (Permissions.SCHEDULE_MANAGE, Permissions.SCHEDULE_IMPORT):
+    for permission in (Permission.SCHEDULE_MANAGE, Permission.SCHEDULE_IMPORT):
         await user_permission_gateway.add(
             UserPermission(
                 id=generate_user_permission_id(),
-                permission=PermissionName(permission),
+                permission=permission,
                 user_id=schedule_editor.id,
             )
         )

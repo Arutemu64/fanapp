@@ -5,7 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from fanfan.adapters.db.models.base import BaseORM, str_enum_column
 from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
-from fanfan.core.vo.permission import Permissions
+from fanfan.core.vo.permission import Permission
 
 
 class UserPermissionORM(UUIDPrimaryKeyMixin, BaseORM):
@@ -14,7 +14,7 @@ class UserPermissionORM(UUIDPrimaryKeyMixin, BaseORM):
 
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     permission: Mapped[str] = str_enum_column(
-        Permissions,
+        Permission,
         name="permissionname",
         length=64,
         index=True,
