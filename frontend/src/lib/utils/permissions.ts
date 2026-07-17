@@ -1,13 +1,13 @@
 import type { components } from '$lib/api/v1';
 import type { CurrentUserDTO, UserPermissionDTO } from '$lib/types/user';
 
-// Permission identifiers, generated from the backend `Permissions` enum via the
+// Permission identifiers, generated from the backend `Permission` enum via the
 // OpenAPI spec (just frontend-generate-api). Typing each constant as
 // PermissionName is the drift guard: if the backend renames or removes a
 // permission, its literal stops being assignable to this union and `pnpm check`
 // fails here — instead of silently shipping a stale string that fails every
 // permission check at runtime.
-export type PermissionName = components['schemas']['Permissions'];
+export type PermissionName = components['schemas']['Permission'];
 
 const SCHEDULE_MANAGE: PermissionName = 'schedule:manage';
 const SCHEDULE_IMPORT: PermissionName = 'schedule:import';

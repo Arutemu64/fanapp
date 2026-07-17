@@ -8,7 +8,7 @@ Switch the remaining ``native_enum=False`` StrEnum columns from storing the
 member *name* (e.g. "VISITOR") to storing the member *value* (e.g. "visitor"),
 matching what the domain, API, DTOs and frontend already use. Rewrites the
 stored data, swaps the CHECK constraint value list, and updates the two
-``role`` server defaults. ``Permissions`` and ``UserFlagName`` already stored
+``role`` server defaults. ``Permission`` and ``UserFlagName`` already stored
 values, so they are untouched.
 
 The name→value maps are pinned as literals so this migration stays fixed to the

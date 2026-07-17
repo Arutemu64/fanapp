@@ -10,7 +10,7 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
 from fanfan.core.models.schedule_event import ScheduleEvent
-from fanfan.core.vo.permission import PermissionName, Permissions
+from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.schedule_event import generate_schedule_event_id
 
 ORDER_INIT = 100.0
@@ -49,7 +49,7 @@ class ImportSchedule:
     async def __call__(self, data: ImportScheduleInput) -> None:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
-            user=current_user, perm_name=PermissionName(Permissions.SCHEDULE_IMPORT)
+            user=current_user, perm_name=Permission.SCHEDULE_IMPORT
         )
         orphaned_events = await self.schedule_gateway.list_all()
         order = ORDER_INIT

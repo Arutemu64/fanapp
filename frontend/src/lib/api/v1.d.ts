@@ -1153,10 +1153,10 @@ export interface components {
             id: string;
         };
         /**
-         * Permissions
+         * Permission
          * @enum {string}
          */
-        Permissions: "schedule:manage" | "schedule:import" | "notifications:send" | "settings:manage";
+        Permission: "schedule:manage" | "schedule:import" | "notifications:send" | "settings:manage";
         /** PushSubscriptionStatus */
         PushSubscriptionStatus: {
             /** Subscribed */
@@ -1363,7 +1363,7 @@ export interface components {
         };
         /** UserPermissionDTO */
         UserPermissionDTO: {
-            name: components["schemas"]["Permissions"];
+            name: components["schemas"]["Permission"];
         };
         /**
          * UserRole

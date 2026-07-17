@@ -8,7 +8,7 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
 from fanfan.core.exceptions.settings import AppSettingsNotFound
-from fanfan.core.vo.permission import PermissionName, Permissions
+from fanfan.core.vo.permission import Permission
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class UpdateSettings:
         data_to_update = data.model_dump(exclude_unset=True)
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
-            user=current_user, perm_name=PermissionName(Permissions.SETTINGS_MANAGE)
+            user=current_user, perm_name=Permission.SETTINGS_MANAGE
         )
         settings = await self.settings_gateway.get_for_update()
         if settings is None:

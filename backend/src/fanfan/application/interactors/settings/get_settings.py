@@ -3,7 +3,7 @@ from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
-from fanfan.core.vo.permission import PermissionName, Permissions
+from fanfan.core.vo.permission import Permission
 
 
 class GetSettings:
@@ -22,7 +22,7 @@ class GetSettings:
     async def __call__(self) -> AppSettingsDTO:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
-            user=current_user, perm_name=PermissionName(Permissions.SETTINGS_MANAGE)
+            user=current_user, perm_name=Permission.SETTINGS_MANAGE
         )
 
         return AppSettingsDTO.model_validate(await self.app_settings_gateway.get())
