@@ -82,18 +82,23 @@ export PATH="$(dirname "$(nvm which default)"):$PATH"
 echo "[setup] Installing pnpm 11 (matches mise.toml / frontend/package.json)..."
 npm install -g pnpm@11.11.0
 
-# Prepull the single Docker image the cloud flow needs: a Postgres matching
-# production (postgres:18-alpine), used to autogenerate Alembic migrations
-# against a throwaway database (see `just backend-generate-auto`). Image layers
-# are files, so a pull here persists in the cached snapshot and every session
-# starts with it on disk; only the daemon (a process) is restarted per session
-# by the SessionStart hook. We start dockerd here purely to pull - it is not
-# expected to survive the snapshot.
+# Prepull the Docker images the cloud flow needs. Image layers are files, so a
+# pull here persists in the cached snapshot and every session starts with them
+# on disk; only the daemon (a process) is restarted per session by the
+# SessionStart hook. We start dockerd here purely to pull - it is not expected
+# to survive the snapshot.
 #
-# Integration-test and image-build deps are deliberately NOT prepulled: the
-# cloud agent flow relies on CI (.github/workflows/ci.yml) to run the full test
-# suite and docker-publish.yml to build images. Local fast checks (ruff, ty)
-# need no containers and still run per AGENTS.md.
+#   * postgres:18-alpine       - matches production (docker-compose.yml) and
+#                                 the CI drift gate; used to autogenerate
+#                                 Alembic migrations (`just backend-generate-auto`).
+#   * postgres:18.4            - testcontainers image for `@pytest.mark.integration`
+#   * valkey/valkey:9.1-alpine - testcontainers image for `@pytest.mark.integration`
+#     (see backend/tests/fixtures/db_provider.py; both let `just backend-test` /
+#     `backend-test-integration` run in-session instead of only in CI).
+#
+# Image builds (docker-publish.yml) and the rest of the compose stack (nats,
+# db-backup) are still left to CI - not needed for either autogenerate or the
+# test suite.
 #
 # Best-effort: a rate-limited or unreachable image must not fail environment
 # creation, so the block runs under `if` (suppresses set -e) and a failed pull
@@ -126,12 +131,13 @@ if command -v dockerd >/dev/null 2>&1; then
       echo "[setup] Note: DOCKERHUB_USER/DOCKERHUB_TOKEN not set; pulling anonymously (rate-limited)."
     fi
 
-    # Single image: production-matching Postgres for Alembic autogenerate.
-    if docker pull postgres:18-alpine >/dev/null 2>&1; then
-      echo "[setup]   pulled postgres:18-alpine"
-    else
-      echo "[setup]   WARN: could not prepull postgres:18-alpine (will lazy-pull at first use)"
-    fi
+    for image in postgres:18-alpine postgres:18.4 valkey/valkey:9.1-alpine; do
+      if docker pull "$image" >/dev/null 2>&1; then
+        echo "[setup]   pulled $image"
+      else
+        echo "[setup]   WARN: could not prepull $image (will lazy-pull at first use)"
+      fi
+    done
   else
     echo "[setup] WARN: dockerd did not start; skipping image prepull."
   fi

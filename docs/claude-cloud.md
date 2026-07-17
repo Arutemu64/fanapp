@@ -83,20 +83,30 @@ Docker Hub rate-limit below.)
 
 ## Docker images
 
-The cloud agent flow does one container-bound task: autogenerating Alembic
-migrations against a throwaway Postgres. So the setup script prepulls a **single**
-image — `postgres:18-alpine`, matching production (`docker-compose.yml`) and the
-CI drift gate — baked into the snapshot and on disk at session start. Only the
-daemon (a process) is restarted per session by the hook; the container itself is
-booted and torn down on demand by `just backend-generate-auto` (see
-[backend.md](backend.md)).
+The cloud agent flow does two container-bound tasks: autogenerating Alembic
+migrations against a throwaway Postgres, and running the `@pytest.mark.integration`
+suite against real Postgres + Valkey via testcontainers (see
+[testing.md](testing.md)). So the setup script prepulls three images, baked
+into the snapshot and on disk at session start:
+
+* `postgres:18-alpine` — matches production (`docker-compose.yml`) and the CI
+  drift gate; used by `just backend-generate-auto`.
+* `postgres:18.4` and `valkey/valkey:9.1-alpine` — the testcontainers images
+  `backend/tests/fixtures/db_provider.py` boots for `@pytest.mark.integration`
+  tests, matching what CI (`.github/workflows/ci.yml`) uses.
+
+Only the daemon (a process) is restarted per session by the hook; containers
+themselves are booted and torn down on demand by `just backend-generate-auto`
+or a test run (`just backend-test` / `backend-test-integration`). The hook
+also sets `TESTCONTAINERS_RYUK_DISABLED=true`, matching CI — dockerd itself
+doesn't survive between sessions and the fixtures stop their own containers in
+`finally:` blocks, so the Ryuk cleanup reaper isn't needed and skipping it
+avoids pulling/running an extra container per session.
 
 Everything else is deliberately **not** prepulled and left to CI:
 
-* integration-test images (`postgres:18.4`, `redis:…` via testcontainers) — the
-  full `pytest` suite runs in `.github/workflows/ci.yml`, not in cloud sessions.
-* the rest of the compose stack (`nats`, `valkey`, db-backup) — not needed to
-  generate a schema diff.
+* the rest of the compose stack (`nats`, db-backup) — not needed for Alembic
+  autogenerate or the test suite.
 * Dockerfile bases (`uv`, `debian`, `node`, `nginx`) and the project's own
   `ghcr.io/arutemu64/fanapp-*` images — image builds run in
   `docker-publish.yml`.
