@@ -3,8 +3,8 @@
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { getOfflineService } from '$lib/services/offline.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { HeartOutline } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
-	import IconHeart from '~icons/lucide/heart';
 	import IconFastapi from '~icons/simple-icons/fastapi';
 	import IconSvelte from '~icons/simple-icons/svelte';
 
@@ -91,6 +91,6 @@
 	</p>
 	<p class="mt-0.5 flex items-center justify-center gap-1">
 		С любовью, Arutemu64
-		<IconHeart class="inline size-3.5 text-red-400" />
+		<HeartOutline class="inline size-3.5 text-red-400" />
 	</p>
 </footer>

@@ -4,11 +4,13 @@
 	import type { Component } from 'svelte';
 
 	import { getPwaService } from '$lib/services/pwa.svelte';
-	import BellIcon from '~icons/lucide/bell';
-	import CalendarCheckIcon from '~icons/lucide/calendar-check';
-	import DownloadIcon from '~icons/lucide/download';
-	import TicketIcon from '~icons/lucide/ticket';
-	import UserPlusIcon from '~icons/lucide/user-plus';
+	import {
+		BellOutline,
+		CalendarWeekOutline,
+		DownloadOutline,
+		TicketOutline,
+		UserAddOutline
+	} from 'flowbite-svelte-icons';
 
 	import GetReadyCard, { type ReadyAccent } from './GetReadyCard.svelte';
 
@@ -44,7 +46,7 @@
 				key: 'account',
 				title: 'Создать аккаунт',
 				description: 'Нужен для голосования и подписки на выступления программы.',
-				icon: UserPlusIcon,
+				icon: UserAddOutline,
 				accent: 'primary',
 				actionLabel: 'Создать',
 				href: '/login'
@@ -56,7 +58,7 @@
 				key: 'ticket',
 				title: 'Привязать билет',
 				description: 'Открывает доступ к голосованию в конкурсных номинациях.',
-				icon: TicketIcon,
+				icon: TicketOutline,
 				accent: 'amber',
 				actionLabel: 'Привязать',
 				href: '/profile'
@@ -68,7 +70,7 @@
 				key: 'schedule',
 				title: 'Посмотреть программу',
 				description: 'Подпишись на номера, чтобы не пропустить интересные выступления.',
-				icon: CalendarCheckIcon,
+				icon: CalendarWeekOutline,
 				accent: 'green',
 				actionLabel: 'Смотреть',
 				href: '/schedule'
@@ -78,7 +80,7 @@
 				key: 'notifications',
 				title: 'Настроить уведомления',
 				description: 'Получай напоминания о начале выступлений и изменениях в программе.',
-				icon: BellIcon,
+				icon: BellOutline,
 				accent: 'blue',
 				actionLabel: 'Настроить',
 				href: '/profile'
@@ -90,7 +92,7 @@
 				key: 'pwa',
 				title: 'Установить приложение',
 				description: 'Быстрый доступ с главного экрана и пуш-уведомления.',
-				icon: DownloadIcon,
+				icon: DownloadOutline,
 				accent: 'secondary',
 				actionLabel: 'Установить',
 				// Open the install dialog directly; the library handles per-platform UX.

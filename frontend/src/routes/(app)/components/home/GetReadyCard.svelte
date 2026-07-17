@@ -9,7 +9,7 @@
 	import type { Component } from 'svelte';
 
 	import { resolve } from '$app/paths';
-	import ArrowRightIcon from '~icons/lucide/arrow-right';
+	import { ArrowRightOutline } from 'flowbite-svelte-icons';
 
 	interface Props {
 		title: string;
@@ -114,7 +114,7 @@
 		{actionLabel}
 		<!-- Arrow implies navigation; only show it for link cards, not action buttons -->
 		{#if href}
-			<ArrowRightIcon
+			<ArrowRightOutline
 				class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
 				aria-hidden="true"
 			/>
@@ -144,7 +144,7 @@
 	>
 		<span class="hidden sm:inline">{actionLabel}</span>
 		{#if href}
-			<ArrowRightIcon
+			<ArrowRightOutline
 				class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
 				aria-hidden="true"
 			/>
