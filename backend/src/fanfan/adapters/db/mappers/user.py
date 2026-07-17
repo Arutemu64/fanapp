@@ -10,7 +10,6 @@ from fanfan.application.dto.user import (
 from fanfan.core.models.user import User, UserSettings
 from fanfan.core.vo.email import Email
 from fanfan.core.vo.permission import (
-    WILDCARD_PERMISSION,
     PermissionName,
 )
 from fanfan.core.vo.ticket import TicketId
@@ -55,11 +54,9 @@ class UserMapper:
 
     @staticmethod
     def _resolve_permissions(orm: UserORM) -> list[UserPermissionDTO]:
-        # ORG implicitly holds every permission (see PermissionService.ensure),
-        # so it carries no explicit grant rows. Ship a single wildcard entry
-        # instead of the empty list so the frontend resolves it as full access.
-        if orm.role is UserRole.ORG:
-            return [UserPermissionDTO(name=WILDCARD_PERMISSION)]
+        # ORG implicitly holds every permission (see PermissionService.ensure)
+        # and carries no explicit grant rows; the frontend checks the ORG role
+        # directly rather than looking for a permission entry here.
         return [
             UserPermissionDTO(name=PermissionName(p.permission))
             for p in orm.permissions

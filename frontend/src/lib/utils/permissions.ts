@@ -1,7 +1,5 @@
 import type { CurrentUserDTO, UserPermissionDTO } from '$lib/types/user';
 
-import { WILDCARD_PERMISSION } from '$lib/constants/permissions';
-
 /**
  * Check if user has a specific permission.
  * @param user - The user object or null
@@ -9,19 +7,20 @@ import { WILDCARD_PERMISSION } from '$lib/constants/permissions';
  * @returns true if user has the permission, false otherwise
  */
 export function hasPermission(user: CurrentUserDTO | null, permissionName: string): boolean {
-	if (!user || !user.permissions) {
+	if (!user) {
 		return false;
 	}
 
-	return user.permissions.some((permission: UserPermissionDTO) => {
-		// The backend ships a wildcard for roles that implicitly hold every
-		// permission (e.g. ORG), so it satisfies any check.
-		if (permission.name === WILDCARD_PERMISSION) {
-			return true;
-		}
+	// ORG is the staff admin role and implicitly holds every permission,
+	// mirroring the bypass in the backend's PermissionService.ensure.
+	if (user.role === 'org') {
+		return true;
+	}
 
-		return permission.name === permissionName;
-	});
+	return (
+		user.permissions?.some((permission: UserPermissionDTO) => permission.name === permissionName) ??
+		false
+	);
 }
 
 /**
