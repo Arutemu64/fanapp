@@ -48,13 +48,14 @@
 
 	let { user, activeUrl, isSidebarOpen, closeSidebar }: Props = $props();
 
-	// All staff see the shared "Инструменты" dropdown so they can discover what
-	// exists; individual items are unlocked per effective permission. The backend
-	// still enforces every action — locked items are a UX affordance only.
+	// The "Инструменты" dropdown is the staff toolbox. Role decides only whether to
+	// show the toolbox at all — a visitor/participant can never hold these and would
+	// just see a wall of locks. Every item inside is gated purely by effective
+	// permission (incl. the former org-only tools), so helpers can discover what
+	// they'd need access to. Permissions are not role-bound: any staff member can
+	// hold any of them, and the backend enforces each action — locked rows are a
+	// discovery affordance only.
 	let isStaff = $derived(user?.role === 'helper' || user?.role === 'org');
-	// Organizer-only tools stay hidden from volunteers entirely; this gates the
-	// organizer subset within the shared dropdown.
-	let isOrg = $derived(user?.role === 'org');
 	let iconClass =
 		'h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white';
 </script>
@@ -154,33 +155,30 @@
 						canManageSchedule(user),
 						scheduleChangesIcon
 					)}
-					{#if isOrg}
-						<!-- Organizer-only festival controls; hidden from volunteers entirely. -->
-						{@render staffLink(
-							'Настройки фестиваля',
-							'/tools/settings',
-							canManageSettings(user),
-							settingsIcon
-						)}
-						{@render staffLink(
-							'Импорт программы',
-							'/tools/import_schedule',
-							canImportSchedule(user),
-							importScheduleIcon
-						)}
-						{@render staffLink(
-							'Рассылка уведомлений',
-							'/tools/broadcast',
-							canSendNotifications(user),
-							broadcastIcon
-						)}
-						{@render staffLink(
-							'Генерация билетов',
-							'/tools/generate_tickets',
-							canGenerateTickets(user),
-							generateTicketsIcon
-						)}
-					{/if}
+					{@render staffLink(
+						'Настройки фестиваля',
+						'/tools/settings',
+						canManageSettings(user),
+						settingsIcon
+					)}
+					{@render staffLink(
+						'Импорт программы',
+						'/tools/import_schedule',
+						canImportSchedule(user),
+						importScheduleIcon
+					)}
+					{@render staffLink(
+						'Рассылка уведомлений',
+						'/tools/broadcast',
+						canSendNotifications(user),
+						broadcastIcon
+					)}
+					{@render staffLink(
+						'Генерация билетов',
+						'/tools/generate_tickets',
+						canGenerateTickets(user),
+						generateTicketsIcon
+					)}
 				</SidebarDropdownWrapper>
 			{/if}
 		</SidebarGroup>
