@@ -3,10 +3,7 @@ from dishka.integrations.click import CONTAINER_NAME
 
 from fanfan.main.common import init
 from fanfan.main.di import create_system_container
-from fanfan.presentation.cli.commands.program import (
-    parse_schedule_command,
-    sync_cosplay2_command,
-)
+from fanfan.presentation.cli.commands.program import sync_cosplay2_command
 from fanfan.presentation.cli.commands.tickets import sync_tcloud_command
 
 
@@ -22,20 +19,13 @@ def sync_group():
     """Run external syncs."""
 
 
-@click.group(name="parse")
-def parse_group():
-    """Parse files into the database."""
-
-
 def main():
     init(service_name="cli")
 
     sync_group.add_command(sync_cosplay2_command)
     sync_group.add_command(sync_tcloud_command)
-    parse_group.add_command(parse_schedule_command)
 
     cli.add_command(sync_group)
-    cli.add_command(parse_group)
 
     cli()
 

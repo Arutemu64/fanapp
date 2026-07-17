@@ -5,12 +5,6 @@ from uuid import UUID, uuid7
 PermissionName = NewType("PermissionName", str)
 UserPermissionId = NewType("UserPermissionId", UUID)
 
-# Wildcard permission granted to roles that implicitly hold every permission
-# (currently ORG). Shipped in the current-user DTO so the frontend can resolve
-# effective permissions by set membership, without re-deriving the role bypass
-# implemented in PermissionService.ensure.
-WILDCARD_PERMISSION = PermissionName("*")
-
 
 def generate_user_permission_id() -> UserPermissionId:
     return UserPermissionId(uuid7())

@@ -1,15 +1,10 @@
 import logging
-from typing import TYPE_CHECKING, BinaryIO
+from typing import TYPE_CHECKING
 
 import click
 from dishka.integrations.click import CONTAINER_NAME
 
-from fanfan.adapters.parsers.schedule import parse_schedule_from_excel
 from fanfan.application.interactors.cosplay.sync_cosplay import SyncCosplay
-from fanfan.application.interactors.schedule_mgmt.import_schedule import (
-    ImportSchedule,
-    ImportScheduleInput,
-)
 from fanfan.presentation.cli.commands.common import async_command
 
 if TYPE_CHECKING:
@@ -27,15 +22,3 @@ async def sync_cosplay2_command(context: click.Context):
         sync_cosplay = await r_container.get(SyncCosplay)
         await sync_cosplay()
         logger.info("Importing from C2 done!")
-
-
-@click.command(name="schedule")
-@click.argument("schedule", type=click.File("rb"))
-@click.pass_context
-@async_command
-async def parse_schedule_command(context: click.Context, schedule: BinaryIO):
-    container: AsyncContainer = context.meta[CONTAINER_NAME]
-    async with container():
-        interactor = await container.get(ImportSchedule)
-        entries = parse_schedule_from_excel(file=schedule)
-        await interactor(ImportScheduleInput(schedule=entries))

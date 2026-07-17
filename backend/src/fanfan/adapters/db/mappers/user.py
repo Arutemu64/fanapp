@@ -10,7 +10,6 @@ from fanfan.application.dto.user import (
 from fanfan.core.models.user import User, UserSettings
 from fanfan.core.vo.email import Email
 from fanfan.core.vo.permission import (
-    WILDCARD_PERMISSION,
     PermissionName,
 )
 from fanfan.core.vo.ticket import TicketId
@@ -53,18 +52,6 @@ class UserMapper:
             role=orm.role,
         )
 
-    @staticmethod
-    def _resolve_permissions(orm: UserORM) -> list[UserPermissionDTO]:
-        # ORG implicitly holds every permission (see PermissionService.ensure),
-        # so it carries no explicit grant rows. Ship a single wildcard entry
-        # instead of the empty list so the frontend resolves it as full access.
-        if orm.role is UserRole.ORG:
-            return [UserPermissionDTO(name=WILDCARD_PERMISSION)]
-        return [
-            UserPermissionDTO(name=PermissionName(p.permission))
-            for p in orm.permissions
-        ]
-
     def parse_current_user_dto(self, orm: UserORM) -> CurrentUserDTO:
         return CurrentUserDTO(
             id=UserId(orm.id),
@@ -79,7 +66,10 @@ class UserMapper:
             )
             if orm.ticket
             else None,
-            permissions=self._resolve_permissions(orm),
+            permissions=[
+                UserPermissionDTO(name=PermissionName(p.permission))
+                for p in orm.permissions
+            ],
             settings=UserSettingsDTO(
                 receive_all_announcements=orm.receive_all_announcements,
                 receive_telegram_notifications=orm.receive_telegram_notifications,

@@ -65,7 +65,7 @@ async def visitor_with_ticket(dishka_request: AsyncContainer, visitor: User) -> 
 @pytest_asyncio.fixture
 async def schedule_editor(dishka_request: AsyncContainer) -> User:
     """
-    Create a schedule manager
+    Create a user granted schedule:manage and schedule:import.
     """
     user_gateway = await dishka_request.get(UserGateway)
     user_permission_gateway = await dishka_request.get(UserPermissionGateway)
@@ -78,12 +78,13 @@ async def schedule_editor(dishka_request: AsyncContainer) -> User:
         role=UserRole.ORG,
     )
     await user_gateway.add(schedule_editor)
-    await user_permission_gateway.add(
-        UserPermission(
-            id=generate_user_permission_id(),
-            permission=PermissionName(Permissions.SCHEDULE_MANAGE),
-            user_id=schedule_editor.id,
+    for permission in (Permissions.SCHEDULE_MANAGE, Permissions.SCHEDULE_IMPORT):
+        await user_permission_gateway.add(
+            UserPermission(
+                id=generate_user_permission_id(),
+                permission=PermissionName(permission),
+                user_id=schedule_editor.id,
+            )
         )
-    )
     await uow.commit()
     return schedule_editor
