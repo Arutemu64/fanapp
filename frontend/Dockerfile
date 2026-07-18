@@ -5,7 +5,7 @@ FROM node:24.18-alpine AS base
 # which is where the cache mounts below point.
 ENV PNPM_HOME=/pnpm
 ENV PATH=/pnpm:$PATH
-ENV PNPM_VERSION=11.11.0
+ENV PNPM_VERSION=11.15.0
 
 # Installed standalone via npm (not Corepack): Node 25+ no longer ships
 # Corepack, and pnpm now recommends standalone installs. Keep the version in

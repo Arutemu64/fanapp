@@ -84,7 +84,7 @@ export PATH="$(dirname "$(nvm which default)"):$PATH"
 # caches persist in the snapshot).
 
 echo "[setup] Installing pnpm 11 (matches mise.toml / frontend/package.json)..."
-npm install -g pnpm@11.11.0
+npm install -g pnpm@11.15.0
 
 # Prepull the Docker images the cloud flow needs. Image layers are files, so a
 # pull here persists in the cached snapshot and every session starts with them
