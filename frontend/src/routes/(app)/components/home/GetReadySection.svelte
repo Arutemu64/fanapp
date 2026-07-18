@@ -12,7 +12,7 @@
 		UserAddOutline
 	} from 'flowbite-svelte-icons';
 
-	import GetReadyCard, { type ReadyAccent } from './GetReadyCard.svelte';
+	import GetReadyCard from './GetReadyCard.svelte';
 
 	interface Props {
 		user: CurrentUserDTO | null;
@@ -27,7 +27,6 @@
 		title: string;
 		description: string;
 		icon: Component;
-		accent: ReadyAccent;
 		actionLabel?: string;
 		href?: Pathname;
 		onclick?: () => void;
@@ -47,7 +46,6 @@
 				title: 'Создать аккаунт',
 				description: 'Нужен для голосования и подписки на выступления программы.',
 				icon: UserAddOutline,
-				accent: 'primary',
 				actionLabel: 'Создать',
 				href: '/login'
 			});
@@ -59,7 +57,6 @@
 				title: 'Привязать билет',
 				description: 'Открывает доступ к голосованию в конкурсных номинациях.',
 				icon: TicketOutline,
-				accent: 'amber',
 				actionLabel: 'Привязать',
 				href: '/profile'
 			});
@@ -71,7 +68,6 @@
 				title: 'Посмотреть программу',
 				description: 'Подпишись на номера, чтобы не пропустить интересные выступления.',
 				icon: CalendarWeekOutline,
-				accent: 'green',
 				actionLabel: 'Смотреть',
 				href: '/schedule'
 			});
@@ -81,7 +77,6 @@
 				title: 'Настроить уведомления',
 				description: 'Получай напоминания о начале выступлений и изменениях в программе.',
 				icon: BellOutline,
-				accent: 'blue',
 				actionLabel: 'Настроить',
 				href: '/profile'
 			});
@@ -93,7 +88,6 @@
 				title: 'Установить приложение',
 				description: 'Быстрый доступ с главного экрана и пуш-уведомления.',
 				icon: DownloadOutline,
-				accent: 'secondary',
 				actionLabel: 'Установить',
 				// Open the install dialog directly; the library handles per-platform UX.
 				onclick: () => pwa.showInstallDialog()
@@ -125,7 +119,6 @@
 				title={featured.title}
 				description={featured.description}
 				icon={featured.icon}
-				accent={featured.accent}
 				actionLabel={featured.actionLabel}
 				href={featured.href}
 				onclick={featured.onclick}
@@ -138,7 +131,6 @@
 							title={card.title}
 							description={card.description}
 							icon={card.icon}
-							accent={card.accent}
 							actionLabel={card.actionLabel}
 							href={card.href}
 							onclick={card.onclick}
