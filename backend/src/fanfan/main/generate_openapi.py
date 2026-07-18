@@ -1,15 +1,13 @@
 import json
-from pathlib import Path
 
 from fastapi import FastAPI
 
+from fanfan.common.paths import SHARED_OPENAPI_PATH
 from fanfan.presentation.web.error_codes import client_facing_error_codes
 from fanfan.presentation.web.openapi import generate_operation_id
 from fanfan.presentation.web.routes import setup_api_router
 
-OPENAPI_PATH = (
-    Path(__file__).resolve().parents[4] / "shared" / "openapi" / "openapi.json"
-)
+OPENAPI_PATH = SHARED_OPENAPI_PATH
 
 
 def build_openapi_schema() -> dict:
