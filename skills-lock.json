@@ -73,6 +73,12 @@
       "skillPath": "skills/productivity/grilling/SKILL.md",
       "computedHash": "368d3dd7251247c69f3656d93dc83c8f1577792eacac2111f1e7981db2ece49b"
     },
+    "kill-ai-slop": {
+      "source": "yetone/kill-ai-slop",
+      "sourceType": "github",
+      "skillPath": "skill/SKILL.md",
+      "computedHash": "efebc38a59edfee096702e79042ca6ac7db2773976537d14843a32838043057b"
+    },
     "pwa-development": {
       "source": "alinaqi/claude-bootstrap",
       "sourceType": "github",
