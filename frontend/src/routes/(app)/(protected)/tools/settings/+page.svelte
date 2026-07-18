@@ -160,7 +160,7 @@
 		<div class="flex items-start justify-between gap-3">
 			<div class="min-w-0">
 				<h3 class="text-base font-medium text-gray-900 dark:text-white">Голосование активно</h3>
-				<p class="mt-1 text-sm leading-6 text-gray-500 dark:text-gray-400">
+				<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-300">
 					Если отключить эту настройку, посетители временно не смогут голосовать.
 				</p>
 			</div>
