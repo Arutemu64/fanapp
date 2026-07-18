@@ -3556,11 +3556,17 @@
             "type": "integer",
             "minimum": 1.0,
             "title": "Announcement Timeout"
+          },
+          "transition_buffer": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Transition Buffer"
           }
         },
         "type": "object",
         "required": [
-          "announcement_timeout"
+          "announcement_timeout",
+          "transition_buffer"
         ],
         "title": "LimitsConfigDTO"
       },
