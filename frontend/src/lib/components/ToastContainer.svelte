@@ -1,9 +1,10 @@
 <script lang="ts">
 	import type { Pathname } from '$app/types';
+	import type { PushToastItem, StatusToastItem } from '$lib/services/toasts.svelte';
 	import type { NotificationDTO } from '$lib/types/notifications';
 
 	import { resolve } from '$app/paths';
-	import { getToastService, ToastTypeColors } from '$lib/services/toasts.svelte';
+	import { getToastService, StatusToastColors } from '$lib/services/toasts.svelte';
 	import { formatRelativeTime } from '$lib/utils/formatters';
 	import { Toast, ToastContainer } from 'flowbite-svelte';
 	import {
@@ -17,10 +18,14 @@
 
 	const toastService = getToastService();
 
-	// When the user prefers reduced motion, drop the slide-in/out distance and
-	// duration so toasts simply appear and disappear instead of flying.
-	let flyParams = $derived(
+	// Toasts enter from the edge they are anchored to: push toasts drop down from
+	// the top, status toasts rise up from the bottom. When the user prefers reduced
+	// motion, drop the slide distance and duration so they simply appear/disappear.
+	let pushFly = $derived(
 		prefersReducedMotion.current ? { y: 0, duration: 0 } : { y: -16, duration: 300 }
+	);
+	let statusFly = $derived(
+		prefersReducedMotion.current ? { y: 0, duration: 0 } : { y: 16, duration: 300 }
 	);
 
 	function handleTouchStart(e: TouchEvent) {
@@ -95,66 +100,91 @@
 	</div>
 {/snippet}
 
+{#snippet statusBody(toast: StatusToastItem)}
+	<Toast
+		color={StatusToastColors[toast.type]}
+		dismissable={true}
+		class="w-full max-w-sm"
+		onclose={() => toastService.dismiss(toast.id)}
+	>
+		{#snippet icon()}
+			{#if toast.type === 'success'}
+				<CheckCircleSolid class="h-5 w-5" />
+			{:else if toast.type === 'error'}
+				<CloseCircleSolid class="h-5 w-5" />
+			{:else}
+				<ExclamationCircleSolid class="h-5 w-5" />
+			{/if}
+		{/snippet}
+		{toast.message}
+	</Toast>
+{/snippet}
+
+{#snippet pushBody(toast: PushToastItem)}
+	<Toast
+		align={false}
+		color={undefined}
+		dismissable={true}
+		onclose={() => toastService.dismiss(toast.id)}
+		class="w-full max-w-sm rounded-lg bg-white p-4 text-gray-500 shadow dark:bg-gray-800 dark:text-gray-400"
+	>
+		<span class="font-semibold text-gray-900 dark:text-white">Новое уведомление</span>
+		{#if toast.notification.path}
+			<!-- Whole body deep-links to the notification's in-app target on tap. -->
+			<a
+				href={resolve(toast.notification.path as Pathname)}
+				class="mt-3 flex items-start"
+				onclick={() => toastService.dismiss(toast.id)}
+			>
+				{@render pushContent(toast.notification)}
+			</a>
+		{:else}
+			<div class="mt-3 flex items-start">
+				{@render pushContent(toast.notification)}
+			</div>
+		{/if}
+	</Toast>
+{/snippet}
+
+<!-- Push notifications: inbound events, pinned to the top like OS notifications.
+     Sticky inside the page container so the stack never covers the top navbar. -->
 <ToastContainer
 	class="pointer-events-none !sticky !top-4 !right-auto !bottom-auto !left-auto z-50 mx-auto flex h-0 w-full max-w-7xl flex-col overflow-visible px-4 md:px-6 lg:px-8"
 >
-	{#each toastService.items as toast (toast.id)}
-		<!-- Keep the toast stack inside the page container so it never covers the top navbar. -->
+	{#each toastService.pushItems as toast (toast.id)}
 		<div
-			role={toast.type === 'error' ? 'alert' : 'status'}
-			aria-live={toast.type === 'error' ? 'assertive' : 'polite'}
+			role="status"
+			aria-live="polite"
 			aria-atomic="true"
 			class="pointer-events-auto w-full sm:ml-auto sm:max-w-sm"
-			transition:fly={flyParams}
+			transition:fly={pushFly}
 			ontouchstart={handleTouchStart}
 			ontouchmove={handleTouchMove}
 			ontouchend={(e) => handleTouchEnd(e, toast.id)}
 		>
-			{#if toast.type === 'push' && toast.notification}
-				<Toast
-					align={false}
-					color={undefined}
-					dismissable={true}
-					onclose={() => toastService.dismiss(toast.id)}
-					class="w-full max-w-sm rounded-lg bg-white p-4 text-gray-500 shadow dark:bg-gray-800 dark:text-gray-400"
-				>
-					<span class="font-semibold text-gray-900 dark:text-white">Новое уведомление</span>
-					{#if toast.notification.path}
-						<!-- Whole body deep-links to the notification's in-app target on tap. -->
-						<a
-							href={resolve(toast.notification.path as Pathname)}
-							class="mt-3 flex items-start"
-							onclick={() => toastService.dismiss(toast.id)}
-						>
-							{@render pushContent(toast.notification)}
-						</a>
-					{:else}
-						<div class="mt-3 flex items-start">
-							{@render pushContent(toast.notification)}
-						</div>
-					{/if}
-				</Toast>
-			{:else}
-				<Toast
-					color={toast.type === 'push' ? undefined : ToastTypeColors[toast.type]}
-					dismissable={true}
-					class="w-full max-w-sm"
-					onclose={() => toastService.dismiss(toast.id)}
-				>
-					{#snippet icon()}
-						{#if toast.type == 'success'}
-							<CheckCircleSolid class="h-5 w-5" />
-						{:else if toast.type == 'info'}
-							<ExclamationCircleSolid class="h-5 w-5" />
-						{:else if toast.type == 'warning'}
-							<ExclamationCircleSolid class="h-5 w-5" />
-						{:else if toast.type == 'error'}
-							<CloseCircleSolid class="h-5 w-5" />
-						{/if}
-					{/snippet}
-					{toast.message}
-				</Toast>
-			{/if}
+			{@render pushBody(toast)}
+		</div>
+	{/each}
+</ToastContainer>
+
+<!-- Action feedback: bottom-center on mobile (raised above the fixed bottom nav,
+     h-16 + safe-area), bottom-right on desktop where that nav is hidden.
+     flex-col-reverse so the newest toast sits at the bottom, nearest its edge. -->
+<ToastContainer
+	class="pointer-events-none !fixed !top-auto !right-auto !bottom-[calc(4.5rem+env(safe-area-inset-bottom))] !left-auto z-50 mx-auto flex w-full max-w-7xl flex-col-reverse px-4 md:!bottom-4 md:px-6 lg:px-8"
+>
+	{#each toastService.statusItems as toast (toast.id)}
+		<div
+			role={toast.type === 'error' ? 'alert' : 'status'}
+			aria-live={toast.type === 'error' ? 'assertive' : 'polite'}
+			aria-atomic="true"
+			class="pointer-events-auto w-full sm:mx-auto sm:max-w-sm"
+			transition:fly={statusFly}
+			ontouchstart={handleTouchStart}
+			ontouchmove={handleTouchMove}
+			ontouchend={(e) => handleTouchEnd(e, toast.id)}
+		>
+			{@render statusBody(toast)}
 		</div>
 	{/each}
 </ToastContainer>
