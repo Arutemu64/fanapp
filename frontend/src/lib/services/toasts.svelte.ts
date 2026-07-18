@@ -3,50 +3,63 @@ import type { NotificationDTO } from '$lib/types/notifications';
 import { getApiErrorDetail } from '$lib/api/errors';
 import { createContext } from 'svelte';
 
-export type ToastColor = 'green' | 'red' | 'yellow' | 'blue' | 'gray';
-export type ToastType = 'success' | 'info' | 'warning' | 'error' | 'push';
+export type ToastColor = 'green' | 'red' | 'yellow' | 'blue';
 
-export const ToastTypeColors: Record<ToastType, ToastColor> = {
+// Status toasts are feedback on the user's own action (success/error/…). Push
+// toasts are inbound notifications from the SSE stream. They are different UX
+// categories, so they live in separate queues with separate budgets — a burst
+// of one can never evict the other — and render in separate screen regions
+// (status at the bottom, push at the top). See ToastContainer.svelte.
+export type StatusToastType = 'success' | 'info' | 'warning' | 'error';
+
+export const StatusToastColors: Record<StatusToastType, ToastColor> = {
 	success: 'green',
 	info: 'blue',
 	warning: 'yellow',
-	error: 'red',
-	push: 'gray'
+	error: 'red'
 };
 
-export interface ToastItem {
+export interface StatusToastItem {
 	id: number;
 	message: string;
-	type: ToastType;
-	notification?: NotificationDTO;
+	type: StatusToastType;
+	timeoutId?: ReturnType<typeof setTimeout>;
+}
+
+export interface PushToastItem {
+	id: number;
+	notification: NotificationDTO;
 	timeoutId?: ReturnType<typeof setTimeout>;
 }
 
 const [getToast, setToast] = createContext<ToastService>();
 
 export class ToastService {
-	#toasts = $state<ToastItem[]>([]);
-	readonly MAX_TOASTS = 3;
+	#statusToasts = $state<StatusToastItem[]>([]);
+	#pushToasts = $state<PushToastItem[]>([]);
+	// Monotonic id — Date.now() collides for two toasts added in the same tick,
+	// which now matters because dismiss() spans both queues by id.
+	#nextId = 0;
+	readonly MAX_STATUS_TOASTS = 3;
+	readonly MAX_PUSH_TOASTS = 2;
 
-	get items() {
-		return this.#toasts;
+	get statusItems() {
+		return this.#statusToasts;
 	}
 
-	add(message: string, type: ToastType = 'info') {
-		const id = Date.now();
-		const newToast: ToastItem = { id, message, type };
+	get pushItems() {
+		return this.#pushToasts;
+	}
 
-		this.#toasts.unshift(newToast);
+	add(message: string, type: StatusToastType = 'info') {
+		const id = this.#nextId++;
+		const newToast: StatusToastItem = { id, message, type };
 
-		if (this.#toasts.length > this.MAX_TOASTS) {
-			const popped = this.#toasts.pop();
-			if (popped?.timeoutId) clearTimeout(popped.timeoutId);
-		}
+		this.#statusToasts.unshift(newToast);
+		this.#evict(this.#statusToasts, this.MAX_STATUS_TOASTS);
 
 		const duration = type === 'error' || type === 'warning' ? 5000 : 3000;
-		newToast.timeoutId = setTimeout(() => {
-			this.dismiss(id);
-		}, duration);
+		newToast.timeoutId = setTimeout(() => this.dismiss(id), duration);
 	}
 
 	error(err: unknown) {
@@ -69,35 +82,35 @@ export class ToastService {
 		// Multiple components (navbar bell + notifications feed) listen to the same
 		// SSE stream and each call push(). Skip if a toast for this notification is
 		// already on screen so the user never sees it twice.
-		const alreadyShown = this.#toasts.some(
-			(toast) => toast.type === 'push' && toast.notification?.id === notification.id
+		const alreadyShown = this.#pushToasts.some(
+			(toast) => toast.notification.id === notification.id
 		);
 		if (alreadyShown) return;
 
-		const id = Date.now();
-		const newToast: ToastItem = {
-			id,
-			message: notification.title,
-			type: 'push',
-			notification
-		};
+		const id = this.#nextId++;
+		const newToast: PushToastItem = { id, notification };
 
-		this.#toasts.unshift(newToast);
+		this.#pushToasts.unshift(newToast);
+		this.#evict(this.#pushToasts, this.MAX_PUSH_TOASTS);
 
-		if (this.#toasts.length > this.MAX_TOASTS) {
-			const popped = this.#toasts.pop();
-			if (popped?.timeoutId) clearTimeout(popped.timeoutId);
-		}
-
-		newToast.timeoutId = setTimeout(() => {
-			this.dismiss(id);
-		}, 5000);
+		newToast.timeoutId = setTimeout(() => this.dismiss(id), 5000);
 	}
 
 	dismiss(id: number) {
-		const toast = this.#toasts.find((t) => t.id === id);
+		const toast =
+			this.#statusToasts.find((t) => t.id === id) ?? this.#pushToasts.find((t) => t.id === id);
 		if (toast?.timeoutId) clearTimeout(toast.timeoutId);
-		this.#toasts = this.#toasts.filter((t) => t.id !== id);
+		this.#statusToasts = this.#statusToasts.filter((t) => t.id !== id);
+		this.#pushToasts = this.#pushToasts.filter((t) => t.id !== id);
+	}
+
+	// Drop the oldest toasts once a queue exceeds its budget, clearing their
+	// pending auto-dismiss timers so they don't fire against a stale id.
+	#evict(queue: (StatusToastItem | PushToastItem)[], max: number) {
+		while (queue.length > max) {
+			const popped = queue.pop();
+			if (popped?.timeoutId) clearTimeout(popped.timeoutId);
+		}
 	}
 }
 
