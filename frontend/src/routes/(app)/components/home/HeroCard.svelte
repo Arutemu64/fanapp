@@ -91,12 +91,6 @@
 	aria-labelledby="hero-title"
 	class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900"
 >
-	<!-- Decorative atmospheric glow along the edges -->
-	<div
-		aria-hidden="true"
-		class="pointer-events-none absolute -top-24 -left-20 h-64 w-64 rounded-full bg-primary-200/40 blur-3xl dark:bg-primary-900/20"
-	></div>
-
 	<div class="relative grid lg:grid-cols-2 lg:items-stretch">
 		<!-- Key art: full-bleed on top for mobile, full-bleed on the right for desktop.
 			 The branded bed keeps the block meaningful while the heavy image streams
