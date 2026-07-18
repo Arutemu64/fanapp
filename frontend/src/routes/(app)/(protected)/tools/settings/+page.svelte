@@ -15,15 +15,22 @@
 	let isSaving = $state(false);
 	let savedVotingEnabled = $state(untrack(() => data.settings.voting_enabled));
 	let savedAnnouncementTimeout = $state(untrack(() => data.settings.limits.announcement_timeout));
+	let savedTransitionBuffer = $state(untrack(() => data.settings.limits.transition_buffer));
 	let votingEnabled = $state(untrack(() => data.settings.voting_enabled));
 	let announcementTimeout = $state<number | undefined>(
 		untrack(() => data.settings.limits.announcement_timeout)
 	);
+	let transitionBuffer = $state<number | undefined>(
+		untrack(() => data.settings.limits.transition_buffer)
+	);
 	let announcementTimeoutError = $state('');
+	let transitionBufferError = $state('');
 	let submitError = $state('');
 
 	let hasChanges = $derived(
-		votingEnabled !== savedVotingEnabled || announcementTimeout !== savedAnnouncementTimeout
+		votingEnabled !== savedVotingEnabled ||
+			announcementTimeout !== savedAnnouncementTimeout ||
+			transitionBuffer !== savedTransitionBuffer
 	);
 
 	function validateAnnouncementTimeout() {
@@ -41,6 +48,21 @@
 		return true;
 	}
 
+	function validateTransitionBuffer() {
+		if (transitionBuffer === undefined || Number.isNaN(transitionBuffer)) {
+			transitionBufferError = 'Укажи буфер перехода';
+			return false;
+		}
+
+		if (!Number.isInteger(transitionBuffer) || transitionBuffer < 0) {
+			transitionBufferError = 'Введи целое число не меньше 0';
+			return false;
+		}
+
+		transitionBufferError = '';
+		return true;
+	}
+
 	function handleAnnouncementTimeoutInput() {
 		submitError = '';
 		// Re-validate live only after the field has already shown an error once.
@@ -49,17 +71,30 @@
 		}
 	}
 
+	function handleTransitionBufferInput() {
+		submitError = '';
+		// Re-validate live only after the field has already shown an error once.
+		if (transitionBufferError) {
+			validateTransitionBuffer();
+		}
+	}
+
 	async function handleSubmit(event: Event) {
 		event.preventDefault();
 		submitError = '';
 
-		if (!validateAnnouncementTimeout()) {
+		// Validate both fields so all errors surface at once, not one at a time.
+		const isAnnouncementTimeoutValid = validateAnnouncementTimeout();
+		const isTransitionBufferValid = validateTransitionBuffer();
+
+		if (!isAnnouncementTimeoutValid || !isTransitionBufferValid) {
 			return;
 		}
 
 		const nextAnnouncementTimeout = announcementTimeout;
+		const nextTransitionBuffer = transitionBuffer;
 
-		if (nextAnnouncementTimeout === undefined) {
+		if (nextAnnouncementTimeout === undefined || nextTransitionBuffer === undefined) {
 			return;
 		}
 
@@ -69,7 +104,8 @@
 			const { error, response } = await client.PATCH('/settings', {
 				body: {
 					voting_enabled: votingEnabled,
-					announcement_timeout: nextAnnouncementTimeout
+					announcement_timeout: nextAnnouncementTimeout,
+					transition_buffer: nextTransitionBuffer
 				}
 			});
 
@@ -91,7 +127,9 @@
 
 			savedVotingEnabled = votingEnabled;
 			savedAnnouncementTimeout = nextAnnouncementTimeout;
+			savedTransitionBuffer = nextTransitionBuffer;
 			announcementTimeoutError = '';
+			transitionBufferError = '';
 			toastService.add('Настройки фестиваля сохранены', 'success');
 			await invalidate('app:festival-settings');
 		} catch (err) {
@@ -107,34 +145,38 @@
 	<title>Настройки фестиваля · ФАН ФАН</title>
 </svelte:head>
 
-<SectionIntro description="Управляй голосованием и таймаутом между анонсами программы." />
+<SectionIntro description="Управляй голосованием и таймингами расписания." />
 
-<Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
-	<form class="space-y-5" onsubmit={handleSubmit}>
-		{#if submitError}
-			<Alert color="red" class="rounded-xl text-sm">
-				{submitError}
-			</Alert>
-		{/if}
+<form class="mx-auto w-full max-w-2xl space-y-5" onsubmit={handleSubmit}>
+	{#if submitError}
+		<Alert color="red" class="rounded-xl text-sm">
+			{submitError}
+		</Alert>
+	{/if}
 
-		<div class="rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
-			<div class="flex items-start justify-between gap-3">
-				<div class="min-w-0">
-					<h2 class="text-base font-medium text-gray-900 dark:text-white">Голосование активно</h2>
-					<p class="mt-1 text-sm leading-6 text-gray-500 dark:text-gray-400">
-						Если отключить эту настройку, посетители временно не смогут голосовать.
-					</p>
-				</div>
-				<Toggle
-					bind:checked={votingEnabled}
-					color="primary"
-					disabled={isSaving}
-					onchange={() => (submitError = '')}
-				/>
+	<Card class="w-full max-w-none space-y-3 rounded-2xl p-4 sm:p-6">
+		<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Голосование</h2>
+
+		<div class="flex items-start justify-between gap-3">
+			<div class="min-w-0">
+				<h3 class="text-base font-medium text-gray-900 dark:text-white">Голосование активно</h3>
+				<p class="mt-1 text-sm leading-6 text-gray-500 dark:text-gray-400">
+					Если отключить эту настройку, посетители временно не смогут голосовать.
+				</p>
 			</div>
+			<Toggle
+				bind:checked={votingEnabled}
+				color="primary"
+				disabled={isSaving}
+				onchange={() => (submitError = '')}
+			/>
 		</div>
+	</Card>
 
-		<div class="space-y-2 rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
+	<Card class="w-full max-w-none space-y-4 rounded-2xl p-4 sm:p-6">
+		<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Расписание</h2>
+
+		<div class="space-y-2">
 			<Label for="announcement-timeout">Таймаут анонсов, сек</Label>
 			<Input
 				id="announcement-timeout"
@@ -156,18 +198,42 @@
 			{/if}
 		</div>
 
-		<Button
-			type="submit"
-			color="primary"
-			class="min-h-11 w-full justify-center rounded-xl sm:w-auto"
-			disabled={isSaving || !hasChanges}
-		>
-			{#if isSaving}
-				<Spinner size="4" class="mr-2" color="primary" />
-				Сохраняем…
+		<div class="space-y-2">
+			<Label for="transition-buffer">Буфер перехода, сек</Label>
+			<Input
+				id="transition-buffer"
+				name="transition_buffer"
+				type="number"
+				min="0"
+				step="1"
+				inputmode="numeric"
+				autocomplete="off"
+				bind:value={transitionBuffer}
+				disabled={isSaving}
+				oninput={handleTransitionBufferInput}
+				onblur={validateTransitionBuffer}
+			/>
+			{#if transitionBufferError}
+				<Helper color="red">{transitionBufferError}</Helper>
 			{:else}
-				Сохранить
+				<Helper>
+					Запас времени между выступлениями. Учитывается при расчёте ожидаемого времени начала.
+				</Helper>
 			{/if}
-		</Button>
-	</form>
-</Card>
+		</div>
+	</Card>
+
+	<Button
+		type="submit"
+		color="primary"
+		class="min-h-11 w-full justify-center rounded-xl sm:w-auto"
+		disabled={isSaving || !hasChanges}
+	>
+		{#if isSaving}
+			<Spinner size="4" class="mr-2" color="primary" />
+			Сохраняем…
+		{:else}
+			Сохранить
+		{/if}
+	</Button>
+</form>

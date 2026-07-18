@@ -1057,6 +1057,8 @@ export interface components {
         LimitsConfigDTO: {
             /** Announcement Timeout */
             announcement_timeout: number;
+            /** Transition Buffer */
+            transition_buffer: number;
         };
         /** LinkTicketInput */
         LinkTicketInput: {

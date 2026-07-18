@@ -6,6 +6,7 @@ class LimitsConfigDTO(BaseModel):
 
     # Keep the validation rule close to the schema so OpenAPI documents it too.
     announcement_timeout: int = Field(ge=1)
+    transition_buffer: int = Field(ge=0)
 
 
 class AppSettingsDTO(BaseModel):
