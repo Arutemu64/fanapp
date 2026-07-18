@@ -3,6 +3,16 @@ services:
     build:
       target: dev
     image: fanapp-frontend-dev
+    # The base compose caps frontend memory at 128M — right for the prod NGINX
+    # static server, but the dev stage runs a full Node/Vite dev server whose
+    # esbuild dependency optimizer peaks well above that. At 128M the optimizer
+    # gets OOM-killed mid "bundling dependencies", the restart policy respawns
+    # it, and it crash-loops forever without ever serving. Raise the ceiling for
+    # dev only.
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     environment:
       NODE_ENV: development
       # The app calls the API with a relative base (`/api`); vite proxies it to
