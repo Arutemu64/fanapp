@@ -2,8 +2,7 @@ from pathlib import Path
 
 from webpush.vapid import VAPID
 
-# Repo root: backend/src/fanfan/main/ -> parents[4]. Mirrors generate_openapi.py.
-SECRETS_DIR = Path(__file__).resolve().parents[4] / "secrets"
+from fanfan.common.paths import SECRETS_DIR
 
 PRIVATE_KEY_NAME = "private_key.pem"
 PUBLIC_KEY_NAME = "public_key.pem"
