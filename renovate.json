@@ -1,0 +1,136 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":pinDevDependencies",
+    ":semanticCommitsDisabled",
+    ":enablePreCommit",
+    "group:monorepos",
+    "group:recommended"
+  ],
+  "timezone": "Europe/Moscow",
+  "schedule": ["before 6am on monday"],
+  "labels": ["dependencies"],
+  "prConcurrentLimit": 8,
+  "prHourlyLimit": 2,
+  "rangeStrategy": "bump",
+  "minimumReleaseAge": "3 days",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true,
+    "schedule": ["before 6am on monday"]
+  },
+  "packageRules": [
+    {
+      "description": "Auto-merge dev tooling (linters, formatters, type checkers, test libs) on minor/patch — these break loudly in CI, not silently in prod.",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    },
+    {
+      "description": "Auto-merge backend dev-group tools (ruff, ty, pytest, import-linter, etc.) on minor/patch.",
+      "matchFileNames": ["backend/pyproject.toml"],
+      "matchDepTypes": ["dev"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    },
+    {
+      "description": "Auto-merge GitHub Actions on minor/patch; majors still get a manual review PR.",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "automerge": true
+    },
+    {
+      "description": "Auto-merge pre-commit hook bumps on minor/patch.",
+      "matchManagers": ["pre-commit"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    },
+    {
+      "description": "Constraint 15 (AGENTS.md): keep every uv pin identical. Group the PyPI pin (setup.sh, pyproject [tool.uv], CI), the Docker builder image, and the mise toolchain pin into one PR so they always bump together.",
+      "groupName": "uv",
+      "matchPackageNames": ["uv", "astral-sh/uv", "ghcr.io/astral-sh/uv"]
+    },
+    {
+      "description": "Constraint 15: keep every Postgres image pin identical (docker-compose + the two Python literals) — a mismatched image risks false migration diffs. One grouped PR.",
+      "groupName": "postgres",
+      "matchDepNames": ["postgres"]
+    },
+    {
+      "description": "Group Node runtime pins (mise, frontend Dockerfile, setup-node) so the runtime version bumps in a single reviewable PR.",
+      "groupName": "node",
+      "matchDepNames": ["node"]
+    },
+    {
+      "description": "Group pnpm pins (mise, package.json packageManager, pnpm/action-setup) — these are currently drifted (11.15.0 vs CI 11.11.0) and must move together.",
+      "groupName": "pnpm",
+      "matchPackageNames": ["pnpm", "pnpm/action-setup"]
+    },
+    {
+      "description": "Major runtime/image and framework bumps are review-only: no automerge, explicit label so they surface on the dashboard.",
+      "matchUpdateTypes": ["major"],
+      "matchPackageNames": [
+        "fastapi",
+        "pydantic",
+        "sqlalchemy",
+        "alembic",
+        "aiogram",
+        "faststream",
+        "svelte",
+        "@sveltejs/kit",
+        "vite",
+        "tailwindcss",
+        "flowbite",
+        "flowbite-svelte",
+        "postgres",
+        "node",
+        "python",
+        "valkey/valkey",
+        "nats",
+        "nginx"
+      ],
+      "automerge": false,
+      "addLabels": ["major-review"]
+    }
+  ],
+  "customManagers": [
+    {
+      "description": "Constraint 15: Postgres image tag hard-coded as a Python string literal in the migration generator and the integration-test fixture (not visible to the docker-compose manager).",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^backend/scripts/generate_migration\\.py$/",
+        "/^backend/tests/fixtures/db_provider\\.py$/"
+      ],
+      "matchStrings": ["postgres:(?<currentValue>[^\"]+)\""],
+      "depNameTemplate": "postgres",
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    },
+    {
+      "description": "Constraint 15: uv version pinned as a PyPI package in the cloud setup script and in pyproject [tool.uv] required-version.",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^\\.claude/setup\\.sh$/",
+        "/^backend/pyproject\\.toml$/"
+      ],
+      "matchStrings": [
+        "uv==(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\"",
+        "required-version = \"==(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\""
+      ],
+      "depNameTemplate": "uv",
+      "datasourceTemplate": "pypi",
+      "versioningTemplate": "pep440"
+    },
+    {
+      "description": "Constraint 15: uv version passed to astral-sh/setup-uv in CI (a workflow input the github-actions manager does not touch).",
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/workflows/ci\\.yml$/"],
+      "matchStrings": [
+        "uses: astral-sh/setup-uv@\\S+\\s+with:\\s+version: \"(?<currentValue>[^\"]+)\""
+      ],
+      "depNameTemplate": "uv",
+      "datasourceTemplate": "pypi",
+      "versioningTemplate": "pep440"
+    }
+  ]
+}
