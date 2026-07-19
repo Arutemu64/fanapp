@@ -6,8 +6,18 @@
     ":semanticCommitsDisabled",
     ":enablePreCommit",
     "helpers:pinGitHubActionDigests",
-    "group:monorepos",
-    "group:recommended"
+    "abandonments:recommended"
+  ],
+  "configMigration": true,
+  "description": "ignorePaths restates the :ignoreModulesAndTests default (part of config:recommended) minus '**/tests/**': the postgres custom manager below must see backend/tests/fixtures/db_provider.py, which the default ignore silently excludes.",
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/bower_components/**",
+    "**/vendor/**",
+    "**/examples/**",
+    "**/__tests__/**",
+    "**/test/**",
+    "**/__fixtures__/**"
   ],
   "timezone": "Europe/Moscow",
   "schedule": ["before 6am on monday"],
@@ -53,9 +63,9 @@
       "matchPackageNames": ["uv", "astral-sh/uv", "ghcr.io/astral-sh/uv"]
     },
     {
-      "description": "Constraint 15: keep every Postgres image pin identical (docker-compose + the two Python literals) — a mismatched image risks false migration diffs. One grouped PR.",
+      "description": "Constraint 15: keep every Postgres image pin identical (docker-compose + the two Python literals) — a mismatched image risks false migration diffs. One grouped PR. postgres-backup-local's '18-alpine' tag must track the postgres major, so it rides in the same group.",
       "groupName": "postgres",
-      "matchDepNames": ["postgres"]
+      "matchDepNames": ["postgres", "prodrigestivill/postgres-backup-local"]
     },
     {
       "description": "Group Node runtime pins (mise, frontend Dockerfile, setup-node) so the runtime version bumps in a single reviewable PR.",
@@ -89,6 +99,7 @@
         "flowbite",
         "flowbite-svelte",
         "postgres",
+        "prodrigestivill/postgres-backup-local",
         "node",
         "python",
         "valkey/valkey",
