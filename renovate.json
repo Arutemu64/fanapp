@@ -5,6 +5,7 @@
     ":pinDevDependencies",
     ":semanticCommitsDisabled",
     ":enablePreCommit",
+    "helpers:pinGitHubActionDigests",
     "group:monorepos",
     "group:recommended"
   ],
@@ -62,9 +63,14 @@
       "matchDepNames": ["node"]
     },
     {
-      "description": "Group pnpm pins (mise, package.json packageManager, pnpm/action-setup) — these are currently drifted (11.15.0 vs CI 11.11.0) and must move together.",
+      "description": "Constraint 15: keep every pnpm binary pin identical — mise.toml, package.json 'packageManager', and the CI setup-pnpm 'version' input (via the custom manager below). One grouped PR. Excludes the pnpm/action-setup action itself, which is a separate version stream handled by the github-actions manager.",
       "groupName": "pnpm",
-      "matchPackageNames": ["pnpm", "pnpm/action-setup"]
+      "matchDepNames": ["pnpm"]
+    },
+    {
+      "description": "Constraint 15: keep the hadolint binary pin identical across the pre-commit hook (.pre-commit-config.yaml rev) and mise.toml. Excludes hadolint/hadolint-action, a separate action version stream.",
+      "groupName": "hadolint",
+      "matchPackageNames": ["hadolint", "hadolint/hadolint"]
     },
     {
       "description": "Major runtime/image and framework bumps are review-only: no automerge, explicit label so they surface on the dashboard.",
@@ -126,11 +132,22 @@
       "customType": "regex",
       "managerFilePatterns": ["/^\\.github/workflows/ci\\.yml$/"],
       "matchStrings": [
-        "uses: astral-sh/setup-uv@\\S+\\s+with:\\s+version: \"(?<currentValue>[^\"]+)\""
+        "uses: astral-sh/setup-uv@\\S+(?:\\s+#[^\\n]*)?\\s+with:(?:\\s+#[^\\n]*)*\\s+version: \"(?<currentValue>[^\"]+)\""
       ],
       "depNameTemplate": "uv",
       "datasourceTemplate": "pypi",
       "versioningTemplate": "pep440"
+    },
+    {
+      "description": "Constraint 15: pnpm version passed to pnpm/action-setup in CI (a workflow input the github-actions manager does not touch). Kept explicit because v6 can't read packageManager from a subdirectory package.json (pnpm/action-setup#227). The optional comment groups tolerate the trailing '# v6' that helpers:pinGitHubActionDigests adds to the pinned 'uses:' line.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/workflows/ci\\.yml$/"],
+      "matchStrings": [
+        "uses: pnpm/action-setup@\\S+(?:\\s+#[^\\n]*)?\\s+with:(?:\\s+#[^\\n]*)*\\s+version: (?<currentValue>\\S+)"
+      ],
+      "depNameTemplate": "pnpm",
+      "datasourceTemplate": "npm",
+      "versioningTemplate": "npm"
     }
   ]
 }
