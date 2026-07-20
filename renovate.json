@@ -33,6 +33,11 @@
   },
   "packageRules": [
     {
+      "description": "This is an application (frontend is private, backend is a deployed service — neither is published for others to install), so Renovate best practice is to pin runtime deps to exact versions rather than float SemVer ranges (https://docs.renovatebot.com/dependency-pinning/). :pinDevDependencies already pins frontend devDependencies; this rule extends exact pinning to the frontend runtime 'dependencies' that still carry '^' ranges. Scoped to frontend/package.json so it does not rewrite the backend's '>=' floors, which intentionally rely on uv.lock as the real pin. The global rangeStrategy stays 'bump'.",
+      "matchFileNames": ["frontend/package.json"],
+      "rangeStrategy": "pin"
+    },
+    {
       "description": "Auto-merge dev tooling (linters, formatters, type checkers, test libs) on minor/patch — these break loudly in CI, not silently in prod.",
       "matchDepTypes": ["devDependencies"],
       "matchUpdateTypes": ["minor", "patch"],
