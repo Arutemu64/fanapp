@@ -60,6 +60,7 @@ services:
       - .env
     environment:
       DB__HOST: "db"
+      DB__APPLICATION_NAME: "fanfan-api"
       REDIS__HOST: "redis"
       NATS__HOST: "nats"
       UVICORN_HOST: "0.0.0.0"
@@ -107,6 +108,7 @@ services:
       - .env
     environment:
       DB__HOST: "db"
+      DB__APPLICATION_NAME: "fanfan-faststream"
       REDIS__HOST: "redis"
       NATS__HOST: "nats"
       PUSH__PRIVATE_KEY_PATH: "/app/secrets/private_key.pem"
@@ -146,6 +148,7 @@ services:
       - .env
     environment:
       DB__HOST: "db"
+      DB__APPLICATION_NAME: "fanfan-scheduler"
       REDIS__HOST: "redis"
       NATS__HOST: "nats"
     command: [ "scheduler" ]
