@@ -103,6 +103,18 @@ npm install -g pnpm@11.15.0
 # falls back to a full `codegraph init`, and everything degrades to grep/read.
 echo "[setup] Installing CodeGraph (npm)..."
 if npm install -g @colbymchenry/codegraph >/dev/null 2>&1; then
+  # Expose codegraph on the base PATH via /usr/local/bin so the project's
+  # .mcp.json server (bare `command: codegraph`) starts regardless of PATH:
+  # Claude Code may spawn MCP servers with a PATH that predates the
+  # SessionStart hook's nvm/Node-24 additions, and the npm global bin lives
+  # under nvm's versioned dir (off the base PATH). /usr/local/bin is on the
+  # base PATH and already has `node`, which the launcher shim needs. The target
+  # is version-specific (nvm Node 24); setup.sh re-runs and refreshes it on a
+  # Node bump. Best-effort: a failed link just falls back to CLI-only use.
+  CG_BIN="$(command -v codegraph || true)"
+  if [ -n "$CG_BIN" ]; then
+    $SUDO ln -sf "$CG_BIN" /usr/local/bin/codegraph 2>/dev/null || true
+  fi
   # Resolve the repo root the same way the hash block below does; cwd is not
   # guaranteed to be inside the clone at env-creation time. If the seed lands
   # in the wrong place (or fails), the hook's own index build recovers.

@@ -62,7 +62,10 @@ prepulls (all persist in the snapshot):
   above skip their GitHub installers). The tool is fully local (bundled SQLite,
   no runtime network). A baseline index is seeded into `.codegraph/` here so the
   hook only has to `sync` the branch delta; both the binary and the seed persist
-  in the snapshot.
+  in the snapshot. The binary is also symlinked into `/usr/local/bin` so the
+  project's `.mcp.json` server (bare `command: codegraph`) starts even when
+  Claude Code spawns MCP servers with a PATH that predates the hook's nvm/Node-24
+  additions — the npm global bin otherwise lives off the base PATH.
 
 **`.claude/hooks/session-start.sh`** — work that must run each session because it
 does not survive the snapshot:
