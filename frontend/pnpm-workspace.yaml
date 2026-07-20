@@ -5,10 +5,18 @@ allowBuilds:
   '@sentry/cli': false
   esbuild: true
 
-# Exempt the iconify JSON data packs from pnpm's supply-chain minimumReleaseAge
-# gate. These are pure icon data (SVG path JSON, no install/build scripts and no
-# runtime code), and upstream publishes them almost daily, so Renovate bumps them
-# constantly. Without this, every fresh @iconify-json bump fails
+# Supply-chain cooldown: refuse versions published less than 3 days ago (value is
+# in minutes; 3 days = 4320). Matches Renovate's `minimumReleaseAge` (renovate.json)
+# and the backend's uv `exclude-newer` (backend/pyproject.toml) so all three
+# resolution layers share one window. pnpm enforces this on every resolution,
+# including the ones Renovate runs to update the lockfile, so nothing younger than
+# the cutoff can enter pnpm-lock.yaml. Keep the three in sync.
+minimumReleaseAge: 4320
+
+# Exempt the iconify JSON data packs from the minimumReleaseAge gate above. These
+# are pure icon data (SVG path JSON, no install/build scripts and no runtime code),
+# and upstream publishes them almost daily, so Renovate bumps them constantly.
+# Without this, every fresh @iconify-json bump fails
 # `pnpm install --frozen-lockfile` with ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION
 # until the release ages past the cutoff. The age gate defends against malicious
 # freshly-published *code*, which does not apply to this data-only scope.
