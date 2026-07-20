@@ -66,7 +66,7 @@ RUN --mount=type=secret,id=sentry_auth_token,env=SENTRY_AUTH_TOKEN \
 # Serve the static bundle with NGINX. No Node runtime ships to production.
 # The `-slim` variant drops optional modules (njs, geoip, image filter…); this
 # config only needs core + gzip, and busybox wget stays for the healthcheck.
-FROM nginx:1.30-alpine-slim AS prod
+FROM nginx:1.31-alpine-slim AS prod
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/build /usr/share/nginx/html
