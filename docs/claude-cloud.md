@@ -55,12 +55,29 @@ prepulls (all persist in the snapshot):
 * Node 24 via `nvm` (already on the image) — the base image's system Node is
   22; the official Node/nvm installers both 403 here.
 * `docker login` + Docker image prepulls (`postgres:18.4-alpine`, `valkey/valkey:9.1-alpine`, see below).
+* CodeGraph (`@colbymchenry/codegraph`, the code-navigation graph — see
+  [AGENTS.md](../AGENTS.md) "Code Navigation") — installed from the **npm
+  registry**, not its recommended `curl|sh` installer, which pulls a runtime
+  from GitHub releases this environment blocks (same reason `just`/`uv`/`node`
+  above skip their GitHub installers). The tool is fully local (bundled SQLite,
+  no runtime network). A baseline index is seeded into `.codegraph/` here so the
+  hook only has to `sync` the branch delta; both the binary and the seed persist
+  in the snapshot. The binary is also symlinked into `/usr/local/bin` so the
+  project's `.mcp.json` server (bare `command: codegraph`) starts even when
+  Claude Code spawns MCP servers with a PATH that predates the hook's nvm/Node-24
+  additions — the npm global bin otherwise lives off the base PATH.
 
 **`.claude/hooks/session-start.sh`** — work that must run each session because it
 does not survive the snapshot:
 
 * `uv sync` / `pnpm install` — kept here so a dependency bump is picked up
   without an environment rebuild; near-instant when the lockfile is unchanged.
+* `codegraph sync` — refreshes the seeded index against the current branch so
+  code-navigation queries stay accurate; falls back to a full `codegraph init`
+  if the snapshot has no seeded index. Kept here (not in the setup script) for
+  the same reason as the dependency syncs: the index is per-branch state that
+  must track the code, so a session on a different branch or a newer commit
+  re-parses only the delta.
 * starting `dockerd` — a process, never cached; restarted every session.
 * per-session env vars written to `$CLAUDE_ENV_FILE` (`PATH`, including
   activating the nvm-installed Node 24 over the base image's system Node 22).
