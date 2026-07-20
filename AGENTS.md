@@ -49,6 +49,8 @@ Helper web app for the "FAN FAN" Russian anime convention (audience: teen to you
 
 Gate on one observable fact: does a `.codegraph/` directory exist at the repo root?
 
+Claude Code on the web auto-provisions codegraph: `.claude/setup.sh` installs the binary and seeds the index, and the SessionStart hook keeps it in sync, so `.codegraph/` normally exists in web sessions (see [docs/claude-cloud.md](docs/claude-cloud.md)). Local development is opt-in.
+
 * **No `.codegraph/`** → skip this section entirely; use Grep/Glob/Read. Do not install codegraph unless the user asks (install: `pnpm add -g @colbymchenry/codegraph && codegraph init`; re-run `codegraph sync` after pulling new code).
 * **`.codegraph/` exists** → use codegraph BEFORE Grep/Glob/Read for any symbol question:
   * "Where is `X`?" → `codegraph query <name>` — definition(s) with `file:line`

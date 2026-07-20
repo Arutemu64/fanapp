@@ -78,6 +78,29 @@ fi
 echo "[session-start] Syncing frontend dependencies (pnpm install)..."
 (cd "$REPO_ROOT/frontend" && pnpm install)
 
+# Refresh the CodeGraph index so code-navigation queries (AGENTS.md "Code
+# Navigation") reflect the current branch. The binary is installed by setup.sh
+# and persists in the snapshot; the index (.codegraph/, gitignored) is
+# per-branch project state that must track the code - like node_modules above -
+# so it is (re)built here, not baked into the snapshot. `sync` updates the
+# seeded index incrementally (near-instant when unchanged); a session whose
+# snapshot predates the seed has no index yet, so fall back to a full `init`.
+# Best-effort: navigation is a convenience, so a failure must not abort session
+# setup (the `if`/`||` keep set -e from tripping).
+if command -v codegraph >/dev/null 2>&1; then
+  if [ -f "$REPO_ROOT/.codegraph/codegraph.db" ]; then
+    echo "[session-start] Syncing CodeGraph index..."
+    (cd "$REPO_ROOT" && codegraph sync >/dev/null 2>&1) \
+      || echo "[session-start] WARN: codegraph sync failed; run 'codegraph index' to rebuild."
+  else
+    echo "[session-start] Building CodeGraph index (first run)..."
+    (cd "$REPO_ROOT" && codegraph init >/dev/null 2>&1) \
+      || echo "[session-start] WARN: codegraph init failed; code navigation falls back to grep/read."
+  fi
+else
+  echo "[session-start] Note: codegraph not installed; skipping index (grep/read still available)."
+fi
+
 # Start the Docker daemon: `just backend-generate-auto` boots a throwaway
 # Postgres against it to autogenerate Alembic migrations, and
 # `@pytest.mark.integration` tests boot Postgres + Valkey via testcontainers

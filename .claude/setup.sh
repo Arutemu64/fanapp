@@ -86,6 +86,37 @@ export PATH="$(dirname "$(nvm which default)"):$PATH"
 echo "[setup] Installing pnpm 11 (matches mise.toml / frontend/package.json)..."
 npm install -g pnpm@11.15.0
 
+# CodeGraph - the code-navigation knowledge graph (see AGENTS.md "Code
+# Navigation"). Installed from the npm registry, NOT the project's recommended
+# curl|sh installer: that pulls a bundled runtime from GitHub releases, which
+# this environment blocks (the same reason just/uv/node above skip their GitHub
+# installers). The tool is 100% local - bundled SQLite, no network at runtime -
+# so it runs fine in the sandbox.
+#
+# Two things happen here, both persisting in the snapshot: the global binary,
+# and a baseline index seeded into .codegraph/ (gitignored). Seeding lets each
+# session's SessionStart hook do a fast incremental `codegraph sync` of the
+# branch delta instead of a full re-parse on every fresh session.
+#
+# Best-effort throughout: CodeGraph is a navigation convenience, so neither a
+# failed install nor a failed seed may fail environment creation - the hook
+# falls back to a full `codegraph init`, and everything degrades to grep/read.
+echo "[setup] Installing CodeGraph (npm)..."
+if npm install -g @colbymchenry/codegraph >/dev/null 2>&1; then
+  # Resolve the repo root the same way the hash block below does; cwd is not
+  # guaranteed to be inside the clone at env-creation time. If the seed lands
+  # in the wrong place (or fails), the hook's own index build recovers.
+  CODEGRAPH_ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  echo "[setup] Seeding CodeGraph index..."
+  if [ -d "$CODEGRAPH_ROOT" ] && (cd "$CODEGRAPH_ROOT" && codegraph init >/dev/null 2>&1); then
+    echo "[setup]   CodeGraph installed and index seeded."
+  else
+    echo "[setup]   WARN: CodeGraph index seed failed; the SessionStart hook will build it."
+  fi
+else
+  echo "[setup]   WARN: CodeGraph install failed; code navigation falls back to grep/read."
+fi
+
 # Prepull the Docker images the cloud flow needs. Image layers are files, so a
 # pull here persists in the cached snapshot and every session starts with them
 # on disk; only the daemon (a process) is restarted per session by the
