@@ -307,7 +307,7 @@
 			</section>
 		{:else}
 			<div
-				class="rounded-2xl border border-dashed border-gray-300 bg-white px-4 py-10 text-center dark:border-gray-700 dark:bg-gray-800 sm:py-14"
+				class="rounded-2xl border border-dashed border-gray-300 bg-white px-4 py-10 text-center sm:py-14 dark:border-gray-700 dark:bg-gray-800"
 			>
 				<p class="text-base font-bold text-gray-900 dark:text-white">
 					{#if data.offlineMiss}
