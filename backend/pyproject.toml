@@ -17,12 +17,12 @@ dependencies = [
     "dishka-faststream>=0.7.0",
     "dishka>=1.10.1",
     "fastapi-mail>=1.6.5",
-    "fastapi>=0.139.2",
+    "fastapi>=0.139.0",
     "faststream[cli,nats]",
     "greenlet>=3.5.3",
     "itsdangerous>=2.2.0",
     "jinja2>=3.1.6",
-    "sentry-sdk[fastapi,sqlalchemy]>=2.66.0",
+    "sentry-sdk[fastapi,sqlalchemy]>=2.64.0",
     "nh3>=0.3.6",
     "pwdlib[argon2]>=0.3.0",
     "pydantic-extra-types>=2.11.1",
@@ -38,7 +38,7 @@ dependencies = [
     "webpush>=1.0.6",
     "polars>=1.42.1",
     "fastexcel>=0.20.2",
-    "httpx2>=2.7.0",
+    "httpx2>=2.5.0",
 ]
 
 [dependency-groups]
@@ -46,7 +46,7 @@ dev = [
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
-    "ruff>=0.15.22",
+    "ruff>=0.15.21",
     "pre-commit>=4.6.0",
     "testcontainers>=4.14.2",
     "types-authlib>=1.6.11.20260518",
@@ -71,7 +71,7 @@ required-version = "==0.11.29"
 # version (the `renovate/artifacts` failure seen on PR #310). Matching the two
 # keeps uv's own resolution inside the same window. Keep this in sync with
 # renovate.json `minimumReleaseAge`.
-exclude-newer = "3 days"
+exclude-newer = "7 days"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

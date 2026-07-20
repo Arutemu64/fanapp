@@ -25,7 +25,7 @@
   "prConcurrentLimit": 8,
   "prHourlyLimit": 2,
   "rangeStrategy": "bump",
-  "minimumReleaseAge": "3 days",
+  "minimumReleaseAge": "7 days",
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true,
