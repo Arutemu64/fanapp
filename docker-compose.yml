@@ -284,8 +284,9 @@ services:
     command: "valkey-server /usr/local/etc/valkey/valkey.conf --requirepass ${REDIS__PASSWORD}"
     ports:
       - "127.0.0.1:6379:6379"
-    # No maxmemory in valkey.conf, so this limit is the only memory ceiling;
-    # sized with headroom for the copy-on-write spike during RDB saves.
+    # valkey.conf sets maxmemory 192mb (allkeys-lru) as the in-process ceiling;
+    # this container limit sits above it as a backstop, with headroom for the
+    # copy-on-write spike during RDB saves.
     deploy:
       resources:
         limits:
