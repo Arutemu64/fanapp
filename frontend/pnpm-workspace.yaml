@@ -4,3 +4,13 @@ allowBuilds:
   # keeps behavior unchanged rather than opting in to running it.
   '@sentry/cli': false
   esbuild: true
+
+# Exempt the iconify JSON data packs from pnpm's supply-chain minimumReleaseAge
+# gate. These are pure icon data (SVG path JSON, no install/build scripts and no
+# runtime code), and upstream publishes them almost daily, so Renovate bumps them
+# constantly. Without this, every fresh @iconify-json bump fails
+# `pnpm install --frozen-lockfile` with ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION
+# until the release ages past the cutoff. The age gate defends against malicious
+# freshly-published *code*, which does not apply to this data-only scope.
+minimumReleaseAgeExclude:
+  - '@iconify-json/*'
