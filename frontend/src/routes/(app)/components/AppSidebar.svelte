@@ -8,6 +8,7 @@
 		canImportSchedule,
 		canManageSchedule,
 		canManageSettings,
+		canRunSyncs,
 		canSendNotifications
 	} from '$lib/utils/permissions';
 	import {
@@ -21,6 +22,7 @@
 		AdjustmentsHorizontalOutline,
 		AnnotationOutline,
 		AnnotationSolid,
+		ArrowsRepeatOutline,
 		BullhornOutline,
 		CalendarWeekOutline,
 		CalendarWeekSolid,
@@ -120,6 +122,9 @@
 {#snippet generateTicketsIcon()}
 	<TicketOutline class={iconClass} />
 {/snippet}
+{#snippet syncIcon()}
+	<ArrowsRepeatOutline class={iconClass} />
+{/snippet}
 
 <!-- `isMobile` slims the hamburger sheet: on phones the four primary
      destinations live in the bottom nav, so the drawer only carries what the
@@ -179,6 +184,7 @@
 						canGenerateTickets(user),
 						generateTicketsIcon
 					)}
+					{@render staffLink('Синхронизация', '/tools/sync', canRunSyncs(user), syncIcon)}
 				</SidebarDropdownWrapper>
 			{/if}
 		</SidebarGroup>

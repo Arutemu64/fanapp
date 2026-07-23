@@ -109,6 +109,8 @@ from fanfan.application.interactors.subscriptions.delete_subscription import (
 from fanfan.application.interactors.subscriptions.get_subscriptions import (
     GetSubscriptions,
 )
+from fanfan.application.interactors.sync.get_sync_status import GetSyncStatus
+from fanfan.application.interactors.sync.run_sync import RunSync
 from fanfan.application.interactors.tickets.generate_tickets import GenerateTickets
 from fanfan.application.interactors.tickets.link_ticket import LinkTicket
 from fanfan.application.interactors.tickets.process_ticket_order import (
@@ -201,6 +203,9 @@ class InteractorsProvider(Provider):
     generate_tickets = provide(GenerateTickets)
 
     sync_cosplay = provide(SyncCosplay)
+
+    run_sync = provide(RunSync)
+    get_sync_status = provide(GetSyncStatus)
 
     stream_events = provide(StreamEvents)
 

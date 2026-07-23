@@ -14,6 +14,7 @@ const SCHEDULE_IMPORT: Permission = 'schedule:import';
 const NOTIFICATIONS_SEND: Permission = 'notifications:send';
 const SETTINGS_MANAGE: Permission = 'settings:manage';
 const TICKETS_GENERATE: Permission = 'tickets:generate';
+const SYNC_RUN: Permission = 'sync:run';
 
 /**
  * Check if user has a specific permission.
@@ -72,4 +73,13 @@ export function canManageSettings(user: CurrentUserDTO | null): boolean {
  */
 export function canGenerateTickets(user: CurrentUserDTO | null): boolean {
 	return hasPermission(user, TICKETS_GENERATE);
+}
+
+/**
+ * Check if user can run external syncs (Cosplay2 / TicketsCloud).
+ * @param user - The user object or null
+ * @returns true if user has 'sync:run' permission
+ */
+export function canRunSyncs(user: CurrentUserDTO | null): boolean {
+	return hasPermission(user, SYNC_RUN);
 }

@@ -1,5 +1,6 @@
 import logging
 from dataclasses import replace
+from datetime import UTC, datetime
 
 from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.application.ports.gateways.participants import ParticipantGateway
@@ -9,10 +10,12 @@ from fanfan.application.ports.sources.cosplay import (
     ExternalParticipant,
 )
 from fanfan.application.ports.uow import UnitOfWork
+from fanfan.application.services.sync_runs import SyncRunRecorderService
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.models.participant import Participant
 from fanfan.core.vo.nomination import generate_nomination_id
 from fanfan.core.vo.participant import generate_participant_id
+from fanfan.core.vo.sync import SyncSource, SyncTrigger
 
 logger = logging.getLogger(__name__)
 
@@ -24,11 +27,13 @@ class SyncCosplay:
         uow: UnitOfWork,
         nomination_gateway: NominationGateway,
         participant_gateway: ParticipantGateway,
+        run_recorder: SyncRunRecorderService,
     ):
         self.source = source
         self.uow = uow
         self.nomination_gateway = nomination_gateway
         self.participant_gateway = participant_gateway
+        self.run_recorder = run_recorder
 
     async def _upsert_nomination(self, external: ExternalNomination) -> Nomination:
         nomination = await self.nomination_gateway.get_by_cosplay2_id(
@@ -107,7 +112,30 @@ class SyncCosplay:
                 },
             )
 
-    async def __call__(self) -> None:
+    async def __call__(self, trigger: SyncTrigger = SyncTrigger.SCHEDULE) -> None:
+        started_at = datetime.now(UTC)
+        try:
+            await self._sync()
+        except Exception as exc:
+            try:
+                await self.run_recorder.record_failed(
+                    source=SyncSource.COSPLAY2,
+                    trigger=trigger,
+                    started_at=started_at,
+                    error_message=str(exc),
+                )
+            except Exception:
+                # Never mask the sync failure with a bookkeeping failure.
+                logger.exception("Failed to record failed Cosplay2 sync run")
+            raise
+        # Commits the synced changes and the run row atomically.
+        await self.run_recorder.record_completed(
+            source=SyncSource.COSPLAY2,
+            trigger=trigger,
+            started_at=started_at,
+        )
+
+    async def _sync(self) -> None:
         nominations = await self.source.fetch_nominations()
         nomination_ids = {nomination.external_id for nomination in nominations}
         # Keep the upserted nominations in memory so participant processing can
@@ -150,5 +178,3 @@ class SyncCosplay:
             )
         else:
             logger.warning("Cosplay2 returned no participants, skipping cleanup")
-
-        await self.uow.commit()

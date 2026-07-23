@@ -859,6 +859,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/sync/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get external sync status
+         * @description Returns, per external source (Cosplay2, TicketsCloud), the timestamp of the last successful sync and the most recent runs. Requires the 'sync:run' permission.
+         */
+        get: operations["get_sync_status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sync/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run an external sync
+         * @description Runs a Cosplay2 or TicketsCloud sync immediately and records it in the run log. Requires the 'sync:run' permission. The run executes synchronously; refresh the status afterwards.
+         */
+        post: operations["run_sync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -993,7 +1033,7 @@ export interface components {
              * Code
              * @enum {string}
              */
-            code: "ACCESS_DENIED" | "ALREADY_VOTED_IN_THIS_NOMINATION" | "APP_SETTINGS_NOT_FOUND" | "AUTHENTICATION_ERROR" | "CAPTCHA_VERIFICATION_FAILED" | "CURRENT_EVENT_NOT_ALLOWED" | "EMAIL_ALREADY_EXISTS" | "EMAIL_CODE_REQUEST_TOO_FAST" | "EVENT_NOT_FOUND" | "HTTP_ERROR" | "INCORRECT_PASSWORD" | "INTERNAL_ERROR" | "INVALID_CREDENTIALS" | "INVALID_EMAIL" | "INVALID_OTP_CODE" | "INVALID_TELEGRAM_AUTH_PAYLOAD" | "NOMINATION_NOT_FOUND" | "OUTDATED_SCHEDULE_CHANGE" | "PARTICIPANT_NOT_FOUND" | "PUSH_SUBSCRIPTION_ALREADY_EXISTS" | "PUSH_SUBSCRIPTION_NOT_FOUND" | "SAME_EVENTS_ARE_NOT_ALLOWED" | "SCHEDULE_CHANGE_NOT_FOUND" | "SCHEDULE_EDIT_TOO_FAST" | "SKIPPED_EVENT_NOT_ALLOWED" | "SUBSCRIPTION_ALREADY_EXISTS" | "SUBSCRIPTION_NOT_FOUND" | "TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER" | "TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL" | "TICKET_ALREADY_USED" | "TICKET_BARCODE_COLLISION" | "TICKET_NOT_FOUND" | "TICKET_NOT_LINKED" | "TOO_MANY_ATTEMPTS" | "TOO_MANY_LOGIN_ATTEMPTS" | "TOO_MANY_OTP_ATTEMPTS" | "USERNAME_ALREADY_TAKEN" | "USERNAME_PROFANITY" | "USER_ALREADY_EXISTS" | "USER_ALREADY_HAS_TELEGRAM_LINKED" | "USER_ALREADY_HAS_TICKET_LINKED" | "USER_HAS_NO_EMAIL" | "USER_NOT_AUTHENTICATED" | "USER_NOT_FOUND" | "VALIDATION_ERROR" | "VOTE_NOT_FOUND";
+            code: "ACCESS_DENIED" | "ALREADY_VOTED_IN_THIS_NOMINATION" | "APP_SETTINGS_NOT_FOUND" | "AUTHENTICATION_ERROR" | "CAPTCHA_VERIFICATION_FAILED" | "CURRENT_EVENT_NOT_ALLOWED" | "EMAIL_ALREADY_EXISTS" | "EMAIL_CODE_REQUEST_TOO_FAST" | "EVENT_NOT_FOUND" | "HTTP_ERROR" | "INCORRECT_PASSWORD" | "INTERNAL_ERROR" | "INVALID_CREDENTIALS" | "INVALID_EMAIL" | "INVALID_OTP_CODE" | "INVALID_TELEGRAM_AUTH_PAYLOAD" | "NOMINATION_NOT_FOUND" | "OUTDATED_SCHEDULE_CHANGE" | "PARTICIPANT_NOT_FOUND" | "PUSH_SUBSCRIPTION_ALREADY_EXISTS" | "PUSH_SUBSCRIPTION_NOT_FOUND" | "SAME_EVENTS_ARE_NOT_ALLOWED" | "SCHEDULE_CHANGE_NOT_FOUND" | "SCHEDULE_EDIT_TOO_FAST" | "SKIPPED_EVENT_NOT_ALLOWED" | "SUBSCRIPTION_ALREADY_EXISTS" | "SUBSCRIPTION_NOT_FOUND" | "SYNC_ALREADY_RUNNING" | "SYNC_TOO_FAST" | "TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER" | "TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL" | "TICKET_ALREADY_USED" | "TICKET_BARCODE_COLLISION" | "TICKET_NOT_FOUND" | "TICKET_NOT_LINKED" | "TOO_MANY_ATTEMPTS" | "TOO_MANY_LOGIN_ATTEMPTS" | "TOO_MANY_OTP_ATTEMPTS" | "USERNAME_ALREADY_TAKEN" | "USERNAME_PROFANITY" | "USER_ALREADY_EXISTS" | "USER_ALREADY_HAS_TELEGRAM_LINKED" | "USER_ALREADY_HAS_TICKET_LINKED" | "USER_HAS_NO_EMAIL" | "USER_NOT_AUTHENTICATED" | "USER_NOT_FOUND" | "VALIDATION_ERROR" | "VOTE_NOT_FOUND";
             /** Details */
             details?: {
                 [key: string]: unknown;
@@ -1189,7 +1229,7 @@ export interface components {
          * Permission
          * @enum {string}
          */
-        Permission: "schedule:manage" | "schedule:import" | "notifications:send" | "settings:manage" | "tickets:generate";
+        Permission: "schedule:manage" | "schedule:import" | "notifications:send" | "settings:manage" | "tickets:generate" | "sync:run";
         /** PushSubscriptionStatus */
         PushSubscriptionStatus: {
             /** Subscribed */
@@ -1214,6 +1254,10 @@ export interface components {
             email: string;
             /** Turnstile Token */
             turnstile_token?: string | null;
+        };
+        /** RunSyncInput */
+        RunSyncInput: {
+            source: components["schemas"]["SyncSource"];
         };
         /** ScheduleChangeEventDTO */
         ScheduleChangeEventDTO: {
@@ -1352,6 +1396,73 @@ export interface components {
             counter: number;
             event: components["schemas"]["SubscriptionEventDTO"];
         };
+        /** SyncRunDTO */
+        SyncRunDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            source: components["schemas"]["SyncSource"];
+            trigger: components["schemas"]["SyncTrigger"];
+            status: components["schemas"]["SyncRunStatus"];
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Finished At
+             * Format: date-time
+             */
+            finished_at: string;
+            /** Error Message */
+            error_message: string | null;
+            started_by: components["schemas"]["SyncRunUserDTO"] | null;
+        };
+        /**
+         * SyncRunStatus
+         * @enum {string}
+         */
+        SyncRunStatus: "completed" | "failed";
+        /** SyncRunUserDTO */
+        SyncRunUserDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Username */
+            username: string;
+        };
+        /**
+         * SyncSource
+         * @description External system a sync run pulls from.
+         * @enum {string}
+         */
+        SyncSource: "cosplay2" | "ticketscloud";
+        /** SyncSourceStatusDTO */
+        SyncSourceStatusDTO: {
+            source: components["schemas"]["SyncSource"];
+            /** Last Success At */
+            last_success_at: string | null;
+            /** Recent Runs */
+            recent_runs: components["schemas"]["SyncRunDTO"][];
+        };
+        /** SyncStatusDTO */
+        SyncStatusDTO: {
+            /** Sources */
+            sources: components["schemas"]["SyncSourceStatusDTO"][];
+        };
+        /**
+         * SyncTrigger
+         * @description How a sync run was started.
+         *
+         *     Scheduler and CLI runs execute under the system identity (no real user), so
+         *     the trigger — not a faked user row — is what attributes them in the run log.
+         * @enum {string}
+         */
+        SyncTrigger: "manual" | "schedule" | "cli";
         /** TCloudWebhookOrderRef */
         TCloudWebhookOrderRef: {
             /** Id */
@@ -3914,6 +4025,111 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    get_sync_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncStatusDTO"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    run_sync: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunSyncInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+            /** @description A sync for this source is already running or was finished moments ago. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
                 };
             };
         };

@@ -153,6 +153,7 @@ const ERROR_MESSAGES = {
 	SAME_EVENTS_ARE_NOT_ALLOWED: 'Нельзя выбрать одно и то же выступление',
 	SKIPPED_EVENT_NOT_ALLOWED: 'Пропущенное выступление нельзя отметить как текущее',
 	SUBSCRIPTION_ALREADY_EXISTS: 'Ты уже подписан на это выступление',
+	SYNC_ALREADY_RUNNING: 'Синхронизация уже выполняется, подожди немного',
 	TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER: 'Этот Telegram уже привязан к другому аккаунту',
 	TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL:
 		'Сначала добавь почту, чтобы не потерять доступ к аккаунту',
@@ -175,6 +176,7 @@ const ERROR_MESSAGES = {
 const RETRY_AFTER_CODES = [
 	'EMAIL_CODE_REQUEST_TOO_FAST',
 	'SCHEDULE_EDIT_TOO_FAST',
+	'SYNC_TOO_FAST',
 	'TOO_MANY_ATTEMPTS',
 	'TOO_MANY_OTP_ATTEMPTS',
 	'TOO_MANY_LOGIN_ATTEMPTS'

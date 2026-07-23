@@ -3020,6 +3020,133 @@
           }
         ]
       }
+    },
+    "/sync/status": {
+      "get": {
+        "tags": [
+          "Sync"
+        ],
+        "summary": "Get external sync status",
+        "description": "Returns, per external source (Cosplay2, TicketsCloud), the timestamp of the last successful sync and the most recent runs. Requires the 'sync:run' permission.",
+        "operationId": "get_sync_status",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncStatusDTO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ]
+      }
+    },
+    "/sync/run": {
+      "post": {
+        "tags": [
+          "Sync"
+        ],
+        "summary": "Run an external sync",
+        "description": "Runs a Cosplay2 or TicketsCloud sync immediately and records it in the run log. Requires the 'sync:run' permission. The run executes synchronously; refresh the status afterwards.",
+        "operationId": "run_sync",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunSyncInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "A sync for this source is already running or was finished moments ago.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -3360,6 +3487,8 @@
               "SKIPPED_EVENT_NOT_ALLOWED",
               "SUBSCRIPTION_ALREADY_EXISTS",
               "SUBSCRIPTION_NOT_FOUND",
+              "SYNC_ALREADY_RUNNING",
+              "SYNC_TOO_FAST",
               "TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER",
               "TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL",
               "TICKET_ALREADY_USED",
@@ -3897,7 +4026,8 @@
           "schedule:import",
           "notifications:send",
           "settings:manage",
-          "tickets:generate"
+          "tickets:generate",
+          "sync:run"
         ],
         "title": "Permission"
       },
@@ -3959,6 +4089,18 @@
           "email"
         ],
         "title": "RequestLoginCodeInput"
+      },
+      "RunSyncInput": {
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/SyncSource"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source"
+        ],
+        "title": "RunSyncInput"
       },
       "ScheduleChangeEventDTO": {
         "properties": {
@@ -4337,6 +4479,162 @@
           "event"
         ],
         "title": "SubscriptionFullDTO"
+      },
+      "SyncRunDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SyncSource"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/SyncTrigger"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SyncRunStatus"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "finished_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Finished At"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "started_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SyncRunUserDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "source",
+          "trigger",
+          "status",
+          "started_at",
+          "finished_at",
+          "error_message",
+          "started_by"
+        ],
+        "title": "SyncRunDTO"
+      },
+      "SyncRunStatus": {
+        "type": "string",
+        "enum": [
+          "completed",
+          "failed"
+        ],
+        "title": "SyncRunStatus"
+      },
+      "SyncRunUserDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username"
+        ],
+        "title": "SyncRunUserDTO"
+      },
+      "SyncSource": {
+        "type": "string",
+        "enum": [
+          "cosplay2",
+          "ticketscloud"
+        ],
+        "title": "SyncSource",
+        "description": "External system a sync run pulls from."
+      },
+      "SyncSourceStatusDTO": {
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/SyncSource"
+          },
+          "last_success_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Success At"
+          },
+          "recent_runs": {
+            "items": {
+              "$ref": "#/components/schemas/SyncRunDTO"
+            },
+            "type": "array",
+            "title": "Recent Runs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "last_success_at",
+          "recent_runs"
+        ],
+        "title": "SyncSourceStatusDTO"
+      },
+      "SyncStatusDTO": {
+        "properties": {
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SyncSourceStatusDTO"
+            },
+            "type": "array",
+            "title": "Sources"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sources"
+        ],
+        "title": "SyncStatusDTO"
+      },
+      "SyncTrigger": {
+        "type": "string",
+        "enum": [
+          "manual",
+          "schedule",
+          "cli"
+        ],
+        "title": "SyncTrigger",
+        "description": "How a sync run was started.\n\nScheduler and CLI runs execute under the system identity (no real user), so\nthe trigger — not a faked user row — is what attributes them in the run log."
       },
       "TCloudWebhookOrderRef": {
         "properties": {
