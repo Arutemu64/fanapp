@@ -80,7 +80,7 @@ third-party credentials, so you can start exploring immediately:
 
 The optional integration blocks stay commented out.
 
-For local (non-Docker) frontend dev, also copy `frontend/.env.example` → `frontend/.env`.
+Local (non-Docker) frontend dev reads this same root `.env` — SvelteKit is configured to load it from the repo root (`kit.env.dir` / Vite `envDir`), so there is no separate `frontend/.env` to maintain.
 
 ### 2. Run with Docker (full environment)
 

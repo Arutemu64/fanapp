@@ -65,14 +65,16 @@ fi
 echo "[session-start] Syncing backend dependencies (uv sync)..."
 (cd "$REPO_ROOT/backend" && uv sync --all-groups)
 
-# Seed frontend/.env so `$env/static/public` types generate during the
-# svelte-kit sync that pnpm's `prepare` runs below. Without it, every PUBLIC_*
-# import is untyped and `pnpm check`/`pnpm lint` error in the cloud container,
-# which has no .env. Placeholder values suffice: the typecheck only needs the
-# keys to exist, not real secrets. frontend/.env is gitignored, so nothing leaks.
-if [ ! -f "$REPO_ROOT/frontend/.env" ]; then
-  echo "[session-start] Seeding frontend/.env from .env.example..."
-  cp "$REPO_ROOT/frontend/.env.example" "$REPO_ROOT/frontend/.env"
+# Seed the root .env so `$env/static/public` types generate during the
+# svelte-kit sync that pnpm's `prepare` runs below. Vite loads env from the repo
+# root (envDir: '..' in frontend/vite.config.ts), so the PUBLIC_* keys must live
+# there. Without it, every PUBLIC_* import is untyped and `pnpm check`/`pnpm lint`
+# error in the cloud container, which has no .env. Placeholder values suffice:
+# the typecheck only needs the keys to exist, not real secrets. .env is
+# gitignored, so nothing leaks.
+if [ ! -f "$REPO_ROOT/.env" ]; then
+  echo "[session-start] Seeding .env from .env.example..."
+  cp "$REPO_ROOT/.env.example" "$REPO_ROOT/.env"
 fi
 
 echo "[session-start] Syncing frontend dependencies (pnpm install)..."
