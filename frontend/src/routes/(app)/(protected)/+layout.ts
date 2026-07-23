@@ -1,9 +1,10 @@
 import { isReachable } from '$lib/services/reachability';
+import { LOGIN_NEXT_PARAM } from '$lib/utils/auth';
 import { error, redirect } from '@sveltejs/kit';
 
 import type { LayoutLoad } from './$types';
 
-export const load: LayoutLoad = async ({ parent }) => {
+export const load: LayoutLoad = async ({ parent, url }) => {
 	const { user } = await parent();
 
 	if (!user) {
@@ -17,7 +18,9 @@ export const load: LayoutLoad = async ({ parent }) => {
 			error(503, 'Нет соединения');
 		}
 
-		// Reachable and still no user: a genuine guest — send them to login.
-		redirect(303, '/login');
+		// Reachable and still no user: a genuine guest — send them to login,
+		// remembering where they were headed so completeLogin can return them
+		// there (validated by sanitizeNextPath on the way back).
+		redirect(303, `/login?${LOGIN_NEXT_PARAM}=${encodeURIComponent(url.pathname + url.search)}`);
 	}
 };
