@@ -4,8 +4,8 @@ from typing import Protocol
 class CaptchaVerifier(Protocol):
     """Verifies a captcha token solved by the user before a sensitive action.
 
-    Implementations either call an external captcha service (e.g. Cloudflare
-    Turnstile) or accept everything when captcha is disabled. Keeping this as a
+    Implementations either call an external captcha service (e.g. Yandex
+    SmartCaptcha) or accept everything when captcha is disabled. Keeping this as a
     port lets the application layer stay unaware of which one is wired in.
     """
 

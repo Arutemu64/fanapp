@@ -32,9 +32,10 @@
 	let emailError = $state('');
 	let formError = $state('');
 
-	// Captcha state (only relevant when a Turnstile site key is configured).
+	// Captcha state (only relevant when a SmartCaptcha client key is configured).
 	let captchaToken = $state<string | null>(null);
 	let resetCaptcha = $state<(() => void) | undefined>(undefined);
+	let executeCaptcha = $state<(() => void) | undefined>(undefined);
 
 	// Holds the request when the user submits before the invisible captcha has a
 	// token; the effect below fires it once the token lands, so the user never
@@ -104,9 +105,11 @@
 			return;
 		}
 
-		// The captcha runs invisibly. If its token isn't ready yet, hold the
-		// request; the effect above re-runs this once the token arrives.
+		// The captcha runs invisibly. If its token isn't ready yet, start the
+		// challenge and hold the request; the effect above re-runs this once the
+		// token arrives.
 		if (captchaEnabled && !captchaToken) {
+			executeCaptcha?.();
 			captchaGate.hold(() => {
 				formError = 'Не удалось пройти проверку. Попробуй ещё раз';
 			});
@@ -121,7 +124,7 @@
 
 		try {
 			const { error, response } = await client.POST('/auth/request-login-code', {
-				body: { email: trimmedEmail, turnstile_token: captchaToken }
+				body: { email: trimmedEmail, captcha_token: captchaToken }
 			});
 
 			if (error || !response.ok) {
@@ -195,7 +198,11 @@
 			{/if}
 		</div>
 
-		<CaptchaWidget bind:token={captchaToken} bind:reset={resetCaptcha} />
+		<CaptchaWidget
+			bind:token={captchaToken}
+			bind:reset={resetCaptcha}
+			bind:execute={executeCaptcha}
+		/>
 
 		<Button
 			type="submit"

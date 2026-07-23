@@ -3942,7 +3942,7 @@
             "format": "email",
             "title": "Email"
           },
-          "turnstile_token": {
+          "captcha_token": {
             "anyOf": [
               {
                 "type": "string"
@@ -3951,7 +3951,7 @@
                 "type": "null"
               }
             ],
-            "title": "Turnstile Token"
+            "title": "Captcha Token"
           }
         },
         "type": "object",

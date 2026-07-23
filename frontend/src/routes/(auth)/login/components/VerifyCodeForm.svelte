@@ -34,6 +34,7 @@
 	// Captcha state for the "resend code" request (same endpoint as the first one).
 	let captchaToken = $state<string | null>(null);
 	let resetCaptcha = $state<(() => void) | undefined>(undefined);
+	let executeCaptcha = $state<(() => void) | undefined>(undefined);
 
 	// Holds a resend the user tapped before the invisible captcha had a token.
 	const captchaGate = new CaptchaGate();
@@ -113,9 +114,11 @@
 	}
 
 	async function handleLoginCodeRequest() {
-		// The captcha runs invisibly. If its token isn't ready yet, hold the
-		// resend; the effect above re-runs this once the token arrives.
+		// The captcha runs invisibly. If its token isn't ready yet, start the
+		// challenge and hold the resend; the effect above re-runs this once the
+		// token arrives.
 		if (captchaEnabled && !captchaToken) {
+			executeCaptcha?.();
 			captchaGate.hold(() => {
 				formError = 'Не удалось пройти проверку. Попробуй ещё раз';
 			});
@@ -129,7 +132,7 @@
 
 		try {
 			const { error, response } = await client.POST('/auth/request-login-code', {
-				body: { email, turnstile_token: captchaToken }
+				body: { email, captcha_token: captchaToken }
 			});
 
 			if (error || !response.ok) {
@@ -208,7 +211,11 @@
 	</Button>
 
 	<div class="flex flex-col space-y-2">
-		<CaptchaWidget bind:token={captchaToken} bind:reset={resetCaptcha} />
+		<CaptchaWidget
+			bind:token={captchaToken}
+			bind:reset={resetCaptcha}
+			bind:execute={executeCaptcha}
+		/>
 
 		<Button
 			type="button"
