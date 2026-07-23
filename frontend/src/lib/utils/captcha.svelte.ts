@@ -1,5 +1,5 @@
 // Invisible-captcha gate shared by the login forms. When the user submits
-// before Turnstile has produced a token, we "hold" the action and let the
+// before the captcha has produced a token, we "hold" the action and let the
 // caller's $effect re-fire it once the token lands — so the user never taps
 // twice. The timeout is a safety net: if the widget never resolves (network or
 // script error), we stop waiting and surface a retryable error.

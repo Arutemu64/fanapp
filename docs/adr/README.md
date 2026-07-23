@@ -53,3 +53,4 @@ permanent — it is how other ADRs and commits reference the decision.
 | [0006](0006-dishka-for-dependency-injection.md) | Dishka for dependency injection | Accepted |
 | [0007](0007-client-rendered-spa-frontend.md) | Client-rendered SvelteKit SPA frontend | Accepted |
 | [0008](0008-schedule-timing-computed-in-application-layer.md) | Absolute schedule times computed in the application layer | Accepted |
+| [0009](0009-yandex-smartcaptcha-over-cloudflare-turnstile.md) | Yandex SmartCaptcha over Cloudflare Turnstile | Accepted |

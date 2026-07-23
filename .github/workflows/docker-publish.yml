@@ -86,7 +86,7 @@ jobs:
             ${{ matrix.name == 'frontend' && format('PUBLIC_API_URL={0}', vars.PUBLIC_API_URL) || '' }}
             ${{ matrix.name == 'frontend' && format('PUBLIC_VAPID_KEY={0}', vars.PUBLIC_VAPID_KEY) || '' }}
             ${{ matrix.name == 'frontend' && format('PUBLIC_SENTRY_DSN={0}', vars.PUBLIC_SENTRY_DSN) || '' }}
-            ${{ matrix.name == 'frontend' && format('PUBLIC_TURNSTILE_SITE_KEY={0}', vars.PUBLIC_TURNSTILE_SITE_KEY) || '' }}
+            ${{ matrix.name == 'frontend' && format('PUBLIC_SMARTCAPTCHA_CLIENT_KEY={0}', vars.PUBLIC_SMARTCAPTCHA_CLIENT_KEY) || '' }}
           # SENTRY_AUTH_TOKEN (a secret) uploads source maps in the `build` stage.
           # It is passed as a BuildKit secret — unlike a build arg, it never lands
           # in image layer metadata or the exported GHA build cache below.

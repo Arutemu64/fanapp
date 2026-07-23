@@ -19,7 +19,7 @@ class RequestLoginCodeInput(BaseModel):
     email: EmailStr
     # Captcha token solved by the user. Optional so the same endpoint works
     # when captcha is disabled (no token sent, no verification performed).
-    turnstile_token: str | None = None
+    captcha_token: str | None = None
 
 
 class RequestLoginCode:
@@ -41,7 +41,7 @@ class RequestLoginCode:
 
     async def __call__(self, data: RequestLoginCodeInput) -> None:
         # Reject bots before touching the database or rate-limit budget.
-        await self.captcha_verifier.verify(data.turnstile_token)
+        await self.captcha_verifier.verify(data.captcha_token)
 
         email = Email(data.email)
 
