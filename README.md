@@ -80,7 +80,7 @@ third-party credentials, so you can start exploring immediately:
 
 The optional integration blocks stay commented out.
 
-For local (non-Docker) frontend dev, also copy `frontend/.env.example` → `frontend/.env`.
+Local (non-Docker) frontend dev reads this same root `.env` — there is no separate frontend env file.
 
 ### 2. Run with Docker (full environment)
 
