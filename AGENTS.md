@@ -1,6 +1,6 @@
-# FAN FAN helper web app — monorepo guidelines
+# FAN FAN companion web app — monorepo guidelines
 
-Helper web app for the "FAN FAN" Russian anime convention. Audience: teen to young adult, non-technical.
+Companion web app for the "FAN FAN" Russian anime convention. Audience: teen to young adult, non-technical.
 
 ## Never
 
