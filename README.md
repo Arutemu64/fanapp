@@ -5,12 +5,11 @@ Companion web app for the **FAN FAN** Russian anime convention. It gives attende
 This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAPI contract between them.
 
 > [!NOTE]
-> **This project is built with AI.** Claude Code writes most of the code and makes
-> plenty of the decisions along the way. I set the direction, review the result, and
-> have the final say on what lands. The backend's architecture is mine — the
-> reasoning is in [`docs/adr/`](docs/adr/README.md); the frontend is mostly
-> agent-written. Agent-assisted commits carry a `Co-Authored-By` trailer, so
-> `git log` shows you exactly how any given line got here.
+> **This project is built with AI.** Coding agents write most of the code and most
+> of the docs — including the reasoning in [`docs/adr/`](docs/adr/README.md) — and
+> they make plenty of the decisions along the way. I steer, review what lands, and
+> make the final call; I'm more hands-on with the backend, and the frontend is
+> mostly left to the agents. Either way, the mistakes in here are mine.
 
 ## Features
 
