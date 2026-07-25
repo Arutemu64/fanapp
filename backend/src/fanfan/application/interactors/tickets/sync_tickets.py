@@ -44,7 +44,7 @@ class SyncTickets:
                     extra={"new_tickets": new_tickets_count},
                 )
         await self.uow.commit()
-        # TODO Find a way to correctly proceed refunds
+        # TODO: Find a way to correctly proceed refunds
         return SyncTicketsOutput(
             new_tickets_count=new_tickets_count,
             removed_tickets_count=removed_tickets_count,
