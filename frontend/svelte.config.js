@@ -8,6 +8,12 @@ const config = {
 	preprocess: vitePreprocess(),
 
 	kit: {
+		// The whole monorepo shares the single root `.env` (see .env.example) —
+		// the frontend has no env file of its own. `$env/static/public` loads
+		// from there; real environment variables (Docker build args, CI) still
+		// take precedence over the file. Path is relative to the frontend dir,
+		// where all commands run (justfile, Docker WORKDIR).
+		env: { dir: '..' },
 		// SPA build: the app is client-rendered, so there is no server.
 		// adapter-static emits a static bundle and a `fallback` page that an
 		// NGINX container serves for every unknown route, letting the client
