@@ -124,6 +124,8 @@ jobs:
       PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
       PUBLIC_VAPID_KEY: ${{ vars.PUBLIC_VAPID_KEY }}
       PUBLIC_SENTRY_DSN: ${{ vars.PUBLIC_SENTRY_DSN }}
+      PUBLIC_SENTRY_ENVIRONMENT: ${{ vars.PUBLIC_SENTRY_ENVIRONMENT }}
+      PUBLIC_SENTRY_TRACES_SAMPLE_RATE: ${{ vars.PUBLIC_SENTRY_TRACES_SAMPLE_RATE }}
       PUBLIC_SMARTCAPTCHA_CLIENT_KEY: ${{ vars.PUBLIC_SMARTCAPTCHA_CLIENT_KEY }}
     strategy:
       # Don't cancel the other tasks when one fails: we want to see every
