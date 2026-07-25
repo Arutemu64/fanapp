@@ -132,7 +132,7 @@ An action that cannot finish inside the request returns **202** with the created
 ---
 
 ## 🇷🇺 Russian Localization & Error Handling
-Russian copy is mandatory (AGENTS.md, Core Constraints). API-specific rule: normalize failures before presenting them — never expose raw backend stack traces or internal identifiers, and show a friendly Russian message explaining how to recover or retry.
+Russian copy is mandatory (AGENTS.md, "Never"). API-specific rule: normalize failures before presenting them — never expose raw backend stack traces or internal identifiers, and show a friendly Russian message explaining how to recover or retry.
 
 * **Error shape**: every error response is `ErrorMessage { code, details }` (see backend `presentation/web/exceptions.py`). Map failures by the machine-readable `code`, not by HTTP status or message text.
 * **Single funnel**: `getApiErrorDetail(error)` (`lib/api/errors.ts`) turns a payload into Russian copy. For **mutations/toasts** use `toastService.error(err)`; for **`load` failures** use `throwApiError(apiError, response, fallback)` from the same module — it throws a SvelteKit `error()` with the mapped copy and the real HTTP status (and carries `code` on `App.Error`), so a load failure looks like every other error instead of a bespoke per-page string. Add new copy to the `ERROR_MESSAGES` dictionary there. (Permission guards and offline-cache-miss states still throw `error()` directly — they have no API `code` to map.)

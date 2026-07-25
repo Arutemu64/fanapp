@@ -104,7 +104,7 @@ module-name = "fanfan"
 
 # Architectural boundary enforcement (run via `just backend-import-lint`).
 # Keeps the Clean/Hexagonal layering from docs/backend.md honest: inner layers
-# must never import outer ones. See AGENTS.md constraint #5.
+# must never import outer ones. See AGENTS.md ("Never") and docs/backend.md.
 [tool.importlinter]
 root_package = "fanfan"
 

@@ -2,15 +2,8 @@
 
 This document outlines the codebase-specific constraints, SvelteKit SPA rules, styling standards, layout designs, and custom component inventory.
 
-> [!IMPORTANT]
-> **Required Svelte Skills**: Svelte 5 reactivity syntax, runes usage, event handling conventions, and snippet patterns are fully documented in workspace skills. Whenever editing Svelte components (`.svelte`) or Svelte modules (`.svelte.ts`/`.svelte.js`), you **MUST** load and apply these skills:
-> 1. `svelte-code-writer`
-> 2. `svelte-core-bestpractices`
->
-> Refer to those skills for core syntax and best practices; do not duplicate them here.
-
 > [!NOTE]
-> **Scope of this doc**: only FAN FAN–specific decisions and bindings live here — chosen scales, tokens, component wiring, conventions. Generic best-practice (accessibility, UX, responsive + dark-mode mechanics) lives in the `ui-ux-pro-max`, `tailwind-css-patterns`, and `svelte-core-bestpractices` skills — load those. **Rule of thumb**: if a skill that has never seen this repo could state a rule, it belongs in the skill, not here.
+> **Scope of this doc**: only FAN FAN–specific decisions and bindings live here — chosen scales, tokens, component wiring, conventions. Generic best-practice (Svelte 5 runes and event syntax, accessibility, UX, responsive + dark-mode mechanics) lives in the `svelte-code-writer`, `svelte-core-bestpractices`, `ui-ux-pro-max` and `tailwind-css-patterns` skills — load those (AGENTS.md, "Load before you edit"). **Rule of thumb**: if a skill that has never seen this repo could state a rule, it belongs in the skill, not here.
 
 ---
 
@@ -144,7 +137,7 @@ Contrast targets and dark-mode mechanics → `tailwind-css-patterns` / `ui-ux-pr
 
 ## 6. Language & Copy
 
-Russian copy is mandatory for all user-facing text — buttons, placeholders, errors, toasts, empty states (AGENTS.md, Core Constraints). Keep sentences brief, direct, and actionable; never surface raw backend exceptions or stack traces.
+Russian copy is mandatory for all user-facing text — buttons, placeholders, errors, toasts, empty states (AGENTS.md, "Never"). Keep sentences brief, direct, and actionable; never surface raw backend exceptions or stack traces.
 
 ---
 
@@ -212,7 +205,7 @@ Before writing any new component, check existing items in `frontend/src/lib/comp
 * **Toasts**: Trigger alerts via `$lib/services/toasts.svelte.ts` and display them with `$lib/components/ToastContainer.svelte`. The service keeps two independent queues so a burst of one category can never evict the other: **status** toasts (action feedback — `add`/`error`) and **push** toasts (inbound SSE notifications — `push`). `ToastContainer` renders them in separate regions — push at the top (like OS notifications), status bottom-centered above the mobile bottom nav (bottom-right on desktop where that nav is hidden).
 * **Notification bodies**: A notification `body` arrives as a pre-sanitized, safe HTML subset (the backend's `HtmlSanitizer` is the single source of truth — see [backend.md](backend.md)). Render it with `{@html notification.body}` (in `ToastContainer.svelte` and `NotificationListItem.svelte`), keeping `whitespace-pre-line` so the stored `\n` line breaks show. The notification `title` is plain text — render it with normal `{title}` interpolation. Do **not** add a client-side sanitizer or `{@html}` any other API field.
 * **Page Containers**: Match the spacing/layout patterns established in `frontend/src/routes/(app)/+layout.svelte`.
-* **Captcha**: `$lib/components/CaptchaWidget.svelte` wraps the Yandex SmartCaptcha widget in invisible mode (loaded via `$lib/utils/smartcaptcha.ts`). It renders nothing unless `PUBLIC_SMARTCAPTCHA_CLIENT_KEY` is set, so callers must gate their submit logic on the exported `captchaEnabled` flag and pass the bound `token` to the API. Invisible mode mints a token only after `execute()`, so callers bind `execute` and call it when submitting; the bound `reset` fetches a fresh single-use token for the next request. Used on the login-code request and resend. Yandex (rather than Cloudflare Turnstile) because Cloudflare is often throttled in Russia — see [docs/adr/](../docs/adr/README.md).
+* **Captcha**: `$lib/components/CaptchaWidget.svelte` wraps the Yandex SmartCaptcha widget in invisible mode (loaded via `$lib/utils/smartcaptcha.ts`). It renders nothing unless `PUBLIC_SMARTCAPTCHA_CLIENT_KEY` is set, so callers must gate their submit logic on the exported `captchaEnabled` flag and pass the bound `token` to the API. Invisible mode mints a token only after `execute()`, so callers bind `execute` and call it when submitting; the bound `reset` fetches a fresh single-use token for the next request. Used on the login-code request and resend. Yandex (rather than Cloudflare Turnstile) because Cloudflare is often throttled in Russia — see [docs/adr/](adr/README.md).
 
 ---
 
