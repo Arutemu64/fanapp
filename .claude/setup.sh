@@ -150,7 +150,7 @@ fi
 #     instead of only in CI).
 #   * hadolint/hadolint       - backs the `hadolint` shim installed below; pinned
 #                                to match mise.toml and the .pre-commit-config.yaml
-#                                rev (AGENTS.md Constraint 15).
+#                                rev (docs/dependencies.md).
 #
 # Image builds (docker-publish.yml) and the rest of the compose stack (nats,
 # db-backup) are still left to CI - not needed for either autogenerate or the
@@ -214,7 +214,7 @@ fi
 # matching the caller's uid/gid keeps both working unchanged.
 #
 # Keep the tag in sync with mise.toml and the .pre-commit-config.yaml rev
-# (AGENTS.md Constraint 15); the renovate.json "hadolint" group covers this site
+# (docs/dependencies.md); the renovate.json "hadolint" group covers this site
 # via a customManager.
 echo "[setup] Installing hadolint shim (Docker-backed)..."
 $SUDO tee /usr/local/bin/hadolint >/dev/null <<'HADOLINT_SHIM'

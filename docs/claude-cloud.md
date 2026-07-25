@@ -64,7 +64,7 @@ prepulls (all persist in the snapshot):
   `hadolint` hook therefore all work unchanged, calling a plain `hadolint` the
   same way they do on a laptop where `mise` supplies the real binary.
 * CodeGraph (`@colbymchenry/codegraph`, the code-navigation graph — see
-  [AGENTS.md](../AGENTS.md) "Code Navigation") — installed from the **npm
+  [AGENTS.md](../AGENTS.md) "Code navigation") — installed from the **npm
   registry**, not its recommended `curl|sh` installer, which pulls a runtime
   from GitHub releases this environment blocks (same reason `just`/`uv`/`node`
   above skip their GitHub installers). The tool is fully local (bundled SQLite,
@@ -128,7 +128,7 @@ the snapshot and on disk at session start:
   tests, matching what CI (`.github/workflows/ci.yml`) uses.
 * `hadolint/hadolint` — backs the `hadolint` shim above, so the Dockerfile gate
   in `just ci` runs in-session instead of only in CI. Pinned to the same version
-  as `mise.toml` and the `.pre-commit-config.yaml` rev (AGENTS.md Constraint 15);
+  as `mise.toml` and the `.pre-commit-config.yaml` rev (docs/dependencies.md);
   the `renovate.json` `hadolint` group bumps all three together.
 
 Only the daemon (a process) is restarted per session by the hook; containers

@@ -126,7 +126,7 @@ jobs:
         with:
           # Explicit version, kept in sync with mise.toml and
           # frontend/package.json "packageManager" by the Renovate "pnpm" group
-          # (AGENTS.md Constraint 15). We can't omit it and read packageManager
+          # (docs/dependencies.md). We can't omit it and read packageManager
           # instead: v6 fails to resolve it from a subdirectory package.json
           # (pnpm/action-setup#227), and there is no root package.json here.
           version: 11.15.1

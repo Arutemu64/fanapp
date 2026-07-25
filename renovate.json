@@ -68,7 +68,7 @@
       "automerge": true
     },
     {
-      "description": "CI-minute control: batch every GitHub Actions bump into one PR. Action updates are mostly digest re-pins from helpers:pinGitHubActionDigests and arrive several at a time; as individual PRs each one costs a CI run on its branch plus another on main once it automerges. The Constraint 15 groups below still override this for the pins they own.",
+      "description": "CI-minute control: batch every GitHub Actions bump into one PR. Action updates are mostly digest re-pins from helpers:pinGitHubActionDigests and arrive several at a time; as individual PRs each one costs a CI run on its branch plus another on main once it automerges. The shared-pin groups below still override this for the pins they own.",
       "groupName": "github actions",
       "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["minor", "patch", "digest", "pin"]
@@ -88,12 +88,12 @@
       "matchUpdateTypes": ["minor", "patch"]
     },
     {
-      "description": "Constraint 15 (AGENTS.md): keep every uv pin identical. Group the PyPI pin (setup.sh, pyproject [tool.uv], CI), the Docker builder image, and the mise toolchain pin into one PR so they always bump together.",
+      "description": "the shared-pin rule (docs/dependencies.md): keep every uv pin identical. Group the PyPI pin (setup.sh, pyproject [tool.uv], CI), the Docker builder image, and the mise toolchain pin into one PR so they always bump together.",
       "groupName": "uv",
       "matchPackageNames": ["uv", "astral-sh/uv", "ghcr.io/astral-sh/uv"]
     },
     {
-      "description": "Constraint 15: keep every Postgres image pin identical (docker-compose + the two Python literals) — a mismatched image risks false migration diffs. One grouped PR. postgres-backup-local's '18-alpine' tag must track the postgres major, so it rides in the same group.",
+      "description": "Shared pin (docs/dependencies.md): keep every Postgres image pin identical (docker-compose + the two Python literals) — a mismatched image risks false migration diffs. One grouped PR. postgres-backup-local's '18-alpine' tag must track the postgres major, so it rides in the same group.",
       "groupName": "postgres",
       "matchDepNames": ["postgres", "prodrigestivill/postgres-backup-local"]
     },
@@ -103,12 +103,12 @@
       "matchDepNames": ["node"]
     },
     {
-      "description": "Constraint 15: keep every pnpm binary pin identical — mise.toml, package.json 'packageManager', and the CI setup-pnpm 'version' input (via the custom manager below). One grouped PR. Excludes the pnpm/action-setup action itself, which is a separate version stream handled by the github-actions manager.",
+      "description": "Shared pin (docs/dependencies.md): keep every pnpm binary pin identical — mise.toml, package.json 'packageManager', and the CI setup-pnpm 'version' input (via the custom manager below). One grouped PR. Excludes the pnpm/action-setup action itself, which is a separate version stream handled by the github-actions manager.",
       "groupName": "pnpm",
       "matchDepNames": ["pnpm"]
     },
     {
-      "description": "Constraint 15: keep the hadolint binary pin identical across the pre-commit hook (.pre-commit-config.yaml rev) and mise.toml. Excludes hadolint/hadolint-action, a separate action version stream.",
+      "description": "Shared pin (docs/dependencies.md): keep the hadolint binary pin identical across the pre-commit hook (.pre-commit-config.yaml rev) and mise.toml. Excludes hadolint/hadolint-action, a separate action version stream.",
       "groupName": "hadolint",
       "matchPackageNames": ["hadolint", "hadolint/hadolint"]
     },
@@ -142,7 +142,7 @@
   ],
   "customManagers": [
     {
-      "description": "Constraint 15: Postgres image tag hard-coded as a Python string literal in the migration generator and the integration-test fixture (not visible to the docker-compose manager).",
+      "description": "Shared pin (docs/dependencies.md): Postgres image tag hard-coded as a Python string literal in the migration generator and the integration-test fixture (not visible to the docker-compose manager).",
       "customType": "regex",
       "managerFilePatterns": [
         "/^backend/scripts/generate_migration\\.py$/",
@@ -154,7 +154,7 @@
       "versioningTemplate": "docker"
     },
     {
-      "description": "Constraint 15: hadolint image tag in the cloud setup script — both the prepull list and the Docker-backed shim it installs (hadolint has no native install channel in that environment). Feeds the 'hadolint' group above so it bumps together with mise.toml and the .pre-commit-config.yaml rev.",
+      "description": "Shared pin (docs/dependencies.md): hadolint image tag in the cloud setup script — both the prepull list and the Docker-backed shim it installs (hadolint has no native install channel in that environment). Feeds the 'hadolint' group above so it bumps together with mise.toml and the .pre-commit-config.yaml rev.",
       "customType": "regex",
       "managerFilePatterns": ["/^\\.claude/setup\\.sh$/"],
       "matchStrings": ["hadolint/hadolint:(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)"],
@@ -163,7 +163,7 @@
       "versioningTemplate": "docker"
     },
     {
-      "description": "Constraint 15: uv version pinned as a PyPI package in the cloud setup script and in pyproject [tool.uv] required-version.",
+      "description": "Shared pin (docs/dependencies.md): uv version pinned as a PyPI package in the cloud setup script and in pyproject [tool.uv] required-version.",
       "customType": "regex",
       "managerFilePatterns": [
         "/^\\.claude/setup\\.sh$/",
@@ -178,7 +178,7 @@
       "versioningTemplate": "pep440"
     },
     {
-      "description": "Constraint 15: uv version passed to astral-sh/setup-uv in CI (a workflow input the github-actions manager does not touch).",
+      "description": "Shared pin (docs/dependencies.md): uv version passed to astral-sh/setup-uv in CI (a workflow input the github-actions manager does not touch).",
       "customType": "regex",
       "managerFilePatterns": ["/^\\.github/workflows/ci\\.yml$/"],
       "matchStrings": [
@@ -189,7 +189,7 @@
       "versioningTemplate": "pep440"
     },
     {
-      "description": "Constraint 15: pnpm version passed to pnpm/action-setup in CI (a workflow input the github-actions manager does not touch). Kept explicit because v6 can't read packageManager from a subdirectory package.json (pnpm/action-setup#227). The optional comment groups tolerate the trailing '# v6' that helpers:pinGitHubActionDigests adds to the pinned 'uses:' line.",
+      "description": "Shared pin (docs/dependencies.md): pnpm version passed to pnpm/action-setup in CI (a workflow input the github-actions manager does not touch). Kept explicit because v6 can't read packageManager from a subdirectory package.json (pnpm/action-setup#227). The optional comment groups tolerate the trailing '# v6' that helpers:pinGitHubActionDigests adds to the pinned 'uses:' line.",
       "customType": "regex",
       "managerFilePatterns": ["/^\\.github/workflows/ci\\.yml$/"],
       "matchStrings": [
