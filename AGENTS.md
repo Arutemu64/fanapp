@@ -6,6 +6,7 @@ Helper web app for the "FAN FAN" Russian anime convention. Audience: teen to you
 
 * **Never** import outward from `core/` or `application/` — no ORM models, concrete adapters, presentation routers, no FastAPI/SQLAlchemy in `core/`. Infrastructure reaches the inner layers only through ports in `application/ports/`. Enforced by `just backend-import-lint`.
 * **Never** ship user-facing English. Every label, placeholder, error, toast and empty state is **Russian**. Code comments and docstrings are **English**.
+* **Never** delete or weaken an existing comment while refactoring unless the code it describes is gone. A comment that survived review encodes a constraint you cannot see from the diff; if it looks wrong, verify before dropping it.
 * **Never** keep request- or user-scoped state in a frontend module singleton — modules outlive navigation and login/logout in the SPA.
 * **Never** add, rename or remove an env var without updating `.env.example` in the same change. Its header explains the three consumers and the grouping; the backend's `extra="ignore"` means a drifted key fails silently at runtime instead of at boot.
 * **Never** call work done with a failing gate: `just backend-lint` + `just backend-typecheck` after Python, `just frontend-lint` + `just frontend-check` after frontend, `just dockerfile-lint` after a `Dockerfile`. Tests are not a gate — run them when useful.
@@ -89,4 +90,6 @@ Structural change → update the docs **in the same change**. Prefer documenting
 * **Mobile first.** Narrow layouts are the default; leave bottom padding so the floating nav bar never covers a control.
 * **Verify Jinja templates by rendering them** with the real context before calling the task done — do not assume they render.
 * **Verify a "best practice" claim before asserting it.** Recommending an HTTP header, config default, caching/security/auth policy or framework convention needs a current docs lookup and a citation — not training memory. Routine edits do not.
-* **`TODO`s are tracked or absent.** Prefer an issue; if a marker is unavoidable, write `# TODO(<issue-ref>): ...` so it is greppable and owned.
+* **`TODO`s explain themselves.** A marker says what is missing and why it was deferred, so it is actionable without hunting for context: `# TODO: <what> — <why deferred>`. An issue reference is welcome, never required.
+* **Comments carry the *why*.** A comment earns its place by recording something the code cannot say: the constraint that forced this shape, the rejected alternative, the upstream bug, the ADR. Never restate what the line already says, and never annotate a function just because it is new — on short, simple code an explanatory comment is usually noise. Prefer a clearer name or type over a comment that compensates for a bad one.
+* **A comment changes with its code, in the same edit.** Touching a line whose comment above it no longer holds means rewriting the comment too. Stale comments are worse than no comment: reviewers trust them.

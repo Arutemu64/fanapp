@@ -39,7 +39,7 @@ target-version = "py314"
 select = ["ALL"]
 ignore = [
     "D",       # pydocstyle (noisy in app development where public docs aren't strictly mandated)
-    "ANN",     # flake8-annotations (type-checking is handled statically by mypy/pyright)
+    "ANN",     # flake8-annotations (type-checking is handled statically by `ty`)
     "N",       # pep8-naming (occasionally conflicts with external schemas or webhook models)
     "FBT",     # flake8-boolean-trap (perfectly fine for query params/arguments in web routes)
     # pylint-refactor code-metric rules: noisy in DDD interactors/controllers where
@@ -56,9 +56,10 @@ ignore = [
     "ISC001",  # single-line-implicit-string-concatenation (formatter compatibility)
     "ARG001",  # unused-function-argument (standard in web routers / dependency injections)
     "FIX002",  # line-contains-todo (TODOs are valid development indicators, not errors)
-    "TD002",   # missing-todo-author (flake8-todos)
+    "TD002",   # missing-todo-author (git blame already answers "who")
+    # A TODO must explain itself (AGENTS.md), not point at a tracker: this project has
+    # no issue-per-TODO workflow, so requiring a link would only buy placeholder refs.
     "TD003",   # missing-todo-link (flake8-todos)
-    "TD004",   # missing-todo-description (flake8-todos)
 
     # ⚠️ CRITICAL: Project evaluates annotations at runtime (no `from __future__
     # import annotations`), and SQLAlchemy (Mapped[...]), Pydantic, and Dishka DI

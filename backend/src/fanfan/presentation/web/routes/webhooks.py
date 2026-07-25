@@ -23,7 +23,7 @@ class TCloudWebhookOrderRef(BaseModel):
 
 class TCloudWebhookPayload(BaseModel):
     data: TCloudWebhookOrderRef
-    type: str  # TODO Enforce possible types later
+    type: str  # TODO: Enforce possible types later
 
 
 class TCloudWebhookResponse(BaseModel):
