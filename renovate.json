@@ -9,7 +9,10 @@
     "abandonments:recommended"
   ],
   "configMigration": true,
-  "description": "ignorePaths restates the :ignoreModulesAndTests default (part of config:recommended) minus '**/tests/**': the postgres custom manager below must see backend/tests/fixtures/db_provider.py, which the default ignore silently excludes.",
+  "description": [
+    "ignorePaths restates the :ignoreModulesAndTests default (part of config:recommended) minus '**/tests/**': the postgres custom manager below must see backend/tests/fixtures/db_provider.py, which the default ignore silently excludes.",
+    "Actions minutes are billed on this private repo and Renovate is by far the largest consumer of them, so rebaseWhen and platformAutomerge below are set purely to stop it from multiplying CI runs. rebaseWhen 'conflicted' replaces the default 'auto', which rebases every open Renovate branch whenever main moves — with several automerging PRs open at once that cascades: each merge re-triggers CI on every other open branch. platformAutomerge hands merging to GitHub's own auto-merge, so Renovate does not push extra commits (and extra CI runs) just to land a branch that is already green. See https://docs.renovatebot.com/noise-reduction/"
+  ],
   "ignorePaths": [
     "**/node_modules/**",
     "**/bower_components/**",
@@ -22,8 +25,10 @@
   "timezone": "Europe/Moscow",
   "schedule": ["before 6am on monday"],
   "labels": ["dependencies"],
-  "prConcurrentLimit": 8,
+  "prConcurrentLimit": 4,
   "prHourlyLimit": 2,
+  "rebaseWhen": "conflicted",
+  "platformAutomerge": true,
   "rangeStrategy": "bump",
   "minimumReleaseAge": "7 days",
   "lockFileMaintenance": {
@@ -44,16 +49,16 @@
       "automerge": true
     },
     {
-      "description": "Auto-merge backend dev-group tools (ruff, ty, pytest, import-linter, etc.) on minor/patch.",
+      "description": "Auto-merge backend dev-group tools (ruff, ty, pytest, import-linter, etc.) on minor/patch. The depType is 'dependency-groups' — the name Renovate's pep621 manager gives the whole PEP 735 [dependency-groups] table (https://docs.renovatebot.com/modules/manager/pep621/) — not the group's own name 'dev', which never matched.",
       "matchFileNames": ["backend/pyproject.toml"],
-      "matchDepTypes": ["dev"],
+      "matchDepTypes": ["dependency-groups"],
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true
     },
     {
-      "description": "Auto-merge GitHub Actions on minor/patch; majors still get a manual review PR.",
+      "description": "Auto-merge GitHub Actions on minor/patch; majors still get a manual review PR. 'pin' is included so it matches the 'github actions' batching group below exactly — a group whose members disagree about automerge does not automerge at all, and pinning an action already in use to its current digest changes nothing.",
       "matchManagers": ["github-actions"],
-      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
       "automerge": true
     },
     {
@@ -61,6 +66,26 @@
       "matchManagers": ["pre-commit"],
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true
+    },
+    {
+      "description": "CI-minute control: batch every GitHub Actions bump into one PR. Action updates are mostly digest re-pins from helpers:pinGitHubActionDigests and arrive several at a time; as individual PRs each one costs a CI run on its branch plus another on main once it automerges. The Constraint 15 groups below still override this for the pins they own.",
+      "groupName": "github actions",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin"]
+    },
+    {
+      "description": "CI-minute control: batch dev tooling (linters, formatters, type checkers, test libs, build tooling) into one PR. These already automerge on green, so a single grouped PR lands the whole week's tooling in one CI run instead of one per package.",
+      "groupName": "dev tooling",
+      "matchFileNames": ["frontend/package.json", "backend/pyproject.toml"],
+      "matchDepTypes": ["devDependencies", "dependency-groups"],
+      "matchUpdateTypes": ["minor", "patch"]
+    },
+    {
+      "description": "CI-minute control: batch backend runtime minor/patch bumps into one reviewable PR. These deliberately do NOT automerge (they ship to prod), so grouping trades one weekly review for one CI run instead of a run per package.",
+      "groupName": "backend dependencies",
+      "matchFileNames": ["backend/pyproject.toml"],
+      "matchDepTypes": ["project.dependencies"],
+      "matchUpdateTypes": ["minor", "patch"]
     },
     {
       "description": "Constraint 15 (AGENTS.md): keep every uv pin identical. Group the PyPI pin (setup.sh, pyproject [tool.uv], CI), the Docker builder image, and the mise toolchain pin into one PR so they always bump together.",
