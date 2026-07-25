@@ -50,13 +50,27 @@ if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo"; fi
 
 # Drift check: setup.sh is pasted into the cloud environment UI by hand, so the
 # branch's copy can silently move ahead of what this environment's snapshot was
-# built from. setup.sh records its own hash at environment creation; compare it
-# against the repo copy and nag until the UI copy is refreshed. A missing hash
-# file also means the snapshot predates the recording step - same remedy.
-SETUP_HASH_FILE="$HOME/.cache/fanfan-setup.hash"
+# built from. At environment creation setup.sh writes a two-line state file:
+# line 1 is the hash of the repo copy it saw, line 2 is `complete`, appended
+# only once the script reaches its end. Four situations, four messages - the
+# remedy is the same repaste every time, but a reader who is told "your script
+# was truncated" can act on it, while the old single "drifted" warning fired
+# for every one of these and so trained everyone to ignore it.
+SETUP_STATE_FILE="$HOME/.cache/fanfan-setup.state" # written by .claude/setup.sh
+REPASTE_HINT="refresh the Setup script field in the cloud environment UI to rebuild the snapshot (see docs/claude-cloud.md)."
 if [ -f "$REPO_ROOT/.claude/setup.sh" ]; then
-  if [ ! -f "$SETUP_HASH_FILE" ] || [ "$(sha256sum "$REPO_ROOT/.claude/setup.sh" | awk '{print $1}')" != "$(cat "$SETUP_HASH_FILE")" ]; then
-    echo "[session-start] WARN: .claude/setup.sh differs from what this environment ran at creation - refresh the Setup script field in the cloud environment UI to rebuild the snapshot (see docs/claude-cloud.md)."
+  repo_hash="$(sha256sum "$REPO_ROOT/.claude/setup.sh" | awk '{print $1}')"
+  recorded_hash="$(sed -n 1p "$SETUP_STATE_FILE" 2>/dev/null || true)"
+  setup_finished="$(sed -n 2p "$SETUP_STATE_FILE" 2>/dev/null || true)"
+
+  if [ ! -f "$SETUP_STATE_FILE" ]; then
+    echo "[session-start] WARN: this environment's snapshot predates setup.sh drift detection - $REPASTE_HINT"
+  elif [ "$setup_finished" != "complete" ]; then
+    echo "[session-start] WARN: setup.sh did not reach its end at environment creation (truncated paste, or it failed midway) - $REPASTE_HINT"
+  elif [ "$recorded_hash" = "unknown" ]; then
+    echo "[session-start] WARN: setup.sh could not find the repo clone at environment creation, so drift cannot be checked - $REPASTE_HINT"
+  elif [ "$recorded_hash" != "$repo_hash" ]; then
+    echo "[session-start] WARN: .claude/setup.sh differs from what this environment ran at creation - $REPASTE_HINT"
   fi
 fi
 

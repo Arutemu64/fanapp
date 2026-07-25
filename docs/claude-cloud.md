@@ -50,11 +50,16 @@ does not trigger a rebuild** — which is why dependency installs live in the ho
 > The setup script lives in the cloud environment UI, not the repo. `.claude/setup.sh`
 > is tracked here for review and as the source of truth; you must paste/refresh
 > it into the environment's **Setup script** field for it to run. Keep the two in
-> sync — drift is detected automatically: at environment creation the setup
-> script records a hash of the repo's `.claude/setup.sh`
-> (`~/.cache/fanfan-setup.hash`), and the SessionStart hook warns at session
-> start whenever the branch's copy no longer matches. On that warning, repaste
-> the file into the **Setup script** field (which rebuilds the snapshot).
+> sync — drift is detected automatically. At environment creation the setup
+> script writes `~/.cache/fanfan-setup.state`: the hash of the repo's
+> `.claude/setup.sh` on line 1, written before anything else runs, and
+> `complete` on line 2, appended only once the script reaches its end. The
+> SessionStart hook reads both and warns when the hashes differ, when the script
+> never finished (a paste the UI truncated, or a mid-run failure), or when the
+> marker is missing altogether. The remedy is the same in every case — repaste
+> the file into the **Setup script** field, which rebuilds the snapshot — but
+> the warning says which one you are looking at, so a truncated paste is not
+> reported as ordinary drift.
 
 ## What runs where
 

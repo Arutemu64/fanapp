@@ -53,6 +53,50 @@ export PATH="$HOME/.local/bin:$PATH"
 # Run apt/sudo correctly whether or not we are already root.
 if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo"; fi
 
+# Locate the repo clone. cwd is not guaranteed to be inside it during the
+# setup-script phase and CLAUDE_PROJECT_DIR is not set there, so fall back to
+# git, then to the standard clone locations. Prints nothing if the clone cannot
+# be found, so callers can decide what to do.
+resolve_repo_root() {
+  local git_root candidate
+  if [ -n "${CLAUDE_PROJECT_DIR:-}" ] && [ -f "$CLAUDE_PROJECT_DIR/.claude/setup.sh" ]; then
+    echo "$CLAUDE_PROJECT_DIR"
+    return
+  fi
+  git_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+  if [ -n "$git_root" ] && [ -f "$git_root/.claude/setup.sh" ]; then
+    echo "$git_root"
+    return
+  fi
+  for candidate in /home/*/*/.claude/setup.sh /workspace/*/.claude/setup.sh; do
+    if [ -f "$candidate" ]; then
+      echo "$(dirname "$(dirname "$candidate")")"
+      return
+    fi
+  done
+}
+
+REPO_ROOT="$(resolve_repo_root)"
+
+# Drift detection, part 1 of 2. This script is pasted into the cloud environment
+# UI by hand, so the branch's copy can silently move ahead of what the snapshot
+# was built from; the SessionStart hook compares the two and nags. The hash is
+# recorded HERE, before anything slow runs, and `complete` is appended only at
+# the very end (part 2). Recording only at the end - as this did originally -
+# cannot distinguish "in sync" from "the paste was truncated" or "the run died
+# midway": all three leave no marker, so the hook warned forever with nothing
+# for the reader to fix.
+# Best-effort: a failure here weakens the warning, it must not fail the setup.
+SETUP_STATE_FILE="$HOME/.cache/fanfan-setup.state" # also read by .claude/hooks/session-start.sh
+mkdir -p "$HOME/.cache" || true
+if [ -n "$REPO_ROOT" ] && sha256sum "$REPO_ROOT/.claude/setup.sh" | awk '{print $1}' > "$SETUP_STATE_FILE"; then
+  echo "[setup] Recorded setup.sh hash for drift detection."
+else
+  # The hook reports this as "could not verify" rather than as real drift.
+  echo "unknown" > "$SETUP_STATE_FILE" || true
+  echo "[setup] WARN: repo clone not found; setup.sh drift detection disabled."
+fi
+
 echo "[setup] Installing just (apt)..."
 if ! command -v just >/dev/null 2>&1; then
   $SUDO apt-get install -y -qq just \
@@ -122,12 +166,12 @@ if npm install -g @colbymchenry/codegraph >/dev/null 2>&1; then
   if [ -n "$CG_BIN" ]; then
     $SUDO ln -sf "$CG_BIN" /usr/local/bin/codegraph 2>/dev/null || true
   fi
-  # Resolve the repo root the same way the hash block below does; cwd is not
-  # guaranteed to be inside the clone at env-creation time. If the seed lands
-  # in the wrong place (or fails), the hook's own index build recovers.
-  CODEGRAPH_ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  # Seed into the clone resolved at the top; cwd is not guaranteed to be inside
+  # it at env-creation time, and seeding the wrong directory would leave the
+  # repo unindexed. If the seed lands nowhere (or fails), the hook's own index
+  # build recovers.
   echo "[setup] Seeding CodeGraph index..."
-  if [ -d "$CODEGRAPH_ROOT" ] && (cd "$CODEGRAPH_ROOT" && codegraph init >/dev/null 2>&1); then
+  if [ -n "$REPO_ROOT" ] && (cd "$REPO_ROOT" && codegraph init >/dev/null 2>&1); then
     echo "[setup]   CodeGraph installed and index seeded."
   else
     echo "[setup]   WARN: CodeGraph index seed failed; the SessionStart hook will build it."
@@ -218,19 +262,12 @@ exec docker run --rm -i \
 HADOLINT_SHIM
 $SUDO chmod +x /usr/local/bin/hadolint
 
-# Record the hash of the repo's setup.sh so the SessionStart hook can detect
-# drift: this script is pasted into the cloud environment UI by hand, and
-# nothing else notices when the repo copy moves ahead of the snapshot. The
-# repo is cloned before the setup script runs, but cwd is not guaranteed to
-# be inside it, so fall through the same candidates the hook uses.
-# Best-effort: skipping the hash only disables the drift warning.
-REPO_ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-if [ -f "$REPO_ROOT/.claude/setup.sh" ]; then
-  mkdir -p "$HOME/.cache"
-  sha256sum "$REPO_ROOT/.claude/setup.sh" | awk '{print $1}' > "$HOME/.cache/fanfan-setup.hash"
-  echo "[setup] Recorded setup.sh hash for drift detection."
-else
-  echo "[setup] Note: repo setup.sh not found from cwd; drift detection disabled."
-fi
-
 echo "[setup] Setup complete."
+
+# Drift detection, part 2 of 2 (see part 1 near the top): mark the run as having
+# reached its end. Keep this the LAST line of the script - anything that stops
+# the script earlier, including a paste the UI truncated, must leave the marker
+# absent so the hook can report that instead of silently passing. Never fatal:
+# the marker is diagnostics, and a nonzero exit here would fail the whole
+# environment creation after every install has already succeeded.
+echo "complete" >> "$SETUP_STATE_FILE" || true
