@@ -2,6 +2,16 @@ name: CI
 
 # Run the same quality gates we run locally (see justfile / .pre-commit-config.yaml)
 # on every pull request and on pushes to main.
+#
+# Everything lives in ONE job on purpose. Billed Actions usage is metered per
+# job, rounded UP to a whole minute
+# (https://docs.github.com/en/actions/concepts/billing-and-usage). Every gate
+# here finishes in well under a minute, so the previous five-job fan-out cost 5
+# minutes for ~2 minutes of real work — the rounding, not the work, was the
+# spend. Sequencing the gates in a single job costs 2. Wall-clock time goes up
+# by roughly a minute; minutes are the scarcer resource, not latency.
+#
+# Run the identical gates locally with `just ci` before pushing.
 on:
   pull_request:
   push:
@@ -21,20 +31,34 @@ permissions:
   pull-requests: read
 
 jobs:
-  # Detect which areas changed so we skip CI for unrelated edits (e.g. docs,
-  # AGENTS.md). Downstream jobs gate on these outputs. The workflow file itself
-  # is in both filters so changes to CI always re-run everything.
-  changes:
-    name: Detect changed areas
+  quality:
+    name: Quality gates
     runs-on: ubuntu-latest
-    outputs:
-      backend: ${{ steps.filter.outputs.backend }}
-      frontend: ${{ steps.filter.outputs.frontend }}
-      dockerfiles: ${{ steps.filter.outputs.dockerfiles }}
+    # Docker is preinstalled and running on ubuntu-latest, which is all the
+    # testcontainers-based integration tests (Postgres + Redis) need.
+    env:
+      # CI runners can block the testcontainers Ryuk reaper's socket; the
+      # ephemeral VM is thrown away after the job, so cleanup isn't needed.
+      TESTCONTAINERS_RYUK_DISABLED: "true"
+      # `pnpm check` and `pnpm build` read PUBLIC_* via `$env/static/public`, which
+      # errors on any referenced var that is undefined at build time. Supply them
+      # from the same repository variables the publish workflow bakes in (empty is
+      # fine — the vars just need to exist). `pnpm lint` ignores them.
+      PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
+      PUBLIC_VAPID_KEY: ${{ vars.PUBLIC_VAPID_KEY }}
+      PUBLIC_SENTRY_DSN: ${{ vars.PUBLIC_SENTRY_DSN }}
+      PUBLIC_SENTRY_ENVIRONMENT: ${{ vars.PUBLIC_SENTRY_ENVIRONMENT }}
+      PUBLIC_SENTRY_TRACES_SAMPLE_RATE: ${{ vars.PUBLIC_SENTRY_TRACES_SAMPLE_RATE }}
+      PUBLIC_SMARTCAPTCHA_CLIENT_KEY: ${{ vars.PUBLIC_SMARTCAPTCHA_CLIENT_KEY }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+
+      # Detect which areas changed so we skip gates for unrelated edits (e.g.
+      # docs, AGENTS.md) — a docs-only change then costs a single metered
+      # minute. The workflow file is in every filter so changes to CI always
+      # re-run everything.
       - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4
-        id: filter
+        id: changes
         with:
           filters: |
             backend:
@@ -49,39 +73,10 @@ jobs:
               - '.hadolint.yaml'
               - '.github/workflows/ci.yml'
 
-  # Lint the Dockerfiles against best practices with hadolint. `recursive`
-  # scans every Dockerfile from the repo root, so new ones are covered without
-  # touching this workflow. Reads .hadolint.yaml (trusted registries) by default.
-  hadolint:
-    name: Dockerfiles (hadolint)
-    needs: changes
-    if: needs.changes.outputs.dockerfiles == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
-      - name: Lint Dockerfiles
-        uses: hadolint/hadolint-action@2332a7b74a6de0dda2e2221d575162eba76ba5e5 # v3.3.0
-        with:
-          recursive: true
-
-  backend:
-    name: Backend (lint, types, tests)
-    needs: changes
-    if: needs.changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
-    # Docker is preinstalled and running on ubuntu-latest, which is all the
-    # testcontainers-based integration tests (Postgres + Redis) need.
-    defaults:
-      run:
-        working-directory: backend
-    env:
-      # CI runners can block the testcontainers Ryuk reaper's socket; the
-      # ephemeral VM is thrown away after the job, so cleanup isn't needed.
-      TESTCONTAINERS_RYUK_DISABLED: "true"
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      # ---- Backend ----
 
       - name: Install uv
+        if: steps.changes.outputs.backend == 'true'
         uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
         with:
           version: "0.11.29"  # matches backend/pyproject.toml [tool.uv] and Dockerfile
@@ -89,60 +84,44 @@ jobs:
           # Cache invalidates when the backend lockfile changes.
           cache-dependency-glob: backend/uv.lock
 
-      - name: Install dependencies
+      - name: Install backend dependencies
+        if: steps.changes.outputs.backend == 'true'
+        working-directory: backend
         run: uv sync --all-groups --frozen
 
+      # Every gate below is guarded with `!cancelled()` so the rest keep running
+      # after one fails: a single run then reports every problem instead of only
+      # the first. Re-running CI to discover the next failure is what actually
+      # burns minutes. (This replaces the old jobs' `fail-fast: false`.)
+      #
       # Lint and format are check-only here (no --fix / no rewrite): CI must
       # fail on violations, not silently "fix" them like the local justfile does.
       - name: Ruff lint
+        if: ${{ !cancelled() && steps.changes.outputs.backend == 'true' }}
+        working-directory: backend
         run: uv run ruff check src/fanfan tests --respect-gitignore
 
       - name: Ruff format check
+        if: ${{ !cancelled() && steps.changes.outputs.backend == 'true' }}
+        working-directory: backend
         run: uv run ruff format --check src/fanfan tests --respect-gitignore
 
       - name: Type check (ty)
+        if: ${{ !cancelled() && steps.changes.outputs.backend == 'true' }}
+        working-directory: backend
         run: uv run ty check src/fanfan
 
       # Runs unit and integration tests. Integration tests start their own
       # Postgres/Redis containers via testcontainers fixtures.
-      - name: Tests
+      - name: Backend tests
+        if: ${{ !cancelled() && steps.changes.outputs.backend == 'true' }}
+        working-directory: backend
         run: uv run pytest tests
 
-  frontend:
-    # Lint, check and build are independent, so we run them as a matrix of
-    # parallel jobs instead of three sequential steps. Wall-clock time drops to
-    # the slowest single task (the build) instead of the sum of all three.
-    name: Frontend (${{ matrix.task.name }})
-    needs: changes
-    if: needs.changes.outputs.frontend == 'true'
-    runs-on: ubuntu-latest
-    # `check` and `build` read PUBLIC_* via `$env/static/public`, which errors on
-    # any referenced var that is undefined at build time. Supply them from the
-    # same repository variables the publish workflow bakes in (empty is fine — the
-    # vars just need to exist). `lint` ignores them.
-    env:
-      PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
-      PUBLIC_VAPID_KEY: ${{ vars.PUBLIC_VAPID_KEY }}
-      PUBLIC_SENTRY_DSN: ${{ vars.PUBLIC_SENTRY_DSN }}
-      PUBLIC_SENTRY_ENVIRONMENT: ${{ vars.PUBLIC_SENTRY_ENVIRONMENT }}
-      PUBLIC_SENTRY_TRACES_SAMPLE_RATE: ${{ vars.PUBLIC_SENTRY_TRACES_SAMPLE_RATE }}
-      PUBLIC_SMARTCAPTCHA_CLIENT_KEY: ${{ vars.PUBLIC_SMARTCAPTCHA_CLIENT_KEY }}
-    strategy:
-      # Don't cancel the other tasks when one fails: we want to see every
-      # failure (lint, types and build) in a single CI run, not just the first.
-      fail-fast: false
-      matrix:
-        task:
-          - { name: lint, command: pnpm lint }
-          - { name: check, command: pnpm check }
-          - { name: build, command: pnpm build }
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      # ---- Frontend ----
 
       - name: Install pnpm
+        if: ${{ !cancelled() && steps.changes.outputs.frontend == 'true' }}
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
         with:
           # Explicit version, kept in sync with mise.toml and
@@ -153,14 +132,40 @@ jobs:
           version: 11.15.1
 
       - name: Install Node
+        if: ${{ !cancelled() && steps.changes.outputs.frontend == 'true' }}
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24.18.0
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
+        if: ${{ !cancelled() && steps.changes.outputs.frontend == 'true' }}
+        working-directory: frontend
         run: pnpm install --frozen-lockfile
 
-      - name: Run ${{ matrix.task.name }}
-        run: ${{ matrix.task.command }}
+      - name: Frontend lint
+        if: ${{ !cancelled() && steps.changes.outputs.frontend == 'true' }}
+        working-directory: frontend
+        run: pnpm lint
+
+      - name: Frontend type check
+        if: ${{ !cancelled() && steps.changes.outputs.frontend == 'true' }}
+        working-directory: frontend
+        run: pnpm check
+
+      - name: Frontend build
+        if: ${{ !cancelled() && steps.changes.outputs.frontend == 'true' }}
+        working-directory: frontend
+        run: pnpm build
+
+      # ---- Dockerfiles ----
+
+      # Lint the Dockerfiles against best practices with hadolint. `recursive`
+      # scans every Dockerfile from the repo root, so new ones are covered without
+      # touching this workflow. Reads .hadolint.yaml (trusted registries) by default.
+      - name: Lint Dockerfiles
+        if: ${{ !cancelled() && steps.changes.outputs.dockerfiles == 'true' }}
+        uses: hadolint/hadolint-action@2332a7b74a6de0dda2e2221d575162eba76ba5e5 # v3.3.0
+        with:
+          recursive: true
