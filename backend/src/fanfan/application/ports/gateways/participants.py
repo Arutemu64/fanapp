@@ -16,7 +16,6 @@ class ParticipantGateway(Protocol):
     async def list_cosplay2_ids(self) -> list[int]: ...
     async def delete_by_cosplay2_ids(self, cosplay2_ids: list[int]) -> None: ...
 
-    # Read projections (return DTOs, not aggregates)
     async def read_list_participants(
         self,
         user_id: UserId | None = None,

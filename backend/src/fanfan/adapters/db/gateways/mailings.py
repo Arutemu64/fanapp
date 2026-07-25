@@ -53,7 +53,6 @@ class SqlMailingGateway(MailingGateway):
         )
         await self.session.execute(stmt)
 
-    # Read projections (return DTOs, not aggregates)
     async def read_mailing(self, mailing_id: MailingId) -> MailingDTO | None:
         stmt = select(MailingORM).where(MailingORM.id == mailing_id)
         mailing_orm = await self.session.scalar(stmt)

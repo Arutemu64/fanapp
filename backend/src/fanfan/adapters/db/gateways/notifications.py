@@ -61,7 +61,6 @@ class SqlNotificationGateway(NotificationGateway):
         # execute() is typed as Result, but a DELETE yields a CursorResult.
         return cast("CursorResult", result).rowcount
 
-    # Read projections (return DTOs, not aggregates)
     async def read_realtime_notification(
         self, notification_id: NotificationId
     ) -> NotificationDTO | None:

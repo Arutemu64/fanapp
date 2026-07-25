@@ -37,7 +37,6 @@
 		{/if}
 	</div>
 
-	<!-- Title -->
 	<h3 class="flex-1 text-base leading-snug font-bold break-words text-gray-900 dark:text-white">
 		{nomination.title}
 	</h3>

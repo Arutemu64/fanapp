@@ -65,17 +65,13 @@
 
 	<div class="grid items-start gap-4 sm:grid-cols-2 sm:gap-5">
 		<div class="flex flex-col gap-4">
-			<!-- Ticket Link Card -->
 			<TicketLinkCard {user} onTicketLinked={refreshProfile} />
-			<!-- Login Methods Card -->
 			<SecurityCard {user} onUpdate={refreshProfile} />
 		</div>
 
 		<div class="flex flex-col gap-4">
-			<!-- PWA Install Card -->
 			<PwaInstallCard />
 
-			<!-- Push Notifications Card -->
 			<PushNotificationsCard {user} onSettingsUpdate={refreshProfile} />
 		</div>
 	</div>

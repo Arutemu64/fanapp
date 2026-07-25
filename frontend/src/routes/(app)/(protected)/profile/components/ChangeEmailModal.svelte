@@ -49,7 +49,6 @@
 		formError = '';
 	}
 
-	// Send OTP to the new email address (also used for resend)
 	async function sendOtp() {
 		if (isRequestingVerification) return;
 

@@ -26,7 +26,6 @@ class UpdateUserSettings:
         self.uow = uow
 
     async def __call__(self, data: UpdateUserSettingsInput) -> None:
-        # Only persist fields that were actually sent by the client.
         data_to_update = data.model_dump(exclude_unset=True)
         current_user = await self.current_user_provider.require_user()
         current_user.update_settings(

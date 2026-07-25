@@ -111,7 +111,6 @@ class SqlScheduleEventGateway(ScheduleEventGateway):
             delete(ScheduleEventORM).where(ScheduleEventORM.id == event.id)
         )
 
-    # Read projections (return DTOs, not aggregates)
     async def read_next_event(self) -> ScheduleEventFullDTO | None:
         current_event_order = (
             select(ScheduleEventORM.order)

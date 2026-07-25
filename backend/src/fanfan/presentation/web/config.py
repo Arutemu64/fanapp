@@ -22,7 +22,6 @@ class WebConfig(BaseModel):
 
     # Set to True in production (HTTPS). Ensures cookies are never sent over plain HTTP.
     cookie_secure: bool = False
-    # Redis-backed session lifetime in seconds.
     session_ttl_seconds: int = 60 * 60 * 24 * 30
     # Refresh Redis TTL only when remaining time drops below this threshold.
     session_touch_threshold_seconds: int = 60 * 60 * 6

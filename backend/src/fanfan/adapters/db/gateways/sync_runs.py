@@ -86,7 +86,6 @@ class SqlSyncRunGateway(SyncRunGateway):
         reaped = await self.session.scalars(stmt)
         return len(reaped.all())
 
-    # Read projections (return DTOs, not aggregates)
     async def read_latest_by_source(self) -> dict[SyncSource, SyncRunDTO]:
         stmt = (
             select(SyncRunORM)

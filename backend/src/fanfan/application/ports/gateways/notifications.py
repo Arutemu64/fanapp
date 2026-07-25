@@ -21,7 +21,6 @@ class NotificationGateway(Protocol):
         """Delete notifications older than ``days``; return the row count."""
         ...
 
-    # Read projections (return DTOs, not aggregates)
     async def read_realtime_notification(
         self, notification_id: NotificationId
     ) -> NotificationDTO | None: ...

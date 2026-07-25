@@ -149,7 +149,6 @@
 		unsubscribeModal = true;
 	}
 
-	// Open the confirm dialog for marking / unmarking the current event.
 	function askToggleCurrent() {
 		confirmConfig = event.is_current
 			? {
@@ -171,7 +170,6 @@
 		confirmOpen = true;
 	}
 
-	// Open the confirm dialog for skipping / restoring the event.
 	function askToggleSkip() {
 		confirmConfig = isSkipped
 			? {

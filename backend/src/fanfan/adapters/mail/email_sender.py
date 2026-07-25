@@ -14,7 +14,6 @@ class FastEmailSender(EmailSender):
         self.mail = mail
 
     async def send(self, message: EmailMessage) -> None:
-        # Convert the application-level email DTO to the FastMail-specific schema here.
         recipients = [
             NameEmail(name=recipient.name, email=recipient.email)
             for recipient in message.recipients

@@ -60,7 +60,6 @@ async function hasVisibleAppClient() {
 	return windowClients.some((client) => client.visibilityState === 'visible');
 }
 
-// Create a unique cache name for this deployment
 const CACHE = `cache-${version}`;
 
 // `build` lists the Vite-generated app files: empty during `vite dev` (the app is
@@ -77,7 +76,6 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
-	// Create a new cache and add all files to it
 	async function addFilesToCache() {
 		const cache = await caches.open(CACHE);
 		await cache.addAll(ASSETS);
@@ -98,7 +96,6 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
 	async function activate() {
-		// Remove previous cached data from disk
 		for (const key of await caches.keys()) {
 			if (key !== CACHE) await caches.delete(key);
 		}
@@ -204,7 +201,6 @@ self.addEventListener('fetch', (event) => {
 	event.respondWith(respond());
 });
 
-// Push Notifications Handling
 self.addEventListener('push', (event: PushEvent) => {
 	let data: PushNotificationPayload = {
 		title: 'ФАН ФАН',

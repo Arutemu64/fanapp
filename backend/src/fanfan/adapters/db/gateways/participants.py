@@ -78,7 +78,6 @@ class SqlParticipantGateway(ParticipantGateway):
             delete(ParticipantORM).where(ParticipantORM.id == participant.id)
         )
 
-    # Read projections (return DTOs, not aggregates)
     async def read_list_participants(
         self,
         user_id: UserId | None = None,
