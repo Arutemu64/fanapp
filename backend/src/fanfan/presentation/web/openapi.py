@@ -1,5 +1,11 @@
 from fastapi.routing import APIRoute
 
+# FastAPI's default title is the literal "FastAPI", which names the framework
+# rather than the service — misleading in the committed spec and in anything
+# rendered from it (/docs, generated clients). Set at every FastAPI build site
+# for the same reason as generate_operation_id below.
+API_TITLE = "FAN FAN API"
+
 
 def generate_operation_id(route: APIRoute) -> str:
     """Use the endpoint function name as the OpenAPI operationId.

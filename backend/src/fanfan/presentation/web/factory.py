@@ -20,7 +20,7 @@ from fanfan.presentation.web.middlewares import (
     no_store_cache_control,
     refresh_session_cookie,
 )
-from fanfan.presentation.web.openapi import generate_operation_id
+from fanfan.presentation.web.openapi import API_TITLE, generate_operation_id
 from fanfan.presentation.web.routes import setup_api_router
 
 
@@ -30,6 +30,7 @@ def create_app() -> FastAPI:
     config = get_config()
     app = FastAPI(
         debug=config.debug.enabled,
+        title=API_TITLE,
         version=APP_VERSION,
         generate_unique_id_function=generate_operation_id,
     )
