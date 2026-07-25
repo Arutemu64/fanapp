@@ -57,10 +57,8 @@ ignore = [
     "ARG001",  # unused-function-argument (standard in web routers / dependency injections)
     "FIX002",  # line-contains-todo (TODOs are valid development indicators, not errors)
     "TD002",   # missing-todo-author (git blame already answers "who")
-    # TD003 (missing-todo-link) is the mechanical form of the "TODOs are tracked or
-    # absent" rule in AGENTS.md, and is meant to be enabled. It currently fails on the
-    # three untracked TODOs in tickets_import.py, sync_tickets.py and webhooks.py;
-    # file issues, rewrite those as `# TODO(#NNN): ...`, then delete this line.
+    # A TODO must explain itself (AGENTS.md), not point at a tracker: this project has
+    # no issue-per-TODO workflow, so requiring a link would only buy placeholder refs.
     "TD003",   # missing-todo-link (flake8-todos)
     "TD004",   # missing-todo-description (flake8-todos)
 
