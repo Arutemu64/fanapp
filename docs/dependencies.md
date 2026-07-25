@@ -65,7 +65,9 @@ It lives in `backend/pyproject.toml` because that is the only manifest that must
 carry a version anyway and can be read back at runtime — `common/version.py`
 resolves it from the installed distribution, so `FastAPI(version=…)` and the
 committed `shared/openapi/openapi.json` cannot drift off it. Regenerate the spec
-(`just backend-generate-openapi`) when you bump.
+(`just backend-generate-openapi`) when you bump — that also refreshes the
+project's own version in `backend/uv.lock`, which must be committed with it or
+the image build fails on `uv sync --locked`.
 
 `frontend/package.json` deliberately stays at `0.0.0`. The frontend is
 `private`, is never installed by anyone, and is deployed from the same commit as
