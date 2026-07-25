@@ -135,7 +135,7 @@ Every pull request and every push to `main` runs [`.github/workflows/ci.yml`](.g
 - **Frontend** — Prettier + ESLint, `svelte-check`, and a production build.
 - **Dockerfiles** — [hadolint](https://github.com/hadolint/hadolint) best-practice linting (config in [`.hadolint.yaml`](.hadolint.yaml)). Run locally with `just dockerfile-lint` (hadolint comes from `mise`) or via the pre-commit hook.
 
-Each gate runs only when its area changed (`dorny/paths-filter`), so unrelated edits skip the gates they don't affect, and a docs-only change costs one billable minute.
+Each gate runs only when its area changed (`dorny/paths-filter`), so unrelated edits skip the gates they don't affect, and a docs-only change costs one metered minute.
 
 CI is check-only: unlike `just backend-lint`, it never auto-fixes — a violation fails the run.
 
@@ -145,11 +145,11 @@ CI is check-only: unlike `just backend-lint`, it never auto-fixes — a violatio
 just ci
 ```
 
-`just ci` runs the same eight gates, in the same check-only mode, on your machine. **Run it before pushing.** This repository is private, so Actions usage is billed against the account's included minutes — a failure caught locally is a CI run you don't pay for.
+`just ci` runs the same eight gates, in the same check-only mode, on your machine. **Run it before pushing** — a failure caught locally is an Actions run nobody spends.
 
 ### Why CI is a single job
 
-All the gates live in one `quality` job rather than fanning out across several. GitHub bills private-repo Actions [per job, rounded up to a whole minute](https://docs.github.com/en/actions/concepts/billing-and-usage), and every gate here finishes in well under a minute — so a five-job fan-out was billed 5 minutes for roughly 2 minutes of real work. Sequencing them is billed 2. Wall-clock time is about a minute longer; minutes are the scarce resource, not latency.
+All the gates live in one `quality` job rather than fanning out across several. Billed Actions usage is metered [per job, rounded up to a whole minute](https://docs.github.com/en/actions/concepts/billing-and-usage), and every gate here finishes in well under a minute — so a five-job fan-out cost 5 minutes for roughly 2 minutes of real work. Sequencing them costs 2. Wall-clock time is about a minute longer; minutes are the scarcer resource, not latency.
 
 Each gate is guarded with `!cancelled()` so the rest still run after one fails: a single run reports every problem instead of only the first, which is what keeps you from spending a second run to find the second bug.
 

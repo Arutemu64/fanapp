@@ -11,7 +11,7 @@
   "configMigration": true,
   "description": [
     "ignorePaths restates the :ignoreModulesAndTests default (part of config:recommended) minus '**/tests/**': the postgres custom manager below must see backend/tests/fixtures/db_provider.py, which the default ignore silently excludes.",
-    "Actions minutes are billed on this private repo and Renovate is by far the largest consumer of them, so rebaseWhen and platformAutomerge below are set purely to stop it from multiplying CI runs. rebaseWhen 'conflicted' replaces the default 'auto', which rebases every open Renovate branch whenever main moves — with several automerging PRs open at once that cascades: each merge re-triggers CI on every other open branch. platformAutomerge hands merging to GitHub's own auto-merge, so Renovate does not push extra commits (and extra CI runs) just to land a branch that is already green. See https://docs.renovatebot.com/noise-reduction/"
+    "Renovate is by far the largest consumer of this repo's Actions minutes, so rebaseWhen and platformAutomerge below are set purely to stop it from multiplying CI runs. rebaseWhen 'conflicted' replaces the default 'auto', which rebases every open Renovate branch whenever main moves — with several automerging PRs open at once that cascades: each merge re-triggers CI on every other open branch. platformAutomerge hands merging to GitHub's own auto-merge, so Renovate does not push extra commits (and extra CI runs) just to land a branch that is already green. See https://docs.renovatebot.com/noise-reduction/"
   ],
   "ignorePaths": [
     "**/node_modules/**",
@@ -150,6 +150,15 @@
       ],
       "matchStrings": ["postgres:(?<currentValue>[^\"]+)\""],
       "depNameTemplate": "postgres",
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    },
+    {
+      "description": "Constraint 15: hadolint image tag in the cloud setup script — both the prepull list and the Docker-backed shim it installs (hadolint has no native install channel in that environment). Feeds the 'hadolint' group above so it bumps together with mise.toml and the .pre-commit-config.yaml rev.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.claude/setup\\.sh$/"],
+      "matchStrings": ["hadolint/hadolint:(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)"],
+      "depNameTemplate": "hadolint/hadolint",
       "datasourceTemplate": "docker",
       "versioningTemplate": "docker"
     },

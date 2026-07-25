@@ -116,8 +116,8 @@ deploy:
 # Check-only, exactly like the workflow: no --fix and no reformat, so a green
 # run here means a green run there. Use `just backend-lint` / `just frontend-lint`
 # while developing instead — those auto-fix; this one only reports.
-# Actions minutes are billed on this private repo, so running this before
-# pushing is the cheapest way to keep them.
+# Running this before pushing is the cheapest way to spend fewer Actions
+# minutes: a failure caught here is a CI run nobody pays for.
 
 # Run every gate from .github/workflows/ci.yml locally
 ci:

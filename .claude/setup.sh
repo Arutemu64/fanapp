@@ -28,6 +28,11 @@
 #           at /opt/node22/bin). mise.toml now pins Node 24, so we install it
 #           with nvm, which the image already has at $NVM_DIR - the official
 #           nodejs.org/nvm-sh installers both pull from GitHub (403).
+#   * hadolint - Ships only as a GitHub release binary (403 here) and is not in
+#           apt, so we install a shim that runs the pinned Docker image instead
+#           (Docker Hub is on the allowlist). Keeps `just dockerfile-lint`,
+#           `just ci` and the pre-commit hook working with the plain `hadolint`
+#           command, exactly as they do on a laptop with mise.
 #   * npm  - Used as-is (bundled with Node 24) purely to install pnpm below.
 #           Deliberately NOT self-upgraded: `npm install -g npm@latest` has a
 #           known upstream bug where the live rebuild of its own module tree
@@ -143,6 +148,9 @@ fi
 #   * valkey/valkey:9.1-alpine - testcontainers image for `@pytest.mark.integration`
 #     (both let `just backend-test` / `backend-test-integration` run in-session
 #     instead of only in CI).
+#   * hadolint/hadolint       - backs the `hadolint` shim installed below; pinned
+#                                to match mise.toml and the .pre-commit-config.yaml
+#                                rev (AGENTS.md Constraint 15).
 #
 # Image builds (docker-publish.yml) and the rest of the compose stack (nats,
 # db-backup) are still left to CI - not needed for either autogenerate or the
@@ -179,7 +187,7 @@ if command -v dockerd >/dev/null 2>&1; then
       echo "[setup] Note: DOCKERHUB_USER/DOCKERHUB_TOKEN not set; pulling anonymously (rate-limited)."
     fi
 
-    for image in postgres:18.4-alpine valkey/valkey:9.1-alpine; do
+    for image in postgres:18.4-alpine valkey/valkey:9.1-alpine hadolint/hadolint:v2.14.0; do
       if docker pull "$image" >/dev/null 2>&1; then
         echo "[setup]   pulled $image"
       else
@@ -192,6 +200,31 @@ if command -v dockerd >/dev/null 2>&1; then
 else
   echo "[setup] WARN: dockerd not found; skipping image prepull."
 fi
+
+# hadolint is the one gate in `just ci` that has no native install channel here:
+# upstream ships GitHub release binaries (403 in this environment) and Ubuntu
+# does not package it. Install a shim that runs the pinned image prepulled above,
+# so `just dockerfile-lint`, `just ci` and the pre-commit `hadolint` hook all
+# invoke a plain `hadolint` exactly as they do on a laptop, where mise supplies
+# the real binary.
+#
+# The mount makes the container behave like the native binary: hadolint resolves
+# relative Dockerfile arguments and discovers .hadolint.yaml from its working
+# directory, so bind-mounting the caller's cwd at the same path (read-only) and
+# matching the caller's uid/gid keeps both working unchanged.
+#
+# Keep the tag in sync with mise.toml and the .pre-commit-config.yaml rev
+# (AGENTS.md Constraint 15); the renovate.json "hadolint" group covers this site
+# via a customManager.
+echo "[setup] Installing hadolint shim (Docker-backed)..."
+$SUDO tee /usr/local/bin/hadolint >/dev/null <<'HADOLINT_SHIM'
+#!/bin/sh
+exec docker run --rm -i \
+  --user "$(id -u):$(id -g)" \
+  -v "$PWD:$PWD:ro" -w "$PWD" \
+  hadolint/hadolint:v2.14.0 hadolint "$@"
+HADOLINT_SHIM
+$SUDO chmod +x /usr/local/bin/hadolint
 
 # Record the hash of the repo's setup.sh so the SessionStart hook can detect
 # drift: this script is pasted into the cloud environment UI by hand, and

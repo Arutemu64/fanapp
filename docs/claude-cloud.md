@@ -54,7 +54,15 @@ prepulls (all persist in the snapshot):
   too old for stable 3.14 and can't self-update here (GitHub installer 403s).
 * Node 24 via `nvm` (already on the image) — the base image's system Node is
   22; the official Node/nvm installers both 403 here.
-* `docker login` + Docker image prepulls (`postgres:18.4-alpine`, `valkey/valkey:9.1-alpine`, see below).
+* `docker login` + Docker image prepulls (`postgres:18.4-alpine`, `valkey/valkey:9.1-alpine`, `hadolint/hadolint`, see below).
+* a `hadolint` shim in `/usr/local/bin` — hadolint ships only as a GitHub
+  release binary (403 here) and is not in apt, so the shim runs the prepulled
+  image instead. It bind-mounts the caller's working directory read-only at the
+  same path and matches the caller's uid/gid, which is what lets hadolint
+  resolve relative Dockerfile arguments and discover `.hadolint.yaml` exactly as
+  the native binary does. `just dockerfile-lint`, `just ci` and the pre-commit
+  `hadolint` hook therefore all work unchanged, calling a plain `hadolint` the
+  same way they do on a laptop where `mise` supplies the real binary.
 * CodeGraph (`@colbymchenry/codegraph`, the code-navigation graph — see
   [AGENTS.md](../AGENTS.md) "Code Navigation") — installed from the **npm
   registry**, not its recommended `curl|sh` installer, which pulls a runtime
@@ -118,6 +126,10 @@ the snapshot and on disk at session start:
 * `valkey/valkey:9.1-alpine` — the testcontainers image
   `backend/tests/fixtures/db_provider.py` boots for `@pytest.mark.integration`
   tests, matching what CI (`.github/workflows/ci.yml`) uses.
+* `hadolint/hadolint` — backs the `hadolint` shim above, so the Dockerfile gate
+  in `just ci` runs in-session instead of only in CI. Pinned to the same version
+  as `mise.toml` and the `.pre-commit-config.yaml` rev (AGENTS.md Constraint 15);
+  the `renovate.json` `hadolint` group bumps all three together.
 
 Only the daemon (a process) is restarted per session by the hook; containers
 themselves are booted and torn down on demand by `just backend-generate-auto`
@@ -136,7 +148,8 @@ Everything else is deliberately **not** prepulled and left to CI:
   `docker-publish.yml`.
 
 Fast local checks (`just backend-lint`, `backend-typecheck`, `frontend-lint`)
-need no containers and still run in-session per AGENTS.md.
+need no containers and still run in-session per AGENTS.md. `just dockerfile-lint`
+does need the daemon, since the `hadolint` shim is container-backed.
 
 ### Docker Hub authentication
 
