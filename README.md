@@ -133,7 +133,7 @@ All commands run from the repo root via `just`.
 | `just backend-sync tcloud` | Sync tickets from TicketsCloud |
 | `just backend-sync cosplay2` | Sync cosplay data from Cosplay2 |
 
-> The frontend talks to the backend through generated types in `frontend/src/lib/api/v1.d.ts`. Whenever backend endpoints or schemas change, run `just frontend-generate-api` to keep the contract in sync.
+> The frontend talks to the backend through generated types in `frontend/src/lib/api/schema.d.ts`. Whenever backend endpoints or schemas change, run `just frontend-generate-api` to keep the contract in sync.
 
 ## Continuous integration
 

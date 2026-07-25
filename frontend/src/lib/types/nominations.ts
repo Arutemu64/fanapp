@@ -1,3 +1,3 @@
-import type { components } from '$lib/api/v1';
+import type { components } from '$lib/api/schema';
 
 export type NominationVotingDTO = components['schemas']['NominationVotingDTO'];

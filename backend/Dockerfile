@@ -57,6 +57,13 @@ ENV PATH="/app/.venv/bin:$PATH"
 # vanish on crash; unbuffered output reaches the container log immediately.
 ENV PYTHONUNBUFFERED=1
 
+# Commit SHA of this build, read back by EnvConfig.build and reported as the
+# Sentry release. Declared this late on purpose: it changes on every commit, and
+# only the metadata-only layers below it are invalidated when it does. Empty for
+# a local build from source — the app treats that as "unknown build".
+ARG APP_BUILD
+ENV APP_BUILD=$APP_BUILD
+
 # Use the non-root user to run our application
 USER nonroot
 

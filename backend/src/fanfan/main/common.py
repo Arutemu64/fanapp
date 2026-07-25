@@ -15,6 +15,7 @@ def init(service_name: str) -> None:
         service_name=service_name,
         environment=config.env,
         sentry_dsn=config.debug.sentry_dsn,
+        release=config.build,
         traces_sample_rate=config.debug.sentry_traces_sample_rate,
         profiles_sample_rate=config.debug.sentry_profiles_sample_rate,
     )

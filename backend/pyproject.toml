@@ -1,6 +1,11 @@
 [project]
 name = "fanfan"
-version = "1.1.1"
+# Release version for the whole repo, frontend included — bump it here and move
+# the matching `vX.Y.Z` git tag in the same change. frontend/package.json stays
+# at a 0.0.0 placeholder rather than carrying a second, independently drifting
+# number. A running deploy is identified by its commit SHA, not by this.
+# See docs/dependencies.md, "Versioning the app".
+version = "2.0.0"
 authors = [
     { name = "Arutemu64", email = "arutemu64@outlook.com" },
 ]

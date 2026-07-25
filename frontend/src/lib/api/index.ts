@@ -1,4 +1,4 @@
-import type { paths } from '$lib/api/v1';
+import type { paths } from '$lib/api/schema';
 import type { Middleware } from 'openapi-fetch';
 
 import { invalidate } from '$app/navigation';

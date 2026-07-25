@@ -1,4 +1,4 @@
-import type { components } from '$lib/api/v1';
+import type { components } from '$lib/api/schema';
 
 export type ScheduleEventFullDTO = components['schemas']['ScheduleEventFullDTO'];
 export type SubscriptionFullDTO = components['schemas']['SubscriptionFullDTO'];

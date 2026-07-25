@@ -4,7 +4,7 @@
 	import { UserCircleSolid, UserSolid } from 'flowbite-svelte-icons';
 	import { untrack } from 'svelte';
 	const client = createApiClient();
-	import type { components } from '$lib/api/v1';
+	import type { components } from '$lib/api/schema';
 	import type { CurrentUserDTO } from '$lib/types/user';
 
 	import { getApiErrorDetail } from '$lib/api/errors';

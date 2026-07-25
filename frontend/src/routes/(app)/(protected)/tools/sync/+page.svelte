@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { components } from '$lib/api/v1';
+	import type { components } from '$lib/api/schema';
 
 	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';

@@ -574,7 +574,7 @@ wheels = [
 
 [[package]]
 name = "fanfan"
-version = "1.1.1"
+version = "2.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "adaptix" },

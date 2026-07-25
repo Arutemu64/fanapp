@@ -47,7 +47,7 @@ Third-party library APIs: look the signature up in current docs; never rely on t
 | `just backend-migrate` | Apply migrations |
 | `just backend-generate <name>` | Autogenerate a migration against the running app DB |
 | `just backend-generate-auto <name>` | Autogenerate against a throwaway Postgres (no app DB needed; requires Docker) |
-| `just frontend-generate-api` | Regenerate `v1.d.ts` from the OpenAPI spec |
+| `just frontend-generate-api` | Regenerate `schema.d.ts` from the OpenAPI spec |
 | `just ci` | Every CI gate locally, check-only. Cheaper than spending an Actions run. |
 
 Always review a generated migration: autogenerate emits renames as drop+create and does not see enum-member changes.
@@ -84,6 +84,7 @@ Structural change → update the docs **in the same change**. Prefer documenting
 * Architecturally significant decision — new external dependency, changed deployment topology, an expensive-to-reverse choice → a new immutable ADR under [docs/adr/](docs/adr/README.md). Guides say *how it works now*; ADRs record *why we chose it*.
 * An open PR that gained commits → refresh its title and description to describe the PR as a whole, not the latest commit.
 * A version pinned in more than one place → bump every site together and keep `renovate.json` covering them. See [docs/dependencies.md](docs/dependencies.md).
+* A release version bump is a human call — **never** edit `backend/pyproject.toml` `version` unless asked for one by name, however release-worthy the change feels; branches that bump on their own initiative collide in `uv.lock` and the generated spec. **Suggesting** one is welcome: say which bump you would pick and why, in the PR description or your final message. You have just seen whether the change needs manual deploy steps, which is exactly what separates MAJOR from the rest — see the bump table in [docs/dependencies.md](docs/dependencies.md) "Versioning the app". When asked: edit `pyproject.toml`, run `just backend-generate-openapi` (it refreshes `uv.lock` too — commit both, or the image build fails on `uv sync --locked`), and stop there. The `vX.Y.Z` tag is a human step on `main` after merge, because pushing it publishes GHCR images. `frontend/package.json` stays at `0.0.0`.
 
 ## Project constraints
 

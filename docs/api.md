@@ -5,7 +5,7 @@ This guide details best practices for using `openapi-typescript` and `openapi-fe
 ---
 
 ## 🛠️ Core Concept: Single Source of Truth
-* **Generated Types**: `frontend/src/lib/api/v1.d.ts` is the single source of truth for all API contracts.
+* **Generated Types**: `frontend/src/lib/api/schema.d.ts` is the single source of truth for all API contracts.
 * **Auto-generation**: Run `just frontend-generate-api` from the workspace root whenever the backend endpoints, routers, or Pydantic schemas change.
 * **Custom Type Transforms**: Any modifications to how types are outputted (e.g. converting FastAPI file uploads or binary schema formats to `Blob` objects) must be registered in `frontend/scripts/generate-api.mjs`.
 
@@ -76,12 +76,12 @@ For local component scripts (`.svelte`), page layouts, or event handlers that on
 ---
 
 ## 🏷️ TypeScript Type Extraction
-The generated types in `v1.d.ts` contain type definitions for all schemas, query params, paths, requests, and responses. Avoid duplicating types; extract them directly:
+The generated types in `schema.d.ts` contain type definitions for all schemas, query params, paths, requests, and responses. Avoid duplicating types; extract them directly:
 
 ### 1. Extracting DTOs and Schemas
 Use Svelte 5 / TypeScript syntax to extract specific schemas from `components['schemas']`:
 ```typescript
-import type { components } from '$lib/api/v1';
+import type { components } from '$lib/api/schema';
 
 // Extract the specific Notification model type
 export type Notification = components['schemas']['NotificationDTO'];
@@ -90,7 +90,7 @@ export type Notification = components['schemas']['NotificationDTO'];
 ### 2. Extracting Request Parameters and Bodies
 To strongly type request parameters or payloads (e.g. inside form submission handlers):
 ```typescript
-import type { paths } from '$lib/api/v1';
+import type { paths } from '$lib/api/schema';
 
 // Extract the Request Body type for PATCH /settings
 export type UpdateSettingsPayload =
@@ -104,7 +104,7 @@ export type NotificationQuery =
 ### 3. Extracting Response Types
 To type-safely extract the success response payload of a specific endpoint:
 ```typescript
-import type { paths } from '$lib/api/v1';
+import type { paths } from '$lib/api/schema';
 
 // Extract the success data payload for GET /voting/nominations
 export type NominationsList =
