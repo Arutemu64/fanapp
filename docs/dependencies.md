@@ -59,15 +59,31 @@ are exactly **two** identifiers, and they answer different questions.
 ### Release version — *which release is this?*
 
 One number for the whole repo, held in `backend/pyproject.toml` (`[project]
-version`) and mirrored by a `vX.Y.Z` git tag. Bump both in the same change.
+version`) and mirrored by a `vX.Y.Z` git tag.
+
+The bump and the tag are two steps, not one. Bump on a branch, merge it, then
+tag `main`:
+
+```bash
+# on the branch
+# edit backend/pyproject.toml -> version = "2.1.0"
+just backend-generate-openapi          # spec + uv.lock follow
+git commit -am "Release 2.1.0"
+
+# after the PR merges, on main
+git tag -a v2.1.0 -m "Release 2.1.0"
+git push origin v2.1.0                 # this publishes 2.1.0, 2.1 and 2 to GHCR
+```
+
+Tagging the branch commit instead would publish images from unmerged code, and
+a squash-merge would leave the tag pointing at a commit `main` never received.
 
 It lives in `backend/pyproject.toml` because that is the only manifest that must
 carry a version anyway and can be read back at runtime — `common/version.py`
 resolves it from the installed distribution, so `FastAPI(version=…)` and the
-committed `shared/openapi/openapi.json` cannot drift off it. Regenerate the spec
-(`just backend-generate-openapi`) when you bump — that also refreshes the
-project's own version in `backend/uv.lock`, which must be committed with it or
-the image build fails on `uv sync --locked`.
+committed `shared/openapi/openapi.json` cannot drift off it. `backend/uv.lock`
+records it as well, which is why the regeneration step above is not optional:
+a lock left behind fails the image build on `uv sync --locked`.
 
 `frontend/package.json` deliberately stays at `0.0.0`. The frontend is
 `private`, is never installed by anyone, and is deployed from the same commit as
