@@ -51,6 +51,14 @@ export interface EventsHandshakePayload {
 	connection_id: string;
 }
 
+// Broadcast whenever a vendor sync run changes state. Carries just enough to
+// log or filter; subscribers refetch GET /sync/sources rather than trusting it
+// as the source of truth, so a missed event self-heals on the next reconnect.
+export interface SyncRunUpdatedPayload {
+	source: string;
+	status: string;
+}
+
 /**
  * Maps each SSE event name to the shape of its parsed payload.
  * `void` means the event carries no usable data (handler called with `undefined`).
@@ -65,6 +73,7 @@ export interface SSEEventMap {
 	connection_established: EventsHandshakePayload;
 	schedule_updated: void;
 	notification_created: NotificationDTO;
+	sync_run_updated: SyncRunUpdatedPayload;
 	ping: void;
 }
 
@@ -79,6 +88,7 @@ const ALL_SSE_EVENTS = Object.keys({
 	connection_established: true,
 	schedule_updated: true,
 	notification_created: true,
+	sync_run_updated: true,
 	ping: true
 } satisfies Record<SSEEventName, true>) as SSEEventName[];
 export type SSEHandler<K extends SSEEventName> = (data: SSEEventMap[K]) => void;

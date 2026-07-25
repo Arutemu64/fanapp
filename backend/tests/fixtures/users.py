@@ -62,6 +62,33 @@ async def visitor_with_ticket(dishka_request: AsyncContainer, visitor: User) -> 
 
 
 @pytest_asyncio.fixture
+async def sync_operator(dishka_request: AsyncContainer) -> User:
+    """
+    Create a user granted sync:run.
+    """
+    user_gateway = await dishka_request.get(UserGateway)
+    user_permission_gateway = await dishka_request.get(UserPermissionGateway)
+    uow = await dishka_request.get(UnitOfWork)
+
+    sync_operator = User(
+        id=UserId(uuid7()),
+        username=Username("sync_operator"),
+        hashed_password=None,
+        role=UserRole.ORG,
+    )
+    await user_gateway.add(sync_operator)
+    await user_permission_gateway.add(
+        UserPermission(
+            id=generate_user_permission_id(),
+            permission=Permission.SYNC_RUN,
+            user_id=sync_operator.id,
+        )
+    )
+    await uow.commit()
+    return sync_operator
+
+
+@pytest_asyncio.fixture
 async def schedule_editor(dishka_request: AsyncContainer) -> User:
     """
     Create a user granted schedule:manage and schedule:import.

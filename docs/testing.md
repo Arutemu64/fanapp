@@ -157,7 +157,7 @@ adapters for real; fake the ports that reach other external systems.**
 | `IdProvider` | **fake** (`FakeIdProvider`) | the test sets the acting user |
 | `EmailSender`, `TelegramNotifierPort`, `PushNotifierPort`, `RealtimeGateway` | **fake** | external side-effects (SMTP / Telegram / WebPush / NATS) |
 | `TicketsSource` (TicketsCloud) | **fake** (`FakeTicketsSource`) | external HTTP; test supplies the tickets a sync should see |
-| Cosplay2 HTTP client | not wired yet | concrete client, no port seam (see below) |
+| `CosplaySource` (Cosplay2) | **fake** (`FakeCosplaySource`) | external HTTP; test supplies nominations/participants, or sets `raises` to exercise the failure path |
 
 Fakes live in `tests/fakes/` and record what they received so tests can assert
 on it. When you make a new side-effecting port testable, add a fake there and
@@ -198,17 +198,20 @@ providers plus test overrides:
   `EnvConfig` is not built in tests), `TestSessionProvider` (rollback session),
   and the fakes above.
 * `skip_validation=True` is intentional: external integrations (NATS broker,
-  Telegram bot, SMTP, OAuth, the Cosplay2 HTTP client) are not wired, so
-  interactors needing them are not yet resolvable. Everything else resolves.
-  TicketsCloud now sits behind the `TicketsSource` port with a
-  `FakeTicketsSource`, so ticket-sync interactors are testable. When the
-  remaining integrations gain a port + fake, register them and the flag can
-  eventually be dropped.
+  Telegram bot, SMTP, OAuth) are not wired, so interactors needing them are not
+  yet resolvable. Everything else resolves. Both vendor syncs now sit behind
+  ports with fakes (`FakeTicketsSource`, `FakeCosplaySource`), so the sync
+  interactors are testable. When the remaining integrations gain a port + fake,
+  register them and the flag can eventually be dropped.
+* `TestSyncProvider` overrides `AvailableSyncSources`, whose real factory in
+  `SyncProvider` reads the `EnvConfig` tests never build. Like
+  `TestSessionProvider`, it must be registered **after** the provider it
+  overrides — Dishka resolves the last provider registered for a type.
 
 ## Fixtures
 
-Reusable user fixtures (`visitor`, `visitor_with_ticket`, `schedule_editor`)
-live in `tests/fixtures/users.py` and are registered as a plugin in
+Reusable user fixtures (`visitor`, `visitor_with_ticket`, `schedule_editor`,
+`sync_operator`) live in `tests/fixtures/users.py` and are registered as a plugin in
 `tests/conftest.py`. The shared plumbing fixtures (`login`, `outbox`,
 `uow`) live in `tests/integration/conftest.py` — see *Shared plumbing
 fixtures* above. Add shared setup in these places rather than copying it

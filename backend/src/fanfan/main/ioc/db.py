@@ -26,6 +26,7 @@ from fanfan.adapters.db.gateways.schedule_changes import SqlScheduleChangeGatewa
 from fanfan.adapters.db.gateways.schedule_events import SqlScheduleEventGateway
 from fanfan.adapters.db.gateways.social_identity import SqlSocialIdentityGateway
 from fanfan.adapters.db.gateways.subscriptions import SqlSubscriptionGateway
+from fanfan.adapters.db.gateways.sync_runs import SqlSyncRunGateway
 from fanfan.adapters.db.gateways.tickets import SqlTicketGateway
 from fanfan.adapters.db.gateways.user_flags import SqlUserFlagGateway
 from fanfan.adapters.db.gateways.users import SqlUserGateway
@@ -48,6 +49,7 @@ from fanfan.application.ports.gateways.push_subscriptions import (
 )
 from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
 from fanfan.application.ports.gateways.subscriptions import SubscriptionGateway
+from fanfan.application.ports.gateways.sync_runs import SyncRunGateway
 from fanfan.application.ports.gateways.tickets import TicketGateway
 from fanfan.application.ports.gateways.user_flags import UserFlagGateway
 from fanfan.application.ports.gateways.users import UserGateway
@@ -103,3 +105,4 @@ class SqlGatewaysProvider(Provider):
         SqlSocialIdentityGateway, provides=SocialIdentityGateway
     )
     outbox = provide(SqlOutboxGateway, provides=OutboxGateway)
+    sync_runs = provide(SqlSyncRunGateway, provides=SyncRunGateway)

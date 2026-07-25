@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 import click
 from dishka.integrations.click import CONTAINER_NAME
 
-from fanfan.application.interactors.cosplay.sync_cosplay import SyncCosplay
+from fanfan.application.interactors.sync.execute_cosplay_sync import ExecuteCosplaySync
 from fanfan.presentation.cli.commands.common import async_command
 
 if TYPE_CHECKING:
@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 async def sync_cosplay2_command(context: click.Context):
     container: AsyncContainer = context.meta[CONTAINER_NAME]
     async with container() as r_container:
-        sync_cosplay = await r_container.get(SyncCosplay)
-        await sync_cosplay()
+        # Execute*Sync, not the bare interactor, so a CLI run is recorded in
+        # sync_runs like any other trigger.
+        execute_sync = await r_container.get(ExecuteCosplaySync)
+        await execute_sync()
         logger.info("Importing from C2 done!")

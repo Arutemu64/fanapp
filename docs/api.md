@@ -121,6 +121,14 @@ Backend `StrEnum`s that appear on a DTO field (`UserRole`, `Permission` in `core
 * **Dependency Invalidation**: When a route uses dependency invalidation, call `depends(...)` in the page load and trigger it with `invalidate('app:something')` after a successful mutation.
 * **Return Checking**: Success payload, error payload, and response metadata must be checked through `openapi-fetch` returns (`data`, `error`, `response`).
 
+### Long-running actions (202 Accepted)
+
+An action that cannot finish inside the request returns **202** with the created record and a `Location` header pointing at a **status resource** the client re-reads, instead of blocking. `POST /sync/{source}` is the first of these: it queues the work, returns the `SyncRunDTO`, and sets `Location: /sync/sources`.
+
+* **The status resource is an existing list endpoint, not a per-run one.** `GET /sync/sources` already reports each source's latest run, including the active one, so a dedicated `GET /sync/runs/{id}` would exist only to satisfy the convention. Add a per-run endpoint if something genuinely needs to poll one run by id — not before.
+* **Prefer SSE over polling for progress.** The page subscribes to the relevant `SSEEventName` (here `sync_run_updated`) and calls `invalidate(...)`; it also re-invalidates on `connection_established`, so an update missed while the stream was down (or the tab was backgrounded past the pause grace) self-heals on reconnect rather than leaving a stale "in progress" on screen. Treat the SSE payload as a nudge to refetch, never as the source of truth.
+* **A second request while one is running is a 409**, mapped to Russian copy by `code` like any other error — not a silent no-op.
+
 ---
 
 ## 🇷🇺 Russian Localization & Error Handling

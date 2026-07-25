@@ -6,14 +6,14 @@ from typing import Any
 import sentry_sdk
 from dishka import AsyncContainer
 
-from fanfan.application.interactors.cosplay.sync_cosplay import SyncCosplay
 from fanfan.application.interactors.notifications.purge_notifications import (
     PurgeNotifications,
 )
 from fanfan.application.interactors.outbox.purge_outbox_events import (
     PurgeOutboxEvents,
 )
-from fanfan.application.interactors.tickets.sync_tickets import SyncTickets
+from fanfan.application.interactors.sync.execute_cosplay_sync import ExecuteCosplaySync
+from fanfan.application.interactors.sync.execute_tickets_sync import ExecuteTicketsSync
 from fanfan.presentation.scheduler.config import SchedulerConfig
 
 logger = logging.getLogger(__name__)
@@ -28,15 +28,18 @@ class JobDefinition:
 
 def get_job_definitions(config: SchedulerConfig) -> list[JobDefinition]:
     return [
+        # Execute*Sync rather than the bare sync interactors: they record a
+        # SyncRun for every trigger and take part in the one-active-run-per-
+        # source guard, so a scheduled tick can't overlap a manual sync.
         JobDefinition(
             id="sync_tcloud",
             cron=config.sync_tcloud_cron,
-            interactor=SyncTickets,
+            interactor=ExecuteTicketsSync,
         ),
         JobDefinition(
             id="sync_cosplay2",
             cron=config.sync_cosplay2_cron,
-            interactor=SyncCosplay,
+            interactor=ExecuteCosplaySync,
         ),
         JobDefinition(
             id="outbox_retention",

@@ -859,6 +859,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/sync/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List sync sources with their last run
+         * @description Returns every vendor sync source, whether it is configured for this deployment, and its most recent run. Requires the 'sync:run' permission.
+         */
+        get: operations["get_sync_sources"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sync/{source}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request a sync
+         * @description Queues a sync of the given source and returns immediately with the created run. The work runs in the stream service, so progress arrives over SSE ('sync_run_updated') and the run's final state is readable from GET /sync/sources. Requires the 'sync:run' permission.
+         */
+        post: operations["request_sync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -993,7 +1033,7 @@ export interface components {
              * Code
              * @enum {string}
              */
-            code: "ACCESS_DENIED" | "ALREADY_VOTED_IN_THIS_NOMINATION" | "APP_SETTINGS_NOT_FOUND" | "AUTHENTICATION_ERROR" | "CAPTCHA_VERIFICATION_FAILED" | "CURRENT_EVENT_NOT_ALLOWED" | "EMAIL_ALREADY_EXISTS" | "EMAIL_CODE_REQUEST_TOO_FAST" | "EVENT_NOT_FOUND" | "HTTP_ERROR" | "INCORRECT_PASSWORD" | "INTERNAL_ERROR" | "INVALID_CREDENTIALS" | "INVALID_EMAIL" | "INVALID_OTP_CODE" | "INVALID_TELEGRAM_AUTH_PAYLOAD" | "NOMINATION_NOT_FOUND" | "OUTDATED_SCHEDULE_CHANGE" | "PARTICIPANT_NOT_FOUND" | "PUSH_SUBSCRIPTION_ALREADY_EXISTS" | "PUSH_SUBSCRIPTION_NOT_FOUND" | "SAME_EVENTS_ARE_NOT_ALLOWED" | "SCHEDULE_CHANGE_NOT_FOUND" | "SCHEDULE_EDIT_TOO_FAST" | "SKIPPED_EVENT_NOT_ALLOWED" | "SUBSCRIPTION_ALREADY_EXISTS" | "SUBSCRIPTION_NOT_FOUND" | "TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER" | "TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL" | "TICKET_ALREADY_USED" | "TICKET_BARCODE_COLLISION" | "TICKET_NOT_FOUND" | "TICKET_NOT_LINKED" | "TOO_MANY_ATTEMPTS" | "TOO_MANY_LOGIN_ATTEMPTS" | "TOO_MANY_OTP_ATTEMPTS" | "USERNAME_ALREADY_TAKEN" | "USERNAME_PROFANITY" | "USER_ALREADY_EXISTS" | "USER_ALREADY_HAS_TELEGRAM_LINKED" | "USER_ALREADY_HAS_TICKET_LINKED" | "USER_HAS_NO_EMAIL" | "USER_NOT_AUTHENTICATED" | "USER_NOT_FOUND" | "VALIDATION_ERROR" | "VOTE_NOT_FOUND";
+            code: "ACCESS_DENIED" | "ALREADY_VOTED_IN_THIS_NOMINATION" | "APP_SETTINGS_NOT_FOUND" | "AUTHENTICATION_ERROR" | "CAPTCHA_VERIFICATION_FAILED" | "CURRENT_EVENT_NOT_ALLOWED" | "EMAIL_ALREADY_EXISTS" | "EMAIL_CODE_REQUEST_TOO_FAST" | "EVENT_NOT_FOUND" | "HTTP_ERROR" | "INCORRECT_PASSWORD" | "INTERNAL_ERROR" | "INVALID_CREDENTIALS" | "INVALID_EMAIL" | "INVALID_OTP_CODE" | "INVALID_TELEGRAM_AUTH_PAYLOAD" | "NOMINATION_NOT_FOUND" | "OUTDATED_SCHEDULE_CHANGE" | "PARTICIPANT_NOT_FOUND" | "PUSH_SUBSCRIPTION_ALREADY_EXISTS" | "PUSH_SUBSCRIPTION_NOT_FOUND" | "SAME_EVENTS_ARE_NOT_ALLOWED" | "SCHEDULE_CHANGE_NOT_FOUND" | "SCHEDULE_EDIT_TOO_FAST" | "SKIPPED_EVENT_NOT_ALLOWED" | "SUBSCRIPTION_ALREADY_EXISTS" | "SUBSCRIPTION_NOT_FOUND" | "SYNC_ALREADY_RUNNING" | "TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER" | "TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL" | "TICKET_ALREADY_USED" | "TICKET_BARCODE_COLLISION" | "TICKET_NOT_FOUND" | "TICKET_NOT_LINKED" | "TOO_MANY_ATTEMPTS" | "TOO_MANY_LOGIN_ATTEMPTS" | "TOO_MANY_OTP_ATTEMPTS" | "USERNAME_ALREADY_TAKEN" | "USERNAME_PROFANITY" | "USER_ALREADY_EXISTS" | "USER_ALREADY_HAS_TELEGRAM_LINKED" | "USER_ALREADY_HAS_TICKET_LINKED" | "USER_HAS_NO_EMAIL" | "USER_NOT_AUTHENTICATED" | "USER_NOT_FOUND" | "VALIDATION_ERROR" | "VOTE_NOT_FOUND";
             /** Details */
             details?: {
                 [key: string]: unknown;
@@ -1189,7 +1229,7 @@ export interface components {
          * Permission
          * @enum {string}
          */
-        Permission: "schedule:manage" | "schedule:import" | "notifications:send" | "settings:manage" | "tickets:generate";
+        Permission: "schedule:manage" | "schedule:import" | "notifications:send" | "settings:manage" | "tickets:generate" | "sync:run";
         /** PushSubscriptionStatus */
         PushSubscriptionStatus: {
             /** Subscribed */
@@ -1351,6 +1391,54 @@ export interface components {
             /** Counter */
             counter: number;
             event: components["schemas"]["SubscriptionEventDTO"];
+        };
+        /**
+         * SyncRunDTO
+         * @description A sync run as shown to an organizer.
+         *
+         *     Deliberately omits ``by_user_id``: the row records who triggered the run for
+         *     the audit trail, but the page only answers "is the data fresh, and did the
+         *     last run succeed?", which status and timestamps already cover. Keeping the
+         *     actor off the wire avoids a users join and any handling of the system user
+         *     id on the frontend.
+         */
+        SyncRunDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            source: components["schemas"]["SyncSource"];
+            status: components["schemas"]["SyncRunStatus"];
+            /** Started At */
+            started_at: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /** Result */
+            result: string | null;
+            /** Error */
+            error: string | null;
+        };
+        /**
+         * SyncRunStatus
+         * @enum {string}
+         */
+        SyncRunStatus: "pending" | "running" | "finished" | "failed";
+        /**
+         * SyncSource
+         * @description External system a sync run pulls from.
+         *
+         *     The value doubles as the URL path segment (``POST /sync/{source}``) and the
+         *     stored column value, so it is part of both the API and the DB contract.
+         * @enum {string}
+         */
+        SyncSource: "cosplay2" | "tcloud";
+        /** SyncSourceStatusDTO */
+        SyncSourceStatusDTO: {
+            source: components["schemas"]["SyncSource"];
+            /** Available */
+            available: boolean;
+            last_run: components["schemas"]["SyncRunDTO"] | null;
         };
         /** TCloudWebhookOrderRef */
         TCloudWebhookOrderRef: {
@@ -3899,6 +3987,111 @@ export interface operations {
                 };
             };
             /** @description A generated barcode collided; retry the request. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    get_sync_sources: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncSourceStatusDTO"][];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    request_sync: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source: components["schemas"]["SyncSource"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sync queued; poll GET /sync/sources for its state. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncRunDTO"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description A sync for this source is already running. */
             409: {
                 headers: {
                     [name: string]: unknown;

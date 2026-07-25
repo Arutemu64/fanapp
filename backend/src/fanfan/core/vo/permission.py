@@ -15,3 +15,4 @@ class Permission(enum.StrEnum):
     NOTIFICATIONS_SEND = "notifications:send"
     SETTINGS_MANAGE = "settings:manage"
     TICKETS_GENERATE = "tickets:generate"
+    SYNC_RUN = "sync:run"
