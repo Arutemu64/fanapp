@@ -39,7 +39,7 @@ target-version = "py314"
 select = ["ALL"]
 ignore = [
     "D",       # pydocstyle (noisy in app development where public docs aren't strictly mandated)
-    "ANN",     # flake8-annotations (type-checking is handled statically by mypy/pyright)
+    "ANN",     # flake8-annotations (type-checking is handled statically by `ty`)
     "N",       # pep8-naming (occasionally conflicts with external schemas or webhook models)
     "FBT",     # flake8-boolean-trap (perfectly fine for query params/arguments in web routes)
     # pylint-refactor code-metric rules: noisy in DDD interactors/controllers where
@@ -56,7 +56,11 @@ ignore = [
     "ISC001",  # single-line-implicit-string-concatenation (formatter compatibility)
     "ARG001",  # unused-function-argument (standard in web routers / dependency injections)
     "FIX002",  # line-contains-todo (TODOs are valid development indicators, not errors)
-    "TD002",   # missing-todo-author (flake8-todos)
+    "TD002",   # missing-todo-author (git blame already answers "who")
+    # TD003 (missing-todo-link) is the mechanical form of the "TODOs are tracked or
+    # absent" rule in AGENTS.md, and is meant to be enabled. It currently fails on the
+    # three untracked TODOs in tickets_import.py, sync_tickets.py and webhooks.py;
+    # file issues, rewrite those as `# TODO(#NNN): ...`, then delete this line.
     "TD003",   # missing-todo-link (flake8-todos)
     "TD004",   # missing-todo-description (flake8-todos)
 
