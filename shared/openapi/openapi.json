@@ -3020,6 +3020,144 @@
           }
         ]
       }
+    },
+    "/sync/sources": {
+      "get": {
+        "tags": [
+          "Sync"
+        ],
+        "summary": "List sync sources with their last run",
+        "description": "Returns every vendor sync source, whether it is configured for this deployment, and its most recent run. Requires the 'sync:run' permission.",
+        "operationId": "get_sync_sources",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SyncSourceStatusDTO"
+                  },
+                  "type": "array",
+                  "title": "Response Get Sync Sources"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ]
+      }
+    },
+    "/sync/{source}": {
+      "post": {
+        "tags": [
+          "Sync"
+        ],
+        "summary": "Request a sync",
+        "description": "Queues a sync of the given source and returns immediately with the created run. The work runs in the stream service, so progress arrives over SSE ('sync_run_updated') and the run's final state is readable from GET /sync/sources. Requires the 'sync:run' permission.",
+        "operationId": "request_sync",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "source",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SyncSource"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Sync queued; poll GET /sync/sources for its state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncRunDTO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A sync for this source is already running.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3360,6 +3498,7 @@
               "SKIPPED_EVENT_NOT_ALLOWED",
               "SUBSCRIPTION_ALREADY_EXISTS",
               "SUBSCRIPTION_NOT_FOUND",
+              "SYNC_ALREADY_RUNNING",
               "TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER",
               "TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL",
               "TICKET_ALREADY_USED",
@@ -3897,7 +4036,8 @@
           "schedule:import",
           "notifications:send",
           "settings:manage",
-          "tickets:generate"
+          "tickets:generate",
+          "sync:run"
         ],
         "title": "Permission"
       },
@@ -4337,6 +4477,126 @@
           "event"
         ],
         "title": "SubscriptionFullDTO"
+      },
+      "SyncRunDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SyncSource"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SyncRunStatus"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "source",
+          "status",
+          "started_at",
+          "finished_at",
+          "result",
+          "error"
+        ],
+        "title": "SyncRunDTO",
+        "description": "A sync run as shown to an organizer.\n\nDeliberately omits ``by_user_id``: the row records who triggered the run for\nthe audit trail, but the page only answers \"is the data fresh, and did the\nlast run succeed?\", which status and timestamps already cover. Keeping the\nactor off the wire avoids a users join and any handling of the system user\nid on the frontend."
+      },
+      "SyncRunStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "running",
+          "finished",
+          "failed"
+        ],
+        "title": "SyncRunStatus"
+      },
+      "SyncSource": {
+        "type": "string",
+        "enum": [
+          "cosplay2",
+          "tcloud"
+        ],
+        "title": "SyncSource",
+        "description": "External system a sync run pulls from.\n\nThe value doubles as the URL path segment (``POST /sync/{source}``) and the\nstored column value, so it is part of both the API and the DB contract."
+      },
+      "SyncSourceStatusDTO": {
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/SyncSource"
+          },
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "last_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SyncRunDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "available",
+          "last_run"
+        ],
+        "title": "SyncSourceStatusDTO"
       },
       "TCloudWebhookOrderRef": {
         "properties": {

@@ -30,6 +30,8 @@ class SSEEventName(StrEnum):
     SCHEDULE_UPDATED = "schedule_updated"
     # A new notification was created for the target user.
     NOTIFICATION_CREATED = "notification_created"
+    # A vendor sync run changed state; organizers should refetch sync sources.
+    SYNC_RUN_UPDATED = "sync_run_updated"
 
 
 @dataclass(slots=True, frozen=True)

@@ -15,6 +15,7 @@ from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.id_provider import IdProvider
 from fanfan.application.ports.notifier import PushNotifierPort, TelegramNotifierPort
 from fanfan.application.ports.realtime_gateway import RealtimeGateway
+from fanfan.application.ports.sources.cosplay import CosplaySource
 from fanfan.application.ports.sources.tickets import TicketsSource
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.base import AppEvent
@@ -26,13 +27,15 @@ from fanfan.main.ioc.redis import RedisProvider
 from fanfan.main.ioc.security import SecurityProvider
 from fanfan.main.ioc.serialization import SerializationProvider
 from fanfan.main.ioc.services import ServicesProvider
+from fanfan.main.ioc.sync import SyncProvider
+from tests.fakes.cosplay_source import FakeCosplaySource
 from tests.fakes.email_sender import FakeEmailSender
 from tests.fakes.event_broker import FakeEventBroker
 from tests.fakes.id_provider import FakeIdProvider
 from tests.fakes.notifier import FakePushNotifier, FakeTelegramNotifier
 from tests.fakes.realtime_gateway import FakeRealtimeGateway
 from tests.fakes.tickets_source import FakeTicketsSource
-from tests.fixtures.config import TestConfigProvider
+from tests.fixtures.config import TestConfigProvider, TestSyncProvider
 from tests.fixtures.db_provider import TestDbProvider
 from tests.fixtures.db_session import TestSessionProvider
 
@@ -65,6 +68,9 @@ async def dishka() -> AsyncIterable[AsyncContainer]:
     fakes_provider.provide(
         FakeTicketsSource, provides=AnyOf[TicketsSource, FakeTicketsSource]
     )
+    fakes_provider.provide(
+        FakeCosplaySource, provides=AnyOf[CosplaySource, FakeCosplaySource]
+    )
     container = make_async_container(
         # Test providers
         fakes_provider,
@@ -76,12 +82,16 @@ async def dishka() -> AsyncIterable[AsyncContainer]:
         RedisProvider(),
         ServicesProvider(),
         SqlGatewaysProvider(),
+        SyncProvider(),
         SecurityProvider(),
         SerializationProvider(),
         JinjaProvider(),
         # Override DbProvider's session with the rollback-per-test session.
         # Must come after DbProvider so it wins the AsyncSession key.
         TestSessionProvider(),
+        # Same trick: must come after SyncProvider to win AvailableSyncSources,
+        # whose real factory reads the EnvConfig tests never build.
+        TestSyncProvider(),
         # External integrations (NATS broker, Telegram bot, SMTP, OAuth,
         # Cosplay2 HTTP client) are intentionally NOT wired. Interactors that
         # need them are not yet testable here; everything else resolves, so we

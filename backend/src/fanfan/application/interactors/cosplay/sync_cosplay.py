@@ -1,6 +1,8 @@
 import logging
 from dataclasses import replace
 
+from pydantic import BaseModel
+
 from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.application.ports.gateways.participants import ParticipantGateway
 from fanfan.application.ports.sources.cosplay import (
@@ -15,6 +17,11 @@ from fanfan.core.vo.nomination import generate_nomination_id
 from fanfan.core.vo.participant import generate_participant_id
 
 logger = logging.getLogger(__name__)
+
+
+class SyncCosplayOutput(BaseModel):
+    nominations_count: int
+    participants_count: int
 
 
 class SyncCosplay:
@@ -107,7 +114,7 @@ class SyncCosplay:
                 },
             )
 
-    async def __call__(self) -> None:
+    async def __call__(self) -> SyncCosplayOutput:
         nominations = await self.source.fetch_nominations()
         nomination_ids = {nomination.external_id for nomination in nominations}
         # Keep the upserted nominations in memory so participant processing can
@@ -152,3 +159,7 @@ class SyncCosplay:
             logger.warning("Cosplay2 returned no participants, skipping cleanup")
 
         await self.uow.commit()
+        return SyncCosplayOutput(
+            nominations_count=len(nominations),
+            participants_count=len(participants),
+        )

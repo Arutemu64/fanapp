@@ -2,6 +2,7 @@ import {
 	canGenerateTickets,
 	canImportSchedule,
 	canManageSettings,
+	canRunSync,
 	canSendNotifications
 } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
@@ -18,7 +19,8 @@ export const load: LayoutLoad = async ({ parent }) => {
 		canManageSettings(user) ||
 		canImportSchedule(user) ||
 		canSendNotifications(user) ||
-		canGenerateTickets(user);
+		canGenerateTickets(user) ||
+		canRunSync(user);
 
 	if (!canSeeToolsSection) {
 		error(403, 'У тебя нет доступа к этому разделу');

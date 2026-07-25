@@ -20,6 +20,7 @@ from fanfan.main.ioc.security import SecurityProvider
 from fanfan.main.ioc.serialization import SerializationProvider
 from fanfan.main.ioc.services import ServicesProvider
 from fanfan.main.ioc.stream import StreamProvider
+from fanfan.main.ioc.sync import SyncProvider
 from fanfan.main.ioc.tcloud import TCloudProvider
 
 
@@ -38,6 +39,7 @@ def get_common_providers() -> list[Provider]:
         ServicesProvider(),
         SqlGatewaysProvider(),
         StreamProvider(),
+        SyncProvider(),
         Cosplay2Provider(),
         JinjaProvider(),
         HtmlProvider(),
