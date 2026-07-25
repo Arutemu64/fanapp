@@ -1,7 +1,9 @@
 {
-	"name": "fanapp",
+	"name": "fanapp-frontend",
 	"private": true,
 	"version": "0.0.1",
+	"description": "Frontend for the FAN FAN convention companion web app: mobile-first SvelteKit PWA",
+	"license": "MIT",
 	"packageManager": "pnpm@11.15.1",
 	"type": "module",
 	"scripts": {

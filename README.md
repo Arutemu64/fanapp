@@ -4,6 +4,14 @@ Companion web app for the **FAN FAN** Russian anime convention. It gives attende
 
 This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAPI contract between them.
 
+> [!NOTE]
+> **This project is built with AI.** It started as a
+> [Telegram bot](https://github.com/Arutemu64/fanfan-bot), written entirely by hand
+> in Python, and later grew into a full-stack PWA. I don't write frontend, so the
+> Svelte 5 / SvelteKit side is largely AI-generated; the backend is now written with
+> heavy AI assistance too, as are most of the docs. The architecture, data model and
+> requirements are mine, and I review everything before it lands.
+
 ## Features
 
 - **Schedule** — public event schedule with live changes, per-user subscriptions, and organizer management/import tools.
@@ -218,3 +226,12 @@ Optional, enabled via `.env`:
 - [`docs/dependencies.md`](docs/dependencies.md) — shared version pins and Renovate
 - [`docs/claude-cloud.md`](docs/claude-cloud.md) — Claude Code on the web provisioning
 - [`docs/adr/`](docs/adr/README.md) — architecture decision records
+
+## License
+
+[MIT](LICENSE) © Arutemu64.
+
+Vendored third-party agent skills under `.claude/skills/`, `.agents/skills/` and
+`.impeccable/` are **not** covered by this license — each keeps its upstream
+license and copyright. `skills-lock.json` records the source repository for every
+one of them.

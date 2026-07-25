@@ -4,7 +4,10 @@ version = "1.1.1"
 authors = [
     { name = "Arutemu64", email = "arutemu64@outlook.com" },
 ]
-description = "Festival bot"
+description = "Backend for the FAN FAN convention companion web app: HTTP API, Telegram bot and background workers"
+# The LICENSE file lives at the monorepo root, outside this project dir, so
+# PEP 639 `license-files` cannot reference it (no `..` allowed).
+license = "MIT"
 requires-python = ">=3.14.6"
 dependencies = [
     "adaptix>=3.0.0b12",
