@@ -10,6 +10,8 @@
 #     code. They are near-instant when the lockfile is unchanged.
 #   * the Docker daemon - a process; never survives between sessions. Used to
 #     boot a throwaway Postgres for Alembic autogenerate (not for testing).
+#   * the Docker Hub login - the environment's variables only exist here, not in
+#     the setup script (see the docker login block below)
 #   * per-session environment variables (PATH) written to $CLAUDE_ENV_FILE
 #
 # The cloud-missing tooling (just, uv, Python 3.14, Node 24 via nvm) lives in
@@ -128,6 +130,28 @@ elif command -v dockerd >/dev/null 2>&1; then
   fi
 else
   echo "[session-start] WARN: dockerd not found; Alembic autogenerate (just backend-generate-auto) unavailable."
+fi
+
+# Authenticate to Docker Hub so this session's pulls are not capped by the
+# anonymous limit (~100 / 6h per egress IP), which a shared cloud egress hits
+# quickly. This deliberately lives here and NOT in setup.sh: the cloud
+# environment's variables are injected only into the session, never into the
+# setup-script phase, so DOCKERHUB_USER/DOCKERHUB_TOKEN read as empty there
+# (anthropics/claude-code#63541). That also means the login cannot be baked into
+# the snapshot - ~/.docker/config.json is written per session, after dockerd is
+# up (docker login authenticates through the daemon). The token goes in on stdin,
+# never on the command line. Best-effort: no token, or a bad one, just leaves
+# pulls anonymous.
+if docker info >/dev/null 2>&1; then
+  if [ -n "${DOCKERHUB_USER:-}" ] && [ -n "${DOCKERHUB_TOKEN:-}" ]; then
+    if printf '%s' "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin >/dev/null 2>&1; then
+      echo "[session-start] Authenticated to Docker Hub as $DOCKERHUB_USER."
+    else
+      echo "[session-start] WARN: Docker Hub login failed; pulls are anonymous and rate-limited."
+    fi
+  else
+    echo "[session-start] Note: DOCKERHUB_USER/DOCKERHUB_TOKEN not set; pulls are anonymous and rate-limited."
+  fi
 fi
 
 # Persist PATH additions so the upgraded uv (~/.local/bin) and nvm's Node 24

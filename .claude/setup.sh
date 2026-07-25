@@ -11,9 +11,11 @@
 # reviewed and pasted/referenced; Claude Code does not auto-run it from the repo
 # the way it runs .claude/hooks/session-start.sh.
 #
-# Steps that must run EVERY session (the Docker daemon process, per-session env
-# vars) live in .claude/hooks/session-start.sh instead, because processes and
-# the per-session env file do not survive in the cached snapshot.
+# Steps that must run EVERY session (the Docker daemon process, the Docker Hub
+# login, per-session env vars) live in .claude/hooks/session-start.sh instead,
+# because processes and the per-session env file do not survive in the cached
+# snapshot - and because the environment's variables are not injected into this
+# script at all (see the prepull block below).
 #
 # Install-channel notes (this environment blocks GitHub release downloads):
 #   * uv  - The base web image ships uv in ~/.local/bin, but it is too old to
@@ -170,23 +172,13 @@ if command -v dockerd >/dev/null 2>&1; then
     done
   fi
   if docker info >/dev/null 2>&1; then
-    # Authenticate to Docker Hub if credentials are provided as environment
-    # variables (set in the cloud environment config). Anonymous pulls are
-    # capped at ~100 / 6h per egress IP, which a shared cloud egress hits fast;
-    # an authenticated account raises that substantially. The token is passed on
-    # stdin (never on the command line), and the resulting ~/.docker/config.json
-    # persists in the snapshot, so sessions' own lazy pulls are authenticated
-    # too. Best-effort: a bad/expired token must not fail environment creation.
-    if [ -n "${DOCKERHUB_USER:-}" ] && [ -n "${DOCKERHUB_TOKEN:-}" ]; then
-      if printf '%s' "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin >/dev/null 2>&1; then
-        echo "[setup] Authenticated to Docker Hub as $DOCKERHUB_USER."
-      else
-        echo "[setup] WARN: Docker Hub login failed; pulling anonymously (rate-limited)."
-      fi
-    else
-      echo "[setup] Note: DOCKERHUB_USER/DOCKERHUB_TOKEN not set; pulling anonymously (rate-limited)."
-    fi
-
+    # These pulls are anonymous and cannot be otherwise: the cloud environment's
+    # variables (DOCKERHUB_USER/DOCKERHUB_TOKEN) are injected only into the
+    # session, never into this setup-script phase, so a `docker login` here would
+    # always read empty credentials (anthropics/claude-code#63541). The login
+    # lives in .claude/hooks/session-start.sh instead, which covers every pull a
+    # session makes; only these three prepulls stay subject to the anonymous cap
+    # (~100 / 6h per egress IP), and they degrade to a lazy pull at first use.
     for image in postgres:18.4-alpine valkey/valkey:9.1-alpine hadolint/hadolint:v2.14.0; do
       if docker pull "$image" >/dev/null 2>&1; then
         echo "[setup]   pulled $image"

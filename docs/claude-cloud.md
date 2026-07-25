@@ -16,11 +16,22 @@ different schedules.
 | Attached to| The cloud environment                            | The repository                                       |
 | Configured | Cloud environment UI (**Setup script** field)    | `.claude/settings.json`                              |
 | Runs       | **Once**, at environment creation; result cached | **Every** session (startup + resume)                 |
+| Env vars   | **Not** injected — the environment's variables read as empty | Injected                                 |
 | Use for    | Slow installs that persist on disk               | Work that does not survive the snapshot              |
 
 **Rule of thumb:** if a step writes files (a binary, `.venv`, `node_modules`, a
-Docker image layer) it belongs in the setup script; if it starts a process or
-sets per-session state it belongs in the hook.
+Docker image layer) it belongs in the setup script; if it starts a process, sets
+per-session state, or needs an environment variable it belongs in the hook.
+
+> **Anything needing a credential must go in the hook.** The environment's
+> **Environment variables** and **Setup script** fields sit in the same dialog,
+> but the variables are injected only into the session — in the setup-script
+> phase they are empty, with no error
+> ([anthropics/claude-code#63541](https://github.com/anthropics/claude-code/issues/63541)).
+> A `docker login`, an authenticated `git clone` or a token-gated download in the
+> setup script fails silently; see
+> [Docker Hub authentication](#docker-hub-authentication) for how this repo
+> handles it.
 
 ### Caching lifecycle
 
@@ -54,7 +65,7 @@ prepulls (all persist in the snapshot):
   too old for stable 3.14 and can't self-update here (GitHub installer 403s).
 * Node 24 via `nvm` (already on the image) — the base image's system Node is
   22; the official Node/nvm installers both 403 here.
-* `docker login` + Docker image prepulls (`postgres:18.4-alpine`, `valkey/valkey:9.1-alpine`, `hadolint/hadolint`, see below).
+* Docker image prepulls (`postgres:18.4-alpine`, `valkey/valkey:9.1-alpine`, `hadolint/hadolint`, see below). Anonymous — the `docker login` lives in the hook, see [Docker Hub authentication](#docker-hub-authentication).
 * a `hadolint` shim in `/usr/local/bin` — hadolint ships only as a GitHub
   release binary (403 here) and is not in apt, so the shim runs the prepulled
   image instead. It bind-mounts the caller's working directory read-only at the
@@ -87,6 +98,9 @@ does not survive the snapshot:
   must track the code, so a session on a different branch or a newer commit
   re-parses only the delta.
 * starting `dockerd` — a process, never cached; restarted every session.
+* `docker login` to Docker Hub — the environment's variables reach the session
+  but not the setup script, so this is the only place it can run; see
+  [Docker Hub authentication](#docker-hub-authentication).
 * per-session env vars written to `$CLAUDE_ENV_FILE` (`PATH`, including
   activating the nvm-installed Node 24 over the base image's system Node 22).
 
@@ -155,16 +169,25 @@ does need the daemon, since the `hadolint` shim is container-backed.
 
 Docker Hub caps **anonymous** pulls (~100 / 6h per egress IP), which a shared
 cloud egress hits quickly. Set `DOCKERHUB_USER` and `DOCKERHUB_TOKEN` (a scoped,
-read-only access token — not your password) in the environment's variables; the
-setup script runs `docker login` (token via stdin) before pulling, which raises
-the cap. The resulting `~/.docker/config.json` persists in the snapshot, so
-sessions' own lazy pulls are authenticated too.
+read-only access token — not your password) in the environment's variables. The
+**SessionStart hook** runs `docker login` (token via stdin) right after it starts
+`dockerd`, so every pull a session makes — testcontainers, the `hadolint` shim,
+`just backend-generate-auto` — is authenticated.
+
+> The login cannot live in the setup script, and its `~/.docker/config.json` is
+> **not** part of the snapshot: the environment's variables are injected into the
+> session only, so in the setup-script phase they read as empty and the login
+> silently does nothing
+> ([anthropics/claude-code#63541](https://github.com/anthropics/claude-code/issues/63541)).
+> That is why the three prepulls are anonymous and why the login is redone each
+> session.
 
 > A token in an env var is **not** used until something runs `docker login` —
 > setting the variable alone does nothing.
 
-The prepull is **best-effort**, so a remaining cap or a bad token degrades a
-pull to a lazy pull at first use rather than failing environment creation.
+Both are **best-effort**: a remaining cap, a missing token or a bad one degrades
+a pull to a lazy, anonymous pull at first use rather than failing environment
+creation or session start.
 
 > Cloud environments have no secrets store yet; environment variables are visible
 > to anyone who can edit the environment. Use a revocable, least-privilege token.
