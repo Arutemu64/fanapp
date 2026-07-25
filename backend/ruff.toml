@@ -60,9 +60,6 @@ ignore = [
     # A TODO must explain itself (AGENTS.md), not point at a tracker: this project has
     # no issue-per-TODO workflow, so requiring a link would only buy placeholder refs.
     "TD003",   # missing-todo-link (flake8-todos)
-    # TD004 (missing colon) stays enabled: it is the mechanical half of the AGENTS.md
-    # rule that a TODO explains itself. The colon is what separates the marker from
-    # its description, so a bare `# TODO fix this` cannot pass.
 
     # ⚠️ CRITICAL: Project evaluates annotations at runtime (no `from __future__
     # import annotations`), and SQLAlchemy (Mapped[...]), Pydantic, and Dishka DI
