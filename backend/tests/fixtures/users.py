@@ -22,9 +22,7 @@ from fanfan.core.vo.user import UserId, Username, UserRole
 
 @pytest_asyncio.fixture
 async def visitor(dishka_request: AsyncContainer) -> User:
-    """
-    Create a visitor (user with no special permissions)
-    """
+    """Create a visitor (user with no special permissions)."""
     user_gateway = await dishka_request.get(UserGateway)
     uow = await dishka_request.get(UnitOfWork)
 
@@ -41,9 +39,7 @@ async def visitor(dishka_request: AsyncContainer) -> User:
 
 @pytest_asyncio.fixture
 async def visitor_with_ticket(dishka_request: AsyncContainer, visitor: User) -> User:
-    """
-    Create a visitor with a linked ticket.
-    """
+    """Create a visitor with a linked ticket."""
     ticket_gateway = await dishka_request.get(TicketGateway)
     uow = await dishka_request.get(UnitOfWork)
 
@@ -63,9 +59,7 @@ async def visitor_with_ticket(dishka_request: AsyncContainer, visitor: User) -> 
 
 @pytest_asyncio.fixture
 async def sync_operator(dishka_request: AsyncContainer) -> User:
-    """
-    Create a user granted sync:run.
-    """
+    """Create a user granted sync:run."""
     user_gateway = await dishka_request.get(UserGateway)
     user_permission_gateway = await dishka_request.get(UserPermissionGateway)
     uow = await dishka_request.get(UnitOfWork)
@@ -90,9 +84,7 @@ async def sync_operator(dishka_request: AsyncContainer) -> User:
 
 @pytest_asyncio.fixture
 async def schedule_editor(dishka_request: AsyncContainer) -> User:
-    """
-    Create a user granted schedule:manage and schedule:import.
-    """
+    """Create a user granted schedule:manage and schedule:import."""
     user_gateway = await dishka_request.get(UserGateway)
     user_permission_gateway = await dishka_request.get(UserPermissionGateway)
     uow = await dishka_request.get(UnitOfWork)

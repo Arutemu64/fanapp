@@ -38,7 +38,25 @@ target-version = "py314"
 [lint]
 select = ["ALL"]
 ignore = [
-    "D",       # pydocstyle (noisy in app development where public docs aren't strictly mandated)
+    # pydocstyle: style rules stay ON, presence rules stay OFF. We document
+    # deliberately (ports, domain models, interactors, translating adapters —
+    # see docs/backend.md "Comments & docstrings"), not exhaustively: enabling
+    # D1xx flags ~1600 undocumented symbols, and the only way to clear that is
+    # filler like """Initialize the thing.""" that restates the signature —
+    # which both PEP 257 and the Google style guide tell you not to write.
+    # The remaining D rules cost ~12 findings and keep the docstrings we *do*
+    # write consistently shaped.
+    "D1",      # undocumented-* (presence); see above
+    # `select = ["ALL"]` pulls in both halves of two mutually exclusive pairs,
+    # which makes ruff warn on every run. Drop the half we don't want: no blank
+    # line before a class docstring (D211 wins), and the summary on the opening
+    # line (D212 wins) — both match how the existing docstrings are written.
+    "D203",    # incorrect-blank-line-before-class (conflicts with D211)
+    "D213",    # multi-line-summary-second-line (conflicts with D212)
+    "D401",    # non-imperative-mood: wrong for properties and predicates,
+               # where a noun phrase ("The unfinished run for a source") or
+               # "True if ..." is the correct English. Its only two hits here
+               # were both false positives.
     "ANN",     # flake8-annotations (type-checking is handled statically by mypy/pyright)
     "N",       # pep8-naming (occasionally conflicts with external schemas or webhook models)
     "FBT",     # flake8-boolean-trap (perfectly fine for query params/arguments in web routes)
@@ -140,8 +158,14 @@ docstring-code-line-length = "dynamic"
 "src/fanfan/adapters/db/migrations/env.py" = [
     "ERA001",  # Alembic auto-generates commented out code
     "INP001",  # Not a package
+    "D",       # docstrings here are Alembic's template boilerplate, not ours
 ]
 "src/fanfan/adapters/db/migrations/versions/*.py" = [
     "E501",    # Alembic sometimes generates long lines
     "INP001",  # Not a package
+    # The module docstring's first line is the revision *slug* Alembic writes
+    # from the `-m` message ("""add sync_runs), so it is neither a sentence nor
+    # ours to punctuate. The prose below it is hand-written and still linted.
+    "D400",    # missing-trailing-period
+    "D415",    # missing-terminal-punctuation
 ]

@@ -200,7 +200,7 @@ Never copy-paste class attribute values from rich-text sources. Unicode curly qu
 * App-shell pieces used only once (navbar/sidebar/banner) stay colocated under `routes/(app)/components/` — single-use does **not** justify `lib/`.
 * `lib/` modules (`utils/`, `services/`, etc.) follow the same spirit: only `export` what is consumed outside the file, and delete unused exports rather than letting them accumulate.
 
-Before writing any new component, check existing items in `frontend/src/lib/components/`:
+Before writing any new component, check existing items in `frontend/src/lib/components/` — each carries a `<!-- @component -->` doc comment that shows on hover at its usage sites (§12), so the inventory is browsable from the editor:
 * **Page titles**: The screen title lives in the top `AppNavbar`, not in the page body. Each page sets it by returning `title` from its `load` (`page.data.title`); `AppNavbar` renders it as the page `<h1>`. For optional intro text or extra context below the navbar, use `$lib/components/SectionIntro.svelte` (description + children, no title).
 * **Toasts**: Trigger alerts via `$lib/services/toasts.svelte.ts` and display them with `$lib/components/ToastContainer.svelte`. The service keeps two independent queues so a burst of one category can never evict the other: **status** toasts (action feedback — `add`/`error`) and **push** toasts (inbound SSE notifications — `push`). `ToastContainer` renders them in separate regions — push at the top (like OS notifications), status bottom-centered above the mobile bottom nav (bottom-right on desktop where that nav is hidden).
 * **Notification bodies**: A notification `body` arrives as a pre-sanitized, safe HTML subset (the backend's `HtmlSanitizer` is the single source of truth — see [backend.md](backend.md)). Render it with `{@html notification.body}` (in `ToastContainer.svelte` and `NotificationListItem.svelte`), keeping `whitespace-pre-line` so the stored `\n` line breaks show. The notification `title` is plain text — render it with normal `{title}` interpolation. Do **not** add a client-side sanitizer or `{@html}` any other API field.
@@ -240,3 +240,44 @@ Stock SvelteKit flat-config tooling (`frontend/eslint.config.js`, `frontend/.pre
 * **Type-only imports** use a separate `import type` — `@typescript-eslint/consistent-type-imports` (autofix). Required because `verbatimModuleSyntax` is on (a value import of a type would emit a broken runtime import).
 * **Unused bindings**: prefix with `_` (`argsIgnorePattern`/`varsIgnorePattern`/`caughtErrorsIgnorePattern` = `^_`) to intentionally keep an unused param/var/catch binding without a lint error.
 * **Type-aware rules** (`typescript-eslint` `recommendedTypeChecked`) are **not** enabled yet — only the syntactic `recommended` preset runs. Adding them is deferred (needs `projectService` wiring for `.ts`, a service-worker carve-out, and a cleanup pass for ~24 pre-existing Promise/`any`-safety findings).
+
+---
+
+## 12. Comments & Component Docs
+
+English, always (AGENTS.md, "Never") — only user-facing copy is Russian. Nothing here is lint-enforced, so it is a review convention.
+
+### `lib/components/` carries `<!-- @component -->`
+
+Svelte renders a comment beginning with `@component` as the **hover tooltip on the component's name at every usage site** ([Svelte docs](https://svelte.dev/docs/svelte/basic-markup)), and it accepts markdown. §8 tells contributors to shop the existing inventory before writing anything new, so this tooltip is what makes that inventory legible — it is the highest-value documentation in the frontend.
+
+Required for everything in `frontend/src/lib/components/`; optional for route-local `components/` folders, where the neighbouring page is the context. Put it at the very top of the file, above `<script>`:
+
+```svelte
+<!--
+@component
+Пустое состояние списка — иконка, сообщение и необязательная кнопка действия.
+
+Not for errors: use `ErrorState` when a request failed, `EmptyState` only when
+the request succeeded and returned nothing.
+-->
+```
+
+Lead with what it renders, then the part a caller cannot guess: which sibling component to reach for instead, a prop that must be paired with another, an assumption about where it is mounted.
+
+### TypeScript
+
+* **`/** */` on exported symbols, `//` for inline why-notes.** Editors surface the former on hover; that is the whole reason to prefer it at a module boundary.
+* **Never write types in JSDoc.** No `@param {string} name` — TypeScript already has the type and [warns that the annotation is redundant](https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html). Plain `@param name — why it matters`, or no tag at all when the name carries it. ([TSDoc](https://tsdoc.org/) is the vocabulary; we use a small subset of it, not a generator.)
+* **Every tuning constant gets a docstring naming where the number came from.** This is the convention the frontend is already best at — `HEARTBEAT_TIMEOUT_MS` in `services/events.svelte.ts` cites the backend interval it is derived from, by file, so changing one side surfaces the other. Cross-repo invariants live nowhere else; write them down.
+
+### Markup comments
+
+A markup comment **justifies a structural decision or names an offscreen constraint**. It never labels the next element:
+
+```svelte
+<!-- Body is sanitized to a safe HTML subset on the backend (HtmlSanitizer). -->
+<!-- DropdownItem renders an <a> when given an href, so the whole row deep-links. -->
+```
+
+Both carry a fact the markup cannot show. `<!-- Title -->` above an `<h2>` carries nothing — delete it rather than write it. `<!-- eslint-disable-next-line svelte/no-at-html-tags -->` is a different thing (a suppression) and should sit directly above the line it silences, with the justifying comment above it.

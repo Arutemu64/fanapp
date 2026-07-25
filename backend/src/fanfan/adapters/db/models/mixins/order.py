@@ -3,9 +3,10 @@ from sqlalchemy.orm import Mapped, declared_attr, mapped_column
 
 
 class OrderMixin:
-    """Adds a deferred-unique float ``order`` column so rows (e.g. schedule
-    events) can be reordered — and swapped within a single transaction —
-    without violating uniqueness during intermediate flushes.
+    """Add a deferred-unique float ``order`` column for reorderable rows.
+
+    Rows (e.g. schedule events) can be reordered — and swapped within a single
+    transaction — without violating uniqueness during intermediate flushes.
 
     Each table gets its own ``<table>_order_seq`` sequence. Alembic does NOT
     autogenerate sequences, so create it by hand in the migration. The order

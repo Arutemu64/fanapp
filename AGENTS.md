@@ -5,7 +5,7 @@ Helper web app for the "FAN FAN" Russian anime convention. Audience: teen to you
 ## Never
 
 * **Never** import outward from `core/` or `application/` — no ORM models, concrete adapters, presentation routers, no FastAPI/SQLAlchemy in `core/`. Infrastructure reaches the inner layers only through ports in `application/ports/`. Enforced by `just backend-import-lint`.
-* **Never** ship user-facing English. Every label, placeholder, error, toast and empty state is **Russian**. Code comments and docstrings are **English**.
+* **Never** ship user-facing English. Every label, placeholder, error, toast and empty state is **Russian**. Code comments and docstrings are **English** — what to document, and where, is in [docs/backend.md](docs/backend.md#comments--docstrings) and [docs/frontend.md](docs/frontend.md#12-comments--component-docs).
 * **Never** keep request- or user-scoped state in a frontend module singleton — modules outlive navigation and login/logout in the SPA.
 * **Never** add, rename or remove an env var without updating `.env.example` in the same change. Its header explains the three consumers and the grouping; the backend's `extra="ignore"` means a drifted key fails silently at runtime instead of at boot.
 * **Never** call work done with a failing gate: `just backend-lint` + `just backend-typecheck` after Python, `just frontend-lint` + `just frontend-check` after frontend, `just dockerfile-lint` after a `Dockerfile`. Tests are not a gate — run them when useful.

@@ -10,7 +10,6 @@ def get_constraint_name(error: IntegrityError) -> str | None:
 
     Works with asyncpg errors and keeps a string fallback for other drivers.
     """
-
     original_error = error.orig
     constraint_name = getattr(original_error, "constraint_name", None)
     if constraint_name:

@@ -65,9 +65,11 @@ def check_template_drift() -> None:
 
 
 def set_if_placeholder(key: str, placeholder: str, value: str) -> None:
-    """Replace `key=placeholder` with `key=value`, but only while the line still
-    holds the exact placeholder. Keeps the script idempotent — a real secret is
-    never overwritten on a re-run.
+    """Replace ``key=placeholder`` with ``key=value``, placeholder lines only.
+
+    Rewrites the line only while it still holds the exact placeholder, which
+    keeps the script idempotent — a real secret is never overwritten on a
+    re-run.
     """
     target = f"{key}={placeholder}"
     lines = ENV_FILE.read_text(encoding="utf-8").splitlines(keepends=True)

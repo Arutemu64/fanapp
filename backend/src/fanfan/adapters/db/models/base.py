@@ -48,8 +48,7 @@ def str_enum_column(
 
 
 class BaseORM(DeclarativeBase):
-    """Declarative base carrying the shared metadata and the ``created_at`` audit
-    column.
+    """Declarative base carrying shared metadata and the ``created_at`` column.
 
     ``created_at`` is universal — knowing when a row was inserted is useful on
     every table. ``updated_at`` is opt-in via ``UpdatedAtMixin`` (mixins/

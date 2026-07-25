@@ -39,7 +39,7 @@ class DatabaseConfig(BaseModel):
     application_name: str | None = None
 
     def build_server_settings(self) -> dict[str, str]:
-        """asyncpg server_settings (all values must be strings).
+        """Build the asyncpg ``server_settings`` mapping (values must be strings).
 
         Timeouts set to 0 are omitted so Postgres keeps its own default
         (unlimited) rather than being handed a redundant "0".

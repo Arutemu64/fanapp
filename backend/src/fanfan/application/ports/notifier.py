@@ -5,11 +5,16 @@ from fanfan.core.models.notification import Notification
 
 class Notifier(Protocol):
     async def send_notification(self, notification: Notification) -> None:
-        """
+        """Deliver an already-persisted notification over this channel.
 
-        :param notification:
-        :raises UserNotReachable:
-        :raises NotificationRetryAfter:
+        The body arrives pre-sanitized (see ``HtmlSanitizer``); an adapter
+        renders it for its own transport rather than re-sanitizing.
+
+        Raises ``UserNotReachable`` when this specific recipient cannot be
+        reached (blocked the bot, no push subscription) — permanent for the
+        channel, so callers drop the delivery rather than retry. Raises
+        ``NotificationRetryAfter`` when the transport asks for backoff, with
+        the delay the caller must wait before retrying.
         """
         raise NotImplementedError
 

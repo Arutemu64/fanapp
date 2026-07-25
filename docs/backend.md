@@ -31,6 +31,8 @@ Everything below this section is detail; these rules alone prevent most mistakes
    drop+create; enum member changes need hand-written migrations).
 10. Logging: stdlib `logging.getLogger(__name__)`; short static message + scalar ids
     in `extra`; `str(...)` UUIDs; never log secrets, codes, or PII.
+11. Docstrings are for ports, domain models, interactors and translating adapters —
+    they explain *why*, never the signature. No `Args:`/`Returns:` sections.
 
 ## Common task recipes
 
@@ -267,3 +269,32 @@ The third-party sync flows for **cosplay2** and **TicketsCloud** are anti-corrup
 * **FastStream integration**: FastStream (the `stream` service) does **not** use its default logger — that one installs its own colorized handler with `propagate=False` and a fixed `INFO` level, which would bypass structlog and emit plaintext even under `DEBUG__JSON_LOGS=true`. Instead `get_stream_logger()` (`presentation/faststream/logger.py`) hands the broker and `FastStream` app a plain stdlib `logging.getLogger("faststream")` with its handlers cleared and `propagate=True`, so framework/access logs and the `Logger` dependency injected into subscribers all flow through the root structlog handler (correct format + level). FastStream forwards its per-message context (`message_id`, channel) via the record's `extra`, so `ExtraAdder` surfaces it automatically.
 * **Noise control**: Noisy third-party loggers (urllib3, aiogram.event, aiohttp.access) are raised to WARNING, and `uvicorn.access` logs for the `/debug/health` probe are dropped by `_HealthCheckFilter`.
 * **Error reporting (Sentry)**: `setup_telemetry()` (`adapters/debug/telemetry.py`) wires Sentry when `DEBUG__SENTRY_DSN` is set. Domain `AppException`s and request-validation errors are filtered out, and request headers / user PII are scrubbed before events are sent.
+
+## Comments & Docstrings
+
+English, always (AGENTS.md, "Never") — only user-facing copy is Russian.
+
+We document **deliberately, not exhaustively**. Ruff's presence rules (`D1xx`) are off on purpose and the reasoning is recorded in `backend/ruff.toml`: turning them on flags ~1600 symbols, and clearing that means writing `"""Initialize the thing."""` filler — which restates a signature the reader can already see, and which both [PEP 257](https://peps.python.org/pep-0257/) ("avoid repeating the function signature") and the [Google style guide](https://google.github.io/styleguide/pyguide.html) ("never describe the code") tell you not to write. The remaining `D` rules **are** enforced, so the docstrings we do write stay consistently shaped.
+
+### Where a docstring earns its place
+
+* **Every port** (`application/ports/**`). A port is a contract with no body to read, so the docstring *is* the specification — including the exceptions it may raise, since those never appear in the signature. `ports/gateways/sync_runs.py::add` documenting `SyncAlreadyRunning` and the `uq_sync_runs_active` index it comes from is the pattern to copy.
+* **Core models and value objects.** This is where the ubiquitous language lives. Record the constraints a type carries beyond its fields — `SyncSource` noting the value doubles as a URL path segment *and* the stored column value is exactly the kind of fact that has no other home.
+* **Interactors.** One line naming the use case, plus delivery/idempotency semantics where they exist (`PublishOutboxEvents` on at-least-once and mid-batch failure).
+* **Translating adapters.** ACLs (`TCloudSource`), `translate_integrity_error`, the ORM mixins — anywhere infrastructure detail leaks into a decision that needs justifying.
+* **Any deliberate omission or non-obvious choice.** `SyncRunDTO` explaining why `by_user_id` is *not* on the wire stops a future reader "fixing" it.
+
+Skip them everywhere else: `__init__`, DI providers, config classes, ORM column declarations, one-line delegating methods, and route handlers whose path and response model already say it. A missing docstring on an obvious function is correct, not debt.
+
+### Shape
+
+* **Summary line, imperative, ends with a period.** `"""Insert a run."""` Multi-line docstrings put the summary on the opening line, then a blank line, then the reasoning.
+* **No `Args:` / `Returns:` / `Raises:` sections.** Those exist to carry types into untyped code; we have annotations and `just backend-typecheck`, so a section listing them is a second copy that drifts. Fold exception behaviour into prose instead — `ports/captcha.py::verify` is the reference.
+* **Noun phrases are fine for properties and predicates** ("The unfinished run for a source, if any."). `D401` is disabled precisely because it is wrong about these.
+* Use ``double backticks`` for code references, matching the existing docstrings.
+
+### Comments
+
+Comments explain **why**, never what. The bar: could a competent reader infer this from the code? If yes, delete it. What survives is the reasoning that is *not* in the code — a workaround and the upstream issue behind it, a constant's provenance, an ordering that looks arbitrary but isn't. The block above `TC001`–`TC003` in `backend/ruff.toml` and the `# Read projections (return DTOs, not aggregates)` divider in every gateway are both doing real work; a `# increment the counter` would not.
+
+`TODO`s are tracked or absent — `# TODO(<issue-ref>): ...` (AGENTS.md, "Project constraints").

@@ -20,8 +20,9 @@ def generate_vapid_keys() -> tuple[bytes, bytes, str]:
 
 
 def write_vapid_keys(secrets_dir: Path) -> str:
-    """Generate a keypair, write the PEM files into `secrets_dir`, and return
-    the application server key. Overwrites any existing keys, so callers that
+    """Generate a keypair, write the PEM files, and return the app server key.
+
+    Writes into ``secrets_dir``. Overwrites any existing keys, so callers that
     must stay idempotent (e.g. bootstrap) check for existing keys first.
     """
     private_pem, public_pem, application_server_key = generate_vapid_keys()
