@@ -5,7 +5,6 @@ from fanfan.presentation.web.routes.auth.login_code import login_code_router
 from fanfan.presentation.web.routes.auth.session import session_router
 from fanfan.presentation.web.routes.auth.telegram import telegram_router
 
-# Assemble dedicated auth sub-routers into a single public auth router.
 auth_router.include_router(credentials_router)
 auth_router.include_router(email_code_router)
 auth_router.include_router(login_code_router)

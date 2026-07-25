@@ -46,6 +46,5 @@ class ChangePassword:
         await self.user_gateway.save(current_user)
         await self.uow.commit()
 
-        # Security-first behavior: revoke every active session after password change.
         await self.session_store.revoke_user_sessions(current_user.id)
         return await self.session_store.create_session(current_user.id)

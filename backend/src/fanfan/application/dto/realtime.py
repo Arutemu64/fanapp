@@ -28,7 +28,6 @@ class SSEEventName(StrEnum):
     PING = "ping"
     # Schedule changed; clients should refetch the schedule.
     SCHEDULE_UPDATED = "schedule_updated"
-    # A new notification was created for the target user.
     NOTIFICATION_CREATED = "notification_created"
     # A vendor sync run changed state; organizers should refetch sync sources.
     SYNC_RUN_UPDATED = "sync_run_updated"

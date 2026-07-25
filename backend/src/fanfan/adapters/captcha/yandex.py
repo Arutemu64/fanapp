@@ -8,7 +8,6 @@ from fanfan.core.exceptions.captcha import CaptchaVerificationFailed
 
 logger = logging.getLogger(__name__)
 
-# Yandex SmartCaptcha's server-side validation endpoint.
 VALIDATE_URL = "https://smartcaptcha.cloud.yandex.ru/validate"
 
 

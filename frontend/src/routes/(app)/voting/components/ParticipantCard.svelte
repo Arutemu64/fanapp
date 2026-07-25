@@ -94,7 +94,6 @@
 		participant.user_vote !== null ? 'ring-2 ring-green-600 dark:ring-green-500' : ''
 	]}
 >
-	<!-- Header row: number + voted badge -->
 	<div class="mb-2 flex min-h-6 items-center justify-between gap-2">
 		{#if participant.voting_number}
 			<span class="text-xs font-semibold tracking-wide text-primary-600 dark:text-primary-400">
@@ -114,7 +113,6 @@
 		{/if}
 	</div>
 
-	<!-- Title -->
 	<h3 class="flex-1 text-base leading-snug font-bold break-words text-gray-900 dark:text-white">
 		{participant.title}
 	</h3>

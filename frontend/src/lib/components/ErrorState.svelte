@@ -18,7 +18,6 @@
 	// sidebar, bottom nav — stays visible and navigable around it.
 	let { variant = 'fullscreen' }: { variant?: Variant } = $props();
 
-	// Reactive states based on page status and error messages
 	let status = $derived(page.status);
 	let errorMessage = $derived(page.error?.message);
 
@@ -74,29 +73,24 @@
 <div class={wrapperClass}>
 	<Card class="w-full max-w-md rounded-2xl p-6 text-center sm:p-8">
 		<div class="flex flex-col items-center justify-center">
-			<!-- Visual Icon -->
 			<div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full {iconColorClass}">
 				<StatusIcon class="h-8 w-8" />
 			</div>
 
-			<!-- Status Code -->
 			<span
 				class="mb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500"
 			>
 				{offline ? 'Офлайн' : `Ошибка ${status}`}
 			</span>
 
-			<!-- Title -->
 			<h2 class="mb-2 text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
 				{title}
 			</h2>
 
-			<!-- Description -->
 			<p class="mb-6 text-sm text-gray-500 dark:text-gray-400">
 				{description}
 			</p>
 
-			<!-- Action Buttons -->
 			<div class="flex w-full flex-col gap-2">
 				{#if offline || status >= 500}
 					<Button

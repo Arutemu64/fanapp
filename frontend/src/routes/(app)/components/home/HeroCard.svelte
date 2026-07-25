@@ -127,7 +127,6 @@
 			{/if}
 		</div>
 
-		<!-- Text block -->
 		<div class="space-y-4 p-5 sm:p-7 lg:order-1 lg:p-9">
 			<div class="space-y-2">
 				<h1

@@ -14,7 +14,6 @@ export class ResendCooldown {
 		this.#seconds = seconds;
 	}
 
-	// Begin (or restart) the countdown from the full duration.
 	start(): void {
 		this.remaining = this.#seconds;
 		this.stop();
@@ -33,7 +32,6 @@ export class ResendCooldown {
 		this.#interval = undefined;
 	}
 
-	// Cancel and clear back to the ready state.
 	reset(): void {
 		this.stop();
 		this.remaining = 0;

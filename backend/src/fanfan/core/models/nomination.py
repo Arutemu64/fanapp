@@ -11,5 +11,4 @@ class Nomination(AggregateRoot):
     code: str
     title: str
     is_votable: bool
-    # Optional external URL where users can preview the nominated works.
     works_url: str | None = None

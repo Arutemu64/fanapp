@@ -2,7 +2,6 @@ from typing import NewType
 
 from adaptix import Retort, dumper, loader
 
-# Retort optimized for Redis usage
 RedisRetort = NewType("RedisRetort", Retort)
 
 

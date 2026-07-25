@@ -68,7 +68,6 @@ class SqlNominationGateway(NominationGateway):
             delete(NominationORM).where(NominationORM.cosplay2_id.in_(cosplay2_ids))
         )
 
-    # Read projections (return DTOs, not aggregates)
     async def read_voting_dto(
         self, nomination_code: NominationCode, user_id: UserId | None = None
     ) -> NominationVotingDTO | None:

@@ -19,7 +19,6 @@ def _scrub_sensitive_data(event: Event, hint: dict) -> Event | None:
         if isinstance(exc_value, (AppException, RequestValidationError)):
             return None
 
-    # Scrub request headers
     if event.get("request", {}).get("headers"):
         headers = cast("dict[str, str]", event["request"]["headers"])
         sensitive = ["cookie", "authorization", "x-api-key", "x-auth-token"]
@@ -27,7 +26,6 @@ def _scrub_sensitive_data(event: Event, hint: dict) -> Event | None:
             if key.lower() in sensitive:
                 headers[key] = "[Filtered]"
 
-    # Scrub user data — keep only id and username, remove emails
     if event.get("user"):
         user = event["user"]
         allowed_keys = {"id", "username"}
