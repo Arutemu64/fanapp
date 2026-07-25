@@ -1,3 +1,14 @@
+<!--
+@component
+Banner offering a reload when a newer build's service worker is waiting.
+
+Mounted once in the root layout. A waiting worker is never activated
+automatically — that would swap assets mid-session — so this prompt is the
+only path to `skipWaiting`, and the page reloads on `controllerchange`.
+It also re-polls for new builds itself (SvelteKit registers the worker once
+and never re-checks), so an installed PWA left open all event day still
+notices a hot-fix deploy.
+-->
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { Button } from 'flowbite-svelte';

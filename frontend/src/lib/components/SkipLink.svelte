@@ -1,3 +1,11 @@
+<!--
+@component
+Keyboard skip-to-content link, visually hidden until focused.
+
+Wired once in `(app)/+layout.svelte` and targets `#main-content`, which must
+stay focusable (`tabindex="-1"`). Both halves of that contract are load-bearing
+a11y — see docs/frontend.md section 9 before moving or removing either.
+-->
 <script lang="ts">
 	interface Props {
 		targetId?: string;

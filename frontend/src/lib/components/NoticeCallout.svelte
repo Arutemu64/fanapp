@@ -1,3 +1,13 @@
+<!--
+@component
+Inline callout box for a short notice. The shared base under
+`StaleDataNotice`; use it directly for one-off notes.
+
+`tone` picks the weight: `warning` (yellow) is stop-and-read, `muted` (gray)
+is a low-stakes FYI. Set `role="alert"` only for a notice that interrupts a
+flow — passive notes stay `status` so screen readers don't preempt.
+A `children` snippet overrides `message`.
+-->
 <script lang="ts">
 	import type { Component, Snippet } from 'svelte';
 

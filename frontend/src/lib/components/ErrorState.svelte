@@ -1,3 +1,17 @@
+<!--
+@component
+Full error screen for a failed load, with recovery actions.
+
+`variant="fullscreen"` takes over the viewport (root errors: 404, auth, root
+load failures); `inline` fills the content area only so the navbar and bottom
+nav stay navigable. Reframes a 5xx as a calm "нет соединения" screen when the
+backend is unreachable, but never for a genuine 403/404 — those are real
+server answers.
+
+Prefer the load-time `offlineMiss` empty state where you can: this component's
+reachability verdict is read at render time and can lag a beat behind the
+load's. See docs/frontend.md section 2.
+-->
 <script lang="ts">
 	import { page } from '$app/state';
 	import { isReachable, onReachableChange } from '$lib/services/reachability';
@@ -74,29 +88,24 @@
 <div class={wrapperClass}>
 	<Card class="w-full max-w-md rounded-2xl p-6 text-center sm:p-8">
 		<div class="flex flex-col items-center justify-center">
-			<!-- Visual Icon -->
 			<div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full {iconColorClass}">
 				<StatusIcon class="h-8 w-8" />
 			</div>
 
-			<!-- Status Code -->
 			<span
 				class="mb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500"
 			>
 				{offline ? 'Офлайн' : `Ошибка ${status}`}
 			</span>
 
-			<!-- Title -->
 			<h2 class="mb-2 text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
 				{title}
 			</h2>
 
-			<!-- Description -->
 			<p class="mb-6 text-sm text-gray-500 dark:text-gray-400">
 				{description}
 			</p>
 
-			<!-- Action Buttons -->
 			<div class="flex w-full flex-col gap-2">
 				{#if offline || status >= 500}
 					<Button

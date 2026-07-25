@@ -1,3 +1,17 @@
+<!--
+@component
+Renders both toast queues from `$lib/services/toasts.svelte.ts`. Mounted once
+in the app layout — never per page.
+
+Two independent regions, so a burst of one kind cannot evict the other: push
+toasts (inbound SSE notifications) drop from the top like OS notifications,
+status toasts (action feedback) rise from the bottom, clearing the mobile
+bottom nav. Supports swipe-to-dismiss.
+
+The a11y contract is load-bearing: `role="alert"`/`aria-live="assertive"` for
+errors, `role="status"`/`aria-live="polite"` otherwise, and toasts must never
+steal focus.
+-->
 <script lang="ts">
 	import type { Pathname } from '$app/types';
 	import type { PushToastItem, StatusToastItem } from '$lib/services/toasts.svelte';

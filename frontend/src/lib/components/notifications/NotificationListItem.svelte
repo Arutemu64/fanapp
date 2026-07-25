@@ -1,3 +1,13 @@
+<!--
+@component
+One notification row: icon, unread dot, title, body and relative timestamp.
+
+Becomes a link when the notification carries a `path`, deep-linking the whole
+row. The `body` is rendered with `{@html}` because the backend already
+sanitized it down to a safe HTML subset (`HtmlSanitizer`) — do not add a
+client-side sanitizer, and do not extend `{@html}` to any other API field.
+The `title` is plain text.
+-->
 <script lang="ts">
 	import type { Pathname } from '$app/types';
 	import type { NotificationDTO } from '$lib/types/notifications';

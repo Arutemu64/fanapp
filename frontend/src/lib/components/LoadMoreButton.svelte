@@ -1,3 +1,10 @@
+<!--
+@component
+Full-width "показать ещё" button for paginated lists, with an inline spinner
+while `loading`.
+
+Owns no pagination state — the parent tracks the cursor and flips `loading`.
+-->
 <script lang="ts">
 	import { Button, Spinner } from 'flowbite-svelte';
 

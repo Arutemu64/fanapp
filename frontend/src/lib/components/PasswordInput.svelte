@@ -1,3 +1,12 @@
+<!--
+@component
+Password field with a show/hide toggle and a lock icon.
+
+`autocomplete` is required, not defaulted: the browser needs `current-password`
+on a login form and `new-password` on registration or a change-password form,
+and getting it wrong breaks password-manager behaviour. `revealLabel` is the
+Russian noun interpolated into the toggle's aria-label.
+-->
 <script lang="ts">
 	import { Input } from 'flowbite-svelte';
 	import { EyeOutline, EyeSlashOutline, LockSolid } from 'flowbite-svelte-icons';

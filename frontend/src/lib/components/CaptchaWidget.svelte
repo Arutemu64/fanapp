@@ -1,3 +1,16 @@
+<!--
+@component
+Yandex SmartCaptcha in invisible mode. Yandex rather than Turnstile because
+Cloudflare is frequently throttled in Russia.
+
+Renders nothing unless `PUBLIC_SMARTCAPTCHA_CLIENT_KEY` is set, so callers
+must gate their submit path on the exported `captchaEnabled` flag rather than
+waiting on a token that will never arrive.
+
+Invisible mode mints a token only after `execute()`: bind `execute` and call
+it when submitting, pass the bound `token` to the API, then call the bound
+`reset` to fetch a fresh single-use token for the next request.
+-->
 <script module lang="ts">
 	import { PUBLIC_SMARTCAPTCHA_CLIENT_KEY } from '$env/static/public';
 

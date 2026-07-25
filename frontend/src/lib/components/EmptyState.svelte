@@ -1,3 +1,12 @@
+<!--
+@component
+Placeholder card for a list that came back empty: optional icon, optional
+bold title, message, and a trailing action snippet (e.g. "clear search").
+
+Not for failures — use `ErrorState` when the request errored, `EmptyState`
+only when it succeeded and returned nothing. Passing `title` switches to the
+two-line variant; without it the message renders alone.
+-->
 <script lang="ts">
 	import type { Component, Snippet } from 'svelte';
 

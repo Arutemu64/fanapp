@@ -1,3 +1,12 @@
+<!--
+@component
+Six-box one-time-code input that behaves as a single `value`.
+
+Handles paste, per-box backspace and arrow navigation, and calls `onComplete`
+once all six digits are present. Resetting `value` to `''` from the parent
+clears the boxes and refocuses the first one — that is the intended way to
+recover after a rejected code.
+-->
 <script lang="ts">
 	import { Input } from 'flowbite-svelte';
 	import { onMount } from 'svelte';

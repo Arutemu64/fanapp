@@ -1,3 +1,12 @@
+<!--
+@component
+Optional intro text under the navbar: a description paragraph plus extra
+content.
+
+Deliberately has no title — the page `<h1>` lives in `AppNavbar`, set by
+returning `title` from the page's `load`. Renders nothing at all when both
+`description` and `children` are absent, so it is safe to leave mounted.
+-->
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 

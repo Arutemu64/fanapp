@@ -256,10 +256,11 @@ Required for everything in `frontend/src/lib/components/`; optional for route-lo
 ```svelte
 <!--
 @component
-Пустое состояние списка — иконка, сообщение и необязательная кнопка действия.
+Placeholder card for a list that came back empty: optional icon, message and
+a trailing action snippet.
 
-Not for errors: use `ErrorState` when a request failed, `EmptyState` only when
-the request succeeded and returned nothing.
+Not for failures — use `ErrorState` when the request errored, `EmptyState`
+only when it succeeded and returned nothing.
 -->
 ```
 
