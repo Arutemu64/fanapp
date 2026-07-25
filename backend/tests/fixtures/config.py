@@ -23,7 +23,7 @@ class TestConfigProvider(Provider):
         return WebConfig(
             host="localhost",
             port=8000,
-            base_url=HttpUrl("http://localhost:8000/"),
+            public_url=HttpUrl("http://localhost:3000/"),
             secret_key=SecretStr("test-secret-key"),
         )
 

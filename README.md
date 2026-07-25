@@ -175,7 +175,7 @@ With the relative default you only set the origin-dependent values to match how 
 | `.env` / Caddy | HTTPS (production) | HTTP (local / insecure testing) |
 |---|---|---|
 | Caddy site block | your domain, e.g. `example.com { … }` (auto-TLS) | `:80 { … }` (as shipped) |
-| `WEB__BASE_URL` | `https://example.com/` | `http://localhost/` |
+| `WEB__PUBLIC_URL` | `https://example.com/` | `http://localhost/` |
 | `PUBLIC_API_URL` | `/api` (relative — domain-agnostic) | `/api` |
 | `WEB__COOKIE_SECURE` | `True` | `False` |
 | `WEB__CORS_ALLOW_ORIGINS` | unset (same-origin) | unset (same-origin) |
