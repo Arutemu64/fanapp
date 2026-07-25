@@ -13,4 +13,4 @@ bun.lockb
 build/
 
 # Generated (just frontend-generate-api)
-src/lib/api/v1.d.ts
+src/lib/api/schema.d.ts

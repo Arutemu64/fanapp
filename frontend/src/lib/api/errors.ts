@@ -1,4 +1,4 @@
-import type { components } from '$lib/api/v1';
+import type { components } from '$lib/api/schema';
 
 import { error as kitError } from '@sveltejs/kit';
 

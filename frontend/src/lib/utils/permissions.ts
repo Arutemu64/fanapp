@@ -1,4 +1,4 @@
-import type { components } from '$lib/api/v1';
+import type { components } from '$lib/api/schema';
 import type { CurrentUserDTO } from '$lib/types/user';
 
 // Permission identifiers, generated from the backend `Permission` enum via the

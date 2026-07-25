@@ -3,7 +3,7 @@
 	import { Button, Modal, Toggle } from 'flowbite-svelte';
 	import { ArrowDownToBracketOutline, BellOutline, BellSolid } from 'flowbite-svelte-icons';
 	const client = createApiClient();
-	import type { components } from '$lib/api/v1';
+	import type { components } from '$lib/api/schema';
 	import type { CurrentUserDTO } from '$lib/types/user';
 
 	import { PUBLIC_VAPID_KEY } from '$env/static/public';
