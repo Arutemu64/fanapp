@@ -14,7 +14,7 @@ different schedules.
 |            | Setup script (`.claude/setup.sh`)                | SessionStart hook (`.claude/hooks/session-start.sh`) |
 | ---------- | ------------------------------------------------ | ---------------------------------------------------- |
 | Attached to| The cloud environment                            | The repository                                       |
-| Configured | Cloud environment UI (**Setup script** field, which holds `.claude/setup-bootstrap.sh`) | `.claude/settings.json`         |
+| Configured | Cloud environment UI (**Setup script** field)    | `.claude/settings.json`                              |
 | Runs       | **Once**, at environment creation; result cached | **Every** session (startup + resume)                 |
 | Env vars   | **Not** injected — the environment's variables read as empty | Injected                                 |
 | Use for    | Slow installs that persist on disk               | Work that does not survive the snapshot              |
@@ -47,41 +47,12 @@ Resuming an existing session never re-runs it. **A dependency bump on the branch
 does not trigger a rebuild** — which is why dependency installs live in the hook
 (see below), not the setup script.
 
-### The bootstrap, and how to force a rebuild
-
-The environment only knows the text in its **Setup script** field, so that field
-holds [`.claude/setup-bootstrap.sh`](../.claude/setup-bootstrap.sh) — a short,
-stable script that locates the clone and runs the branch's own
-`.claude/setup.sh`. The real setup script therefore lives in git, is reviewed
-like any other code, and cannot diverge in content from what the environment
-runs. Paste the bootstrap once; you never paste `setup.sh` itself.
-
-The trade-off: since the field no longer contains `setup.sh`, **editing
-`setup.sh` no longer triggers a rebuild**. An existing environment keeps its
-snapshot until the ~7-day expiry. To pick a change up now, bump the
-`Rebuild counter:` line at the top of the bootstrap and save the environment —
-that changes the field, which rebuilds the snapshot.
-
-> The bootstrap never fails: an unfound clone or a setup script that exits
-> non-zero is reported and swallowed, because a non-zero exit from this field
-> means the session does not start at all.
-
-**What the SessionStart hook reports.** At environment creation `setup.sh`
-writes `~/.cache/fanfan-setup.state`: line 1 is the hash of the `setup.sh` it
-ran, written before anything else; line 2 is `complete`, or
-`incomplete: <tools>` if the closing verification found a required binary
-missing. The hook checks health and version independently, so both can fire:
-
-| State                              | Warning                                              |
-| ---------------------------------- | ---------------------------------------------------- |
-| line 2 is `incomplete: …`          | which tools are missing — install them in-session, or rebuild |
-| line 2 missing                     | the script never reached its end (failed midway, or the field was truncated) |
-| no state file                      | the snapshot predates this mechanism                 |
-| line 1 ≠ the repo's current hash   | `setup.sh` has changed since the snapshot was built  |
-
-Every one of them is fixed by bumping the rebuild counter; the wording tells you
-which you are looking at, so a broken toolchain is not reported as ordinary
-version drift.
+> The setup script lives in the cloud environment UI, not the repo.
+> `.claude/setup.sh` is tracked here for review and as the source of truth; you
+> must paste it into the environment's **Setup script** field for it to run, and
+> repaste it after every change — which is also what rebuilds the snapshot.
+> Nothing detects a stale paste automatically, so treat "edit `setup.sh`" and
+> "repaste the field" as one step.
 
 ## What runs where
 
@@ -89,9 +60,9 @@ version drift.
 prepulls (all persist in the snapshot). Every install is best-effort: a
 non-zero exit from the setup script means *no session starts* in this
 environment until the field or the cache changes, so a transient apt/PyPI/npm
-failure must not propagate. The script's closing verification checks
-`just uv node pnpm hadolint` and records anything missing, which the hook then
-names at the start of every session.
+failure must not propagate. The script ends by checking
+`just uv node pnpm hadolint` and naming anything missing in the setup log,
+rather than failing the build.
 
 * `just` (apt), an upgraded `uv` (PyPI), Python 3.14 — the base image's `uv` is
   too old for stable 3.14 and can't self-update here (GitHub installer 403s).

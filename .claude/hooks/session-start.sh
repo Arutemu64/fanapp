@@ -48,40 +48,6 @@ fi
 # Run sudo correctly whether or not we are already root.
 if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo"; fi
 
-# Report on what the environment's snapshot was built from. setup.sh writes a
-# two-line state file at environment creation: line 1 is the hash of the repo
-# copy it ran, line 2 is `complete` (or `incomplete: <tools>`), written only
-# once it reaches its end. Health and drift are independent - a snapshot can be
-# current but missing pnpm, or complete but built from last week's setup.sh - so
-# they are checked separately and both can fire.
-SETUP_STATE_FILE="$HOME/.cache/fanfan-setup.state" # written by .claude/setup.sh
-REBUILD_HINT="bump the rebuild counter in the environment's Setup script field to rebuild the snapshot (see docs/claude-cloud.md)."
-if [ -f "$REPO_ROOT/.claude/setup.sh" ]; then
-  repo_hash="$(sha256sum "$REPO_ROOT/.claude/setup.sh" | awk '{print $1}')"
-  recorded_hash="$(sed -n 1p "$SETUP_STATE_FILE" 2>/dev/null || true)"
-  setup_result="$(sed -n 2p "$SETUP_STATE_FILE" 2>/dev/null || true)"
-
-  if [ ! -f "$SETUP_STATE_FILE" ]; then
-    echo "[session-start] WARN: this environment's snapshot predates setup.sh state recording - $REBUILD_HINT"
-  else
-    case "$setup_result" in
-      complete) ;;
-      incomplete:*)
-        echo "[session-start] WARN: setup.sh finished at environment creation but these tools are missing:${setup_result#incomplete:} - install them in-session, or $REBUILD_HINT"
-        ;;
-      *)
-        echo "[session-start] WARN: setup.sh did not reach its end at environment creation (it failed midway, or the Setup script field was truncated) - $REBUILD_HINT"
-        ;;
-    esac
-
-    if [ "$recorded_hash" = "unknown" ]; then
-      echo "[session-start] WARN: setup.sh could not find the repo clone at environment creation, so its version cannot be checked - $REBUILD_HINT"
-    elif [ "$recorded_hash" != "$repo_hash" ]; then
-      echo "[session-start] WARN: .claude/setup.sh has changed since this environment's snapshot was built - $REBUILD_HINT"
-    fi
-  fi
-fi
-
 # Sync project dependencies against the current branch code. These are fast when
 # the lockfile is unchanged (uv/pnpm short-circuit) and only fetch the delta
 # after a real bump, since the caches persist in the snapshot. Kept here rather

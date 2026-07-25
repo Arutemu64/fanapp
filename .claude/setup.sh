@@ -6,19 +6,19 @@
 # baked into the cached snapshot every web session starts from. Put slow,
 # filesystem-persistent installs here so they are NOT repeated each session.
 #
-# Claude Code does not auto-run this file the way it runs
-# .claude/hooks/session-start.sh - the cloud environment only knows the text in
-# its "Setup script" field. That field holds .claude/setup-bootstrap.sh, which
-# locates the clone and runs THIS file, so the real setup script stays versioned
-# with the code instead of being pasted by hand. See docs/claude-cloud.md.
+# Register this file as the environment's Setup Script in the Claude Code web
+# UI (Environments -> Setup script). It is tracked in git only so it can be
+# reviewed and pasted/referenced; Claude Code does not auto-run it from the repo
+# the way it runs .claude/hooks/session-start.sh. Repaste it after every change
+# here, which also rebuilds the environment's cached snapshot.
 #
 # Every install here is best-effort. The setup script's exit status decides
 # whether a session starts at all ("If the script exits non-zero, the session
 # fails to start" - Claude Code on the web docs), and the result is cached, so
 # one transient apt/PyPI/npm failure would otherwise break every future session
-# in this environment. Failures are collected and reported through the state
-# file instead (see the verification block at the bottom); the session comes up
-# and the missing tool can be installed in-session.
+# in this environment. Failures are reported by the verification block at the
+# bottom instead; the session comes up and the missing tool can be installed
+# in-session.
 #
 # Steps that must run EVERY session (the Docker daemon process, the Docker Hub
 # login, per-session env vars) live in .claude/hooks/session-start.sh instead,
@@ -86,25 +86,6 @@ resolve_repo_root() {
 }
 
 REPO_ROOT="$(resolve_repo_root)"
-
-# Drift detection, part 1 of 2. This script is pasted into the cloud environment
-# UI by hand, so the branch's copy can silently move ahead of what the snapshot
-# was built from; the SessionStart hook compares the two and nags. The hash is
-# recorded HERE, before anything slow runs, and `complete` is appended only at
-# the very end (part 2). Recording only at the end - as this did originally -
-# cannot distinguish "in sync" from "the paste was truncated" or "the run died
-# midway": all three leave no marker, so the hook warned forever with nothing
-# for the reader to fix.
-# Best-effort: a failure here weakens the warning, it must not fail the setup.
-SETUP_STATE_FILE="$HOME/.cache/fanfan-setup.state" # also read by .claude/hooks/session-start.sh
-mkdir -p "$HOME/.cache" || true
-if [ -n "$REPO_ROOT" ] && sha256sum "$REPO_ROOT/.claude/setup.sh" | awk '{print $1}' > "$SETUP_STATE_FILE"; then
-  echo "[setup] Recorded setup.sh hash for drift detection."
-else
-  # The hook reports this as "could not verify" rather than as real drift.
-  echo "unknown" > "$SETUP_STATE_FILE" || true
-  echo "[setup] WARN: repo clone not found; setup.sh drift detection disabled."
-fi
 
 echo "[setup] Installing just (apt)..."
 if ! command -v just >/dev/null 2>&1; then
@@ -290,26 +271,18 @@ else
   echo "[setup]   WARN: could not write the hadolint shim; just dockerfile-lint will not run in-session."
 fi
 
-# State file, part 2 of 2 (see part 1 near the top). Because every install above
-# is best-effort, "the script reached its end" no longer implies "the toolchain
-# is there" - so check the binaries the repo's own workflows need and record the
-# verdict on line 2. Keep this the LAST block of the script: anything that stops
-# the script earlier, including a paste the UI truncated, must leave line 2
-# absent so the hook reports that instead of silently passing.
-#
-# CodeGraph is deliberately not checked - it is a navigation convenience that
-# already degrades to grep/read. hadolint is, because `just ci` gates on it.
+# Because every install above is best-effort, reaching this line does not mean
+# the toolchain is there - so name anything missing. The environment still comes
+# up; the gap is visible in the setup log and the tool can be installed
+# in-session. CodeGraph is deliberately not checked (a navigation convenience
+# that degrades to grep/read); hadolint is, because `just ci` gates on it.
 MISSING_TOOLS=""
 for tool in just uv node pnpm hadolint; do
   command -v "$tool" >/dev/null 2>&1 || MISSING_TOOLS="$MISSING_TOOLS $tool"
 done
 
-# Never fatal: a nonzero exit here would fail the whole environment build after
-# every install has already succeeded.
 if [ -n "$MISSING_TOOLS" ]; then
   echo "[setup] WARN: setup finished, but these tools are missing:$MISSING_TOOLS"
-  echo "incomplete:$MISSING_TOOLS" >> "$SETUP_STATE_FILE" || true
 else
   echo "[setup] Setup complete."
-  echo "complete" >> "$SETUP_STATE_FILE" || true
 fi
