@@ -63,9 +63,14 @@ jobs:
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         with:
           images: ${{ env.REGISTRY }}/${{ matrix.image }}
+          # `type=sha` is the identity a deploy actually pins (IMAGE_TAG=sha-…);
+          # the semver patterns give a `v1.2.3` tag the rolling `1.2` and `1`
+          # aliases too, so a pin can choose how much drift it accepts.
           tags: |
             type=sha
-            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       - name: Build and push
@@ -85,8 +90,12 @@ jobs:
           # the bundle; leave those variables unset to skip the upload.
           # SENTRY_RELEASE is the commit SHA, matching the image's `type=sha` tag —
           # the build context is ./frontend with no .git in it, so the Sentry plugin
-          # cannot detect the commit itself. For the backend each line evaluates to
-          # an empty string, which build-push-action ignores.
+          # cannot detect the commit itself. Each line for the other image evaluates
+          # to an empty string, which build-push-action ignores.
+          # The last two lines carry that same SHA into each image as its build id:
+          # PUBLIC_APP_VERSION reaches the profile footer, APP_BUILD becomes the
+          # backend's Sentry release. Both sides of a deploy then report the same
+          # release, which is what makes "did this deploy break it" answerable.
           build-args: |
             ${{ matrix.name == 'frontend' && format('PUBLIC_API_URL={0}', vars.PUBLIC_API_URL) || '' }}
             ${{ matrix.name == 'frontend' && format('PUBLIC_VAPID_KEY={0}', vars.PUBLIC_VAPID_KEY) || '' }}
@@ -98,6 +107,8 @@ jobs:
             ${{ matrix.name == 'frontend' && format('SENTRY_ORG={0}', vars.SENTRY_ORG) || '' }}
             ${{ matrix.name == 'frontend' && format('SENTRY_PROJECT={0}', vars.SENTRY_PROJECT) || '' }}
             ${{ matrix.name == 'frontend' && format('SENTRY_RELEASE={0}', github.sha) || '' }}
+            ${{ matrix.name == 'frontend' && format('PUBLIC_APP_VERSION={0}', github.sha) || '' }}
+            ${{ matrix.name == 'backend' && format('APP_BUILD={0}', github.sha) || '' }}
           # SENTRY_AUTH_TOKEN (a secret) uploads source maps in the `build` stage,
           # together with the SENTRY_URL/ORG/PROJECT args above — all four are
           # required or the upload is skipped. The token is passed as a BuildKit

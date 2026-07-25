@@ -1,7 +1,7 @@
 import logging
 from enum import StrEnum
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_extra_types.timezone_name import TimeZoneName
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -62,6 +62,13 @@ class EnvConfig(BaseSettings):
     # and `ENV` is a common ambient shell var that could silently shadow the
     # .env value. The Python attribute stays `env`.
     env: Environment = Field(validation_alias="APP_ENV")
+    # Commit SHA of the running build, baked into the image by the publish
+    # workflow (Dockerfile ARG/ENV APP_BUILD) — it identifies *which* build is
+    # running, where `version` in pyproject identifies the release. Unset when
+    # building from source locally, which is why it is optional. Empty string
+    # normalises to None below so an accidental `APP_BUILD=` in .env does not
+    # report a blank Sentry release.
+    build: str | None = Field(default=None, validation_alias="APP_BUILD")
     # Defaults to production-safe values; relaxed for APP_ENV=dev (see validator).
     debug: DebugConfig = DebugConfig()
 
@@ -80,6 +87,11 @@ class EnvConfig(BaseSettings):
 
     # Notification retention (age before old notifications are purged)
     notification: NotificationConfig = NotificationConfig()
+
+    @field_validator("build", mode="after")
+    @classmethod
+    def _blank_build_is_unset(cls, value: str | None) -> str | None:
+        return value or None
 
     @model_validator(mode="after")
     def _apply_environment_posture(self) -> EnvConfig:

@@ -5,6 +5,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from fanfan.adapters.config.parsers import get_config
+from fanfan.common.version import APP_VERSION
 from fanfan.core.exceptions.base import AppException
 from fanfan.main.common import init
 from fanfan.main.di import create_web_container
@@ -29,6 +30,7 @@ def create_app() -> FastAPI:
     config = get_config()
     app = FastAPI(
         debug=config.debug.enabled,
+        version=APP_VERSION,
         generate_unique_id_function=generate_operation_id,
     )
 

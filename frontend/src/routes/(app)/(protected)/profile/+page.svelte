@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
+	import { PUBLIC_APP_VERSION } from '$env/static/public';
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { getOfflineService } from '$lib/services/offline.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
@@ -25,6 +26,11 @@
 	const offline = getOfflineService();
 	let showStaleNotice = $derived(!offline.isOnline);
 	const staleNoticeMessage = 'Нет связи. Показан сохранённый профиль — обновится при подключении.';
+
+	// Commit SHA baked in at build time, shortened for display. Empty for a local
+	// build from source — then the line is hidden rather than showing a blank id.
+	// It exists so a bug report ("у меня всё сломалось") names an exact bundle.
+	const buildId = PUBLIC_APP_VERSION.slice(0, 7);
 
 	const telegramLinkErrorMessages = {
 		linked_to_another_account: 'Этот Telegram уже подключён к другому аккаунту.',
@@ -93,4 +99,7 @@
 		С любовью, Arutemu64
 		<HeartOutline class="inline size-3.5 text-red-400" />
 	</p>
+	{#if buildId}
+		<p class="mt-0.5">Сборка {buildId}</p>
+	{/if}
 </footer>

@@ -42,6 +42,7 @@ def setup_telemetry(
     service_name: str,
     environment: str,
     sentry_dsn: str | None,
+    release: str | None = None,
     traces_sample_rate: float = 0.1,
     profiles_sample_rate: float = 0.0,
 ) -> None:
@@ -49,6 +50,11 @@ def setup_telemetry(
         sentry_sdk.init(
             dsn=sentry_dsn,
             environment=environment,
+            # Commit SHA, matching the frontend's SENTRY_RELEASE, so an error
+            # from either side of one deploy groups under the same release.
+            # None leaves the SDK to its own detection, which finds nothing in
+            # the image (no .git) — that is the local-build case.
+            release=release,
             traces_sample_rate=traces_sample_rate,
             profiles_sample_rate=profiles_sample_rate,
             enable_logs=False,

@@ -84,6 +84,7 @@ Structural change → update the docs **in the same change**. Prefer documenting
 * Architecturally significant decision — new external dependency, changed deployment topology, an expensive-to-reverse choice → a new immutable ADR under [docs/adr/](docs/adr/README.md). Guides say *how it works now*; ADRs record *why we chose it*.
 * An open PR that gained commits → refresh its title and description to describe the PR as a whole, not the latest commit.
 * A version pinned in more than one place → bump every site together and keep `renovate.json` covering them. See [docs/dependencies.md](docs/dependencies.md).
+* A release → bump `backend/pyproject.toml` `version`, move the matching `vX.Y.Z` tag and regenerate the OpenAPI spec in one change. That version covers the whole repo; `frontend/package.json` stays at `0.0.0`. See [docs/dependencies.md](docs/dependencies.md) "Versioning the app".
 
 ## Project constraints
 

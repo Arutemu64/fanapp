@@ -14,6 +14,9 @@ services:
         PUBLIC_SENTRY_ENVIRONMENT: ${PUBLIC_SENTRY_ENVIRONMENT}
         PUBLIC_SENTRY_TRACES_SAMPLE_RATE: ${PUBLIC_SENTRY_TRACES_SAMPLE_RATE}
         PUBLIC_SMARTCAPTCHA_CLIENT_KEY: ${PUBLIC_SMARTCAPTCHA_CLIENT_KEY}
+        # Commit SHA shown in the profile footer. Injected by the publish
+        # workflow; empty for a local build, which hides the line.
+        PUBLIC_APP_VERSION: ${PUBLIC_APP_VERSION}
         # Source-map upload target. Non-secret and build-time only (read by
         # vite.config.ts, never bundled). An empty URL/ORG/PROJECT = upload
         # skipped; SENTRY_RELEASE names the release the maps land under.
