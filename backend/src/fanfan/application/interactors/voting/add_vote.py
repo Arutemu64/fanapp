@@ -50,10 +50,12 @@ class AddVote:
         ticket = await self.ticket_gateway.get_by_user_id(current_user.id)
         await self.vote_service.ensure_user_can_vote(user=current_user, ticket=ticket)
 
-        # User can only vote once in a nomination
         participant = await self.participant_gateway.get(data.participant_id)
         if participant is None:
             raise ParticipantNotFound
+
+        # One vote per nomination, not per participant: the participant is
+        # resolved above only to read the nomination it competes in.
         if await self.vote_gateway.get_user_vote_by_nomination(
             nomination_id=participant.nomination_id, user_id=current_user.id
         ):
