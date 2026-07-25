@@ -4,6 +4,27 @@ Companion web app for the **FAN FAN** Russian anime convention. It gives attende
 
 This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAPI contract between them.
 
+> [!WARNING]
+> **This codebase is heavily AI-assisted.** Much of it is written by AI coding
+> agents (mainly Claude Code) under human direction and review. Read it with that
+> in mind before you reuse it. The split is not uniform:
+>
+> - **Backend** — the architecture and design decisions are mine. The
+>   clean/hexagonal layering, the domain model, the ports, and the trade-offs
+>   recorded in [`docs/adr/`](docs/adr/README.md) are deliberate choices, not
+>   generated ones. Agents write code inside those decisions; they do not make them.
+> - **Frontend** — largely AI-written, from the SvelteKit components to the
+>   styling, against the design direction and constraints in
+>   [`docs/frontend.md`](docs/frontend.md).
+>
+> Every change is human-reviewed and has to pass the same gates as any other —
+> lint, type check, and tests in CI. Commits written with agent assistance carry a
+> `Co-Authored-By` trailer, so `git log` is the accurate record of what was written
+> how. [`AGENTS.md`](AGENTS.md) is the instruction file the agents read; it doubles
+> as the contributor guide, since the rules are the same for humans. The
+> `.claude/`, `.agents/`, `.gemini/` and `.cline/` directories hold agent
+> configuration and vendored third-party skills.
+
 ## Features
 
 - **Schedule** — public event schedule with live changes, per-user subscriptions, and organizer management/import tools.
@@ -218,3 +239,12 @@ Optional, enabled via `.env`:
 - [`docs/dependencies.md`](docs/dependencies.md) — shared version pins and Renovate
 - [`docs/claude-cloud.md`](docs/claude-cloud.md) — Claude Code on the web provisioning
 - [`docs/adr/`](docs/adr/README.md) — architecture decision records
+
+## License
+
+[MIT](LICENSE) © Arutemu64.
+
+Vendored third-party agent skills under `.claude/skills/`, `.agents/skills/` and
+`.impeccable/` are **not** covered by this license — each keeps its upstream
+license and copyright. `skills-lock.json` records the source repository for every
+one of them.
