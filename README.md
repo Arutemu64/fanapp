@@ -4,26 +4,13 @@ Companion web app for the **FAN FAN** Russian anime convention. It gives attende
 
 This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAPI contract between them.
 
-> [!WARNING]
-> **This codebase is heavily AI-assisted.** Much of it is written by AI coding
-> agents (mainly Claude Code) under human direction and review. Read it with that
-> in mind before you reuse it. The split is not uniform:
->
-> - **Backend** — the architecture and design decisions are mine. The
->   clean/hexagonal layering, the domain model, the ports, and the trade-offs
->   recorded in [`docs/adr/`](docs/adr/README.md) are deliberate choices, not
->   generated ones. Agents write code inside those decisions; they do not make them.
-> - **Frontend** — largely AI-written, from the SvelteKit components to the
->   styling, against the design direction and constraints in
->   [`docs/frontend.md`](docs/frontend.md).
->
-> Every change is human-reviewed and has to pass the same gates as any other —
-> lint, type check, and tests in CI. Commits written with agent assistance carry a
-> `Co-Authored-By` trailer, so `git log` is the accurate record of what was written
-> how. [`AGENTS.md`](AGENTS.md) is the instruction file the agents read; it doubles
-> as the contributor guide, since the rules are the same for humans. The
-> `.claude/`, `.agents/`, `.gemini/` and `.cline/` directories hold agent
-> configuration and vendored third-party skills.
+> [!NOTE]
+> **This project is built with AI.** Claude Code writes most of the code and makes
+> plenty of the decisions along the way. I set the direction, review the result, and
+> have the final say on what lands. The backend's architecture is mine — the
+> reasoning is in [`docs/adr/`](docs/adr/README.md); the frontend is mostly
+> agent-written. Agent-assisted commits carry a `Co-Authored-By` trailer, so
+> `git log` shows you exactly how any given line got here.
 
 ## Features
 
