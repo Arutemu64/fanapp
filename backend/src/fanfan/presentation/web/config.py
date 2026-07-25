@@ -8,7 +8,6 @@ class WebConfig(BaseModel):
     port: int
 
     base_url: HttpUrl
-    path: str = "/"
     secret_key: SecretStr
 
     # Browser origins allowed to make credentialed CORS requests to the API.
