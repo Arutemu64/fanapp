@@ -54,6 +54,17 @@ ENV PUBLIC_API_URL=$PUBLIC_API_URL \
 	PUBLIC_SENTRY_DSN=$PUBLIC_SENTRY_DSN \
 	PUBLIC_SMARTCAPTCHA_CLIENT_KEY=$PUBLIC_SMARTCAPTCHA_CLIENT_KEY
 
+# Where the source maps are uploaded (Sentry SaaS or self-hosted GlitchTip).
+# Build-time only — unlike the PUBLIC_* args above, these are read by
+# vite.config.ts and never inlined into the bundle. Non-secret, and all optional:
+# any of them empty means no upload.
+ARG SENTRY_URL
+ARG SENTRY_ORG
+ARG SENTRY_PROJECT
+ENV SENTRY_URL=$SENTRY_URL \
+	SENTRY_ORG=$SENTRY_ORG \
+	SENTRY_PROJECT=$SENTRY_PROJECT
+
 # SENTRY_AUTH_TOKEN (uploads source maps) is a real secret, so it enters as a
 # BuildKit secret mount, not ARG/ENV — args persist in this stage's layer
 # metadata and in exported build caches (see the SecretsUsedInArgOrEnv build

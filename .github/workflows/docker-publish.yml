@@ -80,16 +80,24 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           # Frontend build args. PUBLIC_* are baked into the static SPA bundle at
           # build time ($env/static/public) — they come from public, non-secret
-          # repository variables. For the backend each line evaluates to an empty
-          # string, which build-push-action ignores.
+          # repository variables. The SENTRY_* trio is build-time only (the
+          # source-map upload target, read by vite.config.ts) and never reaches
+          # the bundle; leave those variables unset to skip the upload. For the
+          # backend each line evaluates to an empty string, which
+          # build-push-action ignores.
           build-args: |
             ${{ matrix.name == 'frontend' && format('PUBLIC_API_URL={0}', vars.PUBLIC_API_URL) || '' }}
             ${{ matrix.name == 'frontend' && format('PUBLIC_VAPID_KEY={0}', vars.PUBLIC_VAPID_KEY) || '' }}
             ${{ matrix.name == 'frontend' && format('PUBLIC_SENTRY_DSN={0}', vars.PUBLIC_SENTRY_DSN) || '' }}
             ${{ matrix.name == 'frontend' && format('PUBLIC_SMARTCAPTCHA_CLIENT_KEY={0}', vars.PUBLIC_SMARTCAPTCHA_CLIENT_KEY) || '' }}
-          # SENTRY_AUTH_TOKEN (a secret) uploads source maps in the `build` stage.
-          # It is passed as a BuildKit secret — unlike a build arg, it never lands
-          # in image layer metadata or the exported GHA build cache below.
+            ${{ matrix.name == 'frontend' && format('SENTRY_URL={0}', vars.SENTRY_URL) || '' }}
+            ${{ matrix.name == 'frontend' && format('SENTRY_ORG={0}', vars.SENTRY_ORG) || '' }}
+            ${{ matrix.name == 'frontend' && format('SENTRY_PROJECT={0}', vars.SENTRY_PROJECT) || '' }}
+          # SENTRY_AUTH_TOKEN (a secret) uploads source maps in the `build` stage,
+          # together with the SENTRY_URL/ORG/PROJECT args above — all four are
+          # required or the upload is skipped. The token is passed as a BuildKit
+          # secret — unlike a build arg, it never lands in image layer metadata or
+          # the exported GHA build cache below.
           secrets: |
             ${{ matrix.name == 'frontend' && format('sentry_auth_token={0}', secrets.SENTRY_AUTH_TOKEN) || '' }}
           cache-from: type=gha
