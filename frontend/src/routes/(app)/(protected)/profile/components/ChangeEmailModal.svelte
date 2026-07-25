@@ -76,7 +76,6 @@
 		}
 	}
 
-	// Step 1: Save new email and send OTP
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
 		emailError = '';
@@ -109,7 +108,6 @@
 		cooldown.start();
 	}
 
-	// Step 2: Confirm OTP
 	async function submitVerificationCode() {
 		verificationCodeError = '';
 

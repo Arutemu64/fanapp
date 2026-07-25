@@ -61,7 +61,6 @@ async def login(
     config: FromDishka[WebConfig],
     response: Response,
 ) -> None:
-    # Keep login flow explicit so junior developers can follow each step.
     session_id = await interactor(
         AuthenticateUserInput(
             email=form_data.email,

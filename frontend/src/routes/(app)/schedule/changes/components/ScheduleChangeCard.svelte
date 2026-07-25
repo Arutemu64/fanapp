@@ -44,7 +44,6 @@
 		}
 	}
 
-	// Map change types to Russian labels
 	const changeTypeLabels: Record<ScheduleChangeType, string> = {
 		set_as_current: 'Установлено текущим',
 		moved: 'Перенесено',
@@ -52,7 +51,6 @@
 		unskipped: 'Восстановлено'
 	};
 
-	// Map change types to badge colors
 	const changeTypeColors: Record<ScheduleChangeType, BadgeProps['color']> = {
 		set_as_current: 'green',
 		moved: 'blue',

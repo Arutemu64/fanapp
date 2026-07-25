@@ -18,7 +18,6 @@
 	// sidebar, bottom nav — stays visible and navigable around it.
 	let { variant = 'fullscreen' }: { variant?: Variant } = $props();
 
-	// Reactive states based on page status and error messages
 	let status = $derived(page.status);
 	let errorMessage = $derived(page.error?.message);
 

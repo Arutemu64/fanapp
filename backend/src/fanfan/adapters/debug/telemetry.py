@@ -19,7 +19,6 @@ def _scrub_sensitive_data(event: Event, hint: dict) -> Event | None:
         if isinstance(exc_value, (AppException, RequestValidationError)):
             return None
 
-    # Scrub request headers
     if event.get("request", {}).get("headers"):
         headers = cast("dict[str, str]", event["request"]["headers"])
         sensitive = ["cookie", "authorization", "x-api-key", "x-auth-token"]

@@ -32,7 +32,7 @@ def setup_logging(level: int, json_logs: bool):
     structlog_processors = [
         structlog.processors.StackInfoRenderer(),
         structlog.stdlib.PositionalArgumentsFormatter(),
-        structlog.processors.UnicodeDecoder(),  # convert bytes to str
+        structlog.processors.UnicodeDecoder(),
         # for integration with default logging
         structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
     ]

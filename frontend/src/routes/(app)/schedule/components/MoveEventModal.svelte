@@ -33,7 +33,6 @@
 		}
 	});
 
-	// Reset error when search changes
 	$effect(() => {
 		if (query) {
 			formError = '';
@@ -68,7 +67,6 @@
 
 				toastService.add('Выступление перенесено', 'success');
 
-				// Successful flow: close modal and reset fields
 				open = false;
 				selectedId = null;
 				query = '';

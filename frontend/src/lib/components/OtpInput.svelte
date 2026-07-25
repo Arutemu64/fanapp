@@ -18,7 +18,6 @@
 		onInput
 	}: Props = $props();
 
-	// Local state for individual digits
 	let codeDigits = $state(['', '', '', '', '', '']);
 	let container = $state<HTMLDivElement | undefined>(undefined);
 
@@ -34,7 +33,6 @@
 			codeDigits[i] = val[i] || '';
 		}
 
-		// If value is reset to empty, refocus the first input field
 		if (val === '' && container) {
 			const inputs = container.querySelectorAll('input');
 			const firstInput = inputs?.[0] as HTMLInputElement;
@@ -53,27 +51,23 @@
 		}
 	}
 
-	// Handle Backspace navigation and auto-focusing on typing
 	function handlePinKeyup(event: KeyboardEvent, index: number) {
 		if (!container) return;
 		const inputs = container.querySelectorAll('input');
 		if (!inputs) return;
 
-		// Move to previous box if Backspace is pressed in an empty box
 		if (event.key === 'Backspace' && codeDigits[index] === '' && index > 0) {
 			const prevInput = inputs[index - 1] as HTMLInputElement;
 			prevInput?.focus();
 			return;
 		}
 
-		// Move to next box if a digit has been typed
 		if (codeDigits[index] !== '' && index < 5 && /^\d$/.test(event.key)) {
 			const nextInput = inputs[index + 1] as HTMLInputElement;
 			nextInput?.focus();
 		}
 	}
 
-	// Handle clipboard paste across all 6 input fields
 	function handlePinPaste(event: ClipboardEvent) {
 		event.preventDefault();
 		const pasteData = event.clipboardData?.getData('text') ?? '';
@@ -81,7 +75,6 @@
 
 		if (!digits) return;
 
-		// Fill the local digit boxes with pasted content
 		for (let i = 0; i < 6; i++) {
 			codeDigits[i] = digits[i] || '';
 		}
@@ -92,7 +85,6 @@
 		const inputs = container.querySelectorAll('input');
 		if (!inputs) return;
 
-		// Focus the next empty input, or the last one if completely filled
 		const nextEmptyIndex = codeDigits.findIndex((d) => d === '');
 		if (nextEmptyIndex !== -1) {
 			const targetInput = inputs[nextEmptyIndex] as HTMLInputElement;
@@ -104,7 +96,6 @@
 	}
 
 	onMount(() => {
-		// Automatically focus the first input block on mount
 		if (container) {
 			const inputs = container.querySelectorAll('input');
 			const firstInput = inputs?.[0] as HTMLInputElement;
@@ -127,7 +118,6 @@
 				onkeyup={(e) => handlePinKeyup(e, i)}
 				onpaste={i === 0 ? handlePinPaste : undefined}
 				oninput={() => {
-					// Ensure only numbers are entered in each cell
 					codeDigits[i] = (codeDigits[i] || '').replace(/\D/g, '');
 					updateValue();
 				}}

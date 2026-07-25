@@ -63,7 +63,6 @@ class SqlSubscriptionGateway(SubscriptionGateway):
         self, current_event_queue: int
     ) -> list[SubscriptionFullDTO]:
         stmt = _select_subscription_full_dto().where(
-            # Ignore skipped events
             ScheduleEventORM.is_skipped.isnot(True),
             # Fire once the event is within `counter` positions of the stage.
             SubscriptionORM.counter >= (ScheduleEventORM.queue - current_event_queue),
