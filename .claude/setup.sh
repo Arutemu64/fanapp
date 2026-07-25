@@ -9,11 +9,22 @@
 # Register this file as the environment's Setup Script in the Claude Code web
 # UI (Environments -> Setup script). It is tracked in git only so it can be
 # reviewed and pasted/referenced; Claude Code does not auto-run it from the repo
-# the way it runs .claude/hooks/session-start.sh.
+# the way it runs .claude/hooks/session-start.sh. Repaste it after every change
+# here, which also rebuilds the environment's cached snapshot.
 #
-# Steps that must run EVERY session (the Docker daemon process, per-session env
-# vars) live in .claude/hooks/session-start.sh instead, because processes and
-# the per-session env file do not survive in the cached snapshot.
+# Every install here is best-effort. The setup script's exit status decides
+# whether a session starts at all ("If the script exits non-zero, the session
+# fails to start" - Claude Code on the web docs), and the result is cached, so
+# one transient apt/PyPI/npm failure would otherwise break every future session
+# in this environment. Failures are reported by the verification block at the
+# bottom instead; the session comes up and the missing tool can be installed
+# in-session.
+#
+# Steps that must run EVERY session (the Docker daemon process, the Docker Hub
+# login, per-session env vars) live in .claude/hooks/session-start.sh instead,
+# because processes and the per-session env file do not survive in the cached
+# snapshot - and because the environment's variables are not injected into this
+# script at all (see the prepull block below).
 #
 # Install-channel notes (this environment blocks GitHub release downloads):
 #   * uv  - The base web image ships uv in ~/.local/bin, but it is too old to
@@ -51,10 +62,36 @@ export PATH="$HOME/.local/bin:$PATH"
 # Run apt/sudo correctly whether or not we are already root.
 if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo"; fi
 
+# Locate the repo clone. cwd is not guaranteed to be inside it during the
+# setup-script phase and CLAUDE_PROJECT_DIR is not set there, so fall back to
+# git, then to the standard clone locations. Prints nothing if the clone cannot
+# be found, so callers can decide what to do.
+resolve_repo_root() {
+  local git_root candidate
+  if [ -n "${CLAUDE_PROJECT_DIR:-}" ] && [ -f "$CLAUDE_PROJECT_DIR/.claude/setup.sh" ]; then
+    echo "$CLAUDE_PROJECT_DIR"
+    return
+  fi
+  git_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+  if [ -n "$git_root" ] && [ -f "$git_root/.claude/setup.sh" ]; then
+    echo "$git_root"
+    return
+  fi
+  for candidate in /home/*/*/.claude/setup.sh /workspace/*/.claude/setup.sh; do
+    if [ -f "$candidate" ]; then
+      echo "$(dirname "$(dirname "$candidate")")"
+      return
+    fi
+  done
+}
+
+REPO_ROOT="$(resolve_repo_root)"
+
 echo "[setup] Installing just (apt)..."
 if ! command -v just >/dev/null 2>&1; then
   $SUDO apt-get install -y -qq just \
-    || { $SUDO apt-get update -qq && $SUDO apt-get install -y -qq just; }
+    || { $SUDO apt-get update -qq && $SUDO apt-get install -y -qq just; } \
+    || echo "[setup]   WARN: just install failed."
 fi
 
 echo "[setup] Installing pinned uv (for stable Python 3.14 support)..."
@@ -62,23 +99,37 @@ echo "[setup] Installing pinned uv (for stable Python 3.14 support)..."
 # backend/Dockerfile - bump all four together. An unpinned `--upgrade` would
 # grab whatever is newest on PyPI, which drifts from the repo's pin and makes
 # `uv sync`/`uv run` fail its own required-version check.
-python3 -m pip install --quiet --user "uv==0.11.29"
+#
+# The --user install works because the base image ships no PEP 668
+# EXTERNALLY-MANAGED marker for its Python 3.11, despite being Ubuntu 24.04. If
+# a future image restores that marker this call starts failing - hence the
+# guard, and hence the verification block at the bottom that names `uv` as
+# missing rather than letting the environment build silently broken.
+python3 -m pip install --quiet --user "uv==0.11.29" \
+  || echo "[setup]   WARN: uv install failed (PyPI unreachable, or pip refused the --user install)."
 
 echo "[setup] Installing stable Python 3.14..."
-uv python install 3.14
+uv python install 3.14 || echo "[setup]   WARN: Python 3.14 install failed; the backend's uv sync will try again per session."
 
 echo "[setup] Installing Node.js 24 (nvm)..."
 export NVM_DIR="/opt/nvm"
-# shellcheck disable=SC1091
-. "$NVM_DIR/nvm.sh"
-nvm install 24
-nvm alias default 24
-# `nvm alias default` only affects PATH once something calls `nvm use`; put
-# Node 24's bin dir first now so the rest of this script picks it up instead
-# of the base image's system Node 22 at /opt/node22/bin, which is earlier on
-# PATH by default (/etc/profile.d/nodejs.sh). session-start.sh resolves the
-# same "default" alias the same way each session.
-export PATH="$(dirname "$(nvm which default)"):$PATH"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  # shellcheck disable=SC1091
+  . "$NVM_DIR/nvm.sh"
+  nvm install 24 && nvm alias default 24 \
+    || echo "[setup]   WARN: Node 24 install failed; the image's system Node 22 stays in use."
+  # `nvm alias default` only affects PATH once something calls `nvm use`; put
+  # Node 24's bin dir first now so the rest of this script picks it up instead
+  # of the base image's system Node 22 at /opt/node22/bin, which is earlier on
+  # PATH by default (/etc/profile.d/nodejs.sh). session-start.sh resolves the
+  # same "default" alias the same way each session.
+  node_path="$(nvm which default 2>/dev/null || true)"
+  if [ -n "$node_path" ]; then
+    export PATH="$(dirname "$node_path"):$PATH"
+  fi
+else
+  echo "[setup]   WARN: nvm not found at $NVM_DIR; skipping Node 24."
+fi
 
 # Note: project dependency installs (uv sync / pnpm install) deliberately live
 # in the SessionStart hook, not here. The setup script only re-runs when the
@@ -89,7 +140,7 @@ export PATH="$(dirname "$(nvm which default)"):$PATH"
 # caches persist in the snapshot).
 
 echo "[setup] Installing pnpm 11 (matches mise.toml / frontend/package.json)..."
-npm install -g pnpm@11.15.0
+npm install -g pnpm@11.15.0 || echo "[setup]   WARN: pnpm install failed."
 
 # CodeGraph - the code-navigation knowledge graph (see AGENTS.md "Code
 # Navigation"). Installed from the npm registry, NOT the project's recommended
@@ -120,12 +171,12 @@ if npm install -g @colbymchenry/codegraph >/dev/null 2>&1; then
   if [ -n "$CG_BIN" ]; then
     $SUDO ln -sf "$CG_BIN" /usr/local/bin/codegraph 2>/dev/null || true
   fi
-  # Resolve the repo root the same way the hash block below does; cwd is not
-  # guaranteed to be inside the clone at env-creation time. If the seed lands
-  # in the wrong place (or fails), the hook's own index build recovers.
-  CODEGRAPH_ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+  # Seed into the clone resolved at the top; cwd is not guaranteed to be inside
+  # it at env-creation time, and seeding the wrong directory would leave the
+  # repo unindexed. If the seed lands nowhere (or fails), the hook's own index
+  # build recovers.
   echo "[setup] Seeding CodeGraph index..."
-  if [ -d "$CODEGRAPH_ROOT" ] && (cd "$CODEGRAPH_ROOT" && codegraph init >/dev/null 2>&1); then
+  if [ -n "$REPO_ROOT" ] && (cd "$REPO_ROOT" && codegraph init >/dev/null 2>&1); then
     echo "[setup]   CodeGraph installed and index seeded."
   else
     echo "[setup]   WARN: CodeGraph index seed failed; the SessionStart hook will build it."
@@ -170,23 +221,13 @@ if command -v dockerd >/dev/null 2>&1; then
     done
   fi
   if docker info >/dev/null 2>&1; then
-    # Authenticate to Docker Hub if credentials are provided as environment
-    # variables (set in the cloud environment config). Anonymous pulls are
-    # capped at ~100 / 6h per egress IP, which a shared cloud egress hits fast;
-    # an authenticated account raises that substantially. The token is passed on
-    # stdin (never on the command line), and the resulting ~/.docker/config.json
-    # persists in the snapshot, so sessions' own lazy pulls are authenticated
-    # too. Best-effort: a bad/expired token must not fail environment creation.
-    if [ -n "${DOCKERHUB_USER:-}" ] && [ -n "${DOCKERHUB_TOKEN:-}" ]; then
-      if printf '%s' "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin >/dev/null 2>&1; then
-        echo "[setup] Authenticated to Docker Hub as $DOCKERHUB_USER."
-      else
-        echo "[setup] WARN: Docker Hub login failed; pulling anonymously (rate-limited)."
-      fi
-    else
-      echo "[setup] Note: DOCKERHUB_USER/DOCKERHUB_TOKEN not set; pulling anonymously (rate-limited)."
-    fi
-
+    # These pulls are anonymous and cannot be otherwise: the cloud environment's
+    # variables (DOCKERHUB_USER/DOCKERHUB_TOKEN) are injected only into the
+    # session, never into this setup-script phase, so a `docker login` here would
+    # always read empty credentials (anthropics/claude-code#63541). The login
+    # lives in .claude/hooks/session-start.sh instead, which covers every pull a
+    # session makes; only these three prepulls stay subject to the anonymous cap
+    # (~100 / 6h per egress IP), and they degrade to a lazy pull at first use.
     for image in postgres:18.4-alpine valkey/valkey:9.1-alpine hadolint/hadolint:v2.14.0; do
       if docker pull "$image" >/dev/null 2>&1; then
         echo "[setup]   pulled $image"
@@ -217,28 +258,31 @@ fi
 # (docs/dependencies.md); the renovate.json "hadolint" group covers this site
 # via a customManager.
 echo "[setup] Installing hadolint shim (Docker-backed)..."
-$SUDO tee /usr/local/bin/hadolint >/dev/null <<'HADOLINT_SHIM'
+if $SUDO tee /usr/local/bin/hadolint >/dev/null <<'HADOLINT_SHIM'
 #!/bin/sh
 exec docker run --rm -i \
   --user "$(id -u):$(id -g)" \
   -v "$PWD:$PWD:ro" -w "$PWD" \
   hadolint/hadolint:v2.14.0 hadolint "$@"
 HADOLINT_SHIM
-$SUDO chmod +x /usr/local/bin/hadolint
-
-# Record the hash of the repo's setup.sh so the SessionStart hook can detect
-# drift: this script is pasted into the cloud environment UI by hand, and
-# nothing else notices when the repo copy moves ahead of the snapshot. The
-# repo is cloned before the setup script runs, but cwd is not guaranteed to
-# be inside it, so fall through the same candidates the hook uses.
-# Best-effort: skipping the hash only disables the drift warning.
-REPO_ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
-if [ -f "$REPO_ROOT/.claude/setup.sh" ]; then
-  mkdir -p "$HOME/.cache"
-  sha256sum "$REPO_ROOT/.claude/setup.sh" | awk '{print $1}' > "$HOME/.cache/fanfan-setup.hash"
-  echo "[setup] Recorded setup.sh hash for drift detection."
+then
+  $SUDO chmod +x /usr/local/bin/hadolint || echo "[setup]   WARN: could not make the hadolint shim executable."
 else
-  echo "[setup] Note: repo setup.sh not found from cwd; drift detection disabled."
+  echo "[setup]   WARN: could not write the hadolint shim; just dockerfile-lint will not run in-session."
 fi
 
-echo "[setup] Setup complete."
+# Because every install above is best-effort, reaching this line does not mean
+# the toolchain is there - so name anything missing. The environment still comes
+# up; the gap is visible in the setup log and the tool can be installed
+# in-session. CodeGraph is deliberately not checked (a navigation convenience
+# that degrades to grep/read); hadolint is, because `just ci` gates on it.
+MISSING_TOOLS=""
+for tool in just uv node pnpm hadolint; do
+  command -v "$tool" >/dev/null 2>&1 || MISSING_TOOLS="$MISSING_TOOLS $tool"
+done
+
+if [ -n "$MISSING_TOOLS" ]; then
+  echo "[setup] WARN: setup finished, but these tools are missing:$MISSING_TOOLS"
+else
+  echo "[setup] Setup complete."
+fi
