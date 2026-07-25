@@ -5,11 +5,12 @@ Companion web app for the **FAN FAN** Russian anime convention. It gives attende
 This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAPI contract between them.
 
 > [!NOTE]
-> **This project is built with AI.** Coding agents write most of the code and most
-> of the docs — including the reasoning in [`docs/adr/`](docs/adr/README.md) — and
-> they make plenty of the decisions along the way. I steer, review what lands, and
-> make the final call; I'm more hands-on with the backend, and the frontend is
-> mostly left to the agents. Either way, the mistakes in here are mine.
+> **This project is built with AI.** It started as a Telegram bot, written entirely
+> by hand in Python, and later grew into a full-stack PWA. I don't write frontend,
+> so the Svelte 5 / SvelteKit side is largely AI-generated; the backend is now
+> written with heavy AI assistance too, as are most of the docs and the reasoning in
+> [`docs/adr/`](docs/adr/README.md). The architecture, data model and requirements
+> are mine, and I review everything before it lands.
 
 ## Features
 
