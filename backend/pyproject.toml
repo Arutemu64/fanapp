@@ -51,7 +51,7 @@ dev = [
     "testcontainers>=4.14.2",
     "types-authlib>=1.6.11.20260518",
     "uv-sort>=0.7.1",
-    "ty>=0.0.60",
+    "ty>=0.0.61",
     "import-linter>=2.13",
 ]
 
