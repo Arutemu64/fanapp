@@ -1,17 +1,33 @@
 import type { HandleClientError } from '@sveltejs/kit';
 
-import { PUBLIC_SENTRY_DSN } from '$env/static/public';
+import {
+	PUBLIC_SENTRY_DSN,
+	PUBLIC_SENTRY_ENVIRONMENT,
+	PUBLIC_SENTRY_TRACES_SAMPLE_RATE
+} from '$env/static/public';
 import * as Sentry from '@sentry/sveltekit';
 
+// `Number('')` is 0 and `Number('half')` is NaN — neither is a sane sample rate
+// to infer from a missing or fat-fingered value, so both fall back to the
+// documented default. An explicit `0` (sampling off) is honoured.
+const DEFAULT_TRACES_SAMPLE_RATE = 0.1;
+const configuredTracesSampleRate = Number(PUBLIC_SENTRY_TRACES_SAMPLE_RATE);
+const tracesSampleRate =
+	PUBLIC_SENTRY_TRACES_SAMPLE_RATE && Number.isFinite(configuredTracesSampleRate)
+		? configuredTracesSampleRate
+		: DEFAULT_TRACES_SAMPLE_RATE;
+
 if (PUBLIC_SENTRY_DSN) {
-	// These build-time Sentry vars aren't in Vite's typed env, so they come
-	// through as `any`; read them through a narrowed view to keep types safe.
-	const buildEnv = import.meta.env as Record<string, string | undefined>;
 	Sentry.init({
 		dsn: PUBLIC_SENTRY_DSN,
-		environment: buildEnv.SENTRY_ENVIRONMENT || 'production',
-		release: buildEnv.SENTRY_RELEASE,
-		tracesSampleRate: parseFloat(buildEnv.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
+		environment: PUBLIC_SENTRY_ENVIRONMENT || 'production',
+		// `release` is deliberately absent. The Sentry build plugin injects the
+		// release name it uploaded the source maps under, and the SDK falls back to
+		// that automatically — which is the only value guaranteed to match the maps.
+		// Passing the key at all would break this: init spreads the caller's options
+		// over its defaults, so even `release: undefined` overwrites the injected
+		// value (see applyDefaultOptions in @sentry/browser).
+		tracesSampleRate,
 		beforeSend(event) {
 			// Scrub potential PII from request headers and cookies
 			if (event.request) {

@@ -41,7 +41,14 @@ export default defineConfig(({ mode }) => {
 		plugins: [
 			sentrySvelteKit({
 				...sentryUpload,
-				autoUploadSourceMaps: canUploadSourceMaps
+				autoUploadSourceMaps: canUploadSourceMaps,
+				release: {
+					// Names the release the source maps are uploaded under, and gets
+					// injected into the bundle so the SDK reports the same name — see the
+					// note in src/hooks.client.ts. Left undefined (not '') when unset so
+					// the plugin's own detection, the git HEAD SHA, still applies.
+					name: env.SENTRY_RELEASE || undefined
+				}
 			}),
 			tailwindcss(),
 			sveltekit(),
