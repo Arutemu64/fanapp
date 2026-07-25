@@ -6,10 +6,19 @@
 # baked into the cached snapshot every web session starts from. Put slow,
 # filesystem-persistent installs here so they are NOT repeated each session.
 #
-# Register this file as the environment's Setup Script in the Claude Code web
-# UI (Environments -> Setup script). It is tracked in git only so it can be
-# reviewed and pasted/referenced; Claude Code does not auto-run it from the repo
-# the way it runs .claude/hooks/session-start.sh.
+# Claude Code does not auto-run this file the way it runs
+# .claude/hooks/session-start.sh - the cloud environment only knows the text in
+# its "Setup script" field. That field holds .claude/setup-bootstrap.sh, which
+# locates the clone and runs THIS file, so the real setup script stays versioned
+# with the code instead of being pasted by hand. See docs/claude-cloud.md.
+#
+# Every install here is best-effort. The setup script's exit status decides
+# whether a session starts at all ("If the script exits non-zero, the session
+# fails to start" - Claude Code on the web docs), and the result is cached, so
+# one transient apt/PyPI/npm failure would otherwise break every future session
+# in this environment. Failures are collected and reported through the state
+# file instead (see the verification block at the bottom); the session comes up
+# and the missing tool can be installed in-session.
 #
 # Steps that must run EVERY session (the Docker daemon process, the Docker Hub
 # login, per-session env vars) live in .claude/hooks/session-start.sh instead,
@@ -100,7 +109,8 @@ fi
 echo "[setup] Installing just (apt)..."
 if ! command -v just >/dev/null 2>&1; then
   $SUDO apt-get install -y -qq just \
-    || { $SUDO apt-get update -qq && $SUDO apt-get install -y -qq just; }
+    || { $SUDO apt-get update -qq && $SUDO apt-get install -y -qq just; } \
+    || echo "[setup]   WARN: just install failed."
 fi
 
 echo "[setup] Installing pinned uv (for stable Python 3.14 support)..."
@@ -108,23 +118,37 @@ echo "[setup] Installing pinned uv (for stable Python 3.14 support)..."
 # backend/Dockerfile - bump all four together. An unpinned `--upgrade` would
 # grab whatever is newest on PyPI, which drifts from the repo's pin and makes
 # `uv sync`/`uv run` fail its own required-version check.
-python3 -m pip install --quiet --user "uv==0.11.29"
+#
+# The --user install works because the base image ships no PEP 668
+# EXTERNALLY-MANAGED marker for its Python 3.11, despite being Ubuntu 24.04. If
+# a future image restores that marker this call starts failing - hence the
+# guard, and hence the verification block at the bottom that names `uv` as
+# missing rather than letting the environment build silently broken.
+python3 -m pip install --quiet --user "uv==0.11.29" \
+  || echo "[setup]   WARN: uv install failed (PyPI unreachable, or pip refused the --user install)."
 
 echo "[setup] Installing stable Python 3.14..."
-uv python install 3.14
+uv python install 3.14 || echo "[setup]   WARN: Python 3.14 install failed; the backend's uv sync will try again per session."
 
 echo "[setup] Installing Node.js 24 (nvm)..."
 export NVM_DIR="/opt/nvm"
-# shellcheck disable=SC1091
-. "$NVM_DIR/nvm.sh"
-nvm install 24
-nvm alias default 24
-# `nvm alias default` only affects PATH once something calls `nvm use`; put
-# Node 24's bin dir first now so the rest of this script picks it up instead
-# of the base image's system Node 22 at /opt/node22/bin, which is earlier on
-# PATH by default (/etc/profile.d/nodejs.sh). session-start.sh resolves the
-# same "default" alias the same way each session.
-export PATH="$(dirname "$(nvm which default)"):$PATH"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  # shellcheck disable=SC1091
+  . "$NVM_DIR/nvm.sh"
+  nvm install 24 && nvm alias default 24 \
+    || echo "[setup]   WARN: Node 24 install failed; the image's system Node 22 stays in use."
+  # `nvm alias default` only affects PATH once something calls `nvm use`; put
+  # Node 24's bin dir first now so the rest of this script picks it up instead
+  # of the base image's system Node 22 at /opt/node22/bin, which is earlier on
+  # PATH by default (/etc/profile.d/nodejs.sh). session-start.sh resolves the
+  # same "default" alias the same way each session.
+  node_path="$(nvm which default 2>/dev/null || true)"
+  if [ -n "$node_path" ]; then
+    export PATH="$(dirname "$node_path"):$PATH"
+  fi
+else
+  echo "[setup]   WARN: nvm not found at $NVM_DIR; skipping Node 24."
+fi
 
 # Note: project dependency installs (uv sync / pnpm install) deliberately live
 # in the SessionStart hook, not here. The setup script only re-runs when the
@@ -135,7 +159,7 @@ export PATH="$(dirname "$(nvm which default)"):$PATH"
 # caches persist in the snapshot).
 
 echo "[setup] Installing pnpm 11 (matches mise.toml / frontend/package.json)..."
-npm install -g pnpm@11.15.0
+npm install -g pnpm@11.15.0 || echo "[setup]   WARN: pnpm install failed."
 
 # CodeGraph - the code-navigation knowledge graph (see AGENTS.md "Code
 # Navigation"). Installed from the npm registry, NOT the project's recommended
@@ -253,21 +277,39 @@ fi
 # (AGENTS.md Constraint 15); the renovate.json "hadolint" group covers this site
 # via a customManager.
 echo "[setup] Installing hadolint shim (Docker-backed)..."
-$SUDO tee /usr/local/bin/hadolint >/dev/null <<'HADOLINT_SHIM'
+if $SUDO tee /usr/local/bin/hadolint >/dev/null <<'HADOLINT_SHIM'
 #!/bin/sh
 exec docker run --rm -i \
   --user "$(id -u):$(id -g)" \
   -v "$PWD:$PWD:ro" -w "$PWD" \
   hadolint/hadolint:v2.14.0 hadolint "$@"
 HADOLINT_SHIM
-$SUDO chmod +x /usr/local/bin/hadolint
+then
+  $SUDO chmod +x /usr/local/bin/hadolint || echo "[setup]   WARN: could not make the hadolint shim executable."
+else
+  echo "[setup]   WARN: could not write the hadolint shim; just dockerfile-lint will not run in-session."
+fi
 
-echo "[setup] Setup complete."
+# State file, part 2 of 2 (see part 1 near the top). Because every install above
+# is best-effort, "the script reached its end" no longer implies "the toolchain
+# is there" - so check the binaries the repo's own workflows need and record the
+# verdict on line 2. Keep this the LAST block of the script: anything that stops
+# the script earlier, including a paste the UI truncated, must leave line 2
+# absent so the hook reports that instead of silently passing.
+#
+# CodeGraph is deliberately not checked - it is a navigation convenience that
+# already degrades to grep/read. hadolint is, because `just ci` gates on it.
+MISSING_TOOLS=""
+for tool in just uv node pnpm hadolint; do
+  command -v "$tool" >/dev/null 2>&1 || MISSING_TOOLS="$MISSING_TOOLS $tool"
+done
 
-# Drift detection, part 2 of 2 (see part 1 near the top): mark the run as having
-# reached its end. Keep this the LAST line of the script - anything that stops
-# the script earlier, including a paste the UI truncated, must leave the marker
-# absent so the hook can report that instead of silently passing. Never fatal:
-# the marker is diagnostics, and a nonzero exit here would fail the whole
-# environment creation after every install has already succeeded.
-echo "complete" >> "$SETUP_STATE_FILE" || true
+# Never fatal: a nonzero exit here would fail the whole environment build after
+# every install has already succeeded.
+if [ -n "$MISSING_TOOLS" ]; then
+  echo "[setup] WARN: setup finished, but these tools are missing:$MISSING_TOOLS"
+  echo "incomplete:$MISSING_TOOLS" >> "$SETUP_STATE_FILE" || true
+else
+  echo "[setup] Setup complete."
+  echo "complete" >> "$SETUP_STATE_FILE" || true
+fi
