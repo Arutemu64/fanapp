@@ -10,7 +10,7 @@ Teen to young-adult anime fans attending the "FAN FAN" Russian anime convention,
 
 ## Product Purpose
 
-A mobile-first helper web app (PWA) that puts the whole convention in the attendee's pocket: live event schedule with subscriptions, nominations and voting, an in-app notification feed plus Web Push, and ticket-linked profiles with account connections and security settings. Success = an attendee can find what's happening next, get notified when it changes, and vote — in seconds, one-handed, without thinking about the tool. For organizers, success = running the schedule and broadcasts without leaving the same surface.
+A mobile-first companion web app (PWA) that puts the whole convention in the attendee's pocket: live event schedule with subscriptions, nominations and voting, an in-app notification feed plus Web Push, and ticket-linked profiles with account connections and security settings. Success = an attendee can find what's happening next, get notified when it changes, and vote — in seconds, one-handed, without thinking about the tool. For organizers, success = running the schedule and broadcasts without leaving the same surface.
 
 ## Brand Personality
 

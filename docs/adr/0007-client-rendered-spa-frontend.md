@@ -6,7 +6,7 @@
 
 ## Context
 
-The frontend is a helper app for an anime convention: an authenticated,
+The frontend is a companion app for an anime convention: an authenticated,
 app-like, mobile-first experience (schedule, voting, notifications, PWA/offline)
 rather than a content site that needs SEO or fast first-paint for anonymous
 visitors. Running a Node SSR server would add a moving part to operate and
