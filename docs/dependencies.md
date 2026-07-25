@@ -78,6 +78,30 @@ git push origin v2.1.0                 # this publishes 2.1.0, 2.1 and 2 to GHCR
 Tagging the branch commit instead would publish images from unmerged code, and
 a squash-merge would leave the tag pointing at a commit `main` never received.
 
+#### Which number moves
+
+SemVer's own rules are defined against a public API — the spec requires that
+"Software using Semantic Versioning MUST declare a public API", and grades
+MAJOR/MINOR/PATCH by backward compatibility with it. This repo has no such API:
+nobody installs `fanfan`, and the only client is regenerated in-repo and
+deployed in the same step as the backend. So the number is a changelog marker,
+not a compatibility promise, and it is keyed to the one boundary that does
+exist — **the deploy**, meaning an image against the server's `.env` and
+database.
+
+| Bump | When |
+| --- | --- |
+| PATCH | `just deploy` and nothing else: fixes, dependency bumps, refactors, copy. |
+| MINOR | Same, but attendees see something new — a feature, a page, a notification type. |
+| MAJOR | `just deploy` alone is **not** enough: a new required env var, a migration that cannot be rolled back, changed deployment topology. |
+
+MAJOR is the one that earns its keep: it is the only version signal that changes
+what a human has to *do*, and the failure it guards against — deploying blind
+into a broken app on the morning of the convention — is a real one here.
+
+(`2.0.0` is an exception to that rule and says so: the 1.x line was the original
+Telegram-bot project, so the major marks lineage, not an operational break.)
+
 It lives in `backend/pyproject.toml` because that is the only manifest that must
 carry a version anyway and can be read back at runtime — `common/version.py`
 resolves it from the installed distribution, so `FastAPI(version=…)` and the
