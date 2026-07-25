@@ -11,7 +11,16 @@ services:
         PUBLIC_API_URL: ${PUBLIC_API_URL}
         PUBLIC_VAPID_KEY: ${PUBLIC_VAPID_KEY}
         PUBLIC_SENTRY_DSN: ${PUBLIC_SENTRY_DSN}
+        PUBLIC_SENTRY_ENVIRONMENT: ${PUBLIC_SENTRY_ENVIRONMENT}
+        PUBLIC_SENTRY_TRACES_SAMPLE_RATE: ${PUBLIC_SENTRY_TRACES_SAMPLE_RATE}
         PUBLIC_SMARTCAPTCHA_CLIENT_KEY: ${PUBLIC_SMARTCAPTCHA_CLIENT_KEY}
+        # Source-map upload target. Non-secret and build-time only (read by
+        # vite.config.ts, never bundled). An empty URL/ORG/PROJECT = upload
+        # skipped; SENTRY_RELEASE names the release the maps land under.
+        SENTRY_URL: ${SENTRY_URL}
+        SENTRY_ORG: ${SENTRY_ORG}
+        SENTRY_PROJECT: ${SENTRY_PROJECT}
+        SENTRY_RELEASE: ${SENTRY_RELEASE}
       # The Sentry token (source-map upload) is a real secret, so it enters the
       # build as a BuildKit secret (never stored in layers or build caches)
       # instead of a build arg. Empty token = upload skipped.

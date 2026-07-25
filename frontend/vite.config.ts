@@ -19,19 +19,35 @@ export default defineConfig(({ mode }) => {
 	// prefixes. Real environment variables (Docker, CI) win over file values —
 	// loadEnv applies process.env last, matching Vite's documented precedence.
 	const env = loadEnv(mode, rootDir, '');
+
+	// Everything the build-time source-map upload needs. Deliberately no
+	// fallbacks: the instance these values point at is deployment-specific, and a
+	// hardcoded default outlives the instance it was written for — an upload
+	// aimed at a dead host fails late and confusingly. The prod Docker build
+	// supplies all four (SENTRY_AUTH_TOKEN arrives as a BuildKit secret, so it is
+	// a real env var, which loadEnv picks up alongside the file values).
+	const sentryUpload = {
+		org: env.SENTRY_ORG,
+		project: env.SENTRY_PROJECT,
+		sentryUrl: env.SENTRY_URL,
+		authToken: env.SENTRY_AUTH_TOKEN
+	};
+	// With any part missing (CI, local dev) skip the upload work instead of
+	// doing it and then failing to upload.
+	const canUploadSourceMaps = Object.values(sentryUpload).every(Boolean);
+
 	return {
 		envDir: rootDir,
 		plugins: [
 			sentrySvelteKit({
-				// Only upload source maps when an auth token is provided (the prod
-				// Docker build passes SENTRY_AUTH_TOKEN). In CI and local dev there is
-				// no token, so skip the upload work instead of doing it and then
-				// silently failing to upload.
-				autoUploadSourceMaps: Boolean(process.env.SENTRY_AUTH_TOKEN),
-				sourceMapsUploadOptions: {
-					org: 'fanfan',
-					project: 'fanapp',
-					url: 'https://glitchtip.sixty-four.ru/'
+				...sentryUpload,
+				autoUploadSourceMaps: canUploadSourceMaps,
+				release: {
+					// Names the release the source maps are uploaded under, and gets
+					// injected into the bundle so the SDK reports the same name — see the
+					// note in src/hooks.client.ts. Left undefined (not '') when unset so
+					// the plugin's own detection, the git HEAD SHA, still applies.
+					name: env.SENTRY_RELEASE || undefined
 				}
 			}),
 			tailwindcss(),
