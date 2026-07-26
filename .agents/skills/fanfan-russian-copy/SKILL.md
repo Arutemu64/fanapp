@@ -15,27 +15,20 @@ convention on the same screens.
 
 ## Register: «ты», always
 
-In the app, the user is addressed informally — imperatives (`Введи адрес эл.
-почты`, `Проверь заполнение формы`, `Выбери Excel-файл для импорта`) and
-pronouns (`тебя`, `Твой отзыв отправлен`) alike. `frontend/src/` is uniformly
-«ты»; keep it that way.
+The user is addressed informally — imperatives (`Введи адрес эл. почты`,
+`Проверь заполнение формы`, `Выбери Excel-файл для импорта`) and pronouns
+(`тебя`, `Твой отзыв отправлен`) alike.
 
-Organizer-facing screens are **not** an exception — organizers are the same age
-group and the same people, and `tools/broadcast` and `tools/settings` use «ты».
+*Always* is literal, and covers the two surfaces where a writer would reasonably
+reach for «вы»: organizer-facing tools (`tools/broadcast`, `tools/settings` —
+organizers are the same age group and the same people) and transactional email
+(the login and confirmation mails greet with `Привет`, not `Здравствуйте`).
 
-**Email is «ты» too.** The templates in
-`backend/src/fanfan/adapters/jinja/templates/` open with `Привет`, not
-`Здравствуйте`. Each email is a **pair** — `email_login_code.jinja2` (HTML) and
-`email_login_code.txt.jinja2` (plain-text alternative), likewise for
-`email_confirmation_code` — so any copy edit touches both files or the two
-halves of the same message disagree.
-
-**Watch past-tense verbs when converting «вы» → «ты».** «вы» past tense is
-gender-neutral (`Если вы не запрашивали…`); «ты» is not, and forces
-`запрашивал` / `запрашивала` on a mixed-gender audience. Slash forms
-(`запрашивал(а)`) are ugly. Rephrase into the present or an impersonal
-construction instead — that line is now `Если это письмо пришло по ошибке,
-просто проигнорируй его.`
+**Past tense forces gender agreement, which is where «ты» copy goes wrong.**
+«вы» hides the problem — `Если вы не запрашивали…` fits any reader. «ты» does
+not: `запрашивал` / `запрашивала` misgenders half the audience, and a slash form
+reads badly. Use the present tense or an impersonal construction instead, the way
+that line now does: `Если это письмо пришло по ошибке, просто проигнорируй его.`
 
 «Ты» does not mean sloppy: no slang, no `плз`, no memes, no exclamation marks by
 default. Friendly, but composed.
@@ -83,5 +76,9 @@ personality lives in the color and the moments, not in the words. Concretely:
   `выступление` / `выступления` / `выступлений`). A bare `+ ' мин.'` is a bug
   waiting for the number 2.
 - **Use the typographic dash** `—`, not a hyphen, in prose.
+- **Each email is two files**, an HTML template and a `.txt.jinja2` plain-text
+  alternative (`email_login_code`, `email_confirmation_code`). Change the copy in
+  both, or the two halves of one message disagree — and render them before
+  calling it done, per AGENTS.md.
 - `kill-ai-slop` ships `scripts/rules.ru.mjs`, a Russian copy-tells ruleset:
   `node .agents/skills/kill-ai-slop/scripts/scan.mjs <root> --rules=.agents/skills/kill-ai-slop/scripts/rules.ru.mjs`
