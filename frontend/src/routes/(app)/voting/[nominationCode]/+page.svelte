@@ -4,7 +4,7 @@
 	import { invalidate } from '$app/navigation';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
-	import { matchesSearch } from '$lib/utils/search';
+	import { buildSearchHaystack, matchesTokens, tokenizeQuery } from '$lib/utils/search';
 	import { Button, Search } from 'flowbite-svelte';
 	import {
 		ArrowLeftOutline,
@@ -28,10 +28,31 @@
 
 	let searchQuery = $state('');
 
+	// Prebuilt per participant so a keystroke only re-runs the substring scan,
+	// not the normalization of the whole nomination.
+	let searchHaystacks = $derived(
+		new Map(
+			participants.map((p: VotingParticipant) => [
+				p.id,
+				buildSearchHaystack([p.title, p.voting_number])
+			])
+		)
+	);
+
+	let searchTokens = $derived(tokenizeQuery(searchQuery));
+
 	let filtered = $derived(
 		participants.filter((p: VotingParticipant) =>
-			matchesSearch(searchQuery, [p.title, p.voting_number])
+			matchesTokens(searchTokens, searchHaystacks.get(p.id) ?? '')
 		)
+	);
+
+	// Mirrors the schedule page: without this, a screen-reader user gets no
+	// feedback that the grid shrank or grew as they type.
+	let resultsSummary = $derived(
+		filtered.length === participants.length
+			? `Всего участников: ${participants.length}`
+			: `Показано ${filtered.length} из ${participants.length}`
 	);
 
 	let hasVoted = $derived(participants.some((p: VotingParticipant) => p.user_vote !== null));
@@ -107,8 +128,12 @@
 	spellcheck={false}
 	clearable
 	size="sm"
-	class="mb-4"
+	class="mb-2"
 />
+
+<p class="mb-4 text-xs text-gray-500 dark:text-gray-400" aria-live="polite" role="status">
+	{resultsSummary}
+</p>
 
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
 	{#each filtered as participant (participant.id)}
@@ -117,6 +142,7 @@
 		<div class="col-span-full">
 			<EmptyState icon={UsersGroupOutline} message="Участники не найдены">
 				<button
+					type="button"
 					onclick={() => (searchQuery = '')}
 					class="mt-3 text-sm font-medium text-primary-600 hover:underline dark:text-primary-400"
 				>

@@ -37,6 +37,7 @@
 	let { user, toggleSidebar }: Props = $props();
 
 	let avatarInitials = $derived(getAvatarInitials(user?.username));
+	let isAvatarMenuOpen = $state(false);
 
 	const toastService = getToastService();
 	const eventsClient = getEventsClient();
@@ -86,8 +87,19 @@
 			<NotificationBell />
 		{/if}
 		{#if user}
-			<Avatar id="avatar-menu" class="cursor-pointer">{avatarInitials}</Avatar>
-			<Dropdown placement="bottom-end" triggeredBy="#avatar-menu">
+			<!-- Flowbite renders Avatar as a div with role="button" whose only content
+				is the initials, so unlabelled it announces as "ИИ, button" — the label
+				and the expanded state are what make it read as an account menu. -->
+			<Avatar
+				id="avatar-menu"
+				class="cursor-pointer"
+				aria-label="Меню профиля"
+				aria-haspopup="true"
+				aria-expanded={isAvatarMenuOpen}
+			>
+				{avatarInitials}
+			</Avatar>
+			<Dropdown placement="bottom-end" triggeredBy="#avatar-menu" bind:isOpen={isAvatarMenuOpen}>
 				<DropdownHeader>
 					<span class="block truncate text-sm font-medium text-gray-900 dark:text-white"
 						>@{user.username}</span

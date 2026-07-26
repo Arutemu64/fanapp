@@ -1,6 +1,7 @@
 <script lang="ts">
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { CloseOutline, DownloadOutline } from 'flowbite-svelte-icons';
+	import { tick } from 'svelte';
 
 	interface MapEntry {
 		id: string;
@@ -52,14 +53,29 @@
 
 	// Currently opened map for the fullscreen viewer, or null when closed.
 	let active = $state<MapEntry | null>(null);
+	let viewer = $state<HTMLDialogElement | null>(null);
 
-	function close() {
-		active = null;
+	// A native <dialog> opened with showModal() is what makes the viewer usable
+	// from a keyboard: it moves focus inside, keeps it there, marks the page
+	// behind it inert (so a screen reader can't wander into it), restores focus
+	// to the map button on close, and handles Escape — none of which a
+	// role="dialog" div does on its own.
+	async function openViewer(map: MapEntry) {
+		active = map;
+		// Let the content render first so showModal() has a control to focus.
+		await tick();
+		viewer?.showModal();
 	}
 
-	function onKeydown(event: KeyboardEvent) {
-		if (event.key === 'Escape') {
-			close();
+	function closeViewer() {
+		viewer?.close();
+	}
+
+	// Clicks that land on the dialog element itself — its padding or the
+	// ::backdrop — are outside the image, so they dismiss the viewer.
+	function handleViewerClick(event: MouseEvent) {
+		if (event.target === viewer) {
+			closeViewer();
 		}
 	}
 </script>
@@ -74,7 +90,7 @@
 	{#each maps as map (map.id)}
 		<button
 			type="button"
-			onclick={() => (active = map)}
+			onclick={() => void openViewer(map)}
 			class="block w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-100 p-2 shadow-sm transition-colors hover:bg-gray-200/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-gray-800/80"
 			aria-label={`Открыть карту на весь экран: ${map.alt}`}
 		>
@@ -96,30 +112,31 @@
 	{/each}
 </div>
 
-{#if active}
-	<!-- Fullscreen viewer overlay. Tap the backdrop or the close button to dismiss. -->
-	<div
-		class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-		role="dialog"
-		aria-modal="true"
-		aria-label="Просмотр карты"
-	>
-		<!-- Full-size backdrop button sits behind the image so a tap outside it closes the viewer. -->
-		<button
-			type="button"
-			onclick={close}
-			class="absolute inset-0 cursor-default"
-			aria-label="Закрыть просмотр"
-		></button>
-
-		<!-- max-w caps the size on desktop so the image isn't stretched. relative keeps it above the backdrop. -->
+<!-- Fullscreen viewer. Tap outside the image, press Escape, or use the close
+	button to dismiss. `onclose` fires for all three, so it owns clearing `active`.
+	The dim lives on the dialog, which fills the viewport, rather than on
+	::backdrop alone — same look, minus the top-layer compositing differences
+	between browsers. The ::backdrop rule still covers the letterboxing that
+	appears when the visual viewport and dvh disagree (mobile URL bar). -->
+<dialog
+	bind:this={viewer}
+	onclose={() => (active = null)}
+	onclick={handleViewerClick}
+	aria-label="Просмотр карты"
+	class="relative m-0 flex h-dvh max-h-none w-full max-w-none items-center justify-center border-0 bg-black/80 p-4 backdrop:bg-black/80"
+>
+	{#if active}
+		<!-- max-w caps the size on desktop so the image isn't stretched. The intrinsic
+			size keeps the frame from jumping while a cold-cached copy decodes. -->
 		<img
 			src={active.src}
 			alt={active.alt}
-			class="relative max-h-full w-full max-w-5xl rounded-xl object-contain shadow-2xl"
+			width={active.width}
+			height={active.height}
+			class="max-h-full w-full max-w-5xl rounded-xl object-contain shadow-2xl"
 		/>
 
-		<div class="absolute end-4 top-4 z-10 flex items-center gap-2">
+		<div class="absolute end-4 top-4 flex items-center gap-2">
 			<a
 				href={active.src}
 				download={active.filename}
@@ -127,18 +144,16 @@
 				class="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
 				aria-label="Скачать карту"
 			>
-				<DownloadOutline class="h-6 w-6" />
+				<DownloadOutline class="h-6 w-6" aria-hidden="true" />
 			</a>
 			<button
 				type="button"
-				onclick={close}
+				onclick={closeViewer}
 				class="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
 				aria-label="Закрыть"
 			>
-				<CloseOutline class="h-6 w-6" />
+				<CloseOutline class="h-6 w-6" aria-hidden="true" />
 			</button>
 		</div>
-	</div>
-{/if}
-
-<svelte:window onkeydown={onKeydown} />
+	{/if}
+</dialog>

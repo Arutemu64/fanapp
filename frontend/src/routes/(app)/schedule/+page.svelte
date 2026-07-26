@@ -7,7 +7,7 @@
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
-	import { matchesSearch } from '$lib/utils/search';
+	import { buildSearchHaystack, matchesTokens, tokenizeQuery } from '$lib/utils/search';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
 	import {
 		ChevronUpOutline,
@@ -54,14 +54,23 @@
 		})
 	);
 
+	// Normalized search text per event, rebuilt only when the schedule itself
+	// changes. Keeps a keystroke down to a substring scan instead of re-running
+	// NFD normalization over every event's four fields.
+	let searchHaystacks: Map<string, string> = $derived(
+		new Map(
+			schedule.map((event) => [
+				event.id,
+				buildSearchHaystack([event.number, event.title, event.block_title, event.nomination_title])
+			])
+		)
+	);
+
+	let searchTokens: string[] = $derived(tokenizeQuery(searchQuery));
+
 	let filtered: ScheduleEventWithSubscription[] = $derived(
 		schedule.filter((event) => {
-			const searchMatch = matchesSearch(searchQuery, [
-				event.number,
-				event.title,
-				event.block_title,
-				event.nomination_title
-			]);
+			const searchMatch = matchesTokens(searchTokens, searchHaystacks.get(event.id) ?? '');
 
 			const subscriptionMatch = !showOnlySubscribed || event.user_subscription !== null;
 

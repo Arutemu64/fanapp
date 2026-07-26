@@ -37,22 +37,28 @@ export function tokenizeQuery(query: string): string[] {
 }
 
 /**
- * True when every query token appears as a substring somewhere in the given
- * fields. AND-matching across tokens lets users type words in any order
- * ("наруто опенинг" matches "Опенинг: Наруто"); each field is matched
- * independently so a token may hit the title and another the nomination.
- * Null/undefined fields are ignored.
+ * Fold a row's searchable fields into one normalized haystack. Fields are
+ * joined by a space, which cannot merge two of them into a false match: tokens
+ * never contain spaces, so no token can span the join. Null/undefined fields
+ * are ignored.
+ *
+ * Build this once per row when the data changes, not once per keystroke —
+ * `normalizeSearchText` runs an NFD decomposition plus three regex passes, and
+ * a filter that re-normalizes the whole list on every input event is what turns
+ * typing in a several-hundred-row schedule into a janky interaction.
  */
-export function matchesSearch(
-	query: string,
-	fields: Array<string | number | null | undefined>
-): boolean {
-	const tokens = tokenizeQuery(query);
-	if (tokens.length === 0) return true;
-
-	const haystacks = fields
+export function buildSearchHaystack(fields: Array<string | number | null | undefined>): string {
+	return fields
 		.filter((field) => field !== null && field !== undefined)
-		.map((field) => normalizeSearchText(String(field)));
+		.map((field) => normalizeSearchText(String(field)))
+		.join(' ');
+}
 
-	return tokens.every((token) => haystacks.some((haystack) => haystack.includes(token)));
+/**
+ * True when every token appears as a substring of the haystack. AND-matching
+ * across tokens lets users type words in any order ("наруто опенинг" matches
+ * "Опенинг: Наруто"). No tokens (empty query) matches everything.
+ */
+export function matchesTokens(tokens: string[], haystack: string): boolean {
+	return tokens.every((token) => haystack.includes(token));
 }

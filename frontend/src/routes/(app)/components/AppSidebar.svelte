@@ -101,7 +101,10 @@
 				{@render itemIcon()}
 			{/snippet}
 			{#snippet subtext()}
-				<LockOutline class="h-4 w-4 shrink-0" />
+				<!-- `title` is mouse-only — it never appears on touch and is announced
+					inconsistently, so the locked state needs real text behind the icon. -->
+				<LockOutline class="h-4 w-4 shrink-0" aria-hidden="true" />
+				<span class="sr-only">— нужен доступ, попроси организатора</span>
 			{/snippet}
 		</SidebarItem>
 	{/if}

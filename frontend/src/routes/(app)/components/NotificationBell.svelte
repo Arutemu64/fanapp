@@ -110,6 +110,8 @@
 <button
 	id="notification-bell"
 	aria-label={bellLabel}
+	aria-haspopup="true"
+	aria-expanded={dropdownOpen}
 	class="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none dark:text-gray-400 dark:hover:bg-gray-700 dark:focus-visible:ring-gray-500 dark:focus-visible:ring-offset-gray-900"
 >
 	<BellSolid class="h-5 w-5" aria-hidden="true" />

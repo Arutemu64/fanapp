@@ -5,7 +5,7 @@
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import NoticeCallout from '$lib/components/NoticeCallout.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { matchesSearch } from '$lib/utils/search';
+	import { buildSearchHaystack, matchesTokens, tokenizeQuery } from '$lib/utils/search';
 	import { Alert, Button, Modal, Search } from 'flowbite-svelte';
 	import { ArrowUpDownOutline, BellActiveOutline } from 'flowbite-svelte-icons';
 
@@ -41,10 +41,21 @@
 	});
 
 	// Shared matcher folds ё/е and matches space-separated tokens in any order.
-	let filtered = $derived(
-		schedule.filter((ev) =>
-			matchesSearch(query, [ev.number, ev.title, ev.block_title, ev.nomination_title])
+	// The haystacks are prebuilt per event so typing here — against the whole
+	// schedule, not a page of it — only re-runs the substring scan.
+	let searchHaystacks = $derived(
+		new Map(
+			schedule.map((ev) => [
+				ev.id,
+				buildSearchHaystack([ev.number, ev.title, ev.block_title, ev.nomination_title])
+			])
 		)
+	);
+
+	let searchTokens = $derived(tokenizeQuery(query));
+
+	let filtered = $derived(
+		schedule.filter((ev) => matchesTokens(searchTokens, searchHaystacks.get(ev.id) ?? ''))
 	);
 
 	function handleSelect(ev: ScheduleEventFullDTO) {
@@ -129,6 +140,7 @@
 						'w-full cursor-pointer px-3 py-2.5 text-left text-sm transition-colors hover:bg-primary-50 focus:outline-none focus-visible:bg-primary-50 focus-visible:ring-2 focus-visible:ring-primary-500 sm:py-3 sm:text-base dark:hover:bg-primary-900/20 dark:focus-visible:bg-primary-900/20',
 						selectedId === ev.id && 'bg-primary-100 dark:bg-primary-900/40'
 					]}
+					aria-pressed={selectedId === ev.id}
 					onclick={() => handleSelect(ev)}
 				>
 					<span class="font-medium text-gray-900 dark:text-white">№{ev.number}</span>

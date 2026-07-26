@@ -63,7 +63,7 @@ The app is an installable PWA: `static/manifest.json` (icons, standalone display
 
 ### Typography Scale
 
-Two fonts are defined in `app.css`: `font-sans` (Inter, body text) and `font-display` (Unbounded, hero headings and countdown numerics only). Apply sizes by role:
+Two fonts are defined in `app.css`: `font-sans` (Inter, body text) and `font-display` (Unbounded, hero headings and countdown numerics only). Their `@font-face` rules are **hand-declared per subset** rather than pulled in via each Fontsource package's `index.css` — the service worker precaches everything Vite emits, so importing the full index shipped Greek/Vietnamese/Latin-ext faces (~170 KB) to every install. Adding a weight or style means adding the face by hand and re-copying its `unicode-range` from the package; see the comment above the rules. Apply sizes by role:
 
 | Role | Classes | Notes |
 |---|---|---|
@@ -148,6 +148,9 @@ Russian copy is mandatory for all user-facing text — buttons, placeholders, er
 
 All modals use Flowbite-Svelte `<Modal bind:open size="sm">`. Follow these structural rules:
 
+> [!NOTE]
+> One deliberate exception: the fullscreen map viewer (`map/+page.svelte`) is a native `<dialog>` driven by `showModal()`, not a Flowbite `<Modal>`. It is a bare image lightbox with no form or footer, and the native element gives focus containment, page inertness, focus restore and Escape for free. Don't convert it back to a `role="dialog"` div.
+
 ### Required: `{#snippet header()}`
 
 Every modal **must** use the `header` snippet — never put a raw `<h3>` inside the modal body. Always pair the title with a contextual icon:
@@ -220,6 +223,9 @@ Project a11y bindings — keep wired, don't regress:
 * **Focus on route**: the main scroll region carries the `#main-content` id and is focusable (`tabindex="-1"` + `focus-visible` ring) — keyboard/screen-reader users land in content after navigation.
 * **Toast a11y contract**: `ToastContainer` sets `role="alert"`/`aria-live="assertive"` for errors and `role="status"`/`aria-live="polite"` otherwise, with `aria-atomic`. Match this on any new toast markup; toasts must not steal focus.
 * **Reduced motion**: a global `@media (prefers-reduced-motion: reduce)` rule in `app.css` near-instantly finishes all CSS animations/transitions and disables `scroll-smooth`. CSS-only motion is covered automatically. JS-driven Svelte transitions are **not** affected by that rule — gate them on `prefersReducedMotion.current` from `svelte/motion` instead (see `ToastContainer` toast `fly` + swipe-dismiss and `HeroCard` countdown).
+* **Flowbite gaps to patch at the call site**: `BottomNav` renders a plain `<div>`, so `AppBottomNav` passes `role="navigation"` + `aria-label` to get a landmark, and `aria-current="page"` per item (`SidebarItem` already sets its own). `Avatar` renders a `div role="button"` whose only content is the initials, so the navbar's account trigger carries an explicit `aria-label` plus `aria-haspopup`/`aria-expanded`. Keep these when upgrading `flowbite-svelte` — check whether upstream fixed them first.
+
+**Search-as-you-type is the app's INP hot path.** The schedule, the move-event picker and the voting nomination page all filter a fully-loaded list on every keystroke. Normalize once per row with `buildSearchHaystack` in a `$derived` keyed on the data, hoist `tokenizeQuery` out of the predicate, and let the per-keystroke work be `matchesTokens` alone — `normalizeSearchText` runs an NFD decomposition plus three regex passes, so re-normalizing a few hundred rows per input event is what makes typing feel sticky.
 
 Everything generic — contrast ratios, keyboard/tab order, `aria-label` on icon-only buttons, heading hierarchy, color-not-sole-signal — lives in `ui-ux-pro-max`. Load it; don't restate here.
 
