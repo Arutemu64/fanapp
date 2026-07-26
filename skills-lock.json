@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "accessibility": {
+      "source": "addyosmani/web-quality-skills",
+      "sourceType": "github",
+      "skillPath": "skills/accessibility/SKILL.md",
+      "computedHash": "10e83284d3395ab5ec2f2db602b663480a37a4ff404d16510eefe86b034fcc1a"
+    },
     "brainstorming": {
       "source": "obra/superpowers",
       "sourceType": "github",
@@ -12,6 +18,12 @@
       "sourceType": "github",
       "skillPath": "skills/clean-ddd-hexagonal/SKILL.md",
       "computedHash": "4a48fdb1461f8f62d3f477bd7958582bc47ac98044f9ac8f0940324f20027663"
+    },
+    "core-web-vitals": {
+      "source": "addyosmani/web-quality-skills",
+      "sourceType": "github",
+      "skillPath": "skills/core-web-vitals/SKILL.md",
+      "computedHash": "8e55888cc177e994e2cbfa0ee0a277e1273c6d43c8cf7649165f9e2f39489a48"
     },
     "dispatching-parallel-agents": {
       "source": "obra/superpowers",
@@ -79,12 +91,6 @@
       "skillPath": "skill/SKILL.md",
       "computedHash": "bece0e23b22176d36a1d07c9c01b448b8458affd5c17328fb780b88b08018939"
     },
-    "pwa-development": {
-      "source": "alinaqi/claude-bootstrap",
-      "sourceType": "github",
-      "skillPath": "skills/pwa-development/SKILL.md",
-      "computedHash": "356d9a26a8435778bb3bb906f5198814c48872ae87485ae97f4da3c10a0cfcc5"
-    },
     "receiving-code-review": {
       "source": "obra/superpowers",
       "sourceType": "github",
@@ -96,6 +102,12 @@
       "sourceType": "github",
       "skillPath": "skills/requesting-code-review/SKILL.md",
       "computedHash": "2304d2073c62eab163e04de40fe775e3d87c69c0df40cd4dc953fdb8e3205b81"
+    },
+    "sqlalchemy-alembic-expert-best-practices-code-review": {
+      "source": "wispbit-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/sqlalchemy-alembic-expert-best-practices-code-review/SKILL.md",
+      "computedHash": "995e671e51c95c73542b48eb7372a752ba1b5f6c0d2277e07ab0d53543dd507c"
     },
     "subagent-driven-development": {
       "source": "obra/superpowers",
@@ -120,12 +132,6 @@
       "sourceType": "github",
       "skillPath": "skills/systematic-debugging/SKILL.md",
       "computedHash": "a2750dfbaed1690da73b120254892c4f926b4576cb82eb16fc877783941fe39b"
-    },
-    "tailwind-css-patterns": {
-      "source": "giuseppe-trisciuoglio/developer-kit",
-      "sourceType": "github",
-      "skillPath": "plugins/developer-kit-typescript/skills/tailwind-css-patterns/SKILL.md",
-      "computedHash": "6092620c3af955a46ea2b94ca8a40197ac8392e6bbdc8c7515659328b186c770"
     },
     "test-driven-development": {
       "source": "obra/superpowers",
