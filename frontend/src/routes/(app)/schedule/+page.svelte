@@ -8,7 +8,7 @@
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
 	import { createSearchIndex } from '$lib/utils/search';
-	import { UrlFlag, UrlParam } from '$lib/utils/urlState';
+	import { UrlFlag, UrlParam } from '$lib/utils/urlState.svelte';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
 	import {
 		ChevronUpOutline,

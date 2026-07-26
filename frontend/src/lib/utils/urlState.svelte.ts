@@ -52,6 +52,11 @@ export class UrlParam {
 		const value = this.#pending;
 		if (value === null) return;
 
+		// prefer-svelte-reactivity guards against holding a plain URL as reactive
+		// state, where mutations would go unnoticed. This one is a local scratch
+		// copy: built, read once by `goto`, discarded. Nothing observes it, so
+		// SvelteURL's reactivity would be pure overhead.
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity
 		const nextUrl = new URL(page.url);
 		if (value === '') {
 			// An empty filter drops the param, so an untouched page keeps a clean URL.

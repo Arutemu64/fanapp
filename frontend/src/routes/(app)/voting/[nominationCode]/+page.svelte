@@ -5,7 +5,7 @@
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { createSearchIndex } from '$lib/utils/search';
-	import { UrlParam } from '$lib/utils/urlState';
+	import { UrlParam } from '$lib/utils/urlState.svelte';
 	import { Button, Search } from 'flowbite-svelte';
 	import {
 		ArrowLeftOutline,
