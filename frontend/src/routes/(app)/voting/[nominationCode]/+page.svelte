@@ -2,11 +2,10 @@
 	import type { GetVotingNominationResult } from '$lib/types/voting';
 
 	import { invalidate } from '$app/navigation';
-	import { page } from '$app/state';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { createSearchIndex } from '$lib/utils/search';
-	import { syncUrlParams } from '$lib/utils/urlState';
+	import { UrlParam } from '$lib/utils/urlState';
 	import { Button, Search } from 'flowbite-svelte';
 	import {
 		ArrowLeftOutline,
@@ -28,31 +27,17 @@
 	let votingStatus = $derived(data.votingStatus);
 	let canVote = $derived(votingStatus?.can_vote ?? false);
 
-	// Seeded from the URL so a shared link or a reload keeps the same view; the
-	// effect below writes it back. Same one-way seed as the schedule page.
-	let searchQuery = $state(page.url.searchParams.get('q') ?? '');
-
-	// Only the URL write is debounced — filtering itself is instant. Browsers
-	// reject `replaceState` called too often.
-	const URL_SYNC_DELAY_MS = 300;
-
-	$effect(() => {
-		const query = searchQuery;
-
-		const timer = setTimeout(() => {
-			syncUrlParams({ q: query });
-		}, URL_SYNC_DELAY_MS);
-
-		return () => clearTimeout(timer);
-	});
+	// Filter state lives in the URL so a shared link or a reload keeps the same
+	// view. Reads and writes go straight through to `page.url`.
+	const search = new UrlParam('q');
 
 	let searchIndex = $derived(
 		createSearchIndex(participants, (p: VotingParticipant) => [p.title, p.voting_number])
 	);
 
-	let filtered = $derived(searchIndex.filter(searchQuery));
+	let filtered = $derived(searchIndex.filter(search.current));
 
-	let hasSearchQuery = $derived(searchQuery.trim().length > 0);
+	let hasSearchQuery = $derived(search.current.trim().length > 0);
 
 	let resultsSummary = $derived(
 		filtered.length === participants.length
@@ -122,9 +107,9 @@
 <VotingStatusAlert votingState={votingStatus} class="mb-4" />
 
 <Search
-	bind:value={searchQuery}
+	bind:value={search.current}
 	clearableOnClick={() => {
-		searchQuery = '';
+		search.current = '';
 	}}
 	name="participant_search"
 	aria-label="Поиск участников в номинации"
@@ -161,7 +146,7 @@
 					message="Попробуй изменить запрос"
 				>
 					<button
-						onclick={() => (searchQuery = '')}
+						onclick={() => (search.current = '')}
 						class="mt-3 text-sm font-medium text-primary-600 hover:underline dark:text-primary-400"
 					>
 						Очистить поиск

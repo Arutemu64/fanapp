@@ -8,7 +8,7 @@
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
 	import { createSearchIndex } from '$lib/utils/search';
-	import { syncUrlParams } from '$lib/utils/urlState';
+	import { UrlFlag, UrlParam } from '$lib/utils/urlState';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
 	import {
 		ChevronUpOutline,
@@ -42,26 +42,10 @@
 	let schedule: ScheduleEventWithSubscription[] = $derived(data.schedule);
 
 	// Filter state lives in the URL, so a reload, a shared link, or a trip into an
-	// event and back restores the same view. Seeded from the URL once — the effect
-	// below writes back, so this is a one-way seed, not a two-way binding.
-	let searchQuery: string = $state(page.url.searchParams.get('q') ?? '');
-	let showOnlySubscribed: boolean = $state(page.url.searchParams.get('subscribed') === '1');
-
-	// Only the URL write is debounced; filtering below stays instant. Browsers
-	// reject `replaceState` called too often, and a write per keystroke would also
-	// park half-typed queries in the address bar and in anything the user copies.
-	const URL_SYNC_DELAY_MS = 300;
-
-	$effect(() => {
-		const query = searchQuery;
-		const subscribedOnly = showOnlySubscribed;
-
-		const timer = setTimeout(() => {
-			syncUrlParams({ q: query, subscribed: subscribedOnly ? '1' : '' });
-		}, URL_SYNC_DELAY_MS);
-
-		return () => clearTimeout(timer);
-	});
+	// event and back restores the same view. Reads and writes go straight through
+	// to `page.url` — there is no second copy to keep in sync.
+	const search = new UrlParam('q');
+	const subscribedOnly = new UrlFlag('subscribed');
 
 	// We use the full schedule current event for countdown labels inside every row.
 	let currentEvent = $derived(schedule.find((event) => event.is_current) ?? null);
@@ -89,8 +73,8 @@
 
 	let filtered: ScheduleEventWithSubscription[] = $derived(
 		searchIndex
-			.filter(searchQuery)
-			.filter((event) => !showOnlySubscribed || event.user_subscription !== null)
+			.filter(search.current)
+			.filter((event) => !subscribedOnly.current || event.user_subscription !== null)
 	);
 
 	// Hide the FAB for the current event when the active filters remove that row from the page.
@@ -172,13 +156,13 @@
 			: `Показано ${filtered.length} из ${schedule.length}`
 	);
 
-	let hasActiveFilters = $derived(showOnlySubscribed || searchQuery.trim().length > 0);
+	let hasActiveFilters = $derived(subscribedOnly.current || search.current.trim().length > 0);
 
 	// Recovery for the no-results state: clear search + subscription filter in one tap
 	// so a user mid-event isn't stuck hunting back to two separate controls.
 	function resetFilters() {
-		searchQuery = '';
-		showOnlySubscribed = false;
+		search.current = '';
+		subscribedOnly.current = false;
 	}
 
 	let pageRoot: HTMLDivElement | null = null;
@@ -269,9 +253,9 @@
 	>
 		<div class="flex flex-col gap-3">
 			<Search
-				bind:value={searchQuery}
+				bind:value={search.current}
 				clearableOnClick={() => {
-					searchQuery = '';
+					search.current = '';
 				}}
 				name="schedule_search"
 				aria-label="Поиск по программе"
@@ -284,7 +268,7 @@
 			/>
 
 			<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-				<Toggle bind:checked={showOnlySubscribed} size="small" color="primary" class="w-fit">
+				<Toggle bind:checked={subscribedOnly.current} size="small" color="primary" class="w-fit">
 					<span class="text-sm font-medium text-gray-700 dark:text-gray-200">Только подписки</span>
 				</Toggle>
 
