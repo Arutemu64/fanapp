@@ -24,7 +24,9 @@ class ParticipantORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     __table_args__ = (UniqueConstraint("nomination_id", "voting_number"),)
 
     cosplay2_id: Mapped[int] = mapped_column(unique=True, index=True)
-    title: Mapped[str] = mapped_column(index=True)
+    # Not indexed: nothing filters or sorts on title. Reads go by id, cosplay2_id
+    # or nomination_id.
+    title: Mapped[str] = mapped_column()
     voting_number: Mapped[int | None] = mapped_column()
     nomination_id: Mapped[UUID] = mapped_column(
         ForeignKey("nominations.id", ondelete="CASCADE"),

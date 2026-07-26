@@ -14,11 +14,13 @@ from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
 from fanfan.adapters.db.models.mixins.timestamps import UpdatedAtMixin
 
 
-class ScheduleEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM, OrderMixin):
+class ScheduleEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, OrderMixin, BaseORM):
     __tablename__ = "schedule_events"
 
     number: Mapped[int] = mapped_column(unique=True)
-    title: Mapped[str] = mapped_column(index=True)
+    # Not indexed: nothing filters or sorts on title. Reads go by id, queue,
+    # order or is_current.
+    title: Mapped[str] = mapped_column()
     duration: Mapped[int] = mapped_column(server_default=text("0"))
     is_current: Mapped[bool] = mapped_column(server_default=text("false"))
     is_skipped: Mapped[bool] = mapped_column(server_default=text("false"))
