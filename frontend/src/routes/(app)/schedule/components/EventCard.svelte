@@ -383,17 +383,31 @@
 	</div>
 </div>
 
-<SubscribeModal bind:open={subscribeModal} {event} />
-<UnsubscribeModal bind:open={unsubscribeModal} {event} />
-<MoveEventModal bind:open={moveModal} {event} {schedule} />
+<!-- Mounted only while open. This card renders once per schedule row, so
+	always-mounted dialogs cost four component instances — and four API clients —
+	per row for something almost never opened. Flowbite's dialog transition is
+	`|global`, so it still animates out when this block removes it. -->
+{#if subscribeModal}
+	<SubscribeModal bind:open={subscribeModal} {event} />
+{/if}
+
+{#if unsubscribeModal}
+	<UnsubscribeModal bind:open={unsubscribeModal} {event} />
+{/if}
+
+{#if moveModal}
+	<MoveEventModal bind:open={moveModal} {event} {schedule} />
+{/if}
 
 <!-- Shared confirm dialog for the staff strip's broadcast actions. -->
-<ConfirmActionModal
-	bind:open={confirmOpen}
-	title={confirmConfig?.title ?? ''}
-	message={confirmConfig?.message ?? ''}
-	confirmLabel={confirmConfig?.confirmLabel ?? ''}
-	confirmColor={confirmConfig?.color ?? 'primary'}
-	notifyTone={confirmConfig?.notifyTone ?? 'warning'}
-	onconfirm={() => void confirmConfig?.run()}
-/>
+{#if confirmOpen && confirmConfig}
+	<ConfirmActionModal
+		bind:open={confirmOpen}
+		title={confirmConfig.title}
+		message={confirmConfig.message}
+		confirmLabel={confirmConfig.confirmLabel}
+		confirmColor={confirmConfig.color}
+		notifyTone={confirmConfig.notifyTone}
+		onconfirm={() => void confirmConfig?.run()}
+	/>
+{/if}

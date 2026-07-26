@@ -160,6 +160,13 @@ jobs:
         working-directory: frontend
         run: pnpm check
 
+      # Vitest unit tests. No browser or DOM environment needed — these cover
+      # plain-TypeScript modules under src/lib (docs/testing.md, "Frontend").
+      - name: Frontend tests
+        if: ${{ !cancelled() && steps.changes.outputs.frontend == 'true' }}
+        working-directory: frontend
+        run: pnpm test
+
       - name: Frontend build
         if: ${{ !cancelled() && steps.changes.outputs.frontend == 'true' }}
         working-directory: frontend

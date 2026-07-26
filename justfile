@@ -26,6 +26,10 @@ frontend-lint:
 frontend-build:
     cd frontend && pnpm build
 
+# Vitest unit tests for plain-TypeScript modules under src/lib (docs/testing.md)
+frontend-test:
+    cd frontend && pnpm test
+
 frontend-generate-api: backend-generate-openapi
     cd frontend && pnpm generate-api
 
@@ -133,6 +137,7 @@ ci:
     cd backend && uv run pytest tests
     cd frontend && pnpm lint
     cd frontend && pnpm check
+    cd frontend && pnpm test
     cd frontend && pnpm build
     hadolint backend/Dockerfile frontend/Dockerfile
 

@@ -4,7 +4,7 @@
 	import { invalidate } from '$app/navigation';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
-	import { matchesSearch } from '$lib/utils/search';
+	import { createSearchIndex } from '$lib/utils/search';
 	import { Button, Search } from 'flowbite-svelte';
 	import {
 		ArrowLeftOutline,
@@ -28,11 +28,11 @@
 
 	let searchQuery = $state('');
 
-	let filtered = $derived(
-		participants.filter((p: VotingParticipant) =>
-			matchesSearch(searchQuery, [p.title, p.voting_number])
-		)
+	let searchIndex = $derived(
+		createSearchIndex(participants, (p: VotingParticipant) => [p.title, p.voting_number])
 	);
+
+	let filtered = $derived(searchIndex.filter(searchQuery));
 
 	let hasVoted = $derived(participants.some((p: VotingParticipant) => p.user_vote !== null));
 
