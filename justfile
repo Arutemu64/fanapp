@@ -81,6 +81,12 @@ backend-generate MIGRATION_NAME:
 backend-generate-auto MIGRATION_NAME:
     cd backend && uv run python scripts/generate_migration.py "{{ MIGRATION_NAME }}"
 
+# Rebuild frontend/static/schedule-template.xlsx, the example file offered for
+# download on the schedule-import screen. Run after changing the columns the
+# parser requires; a parser test fails if the committed file drifts.
+backend-generate-schedule-template:
+    cd backend && uv run python scripts/generate_schedule_template.py
+
 # Fail if ORM models drift from migrations (spins a throwaway Postgres via testcontainers)
 backend-check-migrations:
     cd backend && uv run pytest tests/integration/test_migrations.py

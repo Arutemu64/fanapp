@@ -38,7 +38,7 @@ Guards run client-side in **universal `load`** functions (these are UX redirects
 * The root `+layout.ts` fetches the current user from `/me/` and returns `user`, so it flows down to **every** page. Do not re-return `user` from a nested layout — it is already inherited.
 * Route-group layouts gate by membership: `(app)/(protected)/+layout.ts` requires a logged-in user (else → `/login?next=<attempted path>`); `(auth)/+layout.ts` is guests-only (else → the validated `next` target, or `/`). Putting a route inside the group is the guard — do **not** re-check `user` in that route's `load`.
 * **Post-login destination (`?next=`)**: the `(protected)` guard preserves the attempted path in the `next` query param and `completeLogin` (`$lib/utils/auth.ts`) navigates there after login. Any value read from `next` MUST go through `sanitizeNextPath` first — it only accepts in-app absolute paths (rejects absolute URLs, `//host`, and backslash forms) so a crafted login link can't become an open redirect. The Telegram OAuth login goes through a backend redirect and does not carry `next`.
-* A nested `+layout.ts` should only add checks the group can't express — e.g. a finer-grained `error(403, …)`. The whole `org/` section is already gated by `org/+layout.ts` via the `canManageSettings`/`canImportSchedule`/`canSendNotifications` permission helpers; never re-check organizer access inside individual org pages.
+* A nested `+layout.ts` should only add checks the group can't express — e.g. a finer-grained `error(403, …)`. The whole `tools/` section is already gated by `tools/+layout.ts` via the `canManageSettings`/`canImportSchedule`/`canSendNotifications` permission helpers; never re-check organizer access inside individual tools pages.
 
 ### PWA & Offline Support
 

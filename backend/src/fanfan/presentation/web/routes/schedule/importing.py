@@ -11,6 +11,7 @@ from fanfan.application.interactors.schedule_mgmt.import_schedule import (
     ImportScheduleInput,
 )
 from fanfan.presentation.web.responses import AUTH_RESPONSES
+from fanfan.presentation.web.schemas.error import ErrorMessage
 from fanfan.presentation.web.security import session_security
 
 importing_router = APIRouter(
@@ -22,13 +23,19 @@ importing_router = APIRouter(
 @importing_router.post(
     "/import",
     status_code=201,
+    responses={
+        400: {
+            "model": ErrorMessage,
+            "description": "The spreadsheet could not be read as a schedule.",
+        },
+    },
 )
 @inject
 async def import_schedule(
     file: Annotated[UploadFile, File(description="Excel file with schedule data.")],
     interactor: FromDishka[ImportSchedule],
 ) -> None:
-    # Parse in a worker thread because Pandas/OpenPyXL are synchronous libraries.
+    # Parse in a worker thread because polars/fastexcel are synchronous libraries.
     # This keeps the async FastAPI event loop responsive during file imports.
     schedule = await run_in_threadpool(parse_schedule_from_excel, file.file)
     await interactor(ImportScheduleInput(schedule=schedule))

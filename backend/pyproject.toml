@@ -5,7 +5,7 @@ name = "fanfan"
 # at a 0.0.0 placeholder rather than carrying a second, independently drifting
 # number. A running deploy is identified by its commit SHA, not by this.
 # See docs/dependencies.md, "Versioning the app".
-version = "2.0.0"
+version = "2.1.0"
 authors = [
     { name = "Arutemu64", email = "arutemu64@outlook.com" },
 ]
@@ -61,6 +61,10 @@ dev = [
     "uv-sort>=0.7.1",
     "ty>=0.0.61",
     "import-linter>=2.13",
+    # Writing .xlsx, needed only by the schedule-template generator script and
+    # the parser tests. The app itself only ever reads spreadsheets (polars +
+    # fastexcel), so this stays out of the runtime dependencies.
+    "xlsxwriter>=3.2.9",
 ]
 
 [build-system]

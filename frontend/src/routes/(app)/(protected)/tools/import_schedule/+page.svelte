@@ -2,8 +2,11 @@
 	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
+	import { getApiErrorDetail } from '$lib/api/errors';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { Alert, Button, Card, Fileupload, Helper, Label, Spinner } from 'flowbite-svelte';
+
+	import FileFormatGuide from './components/FileFormatGuide.svelte';
 
 	let selectedFiles = $state<FileList | null>(null);
 	let isUploading = $state(false);
@@ -45,16 +48,10 @@
 			});
 
 			if (error || !response.ok) {
-				if (response.status === 401) {
-					inlineError = 'Нужно войти в аккаунт заново';
-				} else if (response.status === 403) {
-					inlineError = 'У тебя нет доступа к импорту программы';
-				} else if (response.status === 422) {
-					inlineError = 'Проверь формат файла и попробуй снова';
-				} else {
-					inlineError = 'Не удалось импортировать программу';
-				}
-
+				// Mapped by the error `code`, not the status: a rejected spreadsheet
+				// comes back as INVALID_SCHEDULE_FILE carrying the column and row at
+				// fault, which is the whole point of showing an error here.
+				inlineError = getApiErrorDetail(error) ?? 'Не удалось импортировать программу';
 				return;
 			}
 
@@ -78,6 +75,8 @@
 
 <SectionIntro description="Загрузи Excel-файл, чтобы обновить программу мероприятия." />
 
+<FileFormatGuide />
+
 <Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
 	<form class="space-y-4" onsubmit={handleSubmit}>
 		<div class="space-y-2">
@@ -97,7 +96,7 @@
 				{#if selectedFileName}
 					Выбран файл: {selectedFileName}
 				{:else}
-					Поддерживаются файлы `.xls` и `.xlsx`.
+					Поддерживаются файлы .xls и .xlsx.
 				{/if}
 			</Helper>
 		</div>
