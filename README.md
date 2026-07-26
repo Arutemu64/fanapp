@@ -194,9 +194,22 @@ Optional, enabled via `.env`:
 
 ## License
 
-[MIT](LICENSE) © Arutemu64.
+[MIT](LICENSE) © Arutemu64. The MIT grant covers the **source code**. Two
+categories of files in this repository are excluded from it.
 
-Vendored third-party agent skills under `.claude/skills/`, `.agents/skills/` and
-`.impeccable/` are **not** covered by this license — each keeps its upstream
-license and copyright. `skills-lock.json` records the source repository for every
-one of them.
+**Festival branding and artwork.** The FAN FAN name, logo, festival maps and
+event photography belong to the festival, not to this codebase, and carry no
+license to reuse — the event photo in particular shows identifiable attendees,
+who consented to a festival photo, not to redistribution under MIT. Excluded:
+
+- `backend/src/fanfan/common/static/logo.png`
+- `frontend/static/icons/`
+- `frontend/src/lib/assets/map/`
+- `frontend/src/routes/(app)/components/home/main.webp`
+
+Fork the code freely; swap in your own branding.
+
+**Vendored third-party agent skills**, under `.agents/skills/`,
+`.claude/skills/`, `.cline/`, `.gemini/` and `.impeccable/`. Each keeps its
+upstream license and copyright; `skills-lock.json` records the source repository
+for every one of them.
