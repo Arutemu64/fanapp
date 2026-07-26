@@ -28,7 +28,7 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 | Layer | Tech |
 |---|---|
 | Frontend | SvelteKit (Svelte 5 runes), Flowbite-Svelte, Tailwind CSS v4, `pnpm` |
-| Backend | FastAPI, SQLAlchemy + Alembic, Dishka (DI), `uv` |
+| Backend | FastAPI, aiogram (Telegram bot), SQLAlchemy + Alembic, Dishka (DI), `uv` |
 | Data / infra | PostgreSQL, Redis (Valkey), NATS + FastStream |
 | Jobs | APScheduler (periodic syncs), FastStream consumers (domain events) |
 | Tooling | Docker Compose, `just` task runner |
@@ -41,13 +41,14 @@ The backend follows clean / hexagonal architecture — pure `core` and `applicat
 backend/    FastAPI app (core / application / adapters / presentation / main)
 frontend/   SvelteKit app (routes + lib: components, api, services, utils)
 shared/     Shared OpenAPI spec
-config/     Redis config, VAPID keys, infra config
-docs/       Architecture guides (backend.md, frontend.md, api.md)
+config/     Committed, non-secret infra config (Redis)
+secrets/    Gitignored runtime secrets (VAPID PEM keys); ships empty
+docs/       Architecture guides and ADRs
 ```
 
 ## Requirements
 
-- Python ≥ 3.14 and [`uv`](https://docs.astral.sh/uv/)
+- Python ≥ 3.14.6 and [`uv`](https://docs.astral.sh/uv/)
 - Node.js + [`pnpm`](https://pnpm.io/)
 - [`just`](https://github.com/casey/just)
 - Docker + Docker Compose (for the full environment)
@@ -186,7 +187,7 @@ Deploy (pulls the images and restarts, builds nothing on the host):
 just deploy                   # docker compose ... -f docker-compose.prod.yml pull && up -d
 ```
 
-By default `just deploy` tracks the latest `main` build. Pin a specific build (or roll back) by setting `IMAGE_TAG` in `.env`, e.g. `IMAGE_TAG=sha-1a2b3c4`. The server still needs the repo's compose files, `.env`, `config/` (Redis config + VAPID keys), and `backend/alembic.ini` on disk — only the application *build* moves to CI, not the runtime config.
+By default `just deploy` tracks the latest `main` build. Pin a specific build (or roll back) by setting `IMAGE_TAG` in `.env`, e.g. `IMAGE_TAG=sha-1a2b3c4`. The server still needs the repo's compose files, `.env`, `config/` (Redis config), `secrets/` (VAPID keys), and `backend/alembic.ini` on disk — only the application *build* moves to CI, not the runtime config.
 
 ### Reverse proxy (Caddy): HTTPS and HTTP testing
 
@@ -214,6 +215,8 @@ Optional, enabled via `.env`:
 
 - **TicketsCloud** (`TCLOUD__*`) — ticket sync.
 - **Cosplay2** (`COSPLAY2__*`) — cosplay / voting data sync.
+- **Yandex SmartCaptcha** (`SMARTCAPTCHA__SERVER_KEY` + `PUBLIC_SMARTCAPTCHA_CLIENT_KEY`) — bot protection on login-code requests. Unset = a no-op verifier that accepts everything. Yandex rather than Cloudflare Turnstile because Cloudflare is frequently throttled in Russia — see [ADR-0009](docs/adr/0009-yandex-smartcaptcha-over-cloudflare-turnstile.md).
+- **Sentry / GlitchTip** (`DEBUG__SENTRY_DSN` backend, `PUBLIC_SENTRY_DSN` frontend) — error reporting. Empty DSN = disabled.
 - **Scheduler** (`SCHEDULER__SYNC_*_CRON`) — cron strings (in `TIMEZONE`) that run the syncs periodically. Unset = disabled. After editing, `docker compose restart scheduler`. Trigger a sync manually any time with `docker compose run --rm api cli sync tcloud`.
 
 ## Documentation
