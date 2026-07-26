@@ -174,7 +174,7 @@
 	</Card>
 
 	<Card class="w-full max-w-none space-y-4 rounded-2xl p-4 sm:p-6">
-		<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Расписание</h2>
+		<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Программа</h2>
 
 		<div class="space-y-2">
 			<Label for="announcement-timeout">Таймаут анонсов, сек</Label>

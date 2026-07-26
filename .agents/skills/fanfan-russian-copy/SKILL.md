@@ -15,30 +15,32 @@ convention on the same screens.
 
 ## Register: «ты», always
 
-The app addresses the user informally. This is settled by usage, not taste:
-`Введи адрес эл. почты`, `Введи код из письма`, `Проверь заполнение формы`,
-`Укажи таймаут анонсов`, `Выбери Excel-файл для импорта`, `Попробуй ещё раз
-позже`.
+In the app, the user is addressed informally — imperatives (`Введи адрес эл.
+почты`, `Проверь заполнение формы`, `Выбери Excel-файл для импорта`) and
+pronouns (`тебя`, `Твой отзыв отправлен`) alike. `frontend/src/` is uniformly
+«ты»; keep it that way.
 
-Two strings still use «вы» and are inconsistent, not a second convention:
+Organizer-facing screens are **not** an exception — organizers are the same age
+group and the same people, and `tools/broadcast` and `tools/settings` use «ты».
 
-- `frontend/src/routes/(app)/(protected)/feedback/+page.svelte` — `Напишите, чем хотите поделиться`
-- `frontend/src/routes/(app)/(protected)/tools/broadcast/+page.svelte` — `Введите текст уведомления`
-
-Match «ты» in new copy. Organizer-facing screens are not an exception — the
-organizers are the same age group and the same people.
+**Transactional email is the one deliberate «вы» surface.** All four templates
+in `backend/src/fanfan/adapters/jinja/templates/` (`email_login_code`,
+`email_confirmation_code`, each `.jinja2` + `.txt.jinja2`) open with
+`Здравствуйте` and stay formal, which is the convention for email from an
+organization. Edit them as a set, or not at all — a half-converted pair is worse
+than either choice.
 
 «Ты» does not mean sloppy: no slang, no `плз`, no memes, no exclamation marks by
 default. Friendly, but composed.
 
 ## Terminology
 
-Pick the established word. The app has drifted twice already, and a synonym
-introduced now becomes the third.
+Pick the established word. A synonym introduced now is the start of the next
+drift.
 
 | Concept | Use | Not |
 | --- | --- | --- |
-| The event programme | **Программа** | ~~Расписание~~ (one straggler in `tools/settings/+page.svelte:177`) |
+| The event programme | **Программа** | ~~Расписание~~ |
 | A single item in it | **Выступление** | ~~событие~~, ~~мероприятие~~, ~~ивент~~ |
 | Voting | **Голосование** | — |
 | A voting entry | **Номинация** | — |

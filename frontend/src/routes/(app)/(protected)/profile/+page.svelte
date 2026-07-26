@@ -34,7 +34,7 @@
 
 	const telegramLinkErrorMessages = {
 		linked_to_another_account: 'Этот Telegram уже подключён к другому аккаунту.',
-		user_already_has_telegram: 'К вашему аккаунту уже подключён другой Telegram.'
+		user_already_has_telegram: 'К твоему аккаунту уже подключён другой Telegram.'
 	} as const;
 
 	// Refreshing the current user also refreshes connections — they ship together now.
