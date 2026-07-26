@@ -28,7 +28,7 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 | Layer | Tech |
 |---|---|
 | Frontend | SvelteKit (Svelte 5 runes), Flowbite-Svelte, Tailwind CSS v4, `pnpm` |
-| Backend | FastAPI, SQLAlchemy + Alembic, Dishka (DI), `uv` |
+| Backend | FastAPI, aiogram (Telegram bot), SQLAlchemy + Alembic, Dishka (DI), `uv` |
 | Data / infra | PostgreSQL, Redis (Valkey), NATS + FastStream |
 | Jobs | APScheduler (periodic syncs), FastStream consumers (domain events) |
 | Tooling | Docker Compose, `just` task runner |
@@ -41,21 +41,20 @@ The backend follows clean / hexagonal architecture — pure `core` and `applicat
 backend/    FastAPI app (core / application / adapters / presentation / main)
 frontend/   SvelteKit app (routes + lib: components, api, services, utils)
 shared/     Shared OpenAPI spec
-config/     Redis config, VAPID keys, infra config
-docs/       Architecture guides (backend.md, frontend.md, api.md)
+config/     Committed, non-secret infra config (Redis)
+secrets/    Gitignored runtime secrets (VAPID PEM keys); ships empty
+docs/       Architecture guides and ADRs
 ```
 
 ## Requirements
 
-- Python ≥ 3.14 and [`uv`](https://docs.astral.sh/uv/)
+- Python ≥ 3.14.6 and [`uv`](https://docs.astral.sh/uv/)
 - Node.js + [`pnpm`](https://pnpm.io/)
 - [`just`](https://github.com/casey/just)
 - Docker + Docker Compose (for the full environment)
-- On **Windows**, run `just` from **Git Bash** or **WSL** (not cmd/PowerShell): the
-  recipes are POSIX shell. Git Bash ships with
-  [Git for Windows](https://git-scm.com/download/win). (`just bootstrap` itself is a
-  pure-Python script — no bash/openssl needed — but the other recipes still expect a
-  POSIX shell.)
+- On **Windows**, run `just` from **Git Bash** (ships with
+  [Git for Windows](https://git-scm.com/download/win)) or **WSL**, not cmd/PowerShell —
+  the recipes are POSIX shell.
 
 > Optional: [`mise`](https://mise.jdx.dev) (or `asdf`) reads the pinned
 > versions from [`mise.toml`](mise.toml) — run `mise install` to get the exact
@@ -155,58 +154,21 @@ just ci
 
 `just ci` runs the same eight gates, in the same check-only mode, on your machine. **Run it before pushing** — a failure caught locally is an Actions run nobody spends.
 
-### Why CI is a single job
-
-All the gates live in one `quality` job rather than fanning out across several. Billed Actions usage is metered [per job, rounded up to a whole minute](https://docs.github.com/en/actions/concepts/billing-and-usage), and every gate here finishes in well under a minute — so a five-job fan-out cost 5 minutes for roughly 2 minutes of real work. Sequencing them costs 2. Wall-clock time is about a minute longer; minutes are the scarcer resource, not latency.
-
-Each gate is guarded with `!cancelled()` so the rest still run after one fails: a single run reports every problem instead of only the first, which is what keeps you from spending a second run to find the second bug.
-
-Renovate is the other large consumer of minutes. [`renovate.json`](renovate.json) batches Action, dev-tooling and backend-runtime bumps into grouped weekly PRs, and sets `rebaseWhen: "conflicted"` plus `platformAutomerge` so that merging one dependency PR doesn't re-trigger CI on every other open one — see [Renovate's noise-reduction guide](https://docs.renovatebot.com/noise-reduction/).
+All gates run in one `quality` job, and one failing gate doesn't skip the rest, so a run reports every problem instead of only the first. Both choices exist to spend fewer Actions minutes; the reasoning is in the header comments of [`ci.yml`](.github/workflows/ci.yml). [`renovate.json`](renovate.json) batches dependency bumps into grouped weekly PRs for the same reason — see [`docs/dependencies.md`](docs/dependencies.md).
 
 [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml) additionally builds the backend and frontend images and pushes them to the GitHub Container Registry (GHCR) on pushes to `main` (which move the `latest` tag) and on `v*` tags. The `SENTRY_AUTH_TOKEN` repository secret is passed only to the frontend build (source-map upload); it is consumed in a discarded build stage and never ends up in the published image.
 
 ## Deployment
 
-The server runs the **prebuilt** GHCR images instead of building from source — see [`docker-compose.prod.yml`](docker-compose.prod.yml). To test the exact same images locally first, build them from your working tree with `just run-prod` (no registry needed).
-
-One-time server setup:
+The server runs the **prebuilt** GHCR images instead of building from source — only the application *build* moves to CI, the runtime config stays on the host. Once the server is set up, a deploy is:
 
 ```sh
-docker login ghcr.io          # use a read-only PAT / deploy token, not a password
-cp .env.example .env          # fill in placeholders (see Getting started)
-# Put the VAPID keys in secrets/ (the dir ships empty in the repo) and make
-# them readable by the container user (backend runs as uid 999):
-chmod 600 secrets/private_key.pem
-sudo chown 999:999 secrets/*.pem
+just deploy                   # pull the images and restart; builds nothing on the host
 ```
 
-Deploy (pulls the images and restarts, builds nothing on the host):
+To test the exact same images locally first, build them from your working tree with `just run-prod` (no registry needed).
 
-```sh
-just deploy                   # docker compose ... -f docker-compose.prod.yml pull && up -d
-```
-
-By default `just deploy` tracks the latest `main` build. Pin a specific build (or roll back) by setting `IMAGE_TAG` in `.env`, e.g. `IMAGE_TAG=sha-1a2b3c4`. The server still needs the repo's compose files, `.env`, `config/` (Redis config + VAPID keys), and `backend/alembic.ini` on disk — only the application *build* moves to CI, not the runtime config.
-
-### Reverse proxy (Caddy): HTTPS and HTTP testing
-
-The app is meant to run behind a reverse proxy that puts the frontend and the API on **one origin**: [`Caddyfile.example`](Caddyfile.example) routes `/api*` to the backend and everything else to the SvelteKit frontend. Because the API is same-origin, the browser never makes a cross-origin request, so **no CORS config is needed**. The frontend is a static SPA (`adapter-static`, no SSR) served by NGINX, and it calls the API with a **relative base** (`PUBLIC_API_URL=/api`, the default), which resolves against whatever origin serves the app. That keeps the bundle domain-agnostic — the same build (and the prebuilt GHCR image) works on any domain with no rebuild (see [`docs/frontend.md`](docs/frontend.md)).
-
-`just run-prod` exposes the apps on `127.0.0.1:3000` (frontend) and `127.0.0.1:8000` (API); run Caddy with `Caddyfile.example` in front to reach them on a single origin (e.g. `http://localhost`).
-
-With the relative default you only set the origin-dependent values to match how the browser reaches the site:
-
-| `.env` / Caddy | HTTPS (production) | HTTP (local / insecure testing) |
-|---|---|---|
-| Caddy site block | your domain, e.g. `example.com { … }` (auto-TLS) | `:80 { … }` (as shipped) |
-| `WEB__PUBLIC_URL` | `https://example.com/` | `http://localhost/` |
-| `PUBLIC_API_URL` | `/api` (relative — domain-agnostic) | `/api` |
-| `WEB__COOKIE_SECURE` | `True` | `False` |
-| `WEB__CORS_ALLOW_ORIGINS` | unset (same-origin) | unset (same-origin) |
-
-`WEB__COOKIE_SECURE=False` is **required** over plain HTTP — a `Secure` cookie is never sent over HTTP, which would otherwise break login (including the Telegram OAuth callback, whose state cookie follows the same flag). When you switch a host between HTTP and HTTPS, clear its cookies first, or stale `Secure` cookies look like an auth bug.
-
-**Split-origin (optional):** to serve the API on a *different* origin than the site, set `PUBLIC_API_URL` to that absolute URL (e.g. `https://api.example.com`) — this requires a rebuild, since `PUBLIC_API_URL` is baked into the bundle at build time — and set `WEB__CORS_ALLOW_ORIGINS` to the public app origin exactly (scheme + host, no trailing slash, no path).
+[`docs/deployment.md`](docs/deployment.md) covers the rest: what the server needs on disk, one-time setup, pinning a build or rolling back with `IMAGE_TAG`, and the reverse proxy (Caddy) — including the single-origin setup that means **no CORS config is needed** and the `.env` values that change between HTTPS and plain-HTTP testing.
 
 ## External integrations
 
@@ -214,6 +176,8 @@ Optional, enabled via `.env`:
 
 - **TicketsCloud** (`TCLOUD__*`) — ticket sync.
 - **Cosplay2** (`COSPLAY2__*`) — cosplay / voting data sync.
+- **Yandex SmartCaptcha** (`SMARTCAPTCHA__SERVER_KEY` + `PUBLIC_SMARTCAPTCHA_CLIENT_KEY`) — bot protection on login-code requests. Unset = a no-op verifier that accepts everything. Yandex rather than Cloudflare Turnstile because Cloudflare is frequently throttled in Russia — see [ADR-0009](docs/adr/0009-yandex-smartcaptcha-over-cloudflare-turnstile.md).
+- **Sentry / GlitchTip** (`DEBUG__SENTRY_DSN` backend, `PUBLIC_SENTRY_DSN` frontend) — error reporting. Empty DSN = disabled.
 - **Scheduler** (`SCHEDULER__SYNC_*_CRON`) — cron strings (in `TIMEZONE`) that run the syncs periodically. Unset = disabled. After editing, `docker compose restart scheduler`. Trigger a sync manually any time with `docker compose run --rm api cli sync tcloud`.
 
 ## Documentation
@@ -223,6 +187,7 @@ Optional, enabled via `.env`:
 - [`docs/frontend.md`](docs/frontend.md) — SvelteKit SPA rules, styling, components
 - [`docs/api.md`](docs/api.md) — type-safe API integration
 - [`docs/testing.md`](docs/testing.md) — test layers, fixtures, what is real vs faked
+- [`docs/deployment.md`](docs/deployment.md) — server setup, deploys and rollbacks, reverse proxy
 - [`docs/dependencies.md`](docs/dependencies.md) — shared version pins and Renovate
 - [`docs/claude-cloud.md`](docs/claude-cloud.md) — Claude Code on the web provisioning
 - [`docs/adr/`](docs/adr/README.md) — architecture decision records
