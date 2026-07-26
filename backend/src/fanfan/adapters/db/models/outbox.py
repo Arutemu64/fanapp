@@ -27,6 +27,11 @@ class OutboxEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
             "created_at",
             postgresql_where="published_at IS NULL",
         ),
+        # Serves the retention sweep (delete_published_before), which filters the
+        # exact complement of the index above and so could not use it. Without
+        # this the cron full-scans the table on every tick, even once there is
+        # nothing left to delete.
+        Index("ix_outbox_events_published_at", "published_at"),
     )
 
     subject: Mapped[str] = mapped_column(Text())

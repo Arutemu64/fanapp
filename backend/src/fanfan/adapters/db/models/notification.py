@@ -41,4 +41,9 @@ class NotificationORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
             "user_id",
             text("created_at DESC"),
         ),
+        # Serves the retention sweep (delete_created_before). The composite index
+        # above leads with user_id and cannot answer a bare created_at range, so
+        # without this the cron full-scans the table on every tick — including in
+        # the steady state where there is nothing left to delete.
+        Index("ix_notifications_created_at", "created_at"),
     )

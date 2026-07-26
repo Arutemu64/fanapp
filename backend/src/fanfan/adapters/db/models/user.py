@@ -30,6 +30,10 @@ class UserORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     email: Mapped[str | None] = mapped_column(index=True, unique=True)
     # Notification preferences live in columns (not the settings JSON) so they
     # can be filtered on directly — see read_all_by_receive_all_announcements.
+    # Deliberately NOT indexed: the column defaults to true, so the fan-out
+    # query matches ~every row and the planner seq-scans regardless. A partial
+    # index on the same column it filters by also stores no information — the
+    # predicate already pins the value — so it was pure write overhead.
     receive_all_announcements: Mapped[bool] = mapped_column(server_default=text("true"))
     receive_telegram_notifications: Mapped[bool] = mapped_column(
         server_default=text("true")
@@ -38,11 +42,16 @@ class UserORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     # extension point so new prefs need no schema migration.
     settings: Mapped[dict] = mapped_column(JSONB)
 
+    # Indexed for the broadcast fan-out (read_all_by_roles): the org/helper roles
+    # are a tiny slice of a table dominated by visitors, so targeting them was a
+    # full scan. The planner still ignores the index when a broadcast includes
+    # VISITOR, which is correct — that really is most of the table.
     role: Mapped[UserRole] = str_enum_column(
         UserRole,
         name="userrole",
         default=UserRole.VISITOR,
         server_default=UserRole.VISITOR.value,
+        index=True,
     )
 
     ticket: Mapped[TicketORM | None] = relationship(
@@ -59,13 +68,6 @@ class UserORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
         # Case-insensitive uniqueness; get_by_username compares lower(username),
         # so this expression index is also what makes login lookups indexed.
         Index("ix_users_username_lower", func.lower(username), unique=True),
-        # Partial index: only TRUE rows are indexed, which is exactly the set
-        # the global-announcement fan-out query scans.
-        Index(
-            "ix_users_receive_all_announcements",
-            "receive_all_announcements",
-            postgresql_where=text("receive_all_announcements"),
-        ),
     )
 
     def __str__(self) -> str:

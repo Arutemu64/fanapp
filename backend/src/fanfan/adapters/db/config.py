@@ -12,7 +12,11 @@ class DatabaseConfig(BaseModel):
 
     database_system: str = "postgresql"
     driver: str = "asyncpg"
-    echo: bool = True
+    # Defaults off: echo logs every statement *and* its bound parameters, so a
+    # deployment whose .env loses DB__ECHO would quietly start writing emails and
+    # password hashes to the logs. `extra="ignore"` means that drift never fails
+    # at boot, so the safe value has to be the default. Dev opts in.
+    echo: bool = False
 
     # Connection pool sizing (SQLAlchemy QueuePool). A single process may open up
     # to pool_size + max_overflow connections. Kept explicit so the three
