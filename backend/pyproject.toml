@@ -5,7 +5,7 @@ name = "fanfan"
 # at a 0.0.0 placeholder rather than carrying a second, independently drifting
 # number. A running deploy is identified by its commit SHA, not by this.
 # See docs/dependencies.md, "Versioning the app".
-version = "2.0.0"
+version = "2.1.0"
 authors = [
     { name = "Arutemu64", email = "arutemu64@outlook.com" },
 ]
