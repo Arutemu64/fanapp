@@ -2,9 +2,11 @@
 	import type { GetVotingNominationResult } from '$lib/types/voting';
 
 	import { invalidate } from '$app/navigation';
+	import { page } from '$app/state';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { createSearchIndex } from '$lib/utils/search';
+	import { syncUrlParams } from '$lib/utils/urlState';
 	import { Button, Search } from 'flowbite-svelte';
 	import {
 		ArrowLeftOutline,
@@ -26,13 +28,37 @@
 	let votingStatus = $derived(data.votingStatus);
 	let canVote = $derived(votingStatus?.can_vote ?? false);
 
-	let searchQuery = $state('');
+	// Seeded from the URL so a shared link or a reload keeps the same view; the
+	// effect below writes it back. Same one-way seed as the schedule page.
+	let searchQuery = $state(page.url.searchParams.get('q') ?? '');
+
+	// Only the URL write is debounced — filtering itself is instant. Browsers
+	// reject `replaceState` called too often.
+	const URL_SYNC_DELAY_MS = 300;
+
+	$effect(() => {
+		const query = searchQuery;
+
+		const timer = setTimeout(() => {
+			syncUrlParams({ q: query });
+		}, URL_SYNC_DELAY_MS);
+
+		return () => clearTimeout(timer);
+	});
 
 	let searchIndex = $derived(
 		createSearchIndex(participants, (p: VotingParticipant) => [p.title, p.voting_number])
 	);
 
 	let filtered = $derived(searchIndex.filter(searchQuery));
+
+	let hasSearchQuery = $derived(searchQuery.trim().length > 0);
+
+	let resultsSummary = $derived(
+		filtered.length === participants.length
+			? `Всего участников: ${participants.length}`
+			: `Показано ${filtered.length} из ${participants.length}`
+	);
 
 	let hasVoted = $derived(participants.some((p: VotingParticipant) => p.user_vote !== null));
 
@@ -107,22 +133,47 @@
 	spellcheck={false}
 	clearable
 	size="sm"
-	class="mb-4"
+	class="mb-2"
 />
+
+<!-- Announce filter result changes to screen readers, which otherwise get no
+     feedback that the grid shrank or grew. Matches the schedule page. Skipped
+     for an empty nomination: there is nothing to filter, and the empty state
+     below already says so. -->
+{#if participants.length > 0}
+	<p class="mb-4 text-xs text-gray-500 dark:text-gray-400" aria-live="polite" role="status">
+		{resultsSummary}
+	</p>
+{/if}
 
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
 	{#each filtered as participant (participant.id)}
 		<ParticipantCard {participant} {hasVoted} {canVote} onVoted={handleVoted} />
 	{:else}
 		<div class="col-span-full">
-			<EmptyState icon={UsersGroupOutline} message="Участники не найдены">
-				<button
-					onclick={() => (searchQuery = '')}
-					class="mt-3 text-sm font-medium text-primary-600 hover:underline dark:text-primary-400"
+			<!-- Two distinct states: a search that matched nothing (recoverable —
+			     offer the reset), and a nomination with no participants at all,
+			     where clearing the search would do nothing. -->
+			{#if hasSearchQuery}
+				<EmptyState
+					icon={UsersGroupOutline}
+					title="Ничего не нашлось"
+					message="Попробуй изменить запрос"
 				>
-					Очистить поиск
-				</button>
-			</EmptyState>
+					<button
+						onclick={() => (searchQuery = '')}
+						class="mt-3 text-sm font-medium text-primary-600 hover:underline dark:text-primary-400"
+					>
+						Очистить поиск
+					</button>
+				</EmptyState>
+			{:else}
+				<EmptyState
+					icon={UsersGroupOutline}
+					title="Участников пока нет"
+					message="Появятся ближе к фестивалю"
+				/>
+			{/if}
 		</div>
 	{/each}
 </div>

@@ -8,6 +8,7 @@
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
 	import { createSearchIndex } from '$lib/utils/search';
+	import { syncUrlParams } from '$lib/utils/urlState';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
 	import {
 		ChevronUpOutline,
@@ -40,9 +41,27 @@
 	let { data }: PageProps = $props();
 	let schedule: ScheduleEventWithSubscription[] = $derived(data.schedule);
 
-	// Store filter state locally because it only affects this page view.
-	let searchQuery: string = $state('');
-	let showOnlySubscribed: boolean = $state(false);
+	// Filter state lives in the URL, so a reload, a shared link, or a trip into an
+	// event and back restores the same view. Seeded from the URL once — the effect
+	// below writes back, so this is a one-way seed, not a two-way binding.
+	let searchQuery: string = $state(page.url.searchParams.get('q') ?? '');
+	let showOnlySubscribed: boolean = $state(page.url.searchParams.get('subscribed') === '1');
+
+	// Only the URL write is debounced; filtering below stays instant. Browsers
+	// reject `replaceState` called too often, and a write per keystroke would also
+	// park half-typed queries in the address bar and in anything the user copies.
+	const URL_SYNC_DELAY_MS = 300;
+
+	$effect(() => {
+		const query = searchQuery;
+		const subscribedOnly = showOnlySubscribed;
+
+		const timer = setTimeout(() => {
+			syncUrlParams({ q: query, subscribed: subscribedOnly ? '1' : '' });
+		}, URL_SYNC_DELAY_MS);
+
+		return () => clearTimeout(timer);
+	});
 
 	// We use the full schedule current event for countdown labels inside every row.
 	let currentEvent = $derived(schedule.find((event) => event.is_current) ?? null);
