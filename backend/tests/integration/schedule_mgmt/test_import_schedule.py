@@ -3,6 +3,7 @@ from collections.abc import Callable
 import pytest
 from dishka import AsyncContainer
 
+from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.interactors.schedule_mgmt.import_schedule import (
     ImportSchedule,
     ImportScheduleInput,
@@ -15,6 +16,7 @@ from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.models.schedule_event import ScheduleEvent
 from fanfan.core.models.user import User
 from fanfan.core.vo.schedule_event import generate_schedule_event_id
+from tests.fakes.realtime_gateway import FakeRealtimeGateway
 from tests.integration.conftest import as_outbox
 
 pytestmark = [
@@ -56,6 +58,7 @@ async def test_import_creates_events_on_empty_schedule(
 ):
     interactor = await dishka_request.get(ImportSchedule)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    realtime = await dishka_request.get(FakeRealtimeGateway)
     login(schedule_editor)
 
     await interactor(
@@ -83,6 +86,11 @@ async def test_import_creates_events_on_empty_schedule(
 
     # Import records no schedule change and enqueues no events.
     assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
+
+    # Because there is no outbox event, the SSE broadcast telling every other
+    # client to refetch has to come from the interactor itself. Broadcast, not
+    # targeted at the importing user — the schedule is shared state.
+    assert realtime.published == [(None, SSEMessage(SSEEventName.SCHEDULE_UPDATED))]
 
 
 async def test_import_updates_existing_and_deletes_orphans(
@@ -133,6 +141,7 @@ async def test_import_without_permission_raises_access_denied(
 ):
     interactor = await dishka_request.get(ImportSchedule)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    realtime = await dishka_request.get(FakeRealtimeGateway)
     # A regular visitor does not have the SCHEDULE_IMPORT permission.
     login(visitor)
 
@@ -147,3 +156,5 @@ async def test_import_without_permission_raises_access_denied(
     schedule = await schedule_gateway.list_all()
     assert [e.number for e in schedule] == [1]
     assert await schedule_gateway.get_by_id(existing.id) is not None
+    # A rejected import must not send every client off to refetch.
+    assert realtime.published == []
