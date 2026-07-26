@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { isReachable, onReachableChange } from '$lib/services/reachability';
+	import { reachability } from '$lib/services/reachability';
 	import { statusTitle } from '$lib/utils/errorTitle';
 	import { Button, Card } from 'flowbite-svelte';
 	import {
@@ -25,8 +25,7 @@
 	// cause (backend unreachable) and show a calm "you're offline" page instead of
 	// a scary server-error screen. Read straight from the reachability module so
 	// this works without the OfflineService context too.
-	let online = $state(isReachable());
-	$effect(() => onReachableChange(() => (online = isReachable())));
+	let online = $derived(reachability.current);
 	// A genuine 403/404 is a real server answer — never reframe it as offline.
 	let offline = $derived(!online && status !== 403 && status !== 404);
 
