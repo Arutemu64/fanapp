@@ -64,6 +64,7 @@ named `fanfan-*` are project-local and live only here.
 | `just dockerfile-lint` | hadolint (config `.hadolint.yaml`) |
 | `just backend-test` / `just backend-test-integration` | pytest (integration needs a Docker daemon) |
 | `just backend-migrate` | Apply migrations |
+| `just backend-check-migrations` | Fail if the ORM models have drifted from the migrations |
 | `just backend-generate <name>` | Autogenerate a migration against the running app DB |
 | `just backend-generate-auto <name>` | Autogenerate against a throwaway Postgres (no app DB needed; requires Docker) |
 | `just frontend-generate-api` | Regenerate `schema.d.ts` from the OpenAPI spec |
@@ -78,9 +79,9 @@ Always review a generated migration: autogenerate emits renames as drop+create a
 ├── backend/src/fanfan/
 │   ├── core/            # Pure domain: models, value objects, exceptions
 │   ├── application/     # Interactors/use cases, DTOs, ports, services
-│   ├── presentation/    # HTTP (web/), Telegram (tgbot/), NATS (faststream/), CLI (cli/), APScheduler (scheduler/, incl. the outbox relay)
+│   ├── presentation/    # HTTP (web/), Telegram (tgbot/), NATS (faststream/), CLI (cli/), APScheduler cron job definitions (scheduler/)
 │   ├── adapters/        # Infrastructure: DB, Redis, NATS, Telegram, external clients
-│   ├── main/            # FastAPI setup + Dishka DI container
+│   ├── main/            # Entrypoints (web, cli, faststream, scheduler — which registers the outbox relay) + Dishka DI container
 │   └── common/          # Shared static assets, path helpers
 ├── frontend/src/
 │   ├── routes/          # Pages & layouts
