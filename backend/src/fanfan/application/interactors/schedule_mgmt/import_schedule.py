@@ -2,10 +2,12 @@ import logging
 
 from pydantic import BaseModel
 
+from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.ports.gateways.schedule_events import (
     ScheduleEventGateway,
 )
 from fanfan.application.ports.gateways.users import UserGateway
+from fanfan.application.ports.realtime_gateway import RealtimeGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
@@ -39,12 +41,14 @@ class ImportSchedule:
         current_user_provider: CurrentUserProvider,
         user_gateway: UserGateway,
         perm_service: PermissionService,
+        realtime: RealtimeGateway,
     ):
         self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
         self.uow = uow
         self.schedule_gateway = schedule_gateway
         self.perm_service = perm_service
+        self.realtime = realtime
 
     async def __call__(self, data: ImportScheduleInput) -> None:
         current_user = await self.current_user_provider.require_user()
@@ -106,3 +110,12 @@ class ImportSchedule:
                 },
             )
         await self.uow.commit()
+
+        # Import rewrites the whole schedule but deliberately records no
+        # ScheduleChange, so nothing reaches the outbox → NATS → SSE path the
+        # schedule_mgmt interactors rely on. Broadcast here instead, or every
+        # other connected client keeps a stale schedule until it reconnects.
+        # Published after commit: SSE carries no committed state, and a
+        # broadcast for a rolled-back import would send clients to refetch
+        # a schedule that never changed.
+        await self.realtime.publish(SSEMessage(SSEEventName.SCHEDULE_UPDATED))
