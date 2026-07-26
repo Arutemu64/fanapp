@@ -16,10 +16,11 @@ mismatch unexplained.
 | Dependency | Pinned in |
 | --- | --- |
 | `postgres:18.4-alpine` | `docker-compose.yml`, `backend/scripts/generate_migration.py`, `backend/tests/fixtures/db_provider.py` |
-| `uv` | `mise.toml`, `backend/pyproject.toml` (`[tool.uv]`), `backend/Dockerfile`, `.claude/setup.sh`, CI (`setup-uv` input) |
+| `uv` | `mise.toml`, `backend/pyproject.toml` (`[tool.uv]` and the `uv_build` floor in `[build-system]`), `backend/Dockerfile`, `.claude/setup.sh`, CI (`setup-uv` input) |
 | `hadolint` | `mise.toml`, `.pre-commit-config.yaml` (`rev`), the image behind the `.claude/setup.sh` shim |
 | `pnpm` | `mise.toml`, `frontend/package.json` (`packageManager`), CI (`pnpm/action-setup` input) |
 | `node` | `mise.toml`, `frontend/Dockerfile`, CI (`setup-node`) |
+| `python` | `mise.toml`, `backend/.python-version`, `backend/pyproject.toml` (`requires-python` floor) |
 
 Prefer an exact pin over a floating tag so every consumer resolves identically.
 
@@ -27,15 +28,27 @@ Prefer an exact pin over a floating tag so every consumer resolves identically.
 
 [`renovate.json`](../renovate.json) automates the bump-together part:
 
-* **Grouped `packageRules`** (`uv`, `postgres`, `node`, `pnpm`, `hadolint`)
-  consolidate each shared pin into a single PR, so no site is left behind.
+* **Grouped `packageRules`** (`uv`, `postgres`, `node`, `pnpm`, `hadolint`,
+  `python`) consolidate each shared pin into a single PR, so no site is left
+  behind. A shared pin whose sites are read by different managers — and so by
+  different datasources — needs its group most: `python` is seen three times
+  (mise, pyenv, pep621) and would otherwise arrive as three PRs that can settle
+  on different versions.
 * **`customManagers`** (regex) cover the pins the built-in managers cannot see:
   the Postgres image literals in `backend/scripts/generate_migration.py` and
-  `backend/tests/fixtures/db_provider.py`; the uv pin in `.claude/setup.sh`,
-  `backend/pyproject.toml` and the CI `setup-uv` input; and the pnpm `version`
-  input to `pnpm/action-setup` in CI. That last one stays explicit because
-  action-setup v6 cannot read `packageManager` from the subdirectory
-  `frontend/package.json` ([pnpm/action-setup#227](https://github.com/pnpm/action-setup/issues/227)).
+  `backend/tests/fixtures/db_provider.py`; the hadolint image behind the
+  `.claude/setup.sh` shim; and the uv pin in `.claude/setup.sh` and
+  `backend/pyproject.toml`.
+* **Version inputs to setup actions need no custom manager.** The
+  `github-actions` manager reads supported `uses … with` inputs itself, so the
+  `setup-uv`, `pnpm/action-setup` and `setup-node` version inputs in `ci.yml`
+  are extracted natively — as `astral-sh/uv`, `pnpm` and `node`, which is why
+  the `uv` group matches `astral-sh/uv` as well as `uv`. Adding a regex manager
+  for one of those lines gives the same string two owners with two datasources,
+  and then two disagreeing answers about the latest version. The pnpm input
+  still has to *exist* in the workflow, though: action-setup v6 cannot read
+  `packageManager` from the subdirectory `frontend/package.json`
+  ([pnpm/action-setup#227](https://github.com/pnpm/action-setup/issues/227)).
 * Third-party GitHub Actions are pinned to commit SHAs
   (`helpers:pinGitHubActionDigests`) with a `# vX` tag comment.
 
@@ -43,13 +56,37 @@ Prefer an exact pin over a floating tag so every consumer resolves identically.
 matching group or custom manager in the same change** — otherwise Renovate bumps
 the other sites and silently reintroduces the drift this rule exists to prevent.
 
+### One PR per dependency
+
+Bumps are **not** batched into weekly grouped PRs. This repo is public and every
+CI job runs on a standard GitHub-hosted runner, which GitHub does not meter, so
+batching saves nothing and costs atomicity: a grouped branch passes or fails as a
+whole, Renovate cannot split it afterwards, and one bad bump then holds back
+every other update in the batch. One PR per dependency means one revertable
+commit per dependency instead.
+
+The six shared-pin groups are the exception, and they are not an economy
+measure — they exist so that every site of one pin moves in lockstep.
+
+### What automerges, and what only looks like tooling
+
+Dev tooling automerges on minor/patch because it fails loudly in CI. That
+argument does not extend to everything in `frontend/package.json`
+`devDependencies`: SvelteKit convention puts `svelte`, `@sveltejs/*`, `vite`,
+`tailwindcss` and `flowbite*` there, but their output ships in the bundle, and a
+CSS or component-library minor can move the layout with every gate green. Those
+are carved back out into review PRs; `eslint`, `prettier`, `typescript`,
+`svelte-check`, `vitest` and `openapi-typescript` keep automerging.
+
 ### Rule order matters
 
 `packageRules` are applied in order and a later rule overrides an earlier one.
-The broad CI-minute batching groups (`github actions`, `dev tooling`,
-`backend dependencies`) must therefore stay **above** the shared-pin groups —
-otherwise a shared pin gets swallowed into a batch PR instead of bumping
-together in its own.
+Two consequences to keep in mind when editing:
+
+* The shipped-bundle carve-out must stay **below** the `devDependencies`
+  automerge rule it is carving out of, or it silently does nothing.
+* The shared-pin groups stay **last**, so nothing above them can claim a pinned
+  dependency for a different `groupName`.
 
 ## Versioning the app
 

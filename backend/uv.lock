@@ -640,7 +640,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.139.2" },
     { name = "fastapi-mail", specifier = ">=1.6.5" },
     { name = "fastexcel", specifier = ">=0.20.2" },
-    { name = "faststream", extras = ["cli", "nats"] },
+    { name = "faststream", extras = ["cli", "nats"], specifier = ">=0.7.1" },
     { name = "greenlet", specifier = ">=3.5.3" },
     { name = "httpx2", specifier = ">=2.7.0" },
     { name = "itsdangerous", specifier = ">=2.2.0" },

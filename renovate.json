@@ -11,7 +11,9 @@
   "configMigration": true,
   "description": [
     "ignorePaths restates the :ignoreModulesAndTests default (part of config:recommended) minus '**/tests/**': the postgres custom manager below must see backend/tests/fixtures/db_provider.py, which the default ignore silently excludes.",
-    "Renovate is by far the largest consumer of this repo's Actions minutes, so rebaseWhen and platformAutomerge below are set purely to stop it from multiplying CI runs. rebaseWhen 'conflicted' replaces the default 'auto', which rebases every open Renovate branch whenever main moves — with several automerging PRs open at once that cascades: each merge re-triggers CI on every other open branch. platformAutomerge hands merging to GitHub's own auto-merge, so Renovate does not push extra commits (and extra CI runs) just to land a branch that is already green. See https://docs.renovatebot.com/noise-reduction/"
+    "One dependency, one PR: bumps are deliberately NOT batched into weekly grouped PRs. This repo is public and every CI job runs on a standard GitHub-hosted runner, which GitHub does not meter (https://docs.github.com/en/billing/concepts/product-billing/github-actions), so grouping bought nothing but cost atomicity: a grouped branch passes or fails as a whole, Renovate cannot split it, and one bad bump then holds back every other update in the batch ('grouping dependencies increases the chance that the branch has an error' — https://docs.renovatebot.com/noise-reduction/). Per-package PRs give one revertable commit per dependency instead. The shared-pin groups below are the exception, and they exist for correctness — every site of one pin must move together — not to save minutes.",
+    "osvVulnerabilityAlerts adds OSV-sourced CVE detection for direct dependencies on top of GitHub's own alerts, so a vulnerable backend package is caught even where the Dependabot dependency graph does not read uv.lock. Security fixes need no further wiring: Renovate's vulnerabilityAlerts defaults already override the weekly schedule and the minimumReleaseAge cooldown below (schedule [], minimumReleaseAge null, prCreation 'immediate').",
+    "Concurrency, rebasing and platform automerge are left at Renovate's defaults (prConcurrentLimit 10, prHourlyLimit 2, rebaseWhen 'auto', platformAutomerge true), which suit unmetered CI. 'auto' resolves to 'behind-base-branch' on a branch with automerge enabled, so an automerged commit was green against current main rather than against a stale base."
   ],
   "ignorePaths": [
     "**/node_modules/**",
@@ -25,12 +27,9 @@
   "timezone": "Europe/Moscow",
   "schedule": ["before 6am on monday"],
   "labels": ["dependencies"],
-  "prConcurrentLimit": 4,
-  "prHourlyLimit": 2,
-  "rebaseWhen": "conflicted",
-  "platformAutomerge": true,
   "rangeStrategy": "bump",
   "minimumReleaseAge": "7 days",
+  "osvVulnerabilityAlerts": true,
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true,
@@ -49,6 +48,23 @@
       "automerge": true
     },
     {
+      "description": "Carve-out from the rule above: SvelteKit convention puts the framework, bundler, CSS engine and component library in devDependencies, but their output ships in the bundle, so 'breaks loudly in CI' does not hold for them — a Tailwind or Flowbite minor can move the layout, and an icon-pack minor can redraw a glyph, with every gate green. These get a review PR like any other shipped dependency. Everything else in devDependencies (eslint, prettier, typescript, svelte-check, vitest, openapi-typescript) keeps automerging.",
+      "matchFileNames": ["frontend/package.json"],
+      "matchPackageNames": [
+        "svelte",
+        "@sveltejs/**",
+        "vite",
+        "tailwindcss",
+        "@tailwindcss/**",
+        "flowbite",
+        "flowbite-svelte",
+        "flowbite-svelte-icons",
+        "unplugin-icons",
+        "@iconify-json/**"
+      ],
+      "automerge": false
+    },
+    {
       "description": "Auto-merge backend dev-group tools (ruff, ty, pytest, import-linter, etc.) on minor/patch. The depType is 'dependency-groups' — the name Renovate's pep621 manager gives the whole PEP 735 [dependency-groups] table (https://docs.renovatebot.com/modules/manager/pep621/) — not the group's own name 'dev', which never matched.",
       "matchFileNames": ["backend/pyproject.toml"],
       "matchDepTypes": ["dependency-groups"],
@@ -56,7 +72,7 @@
       "automerge": true
     },
     {
-      "description": "Auto-merge GitHub Actions on minor/patch; majors still get a manual review PR. 'pin' is included so it matches the 'github actions' batching group below exactly — a group whose members disagree about automerge does not automerge at all, and pinning an action already in use to its current digest changes nothing.",
+      "description": "Auto-merge GitHub Actions on minor/patch; majors still get a manual review PR. 'digest' and 'pin' ride along because helpers:pinGitHubActionDigests re-pins by digest constantly, and pinning an action already in use to its current digest changes nothing.",
       "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
       "automerge": true
@@ -68,29 +84,14 @@
       "automerge": true
     },
     {
-      "description": "CI-minute control: batch every GitHub Actions bump into one PR. Action updates are mostly digest re-pins from helpers:pinGitHubActionDigests and arrive several at a time; as individual PRs each one costs a CI run on its branch plus another on main once it automerges. The shared-pin groups below still override this for the pins they own.",
-      "groupName": "github actions",
-      "matchManagers": ["github-actions"],
-      "matchUpdateTypes": ["minor", "patch", "digest", "pin"]
-    },
-    {
-      "description": "CI-minute control: batch dev tooling (linters, formatters, type checkers, test libs, build tooling) into one PR. These already automerge on green, so a single grouped PR lands the whole week's tooling in one CI run instead of one per package.",
-      "groupName": "dev tooling",
-      "matchFileNames": ["frontend/package.json", "backend/pyproject.toml"],
-      "matchDepTypes": ["devDependencies", "dependency-groups"],
-      "matchUpdateTypes": ["minor", "patch"]
-    },
-    {
-      "description": "CI-minute control: batch backend runtime minor/patch bumps into one reviewable PR. These deliberately do NOT automerge (they ship to prod), so grouping trades one weekly review for one CI run instead of a run per package.",
-      "groupName": "backend dependencies",
-      "matchFileNames": ["backend/pyproject.toml"],
-      "matchDepTypes": ["project.dependencies"],
-      "matchUpdateTypes": ["minor", "patch"]
-    },
-    {
-      "description": "the shared-pin rule (docs/dependencies.md): keep every uv pin identical. Group the PyPI pin (setup.sh, pyproject [tool.uv], CI), the Docker builder image, and the mise toolchain pin into one PR so they always bump together.",
+      "description": "Shared pin (docs/dependencies.md): keep every uv pin identical. Groups the PyPI pin (setup.sh, pyproject [tool.uv]), the setup-uv 'version' input in CI that the github-actions manager reads as 'astral-sh/uv', the Docker builder image, and the mise toolchain pin into one PR so they always bump together. uv_build rides along: Astral releases it from the same repo under the same version numbers, so with rangeStrategy 'bump' its floor in [build-system] requires would otherwise move in a PR of its own and leave the two disagreeing.",
       "groupName": "uv",
-      "matchPackageNames": ["uv", "astral-sh/uv", "ghcr.io/astral-sh/uv"]
+      "matchPackageNames": [
+        "uv",
+        "astral-sh/uv",
+        "ghcr.io/astral-sh/uv",
+        "uv_build"
+      ]
     },
     {
       "description": "Shared pin (docs/dependencies.md): keep every Postgres image pin identical (docker-compose + the two Python literals) — a mismatched image risks false migration diffs. One grouped PR. postgres-backup-local's '18-alpine' tag must track the postgres major, so it rides in the same group.",
@@ -98,12 +99,17 @@
       "matchDepNames": ["postgres", "prodrigestivill/postgres-backup-local"]
     },
     {
-      "description": "Group Node runtime pins (mise, frontend Dockerfile, setup-node) so the runtime version bumps in a single reviewable PR.",
+      "description": "Group Node runtime pins (mise, frontend Dockerfile, the setup-node 'node-version' input in CI) so the runtime version bumps in a single reviewable PR.",
       "groupName": "node",
       "matchDepNames": ["node"]
     },
     {
-      "description": "Shared pin (docs/dependencies.md): keep every pnpm binary pin identical — mise.toml, package.json 'packageManager', and the CI setup-pnpm 'version' input (via the custom manager below). One grouped PR. Excludes the pnpm/action-setup action itself, which is a separate version stream handled by the github-actions manager.",
+      "description": "Shared pin (docs/dependencies.md): keep every Python pin identical. Three managers see three different files — mise.toml (mise), backend/.python-version (pyenv) and requires-python in backend/pyproject.toml (pep621) — each with its own datasource, so without this group one Python release arrives as three PRs that can settle on different versions.",
+      "groupName": "python",
+      "matchDepNames": ["python"]
+    },
+    {
+      "description": "Shared pin (docs/dependencies.md): keep every pnpm binary pin identical — mise.toml, package.json 'packageManager', and the 'version' input to pnpm/action-setup in CI, which the github-actions manager extracts natively as 'pnpm'. One grouped PR. Matching by depName excludes the pnpm/action-setup action itself, a separate version stream.",
       "groupName": "pnpm",
       "matchDepNames": ["pnpm"]
     },
@@ -134,7 +140,8 @@
         "python",
         "valkey/valkey",
         "nats",
-        "nginx"
+        "nginx",
+        "debian"
       ],
       "automerge": false,
       "addLabels": ["major-review"]
@@ -163,7 +170,7 @@
       "versioningTemplate": "docker"
     },
     {
-      "description": "Shared pin (docs/dependencies.md): uv version pinned as a PyPI package in the cloud setup script and in pyproject [tool.uv] required-version.",
+      "description": "Shared pin (docs/dependencies.md): uv version pinned as a PyPI package in the cloud setup script and in pyproject [tool.uv] required-version. The CI setup-uv input needs no manager here — the github-actions manager reads supported 'uses ... with' version inputs itself (https://docs.renovatebot.com/modules/manager/github-actions/) and reports that line as 'astral-sh/uv', which the uv group above matches. Same for the pnpm input to pnpm/action-setup ('pnpm') and node-version to setup-node ('node').",
       "customType": "regex",
       "managerFilePatterns": [
         "/^\\.claude/setup\\.sh$/",
@@ -176,28 +183,6 @@
       "depNameTemplate": "uv",
       "datasourceTemplate": "pypi",
       "versioningTemplate": "pep440"
-    },
-    {
-      "description": "Shared pin (docs/dependencies.md): uv version passed to astral-sh/setup-uv in CI (a workflow input the github-actions manager does not touch).",
-      "customType": "regex",
-      "managerFilePatterns": ["/^\\.github/workflows/ci\\.yml$/"],
-      "matchStrings": [
-        "uses: astral-sh/setup-uv@\\S+(?:\\s+#[^\\n]*)?\\s+with:(?:\\s+#[^\\n]*)*\\s+version: \"(?<currentValue>[^\"]+)\""
-      ],
-      "depNameTemplate": "uv",
-      "datasourceTemplate": "pypi",
-      "versioningTemplate": "pep440"
-    },
-    {
-      "description": "Shared pin (docs/dependencies.md): pnpm version passed to pnpm/action-setup in CI (a workflow input the github-actions manager does not touch). Kept explicit because v6 can't read packageManager from a subdirectory package.json (pnpm/action-setup#227). The optional comment groups tolerate the trailing '# v6' that helpers:pinGitHubActionDigests adds to the pinned 'uses:' line.",
-      "customType": "regex",
-      "managerFilePatterns": ["/^\\.github/workflows/ci\\.yml$/"],
-      "matchStrings": [
-        "uses: pnpm/action-setup@\\S+(?:\\s+#[^\\n]*)?\\s+with:(?:\\s+#[^\\n]*)*\\s+version: (?<currentValue>\\S+)"
-      ],
-      "depNameTemplate": "pnpm",
-      "datasourceTemplate": "npm",
-      "versioningTemplate": "npm"
     }
   ]
 }
