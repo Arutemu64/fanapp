@@ -234,31 +234,49 @@ between tests.
 # Frontend
 
 Vitest, run with `just frontend-test` (`pnpm --dir frontend test`) and in CI
-alongside the other frontend gates. Config lives in `frontend/vitest.config.ts`.
+alongside the other frontend gates.
+
+Config lives in the `test` block of `frontend/vite.config.ts`, not a
+`vitest.config.ts` of its own — that is what the
+[Svelte testing docs](https://svelte.dev/docs/svelte/testing) and `sv add
+vitest` do, and it is load-bearing: tests run through the SvelteKit plugin, so
+`$lib`/`$app` imports resolve and runes compile. `resolve.conditions` is set to
+`['browser']` under `VITEST` so packages resolve their browser entry points even
+though the runner is Node.
 
 ## What to test here
 
-The frontend's testable surface is the **pure logic in `src/lib/`** — the
-modules that encode a rule a reader cannot check by eye: text normalization and
-matching (`utils/search.ts`), formatters and pluralization
-(`utils/formatters.ts`), permission predicates (`utils/permissions.ts`), cache
-scoping and staleness (`utils/offlineCache.ts`). These are where a silent
-regression is expensive and a test is nearly free.
+The frontend's testable surface is the **logic in `src/lib/`** — the modules
+that encode a rule a reader cannot check by eye: text normalization and matching
+(`utils/search.ts`), formatters and pluralization (`utils/formatters.ts`),
+permission predicates (`utils/permissions.ts`), cache scoping and staleness
+(`utils/offlineCache.ts`). These are where a silent regression is expensive and
+a test is nearly free.
 
-Components, routes and `load` functions are **not** covered: there is no DOM
-environment or component-testing setup, deliberately. Adding one is a real
-decision (a DOM runtime, the SvelteKit Vite plugin, and the `PUBLIC_*` env it
-resolves), so make it a considered change and update this section rather than
-bolting it on — see [ADR-0011](adr/0011-vitest-for-frontend-unit-tests.md) for
-what was and was not adopted.
+That includes the **rune modules** (`services/*.svelte.ts`,
+`utils/cooldown.svelte.ts` and friends): name the test `*.svelte.test.ts` and
+`$state`/`$derived`/`$effect` are available inside it. Effects need
+`$effect.root` and a `flushSync()` to run synchronously — the
+[Svelte testing docs](https://svelte.dev/docs/svelte/testing) show the pattern.
+Reading a `$derived` directly from test scope only captures its initial value;
+pass a getter (`() => count`) into the module under test, as those examples do.
+
+Components, routes and `load` functions are **not** covered: the runner has no
+DOM environment, deliberately. Adding one is a real decision (jsdom or Vitest
+browser mode, plus `@testing-library/svelte` if you want it), so make it a
+considered change and update this section rather than bolting it on — see
+[ADR-0011](adr/0011-vitest-for-frontend-unit-tests.md). The Svelte docs' own
+advice applies first, though: before reaching for a component test, check
+whether the logic can be lifted out and tested without one.
 
 The same judgement call as the backend applies: write a test when the change
 encodes a rule that can break silently, skip it for copy, styling and config.
 
 ## Conventions
 
-1. **Colocate**: `foo.ts` is tested by `foo.test.ts` in the same folder. Vitest
-   collects `src/**/*.test.ts`.
+1. **Colocate**: `foo.ts` is tested by `foo.test.ts` in the same folder, and
+   `foo.svelte.ts` by `foo.svelte.test.ts` — the `.svelte.` in the name is what
+   makes runes available. Vitest collects `src/**/*.test.ts`, which covers both.
 2. **Import explicitly** — `import { describe, expect, it } from 'vitest'`.
    Globals are off, so a test file's dependencies are visible at the top like
    any other module.

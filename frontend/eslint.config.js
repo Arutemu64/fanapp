@@ -93,13 +93,7 @@ export default defineConfig(
 		// build scripts, and the service worker (which SvelteKit deliberately
 		// excludes from the app tsconfig). The project service can't resolve
 		// them, so turn off type-aware linting here to avoid parser errors.
-		files: [
-			'eslint.config.js',
-			'svelte.config.js',
-			'vitest.config.ts',
-			'scripts/**',
-			'src/service-worker.ts'
-		],
+		files: ['eslint.config.js', 'svelte.config.js', 'scripts/**', 'src/service-worker.ts'],
 		extends: [ts.configs.disableTypeChecked]
 	}
 );
