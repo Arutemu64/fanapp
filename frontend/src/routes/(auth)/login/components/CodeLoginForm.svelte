@@ -13,21 +13,21 @@
 
 	interface Props {
 		email: string;
-		isBusy?: boolean;
 		showPasswordForm?: boolean;
-		isWaitingForCode?: boolean;
+		// The address the code went to, empty until it's sent. Bindable because the
+		// login page hides the Telegram button once we're waiting for a code; it
+		// derives that from this rather than us mirroring a second flag back up.
+		codeSentTo?: string;
 	}
 
 	let {
 		email = $bindable(''),
-		isBusy = $bindable(false),
 		showPasswordForm = $bindable(false),
-		isWaitingForCode = $bindable(false)
+		codeSentTo = $bindable('')
 	}: Props = $props();
 
 	type ActiveAction = 'code-request' | null;
 
-	let codeSentTo = $state('');
 	let activeAction = $state<ActiveAction>(null);
 	let emailError = $state('');
 	let formError = $state('');
@@ -45,14 +45,6 @@
 	// In flight from the user's point of view: the request is running, or we're
 	// holding it until the background captcha resolves.
 	let isRequesting = $derived(activeAction === 'code-request' || captchaGate.awaitingCaptcha);
-
-	$effect(() => {
-		isBusy = isRequesting;
-	});
-
-	$effect(() => {
-		isWaitingForCode = !!codeSentTo;
-	});
 
 	// Fulfill a deferred submit the moment the invisible captcha solves.
 	$effect(() => {
@@ -156,7 +148,7 @@
 </script>
 
 {#if codeSentTo}
-	<VerifyCodeForm email={codeSentTo} bind:isBusy onBack={() => (codeSentTo = '')} />
+	<VerifyCodeForm email={codeSentTo} onBack={() => (codeSentTo = '')} />
 {:else}
 	<form onsubmit={handleSubmit} class="space-y-4">
 		{#if formError}

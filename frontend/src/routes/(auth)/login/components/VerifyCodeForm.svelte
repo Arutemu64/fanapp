@@ -16,11 +16,10 @@
 
 	interface Props {
 		email: string;
-		isBusy?: boolean;
 		onBack?: () => void;
 	}
 
-	let { email, isBusy = $bindable(false), onBack }: Props = $props();
+	let { email, onBack }: Props = $props();
 
 	type ActiveAction = 'code-request' | 'code-login' | null;
 
@@ -46,10 +45,6 @@
 
 	const eventsClient = getEventsClient();
 	const toastService = getToastService();
-
-	$effect(() => {
-		isBusy = busy;
-	});
 
 	// Fulfill a deferred resend the moment the invisible captcha solves.
 	$effect(() => {

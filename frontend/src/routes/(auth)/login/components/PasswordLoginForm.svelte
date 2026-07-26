@@ -12,11 +12,10 @@
 
 	interface Props {
 		email: string;
-		isBusy?: boolean;
 		onBack?: () => void;
 	}
 
-	let { email = $bindable(''), isBusy = $bindable(false), onBack }: Props = $props();
+	let { email = $bindable(''), onBack }: Props = $props();
 
 	type ActiveAction = 'password' | null;
 
@@ -30,10 +29,6 @@
 	const toastService = getToastService();
 
 	let busy = $derived(activeAction !== null);
-
-	$effect(() => {
-		isBusy = busy;
-	});
 
 	let normalizedEmail = $derived(normalizeEmail(email));
 	let isEmailValid = $derived(email ? isValidEmail(normalizedEmail) : null);
