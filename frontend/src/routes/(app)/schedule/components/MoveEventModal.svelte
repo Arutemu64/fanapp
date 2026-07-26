@@ -5,7 +5,7 @@
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import NoticeCallout from '$lib/components/NoticeCallout.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { matchesSearch } from '$lib/utils/search';
+	import { createSearchIndex } from '$lib/utils/search';
 	import { Alert, Button, Modal, Search } from 'flowbite-svelte';
 	import { ArrowUpDownOutline, BellActiveOutline } from 'flowbite-svelte-icons';
 
@@ -41,11 +41,12 @@
 	});
 
 	// Shared matcher folds ё/е and matches space-separated tokens in any order.
-	let filtered = $derived(
-		schedule.filter((ev) =>
-			matchesSearch(query, [ev.number, ev.title, ev.block_title, ev.nomination_title])
-		)
+	// Indexed once per schedule so typing through a few hundred events stays cheap.
+	let searchIndex = $derived(
+		createSearchIndex(schedule, (ev) => [ev.number, ev.title, ev.block_title, ev.nomination_title])
 	);
+
+	let filtered = $derived(searchIndex.filter(query));
 
 	function handleSelect(ev: ScheduleEventFullDTO) {
 		selectedId = selectedId === ev.id ? null : ev.id;

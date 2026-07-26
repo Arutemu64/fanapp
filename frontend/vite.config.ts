@@ -3,7 +3,8 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath } from 'node:url';
 import Icons from 'unplugin-icons/vite';
-import { defineConfig, loadEnv } from 'vite';
+import { loadEnv } from 'vite';
+import { defineConfig } from 'vitest/config';
 
 // The whole monorepo shares the single root `.env` (see .env.example); the
 // frontend has no env file of its own. `envDir` points Vite's own env loading
@@ -56,6 +57,19 @@ export default defineConfig(({ mode }) => {
 				compiler: 'svelte'
 			})
 		],
+		// Tests live here rather than in a vitest.config.ts of their own so they run
+		// through the SvelteKit plugin above: that is what resolves `$lib`/`$app`
+		// and compiles runes in `*.svelte.test.ts` files. See docs/testing.md.
+		test: {
+			// Also matches `*.svelte.test.ts`, where runes are available.
+			include: ['src/**/*.test.ts'],
+			// No DOM: component tests are deliberately out of scope (ADR-0011).
+			environment: 'node'
+		},
+		// Tests exercise browser code, so resolve packages' browser entry points
+		// even though the runner is Node. Scoped to test runs so the app build
+		// keeps Vite's normal resolution.
+		resolve: process.env.VITEST ? { conditions: ['browser'] } : undefined,
 		server: {
 			host: true,
 			allowedHosts: true,

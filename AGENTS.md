@@ -9,7 +9,7 @@ Companion web app for the "FAN FAN" Russian anime convention. Audience: teen to 
 * **Never** delete or weaken an existing comment while refactoring unless the code it describes is gone. A comment that survived review encodes a constraint you cannot see from the diff; if it looks wrong, verify before dropping it.
 * **Never** keep request- or user-scoped state in a frontend module singleton — modules outlive navigation and login/logout in the SPA.
 * **Never** add, rename or remove an env var without updating `.env.example` in the same change. Its header explains the three consumers and the grouping; the backend's `extra="ignore"` means a drifted key fails silently at runtime instead of at boot.
-* **Never** call work done with a failing gate: `just backend-lint` + `just backend-typecheck` after Python, `just frontend-lint` + `just frontend-check` after frontend, `just dockerfile-lint` after a `Dockerfile`. Whether a change needs a *new* test is a judgment call — make it deliberately, per [docs/testing.md](docs/testing.md). The existing suite runs in CI either way.
+* **Never** call work done with a failing gate: `just backend-lint` + `just backend-typecheck` after Python, `just frontend-lint` + `just frontend-check` after frontend, `just dockerfile-lint` after a `Dockerfile`. Whether a change needs a *new* test is a judgment call — make it deliberately, per [docs/testing.md](docs/testing.md). The existing suites (pytest, Vitest) run in CI either way.
 
 ## Load before you edit
 
@@ -63,6 +63,7 @@ named `fanfan-*` are project-local and live only here.
 | `just frontend-lint` / `just frontend-check` | Prettier + ESLint / `svelte-check` |
 | `just dockerfile-lint` | hadolint (config `.hadolint.yaml`) |
 | `just backend-test` / `just backend-test-integration` | pytest (integration needs a Docker daemon) |
+| `just frontend-test` | Vitest unit tests for pure `src/lib/` logic |
 | `just backend-migrate` | Apply migrations |
 | `just backend-check-migrations` | Fail if the ORM models have drifted from the migrations |
 | `just backend-generate <name>` | Autogenerate a migration against the running app DB |

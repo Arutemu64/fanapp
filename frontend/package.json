@@ -14,6 +14,7 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
+		"test": "vitest run",
 		"lint": "prettier --check --cache . && eslint --cache --cache-location .eslintcache .",
 		"generate-api": "node ./scripts/generate-api.mjs"
 	},
@@ -44,7 +45,8 @@
 		"typescript": "6.0.3",
 		"typescript-eslint": "8.64.0",
 		"unplugin-icons": "23.0.1",
-		"vite": "8.1.5"
+		"vite": "8.1.5",
+		"vitest": "4.1.10"
 	},
 	"dependencies": {
 		"@fontsource-variable/inter": "5.2.8",

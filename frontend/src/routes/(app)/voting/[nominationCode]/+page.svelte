@@ -4,7 +4,7 @@
 	import { invalidate } from '$app/navigation';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
-	import { matchesSearch } from '$lib/utils/search';
+	import { createSearchIndex } from '$lib/utils/search';
 	import { Button, Search } from 'flowbite-svelte';
 	import {
 		ArrowLeftOutline,
@@ -28,10 +28,18 @@
 
 	let searchQuery = $state('');
 
-	let filtered = $derived(
-		participants.filter((p: VotingParticipant) =>
-			matchesSearch(searchQuery, [p.title, p.voting_number])
-		)
+	let searchIndex = $derived(
+		createSearchIndex(participants, (p: VotingParticipant) => [p.title, p.voting_number])
+	);
+
+	let filtered = $derived(searchIndex.filter(searchQuery));
+
+	let hasSearchQuery = $derived(searchQuery.trim().length > 0);
+
+	let resultsSummary = $derived(
+		filtered.length === participants.length
+			? `Всего участников: ${participants.length}`
+			: `Показано ${filtered.length} из ${participants.length}`
 	);
 
 	let hasVoted = $derived(participants.some((p: VotingParticipant) => p.user_vote !== null));
@@ -107,22 +115,47 @@
 	spellcheck={false}
 	clearable
 	size="sm"
-	class="mb-4"
+	class="mb-2"
 />
+
+<!-- Announce filter result changes to screen readers, which otherwise get no
+     feedback that the grid shrank or grew. Matches the schedule page. Skipped
+     for an empty nomination: there is nothing to filter, and the empty state
+     below already says so. -->
+{#if participants.length > 0}
+	<p class="mb-4 text-xs text-gray-500 dark:text-gray-400" aria-live="polite" role="status">
+		{resultsSummary}
+	</p>
+{/if}
 
 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
 	{#each filtered as participant (participant.id)}
 		<ParticipantCard {participant} {hasVoted} {canVote} onVoted={handleVoted} />
 	{:else}
 		<div class="col-span-full">
-			<EmptyState icon={UsersGroupOutline} message="Участники не найдены">
-				<button
-					onclick={() => (searchQuery = '')}
-					class="mt-3 text-sm font-medium text-primary-600 hover:underline dark:text-primary-400"
+			<!-- Two distinct states: a search that matched nothing (recoverable —
+			     offer the reset), and a nomination with no participants at all,
+			     where clearing the search would do nothing. -->
+			{#if hasSearchQuery}
+				<EmptyState
+					icon={UsersGroupOutline}
+					title="Ничего не нашлось"
+					message="Попробуй изменить запрос"
 				>
-					Очистить поиск
-				</button>
-			</EmptyState>
+					<button
+						onclick={() => (searchQuery = '')}
+						class="mt-3 text-sm font-medium text-primary-600 hover:underline dark:text-primary-400"
+					>
+						Очистить поиск
+					</button>
+				</EmptyState>
+			{:else}
+				<EmptyState
+					icon={UsersGroupOutline}
+					title="Участников пока нет"
+					message="Появятся ближе к фестивалю"
+				/>
+			{/if}
 		</div>
 	{/each}
 </div>

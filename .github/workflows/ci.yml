@@ -51,6 +51,7 @@ jobs:
       # from the same repository variables the publish workflow bakes in (empty is
       # fine — the vars just need to exist). `pnpm lint` ignores them.
       PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
+      PUBLIC_APP_VERSION: ${{ vars.PUBLIC_APP_VERSION }}
       PUBLIC_VAPID_KEY: ${{ vars.PUBLIC_VAPID_KEY }}
       PUBLIC_SENTRY_DSN: ${{ vars.PUBLIC_SENTRY_DSN }}
       PUBLIC_SENTRY_ENVIRONMENT: ${{ vars.PUBLIC_SENTRY_ENVIRONMENT }}
@@ -159,6 +160,13 @@ jobs:
         if: ${{ !cancelled() && steps.changes.outputs.frontend == 'true' }}
         working-directory: frontend
         run: pnpm check
+
+      # Vitest unit tests. No browser or DOM environment needed — these cover
+      # plain-TypeScript modules under src/lib (docs/testing.md, "Frontend").
+      - name: Frontend tests
+        if: ${{ !cancelled() && steps.changes.outputs.frontend == 'true' }}
+        working-directory: frontend
+        run: pnpm test
 
       - name: Frontend build
         if: ${{ !cancelled() && steps.changes.outputs.frontend == 'true' }}

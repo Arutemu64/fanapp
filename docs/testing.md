@@ -1,7 +1,9 @@
-# Backend Testing Guidelines
+# Testing Guidelines
 
-How the backend test suite is structured and the conventions to follow when
-adding tests. Tests live under `backend/tests/` and run with `pytest` + `uv`.
+How the test suites are structured and the conventions to follow when adding
+tests. The backend suite lives under `backend/tests/` and runs with `pytest` +
+`uv`; the frontend suite is colocated under `frontend/src/` and runs with
+Vitest ([Frontend](#frontend) below).
 
 > **Whether a change needs a new test is your call — make it deliberately,
 > rather than defaulting either way.** Write one when the change encodes a rule
@@ -10,9 +12,12 @@ adding tests. Tests live under `backend/tests/` and run with `pytest` + `uv`.
 > styling, config, and refactors an existing test already covers. On a close
 > call, write the test.
 >
-> The **existing** suite is not optional: CI runs `pytest tests`, so a change
-> that breaks a test is broken. And `just backend-lint` +
-> `just backend-typecheck` still run after every backend change.
+> The **existing** suite is not optional: CI runs `pytest tests` and
+> `pnpm test`, so a change that breaks a test is broken. And `just
+> backend-lint` + `just backend-typecheck` (or `just frontend-lint` + `just
+> frontend-check`) still run after every change.
+
+Everything from here to [Frontend](#frontend) describes the **backend** suite.
 
 ## Rules at a glance
 
@@ -223,3 +228,61 @@ Reusable user fixtures (`visitor`, `visitor_with_ticket`, `schedule_editor`,
 `uow`) live in `tests/integration/conftest.py` — see *Shared plumbing
 fixtures* above. Add shared setup in these places rather than copying it
 between tests.
+
+---
+
+# Frontend
+
+Vitest, run with `just frontend-test` (`pnpm --dir frontend test`) and in CI
+alongside the other frontend gates.
+
+Config lives in the `test` block of `frontend/vite.config.ts`, not a
+`vitest.config.ts` of its own — that is what the
+[Svelte testing docs](https://svelte.dev/docs/svelte/testing) and `sv add
+vitest` do, and it is load-bearing: tests run through the SvelteKit plugin, so
+`$lib`/`$app` imports resolve and runes compile. `resolve.conditions` is set to
+`['browser']` under `VITEST` so packages resolve their browser entry points even
+though the runner is Node.
+
+## What to test here
+
+The frontend's testable surface is the **logic in `src/lib/`** — the modules
+that encode a rule a reader cannot check by eye: text normalization and matching
+(`utils/search.ts`), formatters and pluralization (`utils/formatters.ts`),
+permission predicates (`utils/permissions.ts`), cache scoping and staleness
+(`utils/offlineCache.ts`). These are where a silent regression is expensive and
+a test is nearly free.
+
+That includes the **rune modules** (`services/*.svelte.ts`,
+`utils/cooldown.svelte.ts` and friends): name the test `*.svelte.test.ts` and
+`$state`/`$derived`/`$effect` are available inside it. Effects need
+`$effect.root` and a `flushSync()` to run synchronously — the
+[Svelte testing docs](https://svelte.dev/docs/svelte/testing) show the pattern.
+Reading a `$derived` directly from test scope only captures its initial value;
+pass a getter (`() => count`) into the module under test, as those examples do.
+
+Components, routes and `load` functions are **not** covered: the runner has no
+DOM environment, deliberately. Adding one is a real decision (jsdom or Vitest
+browser mode, plus `@testing-library/svelte` if you want it), so make it a
+considered change and update this section rather than bolting it on — see
+[ADR-0011](adr/0011-vitest-for-frontend-unit-tests.md). The Svelte docs' own
+advice applies first, though: before reaching for a component test, check
+whether the logic can be lifted out and tested without one.
+
+The same judgement call as the backend applies: write a test when the change
+encodes a rule that can break silently, skip it for copy, styling and config.
+
+## Conventions
+
+1. **Colocate**: `foo.ts` is tested by `foo.test.ts` in the same folder, and
+   `foo.svelte.ts` by `foo.svelte.test.ts` — the `.svelte.` in the name is what
+   makes runes available. Vitest collects `src/**/*.test.ts`, which covers both.
+2. **Import explicitly** — `import { describe, expect, it } from 'vitest'`.
+   Globals are off, so a test file's dependencies are visible at the top like
+   any other module.
+3. **Test the exported contract**, not the internals. `search.test.ts` exercises
+   ё/е folding, diacritics and token order through `createSearchIndex` — the
+   only export — so the helpers underneath stay free to change.
+4. **Russian fixtures for Russian text.** The normalization rules exist for
+   Cyrillic input; assert them with real Russian strings, not ASCII stand-ins.
+5. Prettier and ESLint apply to test files like any other source file.

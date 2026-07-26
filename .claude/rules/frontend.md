@@ -16,4 +16,4 @@ Loaded only when working with `frontend/**` files.
 - Comment only to carry the *why* (browser quirk, ordering constraint, why an effect is needed) — never a restatement of the markup or a `$derived`. Update a comment in the same edit as the code under it; don't drop an existing one while refactoring unless its code is gone.
 - Never store user/session state in module-level singletons (client-rendered SPA).
 - Mobile-first; bottom padding for the floating nav bar.
-- After changes: run `just frontend-lint` and `just frontend-check`; fix all errors.
+- After changes: run `just frontend-lint` and `just frontend-check`; fix all errors. Touched pure logic in `src/lib/`? Run `just frontend-test` too, and consider a colocated `*.test.ts` — see [docs/testing.md](../../docs/testing.md) "Frontend".

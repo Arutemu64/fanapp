@@ -186,7 +186,7 @@ Optional, enabled via `.env`:
 - [`docs/backend.md`](docs/backend.md) — backend architecture (domain, ports, DI, events)
 - [`docs/frontend.md`](docs/frontend.md) — SvelteKit SPA rules, styling, components
 - [`docs/api.md`](docs/api.md) — type-safe API integration
-- [`docs/testing.md`](docs/testing.md) — test layers, fixtures, what is real vs faked
+- [`docs/testing.md`](docs/testing.md) — backend test layers and fixtures, what is real vs faked, frontend unit tests
 - [`docs/deployment.md`](docs/deployment.md) — server setup, deploys and rollbacks, reverse proxy
 - [`docs/dependencies.md`](docs/dependencies.md) — shared version pins and Renovate
 - [`docs/claude-cloud.md`](docs/claude-cloud.md) — Claude Code on the web provisioning
