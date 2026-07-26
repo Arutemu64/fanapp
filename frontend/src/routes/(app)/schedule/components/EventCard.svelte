@@ -3,6 +3,7 @@
 	import type { CurrentUserDTO } from '$lib/types/user';
 
 	import { createApiClient } from '$lib/api';
+	import { DEFAULT_ACTION_FAILURE, getApiFailureMessage } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { formatDuration, formatUntil, pluralize } from '$lib/utils/formatters';
 	import { canManageSchedule } from '$lib/utils/permissions';
@@ -91,8 +92,9 @@
 			params: { path: { event_id: event.id } }
 		});
 
-		if (error || !response.ok) {
-			toastService.error(error);
+		const failure = getApiFailureMessage(error, response, DEFAULT_ACTION_FAILURE);
+		if (failure) {
+			toastService.error(failure);
 			return;
 		}
 
@@ -104,8 +106,9 @@
 	async function handleUnmarkCurrent() {
 		const { error, response } = await client.DELETE('/schedule/current');
 
-		if (error || !response.ok) {
-			toastService.error(error);
+		const failure = getApiFailureMessage(error, response, DEFAULT_ACTION_FAILURE);
+		if (failure) {
+			toastService.error(failure);
 			return;
 		}
 
@@ -125,9 +128,10 @@
 			body: { is_skipped: skip }
 		});
 
-		if (error || !response.ok) {
+		const failure = getApiFailureMessage(error, response, DEFAULT_ACTION_FAILURE);
+		if (failure) {
 			optimisticSkipped = null;
-			toastService.error(error);
+			toastService.error(failure);
 			return;
 		}
 

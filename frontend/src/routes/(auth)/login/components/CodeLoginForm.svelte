@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
-	import { getApiErrorDetail } from '$lib/api/errors';
+	import { getApiFailureMessage } from '$lib/api/errors';
 	import CaptchaWidget, { captchaEnabled } from '$lib/components/CaptchaWidget.svelte';
 	import { CaptchaGate } from '$lib/utils/captcha.svelte';
 	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
@@ -119,9 +119,10 @@
 				body: { email: trimmedEmail, captcha_token: captchaToken }
 			});
 
-			if (error || !response.ok) {
+			const failure = getApiFailureMessage(error, response, 'Не удалось отправить код');
+			if (failure) {
 				console.error('Login code request error:', error);
-				formError = getApiErrorDetail(error) ?? 'Не удалось отправить код';
+				formError = failure;
 				// The token is single-use, so fetch a fresh one before a retry.
 				resetCaptcha?.();
 				captchaToken = null;

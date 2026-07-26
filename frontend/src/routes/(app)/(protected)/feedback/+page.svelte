@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
+	import { getApiFailureMessage } from '$lib/api/errors';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Alert, Button, Card, Helper, Label, Spinner, Textarea } from 'flowbite-svelte';
@@ -49,14 +50,9 @@
 				}
 			});
 
-			if (error || !response.ok) {
-				if (response.status === 401) {
-					submitError = 'Нужно войти в аккаунт заново';
-				} else if (response.status === 422) {
-					submitError = 'Проверьте правильность заполнения поля';
-				} else {
-					submitError = 'Не удалось отправить отзыв';
-				}
+			const failure = getApiFailureMessage(error, response, 'Не удалось отправить отзыв');
+			if (failure) {
+				submitError = failure;
 				return;
 			}
 

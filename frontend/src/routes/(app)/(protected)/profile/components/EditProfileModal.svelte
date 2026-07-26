@@ -7,7 +7,7 @@
 	import type { components } from '$lib/api/schema';
 	import type { CurrentUserDTO } from '$lib/types/user';
 
-	import { getApiErrorDetail } from '$lib/api/errors';
+	import { getApiFailureMessage } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
 
 	type UpdateCurrentUserInput = components['schemas']['UpdateCurrentUserInput'];
@@ -103,8 +103,9 @@
 
 		isLoading = false;
 
-		if (error || !response.ok) {
-			formError = getApiErrorDetail(error) ?? 'Не удалось обновить профиль';
+		const failure = getApiFailureMessage(error, response, 'Не удалось обновить профиль');
+		if (failure) {
+			formError = failure;
 			return;
 		}
 

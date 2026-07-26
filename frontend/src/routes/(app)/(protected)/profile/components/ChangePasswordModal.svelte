@@ -2,7 +2,7 @@
 	import type { components } from '$lib/api/schema';
 
 	import { createApiClient } from '$lib/api';
-	import { getApiErrorDetail } from '$lib/api/errors';
+	import { getApiFailureMessage } from '$lib/api/errors';
 	import PasswordInput from '$lib/components/PasswordInput.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Alert, Button, Label, Modal, Spinner } from 'flowbite-svelte';
@@ -63,8 +63,9 @@
 
 		isLoading = false;
 
-		if (error || !response.ok) {
-			formError = getApiErrorDetail(error) ?? 'Не удалось сменить пароль';
+		const failure = getApiFailureMessage(error, response, 'Не удалось сменить пароль');
+		if (failure) {
+			formError = failure;
 			return;
 		}
 

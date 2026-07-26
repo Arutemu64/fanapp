@@ -2,7 +2,7 @@
 	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
-	import { getApiErrorDetail } from '$lib/api/errors';
+	import { getApiFailureMessage } from '$lib/api/errors';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { Alert, Button, Card, Fileupload, Helper, Label, Spinner } from 'flowbite-svelte';
 
@@ -47,11 +47,12 @@
 				}
 			});
 
-			if (error || !response.ok) {
-				// Mapped by the error `code`, not the status: a rejected spreadsheet
-				// comes back as INVALID_SCHEDULE_FILE carrying the column and row at
-				// fault, which is the whole point of showing an error here.
-				inlineError = getApiErrorDetail(error) ?? 'Не удалось импортировать программу';
+			// Mapped by the error `code`, not the status: a rejected spreadsheet
+			// comes back as INVALID_SCHEDULE_FILE carrying the column and row at
+			// fault, which is the whole point of showing an error here.
+			const failure = getApiFailureMessage(error, response, 'Не удалось импортировать программу');
+			if (failure) {
+				inlineError = failure;
 				return;
 			}
 

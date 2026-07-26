@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
-	import { getApiErrorDetail } from '$lib/api/errors';
+	import { getApiFailureMessage } from '$lib/api/errors';
 	import PasswordInput from '$lib/components/PasswordInput.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
@@ -92,9 +92,10 @@
 				}
 			});
 
-			if (error || !response.ok) {
+			const failure = getApiFailureMessage(error, response, 'Неверная почта или пароль');
+			if (failure) {
 				console.error('Login error:', error);
-				formError = getApiErrorDetail(error) ?? 'Неверная почта или пароль';
+				formError = failure;
 				return;
 			}
 

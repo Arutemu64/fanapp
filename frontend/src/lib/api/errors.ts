@@ -262,6 +262,35 @@ export function getApiErrorCode(error: unknown): string | null {
 	return getApiErrorPayload(error)?.code ?? null;
 }
 
+// Last-resort copy for an action whose failure has no more specific wording.
+// Shared so the toast service and the call sites that hand it a fallback can
+// never drift into two different generic messages.
+export const DEFAULT_ACTION_FAILURE = 'Не удалось выполнить действие. Попробуй ещё раз.';
+
+/**
+ * Reduce an openapi-fetch result to "why it failed", or `null` when it
+ * succeeded. Keeps the two checks that must always travel together in one
+ * place: a call can fail with an `error` body *or* with a non-2xx `response`
+ * and no body (an empty 500, a proxy error page), and a call site that tests
+ * only the first silently treats the second as success.
+ *
+ * Returns the message rather than acting on it — whether a failure becomes an
+ * inline field error, a toast, or an optimistic revert genuinely differs per
+ * call site, and hiding that behind a shared handler would cost more clarity
+ * than the duplication does.
+ */
+export function getApiFailureMessage(
+	apiError: unknown,
+	response: { ok: boolean } | undefined,
+	fallback: string
+): string | null {
+	if (!apiError && response?.ok) {
+		return null;
+	}
+
+	return getApiErrorDetail(apiError) ?? fallback;
+}
+
 /**
  * Throw a SvelteKit error from a failed openapi-fetch call, so a `load` failure
  * speaks the same language as a form/toast failure. Maps the API error `code` to

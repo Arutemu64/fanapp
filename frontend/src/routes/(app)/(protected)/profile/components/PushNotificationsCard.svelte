@@ -7,6 +7,7 @@
 	import type { CurrentUserDTO } from '$lib/types/user';
 
 	import { PUBLIC_VAPID_KEY } from '$env/static/public';
+	import { DEFAULT_ACTION_FAILURE, getApiFailureMessage } from '$lib/api/errors';
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { onMount } from 'svelte';
@@ -96,8 +97,12 @@
 						}
 					});
 
-					if (error || !response.ok) {
-						console.error('Failed to remove subscription from server:', error);
+					// Logged, not surfaced: the local unsubscribe below must happen either
+					// way, or the browser keeps delivering pushes this device can no
+					// longer turn off from the UI.
+					const failure = getApiFailureMessage(error, response, DEFAULT_ACTION_FAILURE);
+					if (failure) {
+						console.error('Failed to remove subscription from server:', failure);
 					}
 
 					await subscription.unsubscribe();
@@ -171,9 +176,11 @@
 				}
 			});
 
-			if (error || !response.ok) {
-				console.error('API Error:', error);
-				toastService.add('Ошибка при подписке на уведомления', 'error');
+			const failure = getApiFailureMessage(error, response, 'Ошибка при подписке на уведомления');
+			if (failure) {
+				toastService.add(failure, 'error');
+				// Drop the browser-side subscription too, so the device does not end up
+				// registered with the push service but unknown to the backend.
 				await subscription.unsubscribe();
 				return;
 			}
@@ -198,9 +205,9 @@
 			body: nextSettings
 		});
 
-		if (error || !response.ok) {
-			console.error('API Error:', error);
-			toastService.add('Не удалось обновить настройки', 'error');
+		const failure = getApiFailureMessage(error, response, 'Не удалось обновить настройки');
+		if (failure) {
+			toastService.add(failure, 'error');
 			rollback();
 		} else {
 			toastService.add('Настройки сохранены', 'success');
@@ -241,9 +248,13 @@
 
 			const { error, response } = await client.POST('/notifications/test');
 
-			if (error || !response.ok) {
-				console.error('API Error:', error);
-				toastService.add('Не удалось отправить тест по каналам уведомлений', 'error');
+			const failure = getApiFailureMessage(
+				error,
+				response,
+				'Не удалось отправить тест по каналам уведомлений'
+			);
+			if (failure) {
+				toastService.add(failure, 'error');
 				return;
 			}
 

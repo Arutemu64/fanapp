@@ -2,6 +2,7 @@
 	import type { ParticipantFullDTO } from '$lib/types/participant';
 
 	import { createApiClient } from '$lib/api';
+	import { DEFAULT_ACTION_FAILURE, getApiFailureMessage } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { pluralize } from '$lib/utils/formatters';
 	import { Badge, Button, Card } from 'flowbite-svelte';
@@ -40,9 +41,10 @@
 				}
 			});
 
-			if (error || !response.ok) {
+			const failure = getApiFailureMessage(error, response, DEFAULT_ACTION_FAILURE);
+			if (failure) {
 				votesCount -= 1; // revert
-				toastService.error(error);
+				toastService.error(failure);
 				return;
 			}
 
@@ -71,9 +73,10 @@
 				}
 			});
 
-			if (error || !response.ok) {
+			const failure = getApiFailureMessage(error, response, DEFAULT_ACTION_FAILURE);
+			if (failure) {
 				votesCount += 1; // revert
-				toastService.error(error);
+				toastService.error(failure);
 				return;
 			}
 

@@ -2,7 +2,7 @@
 	import type { components } from '$lib/api/schema';
 
 	import { createApiClient } from '$lib/api';
-	import { getApiErrorDetail } from '$lib/api/errors';
+	import { getApiFailureMessage } from '$lib/api/errors';
 	import OtpInput from '$lib/components/OtpInput.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { ResendCooldown } from '$lib/utils/cooldown.svelte';
@@ -60,8 +60,13 @@
 			const body: ChangeEmailInput = { new_email: normalizeEmail(newEmail) };
 			const { error, response } = await client.POST('/me/email', { body });
 
-			if (error || !response.ok) {
-				formError = getApiErrorDetail(error) ?? 'Не удалось отправить код подтверждения';
+			const failure = getApiFailureMessage(
+				error,
+				response,
+				'Не удалось отправить код подтверждения'
+			);
+			if (failure) {
+				formError = failure;
 				return;
 			}
 
@@ -94,12 +99,20 @@
 
 		isLoading = false;
 
-		if (error) {
-			if (response.status === 409) {
-				emailError = getApiErrorDetail(error) ?? 'Этот адрес уже используется';
-				return;
+		// A 409 is the address itself being taken, which belongs on the email
+		// field; anything else failed the request as a whole.
+		const isTakenAddress = response.status === 409;
+		const fallback = isTakenAddress
+			? 'Этот адрес уже используется'
+			: 'Не удалось отправить код подтверждения';
+		const failure = getApiFailureMessage(error, response, fallback);
+
+		if (failure) {
+			if (isTakenAddress) {
+				emailError = failure;
+			} else {
+				formError = failure;
 			}
-			formError = getApiErrorDetail(error) ?? 'Не удалось отправить код подтверждения';
 			return;
 		}
 
@@ -129,12 +142,20 @@
 				body: { code: verificationCode }
 			});
 
-			if (error) {
-				if (response.status === 400) {
-					verificationCodeError = getApiErrorDetail(error) ?? 'Неверный или устаревший код';
-					return;
+			// A 400 is the code itself being rejected, which belongs on the code
+			// field; anything else failed the confirmation as a whole.
+			const isRejectedCode = response.status === 400;
+			const fallback = isRejectedCode
+				? 'Неверный или устаревший код'
+				: 'Не удалось подтвердить код';
+			const failure = getApiFailureMessage(error, response, fallback);
+
+			if (failure) {
+				if (isRejectedCode) {
+					verificationCodeError = failure;
+				} else {
+					formError = failure;
 				}
-				formError = getApiErrorDetail(error) ?? 'Не удалось подтвердить код';
 				return;
 			}
 

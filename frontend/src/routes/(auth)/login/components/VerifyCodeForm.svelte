@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
-	import { getApiErrorDetail } from '$lib/api/errors';
+	import { getApiFailureMessage } from '$lib/api/errors';
 	import CaptchaWidget, { captchaEnabled } from '$lib/components/CaptchaWidget.svelte';
 	import OtpInput from '$lib/components/OtpInput.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
@@ -90,12 +90,18 @@
 				body: { email, code: loginCode }
 			});
 
-			if (error) {
-				if (response.status === 400) {
-					loginCodeError = getApiErrorDetail(error) ?? 'Неверный или устаревший код';
-					return;
+			// A 400 is the code itself being rejected, which belongs on the code
+			// field; anything else failed the login as a whole.
+			const isRejectedCode = response.status === 400;
+			const fallback = isRejectedCode ? 'Неверный или устаревший код' : 'Не удалось выполнить вход';
+			const failure = getApiFailureMessage(error, response, fallback);
+
+			if (failure) {
+				if (isRejectedCode) {
+					loginCodeError = failure;
+				} else {
+					formError = failure;
 				}
-				formError = getApiErrorDetail(error) ?? 'Не удалось выполнить вход';
 				return;
 			}
 
@@ -130,9 +136,10 @@
 				body: { email, captcha_token: captchaToken }
 			});
 
-			if (error || !response.ok) {
+			const failure = getApiFailureMessage(error, response, 'Не удалось отправить код повторно');
+			if (failure) {
 				console.error('Login code request error:', error);
-				formError = getApiErrorDetail(error) ?? 'Не удалось отправить код повторно';
+				formError = failure;
 				// The token is single-use, so fetch a fresh one before a retry.
 				resetCaptcha?.();
 				captchaToken = null;

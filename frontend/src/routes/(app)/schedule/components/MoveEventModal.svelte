@@ -2,7 +2,7 @@
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 
 	import { createApiClient } from '$lib/api';
-	import { getApiErrorDetail } from '$lib/api/errors';
+	import { getApiFailureMessage } from '$lib/api/errors';
 	import NoticeCallout from '$lib/components/NoticeCallout.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { createSearchIndex } from '$lib/utils/search';
@@ -54,9 +54,10 @@
 					body: { place_after_event_id: selectedId }
 				});
 
-				if (error || !response.ok) {
+				const failure = getApiFailureMessage(error, response, 'Не удалось перенести выступление');
+				if (failure) {
 					console.error('Error moving event:', error);
-					formError = getApiErrorDetail(error) ?? 'Не удалось перенести выступление';
+					formError = failure;
 					return;
 				}
 

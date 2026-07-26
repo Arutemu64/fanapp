@@ -4,7 +4,7 @@
 	const client = createApiClient();
 	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
 
-	import { getApiErrorDetail } from '$lib/api/errors';
+	import { getApiFailureMessage } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Alert, Button, Modal } from 'flowbite-svelte';
 	import { BellOutline } from 'flowbite-svelte-icons';
@@ -34,9 +34,10 @@
 			params: { path: { subscription_id: event.user_subscription.id } }
 		});
 
-		if (error || !response.ok) {
+		const failure = getApiFailureMessage(error, response, 'Не удалось отключить уведомления');
+		if (failure) {
 			console.error('Error unsubscribing:', error);
-			formError = getApiErrorDetail(error) ?? 'Не удалось отключить уведомления';
+			formError = failure;
 			return;
 		}
 

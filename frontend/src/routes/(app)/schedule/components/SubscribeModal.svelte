@@ -3,7 +3,7 @@
 
 	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
-	import { getApiErrorDetail } from '$lib/api/errors';
+	import { getApiFailureMessage } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Alert, Button, Modal } from 'flowbite-svelte';
 	import { BellActiveSolid, MinusOutline, PlusOutline } from 'flowbite-svelte-icons';
@@ -43,8 +43,9 @@
 			}
 		});
 
-		if (error || !response.ok) {
-			formError = getApiErrorDetail(error) ?? 'Не удалось оформить подписку';
+		const failure = getApiFailureMessage(error, response, 'Не удалось оформить подписку');
+		if (failure) {
+			formError = failure;
 			return;
 		}
 

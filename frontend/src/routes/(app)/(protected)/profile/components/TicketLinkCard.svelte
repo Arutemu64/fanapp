@@ -3,7 +3,7 @@
 	const client = createApiClient();
 	import type { CurrentUserDTO } from '$lib/types/user';
 
-	import { getApiErrorDetail } from '$lib/api/errors';
+	import { getApiFailureMessage } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Alert, Button, Input, Label, Spinner } from 'flowbite-svelte';
 	import { CheckCircleOutline, TicketOutline, TicketSolid } from 'flowbite-svelte-icons';
@@ -39,8 +39,9 @@
 
 			isSubmitting = false;
 
-			if (error || !response.ok) {
-				submitError = getApiErrorDetail(error) ?? 'Не удалось привязать билет';
+			const failure = getApiFailureMessage(error, response, 'Не удалось привязать билет');
+			if (failure) {
+				submitError = failure;
 				return;
 			}
 

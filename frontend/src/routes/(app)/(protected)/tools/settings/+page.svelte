@@ -2,6 +2,7 @@
 	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
+	import { getApiFailureMessage } from '$lib/api/errors';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Alert, Button, Card, Helper, Input, Label, Spinner, Toggle } from 'flowbite-svelte';
@@ -109,19 +110,13 @@
 				}
 			});
 
-			if (error || !response.ok) {
-				if (response.status === 401) {
-					submitError = 'Нужно войти в аккаунт заново';
-				} else if (response.status === 403) {
-					submitError = 'У тебя нет доступа к настройкам фестиваля';
-				} else if (response.status === 404) {
-					submitError = 'Настройки фестиваля не найдены';
-				} else if (response.status === 422) {
-					submitError = 'Проверь введённые значения и попробуй снова';
-				} else {
-					submitError = 'Не удалось сохранить настройки фестиваля';
-				}
-
+			const failure = getApiFailureMessage(
+				error,
+				response,
+				'Не удалось сохранить настройки фестиваля'
+			);
+			if (failure) {
+				submitError = failure;
 				return;
 			}
 

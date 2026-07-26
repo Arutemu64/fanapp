@@ -1,6 +1,6 @@
 import type { NotificationDTO } from '$lib/types/notifications';
 
-import { getApiErrorDetail } from '$lib/api/errors';
+import { DEFAULT_ACTION_FAILURE, getApiErrorDetail } from '$lib/api/errors';
 import { createContext } from 'svelte';
 
 export type ToastColor = 'green' | 'red' | 'yellow' | 'blue';
@@ -63,7 +63,7 @@ export class ToastService {
 	}
 
 	error(err: unknown) {
-		let message = getApiErrorDetail(err) ?? 'Не удалось выполнить действие. Попробуй ещё раз.';
+		let message = getApiErrorDetail(err) ?? DEFAULT_ACTION_FAILURE;
 
 		if (typeof err === 'string') {
 			message = err;

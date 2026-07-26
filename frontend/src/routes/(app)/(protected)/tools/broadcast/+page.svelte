@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
+	import { getApiFailureMessage } from '$lib/api/errors';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Alert, Button, Card, Checkbox, Helper, Label, Spinner, Textarea } from 'flowbite-svelte';
@@ -65,16 +66,9 @@
 				}
 			});
 
-			if (error || !response.ok) {
-				if (response.status === 401) {
-					submitError = 'Нужно войти в аккаунт заново';
-				} else if (response.status === 403) {
-					submitError = 'У тебя нет доступа к отправке уведомлений';
-				} else if (response.status === 422) {
-					submitError = 'Проверь правильность заполнения полей';
-				} else {
-					submitError = 'Не удалось запустить рассылку';
-				}
+			const failure = getApiFailureMessage(error, response, 'Не удалось запустить рассылку');
+			if (failure) {
+				submitError = failure;
 				return;
 			}
 

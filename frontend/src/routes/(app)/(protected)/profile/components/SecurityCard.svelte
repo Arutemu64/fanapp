@@ -3,6 +3,7 @@
 
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { createApiClient } from '$lib/api';
+	import { DEFAULT_ACTION_FAILURE, getApiFailureMessage } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Alert, Badge, Button, Spinner } from 'flowbite-svelte';
 	import {
@@ -49,8 +50,9 @@
 		try {
 			const { error, response } = await client.DELETE('/me/connections/telegram', {});
 
-			if (error || !response.ok) {
-				toastService.error(error);
+			const failure = getApiFailureMessage(error, response, DEFAULT_ACTION_FAILURE);
+			if (failure) {
+				toastService.error(failure);
 				return;
 			}
 

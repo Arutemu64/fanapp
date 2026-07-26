@@ -5,6 +5,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { createApiClient } from '$lib/api';
+	import { DEFAULT_ACTION_FAILURE, getApiFailureMessage } from '$lib/api/errors';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { setAppBadgeCount } from '$lib/utils/appBadge';
@@ -44,8 +45,9 @@
 	async function handleLogout() {
 		const { error, response } = await client.POST('/auth/logout');
 
-		if (error || !response.ok) {
-			toastService.error(error);
+		const failure = getApiFailureMessage(error, response, DEFAULT_ACTION_FAILURE);
+		if (failure) {
+			toastService.error(failure);
 			return;
 		}
 

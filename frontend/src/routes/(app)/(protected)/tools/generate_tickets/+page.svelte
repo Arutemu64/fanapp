@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
+	import { getApiFailureMessage } from '$lib/api/errors';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import {
@@ -85,16 +86,13 @@
 				body: { role: selectedRole, amount }
 			});
 
-			if (error || !response.ok || !data) {
-				if (response.status === 401) {
-					submitError = 'Нужно войти в аккаунт заново';
-				} else if (response.status === 403) {
-					submitError = 'У тебя нет доступа к генерации билетов';
-				} else if (response.status === 422) {
-					submitError = 'Проверь правильность заполнения полей';
-				} else {
-					submitError = 'Не удалось сгенерировать билеты';
-				}
+			const fallback = 'Не удалось сгенерировать билеты';
+			const failure = getApiFailureMessage(error, response, fallback);
+
+			// `data` can still be missing on a 2xx if the body did not match the
+			// schema, and the barcodes below would then be undefined.
+			if (failure || !data) {
+				submitError = failure ?? fallback;
 				return;
 			}
 

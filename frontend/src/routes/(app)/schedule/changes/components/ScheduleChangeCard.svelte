@@ -10,6 +10,7 @@
 	} from '$lib/types/schedule';
 
 	import { invalidate } from '$app/navigation';
+	import { DEFAULT_ACTION_FAILURE, getApiFailureMessage } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
 
 	interface Props {
@@ -28,9 +29,10 @@
 				params: { path: { schedule_change_id: change.id } }
 			});
 
-			if (error || !response.ok) {
+			const failure = getApiFailureMessage(error, response, DEFAULT_ACTION_FAILURE);
+			if (failure) {
 				console.error('Error undoing change:', error);
-				toastService.error(error);
+				toastService.error(failure);
 				return;
 			}
 

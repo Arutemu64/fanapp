@@ -55,7 +55,20 @@ export default defineConfig(
 					caughtErrorsIgnorePattern: '^_',
 					ignoreRestSiblings: true
 				}
-			]
+			],
+			// Complexity budget, mirroring what ruff's default mccabe gives the
+			// backend — this config had no equivalent, so the frontend was the only
+			// half of the repo where "favour the obvious construction" (AGENTS.md)
+			// had nothing behind it.
+			//
+			// Warnings, not errors, and deliberately so: a high score is a prompt to
+			// look, not a defect. Some handlers here are branchy because the API they
+			// drive is (the Web Push handshake in PushNotificationsCard is flat,
+			// readable, guard-clause code and still scores in the twenties). Erroring
+			// would only buy inline disables. `just frontend-lint` stays green on
+			// warnings; they show up when you read the output.
+			complexity: ['warn', 12],
+			'max-depth': ['warn', 4]
 		}
 	},
 	{
