@@ -160,46 +160,15 @@ All gates run in one `quality` job, and one failing gate doesn't skip the rest, 
 
 ## Deployment
 
-The server runs the **prebuilt** GHCR images instead of building from source — see [`docker-compose.prod.yml`](docker-compose.prod.yml). To test the exact same images locally first, build them from your working tree with `just run-prod` (no registry needed).
-
-One-time server setup:
+The server runs the **prebuilt** GHCR images instead of building from source — only the application *build* moves to CI, the runtime config stays on the host. Once the server is set up, a deploy is:
 
 ```sh
-docker login ghcr.io          # use a read-only PAT / deploy token, not a password
-cp .env.example .env          # fill in placeholders (see Getting started)
-# Put the VAPID keys in secrets/ (the dir ships empty in the repo) and make
-# them readable by the container user (backend runs as uid 999):
-chmod 600 secrets/private_key.pem
-sudo chown 999:999 secrets/*.pem
+just deploy                   # pull the images and restart; builds nothing on the host
 ```
 
-Deploy (pulls the images and restarts, builds nothing on the host):
+To test the exact same images locally first, build them from your working tree with `just run-prod` (no registry needed).
 
-```sh
-just deploy                   # docker compose ... -f docker-compose.prod.yml pull && up -d
-```
-
-By default `just deploy` tracks the latest `main` build. Pin a specific build (or roll back) by setting `IMAGE_TAG` in `.env`, e.g. `IMAGE_TAG=sha-1a2b3c4`. The server still needs the repo's compose files, `.env`, `config/` (Redis config), `secrets/` (VAPID keys), and `backend/alembic.ini` on disk — only the application *build* moves to CI, not the runtime config.
-
-### Reverse proxy (Caddy): HTTPS and HTTP testing
-
-The app is meant to run behind a reverse proxy that puts the frontend and the API on **one origin**: [`Caddyfile.example`](Caddyfile.example) routes `/api*` to the backend and everything else to the SvelteKit frontend. Because the API is same-origin, the browser never makes a cross-origin request, so **no CORS config is needed**. The frontend is a static SPA (`adapter-static`, no SSR) served by NGINX, and it calls the API with a **relative base** (`PUBLIC_API_URL=/api`, the default), which resolves against whatever origin serves the app. That keeps the bundle domain-agnostic — the same build (and the prebuilt GHCR image) works on any domain with no rebuild (see [`docs/frontend.md`](docs/frontend.md)).
-
-`just run-prod` exposes the apps on `127.0.0.1:3000` (frontend) and `127.0.0.1:8000` (API); run Caddy with `Caddyfile.example` in front to reach them on a single origin (e.g. `http://localhost`).
-
-With the relative default you only set the origin-dependent values to match how the browser reaches the site:
-
-| `.env` / Caddy | HTTPS (production) | HTTP (local / insecure testing) |
-|---|---|---|
-| Caddy site block | your domain, e.g. `example.com { … }` (auto-TLS) | `:80 { … }` (as shipped) |
-| `WEB__PUBLIC_URL` | `https://example.com/` | `http://localhost/` |
-| `PUBLIC_API_URL` | `/api` (relative — domain-agnostic) | `/api` |
-| `WEB__COOKIE_SECURE` | `True` | `False` |
-| `WEB__CORS_ALLOW_ORIGINS` | unset (same-origin) | unset (same-origin) |
-
-`WEB__COOKIE_SECURE=False` is **required** over plain HTTP — a `Secure` cookie is never sent over HTTP, which would otherwise break login (including the Telegram OAuth callback, whose state cookie follows the same flag). When you switch a host between HTTP and HTTPS, clear its cookies first, or stale `Secure` cookies look like an auth bug.
-
-**Split-origin (optional):** to serve the API on a *different* origin than the site, set `PUBLIC_API_URL` to that absolute URL (e.g. `https://api.example.com`) — this requires a rebuild, since `PUBLIC_API_URL` is baked into the bundle at build time — and set `WEB__CORS_ALLOW_ORIGINS` to the public app origin exactly (scheme + host, no trailing slash, no path).
+[`docs/deployment.md`](docs/deployment.md) covers the rest: what the server needs on disk, one-time setup, pinning a build or rolling back with `IMAGE_TAG`, and the reverse proxy (Caddy) — including the single-origin setup that means **no CORS config is needed** and the `.env` values that change between HTTPS and plain-HTTP testing.
 
 ## External integrations
 
@@ -218,6 +187,7 @@ Optional, enabled via `.env`:
 - [`docs/frontend.md`](docs/frontend.md) — SvelteKit SPA rules, styling, components
 - [`docs/api.md`](docs/api.md) — type-safe API integration
 - [`docs/testing.md`](docs/testing.md) — test layers, fixtures, what is real vs faked
+- [`docs/deployment.md`](docs/deployment.md) — server setup, deploys and rollbacks, reverse proxy
 - [`docs/dependencies.md`](docs/dependencies.md) — shared version pins and Renovate
 - [`docs/claude-cloud.md`](docs/claude-cloud.md) — Claude Code on the web provisioning
 - [`docs/adr/`](docs/adr/README.md) — architecture decision records

@@ -23,6 +23,7 @@ Load the listed skills and read the guide **before** implementing, not after.
 | Frontend ↔ API contracts | — | [docs/api.md](docs/api.md) |
 | Tests | — | [docs/testing.md](docs/testing.md) |
 | Docker / infra | `docker-expert` | [docs/dependencies.md](docs/dependencies.md) |
+| Deployment / reverse proxy | `docker-expert` | [docs/deployment.md](docs/deployment.md) |
 | Docker / infra in a **web** session | `docker-expert` | [docs/claude-cloud.md](docs/claude-cloud.md) |
 | Docs / writing | `documentation-writer` | [docs/adr/README.md](docs/adr/README.md) |
 
