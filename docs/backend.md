@@ -56,6 +56,12 @@ Everything below this section is detail; these rules alone prevent most mistakes
 1. Add a member to `SSEEventName` (`application/dto/realtime.py`) — snake_case, single token, **no dots**.
 2. Mirror it in `SSEEventMap` (`frontend/src/lib/services/events.svelte.ts`) — the two are kept in sync by hand.
 
+### Change the schedule-import spreadsheet format
+The columns an organizer must supply are named in three coupled places — change one, change all three:
+1. `REQUIRED_COLUMNS` in `adapters/parsers/schedule.py`, the only authority. Reject a bad file with `InvalidScheduleFile` carrying a `reason` plus the column/row that located it, so the frontend can name the cell instead of saying "bad file".
+2. The downloadable template, regenerated with `just backend-generate-schedule-template` (script: `scripts/generate_schedule_template.py`, output: `frontend/static/schedule-template.xlsx`). `tests/unit/adapters/test_schedule_parser.py` parses the committed file, so a forgotten regeneration fails there rather than reaching an organizer.
+3. The on-screen column list in `frontend/src/routes/(app)/(protected)/tools/import_schedule/components/FileFormatGuide.svelte`.
+
 ## Core Domain & Interactors
 * **Core Layer (`core/`)**: Pure domain entities, value objects, and domain exceptions. Must be free of all I/O frameworks and outer layers — no FastAPI, SQLAlchemy, no `adapters/`/`application/`/`presentation/` imports. **Pydantic is the one allowed exception, and only in two narrow spots**: `core/events/base.py` (`AppEvent` is a `BaseModel` so domain events serialize cleanly over NATS) and `core/vo/fields.py` (validation helpers for value objects). Do not reach for Pydantic elsewhere in `core/` — plain dataclasses are the default for entities and value objects.
 * **Application Layer (`application/`)**: Orchestrates interactors and business use cases. Must never import database ORM models directly. Communication with infrastructure happens via abstract interfaces (ports under `application/ports/`) and schemas/DTOs.

@@ -2082,6 +2082,16 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "The spreadsheet could not be read as a schedule.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3486,6 +3496,7 @@
               "INVALID_CREDENTIALS",
               "INVALID_EMAIL",
               "INVALID_OTP_CODE",
+              "INVALID_SCHEDULE_FILE",
               "INVALID_TELEGRAM_AUTH_PAYLOAD",
               "NOMINATION_NOT_FOUND",
               "OUTDATED_SCHEDULE_CHANGE",

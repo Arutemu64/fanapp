@@ -134,6 +134,37 @@ function getAccessDeniedMessage(details: ApiErrorDetails): string {
 	}
 }
 
+function formatColumnList(value: unknown): string {
+	if (!Array.isArray(value)) {
+		return '';
+	}
+
+	return value.filter((column): column is string => typeof column === 'string').join(', ');
+}
+
+// The backend rejects a schedule spreadsheet with a `reason` plus whatever
+// locates the problem (column, spreadsheet row, duplicated number), so the copy
+// can point the organizer at the cell to fix instead of just saying the file is
+// wrong. Reasons come from InvalidScheduleFileReason in core/exceptions/schedule.py.
+function getInvalidScheduleFileMessage(details: ApiErrorDetails): string {
+	const at = `Строка ${String(details.row)}, колонка «${String(details.column)}»`;
+
+	switch (details.reason) {
+		case 'MISSING_COLUMNS':
+			return `В файле нет колонок: ${formatColumnList(details.columns)}. Скачай шаблон и сверь заголовки.`;
+		case 'EMPTY_FILE':
+			return 'В файле нет ни одного выступления.';
+		case 'EMPTY_CELL':
+			return `${at}: ячейка пустая.`;
+		case 'INVALID_NUMBER':
+			return `${at}: нужно целое число.`;
+		case 'DUPLICATE_NUMBER':
+			return `Номер ${String(details.number)} встречается дважды (строка ${String(details.row)}). Номера должны быть уникальными.`;
+		default:
+			return 'Не удалось прочитать файл. Нужен .xlsx или .xls с нужными колонками.';
+	}
+}
+
 // Dictionary: error code -> user-facing message. `satisfies` keeps the literal
 // keys (so the drift guard below can see which codes are covered) while checking
 // every key is a real ApiErrorCode — a typo'd code is a compile error.
@@ -218,6 +249,9 @@ export function getApiErrorDetail(error: unknown): string | null {
 	if (payload.code === 'ACCESS_DENIED') {
 		return getAccessDeniedMessage(details);
 	}
+	if (payload.code === 'INVALID_SCHEDULE_FILE') {
+		return getInvalidScheduleFileMessage(details);
+	}
 	if (payload.code === 'VALIDATION_ERROR') {
 		return getValidationMessage(details);
 	}
@@ -259,6 +293,7 @@ type HandledCode =
 	| (typeof RETRY_AFTER_CODES)[number]
 	| (typeof GENERIC_FALLBACK_CODES)[number]
 	| 'ACCESS_DENIED'
+	| 'INVALID_SCHEDULE_FILE'
 	| 'VALIDATION_ERROR';
 type UnhandledCode = Exclude<ApiErrorCode, HandledCode>;
 

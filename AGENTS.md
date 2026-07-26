@@ -49,6 +49,7 @@ Third-party library APIs: look the signature up in current docs; never rely on t
 | `just backend-generate <name>` | Autogenerate a migration against the running app DB |
 | `just backend-generate-auto <name>` | Autogenerate against a throwaway Postgres (no app DB needed; requires Docker) |
 | `just frontend-generate-api` | Regenerate `schema.d.ts` from the OpenAPI spec |
+| `just backend-generate-schedule-template` | Rebuild the schedule-import template `.xlsx` offered for download |
 | `just ci` | Every CI gate locally, check-only. Cheaper than spending an Actions run. |
 
 Always review a generated migration: autogenerate emits renames as drop+create and does not see enum-member changes.
