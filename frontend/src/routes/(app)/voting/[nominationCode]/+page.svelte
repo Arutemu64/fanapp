@@ -5,7 +5,6 @@
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { createSearchIndex } from '$lib/utils/search';
-	import { UrlParam } from '$lib/utils/urlState.svelte';
 	import { Button, Search } from 'flowbite-svelte';
 	import {
 		ArrowLeftOutline,
@@ -27,17 +26,15 @@
 	let votingStatus = $derived(data.votingStatus);
 	let canVote = $derived(votingStatus?.can_vote ?? false);
 
-	// Filter state lives in the URL so a shared link or a reload keeps the same
-	// view. Reads and writes go straight through to `page.url`.
-	const search = new UrlParam('q');
+	let searchQuery = $state('');
 
 	let searchIndex = $derived(
 		createSearchIndex(participants, (p: VotingParticipant) => [p.title, p.voting_number])
 	);
 
-	let filtered = $derived(searchIndex.filter(search.current));
+	let filtered = $derived(searchIndex.filter(searchQuery));
 
-	let hasSearchQuery = $derived(search.current.trim().length > 0);
+	let hasSearchQuery = $derived(searchQuery.trim().length > 0);
 
 	let resultsSummary = $derived(
 		filtered.length === participants.length
@@ -107,9 +104,9 @@
 <VotingStatusAlert votingState={votingStatus} class="mb-4" />
 
 <Search
-	bind:value={search.current}
+	bind:value={searchQuery}
 	clearableOnClick={() => {
-		search.current = '';
+		searchQuery = '';
 	}}
 	name="participant_search"
 	aria-label="Поиск участников в номинации"
@@ -146,7 +143,7 @@
 					message="Попробуй изменить запрос"
 				>
 					<button
-						onclick={() => (search.current = '')}
+						onclick={() => (searchQuery = '')}
 						class="mt-3 text-sm font-medium text-primary-600 hover:underline dark:text-primary-400"
 					>
 						Очистить поиск

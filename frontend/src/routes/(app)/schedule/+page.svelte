@@ -8,7 +8,6 @@
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
 	import { createSearchIndex } from '$lib/utils/search';
-	import { UrlFlag, UrlParam } from '$lib/utils/urlState.svelte';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
 	import {
 		ChevronUpOutline,
@@ -41,11 +40,9 @@
 	let { data }: PageProps = $props();
 	let schedule: ScheduleEventWithSubscription[] = $derived(data.schedule);
 
-	// Filter state lives in the URL, so a reload, a shared link, or a trip into an
-	// event and back restores the same view. Reads and writes go straight through
-	// to `page.url` — there is no second copy to keep in sync.
-	const search = new UrlParam('q');
-	const subscribedOnly = new UrlFlag('subscribed');
+	// Store filter state locally because it only affects this page view.
+	let searchQuery: string = $state('');
+	let showOnlySubscribed: boolean = $state(false);
 
 	// We use the full schedule current event for countdown labels inside every row.
 	let currentEvent = $derived(schedule.find((event) => event.is_current) ?? null);
@@ -73,8 +70,8 @@
 
 	let filtered: ScheduleEventWithSubscription[] = $derived(
 		searchIndex
-			.filter(search.current)
-			.filter((event) => !subscribedOnly.current || event.user_subscription !== null)
+			.filter(searchQuery)
+			.filter((event) => !showOnlySubscribed || event.user_subscription !== null)
 	);
 
 	// Hide the FAB for the current event when the active filters remove that row from the page.
@@ -156,13 +153,13 @@
 			: `Показано ${filtered.length} из ${schedule.length}`
 	);
 
-	let hasActiveFilters = $derived(subscribedOnly.current || search.current.trim().length > 0);
+	let hasActiveFilters = $derived(showOnlySubscribed || searchQuery.trim().length > 0);
 
 	// Recovery for the no-results state: clear search + subscription filter in one tap
 	// so a user mid-event isn't stuck hunting back to two separate controls.
 	function resetFilters() {
-		search.current = '';
-		subscribedOnly.current = false;
+		searchQuery = '';
+		showOnlySubscribed = false;
 	}
 
 	let pageRoot: HTMLDivElement | null = null;
@@ -253,9 +250,9 @@
 	>
 		<div class="flex flex-col gap-3">
 			<Search
-				bind:value={search.current}
+				bind:value={searchQuery}
 				clearableOnClick={() => {
-					search.current = '';
+					searchQuery = '';
 				}}
 				name="schedule_search"
 				aria-label="Поиск по программе"
@@ -268,7 +265,7 @@
 			/>
 
 			<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-				<Toggle bind:checked={subscribedOnly.current} size="small" color="primary" class="w-fit">
+				<Toggle bind:checked={showOnlySubscribed} size="small" color="primary" class="w-fit">
 					<span class="text-sm font-medium text-gray-700 dark:text-gray-200">Только подписки</span>
 				</Toggle>
 
