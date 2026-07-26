@@ -23,12 +23,19 @@ pronouns (`тебя`, `Твой отзыв отправлен`) alike. `frontend
 Organizer-facing screens are **not** an exception — organizers are the same age
 group and the same people, and `tools/broadcast` and `tools/settings` use «ты».
 
-**Transactional email is the one deliberate «вы» surface.** All four templates
-in `backend/src/fanfan/adapters/jinja/templates/` (`email_login_code`,
-`email_confirmation_code`, each `.jinja2` + `.txt.jinja2`) open with
-`Здравствуйте` and stay formal, which is the convention for email from an
-organization. Edit them as a set, or not at all — a half-converted pair is worse
-than either choice.
+**Email is «ты» too.** The templates in
+`backend/src/fanfan/adapters/jinja/templates/` open with `Привет`, not
+`Здравствуйте`. Each email is a **pair** — `email_login_code.jinja2` (HTML) and
+`email_login_code.txt.jinja2` (plain-text alternative), likewise for
+`email_confirmation_code` — so any copy edit touches both files or the two
+halves of the same message disagree.
+
+**Watch past-tense verbs when converting «вы» → «ты».** «вы» past tense is
+gender-neutral (`Если вы не запрашивали…`); «ты» is not, and forces
+`запрашивал` / `запрашивала` on a mixed-gender audience. Slash forms
+(`запрашивал(а)`) are ugly. Rephrase into the present or an impersonal
+construction instead — that line is now `Если это письмо пришло по ошибке,
+просто проигнорируй его.`
 
 «Ты» does not mean sloppy: no slang, no `плз`, no memes, no exclamation marks by
 default. Friendly, but composed.
