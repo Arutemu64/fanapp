@@ -52,11 +52,9 @@ docs/       Architecture guides and ADRs
 - Node.js + [`pnpm`](https://pnpm.io/)
 - [`just`](https://github.com/casey/just)
 - Docker + Docker Compose (for the full environment)
-- On **Windows**, run `just` from **Git Bash** or **WSL** (not cmd/PowerShell): the
-  recipes are POSIX shell. Git Bash ships with
-  [Git for Windows](https://git-scm.com/download/win). (`just bootstrap` itself is a
-  pure-Python script — no bash/openssl needed — but the other recipes still expect a
-  POSIX shell.)
+- On **Windows**, run `just` from **Git Bash** (ships with
+  [Git for Windows](https://git-scm.com/download/win)) or **WSL**, not cmd/PowerShell —
+  the recipes are POSIX shell.
 
 > Optional: [`mise`](https://mise.jdx.dev) (or `asdf`) reads the pinned
 > versions from [`mise.toml`](mise.toml) — run `mise install` to get the exact
@@ -156,13 +154,7 @@ just ci
 
 `just ci` runs the same eight gates, in the same check-only mode, on your machine. **Run it before pushing** — a failure caught locally is an Actions run nobody spends.
 
-### Why CI is a single job
-
-All the gates live in one `quality` job rather than fanning out across several. Billed Actions usage is metered [per job, rounded up to a whole minute](https://docs.github.com/en/actions/concepts/billing-and-usage), and every gate here finishes in well under a minute — so a five-job fan-out cost 5 minutes for roughly 2 minutes of real work. Sequencing them costs 2. Wall-clock time is about a minute longer; minutes are the scarcer resource, not latency.
-
-Each gate is guarded with `!cancelled()` so the rest still run after one fails: a single run reports every problem instead of only the first, which is what keeps you from spending a second run to find the second bug.
-
-Renovate is the other large consumer of minutes. [`renovate.json`](renovate.json) batches Action, dev-tooling and backend-runtime bumps into grouped weekly PRs, and sets `rebaseWhen: "conflicted"` plus `platformAutomerge` so that merging one dependency PR doesn't re-trigger CI on every other open one — see [Renovate's noise-reduction guide](https://docs.renovatebot.com/noise-reduction/).
+All gates run in one `quality` job, and one failing gate doesn't skip the rest, so a run reports every problem instead of only the first. Both choices exist to spend fewer Actions minutes; the reasoning is in the header comments of [`ci.yml`](.github/workflows/ci.yml). [`renovate.json`](renovate.json) batches dependency bumps into grouped weekly PRs for the same reason — see [`docs/dependencies.md`](docs/dependencies.md).
 
 [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml) additionally builds the backend and frontend images and pushes them to the GitHub Container Registry (GHCR) on pushes to `main` (which move the `latest` tag) and on `v*` tags. The `SENTRY_AUTH_TOKEN` repository secret is passed only to the frontend build (source-map upload); it is consumed in a discarded build stage and never ends up in the published image.
 
