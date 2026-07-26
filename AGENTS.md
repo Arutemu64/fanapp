@@ -18,8 +18,12 @@ Load the listed skills and read the guide **before** implementing, not after.
 | Working on | Load | Read |
 | --- | --- | --- |
 | Backend / FastAPI | `fastapi`, `clean-ddd-hexagonal` | [docs/backend.md](docs/backend.md) (start at "Rules at a glance") |
+| ORM models / migrations | `fanfan-migrations`, `sqlalchemy-alembic-expert-best-practices-code-review` | [docs/backend.md](docs/backend.md) "Persistence & Transaction Management" |
 | `.svelte`, `.svelte.ts`, `.svelte.js` | `svelte-code-writer`, `svelte-core-bestpractices` | [docs/frontend.md](docs/frontend.md) |
-| Styling / layout | `tailwind-css-patterns`, `ui-ux-pro-max` | [docs/frontend.md](docs/frontend.md) §3–4 |
+| Styling / layout | `impeccable`, `ui-ux-pro-max` | [docs/frontend.md](docs/frontend.md) §3–4 |
+| Design review before shipping UI | `kill-ai-slop`, `accessibility`, `core-web-vitals` | [docs/frontend.md](docs/frontend.md) |
+| Russian user-facing copy | `fanfan-russian-copy` | [.agents/context/PRODUCT.md](.agents/context/PRODUCT.md) |
+| Service worker / manifest / offline / push | `fanfan-pwa` | [docs/frontend.md](docs/frontend.md) |
 | Frontend ↔ API contracts | — | [docs/api.md](docs/api.md) |
 | Tests | — | [docs/testing.md](docs/testing.md) |
 | Docker / infra | `docker-expert` | [docs/dependencies.md](docs/dependencies.md) |
@@ -28,6 +32,19 @@ Load the listed skills and read the guide **before** implementing, not after.
 | Docs / writing | `documentation-writer` | [docs/adr/README.md](docs/adr/README.md) |
 
 Third-party library APIs: look the signature up in current docs; never rely on training memory.
+
+**This file wins over a skill.** Skills are vendored from upstream and describe a
+generic project; three of them contradict this repo on purpose, and the repo is
+right: `test-driven-development` mandates a test before every change, but
+[docs/testing.md](docs/testing.md) makes tests optional and not a gate;
+`using-git-worktrees` and `finishing-a-development-branch` assume you choose a
+branch and how to land it, which a Claude Code on the web session does not. All
+three are kept because `executing-plans`, `writing-plans` and
+`subagent-driven-development` call them as required sub-skills — ignore the
+conflicting instruction, not the skill.
+
+Skills are managed with `npx skills` and pinned in `skills-lock.json`; the ones
+named `fanfan-*` are project-local and live only here.
 
 ## Stack & commands
 

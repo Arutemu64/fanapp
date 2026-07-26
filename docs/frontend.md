@@ -3,7 +3,7 @@
 This document outlines the codebase-specific constraints, SvelteKit SPA rules, styling standards, layout designs, and custom component inventory.
 
 > [!NOTE]
-> **Scope of this doc**: only FAN FAN–specific decisions and bindings live here — chosen scales, tokens, component wiring, conventions. Generic best-practice (Svelte 5 runes and event syntax, accessibility, UX, responsive + dark-mode mechanics) lives in the `svelte-code-writer`, `svelte-core-bestpractices`, `ui-ux-pro-max` and `tailwind-css-patterns` skills — load those (AGENTS.md, "Load before you edit"). **Rule of thumb**: if a skill that has never seen this repo could state a rule, it belongs in the skill, not here.
+> **Scope of this doc**: only FAN FAN–specific decisions and bindings live here — chosen scales, tokens, component wiring, conventions. Generic best-practice (Svelte 5 runes and event syntax, accessibility, UX, responsive + dark-mode mechanics) lives in the `svelte-code-writer`, `svelte-core-bestpractices`, `ui-ux-pro-max`, `impeccable`, `accessibility` and `core-web-vitals` skills — load those (AGENTS.md, "Load before you edit"). **Rule of thumb**: if a skill that has never seen this repo could state a rule, it belongs in the skill, not here. The corollary: what only this repo knows — the service worker's caching split, the Russian glossary — belongs in a `fanfan-*` skill, not here either.
 
 ---
 
@@ -115,7 +115,7 @@ Theming is wired via `@custom-variant dark` in `app.css` with `.dark` on `<html>
 * Use semantic tokens (`primary-*`, `secondary-*`, `gray-*`), never raw hex.
 * "Active/selected" = ring/border + badge, not a bold fill (don't signal by color alone; keep dark text contrast). Cards: `ring-2 ring-green-600 dark:ring-green-500` (ring only, no fill either mode — keeps neutral card + readable green badge; ring shade tuned per mode for 3:1 non-text contrast). Rows: left accent bar (`border-l-4 border-transparent` everywhere, `border-green-500` active — reserves space, no shift) + `bg-green-100 dark:bg-green-900/40`.
 
-Contrast targets and dark-mode mechanics → `tailwind-css-patterns` / `ui-ux-pro-max`.
+Contrast targets and dark-mode mechanics → `accessibility` / `ui-ux-pro-max`.
 
 ---
 
