@@ -9,7 +9,7 @@ Companion web app for the "FAN FAN" Russian anime convention. Audience: teen to 
 * **Never** delete or weaken an existing comment while refactoring unless the code it describes is gone. A comment that survived review encodes a constraint you cannot see from the diff; if it looks wrong, verify before dropping it.
 * **Never** keep request- or user-scoped state in a frontend module singleton — modules outlive navigation and login/logout in the SPA.
 * **Never** add, rename or remove an env var without updating `.env.example` in the same change. Its header explains the three consumers and the grouping; the backend's `extra="ignore"` means a drifted key fails silently at runtime instead of at boot.
-* **Never** call work done with a failing gate: `just backend-lint` + `just backend-typecheck` after Python, `just frontend-lint` + `just frontend-check` after frontend, `just dockerfile-lint` after a `Dockerfile`. Tests are not a gate — run them when useful.
+* **Never** call work done with a failing gate: `just backend-lint` + `just backend-typecheck` after Python, `just frontend-lint` + `just frontend-check` after frontend, `just dockerfile-lint` after a `Dockerfile`. Whether a change needs a *new* test is a judgment call — make it deliberately, per [docs/testing.md](docs/testing.md). The existing suite runs in CI either way.
 
 ## Load before you edit
 
@@ -35,8 +35,9 @@ Third-party library APIs: look the signature up in current docs; never rely on t
 
 **This file wins over a skill.** Skills are vendored from upstream and describe a
 generic project; three of them contradict this repo on purpose, and the repo is
-right: `test-driven-development` mandates a test before every change, but
-[docs/testing.md](docs/testing.md) makes tests optional and not a gate;
+right: `test-driven-development` mandates a failing test before every change,
+where [docs/testing.md](docs/testing.md) asks you to judge whether this change
+warrants one;
 `using-git-worktrees` and `finishing-a-development-branch` assume you choose a
 branch and how to land it, which a Claude Code on the web session does not. All
 three are kept because `executing-plans`, `writing-plans` and

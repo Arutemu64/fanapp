@@ -3,9 +3,16 @@
 How the backend test suite is structured and the conventions to follow when
 adding tests. Tests live under `backend/tests/` and run with `pytest` + `uv`.
 
-> Tests are optional, not mandatory on every change — run them when useful,
-> on request, or in CI. After backend code changes you still always run
-> `just backend-lint` and `just backend-typecheck`.
+> **Whether a change needs a new test is your call — make it deliberately,
+> rather than defaulting either way.** Write one when the change encodes a rule
+> that can break silently: a permission, a state transition, an ordering or
+> time calculation, a parser, or a bug you just fixed. Skip it for copy,
+> styling, config, and refactors an existing test already covers. On a close
+> call, write the test.
+>
+> The **existing** suite is not optional: CI runs `pytest tests`, so a change
+> that breaks a test is broken. And `just backend-lint` +
+> `just backend-typecheck` still run after every backend change.
 
 ## Rules at a glance
 
