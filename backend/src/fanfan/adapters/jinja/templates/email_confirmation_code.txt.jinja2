@@ -1,15 +1,15 @@
 {# Plain-text alternative for the email-confirmation email. The Jinja env has
    autoescape on globally (it is HTML-first); disable it here so text stays literal. #}
 {% autoescape false %}
-{% if username %}Здравствуйте, {{ username }}!{% else %}Здравствуйте!{% endif %}
+{% if username %}Привет, {{ username }}!{% else %}Привет!{% endif %}
 
-Введите этот код в приложении ФАН ФАН, чтобы подтвердить вашу почту и завершить настройку учётной записи:
+Введи этот код в приложении ФАН ФАН, чтобы подтвердить свою почту и завершить настройку учётной записи:
 
     {{ confirmation_code }}
 
-Код действует {{ expires_in_minutes }} минут. Никому не сообщайте его.
+Код действует {{ expires_in_minutes }} минут. Никому не сообщай его.
 
-Если вы не запрашивали это письмо, просто проигнорируйте его.
+Если это письмо пришло по ошибке, просто проигнорируй его.
 
 —
 Приложение ФАН ФАН

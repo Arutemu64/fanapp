@@ -19,7 +19,7 @@
 
 	function validateForm() {
 		if (!feedbackText.trim()) {
-			feedbackError = 'Напишите, чем хотите поделиться';
+			feedbackError = 'Напиши, чем хочешь поделиться';
 			return false;
 		}
 		feedbackError = '';
@@ -28,7 +28,7 @@
 
 	function handleInput() {
 		if (feedbackError) {
-			feedbackError = feedbackText.trim() ? '' : 'Напишите, чем хотите поделиться';
+			feedbackError = feedbackText.trim() ? '' : 'Напиши, чем хочешь поделиться';
 		}
 	}
 
@@ -60,7 +60,7 @@
 				return;
 			}
 
-			toastService.add('Спасибо! Ваш отзыв отправлен', 'success');
+			toastService.add('Спасибо! Твой отзыв отправлен', 'success');
 			feedbackText = '';
 			feedbackError = '';
 		} catch (err) {
@@ -77,19 +77,19 @@
 </svelte:head>
 
 <SectionIntro
-	description="Расскажите, что нравится в приложении, а что хотелось бы улучшить. Мы читаем каждое сообщение."
+	description="Расскажи, что нравится в приложении, а что хотелось бы улучшить. Мы читаем каждое сообщение."
 />
 
 <Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
 	<form class="space-y-6" onsubmit={handleSubmit}>
 		<div class="space-y-2">
-			<Label for="feedback-text" class="text-gray-900 dark:text-white">Ваш отзыв</Label>
+			<Label for="feedback-text" class="text-gray-900 dark:text-white">Твой отзыв</Label>
 			<Textarea
 				id="feedback-text"
 				name="text"
 				rows={6}
 				maxlength={MAX_LENGTH}
-				placeholder="Поделитесь впечатлениями, идеями или сообщите о проблеме..."
+				placeholder="Поделись впечатлениями, идеями или сообщи о проблеме..."
 				bind:value={feedbackText}
 				disabled={isSending}
 				oninput={handleInput}

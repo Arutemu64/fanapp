@@ -19,14 +19,14 @@
 		let isValid = true;
 
 		if (!bodyText.trim()) {
-			bodyError = 'Введите текст уведомления';
+			bodyError = 'Введи текст уведомления';
 			isValid = false;
 		} else {
 			bodyError = '';
 		}
 
 		if (selectedRoles.length === 0) {
-			rolesError = 'Выберите хотя бы одну группу пользователей';
+			rolesError = 'Выбери хотя бы одну группу пользователей';
 			isValid = false;
 		} else {
 			rolesError = '';
@@ -37,13 +37,13 @@
 
 	function handleBodyInput() {
 		if (bodyError) {
-			bodyError = bodyText.trim() ? '' : 'Введите текст уведомления';
+			bodyError = bodyText.trim() ? '' : 'Введи текст уведомления';
 		}
 	}
 
 	function handleRoleChange() {
 		if (rolesError) {
-			rolesError = selectedRoles.length > 0 ? '' : 'Выберите хотя бы одну группу пользователей';
+			rolesError = selectedRoles.length > 0 ? '' : 'Выбери хотя бы одну группу пользователей';
 		}
 	}
 
@@ -108,7 +108,7 @@
 				id="broadcast-body"
 				name="body"
 				rows={4}
-				placeholder="Напишите важное сообщение для участников фестиваля..."
+				placeholder="Напиши важное сообщение для участников фестиваля..."
 				bind:value={bodyText}
 				disabled={isSending}
 				oninput={handleBodyInput}

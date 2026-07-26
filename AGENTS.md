@@ -9,7 +9,7 @@ Companion web app for the "FAN FAN" Russian anime convention. Audience: teen to 
 * **Never** delete or weaken an existing comment while refactoring unless the code it describes is gone. A comment that survived review encodes a constraint you cannot see from the diff; if it looks wrong, verify before dropping it.
 * **Never** keep request- or user-scoped state in a frontend module singleton — modules outlive navigation and login/logout in the SPA.
 * **Never** add, rename or remove an env var without updating `.env.example` in the same change. Its header explains the three consumers and the grouping; the backend's `extra="ignore"` means a drifted key fails silently at runtime instead of at boot.
-* **Never** call work done with a failing gate: `just backend-lint` + `just backend-typecheck` after Python, `just frontend-lint` + `just frontend-check` after frontend, `just dockerfile-lint` after a `Dockerfile`. Tests are not a gate — run them when useful.
+* **Never** call work done with a failing gate: `just backend-lint` + `just backend-typecheck` after Python, `just frontend-lint` + `just frontend-check` after frontend, `just dockerfile-lint` after a `Dockerfile`. Whether a change needs a *new* test is a judgment call — make it deliberately, per [docs/testing.md](docs/testing.md). The existing suite runs in CI either way.
 
 ## Load before you edit
 
@@ -18,8 +18,12 @@ Load the listed skills and read the guide **before** implementing, not after.
 | Working on | Load | Read |
 | --- | --- | --- |
 | Backend / FastAPI | `fastapi`, `clean-ddd-hexagonal` | [docs/backend.md](docs/backend.md) (start at "Rules at a glance") |
+| ORM models / migrations | `fanfan-migrations`, `sqlalchemy-alembic-expert-best-practices-code-review` | [docs/backend.md](docs/backend.md) "Persistence & Transaction Management" |
 | `.svelte`, `.svelte.ts`, `.svelte.js` | `svelte-code-writer`, `svelte-core-bestpractices` | [docs/frontend.md](docs/frontend.md) |
-| Styling / layout | `tailwind-css-patterns`, `ui-ux-pro-max` | [docs/frontend.md](docs/frontend.md) §3–4 |
+| Styling / layout | `impeccable`, `ui-ux-pro-max` | [docs/frontend.md](docs/frontend.md) §3–4 |
+| Design review before shipping UI | `kill-ai-slop`, `accessibility`, `core-web-vitals` | [docs/frontend.md](docs/frontend.md) |
+| Russian user-facing copy | `fanfan-russian-copy` | [.agents/context/PRODUCT.md](.agents/context/PRODUCT.md) |
+| Service worker / manifest / offline / push | — | [docs/frontend.md](docs/frontend.md) §2 "PWA & Offline Support" |
 | Frontend ↔ API contracts | — | [docs/api.md](docs/api.md) |
 | Tests | — | [docs/testing.md](docs/testing.md) |
 | Docker / infra | `docker-expert` | [docs/dependencies.md](docs/dependencies.md) |
@@ -28,6 +32,20 @@ Load the listed skills and read the guide **before** implementing, not after.
 | Docs / writing | `documentation-writer` | [docs/adr/README.md](docs/adr/README.md) |
 
 Third-party library APIs: look the signature up in current docs; never rely on training memory.
+
+**This file wins over a skill.** Skills are vendored from upstream and describe a
+generic project; three of them contradict this repo on purpose, and the repo is
+right: `test-driven-development` mandates a failing test before every change,
+where [docs/testing.md](docs/testing.md) asks you to judge whether this change
+warrants one;
+`using-git-worktrees` and `finishing-a-development-branch` assume you choose a
+branch and how to land it, which a Claude Code on the web session does not. All
+three are kept because `executing-plans`, `writing-plans` and
+`subagent-driven-development` call them as required sub-skills — ignore the
+conflicting instruction, not the skill.
+
+Skills are managed with `npx skills` and pinned in `skills-lock.json`; the ones
+named `fanfan-*` are project-local and live only here.
 
 ## Stack & commands
 
@@ -46,6 +64,7 @@ Third-party library APIs: look the signature up in current docs; never rely on t
 | `just dockerfile-lint` | hadolint (config `.hadolint.yaml`) |
 | `just backend-test` / `just backend-test-integration` | pytest (integration needs a Docker daemon) |
 | `just backend-migrate` | Apply migrations |
+| `just backend-check-migrations` | Fail if the ORM models have drifted from the migrations |
 | `just backend-generate <name>` | Autogenerate a migration against the running app DB |
 | `just backend-generate-auto <name>` | Autogenerate against a throwaway Postgres (no app DB needed; requires Docker) |
 | `just frontend-generate-api` | Regenerate `schema.d.ts` from the OpenAPI spec |
@@ -60,9 +79,9 @@ Always review a generated migration: autogenerate emits renames as drop+create a
 ├── backend/src/fanfan/
 │   ├── core/            # Pure domain: models, value objects, exceptions
 │   ├── application/     # Interactors/use cases, DTOs, ports, services
-│   ├── presentation/    # HTTP (web/), Telegram (tgbot/), NATS (faststream/), CLI (cli/), APScheduler (scheduler/, incl. the outbox relay)
+│   ├── presentation/    # HTTP (web/), Telegram (tgbot/), NATS (faststream/), CLI (cli/), APScheduler cron job definitions (scheduler/)
 │   ├── adapters/        # Infrastructure: DB, Redis, NATS, Telegram, external clients
-│   ├── main/            # FastAPI setup + Dishka DI container
+│   ├── main/            # Entrypoints (web, cli, faststream, scheduler — which registers the outbox relay) + Dishka DI container
 │   └── common/          # Shared static assets, path helpers
 ├── frontend/src/
 │   ├── routes/          # Pages & layouts
