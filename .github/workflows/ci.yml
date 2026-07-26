@@ -11,15 +11,6 @@ name: CI
 # independent tasks run in parallel: wall-clock time drops to the slowest
 # single task instead of their sum.
 #
-# This was previously collapsed into a single `quality` job because Actions
-# bills private repos per job, rounded UP to a whole minute, so five jobs cost
-# 5 minutes for ~2 minutes of real work. Public repositories get standard
-# runners for free
-# (https://docs.github.com/en/billing/managing-billing-for-your-products/about-billing-for-github-actions),
-# so that argument no longer applies now that this repo is public. Revisit the
-# collapse again if billing rules change or the fan-out proves not worth the
-# added wall clock from waiting on `changes`.
-#
 # Run the identical gates locally with `just ci` before pushing.
 on:
   pull_request:
