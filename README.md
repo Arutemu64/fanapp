@@ -154,7 +154,7 @@ just ci
 
 `just ci` runs the same eight gates, in the same check-only mode, on your machine. **Run it before pushing** — catching a failure locally takes seconds instead of a round trip through Actions.
 
-All gates run in one `quality` job, and one failing gate doesn't skip the rest, so a run reports every problem instead of only the first. Both choices exist to spend fewer Actions minutes; the reasoning is in the header comments of [`ci.yml`](.github/workflows/ci.yml). [`renovate.json`](renovate.json) batches dependency bumps into grouped weekly PRs for the same reason — see [`docs/dependencies.md`](docs/dependencies.md).
+Each area runs as its own job (`backend`, `frontend`, `dockerfiles`), so branch protection can require them individually and a run reports a separate red/green check per area. The `frontend` job further fans out into a `lint`/`check`/`test`/`build` matrix. Within a job, one failing gate doesn't skip the rest, so a run reports every problem in that area instead of only the first. The reasoning is in the header comment of [`ci.yml`](.github/workflows/ci.yml). [`renovate.json`](renovate.json) batches dependency bumps into grouped weekly PRs to spend fewer Actions minutes — see [`docs/dependencies.md`](docs/dependencies.md).
 
 [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml) additionally builds the backend and frontend images and pushes them to the GitHub Container Registry (GHCR) on pushes to `main` (which move the `latest` tag) and on `v*` tags. The `SENTRY_AUTH_TOKEN` repository secret is passed only to the frontend build (source-map upload); it is consumed in a discarded build stage and never ends up in the published image.
 
