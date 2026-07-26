@@ -142,7 +142,7 @@ Every pull request and every push to `main` runs [`.github/workflows/ci.yml`](.g
 - **Frontend** — Prettier + ESLint, `svelte-check`, and a production build.
 - **Dockerfiles** — [hadolint](https://github.com/hadolint/hadolint) best-practice linting (config in [`.hadolint.yaml`](.hadolint.yaml)). Run locally with `just dockerfile-lint` (hadolint comes from `mise`) or via the pre-commit hook.
 
-Each gate runs only when its area changed (`dorny/paths-filter`), so unrelated edits skip the gates they don't affect, and a docs-only change costs one metered minute.
+Each gate runs only when its area changed (`dorny/paths-filter`), so unrelated edits skip the gates they don't affect and a docs-only change finishes in seconds.
 
 CI is check-only: unlike `just backend-lint`, it never auto-fixes — a violation fails the run.
 
@@ -152,7 +152,7 @@ CI is check-only: unlike `just backend-lint`, it never auto-fixes — a violatio
 just ci
 ```
 
-`just ci` runs the same eight gates, in the same check-only mode, on your machine. **Run it before pushing** — a failure caught locally is an Actions run nobody spends.
+`just ci` runs the same eight gates, in the same check-only mode, on your machine. **Run it before pushing** — catching a failure locally takes seconds instead of a round trip through Actions.
 
 All gates run in one `quality` job, and one failing gate doesn't skip the rest, so a run reports every problem instead of only the first. Both choices exist to spend fewer Actions minutes; the reasoning is in the header comments of [`ci.yml`](.github/workflows/ci.yml). [`renovate.json`](renovate.json) batches dependency bumps into grouped weekly PRs for the same reason — see [`docs/dependencies.md`](docs/dependencies.md).
 
@@ -192,11 +192,30 @@ Optional, enabled via `.env`:
 - [`docs/claude-cloud.md`](docs/claude-cloud.md) — Claude Code on the web provisioning
 - [`docs/adr/`](docs/adr/README.md) — architecture decision records
 
+## Security
+
+Found a vulnerability? Report it privately — see [`SECURITY.md`](SECURITY.md).
+Please don't open a public issue, and please don't test against the live
+festival deployment; `just run-dev` gives you the whole stack locally.
+
 ## License
 
-[MIT](LICENSE) © Arutemu64.
+[MIT](LICENSE) © Arutemu64. The MIT grant covers the **source code**. Two
+categories of files in this repository are excluded from it.
 
-Vendored third-party agent skills under `.claude/skills/`, `.agents/skills/` and
-`.impeccable/` are **not** covered by this license — each keeps its upstream
-license and copyright. `skills-lock.json` records the source repository for every
-one of them.
+**Festival branding and artwork.** The FAN FAN name, logo, festival maps and
+event photography belong to the festival, not to this codebase, and carry no
+license to reuse — the event photo in particular shows identifiable attendees,
+who consented to a festival photo, not to redistribution under MIT. Excluded:
+
+- `backend/src/fanfan/common/static/logo.png`
+- `frontend/static/icons/`
+- `frontend/src/lib/assets/map/`
+- `frontend/src/routes/(app)/components/home/main.webp`
+
+Fork the code freely; swap in your own branding.
+
+**Vendored third-party agent skills**, under `.agents/skills/`,
+`.claude/skills/`, `.cline/`, `.gemini/` and `.impeccable/`. Each keeps its
+upstream license and copyright; `skills-lock.json` records the source repository
+for every one of them.
