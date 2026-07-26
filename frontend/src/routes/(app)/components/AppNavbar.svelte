@@ -87,18 +87,21 @@
 			<NotificationBell />
 		{/if}
 		{#if user}
-			<!-- Flowbite renders Avatar as a div with role="button" whose only content
-				is the initials, so unlabelled it announces as "ИИ, button" — the label
-				and the expanded state are what make it read as an account menu. -->
-			<Avatar
+			<!-- Flowbite's Avatar renders a div with a hardcoded role="button" but no
+				keydown handling, so it claims a role it doesn't implement: Enter and
+				Space do nothing on it. The real <button> is the trigger (Popper binds to
+				this id), and the Avatar rides along as decoration — its initials would
+				otherwise announce as the button's name instead of "Меню профиля". -->
+			<button
 				id="avatar-menu"
-				class="cursor-pointer"
+				type="button"
 				aria-label="Меню профиля"
 				aria-haspopup="true"
 				aria-expanded={isAvatarMenuOpen}
+				class="rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
 			>
-				{avatarInitials}
-			</Avatar>
+				<Avatar aria-hidden="true" class="cursor-pointer">{avatarInitials}</Avatar>
+			</button>
 			<Dropdown placement="bottom-end" triggeredBy="#avatar-menu" bind:isOpen={isAvatarMenuOpen}>
 				<DropdownHeader>
 					<span class="block truncate text-sm font-medium text-gray-900 dark:text-white"

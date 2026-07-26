@@ -70,8 +70,31 @@ const CACHE = `cache-${version}`;
 // in dev because the `push`/`notificationclick` handlers below stay registered.
 const dev = build.length === 0;
 
+// Fontsource ships one face per subset Google publishes, and `build` lists every
+// file Vite emits, so precaching it wholesale pulled ~170 KB of Greek, Vietnamese
+// and extended-Latin at install — alphabets this Russian-language app never
+// renders. `unicode-range` already stops the *browser* fetching them (verified:
+// the home page requests 4 of the 11 files either way); it has no say in what we
+// precache. Skipping them here leaves the faces declared and fetchable, so a
+// stray glyph still renders when online and the opportunistic `cache.put` below
+// keeps whatever actually gets used.
+const SKIPPED_FONT_SUBSETS = [
+	'-greek-', // the substring also covers -greek-ext-
+	'-vietnamese-',
+	// Latin-ext stays for the body face — imported titles carry diacritics
+	// ("Ōkami"). The display face only ever renders one heading and the
+	// countdown digits, so its copy is unreachable.
+	'unbounded-latin-ext-'
+];
+
+function isPrecachable(pathname: string): boolean {
+	if (!pathname.endsWith('.woff2')) return true;
+
+	return !SKIPPED_FONT_SUBSETS.some((subset) => pathname.includes(subset));
+}
+
 const ASSETS = [
-	...build, // the app itself
+	...build.filter(isPrecachable), // the app itself
 	...files // everything in `static`
 ];
 

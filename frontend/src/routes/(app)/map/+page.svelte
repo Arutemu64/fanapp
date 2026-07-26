@@ -55,6 +55,12 @@
 	let active = $state<MapEntry | null>(null);
 	let viewer = $state<HTMLDialogElement | null>(null);
 
+	// The maps are landscape (~1.54:1) and phones are portrait, so a fit-to-screen
+	// view lands around 28% of the file's native resolution — too small to read the
+	// numbered legend. Zoomed swaps the fit for full viewport height, which on a
+	// phone is roughly 1:1 with the source, and the container pans.
+	let zoomed = $state(false);
+
 	// A native <dialog> opened with showModal() is what makes the viewer usable
 	// from a keyboard: it moves focus inside, keeps it there, marks the page
 	// behind it inert (so a screen reader can't wander into it), restores focus
@@ -62,6 +68,7 @@
 	// role="dialog" div does on its own.
 	async function openViewer(map: MapEntry) {
 		active = map;
+		zoomed = false;
 		// Let the content render first so showModal() has a control to focus.
 		await tick();
 		viewer?.showModal();
@@ -71,20 +78,24 @@
 		viewer?.close();
 	}
 
-	// Clicks that land on the dialog element itself — its padding or the
-	// ::backdrop — are outside the image, so they dismiss the viewer.
+	// Clicks that land on the dialog or the pan area — anywhere but the image
+	// itself, which is its own zoom button — are outside the map, so they dismiss.
 	function handleViewerClick(event: MouseEvent) {
-		if (event.target === viewer) {
+		if (event.target === viewer || event.target === panArea) {
 			closeViewer();
 		}
 	}
+
+	let panArea = $state<HTMLDivElement | null>(null);
 </script>
 
 <svelte:head>
 	<title>Карта площадки · ФАН ФАН</title>
 </svelte:head>
 
-<SectionIntro description="Нажми на карту, чтобы открыть её на весь экран." />
+<SectionIntro
+	description="Нажми на карту, чтобы открыть её на весь экран, и ещё раз — чтобы приблизить."
+/>
 
 <div class="space-y-4">
 	{#each maps as map (map.id)}
@@ -123,18 +134,43 @@
 	onclose={() => (active = null)}
 	onclick={handleViewerClick}
 	aria-label="Просмотр карты"
-	class="relative m-0 flex h-dvh max-h-none w-full max-w-none items-center justify-center border-0 bg-black/80 p-4 backdrop:bg-black/80"
+	class="relative m-0 h-dvh max-h-none w-full max-w-none border-0 bg-black/80 p-0 backdrop:bg-black/80"
 >
 	{#if active}
-		<!-- max-w caps the size on desktop so the image isn't stretched. The intrinsic
-			size keeps the frame from jumping while a cold-cached copy decodes. -->
-		<img
-			src={active.src}
-			alt={active.alt}
-			width={active.width}
-			height={active.height}
-			class="max-h-full w-full max-w-5xl rounded-xl object-contain shadow-2xl"
-		/>
+		<!-- Edge to edge: no padding, so a landscape map gets the whole width on a
+			phone. `m-auto` on the image (rather than centring on this container) is
+			what keeps the top-left reachable once the image overflows and this
+			becomes the pan area — centred flex content clips its own overflow. -->
+		<div bind:this={panArea} class="flex h-full w-full overflow-auto overscroll-contain">
+			<!-- The image is its own zoom control, so the gesture is the obvious one
+				(tap the map) and it still arrives as a labelled button in the tab order.
+				The image is sized against the viewport rather than its parent: the button
+				is `shrink-0` so it takes the image's own width, which would make a
+				parent-relative `max-w-full` resolve to the natural size and never fit.
+				The intrinsic width/height keep the frame from jumping while a cold-cached
+				copy decodes. -->
+			<button
+				type="button"
+				onclick={() => (zoomed = !zoomed)}
+				aria-label={zoomed ? 'Отдалить карту' : 'Приблизить карту'}
+				aria-pressed={zoomed}
+				class={[
+					'm-auto shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
+					zoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'
+				]}
+			>
+				<img
+					src={active.src}
+					alt={active.alt}
+					width={active.width}
+					height={active.height}
+					class={[
+						'shadow-2xl',
+						zoomed ? 'h-[100dvh] max-w-none' : 'max-h-[100dvh] max-w-[100dvw] object-contain'
+					]}
+				/>
+			</button>
+		</div>
 
 		<div class="absolute end-4 top-4 flex items-center gap-2">
 			<a
