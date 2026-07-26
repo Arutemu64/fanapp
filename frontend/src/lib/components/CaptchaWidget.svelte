@@ -18,9 +18,21 @@
 		reset?: () => void;
 		/** Bound to a function that starts the invisible challenge on demand. */
 		execute?: () => void;
+		/**
+		 * Fired once per successful solve, after `token` is set. Lets a caller
+		 * resume a submit it parked waiting for the token without watching the
+		 * token in an $effect. Not called for the expiry/error paths, which only
+		 * clear the token.
+		 */
+		onSolve?: () => void;
 	}
 
-	let { token = $bindable(null), reset = $bindable(), execute = $bindable() }: Props = $props();
+	let {
+		token = $bindable(null),
+		reset = $bindable(),
+		execute = $bindable(),
+		onSolve
+	}: Props = $props();
 
 	let container = $state<HTMLDivElement>();
 
@@ -69,7 +81,12 @@
 					// Invisible: a token is minted only after execute(), and only
 					// suspicious users ever see an actual challenge pop-up.
 					invisible: true,
-					callback: (solved) => (token = solved)
+					// `token` is a bindable prop, so the parent sees the new value
+					// synchronously — onSolve() can read it straight away.
+					callback: (solved) => {
+						token = solved;
+						onSolve?.();
+					}
 				});
 
 				// Expired or errored tokens are unusable — drop them so the caller

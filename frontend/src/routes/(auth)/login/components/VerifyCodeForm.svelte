@@ -47,11 +47,11 @@
 	const toastService = getToastService();
 
 	// Fulfill a deferred resend the moment the invisible captcha solves.
-	$effect(() => {
-		if (captchaGate.awaitingCaptcha && captchaToken) {
+	function handleCaptchaSolved() {
+		if (captchaGate.awaitingCaptcha) {
 			void handleLoginCodeRequest();
 		}
-	});
+	}
 
 	onMount(() => {
 		cooldown.start();
@@ -110,7 +110,7 @@
 
 	async function handleLoginCodeRequest() {
 		// The captcha runs invisibly. If its token isn't ready yet, start the
-		// challenge and hold the resend; the effect above re-runs this once the
+		// challenge and hold the resend; handleCaptchaSolved re-runs this once the
 		// token arrives.
 		if (captchaEnabled && !captchaToken) {
 			executeCaptcha?.();
@@ -210,6 +210,7 @@
 			bind:token={captchaToken}
 			bind:reset={resetCaptcha}
 			bind:execute={executeCaptcha}
+			onSolve={handleCaptchaSolved}
 		/>
 
 		<Button

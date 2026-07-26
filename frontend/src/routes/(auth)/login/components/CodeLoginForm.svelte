@@ -38,7 +38,7 @@
 	let executeCaptcha = $state<(() => void) | undefined>(undefined);
 
 	// Holds the request when the user submits before the invisible captcha has a
-	// token; the effect below fires it once the token lands, so the user never
+	// token; the widget's onSolve fires it once the token lands, so the user never
 	// has to tap "Продолжить" a second time.
 	const captchaGate = new CaptchaGate();
 
@@ -47,11 +47,11 @@
 	let isRequesting = $derived(activeAction === 'code-request' || captchaGate.awaitingCaptcha);
 
 	// Fulfill a deferred submit the moment the invisible captcha solves.
-	$effect(() => {
-		if (captchaGate.awaitingCaptcha && captchaToken) {
+	function handleCaptchaSolved() {
+		if (captchaGate.awaitingCaptcha) {
 			void handleLoginCodeRequest();
 		}
-	});
+	}
 
 	onDestroy(() => captchaGate.clear());
 
@@ -98,7 +98,7 @@
 		}
 
 		// The captcha runs invisibly. If its token isn't ready yet, start the
-		// challenge and hold the request; the effect above re-runs this once the
+		// challenge and hold the request; handleCaptchaSolved re-runs this once the
 		// token arrives.
 		if (captchaEnabled && !captchaToken) {
 			executeCaptcha?.();
@@ -194,6 +194,7 @@
 			bind:token={captchaToken}
 			bind:reset={resetCaptcha}
 			bind:execute={executeCaptcha}
+			onSolve={handleCaptchaSolved}
 		/>
 
 		<Button

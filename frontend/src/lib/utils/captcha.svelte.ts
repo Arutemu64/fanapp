@@ -1,8 +1,8 @@
 // Invisible-captcha gate shared by the login forms. When the user submits
 // before the captcha has produced a token, we "hold" the action and let the
-// caller's $effect re-fire it once the token lands — so the user never taps
-// twice. The timeout is a safety net: if the widget never resolves (network or
-// script error), we stop waiting and surface a retryable error.
+// widget's onSolve callback re-fire it once the token lands — so the user never
+// taps twice. The timeout is a safety net: if the widget never resolves (network
+// or script error), we stop waiting and surface a retryable error.
 const DEFAULT_CAPTCHA_WAIT_TIMEOUT_MS = 10000;
 
 export class CaptchaGate {
