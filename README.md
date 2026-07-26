@@ -142,7 +142,7 @@ Every pull request and every push to `main` runs [`.github/workflows/ci.yml`](.g
 - **Frontend** — Prettier + ESLint, `svelte-check`, and a production build.
 - **Dockerfiles** — [hadolint](https://github.com/hadolint/hadolint) best-practice linting (config in [`.hadolint.yaml`](.hadolint.yaml)). Run locally with `just dockerfile-lint` (hadolint comes from `mise`) or via the pre-commit hook.
 
-Each gate runs only when its area changed (`dorny/paths-filter`), so unrelated edits skip the gates they don't affect, and a docs-only change costs one metered minute.
+Each gate runs only when its area changed (`dorny/paths-filter`), so unrelated edits skip the gates they don't affect and a docs-only change finishes in seconds.
 
 CI is check-only: unlike `just backend-lint`, it never auto-fixes — a violation fails the run.
 
@@ -152,7 +152,7 @@ CI is check-only: unlike `just backend-lint`, it never auto-fixes — a violatio
 just ci
 ```
 
-`just ci` runs the same eight gates, in the same check-only mode, on your machine. **Run it before pushing** — a failure caught locally is an Actions run nobody spends.
+`just ci` runs the same eight gates, in the same check-only mode, on your machine. **Run it before pushing** — catching a failure locally takes seconds instead of a round trip through Actions.
 
 All gates run in one `quality` job, and one failing gate doesn't skip the rest, so a run reports every problem instead of only the first. Both choices exist to spend fewer Actions minutes; the reasoning is in the header comments of [`ci.yml`](.github/workflows/ci.yml). [`renovate.json`](renovate.json) batches dependency bumps into grouped weekly PRs for the same reason — see [`docs/dependencies.md`](docs/dependencies.md).
 
@@ -191,6 +191,12 @@ Optional, enabled via `.env`:
 - [`docs/dependencies.md`](docs/dependencies.md) — shared version pins and Renovate
 - [`docs/claude-cloud.md`](docs/claude-cloud.md) — Claude Code on the web provisioning
 - [`docs/adr/`](docs/adr/README.md) — architecture decision records
+
+## Security
+
+Found a vulnerability? Report it privately — see [`SECURITY.md`](SECURITY.md).
+Please don't open a public issue, and please don't test against the live
+festival deployment; `just run-dev` gives you the whole stack locally.
 
 ## License
 

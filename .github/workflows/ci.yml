@@ -3,13 +3,19 @@ name: CI
 # Run the same quality gates we run locally (see justfile / .pre-commit-config.yaml)
 # on every pull request and on pushes to main.
 #
-# Everything lives in ONE job on purpose. Billed Actions usage is metered per
-# job, rounded UP to a whole minute
-# (https://docs.github.com/en/actions/concepts/billing-and-usage). Every gate
-# here finishes in well under a minute, so the previous five-job fan-out cost 5
-# minutes for ~2 minutes of real work — the rounding, not the work, was the
-# spend. Sequencing the gates in a single job costs 2. Wall-clock time goes up
-# by roughly a minute; minutes are the scarcer resource, not latency.
+# Everything lives in ONE job on purpose. The gates finish in ~2 minutes
+# sequentially, and `!cancelled()` on every step below already gives what the
+# old five-job fan-out gave: one run reports every failure, not just the first.
+# Splitting back out would buy about a minute of wall clock and cost a separate
+# paths-filter job that every other job then waits on.
+#
+# The collapse was originally driven by billed Actions minutes — metered per
+# job, rounded UP to a whole minute, so five jobs cost 5 minutes for ~2 minutes
+# of work. Public repositories get standard runners for free
+# (https://docs.github.com/en/billing/managing-billing-for-your-products/about-billing-for-github-actions),
+# so that argument no longer holds up the design; the reasons above do. Revisit
+# if the run outgrows ~5 minutes, or if branch protection needs a separate red
+# check per area.
 #
 # Run the identical gates locally with `just ci` before pushing.
 on:
