@@ -8,8 +8,9 @@
 </script>
 
 <script lang="ts">
+	import type { Attachment } from 'svelte/attachments';
+
 	import { loadSmartCaptcha, type SmartCaptchaApi } from '$lib/utils/smartcaptcha';
-	import { onMount } from 'svelte';
 
 	interface Props {
 		/** Solved token, or null until the user passes the challenge. */
@@ -18,19 +19,31 @@
 		reset?: () => void;
 		/** Bound to a function that starts the invisible challenge on demand. */
 		execute?: () => void;
+		/**
+		 * Fired once per successful solve, after `token` is set. Lets a caller
+		 * resume a submit it parked waiting for the token without watching the
+		 * token in an $effect. Not called for the expiry/error paths, which only
+		 * clear the token.
+		 */
+		onSolve?: () => void;
 	}
 
-	let { token = $bindable(null), reset = $bindable(), execute = $bindable() }: Props = $props();
+	let {
+		token = $bindable(null),
+		reset = $bindable(),
+		execute = $bindable(),
+		onSolve
+	}: Props = $props();
 
-	let container = $state<HTMLDivElement>();
-
-	onMount(() => {
-		if (!PUBLIC_SMARTCAPTCHA_CLIENT_KEY || !container) {
-			return;
-		}
-
-		const target = container;
-
+	// An attachment rather than onMount + bind:this: the node arrives non-null, so
+	// there is no container state to thread through and no null check, and the
+	// teardown sits with the setup that owns it. The {#if} below is what guards on
+	// the client key — the attachment only exists when the container renders.
+	//
+	// Deliberately reads no reactive state while it runs: an attachment re-runs
+	// (destroying and re-rendering the widget) whenever state it read during its
+	// own run changes. `onSolve` is therefore read lazily, inside the callback.
+	const mountSmartCaptcha: Attachment<HTMLDivElement> = (target) => {
 		let api: SmartCaptchaApi | undefined;
 		let widgetId: number | undefined;
 		let unmounted = false;
@@ -69,7 +82,14 @@
 					// Invisible: a token is minted only after execute(), and only
 					// suspicious users ever see an actual challenge pop-up.
 					invisible: true,
-					callback: (solved) => (token = solved)
+					// `token` is a bindable prop, so the parent sees the new value
+					// synchronously — onSolve() can read it straight away. Reading
+					// `onSolve` here rather than above also keeps it out of the
+					// attachment's dependencies.
+					callback: (solved) => {
+						token = solved;
+						onSolve?.();
+					}
 				});
 
 				// Expired or errored tokens are unusable — drop them so the caller
@@ -96,7 +116,7 @@
 				window.smartCaptcha?.destroy(widgetId);
 			}
 		};
-	});
+	};
 </script>
 
 {#if PUBLIC_SMARTCAPTCHA_CLIENT_KEY}
@@ -104,5 +124,5 @@
 		Invisible SmartCaptcha renders into this container. It stays empty in the
 		common case; a challenge pop-up only appears for suspicious requests.
 	-->
-	<div bind:this={container}></div>
+	<div {@attach mountSmartCaptcha}></div>
 {/if}

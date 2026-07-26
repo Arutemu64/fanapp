@@ -1,6 +1,7 @@
 import { browser } from '$app/environment';
 import { PUBLIC_API_URL } from '$env/static/public';
 import { timeoutSignal } from '$lib/utils/fetchTimeout';
+import { createSubscriber } from 'svelte/reactivity';
 
 /**
  * Active server-reachability tracking.
@@ -38,6 +39,25 @@ export function onReachableChange(listener: () => void): () => void {
 	listeners.add(listener);
 	return () => listeners.delete(listener);
 }
+
+// Bridges the listener set above into Svelte's reactivity, so a component can
+// read reachability in a $derived instead of mirroring it into $state from an
+// $effect. One subscription is shared however many readers there are, and it is
+// torn down when the last of them goes away.
+const subscribeReachable = createSubscriber((update) => onReachableChange(update));
+
+/**
+ * Reachability as a *reactive* read, for components and deriveds.
+ *
+ * `isReachable()` stays the plain read: `load` functions run outside any effect,
+ * where subscribing would do nothing, and they only need the current value.
+ */
+export const reachability = {
+	get current(): boolean {
+		subscribeReachable();
+		return reachable;
+	}
+};
 
 let inflight: Promise<boolean> | null = null;
 

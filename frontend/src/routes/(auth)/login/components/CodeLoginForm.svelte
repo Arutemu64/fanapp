@@ -13,21 +13,21 @@
 
 	interface Props {
 		email: string;
-		isBusy?: boolean;
 		showPasswordForm?: boolean;
-		isWaitingForCode?: boolean;
+		// The address the code went to, empty until it's sent. Bindable because the
+		// login page hides the Telegram button once we're waiting for a code; it
+		// derives that from this rather than us mirroring a second flag back up.
+		codeSentTo?: string;
 	}
 
 	let {
 		email = $bindable(''),
-		isBusy = $bindable(false),
 		showPasswordForm = $bindable(false),
-		isWaitingForCode = $bindable(false)
+		codeSentTo = $bindable('')
 	}: Props = $props();
 
 	type ActiveAction = 'code-request' | null;
 
-	let codeSentTo = $state('');
 	let activeAction = $state<ActiveAction>(null);
 	let emailError = $state('');
 	let formError = $state('');
@@ -38,7 +38,7 @@
 	let executeCaptcha = $state<(() => void) | undefined>(undefined);
 
 	// Holds the request when the user submits before the invisible captcha has a
-	// token; the effect below fires it once the token lands, so the user never
+	// token; the widget's onSolve fires it once the token lands, so the user never
 	// has to tap "Продолжить" a second time.
 	const captchaGate = new CaptchaGate();
 
@@ -46,20 +46,12 @@
 	// holding it until the background captcha resolves.
 	let isRequesting = $derived(activeAction === 'code-request' || captchaGate.awaitingCaptcha);
 
-	$effect(() => {
-		isBusy = isRequesting;
-	});
-
-	$effect(() => {
-		isWaitingForCode = !!codeSentTo;
-	});
-
 	// Fulfill a deferred submit the moment the invisible captcha solves.
-	$effect(() => {
-		if (captchaGate.awaitingCaptcha && captchaToken) {
+	function handleCaptchaSolved() {
+		if (captchaGate.awaitingCaptcha) {
 			void handleLoginCodeRequest();
 		}
-	});
+	}
 
 	onDestroy(() => captchaGate.clear());
 
@@ -106,7 +98,7 @@
 		}
 
 		// The captcha runs invisibly. If its token isn't ready yet, start the
-		// challenge and hold the request; the effect above re-runs this once the
+		// challenge and hold the request; handleCaptchaSolved re-runs this once the
 		// token arrives.
 		if (captchaEnabled && !captchaToken) {
 			executeCaptcha?.();
@@ -156,7 +148,7 @@
 </script>
 
 {#if codeSentTo}
-	<VerifyCodeForm email={codeSentTo} bind:isBusy onBack={() => (codeSentTo = '')} />
+	<VerifyCodeForm email={codeSentTo} onBack={() => (codeSentTo = '')} />
 {:else}
 	<form onsubmit={handleSubmit} class="space-y-4">
 		{#if formError}
@@ -202,6 +194,7 @@
 			bind:token={captchaToken}
 			bind:reset={resetCaptcha}
 			bind:execute={executeCaptcha}
+			onSolve={handleCaptchaSolved}
 		/>
 
 		<Button

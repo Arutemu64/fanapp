@@ -33,13 +33,6 @@
 		}
 	});
 
-	// Reset error when search changes
-	$effect(() => {
-		if (query) {
-			formError = '';
-		}
-	});
-
 	// Shared matcher folds ё/е and matches space-separated tokens in any order.
 	// Indexed once per schedule so typing through a few hundred events stays cheap.
 	let searchIndex = $derived(
@@ -119,6 +112,7 @@
 			spellcheck={false}
 			clearable
 			bind:value={query}
+			oninput={() => (formError = '')}
 		/>
 		<div
 			class="max-h-48 overflow-y-auto rounded-lg border border-gray-200 sm:max-h-60 dark:border-gray-700"

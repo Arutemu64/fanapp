@@ -7,9 +7,11 @@
 	import PasswordLoginForm from './components/PasswordLoginForm.svelte';
 
 	let email = $state('');
-	let isBusy = $state(false);
 	let showPasswordForm = $state(false);
-	let isWaitingForCode = $state(false);
+	// CodeLoginForm owns the send; we only need to know whether it happened, so
+	// this is derived from its state rather than mirrored into a second flag.
+	let codeSentTo = $state('');
+	let isWaitingForCode = $derived(!!codeSentTo);
 </script>
 
 <svelte:head>
@@ -43,9 +45,9 @@
 				</div>
 			{/if}
 
-			<CodeLoginForm bind:email bind:isBusy bind:showPasswordForm bind:isWaitingForCode />
+			<CodeLoginForm bind:email bind:showPasswordForm bind:codeSentTo />
 		{:else}
-			<PasswordLoginForm bind:email bind:isBusy onBack={() => (showPasswordForm = false)} />
+			<PasswordLoginForm bind:email onBack={() => (showPasswordForm = false)} />
 		{/if}
 	</div>
 </Card>
