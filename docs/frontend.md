@@ -148,6 +148,9 @@ Russian copy is mandatory for all user-facing text — buttons, placeholders, er
 
 All modals use Flowbite-Svelte `<Modal bind:open size="sm">`. Follow these structural rules:
 
+> [!NOTE]
+> **One deliberate carve-out**: the fullscreen map viewer (`routes/(app)/map/components/MapViewer.svelte`) uses a native `<dialog>` opened with `showModal()`, not `<Modal>`. It needs the whole viewport with no card chrome, and the top layer keeps it above the z-index ladder below without joining it. The native element supplies the focus trap, Escape handling and background inertness that `<Modal>` would otherwise provide. Its surface is dark in both themes on purpose — that is not a missing `dark:` variant. Anything modal that *looks* like a dialog still uses `<Modal>`; don't read this as a general licence.
+
 ### Required: `{#snippet header()}`
 
 Every modal **must** use the `header` snippet — never put a raw `<h3>` inside the modal body. Always pair the title with a contextual icon:
