@@ -32,12 +32,12 @@
 			void invalidate('app:schedule:changes');
 		};
 
-		eventsClient?.on('schedule_updated', reloadChanges);
-		eventsClient?.on('connection_established', reloadChanges);
+		eventsClient.on('schedule_updated', reloadChanges);
+		eventsClient.on('connection_established', reloadChanges);
 
 		return () => {
-			eventsClient?.off('schedule_updated', reloadChanges);
-			eventsClient?.off('connection_established', reloadChanges);
+			eventsClient.off('schedule_updated', reloadChanges);
+			eventsClient.off('connection_established', reloadChanges);
 		};
 	});
 </script>

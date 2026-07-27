@@ -90,12 +90,6 @@
 	}
 
 	onMount(() => {
-		if (!eventsClient) {
-			// No live stream: the initial seed is all we have, so refresh once on mount.
-			void loadNotifications();
-			return;
-		}
-
 		eventsClient.on('notification_created', handleNewNotification);
 		// 'connection_established' fires on the first connect and on every reconnect.
 		eventsClient.on('connection_established', reloadAfterReconnect);

@@ -1,6 +1,5 @@
 import type { NotificationDTO } from '$lib/types/notifications';
 
-import { browser } from '$app/environment';
 import { invalidateAll } from '$app/navigation';
 import { PUBLIC_API_URL } from '$env/static/public';
 import {
@@ -11,7 +10,7 @@ import {
 } from '$lib/services/reachability';
 import { createContext } from 'svelte';
 
-const [getEvents, setEvents] = createContext<EventsClient | null>();
+const [getEvents, setEvents] = createContext<EventsClient>();
 
 /** Max reconnect attempts before backing off to the slow retry below. */
 const MAX_RECONNECT_ATTEMPTS = 10;
@@ -180,17 +179,15 @@ export class EventsClient {
 		// React to OS network changes: pause the stream when the browser goes
 		// offline (stops the reconnect churn and the "reconnecting" banner) and
 		// re-dial when it comes back.
-		if (browser) {
-			window.addEventListener('offline', this.#handleOffline);
-			window.addEventListener('online', this.#handleOnline);
-			// Recover when connectivity returns after the stream gave up retrying.
-			// While the reconnect loop is still running it handles recovery itself,
-			// so we only step in once it has reached the terminal 'failed' state.
-			this.#unsubscribeReachable = onReachableChange(this.#handleReachableChange);
-			// Pause the stream while the app is backgrounded and resume on return;
-			// Web Push keeps notifications flowing while it is down.
-			document.addEventListener('visibilitychange', this.#handleVisibilityChange);
-		}
+		window.addEventListener('offline', this.#handleOffline);
+		window.addEventListener('online', this.#handleOnline);
+		// Recover when connectivity returns after the stream gave up retrying.
+		// While the reconnect loop is still running it handles recovery itself,
+		// so we only step in once it has reached the terminal 'failed' state.
+		this.#unsubscribeReachable = onReachableChange(this.#handleReachableChange);
+		// Pause the stream while the app is backgrounded and resume on return;
+		// Web Push keeps notifications flowing while it is down.
+		document.addEventListener('visibilitychange', this.#handleVisibilityChange);
 		this.connect();
 	}
 
@@ -206,7 +203,7 @@ export class EventsClient {
 
 		// Don't dial while the browser reports no network — wait for the `online`
 		// event instead of looping failed connection attempts.
-		if (browser && !navigator.onLine) {
+		if (!navigator.onLine) {
 			this.#connectionStatus = 'disconnected';
 			return;
 		}
@@ -337,11 +334,9 @@ export class EventsClient {
 	destroy() {
 		this.disconnect();
 		this.#destroyed = true;
-		if (browser) {
-			window.removeEventListener('offline', this.#handleOffline);
-			window.removeEventListener('online', this.#handleOnline);
-			document.removeEventListener('visibilitychange', this.#handleVisibilityChange);
-		}
+		window.removeEventListener('offline', this.#handleOffline);
+		window.removeEventListener('online', this.#handleOnline);
+		document.removeEventListener('visibilitychange', this.#handleVisibilityChange);
 		this.#unsubscribeReachable?.();
 		this.#unsubscribeReachable = null;
 	}
@@ -532,18 +527,17 @@ export class EventsClient {
 }
 
 /** Create and set the EventsClient in Svelte context (call in root layout). */
-export function setEventsClient(): EventsClient | null {
-	const client = browser ? new EventsClient() : null;
+export function setEventsClient(): EventsClient {
+	const client = new EventsClient();
 	setEvents(client);
 	return client;
 }
 
 /**
- * Read the EventsClient from context. Null only when there is no browser (the
- * root layout stores null then). Deliberately lets `createContext`'s
+ * Read the EventsClient from context. Deliberately lets `createContext`'s
  * missing-context error through: swallowing it turned a forgotten
  * `setEventsClient()` into realtime that silently never arrives.
  */
-export function getEventsClient(): EventsClient | null {
+export function getEventsClient(): EventsClient {
 	return getEvents();
 }

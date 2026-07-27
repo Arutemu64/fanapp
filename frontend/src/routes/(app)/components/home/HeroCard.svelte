@@ -175,8 +175,10 @@
 					<div class="grid grid-cols-4 gap-2" aria-hidden="true">
 						{#each units as unit, index (unit.id)}
 							<div
-								class="countdown-cell flex flex-col items-center rounded-lg bg-white px-1 py-2.5 shadow-sm dark:bg-gray-800"
-								class:countdown-cell--animated={!prefersReducedMotion.current}
+								class={[
+									'countdown-cell flex flex-col items-center rounded-lg bg-white px-1 py-2.5 shadow-sm dark:bg-gray-800',
+									!prefersReducedMotion.current && 'countdown-cell--animated'
+								]}
 								style:--enter-delay="{index * 80}ms"
 							>
 								{#if prefersReducedMotion.current || unit.id === 'seconds'}

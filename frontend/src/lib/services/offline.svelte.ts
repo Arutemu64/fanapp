@@ -1,4 +1,3 @@
-import { browser } from '$app/environment';
 import { invalidateAll } from '$app/navigation';
 import { createContext } from 'svelte';
 
@@ -33,8 +32,6 @@ export class OfflineService {
 	#unsubscribeReachable: (() => void) | null = null;
 
 	constructor() {
-		if (!browser) return;
-
 		this.#unsubscribeReachable = onReachableChange(() => {
 			const wasOnline = this.#online;
 			this.#online = isReachable();
@@ -78,7 +75,6 @@ export class OfflineService {
 	 * EventsClient has destroy()).
 	 */
 	destroy() {
-		if (!browser) return;
 		this.#unsubscribeReachable?.();
 		this.#unsubscribeReachable = null;
 		window.removeEventListener('offline', this.#handleOffline);
@@ -92,7 +88,7 @@ export class OfflineService {
 
 	// Start the recovery poll while offline; stop it once we're back.
 	#syncPolling() {
-		const shouldPoll = browser && !this.#online;
+		const shouldPoll = !this.#online;
 		if (shouldPoll && !this.#pollId) {
 			this.#pollDelay = RECOVERY_POLL_MIN_MS;
 			this.#scheduleNextPoll();
@@ -111,7 +107,7 @@ export class OfflineService {
 			// setTimeout wants a void callback; run the async probe fire-and-forget.
 			void (async () => {
 				await probeReachability();
-				if (browser && !this.#online) {
+				if (!this.#online) {
 					this.#pollDelay = Math.min(this.#pollDelay * 2, RECOVERY_POLL_MAX_MS);
 					this.#scheduleNextPoll();
 				}

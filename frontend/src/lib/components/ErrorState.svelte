@@ -57,15 +57,11 @@
 	);
 
 	function handleGoBack() {
-		if (typeof window !== 'undefined') {
-			window.history.back();
-		}
+		window.history.back();
 	}
 
 	function handleRetry() {
-		if (typeof window !== 'undefined') {
-			window.location.reload();
-		}
+		window.location.reload();
 	}
 </script>
 

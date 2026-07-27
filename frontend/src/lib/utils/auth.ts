@@ -35,7 +35,7 @@ export function sanitizeNextPath(raw: string | null): string | null {
  */
 export async function completeLogin(
 	toastService: ToastService,
-	eventsClient: EventsClient | null,
+	eventsClient: EventsClient,
 	message: string
 ): Promise<void> {
 	toastService.add(message, 'success');
@@ -45,5 +45,5 @@ export async function completeLogin(
 	// path a second time. It is sanitized to an in-app path above.
 	// eslint-disable-next-line svelte/no-navigation-without-resolve
 	await goto(next ?? resolve('/'), { invalidateAll: true });
-	eventsClient?.restart();
+	eventsClient.restart();
 }

@@ -79,10 +79,6 @@
 	}
 
 	onMount(() => {
-		if (!eventsClient) {
-			return;
-		}
-
 		eventsClient.on('notification_created', addLiveNotification);
 		// 'connection_established' fires on the first connect and on every reconnect.
 		eventsClient.on('connection_established', syncAfterReconnect);

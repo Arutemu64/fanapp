@@ -97,12 +97,12 @@
 			void invalidate('app:sync-sources');
 		};
 
-		eventsClient?.on('sync_run_updated', reloadSources);
-		eventsClient?.on('connection_established', reloadSources);
+		eventsClient.on('sync_run_updated', reloadSources);
+		eventsClient.on('connection_established', reloadSources);
 
 		return () => {
-			eventsClient?.off('sync_run_updated', reloadSources);
-			eventsClient?.off('connection_established', reloadSources);
+			eventsClient.off('sync_run_updated', reloadSources);
+			eventsClient.off('connection_established', reloadSources);
 		};
 	});
 </script>

@@ -58,7 +58,7 @@
 		setAppBadgeCount(0);
 
 		await goto(resolve('/'), { invalidateAll: true });
-		eventsClient?.restart();
+		eventsClient.restart();
 	}
 </script>
 
