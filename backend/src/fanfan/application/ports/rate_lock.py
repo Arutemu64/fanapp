@@ -28,6 +28,7 @@ class RateLockFactory(Protocol):
     def __call__(
         self,
         limit_name: str,
+        *,
         cooldown_period: float = 60,
         blocking: bool = True,
         lock_timeout: float = 60,

@@ -48,7 +48,7 @@ async def test_add_vote_creates_vote_and_publishes_event(
     # Voting is only available to a user with a linked ticket
     # and the voting setting enabled in the festival config.
     settings = await settings_gateway.get_for_update()
-    settings.set_voting_enabled(True)
+    settings.set_voting_enabled(enabled=True)
     await settings_gateway.save(settings)
 
     nomination = Nomination(
@@ -104,7 +104,7 @@ async def test_add_vote_without_linked_ticket_raises_access_denied(
     login(visitor)
 
     settings = await settings_gateway.get_for_update()
-    settings.set_voting_enabled(True)
+    settings.set_voting_enabled(enabled=True)
     await settings_gateway.save(settings)
 
     nomination = Nomination(
@@ -153,7 +153,7 @@ async def test_add_vote_when_voting_disabled_raises_access_denied(
     login(visitor_with_ticket)
 
     settings = await settings_gateway.get_for_update()
-    settings.set_voting_enabled(False)
+    settings.set_voting_enabled(enabled=False)
     await settings_gateway.save(settings)
 
     nomination = Nomination(
@@ -199,7 +199,7 @@ async def test_add_vote_for_missing_participant_raises_not_found(
     login(visitor_with_ticket)
 
     settings = await settings_gateway.get_for_update()
-    settings.set_voting_enabled(True)
+    settings.set_voting_enabled(enabled=True)
     await settings_gateway.save(settings)
     await uow.commit()
 
@@ -224,7 +224,7 @@ async def test_add_vote_twice_in_same_nomination_raises_already_voted(
     login(visitor_with_ticket)
 
     settings = await settings_gateway.get_for_update()
-    settings.set_voting_enabled(True)
+    settings.set_voting_enabled(enabled=True)
     await settings_gateway.save(settings)
 
     nomination = Nomination(
@@ -289,7 +289,7 @@ async def test_add_vote_allows_votes_in_different_nominations(
     login(visitor_with_ticket)
 
     settings = await settings_gateway.get_for_update()
-    settings.set_voting_enabled(True)
+    settings.set_voting_enabled(enabled=True)
     await settings_gateway.save(settings)
 
     first_nomination = Nomination(

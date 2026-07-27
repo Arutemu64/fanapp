@@ -57,7 +57,7 @@ class ScheduleEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, OrderMixin, BaseORM)
                 cls.id,
                 func.row_number().over(order_by=cls.order).label("queue"),
             )
-            .where(cls.is_skipped.isnot(True))
+            .where(cls.is_skipped.isnot(True))  # noqa: FBT003
             .subquery()
         )
 

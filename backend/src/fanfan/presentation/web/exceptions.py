@@ -134,7 +134,9 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
     by middleware) and return a generic 500 instead of leaking a traceback.
     """
     _ = request
-    logger.exception("Unhandled exception while handling request", exc_info=exc)
+    # Not `.exception()`: a handler runs outside the `except` block, so it would
+    # attach `sys.exc_info()` — None here — instead of `exc` (ruff LOG004).
+    logger.error("Unhandled exception while handling request", exc_info=exc)
 
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

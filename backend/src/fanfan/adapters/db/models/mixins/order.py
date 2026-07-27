@@ -28,6 +28,7 @@ class OrderMixin:
     __tablename__ = None
 
     @declared_attr
+    @classmethod
     def order(cls) -> Mapped[float]:
         order_sequence = Sequence(f"{cls.__tablename__}_order_seq", start=1)
         return mapped_column(
@@ -37,6 +38,7 @@ class OrderMixin:
 
     # Auto-applied to orderable models that declare NO other table args.
     @declared_attr.directive
+    @classmethod
     def __table_args__(cls) -> tuple:
         return cls.order_table_args()
 

@@ -1,56 +1,34 @@
-# Exclude a variety of commonly ignored directories.
-exclude = [
-    ".bzr",
-    ".direnv",
-    ".eggs",
-    ".git",
-    ".git-rewrite",
-    ".hg",
-    ".ipynb_checkpoints",
-    ".mypy_cache",
-    ".nox",
-    ".pants.d",
-    ".pyenv",
-    ".pytest_cache",
-    ".pytype",
-    ".ruff_cache",
-    ".svn",
-    ".tox",
-    ".venv",
-    ".vscode",
-    "__pypackages__",
-    "_build",
-    "buck-out",
-    "build",
-    "dist",
-    "node_modules",
-    "site-packages",
-    "venv",
-]
+# No `exclude`: setting it *replaces* ruff's built-in list instead of extending it,
+# so new defaults would stop applying. Use `extend-exclude` if a path needs skipping.
 
-# Same as Black.
 line-length = 88
-indent-width = 4
 
-# Assume Python 3.14
-target-version = "py314"
+# `target-version` is unset on purpose: ruff infers it from `requires-python` in the
+# pyproject.toml beside this file, keeping the Python version pinned in one place.
 
 [lint]
+# `ALL` opts in to rules added by future ruff releases, against ruff's own "use ALL
+# with discretion" advice. Deliberate — but it means a ruff bump needs rule triage.
 select = ["ALL"]
 ignore = [
     "D",       # pydocstyle (noisy in app development where public docs aren't strictly mandated)
     "ANN",     # flake8-annotations (type-checking is handled statically by `ty`)
-    "N",       # pep8-naming (occasionally conflicts with external schemas or webhook models)
-    "FBT",     # flake8-boolean-trap (perfectly fine for query params/arguments in web routes)
+    # Exceptions are named for the domain condition they represent (UserNotFound,
+    # MailingAlreadyCancelled), which is the convention docs/backend.md documents.
+    # PEP 8 asks for the suffix only "if the exception actually is an error", and the
+    # semantic markers (NotFound, Conflict, RateLimited) classify a condition rather
+    # than being errors. The rule also only reaches 4 of the 71 exception classes —
+    # it recognises a base by an `Error` suffix, so renaming one cascades to its
+    # subclasses and the only fixpoint is renaming all of them.
+    "N818",    # error-suffix-on-exception-name
     # pylint-refactor code-metric rules: noisy in DDD interactors/controllers where
-    # many arguments and branches are structurally expected. PLR1711 (useless-return)
+    # many branches and statements are structurally expected. PLR1711 (useless-return)
     # and PLR2004 (magic-value-comparison) both stay enabled; PLR2004 is scoped off
     # only in pluralize.py (per-file-ignores below), whose constants are intrinsic
     # Russian plural-rule numbers, not stray magic values.
     "PLR0904",  # too-many-public-methods
     "PLR0911",  # too-many-return-statements
     "PLR0912",  # too-many-branches
-    "PLR0913",  # too-many-arguments
     "PLR0915",  # too-many-statements
     "COM812",  # missing-trailing-comma (formatter compatibility)
     "ISC001",  # single-line-implicit-string-concatenation (formatter compatibility)
@@ -78,45 +56,12 @@ ignore = [
     "RUF003",  # ambiguous-unicode-character-comment
 
     "S101",   # assert statements used for invariants; security checks never rely on them
+    "CPY001", # missing-copyright-notice — the MIT LICENSE is at the repo root, not per file
 ]
-
-# Allow fix for all enabled rules (when `--fix`) is provided.
-fixable = ["ALL"]
-unfixable = []
-
-# Allow unused variables when underscore-prefixed.
-dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 [lint.flake8-bugbear]
 # Safe list of immutables to prevent false positives when using FastAPI/FastStream DI
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Body", "fastapi.Header", "faststream.Depends", "pydantic.Field"]
-
-[format]
-# Like Black, use double quotes for strings.
-quote-style = "double"
-
-# Like Black, indent with spaces, rather than tabs.
-indent-style = "space"
-
-# Like Black, respect magic trailing commas.
-skip-magic-trailing-comma = false
-
-# Like Black, automatically detect the appropriate line ending.
-line-ending = "auto"
-
-# Enable auto-formatting of code examples in docstrings. Markdown,
-# reStructuredText code/literal blocks and doctests are all supported.
-#
-# This is currently disabled by default, but it is planned for this
-# to be opt-out in the future.
-docstring-code-format = false
-
-# Set the line length limit used when formatting code snippets in
-# docstrings.
-#
-# This only has an effect when the `docstring-code-format` setting is
-# enabled.
-docstring-code-line-length = "dynamic"
 
 [lint.per-file-ignores]
 "src/fanfan/core/utils/pluralize.py" = [
@@ -136,8 +81,22 @@ docstring-code-line-length = "dynamic"
     "S106",    # hardcoded passwords in tests are fine
     "F401",    # unused imports are common in fixtures / conftest files
     "PLR2004", # magic numbers (e.g. status code == 200) are totally fine in tests
+    "PLR0913", # a test's arguments are pytest fixtures, not a call signature anyone types
+    "PLR0917", # ditto, counted positionally
     "SLF001",  # accessing private members during testing is sometimes necessary
 ]
+# Interactors take their collaborators through Dishka constructor injection: one
+# parameter per port, assembled by the container. Capping the count would only push
+# them into a bundle object and hide the same dependencies (ADR-0005).
+"src/fanfan/application/interactors/**/*.py" = [
+    "PLR0913", # too-many-arguments
+    "PLR0917", # too-many-positional-arguments — same constructors, counted positionally
+]
+# Belongs on the `# noqa: PLR0913` lines in these two files, but PLR0917 is preview in
+# the pinned ruff and RUF100's autofix strips a noqa naming a non-enabled rule. Fold in
+# once 0.16 is pinned.
+"src/fanfan/adapters/debug/telemetry.py" = ["PLR0917"]
+"src/fanfan/presentation/faststream/routes/notifications.py" = ["PLR0917"]
 "src/fanfan/adapters/db/migrations/env.py" = [
     "ERA001",  # Alembic auto-generates commented out code
     "INP001",  # Not a package
@@ -145,4 +104,5 @@ docstring-code-line-length = "dynamic"
 "src/fanfan/adapters/db/migrations/versions/*.py" = [
     "E501",    # Alembic sometimes generates long lines
     "INP001",  # Not a package
+    "N999",    # filenames are Alembic's `<date>-<revision>_<slug>` template, not module names
 ]
