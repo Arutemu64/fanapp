@@ -3,7 +3,7 @@ name: CI
 # Run the same quality gates we run locally (see justfile / .pre-commit-config.yaml)
 # on every pull request and on pushes to main.
 #
-# Split into one job per area (backend, frontend, dockerfiles) plus a
+# Split into one job per area (backend, frontend, dockerfiles, images) plus a
 # `changes` job that gates them, so each area reports its own red/green check
 # and branch protection can require them individually — a docs-only PR then
 # shows backend/frontend as skipped instead of buried inside one job's log.
@@ -11,7 +11,9 @@ name: CI
 # independent tasks run in parallel: wall-clock time drops to the slowest
 # single task instead of their sum.
 #
-# Run the identical gates locally with `just ci` before pushing.
+# Run the identical gates locally with `just ci` before pushing — except the
+# `images` job, which needs a Docker daemon (`just run-prod` builds the same
+# two images locally).
 on:
   pull_request:
   push:
@@ -186,3 +188,55 @@ jobs:
         uses: hadolint/hadolint-action@2332a7b74a6de0dda2e2221d575162eba76ba5e5 # v3.3.0
         with:
           recursive: true
+
+  # Prove both images still build. hadolint above only parses the Dockerfiles,
+  # and until this job existed the only real build ran in docker-publish.yml
+  # *after* merge — so anything that breaks a build turned main's publish red
+  # instead of the PR that caused it, leaving main unable to ship. That is how
+  # PR #360 landed: it bumped four of the five uv pin sites, and the fifth (the
+  # builder image tag in backend/Dockerfile) only failed once `uv sync --locked`
+  # ran against a uv that no longer matched pyproject's `required-version`.
+  #
+  # Gated on all three filters because the inputs are wider than the Dockerfiles:
+  # backend/uv.lock and backend/pyproject.toml decide whether `uv sync --locked`
+  # succeeds, and frontend/pnpm-lock.yaml does the same for the build stage.
+  images:
+    name: Images (${{ matrix.name }} build)
+    needs: changes
+    if: |
+      needs.changes.outputs.backend == 'true' ||
+      needs.changes.outputs.frontend == 'true' ||
+      needs.changes.outputs.dockerfiles == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      # One failing image shouldn't hide the state of the other.
+      fail-fast: false
+      # Mirrors the matrix in docker-publish.yml — same contexts, same targets.
+      matrix:
+        include:
+          - name: backend
+            context: ./backend
+            target: ''
+          - name: frontend
+            context: ./frontend
+            target: prod
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+
+      # No build-args: they only decide what gets baked into the bundle, not
+      # whether the build succeeds, and the publish workflow supplies the real
+      # values. `push: false` needs no registry login and no packages: write.
+      - name: Build ${{ matrix.name }} image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
+        with:
+          context: ${{ matrix.context }}
+          target: ${{ matrix.target }}
+          platforms: linux/amd64
+          push: false
+          # Read the cache docker-publish.yml writes on main (a PR branch can
+          # read its base branch's caches). Deliberately no cache-to: PR-branch
+          # entries are scoped to the branch and would only crowd out main's.
+          cache-from: type=gha

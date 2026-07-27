@@ -170,6 +170,15 @@
       "versioningTemplate": "docker"
     },
     {
+      "description": "Shared pin (docs/dependencies.md): the pnpm the frontend build image installs. It is a plain ENV, so the dockerfile manager (which only reads FROM lines) never saw it, and it silently drifted a patch behind the other three sites. Feeds the 'pnpm' group above so it moves with mise.toml, package.json 'packageManager' and the CI action input.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^frontend/Dockerfile$/"],
+      "matchStrings": ["PNPM_VERSION=(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"],
+      "depNameTemplate": "pnpm",
+      "datasourceTemplate": "npm",
+      "versioningTemplate": "npm"
+    },
+    {
       "description": "Shared pin (docs/dependencies.md): uv version pinned as a PyPI package in the cloud setup script and in pyproject [tool.uv] required-version. The CI setup-uv input needs no manager here — the github-actions manager reads supported 'uses ... with' version inputs itself (https://docs.renovatebot.com/modules/manager/github-actions/) and reports that line as 'astral-sh/uv', which the uv group above matches. Same for the pnpm input to pnpm/action-setup ('pnpm') and node-version to setup-node ('node').",
       "customType": "regex",
       "managerFilePatterns": [

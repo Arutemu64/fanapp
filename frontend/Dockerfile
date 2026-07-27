@@ -5,11 +5,13 @@ FROM node:24.18-alpine AS base
 # which is where the cache mounts below point.
 ENV PNPM_HOME=/pnpm
 ENV PATH=/pnpm:$PATH
-ENV PNPM_VERSION=11.15.0
+ENV PNPM_VERSION=11.15.1
 
 # Installed standalone via npm (not Corepack): Node 25+ no longer ships
-# Corepack, and pnpm now recommends standalone installs. Keep the version in
-# sync with package.json#packageManager.
+# Corepack, and pnpm now recommends standalone installs. This is one site of the
+# shared pnpm pin (docs/dependencies.md) — it must equal mise.toml,
+# package.json#packageManager and the CI action input, and a regex manager in
+# renovate.json keeps it in the same bump PR as those three.
 RUN npm install -g pnpm@${PNPM_VERSION}
 
 WORKDIR /app

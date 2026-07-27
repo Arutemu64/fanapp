@@ -18,7 +18,7 @@ mismatch unexplained.
 | `postgres:18.4-alpine` | `docker-compose.yml`, `backend/scripts/generate_migration.py`, `backend/tests/fixtures/db_provider.py` |
 | `uv` | `mise.toml`, `backend/pyproject.toml` (`[tool.uv]` and the `uv_build` floor in `[build-system]`), `backend/Dockerfile`, `.claude/setup.sh`, CI (`setup-uv` input) |
 | `hadolint` | `mise.toml`, `.pre-commit-config.yaml` (`rev`), the image behind the `.claude/setup.sh` shim |
-| `pnpm` | `mise.toml`, `frontend/package.json` (`packageManager`), CI (`pnpm/action-setup` input) |
+| `pnpm` | `mise.toml`, `frontend/package.json` (`packageManager`), `frontend/Dockerfile` (`PNPM_VERSION`), CI (`pnpm/action-setup` input) |
 | `node` | `mise.toml`, `frontend/Dockerfile`, CI (`setup-node`) |
 | `python` | `mise.toml`, `backend/.python-version`, `backend/pyproject.toml` (`requires-python` floor) |
 
@@ -37,8 +37,10 @@ Prefer an exact pin over a floating tag so every consumer resolves identically.
 * **`customManagers`** (regex) cover the pins the built-in managers cannot see:
   the Postgres image literals in `backend/scripts/generate_migration.py` and
   `backend/tests/fixtures/db_provider.py`; the hadolint image behind the
-  `.claude/setup.sh` shim; and the uv pin in `.claude/setup.sh` and
-  `backend/pyproject.toml`.
+  `.claude/setup.sh` shim; the uv pin in `.claude/setup.sh` and
+  `backend/pyproject.toml`; and the `PNPM_VERSION` ENV in `frontend/Dockerfile`
+  — the `dockerfile` manager reads `FROM` lines only, so an ENV pin is invisible
+  to it.
 * **Version inputs to setup actions need no custom manager.** The
   `github-actions` manager reads supported `uses … with` inputs itself, so the
   `setup-uv`, `pnpm/action-setup` and `setup-node` version inputs in `ci.yml`
@@ -55,6 +57,25 @@ Prefer an exact pin over a floating tag so every consumer resolves identically.
 **Adding a new pin site for an already-tracked dependency means extending the
 matching group or custom manager in the same change** — otherwise Renovate bumps
 the other sites and silently reintroduces the drift this rule exists to prevent.
+
+### The backstop: CI builds the images
+
+Grouping is best-effort, not a guarantee. A group only carries the sites that
+had an update *when Renovate cut the branch*, and its members come from
+different datasources (PyPI, GitHub releases, the GHCR tag list) that learn
+about a release at different moments — so a member can be left at the old
+version in an otherwise correct-looking PR. [PR #360](https://github.com/Arutemu64/fanapp/pull/360)
+did exactly that: it moved four of the five `uv` sites to `0.11.30` and left the
+`ghcr.io/astral-sh/uv` builder tag in `backend/Dockerfile` at `0.11.29`, which
+`[tool.uv] required-version` then rejected inside the image build.
+
+So `ci.yml` has an `images` job that builds both images (without pushing) on any
+change to `backend/**`, `frontend/**` or a `Dockerfile`. Before it existed the
+only real build ran in `docker-publish.yml` *after* merge, which meant a broken
+build was discovered as a red `main` that could no longer publish. **Review a
+shared-pin PR against the table above rather than trusting the diff to be
+complete** — the `images` job catches a drifted pin only when the drift actually
+breaks a build.
 
 ### One PR per dependency
 
