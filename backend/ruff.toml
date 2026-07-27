@@ -1,25 +1,14 @@
-# No `exclude` on purpose. Setting it *replaces* ruff's built-in list rather than
-# extending it, so a future default would silently stop applying. What we would
-# have listed is already covered three times over: ruff's defaults, .gitignore
-# (respected unless `respect-gitignore` is off), and the explicit paths that
-# `just backend-lint` and the pre-commit hook pass (src/fanfan tests scripts).
-# Add `extend-exclude`, never `exclude`, if a path ever genuinely needs skipping.
+# No `exclude`: setting it *replaces* ruff's built-in list instead of extending it,
+# so new defaults would stop applying. Use `extend-exclude` if a path needs skipping.
 
 line-length = 88
 
-# `target-version` is deliberately unset. Ruff infers it from `requires-python` in
-# the pyproject.toml beside this file (verified: it resolves to 3.14), which is
-# what ruff recommends — it keeps the minimum Python version pinned in one place
-# instead of two that can drift apart.
+# `target-version` is unset on purpose: ruff infers it from `requires-python` in the
+# pyproject.toml beside this file, keeping the Python version pinned in one place.
 
 [lint]
-# ⚠️ `ALL` is a deliberate deviation from ruff's own guidance ("Use `ALL` with
-# discretion. Enabling `ALL` will implicitly enable new rules whenever you
-# upgrade" — https://docs.astral.sh/ruff/linter/). We take the trade: new rules
-# arrive as a red Renovate PR, never on a green main, because CI gates every bump.
-# The cost is real and lands on whoever reviews that PR — a ruff minor bump needs
-# rule triage, not a rubber stamp. Rules stabilising out of preview are the usual
-# source (0.16 promoted CPY001, PLR0917 and LOG004 in one go).
+# `ALL` opts in to rules added by future ruff releases, against ruff's own "use ALL
+# with discretion" advice. Deliberate — but it means a ruff bump needs rule triage.
 select = ["ALL"]
 ignore = [
     "D",       # pydocstyle (noisy in app development where public docs aren't strictly mandated)
@@ -29,9 +18,7 @@ ignore = [
     # many branches and statements are structurally expected. PLR1711 (useless-return)
     # and PLR2004 (magic-value-comparison) both stay enabled; PLR2004 is scoped off
     # only in pluralize.py (per-file-ignores below), whose constants are intrinsic
-    # Russian plural-rule numbers, not stray magic values. PLR0913 (too-many-arguments)
-    # is *not* here: it fires only where DI does the arg-passing, so it is scoped to
-    # those spots in per-file-ignores instead of being disabled everywhere.
+    # Russian plural-rule numbers, not stray magic values.
     "PLR0904",  # too-many-public-methods
     "PLR0911",  # too-many-return-statements
     "PLR0912",  # too-many-branches
@@ -62,20 +49,12 @@ ignore = [
     "RUF003",  # ambiguous-unicode-character-comment
 
     "S101",   # assert statements used for invariants; security checks never rely on them
-
-    # The MIT LICENSE lives at the repo root; per-file headers are not this
-    # project's convention, and the rule fires once per file (536 today).
-    "CPY001",  # missing-copyright-notice (stable since ruff 0.16)
+    "CPY001", # missing-copyright-notice — the MIT LICENSE is at the repo root, not per file
 ]
 
 [lint.flake8-bugbear]
 # Safe list of immutables to prevent false positives when using FastAPI/FastStream DI
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Body", "fastapi.Header", "faststream.Depends", "pydantic.Field"]
-
-# No `[format]` section: every option we had set (quote-style, indent-style,
-# skip-magic-trailing-comma, line-ending, docstring-code-*) was already ruff's
-# default, copied from the docs' example config. Add one back only to *change* a
-# default, so this file reads as a list of decisions rather than of restatements.
 
 [lint.per-file-ignores]
 "src/fanfan/core/utils/pluralize.py" = [
@@ -100,19 +79,15 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "f
     "SLF001",  # accessing private members during testing is sometimes necessary
 ]
 # Interactors take their collaborators through Dishka constructor injection: one
-# parameter per port, assembled by the container, never typed out by a caller. The
-# arg count tracks how many ports the use case needs, so capping it would only push
-# work into a bundle object and hide the same dependencies (see ADR-0005).
+# parameter per port, assembled by the container. Capping the count would only push
+# them into a bundle object and hide the same dependencies (ADR-0005).
 "src/fanfan/application/interactors/**/*.py" = [
     "PLR0913", # too-many-arguments
     "PLR0917", # too-many-positional-arguments — same constructors, counted positionally
 ]
-# PLR0917 shadows the per-line `# noqa: PLR0913` in these two files (a Sentry config
-# entrypoint and one FastStream route; see the noqa comments there for why each is
-# exempt). It has to sit here rather than on those lines because PLR0917 is still
-# preview in the pinned ruff, and RUF100's autofix — which `just backend-lint` runs
-# with --unsafe-fixes — strips a noqa naming a non-enabled rule. Fold these into the
-# noqa lines once the pinned ruff has PLR0917 stable (0.16+).
+# Belongs on the `# noqa: PLR0913` lines in these two files, but PLR0917 is preview in
+# the pinned ruff and RUF100's autofix strips a noqa naming a non-enabled rule. Fold in
+# once 0.16 is pinned.
 "src/fanfan/adapters/debug/telemetry.py" = ["PLR0917"]
 "src/fanfan/presentation/faststream/routes/notifications.py" = ["PLR0917"]
 "src/fanfan/adapters/db/migrations/env.py" = [

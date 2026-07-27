@@ -55,7 +55,7 @@ notifications_router = NatsRouter()
     stream=stream,
 )
 @inject
-async def create_new_notification(  # noqa: PLR0913 — every parameter is injected by FastStream or Dishka, none are caller-supplied
+async def create_new_notification(  # noqa: PLR0913 — all params framework-injected
     data: NotificationQueued,
     interactor: FromDishka[CreateNotification],
     get_notification: FromDishka[GetNotification],

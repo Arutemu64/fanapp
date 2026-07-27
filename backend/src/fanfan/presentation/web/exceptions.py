@@ -134,9 +134,8 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
     by middleware) and return a generic 500 instead of leaking a traceback.
     """
     _ = request
-    # `.error(exc_info=exc)`, not `.exception(...)`: a FastAPI handler runs outside
-    # the `except` block, so `.exception()` would attach `sys.exc_info()` — None
-    # here — instead of the exception we were handed (ruff LOG004).
+    # Not `.exception()`: a handler runs outside the `except` block, so it would
+    # attach `sys.exc_info()` — None here — instead of `exc` (ruff LOG004).
     logger.error("Unhandled exception while handling request", exc_info=exc)
 
     return JSONResponse(
