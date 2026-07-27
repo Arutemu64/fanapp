@@ -1,5 +1,10 @@
 # FAN FAN
 
+[![CI](https://img.shields.io/github/actions/workflow/status/Arutemu64/fanapp/ci.yml?branch=main&label=CI)](https://github.com/Arutemu64/fanapp/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2FArutemu64%2Ffanapp%2Fmain%2Fmise.toml&query=%24.tools.python&label=python&prefix=v)](mise.toml)
+[![Node](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2FArutemu64%2Ffanapp%2Fmain%2Fmise.toml&query=%24.tools.node&label=node&prefix=v)](mise.toml)
+[![License: MIT](https://img.shields.io/github/license/Arutemu64/fanapp)](LICENSE)
+
 Companion web app for the **FAN FAN** Russian anime convention. It gives attendees the event schedule, voting, notifications, and ticket-linked profiles from their phone, and gives organizers the tools to run all of it. Audience is teen to young-adult and non-technical, so the UI is mobile-first and all user-facing copy is in Russian.
 
 This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAPI contract between them.
