@@ -1,41 +1,25 @@
-# Exclude a variety of commonly ignored directories.
-exclude = [
-    ".bzr",
-    ".direnv",
-    ".eggs",
-    ".git",
-    ".git-rewrite",
-    ".hg",
-    ".ipynb_checkpoints",
-    ".mypy_cache",
-    ".nox",
-    ".pants.d",
-    ".pyenv",
-    ".pytest_cache",
-    ".pytype",
-    ".ruff_cache",
-    ".svn",
-    ".tox",
-    ".venv",
-    ".vscode",
-    "__pypackages__",
-    "_build",
-    "buck-out",
-    "build",
-    "dist",
-    "node_modules",
-    "site-packages",
-    "venv",
-]
+# No `exclude` on purpose. Setting it *replaces* ruff's built-in list rather than
+# extending it, so a future default would silently stop applying. What we would
+# have listed is already covered three times over: ruff's defaults, .gitignore
+# (respected unless `respect-gitignore` is off), and the explicit paths that
+# `just backend-lint` and the pre-commit hook pass (src/fanfan tests scripts).
+# Add `extend-exclude`, never `exclude`, if a path ever genuinely needs skipping.
 
-# Same as Black.
 line-length = 88
-indent-width = 4
 
-# Assume Python 3.14
-target-version = "py314"
+# `target-version` is deliberately unset. Ruff infers it from `requires-python` in
+# the pyproject.toml beside this file (verified: it resolves to 3.14), which is
+# what ruff recommends — it keeps the minimum Python version pinned in one place
+# instead of two that can drift apart.
 
 [lint]
+# ⚠️ `ALL` is a deliberate deviation from ruff's own guidance ("Use `ALL` with
+# discretion. Enabling `ALL` will implicitly enable new rules whenever you
+# upgrade" — https://docs.astral.sh/ruff/linter/). We take the trade: new rules
+# arrive as a red Renovate PR, never on a green main, because CI gates every bump.
+# The cost is real and lands on whoever reviews that PR — a ruff minor bump needs
+# rule triage, not a rubber stamp. Rules stabilising out of preview are the usual
+# source (0.16 promoted CPY001, PLR0917 and LOG004 in one go).
 select = ["ALL"]
 ignore = [
     "D",       # pydocstyle (noisy in app development where public docs aren't strictly mandated)
@@ -78,45 +62,20 @@ ignore = [
     "RUF003",  # ambiguous-unicode-character-comment
 
     "S101",   # assert statements used for invariants; security checks never rely on them
+
+    # The MIT LICENSE lives at the repo root; per-file headers are not this
+    # project's convention, and the rule fires once per file (536 today).
+    "CPY001",  # missing-copyright-notice (stable since ruff 0.16)
 ]
-
-# Allow fix for all enabled rules (when `--fix`) is provided.
-fixable = ["ALL"]
-unfixable = []
-
-# Allow unused variables when underscore-prefixed.
-dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 [lint.flake8-bugbear]
 # Safe list of immutables to prevent false positives when using FastAPI/FastStream DI
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Body", "fastapi.Header", "faststream.Depends", "pydantic.Field"]
 
-[format]
-# Like Black, use double quotes for strings.
-quote-style = "double"
-
-# Like Black, indent with spaces, rather than tabs.
-indent-style = "space"
-
-# Like Black, respect magic trailing commas.
-skip-magic-trailing-comma = false
-
-# Like Black, automatically detect the appropriate line ending.
-line-ending = "auto"
-
-# Enable auto-formatting of code examples in docstrings. Markdown,
-# reStructuredText code/literal blocks and doctests are all supported.
-#
-# This is currently disabled by default, but it is planned for this
-# to be opt-out in the future.
-docstring-code-format = false
-
-# Set the line length limit used when formatting code snippets in
-# docstrings.
-#
-# This only has an effect when the `docstring-code-format` setting is
-# enabled.
-docstring-code-line-length = "dynamic"
+# No `[format]` section: every option we had set (quote-style, indent-style,
+# skip-magic-trailing-comma, line-ending, docstring-code-*) was already ruff's
+# default, copied from the docs' example config. Add one back only to *change* a
+# default, so this file reads as a list of decisions rather than of restatements.
 
 [lint.per-file-ignores]
 "src/fanfan/core/utils/pluralize.py" = [
@@ -137,6 +96,7 @@ docstring-code-line-length = "dynamic"
     "F401",    # unused imports are common in fixtures / conftest files
     "PLR2004", # magic numbers (e.g. status code == 200) are totally fine in tests
     "PLR0913", # a test's arguments are pytest fixtures, not a call signature anyone types
+    "PLR0917", # ditto, counted positionally
     "SLF001",  # accessing private members during testing is sometimes necessary
 ]
 # Interactors take their collaborators through Dishka constructor injection: one
@@ -145,7 +105,16 @@ docstring-code-line-length = "dynamic"
 # work into a bundle object and hide the same dependencies (see ADR-0005).
 "src/fanfan/application/interactors/**/*.py" = [
     "PLR0913", # too-many-arguments
+    "PLR0917", # too-many-positional-arguments — same constructors, counted positionally
 ]
+# PLR0917 shadows the per-line `# noqa: PLR0913` in these two files (a Sentry config
+# entrypoint and one FastStream route; see the noqa comments there for why each is
+# exempt). It has to sit here rather than on those lines because PLR0917 is still
+# preview in the pinned ruff, and RUF100's autofix — which `just backend-lint` runs
+# with --unsafe-fixes — strips a noqa naming a non-enabled rule. Fold these into the
+# noqa lines once the pinned ruff has PLR0917 stable (0.16+).
+"src/fanfan/adapters/debug/telemetry.py" = ["PLR0917"]
+"src/fanfan/presentation/faststream/routes/notifications.py" = ["PLR0917"]
 "src/fanfan/adapters/db/migrations/env.py" = [
     "ERA001",  # Alembic auto-generates commented out code
     "INP001",  # Not a package
