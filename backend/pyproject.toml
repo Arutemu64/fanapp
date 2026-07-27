@@ -74,7 +74,7 @@ build-backend = "uv_build"
 [tool.uv]
 # Matches mise.toml, backend/Dockerfile, .claude/setup.sh, and
 # .github/workflows/ci.yml; bump all five together.
-required-version = "==0.11.29"
+required-version = "==0.11.30"
 # Ignore releases younger than this when resolving, mirroring Renovate's
 # `minimumReleaseAge` in renovate.json. Renovate applies the cooldown when it
 # *picks* a target version, but when it then calls uv to relock a bumped `>=`
