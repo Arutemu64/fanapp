@@ -38,17 +38,6 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 
 The backend follows clean / hexagonal architecture — pure `core` and `application` layers, infrastructure behind ports in `adapters`. See [`AGENTS.md`](AGENTS.md) and [`docs/`](docs/) for the full guidelines.
 
-## Repository layout
-
-```text
-backend/    FastAPI app (core / application / adapters / presentation / main)
-frontend/   SvelteKit app (routes + lib: components, api, services, utils)
-shared/     Shared OpenAPI spec
-config/     Committed, non-secret infra config (Redis)
-secrets/    Gitignored runtime secrets (VAPID PEM keys); ships empty
-docs/       Architecture guides and ADRs
-```
-
 ## Requirements
 
 - Python ≥ 3.14.6 and [`uv`](https://docs.astral.sh/uv/)
@@ -119,6 +108,16 @@ just backend-dev         # FastAPI on :8000 (WEB__PORT)
 just frontend-dev        # SvelteKit dev server on :3000 (FRONTEND_PORT)
 ```
 
+## External integrations
+
+Optional, enabled via `.env`:
+
+- **TicketsCloud** (`TCLOUD__*`) — ticket sync.
+- **Cosplay2** (`COSPLAY2__*`) — cosplay / voting data sync.
+- **Yandex SmartCaptcha** (`SMARTCAPTCHA__SERVER_KEY` + `PUBLIC_SMARTCAPTCHA_CLIENT_KEY`) — bot protection on login-code requests. Unset = a no-op verifier that accepts everything. Yandex rather than Cloudflare Turnstile because Cloudflare is frequently throttled in Russia — see [ADR-0009](docs/adr/0009-yandex-smartcaptcha-over-cloudflare-turnstile.md).
+- **Sentry / GlitchTip** (`DEBUG__SENTRY_DSN` backend, `PUBLIC_SENTRY_DSN` frontend) — error reporting. Empty DSN = disabled.
+- **Scheduler** (`SCHEDULER__SYNC_*_CRON`) — cron strings (in `TIMEZONE`) that run the syncs periodically. Unset = disabled. After editing, `docker compose restart scheduler`. Trigger a sync manually any time with `docker compose run --rm api cli sync tcloud`.
+
 ## Common commands
 
 All commands run from the repo root via `just`.
@@ -137,48 +136,16 @@ All commands run from the repo root via `just`.
 
 > The frontend talks to the backend through generated types in `frontend/src/lib/api/schema.d.ts`. Whenever backend endpoints or schemas change, run `just frontend-generate-api` to keep the contract in sync.
 
-## Continuous integration
-
-Every pull request and every push to `main` runs [`.github/workflows/ci.yml`](.github/workflows/ci.yml) on GitHub Actions. It mirrors the local quality gates:
-
-- **Backend** — Ruff lint + format check, `ty` type check, and the full `pytest` suite. Integration tests spin up Postgres and Redis automatically via testcontainers (Docker is preinstalled on the runner).
-- **Frontend** — Prettier + ESLint, `svelte-check`, and a production build.
-- **Dockerfiles** — [hadolint](https://github.com/hadolint/hadolint) best-practice linting (config in [`.hadolint.yaml`](.hadolint.yaml)). Run locally with `just dockerfile-lint` (hadolint comes from `mise`) or via the pre-commit hook.
-
-Each gate runs only when its area changed (`dorny/paths-filter`), so unrelated edits skip the gates they don't affect and a docs-only change finishes in seconds.
-
-CI is check-only: unlike `just backend-lint`, it never auto-fixes — a violation fails the run.
-
-### Run CI locally
-
-```sh
-just ci
-```
-
-`just ci` runs the same eight gates, in the same check-only mode, on your machine. **Run it before pushing** — catching a failure locally takes seconds instead of a round trip through Actions.
-
-Each area runs as its own job (`backend`, `frontend`, `dockerfiles`), so branch protection can require them individually and a run reports a separate red/green check per area. The `frontend` job further fans out into a `lint`/`check`/`test`/`build` matrix. Within a job, one failing gate doesn't skip the rest, so a run reports every problem in that area instead of only the first. The reasoning is in the header comment of [`ci.yml`](.github/workflows/ci.yml). [`renovate.json`](renovate.json) opens one PR per dependency every Monday morning, automerging the ones that break loudly in CI — see [`docs/dependencies.md`](docs/dependencies.md).
-
-[`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml) additionally builds the backend and frontend images and pushes them to the GitHub Container Registry (GHCR) on pushes to `main` (which move the `latest` tag) and on `v*` tags. The `SENTRY_AUTH_TOKEN` repository secret is passed only to the frontend build (source-map upload); it is consumed in a discarded build stage and never ends up in the published image.
-
-> [!IMPORTANT]
-> **The published images are built for the FAN FAN deployment — they are not a
-> reusable product.** The frontend is a static SPA, so its `PUBLIC_*` values are
-> baked into the bundle at build time: the published image carries *this*
-> festival's VAPID public key, Yandex SmartCaptcha sitekey and Sentry DSN. Point
-> it at your own backend and Web Push and the captcha break, and your users'
-> errors are reported into our Sentry project. Both images also ship the festival
-> branding, which is [excluded from the MIT grant](#license).
->
-> To run this for your own event, **fork the repository**, set your own
-> repository variables, and publish images from your fork — see
-> [`docs/deployment.md`](docs/deployment.md#reusing-this-for-another-event).
-> `PUBLIC_API_URL` is the one value you don't have to change: it defaults to the
-> relative `/api`, so the bundle itself stays domain-agnostic.
-
 ## Deployment
 
-The server runs the **prebuilt** GHCR images instead of building from source — only the application *build* moves to CI, the runtime config stays on the host. Once the server is set up, a deploy is:
+This section describes how the **FAN FAN** production server is run. If you are
+deploying your own event, the same commands apply once you are publishing your
+own images — see [Running this for your own event](#running-this-for-your-own-event)
+first.
+
+The server runs **prebuilt** GHCR images instead of building from source — only
+the application *build* moves to CI, the runtime config stays on the host. Once
+the server is set up, a deploy is:
 
 ```sh
 just deploy                   # pull the images and restart; builds nothing on the host
@@ -186,17 +153,91 @@ just deploy                   # pull the images and restart; builds nothing on t
 
 To test the exact same images locally first, build them from your working tree with `just run-prod` (no registry needed).
 
+Those images come from
+[`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml),
+which builds the backend and frontend and pushes them to the GitHub Container
+Registry on pushes to `main` (moving the `latest` tag) and on `v*` tags. The
+`SENTRY_AUTH_TOKEN` repository secret is passed only to the frontend build
+(source-map upload); it is consumed in a discarded build stage and never ends up
+in the published image.
+
 [`docs/deployment.md`](docs/deployment.md) covers the rest: what the server needs on disk, one-time setup, pinning a build or rolling back with `IMAGE_TAG`, and the reverse proxy (Caddy) — including the single-origin setup that means **no CORS config is needed** and the `.env` values that change between HTTPS and plain-HTTP testing.
 
-## External integrations
+### Running this for your own event
 
-Optional, enabled via `.env`:
+> [!IMPORTANT]
+> **The images published from this repository are built for the FAN FAN
+> deployment — they are not a reusable product.** The frontend is a static SPA,
+> so its `PUBLIC_*` values are baked into the bundle at build time: the published
+> image carries *this* festival's VAPID public key, Yandex SmartCaptcha sitekey
+> and Sentry DSN. Point it at your own backend and Web Push and the captcha
+> break, and your users' errors are reported into our Sentry project. Both images
+> also ship the festival branding, which is
+> [excluded from the MIT grant](#license).
 
-- **TicketsCloud** (`TCLOUD__*`) — ticket sync.
-- **Cosplay2** (`COSPLAY2__*`) — cosplay / voting data sync.
-- **Yandex SmartCaptcha** (`SMARTCAPTCHA__SERVER_KEY` + `PUBLIC_SMARTCAPTCHA_CLIENT_KEY`) — bot protection on login-code requests. Unset = a no-op verifier that accepts everything. Yandex rather than Cloudflare Turnstile because Cloudflare is frequently throttled in Russia — see [ADR-0009](docs/adr/0009-yandex-smartcaptcha-over-cloudflare-turnstile.md).
-- **Sentry / GlitchTip** (`DEBUG__SENTRY_DSN` backend, `PUBLIC_SENTRY_DSN` frontend) — error reporting. Empty DSN = disabled.
-- **Scheduler** (`SCHEDULER__SYNC_*_CRON`) — cron strings (in `TIMEZONE`) that run the syncs periodically. Unset = disabled. After editing, `docker compose restart scheduler`. Trigger a sync manually any time with `docker compose run --rm api cli sync tcloud`.
+So **fork the repository and publish images from your fork**, then deploy those.
+[`docs/deployment.md`](docs/deployment.md#reusing-this-for-another-event) walks
+through the four things a fork has to change — branding, Actions variables, a
+build to apply them, and the `image:` names in
+[`docker-compose.prod.yml`](docker-compose.prod.yml) that still point at
+`ghcr.io/arutemu64/…`. After that, `just deploy` pulls *your* images and the rest
+of this section applies unchanged.
+
+`PUBLIC_API_URL` is the one value you don't have to change: it defaults to the
+relative `/api`, so the bundle itself stays domain-agnostic.
+
+## Repository layout
+
+```text
+backend/    FastAPI app (core / application / adapters / presentation / main)
+frontend/   SvelteKit app (routes + lib: components, api, services, utils)
+shared/     Shared OpenAPI spec
+config/     Committed, non-secret infra config (Redis)
+secrets/    Gitignored runtime secrets (VAPID PEM keys); ships empty
+docs/       Architecture guides and ADRs
+```
+
+## Contributing
+
+Read [`AGENTS.md`](AGENTS.md) first — it holds the project constraints (Russian
+user-facing copy, the import rules for `core`/`application`, which guide to read
+for the area you're touching). The guides in [`docs/`](docs/) go deeper per area,
+and [`docs/adr/`](docs/adr/README.md) records why the significant choices were
+made.
+
+Before pushing, run every gate locally:
+
+```sh
+just ci
+```
+
+Questions and bug reports go in [GitHub issues](https://github.com/Arutemu64/fanapp/issues)
+— except security reports, which are private ([see below](#security)).
+
+### Continuous integration
+
+Every pull request and every push to `main` runs
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) on GitHub Actions. It
+mirrors the local quality gates:
+
+- **Backend** — Ruff lint + format check, `ty` type check, and the full `pytest` suite. Integration tests spin up Postgres and Redis automatically via testcontainers (Docker is preinstalled on the runner).
+- **Frontend** — Prettier + ESLint, `svelte-check`, and a production build.
+- **Dockerfiles** — [hadolint](https://github.com/hadolint/hadolint) best-practice linting (config in [`.hadolint.yaml`](.hadolint.yaml)). Run locally with `just dockerfile-lint` (hadolint comes from `mise`) or via the pre-commit hook.
+- **Images** — builds both Docker images without pushing, so a broken build fails on the PR instead of after merge. This is the one gate `just ci` skips; `just run-prod` builds the same two images locally.
+
+CI is check-only: unlike `just backend-lint`, it never auto-fixes — a violation
+fails the run. Each area is its own job so branch protection can require them
+individually and a run reports a separate red/green check per area; each gate
+runs only when its area changed (`dorny/paths-filter`), so a docs-only change
+finishes in seconds. The `frontend` job further fans out into a
+`lint`/`check`/`test`/`build` matrix, and within a job one failing gate doesn't
+skip the rest — a run reports every problem in that area instead of only the
+first. The reasoning behind the job split is in the header comment of
+[`ci.yml`](.github/workflows/ci.yml).
+
+[`renovate.json`](renovate.json) opens one PR per dependency every Monday
+morning, automerging the ones that break loudly in CI — see
+[`docs/dependencies.md`](docs/dependencies.md).
 
 ## Documentation
 
