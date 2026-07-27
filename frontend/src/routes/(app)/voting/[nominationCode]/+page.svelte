@@ -2,9 +2,11 @@
 	import type { GetVotingNominationResult } from '$lib/types/voting';
 
 	import { invalidate } from '$app/navigation';
+	import { page } from '$app/state';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { createSearchIndex } from '$lib/utils/search';
+	import { createUrlFilterSync } from '$lib/utils/urlFilters';
 	import { Button, Search } from 'flowbite-svelte';
 	import {
 		ArrowLeftOutline,
@@ -26,7 +28,23 @@
 	let votingStatus = $derived(data.votingStatus);
 	let canVote = $derived(votingStatus?.can_vote ?? false);
 
-	let searchQuery = $state('');
+	const SEARCH_PARAM = 'q';
+
+	// Seeded from the query string once, then owned here — same reasoning as the
+	// schedule page: a `load` that read the param would re-run on every keystroke.
+	// The param rides this nomination's URL, so each nomination keeps its own.
+	let searchQuery = $state(page.url.searchParams.get(SEARCH_PARAM) ?? '');
+
+	const urlFilters = createUrlFilterSync();
+
+	function syncSearchUrl(options?: { debounce?: boolean }) {
+		urlFilters.set({ [SEARCH_PARAM]: searchQuery.trim() }, options);
+	}
+
+	function clearSearch() {
+		searchQuery = '';
+		syncSearchUrl();
+	}
 
 	let searchIndex = $derived(
 		createSearchIndex(participants, (p: VotingParticipant) => [p.title, p.voting_number])
@@ -103,11 +121,17 @@
 
 <VotingStatusAlert votingState={votingStatus} class="mb-4" />
 
+<!-- Function binding rather than `bind:value` plus a handler: the setter is the one
+     place both typing and the clearable "×" pass through. Flowbite clears by writing
+     `undefined`, hence the fallback. -->
 <Search
-	bind:value={searchQuery}
-	clearableOnClick={() => {
-		searchQuery = '';
-	}}
+	bind:value={
+		() => searchQuery,
+		(value: string | undefined) => {
+			searchQuery = value ?? '';
+			syncSearchUrl({ debounce: true });
+		}
+	}
 	name="participant_search"
 	aria-label="Поиск участников в номинации"
 	placeholder="Поиск по имени или номеру…"
@@ -143,7 +167,7 @@
 					message="Попробуй изменить запрос"
 				>
 					<button
-						onclick={() => (searchQuery = '')}
+						onclick={clearSearch}
 						class="mt-3 text-sm font-medium text-primary-600 hover:underline dark:text-primary-400"
 					>
 						Очистить поиск

@@ -8,6 +8,7 @@
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
 	import { createSearchIndex } from '$lib/utils/search';
+	import { createUrlFilterSync } from '$lib/utils/urlFilters';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
 	import {
 		ChevronUpOutline,
@@ -40,9 +41,30 @@
 	let { data }: PageProps = $props();
 	let schedule: ScheduleEventWithSubscription[] = $derived(data.schedule);
 
-	// Store filter state locally because it only affects this page view.
-	let searchQuery: string = $state('');
-	let showOnlySubscribed: boolean = $state(false);
+	const SEARCH_PARAM = 'q';
+	const SUBSCRIBED_PARAM = 'subscribed';
+
+	// Seeded from the query string once, then owned here. Reading the filters in
+	// `load` instead would re-run it on every keystroke — SvelteKit tracks each
+	// search param a `load` reads — and filtering has to stay instant while typing.
+	let searchQuery: string = $state(page.url.searchParams.get(SEARCH_PARAM) ?? '');
+	let showOnlySubscribed: boolean = $state(page.url.searchParams.get(SUBSCRIBED_PARAM) === '1');
+
+	const urlFilters = createUrlFilterSync();
+
+	// Mirror the filters back into the URL so a filtered view survives the things
+	// that drop component state: a reload (this PWA reloads itself when a new
+	// service worker takes over), a trip to /schedule/changes and back, and a link
+	// pasted to someone else.
+	function syncFilterUrl(options?: { debounce?: boolean }) {
+		urlFilters.set(
+			{
+				[SEARCH_PARAM]: searchQuery.trim(),
+				[SUBSCRIBED_PARAM]: showOnlySubscribed ? '1' : null
+			},
+			options
+		);
+	}
 
 	// We use the full schedule current event for countdown labels inside every row.
 	let currentEvent = $derived(schedule.find((event) => event.is_current) ?? null);
@@ -160,6 +182,7 @@
 	function resetFilters() {
 		searchQuery = '';
 		showOnlySubscribed = false;
+		syncFilterUrl();
 	}
 
 	let pageRoot: HTMLDivElement | null = null;
@@ -249,11 +272,18 @@
 		class="rounded-2xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
 	>
 		<div class="flex flex-col gap-3">
+			<!-- Function binding rather than `bind:value` plus a handler: the setter is
+			     the one place both typing and the clearable "×" pass through, and it runs
+			     when the binding writes instead of racing a spread-through `oninput`.
+			     Flowbite clears by writing `undefined`, hence the fallback. -->
 			<Search
-				bind:value={searchQuery}
-				clearableOnClick={() => {
-					searchQuery = '';
-				}}
+				bind:value={
+					() => searchQuery,
+					(value: string | undefined) => {
+						searchQuery = value ?? '';
+						syncFilterUrl({ debounce: true });
+					}
+				}
 				name="schedule_search"
 				aria-label="Поиск по программе"
 				placeholder="Поиск по номеру или названию…"
@@ -265,7 +295,18 @@
 			/>
 
 			<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-				<Toggle bind:checked={showOnlySubscribed} size="small" color="primary" class="w-fit">
+				<Toggle
+					bind:checked={
+						() => showOnlySubscribed,
+						(checked: boolean) => {
+							showOnlySubscribed = checked;
+							syncFilterUrl();
+						}
+					}
+					size="small"
+					color="primary"
+					class="w-fit"
+				>
 					<span class="text-sm font-medium text-gray-700 dark:text-gray-200">Только подписки</span>
 				</Toggle>
 
