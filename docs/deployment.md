@@ -6,6 +6,44 @@ application *build* moves to CI; the runtime config stays on the host. To test
 the exact same images locally first, build them from your working tree with
 `just run-prod` (no registry needed).
 
+## Reusing this for another event
+
+The published GHCR images are built for the FAN FAN deployment. They are fine to
+pull for a look, but they are not a base to run your own event on — fork the
+repository and publish images from your fork instead.
+
+Two things make them deployment-specific. The frontend is a static SPA, so its
+`PUBLIC_*` values are inlined into the bundle at build time (see
+[frontend.md](frontend.md)) from this repository's Actions variables:
+`PUBLIC_VAPID_KEY` must match the private VAPID PEM held by *our* backend,
+`PUBLIC_SMARTCAPTCHA_CLIENT_KEY` is a Yandex sitekey bound to our account and
+domains, and `PUBLIC_SENTRY_DSN` points at our error-reporting project. And both
+images ship the festival branding, which the [README's license
+section](../README.md#license) excludes from the MIT grant.
+
+From a fork, four things need to change:
+
+1. **Branding.** Replace the four excluded asset paths listed in the README, and
+   the name, description and `theme_color` in
+   [`frontend/static/manifest.json`](../frontend/static/manifest.json).
+2. **Actions variables.** Set your own `PUBLIC_VAPID_KEY` (the public half of the
+   keypair `just bootstrap` generates into `secrets/`), plus
+   `PUBLIC_SMARTCAPTCHA_CLIENT_KEY` and the `PUBLIC_SENTRY_*` values if you use
+   those integrations. Leave a variable unset to disable its feature.
+3. **A build.** A variable change alone does not trigger a publish — run
+   [`docker-publish.yml`](../.github/workflows/docker-publish.yml) manually from
+   the Actions tab afterwards, or push to `main`.
+4. **Image names.** The `image:` lines in
+   [`docker-compose.prod.yml`](../docker-compose.prod.yml) name
+   `ghcr.io/arutemu64/…`; point them at your fork's packages.
+
+`PUBLIC_API_URL` is deliberately not on that list — it defaults to the relative
+`/api`, which is what keeps the bundle domain-agnostic (see [Reverse proxy
+(Caddy)](#reverse-proxy-caddy-https-and-http-testing) below).
+
+Everything else — database, Telegram bot, SMTP, TicketsCloud, Cosplay2 — is
+runtime config in `.env` and needs no rebuild.
+
 ## What the server needs on disk
 
 Cloning the repo is the simplest way to get all of it:
