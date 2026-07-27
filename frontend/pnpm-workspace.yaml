@@ -6,7 +6,7 @@ allowBuilds:
   esbuild: true
 
 # Supply-chain cooldown: refuse versions published less than 7 days ago (value is
-# in minutes; 7 days = 10080). Matches Renovate's `minimumReleaseAge` (renovate.json)
+# in minutes; 7 days = 10080). Matches Renovate's `minimumReleaseAge` (.github/renovate.json)
 # and the backend's uv `exclude-newer` (backend/pyproject.toml) so all three
 # resolution layers share one window. pnpm enforces this on every resolution,
 # including the ones Renovate runs to update the lockfile, so nothing younger than

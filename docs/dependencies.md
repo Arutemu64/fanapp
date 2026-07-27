@@ -26,7 +26,7 @@ Prefer an exact pin over a floating tag so every consumer resolves identically.
 
 ## How Renovate enforces it
 
-[`renovate.json`](../renovate.json) automates the bump-together part:
+[`renovate.json`](../.github/renovate.json) automates the bump-together part:
 
 * **Grouped `packageRules`** (`uv`, `postgres`, `node`, `pnpm`, `hadolint`,
   `python`) consolidate each shared pin into a single PR, so no site is left

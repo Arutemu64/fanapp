@@ -101,7 +101,7 @@ This brings up the frontend, API, FastStream consumer, scheduler, Postgres, Redi
 - Frontend: http://localhost:3000
 - API: http://localhost:8000
 
-Both host ports are overridable if 3000/8000 are taken — set `FRONTEND_PORT` / `API_PORT` in `.env` (see `.env.example`). Update `Caddyfile.example` to match if you use it.
+Both host ports are overridable if 3000/8000 are taken — set `FRONTEND_PORT` / `API_PORT` in `.env` (see `.env.example`). Update `config/caddy/Caddyfile.example` to match if you use it.
 
 ### 3. Run locally (without Docker)
 
@@ -154,7 +154,7 @@ just ci
 
 `just ci` runs the same eight gates, in the same check-only mode, on your machine. **Run it before pushing** — catching a failure locally takes seconds instead of a round trip through Actions.
 
-Each area runs as its own job (`backend`, `frontend`, `dockerfiles`), so branch protection can require them individually and a run reports a separate red/green check per area. The `frontend` job further fans out into a `lint`/`check`/`test`/`build` matrix. Within a job, one failing gate doesn't skip the rest, so a run reports every problem in that area instead of only the first. The reasoning is in the header comment of [`ci.yml`](.github/workflows/ci.yml). [`renovate.json`](renovate.json) opens one PR per dependency every Monday morning, automerging the ones that break loudly in CI — see [`docs/dependencies.md`](docs/dependencies.md).
+Each area runs as its own job (`backend`, `frontend`, `dockerfiles`), so branch protection can require them individually and a run reports a separate red/green check per area. The `frontend` job further fans out into a `lint`/`check`/`test`/`build` matrix. Within a job, one failing gate doesn't skip the rest, so a run reports every problem in that area instead of only the first. The reasoning is in the header comment of [`ci.yml`](.github/workflows/ci.yml). [`renovate.json`](.github/renovate.json) opens one PR per dependency every Monday morning, automerging the ones that break loudly in CI — see [`docs/dependencies.md`](docs/dependencies.md).
 
 [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml) additionally builds the backend and frontend images and pushes them to the GitHub Container Registry (GHCR) on pushes to `main` (which move the `latest` tag) and on `v*` tags. The `SENTRY_AUTH_TOKEN` repository secret is passed only to the frontend build (source-map upload); it is consumed in a discarded build stage and never ends up in the published image.
 
@@ -194,7 +194,7 @@ Optional, enabled via `.env`:
 
 ## Security
 
-Found a vulnerability? Report it privately — see [`SECURITY.md`](SECURITY.md).
+Found a vulnerability? Report it privately — see [`SECURITY.md`](.github/SECURITY.md).
 Please don't open a public issue, and please don't test against the live
 festival deployment; `just run-dev` gives you the whole stack locally.
 

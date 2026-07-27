@@ -58,7 +58,7 @@ publishes that release, so any past build is reachable by tag.
 ## Reverse proxy (Caddy): HTTPS and HTTP testing
 
 The app is meant to run behind a reverse proxy that puts the frontend and the API
-on **one origin**: [`Caddyfile.example`](../Caddyfile.example) routes `/api*` to
+on **one origin**: [`Caddyfile.example`](../config/caddy/Caddyfile.example) routes `/api*` to
 the backend and everything else to the SvelteKit frontend. Because the API is
 same-origin, the browser never makes a cross-origin request, so **no CORS config
 is needed**.
@@ -70,7 +70,7 @@ domain-agnostic — the same build (and the prebuilt GHCR image) works on any
 domain with no rebuild (see [frontend.md](frontend.md)).
 
 `just run-prod` exposes the apps on `127.0.0.1:3000` (frontend) and
-`127.0.0.1:8000` (API); run Caddy with `Caddyfile.example` in front to reach them
+`127.0.0.1:8000` (API); run Caddy with `config/caddy/Caddyfile.example` in front to reach them
 on a single origin (e.g. `http://localhost`).
 
 With the relative default you only set the origin-dependent values to match how

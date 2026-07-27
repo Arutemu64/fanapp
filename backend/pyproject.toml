@@ -76,13 +76,13 @@ build-backend = "uv_build"
 # .github/workflows/ci.yml; bump all five together.
 required-version = "==0.11.29"
 # Ignore releases younger than this when resolving, mirroring Renovate's
-# `minimumReleaseAge` in renovate.json. Renovate applies the cooldown when it
+# `minimumReleaseAge` in .github/renovate.json. Renovate applies the cooldown when it
 # *picks* a target version, but when it then calls uv to relock a bumped `>=`
 # floor, uv would otherwise resolve to the newest release available — which may
 # still be inside the cooldown — and Renovate rejects the lockfile as a pending
 # version (the `renovate/artifacts` failure seen on PR #310). Matching the two
 # keeps uv's own resolution inside the same window. Keep this in sync with
-# renovate.json `minimumReleaseAge`.
+# .github/renovate.json `minimumReleaseAge`.
 exclude-newer = "7 days"
 
 [tool.pytest.ini_options]

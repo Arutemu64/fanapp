@@ -146,7 +146,7 @@ the snapshot and on disk at session start:
 * `hadolint/hadolint` — backs the `hadolint` shim above, so the Dockerfile gate
   in `just ci` runs in-session instead of only in CI. Pinned to the same version
   as `mise.toml` and the `.pre-commit-config.yaml` rev (docs/dependencies.md);
-  the `renovate.json` `hadolint` group bumps all three together.
+  the `.github/renovate.json` `hadolint` group bumps all three together.
 
 Only the daemon (a process) is restarted per session by the hook; containers
 themselves are booted and torn down on demand by `just backend-generate-auto`
