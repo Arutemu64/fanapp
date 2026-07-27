@@ -13,15 +13,36 @@ import { createContext } from 'svelte';
 
 const [getEvents, setEvents] = createContext<EventsClient | null>();
 
-/** Max reconnect attempts before giving up. */
+/** Max reconnect attempts before backing off to the slow retry below. */
 const MAX_RECONNECT_ATTEMPTS = 10;
+/**
+ * Once the fast retries are exhausted, keep dialing at this cadence rather than
+ * stopping for good. A stream that stays broken while the backend is otherwise
+ * healthy — a carrier proxy that kills long-lived connections, say — never
+ * produces a reachability *transition*, so `markReachable(true)` notifies nobody
+ * and none of the other recovery paths (`online`, reachability change, visibility
+ * resume) ever fire. Without this the down banner would stick for the rest of the
+ * session on an app whose pages all load fine. One dial a minute is cheap, and it
+ * is paused with the rest of the stream while the app is backgrounded.
+ */
+const FAILED_RETRY_INTERVAL_MS = 60000;
 /** Wait briefly before reconnecting after auth changes to avoid flicker during navigation. */
 const RESTART_DEBOUNCE_MS = 250;
 /**
- * If the dial or the handshake stalls this long, treat the attempt as failed
- * and reconnect. Armed when dialing (a server that accepts the connection but
- * never responds would otherwise leave us in 'connecting' forever) and re-armed
- * once the transport opens to give the handshake its own window.
+ * If the dial stalls this long, treat the attempt as failed and reconnect. The
+ * window covers DNS + TCP + TLS + response headers on a cold connection, which
+ * on a congested venue cell is legitimately slow. It exists to catch a *hung*
+ * dial — a server or proxy that accepts the connection but never sends headers,
+ * firing neither onopen nor onerror for minutes — not a slow one, so it is set
+ * well past plausible slowness: timing out a merely-slow network makes things
+ * worse, since every retry restarts the whole dial and spends the fast-retry
+ * budget on a connection that would have succeeded.
+ */
+const DIAL_TIMEOUT_MS = 15000;
+/**
+ * Re-armed once the transport opens, so the backend handshake gets its own
+ * window. Tighter than the dial: the connection already exists by then, and
+ * `connection_established` is the first thing the backend writes to the stream.
  */
 const HANDSHAKE_TIMEOUT_MS = 5000;
 /**
@@ -128,7 +149,7 @@ export class EventsClient {
 	#source: EventSource | null = null;
 	#reconnectAttempts = 0;
 	#reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
-	#handshakeTimeoutId: ReturnType<typeof setTimeout> | null = null;
+	#stallTimeoutId: ReturnType<typeof setTimeout> | null = null;
 	#restartTimeoutId: ReturnType<typeof setTimeout> | null = null;
 	#visibilityTimeoutId: ReturnType<typeof setTimeout> | null = null;
 	#heartbeatTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -178,7 +199,7 @@ export class EventsClient {
 
 		this.#clearReconnectTimer();
 		this.#clearRestartTimer();
-		this.#clearHandshakeTimer();
+		this.#clearStallTimer();
 		this.#clearHeartbeatTimer();
 		this.#manualDisconnect = false;
 		this.#handshake = null;
@@ -190,7 +211,13 @@ export class EventsClient {
 			return;
 		}
 
-		this.#connectionStatus = 'connecting';
+		// A slow background retry from 'failed' must not downgrade the status to
+		// 'connecting': the user has already been told the stream is down, and
+		// flipping the banner off and back on every minute reads as flapping. Only
+		// a transport that actually opens should change what they see.
+		if (this.#connectionStatus !== 'failed') {
+			this.#connectionStatus = 'connecting';
+		}
 
 		this.#source = new EventSource(`${PUBLIC_API_URL}/events`, {
 			withCredentials: true
@@ -199,7 +226,7 @@ export class EventsClient {
 		// Covers a hung dial: a server (or proxy) that accepts the connection but
 		// never sends headers fires neither onopen nor onerror for minutes, which
 		// would leave the status stuck in 'connecting' with no retry scheduled.
-		this.#armHandshakeTimeout();
+		this.#armStallTimeout(DIAL_TIMEOUT_MS, 'dial');
 
 		this.#source.onopen = () => {
 			// The stream transport is open. We wait for the backend handshake
@@ -207,8 +234,14 @@ export class EventsClient {
 			// reset on handshake success, not here: a transport that opens but
 			// never completes the handshake must still count toward `failed`,
 			// otherwise it loops forever instead of surfacing the down banner.
-			this.#connectionStatus = 'transport_open';
-			this.#armHandshakeTimeout();
+			// Same reason as in connect(): from 'failed', only a completed handshake
+			// clears the down banner. A transport that opens and then stalls on the
+			// handshake would otherwise blink the banner off for HANDSHAKE_TIMEOUT_MS
+			// on every slow retry.
+			if (this.#connectionStatus !== 'failed') {
+				this.#connectionStatus = 'transport_open';
+			}
+			this.#armStallTimeout(HANDSHAKE_TIMEOUT_MS, 'handshake');
 		};
 
 		this.#source.onerror = () => {
@@ -285,7 +318,7 @@ export class EventsClient {
 		this.#manualDisconnect = true;
 		this.#clearReconnectTimer();
 		this.#clearRestartTimer();
-		this.#clearHandshakeTimer();
+		this.#clearStallTimer();
 		this.#clearHeartbeatTimer();
 		this.#clearVisibilityTimer();
 		this.#closeSource();
@@ -331,7 +364,7 @@ export class EventsClient {
 		this.#manualDisconnect = true;
 		this.#clearReconnectTimer();
 		this.#clearRestartTimer();
-		this.#clearHandshakeTimer();
+		this.#clearStallTimer();
 		this.#clearHeartbeatTimer();
 		this.#closeSource();
 		this.#handshake = null;
@@ -370,8 +403,10 @@ export class EventsClient {
 	};
 
 	// Reachability recovered (e.g. the offline recovery poll or a load succeeded).
-	// If the stream already exhausted its retries, its reconnect loop is no longer
-	// running — restart it so the live stream returns without a manual refresh.
+	// A given-up stream is only retrying once a FAILED_RETRY_INTERVAL_MS by then;
+	// a confirmed-reachable backend is good enough evidence to dial straight away
+	// rather than sit out the rest of that minute. Note this fires on a reachability
+	// *transition* only, which is exactly why the slow retry has to exist.
 	#handleReachableChange = () => {
 		if (this.#connectionStatus === 'failed' && isReachable()) {
 			this.restart();
@@ -388,7 +423,7 @@ export class EventsClient {
 			this.#handshake = null;
 		}
 
-		this.#clearHandshakeTimer();
+		this.#clearStallTimer();
 		this.#connectionStatus = 'connected';
 		// A live stream proves the backend is reachable — feed that to the probe.
 		markReachable(true);
@@ -396,12 +431,14 @@ export class EventsClient {
 		this.#reconnectAttempts = 0;
 	};
 
-	#armHandshakeTimeout() {
-		this.#clearHandshakeTimer();
-		this.#handshakeTimeoutId = setTimeout(() => {
-			console.warn('SSE handshake timed out, reconnecting...');
+	// Guards both stages of coming online — the dial, then the handshake. Either
+	// stalling leaves the stream dead in a way EventSource itself never reports.
+	#armStallTimeout(timeoutMs: number, stage: 'dial' | 'handshake') {
+		this.#clearStallTimer();
+		this.#stallTimeoutId = setTimeout(() => {
+			console.warn(`SSE ${stage} timed out, reconnecting...`);
 			this.#failAndReconnect();
-		}, HANDSHAKE_TIMEOUT_MS);
+		}, timeoutMs);
 	}
 
 	// Resets the liveness watchdog; fires on every observed event (see connect()).
@@ -418,7 +455,7 @@ export class EventsClient {
 	}
 
 	#failAndReconnect() {
-		this.#clearHandshakeTimer();
+		this.#clearStallTimer();
 		this.#clearHeartbeatTimer();
 		this.#closeSource();
 		this.#handshake = null;
@@ -431,6 +468,14 @@ export class EventsClient {
 
 		if (this.#reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
 			this.#connectionStatus = 'failed';
+			// Give up on *fast* recovery only — keep a slow dial going so the stream
+			// self-heals without a manual refresh. See FAILED_RETRY_INTERVAL_MS for
+			// why no other recovery path covers this. The counter stays maxed out, so
+			// a failing retry lands back here rather than restarting the fast burst.
+			this.#reconnectTimeoutId = setTimeout(() => {
+				this.#reconnectTimeoutId = null;
+				this.connect();
+			}, FAILED_RETRY_INTERVAL_MS);
 			return;
 		}
 
@@ -467,10 +512,10 @@ export class EventsClient {
 		this.#restartTimeoutId = null;
 	}
 
-	#clearHandshakeTimer() {
-		if (!this.#handshakeTimeoutId) return;
-		clearTimeout(this.#handshakeTimeoutId);
-		this.#handshakeTimeoutId = null;
+	#clearStallTimer() {
+		if (!this.#stallTimeoutId) return;
+		clearTimeout(this.#stallTimeoutId);
+		this.#stallTimeoutId = null;
 	}
 
 	#clearVisibilityTimer() {
