@@ -13,7 +13,14 @@ select = ["ALL"]
 ignore = [
     "D",       # pydocstyle (noisy in app development where public docs aren't strictly mandated)
     "ANN",     # flake8-annotations (type-checking is handled statically by `ty`)
-    "N",       # pep8-naming (occasionally conflicts with external schemas or webhook models)
+    # Exceptions are named for the domain condition they represent (UserNotFound,
+    # MailingAlreadyCancelled), which is the convention docs/backend.md documents.
+    # PEP 8 asks for the suffix only "if the exception actually is an error", and the
+    # semantic markers (NotFound, Conflict, RateLimited) classify a condition rather
+    # than being errors. The rule also only reaches 4 of the 71 exception classes —
+    # it recognises a base by an `Error` suffix, so renaming one cascades to its
+    # subclasses and the only fixpoint is renaming all of them.
+    "N818",    # error-suffix-on-exception-name
     # pylint-refactor code-metric rules: noisy in DDD interactors/controllers where
     # many branches and statements are structurally expected. PLR1711 (useless-return)
     # and PLR2004 (magic-value-comparison) both stay enabled; PLR2004 is scoped off
@@ -97,4 +104,5 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "f
 "src/fanfan/adapters/db/migrations/versions/*.py" = [
     "E501",    # Alembic sometimes generates long lines
     "INP001",  # Not a package
+    "N999",    # filenames are Alembic's `<date>-<revision>_<slug>` template, not module names
 ]
