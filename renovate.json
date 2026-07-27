@@ -6,12 +6,14 @@
     ":semanticCommitsDisabled",
     ":enablePreCommit",
     "helpers:pinGitHubActionDigests",
-    "abandonments:recommended"
+    "abandonments:recommended",
+    "customManagers:dockerfileVersions"
   ],
   "configMigration": true,
   "description": [
     "ignorePaths restates the :ignoreModulesAndTests default (part of config:recommended) minus '**/tests/**': the postgres custom manager below must see backend/tests/fixtures/db_provider.py, which the default ignore silently excludes.",
     "One dependency, one PR: bumps are deliberately NOT batched into weekly grouped PRs. This repo is public and every CI job runs on a standard GitHub-hosted runner, which GitHub does not meter (https://docs.github.com/en/billing/concepts/product-billing/github-actions), so grouping bought nothing but cost atomicity: a grouped branch passes or fails as a whole, Renovate cannot split it, and one bad bump then holds back every other update in the batch ('grouping dependencies increases the chance that the branch has an error' — https://docs.renovatebot.com/noise-reduction/). Per-package PRs give one revertable commit per dependency instead. The shared-pin groups below are the exception, and they exist for correctness — every site of one pin must move together — not to save minutes.",
+    "customManagers:dockerfileVersions reads `# renovate: datasource=… depName=…` annotations above `ENV`/`ARG` *_VERSION lines in Dockerfiles — the built-in dockerfile manager sees FROM lines only. Preferred over a hand-rolled regex manager per https://docs.renovatebot.com/modules/manager/regex/ ('you only need one customManager instead of four', and the annotation documents the pin where a reader of the Dockerfile will see it). Currently one site: PNPM_VERSION in frontend/Dockerfile. The preset only matches annotated lines, so it cannot pick anything up by accident.",
     "osvVulnerabilityAlerts adds OSV-sourced CVE detection for direct dependencies on top of GitHub's own alerts, so a vulnerable backend package is caught even where the Dependabot dependency graph does not read uv.lock. Security fixes need no further wiring: Renovate's vulnerabilityAlerts defaults already override the weekly schedule and the minimumReleaseAge cooldown below (schedule [], minimumReleaseAge null, prCreation 'immediate').",
     "Concurrency, rebasing and platform automerge are left at Renovate's defaults (prConcurrentLimit 10, prHourlyLimit 2, rebaseWhen 'auto', platformAutomerge true), which suit unmetered CI. 'auto' resolves to 'behind-base-branch' on a branch with automerge enabled, so an automerged commit was green against current main rather than against a stale base."
   ],
@@ -168,15 +170,6 @@
       "depNameTemplate": "hadolint/hadolint",
       "datasourceTemplate": "docker",
       "versioningTemplate": "docker"
-    },
-    {
-      "description": "Shared pin (docs/dependencies.md): the pnpm the frontend build image installs. It is a plain ENV, so the dockerfile manager (which only reads FROM lines) never saw it, and it silently drifted a patch behind the other three sites. Feeds the 'pnpm' group above so it moves with mise.toml, package.json 'packageManager' and the CI action input.",
-      "customType": "regex",
-      "managerFilePatterns": ["/^frontend/Dockerfile$/"],
-      "matchStrings": ["PNPM_VERSION=(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"],
-      "depNameTemplate": "pnpm",
-      "datasourceTemplate": "npm",
-      "versioningTemplate": "npm"
     },
     {
       "description": "Shared pin (docs/dependencies.md): uv version pinned as a PyPI package in the cloud setup script and in pyproject [tool.uv] required-version. The CI setup-uv input needs no manager here — the github-actions manager reads supported 'uses ... with' version inputs itself (https://docs.renovatebot.com/modules/manager/github-actions/) and reports that line as 'astral-sh/uv', which the uv group above matches. Same for the pnpm input to pnpm/action-setup ('pnpm') and node-version to setup-node ('node').",

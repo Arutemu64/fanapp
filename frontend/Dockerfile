@@ -5,13 +5,17 @@ FROM node:24.18-alpine AS base
 # which is where the cache mounts below point.
 ENV PNPM_HOME=/pnpm
 ENV PATH=/pnpm:$PATH
+# One site of the shared pnpm pin (docs/dependencies.md): it must equal
+# mise.toml, package.json#packageManager and the CI `pnpm/action-setup` input.
+# The annotation below is what keeps it in their bump PR — the dockerfile
+# manager reads FROM lines only, so an ENV pin is invisible without it. It is
+# read by the customManagers:dockerfileVersions preset (renovate.json), which
+# requires the comment on the line directly above the ENV.
+# renovate: datasource=npm depName=pnpm versioning=npm
 ENV PNPM_VERSION=11.15.1
 
 # Installed standalone via npm (not Corepack): Node 25+ no longer ships
-# Corepack, and pnpm now recommends standalone installs. This is one site of the
-# shared pnpm pin (docs/dependencies.md) — it must equal mise.toml,
-# package.json#packageManager and the CI action input, and a regex manager in
-# renovate.json keeps it in the same bump PR as those three.
+# Corepack, and pnpm now recommends standalone installs.
 RUN npm install -g pnpm@${PNPM_VERSION}
 
 WORKDIR /app

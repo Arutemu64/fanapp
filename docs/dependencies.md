@@ -38,9 +38,19 @@ Prefer an exact pin over a floating tag so every consumer resolves identically.
   the Postgres image literals in `backend/scripts/generate_migration.py` and
   `backend/tests/fixtures/db_provider.py`; the hadolint image behind the
   `.claude/setup.sh` shim; the uv pin in `.claude/setup.sh` and
-  `backend/pyproject.toml`; and the `PNPM_VERSION` ENV in `frontend/Dockerfile`
-  — the `dockerfile` manager reads `FROM` lines only, so an ENV pin is invisible
-  to it.
+  `backend/pyproject.toml`.
+* **A pin inside a Dockerfile that isn't a `FROM` line gets an inline
+  annotation, not a regex manager.** The `dockerfile` manager reads `FROM` lines
+  only, so `ENV PNPM_VERSION` in `frontend/Dockerfile` was invisible to it and
+  drifted a patch behind the other pnpm sites. It now carries a
+  `# renovate: datasource=npm depName=pnpm versioning=npm` comment, read by the
+  first-party `customManagers:dockerfileVersions` preset. Renovate's own
+  [regex-manager docs](https://docs.renovatebot.com/modules/manager/regex/)
+  prefer this to a bespoke rule — one manager covers every annotated line
+  instead of one rule per pin, and the annotation documents the constraint in
+  the file a reader is already looking at. The comment must sit on the line
+  **directly above** the `ENV`/`ARG`; a blank line between them breaks the
+  match.
 * **Version inputs to setup actions need no custom manager.** The
   `github-actions` manager reads supported `uses … with` inputs itself, so the
   `setup-uv`, `pnpm/action-setup` and `setup-node` version inputs in `ci.yml`
