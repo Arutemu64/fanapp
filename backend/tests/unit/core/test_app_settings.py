@@ -14,10 +14,10 @@ def test_voting_is_disabled_by_default():
 def test_set_voting_enabled_toggles_value():
     settings = AppSettings()
 
-    settings.set_voting_enabled(True)
+    settings.set_voting_enabled(enabled=True)
     assert settings.voting_enabled is True
 
-    settings.set_voting_enabled(False)
+    settings.set_voting_enabled(enabled=False)
     assert settings.voting_enabled is False
 
 

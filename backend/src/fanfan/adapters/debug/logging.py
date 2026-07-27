@@ -14,7 +14,7 @@ class _HealthCheckFilter(logging.Filter):
         return _HEALTH_CHECK_PATH not in record.getMessage()
 
 
-def setup_logging(level: int, json_logs: bool):
+def setup_logging(level: int, *, json_logs: bool):
     default_processors = [
         structlog.stdlib.add_log_level,
         structlog.stdlib.add_logger_name,

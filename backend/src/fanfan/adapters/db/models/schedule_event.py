@@ -57,7 +57,9 @@ class ScheduleEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, OrderMixin, BaseORM)
                 cls.id,
                 func.row_number().over(order_by=cls.order).label("queue"),
             )
-            .where(cls.is_skipped.isnot(True))
+            # `IS NOT TRUE` also matches NULL, unlike `~is_skipped`. The literal
+            # is SQLAlchemy's operator API, not a boolean trap.
+            .where(cls.is_skipped.isnot(True))  # noqa: FBT003
             .subquery()
         )
 

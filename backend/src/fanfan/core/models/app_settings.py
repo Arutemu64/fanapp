@@ -17,7 +17,7 @@ class AppSettings(AggregateRoot):
 
     limits: LimitsConfig = field(default_factory=LimitsConfig)
 
-    def set_voting_enabled(self, enabled: bool) -> None:
+    def set_voting_enabled(self, *, enabled: bool) -> None:
         self.voting_enabled = enabled
 
     def update_limits(

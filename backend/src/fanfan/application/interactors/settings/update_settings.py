@@ -47,7 +47,7 @@ class UpdateSettings:
         update_flag = False
 
         if (voting_enabled := data_to_update.get("voting_enabled")) is not None:
-            settings.set_voting_enabled(voting_enabled)
+            settings.set_voting_enabled(enabled=voting_enabled)
             update_flag = True
 
         if (

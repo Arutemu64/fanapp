@@ -41,16 +41,16 @@ ignore = [
     "D",       # pydocstyle (noisy in app development where public docs aren't strictly mandated)
     "ANN",     # flake8-annotations (type-checking is handled statically by `ty`)
     "N",       # pep8-naming (occasionally conflicts with external schemas or webhook models)
-    "FBT",     # flake8-boolean-trap (perfectly fine for query params/arguments in web routes)
     # pylint-refactor code-metric rules: noisy in DDD interactors/controllers where
-    # many arguments and branches are structurally expected. PLR1711 (useless-return)
+    # many branches and statements are structurally expected. PLR1711 (useless-return)
     # and PLR2004 (magic-value-comparison) both stay enabled; PLR2004 is scoped off
     # only in pluralize.py (per-file-ignores below), whose constants are intrinsic
-    # Russian plural-rule numbers, not stray magic values.
+    # Russian plural-rule numbers, not stray magic values. PLR0913 (too-many-arguments)
+    # is *not* here: it fires only where DI does the arg-passing, so it is scoped to
+    # those spots in per-file-ignores instead of being disabled everywhere.
     "PLR0904",  # too-many-public-methods
     "PLR0911",  # too-many-return-statements
     "PLR0912",  # too-many-branches
-    "PLR0913",  # too-many-arguments
     "PLR0915",  # too-many-statements
     "COM812",  # missing-trailing-comma (formatter compatibility)
     "ISC001",  # single-line-implicit-string-concatenation (formatter compatibility)
@@ -136,7 +136,15 @@ docstring-code-line-length = "dynamic"
     "S106",    # hardcoded passwords in tests are fine
     "F401",    # unused imports are common in fixtures / conftest files
     "PLR2004", # magic numbers (e.g. status code == 200) are totally fine in tests
+    "PLR0913", # a test's arguments are pytest fixtures, not a call signature anyone types
     "SLF001",  # accessing private members during testing is sometimes necessary
+]
+# Interactors take their collaborators through Dishka constructor injection: one
+# parameter per port, assembled by the container, never typed out by a caller. The
+# arg count tracks how many ports the use case needs, so capping it would only push
+# work into a bundle object and hide the same dependencies (see ADR-0005).
+"src/fanfan/application/interactors/**/*.py" = [
+    "PLR0913", # too-many-arguments
 ]
 "src/fanfan/adapters/db/migrations/env.py" = [
     "ERA001",  # Alembic auto-generates commented out code
