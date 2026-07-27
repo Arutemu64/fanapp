@@ -62,9 +62,6 @@ class SqlSubscriptionGateway(SubscriptionGateway):
         self, current_event_queue: int
     ) -> list[SubscriptionFullDTO]:
         stmt = _select_subscription_full_dto().where(
-            # `isnot(True)` renders SQL `IS NOT TRUE`, which also matches NULL —
-            # `~is_skipped` would drop NULL rows. The literal is SQLAlchemy's
-            # operator API, not a boolean trap.
             ScheduleEventORM.is_skipped.isnot(True),  # noqa: FBT003
             # Fire once the event is within `counter` positions of the stage.
             SubscriptionORM.counter >= (ScheduleEventORM.queue - current_event_queue),
