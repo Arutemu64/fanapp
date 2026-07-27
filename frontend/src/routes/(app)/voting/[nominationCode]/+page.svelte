@@ -33,6 +33,12 @@
 	// Seeded from the query string once, then owned here — same reasoning as the
 	// schedule page: a `load` that read the param would re-run on every keystroke.
 	// The param rides this nomination's URL, so each nomination keeps its own.
+	//
+	// "Once" is the catch: SvelteKit reuses this component across a
+	// [nominationCode] change rather than rebuilding it. Nothing links one
+	// nomination straight to another today — NominationCard on /voting is the only
+	// way in, and coming through the list rebuilds the page — but a link that did
+	// would carry the previous nomination's query over while the URL disagreed.
 	let searchQuery = $state(page.url.searchParams.get(SEARCH_PARAM) ?? '');
 
 	const urlFilters = createUrlFilterSync();
