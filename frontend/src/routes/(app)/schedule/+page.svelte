@@ -49,6 +49,7 @@
 	let user: CurrentUserDTO | null = $derived(page.data.user);
 
 	const offline = getOfflineService();
+	const eventsClient = getEventsClient();
 	let showStaleNotice = $derived(
 		shouldShowStaleNotice({
 			offlineMiss: data.offlineMiss,
@@ -206,7 +207,6 @@
 
 	onMount(() => {
 		const scrollContainer = getScrollContainer();
-		const eventsClient = getEventsClient();
 
 		const updateScrollState = () => {
 			showScrollTopButton = (scrollContainer?.scrollTop ?? 0) > 320;
