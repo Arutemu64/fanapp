@@ -19,6 +19,7 @@
 
 	const client = createApiClient();
 	const toastService = getToastService();
+	const eventsClient = getEventsClient();
 
 	const SOURCE_LABELS: Record<SyncSource, string> = {
 		cosplay2: 'Cosplay2',
@@ -89,8 +90,6 @@
 	}
 
 	onMount(() => {
-		const eventsClient = getEventsClient();
-
 		// Refetch on every run update and on every (re)connect, so an update
 		// missed while the stream was down (or while the tab was backgrounded
 		// past the pause grace) doesn't leave a stale "Выполняется" on screen.

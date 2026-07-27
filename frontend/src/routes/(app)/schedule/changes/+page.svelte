@@ -10,6 +10,8 @@
 
 	let { data }: PageProps = $props();
 
+	const eventsClient = getEventsClient();
+
 	// Re-seed the feed with the fresh first page after undo triggers invalidate().
 	let changesKey = $derived(
 		feedSnapshotKey(
@@ -19,8 +21,6 @@
 	);
 
 	onMount(() => {
-		const eventsClient = getEventsClient();
-
 		// There is no dedicated SSE event for this feed: every change that adds a
 		// row here (create, undo) also broadcasts 'schedule_updated', so that one
 		// signal already fires on a superset of the moments this list goes stale.

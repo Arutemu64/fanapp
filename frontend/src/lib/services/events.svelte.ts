@@ -121,8 +121,10 @@ function parseEventData(raw: unknown): unknown {
  *   client?.off('schedule_updated', handler);
  */
 export class EventsClient {
-	connectionStatus: ConnectionStatus = $state('disconnected');
-	handshake: EventsHandshakePayload | null = $state(null);
+	#connectionStatus: ConnectionStatus = $state('disconnected');
+	// Reassigned wholesale from parsed JSON, never mutated — `$state.raw` skips the
+	// deep proxy `$state` would otherwise build for it.
+	#handshake: EventsHandshakePayload | null = $state.raw(null);
 	#source: EventSource | null = null;
 	#reconnectAttempts = 0;
 	#reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -142,6 +144,16 @@ export class EventsClient {
 	// Each entry keeps the user handler (for identity on off()) and the JSON-parsing
 	// wrapper actually attached to the EventSource.
 	#listeners: Record<string, RegisteredListener[]> = {};
+
+	/** Current stream state. Reactive — read it from a `$derived` or a template. */
+	get connectionStatus(): ConnectionStatus {
+		return this.#connectionStatus;
+	}
+
+	/** Payload of the last completed handshake; null whenever the stream is down. */
+	get handshake(): EventsHandshakePayload | null {
+		return this.#handshake;
+	}
 
 	constructor() {
 		// React to OS network changes: pause the stream when the browser goes
@@ -169,16 +181,16 @@ export class EventsClient {
 		this.#clearHandshakeTimer();
 		this.#clearHeartbeatTimer();
 		this.#manualDisconnect = false;
-		this.handshake = null;
+		this.#handshake = null;
 
 		// Don't dial while the browser reports no network — wait for the `online`
 		// event instead of looping failed connection attempts.
 		if (browser && !navigator.onLine) {
-			this.connectionStatus = 'disconnected';
+			this.#connectionStatus = 'disconnected';
 			return;
 		}
 
-		this.connectionStatus = 'connecting';
+		this.#connectionStatus = 'connecting';
 
 		this.#source = new EventSource(`${PUBLIC_API_URL}/events`, {
 			withCredentials: true
@@ -195,7 +207,7 @@ export class EventsClient {
 			// reset on handshake success, not here: a transport that opens but
 			// never completes the handshake must still count toward `failed`,
 			// otherwise it loops forever instead of surfacing the down banner.
-			this.connectionStatus = 'transport_open';
+			this.#connectionStatus = 'transport_open';
 			this.#armHandshakeTimeout();
 		};
 
@@ -261,7 +273,7 @@ export class EventsClient {
 	restart() {
 		if (this.#destroyed) return;
 		this.disconnect();
-		this.connectionStatus = 'connecting';
+		this.#connectionStatus = 'connecting';
 		this.#restartTimeoutId = setTimeout(() => {
 			this.#restartTimeoutId = null;
 			this.connect();
@@ -277,8 +289,8 @@ export class EventsClient {
 		this.#clearHeartbeatTimer();
 		this.#clearVisibilityTimer();
 		this.#closeSource();
-		this.handshake = null;
-		this.connectionStatus = 'disconnected';
+		this.#handshake = null;
+		this.#connectionStatus = 'disconnected';
 		this.#reconnectAttempts = 0;
 		this.#pausedForVisibility = false;
 	}
@@ -309,16 +321,21 @@ export class EventsClient {
 
 	// Tear down the live stream without the terminal semantics of disconnect():
 	// keeps the backoff counter, ready to be resumed by an online/visibility event.
+	// Deliberately leaves the visibility timer alone — it tracks how long the app
+	// has been backgrounded, which a network blip does not change. Clearing it here
+	// let an offline/online flap mid-background cancel the pending pause, so the
+	// stream redialled and then stayed open on a hidden app until the user returned
+	// (visibilitychange does not fire again while hidden), which is precisely the
+	// radio churn HIDDEN_PAUSE_GRACE_MS exists to avoid.
 	#suspend() {
 		this.#manualDisconnect = true;
 		this.#clearReconnectTimer();
 		this.#clearRestartTimer();
 		this.#clearHandshakeTimer();
 		this.#clearHeartbeatTimer();
-		this.#clearVisibilityTimer();
 		this.#closeSource();
-		this.handshake = null;
-		this.connectionStatus = 'disconnected';
+		this.#handshake = null;
+		this.#connectionStatus = 'disconnected';
 	}
 
 	// Network is back: re-dial from a clean slate — unless we're paused because the
@@ -356,7 +373,7 @@ export class EventsClient {
 	// If the stream already exhausted its retries, its reconnect loop is no longer
 	// running — restart it so the live stream returns without a manual refresh.
 	#handleReachableChange = () => {
-		if (this.connectionStatus === 'failed' && isReachable()) {
+		if (this.#connectionStatus === 'failed' && isReachable()) {
 			this.restart();
 		}
 	};
@@ -365,14 +382,14 @@ export class EventsClient {
 		if (!(event instanceof MessageEvent)) return;
 
 		try {
-			this.handshake = JSON.parse(event.data as string) as EventsHandshakePayload;
+			this.#handshake = JSON.parse(event.data as string) as EventsHandshakePayload;
 		} catch (error) {
 			console.warn('Failed to parse SSE handshake payload', error);
-			this.handshake = null;
+			this.#handshake = null;
 		}
 
 		this.#clearHandshakeTimer();
-		this.connectionStatus = 'connected';
+		this.#connectionStatus = 'connected';
 		// A live stream proves the backend is reachable — feed that to the probe.
 		markReachable(true);
 		// Connection is fully online; reset backoff so the next blip starts fresh.
@@ -404,8 +421,8 @@ export class EventsClient {
 		this.#clearHandshakeTimer();
 		this.#clearHeartbeatTimer();
 		this.#closeSource();
-		this.handshake = null;
-		this.connectionStatus = 'error';
+		this.#handshake = null;
+		this.#connectionStatus = 'error';
 
 		// A stream failure may mean the network died, not just an SSE hiccup. Probe
 		// the health endpoint so reachability (and the offline banner) reflect reality
@@ -413,7 +430,7 @@ export class EventsClient {
 		void probeReachability();
 
 		if (this.#reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-			this.connectionStatus = 'failed';
+			this.#connectionStatus = 'failed';
 			return;
 		}
 
@@ -476,10 +493,12 @@ export function setEventsClient(): EventsClient | null {
 	return client;
 }
 
+/**
+ * Read the EventsClient from context. Null only when there is no browser (the
+ * root layout stores null then). Deliberately lets `createContext`'s
+ * missing-context error through: swallowing it turned a forgotten
+ * `setEventsClient()` into realtime that silently never arrives.
+ */
 export function getEventsClient(): EventsClient | null {
-	try {
-		return getEvents();
-	} catch {
-		return null;
-	}
+	return getEvents();
 }
