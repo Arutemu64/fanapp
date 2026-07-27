@@ -43,7 +43,7 @@
 		// destroy() (not disconnect()) also unhooks the client's global
 		// window/document listeners, so no zombie stream can resurrect —
 		// matters mostly for dev HMR, which re-creates the layout.
-		eventsClient?.destroy();
+		eventsClient.destroy();
 		// Same reason: drop the offline service's global listeners and its
 		// recovery-poll timer so HMR doesn't stack duplicates.
 		offlineService.destroy();

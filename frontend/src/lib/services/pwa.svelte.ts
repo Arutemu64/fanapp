@@ -1,6 +1,5 @@
 import type { PWAInstallElement } from '@khmyznikov/pwa-install';
 
-import { browser } from '$app/environment';
 import { createContext } from 'svelte';
 
 const ELEMENT_TAG = 'pwa-install';
@@ -20,17 +19,16 @@ export class PwaService {
 	#isApplePlatform = $state(false);
 
 	constructor() {
-		if (browser) {
-			// Detect standalone mode synchronously — reliable and race-free, unlike the
-			// element's `isUnderStandaloneMode`, which is set during its async init.
-			this.#isInstalled = this.#detectStandalone();
+		// Detect standalone mode synchronously — reliable and race-free, unlike the
+		// element's `isUnderStandaloneMode`, which is set during its async init.
+		this.#isInstalled = this.#detectStandalone();
 
-			// Registers the <pwa-install> custom element. Browser-only because the
-			// module touches `window` at import time, so it must not load elsewhere.
-			import('@khmyznikov/pwa-install').catch(() => {
-				// Chunk failed to load; the install card just stays hidden.
-			});
-		}
+		// Registers the <pwa-install> custom element. Imported dynamically so the
+		// library lands in its own chunk instead of the initial bundle — the install
+		// card is a small corner of the profile page.
+		import('@khmyznikov/pwa-install').catch(() => {
+			// Chunk failed to load; the install card just stays hidden.
+		});
 	}
 
 	/**
@@ -46,9 +44,7 @@ export class PwaService {
 
 		// The element upgrades asynchronously after the dynamic import resolves;
 		// read its state once it is defined, then again on every lifecycle event.
-		if (browser) {
-			void customElements.whenDefined(ELEMENT_TAG).then(this.#syncState);
-		}
+		void customElements.whenDefined(ELEMENT_TAG).then(this.#syncState);
 
 		return () => {
 			element.removeEventListener('pwa-install-available-event', this.#syncState);

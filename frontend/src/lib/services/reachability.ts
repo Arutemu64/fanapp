@@ -1,4 +1,3 @@
-import { browser } from '$app/environment';
 import { PUBLIC_API_URL } from '$env/static/public';
 import { timeoutSignal } from '$lib/utils/fetchTimeout';
 import { createSubscriber } from 'svelte/reactivity';
@@ -73,7 +72,6 @@ let inflight: Promise<boolean> | null = null;
  * share one request.
  */
 export function probeReachability(): Promise<boolean> {
-	if (!browser) return Promise.resolve(true);
 	if (inflight) return inflight;
 
 	inflight = fetch(HEALTH_URL, {

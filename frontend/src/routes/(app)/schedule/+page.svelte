@@ -221,13 +221,13 @@
 
 		updateScrollState();
 		scrollContainer?.addEventListener('scroll', updateScrollState, { passive: true });
-		eventsClient?.on('schedule_updated', reloadSchedule);
-		eventsClient?.on('connection_established', reloadSchedule);
+		eventsClient.on('schedule_updated', reloadSchedule);
+		eventsClient.on('connection_established', reloadSchedule);
 
 		return () => {
 			scrollContainer?.removeEventListener('scroll', updateScrollState);
-			eventsClient?.off('schedule_updated', reloadSchedule);
-			eventsClient?.off('connection_established', reloadSchedule);
+			eventsClient.off('schedule_updated', reloadSchedule);
+			eventsClient.off('connection_established', reloadSchedule);
 		};
 	});
 </script>

@@ -20,9 +20,8 @@
 		failed: 'down'
 	};
 
-	// The client is null outside the browser; treat that as healthy so nothing renders.
 	const client = getEventsClient();
-	let health = $derived<Health>(client ? HEALTH_BY_STATUS[client.connectionStatus] : 'healthy');
+	let health = $derived<Health>(HEALTH_BY_STATUS[client.connectionStatus]);
 
 	// Browser-level connectivity. When the device is offline, show a dedicated
 	// strip instead of the SSE "connection lost" one — it is the real cause and
@@ -46,7 +45,7 @@
 
 	function reconnect() {
 		// restart() resets the attempt counter and re-dials the stream.
-		client?.restart();
+		client.restart();
 	}
 
 	type BannerTone = 'yellow' | 'red';

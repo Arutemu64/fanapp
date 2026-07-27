@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
 	import { Button } from 'flowbite-svelte';
 	import { RefreshOutline } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
@@ -43,7 +42,7 @@
 	}
 
 	onMount(() => {
-		if (!browser || !('serviceWorker' in navigator)) return;
+		if (!('serviceWorker' in navigator)) return;
 
 		// Whether a worker already controls this page at startup. On a first-ever
 		// visit there is no controller: the SW installs, activates, and calls

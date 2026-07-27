@@ -1,7 +1,6 @@
 import type { ScheduleEventFullDTO, SubscriptionFullDTO } from '$lib/types/schedule';
 import type { CurrentUserDTO } from '$lib/types/user';
 
-import { browser } from '$app/environment';
 import { createApiClient } from '$lib/api';
 import {
 	clearUserCache,
@@ -62,32 +61,31 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 	// warmed (the schedule page's own load + SSE keep them fresh after that). Uses
 	// the same keys the schedule page reads, and its own client so it isn't tied to
 	// this load's tracked `fetch`.
-	if (browser) {
-		// Schedule is universal — one shared key for guests and every account.
-		void warmCache<ScheduleEventFullDTO[]>({
-			key: 'schedule',
-			scope: universalScope,
+
+	// Schedule is universal — one shared key for guests and every account.
+	void warmCache<ScheduleEventFullDTO[]>({
+		key: 'schedule',
+		scope: universalScope,
+		fetcher: async ({ signal }) => {
+			const warmClient = createApiClient();
+			const { data: schedule, error } = await warmClient.GET('/schedule/', { signal });
+			if (error || !schedule) return undefined;
+			return schedule.schedule ?? [];
+		}
+	});
+
+	// Subscriptions are per-user; only logged-in users have them.
+	if (user) {
+		void warmCache<SubscriptionFullDTO[]>({
+			key: `subscriptions:${user.id}`,
+			scope: userScope,
 			fetcher: async ({ signal }) => {
 				const warmClient = createApiClient();
-				const { data: schedule, error } = await warmClient.GET('/schedule/', { signal });
-				if (error || !schedule) return undefined;
-				return schedule.schedule ?? [];
+				const { data, error } = await warmClient.GET('/schedule/subscriptions/', { signal });
+				if (error || !data) return undefined;
+				return data.subscriptions ?? [];
 			}
 		});
-
-		// Subscriptions are per-user; only logged-in users have them.
-		if (user) {
-			void warmCache<SubscriptionFullDTO[]>({
-				key: `subscriptions:${user.id}`,
-				scope: userScope,
-				fetcher: async ({ signal }) => {
-					const warmClient = createApiClient();
-					const { data, error } = await warmClient.GET('/schedule/subscriptions/', { signal });
-					if (error || !data) return undefined;
-					return data.subscriptions ?? [];
-				}
-			});
-		}
 	}
 
 	return { user };
