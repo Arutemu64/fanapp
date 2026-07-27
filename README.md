@@ -161,6 +161,21 @@ Each area runs as its own job (`backend`, `frontend`, `dockerfiles`), so branch 
 
 [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml) additionally builds the backend and frontend images and pushes them to the GitHub Container Registry (GHCR) on pushes to `main` (which move the `latest` tag) and on `v*` tags. The `SENTRY_AUTH_TOKEN` repository secret is passed only to the frontend build (source-map upload); it is consumed in a discarded build stage and never ends up in the published image.
 
+> [!IMPORTANT]
+> **The published images are built for the FAN FAN deployment — they are not a
+> reusable product.** The frontend is a static SPA, so its `PUBLIC_*` values are
+> baked into the bundle at build time: the published image carries *this*
+> festival's VAPID public key, Yandex SmartCaptcha sitekey and Sentry DSN. Point
+> it at your own backend and Web Push and the captcha break, and your users'
+> errors are reported into our Sentry project. Both images also ship the festival
+> branding, which is [excluded from the MIT grant](#license).
+>
+> To run this for your own event, **fork the repository**, set your own
+> repository variables, and publish images from your fork — see
+> [`docs/deployment.md`](docs/deployment.md#reusing-this-for-another-event).
+> `PUBLIC_API_URL` is the one value you don't have to change: it defaults to the
+> relative `/api`, so the bundle itself stays domain-agnostic.
+
 ## Deployment
 
 The server runs the **prebuilt** GHCR images instead of building from source — only the application *build* moves to CI, the runtime config stays on the host. Once the server is set up, a deploy is:
