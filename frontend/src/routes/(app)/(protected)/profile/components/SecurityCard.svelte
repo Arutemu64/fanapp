@@ -215,6 +215,7 @@
 							color="alternative"
 							class="min-h-11 w-full sm:w-auto"
 						>
+							<IconTelegram class="me-2 h-4 w-4 text-sky-500" />
 							Подключить
 						</Button>
 					{/if}

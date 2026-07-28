@@ -2,7 +2,7 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { clearTelegramErrorParam, TELEGRAM_LOGIN_ERROR_PARAM } from '$lib/utils/telegramOAuth';
-	import { Button, Card } from 'flowbite-svelte';
+	import { Button, Card, Spinner } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
 	import IconTelegram from '~icons/simple-icons/telegram';
 
@@ -28,6 +28,20 @@
 		failed: { message: 'Не удалось войти через Telegram. Попробуй ещё раз.', type: 'error' }
 	} as const;
 
+	// Starting Telegram login is a full-page navigation that waits on our backend
+	// and on Telegram's discovery document, so the button has to say it was heard.
+	let isOpeningTelegram = $state(false);
+
+	function handleTelegramClick(event: MouseEvent) {
+		// A second tap during the wait would burn another OAuth state for nothing.
+		if (isOpeningTelegram) {
+			event.preventDefault();
+			return;
+		}
+
+		isOpeningTelegram = true;
+	}
+
 	onMount(() => {
 		const telegramLoginError = data.telegramLoginError;
 
@@ -39,6 +53,11 @@
 		clearTelegramErrorParam(TELEGRAM_LOGIN_ERROR_PARAM);
 	});
 </script>
+
+<!-- Coming back from Telegram restores this page from the bfcache with its DOM
+	frozen mid-navigation, so the spinner would still be running. `pageshow` fires
+	on that restore (and on a normal load, where the flag is already false). -->
+<svelte:window onpageshow={() => (isOpeningTelegram = false)} />
 
 <svelte:head>
 	<title>Вход или регистрация · ФАН ФАН</title>
@@ -52,17 +71,24 @@
 
 		{#if !showPasswordForm}
 			{#if !isWaitingForCode}
-				<div class="flex justify-center">
-					<!-- Use the configured API base so OAuth works in every environment. -->
-					<Button
-						href={`${PUBLIC_API_URL}/auth/login/telegram`}
-						color="alternative"
-						class="min-h-11 w-full rounded-xl font-medium"
-					>
+				<!-- Use the configured API base so OAuth works in every environment.
+					Flowbite drops `disabled` on an href Button (it renders a bare <a>),
+					so the pending state is aria-disabled plus the guard in the handler. -->
+				<Button
+					href={`${PUBLIC_API_URL}/auth/login/telegram`}
+					color="alternative"
+					class="min-h-11 w-full rounded-xl font-medium"
+					aria-disabled={isOpeningTelegram}
+					onclick={handleTelegramClick}
+				>
+					{#if isOpeningTelegram}
+						<Spinner class="me-2 h-5 w-5" />
+						Открываем Telegram…
+					{:else}
 						<IconTelegram class="me-2 h-5 w-5 text-sky-500" />
 						Войти через Telegram
-					</Button>
-				</div>
+					{/if}
+				</Button>
 
 				<div class="relative flex items-center">
 					<div class="grow border-t border-gray-200 dark:border-gray-700"></div>
