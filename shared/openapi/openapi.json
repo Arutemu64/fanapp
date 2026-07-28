@@ -395,7 +395,7 @@
         }
       }
     },
-    "/auth/auth/telegram": {
+    "/auth/login/telegram/callback": {
       "get": {
         "tags": [
           "Authentication"

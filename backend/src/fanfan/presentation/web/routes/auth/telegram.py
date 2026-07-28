@@ -54,8 +54,10 @@ async def login_telegram(
     return await telegram.authorize_redirect(request, redirect_uri)
 
 
+# Start/callback pair named the same way as the account-linking one in
+# current_user/connections.py, so the two OAuth flows read alike.
 @telegram_router.get(
-    "/auth/telegram",
+    "/login/telegram/callback",
     summary="Finish Telegram login",
     description="OAuth callback for Telegram login. Authenticates the user from the "
     "Telegram payload, sets the session cookie and redirects to the app root. "

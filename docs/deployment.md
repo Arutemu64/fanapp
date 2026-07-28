@@ -79,7 +79,7 @@ open **Bot Settings → Web Login** and register, for your domain:
 | Kind | Value |
 | --- | --- |
 | Origin | `https://example.com` |
-| Redirect URI (login) | `https://example.com/api/auth/auth/telegram` |
+| Redirect URI (login) | `https://example.com/api/auth/login/telegram/callback` |
 | Redirect URI (account linking) | `https://example.com/api/me/connections/telegram/callback` |
 
 The same screen shows the Client ID and Client Secret that `BOT__CLIENT_ID` and
@@ -90,9 +90,9 @@ explain it.
 
 The `/api` prefix is Caddy's (`handle_path /api*`), which the backend mirrors via
 uvicorn's `root_path` — that is why the callback URLs the app generates carry it.
-The doubled `auth/auth` is not a typo: the login router is mounted under `/auth`
-and declares the callback at `/auth/telegram`. Changing it would invalidate a URL
-already registered in BotFather, so it stays.
+Re-register both URIs whenever the domain changes; the app derives them from the
+incoming request, so a mismatch surfaces as Telegram refusing the login rather
+than as an error on our side.
 
 ## Deploying
 

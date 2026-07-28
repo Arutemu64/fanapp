@@ -178,7 +178,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/auth/telegram": {
+    "/auth/login/telegram/callback": {
         parameters: {
             query?: never;
             header?: never;
