@@ -187,7 +187,7 @@ export interface paths {
         };
         /**
          * Finish Telegram login
-         * @description OAuth callback for Telegram login. Authenticates the user from the Telegram payload, sets the session cookie and redirects to the app root. Invoked by Telegram, not called directly by the frontend.
+         * @description OAuth callback for Telegram login. Authenticates the user from the Telegram payload, sets the session cookie and redirects to the app root. A failed or cancelled login redirects to the login page with a `telegramLoginError` query param the frontend turns into a toast. Invoked by Telegram, not called directly by the frontend.
          */
         get: operations["authorize_telegram"];
         put?: never;
@@ -315,7 +315,7 @@ export interface paths {
         };
         /**
          * Finish Telegram linking
-         * @description OAuth callback for Telegram linking. On success, links the account and redirects to the profile page. Recoverable errors (already linked to this or another account) also redirect to the profile page with a `telegramLinkError` query param the frontend turns into a toast. Invoked by Telegram, not called directly by the frontend.
+         * @description OAuth callback for Telegram linking. On success, links the account and redirects to the profile page. Every recoverable error (already linked to this or another account, cancelled or failed authorization) also redirects to the profile page with a `telegramLinkError` query param the frontend turns into a toast. Invoked by Telegram, not called directly by the frontend.
          */
         get: operations["link_telegram_callback"];
         put?: never;
@@ -1921,7 +1921,7 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description Login successful. Session cookie set, redirect to app. */
+            /** @description Login finished. On success the session cookie is set and the browser goes to the app root; otherwise it goes to the login page with a `telegramLoginError` query param. */
             303: {
                 headers: {
                     [name: string]: unknown;
@@ -2368,15 +2368,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-            /** @description Invalid Telegram auth payload. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
             };
             /** @description Not authenticated. */
             401: {

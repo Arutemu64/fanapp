@@ -71,6 +71,29 @@ Generate the VAPID keys with `just bootstrap` (or `just backend-generate-vapid`)
 on any machine and copy the PEMs across; `PUBLIC_VAPID_KEY` in `.env` must match
 the public PEM.
 
+### Telegram login: register the URLs with BotFather
+
+Telegram login needs one step that is not in `.env`. In [@BotFather](https://t.me/BotFather),
+open **Bot Settings → Web Login** and register, for your domain:
+
+| Kind | Value |
+| --- | --- |
+| Origin | `https://example.com` |
+| Redirect URI (login) | `https://example.com/api/auth/auth/telegram` |
+| Redirect URI (account linking) | `https://example.com/api/me/connections/telegram/callback` |
+
+The same screen shows the Client ID and Client Secret that `BOT__CLIENT_ID` and
+`BOT__CLIENT_SECRET` want. Telegram only processes logins and redirects for
+pre-registered URLs, so a bot with correct credentials but unregistered URLs
+fails on Telegram's own authorization page and leaves nothing in the app logs to
+explain it.
+
+The `/api` prefix is Caddy's (`handle_path /api*`), which the backend mirrors via
+uvicorn's `root_path` — that is why the callback URLs the app generates carry it.
+The doubled `auth/auth` is not a typo: the login router is mounted under `/auth`
+and declares the callback at `/auth/telegram`. Changing it would invalidate a URL
+already registered in BotFather, so it stays.
+
 ## Deploying
 
 ```sh

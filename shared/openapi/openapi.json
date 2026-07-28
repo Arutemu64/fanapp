@@ -401,7 +401,7 @@
           "Authentication"
         ],
         "summary": "Finish Telegram login",
-        "description": "OAuth callback for Telegram login. Authenticates the user from the Telegram payload, sets the session cookie and redirects to the app root. Invoked by Telegram, not called directly by the frontend.",
+        "description": "OAuth callback for Telegram login. Authenticates the user from the Telegram payload, sets the session cookie and redirects to the app root. A failed or cancelled login redirects to the login page with a `telegramLoginError` query param the frontend turns into a toast. Invoked by Telegram, not called directly by the frontend.",
         "operationId": "authorize_telegram",
         "responses": {
           "200": {
@@ -423,7 +423,7 @@
             }
           },
           "303": {
-            "description": "Login successful. Session cookie set, redirect to app."
+            "description": "Login finished. On success the session cookie is set and the browser goes to the app root; otherwise it goes to the login page with a `telegramLoginError` query param."
           }
         }
       }
@@ -905,7 +905,7 @@
           "Current user"
         ],
         "summary": "Finish Telegram linking",
-        "description": "OAuth callback for Telegram linking. On success, links the account and redirects to the profile page. Recoverable errors (already linked to this or another account) also redirect to the profile page with a `telegramLinkError` query param the frontend turns into a toast. Invoked by Telegram, not called directly by the frontend.",
+        "description": "OAuth callback for Telegram linking. On success, links the account and redirects to the profile page. Every recoverable error (already linked to this or another account, cancelled or failed authorization) also redirects to the profile page with a `telegramLinkError` query param the frontend turns into a toast. Invoked by Telegram, not called directly by the frontend.",
         "operationId": "link_telegram_callback",
         "responses": {
           "200": {
@@ -948,16 +948,6 @@
           },
           "303": {
             "description": "Linking finished. Redirects to the profile page; on a recoverable error a `telegramLinkError` query param is included."
-          },
-          "400": {
-            "description": "Invalid Telegram auth payload.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
           }
         },
         "security": [

@@ -1,6 +1,7 @@
+import logging
 from urllib.parse import urlencode
 
-from authlib.integrations.starlette_client import OAuth, StarletteOAuth2App
+from authlib.integrations.starlette_client import OAuth, OAuthError, StarletteOAuth2App
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Request
@@ -20,6 +21,13 @@ from fanfan.core.exceptions.users import (
     UserAlreadyHasTelegramLinked,
 )
 from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.telegram_oauth import (
+    TELEGRAM_OAUTH_ERROR_FAILED,
+    classify_oauth_error,
+    read_telegram_claims,
+)
+
+logger = logging.getLogger(__name__)
 
 connections_router = APIRouter(prefix="/connections")
 
@@ -64,16 +72,15 @@ async def link_telegram(
     "/telegram/callback",
     summary="Finish Telegram linking",
     description="OAuth callback for Telegram linking. On success, links the account "
-    "and redirects to the profile page. Recoverable errors (already linked to this "
-    "or another account) also redirect to the profile page with a "
-    "`telegramLinkError` query param the frontend turns into a toast. Invoked by "
-    "Telegram, not called directly by the frontend.",
+    "and redirects to the profile page. Every recoverable error (already linked to "
+    "this or another account, cancelled or failed authorization) also redirects to "
+    "the profile page with a `telegramLinkError` query param the frontend turns into "
+    "a toast. Invoked by Telegram, not called directly by the frontend.",
     responses={
         303: {
             "description": "Linking finished. Redirects to the profile page; on a "
             "recoverable error a `telegramLinkError` query param is included."
         },
-        400: {"model": ErrorMessage, "description": "Invalid Telegram auth payload."},
     },
 )
 @inject
@@ -83,17 +90,30 @@ async def link_telegram_callback(
     interactor: FromDishka[LinkTelegramAccount],
 ) -> RedirectResponse:
     telegram: StarletteOAuth2App = oauth.create_client("telegram")
-    token = await telegram.authorize_access_token(request)
-    userinfo = token.get("userinfo", {})
+
     try:
-        await interactor(LinkTelegramAccountInput(user_id=userinfo["id"]))
-        return _build_profile_redirect()
-    except ValueError as e:
-        raise InvalidTelegramAuthPayload from e
+        token = await telegram.authorize_access_token(request)
+        claims = read_telegram_claims(token)
+    except OAuthError as e:
+        # Declining on Telegram, letting the state expire (Authlib gives it an
+        # hour) and re-opening an already-used callback URL all land here. None
+        # of them is a server fault, so this stays below warning level.
+        logger.info("Telegram linking did not complete", extra={"oauth_error": e.error})
+        return _build_profile_redirect(classify_oauth_error(e))
+    except InvalidTelegramAuthPayload:
+        # Signature-valid token, unusable content — almost always the bot's
+        # signing algorithm in BotFather stripping the `profile` scope.
+        logger.warning("Telegram ID token carried no usable profile claims")
+        return _build_profile_redirect(TELEGRAM_OAUTH_ERROR_FAILED)
+
+    try:
+        await interactor(LinkTelegramAccountInput(user_id=claims.id))
     except TelegramAlreadyLinkedToAnotherUser:
         return _build_profile_redirect(TELEGRAM_LINK_ERROR_LINKED_TO_ANOTHER_ACCOUNT)
     except UserAlreadyHasTelegramLinked:
         return _build_profile_redirect(TELEGRAM_LINK_ERROR_USER_ALREADY_HAS_TELEGRAM)
+
+    return _build_profile_redirect()
 
 
 @connections_router.delete(

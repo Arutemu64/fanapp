@@ -1,10 +1,18 @@
 <script lang="ts">
 	import { PUBLIC_API_URL } from '$env/static/public';
+	import { getToastService } from '$lib/services/toasts.svelte';
+	import { clearTelegramErrorParam, TELEGRAM_LOGIN_ERROR_PARAM } from '$lib/utils/telegramOAuth';
 	import { Button, Card } from 'flowbite-svelte';
+	import { onMount } from 'svelte';
 	import IconTelegram from '~icons/simple-icons/telegram';
+
+	import type { PageProps } from './$types';
 
 	import CodeLoginForm from './components/CodeLoginForm.svelte';
 	import PasswordLoginForm from './components/PasswordLoginForm.svelte';
+
+	let { data }: PageProps = $props();
+	const toastService = getToastService();
 
 	let email = $state('');
 	let showPasswordForm = $state(false);
@@ -12,6 +20,24 @@
 	// this is derived from its state rather than mirrored into a second flag.
 	let codeSentTo = $state('');
 	let isWaitingForCode = $derived(!!codeSentTo);
+
+	// Cancelling is the user's own choice, so it gets an informational toast —
+	// only a flow that actually broke reads as an error.
+	const telegramLoginErrorToasts = {
+		cancelled: { message: 'Вход через Telegram отменён.', type: 'info' },
+		failed: { message: 'Не удалось войти через Telegram. Попробуй ещё раз.', type: 'error' }
+	} as const;
+
+	onMount(() => {
+		const telegramLoginError = data.telegramLoginError;
+
+		if (!telegramLoginError) return;
+
+		const toast = telegramLoginErrorToasts[telegramLoginError];
+		toastService.add(toast.message, toast.type);
+
+		clearTelegramErrorParam(TELEGRAM_LOGIN_ERROR_PARAM);
+	});
 </script>
 
 <svelte:head>
