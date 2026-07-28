@@ -63,8 +63,9 @@ async def login_telegram(
         return _build_login_redirect(TELEGRAM_OAUTH_ERROR_FAILED)
 
 
-# Start/callback pair named the same way as the account-linking one in
-# current_user/connections.py, so the two OAuth flows read alike.
+# URL path pattern (.../telegram, .../telegram/callback) mirrors the
+# account-linking pair in current_user/connections.py, so the two OAuth
+# flows read alike.
 @telegram_router.get(
     "/login/telegram/callback",
     summary="Finish Telegram login",

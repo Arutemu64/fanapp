@@ -14,7 +14,6 @@
 
 	let { notification, compact = false }: Props = $props();
 
-	// Use an explicit festival timezone so timestamps don't shift with the device's timezone.
 	let createdAt = $derived(formatRelativeTime(notification.created_at));
 
 	// Backend-provided in-app deep-link (e.g. "/schedule"). When absent the item

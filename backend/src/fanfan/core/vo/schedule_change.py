@@ -10,18 +10,19 @@ def generate_schedule_change_id() -> ScheduleChangeId:
 
 
 class ScheduleChangeType(enum.StrEnum):
+    """How to read a `ScheduleChange`'s `changed_event_id`/`argument_event_id`.
+
+    SET_AS_CURRENT: `changed_event_id` is the new current event (None if the
+        current event was unchecked); `argument_event_id` is the event that was
+        current before this change.
+    MOVED: `argument_event_id` is the event `changed_event_id` was placed
+        after. To undo, place `changed_event_id` back after
+        `argument_event_id` — or at the top of the order if
+        `argument_event_id` is None.
+    SKIPPED / UNSKIPPED: `argument_event_id` is unused.
+    """
+
     SET_AS_CURRENT = "set_as_current"
-    # Changed event: current event (None if current event was unchecked)
-    # Argument event: previously current event
-
     MOVED = "moved"
-    # Argument event: previous event by order before moving
-    # So if you want to undo this change, you should place
-    # changed_event AFTER argument event
-    # And if argument_event is None - place changed_event to the top
-
     SKIPPED = "skipped"
-    # Argument event: None
-
     UNSKIPPED = "unskipped"
-    # Argument event: None
