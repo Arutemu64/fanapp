@@ -22,6 +22,7 @@ from fanfan.presentation.web.middlewares import (
 )
 from fanfan.presentation.web.openapi import API_TITLE, generate_operation_id
 from fanfan.presentation.web.routes import setup_api_router
+from fanfan.presentation.web.telegram_oauth import OAUTH_STATE_TTL_SECONDS
 
 
 def create_app() -> FastAPI:
@@ -54,9 +55,18 @@ def create_app() -> FastAPI:
     # Secure only when the rest of the app is (cookie_secure), so a plain-HTTP
     # deploy can still complete the OAuth flow — a Secure cookie is never sent
     # back over HTTP, which would break the login callback. Keep it True in prod.
+    #
+    # max_age replaces Starlette's 14-day default with Authlib's own state TTL:
+    # nothing but the OAuth state is ever stored here, and Authlib already
+    # rejects state older than that. It gates the *signature* as well as the
+    # cookie, and Starlette only re-signs when the session changes — so this is
+    # the budget for a single consent round-trip, not a rolling window. Do not
+    # shorten it further: a slow Telegram confirmation would then fail on the
+    # cookie while Authlib would still have accepted the state.
     app.add_middleware(
         SessionMiddleware,
         secret_key=config.web.secret_key.get_secret_value(),
+        max_age=OAUTH_STATE_TTL_SECONDS,
         same_site="lax",
         https_only=config.web.cookie_secure,
     )

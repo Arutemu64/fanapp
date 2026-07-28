@@ -4,6 +4,7 @@
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { getOfflineService } from '$lib/services/offline.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { clearTelegramErrorParam, TELEGRAM_LINK_ERROR_PARAM } from '$lib/utils/telegramOAuth';
 	import { HeartOutline } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
 	import IconFastapi from '~icons/simple-icons/fastapi';
@@ -32,9 +33,19 @@
 	// It exists so a bug report ("у меня всё сломалось") names an exact bundle.
 	const buildId = PUBLIC_APP_VERSION.slice(0, 7);
 
-	const telegramLinkErrorMessages = {
-		linked_to_another_account: 'Этот Telegram уже подключён к другому аккаунту.',
-		user_already_has_telegram: 'К твоему аккаунту уже подключён другой Telegram.'
+	// Cancelling is the user's own choice, so it gets an informational toast —
+	// only a flow that actually broke reads as an error.
+	const telegramLinkErrorToasts = {
+		cancelled: { message: 'Подключение Telegram отменено.', type: 'info' },
+		failed: { message: 'Не удалось подключить Telegram. Попробуй ещё раз.', type: 'error' },
+		linked_to_another_account: {
+			message: 'Этот Telegram уже подключён к другому аккаунту.',
+			type: 'error'
+		},
+		user_already_has_telegram: {
+			message: 'К твоему аккаунту уже подключён другой Telegram.',
+			type: 'error'
+		}
 	} as const;
 
 	// Refreshing the current user also refreshes connections — they ship together now.
@@ -47,13 +58,11 @@
 
 		if (!telegramLinkError) return;
 
-		toastService.add(telegramLinkErrorMessages[telegramLinkError], 'error');
-
-		const nextUrl = new URL(window.location.href);
-		nextUrl.searchParams.delete('telegramLinkError');
+		const toast = telegramLinkErrorToasts[telegramLinkError];
+		toastService.add(toast.message, toast.type);
 
 		// Keep the page in place and remove the one-time error flag from the address bar.
-		window.history.replaceState(window.history.state, '', nextUrl);
+		clearTelegramErrorParam(TELEGRAM_LINK_ERROR_PARAM);
 	});
 </script>
 
