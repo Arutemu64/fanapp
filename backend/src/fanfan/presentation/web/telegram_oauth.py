@@ -14,6 +14,11 @@ from pydantic import BaseModel, ValidationError
 
 from fanfan.core.exceptions.auth import InvalidTelegramAuthPayload
 
+# How long one authorization round-trip may take. Mirrors Authlib's own state
+# TTL (`FrameworkIntegration.expires_in`), which the session cookie's max_age is
+# set to match — see the SessionMiddleware comment in factory.py.
+OAUTH_STATE_TTL_SECONDS = 3600
+
 # The user declined on Telegram's consent screen. Expected, not a fault.
 TELEGRAM_OAUTH_ERROR_CANCELLED = "cancelled"
 # Everything else: expired or replayed state, a failed token exchange, a token we
@@ -32,6 +37,16 @@ class TelegramClaims(BaseModel):
     when the bot is switched to EdDSA or ES256K signing in BotFather, so a bot
     misconfigured there arrives with a valid, signature-checked token that
     carries no user at all — hence the guard rather than direct indexing.
+    `id` is not even in the discovery document's `claims_supported`, though
+    Telegram's docs and sample token both include it, so treat it as advertised
+    by the prose only.
+
+    Identity is keyed on `id` rather than the OIDC `sub` on purpose. They are
+    different values (Telegram's own example pairs `id: 987654321` with
+    `sub: "1234123412341234123"`), and only `id` is the Bot API user id the
+    notifier needs to message the user afterwards. `sub` would otherwise be the
+    orthodox choice: the discovery document declares `subject_types_supported:
+    ["public"]`, so it is stable and identical across clients.
     """
 
     id: int

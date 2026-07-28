@@ -5,6 +5,7 @@ from authlib.integrations.starlette_client import OAuth, OAuthError, StarletteOA
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Request
+from httpx import HTTPError
 from starlette import status
 from starlette.responses import RedirectResponse, Response
 
@@ -65,7 +66,15 @@ async def link_telegram(
 ) -> Response:
     telegram: StarletteOAuth2App = oauth.create_client("telegram")
     redirect_uri = request.url_for("link_telegram_callback")
-    return await telegram.authorize_redirect(request, redirect_uri)
+
+    try:
+        return await telegram.authorize_redirect(request, redirect_uri)
+    except HTTPError:
+        # Building the redirect needs Telegram's discovery document. The registry
+        # is APP-scoped so it is fetched once per process — this is the first
+        # linking attempt after a restart running into an unreachable Telegram.
+        logger.warning("Could not reach Telegram to start account linking")
+        return _build_profile_redirect(TELEGRAM_OAUTH_ERROR_FAILED)
 
 
 @connections_router.get(
