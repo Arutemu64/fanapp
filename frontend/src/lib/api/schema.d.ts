@@ -165,13 +165,15 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        get?: never;
+        put?: never;
         /**
          * Start Telegram login
          * @description Redirects the browser to Telegram's OAuth authorization page. Telegram then calls back to the authorize endpoint to finish the login.
+         *
+         *     Submit this as a same-origin form, not a link: a GET flow-start can be triggered cross-site by any page, so the request initiator is verified.
          */
-        get: operations["login_telegram"];
-        put?: never;
-        post?: never;
+        post: operations["login_telegram"];
         delete?: never;
         options?: never;
         head?: never;
@@ -289,13 +291,15 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
+        get?: never;
+        put?: never;
         /**
          * Start Telegram linking
          * @description Redirects the browser to Telegram's OAuth page to begin linking a Telegram account to the current user. Telegram then calls back to the callback endpoint to finish.
+         *
+         *     Submit this as a same-origin form, not a link: a GET flow-start can be triggered cross-site by any page, and this one runs against an authenticated session, so the request initiator is verified.
          */
-        get: operations["link_telegram"];
-        put?: never;
-        post?: never;
+        post: operations["link_telegram"];
         /**
          * Unlink Telegram account
          * @description Unlinks the Telegram account from the currently authenticated user.
@@ -1886,11 +1890,20 @@ export interface operations {
                 };
             };
             /** @description Redirect to Telegram's OAuth authorization page. */
-            302: {
+            303: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Request did not originate from a trusted origin. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
             };
             /** @description Request validation error. */
             422: {
@@ -2246,7 +2259,7 @@ export interface operations {
                 };
             };
             /** @description Redirect to Telegram's OAuth authorization page. */
-            302: {
+            303: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2261,7 +2274,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorMessage"];
                 };
             };
-            /** @description Access denied. */
+            /** @description Access denied, or the request did not originate from a trusted origin. */
             403: {
                 headers: {
                     [name: string]: unknown;

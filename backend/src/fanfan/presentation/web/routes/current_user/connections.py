@@ -19,6 +19,12 @@ from fanfan.core.exceptions.users import (
     TelegramAlreadyLinkedToAnotherUser,
     UserAlreadyHasTelegramLinked,
 )
+from fanfan.presentation.web.config import WebConfig
+from fanfan.presentation.web.csrf import ensure_trusted_origin
+from fanfan.presentation.web.oauth import (
+    TELEGRAM_CLIENT_NAME,
+    start_telegram_authorization,
+)
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
 connections_router = APIRouter(prefix="/connections")
@@ -40,24 +46,35 @@ def _build_profile_redirect(error_code: str | None = None) -> RedirectResponse:
     return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
 
 
-@connections_router.get(
+@connections_router.post(
     "/telegram",
     summary="Start Telegram linking",
     description="Redirects the browser to Telegram's OAuth page to begin linking a "
     "Telegram account to the current user. Telegram then calls back to the callback "
-    "endpoint to finish.",
+    "endpoint to finish.\n\n"
+    "Submit this as a same-origin form, not a link: a GET flow-start can be "
+    "triggered cross-site by any page, and this one runs against an authenticated "
+    "session, so the request initiator is verified.",
     responses={
-        302: {"description": "Redirect to Telegram's OAuth authorization page."},
+        303: {"description": "Redirect to Telegram's OAuth authorization page."},
+        # Overrides AUTH_RESPONSES' 403 so both causes are documented — the route
+        # is authenticated *and* origin-checked.
+        403: {
+            "model": ErrorMessage,
+            "description": "Access denied, or the request did not originate from "
+            "a trusted origin.",
+        },
     },
 )
 @inject
 async def link_telegram(
     request: Request,
+    config: FromDishka[WebConfig],
     oauth: FromDishka[OAuth],
 ) -> Response:
-    telegram: StarletteOAuth2App = oauth.create_client("telegram")
-    redirect_uri = request.url_for("link_telegram_callback")
-    return await telegram.authorize_redirect(request, redirect_uri)
+    ensure_trusted_origin(request, config)
+    redirect_uri = str(request.url_for("link_telegram_callback"))
+    return await start_telegram_authorization(request, oauth, redirect_uri)
 
 
 @connections_router.get(
@@ -82,7 +99,7 @@ async def link_telegram_callback(
     oauth: FromDishka[OAuth],
     interactor: FromDishka[LinkTelegramAccount],
 ) -> RedirectResponse:
-    telegram: StarletteOAuth2App = oauth.create_client("telegram")
+    telegram: StarletteOAuth2App = oauth.create_client(TELEGRAM_CLIENT_NAME)
     token = await telegram.authorize_access_token(request)
     userinfo = token.get("userinfo", {})
     try:

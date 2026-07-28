@@ -363,12 +363,12 @@
       }
     },
     "/auth/login/telegram": {
-      "get": {
+      "post": {
         "tags": [
           "Authentication"
         ],
         "summary": "Start Telegram login",
-        "description": "Redirects the browser to Telegram's OAuth authorization page. Telegram then calls back to the authorize endpoint to finish the login.",
+        "description": "Redirects the browser to Telegram's OAuth authorization page. Telegram then calls back to the authorize endpoint to finish the login.\n\nSubmit this as a same-origin form, not a link: a GET flow-start can be triggered cross-site by any page, so the request initiator is verified.",
         "operationId": "login_telegram",
         "responses": {
           "200": {
@@ -389,8 +389,18 @@
               }
             }
           },
-          "302": {
+          "303": {
             "description": "Redirect to Telegram's OAuth authorization page."
+          },
+          "403": {
+            "description": "Request did not originate from a trusted origin.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
           }
         }
       }
@@ -774,12 +784,12 @@
       }
     },
     "/me/connections/telegram": {
-      "get": {
+      "post": {
         "tags": [
           "Current user"
         ],
         "summary": "Start Telegram linking",
-        "description": "Redirects the browser to Telegram's OAuth page to begin linking a Telegram account to the current user. Telegram then calls back to the callback endpoint to finish.",
+        "description": "Redirects the browser to Telegram's OAuth page to begin linking a Telegram account to the current user. Telegram then calls back to the callback endpoint to finish.\n\nSubmit this as a same-origin form, not a link: a GET flow-start can be triggered cross-site by any page, and this one runs against an authenticated session, so the request initiator is verified.",
         "operationId": "link_telegram",
         "responses": {
           "200": {
@@ -811,7 +821,7 @@
             }
           },
           "403": {
-            "description": "Access denied.",
+            "description": "Access denied, or the request did not originate from a trusted origin.",
             "content": {
               "application/json": {
                 "schema": {
@@ -820,7 +830,7 @@
               }
             }
           },
-          "302": {
+          "303": {
             "description": "Redirect to Telegram's OAuth authorization page."
           }
         },

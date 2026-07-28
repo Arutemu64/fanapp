@@ -30,6 +30,9 @@
 	let changePasswordModalOpen = $state(false);
 	let changeEmailModalOpen = $state(false);
 	let isUnlinkingTelegram = $state(false);
+	// The link form submits natively and unloads the page, so nothing resets
+	// this — it only keeps the button from looking inert during the redirect.
+	let isLinkingTelegram = $state(false);
 	// Gate the destructive unlink behind a deliberate second tap (inline, no modal).
 	let isConfirmingUnlink = $state(false);
 	const toastService = getToastService();
@@ -209,14 +212,34 @@
 							</Button>
 						{/if}
 					{:else}
-						<!-- Use the configured API base so linking works in every deployment setup. -->
-						<Button
-							href={`${PUBLIC_API_URL}/me/connections/telegram`}
-							color="alternative"
-							class="min-h-11 w-full sm:w-auto"
+						<!--
+							A form POST, not a link: a GET flow-start is triggerable cross-site
+							by any page (image, iframe, prefetch), and this one runs against an
+							authenticated session, so the endpoint now takes POST only and
+							checks the request initiator. SvelteKit's router leaves non-GET
+							submits to the browser, so this navigates natively.
+							Use the configured API base so linking works in every deployment setup.
+						-->
+						<form
+							method="POST"
+							action={`${PUBLIC_API_URL}/me/connections/telegram`}
+							class="w-full sm:w-auto"
+							onsubmit={() => (isLinkingTelegram = true)}
 						>
-							Подключить
-						</Button>
+							<Button
+								type="submit"
+								color="alternative"
+								class="min-h-11 w-full sm:w-auto"
+								disabled={isLinkingTelegram}
+							>
+								{#if isLinkingTelegram}
+									<Spinner class="me-2 h-4 w-4" />
+									Переходим в Telegram…
+								{:else}
+									Подключить
+								{/if}
+							</Button>
+						</form>
 					{/if}
 				</div>
 			</div>
