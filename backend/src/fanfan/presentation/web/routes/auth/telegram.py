@@ -43,7 +43,7 @@ async def login_telegram(
     oauth: FromDishka[OAuth],
 ) -> Response:
     ensure_trusted_origin(request, config)
-    redirect_uri = str(request.url_for("authorize_telegram"))
+    redirect_uri = request.url_for("authorize_telegram")
     return await start_telegram_authorization(request, oauth, redirect_uri)
 
 
