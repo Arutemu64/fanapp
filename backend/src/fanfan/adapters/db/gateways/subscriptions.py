@@ -65,7 +65,8 @@ class SqlSubscriptionGateway(SubscriptionGateway):
             ScheduleEventORM.is_skipped.isnot(True),  # noqa: FBT003
             # Fire once the event is within `counter` positions of the stage.
             SubscriptionORM.counter >= (ScheduleEventORM.queue - current_event_queue),
-            # Ignore past events due to previous clause
+            # Excludes past events (negative diff); the counter check above
+            # doesn't reject those on its own.
             (ScheduleEventORM.queue - current_event_queue) >= 0,
         )
 

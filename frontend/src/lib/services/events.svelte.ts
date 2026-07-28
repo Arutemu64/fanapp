@@ -226,15 +226,14 @@ export class EventsClient {
 		this.#armStallTimeout(DIAL_TIMEOUT_MS, 'dial');
 
 		this.#source.onopen = () => {
-			// The stream transport is open. We wait for the backend handshake
-			// before calling the connection fully online. The attempt counter is
-			// reset on handshake success, not here: a transport that opens but
-			// never completes the handshake must still count toward `failed`,
-			// otherwise it loops forever instead of surfacing the down banner.
-			// Same reason as in connect(): from 'failed', only a completed handshake
-			// clears the down banner. A transport that opens and then stalls on the
-			// handshake would otherwise blink the banner off for HANDSHAKE_TIMEOUT_MS
-			// on every slow retry.
+			// Mirrors connect()'s 'failed' guard above — see there for why; a
+			// transport that opens and stalls on the handshake shouldn't blink
+			// the banner off for HANDSHAKE_TIMEOUT_MS on every slow retry.
+			//
+			// The attempt counter is reset on handshake success, not here: a
+			// transport that opens but never completes the handshake must still
+			// count toward `failed`, or it loops forever instead of surfacing
+			// the down banner.
 			if (this.#connectionStatus !== 'failed') {
 				this.#connectionStatus = 'transport_open';
 			}

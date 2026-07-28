@@ -23,7 +23,9 @@ class TCloudWebhookOrderRef(BaseModel):
 
 class TCloudWebhookPayload(BaseModel):
     data: TCloudWebhookOrderRef
-    type: str  # TODO: Enforce possible types later
+    # TODO: Validate/branch on this — every event type is currently processed
+    # as a ticket order because TicketsCloud has only ever sent one kind so far.
+    type: str
 
 
 class TCloudWebhookResponse(BaseModel):

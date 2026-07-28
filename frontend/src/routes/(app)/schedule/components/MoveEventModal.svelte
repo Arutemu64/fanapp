@@ -62,7 +62,6 @@
 
 				toastService.add('Выступление перенесено', 'success');
 
-				// Successful flow: close modal and reset fields
 				open = false;
 				selectedId = null;
 				query = '';

@@ -51,18 +51,13 @@ def create_app() -> FastAPI:
     # shape; more specific handlers above take precedence by exception type.
     app.add_exception_handler(Exception, unhandled_exception_handler)
 
-    # This session cookie holds the Telegram OAuth state/nonce (authlib). Mark it
-    # Secure only when the rest of the app is (cookie_secure), so a plain-HTTP
-    # deploy can still complete the OAuth flow — a Secure cookie is never sent
-    # back over HTTP, which would break the login callback. Keep it True in prod.
+    # This session cookie holds the Telegram OAuth state/nonce (authlib). Secure
+    # tracks cookie_secure so a plain-HTTP deploy can still complete the OAuth
+    # flow — a Secure cookie is never sent back over HTTP.
     #
-    # max_age replaces Starlette's 14-day default with Authlib's own state TTL:
-    # nothing but the OAuth state is ever stored here, and Authlib already
-    # rejects state older than that. It gates the *signature* as well as the
-    # cookie, and Starlette only re-signs when the session changes — so this is
-    # the budget for a single consent round-trip, not a rolling window. Do not
-    # shorten it further: a slow Telegram confirmation would then fail on the
-    # cookie while Authlib would still have accepted the state.
+    # max_age replaces Starlette's 14-day default with Authlib's own state TTL,
+    # the budget for one consent round-trip: don't shorten it, or a slow
+    # Telegram confirmation could fail here while Authlib still accepts the state.
     app.add_middleware(
         SessionMiddleware,
         secret_key=config.web.secret_key.get_secret_value(),

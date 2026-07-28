@@ -51,7 +51,9 @@ class AuthenticateUser:
 
         user = await self.user_gateway.get_by_email(normalized_email)
         if user is None:
-            # Prevent timing attack
+            # Hash against a dummy value so a nonexistent user takes the same
+            # time as a wrong password, and the response can't be timed to
+            # enumerate accounts.
             self.password_hasher.verify(data.password, self.dummy_hash)
             # Email is omitted from the log on purpose to avoid storing PII;
             # client_ip is kept so repeated failures can be correlated.

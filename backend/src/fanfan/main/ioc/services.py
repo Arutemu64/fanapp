@@ -18,6 +18,5 @@ class ServicesProvider(Provider):
     perm = provide(PermissionService)
     user = provide(UserService)
 
-    # External
     ticket_import = provide(TicketImportService)
     sync_run_tracker = provide(SyncRunTracker)

@@ -44,7 +44,9 @@ class SyncTickets:
                     extra={"new_tickets": new_tickets_count},
                 )
         await self.uow.commit()
-        # TODO: Find a way to correctly proceed refunds
+        # TODO: removed_tickets_count is always 0 — refunds/cancellations aren't
+        # detected because `fetch_all_tickets` only yields currently-active
+        # tickets, giving no signal for which locally-stored tickets disappeared.
         return SyncTicketsOutput(
             new_tickets_count=new_tickets_count,
             removed_tickets_count=removed_tickets_count,

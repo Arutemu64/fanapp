@@ -23,6 +23,7 @@
 
 	let { open = $bindable(false), currentEmail, onSuccess }: Props = $props();
 
+	// Two-step flow: 'email' collects and sends the OTP, 'verify' confirms it.
 	let step = $state<'email' | 'verify'>('email');
 	let newEmail = $state('');
 	let emailError = $state('');
@@ -75,7 +76,6 @@
 		}
 	}
 
-	// Step 1: Save new email and send OTP
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
 		emailError = '';
@@ -108,7 +108,6 @@
 		cooldown.start();
 	}
 
-	// Step 2: Confirm OTP
 	async function submitVerificationCode() {
 		verificationCodeError = '';
 
@@ -179,7 +178,6 @@
 	{/snippet}
 
 	{#if step === 'email'}
-		<!-- Step 1: Input Email Form -->
 		<form onsubmit={handleSubmit} class="space-y-4">
 			{#if formError}
 				<Alert color="red" class="rounded-xl text-sm">
@@ -253,7 +251,6 @@
 			</Button>
 		</form>
 	{:else}
-		<!-- Step 2: Verification Code Entry -->
 		<div class="space-y-4">
 			{#if formError}
 				<Alert color="red" class="rounded-xl text-sm">
