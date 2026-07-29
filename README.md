@@ -3,6 +3,8 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/Arutemu64/fanapp/ci.yml?branch=main&label=CI)](https://github.com/Arutemu64/fanapp/actions/workflows/ci.yml?query=branch%3Amain)
 [![License: MIT](https://img.shields.io/github/license/Arutemu64/fanapp)](#license)
 
+![The FAN FAN app: the home page on a laptop and the event schedule on a phone](docs/assets/readme-header.webp)
+
 Companion web app for the **FAN FAN** Russian anime convention. It gives attendees the event schedule, voting, notifications, and ticket-linked profiles from their phone, and gives organizers the tools to run all of it. Audience is teen to young-adult and non-technical, so the UI is mobile-first and all user-facing copy is in Russian.
 
 This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAPI contract between them.
@@ -271,6 +273,7 @@ who consented to a festival photo, not to redistribution under MIT. Excluded:
 - `frontend/static/icons/`
 - `frontend/src/lib/assets/map/`
 - `frontend/src/routes/(app)/components/home/main.webp`
+- `docs/assets/readme-header.webp` — a screenshot mockup, so it embeds the event photo above
 
 Fork the code freely; swap in your own branding.
 
