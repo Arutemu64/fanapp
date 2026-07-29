@@ -273,7 +273,7 @@ who consented to a festival photo, not to redistribution under MIT. Excluded:
 - `frontend/static/icons/`
 - `frontend/src/lib/assets/map/`
 - `frontend/src/routes/(app)/components/home/main.webp`
-- `docs/assets/readme-header.webp` — a screenshot mockup, so it embeds the event photo above
+- `docs/assets/readme-header.webp`
 
 Fork the code freely; swap in your own branding.
 
