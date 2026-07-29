@@ -6,13 +6,17 @@ browser would render the JSON as the page. So every failure here has to leave as
 a redirect carrying a one-time code the frontend turns into a toast.
 """
 
+import logging
 from collections.abc import Mapping
 from typing import Any
 
-from authlib.integrations.starlette_client import OAuthError
+from authlib.integrations.starlette_client import OAuthError, StarletteOAuth2App
 from pydantic import BaseModel, ValidationError
+from starlette.requests import Request
 
 from fanfan.core.exceptions.auth import InvalidTelegramAuthPayload
+
+logger = logging.getLogger(__name__)
 
 # How long one authorization round-trip may take. Mirrors Authlib's own state
 # TTL (`FrameworkIntegration.expires_in`), which the session cookie's max_age is
@@ -59,6 +63,55 @@ def classify_oauth_error(error: OAuthError) -> str:
         return TELEGRAM_OAUTH_ERROR_CANCELLED
 
     return TELEGRAM_OAUTH_ERROR_FAILED
+
+
+class TelegramOAuthFailed(Exception):
+    """A callback that cannot continue, carrying a code the frontend has copy for.
+
+    Exists so both callbacks translate *every* failure into a redirect. See the
+    module docstring for why an error body is useless on these two routes.
+    """
+
+    def __init__(self, error_code: str) -> None:
+        super().__init__(error_code)
+        self.error_code = error_code
+
+
+async def fetch_telegram_claims(
+    telegram: StarletteOAuth2App, request: Request
+) -> TelegramClaims:
+    """Finish the OAuth round-trip, or raise TelegramOAuthFailed with a code.
+
+    Authlib raises three unrelated exception families out of this one call and
+    only one of them descends from OAuthError: httpx errors escape the token
+    exchange (`parse_response_token` re-raises a 5xx) and the JWKS fetch, jose
+    errors escape ID token validation, and a token endpoint answering
+    `{"error": ...}` raises OAuth2Error — a sibling of OAuthError, not a
+    subclass. Narrow `except` clauses let all of those reach the JSON exception
+    handlers, which on a browser navigation means the user reads
+    `{"code": "INTERNAL_ERROR"}` as the page.
+    """
+    try:
+        token = await telegram.authorize_access_token(request)
+        return read_telegram_claims(token)
+    except OAuthError as e:
+        # Declining on Telegram, letting the state expire (Authlib gives it an
+        # hour) and re-opening an already-used callback URL all land here. None
+        # of them is a server fault, so this stays below warning level.
+        logger.info(
+            "Telegram authorization did not complete", extra={"oauth_error": e.error}
+        )
+        raise TelegramOAuthFailed(classify_oauth_error(e)) from e
+    except InvalidTelegramAuthPayload as e:
+        # Signature-valid token, unusable content — almost always the bot's
+        # signing algorithm in BotFather stripping the `profile` scope.
+        logger.warning("Telegram ID token carried no usable profile claims")
+        raise TelegramOAuthFailed(TELEGRAM_OAUTH_ERROR_FAILED) from e
+    except Exception as e:
+        # Deliberately broad — narrowing this back to an exception list is what
+        # the docstring above argues against, and the cost is a JSON page.
+        logger.exception("Telegram token exchange failed")
+        raise TelegramOAuthFailed(TELEGRAM_OAUTH_ERROR_FAILED) from e
 
 
 def read_telegram_claims(token: Mapping[str, Any]) -> TelegramClaims:

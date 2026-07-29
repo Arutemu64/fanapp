@@ -167,7 +167,7 @@ export interface paths {
         };
         /**
          * Start Telegram login
-         * @description Redirects the browser to Telegram's OAuth authorization page. Telegram then calls back to the authorize endpoint to finish the login.
+         * @description Redirects the browser to Telegram's OAuth authorization page. Telegram then calls back to the authorize endpoint to finish the login. If the redirect cannot be built the browser goes back to the login page with a `telegramLoginError` query param instead.
          */
         get: operations["login_telegram"];
         put?: never;
@@ -187,7 +187,7 @@ export interface paths {
         };
         /**
          * Finish Telegram login
-         * @description OAuth callback for Telegram login. Authenticates the user from the Telegram payload, sets the session cookie and redirects to the app root. A failed or cancelled login redirects to the login page with a `telegramLoginError` query param the frontend turns into a toast. Invoked by Telegram, not called directly by the frontend.
+         * @description OAuth callback for Telegram login. Authenticates the user from the Telegram payload, sets the session cookie and redirects to the app root. Every failure — cancelled on Telegram, an unusable token, an unreachable Telegram or database — redirects to the login page with a `telegramLoginError` query param the frontend turns into a toast; this route never answers with an error body, because the browser would render it as the page. Invoked by Telegram, not called directly by the frontend.
          */
         get: operations["authorize_telegram"];
         put?: never;
@@ -291,7 +291,7 @@ export interface paths {
         };
         /**
          * Start Telegram linking
-         * @description Redirects the browser to Telegram's OAuth page to begin linking a Telegram account to the current user. Telegram then calls back to the callback endpoint to finish.
+         * @description Redirects the browser to Telegram's OAuth page to begin linking a Telegram account to the current user. Telegram then calls back to the callback endpoint to finish. If the redirect cannot be built the browser goes back to the profile page with a `telegramLinkError` query param instead.
          */
         get: operations["link_telegram"];
         put?: never;
@@ -315,7 +315,7 @@ export interface paths {
         };
         /**
          * Finish Telegram linking
-         * @description OAuth callback for Telegram linking. On success, links the account and redirects to the profile page. Every recoverable error (already linked to this or another account, cancelled or failed authorization) also redirects to the profile page with a `telegramLinkError` query param the frontend turns into a toast. Invoked by Telegram, not called directly by the frontend.
+         * @description OAuth callback for Telegram linking. On success, links the account and redirects to the profile page. Every failure — already linked to this or another account, cancelled or failed authorization, an unreachable Telegram or database — also redirects to the profile page with a `telegramLinkError` query param the frontend turns into a toast; this route never answers with an error body, because the browser would render it as the page. Invoked by Telegram, not called directly by the frontend.
          */
         get: operations["link_telegram_callback"];
         put?: never;
@@ -1289,6 +1289,16 @@ export interface components {
         };
         /**
          * ScheduleChangeType
+         * @description How to read a `ScheduleChange`'s `changed_event_id`/`argument_event_id`.
+         *
+         *     SET_AS_CURRENT: `changed_event_id` is the new current event (None if the
+         *         current event was unchecked); `argument_event_id` is the event that was
+         *         current before this change.
+         *     MOVED: `argument_event_id` is the event `changed_event_id` was placed
+         *         after. To undo, place `changed_event_id` back after
+         *         `argument_event_id` — or at the top of the order if
+         *         `argument_event_id` is None.
+         *     SKIPPED / UNSKIPPED: `argument_event_id` is unused.
          * @enum {string}
          */
         ScheduleChangeType: "set_as_current" | "moved" | "skipped" | "unskipped";
@@ -1892,6 +1902,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Telegram could not be reached. Redirects to the login page with a `telegramLoginError` query param. */
+            303: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Request validation error. */
             422: {
                 headers: {
@@ -2252,6 +2269,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Telegram could not be reached. Redirects to the profile page with a `telegramLinkError` query param. */
+            303: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Not authenticated. */
             401: {
                 headers: {
@@ -2362,7 +2386,7 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description Linking finished. Redirects to the profile page; on a recoverable error a `telegramLinkError` query param is included. */
+            /** @description Linking finished. Redirects to the profile page; on any failure a `telegramLinkError` query param is included. */
             303: {
                 headers: {
                     [name: string]: unknown;

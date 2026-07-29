@@ -1,11 +1,10 @@
 import logging
 from urllib.parse import urlencode
 
-from authlib.integrations.starlette_client import OAuth, OAuthError, StarletteOAuth2App
+from authlib.integrations.starlette_client import OAuth, StarletteOAuth2App
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Request
-from httpx import HTTPError
 from starlette import status
 from starlette.responses import RedirectResponse, Response
 
@@ -16,7 +15,6 @@ from fanfan.application.interactors.current_user.link_telegram_account import (
 from fanfan.application.interactors.current_user.unlink_telegram_account import (
     UnlinkTelegramAccount,
 )
-from fanfan.core.exceptions.auth import InvalidTelegramAuthPayload
 from fanfan.core.exceptions.users import (
     TelegramAlreadyLinkedToAnotherUser,
     UserAlreadyHasTelegramLinked,
@@ -24,8 +22,8 @@ from fanfan.core.exceptions.users import (
 from fanfan.presentation.web.schemas.error import ErrorMessage
 from fanfan.presentation.web.telegram_oauth import (
     TELEGRAM_OAUTH_ERROR_FAILED,
-    classify_oauth_error,
-    read_telegram_claims,
+    TelegramOAuthFailed,
+    fetch_telegram_claims,
 )
 
 logger = logging.getLogger(__name__)
@@ -54,9 +52,14 @@ def _build_profile_redirect(error_code: str | None = None) -> RedirectResponse:
     summary="Start Telegram linking",
     description="Redirects the browser to Telegram's OAuth page to begin linking a "
     "Telegram account to the current user. Telegram then calls back to the callback "
-    "endpoint to finish.",
+    "endpoint to finish. If the redirect cannot be built the browser goes back to "
+    "the profile page with a `telegramLinkError` query param instead.",
     responses={
         302: {"description": "Redirect to Telegram's OAuth authorization page."},
+        303: {
+            "description": "Telegram could not be reached. Redirects to the profile "
+            "page with a `telegramLinkError` query param."
+        },
     },
 )
 @inject
@@ -69,11 +72,12 @@ async def link_telegram(
 
     try:
         return await telegram.authorize_redirect(request, redirect_uri)
-    except HTTPError:
+    except Exception:
         # Building the redirect needs Telegram's discovery document. The registry
         # is APP-scoped so it is fetched once per process — this is the first
-        # linking attempt after a restart running into an unreachable Telegram.
-        logger.warning("Could not reach Telegram to start account linking")
+        # linking attempt after a restart running into an unreachable Telegram,
+        # or a discovery document we cannot parse.
+        logger.exception("Could not reach Telegram to start account linking")
         return _build_profile_redirect(TELEGRAM_OAUTH_ERROR_FAILED)
 
 
@@ -81,14 +85,16 @@ async def link_telegram(
     "/telegram/callback",
     summary="Finish Telegram linking",
     description="OAuth callback for Telegram linking. On success, links the account "
-    "and redirects to the profile page. Every recoverable error (already linked to "
-    "this or another account, cancelled or failed authorization) also redirects to "
-    "the profile page with a `telegramLinkError` query param the frontend turns into "
-    "a toast. Invoked by Telegram, not called directly by the frontend.",
+    "and redirects to the profile page. Every failure — already linked to this or "
+    "another account, cancelled or failed authorization, an unreachable Telegram or "
+    "database — also redirects to the profile page with a `telegramLinkError` query "
+    "param the frontend turns into a toast; this route never answers with an error "
+    "body, because the browser would render it as the page. Invoked by Telegram, not "
+    "called directly by the frontend.",
     responses={
         303: {
-            "description": "Linking finished. Redirects to the profile page; on a "
-            "recoverable error a `telegramLinkError` query param is included."
+            "description": "Linking finished. Redirects to the profile page; on any "
+            "failure a `telegramLinkError` query param is included."
         },
     },
 )
@@ -101,19 +107,9 @@ async def link_telegram_callback(
     telegram: StarletteOAuth2App = oauth.create_client("telegram")
 
     try:
-        token = await telegram.authorize_access_token(request)
-        claims = read_telegram_claims(token)
-    except OAuthError as e:
-        # Declining on Telegram, letting the state expire (Authlib gives it an
-        # hour) and re-opening an already-used callback URL all land here. None
-        # of them is a server fault, so this stays below warning level.
-        logger.info("Telegram linking did not complete", extra={"oauth_error": e.error})
-        return _build_profile_redirect(classify_oauth_error(e))
-    except InvalidTelegramAuthPayload:
-        # Signature-valid token, unusable content — almost always the bot's
-        # signing algorithm in BotFather stripping the `profile` scope.
-        logger.warning("Telegram ID token carried no usable profile claims")
-        return _build_profile_redirect(TELEGRAM_OAUTH_ERROR_FAILED)
+        claims = await fetch_telegram_claims(telegram, request)
+    except TelegramOAuthFailed as e:
+        return _build_profile_redirect(e.error_code)
 
     try:
         await interactor(LinkTelegramAccountInput(user_id=claims.id))
@@ -121,6 +117,11 @@ async def link_telegram_callback(
         return _build_profile_redirect(TELEGRAM_LINK_ERROR_LINKED_TO_ANOTHER_ACCOUNT)
     except UserAlreadyHasTelegramLinked:
         return _build_profile_redirect(TELEGRAM_LINK_ERROR_USER_ALREADY_HAS_TELEGRAM)
+    except Exception:
+        # Above are the two outcomes the user can act on; an unreachable database
+        # lands here and still has to leave as a redirect, not a JSON body.
+        logger.exception("Could not link a Telegram account")
+        return _build_profile_redirect(TELEGRAM_OAUTH_ERROR_FAILED)
 
     return _build_profile_redirect()
 
