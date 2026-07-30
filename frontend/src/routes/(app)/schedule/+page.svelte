@@ -177,7 +177,9 @@
 	}
 
 	function getScrollContainer() {
-		const container = pageRoot?.closest('section');
+		// Matched by id, not tag: the layout's scrolling region is the SkipLink target, and
+		// its element has already changed once (section -> main) — which silently broke this.
+		const container = pageRoot?.closest('#main-content');
 
 		return container instanceof HTMLElement ? container : null;
 	}

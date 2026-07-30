@@ -26,12 +26,15 @@
 
 	<AppSidebar {user} {activeUrl} {isSidebarOpen} {closeSidebar} />
 
-	<main class="relative flex flex-1 flex-col overflow-hidden">
+	<!-- <main> is the scrolling region, not this column: the landmark for the page's primary
+		content must not also swallow the top bar and the connection banner. -->
+	<div class="relative flex flex-1 flex-col overflow-hidden">
 		<AppNavbar {user} toggleSidebar={sidebarUi.toggle} />
 
 		<ConnectionBanner />
 
-		<section
+		<!-- Also the SkipLink target, which focuses it by id — hence tabindex="-1". -->
+		<main
 			id="main-content"
 			tabindex="-1"
 			class="relative flex-1 overflow-y-auto scroll-smooth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
@@ -44,8 +47,8 @@
 			>
 				{@render children()}
 			</div>
-		</section>
-	</main>
+		</main>
+	</div>
 
 	<AppBottomNav {activeUrl} />
 </div>

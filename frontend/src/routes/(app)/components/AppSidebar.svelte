@@ -132,7 +132,11 @@
      bottom nav, so its static sidebar keeps the full set. -->
 {#snippet sidebarLinks(isMobile: boolean)}
 	<div class="flex h-full flex-col">
-		<SidebarBrand>
+		<!-- SidebarBrand renders a plain <a href="/"> and, unlike SidebarItem, never reads
+		     closeSidebar off the sidebar context — without this the drawer would stay open
+		     on top of the page it just navigated to. The static desktop sidebar has no
+		     drawer state to close. -->
+		<SidebarBrand onclick={isMobile ? closeSidebar : undefined}>
 			<span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">
 				ФАН ФАН
 			</span>
@@ -194,12 +198,18 @@
 	</div>
 {/snippet}
 
+<!-- Flowbite renders <aside>, a `complementary` landmark; these hold only navigation. A
+     real <nav> would beat the role override, but wrapping a flex child the layout sizes
+     costs more than it buys. Labels omit "навигация" — the role is announced already. The
+     drawer's differs from the bottom nav's because both are exposed while it is open. -->
 <Sidebar
 	{activeUrl}
 	backdrop={true}
 	isOpen={isSidebarOpen}
 	{closeSidebar}
 	position="fixed"
+	role="navigation"
+	ariaLabel="Меню"
 	class="z-50 h-full md:hidden"
 >
 	{@render sidebarLinks(true)}
@@ -209,6 +219,8 @@
 	{activeUrl}
 	backdrop={false}
 	position="static"
+	role="navigation"
+	ariaLabel="Разделы"
 	class="hidden h-full shrink-0 border-r border-gray-200 md:block dark:border-gray-700"
 >
 	{@render sidebarLinks(false)}
