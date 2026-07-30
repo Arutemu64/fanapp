@@ -68,7 +68,9 @@
 	fluid
 	class="sticky top-0 z-40 border-b border-gray-200/50 bg-white/80 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] backdrop-blur-md transition-colors duration-300 sm:px-6 dark:border-gray-700/50 dark:bg-gray-900/80"
 >
-	<SidebarButton onclick={toggleSidebar} class="md:hidden" />
+	<!-- SidebarButton hardcodes an English "Open sidebar" in an sr-only span; aria-label
+		wins over element content, so this is the name Russian screen readers announce. -->
+	<SidebarButton onclick={toggleSidebar} aria-label="Открыть меню" class="md:hidden" />
 	<!-- Page title comes from each page's `load` via `page.data.title`; render it
 		as the single page <h1> in the space the navbar used to leave empty. -->
 	{#if pageTitle}
