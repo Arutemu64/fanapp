@@ -20,6 +20,9 @@
 		// .editorconfig is not built into VS Code — without this extension the
 		// tabs/spaces rules in it never reach the editor.
 		"editorconfig.editorconfig",
-		"sclu1034.justfile"
+
+		// hadolint backs `just dockerfile-lint` against backend/Dockerfile and
+		// frontend/Dockerfile, using the repo's .hadolint.yaml config.
+		"exiasr.hadolint"
 	]
 }
