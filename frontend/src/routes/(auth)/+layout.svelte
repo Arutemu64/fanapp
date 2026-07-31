@@ -10,7 +10,7 @@
 </script>
 
 <SkipLink />
-<ToastContainer />
+<ToastContainer centerStatus />
 
 <main
 	id="main-content"

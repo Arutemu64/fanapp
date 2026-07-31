@@ -16,6 +16,12 @@
 	import { prefersReducedMotion } from 'svelte/motion';
 	import { fly } from 'svelte/transition';
 
+	// Auth pages (login) carry no sidebar or bottom nav, so status toasts read best
+	// centered on the page there; app pages keep them anchored bottom-right on
+	// desktop (see the status container below). Off by default so app layouts are
+	// unaffected.
+	let { centerStatus = false }: { centerStatus?: boolean } = $props();
+
 	const toastService = getToastService();
 
 	// Toasts enter from the edge they are anchored to: push toasts drop down from
@@ -168,10 +174,17 @@
 </ToastContainer>
 
 <!-- Action feedback: bottom-center on mobile (raised above the fixed bottom nav,
-     h-16 + safe-area), bottom-right on desktop where that nav is hidden.
+     h-16 + safe-area). On desktop it defaults to bottom-right, clear of the app
+     sidebar; `centerStatus` opts an auth layout into page-centering instead.
      flex-col-reverse so the newest toast sits at the bottom, nearest its edge. -->
 <ToastContainer
-	class="pointer-events-none !fixed !top-auto !right-auto !bottom-[calc(4.5rem+env(safe-area-inset-bottom))] !left-auto z-50 mx-auto flex w-full max-w-7xl flex-col-reverse px-4 md:!bottom-4 md:px-6 lg:px-8"
+	class={[
+		'pointer-events-none !fixed !top-auto !bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 mx-auto flex w-full max-w-7xl flex-col-reverse px-4 md:!bottom-4 md:px-6 lg:px-8',
+		// Centering needs both inset edges pinned so `mx-auto` has room to work: a
+		// fixed element with only `left/right: auto` sticks to the left once the
+		// viewport is wider than max-w-7xl, which pulls the toast off-centre.
+		centerStatus ? '!inset-x-0' : '!right-auto !left-auto'
+	]}
 >
 	{#each toastService.statusItems as toast (toast.id)}
 		<div
