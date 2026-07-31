@@ -57,3 +57,4 @@ permanent — it is how other ADRs and commits reference the decision.
 | [0010](0010-http-triggered-background-jobs.md) | HTTP-triggered background jobs use a status row, outbox and durable consumer | Accepted |
 | [0011](0011-vitest-for-frontend-unit-tests.md) | Vitest for frontend unit tests | Accepted |
 | [0012](0012-single-oauth-callback-keyed-on-the-oidc-subject.md) | One OAuth callback per provider, identity keyed on the OIDC subject | Accepted |
+| [0013](0013-schedule-wait-derived-at-the-edge.md) | Schedule API publishes anchors; the wait is derived at each edge | Accepted |

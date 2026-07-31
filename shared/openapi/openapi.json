@@ -4318,18 +4318,6 @@
               }
             ],
             "title": "Queue"
-          },
-          "expected_start_time": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Expected Start Time"
           }
         },
         "type": "object",

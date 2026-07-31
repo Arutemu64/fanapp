@@ -1,66 +1,54 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from fanfan.application.dto.schedule import ScheduleEventFullDTO
+from fanfan.core.vo.schedule_event import ScheduleEventId
 
 
-def apply_expected_start_times(
+def project_seconds_until(
     events: list[ScheduleEventFullDTO],
     *,
     transition_buffer_seconds: int,
     now: datetime,
-) -> list[ScheduleEventFullDTO]:
-    """Fill ``expected_start_time`` on each event from the live show anchor.
+) -> dict[ScheduleEventId, int]:
+    """How long until each upcoming event starts, in seconds, keyed by event id.
 
-    See ADR-0008. The current event's real ``actual_start_time`` is the anchor;
-    every later non-skipped event is projected forward by its predecessors'
-    ``duration_seconds`` plus a ``transition_buffer_seconds`` gap. Each
-    projection is floored at ``now + transition_buffer_seconds`` so an
-    overrunning current act pushes the whole tail forward instead of predicting
-    times already in the past.
+    See ADR-0013. The act on stage anchors the walk: whatever is left of its
+    planned ``duration_seconds`` (floored at zero, because an overrunning act has
+    no planned time left) plus a ``transition_buffer_seconds`` changeover, then
+    each following act's duration and changeover in turn.
 
     ``events`` must be ordered by ``order`` (as ``read_list_schedule`` returns
-    them). Events before the current one, skipped events, and the case where
-    nothing is on stage yet are left with ``expected_start_time = None`` — there
-    is no anchor to project from. The list is mutated in place and returned.
+    them). The current event, everything before it, and skipped events are absent
+    from the result: the first two have no wait to report and the third consumes
+    no stage time. An empty dict means nothing is on stage yet, so there is no
+    anchor to measure from.
 
-    The frontend re-runs this same projection between fetches
-    (``lib/utils/scheduleTiming.ts``); the two must stay in step, since the
-    server copy is what the subscription push text renders.
+    The frontend mirrors this in ``lib/utils/scheduleTiming.ts`` to keep the wait
+    live between fetches; this copy renders the same wait into subscription push
+    text, where there is no client to do the work.
     """
     current = next((e for e in events if e.is_current), None)
     if current is None or current.actual_start_time is None:
-        return events
+        return {}
 
-    anchor = current.actual_start_time
-    current.expected_start_time = anchor
+    elapsed_seconds = (now - current.actual_start_time).total_seconds()
+    # An act that has run past its planned length owes no more stage time, but
+    # the changeover below still has to happen — which is what stops the wait
+    # from going negative once a show starts slipping.
+    remaining_current_seconds = max(0.0, current.duration_seconds - elapsed_seconds)
 
-    # Walk the events after the anchor in order, carrying a running clock. The
-    # gap added before each event is the *previous* event's duration_seconds + buffer,
-    # so the running value always names the next event's projected start.
-    running = anchor
-    previous_duration = current.duration_seconds
+    seconds_until: dict[ScheduleEventId, int] = {}
+    running_seconds = remaining_current_seconds
     anchor_passed = False
     for event in events:
         if not anchor_passed:
-            # Fast-forward to just past the current event; earlier events keep
-            # their None projection.
             if event is current:
                 anchor_passed = True
             continue
         if event.is_skipped:
-            # Skipped events consume no stage time and get no projected start.
             continue
-        running = running + timedelta(
-            seconds=previous_duration + transition_buffer_seconds
-        )
-        # Floor at now + buffer so an overrunning current act pushes the tail
-        # forward instead of predicting a start already in the past. The floor
-        # keeps the buffer because even if the overrunning act ended this
-        # instant, the transition would still have to happen. Carrying the
-        # clamped value forward cascades the drift to later events (where the
-        # floor can no longer bind, since each step already adds the buffer).
-        running = max(running, now + timedelta(seconds=transition_buffer_seconds))
-        event.expected_start_time = running
-        previous_duration = event.duration_seconds
+        running_seconds += transition_buffer_seconds
+        seconds_until[event.id] = int(running_seconds)
+        running_seconds += event.duration_seconds
 
-    return events
+    return seconds_until

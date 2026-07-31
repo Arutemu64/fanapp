@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatDuration } from './formatters';
+import { formatApproximateWait, formatDuration, formatUntil } from './formatters';
 
 describe('formatDuration', () => {
 	it('keeps sub-minute acts in seconds', () => {
@@ -34,5 +34,37 @@ describe('formatDuration', () => {
 		expect(formatDuration(3600)).toBe('1 час');
 		expect(formatDuration(7200)).toBe('2 часа');
 		expect(formatDuration(5400)).toBe('1 ч 30 мин');
+	});
+});
+
+describe('formatApproximateWait', () => {
+	it('rounds to the nearest minute', () => {
+		expect(formatApproximateWait(1500)).toBe('25 мин');
+		expect(formatApproximateWait(1529)).toBe('25 мин');
+		expect(formatApproximateWait(1531)).toBe('26 мин');
+	});
+
+	it('floors at one minute so the push copy stays grammatical', () => {
+		// Rendered inside «примерно через …», where "меньше минуты" does not fit.
+		expect(formatApproximateWait(0)).toBe('1 мин');
+		expect(formatApproximateWait(20)).toBe('1 мин');
+	});
+
+	it('switches to hours past the hour mark', () => {
+		expect(formatApproximateWait(3600)).toBe('1 ч');
+		expect(formatApproximateWait(7200)).toBe('2 ч');
+		expect(formatApproximateWait(5400)).toBe('1 ч 30 мин');
+	});
+});
+
+describe('formatUntil', () => {
+	it('shows the queue distance alone when there is no wait to report', () => {
+		// Nothing on stage yet, so the schedule has no anchor to measure from.
+		expect(formatUntil(3, null)).toBe('Через 3 выступления');
+	});
+
+	it('appends the approximate wait when one is known', () => {
+		expect(formatUntil(3, 1500)).toBe('Через 3 выступления · ≈ 25 мин');
+		expect(formatUntil(1, 5400)).toBe('Через 1 выступление · ≈ 1 ч 30 мин');
 	});
 });

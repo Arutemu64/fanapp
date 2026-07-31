@@ -1,5 +1,6 @@
 const SECONDS_PER_MINUTE = 60;
 const SECONDS_PER_HOUR = 3600;
+const MINUTES_PER_HOUR = 60;
 
 /**
  * How long an act runs, in Russian. Acts span a ~30-second single defile to a
@@ -117,21 +118,44 @@ export function formatSyncedAt(timestamp: number): string {
 }
 
 /**
- * Countdown label for an upcoming event: how many acts away (drift-proof) plus
- * the absolute expected start time as an anchor when known. On a schedule that
- * drifts, the queue distance is always exact, while the "≈ HH:MM" survives being
- * read minutes later — see ADR-0008.
+ * An approximate wait, e.g. `25 мин` or `1 ч 30 мин`. Mirrors `_approximate_wait`
+ * in the backend's `adapters/jinja/factory.py` so a push and the schedule screen
+ * word the same wait the same way.
  *
- * An expected time already in the past means the data is a stale snapshot (the
- * show drifted since the last poll), so showing it would be visibly wrong —
- * fall back to the queue distance alone.
+ * Rounded to the nearest minute — the value is a projection, and printing it to
+ * the second would claim a precision the schedule does not have — and floored at
+ * one minute, since «меньше минуты» does not fit the «примерно через …» the push
+ * wraps this in. The queue count beside it is what says an act is imminent.
  */
-export function formatUntil(queueUntil: number, expectedStartTime: string | null): string {
+export function formatApproximateWait(seconds: number): string {
+	const totalMinutes = Math.max(1, Math.round(seconds / SECONDS_PER_MINUTE));
+	if (totalMinutes < MINUTES_PER_HOUR) {
+		return `${totalMinutes} мин`;
+	}
+
+	const hours = Math.floor(totalMinutes / MINUTES_PER_HOUR);
+	const minutes = totalMinutes % MINUTES_PER_HOUR;
+	if (minutes === 0) {
+		return `${hours} ч`;
+	}
+	return `${hours} ч ${minutes} мин`;
+}
+
+/**
+ * Countdown label for an upcoming event: how many acts away, plus roughly how
+ * long that is when the schedule can say. The queue distance is exact whatever
+ * the show does; the wait is a projection, hence the ≈ (ADR-0013).
+ *
+ * No staleness guard here any more — `secondsUntil` is recomputed against a live
+ * clock by the page, so it cannot be a value from the past the way the server's
+ * absolute prediction could.
+ */
+export function formatUntil(queueUntil: number, secondsUntil: number | null): string {
 	const base = `Через ${queueUntil} ${pluralize(queueUntil, 'выступление', 'выступления', 'выступлений')}`;
-	if (!expectedStartTime || new Date(expectedStartTime).getTime() <= Date.now()) {
+	if (secondsUntil === null) {
 		return base;
 	}
-	return `${base} · ≈ ${formatMoscowTime(expectedStartTime)}`;
+	return `${base} · ≈ ${formatApproximateWait(secondsUntil)}`;
 }
 
 /**

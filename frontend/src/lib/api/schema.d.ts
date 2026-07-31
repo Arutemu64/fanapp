@@ -1345,8 +1345,6 @@ export interface components {
             actual_start_time?: string | null;
             /** Queue */
             queue: number | null;
-            /** Expected Start Time */
-            expected_start_time?: string | null;
         };
         /** SendBroadcastInput */
         SendBroadcastInput: {

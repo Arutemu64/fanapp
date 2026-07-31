@@ -111,8 +111,8 @@ interface CachedSchedule {
 /**
  * Entries cached before the buffer was persisted are a bare event array. Report
  * a null buffer for those rather than inventing a fallback value that would
- * silently disagree with the server's — the page then falls back to the
- * `expected_start_time` the rows already carry.
+ * silently disagree with the server's — the cards then show the queue distance
+ * alone until the next online load rewrites the entry.
  */
 function normalizeCached(cached: CachedSchedule | ScheduleEventFullDTO[]): {
 	schedule: ScheduleEventFullDTO[];

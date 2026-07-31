@@ -152,27 +152,30 @@ inputs**, and the page derives the time-relative display itself — the same sha
 as `formatRelativeTime`, which turns an absolute `created_at` into "2 минуты
 назад" rather than having the backend send that string.
 
-The schedule's expected start times are the worked example. `GET /schedule/`
-sends `actual_start_time` (the anchor), `duration_seconds` per event and
-`transition_buffer_seconds` for the gap between them; the page re-runs the
-ADR-0008 projection in `lib/utils/scheduleTiming.ts` against a ticking clock, so
-an overrunning act pushes the whole tail forward on screen instead of leaving
-times that quietly slip into the past between SSE nudges.
+The schedule's "≈ 25 мин until your act" is the worked example ([ADR-0013](adr/0013-schedule-wait-derived-at-the-edge.md)).
+`GET /schedule/` sends `actual_start_time` (when the current act really began),
+`duration_seconds` per event and `transition_buffer_seconds` for the changeover
+between them — and **no predicted time at all**. The page derives the wait in
+`lib/utils/scheduleTiming.ts` against a ticking clock, so it counts down and
+self-corrects when an act overruns instead of freezing at whatever the last
+fetch computed.
 
+* **Send absolute anchors, never a computed relative value.** A `seconds_until`
+  field would be wrong the moment it was serialized. An anchor stays true; only
+  its interpretation depends on `now`.
 * **Correct the device clock from the `Date` response header**
   ([RFC 9110 §6.6.1](https://www.rfc-editor.org/rfc/rfc9110.html#section-6.6.1)),
   never trust `Date.now()` alone — a phone with a mis-set clock would skew every
   countdown. Readable because the app and the API are same-origin; a
   split-origin deployment would have to add `Date` to
   `Access-Control-Expose-Headers`, as it is not CORS-safelisted.
-* **`expected_start_time` on the response is a snapshot, not the live value.**
-  It is what an offline render falls back to and what the subscription push text
-  carries (there is no client there to project). When both are available the
-  client's own projection wins.
-* **The two implementations must move together.** `application/services/
-  schedule_timing.py` and `lib/utils/scheduleTiming.ts` are the same algorithm;
-  their test suites mirror each other case for case so a divergence shows up as
-  a failing pair rather than a wrong time on a phone.
+* **The server keeps its own copy for channels with no client.** Subscription
+  push text renders the wait at dispatch through
+  `application/services/schedule_timing.py`.
+* **The two implementations must move together.** That service and
+  `lib/utils/scheduleTiming.ts` are the same algorithm; their test suites mirror
+  each other case for case so a divergence shows up as a failing pair rather
+  than a wrong time on a phone.
 
 Business rules, authorization and anything that must read identically for every
 viewer stay on the server. This is only about *presentation of a value derived

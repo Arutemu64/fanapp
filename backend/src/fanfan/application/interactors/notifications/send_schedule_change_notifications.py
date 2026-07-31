@@ -22,7 +22,7 @@ from fanfan.application.ports.gateways.subscriptions import SubscriptionGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.template_renderer import TemplateRenderer
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.application.services.schedule_timing import apply_expected_start_times
+from fanfan.application.services.schedule_timing import project_seconds_until
 from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.schedule import ScheduleChangeNotFound
 from fanfan.core.models.notification import NewNotification
@@ -151,7 +151,7 @@ class SendScheduleChangeNotifications:
         current_event: ScheduleEventFullDTO,
         changed_event: ScheduleChangeEventDTO,
         reason_msg: str | None,
-        expected_start_times: dict[ScheduleEventId, datetime | None],
+        seconds_until: dict[ScheduleEventId, int],
     ) -> list[NotificationQueued]:
         events: list[NotificationQueued] = []
         # Queue always exists for the (non-skipped) current event.
@@ -172,9 +172,10 @@ class SendScheduleChangeNotifications:
                         "event_number": s.event.number,
                         "event_title": s.event.title,
                         "queue_difference": s.event.queue - current_event_queue,
-                        # Absolute drift-aware start (ADR-0008); None when there is
-                        # no live anchor yet, and the template omits the time then.
-                        "expected_start_time": expected_start_times.get(s.event.id),
+                        # Wait at the moment the push is built (ADR-0013); None
+                        # when nothing is on stage, and the template omits the
+                        # wait then rather than guessing one.
+                        "seconds_until": seconds_until.get(s.event.id),
                         "reason_msg": reason_msg,
                     },
                 )
@@ -217,25 +218,23 @@ class SendScheduleChangeNotifications:
                 )
             )
         if current_event and changed_event:
-            # Project absolute start times once, reusing the same schedule-read
-            # timing service the app uses, so the push shows the same "≈ HH:MM"
-            # the schedule screen does.
+            # Project the waits once, through the same timing service the
+            # frontend mirrors, so a push and the schedule screen word the same
+            # wait the same way. Measured at send time: a push is read whenever
+            # the phone is next picked up, so this is the wait as of dispatch.
             settings = await self.settings_gateway.get()
-            projected = apply_expected_start_times(
+            seconds_until = project_seconds_until(
                 await self.schedule_gateway.read_list_schedule(),
                 transition_buffer_seconds=settings.limits.transition_buffer_seconds,
                 now=datetime.now(UTC),
             )
-            expected_start_times: dict[ScheduleEventId, datetime | None] = {
-                e.id: e.expected_start_time for e in projected
-            }
             notification_events.extend(
                 await self._build_subscription_notifications(
                     schedule_change=schedule_change,
                     current_event=current_event,
                     changed_event=changed_event,
                     reason_msg=reason_msg,
-                    expected_start_times=expected_start_times,
+                    seconds_until=seconds_until,
                 )
             )
 

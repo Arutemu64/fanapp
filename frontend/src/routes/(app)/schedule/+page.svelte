@@ -7,7 +7,7 @@
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
-	import { projectExpectedStartTimes } from '$lib/utils/scheduleTiming';
+	import { projectSecondsUntil } from '$lib/utils/scheduleTiming';
 	import { createSearchIndex } from '$lib/utils/search';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
 	import {
@@ -48,12 +48,10 @@
 	// We use the full schedule current event for countdown labels inside every row.
 	let currentEvent = $derived(schedule.find((event) => event.is_current) ?? null);
 
-	// Ticking clock behind the expected-start projection. The server's
-	// `expected_start_time` is a snapshot taken when it answered, so an act that
-	// overruns while the page sits open drifts further into the past with every
-	// passing minute; re-projecting locally against a live `now` is what keeps
-	// the ≈ times honest between fetches. Half a minute is finer than the labels,
-	// which are rendered to the minute.
+	// Ticking clock behind the wait projection (ADR-0013): the API sends anchors,
+	// not a predicted time, so «≈ 25 мин» counts down here rather than freezing
+	// at whatever the last fetch computed. Half a minute is finer than the labels,
+	// which are rounded to the minute.
 	const PROJECTION_TICK_MS = 30_000;
 	let nowMs = $state(Date.now());
 
@@ -62,13 +60,12 @@
 		return () => clearInterval(tick);
 	});
 
-	// Empty whenever the buffer is unknown (a cache entry written before it was
-	// persisted) or nothing is on stage — EventCard then falls back to the
-	// server's own snapshot rather than showing nothing.
-	let expectedStartTimes = $derived.by(() => {
-		if (data.transitionBufferSeconds === null) return new Map<string, Date>();
+	// Empty whenever nothing is on stage, or the buffer is unknown because the
+	// cache entry predates it — the cards then show the queue distance alone.
+	let secondsUntilByEvent = $derived.by(() => {
+		if (data.transitionBufferSeconds === null) return new Map<string, number>();
 
-		return projectExpectedStartTimes(schedule, {
+		return projectSecondsUntil(schedule, {
 			transitionBufferSeconds: data.transitionBufferSeconds,
 			nowMs: nowMs + data.serverClockOffsetMs
 		});
@@ -370,7 +367,7 @@
 										{schedule}
 										{currentEvent}
 										{user}
-										expectedStartTime={expectedStartTimes.get(event.id) ?? null}
+										secondsUntil={secondsUntilByEvent.get(event.id) ?? null}
 									/>
 								</div>
 							{/each}

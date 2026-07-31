@@ -1,6 +1,6 @@
 # ADR-0008: Absolute schedule times computed in the application layer
 
-- **Status:** Accepted
+- **Status:** Accepted — transport half superseded by [ADR-0013](0013-schedule-wait-derived-at-the-edge.md)
 - **Date:** 2026-07-09
 - **Deciders:** Project maintainers
 
