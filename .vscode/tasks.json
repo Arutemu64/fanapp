@@ -1,59 +1,114 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "install: all",
-            "type": "shell",
-            "command": "just install",
-            "group": "build",
-            "problemMatcher": []
-        },
-        {
-            "label": "dev: backend",
-            "type": "shell",
-            "command": "just backend-dev",
-            "isBackground": true,
-            "problemMatcher": []
-        },
-        {
-            "label": "dev: frontend",
-            "type": "shell",
-            "command": "just frontend-dev",
-            "isBackground": true,
-            "problemMatcher": []
-        },
-        {
-            "label": "check: all",
-            "type": "shell",
-            "command": "just check",
-            "group": "test",
-            "problemMatcher": []
-        },
-        {
-            "label": "lint: all",
-            "type": "shell",
-            "command": "just lint",
-            "group": "test",
-            "problemMatcher": []
-        },
-        {
-            "label": "infra: up web",
-            "type": "shell",
-            "command": "just infra-up-web",
-            "problemMatcher": []
-        },
-        {
-            "label": "infra: logs web",
-            "type": "shell",
-            "command": "just infra-logs-web",
-            "isBackground": true,
-            "problemMatcher": []
-        },
-        {
-            "label": "infra: stop web",
-            "type": "shell",
-            "command": "just infra-stop-web",
-            "problemMatcher": []
-        }
-    ]
+	// Every command here must exist in the justfile — `just` fails loudly on an
+	// unknown recipe, and a task that silently never worked is worse than no
+	// task. Check against `just --list` when adding one.
+	"version": "2.0.0",
+	"tasks": [
+		{
+			// The pre-push gate: check-only, same steps as .github/workflows/ci.yml.
+			// Default test task, so it is one keystroke (Run Test Task).
+			"label": "ci: all gates",
+			"type": "shell",
+			"command": "just ci",
+			"group": { "kind": "test", "isDefault": true },
+			"problemMatcher": []
+		},
+		{
+			"label": "bootstrap: .env + secrets",
+			"type": "shell",
+			"command": "just bootstrap",
+			"problemMatcher": []
+		},
+		{
+			"label": "install: backend",
+			"type": "shell",
+			"command": "just backend-install",
+			"group": "build",
+			"problemMatcher": []
+		},
+		{
+			"label": "install: frontend",
+			"type": "shell",
+			"command": "just frontend-install",
+			"group": "build",
+			"problemMatcher": []
+		},
+		{
+			// isBackground marks these long-running so VS Code does not wait for
+			// an exit code. With problemMatcher [] there is no readiness signal,
+			// so give them a background matcher before using either as a
+			// preLaunchTask — otherwise the launch hangs waiting for "ready".
+			"label": "dev: backend",
+			"type": "shell",
+			"command": "just backend-dev",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "dev: frontend",
+			"type": "shell",
+			"command": "just frontend-dev",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			// Auto-fixing counterparts of the CI gate — use these while working,
+			// `ci: all gates` before pushing.
+			"label": "lint: backend (fix)",
+			"type": "shell",
+			"command": "just backend-lint",
+			"group": "test",
+			"problemMatcher": []
+		},
+		{
+			"label": "lint: frontend (fix)",
+			"type": "shell",
+			"command": "just frontend-lint",
+			"group": "test",
+			"problemMatcher": []
+		},
+		{
+			"label": "typecheck: backend (ty)",
+			"type": "shell",
+			"command": "just backend-typecheck",
+			"group": "test",
+			"problemMatcher": []
+		},
+		{
+			"label": "check: frontend (svelte-check)",
+			"type": "shell",
+			"command": "just frontend-check",
+			"group": "test",
+			"problemMatcher": []
+		},
+		{
+			"label": "test: backend",
+			"type": "shell",
+			"command": "just backend-test",
+			"group": "test",
+			"problemMatcher": []
+		},
+		{
+			"label": "test: frontend",
+			"type": "shell",
+			"command": "just frontend-test",
+			"group": "test",
+			"problemMatcher": []
+		},
+		{
+			// Full Compose environment with live sync; replaces the infra-* tasks,
+			// which named recipes that never existed.
+			"label": "docker: run dev",
+			"type": "shell",
+			"command": "just run-dev",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "migrate: backend",
+			"type": "shell",
+			"command": "just backend-migrate",
+			"problemMatcher": []
+		}
+	]
 }

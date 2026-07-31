@@ -1,31 +1,37 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Backend: FastAPI (fanfan.main.web)",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "fanfan.main.web",
-            "cwd": "${workspaceFolder}/backend",
-            "envFile": "${workspaceFolder}/backend/.env",
-            "console": "integratedTerminal",
-            "justMyCode": true
-        },
-        {
-            "name": "Frontend: SvelteKit (pnpm dev)",
-            "type": "node-terminal",
-            "request": "launch",
-            "command": "pnpm dev",
-            "cwd": "${workspaceFolder}/frontend"
-        }
-    ],
-    "compounds": [
-        {
-            "name": "Dev: Backend + Frontend",
-            "configurations": [
-                "Backend: FastAPI (fanfan.main.web)",
-                "Frontend: SvelteKit (pnpm dev)"
-            ]
-        }
-    ]
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Backend: FastAPI (fanfan.main.web)",
+			"type": "debugpy",
+			"request": "launch",
+			"module": "fanfan.main.web",
+			"cwd": "${workspaceFolder}/backend",
+			// The venv explicitly, not the selected interpreter: this config is
+			// the thing most likely to be run before anyone has picked one.
+			"python": "${workspaceFolder}/backend/.venv/bin/python",
+			// The root .env, the one `just bootstrap` writes — there is no
+			// backend/.env. Matches env_file=".env" in adapters/config/models.py,
+			// which the backend resolves by walking up from backend/.
+			"envFile": "${workspaceFolder}/.env",
+			"console": "integratedTerminal",
+			"justMyCode": true
+		},
+		{
+			"name": "Frontend: SvelteKit (pnpm dev)",
+			"type": "node-terminal",
+			"request": "launch",
+			"command": "pnpm dev",
+			"cwd": "${workspaceFolder}/frontend"
+		}
+	],
+	"compounds": [
+		{
+			"name": "Dev: Backend + Frontend",
+			"configurations": [
+				"Backend: FastAPI (fanfan.main.web)",
+				"Frontend: SvelteKit (pnpm dev)"
+			]
+		}
+	]
 }

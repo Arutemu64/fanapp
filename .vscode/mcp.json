@@ -1,0 +1,10 @@
+{
+	// Workspace MCP servers. VS Code reads this only from the workspace-folder
+	// root, so it lives here and not under frontend/ despite being frontend-only.
+	"servers": {
+		"svelte": {
+			"command": "npx",
+			"args": ["-y", "@sveltejs/mcp"]
+		}
+	}
+}
