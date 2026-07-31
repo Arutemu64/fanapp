@@ -85,7 +85,11 @@ class UndoScheduleChange:
             else:
                 changed_event.place_after(place_after_event, None)
         else:
-            first_event = await self.schedule_gateway.get_by_queue(1)
+            # First by order, matching how MoveScheduleEvent resolves the top of
+            # the schedule. Queue position 1 would differ whenever the first row
+            # is skipped, leaving a move and its undo with two different ideas
+            # of where "the top" is.
+            first_event = await self.schedule_gateway.get_first_by_order()
             changed_event.place_before_first(first_event)
 
         await self.schedule_gateway.save(changed_event)

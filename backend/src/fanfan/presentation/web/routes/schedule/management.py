@@ -78,7 +78,8 @@ async def uncheck_current_event(
     status_code=204,
     summary="Reorder schedule event",
     description="Moves an event to a new position in the sequence, "
-    "specifically after the provided event ID.",
+    "after the provided event ID — or to the top of the schedule when "
+    "`place_after_event_id` is null.",
     responses={
         204: {"description": "Event moved successfully."},
         400: {

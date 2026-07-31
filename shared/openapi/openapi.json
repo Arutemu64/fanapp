@@ -1407,7 +1407,7 @@
           "Schedule"
         ],
         "summary": "Reorder schedule event",
-        "description": "Moves an event to a new position in the sequence, specifically after the provided event ID.",
+        "description": "Moves an event to a new position in the sequence, after the provided event ID — or to the top of the schedule when `place_after_event_id` is null.",
         "operationId": "move_schedule_event",
         "security": [
           {
@@ -3777,9 +3777,17 @@
       "MoveScheduleEventRequest": {
         "properties": {
           "place_after_event_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Place After Event Id"
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place After Event Id",
+            "description": "Event to place the moved event behind. Null moves it to the top of the schedule."
           }
         },
         "type": "object",
@@ -4121,6 +4129,11 @@
           "type": {
             "$ref": "#/components/schemas/ScheduleChangeType"
           },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
           "mailing_id": {
             "anyOf": [
               {
@@ -4184,6 +4197,7 @@
         "required": [
           "id",
           "type",
+          "created_at",
           "mailing_id",
           "user_id",
           "next_event_changed",

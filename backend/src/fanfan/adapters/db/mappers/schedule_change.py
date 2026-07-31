@@ -49,6 +49,7 @@ class ScheduleChangeMapper:
         return ScheduleChangeFullDTO(
             id=ScheduleChangeId(schedule_change_orm.id),
             type=schedule_change_orm.type,
+            created_at=schedule_change_orm.created_at,
             mailing_id=MailingId(schedule_change_orm.mailing_id)
             if schedule_change_orm.mailing_id is not None
             else None,

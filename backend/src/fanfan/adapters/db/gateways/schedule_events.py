@@ -102,6 +102,19 @@ class SqlScheduleEventGateway(ScheduleEventGateway):
         event_orm = await self.session.scalar(stmt)
         return self.mapper.to_model(event_orm) if event_orm else None
 
+    async def get_first_by_order(self) -> ScheduleEvent | None:
+        # Deliberately ignores is_skipped: a skipped event keeps its slot in the
+        # operator's list, so "the top of the schedule" is the first row there
+        # even when that row is skipped.
+        stmt = (
+            select(ScheduleEventORM)
+            .order_by(ScheduleEventORM.order)
+            .limit(1)
+            .with_for_update()
+        )
+        event_orm = await self.session.scalar(stmt)
+        return self.mapper.to_model(event_orm) if event_orm else None
+
     async def save(self, event: ScheduleEvent) -> None:
         event_orm = await self.session.merge(self.mapper.from_model(event))
         await self.session.flush([event_orm])

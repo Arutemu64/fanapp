@@ -35,7 +35,8 @@ logger = logging.getLogger(__name__)
 
 class MoveScheduleEventInput(BaseModel):
     event_id: ScheduleEventId
-    place_after_event_id: ScheduleEventId
+    # None means the top of the schedule — there is no event to land behind.
+    place_after_event_id: ScheduleEventId | None
 
 
 class MoveScheduleEvent:
@@ -79,21 +80,29 @@ class MoveScheduleEvent:
                 if event is None:
                     raise EventNotFound
 
-                place_after_event = await self.schedule_gateway.get_by_id(
-                    data.place_after_event_id
-                )
-                if place_after_event is None:
-                    raise EventNotFound
-                place_before_event = await self.schedule_gateway.get_next_by_order(
-                    place_after_event.order
-                )
+                # Read the pre-move neighbours before the order changes:
+                # `previous_event` is the anchor undo restores the event to, and
+                # the two `get_next()` reads bracket the move so we can tell
+                # whether the up-next event changed.
                 previous_event = await self.schedule_gateway.get_previous_by_order(
                     event.order
                 )
-
                 next_event_before_change = await self.schedule_gateway.get_next()
 
-                event.place_after(place_after_event, place_before_event)
+                if data.place_after_event_id is None:
+                    first_event = await self.schedule_gateway.get_first_by_order()
+                    event.place_before_first(first_event)
+                else:
+                    place_after_event = await self.schedule_gateway.get_by_id(
+                        data.place_after_event_id
+                    )
+                    if place_after_event is None:
+                        raise EventNotFound
+                    place_before_event = await self.schedule_gateway.get_next_by_order(
+                        place_after_event.order
+                    )
+                    event.place_after(place_after_event, place_before_event)
+
                 await self.schedule_gateway.save(event)
 
                 next_event_after_change = await self.schedule_gateway.get_next()
@@ -117,7 +126,9 @@ class MoveScheduleEvent:
                     "Schedule event moved",
                     extra={
                         "event_id": str(data.event_id),
-                        "place_after_event_id": str(data.place_after_event_id),
+                        "place_after_event_id": str(data.place_after_event_id)
+                        if data.place_after_event_id
+                        else None,
                         "actor_id": str(current_user.id),
                     },
                 )

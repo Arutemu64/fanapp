@@ -11,6 +11,10 @@
 
 	const client = createApiClient();
 
+	// Sentinel for the "top of the programme" choice, which the API expresses as a
+	// null `place_after_event_id`. Not a UUID, so it can never collide with an id.
+	const TOP_OF_SCHEDULE = 'top';
+
 	interface Props {
 		open: boolean;
 		event: ScheduleEventFullDTO;
@@ -51,7 +55,9 @@
 			try {
 				const { error, response } = await client.PATCH('/schedule/{event_id}/move', {
 					params: { path: { event_id: event.id } },
-					body: { place_after_event_id: selectedId }
+					body: {
+						place_after_event_id: selectedId === TOP_OF_SCHEDULE ? null : selectedId
+					}
 				});
 
 				if (error || !response.ok) {
@@ -89,9 +95,29 @@
 		{/if}
 
 		<p class="text-sm text-gray-600 sm:text-base dark:text-gray-400">
-			Выбери выступление, <strong class="text-gray-900 dark:text-white">после</strong> которого
-			разместить:
+			Куда перенести:
 			<strong class="text-primary-600 dark:text-primary-400">{event.title}</strong>
+		</p>
+
+		<!-- The top of the programme has no anchor event to search for, so it is its
+		     own control above the picker rather than a row that search could hide. -->
+		<button
+			type="button"
+			aria-pressed={selectedId === TOP_OF_SCHEDULE}
+			class={[
+				'w-full cursor-pointer rounded-lg border px-3 py-2.5 text-left text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 sm:py-3 sm:text-base',
+				selectedId === TOP_OF_SCHEDULE
+					? 'border-primary-500 bg-primary-100 text-primary-900 dark:bg-primary-900/40 dark:text-primary-100'
+					: 'border-gray-200 text-gray-900 hover:bg-primary-50 dark:border-gray-700 dark:text-white dark:hover:bg-primary-900/20'
+			]}
+			onclick={() => (selectedId = selectedId === TOP_OF_SCHEDULE ? null : TOP_OF_SCHEDULE)}
+		>
+			В начало программы
+		</button>
+
+		<p class="text-sm text-gray-600 sm:text-base dark:text-gray-400">
+			Или выбери выступление, <strong class="text-gray-900 dark:text-white">после</strong> которого его
+			разместить:
 		</p>
 
 		<!-- Moving an event broadcasts a mailing to every subscriber. Push notifications cannot be recalled, so warn before sending. -->

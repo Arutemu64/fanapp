@@ -11,12 +11,17 @@
 
 	import { invalidate } from '$app/navigation';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { formatRelativeTime } from '$lib/utils/formatters';
 
 	interface Props {
 		change: ScheduleChangeFullDTO;
 	}
 
 	let { change }: Props = $props();
+
+	// Same treatment as the notifications feed: relative while the show is running,
+	// falling back to an absolute Moscow date-time past a day.
+	let changedAt = $derived(formatRelativeTime(change.created_at));
 
 	const toastService = getToastService();
 	let isUndoing = $state(false);
@@ -76,6 +81,9 @@
 				{#if change.next_event_changed}
 					<Badge color="red" border class="text-sm">Объявление</Badge>
 				{/if}
+				<time datetime={change.created_at} class="text-xs text-gray-500 dark:text-gray-400">
+					{changedAt}
+				</time>
 			</div>
 
 			<div class="space-y-1 text-sm">

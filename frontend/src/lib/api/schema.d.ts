@@ -461,7 +461,7 @@ export interface paths {
         head?: never;
         /**
          * Reorder schedule event
-         * @description Moves an event to a new position in the sequence, specifically after the provided event ID.
+         * @description Moves an event to a new position in the sequence, after the provided event ID — or to the top of the schedule when `place_after_event_id` is null.
          */
         patch: operations["move_schedule_event"];
         trace?: never;
@@ -1130,9 +1130,9 @@ export interface components {
         MoveScheduleEventRequest: {
             /**
              * Place After Event Id
-             * Format: uuid
+             * @description Event to place the moved event behind. Null moves it to the top of the schedule.
              */
-            place_after_event_id: string;
+            place_after_event_id: string | null;
         };
         /** NominationVoteDTO */
         NominationVoteDTO: {
@@ -1273,6 +1273,11 @@ export interface components {
              */
             id: string;
             type: components["schemas"]["ScheduleChangeType"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
             /** Mailing Id */
             mailing_id: string | null;
             /** User Id */

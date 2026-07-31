@@ -43,6 +43,7 @@ def _schedule_event(
     order: float,
     *,
     is_current: bool = False,
+    is_skipped: bool = False,
 ) -> ScheduleEvent:
     return ScheduleEvent(
         id=generate_schedule_event_id(),
@@ -51,7 +52,7 @@ def _schedule_event(
         duration=15,
         order=order,
         is_current=is_current,
-        is_skipped=False,
+        is_skipped=is_skipped,
         nomination_title=None,
         block_title=None,
     )
@@ -97,6 +98,9 @@ async def test_move_reorders_event_and_records_change(
     assert len(changes) == 1
     change = changes[0]
     assert change.type == ScheduleChangeType.MOVED
+    # The audit feed renders "when", so the stored timestamp has to reach the
+    # DTO — and tz-aware, since the feed formats it in Moscow time.
+    assert change.created_at.tzinfo is not None
     assert change.changed_event is not None
     assert change.changed_event.id == first.id
     # The moved event had no event before it in order, so there is no anchor
@@ -167,6 +171,82 @@ async def test_move_records_previous_event_and_next_change(
     assert [
         (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
     ] == as_outbox(ScheduleChangeCreated(schedule_change_id=change.id))
+
+
+async def test_move_to_top_places_event_before_the_first(
+    dishka_request: AsyncContainer,
+    schedule_editor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+):
+    interactor = await dishka_request.get(MoveScheduleEvent)
+    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
+    login(schedule_editor)
+
+    first = _schedule_event(1, 1)
+    second = _schedule_event(2, 2)
+    third = _schedule_event(3, 3)
+    for event in (first, second, third):
+        await schedule_gateway.add(event)
+    await uow.commit()
+
+    # A null destination is the wire form of "put it at the very beginning".
+    await interactor(
+        MoveScheduleEventInput(
+            event_id=second.id,
+            place_after_event_id=None,
+        )
+    )
+
+    # place_before_first sets order to (first event order - 1).
+    saved_second = await schedule_gateway.get_by_id(second.id)
+    assert saved_second is not None
+    assert saved_second.order == 0
+
+    changes = await changes_gateway.read_list_schedule_changes(
+        pagination=Pagination(limit=100, offset=0)
+    )
+    assert len(changes) == 1
+    change = changes[0]
+    assert change.type == ScheduleChangeType.MOVED
+    assert change.changed_event is not None
+    assert change.changed_event.id == second.id
+    # "first" was where the event sat before the move, so undo restores it there.
+    assert change.argument_event is not None
+    assert change.argument_event.id == first.id
+
+
+async def test_move_to_top_counts_a_skipped_first_event(
+    dishka_request: AsyncContainer,
+    schedule_editor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+):
+    interactor = await dishka_request.get(MoveScheduleEvent)
+    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    login(schedule_editor)
+
+    # The first row is skipped, so it has no queue position — but it still
+    # occupies the top of the list the operator is looking at, and moving to
+    # the top must land ahead of it rather than behind it.
+    skipped_first = _schedule_event(1, 1, is_skipped=True)
+    second = _schedule_event(2, 2)
+    third = _schedule_event(3, 3)
+    for event in (skipped_first, second, third):
+        await schedule_gateway.add(event)
+    await uow.commit()
+
+    await interactor(
+        MoveScheduleEventInput(
+            event_id=third.id,
+            place_after_event_id=None,
+        )
+    )
+
+    saved_third = await schedule_gateway.get_by_id(third.id)
+    assert saved_third is not None
+    assert saved_third.order == 0
 
 
 async def test_move_event_after_itself_raises(
