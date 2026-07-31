@@ -11,7 +11,8 @@ class SocialIdentityMapper:
             id=model.id,
             user_id=model.user_id,
             provider=model.provider,
-            provider_id=model.provider_id,
+            subject=model.subject,
+            provider_user_id=model.provider_user_id,
         )
 
     @staticmethod
@@ -20,5 +21,6 @@ class SocialIdentityMapper:
             id=SocialIdentityId(orm.id),
             user_id=UserId(orm.user_id),
             provider=orm.provider,
-            provider_id=orm.provider_id,
+            subject=orm.subject,
+            provider_user_id=orm.provider_user_id,
         )

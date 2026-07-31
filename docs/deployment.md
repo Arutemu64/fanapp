@@ -79,18 +79,24 @@ open **Bot Settings → Web Login** and register, for your domain:
 | Kind | Value |
 | --- | --- |
 | Origin | `https://example.com` |
-| Redirect URI (login) | `https://example.com/api/auth/login/telegram/callback` |
-| Redirect URI (account linking) | `https://example.com/api/me/connections/telegram/callback` |
+| Redirect URI | `https://example.com/api/auth/oauth/telegram/callback` |
+
+**One URI, because login and account linking share one callback** — they are told
+apart by an intent stored in the OAuth state, not by the URL. A **second provider
+gets its own** callback URI (`.../auth/oauth/<provider>/callback`) rather than
+joining this one: RFC 9700 §4.4.2.2 wants a distinct redirect URI per issuer, and
+that is the app's mix-up defence because Telegram does not support the RFC 9207
+`iss` response parameter. Do not "simplify" the providers onto a shared callback.
 
 The same screen shows the Client ID and Client Secret that `BOT__CLIENT_ID` and
 `BOT__CLIENT_SECRET` want. Telegram only processes logins and redirects for
-pre-registered URLs, so a bot with correct credentials but unregistered URLs
+pre-registered URLs, so a bot with correct credentials but an unregistered URL
 fails on Telegram's own authorization page and leaves nothing in the app logs to
 explain it.
 
 The `/api` prefix is Caddy's (`handle_path /api*`), which the backend mirrors via
-uvicorn's `root_path` — that is why the callback URLs the app generates carry it.
-Re-register both URIs whenever the domain changes; the app derives them from the
+uvicorn's `root_path` — that is why the callback URL the app generates carries it.
+Re-register the URI whenever the domain changes; the app derives it from the
 incoming request, so a mismatch surfaces as Telegram refusing the login rather
 than as an error on our side.
 

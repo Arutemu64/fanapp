@@ -48,3 +48,15 @@ class UserAlreadyHasTelegramLinked(Conflict, UserException):
 
 class TelegramCannotBeUnlinkedWithoutEmail(Conflict, UserException):
     code = "TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL"
+
+
+class LinkInitiatorMismatch(Conflict, UserException):
+    """The session that finished an account link is not the one that started it.
+
+    Raised when the browser signed in as somebody else between the redirect to
+    the provider and the callback. Attaching the identity anyway would bind
+    someone else's external account to whoever happens to hold the session now,
+    so the link is refused rather than retargeted.
+    """
+
+    code = "LINK_INITIATOR_MISMATCH"

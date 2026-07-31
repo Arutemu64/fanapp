@@ -69,10 +69,7 @@ class UserMapper:
                 receive_telegram_notifications=orm.receive_telegram_notifications,
             ),
             social_identities=[
-                UserSocialIdentityDTO(
-                    provider=social_identity.provider,
-                    provider_id=social_identity.provider_id,
-                )
+                UserSocialIdentityDTO(provider=social_identity.provider)
                 for social_identity in orm.social_identities
             ],
         )

@@ -7,6 +7,7 @@ from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.users import (
     TelegramCannotBeUnlinkedWithoutEmail,
 )
+from fanfan.core.vo.social_identity import SocialProvider
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ class UnlinkTelegramAccount:
         # Keep delete idempotent so the profile can recover from stale UI safely.
         telegram_identity = await self.social_identity_gateway.get_by_provider(
             user_id=current_user.id,
-            provider="telegram",
+            provider=SocialProvider.TELEGRAM,
         )
         if telegram_identity:
             await self.social_identity_gateway.delete(telegram_identity)

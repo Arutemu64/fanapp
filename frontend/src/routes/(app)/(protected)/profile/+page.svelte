@@ -4,7 +4,7 @@
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { getOfflineService } from '$lib/services/offline.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { clearTelegramErrorParam, TELEGRAM_LINK_ERROR_PARAM } from '$lib/utils/telegramOAuth';
+	import { clearOAuthErrorParam, OAUTH_LINK_ERROR_PARAM } from '$lib/utils/oauthErrors';
 	import { HeartOutline } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
 	import IconFastapi from '~icons/simple-icons/fastapi';
@@ -35,7 +35,7 @@
 
 	// Cancelling is the user's own choice, so it gets an informational toast —
 	// only a flow that actually broke reads as an error.
-	const telegramLinkErrorToasts = {
+	const linkErrorToasts = {
 		cancelled: { message: 'Подключение Telegram отменено.', type: 'info' },
 		failed: { message: 'Не удалось подключить Telegram. Попробуй ещё раз.', type: 'error' },
 		linked_to_another_account: {
@@ -44,6 +44,10 @@
 		},
 		user_already_has_telegram: {
 			message: 'К твоему аккаунту уже подключён другой Telegram.',
+			type: 'error'
+		},
+		session_changed: {
+			message: 'Вход в аккаунт сменился, пока шло подключение. Попробуй ещё раз.',
 			type: 'error'
 		}
 	} as const;
@@ -54,15 +58,15 @@
 	}
 
 	onMount(() => {
-		const telegramLinkError = data.telegramLinkError;
+		const linkError = data.oauthLinkError;
 
-		if (!telegramLinkError) return;
+		if (!linkError) return;
 
-		const toast = telegramLinkErrorToasts[telegramLinkError];
+		const toast = linkErrorToasts[linkError];
 		toastService.add(toast.message, toast.type);
 
 		// Keep the page in place and remove the one-time error flag from the address bar.
-		clearTelegramErrorParam(TELEGRAM_LINK_ERROR_PARAM);
+		clearOAuthErrorParam(OAUTH_LINK_ERROR_PARAM);
 	});
 </script>
 

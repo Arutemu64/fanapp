@@ -3,9 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from fanfan.adapters.db.constraints import translate_integrity_error
-from fanfan.adapters.db.mappers.social_identity import SocialIdentityMapper
 from fanfan.adapters.db.mappers.user import UserMapper
-from fanfan.adapters.db.models import SocialIdentityORM, UserORM
+from fanfan.adapters.db.models import UserORM
 from fanfan.adapters.db.models.permission import UserPermissionORM
 from fanfan.application.dto.user import CurrentUserDTO, UserBaseDTO
 from fanfan.application.ports.gateways.users import UserGateway
@@ -26,7 +25,6 @@ class SqlUserGateway(UserGateway):
         self.session = session
         self.uow = uow
         self.mapper = UserMapper()
-        self.social_mapper = SocialIdentityMapper()
 
     def _to_model(self, user_orm: UserORM | None) -> User | None:
         if user_orm is None:
@@ -67,21 +65,6 @@ class SqlUserGateway(UserGateway):
         normalized_email = normalize_email(email)
         stmt = (
             select(UserORM).where(UserORM.email == normalized_email).with_for_update()
-        )
-        user_orm = await self.session.scalar(stmt)
-        return self._to_model(user_orm)
-
-    async def get_by_social_identity(
-        self, provider_name: str, provider_account_id: str
-    ) -> User | None:
-        stmt = (
-            select(UserORM)
-            .join(UserORM.social_identities)
-            .where(
-                SocialIdentityORM.provider == provider_name,
-                SocialIdentityORM.provider_id == provider_account_id,
-            )
-            .with_for_update()
         )
         user_orm = await self.session.scalar(stmt)
         return self._to_model(user_orm)

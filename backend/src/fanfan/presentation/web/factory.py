@@ -20,9 +20,9 @@ from fanfan.presentation.web.middlewares import (
     no_store_cache_control,
     refresh_session_cookie,
 )
+from fanfan.presentation.web.oauth import OAUTH_STATE_TTL_SECONDS
 from fanfan.presentation.web.openapi import API_TITLE, generate_operation_id
 from fanfan.presentation.web.routes import setup_api_router
-from fanfan.presentation.web.telegram_oauth import OAUTH_STATE_TTL_SECONDS
 
 
 def create_app() -> FastAPI:

@@ -158,7 +158,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/login/telegram": {
+    "/auth/oauth/{provider}/start": {
         parameters: {
             query?: never;
             header?: never;
@@ -166,10 +166,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Start Telegram login
-         * @description Redirects the browser to Telegram's OAuth authorization page. Telegram then calls back to the authorize endpoint to finish the login. If the redirect cannot be built the browser goes back to the login page with a `telegramLoginError` query param instead.
+         * Start social login
+         * @description Redirects the browser to the provider's OAuth page to begin signing in. The provider then calls back to the callback endpoint to finish. If the redirect cannot be built the browser goes back to the login page with an `oauthLoginError` query param instead.
          */
-        get: operations["login_telegram"];
+        get: operations["start_social_login"];
         put?: never;
         post?: never;
         delete?: never;
@@ -178,7 +178,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/login/telegram/callback": {
+    "/auth/oauth/{provider}/callback": {
         parameters: {
             query?: never;
             header?: never;
@@ -186,10 +186,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Finish Telegram login
-         * @description OAuth callback for Telegram login. Authenticates the user from the Telegram payload, sets the session cookie and redirects to the app root. Every failure — cancelled on Telegram, an unusable token, an unreachable Telegram or database — redirects to the login page with a `telegramLoginError` query param the frontend turns into a toast; this route never answers with an error body, because the browser would render it as the page. Invoked by Telegram, not called directly by the frontend.
+         * Finish a social login or account link
+         * @description OAuth callback shared by both flows; which one it is comes from the intent stored in the OAuth state, never from the request. On a login it sets the session cookie and redirects to the app root; on a link it attaches the account and redirects to the profile page. Every failure also redirects, carrying an `oauthLoginError` or `oauthLinkError` query param the frontend turns into a toast; this route never answers with an error body, because the browser would render it as the page. Invoked by the provider, not called directly by the frontend.
          */
-        get: operations["authorize_telegram"];
+        get: operations["oauth_callback"];
         put?: never;
         post?: never;
         delete?: never;
@@ -282,6 +282,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/connections/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Start account linking
+         * @description Redirects the browser to the provider's OAuth page to begin linking the account to the current user. The provider then calls back to the shared callback (`/auth/oauth/{provider}/callback`) to finish. If the redirect cannot be built the browser goes back to the profile page with an `oauthLinkError` query param instead.
+         */
+        get: operations["start_account_link"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/connections/telegram": {
         parameters: {
             query?: never;
@@ -289,11 +309,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Start Telegram linking
-         * @description Redirects the browser to Telegram's OAuth page to begin linking a Telegram account to the current user. Telegram then calls back to the callback endpoint to finish. If the redirect cannot be built the browser goes back to the profile page with a `telegramLinkError` query param instead.
-         */
-        get: operations["link_telegram"];
+        get?: never;
         put?: never;
         post?: never;
         /**
@@ -301,26 +317,6 @@ export interface paths {
          * @description Unlinks the Telegram account from the currently authenticated user.
          */
         delete: operations["unlink_telegram_account"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/me/connections/telegram/callback": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Finish Telegram linking
-         * @description OAuth callback for Telegram linking. On success, links the account and redirects to the profile page. Every failure — already linked to this or another account, cancelled or failed authorization, an unreachable Telegram or database — also redirects to the profile page with a `telegramLinkError` query param the frontend turns into a toast; this route never answers with an error body, because the browser would render it as the page. Invoked by Telegram, not called directly by the frontend.
-         */
-        get: operations["link_telegram_callback"];
-        put?: never;
-        post?: never;
-        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1033,7 +1029,7 @@ export interface components {
              * Code
              * @enum {string}
              */
-            code: "ACCESS_DENIED" | "ALREADY_VOTED_IN_THIS_NOMINATION" | "APP_SETTINGS_NOT_FOUND" | "AUTHENTICATION_ERROR" | "CAPTCHA_VERIFICATION_FAILED" | "CURRENT_EVENT_NOT_ALLOWED" | "EMAIL_ALREADY_EXISTS" | "EMAIL_CODE_REQUEST_TOO_FAST" | "EVENT_NOT_FOUND" | "HTTP_ERROR" | "INCORRECT_PASSWORD" | "INTERNAL_ERROR" | "INVALID_CREDENTIALS" | "INVALID_EMAIL" | "INVALID_OTP_CODE" | "INVALID_SCHEDULE_FILE" | "INVALID_TELEGRAM_AUTH_PAYLOAD" | "NOMINATION_NOT_FOUND" | "OUTDATED_SCHEDULE_CHANGE" | "PARTICIPANT_NOT_FOUND" | "PUSH_SUBSCRIPTION_ALREADY_EXISTS" | "PUSH_SUBSCRIPTION_NOT_FOUND" | "SAME_EVENTS_ARE_NOT_ALLOWED" | "SCHEDULE_CHANGE_NOT_FOUND" | "SCHEDULE_EDIT_TOO_FAST" | "SKIPPED_EVENT_NOT_ALLOWED" | "SUBSCRIPTION_ALREADY_EXISTS" | "SUBSCRIPTION_NOT_FOUND" | "SYNC_ALREADY_RUNNING" | "TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER" | "TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL" | "TICKET_ALREADY_USED" | "TICKET_BARCODE_COLLISION" | "TICKET_NOT_FOUND" | "TICKET_NOT_LINKED" | "TOO_MANY_ATTEMPTS" | "TOO_MANY_LOGIN_ATTEMPTS" | "TOO_MANY_OTP_ATTEMPTS" | "USERNAME_ALREADY_TAKEN" | "USERNAME_PROFANITY" | "USER_ALREADY_EXISTS" | "USER_ALREADY_HAS_TELEGRAM_LINKED" | "USER_ALREADY_HAS_TICKET_LINKED" | "USER_HAS_NO_EMAIL" | "USER_NOT_AUTHENTICATED" | "USER_NOT_FOUND" | "VALIDATION_ERROR" | "VOTE_NOT_FOUND";
+            code: "ACCESS_DENIED" | "ALREADY_VOTED_IN_THIS_NOMINATION" | "APP_SETTINGS_NOT_FOUND" | "AUTHENTICATION_ERROR" | "CAPTCHA_VERIFICATION_FAILED" | "CURRENT_EVENT_NOT_ALLOWED" | "EMAIL_ALREADY_EXISTS" | "EMAIL_CODE_REQUEST_TOO_FAST" | "EVENT_NOT_FOUND" | "HTTP_ERROR" | "INCORRECT_PASSWORD" | "INTERNAL_ERROR" | "INVALID_CREDENTIALS" | "INVALID_EMAIL" | "INVALID_OTP_CODE" | "INVALID_SCHEDULE_FILE" | "INVALID_TELEGRAM_AUTH_PAYLOAD" | "LINK_INITIATOR_MISMATCH" | "NOMINATION_NOT_FOUND" | "OUTDATED_SCHEDULE_CHANGE" | "PARTICIPANT_NOT_FOUND" | "PUSH_SUBSCRIPTION_ALREADY_EXISTS" | "PUSH_SUBSCRIPTION_NOT_FOUND" | "SAME_EVENTS_ARE_NOT_ALLOWED" | "SCHEDULE_CHANGE_NOT_FOUND" | "SCHEDULE_EDIT_TOO_FAST" | "SKIPPED_EVENT_NOT_ALLOWED" | "SUBSCRIPTION_ALREADY_EXISTS" | "SUBSCRIPTION_NOT_FOUND" | "SYNC_ALREADY_RUNNING" | "TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER" | "TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL" | "TICKET_ALREADY_USED" | "TICKET_BARCODE_COLLISION" | "TICKET_NOT_FOUND" | "TICKET_NOT_LINKED" | "TOO_MANY_ATTEMPTS" | "TOO_MANY_LOGIN_ATTEMPTS" | "TOO_MANY_OTP_ATTEMPTS" | "USERNAME_ALREADY_TAKEN" | "USERNAME_PROFANITY" | "USER_ALREADY_EXISTS" | "USER_ALREADY_HAS_TELEGRAM_LINKED" | "USER_ALREADY_HAS_TICKET_LINKED" | "USER_HAS_NO_EMAIL" | "USER_NOT_AUTHENTICATED" | "USER_NOT_FOUND" | "VALIDATION_ERROR" | "VOTE_NOT_FOUND";
             /** Details */
             details?: {
                 [key: string]: unknown;
@@ -1357,6 +1353,19 @@ export interface components {
              */
             mailing_id: string;
         };
+        /**
+         * SocialProvider
+         * @description External identity providers the app accepts.
+         *
+         *     Doubles as the `iss` stand-in when matching an identity: there is exactly one
+         *     issuer per member, so `(provider, subject)` is the `(iss, sub)` pair OpenID
+         *     Connect asks relying parties to key on. Adding a member means adding an
+         *     Authlib client in `main/ioc/auth.py`, its **own** callback URI (RFC 9700
+         *     §4.4.2.2 — see the module docstring in `presentation/web/oauth.py`), and a
+         *     hand-written migration for the CHECK constraint backing the column.
+         * @enum {string}
+         */
+        SocialProvider: "telegram";
         /** SubmitFeedbackInput */
         SubmitFeedbackInput: {
             /** Text */
@@ -1512,10 +1521,7 @@ export interface components {
         };
         /** UserSocialIdentityDTO */
         UserSocialIdentityDTO: {
-            /** Provider */
-            provider: string;
-            /** Provider Id */
-            provider_id: string;
+            provider: components["schemas"]["SocialProvider"];
         };
         /** UserTicketDTO */
         UserTicketDTO: {
@@ -1877,11 +1883,13 @@ export interface operations {
             };
         };
     };
-    login_telegram: {
+    start_social_login: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                provider: components["schemas"]["SocialProvider"];
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -1895,14 +1903,14 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description Redirect to Telegram's OAuth authorization page. */
+            /** @description Redirect to the provider's authorization page. */
             302: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description Telegram could not be reached. Redirects to the login page with a `telegramLoginError` query param. */
+            /** @description The provider could not be reached. Redirects to the login page with an `oauthLoginError` query param. */
             303: {
                 headers: {
                     [name: string]: unknown;
@@ -1920,11 +1928,13 @@ export interface operations {
             };
         };
     };
-    authorize_telegram: {
+    oauth_callback: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                provider: components["schemas"]["SocialProvider"];
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -1938,7 +1948,7 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description Login finished. On success the session cookie is set and the browser goes to the app root; otherwise it goes to the login page with a `telegramLoginError` query param. */
+            /** @description Flow finished. Redirects to the app root or the profile page; on any failure an error query param is included. */
             303: {
                 headers: {
                     [name: string]: unknown;
@@ -2244,11 +2254,13 @@ export interface operations {
             };
         };
     };
-    link_telegram: {
+    start_account_link: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                provider: components["schemas"]["SocialProvider"];
+            };
             cookie?: never;
         };
         requestBody?: never;
@@ -2262,14 +2274,14 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description Redirect to Telegram's OAuth authorization page. */
+            /** @description Redirect to the provider's authorization page. */
             302: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description Telegram could not be reached. Redirects to the profile page with a `telegramLinkError` query param. */
+            /** @description The provider could not be reached. Redirects to the profile page with an `oauthLinkError` query param. */
             303: {
                 headers: {
                     [name: string]: unknown;
@@ -2350,60 +2362,6 @@ export interface operations {
             };
             /** @description Email is required before unlinking. */
             409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Request validation error. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ValidationErrorResponse"];
-                };
-            };
-        };
-    };
-    link_telegram_callback: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Linking finished. Redirects to the profile page; on any failure a `telegramLinkError` query param is included. */
-            303: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Not authenticated. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description Access denied. */
-            403: {
                 headers: {
                     [name: string]: unknown;
                 };
