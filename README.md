@@ -83,7 +83,7 @@ The optional integration blocks stay commented out.
 
 Local (non-Docker) frontend dev reads this same root `.env` — there is no separate frontend env file.
 
-### 2. Run with Docker (full environment)
+### 2. Run everything in Docker
 
 ```sh
 just run-dev      # dev: hot-reload via Compose --watch
@@ -97,18 +97,41 @@ This brings up the frontend, API, FastStream consumer, scheduler, Postgres, Redi
 
 Both host ports are overridable if 3000/8000 are taken — set `FRONTEND_PORT` / `API_PORT` in `.env` (see `.env.example`). Update `Caddyfile.example` to match if you use it.
 
-### 3. Run locally (without Docker)
+Reach for this when you want the deployed shape — the real images, the real
+Compose network, the reverse-proxy layout. For iterating on code, §3 is faster.
 
-Install dependencies, then start each side in its own terminal:
+### 3. Run the app on the host, infra in Docker (recommended for day-to-day work)
+
+Postgres, Redis and NATS stay containerised; the API and the frontend run
+natively. Reload is faster than any file sync, and breakpoints, profilers and
+your editor's language server all attach to a real local process instead of one
+inside a container.
+
+Install dependencies once:
 
 ```sh
 just backend-install
 just frontend-install
+```
 
-just backend-migrate     # apply DB migrations (needs Postgres reachable)
+Then, per session:
+
+```sh
+just run-infra           # Postgres, Redis and NATS on 127.0.0.1 (detached)
+just backend-migrate     # apply DB migrations
 just backend-dev         # FastAPI on :8000 (WEB__PORT)
 just frontend-dev        # SvelteKit dev server on :3000 (FRONTEND_PORT)
 ```
+
+`backend-dev` and `frontend-dev` each hold a terminal, so run them in two.
+`just stop-infra` stops the containers and keeps the volumes, so your data
+survives.
+
+This works because `DB__HOST` / `REDIS__HOST` / `NATS__HOST` in `.env` are
+`localhost`, not the Compose service names: `docker-compose.yml` overrides all
+three per service via `environment:`, which outranks `env_file:`, so containers
+always reach `db` / `redis` / `nats` regardless. One `.env`, no second copy to
+keep in sync — see the SERVICE HOSTNAMES note in `.env.example`.
 
 ## External integrations
 
@@ -126,7 +149,8 @@ All commands run from the repo root via `just`.
 
 | Command | What it does |
 |---|---|
-| `just backend-dev` / `just frontend-dev` | Start backend / frontend locally |
+| `just run-infra` / `just stop-infra` | Start / stop the backing services (Postgres, Redis, NATS) alone |
+| `just backend-dev` / `just frontend-dev` | Start backend / frontend on the host |
 | `just backend-migrate` | Apply Alembic migrations |
 | `just backend-generate <name>` | Autogenerate a migration |
 | `just backend-lint` | Format + lint + type-check backend |
