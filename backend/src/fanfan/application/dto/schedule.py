@@ -10,6 +10,8 @@ class ScheduleEventFullDTO(BaseModel):
     # None for events with no public number (breaks and other filler rows).
     number: int | None
     title: str
+    # Seconds; the API exposes it unconverted so clients can render sub-minute
+    # acts exactly instead of rounding to whole minutes.
     duration: int
     order: float
     is_current: bool

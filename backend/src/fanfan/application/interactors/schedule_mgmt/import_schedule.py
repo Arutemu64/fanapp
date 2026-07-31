@@ -25,6 +25,9 @@ class ScheduleEntry(BaseModel):
     # None for rows the organizer left numberless (breaks and other filler).
     number: int | None
     title: str
+    # Seconds, as read from the spreadsheet — see REQUIRED_COLUMNS in
+    # adapters/parsers/schedule.py. Sub-minute acts are expected, so this is
+    # never rounded to whole minutes anywhere along the way.
     duration: int
     nomination_title: str
     block_title: str

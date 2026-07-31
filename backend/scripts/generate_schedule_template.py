@@ -25,17 +25,19 @@ COLUMN_WIDTHS = {
 }
 
 # Plausible FAN FAN rows, so the expected shape of every column is obvious at a
-# glance — especially `duration`, which is whole minutes rather than a time. The
-# break row leaves `number` empty on purpose: it is the one column that may be
-# blank, and an organizer is far likelier to copy that from the template than to
-# read it in the guide.
+# glance — especially `duration`, which is whole *seconds* rather than minutes or
+# a time. The single-defile row is deliberately under a minute: an act that short
+# is real (walk on, pose, walk off), and it is the case a minutes column could
+# not express at all. The break row leaves `number` empty on purpose: it is the
+# one column that may be blank, and an organizer is far likelier to copy that
+# from the template than to read it in the guide.
 SAMPLE_ROWS = [
-    (1, "Открытие фестиваля", 15, "Вне конкурса", "Открытие"),
-    (2, "Дефиле «Наруто»", 5, "Одиночное дефиле", "Косплей"),
-    (None, "Перерыв", 10, "Вне конкурса", "Косплей"),
-    (3, "Сценка «Стальной алхимик»", 8, "Групповое дефиле", "Косплей"),
-    (4, "Вокал: «Унесённые призраками»", 6, "Вокал", "Караоке"),
-    (5, "Награждение и закрытие", 20, "Вне конкурса", "Закрытие"),
+    (1, "Открытие фестиваля", 900, "Вне конкурса", "Открытие"),
+    (2, "Дефиле «Наруто»", 45, "Одиночное дефиле", "Косплей"),
+    (None, "Перерыв", 600, "Вне конкурса", "Косплей"),
+    (3, "Сценка «Стальной алхимик»", 480, "Групповое дефиле", "Косплей"),
+    (4, "Вокал: «Унесённые призраками»", 210, "Вокал", "Караоке"),
+    (5, "Награждение и закрытие", 1200, "Вне конкурса", "Закрытие"),
 ]
 
 
