@@ -51,6 +51,23 @@ backend-setup-hooks:
 backend-dev:
     cd backend && uv run python -m fanfan.main.web
 
+# The other two backend processes, for the host-side loop (README §3). Skipping
+# them does not degrade gracefully: the outbox relay is registered only in
+# main/scheduler.py, so without `backend-scheduler` every aggregate domain event
+# is written to the outbox and never published — notifications, Web Push,
+# schedule changes and broadcasts silently do nothing while the API keeps
+# returning 2xx. Without `backend-stream` nothing consumes what is published, so
+# the organizer sync button returns 202 and no sync ever runs. Each holds a
+# terminal, like backend-dev.
+
+# FastStream: durable NATS consumers (notifications, schedule, sync, users, voting)
+backend-stream:
+    cd backend && uv run faststream run --factory fanfan.main.faststream:create_app
+
+# APScheduler: the outbox relay, plus any SCHEDULER__*_CRON jobs that are set
+backend-scheduler:
+    cd backend && uv run python -m fanfan.main.scheduler
+
 backend-generate-openapi:
     cd backend && uv run python -m fanfan.main.generate_openapi
 
@@ -168,4 +185,6 @@ ci:
 dev:
     @echo "Run in separate terminals:"
     @echo "  just backend-dev"
+    @echo "  just backend-stream      # needed for domain events to be consumed"
+    @echo "  just backend-scheduler   # needed for domain events to be published"
     @echo "  just frontend-dev"

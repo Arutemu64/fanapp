@@ -182,6 +182,8 @@ Aggregate events are **not** published to NATS on commit — that would be a dua
 
 This makes domain-event delivery atomic with the write, at the cost of one poll-interval of latency. SSE/realtime is unaffected — it uses `RealtimeGateway`, not `EventBroker`.
 
+> **Running the API alone publishes nothing.** The relay lives in the scheduler process, so on the host-side loop (`just backend-dev`) events accumulate in the outbox table until `just backend-scheduler` is running — and `just backend-stream` for anything to consume them. Nothing errors; the write simply never reaches its consumer. Both processes are part of `just run-dev`, so this only bites the host path. See README §3.
+
 ### Events raised directly by interactors (service events)
 
 Some events are not tied to a single aggregate's committed state change — they are application-level triggers to infrastructure (e.g. "queue a notification for these users", "send an email code"). These are constructed and published directly in the interactor via an injected `EventBroker`, and are **not** routed through the `UnitOfWork`:

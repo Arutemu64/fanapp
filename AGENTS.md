@@ -59,7 +59,8 @@ named `fanfan-*` are project-local and live only here.
 | `just run-dev` / `just run-prod` | Full env via Docker Compose (dev / local prod build) |
 | `just run-infra` / `just stop-infra` | Backing services only (Postgres, Redis, NATS), for running the app on the host |
 | `just deploy` | Server deploy: pull prebuilt GHCR images, restart |
-| `just backend-dev` / `just frontend-dev` | Run one side on the host (pair with `just run-infra`) |
+| `just backend-dev` / `just frontend-dev` | Run the API / frontend on the host (pair with `just run-infra`) |
+| `just backend-stream` / `just backend-scheduler` | The other two host processes — NATS consumers / outbox relay. Without them domain events silently never deliver (README §3) |
 | `just backend-lint` / `just backend-typecheck` | Format + ruff + `ty` + import-linter / `ty` alone |
 | `just frontend-lint` / `just frontend-check` | Prettier + ESLint / `svelte-check` |
 | `just dockerfile-lint` | hadolint (config `.hadolint.yaml`) |

@@ -102,7 +102,7 @@ Compose network, the reverse-proxy layout. For iterating on code, §3 is faster.
 
 ### 3. Run the app on the host, infra in Docker (recommended for day-to-day work)
 
-Postgres, Redis and NATS stay containerised; the API and the frontend run
+Postgres, Redis and NATS stay containerised; the application processes run
 natively. Reload is faster than any file sync, and breakpoints, profilers and
 your editor's language server all attach to a real local process instead of one
 inside a container.
@@ -119,11 +119,18 @@ Then, per session:
 ```sh
 just run-infra           # Postgres, Redis and NATS on 127.0.0.1 (detached)
 just backend-migrate     # apply DB migrations
+```
+
+The app itself is four processes — the same four `just run-dev` starts — and
+each holds a terminal:
+
+```sh
 just backend-dev         # FastAPI on :8000 (WEB__PORT)
+just backend-stream      # FastStream: NATS consumers
+just backend-scheduler   # APScheduler: the outbox relay + any cron jobs
 just frontend-dev        # SvelteKit dev server on :3000 (FRONTEND_PORT)
 ```
 
-`backend-dev` and `frontend-dev` each hold a terminal, so run them in two.
 `just stop-infra` stops the containers and keeps the volumes, so your data
 survives.
 
@@ -132,6 +139,22 @@ This works because `DB__HOST` / `REDIS__HOST` / `NATS__HOST` in `.env` are
 three per service via `environment:`, which outranks `env_file:`, so containers
 always reach `db` / `redis` / `nats` regardless. One `.env`, no second copy to
 keep in sync — see the SERVICE HOSTNAMES note in `.env.example`.
+
+> [!IMPORTANT]
+> **Run the stream and scheduler processes, or domain events go nowhere —
+> silently.** Aggregate events are not published on commit; they are written to
+> a transactional outbox and relayed asynchronously
+> ([ADR-0004](docs/adr/0004-transactional-outbox-for-domain-events.md)). That
+> relay is registered only in the scheduler, and the consumers that act on the
+> published events live only in the stream service. With just `backend-dev`
+> running, the API still answers 2xx and the rows still land in the database,
+> but notifications, Web Push, schedule-change delivery, broadcasts and the
+> organizer's sync button (which returns 202 and hands the work to a consumer)
+> all do nothing, with no error anywhere.
+>
+> Skipping them is fine when you are only touching read endpoints or UI — just
+> do it knowingly. Manual syncs work without either process, because
+> `just backend-sync tcloud` runs the sync in-process.
 
 ## External integrations
 
@@ -150,7 +173,8 @@ All commands run from the repo root via `just`.
 | Command | What it does |
 |---|---|
 | `just run-infra` / `just stop-infra` | Start / stop the backing services (Postgres, Redis, NATS) alone |
-| `just backend-dev` / `just frontend-dev` | Start backend / frontend on the host |
+| `just backend-dev` / `just frontend-dev` | Start the API / frontend on the host |
+| `just backend-stream` / `just backend-scheduler` | Start the NATS consumers / the outbox relay + cron jobs on the host |
 | `just backend-migrate` | Apply Alembic migrations |
 | `just backend-generate <name>` | Autogenerate a migration |
 | `just backend-lint` | Format + lint + type-check backend |
