@@ -120,12 +120,23 @@ Then, per session:
 just run-infra           # Postgres, Redis and NATS on 127.0.0.1 (detached)
 just backend-migrate     # apply DB migrations
 just backend-dev         # FastAPI on :8000 (WEB__PORT)
+just backend-stream      # FastStream consumer — handles domain events
+just backend-scheduler   # periodic syncs + the outbox relay
 just frontend-dev        # SvelteKit dev server on :3000 (FRONTEND_PORT)
 ```
 
-`backend-dev` and `frontend-dev` each hold a terminal, so run them in two.
-`just stop-infra` stops the containers and keeps the volumes, so your data
-survives.
+> [!IMPORTANT]
+> `backend-stream` and `backend-scheduler` are not optional. The scheduler runs
+> the **outbox relay**, so without it aggregate domain events written on commit
+> never leave the database; the FastStream consumer is what handles them once
+> they do. Skip either and event-driven features — email login codes, Web Push
+> broadcasts, notifications — silently do nothing while the API still returns
+> success. `just run-dev` (§2) starts all of these for you.
+
+Each host process holds a terminal, so run them in separate ones (`just dev`
+prints the list). All four reload on save: `backend-dev` and `backend-stream` in
+place, `backend-scheduler` via a watchfiles restart. `just stop-infra` stops the
+containers and keeps the volumes, so your data survives.
 
 This works because `DB__HOST` / `REDIS__HOST` / `NATS__HOST` in `.env` are
 `localhost`, not the Compose service names: `docker-compose.yml` overrides all
@@ -151,6 +162,7 @@ All commands run from the repo root via `just`.
 |---|---|
 | `just run-infra` / `just stop-infra` | Start / stop the backing services (Postgres, Redis, NATS) alone |
 | `just backend-dev` / `just frontend-dev` | Start backend / frontend on the host |
+| `just backend-stream` / `just backend-scheduler` | Start the FastStream consumer / scheduler (outbox relay + syncs) on the host |
 | `just backend-migrate` | Apply Alembic migrations |
 | `just backend-generate <name>` | Autogenerate a migration |
 | `just backend-lint` | Format + lint + type-check backend |

@@ -68,9 +68,33 @@ services:
 
   faststream:
     read_only: false
+    # The base command has no --reload, so a bare `sync` would copy files into the
+    # container but never restart the consumer. --reload (watchfiles ships via
+    # faststream[cli]) reloads the process in place, mirroring the api's
+    # UVICORN_RELOAD, so a synced change actually takes effect.
+    command: [ "faststream", "run", "--factory", "--reload", "fanfan.main.faststream:create_app" ]
     develop:
       watch:
         - action: sync
+          path: ./backend
+          target: /app
+          initial_sync: true
+          ignore:
+            - .venv/
+        - action: rebuild
+          path: ./backend/uv.lock
+
+  scheduler:
+    # sync writes into /app, so the container filesystem can't be read-only —
+    # same reason as api / faststream above.
+    read_only: false
+    develop:
+      watch:
+        # APScheduler has no in-process reload, so sync+restart bounces the
+        # container to pick up changes instead of relying on the process to
+        # reload itself. The outbox relay runs here, so without this a synced
+        # change to relay or job code would never take effect.
+        - action: sync+restart
           path: ./backend
           target: /app
           initial_sync: true
