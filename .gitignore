@@ -40,6 +40,13 @@ build/
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
+# VS Code reads extensions.json and mcp.json only from the workspace-folder
+# root, so these two must live here rather than under frontend/ to have any
+# effect when the monorepo root is opened. The pattern above is anchored to
+# this file, which is why a nested frontend/.vscode/ escaped it and the files
+# ended up there — shared editor config is not per-package.
+!.vscode/extensions.json
+!.vscode/mcp.json
 
 # OS files
 .DS_Store

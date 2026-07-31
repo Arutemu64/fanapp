@@ -1,15 +1,73 @@
 {
-    "editor.formatOnSave": true,
-    "python.analysis.extraPaths": [
-        "${workspaceFolder}/backend/src"
-    ],
-    "js/ts.tsdk.path": "frontend/node_modules/typescript/lib",
-    "files.exclude": {
-        "**/node_modules": true,
-        "**/__pycache__": true,
-        "**/.venv": true,
-        "**/.idea": true,
-        "**/.ruff_cache": true,
-        "**/.svelte-kit": true,
-    }
+	// Format on save is only safe because every language below names its
+	// formatter explicitly. With prettier, ruff and svelte-vscode all
+	// installed, an unset default makes VS Code prompt or pick arbitrarily,
+	// and a stray formatter then fights `just backend-format` (ruff) and
+	// `just frontend-lint` (prettier --check).
+	"editor.formatOnSave": true,
+
+	// prettier, not svelte-vscode's built-in formatter: CI runs
+	// `prettier --check --cache .` over the whole frontend tree (including
+	// .svelte), so matching it byte-for-byte is what keeps the gate green.
+	"[svelte]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+	"[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+	"[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+	"[css]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+	"[html]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+	"[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+	"[jsonc]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+
+	"[python]": {
+		"editor.defaultFormatter": "charliermarsh.ruff",
+		"editor.codeActionsOnSave": {
+			// Mirrors `just backend-check` (ruff check --fix). ruff.toml selects
+			// ALL, so the isort rules are on and imports sort here rather than
+			// surfacing as a lint failure later.
+			"source.fixAll": "explicit",
+			"source.organizeImports": "explicit"
+		}
+	},
+
+	// Pin the backend interpreter so the debugpy configs in launch.json and the
+	// pytest Test Explorer resolve `fanfan` (installed editable by `uv sync`)
+	// instead of falling back to whatever interpreter VS Code guessed on a fresh
+	// clone. POSIX path — on Windows it is backend/.venv/Scripts/python.exe.
+	"python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
+
+	// No python.analysis.* here: the repo typechecks with ty
+	// (`just backend-typecheck`), and the ty extension disables the Python
+	// extension's language server. The interpreter above already resolves
+	// imports through the editable install, so extraPaths would be dead weight.
+	"python.testing.pytestEnabled": true,
+	"python.testing.unittestEnabled": false,
+	"python.testing.cwd": "${workspaceFolder}/backend",
+	// Collects tests/unit and tests/integration alike; the integration ones need
+	// a Docker daemon to run, same as `just backend-test-integration`.
+	"python.testing.pytestArgs": ["tests"],
+
+	// Only tells VS Code a workspace TypeScript exists — each contributor still
+	// runs "TypeScript: Select TypeScript Version" once to switch to it.
+	"js/ts.tsdk.path": "frontend/node_modules/typescript/lib",
+
+	"files.exclude": {
+		"**/node_modules": true,
+		"**/__pycache__": true,
+		"**/.venv": true,
+		"**/.idea": true,
+		"**/.ruff_cache": true,
+		"**/.svelte-kit": true
+	},
+
+	// search.exclude inherits files.exclude, but the file watcher does not — its
+	// default covers only .git/.hg internals. Without this VS Code watches both
+	// dependency trees and burns CPU on a monorepo this size.
+	"files.watcherExclude": {
+		"**/node_modules/**": true,
+		"**/.venv/**": true,
+		"**/.svelte-kit/**": true,
+		"**/__pycache__/**": true,
+		"**/.ruff_cache/**": true,
+		"**/.pytest_cache/**": true,
+		"**/frontend/build/**": true
+	}
 }

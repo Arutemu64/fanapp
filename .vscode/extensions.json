@@ -1,0 +1,25 @@
+{
+	// Extensions that make the repo's own gates work in the editor. Each one
+	// mirrors a command in the justfile, so a save shows what CI would say
+	// instead of leaving it for `just ci`.
+	"recommendations": [
+		// Frontend: prettier + eslint back `just frontend-lint`, svelte-vscode
+		// backs `just frontend-check` (svelte-check).
+		"svelte.svelte-vscode",
+		"esbenp.prettier-vscode",
+		"dbaeumer.vscode-eslint",
+		"bradlc.vscode-tailwindcss",
+
+		// Backend: ruff backs `just backend-lint`, ty backs
+		// `just backend-typecheck`. ms-python.python is still needed for the
+		// debugpy launch configs and the pytest Test Explorer.
+		"ms-python.python",
+		"charliermarsh.ruff",
+		"astral-sh.ty",
+
+		// .editorconfig is not built into VS Code — without this extension the
+		// tabs/spaces rules in it never reach the editor.
+		"editorconfig.editorconfig",
+		"sclu1034.justfile"
+	]
+}
