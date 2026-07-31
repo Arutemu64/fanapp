@@ -66,11 +66,33 @@ services:
         - action: rebuild
           path: ./backend/uv.lock
 
+  # Unlike the api service (uvicorn reloads itself), neither of these two has a
+  # built-in reloader, so a plain `sync` would drop new code into the container
+  # that the running process never imports — the same stale-code trap in a
+  # different shape. `sync+restart` syncs, then restarts the container.
+  # Restarting is cheap and safe for both: the FastStream consumers are durable
+  # (JetStream keeps their position across a reconnect) and the scheduler's job
+  # store is in-memory, so its jobs are simply re-registered from config on boot.
   faststream:
     read_only: false
     develop:
       watch:
-        - action: sync
+        - action: sync+restart
+          path: ./backend
+          target: /app
+          initial_sync: true
+          ignore:
+            - .venv/
+        - action: rebuild
+          path: ./backend/uv.lock
+
+  # The scheduler runs application interactors (the outbox relay, the sync jobs),
+  # so it goes stale on exactly the edits that api and faststream pick up.
+  scheduler:
+    read_only: false
+    develop:
+      watch:
+        - action: sync+restart
           path: ./backend
           target: /app
           initial_sync: true

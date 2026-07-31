@@ -145,8 +145,10 @@ stop-infra:
 
 # Dev: Compose auto-builds any image that doesn't exist yet, and `--watch`
 # live-syncs source + rebuilds only when package.json/pnpm-lock/uv.lock change —
-# so no forced rebuild is needed per start (that just slows startup). Pass
-# build="--build" to force a rebuild (e.g. after editing a Dockerfile).
+# so no forced rebuild is needed per start (that just slows startup). The sync
+# also restarts faststream and scheduler, which have no reloader of their own
+# (see docker-compose.dev.yml). Pass build="--build" to force a rebuild (e.g.
+# after editing a Dockerfile).
 run-dev build="":
     docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile core up {{build}} --watch
 
