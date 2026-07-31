@@ -18,6 +18,7 @@ from fanfan.core.exceptions.notifications import (
     UserNotReachable,
 )
 from fanfan.core.models.notification import Notification
+from fanfan.core.vo.social_identity import SocialProvider
 from fanfan.presentation.web.config import WebConfig
 
 logger = logging.getLogger(__name__)
@@ -60,13 +61,15 @@ class TelegramNotifier(Notifier):
             raise UserNotReachable
 
         social_identity = await self.social_identity_gateway.get_by_provider(
-            user_id=notification.user_id, provider="telegram"
+            user_id=notification.user_id, provider=SocialProvider.TELEGRAM
         )
-        if social_identity is None:
+        # provider_user_id is the Bot API id, and it is optional — an identity
+        # created from an `openid`-only token has no address to send to.
+        if social_identity is None or social_identity.provider_user_id is None:
             raise UserNotReachable
         try:
             await self.bot.send_message(
-                chat_id=int(social_identity.provider_id),
+                chat_id=social_identity.provider_user_id,
                 text=self._render_message_text(notification),
                 parse_mode=ParseMode.HTML,
                 reply_markup=self._build_reply_markup(notification),

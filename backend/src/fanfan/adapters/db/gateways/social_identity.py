@@ -10,6 +10,7 @@ from fanfan.core.exceptions.users import (
     UserAlreadyHasTelegramLinked,
 )
 from fanfan.core.models.social_identity import SocialIdentity
+from fanfan.core.vo.social_identity import SocialProvider
 from fanfan.core.vo.user import UserId
 
 
@@ -30,7 +31,7 @@ class SqlSocialIdentityGateway(SocialIdentityGateway):
             await self.session.flush([social_identity_orm])
 
     async def get_by_provider(
-        self, user_id: UserId, provider: str
+        self, user_id: UserId, provider: SocialProvider
     ) -> SocialIdentity | None:
         stmt = (
             select(SocialIdentityORM)
@@ -48,6 +49,37 @@ class SqlSocialIdentityGateway(SocialIdentityGateway):
             if social_identity_orm
             else None
         )
+
+    async def get_by_subject(
+        self, provider: SocialProvider, subject: str
+    ) -> SocialIdentity | None:
+        stmt = (
+            select(SocialIdentityORM)
+            .where(
+                and_(
+                    SocialIdentityORM.provider == provider,
+                    SocialIdentityORM.subject == subject,
+                )
+            )
+            .with_for_update()
+        )
+        social_identity_orm = await self.session.scalar(stmt)
+        return (
+            self.social_mapper.to_model(social_identity_orm)
+            if social_identity_orm
+            else None
+        )
+
+    async def save(self, social_identity: SocialIdentity) -> None:
+        social_identity_orm = self.social_mapper.from_model(social_identity)
+        with translate_integrity_error(
+            {
+                "uq_social_identities_provider": TelegramAlreadyLinkedToAnotherUser,
+                "uq_social_identities_user_id": UserAlreadyHasTelegramLinked,
+            }
+        ):
+            social_identity_orm = await self.session.merge(social_identity_orm)
+            await self.session.flush([social_identity_orm])
 
     async def delete(self, social_identity: SocialIdentity) -> None:
         await self.session.execute(

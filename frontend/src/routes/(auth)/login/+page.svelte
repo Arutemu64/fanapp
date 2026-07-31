@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { clearTelegramErrorParam, TELEGRAM_LOGIN_ERROR_PARAM } from '$lib/utils/telegramOAuth';
+	import { clearOAuthErrorParam, OAUTH_LOGIN_ERROR_PARAM } from '$lib/utils/oauthErrors';
 	import { Button, Card, Spinner } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
 	import IconTelegram from '~icons/simple-icons/telegram';
@@ -23,7 +23,7 @@
 
 	// Cancelling is the user's own choice, so it gets an informational toast —
 	// only a flow that actually broke reads as an error.
-	const telegramLoginErrorToasts = {
+	const loginErrorToasts = {
 		cancelled: { message: 'Вход через Telegram отменён.', type: 'info' },
 		failed: { message: 'Не удалось войти через Telegram. Попробуй ещё раз.', type: 'error' }
 	} as const;
@@ -43,14 +43,14 @@
 	}
 
 	onMount(() => {
-		const telegramLoginError = data.telegramLoginError;
+		const loginError = data.oauthLoginError;
 
-		if (!telegramLoginError) return;
+		if (!loginError) return;
 
-		const toast = telegramLoginErrorToasts[telegramLoginError];
+		const toast = loginErrorToasts[loginError];
 		toastService.add(toast.message, toast.type);
 
-		clearTelegramErrorParam(TELEGRAM_LOGIN_ERROR_PARAM);
+		clearOAuthErrorParam(OAUTH_LOGIN_ERROR_PARAM);
 	});
 </script>
 
@@ -75,7 +75,7 @@
 					Flowbite drops `disabled` on an href Button (it renders a bare <a>),
 					so the pending state is aria-disabled plus the guard in the handler. -->
 				<Button
-					href={`${PUBLIC_API_URL}/auth/login/telegram`}
+					href={`${PUBLIC_API_URL}/auth/oauth/telegram/start`}
 					color="alternative"
 					class="min-h-11 w-full rounded-xl font-medium"
 					aria-disabled={isOpeningTelegram}

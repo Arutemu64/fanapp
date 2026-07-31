@@ -7,17 +7,24 @@ from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.users import (
+    LinkInitiatorMismatch,
     TelegramAlreadyLinkedToAnotherUser,
     UserAlreadyHasTelegramLinked,
 )
 from fanfan.core.models.social_identity import SocialIdentity
-from fanfan.core.vo.social_identity import generate_social_identity_id
+from fanfan.core.vo.social_identity import SocialProvider, generate_social_identity_id
+from fanfan.core.vo.user import UserId
 
 logger = logging.getLogger(__name__)
 
 
 class LinkTelegramAccountInput(BaseModel):
-    user_id: int
+    # The OIDC `sub` — the identity key, not the Bot API user id.
+    subject: str
+    provider_user_id: int | None
+    # Who started the flow, carried through the OAuth state. Guards against the
+    # browser signing in as somebody else between the redirect and the callback.
+    initiator_user_id: UserId
 
 
 class LinkTelegramAccount:
@@ -34,33 +41,43 @@ class LinkTelegramAccount:
         self.current_user_provider = current_user_provider
 
     async def __call__(self, data: LinkTelegramAccountInput) -> None:
-        provider_id = str(data.user_id)
         current_user = await self.current_user_provider.require_user()
 
+        if current_user.id != data.initiator_user_id:
+            logger.warning(
+                "Telegram link refused: session changed mid-flow",
+                extra={
+                    "actor_id": str(current_user.id),
+                    "initiator_id": str(data.initiator_user_id),
+                },
+            )
+            raise LinkInitiatorMismatch
+
         current_telegram = await self.social_identity_gateway.get_by_provider(
-            current_user.id, "telegram"
+            current_user.id, SocialProvider.TELEGRAM
         )
         if current_telegram is not None:
-            if current_telegram.provider_id == provider_id:
+            if current_telegram.subject == data.subject:
                 return
             raise UserAlreadyHasTelegramLinked
 
-        linked_user = await self.user_gateway.get_by_social_identity(
-            provider_name="telegram", provider_account_id=provider_id
+        existing = await self.social_identity_gateway.get_by_subject(
+            provider=SocialProvider.TELEGRAM, subject=data.subject
         )
-        if linked_user is not None and linked_user.id != current_user.id:
+        if existing is not None and existing.user_id != current_user.id:
             raise TelegramAlreadyLinkedToAnotherUser
 
         await self.social_identity_gateway.add(
             SocialIdentity(
                 id=generate_social_identity_id(),
                 user_id=current_user.id,
-                provider="telegram",
-                provider_id=provider_id,
+                provider=SocialProvider.TELEGRAM,
+                subject=data.subject,
+                provider_user_id=data.provider_user_id,
             )
         )
         await self.uow.commit()
         logger.info(
             "Telegram account linked",
-            extra={"actor_id": str(current_user.id), "provider_id": provider_id},
+            extra={"actor_id": str(current_user.id)},
         )

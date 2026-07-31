@@ -362,14 +362,24 @@
         }
       }
     },
-    "/auth/login/telegram": {
+    "/auth/oauth/{provider}/start": {
       "get": {
         "tags": [
           "Authentication"
         ],
-        "summary": "Start Telegram login",
-        "description": "Redirects the browser to Telegram's OAuth authorization page. Telegram then calls back to the authorize endpoint to finish the login. If the redirect cannot be built the browser goes back to the login page with a `telegramLoginError` query param instead.",
-        "operationId": "login_telegram",
+        "summary": "Start social login",
+        "description": "Redirects the browser to the provider's OAuth page to begin signing in. The provider then calls back to the callback endpoint to finish. If the redirect cannot be built the browser goes back to the login page with an `oauthLoginError` query param instead.",
+        "operationId": "start_social_login",
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SocialProvider"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -390,22 +400,32 @@
             }
           },
           "302": {
-            "description": "Redirect to Telegram's OAuth authorization page."
+            "description": "Redirect to the provider's authorization page."
           },
           "303": {
-            "description": "Telegram could not be reached. Redirects to the login page with a `telegramLoginError` query param."
+            "description": "The provider could not be reached. Redirects to the login page with an `oauthLoginError` query param."
           }
         }
       }
     },
-    "/auth/login/telegram/callback": {
+    "/auth/oauth/{provider}/callback": {
       "get": {
         "tags": [
           "Authentication"
         ],
-        "summary": "Finish Telegram login",
-        "description": "OAuth callback for Telegram login. Authenticates the user from the Telegram payload, sets the session cookie and redirects to the app root. Every failure — cancelled on Telegram, an unusable token, an unreachable Telegram or database — redirects to the login page with a `telegramLoginError` query param the frontend turns into a toast; this route never answers with an error body, because the browser would render it as the page. Invoked by Telegram, not called directly by the frontend.",
-        "operationId": "authorize_telegram",
+        "summary": "Finish a social login or account link",
+        "description": "OAuth callback shared by both flows; which one it is comes from the intent stored in the OAuth state, never from the request. On a login it sets the session cookie and redirects to the app root; on a link it attaches the account and redirects to the profile page. Every failure also redirects, carrying an `oauthLoginError` or `oauthLinkError` query param the frontend turns into a toast; this route never answers with an error body, because the browser would render it as the page. Invoked by the provider, not called directly by the frontend.",
+        "operationId": "oauth_callback",
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SocialProvider"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -426,7 +446,7 @@
             }
           },
           "303": {
-            "description": "Login finished. On success the session cookie is set and the browser goes to the app root; otherwise it goes to the login page with a `telegramLoginError` query param."
+            "description": "Flow finished. Redirects to the app root or the profile page; on any failure an error query param is included."
           }
         }
       }
@@ -776,14 +796,29 @@
         ]
       }
     },
-    "/me/connections/telegram": {
+    "/me/connections/{provider}": {
       "get": {
         "tags": [
           "Current user"
         ],
-        "summary": "Start Telegram linking",
-        "description": "Redirects the browser to Telegram's OAuth page to begin linking a Telegram account to the current user. Telegram then calls back to the callback endpoint to finish. If the redirect cannot be built the browser goes back to the profile page with a `telegramLinkError` query param instead.",
-        "operationId": "link_telegram",
+        "summary": "Start account linking",
+        "description": "Redirects the browser to the provider's OAuth page to begin linking the account to the current user. The provider then calls back to the shared callback (`/auth/oauth/{provider}/callback`) to finish. If the redirect cannot be built the browser goes back to the profile page with an `oauthLinkError` query param instead.",
+        "operationId": "start_account_link",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SocialProvider"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -824,18 +859,15 @@
             }
           },
           "302": {
-            "description": "Redirect to Telegram's OAuth authorization page."
+            "description": "Redirect to the provider's authorization page."
           },
           "303": {
-            "description": "Telegram could not be reached. Redirects to the profile page with a `telegramLinkError` query param."
+            "description": "The provider could not be reached. Redirects to the profile page with an `oauthLinkError` query param."
           }
-        },
-        "security": [
-          {
-            "SessionCookie": []
-          }
-        ]
-      },
+        }
+      }
+    },
+    "/me/connections/telegram": {
       "delete": {
         "tags": [
           "Current user"
@@ -896,64 +928,6 @@
                 }
               }
             }
-          }
-        },
-        "security": [
-          {
-            "SessionCookie": []
-          }
-        ]
-      }
-    },
-    "/me/connections/telegram/callback": {
-      "get": {
-        "tags": [
-          "Current user"
-        ],
-        "summary": "Finish Telegram linking",
-        "description": "OAuth callback for Telegram linking. On success, links the account and redirects to the profile page. Every failure — already linked to this or another account, cancelled or failed authorization, an unreachable Telegram or database — also redirects to the profile page with a `telegramLinkError` query param the frontend turns into a toast; this route never answers with an error body, because the browser would render it as the page. Invoked by Telegram, not called directly by the frontend.",
-        "operationId": "link_telegram_callback",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Not authenticated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Access denied.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "303": {
-            "description": "Linking finished. Redirects to the profile page; on any failure a `telegramLinkError` query param is included."
           }
         },
         "security": [
@@ -3494,6 +3468,7 @@
               "INVALID_OTP_CODE",
               "INVALID_SCHEDULE_FILE",
               "INVALID_TELEGRAM_AUTH_PAYLOAD",
+              "LINK_INITIATOR_MISMATCH",
               "NOMINATION_NOT_FOUND",
               "OUTDATED_SCHEDULE_CHANGE",
               "PARTICIPANT_NOT_FOUND",
@@ -4387,6 +4362,14 @@
         ],
         "title": "SendBroadcastOutput"
       },
+      "SocialProvider": {
+        "type": "string",
+        "enum": [
+          "telegram"
+        ],
+        "title": "SocialProvider",
+        "description": "External identity providers the app accepts.\n\nDoubles as the `iss` stand-in when matching an identity: there is exactly one\nissuer per member, so `(provider, subject)` is the `(iss, sub)` pair OpenID\nConnect asks relying parties to key on. Adding a member means adding an\nAuthlib client in `main/ioc/auth.py`, its **own** callback URI (RFC 9700\n§4.4.2.2 — see the module docstring in `presentation/web/oauth.py`), and a\nhand-written migration for the CHECK constraint backing the column."
+      },
       "SubmitFeedbackInput": {
         "properties": {
           "text": {
@@ -4780,18 +4763,12 @@
       "UserSocialIdentityDTO": {
         "properties": {
           "provider": {
-            "type": "string",
-            "title": "Provider"
-          },
-          "provider_id": {
-            "type": "string",
-            "title": "Provider Id"
+            "$ref": "#/components/schemas/SocialProvider"
           }
         },
         "type": "object",
         "required": [
-          "provider",
-          "provider_id"
+          "provider"
         ],
         "title": "UserSocialIdentityDTO"
       },

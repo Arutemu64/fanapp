@@ -3,6 +3,7 @@ from pydantic import BaseModel, EmailStr
 from fanfan.core.vo.permission import (
     Permission,
 )
+from fanfan.core.vo.social_identity import SocialProvider
 from fanfan.core.vo.ticket import TicketId
 from fanfan.core.vo.user import UserId, UserRole
 
@@ -25,8 +26,10 @@ class UserSettingsDTO(BaseModel):
 
 
 class UserSocialIdentityDTO(BaseModel):
-    provider: str
-    provider_id: str
+    # Which providers are linked is all the profile screen needs. The subject and
+    # the provider's native user id stay server-side — shipping them would leak
+    # an external account id to the client for nothing.
+    provider: SocialProvider
 
 
 class CurrentUserDTO(UserBaseDTO):

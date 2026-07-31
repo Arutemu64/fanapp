@@ -179,6 +179,7 @@ const ERROR_MESSAGES = {
 	INVALID_EMAIL: 'Неверный адрес эл. почты',
 	INVALID_OTP_CODE: 'Неверный или устаревший код',
 	INVALID_TELEGRAM_AUTH_PAYLOAD: 'Не удалось подтвердить Telegram',
+	LINK_INITIATOR_MISMATCH: 'Вход в аккаунт сменился, пока шло подключение. Попробуй ещё раз',
 	OUTDATED_SCHEDULE_CHANGE: 'Программа уже изменилась, обнови страницу',
 	PUSH_SUBSCRIPTION_ALREADY_EXISTS: 'Это устройство уже подключено к push-уведомлениям',
 	SAME_EVENTS_ARE_NOT_ALLOWED: 'Нельзя выбрать одно и то же выступление',
