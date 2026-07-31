@@ -9,6 +9,21 @@ This guide details best practices for using `openapi-typescript` and `openapi-fe
 * **Auto-generation**: Run `just frontend-generate-api` from the workspace root whenever the backend endpoints, routers, or Pydantic schemas change.
 * **Custom Type Transforms**: Any modifications to how types are outputted (e.g. converting FastAPI file uploads or binary schema formats to `Blob` objects) must be registered in `frontend/scripts/generate-api.mjs`.
 
+### Both generated artifacts are enforced in CI
+
+Forgetting to regenerate is not a silent failure — two committed artifacts each have a check, because a stale one still compiles and would quietly disarm every guard below.
+
+| Artifact | Generated from | Checked by |
+| --- | --- | --- |
+| `shared/openapi/openapi.json` | the routers and DTOs | `backend/tests/unit/presentation/test_openapi_spec.py` (runs with `just backend-test` and `just ci`) |
+| `frontend/src/lib/api/schema.d.ts` | that spec | `just frontend-check-api` (`pnpm generate-api:check`; its own CI job) |
+
+`just frontend-generate-api` regenerates both and fixes either failure.
+
+**`info.version` is compared separately, against `pyproject.toml`.** It is the one field in the spec whose value comes from outside the repo: `APP_VERSION` reads the *installed* distribution metadata, so a stale editable install (common right after a release bump, before `uv sync`) makes it disagree with `pyproject.toml` and would fail a whole-document comparison over a field that has not drifted. The spec test therefore renders with the version the committed file already carries — leaving every other byte compared — and a second test checks `info.version` against `pyproject.toml`. Both of that test's inputs are committed files, so it gives the same answer on a laptop, in CI, and in a cloud session.
+
+The general rule when adding to the spec: **a value that is not derived from committed source does not belong in a committed artifact.** `APP_BUILD` (the commit SHA) is the reason this matters — putting it in `info` would churn the spec, and `schema.d.ts` with it, on every single commit. Keep build- and environment-derived values on a runtime endpoint (`/debug/`) instead, and if one has to be in the spec, give it its own test against its own source of truth rather than the byte comparison.
+
 ---
 
 ## 🔒 Client Isolation

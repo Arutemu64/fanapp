@@ -16,7 +16,8 @@
 		"format": "prettier --write .",
 		"test": "vitest run",
 		"lint": "prettier --check --cache . && eslint --cache --cache-location .eslintcache .",
-		"generate-api": "node ./scripts/generate-api.mjs"
+		"generate-api": "node ./scripts/generate-api.mjs",
+		"generate-api:check": "node ./scripts/generate-api.mjs --check"
 	},
 	"devDependencies": {
 		"@eslint/compat": "2.1.0",

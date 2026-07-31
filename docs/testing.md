@@ -100,6 +100,37 @@ def test_set_as_used_twice_raises():
 Aggregates record domain events via `record_event`; assert on `pull_events()`
 to verify the right event was raised (see `tests/unit/core/test_vote.py`).
 
+### Drift guards
+
+A handful of unit tests exist for a different reason: the repo commits
+generated artifacts, and a stale one fails silently — it stays internally
+consistent, so every other gate goes green while it describes code that no
+longer exists. Each committed artifact therefore gets a test that regenerates
+it in memory and compares:
+
+| Test | Guards | Fix a failure with |
+|------|--------|--------------------|
+| `unit/presentation/test_openapi_spec.py` | `shared/openapi/openapi.json` vs. the routers and DTOs | `just frontend-generate-api` |
+| `unit/adapters/test_schedule_parser.py::test_parses_the_downloadable_template` | `frontend/static/schedule-template.xlsx` vs. the parser's required columns | `just backend-generate-schedule-template` |
+| `integration/test_migrations.py` | the ORM models vs. the migrations (needs Docker) | `just backend-generate <name>` |
+
+The second half of the API contract chain — `frontend/src/lib/api/schema.d.ts`
+vs. the spec — is checked by `just frontend-check-api` rather than a test,
+because it belongs to the frontend toolchain. See [api.md](api.md).
+
+Adding a generated file that gets committed? Add its guard in the same change,
+and state the regeneration command in the failure message — the person who
+trips it is rarely the person who wrote it.
+
+**A guard must depend only on committed files.** Any field the artifact takes
+from the environment — a version read from installed package metadata, a build
+SHA, a timestamp, a hostname — makes the comparison answer differently on a
+laptop than in CI, and a guard that cries wolf gets ignored or deleted. Keep
+such values out of the artifact where you can. Where you cannot, exclude the
+field from the comparison and give it its own assertion against its own
+committed source of truth: `test_openapi_spec.py` compares every byte of the
+spec except `info.version`, then checks that field against `pyproject.toml`.
+
 ## Integration tests — for interactors
 
 Interactors are tested **through the real stack**: a real database and real

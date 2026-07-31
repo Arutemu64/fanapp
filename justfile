@@ -33,6 +33,14 @@ frontend-test:
 frontend-generate-api: backend-generate-openapi
     cd frontend && pnpm generate-api
 
+# Second half of the contract chain. The first half — the spec vs. the routers
+# and DTOs — is a backend test (tests/unit/presentation/test_openapi_spec.py),
+# so it runs with `just backend-test`.
+
+# Fail if schema.d.ts has drifted from the committed OpenAPI spec
+frontend-check-api:
+    cd frontend && pnpm generate-api:check
+
 # ---- Backend (FastAPI + uv) ----
 backend-install:
     cd backend && uv sync --all-groups
@@ -138,6 +146,7 @@ ci:
     cd frontend && pnpm lint
     cd frontend && pnpm check
     cd frontend && pnpm test
+    cd frontend && pnpm generate-api:check
     cd frontend && pnpm build
     hadolint backend/Dockerfile frontend/Dockerfile
 
