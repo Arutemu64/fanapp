@@ -122,6 +122,15 @@ Adding a generated file that gets committed? Add its guard in the same change,
 and state the regeneration command in the failure message — the person who
 trips it is rarely the person who wrote it.
 
+**A guard must depend only on committed files.** Any field the artifact takes
+from the environment — a version read from installed package metadata, a build
+SHA, a timestamp, a hostname — makes the comparison answer differently on a
+laptop than in CI, and a guard that cries wolf gets ignored or deleted. Keep
+such values out of the artifact where you can. Where you cannot, exclude the
+field from the comparison and give it its own assertion against its own
+committed source of truth: `test_openapi_spec.py` compares every byte of the
+spec except `info.version`, then checks that field against `pyproject.toml`.
+
 ## Integration tests — for interactors
 
 Interactors are tested **through the real stack**: a real database and real
