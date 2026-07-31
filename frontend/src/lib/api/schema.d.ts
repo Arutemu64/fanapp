@@ -1259,7 +1259,7 @@ export interface components {
              */
             id: string;
             /** Number */
-            number: number;
+            number: number | null;
             /** Title */
             title: string;
             /** Order */
@@ -1316,7 +1316,7 @@ export interface components {
              */
             id: string;
             /** Number */
-            number: number;
+            number: number | null;
             /** Title */
             title: string;
             /** Duration */
@@ -1387,7 +1387,7 @@ export interface components {
              */
             id: string;
             /** Number */
-            number: number;
+            number: number | null;
             /** Title */
             title: string;
             /** Order */

@@ -4090,7 +4090,14 @@
             "title": "Id"
           },
           "number": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Number"
           },
           "title": {
@@ -4231,7 +4238,14 @@
             "title": "Id"
           },
           "number": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Number"
           },
           "title": {
@@ -4407,7 +4421,14 @@
             "title": "Id"
           },
           "number": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Number"
           },
           "title": {

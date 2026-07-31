@@ -71,6 +71,13 @@ def test_parses_the_downloadable_template() -> None:
             block_title="Косплей",
         ),
         ScheduleEntry(
+            number=None,
+            title="Перерыв",
+            duration=10,
+            nomination_title="Вне конкурса",
+            block_title="Косплей",
+        ),
+        ScheduleEntry(
             number=3,
             title="Сценка «Стальной алхимик»",
             duration=8,
@@ -188,3 +195,32 @@ def test_rejects_a_repeated_number() -> None:
     )
     assert exc_info.value.details["number"] == 1
     assert exc_info.value.details["row"] == 3
+
+
+def test_accepts_an_empty_number() -> None:
+    # Breaks carry no public number, so `number` is the one column that may be
+    # left blank.
+    sheet = build_sheet(
+        REQUIRED_COLUMNS,
+        [valid_row(), valid_row(number=None, title="Перерыв")],
+    )
+
+    schedule = parse_schedule_from_excel(sheet)
+
+    assert [entry.number for entry in schedule] == [1, None]
+
+
+def test_accepts_several_numberless_rows() -> None:
+    # Numberless rows match no existing event, so they never collide the way two
+    # rows sharing a number would.
+    sheet = build_sheet(
+        REQUIRED_COLUMNS,
+        [
+            valid_row(number=None, title="Перерыв"),
+            valid_row(number=None, title="Технический перерыв"),
+        ],
+    )
+
+    schedule = parse_schedule_from_excel(sheet)
+
+    assert [entry.number for entry in schedule] == [None, None]

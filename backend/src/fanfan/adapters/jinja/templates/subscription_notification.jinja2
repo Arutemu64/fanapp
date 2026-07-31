@@ -7,11 +7,15 @@
 выступлений
 {%- endif %}
 {%- endmacro -%}
+{# An event without a public number (a break) is announced by title alone. #}
+{% macro event_number_prefix(number) -%}
+{% if number is not none %}№{{ '%03d' % number }} {% endif %}
+{%- endmacro -%}
 {% if queue_difference == 0 -%}
-<b>Выступление №{{ '%03d' % event_number }} «{{ event_title }}» началось!</b>
+<b>Выступление {{ event_number_prefix(event_number) }}«{{ event_title }}» началось!</b>
 {%- else -%}
 {% set time_suffix = (' (примерно в ' ~ (expected_start_time | event_time) ~ ')') if expected_start_time else '' -%}
-До начала выступления <b>№{{ '%03d' % event_number }} «{{ event_title }}»</b> осталось <b>{{ queue_difference }} {{ events_pluralize(queue_difference) }}</b>{{ time_suffix }}
+До начала выступления <b>{{ event_number_prefix(event_number) }}«{{ event_title }}»</b> осталось <b>{{ queue_difference }} {{ events_pluralize(queue_difference) }}</b>{{ time_suffix }}
 {% if reason_msg %}
 {{ reason_msg }}
 {%- endif %}

@@ -59,8 +59,9 @@
 	let confirmOpen = $state(false);
 	let confirmConfig = $state<ConfirmConfig | null>(null);
 
-	// Pad the public number to three digits, e.g. 7 → "007".
-	let eventNumber = $derived(event.number.toString().padStart(3, '0'));
+	// Pad the public number to three digits, e.g. 7 → "007". Null for events that
+	// have none (breaks and other filler rows), which render no number badge.
+	let eventNumber = $derived(event.number === null ? null : String(event.number).padStart(3, '0'));
 
 	// Optimistic skip flag: the row reflects the toggle instantly instead of waiting
 	// for the schedule_updated SSE reload (flaky con wifi can delay it for seconds).
@@ -202,25 +203,32 @@
 	]}
 >
 	<!-- Keep the public number visible so the list stays easy to scan on mobile. -->
-	<div
-		class={[
-			'flex w-12 shrink-0 flex-col items-center rounded-lg border px-1.5 py-1.5 text-center',
-			event.is_current
-				? 'border-green-200 bg-white dark:border-green-600 dark:bg-gray-800'
-				: 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900'
-		]}
-	>
-		<!-- Signature element: scrolls past hundreds of times, so it carries the brand. -->
-		<span
-			class="text-xs font-bold tracking-widest text-primary-500 uppercase dark:text-primary-400"
+	{#if eventNumber !== null}
+		<div
+			class={[
+				'flex w-12 shrink-0 flex-col items-center rounded-lg border px-1.5 py-1.5 text-center',
+				event.is_current
+					? 'border-green-200 bg-white dark:border-green-600 dark:bg-gray-800'
+					: 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900'
+			]}
 		>
-			№
-		</span>
-		<span
-			class="font-display text-base leading-none font-bold text-gray-900 tabular-nums dark:text-white"
-			>{eventNumber}</span
-		>
-	</div>
+			<!-- Signature element: scrolls past hundreds of times, so it carries the brand. -->
+			<span
+				class="text-xs font-bold tracking-widest text-primary-500 uppercase dark:text-primary-400"
+			>
+				№
+			</span>
+			<span
+				class="font-display text-base leading-none font-bold text-gray-900 tabular-nums dark:text-white"
+				>{eventNumber}</span
+			>
+		</div>
+	{:else}
+		<!-- Numberless rows (breaks) keep the badge's width as empty space: dropping
+			it would pull their title out of the column every other row shares, and
+			the ragged left edge reads as a broken list while scrolling. -->
+		<div class="w-12 shrink-0" aria-hidden="true"></div>
+	{/if}
 
 	<div class="min-w-0 flex-1">
 		<div class="flex items-start gap-2">

@@ -125,8 +125,13 @@
 					]}
 					onclick={() => handleSelect(ev)}
 				>
-					<span class="font-medium text-gray-900 dark:text-white">№{ev.number}</span>
-					<span class="text-gray-600 dark:text-gray-400"> — {ev.title}</span>
+					{#if ev.number !== null}
+						<span class="font-medium text-gray-900 dark:text-white">№{ev.number}</span>
+						<span class="text-gray-600 dark:text-gray-400"> — {ev.title}</span>
+					{:else}
+						<!-- No number to lead with (a break), so the title carries the row. -->
+						<span class="font-medium text-gray-900 dark:text-white">{ev.title}</span>
+					{/if}
 				</button>
 			{:else}
 				<div class="px-3 py-4 text-center text-sm text-gray-400 sm:py-5 sm:text-base">

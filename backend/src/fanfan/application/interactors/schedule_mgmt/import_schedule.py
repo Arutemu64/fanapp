@@ -22,7 +22,8 @@ logger = logging.getLogger(__name__)
 
 
 class ScheduleEntry(BaseModel):
-    number: int
+    # None for rows the organizer left numberless (breaks and other filler).
+    number: int | None
     title: str
     duration: int
     nomination_title: str
@@ -50,6 +51,23 @@ class ImportSchedule:
         self.perm_service = perm_service
         self.realtime = realtime
 
+    @staticmethod
+    def _match_existing_event(
+        entry: ScheduleEntry, candidates: list[ScheduleEvent]
+    ) -> ScheduleEvent | None:
+        """Find the event this row updates, or None to create a new one.
+
+        Number is the only identity a spreadsheet row carries, so a numberless
+        row (a break) matches nothing and is imported as a fresh event — the
+        numberless events already in the schedule are left to be deleted as
+        orphans. Titles are not a fallback: several breaks share one title, so
+        matching on it would shuffle rows between each other.
+        """
+        if entry.number is None:
+            return None
+
+        return next((e for e in candidates if e.number == entry.number), None)
+
     async def __call__(self, data: ImportScheduleInput) -> None:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
@@ -58,10 +76,7 @@ class ImportSchedule:
         orphaned_events = await self.schedule_gateway.list_all()
         order = ORDER_INIT
         for entry in data.schedule:
-            existing_event = next(
-                (e for e in orphaned_events if e.number == entry.number),
-                None,
-            )
+            existing_event = self._match_existing_event(entry, orphaned_events)
             if existing_event:
                 existing_event.update_details(
                     title=entry.title,

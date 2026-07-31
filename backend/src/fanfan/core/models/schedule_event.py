@@ -14,7 +14,9 @@ from fanfan.core.vo.schedule_event import ScheduleEventId
 @dataclass(slots=True, kw_only=True)
 class ScheduleEvent(AggregateRoot):
     id: ScheduleEventId
-    number: int
+    # The public number printed in the programme. Optional because not every row
+    # on stage gets one — breaks and other filler are announced by title alone.
+    number: int | None
     title: str
     duration: int
     order: float

@@ -45,6 +45,21 @@ def _read_int(value: object, *, column: str, row: int) -> int:
     )
 
 
+def _read_optional_int(value: object, *, column: str, row: int) -> int | None:
+    """Read a whole number from a cell that is allowed to be empty.
+
+    Empty means an actually blank cell. A cell holding whitespace is not treated
+    as empty here on purpose: polars types the whole column as text once one
+    cell holds a string, so every other row's number would be rejected anyway —
+    silently accepting the blank one would only move the error somewhere less
+    obvious.
+    """
+    if value is None:
+        return None
+
+    return _read_int(value, column=column, row=row)
+
+
 def _read_text(value: object, *, column: str, row: int) -> str:
     if not isinstance(value, str) or not value.strip():
         raise InvalidScheduleFile(
@@ -83,17 +98,20 @@ def parse_schedule_from_excel(file: typing.BinaryIO) -> list[ScheduleEntry]:
     for row_index, row in enumerate(
         schedule_df.iter_rows(named=True), start=FIRST_DATA_ROW
     ):
-        number = _read_int(row["number"], column="number", row=row_index)
+        # An empty number is allowed — breaks and other filler rows have none.
+        number = _read_optional_int(row["number"], column="number", row=row_index)
         # The import matches existing events by number and deletes the rest, so a
         # repeated number would update one event and orphan another instead of
-        # doing what the organizer meant.
-        if number in seen_numbers:
-            raise InvalidScheduleFile(
-                InvalidScheduleFileReason.DUPLICATE_NUMBER,
-                row=row_index,
-                number=number,
-            )
-        seen_numbers.add(number)
+        # doing what the organizer meant. Numberless rows match nothing, so any
+        # number of them may coexist.
+        if number is not None:
+            if number in seen_numbers:
+                raise InvalidScheduleFile(
+                    InvalidScheduleFileReason.DUPLICATE_NUMBER,
+                    row=row_index,
+                    number=number,
+                )
+            seen_numbers.add(number)
 
         schedule.append(
             ScheduleEntry(

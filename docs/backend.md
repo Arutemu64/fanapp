@@ -62,6 +62,14 @@ The columns an organizer must supply are named in three coupled places — chang
 2. The downloadable template, regenerated with `just backend-generate-schedule-template` (script: `scripts/generate_schedule_template.py`, output: `frontend/static/schedule-template.xlsx`). `tests/unit/adapters/test_schedule_parser.py` parses the committed file, so a forgotten regeneration fails there rather than reaching an organizer.
 3. The on-screen column list in `frontend/src/routes/(app)/(protected)/tools/import_schedule/components/FileFormatGuide.svelte`.
 
+Every column must appear in the header, but `number` is the one cell that may be
+left empty: breaks and other filler rows carry no public number, so
+`ScheduleEvent.number` is `int | None` all the way out to the API. `number` is
+also the only identity a spreadsheet row has, so `ImportSchedule` can match a
+numberless row to nothing — it is imported as a **new** event, and the
+numberless events already in the schedule are deleted as orphans like any other
+row missing from the file.
+
 ## Core Domain & Interactors
 * **Core Layer (`core/`)**: Pure domain entities, value objects, and domain exceptions. Must be free of all I/O frameworks and outer layers — no FastAPI, SQLAlchemy, no `adapters/`/`application/`/`presentation/` imports. **Pydantic is the one allowed exception, and only in two narrow spots**: `core/events/base.py` (`AppEvent` is a `BaseModel` so domain events serialize cleanly over NATS) and `core/vo/fields.py` (validation helpers for value objects). Do not reach for Pydantic elsewhere in `core/` — plain dataclasses are the default for entities and value objects.
 * **Application Layer (`application/`)**: Orchestrates interactors and business use cases. Must never import database ORM models directly. Communication with infrastructure happens via abstract interfaces (ports under `application/ports/`) and schemas/DTOs.

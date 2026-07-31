@@ -60,6 +60,8 @@
 
 	function formatEvent(event: ScheduleChangeEventDTO | null | undefined): string {
 		if (!event) return '';
+		// Breaks carry no public number — the title is all there is to show.
+		if (event.number === null) return event.title;
 		return `#${event.number} ${event.title}`;
 	}
 </script>
