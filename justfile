@@ -111,6 +111,21 @@ dockerfile-lint:
     hadolint backend/Dockerfile frontend/Dockerfile
 
 # ---- Docker infra helpers ----
+# For the hybrid loop: infra in Docker, `just backend-dev` / `just frontend-dev`
+# on the host, reaching them through their published 127.0.0.1 ports. Naming the
+# services explicitly is enough — Compose starts a service targeted on the
+# command line even when its profile ("core") isn't enabled. Migrations are NOT
+# run here: the `migration` service belongs to the containerised path, so follow
+# up with `just backend-migrate` on the host.
+
+# Start the backing services alone (Postgres, Redis, NATS), detached
+run-infra:
+    docker compose up -d db redis nats
+
+# Stop the backing services (keeps the volumes, so data survives)
+stop-infra:
+    docker compose stop db redis nats
+
 # Dev: Compose auto-builds any image that doesn't exist yet, and `--watch`
 # live-syncs source + rebuilds only when package.json/pnpm-lock/uv.lock change —
 # so no forced rebuild is needed per start (that just slows startup). Pass

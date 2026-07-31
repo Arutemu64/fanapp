@@ -187,8 +187,14 @@ services:
     build: ./backend
     env_file:
       - .env
+    # Alembic only opens the DB, but loading the config validates every section,
+    # so pin all three hosts like the other services — the .env values are
+    # host-side (localhost) and would be wrong the moment a migration step grows
+    # a Redis or NATS dependency.
     environment:
       DB__HOST: "db"
+      REDIS__HOST: "redis"
+      NATS__HOST: "nats"
     depends_on:
       db:
         condition: service_healthy
