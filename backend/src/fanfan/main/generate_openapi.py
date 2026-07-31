@@ -37,14 +37,22 @@ def _stamp_error_code_enum(schema: dict) -> None:
     error_message["properties"]["code"]["enum"] = sorted(client_facing_error_codes())
 
 
-def main() -> None:
-    OPENAPI_PATH.parent.mkdir(parents=True, exist_ok=True)
+def render_openapi_document() -> str:
+    """Build the spec and render exactly the bytes the committed file holds.
+
+    Serialization lives here rather than inline in main() so the drift test
+    (tests/unit/presentation/test_openapi_spec.py) compares against this
+    function instead of restating the json.dumps arguments — a restatement
+    would drift from the writer on its own and pass while the file is stale.
+    """
     schema = build_openapi_schema()
     _stamp_error_code_enum(schema)
-    OPENAPI_PATH.write_text(
-        json.dumps(schema, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    return json.dumps(schema, ensure_ascii=False, indent=2) + "\n"
+
+
+def main() -> None:
+    OPENAPI_PATH.parent.mkdir(parents=True, exist_ok=True)
+    OPENAPI_PATH.write_text(render_openapi_document(), encoding="utf-8")
 
 
 if __name__ == "__main__":

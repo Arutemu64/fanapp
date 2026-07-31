@@ -1,7 +1,12 @@
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import openapiTS, { astToString } from 'openapi-typescript';
 import ts from 'typescript';
+
+// Mirrors openapi-typescript's own `--check` flag, which we can't use directly:
+// the Blob transform below needs the Node API, not the CLI. Same semantics —
+// compare instead of write, exit non-zero when the committed file is stale.
+const checkOnly = process.argv.includes('--check');
 
 const schemaPath = new URL('../../shared/openapi/openapi.json', import.meta.url);
 const outputPath = new URL('../src/lib/api/schema.d.ts', import.meta.url);
@@ -35,6 +40,22 @@ const ast = await openapiTS(schemaPath, {
 	}
 });
 
-await writeFile(outputPath, `${GENERATED_FILE_HEADER}${astToString(ast)}`, 'utf8');
+const generated = `${GENERATED_FILE_HEADER}${astToString(ast)}`;
 
-console.log(`Generated ${fileURLToPath(outputPath)}`);
+if (checkOnly) {
+	const committed = await readFile(outputPath, 'utf8').catch(() => null);
+
+	if (committed !== generated) {
+		console.error(
+			`${fileURLToPath(outputPath)} is out of date with shared/openapi/openapi.json.\n` +
+				'Regenerate it with: just frontend-generate-api'
+		);
+		process.exit(1);
+	}
+
+	console.log(`Up to date: ${fileURLToPath(outputPath)}`);
+} else {
+	await writeFile(outputPath, generated, 'utf8');
+
+	console.log(`Generated ${fileURLToPath(outputPath)}`);
+}

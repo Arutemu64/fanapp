@@ -136,7 +136,7 @@ All commands run from the repo root via `just`.
 | `just backend-sync tcloud` | Sync tickets from TicketsCloud |
 | `just backend-sync cosplay2` | Sync cosplay data from Cosplay2 |
 
-> The frontend talks to the backend through generated types in `frontend/src/lib/api/schema.d.ts`. Whenever backend endpoints or schemas change, run `just frontend-generate-api` to keep the contract in sync.
+> The frontend talks to the backend through generated types in `frontend/src/lib/api/schema.d.ts`. Whenever backend endpoints or schemas change, run `just frontend-generate-api` to keep the contract in sync. CI fails if you forget: the spec is checked against the routers by a backend test, and the types against the spec by `just frontend-check-api`.
 
 ## Deployment
 

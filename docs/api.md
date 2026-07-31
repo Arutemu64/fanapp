@@ -9,6 +9,17 @@ This guide details best practices for using `openapi-typescript` and `openapi-fe
 * **Auto-generation**: Run `just frontend-generate-api` from the workspace root whenever the backend endpoints, routers, or Pydantic schemas change.
 * **Custom Type Transforms**: Any modifications to how types are outputted (e.g. converting FastAPI file uploads or binary schema formats to `Blob` objects) must be registered in `frontend/scripts/generate-api.mjs`.
 
+### Both generated artifacts are enforced in CI
+
+Forgetting to regenerate is not a silent failure — two committed artifacts each have a check, because a stale one still compiles and would quietly disarm every guard below.
+
+| Artifact | Generated from | Checked by |
+| --- | --- | --- |
+| `shared/openapi/openapi.json` | the routers and DTOs | `backend/tests/unit/presentation/test_openapi_spec.py` (runs with `just backend-test` and `just ci`) |
+| `frontend/src/lib/api/schema.d.ts` | that spec | `just frontend-check-api` (`pnpm generate-api:check`; its own CI job) |
+
+`just frontend-generate-api` regenerates both and fixes either failure. One exception: if the spec test reports a difference in `info.version` alone, nothing has drifted — `APP_VERSION` reads the *installed* distribution metadata, so a stale editable install after a version bump needs `uv sync` in `backend/`, not a regeneration.
+
 ---
 
 ## 🔒 Client Isolation
