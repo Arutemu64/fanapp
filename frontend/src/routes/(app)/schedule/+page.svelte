@@ -7,6 +7,7 @@
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
+	import { projectExpectedStartTimes } from '$lib/utils/scheduleTiming';
 	import { createSearchIndex } from '$lib/utils/search';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
 	import {
@@ -46,6 +47,32 @@
 
 	// We use the full schedule current event for countdown labels inside every row.
 	let currentEvent = $derived(schedule.find((event) => event.is_current) ?? null);
+
+	// Ticking clock behind the expected-start projection. The server's
+	// `expected_start_time` is a snapshot taken when it answered, so an act that
+	// overruns while the page sits open drifts further into the past with every
+	// passing minute; re-projecting locally against a live `now` is what keeps
+	// the ≈ times honest between fetches. Half a minute is finer than the labels,
+	// which are rendered to the minute.
+	const PROJECTION_TICK_MS = 30_000;
+	let nowMs = $state(Date.now());
+
+	$effect(() => {
+		const tick = setInterval(() => (nowMs = Date.now()), PROJECTION_TICK_MS);
+		return () => clearInterval(tick);
+	});
+
+	// Empty whenever the buffer is unknown (a cache entry written before it was
+	// persisted) or nothing is on stage — EventCard then falls back to the
+	// server's own snapshot rather than showing nothing.
+	let expectedStartTimes = $derived.by(() => {
+		if (data.transitionBufferSeconds === null) return new Map<string, Date>();
+
+		return projectExpectedStartTimes(schedule, {
+			transitionBufferSeconds: data.transitionBufferSeconds,
+			nowMs: nowMs + data.serverClockOffsetMs
+		});
+	});
 	let user: CurrentUserDTO | null = $derived(page.data.user);
 
 	const offline = getOfflineService();
@@ -338,7 +365,13 @@
 						<div class="divide-y divide-gray-200 dark:divide-gray-700">
 							{#each nomination.events as event (event.id)}
 								<div data-event-id={event.id} class="scroll-mt-28">
-									<EventCard {event} {schedule} {currentEvent} {user} />
+									<EventCard
+										{event}
+										{schedule}
+										{currentEvent}
+										{user}
+										expectedStartTime={expectedStartTimes.get(event.id) ?? null}
+									/>
 								</div>
 							{/each}
 						</div>

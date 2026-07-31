@@ -16,7 +16,7 @@ class ScheduleEvent(AggregateRoot):
     id: ScheduleEventId
     number: int
     title: str
-    duration: int
+    duration_seconds: int
     order: float
     is_current: bool
     is_skipped: bool
@@ -69,13 +69,13 @@ class ScheduleEvent(AggregateRoot):
         self,
         *,
         title: str,
-        duration: int,
+        duration_seconds: int,
         block_title: str | None,
         nomination_title: str | None,
         order: float,
     ) -> None:
         self.title = title
-        self.duration = duration
+        self.duration_seconds = duration_seconds
         self.block_title = block_title
         self.nomination_title = nomination_title
         self.order = order

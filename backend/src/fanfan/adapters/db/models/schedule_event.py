@@ -21,7 +21,7 @@ class ScheduleEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, OrderMixin, BaseORM)
     # Not indexed: nothing filters or sorts on title. Reads go by id, queue,
     # order or is_current.
     title: Mapped[str] = mapped_column()
-    duration: Mapped[int] = mapped_column(server_default=text("0"))
+    duration_seconds: Mapped[int] = mapped_column(server_default=text("0"))
     is_current: Mapped[bool] = mapped_column(server_default=text("false"))
     is_skipped: Mapped[bool] = mapped_column(server_default=text("false"))
     nomination_title: Mapped[str | None] = mapped_column()

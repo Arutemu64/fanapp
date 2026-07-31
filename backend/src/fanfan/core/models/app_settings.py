@@ -5,10 +5,11 @@ from fanfan.core.models.base import AggregateRoot
 
 @dataclass(slots=True, kw_only=True)
 class LimitsConfig:
-    announcement_timeout: int = 10
-    # Seconds of setup time assumed between consecutive events when projecting
-    # expected start times (see ADR-0008). Matches `duration`, which is seconds.
-    transition_buffer: int = 60
+    announcement_timeout_seconds: int = 10
+    # Setup time assumed between consecutive events when projecting expected
+    # start times (see ADR-0008) — one global value rather than a per-event
+    # column, because nobody tunes per-act buffers day-of.
+    transition_buffer_seconds: int = 60
 
 
 @dataclass(slots=True, kw_only=True)
@@ -23,12 +24,12 @@ class AppSettings(AggregateRoot):
     def update_limits(
         self,
         *,
-        announcement_timeout: int | None = None,
-        transition_buffer: int | None = None,
+        announcement_timeout_seconds: int | None = None,
+        transition_buffer_seconds: int | None = None,
     ) -> None:
         # Mutation of the nested limits config goes through the aggregate root
         # so callers never reach into it directly. None means "leave as is".
-        if announcement_timeout is not None:
-            self.limits.announcement_timeout = announcement_timeout
-        if transition_buffer is not None:
-            self.limits.transition_buffer = transition_buffer
+        if announcement_timeout_seconds is not None:
+            self.limits.announcement_timeout_seconds = announcement_timeout_seconds
+        if transition_buffer_seconds is not None:
+            self.limits.transition_buffer_seconds = transition_buffer_seconds

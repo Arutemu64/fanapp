@@ -3557,11 +3557,17 @@
             },
             "type": "array",
             "title": "Schedule"
+          },
+          "transition_buffer_seconds": {
+            "type": "integer",
+            "title": "Transition Buffer Seconds",
+            "description": "Setup time assumed between consecutive events, in seconds."
           }
         },
         "type": "object",
         "required": [
-          "schedule"
+          "schedule",
+          "transition_buffer_seconds"
         ],
         "title": "GetScheduleOutput"
       },
@@ -3673,21 +3679,21 @@
       },
       "LimitsConfigDTO": {
         "properties": {
-          "announcement_timeout": {
+          "announcement_timeout_seconds": {
             "type": "integer",
             "minimum": 1.0,
-            "title": "Announcement Timeout"
+            "title": "Announcement Timeout Seconds"
           },
-          "transition_buffer": {
+          "transition_buffer_seconds": {
             "type": "integer",
             "minimum": 0.0,
-            "title": "Transition Buffer"
+            "title": "Transition Buffer Seconds"
           }
         },
         "type": "object",
         "required": [
-          "announcement_timeout",
-          "transition_buffer"
+          "announcement_timeout_seconds",
+          "transition_buffer_seconds"
         ],
         "title": "LimitsConfigDTO"
       },
@@ -4252,9 +4258,9 @@
             "type": "string",
             "title": "Title"
           },
-          "duration": {
+          "duration_seconds": {
             "type": "integer",
-            "title": "Duration"
+            "title": "Duration Seconds"
           },
           "order": {
             "type": "number",
@@ -4331,7 +4337,7 @@
           "id",
           "number",
           "title",
-          "duration",
+          "duration_seconds",
           "order",
           "is_current",
           "is_skipped",
@@ -4659,7 +4665,7 @@
             ],
             "title": "Voting Enabled"
           },
-          "announcement_timeout": {
+          "announcement_timeout_seconds": {
             "anyOf": [
               {
                 "type": "integer",
@@ -4669,9 +4675,9 @@
                 "type": "null"
               }
             ],
-            "title": "Announcement Timeout"
+            "title": "Announcement Timeout Seconds"
           },
-          "transition_buffer": {
+          "transition_buffer_seconds": {
             "anyOf": [
               {
                 "type": "integer",
@@ -4681,7 +4687,7 @@
                 "type": "null"
               }
             ],
-            "title": "Transition Buffer"
+            "title": "Transition Buffer Seconds"
           }
         },
         "type": "object",

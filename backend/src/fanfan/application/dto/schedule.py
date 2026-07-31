@@ -9,7 +9,7 @@ class ScheduleEventFullDTO(BaseModel):
     id: ScheduleEventId
     number: int
     title: str
-    duration: int
+    duration_seconds: int
     order: float
     is_current: bool
     is_skipped: bool

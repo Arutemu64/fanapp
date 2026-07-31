@@ -49,7 +49,7 @@ def _schedule_event(
         id=generate_schedule_event_id(),
         number=number,
         title=f"Событие {number}",
-        duration=15,
+        duration_seconds=15,
         order=order,
         is_current=is_current,
         is_skipped=is_skipped,
@@ -421,7 +421,7 @@ async def test_move_twice_in_a_row_raises_too_fast(
     await uow.commit()
 
     # The same real-Redis rate lock as set_current guards announcements
-    # (announcement_timeout from seeds), so a second move within the window
+    # (announcement_timeout_seconds from seeds), so a second move within the window
     # is rejected.
     await interactor(
         MoveScheduleEventInput(

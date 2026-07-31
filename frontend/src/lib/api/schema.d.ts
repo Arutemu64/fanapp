@@ -1050,6 +1050,11 @@ export interface components {
         GetScheduleOutput: {
             /** Schedule */
             schedule: components["schemas"]["ScheduleEventFullDTO"][];
+            /**
+             * Transition Buffer Seconds
+             * @description Setup time assumed between consecutive events, in seconds.
+             */
+            transition_buffer_seconds: number;
         };
         /** GetSubscriptionsOutput */
         GetSubscriptionsOutput: {
@@ -1091,10 +1096,10 @@ export interface components {
         };
         /** LimitsConfigDTO */
         LimitsConfigDTO: {
-            /** Announcement Timeout */
-            announcement_timeout: number;
-            /** Transition Buffer */
-            transition_buffer: number;
+            /** Announcement Timeout Seconds */
+            announcement_timeout_seconds: number;
+            /** Transition Buffer Seconds */
+            transition_buffer_seconds: number;
         };
         /** LinkTicketInput */
         LinkTicketInput: {
@@ -1324,8 +1329,8 @@ export interface components {
             number: number;
             /** Title */
             title: string;
-            /** Duration */
-            duration: number;
+            /** Duration Seconds */
+            duration_seconds: number;
             /** Order */
             order: number;
             /** Is Current */
@@ -1484,10 +1489,10 @@ export interface components {
         UpdateAppSettingsInput: {
             /** Voting Enabled */
             voting_enabled?: boolean | null;
-            /** Announcement Timeout */
-            announcement_timeout?: number | null;
-            /** Transition Buffer */
-            transition_buffer?: number | null;
+            /** Announcement Timeout Seconds */
+            announcement_timeout_seconds?: number | null;
+            /** Transition Buffer Seconds */
+            transition_buffer_seconds?: number | null;
         };
         /** UpdateCurrentUserInput */
         UpdateCurrentUserInput: {

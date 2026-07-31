@@ -40,7 +40,7 @@ def _schedule_event(
     order: float,
     *,
     is_current: bool = False,
-    duration: int = 15,
+    duration_seconds: int = 15,
     nomination_title: str | None = None,
     block_title: str | None = None,
 ) -> ScheduleEvent:
@@ -48,7 +48,7 @@ def _schedule_event(
         id=generate_schedule_event_id(),
         number=number,
         title=title,
-        duration=duration,
+        duration_seconds=duration_seconds,
         order=order,
         is_current=is_current,
         is_skipped=False,
@@ -77,7 +77,7 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
         2,
         "Новое текущее событие",
         2,
-        duration=20,
+        duration_seconds=20,
         nomination_title="Номинация",
         block_title="Блок",
     )
@@ -290,7 +290,7 @@ async def test_set_current_event_twice_in_a_row_raises_too_fast(
     await uow.commit()
 
     # The rate-limit guard for announcements uses a real Redis lock
-    # (announcement_timeout from seeds — 10 seconds), which is cleared
+    # (announcement_timeout_seconds from seeds — 10 seconds), which is cleared
     # between tests by the reset_redis fixture.
     await interactor(SetCurrentScheduleEventInput(event_id=first_event.id))
     with pytest.raises(ScheduleEditTooFast):

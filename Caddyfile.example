@@ -9,6 +9,14 @@
 # (API_PORT / FRONTEND_PORT in .env, default 8000 / 3000). If you override
 # either var, update the matching reverse_proxy target here.
 :80 {
+	# Compression is opt-in in Caddy — without this directive nothing is
+	# compressed, and the API is the one that pays: /api* is proxied straight to
+	# FastAPI (which adds no compression middleware) and never passes through the
+	# frontend container's nginx, which gzips only its own static assets. The
+	# schedule response alone is ~77 KiB uncompressed for a full programme, on
+	# venue wifi. zstd first, gzip for clients that don't take it.
+	encode zstd gzip
+
     # Route all requests starting with /api to FastAPI
 	handle_path /api* {
 		reverse_proxy http://127.0.0.1:8000

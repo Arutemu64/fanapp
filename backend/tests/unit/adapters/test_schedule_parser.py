@@ -19,7 +19,7 @@ TEMPLATE_PATH = REPO_ROOT / "frontend" / "static" / "schedule-template.xlsx"
 VALID_ROW = {
     "number": 1,
     "title": "Открытие фестиваля",
-    "duration": 15,
+    "duration_seconds": 15,
     "nomination_title": "Вне конкурса",
     "block_title": "Открытие",
 }
@@ -59,35 +59,35 @@ def test_parses_the_downloadable_template() -> None:
         ScheduleEntry(
             number=1,
             title="Открытие фестиваля",
-            duration=15,
+            duration_seconds=900,
             nomination_title="Вне конкурса",
             block_title="Открытие",
         ),
         ScheduleEntry(
             number=2,
             title="Дефиле «Наруто»",
-            duration=5,
+            duration_seconds=30,
             nomination_title="Одиночное дефиле",
             block_title="Косплей",
         ),
         ScheduleEntry(
             number=3,
             title="Сценка «Стальной алхимик»",
-            duration=8,
+            duration_seconds=300,
             nomination_title="Групповое дефиле",
             block_title="Косплей",
         ),
         ScheduleEntry(
             number=4,
             title="Вокал: «Унесённые призраками»",
-            duration=6,
+            duration_seconds=240,
             nomination_title="Вокал",
             block_title="Караоке",
         ),
         ScheduleEntry(
             number=5,
             title="Награждение и закрытие",
-            duration=20,
+            duration_seconds=1200,
             nomination_title="Вне конкурса",
             block_title="Закрытие",
         ),
@@ -96,7 +96,7 @@ def test_parses_the_downloadable_template() -> None:
 
 def test_column_order_does_not_matter() -> None:
     sheet = build_sheet(
-        ["block_title", "duration", "number", "nomination_title", "title"],
+        ["block_title", "duration_seconds", "number", "nomination_title", "title"],
         [("Открытие", 15, 1, "Вне конкурса", "Открытие фестиваля")],
     )
 
@@ -105,12 +105,14 @@ def test_column_order_does_not_matter() -> None:
 
 def test_accepts_whole_numbers_stored_as_floats() -> None:
     # Excel has no integer type, so a hand-typed 1 can arrive as 1.0.
-    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(number=1.0, duration=15.0)])
+    sheet = build_sheet(
+        REQUIRED_COLUMNS, [valid_row(number=1.0, duration_seconds=15.0)]
+    )
 
     schedule = parse_schedule_from_excel(sheet)
 
     assert schedule[0].number == 1
-    assert schedule[0].duration == 15
+    assert schedule[0].duration_seconds == 15
 
 
 def test_rejects_a_file_that_is_not_a_spreadsheet() -> None:
@@ -127,7 +129,7 @@ def test_reports_every_missing_column_at_once() -> None:
         parse_schedule_from_excel(sheet)
 
     assert exc_info.value.details["reason"] == InvalidScheduleFileReason.MISSING_COLUMNS
-    assert exc_info.value.details["columns"] == ["duration", "nomination_title"]
+    assert exc_info.value.details["columns"] == ["duration_seconds", "nomination_title"]
 
 
 def test_rejects_an_empty_sheet() -> None:
@@ -155,7 +157,7 @@ def test_rejects_a_blank_text_cell(column: str) -> None:
     assert exc_info.value.details["row"] == 3
 
 
-@pytest.mark.parametrize("column", ["number", "duration"])
+@pytest.mark.parametrize("column", ["number", "duration_seconds"])
 def test_rejects_a_non_integer_number(column: str) -> None:
     sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(**{column: "пять"})])
 
@@ -168,13 +170,13 @@ def test_rejects_a_non_integer_number(column: str) -> None:
 
 
 def test_rejects_a_fractional_duration() -> None:
-    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(duration=7.5)])
+    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(duration_seconds=7.5)])
 
     with pytest.raises(InvalidScheduleFile) as exc_info:
         parse_schedule_from_excel(sheet)
 
     assert exc_info.value.details["reason"] == InvalidScheduleFileReason.INVALID_NUMBER
-    assert exc_info.value.details["column"] == "duration"
+    assert exc_info.value.details["column"] == "duration_seconds"
 
 
 def test_rejects_a_repeated_number() -> None:

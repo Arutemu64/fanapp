@@ -21,15 +21,15 @@ def test_set_voting_enabled_toggles_value():
     assert settings.voting_enabled is False
 
 
-def test_announcement_timeout_has_default():
+def test_announcement_timeout_seconds_has_default():
     settings = AppSettings()
 
-    assert settings.limits.announcement_timeout == 10
+    assert settings.limits.announcement_timeout_seconds == 10
 
 
-def test_update_limits_updates_announcement_timeout():
+def test_update_limits_updates_announcement_timeout_seconds():
     settings = AppSettings()
 
-    settings.update_limits(announcement_timeout=30)
+    settings.update_limits(announcement_timeout_seconds=30)
 
-    assert settings.limits.announcement_timeout == 30
+    assert settings.limits.announcement_timeout_seconds == 30

@@ -14,7 +14,13 @@ logger = logging.getLogger(__name__)
 # The header names the organizer must put in row 1. Matched by name, so column
 # order in the sheet is free. Kept in sync with the template spreadsheet
 # (frontend/static/schedule-template.xlsx) by a parser test.
-REQUIRED_COLUMNS = ("number", "title", "duration", "nomination_title", "block_title")
+REQUIRED_COLUMNS = (
+    "number",
+    "title",
+    "duration_seconds",
+    "nomination_title",
+    "block_title",
+)
 
 # Row 1 holds the headers, so the first data row is row 2. Reported row numbers
 # have to match what the organizer sees in Excel, not the dataframe index.
@@ -99,7 +105,9 @@ def parse_schedule_from_excel(file: typing.BinaryIO) -> list[ScheduleEntry]:
             ScheduleEntry(
                 number=number,
                 title=_read_text(row["title"], column="title", row=row_index),
-                duration=_read_int(row["duration"], column="duration", row=row_index),
+                duration_seconds=_read_int(
+                    row["duration_seconds"], column="duration_seconds", row=row_index
+                ),
                 nomination_title=_read_text(
                     row["nomination_title"], column="nomination_title", row=row_index
                 ),

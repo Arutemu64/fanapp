@@ -16,7 +16,7 @@ def _event(
     number: int,
     order: float,
     *,
-    duration: int = 600,
+    duration_seconds: int = 600,
     is_current: bool = False,
     is_skipped: bool = False,
     actual_start_time: datetime | None = None,
@@ -25,7 +25,7 @@ def _event(
         id=generate_schedule_event_id(),
         number=number,
         title=f"Событие {number}",
-        duration=duration,
+        duration_seconds=duration_seconds,
         order=order,
         is_current=is_current,
         is_skipped=is_skipped,
@@ -39,19 +39,21 @@ def _event(
 def test_no_current_event_leaves_all_projections_none():
     events = [_event(1, 1.0), _event(2, 2.0)]
 
-    apply_expected_start_times(events, transition_buffer=BUFFER, now=ANCHOR)
+    apply_expected_start_times(events, transition_buffer_seconds=BUFFER, now=ANCHOR)
 
     assert all(e.expected_start_time is None for e in events)
 
 
 def test_projects_forward_from_anchor_with_buffer():
-    current = _event(1, 1.0, duration=600, is_current=True, actual_start_time=ANCHOR)
-    second = _event(2, 2.0, duration=300)
-    third = _event(3, 3.0, duration=120)
+    current = _event(
+        1, 1.0, duration_seconds=600, is_current=True, actual_start_time=ANCHOR
+    )
+    second = _event(2, 2.0, duration_seconds=300)
+    third = _event(3, 3.0, duration_seconds=120)
     events = [current, second, third]
 
     # now is right at the anchor, so nothing is overdue and no clamping happens.
-    apply_expected_start_times(events, transition_buffer=BUFFER, now=ANCHOR)
+    apply_expected_start_times(events, transition_buffer_seconds=BUFFER, now=ANCHOR)
 
     assert current.expected_start_time == ANCHOR
     # Second event starts after the current act's 600s plus the 60s buffer.
@@ -62,12 +64,14 @@ def test_projects_forward_from_anchor_with_buffer():
 
 def test_past_and_skipped_events_get_no_projection():
     past = _event(1, 1.0)
-    current = _event(2, 2.0, duration=600, is_current=True, actual_start_time=ANCHOR)
-    skipped = _event(3, 3.0, duration=9999, is_skipped=True)
-    upcoming = _event(4, 4.0, duration=300)
+    current = _event(
+        2, 2.0, duration_seconds=600, is_current=True, actual_start_time=ANCHOR
+    )
+    skipped = _event(3, 3.0, duration_seconds=9999, is_skipped=True)
+    upcoming = _event(4, 4.0, duration_seconds=300)
     events = [past, current, skipped, upcoming]
 
-    apply_expected_start_times(events, transition_buffer=BUFFER, now=ANCHOR)
+    apply_expected_start_times(events, transition_buffer_seconds=BUFFER, now=ANCHOR)
 
     assert past.expected_start_time is None
     assert skipped.expected_start_time is None
@@ -76,15 +80,17 @@ def test_past_and_skipped_events_get_no_projection():
 
 
 def test_overrun_clamps_next_event_to_now_plus_buffer_and_cascades():
-    current = _event(1, 1.0, duration=600, is_current=True, actual_start_time=ANCHOR)
-    second = _event(2, 2.0, duration=300)
-    third = _event(3, 3.0, duration=120)
+    current = _event(
+        1, 1.0, duration_seconds=600, is_current=True, actual_start_time=ANCHOR
+    )
+    second = _event(2, 2.0, duration_seconds=300)
+    third = _event(3, 3.0, duration_seconds=120)
     events = [current, second, third]
 
     # Current act has run 30 min though its planned duration was 10 min.
     now = ANCHOR + timedelta(minutes=30)
 
-    apply_expected_start_times(events, transition_buffer=BUFFER, now=now)
+    apply_expected_start_times(events, transition_buffer_seconds=BUFFER, now=now)
 
     # Raw projection for second (anchor + 660s) is in the past, so it floors to
     # now + buffer: even if the overrunning act ended this instant, the

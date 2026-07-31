@@ -140,6 +140,14 @@ domain with no rebuild (see [frontend.md](frontend.md)).
 `127.0.0.1:8000` (API); run Caddy with `Caddyfile.example` in front to reach them
 on a single origin (e.g. `http://localhost`).
 
+**Compression lives here, and only here, for the API.** Caddy does not compress
+unless the [`encode`](https://caddyserver.com/docs/caddyfile/directives/encode)
+directive is present, the backend adds no compression middleware, and `/api*` is
+proxied straight to FastAPI without passing through the frontend container's
+NGINX. So a proxy swapped in for `Caddyfile.example` must carry its own `encode`
+equivalent, or every JSON response goes out uncompressed — the full schedule is
+~77 KiB that way.
+
 With the relative default you only set the origin-dependent values to match how
 the browser reaches the site:
 

@@ -32,9 +32,17 @@
 		schedule: ScheduleEventWithSubscription[];
 		currentEvent: ScheduleEventWithSubscription | null;
 		user: CurrentUserDTO | null;
+		/** Live projection from the page; null when the page cannot compute one. */
+		expectedStartTime: Date | null;
 	}
 
-	let { event, schedule, currentEvent, user }: Props = $props();
+	let { event, schedule, currentEvent, user, expectedStartTime }: Props = $props();
+
+	// Prefer the page's live projection; fall back to the server's snapshot, which
+	// is all an offline render from an older cache entry has.
+	let effectiveStartTime = $derived(
+		expectedStartTime?.toISOString() ?? event.expected_start_time ?? null
+	);
 	const toastService = getToastService();
 
 	let moveModal = $state(false);
@@ -273,7 +281,7 @@
 						class="inline-flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400"
 					>
 						<ClockOutline class="h-3.5 w-3.5" />
-						{formatDuration(event.duration)}
+						{formatDuration(event.duration_seconds)}
 					</span>
 
 					{#if queueUntil !== null && queueUntil > 0}
@@ -281,7 +289,7 @@
 							class="inline-flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400"
 						>
 							<HourglassOutline class="h-3.5 w-3.5" />
-							{formatUntil(queueUntil, event.expected_start_time ?? null)}
+							{formatUntil(queueUntil, effectiveStartTime)}
 						</span>
 					{/if}
 

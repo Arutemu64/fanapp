@@ -14,14 +14,16 @@
 
 	let isSaving = $state(false);
 	let savedVotingEnabled = $state(untrack(() => data.settings.voting_enabled));
-	let savedAnnouncementTimeout = $state(untrack(() => data.settings.limits.announcement_timeout));
-	let savedTransitionBuffer = $state(untrack(() => data.settings.limits.transition_buffer));
+	let savedAnnouncementTimeout = $state(
+		untrack(() => data.settings.limits.announcement_timeout_seconds)
+	);
+	let savedTransitionBuffer = $state(untrack(() => data.settings.limits.transition_buffer_seconds));
 	let votingEnabled = $state(untrack(() => data.settings.voting_enabled));
 	let announcementTimeout = $state<number | undefined>(
-		untrack(() => data.settings.limits.announcement_timeout)
+		untrack(() => data.settings.limits.announcement_timeout_seconds)
 	);
 	let transitionBuffer = $state<number | undefined>(
-		untrack(() => data.settings.limits.transition_buffer)
+		untrack(() => data.settings.limits.transition_buffer_seconds)
 	);
 	let announcementTimeoutError = $state('');
 	let transitionBufferError = $state('');
@@ -104,8 +106,8 @@
 			const { error, response } = await client.PATCH('/settings', {
 				body: {
 					voting_enabled: votingEnabled,
-					announcement_timeout: nextAnnouncementTimeout,
-					transition_buffer: nextTransitionBuffer
+					announcement_timeout_seconds: nextAnnouncementTimeout,
+					transition_buffer_seconds: nextTransitionBuffer
 				}
 			});
 
@@ -180,7 +182,7 @@
 			<Label for="announcement-timeout">Таймаут анонсов, сек</Label>
 			<Input
 				id="announcement-timeout"
-				name="announcement_timeout"
+				name="announcement_timeout_seconds"
 				type="number"
 				min="1"
 				step="1"
@@ -202,7 +204,7 @@
 			<Label for="transition-buffer">Буфер перехода, сек</Label>
 			<Input
 				id="transition-buffer"
-				name="transition_buffer"
+				name="transition_buffer_seconds"
 				type="number"
 				min="0"
 				step="1"

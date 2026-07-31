@@ -66,7 +66,7 @@ class UpdateScheduleEventSkip:
         settings = await self.settings_gateway.get()
         lock = self.rate_lock_factory(
             ANNOUNCE_LIMIT_NAME,
-            cooldown_period=settings.limits.announcement_timeout,
+            cooldown_period=settings.limits.announcement_timeout_seconds,
         )
 
         try:

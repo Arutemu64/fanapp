@@ -20,8 +20,9 @@
 			description: 'Название выступления.'
 		},
 		{
-			name: 'duration',
-			description: 'Длительность в минутах. Целое число, например 15.'
+			name: 'duration_seconds',
+			description:
+				'Длительность в секундах. Целое число: 30 — короткое дефиле, 900 — пятнадцать минут.'
 		},
 		{
 			name: 'nomination_title',

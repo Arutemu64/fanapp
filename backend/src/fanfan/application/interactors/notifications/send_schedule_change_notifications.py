@@ -223,7 +223,7 @@ class SendScheduleChangeNotifications:
             settings = await self.settings_gateway.get()
             projected = apply_expected_start_times(
                 await self.schedule_gateway.read_list_schedule(),
-                transition_buffer=settings.limits.transition_buffer,
+                transition_buffer_seconds=settings.limits.transition_buffer_seconds,
                 now=datetime.now(UTC),
             )
             expected_start_times: dict[ScheduleEventId, datetime | None] = {

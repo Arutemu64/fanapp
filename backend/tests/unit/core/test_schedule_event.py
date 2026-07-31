@@ -24,7 +24,7 @@ def _event(
         id=generate_schedule_event_id(),
         number=number,
         title=f"Событие {number}",
-        duration=15,
+        duration_seconds=15,
         order=order,
         is_current=is_current,
         is_skipped=is_skipped,

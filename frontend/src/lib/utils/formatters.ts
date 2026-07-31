@@ -1,6 +1,35 @@
+const SECONDS_PER_MINUTE = 60;
+const SECONDS_PER_HOUR = 3600;
+
+/**
+ * How long an act runs, in Russian. Acts span a ~30-second single defile to a
+ * 20-minute closing ceremony, so seconds have to survive the formatting: the
+ * previous version rounded everything up to whole minutes, which rendered every
+ * short act as "1 минута", and its `% 3600` silently dropped whole hours.
+ *
+ * A single unit gets the full word; a compound is abbreviated ("1 мин 30 с")
+ * because "1 минута 30 секунд" does not fit the meta row on a phone.
+ */
 export function formatDuration(seconds: number): string {
-	const m = Math.ceil((seconds % 3600) / 60);
-	return `${m} ${pluralize(m, 'минута', 'минуты', 'минут')}`;
+	if (seconds < SECONDS_PER_MINUTE) {
+		return `${seconds} ${pluralize(seconds, 'секунда', 'секунды', 'секунд')}`;
+	}
+
+	if (seconds < SECONDS_PER_HOUR) {
+		const minutes = Math.floor(seconds / SECONDS_PER_MINUTE);
+		const remainingSeconds = seconds % SECONDS_PER_MINUTE;
+		if (remainingSeconds === 0) {
+			return `${minutes} ${pluralize(minutes, 'минута', 'минуты', 'минут')}`;
+		}
+		return `${minutes} мин ${remainingSeconds} с`;
+	}
+
+	const hours = Math.floor(seconds / SECONDS_PER_HOUR);
+	const remainingMinutes = Math.floor((seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE);
+	if (remainingMinutes === 0) {
+		return `${hours} ${pluralize(hours, 'час', 'часа', 'часов')}`;
+	}
+	return `${hours} ч ${remainingMinutes} мин`;
 }
 
 const MOSCOW_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {

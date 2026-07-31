@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 class UpdateAppSettingsInput(BaseModel):
     voting_enabled: bool | None = None
-    announcement_timeout: int | None = Field(default=None, ge=1)
-    transition_buffer: int | None = Field(default=None, ge=0)
+    announcement_timeout_seconds: int | None = Field(default=None, ge=1)
+    transition_buffer_seconds: int | None = Field(default=None, ge=0)
 
 
 class UpdateSettings:
@@ -51,13 +51,19 @@ class UpdateSettings:
             update_flag = True
 
         if (
-            announcement_timeout := data_to_update.get("announcement_timeout")
+            announcement_timeout_seconds := data_to_update.get(
+                "announcement_timeout_seconds"
+            )
         ) is not None:
-            settings.update_limits(announcement_timeout=announcement_timeout)
+            settings.update_limits(
+                announcement_timeout_seconds=announcement_timeout_seconds
+            )
             update_flag = True
 
-        if (transition_buffer := data_to_update.get("transition_buffer")) is not None:
-            settings.update_limits(transition_buffer=transition_buffer)
+        if (
+            transition_buffer_seconds := data_to_update.get("transition_buffer_seconds")
+        ) is not None:
+            settings.update_limits(transition_buffer_seconds=transition_buffer_seconds)
             update_flag = True
 
         if not update_flag:
