@@ -233,8 +233,10 @@ class SendScheduleChangeNotifications:
             )
         if current_event and changed_event:
             # Project absolute start times once, reusing the same schedule-read
-            # timing service the app uses, so the push shows the same "≈ HH:MM"
-            # the schedule screen does.
+            # timing service the schedule uses. The push renders the absolute
+            # "примерно в HH:MM" — not the screen's live countdown: a delivered
+            # notification is read at an unknown later time and can't tick, so an
+            # absolute time stays correct where a relative one would be stale.
             settings = await self.settings_gateway.get()
             projected = apply_expected_start_times(
                 await self.schedule_gateway.read_list_schedule(),

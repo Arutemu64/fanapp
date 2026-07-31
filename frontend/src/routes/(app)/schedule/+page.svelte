@@ -280,7 +280,7 @@
 		</div>
 	</div>
 
-	<!-- Estimate disclaimer: the "≈ HH:MM" times are drift-projected, not
+	<!-- Estimate disclaimer: the per-event countdowns are drift-projected, not
 	     guaranteed. Kept as a quiet inline note (no border/panel) so it reads as
 	     guidance rather than a promo banner the eye skips. Shown only while an
 	     event is live, since that's the only time projected start times appear. -->

@@ -87,6 +87,15 @@
 
 	let queueUntil = $derived(currentEvent ? aheadOf(event.queue, currentEvent.queue) : null);
 
+	// Static countdown, no ticker: Date.now() is captured when this re-derives,
+	// which happens on every schedule reload — queueUntil decrements as the
+	// current-event pointer advances (one set-current SSE per sub-5-minute act),
+	// so the label refreshes at least that often without a per-second interval.
+	let untilLabel = $derived.by(() => {
+		if (queueUntil === null || queueUntil <= 0) return null;
+		return formatUntil(queueUntil, event.expected_start_time ?? null, Date.now());
+	});
+
 	async function handleMarkCurrent() {
 		const { error, response } = await client.PATCH('/schedule/{event_id}/current', {
 			params: { path: { event_id: event.id } }
@@ -275,30 +284,33 @@
 					</div>
 				{/if}
 
-				<!-- Quiet meta row: duration, countdown, subscription — muted text, no colored chip. -->
+				<!-- Quiet meta row: duration, countdown, subscription — muted text, no colored chip.
+				     Every chip aligns its icon to the first line (items-start + mt-px on the icon),
+				     not the centre: any chip can wrap to two lines on a narrow phone, and a centred
+				     icon would then float in the gap beside the first line. -->
 				<div class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
 					<span
-						class="inline-flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400"
+						class="inline-flex items-start gap-1 text-xs font-medium text-gray-500 dark:text-gray-400"
 					>
-						<ClockOutline class="h-3.5 w-3.5" />
+						<ClockOutline class="mt-px h-3.5 w-3.5 shrink-0" />
 						{formatDuration(event.duration)}
 					</span>
 
-					{#if queueUntil !== null && queueUntil > 0}
+					{#if untilLabel}
 						<span
-							class="inline-flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400"
+							class="inline-flex items-start gap-1 text-xs font-medium text-gray-500 dark:text-gray-400"
 						>
-							<HourglassOutline class="h-3.5 w-3.5" />
-							{formatUntil(queueUntil, event.expected_start_time ?? null)}
+							<HourglassOutline class="mt-px h-3.5 w-3.5 shrink-0" />
+							{untilLabel}
 						</span>
 					{/if}
 
 					{#if event.user_subscription}
 						<!-- Subscription threshold is personal meta, not event state: muted text like duration. The right-side bell carries the colored "subscribed" marker. -->
 						<span
-							class="inline-flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400"
+							class="inline-flex items-start gap-1 text-xs font-medium text-gray-500 dark:text-gray-400"
 						>
-							<BellActiveSolid class="h-3.5 w-3.5" />
+							<BellActiveSolid class="mt-px h-3.5 w-3.5 shrink-0" />
 							Напомним за {event.user_subscription.counter}
 							{pluralize(
 								event.user_subscription.counter,
