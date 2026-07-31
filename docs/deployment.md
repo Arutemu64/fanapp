@@ -140,6 +140,24 @@ domain with no rebuild (see [frontend.md](frontend.md)).
 `127.0.0.1:8000` (API); run Caddy with `Caddyfile.example` in front to reach them
 on a single origin (e.g. `http://localhost`).
 
+### Compression, and the SSE exception
+
+`Caddyfile.example` enables `encode zstd gzip`. The win is the API: `GET
+/schedule/` is unpaginated and runs to ~90 KiB, and every client refetches it on
+each `schedule_updated` event, so compressing it takes ~88% off the heaviest
+traffic on a venue's wifi. Static frontend assets are already gzipped inside the
+frontend container by [`nginx.conf`](../frontend/nginx.conf), and Caddy skips any
+response that already carries a `Content-Encoding` — they are not compressed
+twice.
+
+**`/api/events` (the SSE stream) is deliberately excluded**, and the exclusion
+should survive any rewrite of this file. Compression middleware buffers chunks
+and withholds the response headers until the first body bytes, which delays the
+`EventSource` handshake and can truncate the last event
+([caddyserver/caddy#6293](https://github.com/caddyserver/caddy/issues/6293)).
+Carry the carve-out over if you put a different proxy in front — with NGINX that
+means keeping `text/event-stream` out of `gzip_types`.
+
 With the relative default you only set the origin-dependent values to match how
 the browser reaches the site:
 
