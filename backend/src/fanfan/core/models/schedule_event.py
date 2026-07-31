@@ -18,6 +18,10 @@ class ScheduleEvent(AggregateRoot):
     # on stage gets one — breaks and other filler are announced by title alone.
     number: int | None
     title: str
+    # Planned stage time in seconds — the unit shared by `transition_buffer` and
+    # the expected-start projection (ADR-0008). Seconds rather than minutes
+    # because acts shorter than a minute are real, and because rounding a
+    # per-event duration compounds into schedule-wide drift.
     duration: int
     order: float
     is_current: bool

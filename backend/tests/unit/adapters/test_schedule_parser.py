@@ -19,7 +19,7 @@ TEMPLATE_PATH = REPO_ROOT / "frontend" / "static" / "schedule-template.xlsx"
 VALID_ROW = {
     "number": 1,
     "title": "Открытие фестиваля",
-    "duration": 15,
+    "duration": 900,
     "nomination_title": "Вне конкурса",
     "block_title": "Открытие",
 }
@@ -59,42 +59,42 @@ def test_parses_the_downloadable_template() -> None:
         ScheduleEntry(
             number=1,
             title="Открытие фестиваля",
-            duration=15,
+            duration=900,
             nomination_title="Вне конкурса",
             block_title="Открытие",
         ),
         ScheduleEntry(
             number=2,
             title="Дефиле «Наруто»",
-            duration=5,
+            duration=45,
             nomination_title="Одиночное дефиле",
             block_title="Косплей",
         ),
         ScheduleEntry(
             number=None,
             title="Перерыв",
-            duration=10,
+            duration=600,
             nomination_title="Вне конкурса",
             block_title="Косплей",
         ),
         ScheduleEntry(
             number=3,
             title="Сценка «Стальной алхимик»",
-            duration=8,
+            duration=480,
             nomination_title="Групповое дефиле",
             block_title="Косплей",
         ),
         ScheduleEntry(
             number=4,
             title="Вокал: «Унесённые призраками»",
-            duration=6,
+            duration=210,
             nomination_title="Вокал",
             block_title="Караоке",
         ),
         ScheduleEntry(
             number=5,
             title="Награждение и закрытие",
-            duration=20,
+            duration=1200,
             nomination_title="Вне конкурса",
             block_title="Закрытие",
         ),
@@ -104,7 +104,7 @@ def test_parses_the_downloadable_template() -> None:
 def test_column_order_does_not_matter() -> None:
     sheet = build_sheet(
         ["block_title", "duration", "number", "nomination_title", "title"],
-        [("Открытие", 15, 1, "Вне конкурса", "Открытие фестиваля")],
+        [("Открытие", 900, 1, "Вне конкурса", "Открытие фестиваля")],
     )
 
     assert parse_schedule_from_excel(sheet) == [ScheduleEntry(**VALID_ROW)]
@@ -112,12 +112,21 @@ def test_column_order_does_not_matter() -> None:
 
 def test_accepts_whole_numbers_stored_as_floats() -> None:
     # Excel has no integer type, so a hand-typed 1 can arrive as 1.0.
-    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(number=1.0, duration=15.0)])
+    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(number=1.0, duration=900.0)])
 
     schedule = parse_schedule_from_excel(sheet)
 
     assert schedule[0].number == 1
-    assert schedule[0].duration == 15
+    assert schedule[0].duration == 900
+
+
+def test_accepts_a_sub_minute_duration() -> None:
+    # `duration` is seconds, so an act shorter than a minute is an ordinary
+    # value rather than something to round up — a single defile really does run
+    # under a minute.
+    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(duration=45)])
+
+    assert parse_schedule_from_excel(sheet)[0].duration == 45
 
 
 def test_rejects_a_file_that_is_not_a_spreadsheet() -> None:

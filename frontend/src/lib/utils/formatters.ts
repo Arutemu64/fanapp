@@ -1,6 +1,38 @@
+const SECONDS_IN_MINUTE = 60;
+const SECONDS_IN_HOUR = 60 * SECONDS_IN_MINUTE;
+
+/**
+ * Render an event's `duration`, which the API carries in **seconds** end to end
+ * so a sub-minute act stays exact — the same value ADR-0008 projects expected
+ * start times from, where rounding to whole minutes would accumulate as drift.
+ *
+ * Units are dropped when they are zero, so a whole-minute act still reads
+ * "15 минут" rather than "15 минут 0 секунд".
+ */
 export function formatDuration(seconds: number): string {
-	const m = Math.ceil((seconds % 3600) / 60);
-	return `${m} ${pluralize(m, 'минута', 'минуты', 'минут')}`;
+	// Guards a negative or fractional value from the API into something
+	// renderable; the label is a read-only meta line, not a place to surface it.
+	const total = Math.max(0, Math.round(seconds));
+
+	const hours = Math.floor(total / SECONDS_IN_HOUR);
+	const minutes = Math.floor((total % SECONDS_IN_HOUR) / SECONDS_IN_MINUTE);
+	const remainingSeconds = total % SECONDS_IN_MINUTE;
+
+	const parts: string[] = [];
+	if (hours > 0) {
+		parts.push(`${hours} ${pluralize(hours, 'час', 'часа', 'часов')}`);
+	}
+	if (minutes > 0) {
+		parts.push(`${minutes} ${pluralize(minutes, 'минута', 'минуты', 'минут')}`);
+	}
+	// Also covers a zero duration, which would otherwise render as an empty label.
+	if (remainingSeconds > 0 || parts.length === 0) {
+		parts.push(
+			`${remainingSeconds} ${pluralize(remainingSeconds, 'секунда', 'секунды', 'секунд')}`
+		);
+	}
+
+	return parts.join(' ');
 }
 
 const MOSCOW_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {

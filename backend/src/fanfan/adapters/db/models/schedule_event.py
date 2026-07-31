@@ -24,6 +24,8 @@ class ScheduleEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, OrderMixin, BaseORM)
     # Not indexed: nothing filters or sorts on title. Reads go by id, queue,
     # order or is_current.
     title: Mapped[str] = mapped_column()
+    # Seconds, never minutes — sub-minute acts exist and the expected-start
+    # projection reads this column as seconds (ADR-0008).
     duration: Mapped[int] = mapped_column(server_default=text("0"))
     is_current: Mapped[bool] = mapped_column(server_default=text("false"))
     is_skipped: Mapped[bool] = mapped_column(server_default=text("false"))

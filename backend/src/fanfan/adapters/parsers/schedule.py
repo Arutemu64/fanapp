@@ -14,6 +14,11 @@ logger = logging.getLogger(__name__)
 # The header names the organizer must put in row 1. Matched by name, so column
 # order in the sheet is free. Kept in sync with the template spreadsheet
 # (frontend/static/schedule-template.xlsx) by a parser test.
+#
+# `duration` is read as whole **seconds** and stored unconverted, because that is
+# the unit every consumer downstream already uses (ADR-0008 projects expected
+# start times with `timedelta(seconds=duration)`). Minutes here would both
+# misreport every projection by 60x and make a sub-minute act unrepresentable.
 REQUIRED_COLUMNS = ("number", "title", "duration", "nomination_title", "block_title")
 
 # Row 1 holds the headers, so the first data row is row 2. Reported row numbers
