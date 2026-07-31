@@ -14,13 +14,27 @@
 	let eventNumber = $derived(event ? event.number.toString().padStart(3, '0') : null);
 </script>
 
+<!-- Green is the "on stage now" colour throughout the app — the programme tints the
+	 current row `bg-green-50` and badges it «Сейчас». This card is the same fact on
+	 another screen, so it wears the same colour. It stays neutral while nothing is
+	 marked: green here always means an act really is running. -->
 <section
 	aria-labelledby="live-now-heading"
-	class="rounded-2xl border border-primary-200 bg-primary-50 p-4 shadow-sm sm:p-5 dark:border-primary-800/50 dark:bg-primary-900/20"
+	class={[
+		'rounded-2xl border p-4 shadow-sm sm:p-5',
+		event
+			? 'border-green-200 bg-green-50 dark:border-green-800/50 dark:bg-green-900/20'
+			: 'border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900'
+	]}
 >
 	<div class="flex items-center gap-2.5">
 		<span
-			class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300"
+			class={[
+				'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl',
+				event
+					? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+					: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+			]}
 		>
 			<PlaySolid class="h-4 w-4" aria-hidden="true" />
 		</span>
@@ -30,6 +44,19 @@
 		>
 			Сейчас на сцене
 		</h2>
+
+		{#if event}
+			<!-- Same pulsing live dot as the programme's «Сейчас» badge, so the two screens
+				 share one marker. animate-ping is muted under reduced-motion via global CSS.
+				 Decorative: the heading above already says the act is on stage. -->
+			<span class="relative ml-auto flex h-2.5 w-2.5" aria-hidden="true">
+				<span
+					class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75"
+				></span>
+				<span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-600 dark:bg-green-500"
+				></span>
+			</span>
+		{/if}
 	</div>
 
 	{#if event}

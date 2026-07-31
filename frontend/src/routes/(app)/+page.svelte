@@ -3,7 +3,6 @@
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
-	import { resolveFestivalPhase } from '$lib/utils/festival';
 	import { ThumbsUpSolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
 
@@ -28,10 +27,10 @@
 	const offline = getOfflineService();
 	const eventsClient = getEventsClient();
 
-	// Re-evaluated whenever the schedule reloads, which is exactly when the phase can
-	// change: the `schedule_updated` stream fires as organizers mark acts, and that
-	// same reload is what carries a fresh clock into the fallback below.
-	let phase = $derived(resolveFestivalPhase(schedule, Date.now()));
+	// Resolved in the load so it and the navbar title can't disagree; it changes when
+	// the `schedule_updated` stream triggers a reload, which is exactly when an act
+	// being marked can move the festival from one phase to the next.
+	let phase = $derived(data.phase);
 
 	let currentEvent = $derived(schedule.find((event) => event.is_current) ?? null);
 

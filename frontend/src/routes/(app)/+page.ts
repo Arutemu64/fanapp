@@ -1,6 +1,7 @@
 import { createApiClient } from '$lib/api';
 import { loadSchedule, loadSubscriptions, mergeSubscriptions } from '$lib/api/schedule';
 import { isReachable } from '$lib/services/reachability';
+import { resolveFestivalPhase } from '$lib/utils/festival';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 
 import type { PageLoad } from './$types';
@@ -24,8 +25,16 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	// clock-driven phase (countdown or wrap-up) rather than an error screen.
 	const schedule = scheduleResult.data ?? [];
 
+	// Resolved here rather than in the component so the phase and the navbar title
+	// come from one value — and so re-running the load is the only thing that can
+	// change either, which is what the `schedule_updated` stream triggers.
+	const phase = resolveFestivalPhase(schedule, Date.now());
+
 	return {
-		// No `title`: the hero is this page's heading, so the navbar shows none.
+		// Before the festival the hero carries the page <h1>, so the navbar leaves the
+		// slot empty; in the other phases nothing else does, so the navbar takes it.
+		title: phase === 'before' ? undefined : 'ФАН ФАН',
+		phase,
 		schedule: mergeSubscriptions(schedule, subscriptions),
 		canVote,
 		stale: scheduleResult.stale,
