@@ -25,7 +25,7 @@ pytestmark = [
 ]
 
 
-def _entry(number: int, title: str) -> ScheduleEntry:
+def _entry(number: int | None, title: str) -> ScheduleEntry:
     return ScheduleEntry(
         number=number,
         title=title,
@@ -35,7 +35,7 @@ def _entry(number: int, title: str) -> ScheduleEntry:
     )
 
 
-def _schedule_event(number: int, title: str, order: float) -> ScheduleEvent:
+def _schedule_event(number: int | None, title: str, order: float) -> ScheduleEvent:
     return ScheduleEvent(
         id=generate_schedule_event_id(),
         number=number,
@@ -131,6 +131,42 @@ async def test_import_updates_existing_and_deletes_orphans(
     assert by_number[3].title == "Новое событие"
     # Orphan is gone.
     assert await schedule_gateway.get_by_id(orphan.id) is None
+
+
+async def test_import_replaces_numberless_events(
+    dishka_request: AsyncContainer,
+    schedule_editor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+):
+    interactor = await dishka_request.get(ImportSchedule)
+    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    login(schedule_editor)
+
+    # A break carries no number, so nothing in the file can be matched to it:
+    # the old row is deleted as an orphan and the imported one is created fresh.
+    existing_break = _schedule_event(None, "Перерыв", 100.0)
+    await schedule_gateway.add(existing_break)
+    await uow.commit()
+
+    await interactor(
+        ImportScheduleInput(
+            schedule=[
+                _entry(1, "Открытие"),
+                _entry(None, "Перерыв"),
+                _entry(None, "Технический перерыв"),
+            ]
+        )
+    )
+
+    schedule = sorted(await schedule_gateway.list_all(), key=lambda e: e.order)
+    assert [(e.number, e.title) for e in schedule] == [
+        (1, "Открытие"),
+        (None, "Перерыв"),
+        (None, "Технический перерыв"),
+    ]
+    # Same title, but a new event — the previous break was not matched.
+    assert await schedule_gateway.get_by_id(existing_break.id) is None
 
 
 async def test_import_without_permission_raises_access_denied(

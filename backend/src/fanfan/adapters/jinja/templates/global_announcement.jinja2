@@ -1,6 +1,8 @@
-{% if current_event_number -%}
-<b>Сейчас:</b> №{{ '%03d' % current_event_number }} <b>{{ current_event_title }}</b>
+{# Gated on the title, not the number: an event without a public number (a
+   break) still gets announced, it just loses the №001 prefix. #}
+{% if current_event_title -%}
+<b>Сейчас:</b> {% if current_event_number is not none %}№{{ '%03d' % current_event_number }} {% endif %}<b>{{ current_event_title }}</b>
 {% endif %}
-{% if next_event_number -%}
-<b>Затем:</b> №{{ '%03d' % next_event_number }} {{ next_event_title }}
+{% if next_event_title -%}
+<b>Затем:</b> {% if next_event_number is not none %}№{{ '%03d' % next_event_number }} {% endif %}{{ next_event_title }}
 {% endif %}

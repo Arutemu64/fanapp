@@ -17,7 +17,10 @@ from fanfan.adapters.db.models.mixins.timestamps import UpdatedAtMixin
 class ScheduleEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, OrderMixin, BaseORM):
     __tablename__ = "schedule_events"
 
-    number: Mapped[int] = mapped_column(unique=True)
+    # Nullable: breaks and other filler rows carry no public number. Postgres
+    # treats NULLs as distinct in a unique index, so any number of numberless
+    # events coexist while real numbers stay unique.
+    number: Mapped[int | None] = mapped_column(unique=True)
     # Not indexed: nothing filters or sorts on title. Reads go by id, queue,
     # order or is_current.
     title: Mapped[str] = mapped_column()

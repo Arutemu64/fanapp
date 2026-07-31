@@ -59,7 +59,19 @@ class SendScheduleChangeNotifications:
         self.events_broker = events_broker
 
     @staticmethod
+    def _event_label(event: ScheduleChangeEventDTO) -> str:
+        """Name an event inside a notification body.
+
+        A numberless event (a break) is named by its title instead — it is the
+        only handle the reader has, and there is no number to print.
+        """
+        if event.number is None:
+            return f"«{event.title}»"
+        return f"№{event.number:03d}"
+
+    @classmethod
     def _resolve_reason_msg(
+        cls,
         schedule_change: ScheduleChangeFullDTO,
     ) -> str | None:
         changed_event = schedule_change.changed_event
@@ -67,18 +79,21 @@ class SendScheduleChangeNotifications:
         match schedule_change.type:
             case ScheduleChangeType.SET_AS_CURRENT:
                 if changed_event:
-                    return f"Выступление №{changed_event.number:03d} началось"
+                    return f"Выступление {cls._event_label(changed_event)} началось"
                 if argument_event:
-                    return f"Выступление №{argument_event.number:03d} больше не текущее"
+                    return (
+                        f"Выступление {cls._event_label(argument_event)} "
+                        f"больше не текущее"
+                    )
             case ScheduleChangeType.MOVED:
                 if changed_event:
-                    return f"Выступление №{changed_event.number:03d} перенесено"
+                    return f"Выступление {cls._event_label(changed_event)} перенесено"
             case ScheduleChangeType.SKIPPED:
                 if changed_event:
-                    return f"Выступление №{changed_event.number:03d} было снято"
+                    return f"Выступление {cls._event_label(changed_event)} было снято"
             case ScheduleChangeType.UNSKIPPED:
                 if changed_event:
-                    return f"Выступление №{changed_event.number:03d} вернулось"
+                    return f"Выступление {cls._event_label(changed_event)} вернулось"
         return None
 
     async def _build_editor_notifications(

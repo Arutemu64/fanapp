@@ -7,7 +7,8 @@ from fanfan.core.vo.schedule_event import ScheduleEventId
 
 class ScheduleEventFullDTO(BaseModel):
     id: ScheduleEventId
-    number: int
+    # None for events with no public number (breaks and other filler rows).
+    number: int | None
     title: str
     duration: int
     order: float
