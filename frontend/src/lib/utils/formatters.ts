@@ -76,11 +76,6 @@ const MOSCOW_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
 	timeZone: 'Europe/Moscow'
 });
 
-/** Wall-clock HH:MM in the festival timezone, e.g. an event's expected start. */
-export function formatMoscowTime(value: string | number | Date): string {
-	return MOSCOW_TIME_FORMATTER.format(new Date(value));
-}
-
 const MOSCOW_DAY_MONTH_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
 	day: '2-digit',
 	month: '2-digit',
@@ -120,21 +115,62 @@ export function formatSyncedAt(timestamp: number): string {
 }
 
 /**
- * Countdown label for an upcoming event: how many acts away (drift-proof) plus
- * the absolute expected start time as an anchor when known. On a schedule that
- * drifts, the queue distance is always exact, while the "≈ HH:MM" survives being
- * read minutes later — see ADR-0008.
+ * Relative countdown to an event's projected start, e.g. "через 2 часа 15 минут".
+ * Spelled out (not abbreviated) to match {@link formatDuration} on the same row.
  *
- * An expected time already in the past means the data is a stale snapshot (the
- * show drifted since the last poll), so showing it would be visibly wrong —
- * fall back to the queue distance alone.
+ * `now` is passed in rather than read here so the label is pure/testable and
+ * re-derives when the caller does — on each schedule reload (one per set-current
+ * SSE, at most a sub-5-minute act apart), which is what keeps a static countdown
+ * from drifting far. A projected start already in the past means the snapshot
+ * drifted since that reload, so the countdown would be visibly wrong: it is
+ * dropped and the drift-proof queue distance stands alone.
  */
-export function formatUntil(queueUntil: number, expectedStartTime: string | null): string {
-	const base = `Через ${queueUntil} ${pluralize(queueUntil, 'выступление', 'выступления', 'выступлений')}`;
-	if (!expectedStartTime || new Date(expectedStartTime).getTime() <= Date.now()) {
+function formatStartsIn(expectedStartTime: string, now: number): string {
+	const diffMs = new Date(expectedStartTime).getTime() - now;
+	if (diffMs <= 0) {
+		return '';
+	}
+
+	const totalMinutes = Math.floor(diffMs / (SECONDS_IN_MINUTE * 1000));
+	if (totalMinutes < 1) {
+		return 'меньше минуты';
+	}
+
+	const hours = Math.floor(totalMinutes / 60);
+	const minutes = totalMinutes % 60;
+
+	const parts: string[] = [];
+	if (hours > 0) {
+		parts.push(`${hours} ${pluralize(hours, 'час', 'часа', 'часов')}`);
+	}
+	if (minutes > 0) {
+		// Accusative forms ("через 1 минуту", not "1 минута"): the preposition
+		// "через" governs the accusative, unlike the caseless formatDuration label.
+		parts.push(`${minutes} ${pluralize(minutes, 'минуту', 'минуты', 'минут')}`);
+	}
+
+	return `через ${parts.join(' ')}`;
+}
+
+/**
+ * Countdown label for an upcoming event: the drift-proof queue distance ("how
+ * many acts away") plus a relative countdown to its projected start. On a
+ * schedule that drifts, the queue distance is always exact; the countdown is
+ * re-derived on each schedule reload rather than ticking (see
+ * {@link formatStartsIn}). See ADR-0008.
+ */
+export function formatUntil(
+	queueUntil: number,
+	expectedStartTime: string | null,
+	now: number
+): string {
+	const base = `Осталось ${queueUntil} ${pluralize(queueUntil, 'выступление', 'выступления', 'выступлений')}`;
+	if (!expectedStartTime) {
 		return base;
 	}
-	return `${base} · ≈ ${formatMoscowTime(expectedStartTime)}`;
+
+	const startsIn = formatStartsIn(expectedStartTime, now);
+	return startsIn ? `${base} · ${startsIn}` : base;
 }
 
 /**
