@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Pathname } from '$app/types';
 	import type { CurrentUserDTO } from '$lib/types/user';
+	import type { FestivalPhase } from '$lib/utils/festival';
 	import type { Component } from 'svelte';
 
 	import { getPwaService } from '$lib/services/pwa.svelte';
@@ -16,9 +17,10 @@
 
 	interface Props {
 		user: CurrentUserDTO | null;
+		phase: FestivalPhase;
 	}
 
-	let { user }: Props = $props();
+	let { user, phase }: Props = $props();
 
 	const pwa = getPwaService();
 
@@ -34,6 +36,13 @@
 
 	// Show the install card while the library reports it's available on this platform.
 	let showPwa = $derived(pwa.canInstall);
+
+	// Once the festival is running, the section drops to the steps that still *block*
+	// something (an account and a ticket gate voting; installing is what unlocks push
+	// on iOS). The suggestions — browse the programme, set up reminders — are dropped:
+	// mid-festival they duplicate the bottom nav and push the running order down the
+	// screen, which is the one thing the attendee actually came for.
+	let onlyBlockingSteps = $derived(phase !== 'before');
 
 	// Built in priority order so the first card is always the user's single most
 	// important next step (account → ticket → schedule); the PWA nudge trails last.
@@ -62,7 +71,7 @@
 			});
 		}
 
-		if (user) {
+		if (user && !onlyBlockingSteps) {
 			list.push({
 				key: 'schedule',
 				title: 'Посмотреть программу',
@@ -97,6 +106,13 @@
 		return list;
 	});
 
+	let heading = $derived(onlyBlockingSteps ? 'Что ещё можно сделать' : 'Подготовься к фестивалю');
+	let intro = $derived(
+		onlyBlockingSteps
+			? 'Пара шагов, чтобы голосовать и получать напоминания.'
+			: 'Несколько шагов, чтобы получить максимум от приложения на мероприятии.'
+	);
+
 	// Lead with the top step as a prominent card; the rest fill a compact grid.
 	let featured = $derived(cards[0]);
 	let rest = $derived(cards.slice(1));
@@ -106,10 +122,10 @@
 	<section aria-labelledby="get-ready-heading" class="space-y-3">
 		<div class="max-w-3xl space-y-1">
 			<h2 id="get-ready-heading" class="text-lg font-semibold text-gray-900 dark:text-white">
-				Подготовься к фестивалю
+				{heading}
 			</h2>
 			<p class="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-				Несколько шагов, чтобы получить максимум от приложения на мероприятии.
+				{intro}
 			</p>
 		</div>
 

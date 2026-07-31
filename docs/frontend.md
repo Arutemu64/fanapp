@@ -30,6 +30,20 @@ The app is a **client-rendered SPA**: `export const ssr = false` lives in the ro
 * **Pass the load `fetch`**: Always pass the SvelteKit-provided `fetch` (from load functions) inside the request options block of your client calls (e.g., `client.GET('/route', { fetch })`). It gives request deduplication, relative-URL resolution, and integration with `invalidate()`. The session cookie is carried automatically by the browser (the API client uses `credentials: 'include'`).
 * **Session-expiry reconciliation (401 middleware)**: Every client from `createApiClient` carries an `openapi-fetch` middleware that reacts to a `401` on any endpoint by firing `invalidate('app:current-user')` (debounced to one refresh per burst). The root layout then re-fetches `/me/`, caches the logged-out verdict, clears per-user caches, and the `(protected)` guard redirects — so an expired session flips the whole app to guest state instead of leaving a stale "logged in" UI. `/me/` itself is excluded (it *is* the verdict — reacting would loop) and so are the credential logins (`/auth/login`, `/auth/login-with-code`), whose 401 means "wrong credentials". Components keep their own inline 401 handling; the middleware is fire-and-forget and never swallows the response.
 * **Typed `data`**: Always type page/layout props with the generated `PageProps`/`LayoutProps` (or `PageData`/`LayoutData`) from `./$types`. Never leave `$props()` untyped — typed `data` is what catches load/page mismatches at check time.
+* **Schedule loading lives in `$lib/api/schedule.ts`**: `loadSchedule`, `loadSubscriptions` and `mergeSubscriptions` are shared by the home page and the programme page, which render the same rows from the same two cache entries (`schedule` in `universalScope`, `subscriptions:<userId>` in `userScope`). Add a third consumer there rather than re-deriving the keys — two pages inventing their own keys for the same data would shadow each other's offline copies. Both pages also `depends('app:schedule')` and re-`invalidate` it on the `schedule_updated` and `connection_established` SSE events.
+
+### Home page phases
+
+`routes/(app)/+page.svelte` renders one of three layouts, chosen by `resolveFestivalPhase` (`$lib/utils/festival.ts`) from the schedule, with `FESTIVAL_START` (`$lib/constants/festival.ts`) as the fallback clock:
+
+| Phase | Shown | Chosen when |
+| --- | --- | --- |
+| `before` | Hero + countdown + all setup steps | No act has run and the clock is short of `FESTIVAL_START` |
+| `live` | Act on stage, "Дальше", the viewer's nearest subscription, the voting CTA | An act is marked current, some acts have run, or the clock has passed the start |
+| `after` | Wrap-up card | Every non-skipped act has run and none is current |
+
+The schedule outranks the clock deliberately: a programme that starts late, overruns or is cancelled moves those flags, while `FESTIVAL_START` is a date written months earlier. The page is the PWA `start_url`, so its `load` never throws — a schedule it cannot fetch or find in the cache degrades to the clock-driven phase. It is also the one page that returns no `title`, because the hero (or the phase heading) *is* its `h1`.
+
 ### Access Control (don't duplicate guards)
 
 Guards run client-side in **universal `load`** functions (these are UX redirects only — the backend enforces real auth on every endpoint):

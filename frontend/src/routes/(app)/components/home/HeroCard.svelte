@@ -1,26 +1,15 @@
 <script lang="ts">
+	import { FESTIVAL_START } from '$lib/constants/festival';
 	import { pluralize } from '$lib/utils/formatters';
-	import { CalendarMonthOutline, GlobeOutline, MapPinAltOutline } from 'flowbite-svelte-icons';
+	import { CalendarMonthOutline, MapPinAltOutline } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
-	import TelegramIcon from '~icons/simple-icons/telegram';
-	import TiktokIcon from '~icons/simple-icons/tiktok';
-	import VkIcon from '~icons/simple-icons/vk';
 
 	// Bundled (not static/) so Vite content-hashes the file: swapping the art
 	// busts every cache — including the precached PWA copy — with no stale-image
 	// risk. It's emitted into `build`, which the service worker already precaches.
 	import heroArt from './main.webp';
-
-	const socials = [
-		{ label: 'Официальный сайт fancom.info', href: 'https://fancom.info', icon: GlobeOutline },
-		{ label: 'Telegram', href: 'https://t.me/fanfan_fest_news', icon: TelegramIcon },
-		{ label: 'ВКонтакте', href: 'https://vk.com/fan_fest', icon: VkIcon },
-		{ label: 'TikTok', href: 'https://www.tiktok.com/@fan_fan_official', icon: TiktokIcon }
-	];
-
-	// Program start — 22 August 2026, 11:30 Moscow time (UTC+3).
-	const TARGET = new Date('2026-08-22T11:30:00+03:00').getTime();
+	import SocialLinks from './SocialLinks.svelte';
 
 	let now = $state(Date.now());
 	let intervalId: ReturnType<typeof setInterval> | null = null;
@@ -29,7 +18,7 @@
 	// instead of the browser's broken-image icon.
 	let imageFailed = $state(false);
 
-	let remaining = $derived(Math.max(0, TARGET - now));
+	let remaining = $derived(Math.max(0, FESTIVAL_START - now));
 	let hasStarted = $derived(remaining <= 0);
 
 	const SECOND = 1000;
@@ -230,18 +219,8 @@
 				</div>
 			</dl>
 
-			<div class="flex flex-wrap items-center gap-2 pt-1">
-				{#each socials as social (social.href)}
-					<a
-						href={social.href}
-						target="_blank"
-						rel="noopener noreferrer external"
-						aria-label={social.label}
-						class="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-gray-600 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-primary-500 dark:hover:bg-primary-900/20 dark:hover:text-primary-400"
-					>
-						<social.icon class="h-5 w-5" aria-hidden="true" />
-					</a>
-				{/each}
+			<div class="pt-1">
+				<SocialLinks />
 			</div>
 		</div>
 	</div>
