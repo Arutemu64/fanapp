@@ -144,6 +144,40 @@ An action that cannot finish inside the request returns **202** with the created
 * **Prefer SSE over polling for progress.** The page subscribes to the relevant `SSEEventName` (here `sync_run_updated`) and calls `invalidate(...)`; it also re-invalidates on `connection_established`, so an update missed while the stream was down (or the tab was backgrounded past the pause grace) self-heals on reconnect rather than leaving a stale "in progress" on screen. Treat the SSE payload as a nudge to refetch, never as the source of truth.
 * **A second request while one is running is a 409**, mapped to Russian copy by `code` like any other error — not a silent no-op.
 
+### Values that depend on "now" are derived on the client
+
+A field whose correct value changes with the wall clock is stale the moment the
+response is serialized. The API therefore publishes **absolute anchors and the
+inputs**, and the page derives the time-relative display itself — the same shape
+as `formatRelativeTime`, which turns an absolute `created_at` into "2 минуты
+назад" rather than having the backend send that string.
+
+The schedule's expected start times are the worked example. `GET /schedule/`
+sends `actual_start_time` (the anchor), `duration_seconds` per event and
+`transition_buffer_seconds` for the gap between them; the page re-runs the
+ADR-0008 projection in `lib/utils/scheduleTiming.ts` against a ticking clock, so
+an overrunning act pushes the whole tail forward on screen instead of leaving
+times that quietly slip into the past between SSE nudges.
+
+* **Correct the device clock from the `Date` response header**
+  ([RFC 9110 §6.6.1](https://www.rfc-editor.org/rfc/rfc9110.html#section-6.6.1)),
+  never trust `Date.now()` alone — a phone with a mis-set clock would skew every
+  countdown. Readable because the app and the API are same-origin; a
+  split-origin deployment would have to add `Date` to
+  `Access-Control-Expose-Headers`, as it is not CORS-safelisted.
+* **`expected_start_time` on the response is a snapshot, not the live value.**
+  It is what an offline render falls back to and what the subscription push text
+  carries (there is no client there to project). When both are available the
+  client's own projection wins.
+* **The two implementations must move together.** `application/services/
+  schedule_timing.py` and `lib/utils/scheduleTiming.ts` are the same algorithm;
+  their test suites mirror each other case for case so a divergence shows up as
+  a failing pair rather than a wrong time on a phone.
+
+Business rules, authorization and anything that must read identically for every
+viewer stay on the server. This is only about *presentation of a value derived
+from the current moment*.
+
 ---
 
 ## 🇷🇺 Russian Localization & Error Handling
