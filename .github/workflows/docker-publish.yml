@@ -98,6 +98,7 @@ jobs:
           # release, which is what makes "did this deploy break it" answerable.
           build-args: |
             ${{ matrix.name == 'frontend' && format('PUBLIC_API_URL={0}', vars.PUBLIC_API_URL) || '' }}
+            ${{ matrix.name == 'frontend' && format('PUBLIC_TIMEZONE={0}', vars.PUBLIC_TIMEZONE) || '' }}
             ${{ matrix.name == 'frontend' && format('PUBLIC_VAPID_KEY={0}', vars.PUBLIC_VAPID_KEY) || '' }}
             ${{ matrix.name == 'frontend' && format('PUBLIC_SENTRY_DSN={0}', vars.PUBLIC_SENTRY_DSN) || '' }}
             ${{ matrix.name == 'frontend' && format('PUBLIC_SENTRY_ENVIRONMENT={0}', vars.PUBLIC_SENTRY_ENVIRONMENT) || '' }}

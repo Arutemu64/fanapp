@@ -1,5 +1,14 @@
+import { PUBLIC_TIMEZONE } from '$env/static/public';
+
 const SECONDS_IN_MINUTE = 60;
 const SECONDS_IN_HOUR = 60 * SECONDS_IN_MINUTE;
+
+// Single event/venue timezone for the whole app. Everyone using this app is at
+// the venue, so times are shown on the venue clock regardless of the device's own
+// zone — this is an event timezone, not a per-user one. Sourced from
+// PUBLIC_TIMEZONE so it stays in sync with the backend's TIMEZONE; falls back to
+// the same Europe/Moscow default the backend uses when the build var is empty.
+const EVENT_TIME_ZONE = PUBLIC_TIMEZONE || 'Europe/Moscow';
 
 /**
  * Render an event's `duration`, which the API carries in **seconds** end to end
@@ -35,17 +44,17 @@ export function formatDuration(seconds: number): string {
 	return parts.join(' ');
 }
 
-const MOSCOW_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+const EVENT_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
 	day: '2-digit',
 	month: '2-digit',
 	year: 'numeric',
 	hour: '2-digit',
 	minute: '2-digit',
-	timeZone: 'Europe/Moscow'
+	timeZone: EVENT_TIME_ZONE
 });
 
-function formatMoscowDateTime(value: string | number | Date): string {
-	return MOSCOW_DATE_TIME_FORMATTER.format(new Date(value));
+function formatEventDateTime(value: string | number | Date): string {
+	return EVENT_DATE_TIME_FORMATTER.format(new Date(value));
 }
 
 export function formatRelativeTime(value: string | number | Date): string {
@@ -67,51 +76,51 @@ export function formatRelativeTime(value: string | number | Date): string {
 		return `${diffHours} ${pluralize(diffHours, 'час', 'часа', 'часов')} назад`;
 	}
 
-	return formatMoscowDateTime(date);
+	return formatEventDateTime(date);
 }
 
-const MOSCOW_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+const EVENT_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
 	hour: '2-digit',
 	minute: '2-digit',
-	timeZone: 'Europe/Moscow'
+	timeZone: EVENT_TIME_ZONE
 });
 
-const MOSCOW_DAY_MONTH_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+const EVENT_DAY_MONTH_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
 	day: '2-digit',
 	month: '2-digit',
-	timeZone: 'Europe/Moscow'
+	timeZone: EVENT_TIME_ZONE
 });
 
-// Y-M-D in Moscow time, used only to compare calendar days regardless of the
-// device's own timezone (en-CA gives a stable "2026-06-19" shape).
-const MOSCOW_DAY_KEY_FORMATTER = new Intl.DateTimeFormat('en-CA', {
+// Y-M-D in the event timezone, used only to compare calendar days regardless of
+// the device's own timezone (en-CA gives a stable "2026-06-19" shape).
+const EVENT_DAY_KEY_FORMATTER = new Intl.DateTimeFormat('en-CA', {
 	year: 'numeric',
 	month: '2-digit',
 	day: '2-digit',
-	timeZone: 'Europe/Moscow'
+	timeZone: EVENT_TIME_ZONE
 });
 
 /**
  * Format when cached data was last synced, for the offline stale notice. Caching
  * may have happened days earlier (installed at home, opened at the venue), so the
- * day is always shown unless it is today/yesterday. Moscow time, like the rest of
- * the app.
+ * day is always shown unless it is today/yesterday. Event timezone, like the rest
+ * of the app.
  */
 export function formatSyncedAt(timestamp: number): string {
 	const target = new Date(timestamp);
-	const time = MOSCOW_TIME_FORMATTER.format(target);
+	const time = EVENT_TIME_FORMATTER.format(target);
 
 	const now = new Date();
 	const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-	const targetDay = MOSCOW_DAY_KEY_FORMATTER.format(target);
+	const targetDay = EVENT_DAY_KEY_FORMATTER.format(target);
 
-	if (targetDay === MOSCOW_DAY_KEY_FORMATTER.format(now)) {
+	if (targetDay === EVENT_DAY_KEY_FORMATTER.format(now)) {
 		return `сегодня в ${time}`;
 	}
-	if (targetDay === MOSCOW_DAY_KEY_FORMATTER.format(yesterday)) {
+	if (targetDay === EVENT_DAY_KEY_FORMATTER.format(yesterday)) {
 		return `вчера в ${time}`;
 	}
-	return `${MOSCOW_DAY_MONTH_FORMATTER.format(target)} в ${time}`;
+	return `${EVENT_DAY_MONTH_FORMATTER.format(target)} в ${time}`;
 }
 
 /**
