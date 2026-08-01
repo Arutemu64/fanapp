@@ -9,6 +9,7 @@ services:
       # public, non-secret constants.
       args:
         PUBLIC_API_URL: ${PUBLIC_API_URL}
+        PUBLIC_TIMEZONE: ${PUBLIC_TIMEZONE}
         PUBLIC_VAPID_KEY: ${PUBLIC_VAPID_KEY}
         PUBLIC_SENTRY_DSN: ${PUBLIC_SENTRY_DSN}
         PUBLIC_SENTRY_ENVIRONMENT: ${PUBLIC_SENTRY_ENVIRONMENT}

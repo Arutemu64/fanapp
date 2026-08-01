@@ -125,13 +125,15 @@ jobs:
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
-    # `check` and `build` read PUBLIC_* via `$env/static/public`, which errors on
-    # any referenced var that is undefined at build time. Supply them from the
+    # `check`, `build` and `test` read PUBLIC_* via `$env/static/public`, which
+    # errors on any referenced var that is undefined at build time (`test` pulls
+    # PUBLIC_TIMEZONE in through the formatters it covers). Supply them from the
     # same repository variables the publish workflow bakes in (empty is fine — the
-    # vars just need to exist). `lint` and `test` ignore them.
+    # vars just need to exist). `lint` ignores them.
     env:
       PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
       PUBLIC_APP_VERSION: ${{ vars.PUBLIC_APP_VERSION }}
+      PUBLIC_TIMEZONE: ${{ vars.PUBLIC_TIMEZONE }}
       PUBLIC_VAPID_KEY: ${{ vars.PUBLIC_VAPID_KEY }}
       PUBLIC_SENTRY_DSN: ${{ vars.PUBLIC_SENTRY_DSN }}
       PUBLIC_SENTRY_ENVIRONMENT: ${{ vars.PUBLIC_SENTRY_ENVIRONMENT }}
