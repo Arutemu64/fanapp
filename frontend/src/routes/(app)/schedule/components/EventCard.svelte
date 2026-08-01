@@ -242,14 +242,17 @@
 	<div class="min-w-0 flex-1">
 		<div class="flex items-start gap-2">
 			<div class="min-w-0 flex-1">
-				<h3
+				<!-- h4, not h3: nests under the nomination header (h3) in the parent, which
+					sits under the block header (h2). Same level as the nomination would
+					flatten the programme outline for screen-reader heading navigation. -->
+				<h4
 					class={[
 						'text-base leading-snug font-semibold text-gray-900 dark:text-white',
 						isSkipped && 'line-through'
 					]}
 				>
 					{event.title}
-				</h3>
+				</h4>
 
 				<!-- Colored state badges get their own row so they read as a distinct tier above the quiet meta, and wrap predictably on narrow screens. Rendered only when a state is present, so the common no-badge row stays single-line. -->
 				{#if event.is_current || isSkipped}
@@ -359,6 +362,7 @@
 						type="button"
 						onclick={askToggleCurrent}
 						aria-label={event.is_current ? 'Снять отметку' : 'Отметить текущим'}
+						aria-pressed={event.is_current}
 						title={event.is_current ? 'Снять отметку' : 'Отметить текущим'}
 						class="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-primary-50 text-primary-700 transition-colors hover:bg-primary-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/50"
 					>
@@ -384,6 +388,7 @@
 					type="button"
 					onclick={askToggleSkip}
 					aria-label={isSkipped ? 'Вернуть' : 'Пропустить'}
+					aria-pressed={isSkipped}
 					title={isSkipped ? 'Вернуть' : 'Пропустить'}
 					class={[
 						'inline-flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none',
