@@ -672,7 +672,7 @@ dev = [
     { name = "ruff", specifier = ">=0.15.22" },
     { name = "testcontainers", specifier = ">=4.15.0" },
     { name = "ty", specifier = ">=0.0.62" },
-    { name = "types-authlib", specifier = ">=1.7.1.20260722" },
+    { name = "types-authlib", specifier = ">=1.7.2.20260724" },
     { name = "uv-sort", specifier = ">=0.7.1" },
     { name = "xlsxwriter", specifier = ">=3.2.9" },
 ]
@@ -1835,14 +1835,14 @@ wheels = [
 
 [[package]]
 name = "types-authlib"
-version = "1.7.1.20260722"
+version = "1.7.2.20260724"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/08/36/5d83da012e26b4a9433409ca2cd6a87060e598b6e5db1013313c55e375a7/types_authlib-1.7.1.20260722.tar.gz", hash = "sha256:1f36356bd0648ce9d50eedf12c1112ec86bf45bfe85b755a90ecab23a4e927a2", size = 49369, upload-time = "2026-07-22T04:56:01.302Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/37/ed/2f209e2a7331dd7475ba489d23ec5a6d500416f594940cb910e6defee4c9/types_authlib-1.7.2.20260724.tar.gz", hash = "sha256:ce1f40fa4269daf029e9b288d82083675b45c9e88c2787be6a4bfdd5484607f1", size = 49508, upload-time = "2026-07-24T04:59:55.977Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/be/75/78331f33def2721ea4877f0157f775f57d9b9ff107e08a1234bf24f515f3/types_authlib-1.7.1.20260722-py3-none-any.whl", hash = "sha256:ee42df33180924d6e03f56a513f044b4670b8ea802567335da682a5d2619e8e9", size = 109089, upload-time = "2026-07-22T04:56:00.211Z" },
+    { url = "https://files.pythonhosted.org/packages/cc/d6/eb96fb554d2fdcf95e39edb815a86b490f061a8e33a5743cc9ba789377ae/types_authlib-1.7.2.20260724-py3-none-any.whl", hash = "sha256:ed5ad55d94eadfc4df8ac6396df36e28bd188bf50e05ae892463ff6d85456e03", size = 109384, upload-time = "2026-07-24T04:59:54.957Z" },
 ]
 
 [[package]]
