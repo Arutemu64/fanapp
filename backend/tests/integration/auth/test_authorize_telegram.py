@@ -119,30 +119,3 @@ async def test_different_subjects_get_different_users(
     first = await session_store.resolve_session(one)
     second = await session_store.resolve_session(two)
     assert first.user_id != second.user_id
-
-
-async def test_login_backfills_a_missing_notification_address(
-    dishka_request: AsyncContainer,
-):
-    # A token carrying only `openid` has no Bot API id, which would leave the
-    # account unreachable over Telegram forever. The next login that does carry
-    # one has to heal it — nothing else ever writes this column.
-    interactor = await dishka_request.get(AuthorizeTelegram)
-    social_identity_gateway = await dishka_request.get(SocialIdentityGateway)
-    session_store = await dishka_request.get(SessionStore)
-
-    await interactor(
-        AuthorizeTelegramInput(subject=TELEGRAM_SUBJECT, provider_user_id=None)
-    )
-    session_id = await interactor(
-        AuthorizeTelegramInput(
-            subject=TELEGRAM_SUBJECT, provider_user_id=TELEGRAM_USER_ID
-        )
-    )
-
-    resolution = await session_store.resolve_session(session_id)
-    identity = await social_identity_gateway.get_by_provider(
-        resolution.user_id, SocialProvider.TELEGRAM
-    )
-    assert identity is not None
-    assert identity.provider_user_id == TELEGRAM_USER_ID

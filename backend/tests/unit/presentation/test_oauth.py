@@ -118,14 +118,12 @@ def test_token_without_a_subject_is_rejected():
 
 
 # A bot signing with EdDSA or ES256K gets the `profile` scope rejected by
-# Telegram, so the ID token verifies but carries no `id`. That is a degraded
-# login (no notification address), not a failed one — `sub` still identifies,
-# and the next login carrying an id backfills it.
-def test_token_without_profile_claims_still_identifies_the_user():
-    claims = read_telegram_claims({"userinfo": {"sub": SUBJECT}})
-
-    assert claims.sub == SUBJECT
-    assert claims.id is None
+# Telegram, so the ID token verifies but carries no `id`. The app requires the
+# notification address on every identity, so such a token is refused rather than
+# producing an unreachable account.
+def test_token_without_an_id_is_rejected():
+    with pytest.raises(InvalidTelegramAuthPayload):
+        read_telegram_claims({"userinfo": {"sub": SUBJECT}})
 
 
 async def _fetch_claims(app: FakeTelegramApp):

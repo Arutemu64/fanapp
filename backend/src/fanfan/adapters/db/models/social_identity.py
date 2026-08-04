@@ -31,8 +31,8 @@ class SocialIdentityORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     # The provider's stable account identifier (OIDC `sub`) — the identity key.
     subject: Mapped[str] = mapped_column()
     # The provider's native account id (Telegram's Bot API user id), used only to
-    # address outbound messages. Nullable: a token issued for `openid` alone
-    # carries none. BIGINT because Telegram ids exceed 32 bits.
-    provider_user_id: Mapped[int | None] = mapped_column(BigInteger)
+    # address outbound messages. NOT NULL: both providers always supply it and a
+    # login/link lacking it is refused. BIGINT because Telegram ids exceed 32 bits.
+    provider_user_id: Mapped[int] = mapped_column(BigInteger)
 
     user: Mapped[UserORM] = relationship(back_populates="social_identities")

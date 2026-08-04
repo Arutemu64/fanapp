@@ -58,8 +58,8 @@ class EnvConfig(BaseSettings):
     bot: TelegramConfig
     push: PushConfig
 
-    # Social login (optional — when unset, that provider's login is disabled)
-    vk: VkConfig | None = None
+    # Social login
+    vk: VkConfig
 
     # Debug
     # Read from APP_ENV, not bare ENV: pydantic-settings also reads os.environ,

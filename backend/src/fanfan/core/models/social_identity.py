@@ -17,9 +17,9 @@ class SocialIdentity(AggregateRoot):
       OIDC `sub`). It is the **identity key** — the only value matched on at
       login — and is never used to call the provider's API.
     * `provider_user_id` is the provider's native account id (Telegram's Bot API
-      user id, used as `chat_id`). It is an **address**, never an identity, and
-      is optional: a token issued for `openid` alone carries no such id, and a
-      provider used only for signing in never needs one.
+      user id, used as `chat_id`). It is an **address**, never an identity. Both
+      providers always supply it — a login or link lacking it is refused
+      upstream — and the column is `NOT NULL` to match.
 
     Keying on `subject` rather than the native id is what OpenID Connect asks a
     relying party to do, and here it is also the more durable choice: Telegram
@@ -32,4 +32,4 @@ class SocialIdentity(AggregateRoot):
     user_id: UserId
     provider: SocialProvider
     subject: str
-    provider_user_id: int | None
+    provider_user_id: int
