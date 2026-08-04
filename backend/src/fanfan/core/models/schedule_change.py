@@ -21,11 +21,9 @@ class ScheduleChange(AggregateRoot):
     id: ScheduleChangeId
     type: ScheduleChangeType
 
-    # Arguments
     changed_event_id: ScheduleEventId | None
     argument_event_id: ScheduleEventId | None
 
-    # Mailing
     mailing_id: MailingId | None
     user_id: UserId | None
     next_event_changed: bool

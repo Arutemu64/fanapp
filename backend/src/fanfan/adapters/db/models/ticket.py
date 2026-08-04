@@ -30,7 +30,6 @@ class TicketORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
         unique=True,
     )
 
-    # Ticketscloud
     ticketscloud_ticket_id: Mapped[str | None] = mapped_column(unique=True)
 
     issued_by: Mapped[UserORM | None] = relationship(foreign_keys=issued_by_user_id)

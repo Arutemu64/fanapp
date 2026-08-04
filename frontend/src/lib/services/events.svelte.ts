@@ -268,7 +268,7 @@ export class EventsClient {
 	 */
 	on<K extends SSEEventName>(event: K, handler: SSEHandler<K>) {
 		const handlers = this.#listeners[event] ?? (this.#listeners[event] = []);
-		if (handlers.some((registered) => registered.handler === handler)) return; // Already registered
+		if (handlers.some((registered) => registered.handler === handler)) return;
 
 		const wrapper: EventListener = (domEvent) => {
 			const data = parseEventData(domEvent instanceof MessageEvent ? domEvent.data : undefined);
