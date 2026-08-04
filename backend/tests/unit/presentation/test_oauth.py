@@ -8,6 +8,7 @@ from authlib.oauth2.base import OAuth2Error
 from joserfc.errors import BadSignatureError, ExpiredTokenError, InvalidClaimError
 
 from fanfan.core.exceptions.auth import InvalidTelegramAuthPayload
+from fanfan.core.vo.social_identity import SocialProvider
 from fanfan.presentation.web.oauth import (
     OAUTH_ERROR_CANCELLED,
     OAUTH_ERROR_FAILED,
@@ -195,7 +196,9 @@ async def test_a_token_without_a_subject_gets_an_error_code():
 
 
 async def _read_state(app: FakeTelegramApp, state: str | None) -> OAuthFlowState:
-    return await read_flow_state(cast("Any", app), cast("Any", FakeRequest(state)))
+    return await read_flow_state(
+        cast("Any", app), cast("Any", FakeRequest(state)), SocialProvider.TELEGRAM
+    )
 
 
 async def test_flow_state_round_trips_the_intent():
