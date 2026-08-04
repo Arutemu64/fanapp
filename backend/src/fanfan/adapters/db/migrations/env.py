@@ -12,7 +12,6 @@ from fanfan.adapters.db.models import BaseORM
 
 config = context.config
 
-# Configure Python logging from the alembic .ini file.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 

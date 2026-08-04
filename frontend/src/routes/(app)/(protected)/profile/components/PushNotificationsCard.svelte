@@ -36,7 +36,6 @@
 		user.social_identities.some((socialIdentity) => socialIdentity.provider === 'telegram')
 	);
 
-	// Convert base64 VAPID key to Uint8Array required by pushManager.
 	function urlBase64ToUint8Array(base64String: string) {
 		const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
 		const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');

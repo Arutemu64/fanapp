@@ -5,11 +5,8 @@ from fanfan.core.models.notification import Notification
 
 class Notifier(Protocol):
     async def send_notification(self, notification: Notification) -> None:
-        """
-
-        :param notification:
-        :raises UserNotReachable:
-        :raises NotificationRetryAfter:
+        """Deliver notification, raising UserNotReachable if the user cannot be
+        reached or NotificationRetryAfter if delivery should be retried later.
         """
         raise NotImplementedError
 

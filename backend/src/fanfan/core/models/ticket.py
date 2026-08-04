@@ -15,7 +15,6 @@ class Ticket(AggregateRoot):
     used_by_user_id: UserId | None
     issued_by_user_id: UserId | None
 
-    # Ticketscloud
     ticketscloud_ticket_id: str | None
 
     @classmethod
