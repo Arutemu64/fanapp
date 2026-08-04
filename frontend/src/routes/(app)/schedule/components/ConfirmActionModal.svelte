@@ -1,6 +1,5 @@
 <script lang="ts">
-	import NoticeCallout from '$lib/components/NoticeCallout.svelte';
-	import { Button, Modal } from 'flowbite-svelte';
+	import { Alert, Button, Modal } from 'flowbite-svelte';
 	import { BellActiveOutline, ExclamationCircleOutline } from 'flowbite-svelte-icons';
 
 	interface Props {
@@ -34,6 +33,9 @@
 			: 'Подписчики получат уведомление об изменении.'
 	);
 
+	// Loud broadcasts get the yellow warning alert; quiet updates a muted gray one.
+	let notifyColor: 'yellow' | 'gray' = $derived(notifyTone === 'warning' ? 'yellow' : 'gray');
+
 	function handleConfirm() {
 		// Close first so a slow request never leaves the dialog hanging open.
 		open = false;
@@ -53,12 +55,12 @@
 		<p class="text-sm text-gray-600 sm:text-base dark:text-gray-400">{message}</p>
 
 		<!-- These actions fan out a mailing to every subscriber. Telegram messages can be undone, but delivered push notifications cannot, so warn before sending. -->
-		<NoticeCallout
-			tone={notifyTone}
-			icon={BellActiveOutline}
-			message={notifyMessage}
-			role="alert"
-		/>
+		<Alert color={notifyColor} class="rounded-xl">
+			{#snippet icon()}
+				<BellActiveOutline class="h-5 w-5 shrink-0" />
+			{/snippet}
+			{notifyMessage}
+		</Alert>
 	</div>
 
 	{#snippet footer()}
