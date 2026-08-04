@@ -9,10 +9,6 @@
 	let waitingWorker = $state<ServiceWorker | null>(null);
 	let reloading = false;
 
-	// Measured height of the rendered prompt, mirrored to a CSS var below so the
-	// bottom status toasts (mounted in a different layout) can lift clear of it.
-	let promptHeight = $state(0);
-
 	// Held so we can poll for new builds ourselves (see checkForUpdate). SvelteKit's
 	// auto-registration registers the worker once on load and never re-checks, so
 	// without this an installed PWA kept open all event day would not notice a
@@ -44,21 +40,6 @@
 		// reloads the page once it takes control.
 		waitingWorker?.postMessage('skipWaiting');
 	}
-
-	// The status toasts live in a different layout and cannot see this component,
-	// so hand them our footprint through a CSS custom property on <html>. While the
-	// prompt is showing, their container adds this to its bottom offset and stacks
-	// above us instead of overlapping; the var is cleared when the prompt is gone.
-	$effect(() => {
-		const root = document.documentElement;
-		if (waitingWorker && promptHeight > 0) {
-			// Small gap so the toast stack does not sit flush against the banner.
-			root.style.setProperty('--update-prompt-offset', `${promptHeight + 12}px`);
-		} else {
-			root.style.removeProperty('--update-prompt-offset');
-		}
-		return () => root.style.removeProperty('--update-prompt-offset');
-	});
 
 	onMount(() => {
 		if (!('serviceWorker' in navigator)) return;
@@ -124,15 +105,15 @@
 {#if waitingWorker}
 	<!-- Persistent by design: a prompt carrying an action must never auto-dismiss
 		(WCAG 2.2.1), so this is a plain Toast with no close button and no timer.
-		Anchored in the same bottom band and z-layer as the status toasts; those lift
-		above it via --update-prompt-offset (set in the $effect) so they never overlap.
+		Shares the bottom band and z-layer with the status toasts; on the rare tick
+		where a reload is pending and an action toast fires at the same time the two
+		may overlap, which we accept rather than couple them across layouts.
 		pointer-events-none on the full-width wrapper keeps taps outside the card from
 		being swallowed; the card itself re-enables them. -->
 	<div
 		role="status"
 		aria-live="polite"
 		aria-atomic="true"
-		bind:clientHeight={promptHeight}
 		class="pointer-events-none fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 flex justify-center px-4 md:bottom-4 md:px-6 lg:px-8"
 	>
 		<Toast
