@@ -11,7 +11,7 @@ import type { PageLoad } from './$types';
 const LINK_ERROR_CODES = [
 	...OAUTH_ERROR_CODES,
 	'linked_to_another_account',
-	'user_already_has_telegram',
+	'user_already_has_provider',
 	'session_changed'
 ] as const;
 

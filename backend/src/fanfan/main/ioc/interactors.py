@@ -3,6 +3,7 @@ from dishka import Provider, Scope, provide
 from fanfan.adapters.config.models import EnvConfig
 from fanfan.application.interactors.auth.authenticate_user import AuthenticateUser
 from fanfan.application.interactors.auth.authorize_telegram import AuthorizeTelegram
+from fanfan.application.interactors.auth.authorize_vk import AuthorizeVk
 from fanfan.application.interactors.auth.change_email import ChangeEmail
 from fanfan.application.interactors.auth.change_password import ChangePassword
 from fanfan.application.interactors.auth.confirm_email_code import ConfirmEmailCode
@@ -19,8 +20,14 @@ from fanfan.application.interactors.current_user.get_current_user import GetCurr
 from fanfan.application.interactors.current_user.link_telegram_account import (
     LinkTelegramAccount,
 )
+from fanfan.application.interactors.current_user.link_vk_account import (
+    LinkVkAccount,
+)
 from fanfan.application.interactors.current_user.unlink_telegram_account import (
     UnlinkTelegramAccount,
+)
+from fanfan.application.interactors.current_user.unlink_vk_account import (
+    UnlinkVkAccount,
 )
 from fanfan.application.interactors.current_user.update_current_user import (
     UpdateCurrentUser,
@@ -177,7 +184,9 @@ class InteractorsProvider(Provider):
     register_user = provide(RegisterUser)
     get_current_user = provide(GetCurrentUser)
     link_telegram_account = provide(LinkTelegramAccount)
+    link_vk_account = provide(LinkVkAccount)
     unlink_telegram_account = provide(UnlinkTelegramAccount)
+    unlink_vk_account = provide(UnlinkVkAccount)
     update_current_user = provide(UpdateCurrentUser)
     update_user_settings = provide(UpdateUserSettings)
     change_password = provide(ChangePassword)
@@ -189,6 +198,7 @@ class InteractorsProvider(Provider):
     login_with_code = provide(LoginWithCode)
     logout_user = provide(LogoutUser)
     authorize_telegram = provide(AuthorizeTelegram)
+    authorize_vk = provide(AuthorizeVk)
 
     get_voting_nomination = provide(GetVotingNomination)
     add_vote = provide(AddVote)

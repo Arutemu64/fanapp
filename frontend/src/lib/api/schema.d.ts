@@ -322,6 +322,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/connections/vk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Unlink VK account
+         * @description Unlinks the VK account from the currently authenticated user.
+         */
+        delete: operations["unlink_vk_account"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/ticket": {
         parameters: {
             query?: never;
@@ -1029,7 +1049,7 @@ export interface components {
              * Code
              * @enum {string}
              */
-            code: "ACCESS_DENIED" | "ALREADY_VOTED_IN_THIS_NOMINATION" | "APP_SETTINGS_NOT_FOUND" | "AUTHENTICATION_ERROR" | "CAPTCHA_VERIFICATION_FAILED" | "CURRENT_EVENT_NOT_ALLOWED" | "EMAIL_ALREADY_EXISTS" | "EMAIL_CODE_REQUEST_TOO_FAST" | "EVENT_NOT_FOUND" | "HTTP_ERROR" | "INCORRECT_PASSWORD" | "INTERNAL_ERROR" | "INVALID_CREDENTIALS" | "INVALID_EMAIL" | "INVALID_OTP_CODE" | "INVALID_SCHEDULE_FILE" | "INVALID_TELEGRAM_AUTH_PAYLOAD" | "LINK_INITIATOR_MISMATCH" | "NOMINATION_NOT_FOUND" | "OUTDATED_SCHEDULE_CHANGE" | "PARTICIPANT_NOT_FOUND" | "PUSH_SUBSCRIPTION_ALREADY_EXISTS" | "PUSH_SUBSCRIPTION_NOT_FOUND" | "SAME_EVENTS_ARE_NOT_ALLOWED" | "SCHEDULE_CHANGE_NOT_FOUND" | "SCHEDULE_EDIT_TOO_FAST" | "SKIPPED_EVENT_NOT_ALLOWED" | "SUBSCRIPTION_ALREADY_EXISTS" | "SUBSCRIPTION_NOT_FOUND" | "SYNC_ALREADY_RUNNING" | "TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER" | "TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL" | "TICKET_ALREADY_USED" | "TICKET_BARCODE_COLLISION" | "TICKET_NOT_FOUND" | "TICKET_NOT_LINKED" | "TOO_MANY_ATTEMPTS" | "TOO_MANY_LOGIN_ATTEMPTS" | "TOO_MANY_OTP_ATTEMPTS" | "USERNAME_ALREADY_TAKEN" | "USERNAME_PROFANITY" | "USER_ALREADY_EXISTS" | "USER_ALREADY_HAS_TELEGRAM_LINKED" | "USER_ALREADY_HAS_TICKET_LINKED" | "USER_HAS_NO_EMAIL" | "USER_NOT_AUTHENTICATED" | "USER_NOT_FOUND" | "VALIDATION_ERROR" | "VOTE_NOT_FOUND";
+            code: "ACCESS_DENIED" | "ALREADY_VOTED_IN_THIS_NOMINATION" | "APP_SETTINGS_NOT_FOUND" | "AUTHENTICATION_ERROR" | "CAPTCHA_VERIFICATION_FAILED" | "CURRENT_EVENT_NOT_ALLOWED" | "EMAIL_ALREADY_EXISTS" | "EMAIL_CODE_REQUEST_TOO_FAST" | "EVENT_NOT_FOUND" | "HTTP_ERROR" | "INCORRECT_PASSWORD" | "INTERNAL_ERROR" | "INVALID_CREDENTIALS" | "INVALID_EMAIL" | "INVALID_OTP_CODE" | "INVALID_SCHEDULE_FILE" | "INVALID_TELEGRAM_AUTH_PAYLOAD" | "LINK_INITIATOR_MISMATCH" | "NOMINATION_NOT_FOUND" | "OUTDATED_SCHEDULE_CHANGE" | "PARTICIPANT_NOT_FOUND" | "PUSH_SUBSCRIPTION_ALREADY_EXISTS" | "PUSH_SUBSCRIPTION_NOT_FOUND" | "SAME_EVENTS_ARE_NOT_ALLOWED" | "SCHEDULE_CHANGE_NOT_FOUND" | "SCHEDULE_EDIT_TOO_FAST" | "SKIPPED_EVENT_NOT_ALLOWED" | "SUBSCRIPTION_ALREADY_EXISTS" | "SUBSCRIPTION_NOT_FOUND" | "SYNC_ALREADY_RUNNING" | "TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER" | "TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL" | "TICKET_ALREADY_USED" | "TICKET_BARCODE_COLLISION" | "TICKET_NOT_FOUND" | "TICKET_NOT_LINKED" | "TOO_MANY_ATTEMPTS" | "TOO_MANY_LOGIN_ATTEMPTS" | "TOO_MANY_OTP_ATTEMPTS" | "USERNAME_ALREADY_TAKEN" | "USERNAME_PROFANITY" | "USER_ALREADY_EXISTS" | "USER_ALREADY_HAS_TELEGRAM_LINKED" | "USER_ALREADY_HAS_TICKET_LINKED" | "USER_ALREADY_HAS_VK_LINKED" | "USER_HAS_NO_EMAIL" | "USER_NOT_AUTHENTICATED" | "USER_NOT_FOUND" | "VALIDATION_ERROR" | "VK_ALREADY_LINKED_TO_ANOTHER_USER" | "VK_CANNOT_BE_UNLINKED_WITHOUT_EMAIL" | "VOTE_NOT_FOUND";
             /** Details */
             details?: {
                 [key: string]: unknown;
@@ -1365,7 +1385,7 @@ export interface components {
          *     hand-written migration for the CHECK constraint backing the column.
          * @enum {string}
          */
-        SocialProvider: "telegram";
+        SocialProvider: "telegram" | "vk";
         /** SubmitFeedbackInput */
         SubmitFeedbackInput: {
             /** Text */
@@ -2327,6 +2347,69 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Telegram account unlinked successfully. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description User not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Email is required before unlinking. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    unlink_vk_account: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description VK account unlinked successfully. */
             204: {
                 headers: {
                     [name: string]: unknown;

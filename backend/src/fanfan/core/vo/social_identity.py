@@ -17,6 +17,7 @@ class SocialProvider(StrEnum):
     """
 
     TELEGRAM = "telegram"
+    VK = "vk"
 
 
 def generate_social_identity_id() -> SocialIdentityId:

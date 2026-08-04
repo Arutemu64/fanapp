@@ -6,6 +6,7 @@
 	import { EnvelopeSolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
 	import IconTelegram from '~icons/simple-icons/telegram';
+	import IconVk from '~icons/simple-icons/vk';
 
 	import type { PageProps } from './$types';
 
@@ -28,22 +29,32 @@
 	// Cancelling is the user's own choice, so it gets an informational toast —
 	// only a flow that actually broke reads as an error.
 	const loginErrorToasts = {
-		cancelled: { message: 'Вход через Telegram отменён.', type: 'info' },
-		failed: { message: 'Не удалось войти через Telegram. Попробуй ещё раз.', type: 'error' }
+		cancelled: { message: 'Вход отменён.', type: 'info' },
+		failed: { message: 'Не удалось войти. Попробуй ещё раз.', type: 'error' }
 	} as const;
 
-	// Starting Telegram login is a full-page navigation that waits on our backend
-	// and on Telegram's discovery document, so the button has to say it was heard.
+	// Starting an OAuth login is a full-page navigation that waits on our backend
+	// and on the provider's discovery/authorize page, so the button has to say it
+	// was heard. One flag per provider prevents a double-click on either.
 	let isOpeningTelegram = $state(false);
+	let isOpeningVk = $state(false);
 
 	function handleTelegramClick(event: MouseEvent) {
-		// A second tap during the wait would burn another OAuth state for nothing.
 		if (isOpeningTelegram) {
 			event.preventDefault();
 			return;
 		}
 
 		isOpeningTelegram = true;
+	}
+
+	function handleVkClick(event: MouseEvent) {
+		if (isOpeningVk) {
+			event.preventDefault();
+			return;
+		}
+
+		isOpeningVk = true;
 	}
 
 	function showOptions() {
@@ -70,10 +81,15 @@
 	});
 </script>
 
-<!-- Coming back from Telegram restores this page from the bfcache with its DOM
+<!-- Coming back from a provider restores this page from the bfcache with its DOM
 	frozen mid-navigation, so the spinner would still be running. `pageshow` fires
-	on that restore (and on a normal load, where the flag is already false). -->
-<svelte:window onpageshow={() => (isOpeningTelegram = false)} />
+	on that restore (and on a normal load, where the flags are already false). -->
+<svelte:window
+	onpageshow={() => {
+		isOpeningTelegram = false;
+		isOpeningVk = false;
+	}}
+/>
 
 <svelte:head>
 	<title>Вход или регистрация · ФАН ФАН</title>
@@ -105,7 +121,21 @@
 				{/if}
 			</Button>
 
-			<!-- The VK OAuth button lands here beside Telegram when the provider ships. -->
+			<Button
+				href={`${PUBLIC_API_URL}/auth/oauth/vk/start`}
+				color="alternative"
+				class="min-h-11 w-full rounded-xl font-medium"
+				aria-disabled={isOpeningVk}
+				onclick={handleVkClick}
+			>
+				{#if isOpeningVk}
+					<Spinner class="me-2 h-5 w-5" />
+					Открываем VK ID…
+				{:else}
+					<IconVk class="me-2 h-5 w-5 text-[#0077FF]" />
+					Войти через VK ID
+				{/if}
+			</Button>
 
 			<Button
 				type="button"

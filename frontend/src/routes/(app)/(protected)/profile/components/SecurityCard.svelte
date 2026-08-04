@@ -13,6 +13,7 @@
 		TrashBinOutline
 	} from 'flowbite-svelte-icons';
 	import IconTelegram from '~icons/simple-icons/telegram';
+	import IconVk from '~icons/simple-icons/vk';
 
 	import ChangeEmailModal from './ChangeEmailModal.svelte';
 	import ChangePasswordModal from './ChangePasswordModal.svelte';
@@ -30,16 +31,18 @@
 	let changePasswordModalOpen = $state(false);
 	let changeEmailModalOpen = $state(false);
 	let isUnlinkingTelegram = $state(false);
-	// Gate the destructive unlink behind a deliberate second tap (inline, no modal).
-	let isConfirmingUnlink = $state(false);
+	let isUnlinkingVk = $state(false);
+	// Gate destructive unlinks behind a deliberate second tap (inline, no modal).
+	let isConfirmingTelegramUnlink = $state(false);
+	let isConfirmingVkUnlink = $state(false);
 	const toastService = getToastService();
 	let emailStatusColor = $derived<'green' | 'gray'>(user.email ? 'green' : 'gray');
 	let emailStatusLabel = $derived(user.email ? 'Подтверждена' : 'Не добавлена');
 
-	// Keep the connected Telegram account handy for status text and actions.
 	let telegramAccount = $derived(
-		user.social_identities.find((socialIdentity) => socialIdentity.provider === 'telegram') ?? null
+		user.social_identities.find((si) => si.provider === 'telegram') ?? null
 	);
+	let vkAccount = $derived(user.social_identities.find((si) => si.provider === 'vk') ?? null);
 
 	async function handleTelegramUnlink() {
 		if (isUnlinkingTelegram || !telegramAccount) return;
@@ -60,15 +63,37 @@
 			toastService.error(err);
 		} finally {
 			isUnlinkingTelegram = false;
-			// Drop back to the resting state whether it succeeded or failed.
-			isConfirmingUnlink = false;
+			isConfirmingTelegramUnlink = false;
+		}
+	}
+
+	async function handleVkUnlink() {
+		if (isUnlinkingVk || !vkAccount) return;
+
+		isUnlinkingVk = true;
+
+		try {
+			const { error, response } = await client.DELETE('/me/connections/vk', {});
+
+			if (error || !response.ok) {
+				toastService.error(error);
+				return;
+			}
+
+			toastService.add('VK отвязан', 'success');
+			await onUpdate?.();
+		} catch (err) {
+			toastService.error(err);
+		} finally {
+			isUnlinkingVk = false;
+			isConfirmingVkUnlink = false;
 		}
 	}
 </script>
 
 <ProfileCardShell
 	title="Способы входа"
-	description="Настрой почту, пароль и Telegram для входа и восстановления доступа."
+	description="Настрой почту, пароль и привязки для входа и восстановления доступа."
 >
 	{#snippet icon()}
 		<LinkOutline class="h-5 w-5" />
@@ -150,8 +175,6 @@
 					</div>
 
 					{#if telegramAccount}
-						<!-- The raw provider id is meaningless to attendees; the badge already says it's
-							connected, so we only explain what the connection does. -->
 						<p class="mt-1.5 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
 							Через Telegram можно быстро входить и получать уведомления от бота.
 						</p>
@@ -164,8 +187,7 @@
 
 				<div class="flex w-full flex-col gap-2 sm:w-auto">
 					{#if telegramAccount}
-						{#if isConfirmingUnlink}
-							<!-- Inline confirm: a destructive account change should cost a deliberate second tap. -->
+						{#if isConfirmingTelegramUnlink}
 							<p class="text-sm font-medium text-gray-900 sm:text-right dark:text-white">
 								Отвязать Telegram?
 							</p>
@@ -190,7 +212,7 @@
 									size="sm"
 									class="min-h-11 flex-1 sm:flex-initial"
 									disabled={isUnlinkingTelegram}
-									onclick={() => (isConfirmingUnlink = false)}
+									onclick={() => (isConfirmingTelegramUnlink = false)}
 								>
 									Отмена
 								</Button>
@@ -202,20 +224,99 @@
 								size="sm"
 								class="min-h-11 w-full sm:w-auto"
 								disabled={!user.email}
-								onclick={() => (isConfirmingUnlink = true)}
+								onclick={() => (isConfirmingTelegramUnlink = true)}
 							>
 								<TrashBinOutline class="me-2 h-4 w-4" />
 								Отвязать
 							</Button>
 						{/if}
 					{:else}
-						<!-- Use the configured API base so linking works in every deployment setup. -->
 						<Button
 							href={`${PUBLIC_API_URL}/me/connections/telegram`}
 							color="alternative"
 							class="min-h-11 w-full sm:w-auto"
 						>
 							<IconTelegram class="me-2 h-4 w-4 text-sky-500" />
+							Подключить
+						</Button>
+					{/if}
+				</div>
+			</div>
+		</div>
+
+		<div class="rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
+			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+				<div class="min-w-0">
+					<div class="flex flex-wrap items-center gap-2">
+						<IconVk class="h-4 w-4 text-[#0077FF]" />
+						<p class="font-medium text-gray-900 dark:text-white">VK ID</p>
+						<Badge color={vkAccount ? 'green' : 'gray'} border>
+							{vkAccount ? 'Подключён' : 'Не подключён'}
+						</Badge>
+					</div>
+
+					{#if vkAccount}
+						<p class="mt-1.5 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+							Через VK ID можно быстро входить без пароля.
+						</p>
+					{:else}
+						<p class="mt-1.5 text-sm leading-5 text-gray-500 dark:text-gray-400">
+							Подключи VK ID для быстрого входа без пароля.
+						</p>
+					{/if}
+				</div>
+
+				<div class="flex w-full flex-col gap-2 sm:w-auto">
+					{#if vkAccount}
+						{#if isConfirmingVkUnlink}
+							<p class="text-sm font-medium text-gray-900 sm:text-right dark:text-white">
+								Отвязать VK ID?
+							</p>
+							<div class="flex gap-2">
+								<Button
+									color="red"
+									size="sm"
+									class="min-h-11 flex-1 sm:flex-initial"
+									disabled={isUnlinkingVk || !user.email}
+									onclick={handleVkUnlink}
+								>
+									{#if isUnlinkingVk}
+										<Spinner class="me-2 h-4 w-4" />
+										Отвязка…
+									{:else}
+										<TrashBinOutline class="me-2 h-4 w-4" />
+										Отвязать
+									{/if}
+								</Button>
+								<Button
+									color="alternative"
+									size="sm"
+									class="min-h-11 flex-1 sm:flex-initial"
+									disabled={isUnlinkingVk}
+									onclick={() => (isConfirmingVkUnlink = false)}
+								>
+									Отмена
+								</Button>
+							</div>
+						{:else}
+							<Button
+								color="red"
+								size="sm"
+								class="min-h-11 w-full sm:w-auto"
+								disabled={!user.email}
+								onclick={() => (isConfirmingVkUnlink = true)}
+							>
+								<TrashBinOutline class="me-2 h-4 w-4" />
+								Отвязать
+							</Button>
+						{/if}
+					{:else}
+						<Button
+							href={`${PUBLIC_API_URL}/me/connections/vk`}
+							color="alternative"
+							class="min-h-11 w-full sm:w-auto"
+						>
+							<IconVk class="me-2 h-4 w-4 text-[#0077FF]" />
 							Подключить
 						</Button>
 					{/if}
@@ -230,7 +331,7 @@
 				<ExclamationCircleSolid class="mt-0.5 h-4 w-4 shrink-0" />
 				<p>
 					Добавь почту. Так будет проще восстановить доступ, и только после этого можно безопасно
-					отвязать Telegram.
+					отвязать привязки.
 				</p>
 			</div>
 		</Alert>

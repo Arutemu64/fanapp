@@ -14,6 +14,7 @@ from fanfan.adapters.mail.config import MailConfig
 from fanfan.adapters.nats.config import NatsConfig
 from fanfan.adapters.push.config import PushConfig
 from fanfan.adapters.redis.config import RedisConfig
+from fanfan.adapters.vk.config import VkConfig
 from fanfan.application.interactors.notifications.config import NotificationConfig
 from fanfan.application.interactors.outbox.config import OutboxConfig
 from fanfan.presentation.scheduler.config import SchedulerConfig
@@ -56,6 +57,9 @@ class EnvConfig(BaseSettings):
     # Notifications
     bot: TelegramConfig
     push: PushConfig
+
+    # Social login (optional — when unset, that provider's login is disabled)
+    vk: VkConfig | None = None
 
     # Debug
     # Read from APP_ENV, not bare ENV: pydantic-settings also reads os.environ,
