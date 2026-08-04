@@ -3,6 +3,7 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { clearOAuthErrorParam, OAUTH_LOGIN_ERROR_PARAM } from '$lib/utils/oauthErrors';
 	import { Button, Card, Spinner } from 'flowbite-svelte';
+	import { EnvelopeSolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
 	import IconTelegram from '~icons/simple-icons/telegram';
 
@@ -14,12 +15,15 @@
 	let { data }: PageProps = $props();
 	const toastService = getToastService();
 
+	// The first screen offers the login options only; the email form (and its
+	// third-party captcha script) lives on its own step, so someone using an
+	// OAuth provider never loads it. 'password' is a factor under 'email', not a
+	// peer option, so it's reached from the email step rather than the options.
+	type LoginView = 'options' | 'email' | 'password';
+	let view = $state<LoginView>('options');
+
+	// Kept on the parent so it survives the email ⇄ password switch.
 	let email = $state('');
-	let showPasswordForm = $state(false);
-	// CodeLoginForm owns the send; we only need to know whether it happened, so
-	// this is derived from its state rather than mirrored into a second flag.
-	let codeSentTo = $state('');
-	let isWaitingForCode = $derived(!!codeSentTo);
 
 	// Cancelling is the user's own choice, so it gets an informational toast —
 	// only a flow that actually broke reads as an error.
@@ -40,6 +44,18 @@
 		}
 
 		isOpeningTelegram = true;
+	}
+
+	function showOptions() {
+		view = 'options';
+	}
+
+	function showEmailLogin() {
+		view = 'email';
+	}
+
+	function showPasswordLogin() {
+		view = 'password';
 	}
 
 	onMount(() => {
@@ -69,37 +85,41 @@
 			Вход или регистрация
 		</h2>
 
-		{#if !showPasswordForm}
-			{#if !isWaitingForCode}
-				<!-- Use the configured API base so OAuth works in every environment.
-					Flowbite drops `disabled` on an href Button (it renders a bare <a>),
-					so the pending state is aria-disabled plus the guard in the handler. -->
-				<Button
-					href={`${PUBLIC_API_URL}/auth/oauth/telegram/start`}
-					color="alternative"
-					class="min-h-11 w-full rounded-xl font-medium"
-					aria-disabled={isOpeningTelegram}
-					onclick={handleTelegramClick}
-				>
-					{#if isOpeningTelegram}
-						<Spinner class="me-2 h-5 w-5" />
-						Открываем Telegram…
-					{:else}
-						<IconTelegram class="me-2 h-5 w-5 text-sky-500" />
-						Войти через Telegram
-					{/if}
-				</Button>
+		{#if view === 'options'}
+			<!-- Use the configured API base so OAuth works in every environment.
+				Flowbite drops `disabled` on an href Button (it renders a bare <a>),
+				so the pending state is aria-disabled plus the guard in the handler. -->
+			<Button
+				href={`${PUBLIC_API_URL}/auth/oauth/telegram/start`}
+				color="alternative"
+				class="min-h-11 w-full rounded-xl font-medium"
+				aria-disabled={isOpeningTelegram}
+				onclick={handleTelegramClick}
+			>
+				{#if isOpeningTelegram}
+					<Spinner class="me-2 h-5 w-5" />
+					Открываем Telegram…
+				{:else}
+					<IconTelegram class="me-2 h-5 w-5 text-sky-500" />
+					Войти через Telegram
+				{/if}
+			</Button>
 
-				<div class="relative flex items-center">
-					<div class="grow border-t border-gray-200 dark:border-gray-700"></div>
-					<span class="mx-4 shrink text-sm text-gray-400">или</span>
-					<div class="grow border-t border-gray-200 dark:border-gray-700"></div>
-				</div>
-			{/if}
+			<!-- The VK OAuth button lands here beside Telegram when the provider ships. -->
 
-			<CodeLoginForm bind:email bind:showPasswordForm bind:codeSentTo />
+			<Button
+				type="button"
+				color="alternative"
+				class="min-h-11 w-full rounded-xl font-medium"
+				onclick={showEmailLogin}
+			>
+				<EnvelopeSolid class="me-2 h-5 w-5" />
+				Войти по почте
+			</Button>
+		{:else if view === 'email'}
+			<CodeLoginForm bind:email onBack={showOptions} onPasswordLogin={showPasswordLogin} />
 		{:else}
-			<PasswordLoginForm bind:email onBack={() => (showPasswordForm = false)} />
+			<PasswordLoginForm bind:email onBack={showEmailLogin} />
 		{/if}
 	</div>
 </Card>
