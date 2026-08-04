@@ -4,8 +4,8 @@ from collections.abc import Iterable
 
 from dishka import Provider, Scope, provide
 from pydantic import PostgresDsn
-from testcontainers.postgres import PostgresContainer
-from testcontainers.redis import RedisContainer
+from testcontainers.community.postgres import PostgresContainer
+from testcontainers.community.valkey import ValkeyContainer
 
 from fanfan.adapters.db.config import DatabaseConfig
 from fanfan.adapters.redis.config import RedisConfig
@@ -25,8 +25,10 @@ class TestDbProvider(Provider):
         # sorting bugs that wouldn't show up against a different libc.
         postgres = PostgresContainer("postgres:18.4-alpine", driver="asyncpg")
         # TODO: workaround from testcontainers/testcontainers-python#108.
+        # Use 127.0.0.1, not "localhost": redis.asyncio resolves "localhost"
+        # to ::1 (IPv6) on Windows, but Docker only binds mapped ports on IPv4.
         if os.name == "nt":
-            postgres.get_container_host_ip = lambda: "localhost"
+            postgres.get_container_host_ip = lambda: "127.0.0.1"
         try:
             postgres.start()
             postgres_url = postgres.get_connection_url()
@@ -38,23 +40,18 @@ class TestDbProvider(Provider):
 
     @provide
     def get_redis_config(self) -> Iterable[RedisConfig]:
-        # Match the prod/dev image (docker-compose.yml). RedisContainer pings
-        # over the RESP wire with a redis-py client, so Valkey works unchanged.
-        # TODO(testcontainers>=4.15.0): switch to the dedicated ValkeyContainer
-        # (testcontainers/testcontainers-python#947) once it ships in a stable
-        # release; it also drops the deprecated wait-decorator filterwarning.
-        redis_container = RedisContainer("valkey/valkey:9.1-alpine")
+        valkey = ValkeyContainer("valkey/valkey:9.1-alpine")
         # TODO: workaround from testcontainers/testcontainers-python#108.
         if os.name == "nt":
-            redis_container.get_container_host_ip = lambda: "localhost"
+            valkey.get_container_host_ip = lambda: "127.0.0.1"
         try:
-            redis_container.start()
-            host = redis_container.get_container_host_ip()
-            port = redis_container.get_exposed_port(redis_container.port)
+            valkey.start()
+            host = valkey.get_container_host_ip()
+            port = valkey.get_exposed_port()
             redis_config = RedisConfig(
                 host=host,
                 port=int(port),
             )
             yield redis_config
         finally:
-            redis_container.stop()
+            valkey.stop()
