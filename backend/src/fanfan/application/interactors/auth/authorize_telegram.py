@@ -1,5 +1,3 @@
-import logging
-
 from pydantic import BaseModel
 
 from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
@@ -12,15 +10,13 @@ from fanfan.core.models.user import User
 from fanfan.core.vo.social_identity import SocialProvider, generate_social_identity_id
 from fanfan.core.vo.user import UserRole, generate_user_id
 
-logger = logging.getLogger(__name__)
-
 
 class AuthorizeTelegramInput(BaseModel):
     # The OIDC `sub` — the identity key, not the Bot API user id.
     subject: str
-    # The Bot API user id, kept only so the notifier can reach the user. Absent
-    # when the token carried no `profile` scope.
-    provider_user_id: int | None
+    # The Bot API user id, so the notifier can reach the user. Required: a token
+    # without it is refused upstream (see TelegramClaims), so it always arrives.
+    provider_user_id: int
 
 
 class AuthorizeTelegram:
@@ -44,7 +40,6 @@ class AuthorizeTelegram:
         )
 
         if identity:
-            await self._refresh_provider_user_id(identity, data.provider_user_id)
             return await self.session_store.create_session(identity.user_id)
 
         user = User.create(
@@ -66,23 +61,3 @@ class AuthorizeTelegram:
         )
         await self.uow.commit()
         return await self.session_store.create_session(user.id)
-
-    async def _refresh_provider_user_id(
-        self, identity: SocialIdentity, provider_user_id: int | None
-    ) -> None:
-        """Keep the notification address current on an already-linked account.
-
-        A first login through an `openid`-only token stores nothing here, which
-        leaves that account unreachable over Telegram even though every later
-        login carries the id. Login is the only place it can heal.
-        """
-        if provider_user_id is None or identity.provider_user_id == provider_user_id:
-            return
-
-        identity.provider_user_id = provider_user_id
-        await self.social_identity_gateway.save(identity)
-        await self.uow.commit()
-        logger.info(
-            "Telegram notification address updated",
-            extra={"actor_id": str(identity.user_id)},
-        )

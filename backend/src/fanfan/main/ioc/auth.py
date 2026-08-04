@@ -52,19 +52,18 @@ class OAuthProvider(Provider):
                 "code_challenge_method": "S256",
             },
         )
-        # VK ID OAuth (optional — absent when VK__CLIENT_ID is not set)
-        if config.vk:
-            oauth.register(  # pyright: ignore[reportUnknownMemberType]
-                name="vk",
-                client_id=config.vk.client_id,
-                client_secret=config.vk.client_secret.get_secret_value(),
-                authorize_url="https://id.vk.ru/authorize",
-                access_token_url="https://id.vk.ru/oauth2/auth",  # noqa: S106
-                token_endpoint_auth_method="client_secret_post",  # noqa: S106
-                client_kwargs={
-                    "scope": "vkid.personal_info email",
-                    "code_challenge_method": "S256",
-                },
-                compliance_fix=_vk_compliance_fix,
-            )
+        # VK ID OAuth
+        oauth.register(  # pyright: ignore[reportUnknownMemberType]
+            name="vk",
+            client_id=config.vk.client_id,
+            client_secret=config.vk.client_secret.get_secret_value(),
+            authorize_url="https://id.vk.ru/authorize",
+            access_token_url="https://id.vk.ru/oauth2/auth",  # noqa: S106
+            token_endpoint_auth_method="client_secret_post",  # noqa: S106
+            client_kwargs={
+                "scope": "vkid.personal_info email",
+                "code_challenge_method": "S256",
+            },
+            compliance_fix=_vk_compliance_fix,
+        )
         return oauth

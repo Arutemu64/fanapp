@@ -94,16 +94,16 @@ class TelegramClaims(BaseModel):
     `sub` is the identity key and `id` is only ever an address — see the
     `SocialIdentity` docstring for why they are stored separately.
 
-    `name` and `id` are `profile`-scope claims. Telegram rejects that scope
+    `id` and `name` are `profile`-scope claims. Telegram rejects that scope
     outright when the bot is switched to EdDSA or ES256K signing in BotFather, so
     a bot misconfigured there arrives with a valid, signature-checked token that
-    carries neither. `sub` survives that (it needs only `openid`), which is why it
-    is the one field with no fallback — and why the other two are optional here
-    rather than indexed directly.
+    carries neither. The app treats `id` as mandatory — every Telegram identity
+    must be reachable — so a token missing it fails validation and the login is
+    refused rather than degrading. `name` stays optional.
     """
 
     sub: str
-    id: int | None = None
+    id: int
     name: str | None = None
 
 
@@ -252,30 +252,18 @@ def read_telegram_claims(token: Mapping[str, Any]) -> TelegramClaims:
 
     Authlib has already verified the signature, `iss`, `aud`, `exp` and `nonce`
     by the time a token reaches here — this only checks that the payload has the
-    shape we need. `userinfo` is absent when the response carried no `id_token`.
+    shape we need. `userinfo` is absent when the response carried no `id_token`,
+    and a token missing `sub` or `id` (a bot with `profile` scope stripped by
+    EdDSA/ES256K signing) fails validation and is refused.
     """
     userinfo = token.get("userinfo")
     if not isinstance(userinfo, Mapping):
         raise InvalidTelegramAuthPayload
 
     try:
-        claims = TelegramClaims.model_validate(dict(userinfo))
+        return TelegramClaims.model_validate(dict(userinfo))
     except ValidationError as e:
         raise InvalidTelegramAuthPayload from e
-
-    if claims.id is None:
-        # Not fatal — `sub` alone identifies the user, so the login proceeds and
-        # only Telegram notifications are unavailable (the notifier treats a
-        # missing address as UserNotReachable, and the next login carrying an id
-        # backfills it). Logged loudly because the cause is almost always the
-        # bot's signing algorithm in BotFather stripping the `profile` scope,
-        # which is a misconfiguration nobody would otherwise notice.
-        logger.warning(
-            "Telegram ID token carried no `id` claim — "
-            "notifications will not reach this user until it does"
-        )
-
-    return claims
 
 
 _VK_USERINFO_URL = "https://id.vk.ru/oauth2/user_info"

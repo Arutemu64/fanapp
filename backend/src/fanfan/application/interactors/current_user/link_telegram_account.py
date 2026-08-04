@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class LinkTelegramAccountInput(BaseModel):
     # The OIDC `sub` — the identity key, not the Bot API user id.
     subject: str
-    provider_user_id: int | None
+    provider_user_id: int
     # Who started the flow, carried through the OAuth state. Guards against the
     # browser signing in as somebody else between the redirect and the callback.
     initiator_user_id: UserId

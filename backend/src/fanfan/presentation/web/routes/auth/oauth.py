@@ -109,10 +109,9 @@ async def start_social_login(
             client, request, provider, OAuthIntent.LOGIN, initiator_user_id=None
         )
     except Exception:
-        # Building the redirect needs the provider's discovery document (or the
-        # provider being registered at all — VK is optional). The registry is
-        # APP-scoped so it is fetched once per process — this is the first login
-        # after a restart running into an unreachable or unconfigured provider.
+        # Building the redirect needs the provider's discovery document. The
+        # registry is APP-scoped so it is fetched once per process — this is the
+        # first login after a restart running into an unreachable provider.
         logger.exception("Could not reach the provider to start the login")
         return build_login_redirect(OAUTH_ERROR_FAILED)
 
