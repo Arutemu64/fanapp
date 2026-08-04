@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { formatSyncedAt } from '$lib/utils/formatters';
+	import { Alert } from 'flowbite-svelte';
 	import { ClockOutline } from 'flowbite-svelte-icons';
-
-	import NoticeCallout from './NoticeCallout.svelte';
 
 	// Shown when a page is rendering a cached copy because the network was down.
 	let {
@@ -17,11 +16,12 @@
 	let syncedLabel = $derived(cachedAt !== undefined ? formatSyncedAt(cachedAt) : undefined);
 </script>
 
-{#if syncedLabel}
-	<NoticeCallout tone="warning" icon={ClockOutline} role="status">
-		{message}
+<Alert color="yellow" class="rounded-xl">
+	{#snippet icon()}
+		<ClockOutline class="h-5 w-5 shrink-0" />
+	{/snippet}
+	{message}
+	{#if syncedLabel}
 		<span class="mt-0.5 block text-xs opacity-80">Синхронизировано {syncedLabel}</span>
-	</NoticeCallout>
-{:else}
-	<NoticeCallout tone="warning" icon={ClockOutline} {message} role="status" />
-{/if}
+	{/if}
+</Alert>

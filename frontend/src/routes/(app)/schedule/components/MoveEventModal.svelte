@@ -3,7 +3,6 @@
 
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
-	import NoticeCallout from '$lib/components/NoticeCallout.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { createSearchIndex } from '$lib/utils/search';
 	import { Alert, Button, Modal, Search } from 'flowbite-svelte';
@@ -95,12 +94,12 @@
 		</p>
 
 		<!-- Moving an event broadcasts a mailing to every subscriber. Push notifications cannot be recalled, so warn before sending. -->
-		<NoticeCallout
-			tone="warning"
-			icon={BellActiveOutline}
-			message="Все подписчики получат уведомление. Пуш-уведомление нельзя будет отозвать."
-			role="alert"
-		/>
+		<Alert color="yellow" class="rounded-xl">
+			{#snippet icon()}
+				<BellActiveOutline class="h-5 w-5 shrink-0" />
+			{/snippet}
+			Все подписчики получат уведомление. Пуш-уведомление нельзя будет отозвать.
+		</Alert>
 
 		<Search
 			name="schedule_move_search"
