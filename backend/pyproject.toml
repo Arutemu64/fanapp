@@ -100,8 +100,6 @@ filterwarnings = [
     # Our ORM models map branded NewType columns; SQLAlchemy warns about
     # resolving them implicitly. Tracked separately from the test suite.
     "ignore:Matching the provided NewType",
-    # testcontainers' Redis module uses a deprecated wait decorator internally.
-    "ignore:The @wait_container_is_ready decorator is deprecated",
 ]
 
 [tool.coverage.run]
