@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button } from 'flowbite-svelte';
+	import { Button, Toast } from 'flowbite-svelte';
 	import { RefreshOutline } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
 
@@ -103,18 +103,34 @@
 <svelte:document onvisibilitychange={checkForUpdate} />
 
 {#if waitingWorker}
+	<!-- Persistent by design: a prompt carrying an action must never auto-dismiss
+		(WCAG 2.2.1), so this is a plain Toast with no close button and no timer.
+		Shares the bottom band and z-layer with the status toasts; on the rare tick
+		where a reload is pending and an action toast fires at the same time the two
+		may overlap, which we accept rather than couple them across layouts.
+		pointer-events-none on the full-width wrapper keeps taps outside the card from
+		being swallowed; the card itself re-enables them. -->
 	<div
 		role="status"
-		class="fixed inset-x-0 bottom-0 z-[110] flex justify-center px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
+		aria-live="polite"
+		aria-atomic="true"
+		class="pointer-events-none fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 flex justify-center px-4 md:bottom-4 md:px-6 lg:px-8"
 	>
-		<div
-			class="flex w-full max-w-md items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-lg dark:border-gray-700 dark:bg-gray-800"
+		<Toast
+			align={false}
+			color={undefined}
+			dismissable={false}
+			class="pointer-events-auto w-full max-w-sm rounded-lg bg-white p-4 text-gray-500 shadow dark:bg-gray-800 dark:text-gray-400"
 		>
-			<RefreshOutline class="h-5 w-5 shrink-0 text-primary-600" aria-hidden="true" />
-			<p class="flex-1 text-sm leading-snug text-gray-700 dark:text-gray-200">
+			{#snippet icon()}
+				<RefreshOutline class="h-5 w-5 text-primary-600" aria-hidden="true" />
+			{/snippet}
+			<div class="text-sm leading-snug font-normal text-gray-700 dark:text-gray-200">
 				Доступна новая версия приложения.
-			</p>
-			<Button size="sm" color="primary" class="shrink-0" onclick={applyUpdate}>Обновить</Button>
-		</div>
+			</div>
+			<div class="mt-3">
+				<Button size="sm" color="primary" class="w-full" onclick={applyUpdate}>Обновить</Button>
+			</div>
+		</Toast>
 	</div>
 {/if}
