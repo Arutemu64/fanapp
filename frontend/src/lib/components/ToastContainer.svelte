@@ -169,9 +169,11 @@
 
 <!-- Action feedback: bottom-center on mobile (raised above the fixed bottom nav,
      h-16 + safe-area), bottom-right on desktop where that nav is hidden.
-     flex-col-reverse so the newest toast sits at the bottom, nearest its edge. -->
+     flex-col-reverse so the newest toast sits at the bottom, nearest its edge.
+     --update-prompt-offset (set by UpdatePrompt while the reload banner shows,
+     0 otherwise) lifts the stack clear of that banner so the two never overlap. -->
 <ToastContainer
-	class="pointer-events-none !fixed !top-auto !right-auto !bottom-[calc(4.5rem+env(safe-area-inset-bottom))] !left-auto z-50 mx-auto flex w-full max-w-7xl flex-col-reverse px-4 md:!bottom-4 md:px-6 lg:px-8"
+	class="pointer-events-none !fixed !top-auto !right-auto !bottom-[calc(4.5rem+env(safe-area-inset-bottom)+var(--update-prompt-offset,0px))] !left-auto z-50 mx-auto flex w-full max-w-7xl flex-col-reverse px-4 md:!bottom-[calc(1rem+var(--update-prompt-offset,0px))] md:px-6 lg:px-8"
 >
 	{#each toastService.statusItems as toast (toast.id)}
 		<div
