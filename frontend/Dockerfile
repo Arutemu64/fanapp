@@ -1,5 +1,10 @@
 # syntax=docker/dockerfile:1
-FROM node:24.18-alpine AS base
+# Shared node pin (docs/dependencies.md): pin the full patch, not a bare `24.18`.
+# The dockerfile manager reads FROM lines, but a `24.18` tag floats to the latest
+# patch on its own, so a patch release produces no diff here and this site drops
+# out of the grouped "node" Renovate PR — leaving it silently behind mise.toml
+# and the CI setup-node input. The full patch keeps all three moving together.
+FROM node:24.18.1-alpine AS base
 
 # PNPM_HOME makes pnpm keep its content-addressable store under /pnpm/store,
 # which is where the cache mounts below point.
