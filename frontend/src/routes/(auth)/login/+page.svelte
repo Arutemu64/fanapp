@@ -107,12 +107,6 @@
 
 			<!-- The VK OAuth button lands here beside Telegram when the provider ships. -->
 
-			<div class="relative flex items-center">
-				<div class="grow border-t border-gray-200 dark:border-gray-700"></div>
-				<span class="mx-4 shrink text-sm text-gray-400">или</span>
-				<div class="grow border-t border-gray-200 dark:border-gray-700"></div>
-			</div>
-
 			<Button
 				type="button"
 				color="alternative"
