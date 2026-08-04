@@ -6,25 +6,24 @@
 	import { CaptchaGate } from '$lib/utils/captcha.svelte';
 	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
 	import { Alert, Button, Helper, Input, Label, Spinner } from 'flowbite-svelte';
-	import { EnvelopeSolid } from 'flowbite-svelte-icons';
+	import { ArrowLeftOutline, EnvelopeSolid } from 'flowbite-svelte-icons';
 	import { onDestroy } from 'svelte';
 
 	import VerifyCodeForm from './VerifyCodeForm.svelte';
 
 	interface Props {
 		email: string;
-		showPasswordForm?: boolean;
-		// The address the code went to, empty until it's sent. Bindable because the
-		// login page hides the Telegram button once we're waiting for a code; it
-		// derives that from this rather than us mirroring a second flag back up.
-		codeSentTo?: string;
+		// Return to the login-options screen.
+		onBack?: () => void;
+		// Switch to the password form (a factor under this same email identity).
+		onPasswordLogin?: () => void;
 	}
 
-	let {
-		email = $bindable(''),
-		showPasswordForm = $bindable(false),
-		codeSentTo = $bindable('')
-	}: Props = $props();
+	let { email = $bindable(''), onBack, onPasswordLogin }: Props = $props();
+
+	// The address the code went to, empty until it's sent — the switch to the
+	// verify step. Local now: the options screen no longer needs to know.
+	let codeSentTo = $state('');
 
 	type ActiveAction = 'code-request' | null;
 
@@ -216,11 +215,22 @@
 			<button
 				type="button"
 				class="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium text-primary-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-50 dark:text-primary-400"
-				onclick={() => (showPasswordForm = true)}
+				onclick={() => onPasswordLogin?.()}
 				disabled={isRequesting}
 			>
 				Войти с паролем
 			</button>
 		</div>
+
+		<Button
+			type="button"
+			color="light"
+			class="min-h-11 w-full rounded-xl font-medium"
+			disabled={isRequesting}
+			onclick={() => onBack?.()}
+		>
+			<ArrowLeftOutline class="me-2 h-4 w-4" />
+			Назад
+		</Button>
 	</form>
 {/if}
