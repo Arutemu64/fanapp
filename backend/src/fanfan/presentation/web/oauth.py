@@ -20,12 +20,15 @@ import logging
 from collections.abc import Mapping
 from enum import StrEnum
 from typing import Any
+from urllib.parse import urlencode
 
+import httpx
 from authlib.integrations.starlette_client import OAuthError, StarletteOAuth2App
 from pydantic import BaseModel, ValidationError
 from starlette.requests import Request
 
 from fanfan.core.exceptions.auth import InvalidTelegramAuthPayload
+from fanfan.core.vo.social_identity import SocialProvider
 from fanfan.core.vo.user import UserId
 
 logger = logging.getLogger(__name__)
@@ -44,6 +47,14 @@ OAUTH_ERROR_FAILED = "failed"
 # Authlib passes the provider's `error` parameter through verbatim, and
 # `access_denied` is the OAuth 2.0 code for a user who refused (RFC 6749 4.1.2.1).
 _ACCESS_DENIED = "access_denied"
+
+# Stable issuer identifiers per provider. Telegram publishes its issuer via OIDC
+# discovery; VK ID does not expose a discovery endpoint, so the value is
+# hardcoded. Both are compared in `read_flow_state` as a mix-up defence.
+PROVIDER_ISSUERS: dict[SocialProvider, str] = {
+    SocialProvider.TELEGRAM: "https://oauth.telegram.org",
+    SocialProvider.VK: "https://id.vk.ru",
+}
 
 
 class OAuthIntent(StrEnum):
@@ -96,6 +107,19 @@ class TelegramClaims(BaseModel):
     name: str | None = None
 
 
+class VkClaims(BaseModel):
+    """Claims extracted from VK ID's ``/oauth2/user_info`` response.
+
+    ``user_id`` is the stable numeric VK user identifier; it is stored as
+    ``str(user_id)`` in the ``subject`` column of ``SocialIdentity``.
+    """
+
+    user_id: int
+    email: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+
+
 def classify_oauth_error(error: OAuthError) -> str:
     """Map an Authlib failure onto the code the frontend has copy for."""
     if error.error == _ACCESS_DENIED:
@@ -141,7 +165,9 @@ async def start_oauth_flow(
 
 
 async def read_flow_state(
-    client: StarletteOAuth2App, request: Request
+    client: StarletteOAuth2App,
+    request: Request,
+    provider: SocialProvider,
 ) -> OAuthFlowState:
     """Recover the flow state, or raise OAuthFailed if it cannot be trusted.
 
@@ -170,13 +196,14 @@ async def read_flow_state(
         logger.warning("OAuth state payload could not be read")
         raise OAuthFailed(OAUTH_ERROR_FAILED) from e
 
-    metadata = await client.load_server_metadata()
-    if flow_state.issuer != metadata.get("issuer"):
-        # RFC 9700 §4.4.2.1: a response whose issuer is not the one the request
-        # went to must abort the interaction.
+    # RFC 9700 §4.4.2.1: a response whose issuer is not the one the request
+    # went to must abort the interaction.  Telegram publishes its issuer via
+    # OIDC discovery; VK does not, so PROVIDER_ISSUERS carries a static value.
+    expected_issuer = PROVIDER_ISSUERS.get(provider)
+    if flow_state.issuer != expected_issuer:
         logger.warning(
             "OAuth callback issuer does not match the authorization request",
-            extra={"expected_issuer": flow_state.issuer},
+            extra={"expected_issuer": expected_issuer},
         )
         raise OAuthFailed(OAUTH_ERROR_FAILED)
 
@@ -249,3 +276,54 @@ def read_telegram_claims(token: Mapping[str, Any]) -> TelegramClaims:
         )
 
     return claims
+
+
+_VK_USERINFO_URL = "https://id.vk.ru/oauth2/user_info"
+
+
+async def fetch_vk_claims(vk: StarletteOAuth2App, request: Request) -> VkClaims:
+    """Exchange the authorization code and fetch the VK ID user profile.
+
+    VK ID deviates from standard OAuth in three ways handled here:
+
+    1. The callback carries a ``device_id`` query parameter that must be
+       forwarded to the token endpoint (Authlib passes extra kwargs through).
+    2. The token endpoint requires ``state`` in the POST body. Authlib's
+       ``fetch_token`` consumes ``state`` as a named parameter without
+       forwarding it to ``_prepare_token_endpoint_body``, so we inject it
+       via the ``body`` seed string that ``_prepare_token_endpoint_body``
+       appends the other params to.
+    3. The user-info endpoint is a POST that takes ``client_id`` and
+       ``access_token`` in the form body, not a GET with a Bearer token.
+    """
+    try:
+        device_id = request.query_params.get("device_id", "")
+        state = request.query_params.get("state", "")
+        token = await vk.authorize_access_token(
+            request, device_id=device_id, body=urlencode({"state": state})
+        )
+
+        async with httpx.AsyncClient() as http:
+            resp = await http.post(
+                _VK_USERINFO_URL,
+                data={
+                    "client_id": vk.client_id,
+                    "access_token": token["access_token"],
+                },
+            )
+            resp.raise_for_status()
+
+        user = resp.json().get("user")
+        if not isinstance(user, dict):
+            logger.warning("VK user_info response carried no user object")
+            raise OAuthFailed(OAUTH_ERROR_FAILED)  # noqa: TRY301
+
+        return VkClaims.model_validate(user)
+    except OAuthError as e:
+        logger.info("VK authorization did not complete", extra={"oauth_error": e.error})
+        raise OAuthFailed(classify_oauth_error(e)) from e
+    except OAuthFailed:
+        raise
+    except Exception as e:
+        logger.exception("VK token exchange or user-info fetch failed")
+        raise OAuthFailed(OAUTH_ERROR_FAILED) from e

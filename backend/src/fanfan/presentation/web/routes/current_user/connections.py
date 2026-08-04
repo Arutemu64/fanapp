@@ -10,6 +10,9 @@ from starlette.responses import RedirectResponse, Response
 from fanfan.application.interactors.current_user.unlink_telegram_account import (
     UnlinkTelegramAccount,
 )
+from fanfan.application.interactors.current_user.unlink_vk_account import (
+    UnlinkVkAccount,
+)
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.vo.social_identity import SocialProvider
 from fanfan.presentation.web.oauth import OAUTH_ERROR_FAILED, OAuthIntent
@@ -47,9 +50,8 @@ async def start_account_link(
     oauth: FromDishka[OAuth],
     current_user_provider: FromDishka[CurrentUserProvider],
 ) -> Response:
-    client: StarletteOAuth2App = oauth.create_client(provider.value)
-
     try:
+        client: StarletteOAuth2App = oauth.create_client(provider.value)
         # Recorded in the OAuth state and compared against the session at the
         # callback, so signing in as somebody else mid-flow cannot retarget the
         # link. require_user also keeps an anonymous browser out of this route.
@@ -72,10 +74,6 @@ async def start_account_link(
     return RedirectResponse(url, status_code=status.HTTP_302_FOUND)
 
 
-# Not `/{provider}` like the route above: the rule this enforces ("you still need
-# an email to sign in with") names Telegram, and generalizing it to "you may not
-# remove your last way in" is a decision that needs VK's real flows in front of
-# it. See UnlinkTelegramAccount.
 @connections_router.delete(
     "/telegram",
     status_code=204,
@@ -93,5 +91,26 @@ async def start_account_link(
 @inject
 async def unlink_telegram_account(
     interactor: FromDishka[UnlinkTelegramAccount],
+) -> None:
+    await interactor()
+
+
+@connections_router.delete(
+    "/vk",
+    status_code=204,
+    summary="Unlink VK account",
+    description="Unlinks the VK account from the currently authenticated user.",
+    responses={
+        204: {"description": "VK account unlinked successfully."},
+        404: {"model": ErrorMessage, "description": "User not found."},
+        409: {
+            "model": ErrorMessage,
+            "description": "Email is required before unlinking.",
+        },
+    },
+)
+@inject
+async def unlink_vk_account(
+    interactor: FromDishka[UnlinkVkAccount],
 ) -> None:
     await interactor()

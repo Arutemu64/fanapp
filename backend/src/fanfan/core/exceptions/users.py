@@ -50,6 +50,18 @@ class TelegramCannotBeUnlinkedWithoutEmail(Conflict, UserException):
     code = "TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL"
 
 
+class VkAlreadyLinkedToAnotherUser(Conflict, UserException):
+    code = "VK_ALREADY_LINKED_TO_ANOTHER_USER"
+
+
+class UserAlreadyHasVkLinked(Conflict, UserException):
+    code = "USER_ALREADY_HAS_VK_LINKED"
+
+
+class VkCannotBeUnlinkedWithoutEmail(Conflict, UserException):
+    code = "VK_CANNOT_BE_UNLINKED_WITHOUT_EMAIL"
+
+
 class LinkInitiatorMismatch(Conflict, UserException):
     """The session that finished an account link is not the one that started it.
 

@@ -36,14 +36,14 @@
 	// Cancelling is the user's own choice, so it gets an informational toast —
 	// only a flow that actually broke reads as an error.
 	const linkErrorToasts = {
-		cancelled: { message: 'Подключение Telegram отменено.', type: 'info' },
-		failed: { message: 'Не удалось подключить Telegram. Попробуй ещё раз.', type: 'error' },
+		cancelled: { message: 'Подключение отменено.', type: 'info' },
+		failed: { message: 'Не удалось подключить аккаунт. Попробуй ещё раз.', type: 'error' },
 		linked_to_another_account: {
-			message: 'Этот Telegram уже подключён к другому аккаунту.',
+			message: 'Этот аккаунт уже подключён к другому профилю.',
 			type: 'error'
 		},
-		user_already_has_telegram: {
-			message: 'К твоему аккаунту уже подключён другой Telegram.',
+		user_already_has_provider: {
+			message: 'К твоему аккаунту уже подключён аккаунт этого сервиса.',
 			type: 'error'
 		},
 		session_changed: {
