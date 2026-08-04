@@ -637,7 +637,7 @@ requires-dist = [
     { name = "click", specifier = ">=8.4.2" },
     { name = "dishka", specifier = ">=1.10.1" },
     { name = "dishka-faststream", specifier = ">=0.7.0" },
-    { name = "fastapi", specifier = ">=0.140.7" },
+    { name = "fastapi", specifier = ">=0.140.10" },
     { name = "fastapi-mail", specifier = ">=1.6.5" },
     { name = "fastexcel", specifier = ">=0.20.2" },
     { name = "faststream", extras = ["cli", "nats"], specifier = ">=0.7.2" },
@@ -697,7 +697,7 @@ pydantic = [
 
 [[package]]
 name = "fastapi"
-version = "0.140.7"
+version = "0.140.10"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "annotated-doc" },
@@ -706,9 +706,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "typing-inspection" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e1/33/e0dfa29ccce4eb8c9a073f9e557b0d6bacbb3aa32e7ad595f678de4d036a/fastapi-0.140.7.tar.gz", hash = "sha256:09a640af2d29006345e1f28e4f031fa60f89b1a75d29f26070f3afa677d66cce", size = 422051, upload-time = "2026-07-27T17:34:45.908Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/60/3a/4734b861d4471653ad4c3c86af25904bde8adabc6357e9b400f7f80451bc/fastapi-0.140.10.tar.gz", hash = "sha256:e05c183a57e1084708c34e43b5305494046c28a798b753f94ba96691f5394262", size = 423129, upload-time = "2026-07-28T14:21:30.866Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7b/0e/00cddd6b8668884e9c7588ab0eeb73becbd1efa3eaead34397f2e9a8de49/fastapi-0.140.7-py3-none-any.whl", hash = "sha256:960bb9696d8fd19dff488aa4f67f276364542cfcce9f7e68a82fe49dce126626", size = 131085, upload-time = "2026-07-27T17:34:47.036Z" },
+    { url = "https://files.pythonhosted.org/packages/05/bf/19aaed94c5f893555520cd539f08b4eebe6741154a3fd8b4a4216448ab95/fastapi-0.140.10-py3-none-any.whl", hash = "sha256:d545b4a3a3a0d5a1ce99d28b38568b0b228bcc47490af150f7c87691df6bc7a5", size = 131128, upload-time = "2026-07-28T14:21:29.445Z" },
 ]
 
 [[package]]
