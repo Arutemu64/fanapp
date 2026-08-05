@@ -38,28 +38,39 @@ class InvalidEmail(ConstraintViolation, UserException):
     code = "INVALID_EMAIL"
 
 
-class TelegramAlreadyLinkedToAnotherUser(Conflict, UserException):
-    code = "TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER"
+class SocialAccountLinkedToAnotherUser(Conflict, UserException):
+    """The external account is already linked to a different local user.
+
+    Provider-agnostic: the OAuth callback funnels every provider into the same
+    `linked_to_another_account` toast, and the `(provider, subject)` unique
+    constraint enforces it identically for all providers.
+    """
+
+    code = "SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER"
 
 
-class UserAlreadyHasTelegramLinked(Conflict, UserException):
-    code = "USER_ALREADY_HAS_TELEGRAM_LINKED"
+class UserAlreadyHasProviderLinked(Conflict, UserException):
+    """The user already has an account of this provider linked.
+
+    Backed by the `(user_id, provider)` unique constraint — one identity per
+    provider per user.
+    """
+
+    code = "USER_ALREADY_HAS_PROVIDER_LINKED"
 
 
-class TelegramCannotBeUnlinkedWithoutEmail(Conflict, UserException):
-    code = "TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL"
+class CannotRemoveLastSignInMethod(Conflict, UserException):
+    """Unlinking would leave the user with no way to sign back in.
 
+    A user signs in either by email — which drives both password and email-code
+    login — or by a linked social account. Removing an identity is refused only
+    when there is no email and it is the user's last remaining linked provider;
+    otherwise the account would become unreachable. With two providers this
+    replaces the old per-provider "email required to unlink" rule, which locked a
+    user out of unlinking *either* account when they held both and had no email.
+    """
 
-class VkAlreadyLinkedToAnotherUser(Conflict, UserException):
-    code = "VK_ALREADY_LINKED_TO_ANOTHER_USER"
-
-
-class UserAlreadyHasVkLinked(Conflict, UserException):
-    code = "USER_ALREADY_HAS_VK_LINKED"
-
-
-class VkCannotBeUnlinkedWithoutEmail(Conflict, UserException):
-    code = "VK_CANNOT_BE_UNLINKED_WITHOUT_EMAIL"
+    code = "CANNOT_REMOVE_LAST_SIGN_IN_METHOD"
 
 
 class LinkInitiatorMismatch(Conflict, UserException):

@@ -11,15 +11,25 @@ from fanfan.core.vo.social_identity import SocialProvider, generate_social_ident
 from fanfan.core.vo.user import UserRole, generate_user_id
 
 
-class AuthorizeTelegramInput(BaseModel):
-    # The OIDC `sub` — the identity key, not the Bot API user id.
+class AuthorizeSocialLoginInput(BaseModel):
+    provider: SocialProvider
+    # The provider's stable account identifier (OIDC `sub` for Telegram) — the
+    # identity key, not the native account id.
     subject: str
-    # The Bot API user id, so the notifier can reach the user. Required: a token
-    # without it is refused upstream (see TelegramClaims), so it always arrives.
+    # The native account id, so the notifier can reach the user. Required: a
+    # token without it is refused upstream, so it always arrives.
     provider_user_id: int
 
 
-class AuthorizeTelegram:
+class AuthorizeSocialLogin:
+    """Sign a user in via any social provider, creating the account on first sight.
+
+    One flow serves every provider: the identity is matched on `(provider,
+    subject)`, and a first-time subject gets a fresh visitor account. The callback
+    is unauthenticated and runs on every login, so a returning subject must
+    resolve to the existing account rather than create a duplicate.
+    """
+
     def __init__(
         self,
         user_gateway: UserGateway,
@@ -34,9 +44,9 @@ class AuthorizeTelegram:
         self.user_service = user_service
         self.session_store = session_store
 
-    async def __call__(self, data: AuthorizeTelegramInput) -> str:
+    async def __call__(self, data: AuthorizeSocialLoginInput) -> str:
         identity = await self.social_identity_gateway.get_by_subject(
-            provider=SocialProvider.TELEGRAM, subject=data.subject
+            provider=data.provider, subject=data.subject
         )
 
         if identity:
@@ -54,7 +64,7 @@ class AuthorizeTelegram:
             SocialIdentity(
                 id=generate_social_identity_id(),
                 user_id=user.id,
-                provider=SocialProvider.TELEGRAM,
+                provider=data.provider,
                 subject=data.subject,
                 provider_user_id=data.provider_user_id,
             )

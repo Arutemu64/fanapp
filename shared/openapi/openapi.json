@@ -920,7 +920,7 @@
             }
           },
           "409": {
-            "description": "Email is required before unlinking.",
+            "description": "Cannot remove the user's last remaining sign-in method.",
             "content": {
               "application/json": {
                 "schema": {
@@ -990,7 +990,7 @@
             }
           },
           "409": {
-            "description": "Email is required before unlinking.",
+            "description": "Cannot remove the user's last remaining sign-in method.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3525,6 +3525,7 @@
               "ALREADY_VOTED_IN_THIS_NOMINATION",
               "APP_SETTINGS_NOT_FOUND",
               "AUTHENTICATION_ERROR",
+              "CANNOT_REMOVE_LAST_SIGN_IN_METHOD",
               "CAPTCHA_VERIFICATION_FAILED",
               "CURRENT_EVENT_NOT_ALLOWED",
               "EMAIL_ALREADY_EXISTS",
@@ -3548,11 +3549,10 @@
               "SCHEDULE_CHANGE_NOT_FOUND",
               "SCHEDULE_EDIT_TOO_FAST",
               "SKIPPED_EVENT_NOT_ALLOWED",
+              "SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER",
               "SUBSCRIPTION_ALREADY_EXISTS",
               "SUBSCRIPTION_NOT_FOUND",
               "SYNC_ALREADY_RUNNING",
-              "TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER",
-              "TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL",
               "TICKET_ALREADY_USED",
               "TICKET_BARCODE_COLLISION",
               "TICKET_NOT_FOUND",
@@ -3563,15 +3563,12 @@
               "USERNAME_ALREADY_TAKEN",
               "USERNAME_PROFANITY",
               "USER_ALREADY_EXISTS",
-              "USER_ALREADY_HAS_TELEGRAM_LINKED",
+              "USER_ALREADY_HAS_PROVIDER_LINKED",
               "USER_ALREADY_HAS_TICKET_LINKED",
-              "USER_ALREADY_HAS_VK_LINKED",
               "USER_HAS_NO_EMAIL",
               "USER_NOT_AUTHENTICATED",
               "USER_NOT_FOUND",
               "VALIDATION_ERROR",
-              "VK_ALREADY_LINKED_TO_ANOTHER_USER",
-              "VK_CANNOT_BE_UNLINKED_WITHOUT_EMAIL",
               "VOTE_NOT_FOUND"
             ]
           },

@@ -8,8 +8,8 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.users import (
     LinkInitiatorMismatch,
-    UserAlreadyHasVkLinked,
-    VkAlreadyLinkedToAnotherUser,
+    SocialAccountLinkedToAnotherUser,
+    UserAlreadyHasProviderLinked,
 )
 from fanfan.core.models.social_identity import SocialIdentity
 from fanfan.core.vo.social_identity import SocialProvider, generate_social_identity_id
@@ -18,13 +18,19 @@ from fanfan.core.vo.user import UserId
 logger = logging.getLogger(__name__)
 
 
-class LinkVkAccountInput(BaseModel):
+class LinkSocialAccountInput(BaseModel):
+    provider: SocialProvider
+    # The OIDC `sub` — the identity key, not the native account id.
     subject: str
     provider_user_id: int
+    # Who started the flow, carried through the OAuth state. Guards against the
+    # browser signing in as somebody else between the redirect and the callback.
     initiator_user_id: UserId
 
 
-class LinkVkAccount:
+class LinkSocialAccount:
+    """Attach a social identity to the current user, for any provider."""
+
     def __init__(
         self,
         user_gateway: UserGateway,
@@ -37,44 +43,45 @@ class LinkVkAccount:
         self.uow = uow
         self.current_user_provider = current_user_provider
 
-    async def __call__(self, data: LinkVkAccountInput) -> None:
+    async def __call__(self, data: LinkSocialAccountInput) -> None:
         current_user = await self.current_user_provider.require_user()
 
         if current_user.id != data.initiator_user_id:
             logger.warning(
-                "VK link refused: session changed mid-flow",
+                "Social link refused: session changed mid-flow",
                 extra={
+                    "provider": data.provider.value,
                     "actor_id": str(current_user.id),
                     "initiator_id": str(data.initiator_user_id),
                 },
             )
             raise LinkInitiatorMismatch
 
-        current_vk = await self.social_identity_gateway.get_by_provider(
-            current_user.id, SocialProvider.VK
+        current = await self.social_identity_gateway.get_by_provider(
+            current_user.id, data.provider
         )
-        if current_vk is not None:
-            if current_vk.subject == data.subject:
+        if current is not None:
+            if current.subject == data.subject:
                 return
-            raise UserAlreadyHasVkLinked
+            raise UserAlreadyHasProviderLinked
 
         existing = await self.social_identity_gateway.get_by_subject(
-            provider=SocialProvider.VK, subject=data.subject
+            provider=data.provider, subject=data.subject
         )
         if existing is not None and existing.user_id != current_user.id:
-            raise VkAlreadyLinkedToAnotherUser
+            raise SocialAccountLinkedToAnotherUser
 
         await self.social_identity_gateway.add(
             SocialIdentity(
                 id=generate_social_identity_id(),
                 user_id=current_user.id,
-                provider=SocialProvider.VK,
+                provider=data.provider,
                 subject=data.subject,
                 provider_user_id=data.provider_user_id,
             )
         )
         await self.uow.commit()
         logger.info(
-            "VK account linked",
-            extra={"actor_id": str(current_user.id)},
+            "Social account linked",
+            extra={"provider": data.provider.value, "actor_id": str(current_user.id)},
         )
