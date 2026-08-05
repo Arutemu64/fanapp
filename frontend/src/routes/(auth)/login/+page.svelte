@@ -103,7 +103,7 @@
 				<!-- Benefits belong on the entry screen only: once a method is chosen the
 					sub-steps are the task, not the pitch. -->
 				<p class="text-sm text-gray-600 dark:text-gray-400">
-					Голосуй за выступления, получай уведомления и оставляй обратную связь.
+					Получай персональные уведомления, голосуй за участников и оставляй обратную связь.
 				</p>
 			{/if}
 		</div>
