@@ -11,7 +11,7 @@ class RefundStatus(StrEnum):
     REJECTED = "rejected"
 
 
-@dataclass
+@dataclass(slots=True, frozen=True)
 class Refund:
     id: str
     event: str

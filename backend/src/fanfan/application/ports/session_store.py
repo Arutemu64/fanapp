@@ -4,7 +4,7 @@ from typing import Protocol
 from fanfan.core.vo.user import UserId
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SessionResolution:
     user_id: UserId | None
     touched: bool
