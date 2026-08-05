@@ -87,6 +87,10 @@ backend-test-integration:
 backend-sync TARGET:
     cd backend && uv run python -m fanfan.main.cli sync {{ TARGET }}
 
+# Fill an empty environment with a demo programme and voting (idempotent).
+backend-seed-demo:
+    cd backend && uv run python -m fanfan.main.cli demo seed
+
 backend-typecheck:
     cd backend && uv run ty check src/fanfan
 
