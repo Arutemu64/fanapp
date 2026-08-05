@@ -23,9 +23,13 @@ section](../README.md#license) excludes from the MIT grant.
 
 From a fork, five things need to change:
 
-1. **Branding.** Replace the four excluded asset paths listed in the README, and
-   the name, description and `theme_color` in
+1. **Branding.** Replace the excluded asset paths listed in the README — app
+   icons, favicons, the sidebar/login logo, venue maps and hero art — and the
+   name, description and `theme_color` in
    [`frontend/static/manifest.json`](../frontend/static/manifest.json).
+   [frontend.md](frontend.md) §2 lists the icon format constraints the swaps must
+   respect (maskable safe-zone padding, the transparent push badge, the
+   `dark:invert` logo).
 2. **Actions variables.** Set your own `PUBLIC_VAPID_KEY` (the public half of the
    keypair `just bootstrap` generates into `secrets/`), plus
    `PUBLIC_SMARTCAPTCHA_CLIENT_KEY` and the `PUBLIC_SENTRY_*` values if you use

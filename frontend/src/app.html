@@ -4,8 +4,12 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<link rel="manifest" href="/manifest.json" />
+		<!-- SVG for browsers that support it (Chrome/Firefox/Edge); ICO as the fallback
+			(Safari, plus browsers that only ever probe /favicon.ico by convention). -->
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<link rel="alternate icon" href="/favicon.ico" />
 		<!-- iOS reads this for the home-screen icon (it ignores manifest icons). -->
-		<link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+		<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 		<!-- Run standalone (no Safari chrome) when launched from the iOS home screen.
 			Modern iOS also honors the manifest's display:standalone, but these legacy
 			Apple metas are still required for the status-bar style and app title. -->

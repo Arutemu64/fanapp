@@ -129,7 +129,7 @@
 		manual-apple
 		manifest-url="/manifest.json"
 		name="ФАН ФАН"
-		icon="/icons/icon-512x512.png"
+		icon="/icons/icon-512.png"
 	></pwa-install>
 
 	<!-- Prompts the user to reload when a new build has been cached by the SW. -->

@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	// Bundled (not static/) so Vite content-hashes it like the other brand assets.
+	import logo from '$lib/assets/logo.svg';
 	import SkipLink from '$lib/components/SkipLink.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
 
@@ -18,6 +20,10 @@
 	class="relative flex min-h-dvh items-center justify-center bg-gray-50 px-4 py-6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 sm:py-10 dark:bg-gray-950"
 >
 	<div class="w-full max-w-sm space-y-3">
+		<!-- Same mark as the sidebar; see AppSidebar.svelte for why `dark:invert` is enough
+			on its own to cover both themes. -->
+		<img src={logo} alt="ФАН ФАН" class="mx-auto h-12 w-auto dark:invert" />
+
 		{@render children()}
 
 		<!--

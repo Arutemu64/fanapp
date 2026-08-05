@@ -221,8 +221,11 @@ self.addEventListener('push', (event: PushEvent) => {
 
 	const options = {
 		body: data.body,
-		icon: '/favicon.png',
-		badge: '/favicon.png',
+		icon: '/icons/icon-192.png',
+		// Android renders the badge as a monochrome silhouette from the alpha
+		// channel alone, re-tinted with the system accent — so it must be a
+		// transparent-background mark, not the opaque full-color app icon.
+		badge: '/icons/badge-96.png',
 		tag: data.tag,
 		data: {
 			url: data.url || '/'
