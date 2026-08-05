@@ -97,13 +97,29 @@ Three tiers — pick by element role:
 * Never use `rounded-sm`, `rounded-md`, or bare `rounded` — they have no role in this scale.
 * `rounded-2xl` on the outermost container, `rounded-lg` on inner borders/rows inside it.
 
-### Card surface (centralized — don't re-specify the default)
+### Centralized component theme (don't re-specify these defaults)
 
-Flowbite's `Card` ships `shadow-md` + `rounded-lg` defaults that don't match this system, and re-overriding them on every card is exactly how the design drifts. Instead, the root `src/routes/+layout.svelte` wraps the app in Flowbite's `<ThemeProvider>` with a **card theme** that makes the *default* surface flat (`shadow-none`) at the standard `rounded-xl` tier, plus a `focus-visible` ring that only renders on `href` (link) cards — Flowbite emits an `<a>` there, and the ring is inert on non-focusable `<div>` cards. So:
+Flowbite components ship their own radius defaults; re-overriding them on every instance is exactly how the design drifts. Instead, the root `src/routes/+layout.svelte` wraps the app in Flowbite's `<ThemeProvider>` with a `flowbiteTheme` object that sets the app-wide surface baseline once.
 
-* A plain `<Card>` is already correct — **do not** re-add `shadow-none` or `rounded-xl`; that reintroduces the duplication the theme exists to remove.
-* Opt **up** only where a card genuinely deviates: `rounded-2xl` for large feature/settings/error cards, `shadow-sm` for a genuinely tappable standalone card (`NominationCard`, notification rows). Its own class wins via `tailwind-merge`, because the theme base is merged *before* the consumer's `class`.
-* Changing the baseline card look is a one-line edit in that theme — not a sweep across every card.
+**Standing rule:** any class you'd otherwise repeat on 3+ instances of the same Flowbite component belongs in `flowbiteTheme`, not on each instance. This is a rule about de-duplicating *our* overrides — **not** a reason to preserve Flowbite's defaults. Diverging from a Flowbite default is fine and deliberate (the radius scale below does exactly that, overriding `rounded-lg` app-wide); the point is only to encode each divergence *once*, centrally, so no single call site can forget it and drift. A one-off override that genuinely belongs on a single element stays on that element.
+
+The current set:
+
+| Component | Flowbite default | Themed to |
+|---|---|---|
+| `Card` | `shadow-md rounded-lg` | `shadow-none rounded-xl` + a `focus-visible` ring (only renders on `href` cards — Flowbite emits an `<a>` there; inert on non-focusable `<div>` cards) |
+| `Alert` | `rounded-lg` | `rounded-xl` |
+| `Button` | `rounded-lg` | `rounded-xl` |
+| `Dropdown` | `rounded-lg` | `rounded-xl` |
+| `Modal` | `rounded-lg` (base/header/footer) | `rounded-2xl` / `rounded-t-2xl` / `rounded-b-2xl` |
+
+So:
+
+* A plain instance of any themed component is already correct — **do not** re-add the class the theme already sets (e.g. `rounded-xl` on a `<Button>`, `shadow-none` on a `<Card>`); that reintroduces the duplication the theme exists to remove.
+* Opt **up** only where an instance genuinely deviates: `rounded-2xl` for large feature/settings/error cards, `shadow-sm` for a genuinely tappable standalone card (`NominationCard`, notification rows), `rounded-full` for a deliberately circular button (the PWA install prompt's floating actions). Its own class wins via `tailwind-merge`, because the theme's class is merged *before* the consumer's `class`.
+* `Button`'s `min-h-11` (44px touch target) is **not** themed — it's a per-instance call between a full-width primary CTA and a compact secondary/icon button, not a surface default.
+* `Textarea`'s unwrapped render path (no `header`/`footer`/`addon` snippet — the only path this app uses) does not read the `ThemeProvider` theme at all; that's a flowbite-svelte quirk, not a choice. Its `rounded-xl` has to stay a per-instance `class` until upstream fixes it — don't move it into `flowbiteTheme` expecting it to take effect.
+* Changing one of these baselines is a one-line edit in `flowbiteTheme` — not a sweep across every instance.
 
 ### Z-Index Scale
 

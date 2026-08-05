@@ -16,7 +16,7 @@
 	let syncedLabel = $derived(cachedAt !== undefined ? formatSyncedAt(cachedAt) : undefined);
 </script>
 
-<Alert color="yellow" class="rounded-xl">
+<Alert color="yellow">
 	{#snippet icon()}
 		<ClockOutline class="h-5 w-5 shrink-0" />
 	{/snippet}

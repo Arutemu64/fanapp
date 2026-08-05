@@ -55,7 +55,7 @@
 		<p class="text-sm text-gray-600 sm:text-base dark:text-gray-400">{message}</p>
 
 		<!-- These actions fan out a mailing to every subscriber. Telegram messages can be undone, but delivered push notifications cannot, so warn before sending. -->
-		<Alert color={notifyColor} class="rounded-xl">
+		<Alert color={notifyColor}>
 			{#snippet icon()}
 				<BellActiveOutline class="h-5 w-5 shrink-0" />
 			{/snippet}

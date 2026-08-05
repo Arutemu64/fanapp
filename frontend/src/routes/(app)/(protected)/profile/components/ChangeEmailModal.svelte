@@ -180,7 +180,7 @@
 	{#if step === 'email'}
 		<form onsubmit={handleSubmit} class="space-y-4">
 			{#if formError}
-				<Alert color="red" class="rounded-xl text-sm">
+				<Alert color="red">
 					{formError}
 				</Alert>
 			{/if}
@@ -242,7 +242,7 @@
 			>
 				{#if isLoading}
 					<span class="flex items-center gap-2">
-						<Spinner size="4" />
+						<Spinner size="4" class="fill-white" />
 						Отправка кода…
 					</span>
 				{:else}
@@ -253,7 +253,7 @@
 	{:else}
 		<div class="space-y-4">
 			{#if formError}
-				<Alert color="red" class="rounded-xl text-sm">
+				<Alert color="red">
 					{formError}
 				</Alert>
 			{/if}
@@ -290,12 +290,12 @@
 			<div class="flex flex-col space-y-2 pt-2">
 				<Button
 					color="primary"
-					class="min-h-11 w-full rounded-xl font-medium"
+					class="min-h-11 w-full font-medium"
 					disabled={isVerifying || isRequestingVerification || verificationCode.length < 6}
 					onclick={submitVerificationCode}
 				>
 					{#if isVerifying}
-						<Spinner size="4" class="me-2" />
+						<Spinner size="4" class="me-2 fill-white" />
 						Проверяем…
 					{:else}
 						Подтвердить код
@@ -305,7 +305,7 @@
 				<Button
 					type="button"
 					color="alternative"
-					class="min-h-11 w-full rounded-xl font-medium"
+					class="min-h-11 w-full font-medium"
 					disabled={isVerifying || isRequestingVerification || cooldown.remaining > 0}
 					onclick={sendOtp}
 				>

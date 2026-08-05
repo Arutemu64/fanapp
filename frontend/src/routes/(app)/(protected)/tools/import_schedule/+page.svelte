@@ -116,11 +116,11 @@
 		<Button
 			type="submit"
 			color="primary"
-			class="min-h-11 w-full justify-center rounded-xl sm:w-auto"
+			class="min-h-11 w-full justify-center sm:w-auto"
 			disabled={isUploading}
 		>
 			{#if isUploading}
-				<Spinner size="4" class="mr-2" color="primary" />
+				<Spinner size="4" class="mr-2 fill-white" />
 				Импортируем…
 			{:else}
 				Импортировать

@@ -128,7 +128,7 @@
 
 	<form onsubmit={handleSubmit} class="space-y-4">
 		{#if formError}
-			<Alert color="red" class="rounded-xl text-sm">
+			<Alert color="red">
 				{formError}
 			</Alert>
 		{/if}
@@ -165,7 +165,7 @@
 		<Button type="submit" color="primary" class="w-full" disabled={!isValid() || isLoading}>
 			{#if isLoading}
 				<span class="flex items-center gap-2">
-					<Spinner size="4" />
+					<Spinner size="4" class="fill-white" />
 					Сохранение…
 				</span>
 			{:else}

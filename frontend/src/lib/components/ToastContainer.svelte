@@ -126,7 +126,7 @@
 		color={undefined}
 		dismissable={true}
 		onclose={() => toastService.dismiss(toast.id)}
-		class="w-full max-w-sm rounded-lg bg-white p-4 text-gray-500 shadow dark:bg-gray-800 dark:text-gray-400"
+		class="w-full max-w-sm shadow"
 	>
 		<span class="font-semibold text-gray-900 dark:text-white">Новое уведомление</span>
 		{#if toast.notification.path}

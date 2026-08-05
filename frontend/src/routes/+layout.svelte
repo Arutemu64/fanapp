@@ -19,17 +19,41 @@
 
 	let { children, data }: LayoutProps = $props();
 
-	// Single source of truth for the card surface, so it can never drift away.
-	// Flowbite's Card ships shadow-md + rounded-lg defaults; this neutralizes them
-	// app-wide to the design system's near-flat, standard rounded-xl surface
-	// (Border-Before-Shadow, DESIGN.md / docs/frontend.md §3). Individual cards opt
-	// up to rounded-2xl (large/feature/error) or shadow-sm (tappable) via their own
-	// class, which wins through tailwind-merge. The focus-visible ring is inert on
-	// non-focusable <div> cards and gives every href card (Flowbite renders an <a>)
-	// a visible keyboard focus indicator — the one card a11y gap that was missing.
+	// Single source of truth for surfaces that otherwise drift: every one of these
+	// classes used to be hand-copied onto each component instance (see git history
+	// on this file) — one call site forgetting the override is how the drift
+	// starts. Centralizing here means the Border-Radius Scale (docs/frontend.md §3)
+	// is enforced by default instead of by convention. Components opt up/out via
+	// their own class, which always wins through tailwind-merge.
 	const flowbiteTheme: ThemeConfig = {
+		// Flowbite's Card ships shadow-md + rounded-lg; this is the near-flat,
+		// standard rounded-xl surface. Individual cards opt up to rounded-2xl
+		// (large/feature/error) or shadow-sm (tappable) via their own class. The
+		// focus-visible ring is inert on non-focusable <div> cards and gives every
+		// href card (Flowbite renders an <a>) a visible keyboard focus indicator —
+		// the one card a11y gap that was missing.
 		card: {
 			base: 'rounded-xl shadow-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:outline-none'
+		},
+		// Alert base already ships text-sm; only the radius (default rounded-lg)
+		// needed lifting to the Inner tier every call site was independently doing.
+		alert: 'rounded-xl',
+		// Button ships rounded-lg; every primary/secondary/social button in the app
+		// wants the Inner tier instead. Per-instance min-h-11 stays instance-side —
+		// that's a touch-target decision (compact vs. full CTA), not a surface default.
+		button: {
+			base: 'rounded-xl'
+		},
+		// Popover menus (notification bell, avatar menu) are dropdown popovers per
+		// the Inner tier; only one of the two call sites was applying it by hand.
+		dropdown: 'rounded-xl',
+		// Flowbite's Modal ships rounded-lg (Sub-group tier); modals are Outer tier.
+		// header/footer need their own corner classes so they don't square off
+		// against the now-rounder base.
+		modal: {
+			base: 'rounded-2xl',
+			header: 'rounded-t-2xl',
+			footer: 'rounded-b-2xl'
 		}
 	};
 

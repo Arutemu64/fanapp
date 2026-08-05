@@ -200,7 +200,7 @@
 									onclick={handleTelegramUnlink}
 								>
 									{#if isUnlinkingTelegram}
-										<Spinner class="me-2 h-4 w-4" />
+										<Spinner class="me-2 h-4 w-4 fill-white" />
 										Отвязка…
 									{:else}
 										<TrashBinOutline class="me-2 h-4 w-4" />
@@ -281,7 +281,7 @@
 									onclick={handleVkUnlink}
 								>
 									{#if isUnlinkingVk}
-										<Spinner class="me-2 h-4 w-4" />
+										<Spinner class="me-2 h-4 w-4 fill-white" />
 										Отвязка…
 									{:else}
 										<TrashBinOutline class="me-2 h-4 w-4" />
@@ -326,7 +326,7 @@
 	</div>
 
 	{#if !user.email}
-		<Alert color="yellow" class="text-sm">
+		<Alert color="yellow">
 			<div class="flex items-start gap-2">
 				<ExclamationCircleSolid class="mt-0.5 h-4 w-4 shrink-0" />
 				<p>

@@ -122,7 +122,7 @@
 <Dropdown
 	triggeredBy="#notification-bell"
 	bind:isOpen={dropdownOpen}
-	class="w-full max-w-sm divide-y divide-gray-100 rounded-xl shadow-sm dark:divide-gray-700 dark:bg-gray-800"
+	class="w-full max-w-sm divide-y divide-gray-100 dark:divide-gray-700 dark:bg-gray-800"
 >
 	<div class="flex items-center justify-between px-4 py-2">
 		<div class="text-center font-bold text-gray-900 dark:text-white">Уведомления</div>
