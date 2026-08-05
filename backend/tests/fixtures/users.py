@@ -89,6 +89,33 @@ async def sync_operator(dishka_request: AsyncContainer) -> User:
 
 
 @pytest_asyncio.fixture
+async def demo_seeder(dishka_request: AsyncContainer) -> User:
+    """
+    Create a user granted demo:seed.
+    """
+    user_gateway = await dishka_request.get(UserGateway)
+    user_permission_gateway = await dishka_request.get(UserPermissionGateway)
+    uow = await dishka_request.get(UnitOfWork)
+
+    demo_seeder = User(
+        id=UserId(uuid7()),
+        username=Username("demo_seeder"),
+        hashed_password=None,
+        role=UserRole.ORG,
+    )
+    await user_gateway.add(demo_seeder)
+    await user_permission_gateway.add(
+        UserPermission(
+            id=generate_user_permission_id(),
+            permission=Permission.DEMO_SEED,
+            user_id=demo_seeder.id,
+        )
+    )
+    await uow.commit()
+    return demo_seeder
+
+
+@pytest_asyncio.fixture
 async def schedule_editor(dishka_request: AsyncContainer) -> User:
     """
     Create a user granted schedule:manage and schedule:import.

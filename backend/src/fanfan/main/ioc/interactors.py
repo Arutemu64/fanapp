@@ -30,6 +30,7 @@ from fanfan.application.interactors.current_user.update_current_user import (
 from fanfan.application.interactors.current_user.update_user_settings import (
     UpdateUserSettings,
 )
+from fanfan.application.interactors.demo.seed_demo_data import SeedDemoData
 from fanfan.application.interactors.feedback.submit_feedback import SubmitFeedback
 from fanfan.application.interactors.notifications.config import NotificationConfig
 from fanfan.application.interactors.notifications.create_notification import (
@@ -154,6 +155,8 @@ class InteractorsProvider(Provider):
     send_schedule_change_notifications = provide(SendScheduleChangeNotifications)
     list_schedule_changes = provide(ListScheduleChanges)
     import_schedule = provide(ImportSchedule)
+
+    seed_demo_data = provide(SeedDemoData)
 
     send_broadcast = provide(SendBroadcast)
     get_notification = provide(GetNotification)

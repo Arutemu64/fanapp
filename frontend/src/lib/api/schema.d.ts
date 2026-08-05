@@ -1245,7 +1245,7 @@ export interface components {
          * Permission
          * @enum {string}
          */
-        Permission: "schedule:manage" | "schedule:import" | "notifications:send" | "settings:manage" | "tickets:generate" | "sync:run";
+        Permission: "schedule:manage" | "schedule:import" | "notifications:send" | "settings:manage" | "tickets:generate" | "sync:run" | "demo:seed";
         /** PushSubscriptionStatus */
         PushSubscriptionStatus: {
             /** Subscribed */
