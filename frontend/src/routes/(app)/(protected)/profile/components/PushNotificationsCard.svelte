@@ -48,7 +48,7 @@
 	// Link to the group's chat where the user grants "allow messages". Built from
 	// the build-time group id, so it may be empty if VK notifications were not
 	// configured for this deployment — the modal hides the button then.
-	const vkGroupUrl = PUBLIC_VK_GROUP_ID ? `https://vk.com/im?sel=-${PUBLIC_VK_GROUP_ID}` : null;
+	const vkGroupUrl = PUBLIC_VK_GROUP_ID ? `https://vk.ru/im?sel=-${PUBLIC_VK_GROUP_ID}` : null;
 
 	function urlBase64ToUint8Array(base64String: string) {
 		const padding = '='.repeat((4 - (base64String.length % 4)) % 4);

@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 # are the generic permission/access-denied variants of the same. 6/9 are flood
 # control. 5/27/28 are token/authorization failures — a channel-wide
 # misconfiguration, not a per-user problem.
-# https://dev.vk.com/en/reference/errors
+# https://dev.vk.ru/en/reference/errors
 _USER_UNREACHABLE_CODES = frozenset({7, 15, 901, 902})
 _FLOOD_CODES = frozenset({6, 9})
 _AUTH_CODES = frozenset({5, 27, 28})
