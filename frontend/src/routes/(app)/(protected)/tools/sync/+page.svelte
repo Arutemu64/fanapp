@@ -113,7 +113,7 @@
 
 <div class="mx-auto flex w-full max-w-2xl flex-col gap-4">
 	{#each data.sources as source (source.source)}
-		<Card class="w-full max-w-none rounded-2xl p-4 sm:p-6">
+		<Card class="w-full max-w-none rounded-2xl p-4 shadow-none sm:p-6">
 			<div class="flex flex-wrap items-start justify-between gap-3">
 				<div class="min-w-0">
 					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">

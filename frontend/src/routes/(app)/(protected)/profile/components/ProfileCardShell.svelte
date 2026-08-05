@@ -13,10 +13,11 @@
 	let { title, description, icon, children }: Props = $props();
 </script>
 
-<!-- Border + tonal step separate the card from the recessed page bg; no resting shadow
-	(shadow is reserved for genuinely floating layers, per the Border-Before-Shadow rule). -->
+<!-- Border + tonal step separate the card from the recessed page bg; shadow-none
+	keeps it flat (Card defaults to shadow-md) since shadow is reserved for genuinely
+	floating layers, per the Border-Before-Shadow rule. -->
 <Card
-	class="w-full max-w-none rounded-2xl border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+	class="w-full max-w-none rounded-2xl border-gray-200 bg-white shadow-none dark:border-gray-700 dark:bg-gray-800"
 >
 	<div class="p-5 sm:p-6">
 		<div class="flex flex-col gap-4">

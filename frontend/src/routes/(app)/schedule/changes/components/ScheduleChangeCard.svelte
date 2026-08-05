@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
-	import { Badge, type BadgeProps, Button, Spinner } from 'flowbite-svelte';
+	import { Badge, type BadgeProps, Button, Card, Spinner } from 'flowbite-svelte';
 	import { UndoOutline } from 'flowbite-svelte-icons';
 	const client = createApiClient();
 	import type {
@@ -66,7 +66,9 @@
 	}
 </script>
 
-<div class="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+<!-- Feed card: Flowbite Card supplies the border + surface; shadow-none keeps it
+	near-flat per the Border-Before-Shadow rule (Card defaults to shadow-md). -->
+<Card class="w-full max-w-none rounded-2xl p-4 shadow-none">
 	<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 		<div class="flex-1">
 			<div class="mb-2 flex flex-wrap items-center gap-2">
@@ -135,4 +137,4 @@
 			</Button>
 		</div>
 	</div>
-</div>
+</Card>

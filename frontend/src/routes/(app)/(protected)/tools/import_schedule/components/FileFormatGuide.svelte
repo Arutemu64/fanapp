@@ -36,7 +36,7 @@
 	];
 </script>
 
-<Card class="mx-auto mb-4 w-full max-w-2xl rounded-2xl p-4 sm:mb-6 sm:p-6">
+<Card class="mx-auto mb-4 w-full max-w-2xl rounded-2xl p-4 shadow-none sm:mb-6 sm:p-6">
 	<div class="mb-3 flex items-center gap-2">
 		<InfoCircleOutline class="h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400" />
 		<h2 class="text-base leading-snug font-semibold text-gray-900 sm:text-lg dark:text-white">

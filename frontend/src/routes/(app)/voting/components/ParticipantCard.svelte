@@ -90,7 +90,7 @@
 
 <Card
 	class={[
-		'flex w-full max-w-none flex-col p-4 transition-[box-shadow,border-color,background-color]',
+		'flex w-full max-w-none flex-col rounded-xl p-4 shadow-none transition-[box-shadow,border-color,background-color]',
 		participant.user_vote !== null ? 'ring-2 ring-green-600 dark:ring-green-500' : ''
 	]}
 >
