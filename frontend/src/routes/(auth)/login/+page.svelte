@@ -98,7 +98,7 @@
 <Card class="w-full rounded-2xl p-4 sm:p-6">
 	<div class="space-y-4">
 		<div class="space-y-1 text-center">
-			<h1 class="text-2xl font-bold text-gray-900 dark:text-white">Вход</h1>
+			<h1 class="text-2xl font-bold text-gray-900 dark:text-white">Вход в ФАН ФАН</h1>
 			{#if view === 'options'}
 				<!-- Benefits belong on the entry screen only: once a method is chosen the
 					sub-steps are the task, not the pitch. -->
