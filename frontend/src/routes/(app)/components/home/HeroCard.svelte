@@ -15,7 +15,7 @@
 	const socials = [
 		{ label: 'Официальный сайт fancom.info', href: 'https://fancom.info', icon: GlobeOutline },
 		{ label: 'Telegram', href: 'https://t.me/fanfan_fest_news', icon: TelegramIcon },
-		{ label: 'ВКонтакте', href: 'https://vk.com/fan_fest', icon: VkIcon },
+		{ label: 'ВКонтакте', href: 'https://vk.ru/fan_fest', icon: VkIcon },
 		{ label: 'TikTok', href: 'https://www.tiktok.com/@fan_fan_official', icon: TiktokIcon }
 	];
 
