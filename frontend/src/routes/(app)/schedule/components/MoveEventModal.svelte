@@ -82,7 +82,7 @@
 
 	<div class="flex flex-col gap-4 sm:gap-5">
 		{#if formError}
-			<Alert color="red" class="rounded-xl text-sm">
+			<Alert color="red">
 				{formError}
 			</Alert>
 		{/if}
@@ -94,7 +94,7 @@
 		</p>
 
 		<!-- Moving an event broadcasts a mailing to every subscriber. Push notifications cannot be recalled, so warn before sending. -->
-		<Alert color="yellow" class="rounded-xl">
+		<Alert color="yellow">
 			{#snippet icon()}
 				<BellActiveOutline class="h-5 w-5 shrink-0" />
 			{/snippet}

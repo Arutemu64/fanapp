@@ -120,7 +120,7 @@
 
 <form onsubmit={handlePasswordSubmit} class="space-y-4">
 	{#if formError}
-		<Alert color="red" class="rounded-xl text-sm">
+		<Alert color="red">
 			{formError}
 		</Alert>
 	{/if}
@@ -171,14 +171,9 @@
 		{/if}
 	</div>
 
-	<Button
-		type="submit"
-		color="primary"
-		class="min-h-11 w-full rounded-xl font-medium"
-		disabled={busy}
-	>
+	<Button type="submit" color="primary" class="min-h-11 w-full font-medium" disabled={busy}>
 		{#if activeAction === 'password'}
-			<Spinner size="4" class="mr-2" color="primary" />
+			<Spinner size="4" class="mr-2 fill-white" />
 			Входим…
 		{:else}
 			Войти
@@ -188,7 +183,7 @@
 	<Button
 		type="button"
 		color="light"
-		class="min-h-11 w-full rounded-xl font-medium"
+		class="min-h-11 w-full font-medium"
 		disabled={busy}
 		onclick={() => onBack?.()}
 	>

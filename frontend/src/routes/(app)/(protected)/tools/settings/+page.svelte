@@ -149,7 +149,7 @@
 
 <form class="mx-auto w-full max-w-2xl space-y-5" onsubmit={handleSubmit}>
 	{#if submitError}
-		<Alert color="red" class="rounded-xl text-sm">
+		<Alert color="red">
 			{submitError}
 		</Alert>
 	{/if}
@@ -226,11 +226,11 @@
 	<Button
 		type="submit"
 		color="primary"
-		class="min-h-11 w-full justify-center rounded-xl sm:w-auto"
+		class="min-h-11 w-full justify-center sm:w-auto"
 		disabled={isSaving || !hasChanges}
 	>
 		{#if isSaving}
-			<Spinner size="4" class="mr-2" color="primary" />
+			<Spinner size="4" class="mr-2 fill-white" />
 			Сохраняем…
 		{:else}
 			Сохранить

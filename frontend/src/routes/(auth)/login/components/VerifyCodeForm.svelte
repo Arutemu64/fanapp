@@ -164,7 +164,7 @@
 
 <form onsubmit={handleSubmit} class="space-y-4">
 	{#if formError}
-		<Alert color="red" class="rounded-xl text-sm">
+		<Alert color="red">
 			{formError}
 		</Alert>
 	{/if}
@@ -194,11 +194,11 @@
 	<Button
 		type="submit"
 		color="primary"
-		class="min-h-11 w-full rounded-xl font-medium"
+		class="min-h-11 w-full font-medium"
 		disabled={busy || loginCode.length < 6}
 	>
 		{#if activeAction === 'code-login'}
-			<Spinner size="4" class="mr-2" color="primary" />
+			<Spinner size="4" class="mr-2 fill-white" />
 			Проверяем…
 		{:else}
 			Войти по коду
@@ -216,7 +216,7 @@
 		<Button
 			type="button"
 			color="alternative"
-			class="min-h-11 w-full rounded-xl font-medium"
+			class="min-h-11 w-full font-medium"
 			disabled={busy || cooldown.remaining > 0}
 			onclick={() => void handleLoginCodeRequest()}
 		>
@@ -234,7 +234,7 @@
 		<Button
 			type="button"
 			color="light"
-			class="min-h-11 w-full rounded-xl font-medium"
+			class="min-h-11 w-full font-medium"
 			disabled={busy}
 			onclick={() => onBack?.()}
 		>

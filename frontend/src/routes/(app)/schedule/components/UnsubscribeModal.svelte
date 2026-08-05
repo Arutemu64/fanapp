@@ -55,7 +55,7 @@
 	{/snippet}
 
 	{#if formError}
-		<Alert color="red" class="mb-4 rounded-xl text-sm">
+		<Alert color="red" class="mb-4">
 			{formError}
 		</Alert>
 	{/if}

@@ -73,7 +73,7 @@
 	{:else}
 		<div class="space-y-3 rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
 			{#if submitError}
-				<Alert role="alert" color="red" class="rounded-xl text-sm">
+				<Alert role="alert" color="red">
 					{submitError}
 				</Alert>
 			{/if}
@@ -97,7 +97,7 @@
 			/>
 			<Button onclick={handleLinkTicket} class="min-h-11 w-full" disabled={isSubmitting} size="md">
 				{#if isSubmitting}
-					<Spinner class="me-2 h-4 w-4" />
+					<Spinner class="me-2 h-4 w-4 fill-white" />
 					Привязка…
 				{:else}
 					<TicketSolid class="me-2 h-4 w-4" />

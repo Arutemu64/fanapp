@@ -149,12 +149,12 @@
 					<Button
 						type="button"
 						color="primary"
-						class="min-h-11 w-full justify-center rounded-xl sm:w-auto"
+						class="min-h-11 w-full justify-center sm:w-auto"
 						disabled={isBusy(source)}
 						onclick={() => requestSync(source.source)}
 					>
 						{#if isBusy(source)}
-							<Spinner size="4" class="mr-2" color="primary" />
+							<Spinner size="4" class="mr-2 fill-white" />
 							Синхронизируем…
 						{:else}
 							Синхронизировать

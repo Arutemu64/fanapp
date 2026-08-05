@@ -71,7 +71,7 @@
 		>. Лишние колонки игнорируются.
 	</p>
 
-	<Alert color="yellow" class="mt-4 rounded-lg">
+	<Alert color="yellow" class="mt-4">
 		{#snippet icon()}
 			<ExclamationCircleOutline class="h-5 w-5 shrink-0" />
 		{/snippet}
@@ -87,7 +87,7 @@
 		href="{base}/schedule-template.xlsx"
 		download="schedule-template.xlsx"
 		color="alternative"
-		class="mt-4 min-h-11 w-full justify-center rounded-xl sm:w-auto sm:self-start"
+		class="mt-4 min-h-11 w-full justify-center sm:w-auto sm:self-start"
 	>
 		<DownloadOutline class="me-2 h-5 w-5" />
 		Скачать шаблон

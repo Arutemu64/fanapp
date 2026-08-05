@@ -88,11 +88,7 @@
 
 			<div class="flex w-full flex-col gap-2">
 				{#if offline || status >= 500}
-					<Button
-						color="primary"
-						class="min-h-11 w-full rounded-xl font-medium"
-						onclick={handleRetry}
-					>
+					<Button color="primary" class="min-h-11 w-full font-medium" onclick={handleRetry}>
 						<RefreshOutline class="me-2 h-4 w-4" />
 						Попробовать снова
 					</Button>
@@ -101,7 +97,7 @@
 				<Button
 					href="/"
 					color={offline || status >= 500 ? 'alternative' : 'primary'}
-					class="min-h-11 w-full rounded-xl font-medium"
+					class="min-h-11 w-full font-medium"
 				>
 					<HomeOutline class="me-2 h-4 w-4" />
 					На главную
@@ -110,7 +106,7 @@
 				<Button
 					type="button"
 					color="light"
-					class="min-h-11 w-full rounded-xl font-medium"
+					class="min-h-11 w-full font-medium"
 					onclick={handleGoBack}
 				>
 					<ArrowLeftOutline class="me-2 h-4 w-4" />

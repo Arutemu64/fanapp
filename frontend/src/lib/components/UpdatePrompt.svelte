@@ -120,7 +120,7 @@
 			align={false}
 			color={undefined}
 			dismissable={false}
-			class="pointer-events-auto w-full max-w-sm rounded-lg bg-white p-4 text-gray-500 shadow dark:bg-gray-800 dark:text-gray-400"
+			class="pointer-events-auto w-full max-w-sm shadow"
 		>
 			{#snippet icon()}
 				<RefreshOutline class="h-5 w-5 text-primary-600" aria-hidden="true" />

@@ -108,7 +108,7 @@
 			<Button
 				href={`${PUBLIC_API_URL}/auth/oauth/telegram/start`}
 				color="alternative"
-				class="min-h-11 w-full rounded-xl font-medium"
+				class="min-h-11 w-full font-medium"
 				aria-disabled={isOpeningTelegram}
 				onclick={handleTelegramClick}
 			>
@@ -124,7 +124,7 @@
 			<Button
 				href={`${PUBLIC_API_URL}/auth/oauth/vk/start`}
 				color="alternative"
-				class="min-h-11 w-full rounded-xl font-medium"
+				class="min-h-11 w-full font-medium"
 				aria-disabled={isOpeningVk}
 				onclick={handleVkClick}
 			>
@@ -140,7 +140,7 @@
 			<Button
 				type="button"
 				color="alternative"
-				class="min-h-11 w-full rounded-xl font-medium"
+				class="min-h-11 w-full font-medium"
 				onclick={showEmailLogin}
 			>
 				<EnvelopeSolid class="me-2 h-5 w-5" />

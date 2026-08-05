@@ -136,7 +136,7 @@
 				items={ROLE_OPTIONS}
 				bind:value={selectedRole}
 				disabled={isGenerating}
-				class="w-full rounded-xl"
+				classes={{ select: 'rounded-xl' }}
 			/>
 			<Helper class="text-sm text-gray-500 dark:text-gray-400">
 				Эту роль получит тот, кто привяжет билет.
@@ -166,7 +166,7 @@
 		</div>
 
 		{#if submitError}
-			<Alert color="red" class="rounded-xl">
+			<Alert color="red">
 				{submitError}
 			</Alert>
 		{/if}
@@ -174,11 +174,11 @@
 		<Button
 			type="submit"
 			color="primary"
-			class="min-h-11 w-full justify-center rounded-xl sm:w-auto"
+			class="min-h-11 w-full justify-center sm:w-auto"
 			disabled={isGenerating}
 		>
 			{#if isGenerating}
-				<Spinner size="4" class="mr-2" color="primary" />
+				<Spinner size="4" class="mr-2 fill-white" />
 				Генерируем…
 			{:else}
 				Сгенерировать
@@ -192,13 +192,7 @@
 				<span class="text-sm font-medium text-gray-900 dark:text-white">
 					Готовые билеты: {generatedBarcodes.length}
 				</span>
-				<Button
-					type="button"
-					color="alternative"
-					size="sm"
-					class="rounded-xl"
-					onclick={copyBarcodes}
-				>
+				<Button type="button" color="alternative" size="sm" onclick={copyBarcodes}>
 					<ClipboardCheckOutline class="mr-2 h-4 w-4" />
 					Копировать
 				</Button>
