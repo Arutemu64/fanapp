@@ -13,7 +13,7 @@ class OrderStatus(StrEnum):
     IN_PROGRESS = "in_progress"
 
 
-@dataclass
+@dataclass(slots=True, frozen=True)
 class Order:
     id: str
     status: OrderStatus
