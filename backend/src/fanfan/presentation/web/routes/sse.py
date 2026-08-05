@@ -24,15 +24,8 @@ HEARTBEAT_INTERVAL_SECONDS = 30
 
 
 def _to_sse(message: SSEMessage) -> ServerSentEvent:
-    if message.data is None:
-        # SSE spec: EventSource drops an event whose data buffer is empty, even
-        # when `event:` is set, so a payload-less signal (e.g. schedule_updated)
-        # never fires its named listener. Emit "{}" so the data line is non-empty
-        # and the frontend JSON.parse stays happy. raw_data skips the router's
-        # JSON encoding — plain `data` would double-encode it to the string '"{}"'.
-        # https://html.spec.whatwg.org/multipage/server-sent-events.html#dispatchMessage
-        return ServerSentEvent(event=message.event_name, raw_data="{}")
-    # dict payloads are JSON-serialized by the router.
+    # data is always a dict (empty for payload-less signals, see SSEMessage);
+    # the router JSON-serializes it, so `{}` becomes a non-empty `data: {}` line.
     return ServerSentEvent(event=message.event_name, data=message.data)
 
 

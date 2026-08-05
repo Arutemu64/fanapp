@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 
 
@@ -36,4 +36,9 @@ class SSEEventName(StrEnum):
 @dataclass(slots=True, frozen=True)
 class SSEMessage:
     event_name: SSEEventName
-    data: dict | None = None
+    # Default to an empty dict, not None, for payload-less signals (schedule_updated,
+    # ping). Per the SSE spec, EventSource drops an event whose data buffer is empty
+    # even when `event:` is set, so the named listener never fires; sending `{}` keeps
+    # the data line non-empty. The router JSON-encodes the dict to `{}` on the wire.
+    # https://html.spec.whatwg.org/multipage/server-sent-events.html#event-stream-interpretation
+    data: dict = field(default_factory=dict)

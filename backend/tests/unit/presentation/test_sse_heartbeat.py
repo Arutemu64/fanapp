@@ -20,7 +20,7 @@ HANDSHAKE = SSEMessage(
 SCHEDULE_UPDATED = SSEMessage(event_name=SSEEventName.SCHEDULE_UPDATED)
 
 
-async def test_messages_pass_through_and_none_data_becomes_empty_object() -> None:
+async def test_messages_pass_through_and_empty_data_stays_empty_object() -> None:
     async def source() -> AsyncGenerator[SSEMessage]:
         yield HANDSHAKE
         yield SCHEDULE_UPDATED
@@ -33,9 +33,9 @@ async def test_messages_pass_through_and_none_data_becomes_empty_object() -> Non
         SSEEventName.CONNECTION_ESTABLISHED,
         SSEEventName.SCHEDULE_UPDATED,
     ]
-    # None data must be replaced so EventSource does not drop the event; raw_data
-    # keeps it an unquoted `{}` on the wire.
-    assert events[1].raw_data == "{}"
+    # Payload-less signals carry an empty dict so EventSource does not drop the
+    # event; the router serializes it to a non-empty `data: {}` line on the wire.
+    assert events[1].data == {}
 
 
 async def test_ping_injected_when_stream_is_idle() -> None:
@@ -59,7 +59,7 @@ async def test_ping_injected_when_stream_is_idle() -> None:
     assert names[-1] == SSEEventName.SCHEDULE_UPDATED
     pings = [name for name in names if name == SSEEventName.PING]
     assert pings, "expected at least one ping during the idle window"
-    assert events[names.index(SSEEventName.PING)].raw_data == "{}"
+    assert events[names.index(SSEEventName.PING)].data == {}
 
 
 async def test_close_runs_source_cleanup() -> None:
