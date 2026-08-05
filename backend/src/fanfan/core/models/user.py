@@ -10,6 +10,7 @@ from fanfan.core.vo.user import UserId, Username, UserRole
 class UserSettings:
     receive_all_announcements: bool = True
     receive_telegram_notifications: bool = True
+    receive_vk_notifications: bool = True
 
 
 @dataclass(slots=True, kw_only=True)
@@ -56,6 +57,7 @@ class User(AggregateRoot):
         *,
         receive_all_announcements: bool | None = None,
         receive_telegram_notifications: bool | None = None,
+        receive_vk_notifications: bool | None = None,
     ) -> None:
         # Only the fields that were explicitly passed get changed; None means
         # "leave as is". Mutation goes through the aggregate root so callers
@@ -66,6 +68,8 @@ class User(AggregateRoot):
             self.settings.receive_telegram_notifications = (
                 receive_telegram_notifications
             )
+        if receive_vk_notifications is not None:
+            self.settings.receive_vk_notifications = receive_vk_notifications
 
     def set_email(self, email: Email) -> None:
         self.email = email

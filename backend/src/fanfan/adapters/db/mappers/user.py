@@ -25,6 +25,7 @@ class UserMapper:
             # extension point for future non-queryable prefs (currently empty).
             receive_all_announcements=model.settings.receive_all_announcements,
             receive_telegram_notifications=model.settings.receive_telegram_notifications,
+            receive_vk_notifications=model.settings.receive_vk_notifications,
             settings={},
         )
 
@@ -38,6 +39,7 @@ class UserMapper:
             settings=UserSettings(
                 receive_all_announcements=orm.receive_all_announcements,
                 receive_telegram_notifications=orm.receive_telegram_notifications,
+                receive_vk_notifications=orm.receive_vk_notifications,
             ),
         )
 
@@ -67,6 +69,7 @@ class UserMapper:
             settings=UserSettingsDTO(
                 receive_all_announcements=orm.receive_all_announcements,
                 receive_telegram_notifications=orm.receive_telegram_notifications,
+                receive_vk_notifications=orm.receive_vk_notifications,
             ),
             social_identities=[
                 UserSocialIdentityDTO(provider=social_identity.provider)

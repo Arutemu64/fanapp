@@ -1520,6 +1520,8 @@ export interface components {
             receive_all_announcements?: boolean | null;
             /** Receive Telegram Notifications */
             receive_telegram_notifications?: boolean | null;
+            /** Receive Vk Notifications */
+            receive_vk_notifications?: boolean | null;
         };
         /**
          * UserRole
@@ -1538,6 +1540,11 @@ export interface components {
              * @default true
              */
             receive_telegram_notifications: boolean;
+            /**
+             * Receive Vk Notifications
+             * @default true
+             */
+            receive_vk_notifications: boolean;
         };
         /** UserSocialIdentityDTO */
         UserSocialIdentityDTO: {

@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 class UpdateUserSettingsInput(BaseModel):
     receive_all_announcements: bool | None = None
     receive_telegram_notifications: bool | None = None
+    receive_vk_notifications: bool | None = None
 
 
 class UpdateUserSettings:
@@ -33,6 +34,7 @@ class UpdateUserSettings:
             receive_telegram_notifications=data_to_update.get(
                 "receive_telegram_notifications"
             ),
+            receive_vk_notifications=data_to_update.get("receive_vk_notifications"),
         )
         if data_to_update:
             await self.user_gateway.save(current_user)

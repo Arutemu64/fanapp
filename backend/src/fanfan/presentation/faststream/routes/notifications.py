@@ -142,6 +142,45 @@ async def send_notification_to_telegram(
     NotificationCreated.subject,
     stream=stream,
     pull_sub=PullSub(),
+    durable="send_notification_to_vk",
+    ack_policy=AckPolicy.MANUAL,
+)
+@inject
+async def send_notification_to_vk(
+    data: NotificationCreated,
+    interactor: FromDishka[SendNotification],
+    msg: NatsMessage,
+    logger: Logger,
+) -> None:
+    try:
+        await interactor.send_notification_to_vk(
+            SendNotificationInput(notification_id=data.notification_id)
+        )
+    except NotificationRetryAfter as e:
+        logger.warning(
+            "Retry sending notification %s to VK in %s",
+            data.notification_id,
+            e.retry_after,
+        )
+        await msg.nack(delay=e.retry_after)
+        return
+    except UserNotReachable:
+        logger.info("Skip sending notification %s to VK", data.notification_id)
+        await msg.reject()
+        return
+    except MailingAlreadyCancelled:
+        logger.info("Mailing for notification %s was cancelled", data.notification_id)
+        await msg.reject()
+        return
+    else:
+        await msg.ack()
+        logger.info("Sent notification %s to VK", data.notification_id)
+
+
+@notifications_router.subscriber(
+    NotificationCreated.subject,
+    stream=stream,
+    pull_sub=PullSub(),
     durable="send_push_notification",
     ack_policy=AckPolicy.MANUAL,
 )
