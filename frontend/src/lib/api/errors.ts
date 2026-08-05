@@ -170,6 +170,8 @@ function getInvalidScheduleFileMessage(details: ApiErrorDetails): string {
 // every key is a real ApiErrorCode — a typo'd code is a compile error.
 const ERROR_MESSAGES = {
 	ALREADY_VOTED_IN_THIS_NOMINATION: 'Ты уже голосовал в этой номинации',
+	CANNOT_REMOVE_LAST_SIGN_IN_METHOD:
+		'Это твой единственный способ входа. Сначала добавь почту или подключи другой аккаунт',
 	CAPTCHA_VERIFICATION_FAILED: 'Не удалось пройти проверку. Попробуй ещё раз.',
 	CURRENT_EVENT_NOT_ALLOWED: 'Это выступление нельзя отметить как текущее',
 	EMAIL_ALREADY_EXISTS: 'Этот адрес уже используется',
@@ -184,20 +186,15 @@ const ERROR_MESSAGES = {
 	PUSH_SUBSCRIPTION_ALREADY_EXISTS: 'Это устройство уже подключено к push-уведомлениям',
 	SAME_EVENTS_ARE_NOT_ALLOWED: 'Нельзя выбрать одно и то же выступление',
 	SKIPPED_EVENT_NOT_ALLOWED: 'Пропущенное выступление нельзя отметить как текущее',
+	SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER: 'Этот аккаунт уже подключён к другому профилю',
 	SUBSCRIPTION_ALREADY_EXISTS: 'Ты уже подписан на это выступление',
 	SYNC_ALREADY_RUNNING: 'Синхронизация уже выполняется, подожди немного',
-	TELEGRAM_ALREADY_LINKED_TO_ANOTHER_USER: 'Этот Telegram уже привязан к другому аккаунту',
-	TELEGRAM_CANNOT_BE_UNLINKED_WITHOUT_EMAIL:
-		'Сначала добавь почту, чтобы не потерять доступ к аккаунту',
-	VK_ALREADY_LINKED_TO_ANOTHER_USER: 'Этот VK уже привязан к другому аккаунту',
-	VK_CANNOT_BE_UNLINKED_WITHOUT_EMAIL: 'Сначала добавь почту, чтобы не потерять доступ к аккаунту',
 	TICKET_ALREADY_USED: 'Этот билет уже использован',
 	TICKET_BARCODE_COLLISION: 'Не удалось создать билеты, попробуй ещё раз',
 	TICKET_NOT_FOUND: 'Билет не найден',
 	TICKET_NOT_LINKED: 'Сначала привяжи билет',
 	USER_ALREADY_EXISTS: 'Этот адрес уже используется',
-	USER_ALREADY_HAS_TELEGRAM_LINKED: 'К аккаунту уже привязан Telegram',
-	USER_ALREADY_HAS_VK_LINKED: 'К аккаунту уже привязан VK',
+	USER_ALREADY_HAS_PROVIDER_LINKED: 'К твоему профилю уже подключён аккаунт этого сервиса',
 	USER_ALREADY_HAS_TICKET_LINKED: 'У тебя уже привязан билет',
 	USER_HAS_NO_EMAIL: 'Сначала добавь почту к аккаунту',
 	USER_NOT_AUTHENTICATED: 'Нужно войти в аккаунт',

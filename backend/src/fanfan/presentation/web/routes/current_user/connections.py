@@ -7,11 +7,9 @@ from fastapi import APIRouter, Request
 from starlette import status
 from starlette.responses import RedirectResponse, Response
 
-from fanfan.application.interactors.current_user.unlink_telegram_account import (
-    UnlinkTelegramAccount,
-)
-from fanfan.application.interactors.current_user.unlink_vk_account import (
-    UnlinkVkAccount,
+from fanfan.application.interactors.current_user.unlink_social_account import (
+    UnlinkSocialAccount,
+    UnlinkSocialAccountInput,
 )
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.vo.social_identity import SocialProvider
@@ -74,6 +72,9 @@ async def start_account_link(
     return RedirectResponse(url, status_code=status.HTTP_302_FOUND)
 
 
+# Two thin endpoints share one interactor: keeping a distinct path per provider
+# preserves the frontend's typed client calls (and the per-provider redirect URI
+# story of ADR-0012), while the unlink logic lives in one place.
 @connections_router.delete(
     "/telegram",
     status_code=204,
@@ -84,15 +85,15 @@ async def start_account_link(
         404: {"model": ErrorMessage, "description": "User not found."},
         409: {
             "model": ErrorMessage,
-            "description": "Email is required before unlinking.",
+            "description": "Cannot remove the user's last remaining sign-in method.",
         },
     },
 )
 @inject
 async def unlink_telegram_account(
-    interactor: FromDishka[UnlinkTelegramAccount],
+    interactor: FromDishka[UnlinkSocialAccount],
 ) -> None:
-    await interactor()
+    await interactor(UnlinkSocialAccountInput(provider=SocialProvider.TELEGRAM))
 
 
 @connections_router.delete(
@@ -105,12 +106,12 @@ async def unlink_telegram_account(
         404: {"model": ErrorMessage, "description": "User not found."},
         409: {
             "model": ErrorMessage,
-            "description": "Email is required before unlinking.",
+            "description": "Cannot remove the user's last remaining sign-in method.",
         },
     },
 )
 @inject
 async def unlink_vk_account(
-    interactor: FromDishka[UnlinkVkAccount],
+    interactor: FromDishka[UnlinkSocialAccount],
 ) -> None:
-    await interactor()
+    await interactor(UnlinkSocialAccountInput(provider=SocialProvider.VK))

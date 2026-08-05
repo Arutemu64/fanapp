@@ -8,28 +8,18 @@ from fastapi import APIRouter, Request
 from starlette import status
 from starlette.responses import RedirectResponse, Response
 
-from fanfan.application.interactors.auth.authorize_telegram import (
-    AuthorizeTelegram,
-    AuthorizeTelegramInput,
+from fanfan.application.interactors.auth.authorize_social_login import (
+    AuthorizeSocialLogin,
+    AuthorizeSocialLoginInput,
 )
-from fanfan.application.interactors.auth.authorize_vk import (
-    AuthorizeVk,
-    AuthorizeVkInput,
-)
-from fanfan.application.interactors.current_user.link_telegram_account import (
-    LinkTelegramAccount,
-    LinkTelegramAccountInput,
-)
-from fanfan.application.interactors.current_user.link_vk_account import (
-    LinkVkAccount,
-    LinkVkAccountInput,
+from fanfan.application.interactors.current_user.link_social_account import (
+    LinkSocialAccount,
+    LinkSocialAccountInput,
 )
 from fanfan.core.exceptions.users import (
     LinkInitiatorMismatch,
-    TelegramAlreadyLinkedToAnotherUser,
-    UserAlreadyHasTelegramLinked,
-    UserAlreadyHasVkLinked,
-    VkAlreadyLinkedToAnotherUser,
+    SocialAccountLinkedToAnotherUser,
+    UserAlreadyHasProviderLinked,
 )
 from fanfan.core.vo.social_identity import SocialProvider
 from fanfan.core.vo.user import UserId
@@ -40,8 +30,6 @@ from fanfan.presentation.web.oauth import (
     OAuthFailed,
     OAuthFlowState,
     OAuthIntent,
-    TelegramClaims,
-    VkClaims,
     fetch_telegram_claims,
     fetch_vk_claims,
     read_flow_state,
@@ -145,10 +133,8 @@ async def oauth_callback(  # noqa: PLR0913 — all params framework-injected
     request: Request,
     config: FromDishka[WebConfig],
     oauth: FromDishka[OAuth],
-    authorize_telegram: FromDishka[AuthorizeTelegram],
-    link_telegram: FromDishka[LinkTelegramAccount],
-    authorize_vk: FromDishka[AuthorizeVk],
-    link_vk: FromDishka[LinkVkAccount],
+    authorize: FromDishka[AuthorizeSocialLogin],
+    link: FromDishka[LinkSocialAccount],
 ) -> RedirectResponse:
     client: StarletteOAuth2App = oauth.create_client(provider.value)
 
@@ -161,67 +147,38 @@ async def oauth_callback(  # noqa: PLR0913 — all params framework-injected
         # them to the login page. Safe default: nothing privileged happened.
         return build_login_redirect(e.error_code)
 
+    try:
+        subject, provider_user_id = await _fetch_identity(provider, client, request)
+    except OAuthFailed as e:
+        if flow_state.intent is OAuthIntent.LINK:
+            return build_profile_redirect(e.error_code)
+        return build_login_redirect(e.error_code)
+
+    if flow_state.intent is OAuthIntent.LINK:
+        return await _finish_link(link, provider, subject, provider_user_id, flow_state)
+
+    return await _finish_login(authorize, config, provider, subject, provider_user_id)
+
+
+async def _fetch_identity(
+    provider: SocialProvider,
+    client: StarletteOAuth2App,
+    request: Request,
+) -> tuple[str, int]:
+    """Complete the provider round-trip and normalise it to (subject, address).
+
+    The token exchange and the claim shape differ per provider — Telegram returns
+    an OIDC id_token, VK a userinfo POST — but everything after this point (create
+    a session, or attach the identity) is provider-agnostic. `subject` is the
+    identity key; the int is the native account id the notifier addresses.
+    """
     match provider:
         case SocialProvider.TELEGRAM:
-            return await _handle_telegram(
-                client,
-                request,
-                flow_state,
-                config,
-                authorize_telegram,
-                link_telegram,
-            )
+            telegram = await fetch_telegram_claims(client, request)
+            return telegram.sub, telegram.id
         case SocialProvider.VK:
-            return await _handle_vk(
-                client,
-                request,
-                flow_state,
-                config,
-                authorize_vk,
-                link_vk,
-            )
-
-
-async def _handle_telegram(  # noqa: PLR0913
-    client: StarletteOAuth2App,
-    request: Request,
-    flow_state: OAuthFlowState,
-    config: WebConfig,
-    authorize: AuthorizeTelegram,
-    link: LinkTelegramAccount,
-) -> RedirectResponse:
-    try:
-        claims = await fetch_telegram_claims(client, request)
-    except OAuthFailed as e:
-        if flow_state.intent is OAuthIntent.LINK:
-            return build_profile_redirect(e.error_code)
-        return build_login_redirect(e.error_code)
-
-    if flow_state.intent is OAuthIntent.LINK:
-        return await _finish_telegram_link(link, claims, flow_state)
-
-    return await _finish_telegram_login(authorize, claims, config)
-
-
-async def _handle_vk(  # noqa: PLR0913
-    client: StarletteOAuth2App,
-    request: Request,
-    flow_state: OAuthFlowState,
-    config: WebConfig,
-    authorize: AuthorizeVk,
-    link: LinkVkAccount,
-) -> RedirectResponse:
-    try:
-        claims = await fetch_vk_claims(client, request)
-    except OAuthFailed as e:
-        if flow_state.intent is OAuthIntent.LINK:
-            return build_profile_redirect(e.error_code)
-        return build_login_redirect(e.error_code)
-
-    if flow_state.intent is OAuthIntent.LINK:
-        return await _finish_vk_link(link, claims, flow_state)
-
-    return await _finish_vk_login(authorize, claims, config)
+            vk = await fetch_vk_claims(client, request)
+            return str(vk.user_id), vk.user_id
 
 
 async def build_authorization_url(
@@ -250,18 +207,29 @@ async def build_authorization_url(
     )
 
 
-# ── Telegram finish helpers ──────────────────────────────────────────────
+# ── Shared finish helpers ────────────────────────────────────────────────
 
 
-async def _finish_telegram_login(
-    authorize: AuthorizeTelegram, claims: TelegramClaims, config: WebConfig
+async def _finish_login(
+    authorize: AuthorizeSocialLogin,
+    config: WebConfig,
+    provider: SocialProvider,
+    subject: str,
+    provider_user_id: int,
 ) -> RedirectResponse:
     try:
         session_id = await authorize(
-            AuthorizeTelegramInput(subject=claims.sub, provider_user_id=claims.id)
+            AuthorizeSocialLoginInput(
+                provider=provider,
+                subject=subject,
+                provider_user_id=provider_user_id,
+            )
         )
     except Exception:
-        logger.exception("Could not create a session for a Telegram login")
+        logger.exception(
+            "Could not create a session for a social login",
+            extra={"provider": provider.value},
+        )
         return build_login_redirect(OAUTH_ERROR_FAILED)
 
     response = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
@@ -269,83 +237,38 @@ async def _finish_telegram_login(
     return response
 
 
-async def _finish_telegram_link(
-    link: LinkTelegramAccount,
-    claims: TelegramClaims,
+async def _finish_link(
+    link: LinkSocialAccount,
+    provider: SocialProvider,
+    subject: str,
+    provider_user_id: int,
     flow_state: OAuthFlowState,
 ) -> RedirectResponse:
     if flow_state.initiator_user_id is None:
-        logger.warning("Link callback carried no initiator")
+        logger.warning(
+            "Link callback carried no initiator", extra={"provider": provider.value}
+        )
         return build_profile_redirect(OAUTH_ERROR_FAILED)
 
     try:
         await link(
-            LinkTelegramAccountInput(
-                subject=claims.sub,
-                provider_user_id=claims.id,
+            LinkSocialAccountInput(
+                provider=provider,
+                subject=subject,
+                provider_user_id=provider_user_id,
                 initiator_user_id=flow_state.initiator_user_id,
             )
         )
-    except TelegramAlreadyLinkedToAnotherUser:
+    except SocialAccountLinkedToAnotherUser:
         return build_profile_redirect(LINK_ERROR_LINKED_TO_ANOTHER_ACCOUNT)
-    except UserAlreadyHasTelegramLinked:
+    except UserAlreadyHasProviderLinked:
         return build_profile_redirect(LINK_ERROR_USER_ALREADY_HAS_PROVIDER)
     except LinkInitiatorMismatch:
         return build_profile_redirect(LINK_ERROR_SESSION_CHANGED)
     except Exception:
-        logger.exception("Could not link a Telegram account")
-        return build_profile_redirect(OAUTH_ERROR_FAILED)
-
-    return build_profile_redirect()
-
-
-# ── VK finish helpers ────────────────────────────────────────────────────
-
-
-async def _finish_vk_login(
-    authorize: AuthorizeVk, claims: VkClaims, config: WebConfig
-) -> RedirectResponse:
-    try:
-        session_id = await authorize(
-            AuthorizeVkInput(
-                subject=str(claims.user_id),
-                provider_user_id=claims.user_id,
-            )
+        logger.exception(
+            "Could not link a social account", extra={"provider": provider.value}
         )
-    except Exception:
-        logger.exception("Could not create a session for a VK login")
-        return build_login_redirect(OAUTH_ERROR_FAILED)
-
-    response = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
-    set_auth_cookie(response, session_id, config)
-    return response
-
-
-async def _finish_vk_link(
-    link: LinkVkAccount,
-    claims: VkClaims,
-    flow_state: OAuthFlowState,
-) -> RedirectResponse:
-    if flow_state.initiator_user_id is None:
-        logger.warning("Link callback carried no initiator")
-        return build_profile_redirect(OAUTH_ERROR_FAILED)
-
-    try:
-        await link(
-            LinkVkAccountInput(
-                subject=str(claims.user_id),
-                provider_user_id=claims.user_id,
-                initiator_user_id=flow_state.initiator_user_id,
-            )
-        )
-    except VkAlreadyLinkedToAnotherUser:
-        return build_profile_redirect(LINK_ERROR_LINKED_TO_ANOTHER_ACCOUNT)
-    except UserAlreadyHasVkLinked:
-        return build_profile_redirect(LINK_ERROR_USER_ALREADY_HAS_PROVIDER)
-    except LinkInitiatorMismatch:
-        return build_profile_redirect(LINK_ERROR_SESSION_CHANGED)
-    except Exception:
-        logger.exception("Could not link a VK account")
         return build_profile_redirect(OAUTH_ERROR_FAILED)
 
     return build_profile_redirect()
