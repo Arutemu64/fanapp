@@ -2,6 +2,8 @@
 	import type { CurrentUserDTO } from '$lib/types/user';
 	import type { Component, Snippet } from 'svelte';
 
+	// Bundled (not static/) so Vite content-hashes it like the other brand assets.
+	import logo from '$lib/assets/logo.svg';
 	import { isActivePath } from '$lib/utils/nav';
 	import {
 		canGenerateTickets,
@@ -136,10 +138,11 @@
 		     closeSidebar off the sidebar context — without this the drawer would stay open
 		     on top of the page it just navigated to. The static desktop sidebar has no
 		     drawer state to close. -->
-		<SidebarBrand onclick={isMobile ? closeSidebar : undefined}>
-			<span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">
-				ФАН ФАН
-			</span>
+		<SidebarBrand onclick={isMobile ? closeSidebar : undefined} class="justify-center ps-0">
+			<!-- The mark is pure black shapes on transparent (incl. a black "2026" pill with
+				white text); `dark:invert` flips it to white shapes / a white pill with black
+				text with no separate dark asset to maintain. -->
+			<img src={logo} alt="ФАН ФАН" class="h-11 w-auto dark:invert" />
 		</SidebarBrand>
 		<SidebarGroup>
 			{#if !isMobile}
