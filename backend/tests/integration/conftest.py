@@ -13,7 +13,11 @@ from fanfan.application.ports.email_sender import EmailSender
 from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.id_provider import IdProvider
-from fanfan.application.ports.notifier import PushNotifierPort, TelegramNotifierPort
+from fanfan.application.ports.notifier import (
+    PushNotifierPort,
+    TelegramNotifierPort,
+    VkNotifierPort,
+)
 from fanfan.application.ports.realtime_gateway import RealtimeGateway
 from fanfan.application.ports.sources.cosplay import CosplaySource
 from fanfan.application.ports.sources.tickets import TicketsSource
@@ -32,7 +36,11 @@ from tests.fakes.cosplay_source import FakeCosplaySource
 from tests.fakes.email_sender import FakeEmailSender
 from tests.fakes.event_broker import FakeEventBroker
 from tests.fakes.id_provider import FakeIdProvider
-from tests.fakes.notifier import FakePushNotifier, FakeTelegramNotifier
+from tests.fakes.notifier import (
+    FakePushNotifier,
+    FakeTelegramNotifier,
+    FakeVkNotifier,
+)
 from tests.fakes.realtime_gateway import FakeRealtimeGateway
 from tests.fakes.tickets_source import FakeTicketsSource
 from tests.fixtures.config import TestConfigProvider, TestSyncProvider
@@ -61,6 +69,9 @@ async def dishka() -> AsyncIterable[AsyncContainer]:
     )
     fakes_provider.provide(
         FakePushNotifier, provides=AnyOf[PushNotifierPort, FakePushNotifier]
+    )
+    fakes_provider.provide(
+        FakeVkNotifier, provides=AnyOf[VkNotifierPort, FakeVkNotifier]
     )
     fakes_provider.provide(
         FakeRealtimeGateway, provides=AnyOf[RealtimeGateway, FakeRealtimeGateway]

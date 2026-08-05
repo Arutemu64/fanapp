@@ -20,3 +20,7 @@ class TelegramNotifierPort(Notifier, Protocol):
 
 class PushNotifierPort(Notifier, Protocol):
     pass
+
+
+class VkNotifierPort(Notifier, Protocol):
+    pass

@@ -22,6 +22,7 @@ from fanfan.main.ioc.services import ServicesProvider
 from fanfan.main.ioc.stream import StreamProvider
 from fanfan.main.ioc.sync import SyncProvider
 from fanfan.main.ioc.tcloud import TCloudProvider
+from fanfan.main.ioc.vk import VkProvider
 
 
 def get_common_providers() -> list[Provider]:
@@ -47,6 +48,7 @@ def get_common_providers() -> list[Provider]:
         PushProvider(),
         MailProvider(),
         OAuthProvider(),
+        VkProvider(),
     ]
 
 

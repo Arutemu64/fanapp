@@ -1,12 +1,17 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
 	import { Button, Modal, Toggle } from 'flowbite-svelte';
-	import { ArrowDownToBracketOutline, BellOutline, BellSolid } from 'flowbite-svelte-icons';
+	import {
+		AnnotationOutline,
+		ArrowDownToBracketOutline,
+		BellOutline,
+		BellSolid
+	} from 'flowbite-svelte-icons';
 	const client = createApiClient();
 	import type { components } from '$lib/api/schema';
 	import type { CurrentUserDTO } from '$lib/types/user';
 
-	import { PUBLIC_VAPID_KEY } from '$env/static/public';
+	import { PUBLIC_VAPID_KEY, PUBLIC_VK_GROUP_ID } from '$env/static/public';
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { onMount } from 'svelte';
@@ -28,13 +33,22 @@
 	// Because they derive from the prop, a successful refetch re-syncs them for free.
 	let receiveAll = $derived(user.settings.receive_all_announcements);
 	let receiveTelegram = $derived(user.settings.receive_telegram_notifications);
+	let receiveVk = $derived(user.settings.receive_vk_notifications);
 	let isSavingSettings = $state(false);
 	let isSendingTest = $state(false);
 	const pwa = getPwaService();
 	let showIosPwaModal = $state(false);
+	let showVkModal = $state(false);
 	let hasTelegramAccount = $derived(
 		user.social_identities.some((socialIdentity) => socialIdentity.provider === 'telegram')
 	);
+	let hasVkAccount = $derived(
+		user.social_identities.some((socialIdentity) => socialIdentity.provider === 'vk')
+	);
+	// Link to the community's chat where the user grants "allow messages". Built
+	// from the build-time group id, so it may be empty if VK notifications were
+	// not configured for this deployment — the modal hides the button then.
+	const vkCommunityUrl = PUBLIC_VK_GROUP_ID ? `https://vk.com/im?sel=-${PUBLIC_VK_GROUP_ID}` : null;
 
 	function urlBase64ToUint8Array(base64String: string) {
 		const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -230,6 +244,17 @@
 		);
 	}
 
+	function toggleReceiveVk() {
+		void updateSettings(
+			{
+				receive_vk_notifications: receiveVk
+			},
+			() => {
+				receiveVk = user.settings.receive_vk_notifications;
+			}
+		);
+	}
+
 	async function sendTestNotification() {
 		if (isSendingTest) {
 			return;
@@ -312,6 +337,35 @@
 				/>
 			</div>
 		</div>
+
+		<div class="border-t border-gray-200 p-3 sm:p-4 dark:border-gray-700">
+			<div class="flex items-start justify-between gap-3">
+				<div class="min-w-0">
+					<span class="text-sm font-medium text-gray-900 dark:text-gray-300">ВКонтакте</span>
+					<p class="mt-1 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+						{#if hasVkAccount}
+							Получать сообщения от сообщества во ВКонтакте.
+						{:else}
+							Сначала подключи ВКонтакте в блоке «Способы входа».
+						{/if}
+					</p>
+					<button
+						type="button"
+						class="mt-1 text-sm font-medium text-primary-600 hover:underline dark:text-primary-400"
+						onclick={() => (showVkModal = true)}
+					>
+						Как это работает?
+					</button>
+				</div>
+				<Toggle
+					bind:checked={receiveVk}
+					aria-label="Получать уведомления во ВКонтакте"
+					disabled={isSavingSettings || !hasVkAccount}
+					onchange={toggleReceiveVk}
+					color="primary"
+				/>
+			</div>
+		</div>
 	</div>
 
 	<div class="rounded-lg border border-gray-200 dark:border-gray-700">
@@ -373,6 +427,36 @@
 	{#snippet footer()}
 		<Button color="alternative" class="w-full" onclick={() => (showIosPwaModal = false)}
 			>Понятно</Button
+		>
+	{/snippet}
+</Modal>
+
+<Modal bind:open={showVkModal} size="sm">
+	{#snippet header()}
+		<div class="flex items-center gap-2">
+			<AnnotationOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+			<h3 class="text-lg font-bold text-gray-900 dark:text-white">Уведомления во ВКонтакте</h3>
+		</div>
+	{/snippet}
+
+	<p class="text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+		Чтобы получать уведомления во ВКонтакте, нужно разрешить сообществу писать тебе — без этого
+		ВКонтакте не доставит сообщения.
+	</p>
+	<p class="mt-3 text-sm font-medium text-gray-900 dark:text-gray-300">Что сделать:</p>
+	<ul
+		class="mt-1 list-disc space-y-1 ps-5 text-sm leading-relaxed text-gray-500 dark:text-gray-400"
+	>
+		<li>Подключи аккаунт ВКонтакте в блоке «Способы входа».</li>
+		<li>Открой сообщество и нажми «Разрешить сообщения».</li>
+	</ul>
+	{#snippet footer()}
+		{#if vkCommunityUrl}
+			<Button color="primary" class="w-full" href={vkCommunityUrl} target="_blank" rel="noopener">
+				Открыть сообщество
+			</Button>
+		{/if}
+		<Button color="alternative" class="w-full" onclick={() => (showVkModal = false)}>Понятно</Button
 		>
 	{/snippet}
 </Modal>

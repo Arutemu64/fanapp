@@ -38,6 +38,7 @@ class UserORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     receive_telegram_notifications: Mapped[bool] = mapped_column(
         server_default=text("true")
     )
+    receive_vk_notifications: Mapped[bool] = mapped_column(server_default=text("true"))
     # Bag for non-queryable user preferences. Currently empty; kept as an
     # extension point so new prefs need no schema migration.
     settings: Mapped[dict] = mapped_column(JSONB)
