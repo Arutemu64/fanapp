@@ -162,7 +162,7 @@ async def test_unlinked_user_is_unreachable() -> None:
 
 async def test_messages_not_allowed_is_unreachable() -> None:
     user = _make_user()
-    # 901: the user never allowed the community to message them.
+    # 901: the user never allowed the group to message them.
     api = _StubApi(VKAPIError[901](error_msg="not allowed"))
     notifier = _notifier(user=user, identity=_identity_for(user), api=api)
 

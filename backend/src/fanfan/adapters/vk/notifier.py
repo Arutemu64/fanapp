@@ -17,7 +17,7 @@ from fanfan.presentation.web.config import WebConfig
 
 logger = logging.getLogger(__name__)
 
-# VK error codes we translate. 901/902 mean the community may not message this
+# VK error codes we translate. 901/902 mean the group may not message this
 # user (they never allowed messages, or their privacy settings forbid it); 7/15
 # are the generic permission/access-denied variants of the same. 6/9 are flood
 # control. 5/27/28 are token/authorization failures — a channel-wide
@@ -46,7 +46,7 @@ class VkNotifier(Notifier):
         self.web_config = web_config
 
     def _render_message_text(self, notification: Notification) -> str:
-        # VK community messages are plain text (no HTML). The stored body is a
+        # VK group messages are plain text (no HTML). The stored body is a
         # safe HTML subset, so strip every tag the same way the push adapter
         # does, turning <br> into newlines first. VK auto-links the bare URL, so
         # a trailing "open the app" line replaces Telegram's inline button.
@@ -88,14 +88,14 @@ class VkNotifier(Notifier):
         if error.code in _USER_UNREACHABLE_CODES:
             raise UserNotReachable from error
         if error.code in _AUTH_CODES:
-            # The community token is invalid or lacks the messages scope. This is
+            # The group token is invalid or lacks the messages scope. This is
             # a global misconfiguration, not a per-user problem, so log it loudly.
             # A concise one-liner, not a traceback: it fires on every VK
             # notification while the token is broken, and the cause is chained
             # onto the raised UserNotReachable. Treated as unreachable so the
             # consumer drops the message instead of redelivering it forever.
             logger.error(
-                "VK community token is invalid or unauthorized (code %s) — "
+                "VK group token is invalid or unauthorized (code %s) — "
                 "cannot deliver notifications via VK",
                 error.code,
             )

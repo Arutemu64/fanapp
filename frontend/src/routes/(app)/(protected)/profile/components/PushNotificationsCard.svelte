@@ -45,10 +45,10 @@
 	let hasVkAccount = $derived(
 		user.social_identities.some((socialIdentity) => socialIdentity.provider === 'vk')
 	);
-	// Link to the community's chat where the user grants "allow messages". Built
-	// from the build-time group id, so it may be empty if VK notifications were
-	// not configured for this deployment — the modal hides the button then.
-	const vkCommunityUrl = PUBLIC_VK_GROUP_ID ? `https://vk.com/im?sel=-${PUBLIC_VK_GROUP_ID}` : null;
+	// Link to the group's chat where the user grants "allow messages". Built from
+	// the build-time group id, so it may be empty if VK notifications were not
+	// configured for this deployment — the modal hides the button then.
+	const vkGroupUrl = PUBLIC_VK_GROUP_ID ? `https://vk.com/im?sel=-${PUBLIC_VK_GROUP_ID}` : null;
 
 	function urlBase64ToUint8Array(base64String: string) {
 		const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -451,8 +451,8 @@
 		<li>Открой сообщество и нажми «Разрешить сообщения».</li>
 	</ul>
 	{#snippet footer()}
-		{#if vkCommunityUrl}
-			<Button color="primary" class="w-full" href={vkCommunityUrl} target="_blank" rel="noopener">
+		{#if vkGroupUrl}
+			<Button color="primary" class="w-full" href={vkGroupUrl} target="_blank" rel="noopener">
 				Открыть сообщество
 			</Button>
 		{/if}

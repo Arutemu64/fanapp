@@ -16,6 +16,6 @@ class VkProvider(Provider):
 
     @provide
     def get_vk_api(self, config: VkConfig) -> API:
-        return API(token=config.community_token.get_secret_value())
+        return API(token=config.group_token.get_secret_value())
 
     vk_notifier = provide(VkNotifier, scope=Scope.REQUEST, provides=VkNotifierPort)
