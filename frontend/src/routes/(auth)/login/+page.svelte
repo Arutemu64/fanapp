@@ -92,14 +92,21 @@
 />
 
 <svelte:head>
-	<title>Вход или регистрация · ФАН ФАН</title>
+	<title>Вход · ФАН ФАН</title>
 </svelte:head>
 
 <Card class="w-full rounded-2xl p-4 sm:p-6">
 	<div class="space-y-4">
-		<h2 class="text-center text-2xl font-bold text-gray-900 dark:text-white">
-			Вход или регистрация
-		</h2>
+		<div class="space-y-1 text-center">
+			<h1 class="text-2xl font-bold text-gray-900 dark:text-white">Добро пожаловать</h1>
+			{#if view === 'options'}
+				<!-- Benefits belong on the entry screen only: once a method is chosen the
+					sub-steps are the task, not the pitch. -->
+				<p class="text-sm text-gray-600 dark:text-gray-400">
+					Голосуй за выступления, получай уведомления и оставляй обратную связь.
+				</p>
+			{/if}
+		</div>
 
 		{#if view === 'options'}
 			<!-- Use the configured API base so OAuth works in every environment.
