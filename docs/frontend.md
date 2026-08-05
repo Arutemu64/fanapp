@@ -99,7 +99,11 @@ Three tiers — pick by element role:
 
 ### Centralized component theme (don't re-specify these defaults)
 
-Flowbite components ship their own (mismatched) radius defaults, and re-overriding them on every instance is exactly how the design drifts. Instead, the root `src/routes/+layout.svelte` wraps the app in Flowbite's `<ThemeProvider>` with a `flowbiteTheme` object that pins the mismatched ones to this scale:
+Flowbite components ship their own radius defaults; re-overriding them on every instance is exactly how the design drifts. Instead, the root `src/routes/+layout.svelte` wraps the app in Flowbite's `<ThemeProvider>` with a `flowbiteTheme` object that sets the app-wide surface baseline once.
+
+**Standing rule:** any class you'd otherwise repeat on 3+ instances of the same Flowbite component belongs in `flowbiteTheme`, not on each instance. This is a rule about de-duplicating *our* overrides — **not** a reason to preserve Flowbite's defaults. Diverging from a Flowbite default is fine and deliberate (the radius scale below does exactly that, overriding `rounded-lg` app-wide); the point is only to encode each divergence *once*, centrally, so no single call site can forget it and drift. A one-off override that genuinely belongs on a single element stays on that element.
+
+The current set:
 
 | Component | Flowbite default | Themed to |
 |---|---|---|
