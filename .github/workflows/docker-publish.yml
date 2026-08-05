@@ -104,6 +104,7 @@ jobs:
             ${{ matrix.name == 'frontend' && format('PUBLIC_SENTRY_ENVIRONMENT={0}', vars.PUBLIC_SENTRY_ENVIRONMENT) || '' }}
             ${{ matrix.name == 'frontend' && format('PUBLIC_SENTRY_TRACES_SAMPLE_RATE={0}', vars.PUBLIC_SENTRY_TRACES_SAMPLE_RATE) || '' }}
             ${{ matrix.name == 'frontend' && format('PUBLIC_SMARTCAPTCHA_CLIENT_KEY={0}', vars.PUBLIC_SMARTCAPTCHA_CLIENT_KEY) || '' }}
+            ${{ matrix.name == 'frontend' && format('PUBLIC_VK_GROUP_ID={0}', vars.PUBLIC_VK_GROUP_ID) || '' }}
             ${{ matrix.name == 'frontend' && format('SENTRY_URL={0}', vars.SENTRY_URL) || '' }}
             ${{ matrix.name == 'frontend' && format('SENTRY_ORG={0}', vars.SENTRY_ORG) || '' }}
             ${{ matrix.name == 'frontend' && format('SENTRY_PROJECT={0}', vars.SENTRY_PROJECT) || '' }}

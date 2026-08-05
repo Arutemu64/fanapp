@@ -139,6 +139,7 @@ jobs:
       PUBLIC_SENTRY_ENVIRONMENT: ${{ vars.PUBLIC_SENTRY_ENVIRONMENT }}
       PUBLIC_SENTRY_TRACES_SAMPLE_RATE: ${{ vars.PUBLIC_SENTRY_TRACES_SAMPLE_RATE }}
       PUBLIC_SMARTCAPTCHA_CLIENT_KEY: ${{ vars.PUBLIC_SMARTCAPTCHA_CLIENT_KEY }}
+      PUBLIC_VK_GROUP_ID: ${{ vars.PUBLIC_VK_GROUP_ID }}
     strategy:
       # Don't cancel the other tasks when one fails: we want to see every
       # failure (lint, types, tests and build) in a single CI run, not just the first.

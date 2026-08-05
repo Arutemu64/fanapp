@@ -15,6 +15,7 @@ services:
         PUBLIC_SENTRY_ENVIRONMENT: ${PUBLIC_SENTRY_ENVIRONMENT}
         PUBLIC_SENTRY_TRACES_SAMPLE_RATE: ${PUBLIC_SENTRY_TRACES_SAMPLE_RATE}
         PUBLIC_SMARTCAPTCHA_CLIENT_KEY: ${PUBLIC_SMARTCAPTCHA_CLIENT_KEY}
+        PUBLIC_VK_GROUP_ID: ${PUBLIC_VK_GROUP_ID}
         # Commit SHA shown in the profile footer. Injected by the publish
         # workflow; empty for a local build, which hides the line.
         PUBLIC_APP_VERSION: ${PUBLIC_APP_VERSION}
