@@ -20,11 +20,12 @@
 	// is not clickable. The path is a trusted internal route, so cast to Pathname.
 	let href = $derived(notification.path ? resolve(notification.path as Pathname) : undefined);
 
-	// Flowbite Card supplies the border + surface + dark variants. flex-row overrides
-	// Card's default flex-col so the icon sits beside the text; shadow-sm is the one
-	// sanctioned resting shadow for a standalone tappable list item (DESIGN,
-	// Border-Before-Shadow) and overrides Card's shadow-md default via tailwind-merge.
-	let cardClass = 'flex max-w-none flex-row items-start gap-3 rounded-xl p-4 text-left shadow-sm';
+	// Flowbite Card supplies the border + surface + dark variants, and inherits the
+	// app-wide flat, rounded-xl default from the root +layout.svelte theme. flex-row
+	// overrides Card's default flex-col so the icon sits beside the text; shadow-sm
+	// opts up to the one sanctioned resting shadow for a standalone tappable list
+	// item (DESIGN, Border-Before-Shadow).
+	let cardClass = 'flex max-w-none flex-row items-start gap-3 p-4 text-left shadow-sm';
 </script>
 
 {#snippet content()}

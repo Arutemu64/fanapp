@@ -66,7 +66,7 @@
 </script>
 
 <div class={wrapperClass}>
-	<Card class="w-full max-w-md rounded-2xl p-6 text-center shadow-none sm:p-8">
+	<Card class="w-full max-w-md rounded-2xl p-6 text-center sm:p-8">
 		<div class="flex flex-col items-center justify-center">
 			<div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full {iconColorClass}">
 				<StatusIcon class="h-8 w-8" />

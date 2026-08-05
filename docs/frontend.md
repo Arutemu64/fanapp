@@ -88,14 +88,22 @@ Three tiers — pick by element role:
 
 | Tier | Class | Use for |
 |---|---|---|
-| Outer | `rounded-2xl` | Page-level cards, modals, sheet containers (`ProfileCardShell`, `HeroCard`, `EventCard` wrappers, etc.) |
-| Inner | `rounded-xl` | Icon containers, social/chip buttons, dropdown popovers, pill-shaped elements |
+| Outer | `rounded-2xl` | Large feature/settings/error cards, modals, sheet containers (`ProfileCardShell`, `HeroCard`, error card, etc.) |
+| Inner | `rounded-xl` | Standard content & list cards (voting, notifications, schedule-changes feed — the centralized Card default), icon containers, social/chip buttons, dropdown popovers, pill-shaped elements |
 | Sub-group | `rounded-lg` | Sections/rows inside a card, toasts, small interactive elements (icon buttons) |
 | Circular | `rounded-full` | Avatars, dot indicators, step-number badges |
 
 **Rules:**
 * Never use `rounded-sm`, `rounded-md`, or bare `rounded` — they have no role in this scale.
 * `rounded-2xl` on the outermost container, `rounded-lg` on inner borders/rows inside it.
+
+### Card surface (centralized — don't re-specify the default)
+
+Flowbite's `Card` ships `shadow-md` + `rounded-lg` defaults that don't match this system, and re-overriding them on every card is exactly how the design drifts. Instead, the root `src/routes/+layout.svelte` wraps the app in Flowbite's `<ThemeProvider>` with a **card theme** that makes the *default* surface flat (`shadow-none`) at the standard `rounded-xl` tier, plus a `focus-visible` ring that only renders on `href` (link) cards — Flowbite emits an `<a>` there, and the ring is inert on non-focusable `<div>` cards. So:
+
+* A plain `<Card>` is already correct — **do not** re-add `shadow-none` or `rounded-xl`; that reintroduces the duplication the theme exists to remove.
+* Opt **up** only where a card genuinely deviates: `rounded-2xl` for large feature/settings/error cards, `shadow-sm` for a genuinely tappable standalone card (`NominationCard`, notification rows). Its own class wins via `tailwind-merge`, because the theme base is merged *before* the consumer's `class`.
+* Changing the baseline card look is a one-line edit in that theme — not a sweep across every card.
 
 ### Z-Index Scale
 

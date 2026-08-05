@@ -77,7 +77,7 @@
 
 <FileFormatGuide />
 
-<Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 shadow-none sm:p-6">
+<Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
 	<form class="space-y-4" onsubmit={handleSubmit}>
 		<div class="space-y-2">
 			<Label for="schedule-file">Excel-файл</Label>

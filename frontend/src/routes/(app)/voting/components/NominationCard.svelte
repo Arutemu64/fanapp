@@ -16,7 +16,7 @@
 <Card
 	href="/voting/{nomination.code}"
 	class={[
-		'flex w-full max-w-none flex-col rounded-xl p-4 shadow-sm transition-[box-shadow,border-color,background-color] hover:shadow-md',
+		'flex w-full max-w-none flex-col p-4 shadow-sm transition-[box-shadow,border-color,background-color] hover:shadow-md',
 		nomination.user_vote ? 'ring-2 ring-green-600 dark:ring-green-500' : ''
 	]}
 >

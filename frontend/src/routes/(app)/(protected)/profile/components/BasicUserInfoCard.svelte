@@ -24,7 +24,7 @@
 	anchors the page above the settings group rather than looking like a fifth settings panel.
 -->
 <Card
-	class="w-full max-w-none rounded-2xl border-gray-200 bg-white shadow-none dark:border-gray-700 dark:bg-gray-800"
+	class="w-full max-w-none rounded-2xl border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
 >
 	<!--
 		Mobile: centered vertical stack (avatar / name / role / edit) so the full username gets

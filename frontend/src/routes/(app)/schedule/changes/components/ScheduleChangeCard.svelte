@@ -66,9 +66,9 @@
 	}
 </script>
 
-<!-- Feed card: Flowbite Card supplies the border + surface; shadow-none keeps it
-	near-flat per the Border-Before-Shadow rule (Card defaults to shadow-md). -->
-<Card class="w-full max-w-none rounded-2xl p-4 shadow-none">
+<!-- Feed card: inherits the app-wide flat, standard rounded-xl Card surface set in
+	the root +layout.svelte theme (matches the notifications feed). -->
+<Card class="w-full max-w-none p-4">
 	<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 		<div class="flex-1">
 			<div class="mb-2 flex flex-wrap items-center gap-2">

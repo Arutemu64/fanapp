@@ -127,7 +127,7 @@
 	description="Создавай новые билеты для выбранной роли. Получатель привязывает билет по номеру и получает роль."
 />
 
-<Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 shadow-none sm:p-6">
+<Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
 	<form class="space-y-6" onsubmit={handleSubmit}>
 		<div class="space-y-2">
 			<Label for="ticket-role" class="text-gray-900 dark:text-white">Роль</Label>
