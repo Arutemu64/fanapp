@@ -13,8 +13,9 @@
 	let { title, description, icon, children }: Props = $props();
 </script>
 
-<!-- Border + tonal step separate the card from the recessed page bg; no resting shadow
-	(shadow is reserved for genuinely floating layers, per the Border-Before-Shadow rule). -->
+<!-- rounded-2xl opts up from the standard tier for this large settings card. The
+	flat, shadow-free surface (Border-Before-Shadow) is the app-wide Card default,
+	set once in the root +layout.svelte theme. -->
 <Card
 	class="w-full max-w-none rounded-2xl border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
 >

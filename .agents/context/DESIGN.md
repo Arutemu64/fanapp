@@ -206,6 +206,8 @@ Flowbite-Svelte is the component substrate; these are the project's tuned defaul
 - **Background:** `white` / `dark:bg-gray-800` surface.
 - **Border:** `border-gray-200` / `dark:border-gray-700` — the primary separator.
 - **Shadow Strategy:** `shadow-sm` only on standalone tappable list items; otherwise none (see Elevation).
+- **Focus (link cards):** a whole-card link (`<a href>`) shows a visible `focus-visible` ring for keyboard users; non-interactive cards have no focus state. Wired once in the central Card theme (root `+layout.svelte`), so it can't be forgotten per card.
+- **Defaults are centralized:** the flat, `rounded-xl` surface is the app-wide Card default (Flowbite `ThemeProvider` in the root layout), not something each card re-specifies. Deviate up (`rounded-2xl`, `shadow-sm`) only where noted above.
 - **Internal Padding:** `p-4` (16px) mobile, `p-6`–`p-8` desktop.
 
 ### Notices (signature)

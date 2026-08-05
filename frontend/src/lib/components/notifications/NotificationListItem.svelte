@@ -4,7 +4,7 @@
 
 	import { resolve } from '$app/paths';
 	import { formatRelativeTime } from '$lib/utils/formatters';
-	import { DropdownItem } from 'flowbite-svelte';
+	import { Card, DropdownItem } from 'flowbite-svelte';
 	import { BellSolid } from 'flowbite-svelte-icons';
 
 	interface Props {
@@ -20,8 +20,12 @@
 	// is not clickable. The path is a trusted internal route, so cast to Pathname.
 	let href = $derived(notification.path ? resolve(notification.path as Pathname) : undefined);
 
-	let cardClass =
-		'flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-4 text-left shadow-sm dark:border-gray-700 dark:bg-gray-800';
+	// Flowbite Card supplies the border + surface + dark variants, and inherits the
+	// app-wide flat, rounded-xl default from the root +layout.svelte theme. flex-row
+	// overrides Card's default flex-col so the icon sits beside the text; shadow-sm
+	// opts up to the one sanctioned resting shadow for a standalone tappable list
+	// item (DESIGN, Border-Before-Shadow).
+	let cardClass = 'flex max-w-none flex-row items-start gap-3 p-4 text-left shadow-sm';
 </script>
 
 {#snippet content()}
@@ -58,11 +62,13 @@
 		{@render content()}
 	</DropdownItem>
 {:else if href}
-	<a {href} class={cardClass}>
+	<!-- Card renders an <a> here, so the whole row deep-links. Branching on href
+		(rather than passing it optionally) narrows Card's href-vs-div prop union. -->
+	<Card {href} class={cardClass}>
 		{@render content()}
-	</a>
+	</Card>
 {:else}
-	<div class={cardClass}>
+	<Card class={cardClass}>
 		{@render content()}
-	</div>
+	</Card>
 {/if}
