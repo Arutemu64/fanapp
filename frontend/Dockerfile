@@ -17,7 +17,7 @@ ENV PATH=/pnpm:$PATH
 # read by the customManagers:dockerfileVersions preset (renovate.json), which
 # requires the comment on the line directly above the ENV.
 # renovate: datasource=npm depName=pnpm versioning=npm
-ENV PNPM_VERSION=11.17.0
+ENV PNPM_VERSION=11.18.0
 
 # Installed standalone via npm (not Corepack): Node 25+ no longer ships
 # Corepack, and pnpm now recommends standalone installs.
