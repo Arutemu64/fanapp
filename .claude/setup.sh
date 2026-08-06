@@ -62,31 +62,6 @@ export PATH="$HOME/.local/bin:$PATH"
 # Run apt/sudo correctly whether or not we are already root.
 if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo"; fi
 
-# Locate the repo clone. cwd is not guaranteed to be inside it during the
-# setup-script phase and CLAUDE_PROJECT_DIR is not set there, so fall back to
-# git, then to the standard clone locations. Prints nothing if the clone cannot
-# be found, so callers can decide what to do.
-resolve_repo_root() {
-  local git_root candidate
-  if [ -n "${CLAUDE_PROJECT_DIR:-}" ] && [ -f "$CLAUDE_PROJECT_DIR/.claude/setup.sh" ]; then
-    echo "$CLAUDE_PROJECT_DIR"
-    return
-  fi
-  git_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
-  if [ -n "$git_root" ] && [ -f "$git_root/.claude/setup.sh" ]; then
-    echo "$git_root"
-    return
-  fi
-  for candidate in /home/*/*/.claude/setup.sh /workspace/*/.claude/setup.sh; do
-    if [ -f "$candidate" ]; then
-      echo "$(dirname "$(dirname "$candidate")")"
-      return
-    fi
-  done
-}
-
-REPO_ROOT="$(resolve_repo_root)"
-
 echo "[setup] Installing just (apt)..."
 if ! command -v just >/dev/null 2>&1; then
   $SUDO apt-get install -y -qq just \
@@ -149,14 +124,15 @@ npm install -g pnpm@11.15.0 || echo "[setup]   WARN: pnpm install failed."
 # installers). The tool is 100% local - bundled SQLite, no network at runtime -
 # so it runs fine in the sandbox.
 #
-# Two things happen here, both persisting in the snapshot: the global binary,
-# and a baseline index seeded into .codegraph/ (gitignored). Seeding lets each
-# session's SessionStart hook do a fast incremental `codegraph sync` of the
-# branch delta instead of a full re-parse on every fresh session.
+# Only the global binary is installed here (it persists in the snapshot); the
+# index itself is NOT seeded here. A snapshot is reused across sessions on
+# different branches/commits, so an index baked in at environment-creation time
+# would reflect whatever ref happened to be checked out then, not the branch a
+# later session actually runs on. The SessionStart hook builds/refreshes the
+# index every session instead, against the code that session actually has.
 #
-# Best-effort throughout: CodeGraph is a navigation convenience, so neither a
-# failed install nor a failed seed may fail environment creation - the hook
-# falls back to a full `codegraph init`, and everything degrades to grep/read.
+# Best-effort: CodeGraph is a navigation convenience, so a failed install must
+# not fail environment creation - it just leaves code navigation to grep/read.
 echo "[setup] Installing CodeGraph (npm)..."
 if npm install -g @colbymchenry/codegraph >/dev/null 2>&1; then
   # Expose codegraph on the base PATH via /usr/local/bin so the project's
@@ -171,16 +147,7 @@ if npm install -g @colbymchenry/codegraph >/dev/null 2>&1; then
   if [ -n "$CG_BIN" ]; then
     $SUDO ln -sf "$CG_BIN" /usr/local/bin/codegraph 2>/dev/null || true
   fi
-  # Seed into the clone resolved at the top; cwd is not guaranteed to be inside
-  # it at env-creation time, and seeding the wrong directory would leave the
-  # repo unindexed. If the seed lands nowhere (or fails), the hook's own index
-  # build recovers.
-  echo "[setup] Seeding CodeGraph index..."
-  if [ -n "$REPO_ROOT" ] && (cd "$REPO_ROOT" && codegraph init >/dev/null 2>&1); then
-    echo "[setup]   CodeGraph installed and index seeded."
-  else
-    echo "[setup]   WARN: CodeGraph index seed failed; the SessionStart hook will build it."
-  fi
+  echo "[setup]   CodeGraph installed; the SessionStart hook builds the index."
 else
   echo "[setup]   WARN: CodeGraph install failed; code navigation falls back to grep/read."
 fi

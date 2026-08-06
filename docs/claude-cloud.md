@@ -82,11 +82,13 @@ rather than failing the build.
   registry**, not its recommended `curl|sh` installer, which pulls a runtime
   from GitHub releases this environment blocks (same reason `just`/`uv`/`node`
   above skip their GitHub installers). The tool is fully local (bundled SQLite,
-  no runtime network). A baseline index is seeded into `.codegraph/` here so the
-  hook only has to `sync` the branch delta; both the binary and the seed persist
-  in the snapshot. The binary is also symlinked into `/usr/local/bin` so the
-  project's `.mcp.json` server (bare `command: codegraph`) starts even when
-  Claude Code spawns MCP servers with a PATH that predates the hook's nvm/Node-24
+  no runtime network). Only the binary is installed and persisted in the
+  snapshot here — the index itself is built by the hook instead (see below),
+  since a snapshot is reused across sessions on different branches/commits and
+  an index baked in at environment-creation time could reflect the wrong ref.
+  The binary is also symlinked into `/usr/local/bin` so the project's
+  `.mcp.json` server (bare `command: codegraph`) starts even when Claude Code
+  spawns MCP servers with a PATH that predates the hook's nvm/Node-24
   additions — the npm global bin otherwise lives off the base PATH.
 
 **`.claude/hooks/session-start.sh`** — work that must run each session because it
@@ -94,12 +96,14 @@ does not survive the snapshot:
 
 * `uv sync` / `pnpm install` — kept here so a dependency bump is picked up
   without an environment rebuild; near-instant when the lockfile is unchanged.
-* `codegraph sync` — refreshes the seeded index against the current branch so
-  code-navigation queries stay accurate; falls back to a full `codegraph init`
-  if the snapshot has no seeded index. Kept here (not in the setup script) for
+* building/refreshing the CodeGraph index — `codegraph sync` updates an
+  existing index incrementally so code-navigation queries stay accurate;
+  falls back to a full `codegraph init` when no index exists yet, which is
+  every fresh session (the setup script only installs the binary, not an
+  index) until this hook builds one. Kept here (not in the setup script) for
   the same reason as the dependency syncs: the index is per-branch state that
-  must track the code, so a session on a different branch or a newer commit
-  re-parses only the delta.
+  must track the code a session actually has, not whatever ref happened to be
+  checked out when the snapshot was built.
 * starting `dockerd` — a process, never cached; restarted every session.
 * `docker login` to Docker Hub — the environment's variables reach the session
   but not the setup script, so this is the only place it can run; see
