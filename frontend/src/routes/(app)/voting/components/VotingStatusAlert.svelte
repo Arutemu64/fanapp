@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { GetVotingStateResult, VotingStatus } from '$lib/types/voting';
 
+	import { resolve } from '$app/paths';
 	import { Alert } from 'flowbite-svelte';
 	import { ExclamationCircleSolid } from 'flowbite-svelte-icons';
 
@@ -46,8 +47,13 @@
 {#if votingState && votingState.status !== 'open'}
 	<Alert color={getStatusColor(votingState.status)} class={className}>
 		<div class="flex items-center gap-2">
-			<ExclamationCircleSolid class="h-5 w-5" />
-			<span>{getStatusMessage(votingState.status)}</span>
+			<ExclamationCircleSolid class="h-5 w-5 shrink-0" />
+			<span>
+				{getStatusMessage(votingState.status)}
+				{#if votingState.status === 'no_ticket'}
+					<a href={resolve('/profile')} class="font-medium underline">Привязать билет</a>
+				{/if}
+			</span>
 		</div>
 	</Alert>
 {/if}

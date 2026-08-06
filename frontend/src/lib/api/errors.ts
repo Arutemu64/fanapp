@@ -124,7 +124,7 @@ function formatRetryAfter(value: unknown): string {
 function getAccessDeniedMessage(details: ApiErrorDetails): string {
 	switch (details.reason) {
 		case 'VOTING_TICKET_REQUIRED':
-			return 'Для голосования привяжи билет.';
+			return 'Для голосования привяжи билет в профиле.';
 		case 'VOTING_DISABLED':
 			return 'Голосование сейчас отключено.';
 		case 'MAILING_DELETE_FORBIDDEN':
