@@ -14,12 +14,16 @@ ENV UV_PYTHON_INSTALL_DIR=/python
 # Only use the managed Python version
 ENV UV_PYTHON_PREFERENCE=only-managed
 
-# Install Python before the project for caching. The patch version is pinned
-# for reproducible images; it must be one this uv release ships (check with
-# `uv python list --managed-python`), so bump it together with the uv tag above.
-RUN uv python install 3.14.6
-
 WORKDIR /app
+
+# Install Python before the project for caching. The exact version is read from
+# .python-version — the single source Renovate's `python` group already bumps —
+# so the image tracks the project pin automatically instead of hard-coding the
+# patch here, which was invisible to Renovate and silently drifted. It must
+# still be a version this uv release ships (`uv python list --managed-python`);
+# a Python bump that outruns the pinned uv needs the uv bump alongside it.
+COPY .python-version .
+RUN uv python install
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \

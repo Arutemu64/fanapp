@@ -7,7 +7,8 @@ __pycache__/
 htmlcov/
 .git
 .gitignore
-.python-version
+# .python-version is intentionally NOT ignored: the builder COPYs it so
+# `uv python install` pins the managed Python from the one project source.
 .env
 .env.*
 *.pyc
