@@ -51,7 +51,7 @@
 			<span>
 				{getStatusMessage(votingState.status)}
 				{#if votingState.status === 'no_ticket'}
-					<a href={resolve('/profile')} class="font-medium underline">Привязать в профиле</a>
+					<a href={resolve('/profile')} class="font-medium underline">Привязать билет</a>
 				{/if}
 			</span>
 		</div>
