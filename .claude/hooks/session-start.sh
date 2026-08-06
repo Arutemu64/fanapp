@@ -8,6 +8,9 @@
 #     re-runs on config change or cache expiry, so it would miss a dependency
 #     bump on the branch; running the syncs here keeps deps in step with the
 #     code. They are near-instant when the lockfile is unchanged.
+#   * the CodeGraph index (.codegraph/, gitignored) - per-branch project state
+#     that must track the code actually checked out this session, which the
+#     setup script's snapshot cannot guarantee (see the codegraph block below).
 #   * the Docker daemon - a process; never survives between sessions. Used to
 #     boot a throwaway Postgres for Alembic autogenerate (not for testing).
 #   * the Docker Hub login - the environment's variables only exist here, not in
@@ -93,22 +96,24 @@ fi
 echo "[session-start] Syncing frontend dependencies (pnpm install)..."
 (cd "$REPO_ROOT/frontend" && pnpm install)
 
-# Refresh the CodeGraph index so code-navigation queries (AGENTS.md "Code
+# Build/refresh the CodeGraph index so code-navigation queries (AGENTS.md "Code
 # Navigation") reflect the current branch. The binary is installed by setup.sh
-# and persists in the snapshot; the index (.codegraph/, gitignored) is
-# per-branch project state that must track the code - like node_modules above -
-# so it is (re)built here, not baked into the snapshot. `sync` updates the
-# seeded index incrementally (near-instant when unchanged); a session whose
-# snapshot predates the seed has no index yet, so fall back to a full `init`.
-# Best-effort: navigation is a convenience, so a failure must not abort session
-# setup (the `if`/`||` keep set -e from tripping).
+# and persists in the snapshot, but the index itself is deliberately NOT seeded
+# there: a snapshot is reused across sessions on different branches/commits, so
+# an index baked in at environment-creation time could reflect the wrong ref.
+# Building it here instead - like the dependency syncs above - means every
+# session indexes the code it actually has. `sync` updates an existing index
+# incrementally (near-instant when unchanged); a session with no index yet
+# (every session, since setup.sh no longer seeds one) falls back to a full
+# `init`. Best-effort: navigation is a convenience, so a failure must not abort
+# session setup (the `if`/`||` keep set -e from tripping).
 if command -v codegraph >/dev/null 2>&1; then
   if [ -f "$REPO_ROOT/.codegraph/codegraph.db" ]; then
     echo "[session-start] Syncing CodeGraph index..."
     (cd "$REPO_ROOT" && codegraph sync >/dev/null 2>&1) \
       || echo "[session-start] WARN: codegraph sync failed; run 'codegraph index' to rebuild."
   else
-    echo "[session-start] Building CodeGraph index (first run)..."
+    echo "[session-start] Building CodeGraph index..."
     (cd "$REPO_ROOT" && codegraph init >/dev/null 2>&1) \
       || echo "[session-start] WARN: codegraph init failed; code navigation falls back to grep/read."
   fi
