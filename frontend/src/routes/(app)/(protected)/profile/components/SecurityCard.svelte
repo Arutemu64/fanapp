@@ -167,7 +167,7 @@
 			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 				<div class="min-w-0">
 					<div class="flex flex-wrap items-center gap-2">
-						<IconTelegram class="h-4 w-4 text-sky-500" />
+						<IconTelegram class="h-4 w-4 text-gray-500 dark:text-gray-400" />
 						<p class="font-medium text-gray-900 dark:text-white">Telegram</p>
 						<Badge color={telegramAccount ? 'green' : 'gray'} border>
 							{telegramAccount ? 'Подключён' : 'Не подключён'}
@@ -236,7 +236,6 @@
 							color="alternative"
 							class="min-h-11 w-full sm:w-auto"
 						>
-							<IconTelegram class="me-2 h-4 w-4 text-sky-500" />
 							Подключить
 						</Button>
 					{/if}
@@ -248,7 +247,7 @@
 			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 				<div class="min-w-0">
 					<div class="flex flex-wrap items-center gap-2">
-						<IconVk class="h-4 w-4 text-[#0077FF]" />
+						<IconVk class="h-4 w-4 text-gray-500 dark:text-gray-400" />
 						<p class="font-medium text-gray-900 dark:text-white">VK ID</p>
 						<Badge color={vkAccount ? 'green' : 'gray'} border>
 							{vkAccount ? 'Подключён' : 'Не подключён'}
@@ -316,7 +315,6 @@
 							color="alternative"
 							class="min-h-11 w-full sm:w-auto"
 						>
-							<IconVk class="me-2 h-4 w-4 text-[#0077FF]" />
 							Подключить
 						</Button>
 					{/if}
