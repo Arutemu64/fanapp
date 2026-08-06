@@ -24,6 +24,14 @@ mismatch unexplained.
 
 Prefer an exact pin over a floating tag so every consumer resolves identically.
 
+`just` is pinned too (`mise.toml`), but it is deliberately **not** in the table
+above: `mise.toml` is its only exact-pin site, so there is nothing to keep in
+lockstep and it needs no Renovate group — the built-in `mise` manager bumps it
+directly as a normal review PR. The cloud setup (`.claude/setup.sh`) installs it
+with `apt-get install just`, which cannot pin a version; that is an accepted
+exception, the same shape as Node's `nvm install 24` there, and the reason
+`just` is single-site rather than shared.
+
 ## How Renovate enforces it
 
 [`renovate.json`](../renovate.json) automates the bump-together part:
