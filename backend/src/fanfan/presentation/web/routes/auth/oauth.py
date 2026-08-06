@@ -128,7 +128,7 @@ async def start_social_login(
     },
 )
 @inject
-async def oauth_callback(  # noqa: PLR0913 — all params framework-injected
+async def oauth_callback(  # noqa: PLR0913, PLR0917 — all params framework-injected
     provider: SocialProvider,
     request: Request,
     config: FromDishka[WebConfig],

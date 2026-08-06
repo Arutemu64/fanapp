@@ -92,11 +92,6 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "f
     "PLR0913", # too-many-arguments
     "PLR0917", # too-many-positional-arguments — same constructors, counted positionally
 ]
-# Belongs on the `# noqa: PLR0913` lines in these two files, but PLR0917 is preview in
-# the pinned ruff and RUF100's autofix strips a noqa naming a non-enabled rule. Fold in
-# once 0.16 is pinned.
-"src/fanfan/adapters/debug/telemetry.py" = ["PLR0917"]
-"src/fanfan/presentation/faststream/routes/notifications.py" = ["PLR0917"]
 "src/fanfan/adapters/db/migrations/env.py" = [
     "ERA001",  # Alembic auto-generates commented out code
     "INP001",  # Not a package
