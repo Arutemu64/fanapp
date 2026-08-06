@@ -18,11 +18,19 @@ mismatch unexplained.
 | `postgres:18.4-alpine` | `docker-compose.yml`, `backend/scripts/generate_migration.py`, `backend/tests/fixtures/db_provider.py` |
 | `uv` | `mise.toml`, `backend/pyproject.toml` (`[tool.uv]` and the `uv_build` floor in `[build-system]`), `backend/Dockerfile`, `.claude/setup.sh`, CI (`setup-uv` input) |
 | `hadolint` | `mise.toml`, `.pre-commit-config.yaml` (`rev`), the image behind the `.claude/setup.sh` shim |
-| `pnpm` | `mise.toml`, `frontend/package.json` (`packageManager`), `frontend/Dockerfile` (`PNPM_VERSION`), CI (`pnpm/action-setup` input) |
-| `node` | `mise.toml`, `frontend/Dockerfile`, CI (`setup-node`) |
+| `pnpm` | `mise.toml`, `frontend/package.json` (`packageManager`), `frontend/Dockerfile` (`PNPM_VERSION`), `.claude/setup.sh`, CI (`pnpm/action-setup` input) |
+| `node` | `mise.toml`, `frontend/Dockerfile`, `.claude/setup.sh`, CI (`setup-node`) |
 | `python` | `mise.toml`, `backend/.python-version`, `backend/pyproject.toml` (`requires-python` floor) |
 
 Prefer an exact pin over a floating tag so every consumer resolves identically.
+
+`just` is pinned too (`mise.toml`), but it is deliberately **not** in the table
+above: `mise.toml` is its only exact-pin site, so there is nothing to keep in
+lockstep and it needs no Renovate group — the built-in `mise` manager bumps it
+directly as a normal review PR. The cloud setup (`.claude/setup.sh`) installs it
+with `apt-get install just`, which cannot pin a version: that is the one
+cloud-install exception left untracked, unlike the uv, pnpm and node pins in the
+same script, which are exact and Renovate-tracked.
 
 ## How Renovate enforces it
 
@@ -37,8 +45,11 @@ Prefer an exact pin over a floating tag so every consumer resolves identically.
 * **`customManagers`** (regex) cover the pins the built-in managers cannot see:
   the Postgres image literals in `backend/scripts/generate_migration.py` and
   `backend/tests/fixtures/db_provider.py`; the hadolint image behind the
-  `.claude/setup.sh` shim; the uv pin in `.claude/setup.sh` and
-  `backend/pyproject.toml`.
+  `.claude/setup.sh` shim; the uv, pnpm and node pins in `.claude/setup.sh`
+  (the `npm install -g pnpm@…` and `NODE_VERSION=…` lines the session actually
+  runs — distinct from the postgres/valkey prepull literals in that file, which
+  are cache hints, not functional pins, so they are left untracked); the uv pin
+  in `backend/pyproject.toml`.
 * **A pin inside a Dockerfile that isn't a `FROM` line gets an inline
   annotation, not a regex manager.** The `dockerfile` manager reads `FROM` lines
   only, so `ENV PNPM_VERSION` in `frontend/Dockerfile` was invisible to it and

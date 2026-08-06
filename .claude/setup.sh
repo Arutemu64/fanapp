@@ -36,9 +36,10 @@
 #           preinstalled. Its official installer pulls from GitHub (403), so we
 #           use the native Ubuntu package (`apt-get install just`).
 #   * node - The base web image ships Node 22 as the system Node (outside nvm,
-#           at /opt/node22/bin). mise.toml now pins Node 24, so we install it
-#           with nvm, which the image already has at $NVM_DIR - the official
-#           nodejs.org/nvm-sh installers both pull from GitHub (403).
+#           at /opt/node22/bin). We install the mise-pinned Node with nvm, which
+#           the image already has at $NVM_DIR - the official nodejs.org/nvm-sh
+#           installers both pull from GitHub (403). The exact version tracks the
+#           mise pin via Renovate's "node" group (docs/dependencies.md).
 #   * hadolint - Ships only as a GitHub release binary (403 here) and is not in
 #           apt, so we install a shim that runs the pinned Docker image instead
 #           (Docker Hub is on the allowlist). Keeps `just dockerfile-lint`,
@@ -86,15 +87,20 @@ python3 -m pip install --quiet --user "uv==0.12.0" \
 echo "[setup] Installing stable Python 3.14..."
 uv python install 3.14 || echo "[setup]   WARN: Python 3.14 install failed; the backend's uv sync will try again per session."
 
-echo "[setup] Installing Node.js 24 (nvm)..."
+# Pinned to match the other node sites (mise.toml, frontend/Dockerfile, CI
+# setup-node); the renovate.json "node" group keeps them together via a
+# customManager (docs/dependencies.md). One literal, referenced twice, so the
+# install and the default alias cannot drift apart on a bump.
+NODE_VERSION=24.18.1
+echo "[setup] Installing Node.js $NODE_VERSION (nvm)..."
 export NVM_DIR="/opt/nvm"
 if [ -s "$NVM_DIR/nvm.sh" ]; then
   # shellcheck disable=SC1091
   . "$NVM_DIR/nvm.sh"
-  nvm install 24 && nvm alias default 24 \
-    || echo "[setup]   WARN: Node 24 install failed; the image's system Node 22 stays in use."
+  nvm install "$NODE_VERSION" && nvm alias default "$NODE_VERSION" \
+    || echo "[setup]   WARN: Node $NODE_VERSION install failed; the image's system Node 22 stays in use."
   # `nvm alias default` only affects PATH once something calls `nvm use`; put
-  # Node 24's bin dir first now so the rest of this script picks it up instead
+  # Node's bin dir first now so the rest of this script picks it up instead
   # of the base image's system Node 22 at /opt/node22/bin, which is earlier on
   # PATH by default (/etc/profile.d/nodejs.sh). session-start.sh resolves the
   # same "default" alias the same way each session.
@@ -103,7 +109,7 @@ if [ -s "$NVM_DIR/nvm.sh" ]; then
     export PATH="$(dirname "$node_path"):$PATH"
   fi
 else
-  echo "[setup]   WARN: nvm not found at $NVM_DIR; skipping Node 24."
+  echo "[setup]   WARN: nvm not found at $NVM_DIR; skipping Node $NODE_VERSION."
 fi
 
 # Note: project dependency installs (uv sync / pnpm install) deliberately live
@@ -114,8 +120,12 @@ fi
 # lockfile is unchanged and only fetch the delta after a real bump (the uv/pnpm
 # caches persist in the snapshot).
 
-echo "[setup] Installing pnpm 11 (matches mise.toml / frontend/package.json)..."
-npm install -g pnpm@11.15.0 || echo "[setup]   WARN: pnpm install failed."
+# Pinned to match the other pnpm sites (mise.toml, frontend/package.json
+# "packageManager", frontend/Dockerfile); the renovate.json "pnpm" group keeps
+# them together via a customManager (docs/dependencies.md). Without that manager
+# this line is invisible to Renovate and drifts behind the other pnpm sites.
+echo "[setup] Installing pnpm 11..."
+npm install -g pnpm@11.18.0 || echo "[setup]   WARN: pnpm install failed."
 
 # CodeGraph - the code-navigation knowledge graph (see AGENTS.md "Code
 # Navigation"). Installed from the npm registry, NOT the project's recommended

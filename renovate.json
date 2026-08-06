@@ -185,6 +185,24 @@
       "depNameTemplate": "uv",
       "datasourceTemplate": "pypi",
       "versioningTemplate": "pep440"
+    },
+    {
+      "description": "Shared pin (docs/dependencies.md): pnpm installed via `npm install -g pnpm@X.Y.Z` in the cloud setup script. This is a functional pin — the session runs this pnpm — unlike the postgres/valkey prepull literals in the same file, which are cache hints backed by the real pins in docker-compose.yml and the test fixtures. No built-in manager reads a shell script, so without this manager the line stays invisible to Renovate and drifts behind the other pnpm sites. Feeds the 'pnpm' group above via depName 'pnpm'.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.claude/setup\\.sh$/"],
+      "matchStrings": ["pnpm@(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"],
+      "depNameTemplate": "pnpm",
+      "datasourceTemplate": "npm",
+      "versioningTemplate": "npm"
+    },
+    {
+      "description": "Shared pin (docs/dependencies.md): Node runtime installed via nvm in the cloud setup script, held in a single NODE_VERSION literal the `nvm install`/`nvm alias` lines both reference. Functional pin — the session runs this Node — with the same shell-script invisibility as the pnpm line above, so it needs its own manager. Feeds the 'node' group above via depName 'node'; datasource node-version matches how the mise and setup-node sites in that group are extracted.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.claude/setup\\.sh$/"],
+      "matchStrings": ["NODE_VERSION=(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"],
+      "depNameTemplate": "node",
+      "datasourceTemplate": "node-version",
+      "versioningTemplate": "node"
     }
   ]
 }
