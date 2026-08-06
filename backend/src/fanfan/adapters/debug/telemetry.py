@@ -36,7 +36,7 @@ def _scrub_sensitive_data(event: Event, hint: dict) -> Event | None:
     return event
 
 
-def setup_telemetry(  # noqa: PLR0913 — one parameter per Sentry knob
+def setup_telemetry(  # noqa: PLR0913, PLR0917 — one parameter per Sentry knob
     service_name: str,
     environment: str,
     sentry_dsn: str | None,
