@@ -84,7 +84,7 @@ Always review a generated migration: autogenerate emits renames as drop+create a
 ├── backend/src/fanfan/
 │   ├── core/            # Pure domain: models, value objects, exceptions
 │   ├── application/     # Interactors/use cases, DTOs, ports, services
-│   ├── presentation/    # HTTP (web/), Telegram (tgbot/), NATS (faststream/), CLI (cli/), APScheduler cron job definitions (scheduler/)
+│   ├── presentation/    # HTTP (web/), Telegram (tgbot/), NATS (faststream/), CLI (cli/), APScheduler cron jobs (scheduler/)
 │   ├── adapters/        # Infrastructure: DB, Redis, NATS, Telegram, external clients
 │   ├── main/            # Entrypoints (web, cli, faststream, scheduler — which registers the outbox relay) + Dishka DI container
 │   └── common/          # Shared static assets, path helpers
@@ -110,7 +110,7 @@ Structural change → update the docs **in the same change**. Prefer documenting
 * Architecturally significant decision — new external dependency, changed deployment topology, an expensive-to-reverse choice → a new immutable ADR under [docs/adr/](docs/adr/README.md). Guides say *how it works now*; ADRs record *why we chose it*.
 * An open PR that gained commits → refresh its title and description to describe the PR as a whole, not the latest commit.
 * A version pinned in more than one place → bump every site together and keep `renovate.json` covering them. See [docs/dependencies.md](docs/dependencies.md).
-* A release version bump is a human call — **never** edit `backend/pyproject.toml` `version` unless asked for one by name, however release-worthy the change feels; branches that bump on their own initiative collide in `uv.lock` and the generated spec. **Suggesting** one is welcome: say which bump you would pick and why, in the PR description or your final message. You have just seen whether the change needs manual deploy steps, which is exactly what separates MAJOR from the rest — see the bump table in [docs/dependencies.md](docs/dependencies.md) "Versioning the app". When asked: edit `pyproject.toml`, run `just backend-generate-openapi` (it refreshes `uv.lock` too — commit both, or the image build fails on `uv sync --locked`), and stop there. The `vX.Y.Z` tag is a human step on `main` after merge, because pushing it publishes GHCR images. `frontend/package.json` stays at `0.0.0`.
+* A release version bump is a human call — **never** edit `backend/pyproject.toml` `version` unless asked for one by name, however release-worthy the change feels; self-initiated bumps collide in `uv.lock` and the generated spec. **Suggesting** one is welcome: say which bump and why, in the PR description or your final message — you have just seen whether the change needs manual deploy steps, which is what separates MAJOR from the rest (bump table in [docs/dependencies.md](docs/dependencies.md) "Versioning the app"). When asked: edit `pyproject.toml`, run `just backend-generate-openapi` (refreshes `uv.lock` too — commit both, or the image build fails on `uv sync --locked`), and stop. The `vX.Y.Z` tag is a human step on `main` after merge, since pushing it publishes GHCR images. `frontend/package.json` stays at `0.0.0`.
 
 ## Project constraints
 
