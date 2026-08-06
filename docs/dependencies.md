@@ -18,7 +18,7 @@ mismatch unexplained.
 | `postgres:18.4-alpine` | `docker-compose.yml`, `backend/scripts/generate_migration.py`, `backend/tests/fixtures/db_provider.py` |
 | `uv` | `mise.toml`, `backend/pyproject.toml` (`[tool.uv]` and the `uv_build` floor in `[build-system]`), `backend/Dockerfile`, `.claude/setup.sh`, CI (`setup-uv` input) |
 | `hadolint` | `mise.toml`, `.pre-commit-config.yaml` (`rev`), the image behind the `.claude/setup.sh` shim |
-| `pnpm` | `mise.toml`, `frontend/package.json` (`packageManager`), `frontend/Dockerfile` (`PNPM_VERSION`), CI (`pnpm/action-setup` input) |
+| `pnpm` | `mise.toml`, `frontend/package.json` (`packageManager`), `frontend/Dockerfile` (`PNPM_VERSION`), `.claude/setup.sh`, CI (`pnpm/action-setup` input) |
 | `node` | `mise.toml`, `frontend/Dockerfile`, CI (`setup-node`) |
 | `python` | `mise.toml`, `backend/.python-version`, `backend/pyproject.toml` (`requires-python` floor) |
 
@@ -45,7 +45,10 @@ exception, the same shape as Node's `nvm install 24` there, and the reason
 * **`customManagers`** (regex) cover the pins the built-in managers cannot see:
   the Postgres image literals in `backend/scripts/generate_migration.py` and
   `backend/tests/fixtures/db_provider.py`; the hadolint image behind the
-  `.claude/setup.sh` shim; the uv pin in `.claude/setup.sh` and
+  `.claude/setup.sh` shim; the uv and pnpm pins in `.claude/setup.sh` (the
+  `npm install -g pnpm@…` line the session actually runs — distinct from the
+  postgres/valkey prepull literals in that file, which are cache hints, not
+  functional pins, so they are left untracked); the uv pin in
   `backend/pyproject.toml`.
 * **A pin inside a Dockerfile that isn't a `FROM` line gets an inline
   annotation, not a regex manager.** The `dockerfile` manager reads `FROM` lines

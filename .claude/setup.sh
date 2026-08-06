@@ -114,8 +114,12 @@ fi
 # lockfile is unchanged and only fetch the delta after a real bump (the uv/pnpm
 # caches persist in the snapshot).
 
-echo "[setup] Installing pnpm 11 (matches mise.toml / frontend/package.json)..."
-npm install -g pnpm@11.15.0 || echo "[setup]   WARN: pnpm install failed."
+# Pinned to match the other pnpm sites (mise.toml, frontend/package.json
+# "packageManager", frontend/Dockerfile); the renovate.json "pnpm" group keeps
+# them together via the customManager below (docs/dependencies.md). Without that
+# manager this line is invisible to Renovate and drifts a few minors behind.
+echo "[setup] Installing pnpm 11..."
+npm install -g pnpm@11.18.0 || echo "[setup]   WARN: pnpm install failed."
 
 # CodeGraph - the code-navigation knowledge graph (see AGENTS.md "Code
 # Navigation"). Installed from the npm registry, NOT the project's recommended
