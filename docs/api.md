@@ -4,7 +4,7 @@ This guide details best practices for using `openapi-typescript` and `openapi-fe
 
 ---
 
-## 🛠️ Core Concept: Single Source of Truth
+## Core Concept: Single Source of Truth
 * **Generated Types**: `frontend/src/lib/api/schema.d.ts` is the single source of truth for all API contracts.
 * **Auto-generation**: Run `just frontend-generate-api` from the workspace root whenever the backend endpoints, routers, or Pydantic schemas change.
 * **Custom Type Transforms**: Any modifications to how types are outputted (e.g. converting FastAPI file uploads or binary schema formats to `Blob` objects) must be registered in `frontend/scripts/generate-api.mjs`.
@@ -26,7 +26,7 @@ The general rule when adding to the spec: **a value that is not derived from com
 
 ---
 
-## 🔒 Client Isolation
+## Client Isolation
 A shared global/module singleton API client can accumulate mutable state that bleeds across navigations and login/logout, so **never use one**.
 
 Instead, always instantiate a local client per context using `createApiClient()`.
@@ -90,11 +90,11 @@ For local component scripts (`.svelte`), page layouts, or event handlers that on
 
 ---
 
-## 🏷️ TypeScript Type Extraction
+## TypeScript Type Extraction
 The generated types in `schema.d.ts` contain type definitions for all schemas, query params, paths, requests, and responses. Avoid duplicating types; extract them directly:
 
 ### 1. Extracting DTOs and Schemas
-Use Svelte 5 / TypeScript syntax to extract specific schemas from `components['schemas']`:
+Use TypeScript indexed-access syntax to extract specific schemas from `components['schemas']`:
 ```typescript
 import type { components } from '$lib/api/schema';
 
@@ -131,7 +131,7 @@ Backend `StrEnum`s that appear on a DTO field (`UserRole`, `Permission` in `core
 
 ---
 
-## 🔄 Mutations & Data Recovery
+## Mutations & Data Recovery
 * **UI Consistency**: Define how the UI becomes consistent after mutations (e.g. invalidate layout cache, optimistic update, or full state refetch).
 * **Dependency Invalidation**: When a route uses dependency invalidation, call `depends(...)` in the page load and trigger it with `invalidate('app:something')` after a successful mutation.
 * **Return Checking**: Success payload, error payload, and response metadata must be checked through `openapi-fetch` returns (`data`, `error`, `response`).
@@ -146,7 +146,7 @@ An action that cannot finish inside the request returns **202** with the created
 
 ---
 
-## 🇷🇺 Russian Localization & Error Handling
+## Russian Localization & Error Handling
 Russian copy is mandatory (AGENTS.md, "Never"). API-specific rule: normalize failures before presenting them — never expose raw backend stack traces or internal identifiers, and show a friendly Russian message explaining how to recover or retry.
 
 * **Error shape**: every error response is `ErrorMessage { code, details }` (see backend `presentation/web/exceptions.py`). Map failures by the machine-readable `code`, not by HTTP status or message text.
