@@ -2,7 +2,7 @@
 # An example of using standalone Python builds with multistage images.
 
 # First, build the application in the `/app` directory
-FROM ghcr.io/astral-sh/uv:0.11.30-trixie-slim AS builder
+FROM ghcr.io/astral-sh/uv:0.12.0-trixie-slim AS builder
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 
 # Omit development dependencies
