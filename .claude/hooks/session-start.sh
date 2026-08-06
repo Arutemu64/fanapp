@@ -55,15 +55,39 @@ if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo"; fi
 echo "[session-start] Syncing backend dependencies (uv sync)..."
 (cd "$REPO_ROOT/backend" && uv sync --all-groups)
 
-# Seed the root .env so `$env/static/public` types generate during the
+# Seed / reconcile the root .env so `$env/static/public` resolves during the
 # svelte-kit sync that pnpm's `prepare` runs below (the frontend reads env from
-# the repo root — see frontend/svelte.config.js). Without it, every PUBLIC_*
-# import is untyped and `pnpm check`/`pnpm lint` error in the cloud container,
-# which has no .env. Placeholder values suffice: the typecheck only needs the
-# keys to exist, not real secrets. .env is gitignored, so nothing leaks.
+# the repo root — see frontend/svelte.config.js). SvelteKit inlines static
+# public env at build time and turns any referenced-but-undefined member into a
+# hard error, so every PUBLIC_* the code imports must exist as a key or
+# `pnpm check`/`lint`/`build` fail in the cloud container. Placeholder values
+# suffice: the gate only needs the keys to exist, not real secrets. .env is
+# gitignored, so nothing leaks.
 if [ ! -f "$REPO_ROOT/.env" ]; then
   echo "[session-start] Seeding .env from .env.example..."
   cp "$REPO_ROOT/.env.example" "$REPO_ROOT/.env"
+else
+  # Seeding only fires when .env is absent, but the environment snapshot carries
+  # a .env built from an OLDER .env.example — it keeps only the keys it had then,
+  # so every PUBLIC_* var added to the code + .env.example since (AGENTS.md
+  # requires the two move together) reads as undefined and breaks the frontend
+  # gate. Backfill each uncommented key that .env.example declares but .env
+  # lacks, copying the example's placeholder value. This self-heals the drift
+  # each session and is idempotent (a backfilled key is "present" next run).
+  # Only uncommented `KEY=` lines are copied: commented example entries
+  # (APP_BUILD, IMAGE_TAG) are deliberately optional and must stay out.
+  missing_env=$(awk -F= '
+    FNR==NR { if ($0 ~ /^[A-Za-z_][A-Za-z0-9_]*=/) seen[$1]=1; next }
+    /^[A-Za-z_][A-Za-z0-9_]*=/ && !($1 in seen)
+  ' "$REPO_ROOT/.env" "$REPO_ROOT/.env.example")
+  if [ -n "$missing_env" ]; then
+    echo "[session-start] Backfilling .env with keys added to .env.example..."
+    {
+      echo ""
+      echo "# Backfilled by session-start: declared in .env.example, absent here."
+      printf '%s\n' "$missing_env"
+    } >> "$REPO_ROOT/.env"
+  fi
 fi
 
 echo "[session-start] Syncing frontend dependencies (pnpm install)..."
