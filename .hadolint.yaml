@@ -11,3 +11,20 @@
 trustedRegistries:
   - docker.io
   - ghcr.io
+
+# Rules added in hadolint 2.15 that are false positives for this repo. Both fire
+# on code that is safe by construction, so they are silenced here rather than
+# worked around in the Dockerfiles.
+ignored:
+  # DL3064 flags "potentially sensitive data" in ARG/ENV. The frontend build must
+  # pass its PUBLIC_* config as build args — this is a static SPA with no server,
+  # so `$env/static/public` values are inlined into the bundle at build time. They
+  # are public, non-secret deploy constants by design (see frontend/Dockerfile).
+  # Real secrets are never build args in this project (runtime env / mounted files
+  # only, per AGENTS.md), so the rule only ever fires false positives here.
+  - DL3064
+  # DL3066 warns that a non-numeric user-id may be unresolvable by the host. Our
+  # `USER nonroot` names a user this image creates itself with an explicit
+  # `--uid 999` (backend/Dockerfile), so it is always resolvable and the host
+  # concern does not apply. Keeping the name over a bare UID is deliberate.
+  - DL3066
