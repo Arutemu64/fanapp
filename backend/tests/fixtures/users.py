@@ -116,6 +116,33 @@ async def demo_seeder(dishka_request: AsyncContainer) -> User:
 
 
 @pytest_asyncio.fixture
+async def settings_editor(dishka_request: AsyncContainer) -> User:
+    """
+    Create a user granted settings:manage.
+    """
+    user_gateway = await dishka_request.get(UserGateway)
+    user_permission_gateway = await dishka_request.get(UserPermissionGateway)
+    uow = await dishka_request.get(UnitOfWork)
+
+    settings_editor = User(
+        id=UserId(uuid7()),
+        username=Username("settings_editor"),
+        hashed_password=None,
+        role=UserRole.ORG,
+    )
+    await user_gateway.add(settings_editor)
+    await user_permission_gateway.add(
+        UserPermission(
+            id=generate_user_permission_id(),
+            permission=Permission.SETTINGS_MANAGE,
+            user_id=settings_editor.id,
+        )
+    )
+    await uow.commit()
+    return settings_editor
+
+
+@pytest_asyncio.fixture
 async def schedule_editor(dishka_request: AsyncContainer) -> User:
     """
     Create a user granted schedule:manage and schedule:import.
