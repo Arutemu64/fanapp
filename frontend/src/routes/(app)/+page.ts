@@ -1,27 +1,29 @@
 import { createApiClient } from '$lib/api';
-import { FALLBACK_FESTIVAL_START } from '$lib/constants/festival';
+import { CONFIG_CACHE_KEY, FALLBACK_CONFIG, type PublicConfig } from '$lib/constants/festival';
+import { fetchWithCache, universalScope } from '$lib/utils/offlineCache';
 
 import type { PageLoad } from './$types';
 
-// Public config drives the hero's phase (before/during/after) and countdown.
-// It must render for guests and on a cold or offline load, so the request is
-// best-effort: any failure falls back to the shipped default start rather than
-// blocking the page. The server value wins whenever /config is reachable.
+// Public config drives the hero's phase (before/during/after) and countdown, so it
+// must render for guests and offline. Network-first with a fallback to the last
+// synced copy (fetchWithCache, universal store — no per-user data), matching the
+// schedule. Network-first over stale-while-revalidate on purpose: the phase is a
+// decision, so a client opening the app after the festival ends must not first
+// paint a stale countdown. A complete cache miss (first-ever visit made offline)
+// falls back to the shipped defaults; any live response wins over both.
 export const load: PageLoad = async ({ fetch, depends }) => {
 	depends('app:config');
 
-	const fallback = {
-		festival_start: FALLBACK_FESTIVAL_START,
-		festival_ended: false,
-		voting_enabled: false
-	};
-
 	const client = createApiClient();
 
-	try {
-		const { data, error } = await client.GET('/config', { fetch });
-		return { config: error || !data ? fallback : data };
-	} catch {
-		return { config: fallback };
-	}
+	const { data } = await fetchWithCache<PublicConfig>({
+		key: CONFIG_CACHE_KEY,
+		scope: universalScope,
+		fetcher: async ({ signal }) => {
+			const { data, error } = await client.GET('/config', { fetch, signal });
+			return error ? undefined : data;
+		}
+	});
+
+	return { config: data ?? FALLBACK_CONFIG };
 };
