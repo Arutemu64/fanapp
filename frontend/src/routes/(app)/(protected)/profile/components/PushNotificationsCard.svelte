@@ -1,12 +1,7 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
-	import { Button, Modal, Toggle } from 'flowbite-svelte';
-	import {
-		AnnotationOutline,
-		ArrowDownToBracketOutline,
-		BellOutline,
-		BellSolid
-	} from 'flowbite-svelte-icons';
+	import { Button, Toggle } from 'flowbite-svelte';
+	import { BellOutline, BellSolid } from 'flowbite-svelte-icons';
 	const client = createApiClient();
 	import type { components } from '$lib/api/schema';
 	import type { CurrentUserDTO } from '$lib/types/user';
@@ -14,9 +9,12 @@
 	import { PUBLIC_VAPID_KEY, PUBLIC_VK_GROUP_ID } from '$env/static/public';
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { urlBase64ToUint8Array } from '$lib/utils/push';
 	import { onMount } from 'svelte';
 
+	import IosPwaModal from './IosPwaModal.svelte';
 	import ProfileCardShell from './ProfileCardShell.svelte';
+	import VkNotificationsModal from './VkNotificationsModal.svelte';
 
 	interface Props {
 		user: CurrentUserDTO;
@@ -49,19 +47,6 @@
 	// the build-time group id, so it may be empty if VK notifications were not
 	// configured for this deployment — the modal hides the button then.
 	const vkGroupUrl = PUBLIC_VK_GROUP_ID ? `https://vk.ru/im?sel=-${PUBLIC_VK_GROUP_ID}` : null;
-
-	function urlBase64ToUint8Array(base64String: string) {
-		const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-		const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-
-		const rawData = window.atob(base64);
-		const outputArray = new Uint8Array(rawData.length);
-
-		for (let i = 0; i < rawData.length; ++i) {
-			outputArray[i] = rawData.charCodeAt(i);
-		}
-		return outputArray;
-	}
 
 	async function checkSubscription() {
 		try {
@@ -412,51 +397,6 @@
 	</div>
 </ProfileCardShell>
 
-<Modal bind:open={showIosPwaModal} size="sm">
-	{#snippet header()}
-		<div class="flex items-center gap-2">
-			<ArrowDownToBracketOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-			<h3 class="text-lg font-bold text-gray-900 dark:text-white">Установи приложение</h3>
-		</div>
-	{/snippet}
+<IosPwaModal bind:open={showIosPwaModal} />
 
-	<p class="text-sm text-gray-500 dark:text-gray-400">
-		Пуш-уведомления на iOS доступны только в установленном приложении. Найди карточку «Установить
-		приложение» на этой странице и следуй инструкции.
-	</p>
-	{#snippet footer()}
-		<Button color="alternative" class="w-full" onclick={() => (showIosPwaModal = false)}
-			>Понятно</Button
-		>
-	{/snippet}
-</Modal>
-
-<Modal bind:open={showVkModal} size="sm">
-	{#snippet header()}
-		<div class="flex items-center gap-2">
-			<AnnotationOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-			<h3 class="text-lg font-bold text-gray-900 dark:text-white">Уведомления во ВКонтакте</h3>
-		</div>
-	{/snippet}
-
-	<p class="text-sm leading-relaxed text-gray-500 dark:text-gray-400">
-		Чтобы получать уведомления во ВКонтакте, нужно разрешить сообществу писать тебе — без этого
-		ВКонтакте не доставит сообщения.
-	</p>
-	<p class="mt-3 text-sm font-medium text-gray-900 dark:text-gray-300">Что сделать:</p>
-	<ul
-		class="mt-1 list-disc space-y-1 ps-5 text-sm leading-relaxed text-gray-500 dark:text-gray-400"
-	>
-		<li>Подключи аккаунт ВКонтакте в блоке «Способы входа».</li>
-		<li>Открой сообщество и нажми «Разрешить сообщения».</li>
-	</ul>
-	{#snippet footer()}
-		{#if vkGroupUrl}
-			<Button color="primary" class="w-full" href={vkGroupUrl} target="_blank" rel="noopener">
-				Открыть сообщество
-			</Button>
-		{/if}
-		<Button color="alternative" class="w-full" onclick={() => (showVkModal = false)}>Понятно</Button
-		>
-	{/snippet}
-</Modal>
+<VkNotificationsModal bind:open={showVkModal} {vkGroupUrl} />

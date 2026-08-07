@@ -7,6 +7,7 @@
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
+	import { buildScheduleGroups, filterScheduleGroups } from '$lib/utils/scheduleGrouping';
 	import { createSearchIndex } from '$lib/utils/search';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
 	import {
@@ -20,21 +21,6 @@
 	import type { PageProps } from './$types';
 
 	import EventCard from './components/EventCard.svelte';
-
-	type ScheduleNominationGroup = {
-		// Identity for the keyed {#each}. Assigned from the unfiltered schedule so
-		// it survives filtering — see `allGroups`.
-		key: string;
-		title: string;
-		events: ScheduleEventWithSubscription[];
-	};
-
-	type ScheduleBlockGroup = {
-		key: string;
-		title: string;
-		eventCount: number;
-		nominations: ScheduleNominationGroup[];
-	};
 
 	// Mirror the loaded page data so the component reads schedule from one local source.
 	let { data }: PageProps = $props();
@@ -79,74 +65,11 @@
 	let visibleCurrentEvent = $derived(filtered.find((event) => event.is_current) ?? null);
 
 	// Group rows into block and nomination sections so we can make headers sticky.
-	//
-	// Grouping runs over the *unfiltered* schedule so each group's key describes a
-	// fixed run of the programme. Deriving keys from the filtered list instead
-	// (e.g. its index) would rename every group that follows one a search empties
-	// out, and Svelte would tear down and rebuild those blocks — and every
-	// EventCard inside them — on each keystroke rather than reusing them.
-	let allGroups: ScheduleBlockGroup[] = $derived.by(() => {
-		const groups: ScheduleBlockGroup[] = [];
-
-		for (const event of schedule) {
-			const blockTitle = event.block_title?.trim() || 'Без блока';
-			const nominationTitle = event.nomination_title?.trim() || 'Без номинации';
-
-			let blockGroup = groups.at(-1);
-			if (!blockGroup || blockGroup.title !== blockTitle) {
-				blockGroup = {
-					key: `block-${groups.length}`,
-					title: blockTitle,
-					eventCount: 0,
-					nominations: []
-				};
-				groups.push(blockGroup);
-			}
-
-			blockGroup.eventCount += 1;
-
-			let nominationGroup = blockGroup.nominations.at(-1);
-			if (!nominationGroup || nominationGroup.title !== nominationTitle) {
-				nominationGroup = {
-					key: `${blockGroup.key}-nomination-${blockGroup.nominations.length}`,
-					title: nominationTitle,
-					events: []
-				};
-				blockGroup.nominations.push(nominationGroup);
-			}
-
-			nominationGroup.events.push(event);
-		}
-
-		return groups;
-	});
-
-	// The same tree with filtered-out events — and any group they emptied —
-	// removed. Groups keep the keys they got above, so a block that survives the
-	// filter keeps its identity and its rendered rows.
-	let groupedSchedule: ScheduleBlockGroup[] = $derived.by(() => {
-		const visibleEventIds = new Set(filtered.map((event) => event.id));
-		const groups: ScheduleBlockGroup[] = [];
-
-		for (const block of allGroups) {
-			const nominations: ScheduleNominationGroup[] = [];
-			let eventCount = 0;
-
-			for (const nomination of block.nominations) {
-				const events = nomination.events.filter((event) => visibleEventIds.has(event.id));
-				if (events.length === 0) continue;
-
-				nominations.push({ ...nomination, events });
-				eventCount += events.length;
-			}
-
-			if (nominations.length > 0) {
-				groups.push({ ...block, eventCount, nominations });
-			}
-		}
-
-		return groups;
-	});
+	// Built off the unfiltered schedule (recomputes only on reload); the filter
+	// pass below reuses these groups so a keystroke never re-groups. See
+	// scheduleGrouping.ts for the keying contract that keeps rows stable.
+	let allGroups = $derived(buildScheduleGroups(schedule));
+	let groupedSchedule = $derived(filterScheduleGroups(allGroups, filtered));
 
 	let resultsSummary = $derived(
 		filtered.length === schedule.length
