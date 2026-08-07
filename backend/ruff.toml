@@ -21,15 +21,18 @@ ignore = [
     # it recognises a base by an `Error` suffix, so renaming one cascades to its
     # subclasses and the only fixpoint is renaming all of them.
     "N818",    # error-suffix-on-exception-name
-    # pylint-refactor code-metric rules: noisy in DDD interactors/controllers where
-    # many branches and statements are structurally expected. PLR1711 (useless-return)
-    # and PLR2004 (magic-value-comparison) both stay enabled; PLR2004 is scoped off
-    # only in pluralize.py (per-file-ignores below), whose constants are intrinsic
-    # Russian plural-rule numbers, not stray magic values.
+    # PLR0904 (too-many-public-methods) stays globally off: it has no natural scope
+    # and false-positives on data-access gateways that legitimately grow many query
+    # methods. The three function-complexity metrics — return statements, branches,
+    # statements — are left ENABLED on purpose: the codebase satisfies all three
+    # everywhere today, so an oversized function is a real smell worth catching, and a
+    # genuinely branchy interactor documents the exception with an inline `noqa` at the
+    # site — the same pattern PLR0913/PLR0917 already use on the framework-injected
+    # routers (telemetry.py, the OAuth callback, the notifications consumer). PLR1711
+    # (useless-return) and PLR2004 (magic-value-comparison) stay enabled too; PLR2004
+    # is scoped off only in pluralize.py (per-file-ignores below), whose constants are
+    # intrinsic Russian plural-rule numbers, not stray magic values.
     "PLR0904",  # too-many-public-methods
-    "PLR0911",  # too-many-return-statements
-    "PLR0912",  # too-many-branches
-    "PLR0915",  # too-many-statements
     "COM812",  # missing-trailing-comma (formatter compatibility)
     "ISC001",  # single-line-implicit-string-concatenation (formatter compatibility)
     "ARG001",  # unused-function-argument (standard in web routers / dependency injections)
@@ -76,7 +79,8 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "f
     "INP001",  # standalone scripts, not an importable package
 ]
 "tests/**/*.py" = [
-    "S101",    # asserts are standard in tests
+    # S101 (asserts) is already ignored globally — invariants lean on asserts in app
+    # code too — so tests need no separate entry; re-adding one would be dead config.
     "S105",    # hardcoded passwords in tests are fine
     "S106",    # hardcoded passwords in tests are fine
     "F401",    # unused imports are common in fixtures / conftest files
