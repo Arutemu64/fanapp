@@ -326,7 +326,7 @@
 						color="green"
 						size="sm"
 						pill
-						class="pointer-events-auto h-12 w-12 rounded-full px-0 shadow-lg shadow-green-500/15 lg:w-32 lg:px-3"
+						class="pointer-events-auto h-12 w-12 rounded-full px-0 shadow-lg lg:w-32 lg:px-3"
 						onclick={scrollToCurrentEvent}
 						aria-label="Перейти к текущему выступлению"
 					>
