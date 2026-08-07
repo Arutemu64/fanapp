@@ -39,10 +39,6 @@
 </svelte:head>
 
 <div class="space-y-5 sm:space-y-6">
-	<HeroCard
-		festivalStart={config.festival_start}
-		festivalEnded={config.festival_ended}
-		loggedIn={Boolean(user)}
-	/>
+	<HeroCard festivalStart={config.festival_start} festivalEnded={config.festival_ended} />
 	<GetReadySection {user} />
 </div>

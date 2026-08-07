@@ -18,11 +18,8 @@
 	// risk. It's emitted into `build`, which the service worker already precaches.
 	import heroArt from './main.webp';
 
-	let {
-		festivalStart,
-		festivalEnded,
-		loggedIn
-	}: { festivalStart: string; festivalEnded: boolean; loggedIn: boolean } = $props();
+	let { festivalStart, festivalEnded }: { festivalStart: string; festivalEnded: boolean } =
+		$props();
 
 	const socials = [
 		{ label: 'Официальный сайт fancom.info', href: 'https://fancom.info', icon: GlobeOutline },
@@ -228,17 +225,15 @@
 					<p class="mt-1 text-xs leading-5 text-gray-600 dark:text-gray-400">
 						Спасибо, что были с нами. До встречи в следующем году.
 					</p>
-					{#if loggedIn}
-						<!-- Feedback is account-scoped and its page is auth-gated, so this
-							 invitation is only shown to signed-in users. -->
-						<p class="mt-2 text-xs leading-5 text-gray-600 dark:text-gray-400">
-							Поделись впечатлениями — расскажи, как для тебя прошёл фестиваль.
-						</p>
-						<Button href="/feedback" color="primary" size="sm" class="mt-3">
-							<AnnotationOutline class="me-2 h-4 w-4" aria-hidden="true" />
-							Оставить отзыв
-						</Button>
-					{/if}
+					<p class="mt-2 text-xs leading-5 text-gray-600 dark:text-gray-400">
+						Поделись впечатлениями — расскажи, как для тебя прошёл фестиваль.
+					</p>
+					<!-- Guests land on the auth-gated feedback page, which bounces them to
+						 login and returns them here after (LOGIN_NEXT_PARAM). -->
+					<Button href="/feedback" color="primary" size="sm" class="mt-3">
+						<AnnotationOutline class="me-2 h-4 w-4" aria-hidden="true" />
+						Оставить отзыв
+					</Button>
 				</div>
 			{/if}
 
