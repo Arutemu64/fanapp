@@ -17,19 +17,22 @@ ignore = [
     # MailingAlreadyCancelled), which is the convention docs/backend.md documents.
     # PEP 8 asks for the suffix only "if the exception actually is an error", and the
     # semantic markers (NotFound, Conflict, RateLimited) classify a condition rather
-    # than being errors. The rule also only reaches 4 of the 71 exception classes —
-    # it recognises a base by an `Error` suffix, so renaming one cascades to its
-    # subclasses and the only fixpoint is renaming all of them.
+    # than being errors. It fires on only a handful of the exception classes anyway —
+    # pep8-naming doesn't recurse through subclasses (ruff#783), so acting on it would
+    # cascade renames across the whole hierarchy for no semantic gain.
     "N818",    # error-suffix-on-exception-name
-    # pylint-refactor code-metric rules: noisy in DDD interactors/controllers where
-    # many branches and statements are structurally expected. PLR1711 (useless-return)
-    # and PLR2004 (magic-value-comparison) both stay enabled; PLR2004 is scoped off
-    # only in pluralize.py (per-file-ignores below), whose constants are intrinsic
-    # Russian plural-rule numbers, not stray magic values.
+    # PLR0904 (too-many-public-methods) stays globally off: it has no natural scope
+    # and false-positives on data-access gateways that legitimately grow many query
+    # methods. The three function-complexity metrics — return statements, branches,
+    # statements — are left ENABLED on purpose: the codebase satisfies all three
+    # everywhere today, so an oversized function is a real smell worth catching, and a
+    # genuinely branchy interactor documents the exception with an inline `noqa` at the
+    # site — the same pattern PLR0913/PLR0917 already use on the framework-injected
+    # routers (telemetry.py, the OAuth callback, the notifications consumer). PLR1711
+    # (useless-return) and PLR2004 (magic-value-comparison) stay enabled too; PLR2004
+    # is scoped off only in pluralize.py (per-file-ignores below), whose constants are
+    # intrinsic Russian plural-rule numbers, not stray magic values.
     "PLR0904",  # too-many-public-methods
-    "PLR0911",  # too-many-return-statements
-    "PLR0912",  # too-many-branches
-    "PLR0915",  # too-many-statements
     "COM812",  # missing-trailing-comma (formatter compatibility)
     "ISC001",  # single-line-implicit-string-concatenation (formatter compatibility)
     "ARG001",  # unused-function-argument (standard in web routers / dependency injections)
@@ -39,13 +42,18 @@ ignore = [
     # no issue-per-TODO workflow, so requiring a link would only buy placeholder refs.
     "TD003",   # missing-todo-link (flake8-todos)
 
-    # ⚠️ CRITICAL: Project evaluates annotations at runtime (no `from __future__
-    # import annotations`), and SQLAlchemy (Mapped[...]), Pydantic, and Dishka DI
-    # all resolve type hints at runtime. Moving these imports under TYPE_CHECKING
-    # breaks that. Ruff's runtime-evaluated-base-classes can't save us: it has no
-    # cross-file analysis (ruff#7866) — our custom BaseORM/AppEvent/*Config bases
-    # live in other modules — and Dishka constructor injection has no base-class
-    # knob at all. Keep disabled.
+    # ⚠️ CRITICAL: runtime type-hint consumers resolve these annotations at import or
+    # serialization time — SQLAlchemy (Mapped[...]), Pydantic, Dishka DI, and the
+    # adaptix retorts that (de)serialize plain core dataclasses. Moving the import
+    # under TYPE_CHECKING makes the name unresolvable, so `get_type_hints()` raises
+    # NameError when the retort/mapper builds. `from __future__ import annotations`
+    # does NOT save us: it only defers the failure from import time to first
+    # serialization. Verified — TC-fixing core/models/sync_run.py (which already has
+    # the future import) breaks the app's adaptix retort with
+    # `NameError: name 'UserId' is not defined`. Ruff's runtime-evaluated-base-classes
+    # knob can't help either: no cross-file analysis (ruff#7866) for our
+    # BaseORM/AppEvent/*Config bases, Dishka constructor injection has no base-class
+    # knob, and adaptix dataclasses have no marker base at all. Keep disabled.
     "TC001",  # typing-only-first-party-import
     "TC002",  # typing-only-third-party-import
     "TC003",  # typing-only-standard-library-import
@@ -55,7 +63,6 @@ ignore = [
     "RUF002",  # ambiguous-unicode-character-docstring
     "RUF003",  # ambiguous-unicode-character-comment
 
-    "S101",   # assert statements used for invariants; security checks never rely on them
     "CPY001", # missing-copyright-notice — the MIT LICENSE is at the repo root, not per file
 ]
 
@@ -76,7 +83,9 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "f
     "INP001",  # standalone scripts, not an importable package
 ]
 "tests/**/*.py" = [
-    "S101",    # asserts are standard in tests
+    "S101",    # asserts are the assertion mechanism in tests. Production code keeps S101
+    #            enabled: asserts vanish under `python -O`, so an invariant or security
+    #            check written as an assert would be silently dropped in prod.
     "S105",    # hardcoded passwords in tests are fine
     "S106",    # hardcoded passwords in tests are fine
     "F401",    # unused imports are common in fixtures / conftest files
