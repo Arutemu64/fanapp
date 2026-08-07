@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatDuration, formatUntil } from './formatters';
+import {
+	formatDuration,
+	formatFestivalDateTime,
+	formatUntil,
+	fromEventDateTimeLocal,
+	toEventDateTimeLocal
+} from './formatters';
 
 // `duration` is seconds everywhere — spreadsheet cell, database column, API
 // field — so that a sub-minute act survives the round trip exactly. These cases
@@ -94,5 +100,26 @@ describe('formatUntil', () => {
 
 	it('collapses a sub-minute countdown', () => {
 		expect(formatUntil(2, startingIn(30_000), NOW)).toBe('Осталось 2 выступления · меньше минуты');
+	});
+});
+
+// festival_start is stored as an instant and shown/edited on the venue clock
+// (Europe/Moscow, +03:00). These pin the display copy and the lossless round
+// trip through the zone-naive datetime-local input organizers edit it with.
+describe('festival start helpers', () => {
+	// 2026-08-22 11:30 Moscow, the shipped default, expressed as its UTC instant.
+	const START_ISO = '2026-08-22T08:30:00.000Z';
+
+	it('formats the start on the venue clock without a "г." suffix', () => {
+		expect(formatFestivalDateTime(START_ISO)).toBe('22 августа 2026, 11:30');
+	});
+
+	it('shows the venue wall clock in the datetime-local value', () => {
+		expect(toEventDateTimeLocal(START_ISO)).toBe('2026-08-22T11:30');
+	});
+
+	it('round-trips a datetime-local value back to the same instant', () => {
+		const local = toEventDateTimeLocal(START_ISO);
+		expect(new Date(fromEventDateTimeLocal(local)).getTime()).toBe(new Date(START_ISO).getTime());
 	});
 });

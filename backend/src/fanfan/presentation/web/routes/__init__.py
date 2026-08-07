@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from fanfan.presentation.web.responses import VALIDATION_RESPONSES
 from fanfan.presentation.web.routes.auth import auth_router
+from fanfan.presentation.web.routes.config import config_router
 from fanfan.presentation.web.routes.current_user import current_user_router
 from fanfan.presentation.web.routes.debug import debug_router
 from fanfan.presentation.web.routes.feedback import feedback_router
@@ -23,6 +24,7 @@ def setup_api_router() -> APIRouter:
     # security marker and AUTH_RESPONSES themselves, so public routes stay clean.
     router.include_router(debug_router, responses=VALIDATION_RESPONSES)
     router.include_router(auth_router, responses=VALIDATION_RESPONSES)
+    router.include_router(config_router, responses=VALIDATION_RESPONSES)
     router.include_router(current_user_router, responses=VALIDATION_RESPONSES)
     router.include_router(settings_router, responses=VALIDATION_RESPONSES)
     router.include_router(sse_router, responses=VALIDATION_RESPONSES)

@@ -94,6 +94,7 @@ export interface SSEEventMap {
 	schedule_updated: void;
 	notification_created: NotificationDTO;
 	sync_run_updated: SyncRunUpdatedPayload;
+	config_updated: void;
 	ping: void;
 }
 
@@ -109,6 +110,7 @@ const ALL_SSE_EVENTS = Object.keys({
 	schedule_updated: true,
 	notification_created: true,
 	sync_run_updated: true,
+	config_updated: true,
 	ping: true
 } satisfies Record<SSEEventName, true>) as SSEEventName[];
 export type SSEHandler<K extends SSEEventName> = (data: SSEEventMap[K]) => void;

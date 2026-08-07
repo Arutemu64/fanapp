@@ -451,6 +451,38 @@
         }
       }
     },
+    "/config": {
+      "get": {
+        "tags": [
+          "Config"
+        ],
+        "summary": "Get public config",
+        "description": "Returns the public festival config the SPA needs before login.",
+        "operationId": "get_public_config",
+        "responses": {
+          "200": {
+            "description": "Public config retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicConfigDTO"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/me/": {
       "get": {
         "tags": [
@@ -3246,6 +3278,15 @@
             "type": "boolean",
             "title": "Voting Enabled"
           },
+          "festival_start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Festival Start"
+          },
+          "festival_ended": {
+            "type": "boolean",
+            "title": "Festival Ended"
+          },
           "limits": {
             "$ref": "#/components/schemas/LimitsConfigDTO"
           }
@@ -3253,6 +3294,8 @@
         "type": "object",
         "required": [
           "voting_enabled",
+          "festival_start",
+          "festival_ended",
           "limits"
         ],
         "title": "AppSettingsDTO"
@@ -4094,6 +4137,31 @@
         ],
         "title": "Permission"
       },
+      "PublicConfigDTO": {
+        "properties": {
+          "festival_start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Festival Start"
+          },
+          "festival_ended": {
+            "type": "boolean",
+            "title": "Festival Ended"
+          },
+          "voting_enabled": {
+            "type": "boolean",
+            "title": "Voting Enabled"
+          }
+        },
+        "type": "object",
+        "required": [
+          "festival_start",
+          "festival_ended",
+          "voting_enabled"
+        ],
+        "title": "PublicConfigDTO",
+        "description": "Public, unauthenticated projection of AppSettings served at GET /config.\n\nDeliberately omits `limits` (ADR-0008 projection tuning is organizer-only).\nCarries the raw `festival_start` so the client can run the live countdown,\nplus the two flags the UI needs to pick its phase and gate voting without\nprovoking a 403 on a guarded endpoint."
+      },
       "PushSubscriptionStatus": {
         "properties": {
           "subscribed": {
@@ -4737,6 +4805,29 @@
               }
             ],
             "title": "Voting Enabled"
+          },
+          "festival_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Festival Start"
+          },
+          "festival_ended": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Festival Ended"
           },
           "announcement_timeout": {
             "anyOf": [

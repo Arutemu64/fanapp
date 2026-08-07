@@ -31,6 +31,9 @@ class SSEEventName(StrEnum):
     NOTIFICATION_CREATED = "notification_created"
     # A vendor sync run changed state; organizers should refetch sync sources.
     SYNC_RUN_UPDATED = "sync_run_updated"
+    # Public festival config changed (phase, start, voting); clients should
+    # refetch GET /config so the home page reflects it without a reload.
+    CONFIG_UPDATED = "config_updated"
 
 
 @dataclass(slots=True, frozen=True)

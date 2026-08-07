@@ -44,6 +44,88 @@ export function formatDuration(seconds: number): string {
 	return parts.join(' ');
 }
 
+const FESTIVAL_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+	day: 'numeric',
+	month: 'long',
+	year: 'numeric',
+	hour: '2-digit',
+	minute: '2-digit',
+	hourCycle: 'h23',
+	timeZone: EVENT_TIME_ZONE
+});
+
+/**
+ * Festival start for the hero, on the venue clock: "22 августа 2026, 11:30".
+ * Built from parts so it drops the " г." year suffix ru-RU's long format adds,
+ * matching the app's existing date copy.
+ */
+export function formatFestivalDateTime(value: string | number | Date): string {
+	const parts = FESTIVAL_DATE_TIME_FORMATTER.formatToParts(new Date(value));
+	const get = (type: Intl.DateTimeFormatPartTypes) =>
+		parts.find((part) => part.type === type)?.value ?? '';
+	return `${get('day')} ${get('month')} ${get('year')}, ${get('hour')}:${get('minute')}`;
+}
+
+// Wall-clock parts in the event timezone, used to convert to/from the zone-naive
+// <input type="datetime-local"> value organizers edit festival_start with.
+const EVENT_WALL_CLOCK_FORMATTER = new Intl.DateTimeFormat('en-CA', {
+	year: 'numeric',
+	month: '2-digit',
+	day: '2-digit',
+	hour: '2-digit',
+	minute: '2-digit',
+	second: '2-digit',
+	hourCycle: 'h23',
+	timeZone: EVENT_TIME_ZONE
+});
+
+function eventWallClockParts(date: Date): Record<string, string> {
+	const parts: Record<string, string> = {};
+	for (const part of EVENT_WALL_CLOCK_FORMATTER.formatToParts(date)) {
+		parts[part.type] = part.value;
+	}
+	return parts;
+}
+
+/**
+ * Minutes the event timezone is ahead of UTC at `date`. Derived via Intl so it
+ * follows the zone's real rules rather than a hardcoded +03:00 that would break
+ * if PUBLIC_TIMEZONE moved to a DST zone.
+ */
+function eventZoneOffsetMinutes(date: Date): number {
+	const p = eventWallClockParts(date);
+	const asUtc = Date.UTC(
+		Number(p.year),
+		Number(p.month) - 1,
+		Number(p.day),
+		Number(p.hour),
+		Number(p.minute),
+		Number(p.second)
+	);
+	return (asUtc - date.getTime()) / 60_000;
+}
+
+/**
+ * ISO instant → "YYYY-MM-DDTHH:mm" on the venue clock, to populate a
+ * <input type="datetime-local"> (which is zone-naive).
+ */
+export function toEventDateTimeLocal(iso: string): string {
+	const p = eventWallClockParts(new Date(iso));
+	return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+}
+
+/**
+ * "YYYY-MM-DDTHH:mm" venue-clock value from a datetime-local input → ISO instant
+ * for the API. Reads the input as UTC first, then shifts by the zone's offset at
+ * that wall clock. Exact for the venue's fixed-offset zone; at a DST boundary the
+ * one ambiguous hour could land an hour off, which festival_start never needs.
+ */
+export function fromEventDateTimeLocal(value: string): string {
+	const naiveUtc = new Date(`${value}:00Z`).getTime();
+	const offsetMs = eventZoneOffsetMinutes(new Date(naiveUtc)) * 60_000;
+	return new Date(naiveUtc - offsetMs).toISOString();
+}
+
 const EVENT_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
 	day: '2-digit',
 	month: '2-digit',

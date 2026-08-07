@@ -100,6 +100,7 @@ from fanfan.application.interactors.schedule_mgmt.undo_schedule_change import (
 from fanfan.application.interactors.schedule_mgmt.update_schedule_event_skip import (
     UpdateScheduleEventSkip,
 )
+from fanfan.application.interactors.settings.get_public_config import GetPublicConfig
 from fanfan.application.interactors.settings.get_settings import GetSettings
 from fanfan.application.interactors.settings.update_settings import UpdateSettings
 from fanfan.application.interactors.sse.stream_events import StreamEvents
@@ -167,6 +168,7 @@ class InteractorsProvider(Provider):
 
     list_voting_nominations = provide(ListVotingNominations)
 
+    get_public_config = provide(GetPublicConfig)
     get_settings = provide(GetSettings)
     update_settings = provide(UpdateSettings)
 
