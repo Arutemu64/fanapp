@@ -228,6 +228,23 @@ Never copy-paste class attribute values from rich-text sources. Unicode curly qu
 * App-shell pieces used only once (navbar/sidebar/banner) stay colocated under `routes/(app)/components/` — single-use does **not** justify `lib/`.
 * `lib/` modules (`utils/`, `services/`, etc.) follow the same spirit: only `export` what is consumed outside the file, and delete unused exports rather than letting them accumulate.
 
+### When to split a large component
+
+Line count is a *smell*, not a threshold — never split to hit a number. Split when a file carries more than one responsibility or repeats a block; leave a long-but-cohesive file whole. The generic case *for* splitting (single responsibility, don't-repeat-yourself) lives in `svelte-core-bestpractices` / `impeccable` — load those. What this repo pins is **where each kind of extraction goes**, so a split lands in the conventional shape instead of a bespoke one:
+
+* **Pure logic** (grouping, formatting, parsing, filtering) → a plain function in `$lib/utils/*.ts` with a colocated `*.test.ts` (e.g. `scheduleGrouping.ts`). Keep it a `.ts`, not `.svelte.ts`, unless it genuinely needs runes — a pure function is testable in the node-only Vitest env (DOM is out of scope, ADR-0011). Moving logic out of a `.svelte` file is usually the highest-value split: it shrinks the component *and* buys a test.
+* **A repeated markup block** (≥2 near-identical instances, like the Telegram/VK rows that became `SocialConnectionRow`) → a component in the folder the placement rule above dictates. Parameterise the differences with props, and pass variant markup as a `{#snippet}` prop (e.g. an `icon` snippet) rather than a `boolean`-per-shape.
+* **Repeated markup used only inside one component** → a local `{#snippet}`, *not* a new file. A file earns its own module only when something else renders it.
+* **A self-contained dialog** → its own component, mounted behind `{#if open}` where always-mounting would cost real instances (see `EventCard`'s modals). An extracted modal keeps the §7 conventions.
+* **A Flowbite class repeated on 3+ instances** → `flowbiteTheme` (§3), *not* a wrapper component — that's a theming divergence, not a new abstraction.
+
+Two guardrails on the result:
+
+* **Give the child a real boundary.** Pass only what it needs; it may own its own *local* UI state (a confirm/loading flag, like `SocialConnectionRow`), but never request- or user-scoped state in a way that survives navigation (§1). Hand the actual work back to the parent through a callback prop (`onUnlink`, `onSuccess`) so API/domain knowledge stays with the owner.
+* **Don't shatter a cohesive state machine.** A long class like `EventsClient` (`events.svelte.ts`) is length driven by interlocking timer state and constraint comments, not duplication — splitting it would fragment one machine across files. Leave it.
+
+A split that changes rendered layout is not done until you've *seen* it render — spin up a throwaway `routes/` page, screenshot each state (including the in-flight ones), then delete the harness. This mirrors the project constraint on verifying Jinja templates by rendering; a refactor that "should be identical" still has to be shown identical.
+
 Before writing any new component, check existing items in `frontend/src/lib/components/`:
 * **Page titles**: The screen title lives in the top `AppNavbar`, not in the page body. Each page sets it by returning `title` from its `load` (`page.data.title`); `AppNavbar` renders it as the page `<h1>`. For optional intro text or extra context below the navbar, use `$lib/components/SectionIntro.svelte` (description + children, no title).
 * **Toasts**: Trigger alerts via `$lib/services/toasts.svelte.ts` and display them with `$lib/components/ToastContainer.svelte`. The service keeps two independent queues so a burst of one category can never evict the other: **status** toasts (action feedback — `add`/`error`) and **push** toasts (inbound SSE notifications — `push`). `ToastContainer` renders them in separate regions — push at the top (like OS notifications), status bottom-centered above the mobile bottom nav (bottom-right on desktop where that nav is hidden).

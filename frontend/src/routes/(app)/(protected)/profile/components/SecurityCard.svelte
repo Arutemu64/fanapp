@@ -4,13 +4,12 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { createApiClient } from '$lib/api';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { Alert, Badge, Button, Spinner } from 'flowbite-svelte';
+	import { Alert, Badge, Button } from 'flowbite-svelte';
 	import {
 		EnvelopeSolid,
 		ExclamationCircleSolid,
 		LinkOutline,
-		ShieldOutline,
-		TrashBinOutline
+		ShieldOutline
 	} from 'flowbite-svelte-icons';
 	import IconTelegram from '~icons/simple-icons/telegram';
 	import IconVk from '~icons/simple-icons/vk';
@@ -18,6 +17,7 @@
 	import ChangeEmailModal from './ChangeEmailModal.svelte';
 	import ChangePasswordModal from './ChangePasswordModal.svelte';
 	import ProfileCardShell from './ProfileCardShell.svelte';
+	import SocialConnectionRow from './SocialConnectionRow.svelte';
 
 	const client = createApiClient();
 
@@ -30,11 +30,6 @@
 
 	let changePasswordModalOpen = $state(false);
 	let changeEmailModalOpen = $state(false);
-	let isUnlinkingTelegram = $state(false);
-	let isUnlinkingVk = $state(false);
-	// Gate destructive unlinks behind a deliberate second tap (inline, no modal).
-	let isConfirmingTelegramUnlink = $state(false);
-	let isConfirmingVkUnlink = $state(false);
 	const toastService = getToastService();
 	let emailStatusColor = $derived<'green' | 'gray'>(user.email ? 'green' : 'gray');
 	let emailStatusLabel = $derived(user.email ? 'Подтверждена' : 'Не добавлена');
@@ -44,11 +39,9 @@
 	);
 	let vkAccount = $derived(user.social_identities.find((si) => si.provider === 'vk') ?? null);
 
-	async function handleTelegramUnlink() {
-		if (isUnlinkingTelegram || !telegramAccount) return;
-
-		isUnlinkingTelegram = true;
-
+	// The unlink DELETEs differ only in path + copy; SocialConnectionRow owns the
+	// confirm-and-loading UI and calls one of these to perform the action.
+	async function unlinkTelegram() {
 		try {
 			const { error, response } = await client.DELETE('/me/connections/telegram', {});
 
@@ -61,17 +54,10 @@
 			await onUpdate?.();
 		} catch (err) {
 			toastService.error(err);
-		} finally {
-			isUnlinkingTelegram = false;
-			isConfirmingTelegramUnlink = false;
 		}
 	}
 
-	async function handleVkUnlink() {
-		if (isUnlinkingVk || !vkAccount) return;
-
-		isUnlinkingVk = true;
-
+	async function unlinkVk() {
 		try {
 			const { error, response } = await client.DELETE('/me/connections/vk', {});
 
@@ -84,9 +70,6 @@
 			await onUpdate?.();
 		} catch (err) {
 			toastService.error(err);
-		} finally {
-			isUnlinkingVk = false;
-			isConfirmingVkUnlink = false;
 		}
 	}
 </script>
@@ -163,164 +146,35 @@
 			</div>
 		</div>
 
-		<div class="rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
-			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-				<div class="min-w-0">
-					<div class="flex flex-wrap items-center gap-2">
-						<IconTelegram class="h-4 w-4 text-gray-500 dark:text-gray-400" />
-						<p class="font-medium text-gray-900 dark:text-white">Telegram</p>
-						<Badge color={telegramAccount ? 'green' : 'gray'} border>
-							{telegramAccount ? 'Подключён' : 'Не подключён'}
-						</Badge>
-					</div>
+		<SocialConnectionRow
+			label="Telegram"
+			connected={telegramAccount !== null}
+			connectedDescription="Через Telegram можно быстро входить и получать уведомления от бота."
+			notConnectedDescription="Подключи Telegram для быстрого входа без пароля."
+			connectHref={`${PUBLIC_API_URL}/me/connections/telegram`}
+			unlinkPrompt="Отвязать Telegram?"
+			hasEmail={Boolean(user.email)}
+			onUnlink={unlinkTelegram}
+		>
+			{#snippet icon()}
+				<IconTelegram class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+			{/snippet}
+		</SocialConnectionRow>
 
-					{#if telegramAccount}
-						<p class="mt-1.5 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
-							Через Telegram можно быстро входить и получать уведомления от бота.
-						</p>
-					{:else}
-						<p class="mt-1.5 text-sm leading-5 text-gray-500 dark:text-gray-400">
-							Подключи Telegram для быстрого входа без пароля.
-						</p>
-					{/if}
-				</div>
-
-				<div class="flex w-full flex-col gap-2 sm:w-auto">
-					{#if telegramAccount}
-						{#if isConfirmingTelegramUnlink}
-							<p class="text-sm font-medium text-gray-900 sm:text-right dark:text-white">
-								Отвязать Telegram?
-							</p>
-							<div class="flex gap-2">
-								<Button
-									color="red"
-									size="sm"
-									class="min-h-11 flex-1 sm:flex-initial"
-									disabled={isUnlinkingTelegram || !user.email}
-									onclick={handleTelegramUnlink}
-								>
-									{#if isUnlinkingTelegram}
-										<Spinner class="me-2 h-4 w-4 fill-white" />
-										Отвязка…
-									{:else}
-										<TrashBinOutline class="me-2 h-4 w-4" />
-										Отвязать
-									{/if}
-								</Button>
-								<Button
-									color="alternative"
-									size="sm"
-									class="min-h-11 flex-1 sm:flex-initial"
-									disabled={isUnlinkingTelegram}
-									onclick={() => (isConfirmingTelegramUnlink = false)}
-								>
-									Отмена
-								</Button>
-							</div>
-						{:else}
-							<!-- Unlink is blocked without email so the user does not lose a recovery path. -->
-							<Button
-								color="red"
-								size="sm"
-								class="min-h-11 w-full sm:w-auto"
-								disabled={!user.email}
-								onclick={() => (isConfirmingTelegramUnlink = true)}
-							>
-								<TrashBinOutline class="me-2 h-4 w-4" />
-								Отвязать
-							</Button>
-						{/if}
-					{:else}
-						<Button
-							href={`${PUBLIC_API_URL}/me/connections/telegram`}
-							color="alternative"
-							class="min-h-11 w-full sm:w-auto"
-						>
-							Подключить
-						</Button>
-					{/if}
-				</div>
-			</div>
-		</div>
-
-		<div class="rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
-			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-				<div class="min-w-0">
-					<div class="flex flex-wrap items-center gap-2">
-						<IconVk class="h-4 w-4 text-gray-500 dark:text-gray-400" />
-						<p class="font-medium text-gray-900 dark:text-white">VK ID</p>
-						<Badge color={vkAccount ? 'green' : 'gray'} border>
-							{vkAccount ? 'Подключён' : 'Не подключён'}
-						</Badge>
-					</div>
-
-					{#if vkAccount}
-						<p class="mt-1.5 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
-							Через VK ID можно быстро входить без пароля.
-						</p>
-					{:else}
-						<p class="mt-1.5 text-sm leading-5 text-gray-500 dark:text-gray-400">
-							Подключи VK ID для быстрого входа без пароля.
-						</p>
-					{/if}
-				</div>
-
-				<div class="flex w-full flex-col gap-2 sm:w-auto">
-					{#if vkAccount}
-						{#if isConfirmingVkUnlink}
-							<p class="text-sm font-medium text-gray-900 sm:text-right dark:text-white">
-								Отвязать VK ID?
-							</p>
-							<div class="flex gap-2">
-								<Button
-									color="red"
-									size="sm"
-									class="min-h-11 flex-1 sm:flex-initial"
-									disabled={isUnlinkingVk || !user.email}
-									onclick={handleVkUnlink}
-								>
-									{#if isUnlinkingVk}
-										<Spinner class="me-2 h-4 w-4 fill-white" />
-										Отвязка…
-									{:else}
-										<TrashBinOutline class="me-2 h-4 w-4" />
-										Отвязать
-									{/if}
-								</Button>
-								<Button
-									color="alternative"
-									size="sm"
-									class="min-h-11 flex-1 sm:flex-initial"
-									disabled={isUnlinkingVk}
-									onclick={() => (isConfirmingVkUnlink = false)}
-								>
-									Отмена
-								</Button>
-							</div>
-						{:else}
-							<Button
-								color="red"
-								size="sm"
-								class="min-h-11 w-full sm:w-auto"
-								disabled={!user.email}
-								onclick={() => (isConfirmingVkUnlink = true)}
-							>
-								<TrashBinOutline class="me-2 h-4 w-4" />
-								Отвязать
-							</Button>
-						{/if}
-					{:else}
-						<Button
-							href={`${PUBLIC_API_URL}/me/connections/vk`}
-							color="alternative"
-							class="min-h-11 w-full sm:w-auto"
-						>
-							Подключить
-						</Button>
-					{/if}
-				</div>
-			</div>
-		</div>
+		<SocialConnectionRow
+			label="VK ID"
+			connected={vkAccount !== null}
+			connectedDescription="Через VK ID можно быстро входить без пароля."
+			notConnectedDescription="Подключи VK ID для быстрого входа без пароля."
+			connectHref={`${PUBLIC_API_URL}/me/connections/vk`}
+			unlinkPrompt="Отвязать VK ID?"
+			hasEmail={Boolean(user.email)}
+			onUnlink={unlinkVk}
+		>
+			{#snippet icon()}
+				<IconVk class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+			{/snippet}
+		</SocialConnectionRow>
 	</div>
 
 	{#if !user.email}
