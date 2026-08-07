@@ -4,6 +4,7 @@
 	const client = createApiClient();
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { fromEventDateTimeLocal, toEventDateTimeLocal } from '$lib/utils/formatters';
 	import { Alert, Button, Card, Helper, Input, Label, Spinner, Toggle } from 'flowbite-svelte';
 	import { untrack } from 'svelte';
 
@@ -13,6 +14,15 @@
 	const toastService = getToastService();
 
 	let isSaving = $state(false);
+	// festival_start is an instant; edit it on the venue clock via a zone-naive
+	// datetime-local, converting back to an ISO instant only when saving.
+	let savedFestivalStart = $state(
+		untrack(() => toEventDateTimeLocal(data.settings.festival_start))
+	);
+	let savedFestivalEnded = $state(untrack(() => data.settings.festival_ended));
+	let festivalStart = $state(untrack(() => toEventDateTimeLocal(data.settings.festival_start)));
+	let festivalEnded = $state(untrack(() => data.settings.festival_ended));
+	let festivalStartError = $state('');
 	let savedVotingEnabled = $state(untrack(() => data.settings.voting_enabled));
 	let savedAnnouncementTimeout = $state(untrack(() => data.settings.limits.announcement_timeout));
 	let savedTransitionBuffer = $state(untrack(() => data.settings.limits.transition_buffer));
@@ -28,10 +38,30 @@
 	let submitError = $state('');
 
 	let hasChanges = $derived(
-		votingEnabled !== savedVotingEnabled ||
+		festivalStart !== savedFestivalStart ||
+			festivalEnded !== savedFestivalEnded ||
+			votingEnabled !== savedVotingEnabled ||
 			announcementTimeout !== savedAnnouncementTimeout ||
 			transitionBuffer !== savedTransitionBuffer
 	);
+
+	function validateFestivalStart() {
+		if (!festivalStart) {
+			festivalStartError = 'Укажи дату и время начала фестиваля';
+			return false;
+		}
+
+		festivalStartError = '';
+		return true;
+	}
+
+	function handleFestivalStartInput() {
+		submitError = '';
+		// Re-validate live only after the field has already shown an error once.
+		if (festivalStartError) {
+			validateFestivalStart();
+		}
+	}
 
 	function validateAnnouncementTimeout() {
 		if (announcementTimeout === undefined || Number.isNaN(announcementTimeout)) {
@@ -83,11 +113,12 @@
 		event.preventDefault();
 		submitError = '';
 
-		// Validate both fields so all errors surface at once, not one at a time.
+		// Validate every field so all errors surface at once, not one at a time.
+		const isFestivalStartValid = validateFestivalStart();
 		const isAnnouncementTimeoutValid = validateAnnouncementTimeout();
 		const isTransitionBufferValid = validateTransitionBuffer();
 
-		if (!isAnnouncementTimeoutValid || !isTransitionBufferValid) {
+		if (!isFestivalStartValid || !isAnnouncementTimeoutValid || !isTransitionBufferValid) {
 			return;
 		}
 
@@ -104,6 +135,8 @@
 			const { error, response } = await client.PATCH('/settings', {
 				body: {
 					voting_enabled: votingEnabled,
+					festival_start: fromEventDateTimeLocal(festivalStart),
+					festival_ended: festivalEnded,
 					announcement_timeout: nextAnnouncementTimeout,
 					transition_buffer: nextTransitionBuffer
 				}
@@ -125,9 +158,12 @@
 				return;
 			}
 
+			savedFestivalStart = festivalStart;
+			savedFestivalEnded = festivalEnded;
 			savedVotingEnabled = votingEnabled;
 			savedAnnouncementTimeout = nextAnnouncementTimeout;
 			savedTransitionBuffer = nextTransitionBuffer;
+			festivalStartError = '';
 			announcementTimeoutError = '';
 			transitionBufferError = '';
 			toastService.add('Настройки фестиваля сохранены', 'success');
@@ -145,7 +181,7 @@
 	<title>Настройки фестиваля · ФАН ФАН</title>
 </svelte:head>
 
-<SectionIntro description="Управляй голосованием и таймингами расписания." />
+<SectionIntro description="Управляй фестивалем, голосованием и таймингами расписания." />
 
 <form class="mx-auto w-full max-w-2xl space-y-5" onsubmit={handleSubmit}>
 	{#if submitError}
@@ -153,6 +189,46 @@
 			{submitError}
 		</Alert>
 	{/if}
+
+	<Card class="w-full max-w-none space-y-4 rounded-2xl p-4 sm:p-6">
+		<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Фестиваль</h2>
+
+		<div class="space-y-2">
+			<Label for="festival-start">Начало фестиваля (МСК)</Label>
+			<Input
+				id="festival-start"
+				name="festival_start"
+				type="datetime-local"
+				autocomplete="off"
+				bind:value={festivalStart}
+				disabled={isSaving}
+				oninput={handleFestivalStartInput}
+				onblur={validateFestivalStart}
+			/>
+			{#if festivalStartError}
+				<Helper color="red">{festivalStartError}</Helper>
+			{:else}
+				<Helper>
+					Дата и время по московскому времени. От неё считается обратный отсчёт на главной.
+				</Helper>
+			{/if}
+		</div>
+
+		<div class="flex items-start justify-between gap-3">
+			<div class="min-w-0">
+				<h3 class="text-base font-medium text-gray-900 dark:text-white">Фестиваль завершён</h3>
+				<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-300">
+					Включи, когда фестиваль закончится — на главной вместо отсчёта появится прощание.
+				</p>
+			</div>
+			<Toggle
+				bind:checked={festivalEnded}
+				color="primary"
+				disabled={isSaving}
+				onchange={() => (submitError = '')}
+			/>
+		</div>
+	</Card>
 
 	<Card class="w-full max-w-none space-y-3 rounded-2xl p-4 sm:p-6">
 		<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Голосование</h2>

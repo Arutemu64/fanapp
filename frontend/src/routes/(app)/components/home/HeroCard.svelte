@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { pluralize } from '$lib/utils/formatters';
+	import { formatFestivalDateTime, pluralize } from '$lib/utils/formatters';
 	import { CalendarMonthOutline, GlobeOutline, MapPinAltOutline } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
@@ -12,6 +12,9 @@
 	// risk. It's emitted into `build`, which the service worker already precaches.
 	import heroArt from './main.webp';
 
+	let { festivalStart, festivalEnded }: { festivalStart: string; festivalEnded: boolean } =
+		$props();
+
 	const socials = [
 		{ label: 'Официальный сайт fancom.info', href: 'https://fancom.info', icon: GlobeOutline },
 		{ label: 'Telegram', href: 'https://t.me/fanfan_fest_news', icon: TelegramIcon },
@@ -19,8 +22,10 @@
 		{ label: 'TikTok', href: 'https://www.tiktok.com/@fan_fan_official', icon: TiktokIcon }
 	];
 
-	// Program start — 22 August 2026, 11:30 Moscow time (UTC+3).
-	const TARGET = new Date('2026-08-22T11:30:00+03:00').getTime();
+	// Program start, on the venue clock. Configurable via GET /config and passed in
+	// by the page so the hero renders for guests and on a cold/offline load.
+	let target = $derived(new Date(festivalStart).getTime());
+	let festivalDate = $derived(formatFestivalDateTime(festivalStart));
 
 	let now = $state(Date.now());
 	let intervalId: ReturnType<typeof setInterval> | null = null;
@@ -29,8 +34,16 @@
 	// instead of the browser's broken-image icon.
 	let imageFailed = $state(false);
 
-	let remaining = $derived(Math.max(0, TARGET - now));
+	let remaining = $derived(Math.max(0, target - now));
 	let hasStarted = $derived(remaining <= 0);
+
+	// before → countdown to the start; during → the festival is running; after →
+	// organizers flipped festival_ended, a deliberate switch (not a guessed end).
+	let phase = $derived.by(() => {
+		if (festivalEnded) return 'after';
+		if (hasStarted) return 'during';
+		return 'before';
+	});
 
 	const SECOND = 1000;
 	const MINUTE = 60 * SECOND;
@@ -60,9 +73,9 @@
 		intervalId = null;
 	}
 
-	// Start the 1s ticker, unless the countdown is already over.
+	// Start the 1s ticker, only while counting down to the start.
 	function startTicking() {
-		if (intervalId !== null || hasStarted) return;
+		if (intervalId !== null || phase !== 'before') return;
 		now = Date.now(); // resync after any pause so the time doesn't jump visibly
 		intervalId = setInterval(() => {
 			now = Date.now();
@@ -143,25 +156,7 @@
 				</p>
 			</div>
 
-			{#if hasStarted}
-				<dl>
-					<div class="flex items-center gap-3">
-						<span
-							class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
-						>
-							<CalendarMonthOutline class="h-5 w-5" aria-hidden="true" />
-						</span>
-						<div>
-							<dt class="sr-only">Когда</dt>
-							<dd class="text-sm font-semibold text-gray-900 sm:text-base dark:text-white">
-								22 августа 2026, 11:30
-							</dd>
-						</div>
-					</div>
-				</dl>
-			{/if}
-
-			{#if !hasStarted}
+			{#if phase === 'before'}
 				<div
 					aria-label="Обратный отсчёт до начала фестиваля"
 					class="rounded-xl border border-primary-100 bg-primary-50/60 p-3 dark:border-primary-800/40 dark:bg-primary-900/20"
@@ -203,8 +198,46 @@
 							</div>
 						{/each}
 					</div>
-					<p class="mt-2 text-xs text-gray-600 dark:text-gray-400">22 августа 2026 · 11:30</p>
+					<p class="mt-2 text-xs text-gray-600 dark:text-gray-400">{festivalDate}</p>
 				</div>
+			{:else if phase === 'during'}
+				<div
+					class="rounded-xl border border-primary-100 bg-primary-50/60 p-3 dark:border-primary-800/40 dark:bg-primary-900/20"
+				>
+					<p class="text-sm font-semibold text-primary-700 dark:text-primary-300">
+						Фестиваль идёт прямо сейчас
+					</p>
+					<p class="mt-1 text-xs leading-5 text-gray-600 dark:text-gray-400">
+						Загляни в программу, чтобы не пропустить ближайшие выступления.
+					</p>
+				</div>
+			{:else}
+				<div
+					class="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/60"
+				>
+					<p class="text-sm font-semibold text-gray-900 dark:text-white">Фестиваль завершён</p>
+					<p class="mt-1 text-xs leading-5 text-gray-600 dark:text-gray-400">
+						Спасибо, что были с нами. До встречи в следующем году.
+					</p>
+				</div>
+			{/if}
+
+			{#if phase !== 'before'}
+				<dl>
+					<div class="flex items-center gap-3">
+						<span
+							class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
+						>
+							<CalendarMonthOutline class="h-5 w-5" aria-hidden="true" />
+						</span>
+						<div>
+							<dt class="sr-only">Когда</dt>
+							<dd class="text-sm font-semibold text-gray-900 sm:text-base dark:text-white">
+								{festivalDate}
+							</dd>
+						</div>
+					</div>
+				</dl>
 			{/if}
 
 			<dl>

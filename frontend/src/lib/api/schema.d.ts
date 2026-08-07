@@ -198,6 +198,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get public config
+         * @description Returns the public festival config the SPA needs before login.
+         */
+        get: operations["get_public_config"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/": {
         parameters: {
             query?: never;
@@ -939,6 +959,13 @@ export interface components {
         AppSettingsDTO: {
             /** Voting Enabled */
             voting_enabled: boolean;
+            /**
+             * Festival Start
+             * Format: date-time
+             */
+            festival_start: string;
+            /** Festival Ended */
+            festival_ended: boolean;
             limits: components["schemas"]["LimitsConfigDTO"];
         };
         /** Body_import_schedule */
@@ -1246,6 +1273,26 @@ export interface components {
          * @enum {string}
          */
         Permission: "schedule:manage" | "schedule:import" | "notifications:send" | "settings:manage" | "tickets:generate" | "sync:run" | "demo:seed";
+        /**
+         * PublicConfigDTO
+         * @description Public, unauthenticated projection of AppSettings served at GET /config.
+         *
+         *     Deliberately omits `limits` (ADR-0008 projection tuning is organizer-only).
+         *     Carries the raw `festival_start` so the client can run the live countdown,
+         *     plus the two flags the UI needs to pick its phase and gate voting without
+         *     provoking a 403 on a guarded endpoint.
+         */
+        PublicConfigDTO: {
+            /**
+             * Festival Start
+             * Format: date-time
+             */
+            festival_start: string;
+            /** Festival Ended */
+            festival_ended: boolean;
+            /** Voting Enabled */
+            voting_enabled: boolean;
+        };
         /** PushSubscriptionStatus */
         PushSubscriptionStatus: {
             /** Subscribed */
@@ -1499,6 +1546,10 @@ export interface components {
         UpdateAppSettingsInput: {
             /** Voting Enabled */
             voting_enabled?: boolean | null;
+            /** Festival Start */
+            festival_start?: string | null;
+            /** Festival Ended */
+            festival_ended?: boolean | null;
             /** Announcement Timeout */
             announcement_timeout?: number | null;
             /** Transition Buffer */
@@ -1981,6 +2032,35 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    get_public_config: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Public config retrieved successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicConfigDTO"];
+                };
             };
             /** @description Request validation error. */
             422: {
