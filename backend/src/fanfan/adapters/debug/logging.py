@@ -78,3 +78,8 @@ def setup_logging(level: int, *, json_logs: bool):
     logging.getLogger("aiogram.event").setLevel(logging.WARNING)
     logging.getLogger("aiohttp.access").setLevel(logging.WARNING)
     logging.getLogger("uvicorn.access").addFilter(_HealthCheckFilter())
+    # The outbox relay ticks every couple of seconds, and APScheduler's executor
+    # logs "Running job"/"executed successfully" at INFO on every tick — tens of
+    # thousands of lines a day for a job that usually finds nothing to publish.
+    # WARNING keeps the ones that matter (missed runs, max-instances, failures).
+    logging.getLogger("apscheduler.executors.default").setLevel(logging.WARNING)
