@@ -278,6 +278,34 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Rate limited — editing too fast.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Captcha verification failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
           }
         }
       }
@@ -754,7 +782,7 @@
           "Current user"
         ],
         "summary": "Change current user email",
-        "description": "Changes the authenticated user's email address and sends a confirmation code to the new email.",
+        "description": "Sends a confirmation code to the new address. The stored email changes only once that code is confirmed. The code is sent before the response returns, so a delivery failure is reported instead of swallowed.",
         "operationId": "change_current_user_email",
         "requestBody": {
           "content": {
@@ -768,7 +796,7 @@
         },
         "responses": {
           "204": {
-            "description": "Email changed and confirmation code requested."
+            "description": "Confirmation code sent to the new email address."
           },
           "422": {
             "description": "Request validation error.",
@@ -792,6 +820,24 @@
           },
           "403": {
             "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited — editing too fast.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {

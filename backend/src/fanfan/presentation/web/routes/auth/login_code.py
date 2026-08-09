@@ -12,6 +12,7 @@ from fanfan.application.interactors.auth.request_login_code import (
     RequestLoginCodeInput,
 )
 from fanfan.presentation.web.config import WebConfig
+from fanfan.presentation.web.responses import RATE_LIMIT_RESPONSES
 from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
@@ -29,7 +30,9 @@ login_code_router = APIRouter()
         "is reported instead of being swallowed."
     ),
     responses={
+        **RATE_LIMIT_RESPONSES,
         200: {"description": "The login code was sent to the email address."},
+        403: {"model": ErrorMessage, "description": "Captcha verification failed."},
     },
 )
 @inject

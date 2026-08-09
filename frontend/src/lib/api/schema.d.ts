@@ -293,7 +293,7 @@ export interface paths {
         put?: never;
         /**
          * Change current user email
-         * @description Changes the authenticated user's email address and sends a confirmation code to the new email.
+         * @description Sends a confirmation code to the new address. The stored email changes only once that code is confirmed. The code is sent before the response returns, so a delivery failure is reported instead of swallowed.
          */
         post: operations["change_current_user_email"];
         delete?: never;
@@ -1874,6 +1874,15 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
+            /** @description Captcha verification failed. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
             /** @description Request validation error. */
             422: {
                 headers: {
@@ -1881,6 +1890,17 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+            /** @description Rate limited — editing too fast. */
+            429: {
+                headers: {
+                    /** @description Seconds to wait before retrying. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
                 };
             };
         };
@@ -2307,7 +2327,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Email changed and confirmation code requested. */
+            /** @description Confirmation code sent to the new email address. */
             204: {
                 headers: {
                     [name: string]: unknown;
@@ -2357,6 +2377,17 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+            /** @description Rate limited — editing too fast. */
+            429: {
+                headers: {
+                    /** @description Seconds to wait before retrying. */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
                 };
             };
         };
