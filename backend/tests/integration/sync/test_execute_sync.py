@@ -10,13 +10,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fanfan.adapters.db.models import SyncRunORM
 from fanfan.application.interactors.sync.execute_cosplay_sync import ExecuteCosplaySync
 from fanfan.application.ports.gateways import UserPermissionGateway
+from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.application.ports.gateways.sync_runs import SyncRunGateway
 from fanfan.application.ports.sources.cosplay import ExternalNomination
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.sync_run_tracker import STALE_RUN_TIMEOUT
 from fanfan.core.exceptions.base import AccessDenied
+from fanfan.core.models.nomination import Nomination
 from fanfan.core.models.sync_run import SyncRun
 from fanfan.core.models.user import User
+from fanfan.core.vo.nomination import generate_nomination_id
 from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.sync import SyncRunStatus, SyncSource
 from fanfan.core.vo.user import UserId
@@ -152,6 +155,71 @@ async def test_vendor_failure_is_recorded_not_raised(
     assert run.status is SyncRunStatus.FAILED
     assert run.error is not None
     assert run.finished_at is not None
+
+
+async def test_failure_mid_flush_is_recorded_not_left_running(
+    dishka_request: AsyncContainer,
+    sync_operator: User,
+    login: Callable[[User], None],
+):
+    # A vendor error that raises *before* the DB is touched (the test above) is
+    # the easy case. This one fails during a flush: two nominations sharing a
+    # code violate uq_nominations_code, which poisons the session. fail() must
+    # roll that back before writing the FAILED row — otherwise persisting it
+    # raises PendingRollbackError and the run stays stuck in RUNNING ("syncing").
+    login(sync_operator)
+    source = await dishka_request.get(FakeCosplaySource)
+    source.nominations = [
+        ExternalNomination(external_id=1, code="dup", title="Первая"),
+        ExternalNomination(external_id=2, code="dup", title="Вторая"),
+    ]
+    interactor = await dishka_request.get(ExecuteCosplaySync)
+    gateway = await dishka_request.get(SyncRunGateway)
+
+    await interactor()
+
+    run = (await gateway.read_latest_by_source())[SyncSource.COSPLAY2]
+    assert run.status is SyncRunStatus.FAILED
+    assert run.error is not None
+    assert run.finished_at is not None
+
+
+async def test_recreated_nomination_may_reuse_a_retired_code(
+    dishka_request: AsyncContainer,
+    sync_operator: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+):
+    # Cosplay2 retires a nomination and issues a new one (a new cosplay2_id) that
+    # reuses the old code. Because stale nominations are pruned before the upsert
+    # loop, the old row is deleted first and frees its code for the newcomer —
+    # rather than the insert colliding on uq_nominations_code.
+    login(sync_operator)
+    nomination_gateway = await dishka_request.get(NominationGateway)
+    await nomination_gateway.add(
+        Nomination(
+            id=generate_nomination_id(),
+            cosplay2_id=100,
+            code="sv",
+            title="Старая номинация",
+            is_votable=False,
+        )
+    )
+    await uow.commit()
+
+    source = await dishka_request.get(FakeCosplaySource)
+    source.nominations = [ExternalNomination(external_id=200, code="sv", title="Новая")]
+    interactor = await dishka_request.get(ExecuteCosplaySync)
+    sync_run_gateway = await dishka_request.get(SyncRunGateway)
+
+    await interactor()
+
+    run = (await sync_run_gateway.read_latest_by_source())[SyncSource.COSPLAY2]
+    assert run.status is SyncRunStatus.FINISHED
+    assert await nomination_gateway.get_by_cosplay2_id(100) is None
+    migrated = await nomination_gateway.get_by_cosplay2_id(200)
+    assert migrated is not None
+    assert migrated.code == "sv"
 
 
 async def test_execute_sync_requires_the_permission(

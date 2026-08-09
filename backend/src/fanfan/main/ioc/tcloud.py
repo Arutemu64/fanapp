@@ -4,6 +4,7 @@ import httpx2
 from adaptix import Retort
 from dishka import Provider, Scope, provide
 
+from fanfan.adapters.api.base import DEFAULT_TIMEOUT
 from fanfan.adapters.api.ticketscloud.client import TCloudClient
 from fanfan.adapters.api.ticketscloud.config import TCloudConfig
 from fanfan.adapters.api.ticketscloud.exceptions import NoTCloudConfigProvided
@@ -29,6 +30,8 @@ class TCloudProvider(Provider):
     ) -> AsyncIterable[TCloudClient]:
         headers = {"Authorization": f"key {config.api_key.get_secret_value()}"}
         async with httpx2.AsyncClient(
-            base_url="https://ticketscloud.com/v2/", headers=headers
+            base_url="https://ticketscloud.com/v2/",
+            headers=headers,
+            timeout=DEFAULT_TIMEOUT,
         ) as client:
             yield TCloudClient(client=client, retort=retort)

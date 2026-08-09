@@ -117,18 +117,16 @@ class SyncCosplay:
     async def __call__(self) -> SyncCosplayOutput:
         nominations = await self.source.fetch_nominations()
         nomination_ids = {nomination.external_id for nomination in nominations}
-        # Keep the upserted nominations in memory so participant processing can
-        # resolve a participant's nomination without a DB query per participant.
-        nominations_by_external_id: dict[int, Nomination] = {}
-        for external in nominations:
-            nominations_by_external_id[
-                external.external_id
-            ] = await self._upsert_nomination(external)
 
-        # Prune nominations the source no longer has. Guard against a
-        # successful-but-empty response (a vendor hiccup): without this an empty
-        # list marks every stored nomination as stale and wipes the table.
-        # Leaving stale rows is recoverable; a mass delete is not.
+        # Prune nominations the source no longer has BEFORE upserting, not after:
+        # `code` is unique independently of `cosplay2_id` (uq_nominations_code —
+        # it is the voting URL segment), so when the source retires a nomination
+        # and issues a new one that reuses its code, inserting the newcomer first
+        # collides with the not-yet-deleted old row. Freeing stale codes first
+        # lets the replacement take them.
+        # Guard against a successful-but-empty response (a vendor hiccup):
+        # without this an empty list marks every stored nomination as stale and
+        # wipes the table. Leaving stale rows is recoverable; a mass delete is not.
         if nominations:
             stale_nomination_ids = (
                 set(await self.nomination_gateway.list_cosplay2_ids()) - nomination_ids
@@ -138,6 +136,14 @@ class SyncCosplay:
             )
         else:
             logger.warning("Cosplay2 returned no nominations, skipping cleanup")
+
+        # Keep the upserted nominations in memory so participant processing can
+        # resolve a participant's nomination without a DB query per participant.
+        nominations_by_external_id: dict[int, Nomination] = {}
+        for external in nominations:
+            nominations_by_external_id[
+                external.external_id
+            ] = await self._upsert_nomination(external)
 
         participants = await self.source.fetch_participants()
         participant_ids = {participant.external_id for participant in participants}

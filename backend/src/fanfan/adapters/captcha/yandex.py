@@ -10,6 +10,12 @@ logger = logging.getLogger(__name__)
 
 VALIDATE_URL = "https://smartcaptcha.cloud.yandex.ru/validate"
 
+# This call sits on the interactive login path and fails open (see verify), so
+# the budget is tight on purpose: a slow or hung Yandex must let login through
+# fast rather than stall it. Deliberately much shorter than the vendor-sync
+# clients' generous DEFAULT_TIMEOUT, which serve slow background sweeps.
+VALIDATE_TIMEOUT = httpx2.Timeout(3.0, connect=2.0)
+
 
 class SmartCaptchaVerifier(CaptchaVerifier):
     """Validates SmartCaptcha tokens against Yandex's validate endpoint."""
