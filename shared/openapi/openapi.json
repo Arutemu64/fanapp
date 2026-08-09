@@ -248,7 +248,7 @@
           "Authentication"
         ],
         "summary": "Request email login code",
-        "description": "Sends a one-time six-digit sign-in code to the requested email address. Creates an account automatically when the email is new.",
+        "description": "Sends a one-time six-digit sign-in code to the requested email address. Creates an account automatically when the email is new. The code is sent before the response returns, so a delivery failure is reported instead of being swallowed.",
         "operationId": "request_login_code",
         "requestBody": {
           "content": {
@@ -261,8 +261,8 @@
           "required": true
         },
         "responses": {
-          "202": {
-            "description": "If the email is valid, the login code was queued.",
+          "200": {
+            "description": "The login code was sent to the email address.",
             "content": {
               "application/json": {
                 "schema": {}

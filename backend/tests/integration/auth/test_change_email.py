@@ -9,13 +9,12 @@ from fanfan.application.interactors.auth.change_email import (
 )
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.core.events.users import EmailConfirmationCodeRequested
 from fanfan.core.exceptions.rate_limit import EmailCodeRequestTooFast
 from fanfan.core.exceptions.users import EmailAlreadyExists
 from fanfan.core.models.user import User
 from fanfan.core.vo.email import Email
 from fanfan.core.vo.user import Username, UserRole, generate_user_id
-from tests.fakes.event_broker import FakeEventBroker
+from tests.fakes.email_sender import FakeEmailSender
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -42,27 +41,26 @@ async def _user(
     return user
 
 
-async def test_change_email_publishes_confirmation_request(
+async def test_change_email_sends_confirmation_code(
     dishka_request: AsyncContainer,
     login: Callable[[User], None],
     uow: UnitOfWork,
 ):
-    # Changing an email does not update the account directly — it asks the email
-    # subsystem to send a confirmation code to the new address.
+    # Changing an email does not update the account directly — it sends a
+    # confirmation code to the new address, synchronously, so a delivery failure
+    # would surface to the caller.
     interactor = await dishka_request.get(ChangeEmail)
     user_gateway = await dishka_request.get(UserGateway)
-    event_broker = await dishka_request.get(FakeEventBroker)
+    email_sender = await dishka_request.get(FakeEmailSender)
 
     user = await _user(user_gateway, uow, "old.address@example.com")
     login(user)
 
     await interactor(ChangeEmailInput(new_email="New.Address@Example.COM"))
 
-    assert event_broker.published_events == [
-        EmailConfirmationCodeRequested(
-            user_id=user.id, target_email="new.address@example.com"
-        )
-    ]
+    assert len(email_sender.sent_messages) == 1
+    recipients = email_sender.sent_messages[0].recipients
+    assert [recipient.email for recipient in recipients] == ["new.address@example.com"]
 
     # The stored email stays put until the code is confirmed.
     saved_user = await user_gateway.get_by_id(user.id)
@@ -77,7 +75,7 @@ async def test_change_email_to_same_address_is_noop(
 ):
     interactor = await dishka_request.get(ChangeEmail)
     user_gateway = await dishka_request.get(UserGateway)
-    event_broker = await dishka_request.get(FakeEventBroker)
+    email_sender = await dishka_request.get(FakeEmailSender)
 
     user = await _user(user_gateway, uow, "same.address@example.com")
     login(user)
@@ -85,7 +83,7 @@ async def test_change_email_to_same_address_is_noop(
     # Normalization means differing case is still the same address.
     await interactor(ChangeEmailInput(new_email="Same.Address@Example.COM"))
 
-    assert event_broker.published_events == []
+    assert email_sender.sent_messages == []
 
 
 async def test_change_email_to_address_taken_by_another_user_raises(
@@ -95,7 +93,7 @@ async def test_change_email_to_address_taken_by_another_user_raises(
 ):
     interactor = await dishka_request.get(ChangeEmail)
     user_gateway = await dishka_request.get(UserGateway)
-    event_broker = await dishka_request.get(FakeEventBroker)
+    email_sender = await dishka_request.get(FakeEmailSender)
 
     await _user(user_gateway, uow, "taken@example.com", username="other_owner")
     user = await _user(user_gateway, uow, "mine@example.com", username="email_user")
@@ -104,7 +102,7 @@ async def test_change_email_to_address_taken_by_another_user_raises(
     with pytest.raises(EmailAlreadyExists):
         await interactor(ChangeEmailInput(new_email="taken@example.com"))
 
-    assert event_broker.published_events == []
+    assert email_sender.sent_messages == []
 
 
 async def test_change_email_twice_in_a_row_hits_cooldown(
@@ -116,7 +114,7 @@ async def test_change_email_twice_in_a_row_hits_cooldown(
     # to the same target immediately after the first.
     interactor = await dishka_request.get(ChangeEmail)
     user_gateway = await dishka_request.get(UserGateway)
-    event_broker = await dishka_request.get(FakeEventBroker)
+    email_sender = await dishka_request.get(FakeEmailSender)
 
     user = await _user(user_gateway, uow, "old.address@example.com")
     login(user)
@@ -125,9 +123,7 @@ async def test_change_email_twice_in_a_row_hits_cooldown(
     with pytest.raises(EmailCodeRequestTooFast):
         await interactor(ChangeEmailInput(new_email="target@example.com"))
 
-    # Only the first request produced an event.
-    assert event_broker.published_events == [
-        EmailConfirmationCodeRequested(
-            user_id=user.id, target_email="target@example.com"
-        )
-    ]
+    # Only the first request sent a code.
+    assert len(email_sender.sent_messages) == 1
+    recipients = email_sender.sent_messages[0].recipients
+    assert [recipient.email for recipient in recipients] == ["target@example.com"]

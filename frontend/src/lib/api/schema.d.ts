@@ -109,7 +109,7 @@ export interface paths {
         put?: never;
         /**
          * Request email login code
-         * @description Sends a one-time six-digit sign-in code to the requested email address. Creates an account automatically when the email is new.
+         * @description Sends a one-time six-digit sign-in code to the requested email address. Creates an account automatically when the email is new. The code is sent before the response returns, so a delivery failure is reported instead of being swallowed.
          */
         post: operations["request_login_code"];
         delete?: never;
@@ -1865,8 +1865,8 @@ export interface operations {
             };
         };
         responses: {
-            /** @description If the email is valid, the login code was queued. */
-            202: {
+            /** @description The login code was sent to the email address. */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

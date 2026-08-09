@@ -20,14 +20,16 @@ login_code_router = APIRouter()
 
 @login_code_router.post(
     "/request-login-code",
-    status_code=status.HTTP_202_ACCEPTED,
+    status_code=status.HTTP_200_OK,
     summary="Request email login code",
     description=(
         "Sends a one-time six-digit sign-in code to the requested email "
-        "address. Creates an account automatically when the email is new."
+        "address. Creates an account automatically when the email is new. "
+        "The code is sent before the response returns, so a delivery failure "
+        "is reported instead of being swallowed."
     ),
     responses={
-        202: {"description": "If the email is valid, the login code was queued."},
+        200: {"description": "The login code was sent to the email address."},
     },
 )
 @inject

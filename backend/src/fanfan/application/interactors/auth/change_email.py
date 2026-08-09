@@ -1,10 +1,12 @@
 from pydantic import BaseModel, EmailStr
 
-from fanfan.application.ports.events_broker import EventBroker
+from fanfan.application.interactors.auth.send_email_confirmation_code import (
+    SendEmailConfirmationCode,
+    SendEmailConfirmationCodeInput,
+)
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.rate_lock import RateLockFactory
 from fanfan.application.services.current_user import CurrentUserProvider
-from fanfan.core.events.users import EmailConfirmationCodeRequested
 from fanfan.core.exceptions.rate_limit import EmailCodeRequestTooFast, RateLimitCooldown
 from fanfan.core.exceptions.users import EmailAlreadyExists
 from fanfan.core.services.email_login import EMAIL_CODE_REQUEST_COOLDOWN_SECONDS
@@ -20,12 +22,12 @@ class ChangeEmail:
         self,
         user_gateway: UserGateway,
         current_user_provider: CurrentUserProvider,
-        event_broker: EventBroker,
+        send_email_confirmation_code: SendEmailConfirmationCode,
         rate_lock_factory: RateLockFactory,
     ):
         self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
-        self.event_broker = event_broker
+        self.send_email_confirmation_code = send_email_confirmation_code
         self.rate_lock_factory = rate_lock_factory
 
     async def __call__(self, data: ChangeEmailInput) -> None:
@@ -45,8 +47,13 @@ class ChangeEmail:
         )
         try:
             async with lock:
-                await self.event_broker.publish(
-                    EmailConfirmationCodeRequested(
+                # Send the confirmation code synchronously inside the lock so a
+                # delivery failure surfaces to the caller instead of failing
+                # silently after the UI has already claimed the code was sent.
+                # The lock records its cooldown only on a clean exit, so a failed
+                # send leaves the cooldown unspent and the user can retry at once.
+                await self.send_email_confirmation_code(
+                    SendEmailConfirmationCodeInput(
                         user_id=current_user.id,
                         target_email=new_email.value,
                     )
