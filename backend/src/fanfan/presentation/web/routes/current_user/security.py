@@ -11,6 +11,7 @@ from fanfan.application.interactors.auth.change_password import (
     ChangePasswordInput,
 )
 from fanfan.presentation.web.config import WebConfig
+from fanfan.presentation.web.responses import RATE_LIMIT_RESPONSES
 from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
@@ -44,10 +45,12 @@ async def change_current_user_password(
     "/email",
     status_code=204,
     summary="Change current user email",
-    description="Changes the authenticated user's email address "
-    "and sends a confirmation code to the new email.",
+    description="Sends a confirmation code to the new address. The stored email "
+    "changes only once that code is confirmed. The code is sent before the "
+    "response returns, so a delivery failure is reported instead of swallowed.",
     responses={
-        204: {"description": "Email changed and confirmation code requested."},
+        **RATE_LIMIT_RESPONSES,
+        204: {"description": "Confirmation code sent to the new email address."},
         404: {"model": ErrorMessage, "description": "User not found."},
         409: {
             "model": ErrorMessage,

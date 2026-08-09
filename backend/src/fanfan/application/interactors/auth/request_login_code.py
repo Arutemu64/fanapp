@@ -1,12 +1,14 @@
 from pydantic import BaseModel, EmailStr
 
+from fanfan.application.interactors.auth.send_login_code_email import (
+    SendLoginCodeEmail,
+    SendLoginCodeEmailInput,
+)
 from fanfan.application.ports.captcha import CaptchaVerifier
-from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.rate_lock import RateLockFactory
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.user import UserService
-from fanfan.core.events.users import EmailLoginCodeRequested
 from fanfan.core.exceptions.rate_limit import EmailCodeRequestTooFast, RateLimitCooldown
 from fanfan.core.exceptions.users import UserAlreadyExists
 from fanfan.core.models.user import User
@@ -26,14 +28,14 @@ class RequestLoginCode:
     def __init__(
         self,
         user_gateway: UserGateway,
-        event_broker: EventBroker,
+        send_login_code_email: SendLoginCodeEmail,
         uow: UnitOfWork,
         user_service: UserService,
         rate_lock_factory: RateLockFactory,
         captcha_verifier: CaptchaVerifier,
     ):
         self.user_gateway = user_gateway
-        self.event_broker = event_broker
+        self.send_login_code_email = send_login_code_email
         self.uow = uow
         self.user_service = user_service
         self.rate_lock_factory = rate_lock_factory
@@ -79,11 +81,13 @@ class RequestLoginCode:
                         msg = "Could not provision user for login code"
                         raise RuntimeError(msg)
 
-                # "Send a login code" is a command to the email subsystem,
-                # not an aggregate state change, so it is published directly
-                # as a service event.
-                await self.event_broker.publish(
-                    EmailLoginCodeRequested(user_id=user.id)
+                # Send the code synchronously inside the lock so a delivery
+                # failure surfaces to the caller as an error instead of leaving
+                # the user staring at a code that never arrives. The lock only
+                # records its cooldown on a clean exit, so a failed send does not
+                # burn the cooldown — the user can retry immediately.
+                await self.send_login_code_email(
+                    SendLoginCodeEmailInput(user_id=user.id)
                 )
         except RateLimitCooldown as e:
             raise EmailCodeRequestTooFast(retry_after=e.details["retry_after"]) from e

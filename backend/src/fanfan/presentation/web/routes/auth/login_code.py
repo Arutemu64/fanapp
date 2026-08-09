@@ -12,6 +12,7 @@ from fanfan.application.interactors.auth.request_login_code import (
     RequestLoginCodeInput,
 )
 from fanfan.presentation.web.config import WebConfig
+from fanfan.presentation.web.responses import RATE_LIMIT_RESPONSES
 from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
@@ -20,14 +21,18 @@ login_code_router = APIRouter()
 
 @login_code_router.post(
     "/request-login-code",
-    status_code=status.HTTP_202_ACCEPTED,
+    status_code=status.HTTP_200_OK,
     summary="Request email login code",
     description=(
         "Sends a one-time six-digit sign-in code to the requested email "
-        "address. Creates an account automatically when the email is new."
+        "address. Creates an account automatically when the email is new. "
+        "The code is sent before the response returns, so a delivery failure "
+        "is reported instead of being swallowed."
     ),
     responses={
-        202: {"description": "If the email is valid, the login code was queued."},
+        **RATE_LIMIT_RESPONSES,
+        200: {"description": "The login code was sent to the email address."},
+        403: {"model": ErrorMessage, "description": "Captcha verification failed."},
     },
 )
 @inject

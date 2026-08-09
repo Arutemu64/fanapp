@@ -38,5 +38,6 @@ class MailProvider(Provider):
             MAIL_SSL_TLS=False,
             MAIL_FROM=config.sender.email,
             MAIL_FROM_NAME=config.sender.name,
+            TIMEOUT=config.timeout,
         )
         return FastEmailSender(FastMail(connection_config))
