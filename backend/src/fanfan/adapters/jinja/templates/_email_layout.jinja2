@@ -1,10 +1,12 @@
-{# Shared HTML email layout for auth emails. Mirrors the app's light card UI: white
-   rounded card on a gray-50 page, watermelon-crimson wordmark, gray palette. Colors
-   are the app's brand tokens (primary #d61450, secondary #0c9fb8) so email and app
-   read as one product. Keep markup simple (tables + inline styles) for email client
-   support. Web fonts are intentionally NOT linked: mail clients strip <link> fonts,
-   so we rely on the inline system-sans fallback and carry brand voice via color and
-   layout instead. #}
+{# Shared HTML layout for the auth (OTP) emails. Mirrors what a user sees at /login:
+   the ФАН ФАН wordmark centred above a white rounded card on a gray-50 page, so the
+   email and the app read as one product. Deliberately restrained like that screen —
+   no gradients or tinted panels, one crimson accent on the wordmark, everything else
+   ink and gray. Tables + inline styles for mail-client support. SVG marks and <link>
+   web fonts are stripped by many clients, so the wordmark is styled text over the
+   system-sans fallback and brand is carried by colour and card shape, not imagery.
+   Light-only: the app has a dark theme, but one well-contrasted light email renders
+   more predictably than trusting clients to honour dark-mode overrides. #}
 <!doctype html>
 <html lang="ru">
 
@@ -17,44 +19,43 @@
 </head>
 
 <body style="margin:0; padding:0; background-color:#f9fafb; font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color:#111827; -webkit-font-smoothing:antialiased;">
+  {# Preheader: the inbox preview line. Held off-screen so it sets the preview (the code
+     and its lifetime) without appearing in the email body. The zero-width spaces stop
+     the client from pulling body copy in after it. #}
+  <div style="display:none; max-height:0; overflow:hidden; opacity:0; mso-hide:all;">
+    {% block preheader %}{% endblock %}
+    &#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;
+  </div>
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
     style="width:100%; border-collapse:collapse; background-color:#f9fafb;">
     <tr>
       <td style="padding:40px 16px;">
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
-          style="max-width:500px; margin:0 auto; border-collapse:collapse; background-color:#ffffff; border:1px solid #e5e7eb; border-radius:16px; box-shadow:0 1px 2px 0 rgba(0, 0, 0, 0.05); overflow:hidden;">
-          <!-- Brand accent at the very top: watermelon crimson -> teal rind.
-               background-color is the Outlook (no-gradient) fallback. -->
+          style="max-width:480px; margin:0 auto; border-collapse:collapse;">
+          <!-- Brand wordmark above the card, as on the login screen. Crimson is the app's
+               primary; it is the single accent in the whole email. -->
           <tr>
-            <td height="4" style="height:4px; font-size:0; line-height:0; background:linear-gradient(90deg, #d61450, #0c9fb8); background-color:#d61450;">&nbsp;</td>
-          </tr>
-          <!-- Light header: crimson wordmark + Unbounded display title.
-               primary-700 (#b30f43) keeps the small uppercase wordmark above 4.5:1 on white. -->
-          <tr>
-            <td style="padding:32px 32px 4px; background-color:#ffffff;">
-              <div
-                style="font-size:12px; line-height:16px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#b30f43;">
-                ФАН ФАН
-              </div>
-              <h1 style="margin:8px 0 0; font-family:'Unbounded', 'Inter', -apple-system, sans-serif; font-size:24px; line-height:32px; font-weight:700; color:#111827; letter-spacing:-0.01em;">
-                {{ title }}
-              </h1>
+            <td style="padding:0 8px 20px; text-align:center;">
+              <span
+                style="font-family:'Unbounded', 'Inter', -apple-system, sans-serif; font-size:22px; line-height:28px; font-weight:800; letter-spacing:0.02em; color:#d61450;">ФАН&nbsp;ФАН</span>
             </td>
           </tr>
-          <!-- Main content area -->
+          <!-- The card: same white / rounded-2xl / hairline-border / soft-shadow as the
+               app's login Card. -->
           <tr>
-            <td style="padding:20px 32px 28px;">
+            <td
+              style="padding:32px; background-color:#ffffff; border:1px solid #e5e7eb; border-radius:16px; box-shadow:0 1px 2px 0 rgba(0, 0, 0, 0.05);">
+              <h1
+                style="margin:0 0 20px; font-family:'Unbounded', 'Inter', -apple-system, sans-serif; font-size:22px; line-height:30px; font-weight:700; color:#111827; letter-spacing:-0.01em;">
+                {{ title }}
+              </h1>
               {% block content %}{% endblock %}
             </td>
           </tr>
-          <!-- Footer section -->
+          <!-- Footer: one muted line under the card, no divider. -->
           <tr>
-            <td style="padding:0 32px 28px; text-align:center; font-size:12px; line-height:18px; color:#6b7280;">
-              <hr style="margin:0 0 20px; border:0; border-top:1px solid #e5e7eb;" />
-              <div style="font-weight:600; color:#4b5563;">Приложение ФАН ФАН</div>
-              <div style="margin-top:4px; font-size:12px; color:#6b7280;">
-                Это автоматическое письмо, отвечать на него не нужно.
-              </div>
+            <td style="padding:20px 8px 0; text-align:center; font-size:12px; line-height:18px; color:#9ca3af;">
+              Приложение ФАН ФАН · автоматическое письмо, отвечать на него не нужно
             </td>
           </tr>
         </table>
