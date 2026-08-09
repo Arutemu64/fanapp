@@ -107,6 +107,12 @@ class SyncRunTracker:
         )
 
     async def fail(self, run: SyncRun, error: str) -> None:
+        # Always reached after the sync raised, which may have left the session
+        # in a rollback-required state (e.g. a failed flush on a duplicate key).
+        # Discard that poisoned transaction before writing the FAILED row —
+        # otherwise _persist raises PendingRollbackError, the row stays RUNNING,
+        # and the run is stuck "syncing" until reap_stale clears it 30 min later.
+        await self.uow.rollback()
         run.mark_failed(error, datetime.now(UTC))
         await self._persist(run)
         logger.warning(

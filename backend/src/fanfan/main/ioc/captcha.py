@@ -5,6 +5,7 @@ from dishka import Provider, Scope, provide
 
 from fanfan.adapters.captcha.config import SmartCaptchaConfig
 from fanfan.adapters.captcha.yandex import (
+    VALIDATE_TIMEOUT,
     NoOpCaptchaVerifier,
     SmartCaptchaVerifier,
 )
@@ -28,5 +29,5 @@ class CaptchaProvider(Provider):
             yield NoOpCaptchaVerifier()
             return
 
-        async with httpx2.AsyncClient() as client:
+        async with httpx2.AsyncClient(timeout=VALIDATE_TIMEOUT) as client:
             yield SmartCaptchaVerifier(config=config, client=client)

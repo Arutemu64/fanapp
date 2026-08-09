@@ -4,6 +4,7 @@ import httpx2
 from adaptix import Retort
 from dishka import Provider, Scope, provide
 
+from fanfan.adapters.api.base import DEFAULT_TIMEOUT
 from fanfan.adapters.api.cosplay2.client import Cosplay2Client
 from fanfan.adapters.api.cosplay2.config import Cosplay2Config
 from fanfan.adapters.api.cosplay2.exceptions import NoCosplay2ConfigProvided
@@ -32,6 +33,8 @@ class Cosplay2Provider(Provider):
             "X-API-Secret": config.api_secret.get_secret_value(),
         }
         async with httpx2.AsyncClient(
-            base_url=config.build_api_base_url(), headers=headers
+            base_url=config.build_api_base_url(),
+            headers=headers,
+            timeout=DEFAULT_TIMEOUT,
         ) as client:
             yield Cosplay2Client(client=client, retort=retort)
