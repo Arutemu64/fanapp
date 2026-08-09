@@ -1,31 +1,37 @@
-{# HTML email with a large one-time code for email confirmation. #}
+{# HTML email with a one-time code for confirming an email address. #}
 {% extends "_email_layout.jinja2" %}
 
 {% set title = "Подтверждение почты" %}
 
+{% block preheader %}Код подтверждения: {{ confirmation_code }}. Действует {{ expires_in_minutes }} минут.{% endblock %}
+
 {% block content %}
-<p style="margin:0 0 16px; font-size:16px; line-height:24px; color:#374151;">
+<p style="margin:0 0 12px; font-size:15px; line-height:24px; color:#374151;">
   {% if username %}Привет, <strong style="color:#111827;">{{ username }}</strong>!{% else %}Привет!{% endif %}
 </p>
 <p style="margin:0 0 24px; font-size:15px; line-height:24px; color:#4b5563;">
   Введи этот код в приложении ФАН ФАН, чтобы подтвердить свою почту и завершить настройку учётной записи.
 </p>
 
-{# Confirmation code uses the primary (watermelon crimson) accent; login uses secondary teal. #}
-<div
-  style="margin:0 0 24px; padding:24px 20px; border-radius:12px; background-color:#fff1f5; border:1px solid #ffccd9; text-align:center;">
-  <div
-    style="margin:0 0 8px; font-size:13px; line-height:20px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#b30f43;">
-    Код подтверждения
-  </div>
-  <div style="font-family:'Unbounded', 'Inter', -apple-system, sans-serif; font-size:34px; line-height:40px; font-weight:700; letter-spacing:0.18em; margin-right:-0.18em; color:#d61450;">{{ confirmation_code }}</div>
-</div>
+{# Neutral surface and ink digits, echoing the app's OTP input. The code is the only
+   thing to act on, so nothing colours or competes with it; letter-spacing is pulled
+   back on the right so the tracked digits stay optically centred. #}
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+  style="border-collapse:collapse; margin:0 0 24px;">
+  <tr>
+    <td style="padding:20px; background-color:#f9fafb; border:1px solid #e5e7eb; border-radius:12px; text-align:center;">
+      <div style="font-size:12px; line-height:16px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#6b7280;">
+        Код подтверждения
+      </div>
+      <div style="margin-top:8px; font-family:'Unbounded', 'Inter', -apple-system, sans-serif; font-size:36px; line-height:44px; font-weight:800; letter-spacing:0.16em; margin-right:-0.16em; color:#111827;">{{ confirmation_code }}</div>
+    </td>
+  </tr>
+</table>
 
-<p style="margin:0 0 12px; font-size:14px; line-height:20px; color:#4b5563;">
+<p style="margin:0 0 8px; font-size:14px; line-height:22px; color:#4b5563;">
   Код действует <strong>{{ expires_in_minutes }}</strong> минут. Никому не сообщай его.
 </p>
-
-<p style="margin:0; font-size:13px; line-height:20px; color:#6b7280;">
+<p style="margin:0; font-size:13px; line-height:20px; color:#9ca3af;">
   Если это письмо пришло по ошибке, просто проигнорируй его.
 </p>
 {% endblock %}
