@@ -19,7 +19,7 @@ repos:
   # from the repo root, matching `just dockerfile-lint` and the CI hadolint job.
   # Keep this rev in sync with the hadolint pin in mise.toml.
   - repo: https://github.com/hadolint/hadolint
-    rev: v2.15.0
+    rev: v2.15.1
     hooks:
       - id: hadolint
 

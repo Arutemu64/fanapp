@@ -205,7 +205,7 @@ if command -v dockerd >/dev/null 2>&1; then
     # lives in .claude/hooks/session-start.sh instead, which covers every pull a
     # session makes; only these three prepulls stay subject to the anonymous cap
     # (~100 / 6h per egress IP), and they degrade to a lazy pull at first use.
-    for image in postgres:18.4-alpine valkey/valkey:9.1-alpine hadolint/hadolint:v2.15.0; do
+    for image in postgres:18.4-alpine valkey/valkey:9.1-alpine hadolint/hadolint:v2.15.1; do
       if docker pull "$image" >/dev/null 2>&1; then
         echo "[setup]   pulled $image"
       else
@@ -240,7 +240,7 @@ if $SUDO tee /usr/local/bin/hadolint >/dev/null <<'HADOLINT_SHIM'
 exec docker run --rm -i \
   --user "$(id -u):$(id -g)" \
   -v "$PWD:$PWD:ro" -w "$PWD" \
-  hadolint/hadolint:v2.15.0 hadolint "$@"
+  hadolint/hadolint:v2.15.1 hadolint "$@"
 HADOLINT_SHIM
 then
   $SUDO chmod +x /usr/local/bin/hadolint || echo "[setup]   WARN: could not make the hadolint shim executable."
