@@ -1,4 +1,5 @@
 import logging
+from email.utils import formataddr
 
 from fastapi_mail import FastMail, MessageSchema, MessageType
 from fastapi_mail.schemas import MultipartSubtypeEnum
@@ -9,13 +10,29 @@ from fanfan.application.ports.email_sender import EmailMessage, EmailSender
 logger = logging.getLogger(__name__)
 
 
+def _encode_display_name(name: str) -> str:
+    """RFC 2047-encode a recipient display name so the To header is pure ASCII.
+
+    fastapi-mail assigns the recipient to a legacy (compat32) MIMEMultipart
+    header via ``str(NameEmail(...))``, which does NOT encode non-ASCII display
+    names. A Cyrillic username then reaches the SMTP server as raw bytes and
+    Yandex Postbox rejects the message with "email address parse failed (To)".
+    ``formataddr`` encodes non-ASCII names and quotes ASCII specials (comma,
+    quotes) — format against an empty address and drop it, keeping only the
+    encoded/quoted display-name token to hand back to NameEmail.
+    """
+    if not name:
+        return ""
+    return formataddr((name, ""), charset="utf-8").removesuffix(" <>")
+
+
 class FastEmailSender(EmailSender):
     def __init__(self, mail: FastMail):
         self.mail = mail
 
     async def send(self, message: EmailMessage) -> None:
         recipients = [
-            NameEmail(name=recipient.name, email=recipient.email)
+            NameEmail(name=_encode_display_name(recipient.name), email=recipient.email)
             for recipient in message.recipients
         ]
         logger.info("Sending email to %s", recipients)
