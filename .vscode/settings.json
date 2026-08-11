@@ -31,8 +31,10 @@
 	// Pin the backend interpreter so the debugpy configs in launch.json and the
 	// pytest Test Explorer resolve `fanfan` (installed editable by `uv sync`)
 	// instead of falling back to whatever interpreter VS Code guessed on a fresh
-	// clone. POSIX path — on Windows it is backend/.venv/Scripts/python.exe.
-	"python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
+	// clone. A folder path, not the executable: the Python extension resolves it
+	// to bin/python (POSIX) or Scripts/python.exe (Windows) per platform, so one
+	// value works cross-platform without a Windows-specific override.
+	"python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv",
 
 	// No python.analysis.* here: the repo typechecks with ty
 	// (`just backend-typecheck`), and the ty extension disables the Python

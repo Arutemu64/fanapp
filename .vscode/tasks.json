@@ -3,6 +3,18 @@
 	// unknown recipe, and a task that silently never worked is worse than no
 	// task. Check against `just --list` when adding one.
 	"version": "2.0.0",
+	// The justfile expects a POSIX-ish shell (see README's "run `just` from Git
+	// Bash or WSL, not cmd/PowerShell"); this pins these tasks to Git Bash on
+	// Windows so `just` resolves `sh` the same way regardless of which shell a
+	// contributor's integrated terminal defaults to.
+	"windows": {
+		"options": {
+			"shell": {
+				"executable": "C:\\Program Files\\Git\\bin\\bash.exe",
+				"args": ["-c"]
+			}
+		}
+	},
 	"tasks": [
 		{
 			// The pre-push gate: check-only, same steps as .github/workflows/ci.yml.
