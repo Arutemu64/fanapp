@@ -60,7 +60,7 @@
 				return;
 			}
 
-			toastService.add('Спасибо! Твой отзыв отправлен', 'success');
+			toastService.add('Спасибо, отзыв отправлен', 'success');
 			feedbackText = '';
 			feedbackError = '';
 		} catch (err) {

@@ -111,7 +111,7 @@
 	async function copyBarcodes() {
 		try {
 			await navigator.clipboard.writeText(barcodesText);
-			toastService.add('Скопировано! Вставь в таблицу.', 'success');
+			toastService.add('Скопировано. Вставь в таблицу', 'success');
 		} catch (err) {
 			console.error('Failed to copy barcodes:', err);
 			toastService.add('Не удалось скопировать. Выдели текст и скопируй вручную.', 'error');

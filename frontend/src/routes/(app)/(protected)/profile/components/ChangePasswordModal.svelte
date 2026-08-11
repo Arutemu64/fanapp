@@ -68,10 +68,7 @@
 			return;
 		}
 
-		toastService.add(
-			hasPassword ? 'Пароль успешно изменён' : 'Пароль успешно установлен',
-			'success'
-		);
+		toastService.add(hasPassword ? 'Пароль изменён' : 'Пароль установлен', 'success');
 		oldPassword = '';
 		newPassword = '';
 		open = false;

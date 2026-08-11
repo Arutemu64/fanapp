@@ -78,7 +78,7 @@
 				return;
 			}
 
-			toastService.add('Рассылка успешно запущена!', 'success');
+			toastService.add('Рассылка запущена', 'success');
 			bodyText = '';
 			selectedRoles = [];
 			bodyError = '';

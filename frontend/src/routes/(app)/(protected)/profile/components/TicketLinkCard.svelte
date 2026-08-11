@@ -44,7 +44,7 @@
 				return;
 			}
 
-			toastService.add('Билет успешно привязан!', 'success');
+			toastService.add('Билет привязан', 'success');
 			barcode = '';
 			onTicketLinked?.();
 		} catch (err) {

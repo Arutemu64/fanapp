@@ -157,6 +157,12 @@
       "skillPath": "skills/using-superpowers/SKILL.md",
       "computedHash": "a77a803b7fc1a19c87605cf7a5ef318c5adc233de10b9ebeecb2ee2609f5454e"
     },
+    "ux-copy": {
+      "source": "N1arko/redaktura-skills",
+      "sourceType": "github",
+      "skillPath": "ux-copy/SKILL.md",
+      "computedHash": "2c469dd656c2729d1dff8c5dc7eda748304f490599464343615a5124cbe909e1"
+    },
     "verification-before-completion": {
       "source": "obra/superpowers",
       "sourceType": "github",
