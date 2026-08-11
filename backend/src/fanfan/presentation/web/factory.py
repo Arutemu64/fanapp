@@ -19,6 +19,7 @@ from fanfan.presentation.web.middlewares import (
     bind_request_context,
     no_store_cache_control,
     refresh_session_cookie,
+    security_headers,
 )
 from fanfan.presentation.web.oauth import OAUTH_STATE_TTL_SECONDS
 from fanfan.presentation.web.openapi import API_TITLE, generate_operation_id
@@ -78,6 +79,10 @@ def create_app() -> FastAPI:
 
     # Default-deny caching on every response, including CORS/error responses.
     app.middleware("http")(no_store_cache_control)
+
+    # Hardening headers (nosniff, anti-framing, referrer policy) on every
+    # response, so the API stays secure-by-default behind any proxy.
+    app.middleware("http")(security_headers)
 
     # Registered last so it runs first (outermost): the request id is bound
     # before any other middleware or route handler, so all of their logs

@@ -9,6 +9,26 @@
 # (API_PORT / FRONTEND_PORT in .env, default 8000 / 3000). If you override
 # either var, update the matching reverse_proxy target here.
 :80 {
+    # Security headers for every response on the single origin — the SPA
+    # document (which the backend never serves) as well as the API. Values
+    # follow the OWASP Secure Headers Project. frame-ancestors 'none' plus the
+    # legacy X-Frame-Options block clickjacking on old and new browsers; only
+    # frame-ancestors is set (not a full CSP) so nothing here has to track the
+    # SPA's own script/style sources. The backend also sets these itself, so
+    # the API stays hardened behind a different proxy; Caddy re-stamping the
+    # same values is a harmless overwrite.
+    #
+    # Strict-Transport-Security is intentionally omitted from this :80 example:
+    # a browser only honours HSTS received over HTTPS. When you switch this to
+    # an HTTPS `example.com { … }` block (auto-TLS), add it there:
+    #   header Strict-Transport-Security "max-age=63072000; includeSubDomains"
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Content-Security-Policy "frame-ancestors 'none'"
+        Referrer-Policy strict-origin-when-cross-origin
+    }
+
     # Compress API JSON. GET /schedule/ is unpaginated (~90 KiB for 250
     # events) and every client refetches it on each schedule_updated SSE
     # event, so it dominates venue-wifi traffic; gzip takes ~88% off it.

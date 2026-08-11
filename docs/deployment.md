@@ -178,6 +178,15 @@ the browser reaches the site:
 | `PUBLIC_API_URL` | `/api` (relative — domain-agnostic) | `/api` |
 | `WEB__COOKIE_SECURE` | `True` | `False` |
 | `WEB__CORS_ALLOW_ORIGINS` | unset (same-origin) | unset (same-origin) |
+| `Strict-Transport-Security` | add to the site block (see below) | omit — HSTS needs HTTPS |
+
+`Caddyfile.example` already stamps the OWASP hardening headers
+(`X-Content-Type-Options`, anti-framing, `Referrer-Policy`) on every response,
+and the backend sets the same set itself so the API stays hardened behind any
+proxy. HSTS is the one that is deployment-mode-specific: a browser only honours
+it over HTTPS, so it is **not** in the shipped `:80` block. Under your HTTPS
+`example.com { … }` block add it inside the `header` directive:
+`header Strict-Transport-Security "max-age=63072000; includeSubDomains"`.
 
 `WEB__COOKIE_SECURE=False` is **required** over plain HTTP — a `Secure` cookie is
 never sent over HTTP, which would otherwise break login (including the Telegram

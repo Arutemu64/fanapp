@@ -36,6 +36,34 @@ def refresh_session_cookie(web_config: WebConfig) -> HttpMiddleware:
     return middleware
 
 
+async def security_headers(request: Request, call_next) -> Response:
+    """Stamp hardening headers on every response.
+
+    Defence-in-depth that travels with the app: even deployed behind a proxy
+    that forgets to add them (or exposed directly), the API and its framable
+    HTML surfaces — FastAPI's ``/docs`` and the OAuth redirect responses —
+    carry the same protection. Values follow the OWASP Secure Headers Project
+    (https://owasp.org/www-project-secure-headers/):
+
+    * ``nosniff`` stops MIME-type confusion, which matters for JSON as much as
+      for the served docs page.
+    * ``X-Frame-Options`` and the modern ``frame-ancestors`` together forbid
+      framing (clickjacking) on old and new browsers; only ``frame-ancestors``
+      is set — not a full CSP — so Swagger UI's CDN-loaded assets still load.
+    * ``strict-origin-when-cross-origin`` keeps the path/query out of the
+      ``Referer`` sent to other origins.
+
+    HSTS is deliberately absent: it must be emitted only over HTTPS by the
+    TLS-terminating proxy, which the app cannot detect from behind it.
+    """
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Content-Security-Policy"] = "frame-ancestors 'none'"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
+
+
 async def no_store_cache_control(request: Request, call_next) -> Response:
     """Default-deny HTTP caching for the whole API.
 
