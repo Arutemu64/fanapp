@@ -10,10 +10,6 @@ from fanfan.application.interactors.auth.authenticate_user import (
     AuthenticateUser,
     AuthenticateUserInput,
 )
-from fanfan.application.interactors.auth.register_user import (
-    RegisterUser,
-    RegisterUserInput,
-)
 from fanfan.presentation.web.config import WebConfig
 from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
 from fanfan.presentation.web.schemas.error import ErrorMessage
@@ -70,23 +66,3 @@ async def login(
     )
 
     set_auth_cookie(response, session_id, config)
-
-
-@credentials_router.post(
-    "/register",
-    status_code=201,
-    summary="Register a new user",
-    description="Creates a new user account with an email and password. "
-    "A username is generated automatically. To avoid leaking which emails "
-    "already have an account, the response is the same whether the account "
-    "was created or the email was already taken.",
-    responses={
-        201: {"description": "Registration request accepted."},
-    },
-)
-@inject
-async def register_user(
-    data: RegisterUserInput,
-    interactor: FromDishka[RegisterUser],
-) -> None:
-    await interactor(data)

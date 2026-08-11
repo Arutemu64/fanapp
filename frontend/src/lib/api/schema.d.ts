@@ -58,26 +58,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/register": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Register a new user
-         * @description Creates a new user account with an email and password. A username is generated automatically. To avoid leaking which emails already have an account, the response is the same whether the account was created or the email was already taken.
-         */
-        post: operations["register_user"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/auth/confirm-email-code": {
         parameters: {
             query?: never;
@@ -1298,16 +1278,6 @@ export interface components {
             /** Subscribed */
             subscribed: boolean;
         };
-        /** RegisterUserInput */
-        RegisterUserInput: {
-            /**
-             * Email
-             * Format: email
-             */
-            email: string;
-            /** Password */
-            password: string;
-        };
         /** RequestLoginCodeInput */
         RequestLoginCodeInput: {
             /**
@@ -1748,39 +1718,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-        };
-    };
-    register_user: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RegisterUserInput"];
-            };
-        };
-        responses: {
-            /** @description Registration request accepted. */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Request validation error. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ValidationErrorResponse"];
                 };
             };
         };

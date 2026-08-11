@@ -122,46 +122,6 @@
         }
       }
     },
-    "/auth/register": {
-      "post": {
-        "tags": [
-          "Authentication"
-        ],
-        "summary": "Register a new user",
-        "description": "Creates a new user account with an email and password. A username is generated automatically. To avoid leaking which emails already have an account, the response is the same whether the account was created or the email was already taken.",
-        "operationId": "register_user",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterUserInput"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Registration request accepted.",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Request validation error.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ValidationErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/auth/confirm-email-code": {
       "post": {
         "tags": [
@@ -4220,27 +4180,6 @@
           "subscribed"
         ],
         "title": "PushSubscriptionStatus"
-      },
-      "RegisterUserInput": {
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email",
-            "title": "Email"
-          },
-          "password": {
-            "type": "string",
-            "maxLength": 128,
-            "minLength": 10,
-            "title": "Password"
-          }
-        },
-        "type": "object",
-        "required": [
-          "email",
-          "password"
-        ],
-        "title": "RegisterUserInput"
       },
       "RequestLoginCodeInput": {
         "properties": {
