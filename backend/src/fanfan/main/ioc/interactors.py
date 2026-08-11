@@ -10,7 +10,6 @@ from fanfan.application.interactors.auth.change_password import ChangePassword
 from fanfan.application.interactors.auth.confirm_email_code import ConfirmEmailCode
 from fanfan.application.interactors.auth.login_with_code import LoginWithCode
 from fanfan.application.interactors.auth.logout_user import LogoutUser
-from fanfan.application.interactors.auth.register_user import RegisterUser
 from fanfan.application.interactors.auth.request_login_code import RequestLoginCode
 from fanfan.application.interactors.auth.send_email_confirmation_code import (
     SendEmailConfirmationCode,
@@ -181,7 +180,6 @@ class InteractorsProvider(Provider):
     submit_feedback = provide(SubmitFeedback)
 
     authenticate_user = provide(AuthenticateUser)
-    register_user = provide(RegisterUser)
     get_current_user = provide(GetCurrentUser)
     link_social_account = provide(LinkSocialAccount)
     unlink_social_account = provide(UnlinkSocialAccount)
