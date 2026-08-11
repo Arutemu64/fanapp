@@ -8,7 +8,7 @@ paths:
 Loaded only when working with `frontend/**` files.
 
 - Load the `svelte-code-writer` and `svelte-core-bestpractices` skills for any `.svelte`/`.svelte.ts`/`.svelte.js` change; add `impeccable` and `ui-ux-pro-max` for styling/layout work, and `kill-ai-slop`, `accessibility` and `core-web-vitals` before shipping UI.
-- Writing or changing Russian copy? Load `fanfan-russian-copy` — it pins the register («ты») and the glossary (Программа / Выступление / Голосование).
+- Writing or changing Russian copy? Voice, register («ты») and the glossary (Программа / Выступление / Голосование) live in [.agents/redpolitika.md](../../.agents/redpolitika.md), read automatically by the `ux-copy` / `redaktura` skills — load `ux-copy` for interface strings. Load `fanfan-russian-copy` for the repo mechanics (plural three-forms, two-file emails, the copy-tells scanner).
 - Touching `service-worker.ts`, `manifest.json`, the IndexedDB offline cache or Web Push? Read [docs/frontend.md](../../docs/frontend.md) §2 "PWA & Offline Support" — and note the SW's fetch handler is inert in dev, so verify with `just run-prod`, not `just frontend-dev`.
 - Read [docs/frontend.md](../../docs/frontend.md) for project bindings (typography/radius/z-index scales, modal conventions, offline cache, component placement).
 - Prefer official Flowbite-Svelte components over hand-rolled elements. Repeating the same class on 3+ instances of a Flowbite component? Move it into the root `<ThemeProvider>` `flowbiteTheme`, not per-instance — see [docs/frontend.md](../../docs/frontend.md) §3 "Centralized component theme". Overriding a Flowbite default is fine; just centralize the override, don't preserve the default for its own sake.

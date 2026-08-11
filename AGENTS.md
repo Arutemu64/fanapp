@@ -22,7 +22,7 @@ Load the listed skills and read the guide **before** implementing, not after.
 | `.svelte`, `.svelte.ts`, `.svelte.js` | `svelte-code-writer`, `svelte-core-bestpractices` | [docs/frontend.md](docs/frontend.md) |
 | Styling / layout | `impeccable`, `ui-ux-pro-max` | [docs/frontend.md](docs/frontend.md) §3–4 |
 | Design review before shipping UI | `kill-ai-slop`, `accessibility`, `core-web-vitals` | [docs/frontend.md](docs/frontend.md) |
-| Russian user-facing copy | `fanfan-russian-copy` | [.agents/context/PRODUCT.md](.agents/context/PRODUCT.md) |
+| Russian user-facing copy | `ux-copy`, `fanfan-russian-copy` | [.agents/redpolitika.md](.agents/redpolitika.md), [.agents/context/PRODUCT.md](.agents/context/PRODUCT.md) |
 | Service worker / manifest / offline / push | — | [docs/frontend.md](docs/frontend.md) §2 "PWA & Offline Support" |
 | Frontend ↔ API contracts | — | [docs/api.md](docs/api.md) |
 | Tests | — | [docs/testing.md](docs/testing.md) |
