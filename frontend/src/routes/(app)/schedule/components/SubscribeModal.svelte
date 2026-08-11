@@ -48,7 +48,7 @@
 			return;
 		}
 
-		toastService.add('Подписка оформлена!', 'success');
+		toastService.add('Подписка оформлена', 'success');
 		await invalidate('app:schedule');
 		open = false;
 	}

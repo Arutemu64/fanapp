@@ -44,7 +44,7 @@
 
 	function validateUsername(value: string): string {
 		if (!value) {
-			return 'Псевдоним обязателен';
+			return 'Введи имя пользователя';
 		}
 
 		if (value.length < USERNAME_MIN_LENGTH) {
@@ -134,12 +134,12 @@
 		{/if}
 
 		<div>
-			<Label for="username" class="mb-2 block">Псевдоним</Label>
+			<Label for="username" class="mb-2 block">Имя пользователя</Label>
 			<Input
 				id="username"
 				name="username"
 				type="text"
-				placeholder="Псевдоним"
+				placeholder="Например, sakura_chan"
 				autocomplete="nickname"
 				autocapitalize="off"
 				spellcheck={false}

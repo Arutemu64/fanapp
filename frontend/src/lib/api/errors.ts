@@ -124,9 +124,9 @@ function formatRetryAfter(value: unknown): string {
 function getAccessDeniedMessage(details: ApiErrorDetails): string {
 	switch (details.reason) {
 		case 'VOTING_TICKET_REQUIRED':
-			return 'Для голосования привяжи билет в профиле.';
+			return 'Чтобы голосовать, привяжи билет в профиле.';
 		case 'VOTING_DISABLED':
-			return 'Голосование сейчас отключено.';
+			return 'Голосование сейчас закрыто.';
 		case 'MAILING_DELETE_FORBIDDEN':
 			return 'Нельзя удалить эту рассылку.';
 		default:
@@ -169,7 +169,7 @@ function getInvalidScheduleFileMessage(details: ApiErrorDetails): string {
 // keys (so the drift guard below can see which codes are covered) while checking
 // every key is a real ApiErrorCode — a typo'd code is a compile error.
 const ERROR_MESSAGES = {
-	ALREADY_VOTED_IN_THIS_NOMINATION: 'Ты уже голосовал в этой номинации',
+	ALREADY_VOTED_IN_THIS_NOMINATION: 'В этой номинации голос уже учтён',
 	CANNOT_REMOVE_LAST_SIGN_IN_METHOD:
 		'Это твой единственный способ входа. Сначала добавь почту или подключи другой аккаунт',
 	CAPTCHA_VERIFICATION_FAILED: 'Не удалось пройти проверку. Попробуй ещё раз.',
@@ -187,7 +187,7 @@ const ERROR_MESSAGES = {
 	SAME_EVENTS_ARE_NOT_ALLOWED: 'Нельзя выбрать одно и то же выступление',
 	SKIPPED_EVENT_NOT_ALLOWED: 'Пропущенное выступление нельзя отметить как текущее',
 	SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER: 'Этот аккаунт уже подключён к другому профилю',
-	SUBSCRIPTION_ALREADY_EXISTS: 'Ты уже подписан на это выступление',
+	SUBSCRIPTION_ALREADY_EXISTS: 'Подписка на это выступление уже оформлена',
 	SYNC_ALREADY_RUNNING: 'Синхронизация уже выполняется, подожди немного',
 	TICKET_ALREADY_USED: 'Этот билет уже использован',
 	TICKET_BARCODE_COLLISION: 'Не удалось создать билеты, попробуй ещё раз',
@@ -200,7 +200,7 @@ const ERROR_MESSAGES = {
 	USER_NOT_AUTHENTICATED: 'Нужно войти в аккаунт',
 	USER_NOT_FOUND: 'Аккаунт не найден',
 	USERNAME_ALREADY_TAKEN: 'Это имя пользователя уже занято',
-	USERNAME_PROFANITY: 'Псевдоним содержит недопустимые слова',
+	USERNAME_PROFANITY: 'В имени пользователя есть недопустимые слова. Выбери другое',
 	VOTE_NOT_FOUND: 'Голос не найден'
 } satisfies Partial<Record<ApiErrorCode, string>>;
 

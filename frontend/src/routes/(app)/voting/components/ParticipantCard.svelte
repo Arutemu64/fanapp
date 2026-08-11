@@ -47,7 +47,7 @@
 			}
 
 			if (data) {
-				toastService.add('Голос успешно отдан!', 'success');
+				toastService.add('Голос учтён', 'success');
 				onVoted?.();
 			}
 		} catch (err) {

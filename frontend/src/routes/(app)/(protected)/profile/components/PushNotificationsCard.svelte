@@ -135,7 +135,7 @@
 			if (Notification.permission === 'default') {
 				const permission = await Notification.requestPermission();
 				if (permission !== 'granted') {
-					toastService.add('Доступ к уведомлениям отклонен', 'error');
+					toastService.add('Уведомления не разрешены', 'error');
 					return;
 				}
 			} else if (Notification.permission === 'denied') {
@@ -156,7 +156,7 @@
 			const auth = subJson.keys?.auth;
 
 			if (!endpoint || !p256dh || !auth) {
-				toastService.add('Не удалось подготовить данные устройства для подписки', 'error');
+				toastService.add('Не удалось подключить устройство. Попробуй ещё раз', 'error');
 				await subscription.unsubscribe();
 				return;
 			}
@@ -171,14 +171,14 @@
 
 			if (error || !response.ok) {
 				console.error('API Error:', error);
-				toastService.add('Ошибка при подписке на уведомления', 'error');
+				toastService.add('Не удалось включить уведомления. Попробуй ещё раз', 'error');
 				await subscription.unsubscribe();
 				return;
 			}
 
 			isSubscribed = true;
 			onSettingsUpdate?.();
-			toastService.add('Включены пуш-уведомления', 'success');
+			toastService.add('Пуш-уведомления включены', 'success');
 		} catch (error: unknown) {
 			console.error('Failed to subscribe:', error);
 			toastService.add('Не удалось включить уведомления', 'error');
@@ -252,7 +252,7 @@
 
 			if (error || !response.ok) {
 				console.error('API Error:', error);
-				toastService.add('Не удалось отправить тест по каналам уведомлений', 'error');
+				toastService.add('Не удалось отправить тестовое уведомление', 'error');
 				return;
 			}
 

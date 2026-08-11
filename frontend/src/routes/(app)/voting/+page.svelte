@@ -21,7 +21,7 @@
 <VotingStatusAlert votingState={votingStatus} class="mb-4" />
 
 {#if nominations.length === 0}
-	<EmptyState icon={ThumbsUpOutline} message="Нет доступных номинаций" />
+	<EmptyState icon={ThumbsUpOutline} message="Номинаций пока нет" />
 {:else}
 	<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
 		{#each nominations as nomination (nomination.id)}

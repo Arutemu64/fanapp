@@ -78,7 +78,7 @@
 				return;
 			}
 
-			toastService.add('Рассылка успешно запущена!', 'success');
+			toastService.add('Рассылка запущена', 'success');
 			bodyText = '';
 			selectedRoles = [];
 			bodyError = '';
@@ -108,7 +108,7 @@
 				id="broadcast-body"
 				name="body"
 				rows={4}
-				placeholder="Напиши важное сообщение для участников фестиваля..."
+				placeholder="Напиши важное сообщение для участников фестиваля…"
 				bind:value={bodyText}
 				disabled={isSending}
 				oninput={handleBodyInput}
