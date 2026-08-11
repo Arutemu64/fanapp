@@ -19,14 +19,14 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 
 ## Features
 
-- **Schedule** — public event schedule with live changes, per-user subscriptions, and organizer management/import tools.
-- **Voting** — nominations and voting, with cosplay data synced from Cosplay2.
-- **Notifications** — in-app feed plus Web Push (VAPID) for broadcasts and per-user alerts.
-- **Auth** — sign in via Telegram, email code, one-time login code, or credentials; cookie-based sessions.
-- **Profiles & tickets** — user profile, linked tickets (synced from TicketsCloud), account connections, and security settings.
-- **Feedback** — user feedback submission.
-- **Telegram bot** — companion bot sharing the same backend and domain logic.
-- **Live updates** — Server-Sent Events (SSE) push real-time changes to the client.
+- **Schedule**: public event schedule with live changes, per-user subscriptions, and organizer management/import tools.
+- **Voting**: nominations and voting, with cosplay data synced from Cosplay2.
+- **Notifications**: in-app feed plus Web Push (VAPID) for broadcasts and per-user alerts.
+- **Auth**: sign in via Telegram, email code, one-time login code, or credentials; cookie-based sessions.
+- **Profiles & tickets**: user profile, linked tickets (synced from TicketsCloud), account connections, and security settings.
+- **Feedback**: user feedback submission.
+- **Telegram bot**: companion bot sharing the same backend and domain logic.
+- **Live updates**: Server-Sent Events (SSE) push real-time changes to the client.
 
 ## Stack
 
@@ -38,7 +38,7 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 | Jobs | APScheduler (periodic syncs), FastStream consumers (domain events) |
 | Tooling | Docker Compose, `just` task runner |
 
-The backend follows clean / hexagonal architecture — pure `core` and `application` layers, infrastructure behind ports in `adapters`. See [`AGENTS.md`](AGENTS.md) and [`docs/`](docs/) for the full guidelines.
+The backend follows clean / hexagonal architecture: pure `core` and `application` layers, infrastructure behind ports in `adapters`. See [`AGENTS.md`](AGENTS.md) and [`docs/`](docs/) for the full guidelines.
 
 ## Requirements
 
@@ -47,11 +47,11 @@ The backend follows clean / hexagonal architecture — pure `core` and `applicat
 - [`just`](https://github.com/casey/just)
 - Docker + Docker Compose (for the full environment)
 - On **Windows**, run `just` from **Git Bash** (ships with
-  [Git for Windows](https://git-scm.com/download/win)) or **WSL**, not cmd/PowerShell —
-  the recipes are POSIX shell.
+  [Git for Windows](https://git-scm.com/download/win)) or **WSL**, not cmd/PowerShell,
+  since the recipes are POSIX shell.
 
 > Optional: [`mise`](https://mise.jdx.dev) (or `asdf`) reads the pinned
-> versions from [`mise.toml`](mise.toml) — run `mise install` to get the exact
+> versions from [`mise.toml`](mise.toml): run `mise install` to get the exact
 > Python / Node / pnpm / uv / just this repo expects in one step. Docker is not
 > managed by mise; install it separately.
 
@@ -66,22 +66,22 @@ just bootstrap
 This creates `.env` from the template, fills the generated secrets (DB / Redis /
 NATS passwords, `WEB__SECRET_KEY`), and generates the Web Push VAPID keys
 (`secrets/private_key.pem`, `secrets/public_key.pem`, `PUBLIC_VAPID_KEY`). It is
-idempotent — re-run anytime; it never overwrites values you've already set.
+idempotent. Re-run anytime; it never overwrites values you've already set.
 
 Both the web API and the bootstrap defaults are designed to boot with no real
 third-party credentials, so you can start exploring immediately:
 
-- `BOT__*` — the placeholder values are format-valid, so the web API starts with
+- `BOT__*`: the placeholder values are format-valid, so the web API starts with
   them. Telegram login and Telegram notifications stay disabled until you set a
   real bot (create one via [@BotFather](https://t.me/BotFather)); email and
   credentials login work without it. The bot *process* needs a real token to run.
-- `MAIL__*` (SMTP) — optional; leave unset and outgoing emails are logged instead
+- `MAIL__*` (SMTP): optional; leave unset and outgoing emails are logged instead
   of sent (email login/confirmation codes appear in the app logs).
-- `PUSH__SUBSCRIBER` — your contact email for Web Push.
+- `PUSH__SUBSCRIBER`: your contact email for Web Push.
 
 The optional integration blocks stay commented out.
 
-Local (non-Docker) frontend dev reads this same root `.env` — there is no separate frontend env file.
+Local (non-Docker) frontend dev reads this same root `.env`. There is no separate frontend env file.
 
 ### 2. Run everything in Docker
 
@@ -95,9 +95,9 @@ This brings up the frontend, API, FastStream consumer, scheduler, Postgres, Redi
 - Frontend: http://localhost:3000
 - API: http://localhost:8000
 
-Both host ports are overridable if 3000/8000 are taken — set `FRONTEND_PORT` / `API_PORT` in `.env` (see `.env.example`). Update `Caddyfile.example` to match if you use it.
+Both host ports are overridable if 3000/8000 are taken: set `FRONTEND_PORT` / `API_PORT` in `.env` (see `.env.example`). Update `Caddyfile.example` to match if you use it.
 
-Reach for this when you want the deployed shape — the real images, the real
+Reach for this when you want the deployed shape: the real images, the real
 Compose network, the reverse-proxy layout. For iterating on code, §3 is faster.
 
 ### 3. Run the app on the host, infra in Docker (recommended for day-to-day work)
@@ -129,8 +129,8 @@ just frontend-dev        # SvelteKit dev server on :3000 (FRONTEND_PORT)
 > `backend-stream` and `backend-scheduler` are not optional. The scheduler runs
 > the **outbox relay**, so without it aggregate domain events written on commit
 > never leave the database; the FastStream consumer is what handles them once
-> they do. Skip either and event-driven features — email login codes, Web Push
-> broadcasts, notifications — silently do nothing while the API still returns
+> they do. Skip either and event-driven features (email login codes, Web Push
+> broadcasts, notifications) silently do nothing while the API still returns
 > success. `just run-dev` (§2) starts all of these for you.
 
 Each host process holds a terminal, so run them in separate ones (`just dev`
@@ -142,17 +142,17 @@ This works because `DB__HOST` / `REDIS__HOST` / `NATS__HOST` in `.env` are
 `localhost`, not the Compose service names: `docker-compose.yml` overrides all
 three per service via `environment:`, which outranks `env_file:`, so containers
 always reach `db` / `redis` / `nats` regardless. One `.env`, no second copy to
-keep in sync — see the SERVICE HOSTNAMES note in `.env.example`.
+keep in sync: see the SERVICE HOSTNAMES note in `.env.example`.
 
 ## External integrations
 
 Optional, enabled via `.env`:
 
-- **TicketsCloud** (`TCLOUD__*`) — ticket sync.
-- **Cosplay2** (`COSPLAY2__*`) — cosplay / voting data sync.
-- **Yandex SmartCaptcha** (`SMARTCAPTCHA__SERVER_KEY` + `PUBLIC_SMARTCAPTCHA_CLIENT_KEY`) — bot protection on login-code requests. Unset = a no-op verifier that accepts everything. Yandex rather than Cloudflare Turnstile because Cloudflare is frequently throttled in Russia — see [ADR-0009](docs/adr/0009-yandex-smartcaptcha-over-cloudflare-turnstile.md).
-- **Sentry / GlitchTip** (`DEBUG__SENTRY_DSN` backend, `PUBLIC_SENTRY_DSN` frontend) — error reporting. Empty DSN = disabled.
-- **Scheduler** (`SCHEDULER__SYNC_*_CRON`) — cron strings (in `TIMEZONE`) that run the syncs periodically. Unset = disabled. After editing, `docker compose restart scheduler`. Trigger a sync manually any time with `docker compose run --rm api cli sync tcloud`.
+- **TicketsCloud** (`TCLOUD__*`): ticket sync.
+- **Cosplay2** (`COSPLAY2__*`): cosplay / voting data sync.
+- **Yandex SmartCaptcha** (`SMARTCAPTCHA__SERVER_KEY` + `PUBLIC_SMARTCAPTCHA_CLIENT_KEY`): bot protection on login-code requests. Unset = a no-op verifier that accepts everything. Yandex rather than Cloudflare Turnstile because Cloudflare is frequently throttled in Russia: see [ADR-0009](docs/adr/0009-yandex-smartcaptcha-over-cloudflare-turnstile.md).
+- **Sentry / GlitchTip** (`DEBUG__SENTRY_DSN` backend, `PUBLIC_SENTRY_DSN` frontend): error reporting. Empty DSN = disabled.
+- **Scheduler** (`SCHEDULER__SYNC_*_CRON`): cron strings (in `TIMEZONE`) that run the syncs periodically. Unset = disabled. After editing, `docker compose restart scheduler`. Trigger a sync manually any time with `docker compose run --rm api cli sync tcloud`.
 
 ## Common commands
 
@@ -178,10 +178,10 @@ All commands run from the repo root via `just`.
 
 This section describes how the **FAN FAN** production server is run. If you are
 deploying your own event, the same commands apply once you are publishing your
-own images — see [Running this for your own event](#running-this-for-your-own-event)
+own images: see [Running this for your own event](#running-this-for-your-own-event)
 first.
 
-The server runs **prebuilt** GHCR images instead of building from source — only
+The server runs **prebuilt** GHCR images instead of building from source: only
 the application *build* moves to CI, the runtime config stays on the host. Once
 the server is set up, a deploy is:
 
@@ -199,13 +199,13 @@ Registry on pushes to `main` (moving the `latest` tag) and on `v*` tags. The
 (source-map upload); it is consumed in a discarded build stage and never ends up
 in the published image.
 
-[`docs/deployment.md`](docs/deployment.md) covers the rest: what the server needs on disk, one-time setup, pinning a build or rolling back with `IMAGE_TAG`, and the reverse proxy (Caddy) — including the single-origin setup that means **no CORS config is needed** and the `.env` values that change between HTTPS and plain-HTTP testing.
+[`docs/deployment.md`](docs/deployment.md) covers the rest: what the server needs on disk, one-time setup, pinning a build or rolling back with `IMAGE_TAG`, and the reverse proxy (Caddy), including the single-origin setup that means **no CORS config is needed** and the `.env` values that change between HTTPS and plain-HTTP testing.
 
 ### Running this for your own event
 
 > [!IMPORTANT]
 > **The images published from this repository are built for the FAN FAN
-> deployment — they are not a reusable product.** The frontend is a static SPA,
+> deployment. They are not a reusable product.** The frontend is a static SPA,
 > so its `PUBLIC_*` values are baked into the bundle at build time: the published
 > image carries *this* festival's VAPID public key, Yandex SmartCaptcha sitekey
 > and Sentry DSN. Point it at your own backend and Web Push and the captcha
@@ -215,7 +215,7 @@ in the published image.
 
 So **fork the repository and publish images from your fork**, then deploy those.
 [`docs/deployment.md`](docs/deployment.md#reusing-this-for-another-event) walks
-through the four things a fork has to change — branding, Actions variables, a
+through the four things a fork has to change: branding, Actions variables, a
 build to apply them, and the `image:` names in
 [`docker-compose.prod.yml`](docker-compose.prod.yml) that still point at
 `ghcr.io/arutemu64/…`. After that, `just deploy` pulls *your* images and the rest
@@ -237,7 +237,7 @@ docs/       Architecture guides and ADRs
 
 ## Contributing
 
-Read [`AGENTS.md`](AGENTS.md) first — it holds the project constraints (Russian
+Read [`AGENTS.md`](AGENTS.md) first: it holds the project constraints (Russian
 user-facing copy, the import rules for `core`/`application`, which guide to read
 for the area you're touching). The guides in [`docs/`](docs/) go deeper per area,
 and [`docs/adr/`](docs/adr/README.md) records why the significant choices were
@@ -249,8 +249,8 @@ Before pushing, run every gate locally:
 just ci
 ```
 
-Questions and bug reports go in [GitHub issues](https://github.com/Arutemu64/fanapp/issues)
-— except security reports, which are private ([see below](#security)).
+Questions and bug reports go in [GitHub issues](https://github.com/Arutemu64/fanapp/issues),
+except security reports, which are private ([see below](#security)).
 
 ### Continuous integration
 
@@ -258,40 +258,40 @@ Every pull request and every push to `main` runs
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) on GitHub Actions. It
 mirrors the local quality gates:
 
-- **Backend** — Ruff lint + format check, `ty` type check, and the full `pytest` suite. Integration tests spin up Postgres and Redis automatically via testcontainers (Docker is preinstalled on the runner).
-- **Frontend** — Prettier + ESLint, `svelte-check`, and a production build.
-- **Dockerfiles** — [hadolint](https://github.com/hadolint/hadolint) best-practice linting (config in [`.hadolint.yaml`](.hadolint.yaml)). Run locally with `just dockerfile-lint` (hadolint comes from `mise`) or via the pre-commit hook.
-- **Images** — builds both Docker images without pushing, so a broken build fails on the PR instead of after merge. This is the one gate `just ci` skips; `just run-prod` builds the same two images locally.
+- **Backend**: Ruff lint + format check, `ty` type check, and the full `pytest` suite. Integration tests spin up Postgres and Redis automatically via testcontainers (Docker is preinstalled on the runner).
+- **Frontend**: Prettier + ESLint, `svelte-check`, and a production build.
+- **Dockerfiles**: [hadolint](https://github.com/hadolint/hadolint) best-practice linting (config in [`.hadolint.yaml`](.hadolint.yaml)). Run locally with `just dockerfile-lint` (hadolint comes from `mise`) or via the pre-commit hook.
+- **Images**: builds both Docker images without pushing, so a broken build fails on the PR instead of after merge. This is the one gate `just ci` skips; `just run-prod` builds the same two images locally.
 
-CI is check-only: unlike `just backend-lint`, it never auto-fixes — a violation
+CI is check-only: unlike `just backend-lint`, it never auto-fixes. A violation
 fails the run. Each area is its own job so branch protection can require them
 individually and a run reports a separate red/green check per area; each gate
 runs only when its area changed (`dorny/paths-filter`), so a docs-only change
 finishes in seconds. The `frontend` job further fans out into a
 `lint`/`check`/`test`/`build` matrix, and within a job one failing gate doesn't
-skip the rest — a run reports every problem in that area instead of only the
+skip the rest. A run reports every problem in that area instead of only the
 first. The reasoning behind the job split is in the header comment of
 [`ci.yml`](.github/workflows/ci.yml).
 
 [`renovate.json`](renovate.json) opens one PR per dependency every Monday
-morning, automerging the ones that break loudly in CI — see
+morning, automerging the ones that break loudly in CI: see
 [`docs/dependencies.md`](docs/dependencies.md).
 
 ## Documentation
 
-- [`AGENTS.md`](AGENTS.md) — monorepo guidelines and project constraints
-- [`docs/backend.md`](docs/backend.md) — backend architecture (domain, ports, DI, events)
-- [`docs/frontend.md`](docs/frontend.md) — SvelteKit SPA rules, styling, components
-- [`docs/api.md`](docs/api.md) — type-safe API integration
-- [`docs/testing.md`](docs/testing.md) — backend test layers and fixtures, what is real vs faked, frontend unit tests
-- [`docs/deployment.md`](docs/deployment.md) — server setup, deploys and rollbacks, reverse proxy
-- [`docs/dependencies.md`](docs/dependencies.md) — shared version pins and Renovate
-- [`docs/claude-cloud.md`](docs/claude-cloud.md) — Claude Code on the web provisioning
-- [`docs/adr/`](docs/adr/README.md) — architecture decision records
+- [`AGENTS.md`](AGENTS.md): monorepo guidelines and project constraints
+- [`docs/backend.md`](docs/backend.md): backend architecture (domain, ports, DI, events)
+- [`docs/frontend.md`](docs/frontend.md): SvelteKit SPA rules, styling, components
+- [`docs/api.md`](docs/api.md): type-safe API integration
+- [`docs/testing.md`](docs/testing.md): backend test layers and fixtures, what is real vs faked, frontend unit tests
+- [`docs/deployment.md`](docs/deployment.md): server setup, deploys and rollbacks, reverse proxy
+- [`docs/dependencies.md`](docs/dependencies.md): shared version pins and Renovate
+- [`docs/claude-cloud.md`](docs/claude-cloud.md): Claude Code on the web provisioning
+- [`docs/adr/`](docs/adr/README.md): architecture decision records
 
 ## Security
 
-Found a vulnerability? Report it privately — see [`SECURITY.md`](SECURITY.md).
+Found a vulnerability? Report it privately: see [`SECURITY.md`](SECURITY.md).
 Please don't open a public issue, and please don't test against the live
 festival deployment; `just run-dev` gives you the whole stack locally.
 
@@ -302,7 +302,7 @@ categories of files in this repository are excluded from it.
 
 **Festival branding and artwork.** The FAN FAN name, logo, festival maps and
 event photography belong to the festival, not to this codebase, and carry no
-license to reuse — the event photo in particular shows identifiable attendees,
+license to reuse; the event photo in particular shows identifiable attendees,
 who consented to a festival photo, not to redistribution under MIT. Excluded:
 
 - `backend/src/fanfan/common/static/logo.png`
