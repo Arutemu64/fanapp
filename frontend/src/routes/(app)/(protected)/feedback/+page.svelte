@@ -89,7 +89,7 @@
 				name="text"
 				rows={6}
 				maxlength={MAX_LENGTH}
-				placeholder="Поделись впечатлениями, идеями или сообщи о проблеме..."
+				placeholder="Поделись впечатлениями, идеями или сообщи о проблеме…"
 				bind:value={feedbackText}
 				disabled={isSending}
 				oninput={handleInput}
