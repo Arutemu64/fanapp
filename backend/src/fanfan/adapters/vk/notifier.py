@@ -37,8 +37,10 @@ _FLOOD_RETRY_AFTER_SECONDS = 1
 _VK_API_VERSION = "5.199"
 
 # messages.send is the only method this adapter calls. Full URL rather than a
-# base_url + relative path because the notifier owns the single endpoint.
-_MESSAGES_SEND_URL = "https://api.vk.com/method/messages.send"
+# base_url + relative path because the notifier owns the single endpoint. The
+# vk.ru host is VK's post-rebrand domain; api.vk.com still resolves to the same
+# API. https://dev.vk.ru/ru/method/messages.send
+_MESSAGES_SEND_URL = "https://api.vk.ru/method/messages.send"
 
 
 class VkApiError(Exception):
