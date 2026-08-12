@@ -2,7 +2,7 @@ import logging
 
 import nh3
 
-from fanfan.adapters.push.client import WebPushClient
+from fanfan.adapters.push.client import MessageData, WebPushClient
 from fanfan.application.ports.gateways.push_subscriptions import (
     PushSubscriptionGateway,
 )
@@ -35,7 +35,7 @@ class PushNotifier(Notifier):
         text = text.replace("<br>", "\n")
         return nh3.clean(text, tags=set())
 
-    def _build_message_data(self, notification: Notification) -> dict:
+    def _build_message_data(self, notification: Notification) -> MessageData:
         # Identical for every subscription of this user, so build it once; only
         # the per-subscription encryption downstream varies.
         return {
@@ -58,11 +58,7 @@ class PushNotifier(Notifier):
         message_data = self._build_message_data(notification)
         for sub in push_subs:
             status_code = await self.client.send(
-                subscription_info={
-                    "endpoint": sub.endpoint,
-                    "auth": sub.auth,
-                    "p256dh": sub.p256dh,
-                },
+                subscription=sub,
                 message_data=message_data,
             )
             if status_code in _GONE_STATUS_CODES:
