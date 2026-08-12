@@ -1,14 +1,27 @@
 import logging
-from typing import cast
+from typing import Any, TypedDict, cast
 
 import httpx2
+from pydantic import AnyHttpUrl
 from webpush import WebPush, WebPushSubscription
+from webpush.types import WebPushKeys
 from webpush.vapid import VAPIDException
 
 from fanfan.adapters.push.config import PushConfig
 from fanfan.core.exceptions.notifications import NotificationChannelUnavailable
+from fanfan.core.models.push_subscription import PushSubscription
 
 logger = logging.getLogger(__name__)
+
+
+class MessageData(TypedDict):
+    # The payload the service worker unpacks in its `push` handler. Serialized to
+    # JSON by the library, so every value must be JSON-native.
+    tag: str
+    title: str
+    body: str
+    url: str
+    test: bool
 
 
 class WebPushClient:
@@ -48,13 +61,26 @@ class WebPushClient:
         # fails fast (and is caught by the consumer) before it hits the gateway.
         self._get_web_push()
 
-    async def send(self, *, subscription_info: dict, message_data: dict) -> int:
+    async def send(
+        self, *, subscription: PushSubscription, message_data: MessageData
+    ) -> int:
         # Encrypt per subscription (each has its own keys) and POST to that
         # endpoint. Returns the HTTP status so the notifier can prune a
         # subscription the push service has retired (404/410).
-        push_subscription = WebPushSubscription.model_validate(subscription_info)
+        # The library's WebPushSubscription nests the keys under `keys`; our
+        # domain model keeps them flat, so map explicitly here rather than
+        # feeding it a dict of the wrong shape.
+        push_subscription = WebPushSubscription(
+            endpoint=cast("AnyHttpUrl", subscription.endpoint),
+            keys=WebPushKeys(auth=subscription.auth, p256dh=subscription.p256dh),
+        )
         message = self._get_web_push().get(
-            message=message_data, subscription=push_subscription, ttl=3600
+            # get() types `message` as dict[Any, Any]; a TypedDict is not
+            # assignable to an invariant dict, so cast. get() only reads it
+            # (json.dumps), never mutating, so the cast is sound.
+            message=cast("dict[Any, Any]", message_data),
+            subscription=push_subscription,
+            ttl=3600,
         )
         response = await self._client.post(
             url=str(push_subscription.endpoint),
