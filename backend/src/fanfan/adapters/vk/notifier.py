@@ -42,6 +42,11 @@ _VK_API_VERSION = "5.199"
 # API. https://dev.vk.ru/ru/method/messages.send
 _MESSAGES_SEND_URL = "https://api.vk.ru/method/messages.send"
 
+# httpx2 defaults to a 5s deadline on every operation. This runs on the
+# background notification consumer, not an interactive path, so give the read a
+# generous budget while keeping connect short so an unreachable host fails fast.
+_VK_TIMEOUT = httpx2.Timeout(30.0, connect=10.0)
+
 
 class VkApiError(Exception):
     """A VK API method answered with an ``error`` object instead of a response.
@@ -60,13 +65,11 @@ class VkApiError(Exception):
 class VkNotifier(Notifier):
     def __init__(
         self,
-        client: httpx2.AsyncClient,
         config: VkConfig,
         user_gateway: UserGateway,
         social_identity_gateway: SocialIdentityGateway,
         web_config: WebConfig,
     ) -> None:
-        self.client = client
         self.config = config
         self.user_gateway = user_gateway
         self.social_identity_gateway = social_identity_gateway
@@ -106,23 +109,29 @@ class VkNotifier(Notifier):
             self._handle_api_error(e, notification)
 
     async def _send_message(self, *, peer_id: int, message: str) -> None:
-        # Token and version travel in the POST body, not the query string, so the
-        # group token never lands in access logs or the URL. VK still returns
-        # HTTP 200 on a logical failure, carrying it in the body's `error` object.
-        response = await self.client.post(
-            _MESSAGES_SEND_URL,
-            data={
-                "access_token": self.config.group_token.get_secret_value(),
-                "v": _VK_API_VERSION,
-                "peer_id": peer_id,
-                "message": message,
-                # random_id 0 disables VK's uniqueness check, so every send goes
-                # through even when two notifications carry identical text; a
-                # fixed non-zero value would instead let VK drop the second as a
-                # duplicate. The outbox is the deduplication authority upstream.
-                "random_id": 0,
-            },
-        )
+        # Open the client per send, like the push notifier does: this adapter is
+        # the only caller, and a shared client would otherwise have to be a bare
+        # httpx2.AsyncClient in the DI container — injectable by anything and a
+        # type collision waiting for the next vendor. Token and version travel in
+        # the POST body, not the query string, so the group token never lands in
+        # access logs or the URL. VK still returns HTTP 200 on a logical failure,
+        # carrying it in the body's `error` object.
+        async with httpx2.AsyncClient(timeout=_VK_TIMEOUT) as client:
+            response = await client.post(
+                _MESSAGES_SEND_URL,
+                data={
+                    "access_token": self.config.group_token.get_secret_value(),
+                    "v": _VK_API_VERSION,
+                    "peer_id": peer_id,
+                    "message": message,
+                    # random_id 0 disables VK's uniqueness check, so every send
+                    # goes through even when two notifications carry identical
+                    # text; a fixed non-zero value would instead let VK drop the
+                    # second as a duplicate. The outbox is the deduplication
+                    # authority upstream.
+                    "random_id": 0,
+                },
+            )
         response.raise_for_status()
         error = response.json().get("error")
         if error is not None:
