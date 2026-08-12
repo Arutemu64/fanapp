@@ -28,11 +28,15 @@
 		}
 	},
 
-	// Pin the backend interpreter so the debugpy configs in launch.json and the
-	// pytest Test Explorer resolve `fanfan` (installed editable by `uv sync`)
-	// instead of falling back to whatever interpreter VS Code guessed on a fresh
-	// clone. POSIX path — on Windows it is backend/.venv/Scripts/python.exe.
-	"python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
+	// Pin the backend interpreter so the pytest Test Explorer, ty and the Ruff
+	// extension (which locates its binary through the active environment, its
+	// default `fromEnvironment` strategy) resolve `fanfan` and `.venv` tools
+	// instead of falling back to whatever VS Code guessed on a fresh clone.
+	// Point at the venv FOLDER, not bin/python: settings.json has no per-OS
+	// blocks, and the folder lets VS Code pick bin/python (POSIX) or
+	// Scripts\python.exe (Windows) itself. A hardcoded bin/python left Windows
+	// with no resolvable interpreter, so Ruff could not find its binary.
+	"python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv",
 
 	// No python.analysis.* here: the repo typechecks with ty
 	// (`just backend-typecheck`), and the ty extension disables the Python
