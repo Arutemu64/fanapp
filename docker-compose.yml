@@ -185,6 +185,44 @@ services:
     networks:
       - backend-network
 
+  bot:
+    build: ./backend
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+      nats:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./secrets:/app/secrets:ro
+    env_file:
+      - .env
+    environment:
+      DB__HOST: "db"
+      DB__APPLICATION_NAME: "fanfan-bot"
+      REDIS__HOST: "redis"
+      NATS__HOST: "nats"
+    command: [ "bot" ]
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    healthcheck:
+      disable: true
+    profiles: [ "core" ]
+    networks:
+      - backend-network
+
   migration:
     build: ./backend
     env_file:
