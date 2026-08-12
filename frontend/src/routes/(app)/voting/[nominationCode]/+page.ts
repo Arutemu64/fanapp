@@ -12,7 +12,7 @@ export const load: PageLoad = async ({ params, fetch, depends }) => {
 	// mutation surface and is deliberately not cached, so a known-unreachable
 	// backend gets an honest "online only" state, not a stale ballot.
 	if (!isReachable()) {
-		return { title: 'Голосование', nomination: undefined, offlineOnly: true };
+		return { title: 'Голосование', nomination: undefined, offlineUnavailable: true };
 	}
 
 	const client = createApiClient();
@@ -38,11 +38,11 @@ export const load: PageLoad = async ({ params, fetch, depends }) => {
 		return {
 			title: 'Голосование',
 			nomination: data,
-			offlineOnly: false
+			offlineUnavailable: false
 		};
 	} catch (err) {
 		if (isHttpError(err)) throw err;
 		markReachable(false);
-		return { title: 'Голосование', nomination: undefined, offlineOnly: true };
+		return { title: 'Голосование', nomination: undefined, offlineUnavailable: true };
 	}
 };

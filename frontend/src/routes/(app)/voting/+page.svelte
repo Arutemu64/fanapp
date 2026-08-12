@@ -18,7 +18,7 @@
 	<title>Голосование · ФАН ФАН</title>
 </svelte:head>
 
-{#if data.offlineOnly}
+{#if data.offlineUnavailable}
 	<!-- Voting is uncached and online-only, so there is no saved copy to show —
 	     say so plainly instead of an empty "no nominations" state. -->
 	<EmptyState

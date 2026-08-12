@@ -12,7 +12,7 @@ export const load: PageLoad = async ({ fetch }) => {
 	// backend is known unreachable, skip the doomed request and show an honest
 	// "online only" state instead of a generic error that implies offline data.
 	if (!isReachable()) {
-		return { title: 'Голосование', nominations: [], offlineOnly: true };
+		return { title: 'Голосование', nominations: [], offlineUnavailable: true };
 	}
 
 	const client = createApiClient();
@@ -27,7 +27,7 @@ export const load: PageLoad = async ({ fetch }) => {
 		return {
 			title: 'Голосование',
 			nominations: data?.nominations ?? [],
-			offlineOnly: false
+			offlineUnavailable: false
 		};
 	} catch (err) {
 		// A reachable failure surfaced by throwApiError: re-throw so the error page
@@ -35,6 +35,6 @@ export const load: PageLoad = async ({ fetch }) => {
 		// timeout) — mark us unreachable and fall to the honest online-only state.
 		if (isHttpError(err)) throw err;
 		markReachable(false);
-		return { title: 'Голосование', nominations: [], offlineOnly: true };
+		return { title: 'Голосование', nominations: [], offlineUnavailable: true };
 	}
 };

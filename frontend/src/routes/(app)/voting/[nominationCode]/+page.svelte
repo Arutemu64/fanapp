@@ -67,7 +67,7 @@
 	Назад к номинациям
 </Button>
 
-{#if data.offlineOnly || !nomination}
+{#if data.offlineUnavailable || !nomination}
 	<!-- Voting is uncached and online-only, so there is no saved copy to show —
 	     say so plainly instead of crashing on a missing nomination. -->
 	<EmptyState
