@@ -4153,20 +4153,15 @@
           "festival_ended": {
             "type": "boolean",
             "title": "Festival Ended"
-          },
-          "voting_enabled": {
-            "type": "boolean",
-            "title": "Voting Enabled"
           }
         },
         "type": "object",
         "required": [
           "festival_start",
-          "festival_ended",
-          "voting_enabled"
+          "festival_ended"
         ],
         "title": "PublicConfigDTO",
-        "description": "Public, unauthenticated projection of AppSettings served at GET /config.\n\nDeliberately omits `limits` (ADR-0008 projection tuning is organizer-only).\nCarries the raw `festival_start` so the client can run the live countdown,\nplus the two flags the UI needs to pick its phase and gate voting without\nprovoking a 403 on a guarded endpoint."
+        "description": "Public, unauthenticated projection of AppSettings served at GET /config.\n\nDeliberately omits `limits` (ADR-0008 projection tuning is organizer-only).\nCarries the raw `festival_start` so the client can run the live countdown,\nplus `festival_ended` so the UI can pick its phase without provoking a 403 on\na guarded endpoint. Voting availability is intentionally not here: the UI\nreads it per-user from GET /voting/status (which already reflects the\n`voting_enabled` flag as a DISABLED state), so a second public copy would only\nbe a redundant source of truth to drift."
       },
       "PushSubscriptionStatus": {
         "properties": {

@@ -6,7 +6,7 @@ class GetPublicConfig:
     """Serve the public config projection with no authentication.
 
     Unlike GetSettings this takes no user and runs no permission check: the
-    home page needs the countdown and voting state before login, and on a cold
+    home page needs the countdown and festival phase before login, and on a cold
     or offline PWA load there may be no session at all.
     """
 

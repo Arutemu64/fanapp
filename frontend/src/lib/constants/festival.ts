@@ -12,6 +12,5 @@ export const CONFIG_CACHE_KEY = 'public-config';
 // backend defaults (core AppSettings.DEFAULT_FESTIVAL_START, Moscow time UTC+3).
 export const FALLBACK_CONFIG: PublicConfig = {
 	festival_start: '2026-08-22T11:30:00+03:00',
-	festival_ended: false,
-	voting_enabled: false
+	festival_ended: false
 };

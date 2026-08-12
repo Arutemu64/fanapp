@@ -1259,8 +1259,11 @@ export interface components {
          *
          *     Deliberately omits `limits` (ADR-0008 projection tuning is organizer-only).
          *     Carries the raw `festival_start` so the client can run the live countdown,
-         *     plus the two flags the UI needs to pick its phase and gate voting without
-         *     provoking a 403 on a guarded endpoint.
+         *     plus `festival_ended` so the UI can pick its phase without provoking a 403 on
+         *     a guarded endpoint. Voting availability is intentionally not here: the UI
+         *     reads it per-user from GET /voting/status (which already reflects the
+         *     `voting_enabled` flag as a DISABLED state), so a second public copy would only
+         *     be a redundant source of truth to drift.
          */
         PublicConfigDTO: {
             /**
@@ -1270,8 +1273,6 @@ export interface components {
             festival_start: string;
             /** Festival Ended */
             festival_ended: boolean;
-            /** Voting Enabled */
-            voting_enabled: boolean;
         };
         /** PushSubscriptionStatus */
         PushSubscriptionStatus: {

@@ -32,6 +32,8 @@ async def test_projects_public_fields_from_settings():
 
     assert result.festival_start == start
     assert result.festival_ended is True
-    assert result.voting_enabled is True
-    # limits is organizer-only and must not leak into the public projection.
+    # Neither limits (organizer-only) nor voting_enabled leak into the public
+    # projection: voting availability is served per-user from GET /voting/status,
+    # so the enabled input above must not appear here.
     assert not hasattr(result, "limits")
+    assert not hasattr(result, "voting_enabled")
