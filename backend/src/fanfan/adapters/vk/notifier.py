@@ -1,9 +1,9 @@
 import logging
 
+import httpx2
 import nh3
-from vkbottle import VKAPIError
-from vkbottle.api import API
 
+from fanfan.adapters.vk.config import VkConfig
 from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.notifier import Notifier
@@ -31,16 +31,41 @@ _AUTH_CODES = frozenset({5, 27, 28})
 # before the consumer redelivers.
 _FLOOD_RETRY_AFTER_SECONDS = 1
 
+# Pin the API version so VK never falls back to an account-default that could
+# change response shapes under us. 5.199 is the latest documented version in the
+# official schema (VKCOM/vk-api-schema). https://dev.vk.ru/en/reference/versions
+_VK_API_VERSION = "5.199"
+
+# messages.send is the only method this adapter calls. Full URL rather than a
+# base_url + relative path because the notifier owns the single endpoint.
+_MESSAGES_SEND_URL = "https://api.vk.com/method/messages.send"
+
+
+class VkApiError(Exception):
+    """A VK API method answered with an ``error`` object instead of a response.
+
+    VK returns HTTP 200 even for logical failures, carrying the failure in the
+    body's ``error`` object; ``code`` mirrors that ``error_code`` and drives the
+    per-user vs. channel-wide translation in ``VkNotifier._handle_api_error``.
+    """
+
+    def __init__(self, code: int, message: str) -> None:
+        self.code = code
+        self.message = message
+        super().__init__(f"VK API error {code}: {message}")
+
 
 class VkNotifier(Notifier):
     def __init__(
         self,
-        api: API,
+        client: httpx2.AsyncClient,
+        config: VkConfig,
         user_gateway: UserGateway,
         social_identity_gateway: SocialIdentityGateway,
         web_config: WebConfig,
     ) -> None:
-        self.api = api
+        self.client = client
+        self.config = config
         self.user_gateway = user_gateway
         self.social_identity_gateway = social_identity_gateway
         self.web_config = web_config
@@ -71,16 +96,41 @@ class VkNotifier(Notifier):
             raise UserNotReachable
 
         try:
-            await self.api.messages.send(
+            await self._send_message(
                 peer_id=social_identity.provider_user_id,
                 message=self._render_message_text(notification),
-                random_id=0,
             )
-        except VKAPIError as e:
+        except VkApiError as e:
             self._handle_api_error(e, notification)
 
+    async def _send_message(self, *, peer_id: int, message: str) -> None:
+        # Token and version travel in the POST body, not the query string, so the
+        # group token never lands in access logs or the URL. VK still returns
+        # HTTP 200 on a logical failure, carrying it in the body's `error` object.
+        response = await self.client.post(
+            _MESSAGES_SEND_URL,
+            data={
+                "access_token": self.config.group_token.get_secret_value(),
+                "v": _VK_API_VERSION,
+                "peer_id": peer_id,
+                "message": message,
+                # random_id 0 disables VK's uniqueness check, so every send goes
+                # through even when two notifications carry identical text; a
+                # fixed non-zero value would instead let VK drop the second as a
+                # duplicate. The outbox is the deduplication authority upstream.
+                "random_id": 0,
+            },
+        )
+        response.raise_for_status()
+        error = response.json().get("error")
+        if error is not None:
+            raise VkApiError(
+                code=error.get("error_code"),
+                message=error.get("error_msg", ""),
+            )
+
     @staticmethod
-    def _handle_api_error(error: VKAPIError, notification: Notification) -> None:
+    def _handle_api_error(error: VkApiError, notification: Notification) -> None:
         if error.code in _FLOOD_CODES:
             raise NotificationRetryAfter(
                 retry_after=_FLOOD_RETRY_AFTER_SECONDS

@@ -1,9 +1,10 @@
 from uuid import uuid7
 
+import httpx2
 import pytest
-from vkbottle import VKAPIError
 
-from fanfan.adapters.vk.notifier import VkNotifier
+from fanfan.adapters.vk.config import VkConfig
+from fanfan.adapters.vk.notifier import VkApiError, VkNotifier
 from fanfan.core.exceptions.notifications import (
     NotificationRetryAfter,
     UserNotReachable,
@@ -71,22 +72,36 @@ class _StubSocialIdentityGateway:
         return self._identity
 
 
-class _StubMessages:
-    """Stands in for vkbottle's `api.messages`, raising a preset error."""
+class _StubClient:
+    """Stands in for the injected httpx2 client.
 
-    def __init__(self, error: VKAPIError | None) -> None:
-        self._error = error
+    VK answers messages.send with HTTP 200 and either a ``response`` object or an
+    ``error`` object; this replays a chosen error code (or a success) and records
+    the form data POSTed so tests can assert on the rendered message.
+    """
+
+    def __init__(self, *, error_code: int | None = None) -> None:
+        self._error_code = error_code
         self.calls: list[dict] = []
 
-    async def send(self, **kwargs: object) -> None:
-        self.calls.append(kwargs)
-        if self._error is not None:
-            raise self._error
+    async def post(self, url: str, *, data: dict) -> httpx2.Response:
+        self.calls.append(data)
+        if self._error_code is not None:
+            body = {"error": {"error_code": self._error_code, "error_msg": "boom"}}
+        else:
+            body = {"response": {"peer_id": data["peer_id"], "message_id": 1}}
+        # A request must be attached so the notifier's raise_for_status() works.
+        return httpx2.Response(
+            status_code=200, json=body, request=httpx2.Request("POST", url)
+        )
 
 
-class _StubApi:
-    def __init__(self, error: VKAPIError | None = None) -> None:
-        self.messages = _StubMessages(error)
+def _vk_config() -> VkConfig:
+    return VkConfig(
+        client_id="app",
+        client_secret="app-secret",  # type: ignore[arg-type]
+        group_token="group-token",  # type: ignore[arg-type]
+    )
 
 
 def _web_config() -> WebConfig:
@@ -102,10 +117,11 @@ def _notifier(
     *,
     user: User | None,
     identity: SocialIdentity | None,
-    api: _StubApi,
+    client: _StubClient,
 ) -> VkNotifier:
     return VkNotifier(
-        api=api,  # type: ignore[arg-type]
+        client=client,  # type: ignore[arg-type]
+        config=_vk_config(),
         user_gateway=_StubUserGateway(user),  # type: ignore[arg-type]
         social_identity_gateway=_StubSocialIdentityGateway(identity),  # type: ignore[arg-type]
         web_config=_web_config(),
@@ -124,14 +140,19 @@ def _identity_for(user: User) -> SocialIdentity:
 
 async def test_sends_plain_text_to_linked_user() -> None:
     user = _make_user()
-    api = _StubApi()
-    notifier = _notifier(user=user, identity=_identity_for(user), api=api)
+    client = _StubClient()
+    notifier = _notifier(user=user, identity=_identity_for(user), client=client)
 
     await notifier.send_notification(_make_notification(user.id))
 
-    assert len(api.messages.calls) == 1
-    sent = api.messages.calls[0]
+    assert len(client.calls) == 1
+    sent = client.calls[0]
     assert sent["peer_id"] == VK_USER_ID
+    # The group token and pinned API version travel in the POST body.
+    assert sent["access_token"] == "group-token"
+    assert sent["v"] == "5.199"
+    # random_id 0 keeps VK from deduplicating distinct notifications.
+    assert sent["random_id"] == 0
     # The stored HTML body is flattened to plain text for VK.
     assert "<b>" not in sent["message"]
     assert "уведомления" in sent["message"]
@@ -141,30 +162,30 @@ async def test_sends_plain_text_to_linked_user() -> None:
 
 async def test_opted_out_user_is_unreachable() -> None:
     user = _make_user(receive_vk=False)
-    api = _StubApi()
-    notifier = _notifier(user=user, identity=_identity_for(user), api=api)
+    client = _StubClient()
+    notifier = _notifier(user=user, identity=_identity_for(user), client=client)
 
     with pytest.raises(UserNotReachable):
         await notifier.send_notification(_make_notification(user.id))
     # Short-circuits before touching the API.
-    assert api.messages.calls == []
+    assert client.calls == []
 
 
 async def test_unlinked_user_is_unreachable() -> None:
     user = _make_user()
-    api = _StubApi()
-    notifier = _notifier(user=user, identity=None, api=api)
+    client = _StubClient()
+    notifier = _notifier(user=user, identity=None, client=client)
 
     with pytest.raises(UserNotReachable):
         await notifier.send_notification(_make_notification(user.id))
-    assert api.messages.calls == []
+    assert client.calls == []
 
 
 async def test_messages_not_allowed_is_unreachable() -> None:
     user = _make_user()
     # 901: the user never allowed the group to message them.
-    api = _StubApi(VKAPIError[901](error_msg="not allowed"))
-    notifier = _notifier(user=user, identity=_identity_for(user), api=api)
+    client = _StubClient(error_code=901)
+    notifier = _notifier(user=user, identity=_identity_for(user), client=client)
 
     with pytest.raises(UserNotReachable):
         await notifier.send_notification(_make_notification(user.id))
@@ -173,8 +194,8 @@ async def test_messages_not_allowed_is_unreachable() -> None:
 async def test_flood_control_asks_to_retry() -> None:
     user = _make_user()
     # 6: too many requests — a transient condition worth retrying.
-    api = _StubApi(VKAPIError[6](error_msg="too many requests"))
-    notifier = _notifier(user=user, identity=_identity_for(user), api=api)
+    client = _StubClient(error_code=6)
+    notifier = _notifier(user=user, identity=_identity_for(user), client=client)
 
     with pytest.raises(NotificationRetryAfter):
         await notifier.send_notification(_make_notification(user.id))
@@ -183,8 +204,8 @@ async def test_flood_control_asks_to_retry() -> None:
 async def test_invalid_token_is_unreachable() -> None:
     user = _make_user()
     # 5: authorization failed — a channel misconfiguration, dropped per-message.
-    api = _StubApi(VKAPIError[5](error_msg="auth failed"))
-    notifier = _notifier(user=user, identity=_identity_for(user), api=api)
+    client = _StubClient(error_code=5)
+    notifier = _notifier(user=user, identity=_identity_for(user), client=client)
 
     with pytest.raises(UserNotReachable):
         await notifier.send_notification(_make_notification(user.id))
@@ -192,8 +213,8 @@ async def test_invalid_token_is_unreachable() -> None:
 
 async def test_unknown_error_propagates() -> None:
     user = _make_user()
-    api = _StubApi(VKAPIError[100500](error_msg="mystery"))
-    notifier = _notifier(user=user, identity=_identity_for(user), api=api)
+    client = _StubClient(error_code=100500)
+    notifier = _notifier(user=user, identity=_identity_for(user), client=client)
 
-    with pytest.raises(VKAPIError):
+    with pytest.raises(VkApiError):
         await notifier.send_notification(_make_notification(user.id))
