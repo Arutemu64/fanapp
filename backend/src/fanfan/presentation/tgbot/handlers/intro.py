@@ -12,12 +12,19 @@ from fanfan.presentation.web.config import WebConfig
 
 router = Router(name="intro")
 
-# The bot has no in-app features of its own: every interaction just points the
-# user back to the web app. The copy is intentionally short — audience is teen
-# to young adult, non-technical.
+# The bot has no in-app features of its own: it announces that everything moved
+# to the web app and points the user there. Audience is teen to young adult,
+# non-technical, so the copy is short and names the real sections. Wording and
+# vocabulary follow .agents/redpolitika.md (кириллица «ФАН ФАН», «программа»/
+# «выступления»/«уведомления», обращение на «ты», без восклицаний).
 INTRO_TEXT = (
-    "Привет! Это бот-компаньон конвента FAN FAN. Всё самое важное — "
-    "расписание, голосования и новости — теперь в веб-приложении.\n\n"
+    "Привет! Бот фестиваля анимации и фантастики ФАН ФАН "
+    "обновился до веб-приложения.\n\n"
+    "Что внутри:\n"
+    "• программа выступлений и подписки\n"
+    "• голосование за номинации\n"
+    "• уведомления, когда что-то меняется\n"
+    "• карта площадки и профиль с билетом\n\n"
     "Открой его по кнопке ниже 👇"
 )
 
