@@ -17,10 +17,7 @@ requires-python = ">=3.14.6"
 dependencies = [
     "adaptix>=3.0.0b12",
     "aiogram>=3.30.0",
-    # Held below 1.19: its checkconstraint-by-name autogenerate reports the
-    # type-bound Enum CHECK constraints as permanent drift (test_no_migration_drift).
-    # TODO: adopt 1.19+ once env.py excludes those constraints from autogenerate.
-    "alembic>=1.18.5,<1.19",
+    "alembic>=1.18.5",
     "apscheduler>=3.11.3,<4",
     "asyncpg>=0.31.0",
     "authlib>=1.7.2",
