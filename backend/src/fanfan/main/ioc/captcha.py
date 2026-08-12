@@ -14,9 +14,9 @@ from fanfan.application.ports.captcha import CaptchaVerifier
 
 
 class CaptchaProvider(Provider):
-    scope = Scope.REQUEST
+    scope = Scope.APP
 
-    @provide(scope=Scope.APP)
+    @provide
     def get_smartcaptcha_config(self, config: EnvConfig) -> SmartCaptchaConfig | None:
         return config.smartcaptcha
 
@@ -29,5 +29,7 @@ class CaptchaProvider(Provider):
             yield NoOpCaptchaVerifier()
             return
 
+        # APP scope: one client (and its pool) reused across every login check,
+        # instead of a fresh client per request.
         async with httpx2.AsyncClient(timeout=VALIDATE_TIMEOUT) as client:
             yield SmartCaptchaVerifier(config=config, client=client)
