@@ -13,7 +13,7 @@ description = "Backend for the FAN FAN convention companion web app: HTTP API, T
 # The LICENSE file lives at the monorepo root, outside this project dir, so
 # PEP 639 `license-files` cannot reference it (no `..` allowed).
 license = "MIT"
-requires-python = ">=3.14.7"
+requires-python = ">=3.14.6"
 dependencies = [
     "adaptix>=3.0.0b12",
     "aiogram>=3.30.0",
