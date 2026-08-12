@@ -22,7 +22,7 @@ from enum import StrEnum
 from typing import Any
 from urllib.parse import urlencode
 
-import httpx
+import httpx2
 from authlib.integrations.starlette_client import OAuthError, StarletteOAuth2App
 from pydantic import BaseModel, ValidationError
 from starlette.requests import Request
@@ -291,7 +291,7 @@ async def fetch_vk_claims(vk: StarletteOAuth2App, request: Request) -> VkClaims:
             request, device_id=device_id, body=urlencode({"state": state})
         )
 
-        async with httpx.AsyncClient() as http:
+        async with httpx2.AsyncClient() as http:
             resp = await http.post(
                 _VK_USERINFO_URL,
                 data={

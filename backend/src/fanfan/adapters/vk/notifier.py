@@ -1,9 +1,8 @@
 import logging
 
 import nh3
-from vkbottle import VKAPIError
-from vkbottle.api import API
 
+from fanfan.adapters.vk.client import VkApiClient, VkApiError
 from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.notifier import Notifier
@@ -35,12 +34,12 @@ _FLOOD_RETRY_AFTER_SECONDS = 1
 class VkNotifier(Notifier):
     def __init__(
         self,
-        api: API,
+        client: VkApiClient,
         user_gateway: UserGateway,
         social_identity_gateway: SocialIdentityGateway,
         web_config: WebConfig,
     ) -> None:
-        self.api = api
+        self.client = client
         self.user_gateway = user_gateway
         self.social_identity_gateway = social_identity_gateway
         self.web_config = web_config
@@ -71,16 +70,15 @@ class VkNotifier(Notifier):
             raise UserNotReachable
 
         try:
-            await self.api.messages.send(
+            await self.client.send_message(
                 peer_id=social_identity.provider_user_id,
                 message=self._render_message_text(notification),
-                random_id=0,
             )
-        except VKAPIError as e:
+        except VkApiError as e:
             self._handle_api_error(e, notification)
 
     @staticmethod
-    def _handle_api_error(error: VKAPIError, notification: Notification) -> None:
+    def _handle_api_error(error: VkApiError, notification: Notification) -> None:
         if error.code in _FLOOD_CODES:
             raise NotificationRetryAfter(
                 retry_after=_FLOOD_RETRY_AFTER_SECONDS

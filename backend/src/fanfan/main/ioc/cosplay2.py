@@ -24,7 +24,11 @@ class Cosplay2Provider(Provider):
             raise NoCosplay2ConfigProvided
         return config.cosplay2
 
-    @provide
+    # APP scope: one client (and its connection pool) is reused across every
+    # sync, so the paginated sweep and successive runs reuse the connection to
+    # the vendor instead of re-handshaking. The request-scoped source depends on
+    # it; the wrapper type keeps a bare httpx2.AsyncClient out of the container.
+    @provide(scope=Scope.APP)
     async def get_cosplay2_client(
         self, config: Cosplay2Config, retort: Retort
     ) -> AsyncIterable[Cosplay2Client]:
