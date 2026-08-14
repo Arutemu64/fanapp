@@ -218,7 +218,7 @@
 		</p>
 	{/if}
 
-	<div class="space-y-4">
+	<div class="space-y-6">
 		{#each groupedSchedule as node (node.key)}
 			{#if node.kind === 'interlude'}
 				<!-- A block-less row (break, opening, closing) sits between block sections
