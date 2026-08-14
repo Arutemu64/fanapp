@@ -29,8 +29,10 @@ class ScheduleEntry(BaseModel):
     # adapters/parsers/schedule.py. Sub-minute acts are expected, so this is
     # never rounded to whole minutes anywhere along the way.
     duration: int
-    nomination_title: str
-    block_title: str
+    # None for rows with no competition nomination / programme block — breaks,
+    # the opening and the closing. See _read_optional_text in the parser.
+    nomination_title: str | None
+    block_title: str | None
 
 
 class ImportScheduleInput(BaseModel):

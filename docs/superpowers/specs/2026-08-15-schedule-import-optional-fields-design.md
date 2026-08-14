@@ -99,15 +99,12 @@ schedule so filtering never re-identifies a group).
 
 - Interlude nodes reuse `EventCard` through a new `variant: 'default' |
   'interlude'` prop so mark-current, skip, the `Сейчас` highlight, and the
-  duration/countdown meta all keep working. `variant="interlude"`:
-  - drops the bordered block-card chrome for a lighter full-width strip,
-  - hides the subscribe bell (a "remind me before the break" reminder is not
-    meaningful).
-
-  The staff management strip stays — staff must be able to mark the opening/break
-  as the current event. Exact visual polish per the `impeccable` / `ui-ux-pro-max`
-  guidance at implementation time; the approved direction is a centered, muted
-  `⏸ Перерыв · 10 мин`-style row.
+  duration/countdown meta all keep working. `variant="interlude"` drops the
+  number column (interludes stand alone, not in the numbered list). The subscribe
+  bell and the staff strip both stay — subscribing to the opening/closing is
+  legitimate, and staff must be able to mark an interlude as the current event.
+- The page wraps interlude rows in a lighter, dashed-border container so they
+  read as an interlude between the white block cards, not as a block of their own.
 - Sticky block/nomination headers are unaffected; interludes scroll normally
   between them.
 - `createSearchIndex` already receives `block_title`/`nomination_title` as

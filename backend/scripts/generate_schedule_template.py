@@ -28,16 +28,22 @@ COLUMN_WIDTHS = {
 # glance — especially `duration`, which is whole *seconds* rather than minutes or
 # a time. The single-defile row is deliberately under a minute: an act that short
 # is real (walk on, pose, walk off), and it is the case a minutes column could
-# not express at all. The break row leaves `number` empty on purpose: it is the
-# one column that may be blank, and an organizer is far likelier to copy that
-# from the template than to read it in the guide.
+# not express at all.
+#
+# The opening, the break and the closing leave `number`, `nomination_title` and
+# `block_title` all blank on purpose: those cells may be empty, and an organizer
+# is far likelier to copy the shape from the template than to read it in the
+# guide. The break sits *between* the Косплей and Караоке blocks, modelling the
+# recommended shape — a block-less row renders as an interlude between sections,
+# so keeping mid-block pauses out of this sample avoids teaching a split block.
+# `None` for a text cell is written as a blank cell below.
 SAMPLE_ROWS = [
-    (1, "Открытие фестиваля", 900, "Вне конкурса", "Открытие"),
-    (2, "Дефиле «Наруто»", 45, "Одиночное дефиле", "Косплей"),
-    (None, "Перерыв", 600, "Вне конкурса", "Косплей"),
-    (3, "Сценка «Стальной алхимик»", 480, "Групповое дефиле", "Косплей"),
-    (4, "Вокал: «Унесённые призраками»", 210, "Вокал", "Караоке"),
-    (5, "Награждение и закрытие", 1200, "Вне конкурса", "Закрытие"),
+    (None, "Открытие фестиваля", 900, None, None),
+    (1, "Дефиле «Наруто»", 45, "Одиночное дефиле", "Косплей"),
+    (2, "Сценка «Стальной алхимик»", 480, "Групповое дефиле", "Косплей"),
+    (None, "Перерыв", 600, None, None),
+    (3, "Вокал: «Унесённые призраками»", 210, "Вокал", "Караоке"),
+    (None, "Награждение и закрытие", 1200, None, None),
 ]
 
 
@@ -60,8 +66,12 @@ def main() -> None:
             worksheet.write_number(row_index, 0, number, number_format)
         worksheet.write_string(row_index, 1, title)
         worksheet.write_number(row_index, 2, duration, number_format)
-        worksheet.write_string(row_index, 3, nomination_title)
-        worksheet.write_string(row_index, 4, block_title)
+        # Left blank for interludes (breaks, opening, closing) — a blank cell is
+        # what the parser reads back as "no nomination / no block".
+        if nomination_title is not None:
+            worksheet.write_string(row_index, 3, nomination_title)
+        if block_title is not None:
+            worksheet.write_string(row_index, 4, block_title)
 
     worksheet.freeze_panes(1, 0)
     workbook.close()

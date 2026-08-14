@@ -57,46 +57,46 @@ def test_parses_the_downloadable_template() -> None:
 
     assert schedule == [
         ScheduleEntry(
-            number=1,
+            number=None,
             title="Открытие фестиваля",
             duration=900,
-            nomination_title="Вне конкурса",
-            block_title="Открытие",
+            nomination_title=None,
+            block_title=None,
         ),
         ScheduleEntry(
-            number=2,
+            number=1,
             title="Дефиле «Наруто»",
             duration=45,
             nomination_title="Одиночное дефиле",
             block_title="Косплей",
         ),
         ScheduleEntry(
-            number=None,
-            title="Перерыв",
-            duration=600,
-            nomination_title="Вне конкурса",
-            block_title="Косплей",
-        ),
-        ScheduleEntry(
-            number=3,
+            number=2,
             title="Сценка «Стальной алхимик»",
             duration=480,
             nomination_title="Групповое дефиле",
             block_title="Косплей",
         ),
         ScheduleEntry(
-            number=4,
+            number=None,
+            title="Перерыв",
+            duration=600,
+            nomination_title=None,
+            block_title=None,
+        ),
+        ScheduleEntry(
+            number=3,
             title="Вокал: «Унесённые призраками»",
             duration=210,
             nomination_title="Вокал",
             block_title="Караоке",
         ),
         ScheduleEntry(
-            number=5,
+            number=None,
             title="Награждение и закрытие",
             duration=1200,
-            nomination_title="Вне конкурса",
-            block_title="Закрытие",
+            nomination_title=None,
+            block_title=None,
         ),
     ]
 
@@ -155,20 +155,34 @@ def test_rejects_an_empty_sheet() -> None:
     assert exc_info.value.details["reason"] == InvalidScheduleFileReason.EMPTY_FILE
 
 
-@pytest.mark.parametrize("column", ["title", "nomination_title", "block_title"])
-def test_rejects_a_blank_text_cell(column: str) -> None:
+def test_rejects_a_blank_title() -> None:
+    # `title` is a row's only human identity, so it stays required even though
+    # nomination and block no longer are.
     sheet = build_sheet(
         REQUIRED_COLUMNS,
-        [valid_row(), valid_row(number=2, **{column: "   "})],
+        [valid_row(), valid_row(number=2, title="   ")],
     )
 
     with pytest.raises(InvalidScheduleFile) as exc_info:
         parse_schedule_from_excel(sheet)
 
     assert exc_info.value.details["reason"] == InvalidScheduleFileReason.EMPTY_CELL
-    assert exc_info.value.details["column"] == column
+    assert exc_info.value.details["column"] == "title"
     # Row 1 is the header and row 2 is the valid entry, so the bad one is row 3.
     assert exc_info.value.details["row"] == 3
+
+
+@pytest.mark.parametrize("column", ["nomination_title", "block_title"])
+@pytest.mark.parametrize("blank", [None, "", "   "])
+def test_accepts_a_blank_nomination_or_block(column: str, blank: object) -> None:
+    # Breaks, the opening and the closing carry no nomination or block, so those
+    # cells may be blank — an empty cell, an empty string or whitespace all read
+    # back as None rather than forcing an invented placeholder.
+    sheet = build_sheet(REQUIRED_COLUMNS, [valid_row(**{column: blank})])
+
+    schedule = parse_schedule_from_excel(sheet)
+
+    assert getattr(schedule[0], column) is None
 
 
 @pytest.mark.parametrize("column", ["number", "duration"])
