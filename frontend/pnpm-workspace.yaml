@@ -4,6 +4,9 @@ allowBuilds:
   # keeps behavior unchanged rather than opting in to running it.
   '@sentry/cli': false
   esbuild: true
+  # @sveltejs/enhanced-img runs sharp at build to generate the map gallery's
+  # AVIF/WebP + resized variants; its postinstall links the native libvips.
+  sharp: true
 
 # Supply-chain cooldown: refuse versions published less than 7 days ago (value is
 # in minutes; 7 days = 10080). Matches Renovate's `minimumReleaseAge` (renovate.json)

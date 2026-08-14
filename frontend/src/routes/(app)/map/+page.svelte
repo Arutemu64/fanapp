@@ -1,49 +1,47 @@
 <script lang="ts">
+	import type { Picture } from '@sveltejs/enhanced-img';
+
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { CloseOutline, DownloadOutline } from 'flowbite-svelte-icons';
 
 	interface MapEntry {
 		id: string;
-		src: string;
+		picture: Picture;
 		alt: string;
-		width: number;
-		height: number;
 		// File name used when downloading the map.
 		filename: string;
 	}
 
-	// Per-file metadata keyed by the source file name. Image URLs are discovered
-	// from the bundle below, so adding a map needs only a new file in
-	// $lib/assets/map plus an entry here (alt text + intrinsic dimensions, which
-	// keep the layout stable while the image loads).
-	const META: Record<string, { alt: string; width: number; height: number }> = {
-		'map_1.jpg': { alt: 'Карта площадки 1', width: 1280, height: 831 },
-		'map_2_3.jpg': { alt: 'Карта площадки 2 и 3', width: 1280, height: 787 }
+	// Alt text is the only per-file metadata that can't be derived from the file:
+	// it's human-authored Russian and required for accessibility. Intrinsic
+	// dimensions, formats and responsive sizes come from <enhanced:img> at build
+	// time, so dropping in a map of any proportions needs only its alt entry here.
+	const ALT: Record<string, string> = {
+		'map_1.jpg': 'Карта площадки 1',
+		'map_2_3.jpg': 'Карта площадки 2 и 3'
 	};
 
-	// Vite resolves these imports to content-hashed URLs at build time, so a
-	// swapped map busts every cache layer (browser, CDN, service worker)
-	// automatically. eager = inline the URL strings; ?url = the asset URL rather
-	// than the decoded module.
-	const modules = import.meta.glob('$lib/assets/map/*.jpg', {
+	// enhanced-img processes each match at build into a Picture (AVIF/WebP + sized
+	// variants, content-hashed so a swap busts every cache layer — browser, CDN,
+	// service worker). eager inlines the objects; import:'default' unwraps each
+	// module to its Picture.
+	const modules = import.meta.glob<Picture>('$lib/assets/map/*.jpg', {
 		eager: true,
-		query: '?url',
+		query: { enhanced: true },
 		import: 'default'
 	});
 
-	// Build the gallery from the discovered files, attaching metadata by name and
+	// Build the gallery from the discovered files, attaching alt text by name and
 	// sorting by id so the order is stable regardless of glob iteration order.
 	const maps: MapEntry[] = Object.entries(modules)
-		.map(([path, src]) => {
+		.map(([path, picture]) => {
 			const filename = path.split('/').pop() ?? '';
-			const meta = META[filename];
-			if (!meta) return null;
+			const alt = ALT[filename];
+			if (!alt) return null;
 			return {
 				id: filename.replace(/\.[^.]+$/, ''),
-				src,
-				alt: meta.alt,
-				width: meta.width,
-				height: meta.height,
+				picture,
+				alt,
 				filename
 			};
 		})
@@ -78,12 +76,11 @@
 			class="block w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-100 p-2 shadow-sm transition-colors hover:bg-gray-200/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-gray-800/80"
 			aria-label={`Открыть карту на весь экран: ${map.alt}`}
 		>
-			<img
-				src={map.src}
+			<enhanced:img
+				src={map.picture}
 				alt={map.alt}
-				width={map.width}
-				height={map.height}
 				loading="lazy"
+				sizes="(min-width: 1024px) 1024px, 100vw"
 				class="max-h-[70dvh] w-full rounded-xl object-contain"
 			/>
 		</button>
@@ -113,15 +110,17 @@
 		></button>
 
 		<!-- max-w caps the size on desktop so the image isn't stretched. relative keeps it above the backdrop. -->
-		<img
-			src={active.src}
+		<enhanced:img
+			src={active.picture}
 			alt={active.alt}
+			sizes="(min-width: 1024px) 1024px, 100vw"
 			class="relative max-h-full w-full max-w-5xl rounded-xl object-contain shadow-2xl"
 		/>
 
 		<div class="absolute end-4 top-4 z-10 flex items-center gap-2">
+			<!-- Download the full-size fallback (img.src is the largest, original-format variant). -->
 			<a
-				href={active.src}
+				href={active.picture.img.src}
 				download={active.filename}
 				rel="external"
 				class="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"

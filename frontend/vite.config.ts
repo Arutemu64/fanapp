@@ -1,4 +1,5 @@
 import { sentrySvelteKit } from '@sentry/sveltekit';
+import { enhancedImages } from '@sveltejs/enhanced-img';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath } from 'node:url';
@@ -52,6 +53,10 @@ export default defineConfig(({ mode }) => {
 				}
 			}),
 			tailwindcss(),
+			// Processes <enhanced:img> on the map page into AVIF/WebP + resized
+			// variants. Returns a Promise<Plugin[]>, which Vite resolves in place;
+			// must precede sveltekit().
+			enhancedImages(),
 			sveltekit(),
 			Icons({
 				compiler: 'svelte'
