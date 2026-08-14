@@ -90,7 +90,7 @@ Always review a generated migration: autogenerate emits renames as drop+create a
 │   └── common/          # Shared static assets, path helpers
 ├── frontend/src/
 │   ├── routes/          # Pages & layouts
-│   └── lib/             # assets/ components/ api/ types/ services/ utils/ constants/
+│   └── lib/             # assets/ components/ api/ types/ services/ utils/ constants/ data/
 ├── shared/openapi/      # Shared OpenAPI spec
 ├── config/              # Committed, non-secret infra config
 └── secrets/             # Gitignored runtime secrets (VAPID PEM); mounted read-only
