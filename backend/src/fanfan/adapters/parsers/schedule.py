@@ -74,6 +74,20 @@ def _read_text(value: object, *, column: str, row: int) -> str:
     return value.strip()
 
 
+def _read_optional_text(value: object, *, column: str, row: int) -> str | None:
+    """Read text from a cell that is allowed to be empty.
+
+    Breaks, the opening and the closing carry no nomination or block, so those
+    cells may be left blank instead of forcing the organizer to invent a
+    placeholder. A blank cell (None, or a string that is only whitespace) means
+    "no value"; anything else is read as ordinary text.
+    """
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return None
+
+    return _read_text(value, column=column, row=row)
+
+
 def _read_dataframe(file: typing.BinaryIO) -> pl.DataFrame:
     # fastexcel (the calamine engine) only accepts a path or raw bytes, not a
     # file object, so read the upload into memory before handing it to polars.
@@ -123,10 +137,10 @@ def parse_schedule_from_excel(file: typing.BinaryIO) -> list[ScheduleEntry]:
                 number=number,
                 title=_read_text(row["title"], column="title", row=row_index),
                 duration=_read_int(row["duration"], column="duration", row=row_index),
-                nomination_title=_read_text(
+                nomination_title=_read_optional_text(
                     row["nomination_title"], column="nomination_title", row=row_index
                 ),
-                block_title=_read_text(
+                block_title=_read_optional_text(
                     row["block_title"], column="block_title", row=row_index
                 ),
             )

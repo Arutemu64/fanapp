@@ -27,11 +27,13 @@
 		},
 		{
 			name: 'nomination_title',
-			description: 'Номинация, например «Одиночное дефиле».'
+			description:
+				'Номинация, например «Одиночное дефиле». Можно оставить пустой — у перерыва, открытия и закрытия номинации нет.'
 		},
 		{
 			name: 'block_title',
-			description: 'Блок программы, например «Косплей».'
+			description:
+				'Блок программы, например «Косплей». Можно оставить пустым — строка без блока (перерыв, открытие, закрытие) встаёт между блоками.'
 		}
 	];
 </script>
@@ -66,9 +68,11 @@
 	</dl>
 
 	<p class="mt-3 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-		Все пять колонок обязательны. Пустой может быть только ячейка в колонке <span class="font-mono"
-			>number</span
-		>. Лишние колонки игнорируются.
+		Все пять колонок обязательны, но ячейки в <span class="font-mono">number</span>,
+		<span class="font-mono">nomination_title</span> и <span class="font-mono">block_title</span>
+		можно оставлять пустыми. В каждой строке обязательны только <span class="font-mono">title</span>
+		и
+		<span class="font-mono">duration</span>. Лишние колонки игнорируются.
 	</p>
 
 	<Alert color="yellow" class="mt-4">

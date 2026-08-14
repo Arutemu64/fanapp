@@ -7,7 +7,11 @@
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
-	import { buildScheduleGroups, filterScheduleGroups } from '$lib/utils/scheduleGrouping';
+	import {
+		buildScheduleGroups,
+		filterScheduleGroups,
+		type ScheduleBlockGroup
+	} from '$lib/utils/scheduleGrouping';
 	import { createSearchIndex } from '$lib/utils/search';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
 	import {
@@ -215,59 +219,20 @@
 	{/if}
 
 	<div class="space-y-4">
-		{#each groupedSchedule as block (block.key)}
-			<section class="space-y-2">
-				<!-- Keep the active block visible while the user scrolls through dense rows. -->
-				<!-- Inter (not display): block headers are repeated structural data, and DESIGN reserves Unbounded for rare identity moments. Size/weight + filled count chip carry the hierarchy; no accent stripe. -->
-				<div class="sticky top-0 z-20">
-					<div
-						class="flex min-h-11 items-center justify-between gap-3 overflow-hidden rounded-xl border border-gray-200 bg-white/95 px-3 py-2 shadow-sm backdrop-blur dark:border-gray-700 dark:bg-gray-900/95"
-					>
-						<h2
-							class="truncate text-sm font-semibold tracking-tight text-gray-900 sm:text-base dark:text-white"
-						>
-							{block.title}
-						</h2>
-						<span
-							class="shrink-0 rounded-full bg-primary-50 px-2 py-0.5 text-xs font-bold text-primary-600 tabular-nums dark:bg-primary-900/30 dark:text-primary-300"
-						>
-							{block.eventCount}
-						</span>
-					</div>
+		{#each groupedSchedule as node (node.key)}
+			{#if node.kind === 'interlude'}
+				<!-- A block-less row (break, opening, closing) sits between block sections
+				     as a lighter, dashed row so it reads as an interlude, not a block card.
+				     Still interactive (mark-current, skip) via EventCard's interlude variant. -->
+				<div
+					data-event-id={node.event.id}
+					class="scroll-mt-28 overflow-clip rounded-xl border border-dashed border-gray-300 bg-gray-50/70 dark:border-gray-600 dark:bg-gray-800/40"
+				>
+					<EventCard event={node.event} {schedule} {currentEvent} {user} variant="interlude" />
 				</div>
-
-				{#each block.nominations as nomination (nomination.key)}
-					<!-- Clip the card edges without creating a new scroll container, so sticky headers keep working. -->
-					<div
-						class="relative overflow-clip rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800/80"
-					>
-						<!-- Stick the nomination header below the block header for better context. -->
-						<div
-							class="sticky top-12 z-10 rounded-t-xl border-b border-gray-100 bg-white/95 px-3 py-2 backdrop-blur dark:border-gray-700 dark:bg-gray-800/95"
-						>
-							<div class="flex items-center justify-between gap-3">
-								<h3 class="min-w-0 truncate text-sm font-semibold text-gray-700 dark:text-gray-300">
-									{nomination.title}
-								</h3>
-								<span class="shrink-0 text-xs text-gray-500 tabular-nums dark:text-gray-400">
-									{nomination.events.length}
-								</span>
-							</div>
-						</div>
-
-						<!-- Row divider sits one step stronger than the in-card staff-strip
-						     border (gray-100 / gray-800), so event boundaries read as the
-						     primary split and the strip separator stays subordinate. -->
-						<div class="divide-y divide-gray-200 dark:divide-gray-700">
-							{#each nomination.events as event (event.id)}
-								<div data-event-id={event.id} class="scroll-mt-28">
-									<EventCard {event} {schedule} {currentEvent} {user} />
-								</div>
-							{/each}
-						</div>
-					</div>
-				{/each}
-			</section>
+			{:else}
+				{@render blockSection(node)}
+			{/if}
 		{:else}
 			<div
 				class="rounded-2xl border border-dashed border-gray-300 bg-white px-4 py-10 text-center sm:py-14 dark:border-gray-700 dark:bg-gray-800"
@@ -338,3 +303,64 @@
 		</div>
 	{/if}
 </div>
+
+<!-- A block section: sticky block header + its nomination cards. Taken as a
+	snippet so the {#each} above narrows a node to a concrete ScheduleBlockGroup
+	before rendering, keeping the union out of this markup. -->
+{#snippet blockSection(block: ScheduleBlockGroup)}
+	<section class="space-y-2">
+		<!-- Keep the active block visible while the user scrolls through dense rows. -->
+		<!-- Inter (not display): block headers are repeated structural data, and DESIGN reserves Unbounded for rare identity moments. Size/weight + filled count chip carry the hierarchy; no accent stripe. -->
+		<div class="sticky top-0 z-20">
+			<div
+				class="flex min-h-11 items-center justify-between gap-3 overflow-hidden rounded-xl border border-gray-200 bg-white/95 px-3 py-2 shadow-sm backdrop-blur dark:border-gray-700 dark:bg-gray-900/95"
+			>
+				<h2
+					class="truncate text-sm font-semibold tracking-tight text-gray-900 sm:text-base dark:text-white"
+				>
+					{block.title}
+				</h2>
+				<span
+					class="shrink-0 rounded-full bg-primary-50 px-2 py-0.5 text-xs font-bold text-primary-600 tabular-nums dark:bg-primary-900/30 dark:text-primary-300"
+				>
+					{block.eventCount}
+				</span>
+			</div>
+		</div>
+
+		{#each block.nominations as nomination (nomination.key)}
+			<!-- Clip the card edges without creating a new scroll container, so sticky headers keep working. -->
+			<div
+				class="relative overflow-clip rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800/80"
+			>
+				<!-- Stick the nomination header below the block header for better context.
+				     Skipped when a block's rows carry no nomination — there is nothing to label. -->
+				{#if nomination.title !== null}
+					<div
+						class="sticky top-12 z-10 rounded-t-xl border-b border-gray-100 bg-white/95 px-3 py-2 backdrop-blur dark:border-gray-700 dark:bg-gray-800/95"
+					>
+						<div class="flex items-center justify-between gap-3">
+							<h3 class="min-w-0 truncate text-sm font-semibold text-gray-700 dark:text-gray-300">
+								{nomination.title}
+							</h3>
+							<span class="shrink-0 text-xs text-gray-500 tabular-nums dark:text-gray-400">
+								{nomination.events.length}
+							</span>
+						</div>
+					</div>
+				{/if}
+
+				<!-- Row divider sits one step stronger than the in-card staff-strip
+				     border (gray-100 / gray-800), so event boundaries read as the
+				     primary split and the strip separator stays subordinate. -->
+				<div class="divide-y divide-gray-200 dark:divide-gray-700">
+					{#each nomination.events as event (event.id)}
+						<div data-event-id={event.id} class="scroll-mt-28">
+							<EventCard {event} {schedule} {currentEvent} {user} />
+						</div>
+					{/each}
+				</div>
+			</div>
+		{/each}
+	</section>
+{/snippet}

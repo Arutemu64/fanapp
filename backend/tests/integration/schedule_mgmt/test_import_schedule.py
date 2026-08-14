@@ -169,6 +169,36 @@ async def test_import_replaces_numberless_events(
     assert await schedule_gateway.get_by_id(existing_break.id) is None
 
 
+async def test_import_persists_null_nomination_and_block(
+    dishka_request: AsyncContainer,
+    schedule_editor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+):
+    interactor = await dishka_request.get(ImportSchedule)
+    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    login(schedule_editor)
+
+    # An interlude (a break, the opening or the closing) carries no nomination
+    # and no block; those arrive as None and must be stored as None rather than
+    # coerced to a placeholder.
+    interlude = ScheduleEntry(
+        number=None,
+        title="Перерыв",
+        duration=600,
+        nomination_title=None,
+        block_title=None,
+    )
+
+    await interactor(ImportScheduleInput(schedule=[_entry(1, "Открытие"), interlude]))
+
+    schedule = sorted(await schedule_gateway.list_all(), key=lambda e: e.order)
+    stored_interlude = schedule[1]
+    assert stored_interlude.title == "Перерыв"
+    assert stored_interlude.nomination_title is None
+    assert stored_interlude.block_title is None
+
+
 async def test_import_without_permission_raises_access_denied(
     dishka_request: AsyncContainer,
     visitor: User,
