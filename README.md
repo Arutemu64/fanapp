@@ -22,10 +22,9 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 - **Schedule**: public event schedule with live changes, per-user subscriptions, and organizer management/import tools.
 - **Voting**: nominations and voting, with cosplay data synced from Cosplay2.
 - **Notifications**: in-app feed plus Web Push (VAPID) for broadcasts and per-user alerts.
-- **Auth**: sign in via Telegram, email code, one-time login code, or credentials; cookie-based sessions.
+- **Auth**: sign in via VK ID, email code, one-time login code, or credentials; cookie-based sessions.
 - **Profiles & tickets**: user profile, linked tickets (synced from TicketsCloud), account connections, and security settings.
 - **Feedback**: user feedback submission.
-- **Telegram bot**: companion bot sharing the same backend and domain logic.
 - **Live updates**: Server-Sent Events (SSE) push real-time changes to the client.
 
 ## Stack
@@ -33,7 +32,7 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 | Layer | Tech |
 |---|---|
 | Frontend | SvelteKit (Svelte 5 runes), Flowbite-Svelte, Tailwind CSS v4, `pnpm` |
-| Backend | FastAPI, aiogram (Telegram bot), SQLAlchemy + Alembic, Dishka (DI), `uv` |
+| Backend | FastAPI, aiogram (Telegram Bot API), SQLAlchemy + Alembic, Dishka (DI), `uv` |
 | Data / infra | PostgreSQL, Redis (Valkey), NATS + FastStream |
 | Jobs | APScheduler (periodic syncs), FastStream consumers (domain events) |
 | Tooling | Docker Compose, `just` task runner |
@@ -74,7 +73,8 @@ third-party credentials, so you can start exploring immediately:
 - `BOT__*`: the placeholder values are format-valid, so the web API starts with
   them. Telegram login and Telegram notifications stay disabled until you set a
   real bot (create one via [@BotFather](https://t.me/BotFather)); email and
-  credentials login work without it. The bot *process* needs a real token to run.
+  credentials login work without it. There is no standalone bot process — the
+  token is used only as a Bot API client for the notifier and OAuth login.
 - `MAIL__*` (SMTP): optional. Leave unset and outgoing emails are logged instead
   of sent (email login/confirmation codes appear in the app logs).
 - `PUSH__SUBSCRIBER`: your contact email for Web Push.

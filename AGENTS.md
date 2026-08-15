@@ -84,7 +84,7 @@ Always review a generated migration: autogenerate emits renames as drop+create a
 ├── backend/src/fanfan/
 │   ├── core/            # Pure domain: models, value objects, exceptions
 │   ├── application/     # Interactors/use cases, DTOs, ports, services
-│   ├── presentation/    # HTTP (web/), Telegram (tgbot/), NATS (faststream/), CLI (cli/), APScheduler cron jobs (scheduler/)
+│   ├── presentation/    # HTTP (web/), NATS (faststream/), CLI (cli/), APScheduler cron jobs (scheduler/)
 │   ├── adapters/        # Infrastructure: DB, Redis, NATS, Telegram, external clients
 │   ├── main/            # Entrypoints (web, cli, faststream, scheduler — which registers the outbox relay) + Dishka DI container
 │   └── common/          # Shared static assets, path helpers

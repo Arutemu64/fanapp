@@ -54,10 +54,6 @@ services:
     image: ghcr.io/arutemu64/fanapp-backend:${IMAGE_TAG:-latest}
     build: !reset null
 
-  bot:
-    image: ghcr.io/arutemu64/fanapp-backend:${IMAGE_TAG:-latest}
-    build: !reset null
-
   migration:
     image: ghcr.io/arutemu64/fanapp-backend:${IMAGE_TAG:-latest}
     build: !reset null

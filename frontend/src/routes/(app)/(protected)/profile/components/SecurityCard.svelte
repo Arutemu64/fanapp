@@ -11,7 +11,6 @@
 		LinkOutline,
 		ShieldOutline
 	} from 'flowbite-svelte-icons';
-	import IconTelegram from '~icons/simple-icons/telegram';
 	import IconVk from '~icons/simple-icons/vk';
 
 	import ChangeEmailModal from './ChangeEmailModal.svelte';
@@ -34,29 +33,10 @@
 	let emailStatusColor = $derived<'green' | 'gray'>(user.email ? 'green' : 'gray');
 	let emailStatusLabel = $derived(user.email ? 'Подтверждена' : 'Не добавлена');
 
-	let telegramAccount = $derived(
-		user.social_identities.find((si) => si.provider === 'telegram') ?? null
-	);
 	let vkAccount = $derived(user.social_identities.find((si) => si.provider === 'vk') ?? null);
 
 	// The unlink DELETEs differ only in path + copy; SocialConnectionRow owns the
 	// confirm-and-loading UI and calls one of these to perform the action.
-	async function unlinkTelegram() {
-		try {
-			const { error, response } = await client.DELETE('/me/connections/telegram', {});
-
-			if (error || !response.ok) {
-				toastService.error(error);
-				return;
-			}
-
-			toastService.add('Telegram отвязан', 'success');
-			await onUpdate?.();
-		} catch (err) {
-			toastService.error(err);
-		}
-	}
-
 	async function unlinkVk() {
 		try {
 			const { error, response } = await client.DELETE('/me/connections/vk', {});
@@ -145,21 +125,6 @@
 				</Button>
 			</div>
 		</div>
-
-		<SocialConnectionRow
-			label="Telegram"
-			connected={telegramAccount !== null}
-			connectedDescription="Через Telegram можно быстро входить и получать уведомления от бота."
-			notConnectedDescription="Подключи Telegram для быстрого входа без пароля."
-			connectHref={`${PUBLIC_API_URL}/me/connections/telegram`}
-			unlinkPrompt="Отвязать Telegram?"
-			hasEmail={Boolean(user.email)}
-			onUnlink={unlinkTelegram}
-		>
-			{#snippet icon()}
-				<IconTelegram class="h-4 w-4 text-gray-500 dark:text-gray-400" />
-			{/snippet}
-		</SocialConnectionRow>
 
 		<SocialConnectionRow
 			label="VK ID"

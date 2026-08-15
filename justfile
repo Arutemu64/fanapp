@@ -65,12 +65,6 @@ backend-stream:
 backend-scheduler:
     cd backend && uv run watchfiles "python -m fanfan.main.scheduler" src
 
-# Telegram bot on the host (pair with `just run-infra`). Long polling, DM-only.
-# aiogram has no native reload, so watchfiles restarts it on source changes
-# (parity with backend-scheduler).
-backend-bot:
-    cd backend && uv run watchfiles "python -m fanfan.main.tgbot" src
-
 backend-generate-openapi:
     cd backend && uv run python -m fanfan.main.generate_openapi
 
@@ -195,5 +189,4 @@ dev:
     @echo "  just backend-dev"
     @echo "  just backend-stream"
     @echo "  just backend-scheduler"
-    @echo "  just backend-bot"
     @echo "  just frontend-dev"

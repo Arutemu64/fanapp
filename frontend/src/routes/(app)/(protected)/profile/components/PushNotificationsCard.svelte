@@ -30,16 +30,12 @@
 	// then the rollback in updateSettings reassigns from `user.settings` on failure.
 	// Because they derive from the prop, a successful refetch re-syncs them for free.
 	let receiveAll = $derived(user.settings.receive_all_announcements);
-	let receiveTelegram = $derived(user.settings.receive_telegram_notifications);
 	let receiveVk = $derived(user.settings.receive_vk_notifications);
 	let isSavingSettings = $state(false);
 	let isSendingTest = $state(false);
 	const pwa = getPwaService();
 	let showIosPwaModal = $state(false);
 	let showVkModal = $state(false);
-	let hasTelegramAccount = $derived(
-		user.social_identities.some((socialIdentity) => socialIdentity.provider === 'telegram')
-	);
 	let hasVkAccount = $derived(
 		user.social_identities.some((socialIdentity) => socialIdentity.provider === 'vk')
 	);
@@ -218,17 +214,6 @@
 		);
 	}
 
-	function toggleReceiveTelegram() {
-		void updateSettings(
-			{
-				receive_telegram_notifications: receiveTelegram
-			},
-			() => {
-				receiveTelegram = user.settings.receive_telegram_notifications;
-			}
-		);
-	}
-
 	function toggleReceiveVk() {
 		void updateSettings(
 			{
@@ -299,28 +284,6 @@
 				}}
 				color="primary"
 			/>
-		</div>
-
-		<div class="border-t border-gray-200 p-3 sm:p-4 dark:border-gray-700">
-			<div class="flex items-start justify-between gap-3">
-				<div class="min-w-0">
-					<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Telegram</span>
-					<p class="mt-1 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
-						{#if hasTelegramAccount}
-							Получать сообщения в Telegram-боте.
-						{:else}
-							Сначала подключи Telegram в блоке «Способы входа».
-						{/if}
-					</p>
-				</div>
-				<Toggle
-					bind:checked={receiveTelegram}
-					aria-label="Получать уведомления в Telegram"
-					disabled={isSavingSettings || !hasTelegramAccount}
-					onchange={toggleReceiveTelegram}
-					color="primary"
-				/>
-			</div>
 		</div>
 
 		<div class="border-t border-gray-200 p-3 sm:p-4 dark:border-gray-700">
