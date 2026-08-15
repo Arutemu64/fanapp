@@ -320,13 +320,16 @@ services:
     # Postgres is the heaviest and most critical service, so it gets the largest
     # memory ceiling. The cpus ceiling can't exceed the host core count — a 2.0
     # here is what failed to create on the 1-vCPU VPS — so it caps at the whole
-    # single core; memory sits comfortably above a small-load working set (the
-    # image's 128M shared_buffers plus per-connection and maintenance overhead).
+    # single core. Memory is sized to the engine's own worst case, not the idle
+    # working set: shared_buffers 128M + maintenance_work_mem (64M default, up to
+    # 3 autovacuum workers) + max_connections 60 x work_mem 8M can approach this
+    # ceiling under a heavy-sort burst, so keep ~20% headroom to stay off the OOM
+    # killer (Postgres has no graceful degradation — it gets killed).
     deploy:
       resources:
         limits:
           cpus: '1.0'
-          memory: 448M
+          memory: 512M
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
