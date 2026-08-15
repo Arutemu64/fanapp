@@ -10,6 +10,13 @@ from fanfan.core.events.base import AppEvent
 # constant so this adapter never imports the presentation layer.
 _STREAM_NAME = "stream"
 
+# Bound the wait for the JetStream store-ack. publish() otherwise inherits
+# nats-py's context timeout, which can be unbounded — and the relay runs under
+# APScheduler max_instances=1, so a single publish that never returns silently
+# freezes every later tick with no log. A bounded wait raises instead, so the
+# tick fails loudly and retries next interval.
+_PUBLISH_TIMEOUT_SECONDS = 10.0
+
 
 class NatsEventBroker(EventBroker):
     def __init__(self, broker: NatsBroker):
@@ -29,4 +36,5 @@ class NatsEventBroker(EventBroker):
             subject=subject,
             stream=_STREAM_NAME,
             headers={"Nats-Msg-Id": message_id},
+            timeout=_PUBLISH_TIMEOUT_SECONDS,
         )
