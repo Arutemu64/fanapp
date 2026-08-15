@@ -281,7 +281,7 @@
 						onclick={scrollToTop}
 						aria-label="Подняться наверх"
 					>
-						<ChevronUpOutline class="h-4 w-4 shrink-0" />
+						<ChevronUpOutline class="h-5 w-5 shrink-0" />
 						<span class="sr-only lg:not-sr-only lg:ml-2">Наверх</span>
 					</Button>
 				{/if}
@@ -295,7 +295,7 @@
 						onclick={scrollToCurrentEvent}
 						aria-label="Перейти к текущему выступлению"
 					>
-						<PlaySolid class="h-4 w-4 shrink-0" />
+						<PlaySolid class="h-5 w-5 shrink-0" />
 						<span class="sr-only lg:not-sr-only lg:ml-2">Текущее</span>
 					</Button>
 				{/if}
