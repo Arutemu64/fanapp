@@ -82,6 +82,13 @@ services:
     environment:
       DB__HOST: "db"
       DB__APPLICATION_NAME: "fanfan-api"
+      # Pools are sized per service so their combined backend count stays well
+      # under Postgres' max_connections (60, set on db). The api is the only side
+      # with real request concurrency, so it keeps the largest pool; the workers
+      # below are trimmed. Each backend is a ~5-10 MB process, so oversized pools
+      # cost real RAM on a 2 GB host. Overrides the .env DB__POOL_SIZE default.
+      DB__POOL_SIZE: "10"
+      DB__MAX_OVERFLOW: "10"
       REDIS__HOST: "redis"
       NATS__HOST: "nats"
       UVICORN_HOST: "0.0.0.0"
@@ -127,6 +134,9 @@ services:
     environment:
       DB__HOST: "db"
       DB__APPLICATION_NAME: "fanfan-faststream"
+      # Trimmed pool: a NATS consumer with modest DB write concurrency. See api.
+      DB__POOL_SIZE: "5"
+      DB__MAX_OVERFLOW: "5"
       REDIS__HOST: "redis"
       NATS__HOST: "nats"
       PUSH__PRIVATE_KEY_PATH: "/app/secrets/private_key.pem"
@@ -164,6 +174,9 @@ services:
     environment:
       DB__HOST: "db"
       DB__APPLICATION_NAME: "fanfan-scheduler"
+      # Smallest pool: cron jobs run a few sequential queries, never a burst.
+      DB__POOL_SIZE: "2"
+      DB__MAX_OVERFLOW: "3"
       REDIS__HOST: "redis"
       NATS__HOST: "nats"
     command: [ "scheduler" ]
@@ -199,6 +212,9 @@ services:
     environment:
       DB__HOST: "db"
       DB__APPLICATION_NAME: "fanfan-bot"
+      # Modest pool: Telegram update handlers, low steady concurrency. See api.
+      DB__POOL_SIZE: "3"
+      DB__MAX_OVERFLOW: "5"
       REDIS__HOST: "redis"
       NATS__HOST: "nats"
     command: [ "bot" ]
@@ -269,6 +285,29 @@ services:
     # Postgres uses /dev/shm for parallel workers; Docker's 64M default is too
     # small and surfaces as "no space left on device" under load.
     shm_size: 128mb
+    # Otherwise Postgres runs on image defaults. These override the ones that are
+    # wrong for a 2 GB SSD host: effective_cache_size defaults to 4 GB (a planner
+    # hint far above the page cache this host can spare, so it caps at 512M);
+    # random_page_cost defaults to 4.0, a spinning-disk cost, so 1.1 + a higher
+    # effective_io_concurrency tell the planner this is SSD. jit=off keeps the
+    # single core from spending it JIT-compiling OLTP queries. max_connections
+    # tracks the per-service pool ceilings (see api/faststream/scheduler/bot).
+    # shared_buffers stays at the image default (128M, ~28% of this container's
+    # cap and matched to shm_size above); raising it would starve work_mem.
+    command:
+      - postgres
+      - -c
+      - effective_cache_size=512MB
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - effective_io_concurrency=200
+      - -c
+      - work_mem=8MB
+      - -c
+      - jit=off
+      - -c
+      - max_connections=60
     # Postgres is the heaviest and most critical service, so it gets the largest
     # memory ceiling. The cpus ceiling can't exceed the host core count — a 2.0
     # here is what failed to create on the 1-vCPU VPS — so it caps at the whole
