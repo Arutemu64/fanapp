@@ -189,7 +189,12 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 128M
+          # Runs the same broker + Dishka DI + sync-executor stack as faststream,
+          # so it needs the same class of memory. At 128M the process thrashed on
+          # page faults (near-zero progress, restart loop) and the outbox relay
+          # never published — it wedged before or during its first NATS publish.
+          # Matches the api ceiling; keep in step with faststream's limit.
+          memory: 256M
     healthcheck:
       disable: true
     profiles: [ "core" ]

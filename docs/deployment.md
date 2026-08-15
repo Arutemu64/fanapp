@@ -140,7 +140,7 @@ The shape of it:
 
 - **Resource limits** (`deploy.resources.limits` in
   [`docker-compose.yml`](../docker-compose.yml)) are sized so the steady-state
-  memory total stays near 1.6 GB, leaving ~20% for the kernel, Docker and sshd.
+  memory total stays near 1.7 GB, leaving ~15% for the kernel, Docker and sshd.
   A `cpus` limit may never exceed the host's core count or the container fails to
   create. Plain `docker compose up` (non-swarm) enforces `limits` only —
   `reservations` are ignored ([docker/compose#10046](https://github.com/docker/compose/issues/10046)) —
