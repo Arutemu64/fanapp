@@ -13,11 +13,6 @@
 	import TiktokIcon from '~icons/simple-icons/tiktok';
 	import VkIcon from '~icons/simple-icons/vk';
 
-	// Bundled (not static/) so Vite content-hashes the file: swapping the art
-	// busts every cache — including the precached PWA copy — with no stale-image
-	// risk. It's emitted into `build`, which the service worker already precaches.
-	import heroArt from './main.webp';
-
 	let { festivalStart, festivalEnded }: { festivalStart: string; festivalEnded: boolean } =
 		$props();
 
@@ -132,11 +127,18 @@
 					</span>
 				</div>
 			{:else}
-				<img
-					src={heroArt}
+				<!-- Static src, not a ?enhanced import: only the static-path form feeds
+					 `sizes` back into the build, so it emits the full resized ladder — an
+					 imported Picture would ship just 1x/2x widths. Output is still
+					 content-hashed into `build`, which the service worker precaches, so
+					 swapping the art busts every cache with no stale copy. LCP element:
+					 eager + fetchpriority="high", never lazy. `sizes` tracks the layout
+					 (full-bleed below lg, ~480px half-column from lg); width/height are
+					 injected from the intrinsic size to prevent layout shift. -->
+				<enhanced:img
+					src="./main.webp"
 					alt="Участники фестиваля ФАН ФАН на сцене"
-					width="1500"
-					height="844"
+					sizes="(min-width: 1024px) 480px, 100vw"
 					loading="eager"
 					decoding="async"
 					fetchpriority="high"
