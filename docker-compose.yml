@@ -151,7 +151,11 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 192M
+          # Idles near 110M but this is where the heavy work runs — full
+          # TicketsCloud/cosplay2 sync sweeps and broadcast fan-out load real
+          # data and spike well above idle, so leave headroom over the ~130M
+          # shared-image baseline. Matches the scheduler/api ceiling.
+          memory: 256M
     healthcheck:
       disable: true
     profiles: [ "core" ]
