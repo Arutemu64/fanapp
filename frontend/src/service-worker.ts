@@ -70,8 +70,17 @@ const CACHE = `cache-${version}`;
 // in dev because the `push`/`notificationclick` handlers below stay registered.
 const dev = build.length === 0;
 
+// Content-hashed responsive image variants (AVIF/WebP/… emitted by
+// <enhanced:img>) live in `build`. Precaching the whole set would store every
+// width and format at install when a device only ever displays one — wasteful of
+// bandwidth and storage, and explicitly discouraged for responsive image sets
+// (https://developer.chrome.com/docs/workbox/precaching-dos-and-donts). Keep them
+// out of the precache and serve them cache-first at runtime instead (see below).
+const IMAGE_ASSET = /\.(avif|webp|png|jpe?g|gif)$/;
+const imageBuild = build.filter((path) => IMAGE_ASSET.test(path));
+
 const ASSETS = [
-	...build, // the app itself
+	...build.filter((path) => !IMAGE_ASSET.test(path)), // app shell (JS/CSS), minus image sets
 	...files // everything in `static`
 ];
 
@@ -142,6 +151,19 @@ self.addEventListener('fetch', (event) => {
 		// whose path happens to match a precached file (e.g. any host's
 		// /robots.txt) would be answered with our local copy.
 		if (url.origin === self.location.origin && ASSETS.includes(url.pathname)) {
+			const response = await cache.match(url.pathname);
+
+			if (response) {
+				return response;
+			}
+		}
+
+		// Responsive image variants are deliberately not precached (see ASSETS), but
+		// they're content-hashed and immutable, so cache-first is safe: a hit can
+		// never be stale. The network branch below cache.puts on the first request,
+		// so every load after that is served from cache — the instant repeat-load of
+		// precaching without storing widths and formats the device never requests.
+		if (url.origin === self.location.origin && imageBuild.includes(url.pathname)) {
 			const response = await cache.match(url.pathname);
 
 			if (response) {
