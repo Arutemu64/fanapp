@@ -8,6 +8,12 @@
 # The upstream ports below must match the host ports Compose publishes
 # (API_PORT / FRONTEND_PORT in .env, default 8000 / 3000). If you override
 # either var, update the matching reverse_proxy target here.
+#
+# These 127.0.0.1 targets assume Caddy runs ON THE HOST. If you run Caddy as its
+# own container (one global proxy fronting several stacks), the container's
+# loopback is not the host's and these get "connection refused" — route over the
+# shared `proxy` network to fanapp-api:8000 / fanapp-frontend:80 instead. See
+# docs/deployment.md "Caddy as its own container (shared `proxy` network)".
 :80 {
     # Security headers for every response on the single origin — the SPA
     # document (which the backend never serves) as well as the API. Values

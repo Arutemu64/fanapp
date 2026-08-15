@@ -230,3 +230,49 @@ that absolute URL (e.g. `https://api.example.com`) — this requires a rebuild,
 since `PUBLIC_API_URL` is baked into the bundle at build time — and set
 `WEB__CORS_ALLOW_ORIGINS` to the public app origin exactly (scheme + host, no
 trailing slash, no path).
+
+### Caddy as its own container (shared `proxy` network)
+
+[`Caddyfile.example`](../Caddyfile.example) and the sections above assume Caddy
+runs **on the host**, where its `reverse_proxy` targets (`127.0.0.1:3000` /
+`:8000`) hit the loopback-published Compose ports directly. If instead you run a
+**single global Caddy container** that fronts several independent stacks on the
+VPS, that no longer holds: inside the container `127.0.0.1` is the container's
+own loopback, so those targets get `connection refused`. `host.docker.internal`
+does not rescue it either — it resolves to the host's *bridge* IP, and the app
+ports are bound to `127.0.0.1` only, a different interface (republishing them on
+`0.0.0.0` to reach them would expose the frontend and API to the internet).
+
+The fix is a shared Docker network. The **prod overlay**
+([`docker-compose.prod.yml`](../docker-compose.prod.yml)) joins `frontend` and
+`api` to an `external` network named `proxy` — the community-standard name for a
+proxy-to-many-stacks network — so the proxy reaches them over Docker DNS instead
+of the host. It lives in the overlay, not the base file, so local `run-dev` and
+CI (base only) never require the external network to exist.
+
+Set it up once on the server, before the first `just deploy`:
+
+```sh
+docker network create proxy
+docker network connect proxy <caddy-container>   # attach your global Caddy
+```
+
+Then point the proxy at the **project-prefixed aliases**, not the bare service
+names:
+
+```caddy
+handle_path /api* { reverse_proxy http://fanapp-api:8000 }
+handle          { reverse_proxy http://fanapp-frontend:80 }
+```
+
+The aliases (`fanapp-api`, `fanapp-frontend`) are deliberate: on a shared
+network Docker DNS also resolves the bare `api` / `frontend`, and if another
+stack on `proxy` defines a service by the same name, DNS returns both containers
+and round-robins between them silently. The prefixed alias stays unambiguous no
+matter what else joins the network. The internal service-to-service names
+(`db`, `redis`, `nats`, and `api` for same-stack callers) are unaffected — they
+resolve on the private `backend-network` / `frontend-network` as before.
+
+The base file's loopback host bindings (`127.0.0.1:3000` / `:8000`) are kept, so
+the SSH-tunnel/debug seam still works; with alias routing the proxy no longer
+depends on them.
