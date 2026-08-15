@@ -13,15 +13,15 @@ export interface MapEntry {
 // dimensions, formats and responsive sizes come from <enhanced:img> at build
 // time, so dropping in a map of any proportions needs only its alt entry here.
 const ALT: Record<string, string> = {
-	'map_1.jpg': 'Карта площадки 1',
-	'map_2_3.jpg': 'Карта площадки 2 и 3'
+	'map_1.png': 'Карта 1 этажа',
+	'map_2.png': 'Карта 2 и 3 этажа'
 };
 
 // enhanced-img processes each match at build into a Picture (AVIF/WebP + sized
 // variants, content-hashed so a swap busts every cache layer — browser, CDN,
 // service worker). eager inlines the objects; import:'default' unwraps each
 // module to its Picture.
-const modules = import.meta.glob<Picture>('$lib/assets/map/*.jpg', {
+const modules = import.meta.glob<Picture>('$lib/assets/map/*.{jpg,jpeg,png}', {
 	eager: true,
 	query: { enhanced: true },
 	import: 'default'
