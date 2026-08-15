@@ -51,8 +51,8 @@ From a fork, five things need to change:
 `/api`, which is what keeps the bundle domain-agnostic (see [Reverse proxy
 (Caddy)](#reverse-proxy-caddy-https-and-http-testing) below).
 
-Everything else — database, Telegram bot, SMTP, TicketsCloud, Cosplay2 — is
-runtime config in `.env` and needs no rebuild.
+Everything else — database, Telegram (login + notifier), SMTP, TicketsCloud,
+Cosplay2 — is runtime config in `.env` and needs no rebuild.
 
 ## What the server needs on disk
 

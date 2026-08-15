@@ -196,44 +196,6 @@ services:
     networks:
       - backend-network
 
-  bot:
-    build: ./backend
-    depends_on:
-      migration:
-        condition: service_completed_successfully
-      nats:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./secrets:/app/secrets:ro
-    env_file:
-      - .env
-    environment:
-      DB__HOST: "db"
-      DB__APPLICATION_NAME: "fanfan-bot"
-      # Modest pool: Telegram update handlers, low steady concurrency. See api.
-      DB__POOL_SIZE: "3"
-      DB__MAX_OVERFLOW: "5"
-      REDIS__HOST: "redis"
-      NATS__HOST: "nats"
-    command: [ "bot" ]
-    restart: unless-stopped
-    init: true
-    read_only: true
-    tmpfs:
-      - /tmp
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 128M
-    healthcheck:
-      disable: true
-    profiles: [ "core" ]
-    networks:
-      - backend-network
-
   migration:
     build: ./backend
     env_file:
@@ -291,7 +253,7 @@ services:
     # random_page_cost defaults to 4.0, a spinning-disk cost, so 1.1 + a higher
     # effective_io_concurrency tell the planner this is SSD. jit=off keeps the
     # single core from spending it JIT-compiling OLTP queries. max_connections
-    # tracks the per-service pool ceilings (see api/faststream/scheduler/bot).
+    # tracks the per-service pool ceilings (see api/faststream/scheduler).
     # shared_buffers stays at the image default (128M, ~28% of this container's
     # cap and matched to shm_size above); raising it would starve work_mem.
     command:

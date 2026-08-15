@@ -241,7 +241,7 @@ providers plus test overrides:
   `EnvConfig` is not built in tests), `TestSessionProvider` (rollback session),
   and the fakes above.
 * `skip_validation=True` is intentional: external integrations (NATS broker,
-  Telegram bot, SMTP, OAuth) are not wired, so interactors needing them are not
+  Telegram Bot API, SMTP, OAuth) are not wired, so interactors needing them are not
   yet resolvable. Everything else resolves. Both vendor syncs now sit behind
   ports with fakes (`FakeTicketsSource`, `FakeCosplaySource`), so the sync
   interactors are testable. When the remaining integrations gain a port + fake,

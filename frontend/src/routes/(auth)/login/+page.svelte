@@ -5,7 +5,6 @@
 	import { Button, Card, Spinner } from 'flowbite-svelte';
 	import { EnvelopeSolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
-	import IconTelegram from '~icons/simple-icons/telegram';
 	import IconVk from '~icons/simple-icons/vk';
 
 	import type { PageProps } from './$types';
@@ -36,17 +35,7 @@
 	// Starting an OAuth login is a full-page navigation that waits on our backend
 	// and on the provider's discovery/authorize page, so the button has to say it
 	// was heard. One flag per provider prevents a double-click on either.
-	let isOpeningTelegram = $state(false);
 	let isOpeningVk = $state(false);
-
-	function handleTelegramClick(event: MouseEvent) {
-		if (isOpeningTelegram) {
-			event.preventDefault();
-			return;
-		}
-
-		isOpeningTelegram = true;
-	}
 
 	function handleVkClick(event: MouseEvent) {
 		if (isOpeningVk) {
@@ -86,7 +75,6 @@
 	on that restore (and on a normal load, where the flags are already false). -->
 <svelte:window
 	onpageshow={() => {
-		isOpeningTelegram = false;
 		isOpeningVk = false;
 	}}
 />
@@ -112,22 +100,6 @@
 			<!-- Use the configured API base so OAuth works in every environment.
 				Flowbite drops `disabled` on an href Button (it renders a bare <a>),
 				so the pending state is aria-disabled plus the guard in the handler. -->
-			<Button
-				href={`${PUBLIC_API_URL}/auth/oauth/telegram/start`}
-				color="alternative"
-				class="min-h-11 w-full font-medium"
-				aria-disabled={isOpeningTelegram}
-				onclick={handleTelegramClick}
-			>
-				{#if isOpeningTelegram}
-					<Spinner class="me-2 h-5 w-5" />
-					Открываем Telegram…
-				{:else}
-					<IconTelegram class="me-2 h-5 w-5 text-sky-500" />
-					Войти через Telegram
-				{/if}
-			</Button>
-
 			<Button
 				href={`${PUBLIC_API_URL}/auth/oauth/vk/start`}
 				color="alternative"
