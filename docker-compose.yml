@@ -48,13 +48,20 @@ services:
       - '127.0.0.1:${FRONTEND_PORT:-3000}:80'
     restart: unless-stopped
     init: true
-    # Limits are conservative defaults sized for a small VPS — tune to the host.
-    # A hit limit shows up as throttling (CPU) or an OOM kill (memory).
+    # Resource ceilings are budgeted for the smallest target host: a 1-vCPU /
+    # 2 GB VPS. Plain `docker compose up` (non-swarm, how we deploy) enforces
+    # `limits` but silently ignores `reservations` (docker/compose#10046), so we
+    # set limits only. A `cpus` limit may not exceed the host core count, or the
+    # container fails to create. Memory limits are hard caps — breach one and the
+    # container is OOM-killed — so each is sized above the service's real peak,
+    # not at it; the sum across services stays near 1.6 GB, leaving ~20% of the
+    # 2 GB for the kernel, Docker and sshd. Raise everything to match a bigger host.
+    # A hit limit shows up as CPU throttling or an OOM kill.
     deploy:
       resources:
         limits:
           cpus: '0.5'
-          memory: 128M
+          memory: 64M
     profiles: [ "core" ]
     networks:
       - frontend-network
@@ -98,10 +105,7 @@ services:
       resources:
         limits:
           cpus: '1.0'
-          memory: 512M
-        reservations:
-          cpus: '0.1'
-          memory: 128M
+          memory: 256M
     profiles: [ "core" ]
     networks:
       - frontend-network
@@ -136,11 +140,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
-          memory: 512M
-        reservations:
-          cpus: '0.1'
-          memory: 128M
+          cpus: '0.5'
+          memory: 192M
     healthcheck:
       disable: true
     profiles: [ "core" ]
@@ -175,10 +176,7 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 64M
+          memory: 128M
     healthcheck:
       disable: true
     profiles: [ "core" ]
@@ -213,10 +211,7 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 64M
+          memory: 128M
     healthcheck:
       disable: true
     profiles: [ "core" ]
@@ -243,6 +238,13 @@ services:
     command: [ "alembic", "upgrade", "head" ]
     restart: on-failure
     init: true
+    # One-shot: runs to completion before api/workers start (they depend on it),
+    # so this ceiling overlaps only with db/redis/nats, never the app processes.
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 256M
     profiles: [ "core" ]
     networks:
       - backend-network
@@ -267,11 +269,16 @@ services:
     # Postgres uses /dev/shm for parallel workers; Docker's 64M default is too
     # small and surfaces as "no space left on device" under load.
     shm_size: 128mb
+    # Postgres is the heaviest and most critical service, so it gets the largest
+    # memory ceiling. The cpus ceiling can't exceed the host core count — a 2.0
+    # here is what failed to create on the 1-vCPU VPS — so it caps at the whole
+    # single core; memory sits comfortably above a small-load working set (the
+    # image's 128M shared_buffers plus per-connection and maintenance overhead).
     deploy:
       resources:
         limits:
-          cpus: '2.0'
-          memory: 1G
+          cpus: '1.0'
+          memory: 448M
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
@@ -294,7 +301,7 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 256M
+          memory: 96M
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8222/healthz?js-enabled-only=true"]
@@ -329,7 +336,7 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 256M
+          memory: 96M
     restart: unless-stopped
     profiles: [ "ops" ]
     networks:
