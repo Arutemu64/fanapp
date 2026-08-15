@@ -25,12 +25,17 @@
 
 <SectionIntro description="Нажми на карту, чтобы открыть её на весь экран." />
 
-<div class="space-y-4">
+<!-- Stacked on mobile, side by side from lg so the now-portrait maps sit next to
+each other on desktop. items-start keeps each frame at its own height. -->
+<div class="grid items-start gap-4 lg:grid-cols-2">
 	{#each maps as map (map.id)}
+		<!-- w-fit makes the frame hug the image so a portrait map is centred without
+		side letterboxing; the image sizes to its intrinsic ratio, capped to the
+		container width and 70dvh so a tall map never overflows the viewport. -->
 		<button
 			type="button"
 			onclick={() => (active = map)}
-			class="block w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-100 p-2 shadow-sm transition-colors hover:bg-gray-200/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-gray-800/80"
+			class="mx-auto block w-fit max-w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-100 p-2 shadow-sm transition-colors hover:bg-gray-200/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-gray-800/80"
 			aria-label={`Открыть карту на весь экран: ${map.alt}`}
 		>
 			<enhanced:img
@@ -38,12 +43,12 @@
 				alt={map.alt}
 				loading="lazy"
 				sizes="(min-width: 1024px) 1024px, 100vw"
-				class="max-h-[70dvh] w-full rounded-xl object-contain"
+				class="block max-h-[70dvh] w-auto max-w-full rounded-xl"
 			/>
 		</button>
 	{:else}
 		<div
-			class="rounded-2xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400"
+			class="rounded-2xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 lg:col-span-2 dark:border-gray-700 dark:text-gray-400"
 		>
 			Карты пока не добавлены.
 		</div>
@@ -66,12 +71,17 @@
 			aria-label="Закрыть просмотр"
 		></button>
 
-		<!-- max-w caps the size on desktop so the image isn't stretched. relative keeps it above the backdrop. -->
+		<!-- Caps are viewport units, not max-h-full: enhanced:img wraps the <img> in
+		an inline <picture> with no definite height, so a percentage max-height never
+		resolves and a tall portrait map overflows the viewport. 2rem matches the
+		overlay's p-4. w-auto sizes to the intrinsic ratio and never upscales.
+		relative keeps it above the backdrop, and hugging means the black area beside
+		a portrait map is the backdrop button, so a tap there still closes the viewer. -->
 		<enhanced:img
 			src={active.picture}
 			alt={active.alt}
 			sizes="(min-width: 1024px) 1024px, 100vw"
-			class="relative max-h-full w-full max-w-5xl rounded-xl object-contain shadow-2xl"
+			class="relative block max-h-[calc(100dvh-2rem)] w-auto max-w-[calc(100vw-2rem)] rounded-xl shadow-2xl"
 		/>
 
 		<div class="absolute end-4 top-4 z-10 flex items-center gap-2">
