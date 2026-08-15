@@ -132,6 +132,35 @@ IMAGE_TAG=sha-1a2b3c4
 Every push to `main` publishes a `sha-<short-sha>` tag, and every `v*` tag
 publishes that release, so any past build is reachable by tag.
 
+## Sizing and tuning for a small VPS
+
+The Compose resource limits and database settings are budgeted for the smallest
+target host — a **1-vCPU / 2 GB** VPS — and documented inline where they are set.
+The shape of it:
+
+- **Resource limits** (`deploy.resources.limits` in
+  [`docker-compose.yml`](../docker-compose.yml)) are sized so the steady-state
+  memory total stays near 1.6 GB, leaving ~20% for the kernel, Docker and sshd.
+  A `cpus` limit may never exceed the host's core count or the container fails to
+  create. Plain `docker compose up` (non-swarm) enforces `limits` only —
+  `reservations` are ignored ([docker/compose#10046](https://github.com/docker/compose/issues/10046)) —
+  so the file sets limits and nothing else. Raise everything to match a bigger host.
+- **Postgres** otherwise runs on image defaults; the `db` service overrides only
+  the ones wrong for this host — `effective_cache_size` (image default 4 GB
+  overstates the page cache available here), `random_page_cost` /
+  `effective_io_concurrency` (SSD, not spinning disk), `jit=off` (don't spend the
+  single core JIT-compiling OLTP queries), and `max_connections` (tracks the pools
+  below). `shared_buffers` stays at the 128 MB default — ~28% of the container cap,
+  matched to `shm_size`.
+- **Connection pools** are trimmed per service: only the api carries real request
+  concurrency, so the workers use small pools. The combined backend count stays
+  under `max_connections`, and fewer idle backends means less RAM (each is a
+  process). Host runs (`just backend-dev`) use the `.env` defaults.
+
+If you move to a larger host, the levers to raise in order are: the vCPU count
+(the real ceiling under load), then the memory limits, then `shared_buffers` and
+`effective_cache_size` to match.
+
 ## Reverse proxy (Caddy): HTTPS and HTTP testing
 
 The app is meant to run behind a reverse proxy that puts the frontend and the API

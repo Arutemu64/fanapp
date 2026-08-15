@@ -48,13 +48,20 @@ services:
       - '127.0.0.1:${FRONTEND_PORT:-3000}:80'
     restart: unless-stopped
     init: true
-    # Limits are conservative defaults sized for a small VPS — tune to the host.
-    # A hit limit shows up as throttling (CPU) or an OOM kill (memory).
+    # Resource ceilings are budgeted for the smallest target host: a 1-vCPU /
+    # 2 GB VPS. Plain `docker compose up` (non-swarm, how we deploy) enforces
+    # `limits` but silently ignores `reservations` (docker/compose#10046), so we
+    # set limits only. A `cpus` limit may not exceed the host core count, or the
+    # container fails to create. Memory limits are hard caps — breach one and the
+    # container is OOM-killed — so each is sized above the service's real peak,
+    # not at it; the sum across services stays near 1.6 GB, leaving ~20% of the
+    # 2 GB for the kernel, Docker and sshd. Raise everything to match a bigger host.
+    # A hit limit shows up as CPU throttling or an OOM kill.
     deploy:
       resources:
         limits:
           cpus: '0.5'
-          memory: 128M
+          memory: 64M
     profiles: [ "core" ]
     networks:
       - frontend-network
@@ -75,6 +82,13 @@ services:
     environment:
       DB__HOST: "db"
       DB__APPLICATION_NAME: "fanfan-api"
+      # Pools are sized per service so their combined backend count stays well
+      # under Postgres' max_connections (60, set on db). The api is the only side
+      # with real request concurrency, so it keeps the largest pool; the workers
+      # below are trimmed. Each backend is a ~5-10 MB process, so oversized pools
+      # cost real RAM on a 2 GB host. Overrides the .env DB__POOL_SIZE default.
+      DB__POOL_SIZE: "10"
+      DB__MAX_OVERFLOW: "10"
       REDIS__HOST: "redis"
       NATS__HOST: "nats"
       UVICORN_HOST: "0.0.0.0"
@@ -98,10 +112,7 @@ services:
       resources:
         limits:
           cpus: '1.0'
-          memory: 512M
-        reservations:
-          cpus: '0.1'
-          memory: 128M
+          memory: 256M
     profiles: [ "core" ]
     networks:
       - frontend-network
@@ -123,6 +134,9 @@ services:
     environment:
       DB__HOST: "db"
       DB__APPLICATION_NAME: "fanfan-faststream"
+      # Trimmed pool: a NATS consumer with modest DB write concurrency. See api.
+      DB__POOL_SIZE: "5"
+      DB__MAX_OVERFLOW: "5"
       REDIS__HOST: "redis"
       NATS__HOST: "nats"
       PUSH__PRIVATE_KEY_PATH: "/app/secrets/private_key.pem"
@@ -136,11 +150,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
-          memory: 512M
-        reservations:
-          cpus: '0.1'
-          memory: 128M
+          cpus: '0.5'
+          memory: 192M
     healthcheck:
       disable: true
     profiles: [ "core" ]
@@ -163,6 +174,9 @@ services:
     environment:
       DB__HOST: "db"
       DB__APPLICATION_NAME: "fanfan-scheduler"
+      # Smallest pool: cron jobs run a few sequential queries, never a burst.
+      DB__POOL_SIZE: "2"
+      DB__MAX_OVERFLOW: "3"
       REDIS__HOST: "redis"
       NATS__HOST: "nats"
     command: [ "scheduler" ]
@@ -175,10 +189,7 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 64M
+          memory: 128M
     healthcheck:
       disable: true
     profiles: [ "core" ]
@@ -201,6 +212,9 @@ services:
     environment:
       DB__HOST: "db"
       DB__APPLICATION_NAME: "fanfan-bot"
+      # Modest pool: Telegram update handlers, low steady concurrency. See api.
+      DB__POOL_SIZE: "3"
+      DB__MAX_OVERFLOW: "5"
       REDIS__HOST: "redis"
       NATS__HOST: "nats"
     command: [ "bot" ]
@@ -213,10 +227,7 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 64M
+          memory: 128M
     healthcheck:
       disable: true
     profiles: [ "core" ]
@@ -243,6 +254,13 @@ services:
     command: [ "alembic", "upgrade", "head" ]
     restart: on-failure
     init: true
+    # One-shot: runs to completion before api/workers start (they depend on it),
+    # so this ceiling overlaps only with db/redis/nats, never the app processes.
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 256M
     profiles: [ "core" ]
     networks:
       - backend-network
@@ -267,11 +285,39 @@ services:
     # Postgres uses /dev/shm for parallel workers; Docker's 64M default is too
     # small and surfaces as "no space left on device" under load.
     shm_size: 128mb
+    # Otherwise Postgres runs on image defaults. These override the ones that are
+    # wrong for a 2 GB SSD host: effective_cache_size defaults to 4 GB (a planner
+    # hint far above the page cache this host can spare, so it caps at 512M);
+    # random_page_cost defaults to 4.0, a spinning-disk cost, so 1.1 + a higher
+    # effective_io_concurrency tell the planner this is SSD. jit=off keeps the
+    # single core from spending it JIT-compiling OLTP queries. max_connections
+    # tracks the per-service pool ceilings (see api/faststream/scheduler/bot).
+    # shared_buffers stays at the image default (128M, ~28% of this container's
+    # cap and matched to shm_size above); raising it would starve work_mem.
+    command:
+      - postgres
+      - -c
+      - effective_cache_size=512MB
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - effective_io_concurrency=200
+      - -c
+      - work_mem=8MB
+      - -c
+      - jit=off
+      - -c
+      - max_connections=60
+    # Postgres is the heaviest and most critical service, so it gets the largest
+    # memory ceiling. The cpus ceiling can't exceed the host core count — a 2.0
+    # here is what failed to create on the 1-vCPU VPS — so it caps at the whole
+    # single core; memory sits comfortably above a small-load working set (the
+    # image's 128M shared_buffers plus per-connection and maintenance overhead).
     deploy:
       resources:
         limits:
-          cpus: '2.0'
-          memory: 1G
+          cpus: '1.0'
+          memory: 448M
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
@@ -294,7 +340,7 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 256M
+          memory: 96M
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8222/healthz?js-enabled-only=true"]
@@ -329,7 +375,7 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 256M
+          memory: 96M
     restart: unless-stopped
     profiles: [ "ops" ]
     networks:
