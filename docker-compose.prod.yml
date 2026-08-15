@@ -23,10 +23,28 @@ services:
   frontend:
     image: ghcr.io/arutemu64/fanapp-frontend:${IMAGE_TAG:-latest}
     build: !reset null
+    # Join the shared `proxy` network so a reverse proxy that runs as its own
+    # container on the VPS (fronting several independent stacks, not part of this
+    # Compose project) can reach the SPA by name. The host-port bindings in the
+    # base file stay — they remain the SSH-tunnel/debug seam. The alias is
+    # project-prefixed on purpose: on a shared network Docker DNS resolves the
+    # bare service name (`frontend`) too, and if another stack on `proxy` also
+    # has a `frontend`, DNS returns both and round-robins silently. Point the
+    # proxy at `fanapp-frontend:80` to stay unambiguous. Only added on the deploy
+    # path (prod overlay) so local `run-dev` / CI don't require the external net.
+    networks:
+      proxy:
+        aliases: [fanapp-frontend]
 
   api:
     image: ghcr.io/arutemu64/fanapp-backend:${IMAGE_TAG:-latest}
     build: !reset null
+    # Same shared-proxy join as frontend — the API must be on `proxy` too or the
+    # proxy's /api route stays refused. Route it at `fanapp-api:8000`. Keeps its
+    # base-file frontend-network / backend-network memberships (Compose merges).
+    networks:
+      proxy:
+        aliases: [fanapp-api]
 
   faststream:
     image: ghcr.io/arutemu64/fanapp-backend:${IMAGE_TAG:-latest}
@@ -43,3 +61,12 @@ services:
   migration:
     image: ghcr.io/arutemu64/fanapp-backend:${IMAGE_TAG:-latest}
     build: !reset null
+
+# The reverse proxy on the VPS runs as its own container outside this project, so
+# the network it shares with us is `external` — Compose attaches to it but never
+# creates or removes it. Create it once on the server before the first deploy:
+#   docker network create proxy
+# then connect the proxy container to it (`docker network connect proxy <caddy>`).
+networks:
+  proxy:
+    external: true
