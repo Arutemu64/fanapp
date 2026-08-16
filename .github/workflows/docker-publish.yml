@@ -118,5 +118,13 @@ jobs:
           # the exported GHA build cache below.
           secrets: |
             ${{ matrix.name == 'frontend' && format('sentry_auth_token={0}', secrets.SENTRY_AUTH_TOKEN) || '' }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Registry-backed layer cache on GHCR, not the GitHub Actions cache.
+          # Two mode=max image caches (backend + frontend) overran the 10 GB
+          # Actions-cache pool and evicted the pnpm/uv dependency caches that
+          # share it. A dedicated `:buildcache` tag per image lives in GHCR,
+          # outside that pool — it neither evicts those caches nor gets evicted,
+          # and gives each image its own ref instead of colliding on one default
+          # gha scope. image-manifest + oci-mediatypes store the cache as a
+          # standard OCI artifact, which GHCR requires.
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ matrix.image }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ matrix.image }}:buildcache,mode=max,image-manifest=true,oci-mediatypes=true
