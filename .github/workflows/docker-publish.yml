@@ -56,6 +56,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # A mixed-case owner login (github.repository keeps it verbatim) yields a
+      # ref like ghcr.io/Arutemu64/…, which buildx rejects on the cache exporter
+      # ("repository name must be lowercase"). metadata-action lowercases its own
+      # tags, but the raw cache-from/to refs below do not — so lowercase once here.
+      - name: Lowercase image ref
+        id: image
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ matrix.image }}
+        run: echo "ref=${IMAGE,,}" >> "$GITHUB_OUTPUT"
+
       # Derives image tags/labels from the git ref. metadata-action lowercases
       # the image name, so a mixed-case owner login still produces a valid tag.
       - name: Image metadata
@@ -127,5 +137,5 @@ jobs:
           # and gives each image its own ref instead of colliding on one default
           # gha scope. image-manifest + oci-mediatypes store the cache as a
           # standard OCI artifact, which GHCR requires.
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ matrix.image }}:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ matrix.image }}:buildcache,mode=max,image-manifest=true,oci-mediatypes=true
+          cache-from: type=registry,ref=${{ steps.image.outputs.ref }}:buildcache
+          cache-to: type=registry,ref=${{ steps.image.outputs.ref }}:buildcache,mode=max,image-manifest=true,oci-mediatypes=true
