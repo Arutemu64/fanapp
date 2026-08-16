@@ -31,7 +31,7 @@
 	let changeEmailModalOpen = $state(false);
 	const toastService = getToastService();
 	let emailStatusColor = $derived<'green' | 'gray'>(user.email ? 'green' : 'gray');
-	let emailStatusLabel = $derived(user.email ? 'Подтверждена' : 'Не добавлена');
+	let emailStatusLabel = $derived(user.email ? 'Привязана' : 'Не добавлена');
 
 	let vkAccount = $derived(user.social_identities.find((si) => si.provider === 'vk') ?? null);
 
