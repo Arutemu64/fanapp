@@ -125,7 +125,7 @@ fi
 # them together via a customManager (docs/dependencies.md). Without that manager
 # this line is invisible to Renovate and drifts behind the other pnpm sites.
 echo "[setup] Installing pnpm 11..."
-npm install -g pnpm@11.20.0 || echo "[setup]   WARN: pnpm install failed."
+npm install -g pnpm@11.21.0 || echo "[setup]   WARN: pnpm install failed."
 
 # CodeGraph - the code-navigation knowledge graph (see AGENTS.md "Code
 # Navigation"). Installed from the npm registry, NOT the project's recommended
