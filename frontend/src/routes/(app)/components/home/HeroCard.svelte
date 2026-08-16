@@ -132,13 +132,19 @@
 					 imported Picture would ship just 1x/2x widths. Output is still
 					 content-hashed into `build`, which the service worker precaches, so
 					 swapping the art busts every cache with no stale copy. LCP element:
-					 eager + fetchpriority="high", never lazy. `sizes` tracks the layout
-					 (full-bleed below lg, ~480px half-column from lg); width/height are
-					 injected from the intrinsic size to prevent layout shift. -->
+					 eager + fetchpriority="high", never lazy. width/height are injected
+					 from the intrinsic size to prevent layout shift.
+					 `sizes` below lg is the full-bleed width (100vw). From lg the column
+					 is only ~480px wide, but `lg:aspect-auto` + `lg:items-stretch` let it
+					 grow to the text column's full height (~500px) and `object-cover` then
+					 scales the 16/9 art to cover that taller box — an effective render
+					 width of ~500·16/9 ≈ 890px, not 480. `sizes` is width-only and can't
+					 see that upscale, so it must state the *cover* width (~900px) or the
+					 browser fetches a 480-target rung and paints it blurry on desktop. -->
 				<enhanced:img
 					src="./main.webp"
 					alt="Участники фестиваля ФАН ФАН на сцене"
-					sizes="(min-width: 1024px) 480px, 100vw"
+					sizes="(min-width: 1024px) 900px, 100vw"
 					loading="eager"
 					decoding="async"
 					fetchpriority="high"
