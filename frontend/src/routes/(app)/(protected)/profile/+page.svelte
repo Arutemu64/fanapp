@@ -105,7 +105,15 @@
 		FastAPI
 	</p>
 	<p class="mt-0.5 flex items-center justify-center gap-1">
-		С любовью, Arutemu64
+		С любовью,
+		<a
+			href="https://arutemu64.com/"
+			target="_blank"
+			rel="noopener noreferrer"
+			class="underline hover:text-gray-700 dark:hover:text-gray-300"
+		>
+			Arutemu64
+		</a>
 		<HeartOutline class="inline size-3.5 text-red-400" />
 	</p>
 	{#if buildId}
