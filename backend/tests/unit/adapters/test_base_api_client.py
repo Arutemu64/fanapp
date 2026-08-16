@@ -6,6 +6,8 @@ import pytest
 from adaptix import Retort
 
 from fanfan.adapters.api.base import MAX_ATTEMPTS, BaseApiClient
+from fanfan.adapters.api.ticketscloud.client import TCloudClient
+from fanfan.adapters.api.ticketscloud.dto.order import OrderStatus
 
 
 @dataclass
@@ -109,3 +111,59 @@ async def test_gives_up_after_max_attempts() -> None:
     with pytest.raises(httpx2.ReadTimeout):
         await client._get("orders", _Payload)
     assert handler.calls == MAX_ATTEMPTS
+
+
+def _tcloud_client(handler: _ScriptedHandler) -> TCloudClient:
+    http = httpx2.AsyncClient(
+        transport=httpx2.MockTransport(handler),
+        base_url="https://vendor.test/",
+    )
+    return TCloudClient(client=http, retort=Retort())
+
+
+async def test_get_order_unwraps_data_envelope() -> None:
+    # The single-order endpoint returns the order under a `data` key (like the
+    # list endpoint, minus pagination), and the vendor sends far more fields
+    # than the DTO declares — both must load without a NoRequiredFieldsLoadError.
+    envelope = httpx2.Response(
+        200,
+        json={
+            "data": {
+                "id": "o1",
+                "status": "done",
+                "event": "e1",
+                "created_at": "2026-08-14 11:43:06",
+                "number": 118090379,
+                "tickets": [
+                    {
+                        "id": "t1",
+                        "serial": "YKT",
+                        "number": 585594,
+                        "barcode": "2724343490481812",
+                        "status": "reserved",
+                        "price": "500.00",
+                        "nominal": "500.00",
+                        "discount": "0.00",
+                        "extra": "50.00",
+                        "full": "550.00",
+                        "set": "s1",
+                        "tariff": None,
+                    }
+                ],
+            }
+        },
+    )
+    client = _tcloud_client(_ScriptedHandler([envelope]))
+
+    order = await client.get_order("o1")
+
+    assert order is not None
+    assert order.id == "o1"
+    assert order.status is OrderStatus.DONE
+    assert [t.id for t in order.tickets] == ["t1"]
+
+
+async def test_get_order_returns_none_on_not_found() -> None:
+    client = _tcloud_client(_ScriptedHandler([_status(404)]))
+
+    assert await client.get_order("missing") is None

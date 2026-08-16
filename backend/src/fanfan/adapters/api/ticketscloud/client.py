@@ -3,7 +3,11 @@ import logging
 import httpx2
 
 from fanfan.adapters.api.base import BaseApiClient
-from fanfan.adapters.api.ticketscloud.dto.order import Order, OrdersResponse
+from fanfan.adapters.api.ticketscloud.dto.order import (
+    Order,
+    OrderResponse,
+    OrdersResponse,
+)
 from fanfan.adapters.api.ticketscloud.dto.refund import RefundsResponse
 
 HTTP_NOT_FOUND = 404
@@ -30,8 +34,9 @@ class TCloudClient(BaseApiClient):
         # exist (404) so callers don't have to handle HTTP error types.
         # Other errors (auth, 5xx) still propagate.
         try:
-            return await self._get(f"resources/orders/{order_id}", Order)
+            response = await self._get(f"resources/orders/{order_id}", OrderResponse)
         except httpx2.HTTPStatusError as error:
             if error.response.status_code == HTTP_NOT_FOUND:
                 return None
             raise
+        return response.data
