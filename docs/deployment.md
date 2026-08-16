@@ -33,7 +33,11 @@ From a fork, five things need to change:
 2. **Actions variables.** Set your own `PUBLIC_VAPID_KEY` (the public half of the
    keypair `just bootstrap` generates into `secrets/`), plus
    `PUBLIC_SMARTCAPTCHA_CLIENT_KEY` and the `PUBLIC_SENTRY_*` values if you use
-   those integrations. Leave a variable unset to disable its feature.
+   those integrations. Leave a variable unset to disable its feature. Set
+   `PUBLIC_SITE_URL` to your public origin (no trailing slash) so the social
+   share preview's `og:image`/`og:url` are absolute — Telegram and other
+   crawlers drop relative image URLs (see [frontend.md](frontend.md) §2). Left
+   unset, links still work but unfurl without a preview image.
 3. **A build.** A variable change alone does not trigger a publish — run
    [`docker-publish.yml`](../.github/workflows/docker-publish.yml) manually from
    the Actions tab afterwards, or push to `main`.

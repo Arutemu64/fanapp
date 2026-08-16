@@ -3,6 +3,9 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!-- Static shell title. Pages set their own via <svelte:head> once the client
+			router mounts; this is what a no-JS reader (a crawler, view-source) sees. -->
+		<title>ФАН ФАН</title>
 		<link rel="manifest" href="/manifest.json" />
 		<!-- SVG for browsers that support it (Chrome/Firefox/Edge); ICO as the fallback
 			(Safari, plus browsers that only ever probe /favicon.ico by convention). -->
@@ -20,6 +23,42 @@
 		<!-- Tints the mobile browser UI; watermelon pink in light, dark gray in dark mode. -->
 		<meta name="theme-color" media="(prefers-color-scheme: light)" content="#d61450" />
 		<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#111827" />
+		<!-- Social share preview (Open Graph + Twitter Card). This app is a
+			client-rendered SPA (ssr = false), and social crawlers (Telegram, VK,
+			WhatsApp, Facebook, X) don't run JS — they read only this static shell,
+			never anything a page adds via <svelte:head>. So the preview must live
+			here, baked into the shell NGINX serves (200.html) for every route.
+			og:url and og:image MUST be absolute HTTPS: Telegram (the primary sharing
+			channel) silently drops a relative og:image. The origin is baked at build
+			time from PUBLIC_SITE_URL — %sveltekit.env% only substitutes PUBLIC_-prefixed
+			vars, and an unset value degrades to a relative URL rather than failing the
+			build. Copy mirrors manifest.json (name + description); keep them in sync. -->
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="ФАН ФАН" />
+		<meta property="og:title" content="ФАН ФАН" />
+		<meta
+			property="og:description"
+			content="Приложение-компаньон зрителя на аниме-фестивале ФАН ФАН: программа выступлений, голосование и пуш-уведомления."
+		/>
+		<meta property="og:locale" content="ru_RU" />
+		<meta property="og:url" content="%sveltekit.env.PUBLIC_SITE_URL%/" />
+		<!-- Placeholder card: static/og-image.png is currently the 512×512 app icon so
+			previews render today. Replace that file with a 1200×630 (1.91:1) branded
+			card and update the width/height below — keep the filename, these tags
+			point at it. -->
+		<meta property="og:image" content="%sveltekit.env.PUBLIC_SITE_URL%/og-image.png" />
+		<meta property="og:image:type" content="image/png" />
+		<meta property="og:image:width" content="512" />
+		<meta property="og:image:height" content="512" />
+		<meta property="og:image:alt" content="ФАН ФАН — приложение-компаньон фестиваля" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="ФАН ФАН" />
+		<meta
+			name="twitter:description"
+			content="Приложение-компаньон зрителя на аниме-фестивале ФАН ФАН: программа выступлений, голосование и пуш-уведомления."
+		/>
+		<meta name="twitter:image" content="%sveltekit.env.PUBLIC_SITE_URL%/og-image.png" />
+		<meta name="twitter:image:alt" content="ФАН ФАН — приложение-компаньон фестиваля" />
 		<script>
 			(function () {
 				var m = localStorage.getItem('theme-mode');

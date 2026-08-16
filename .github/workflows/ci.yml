@@ -133,6 +133,7 @@ jobs:
     env:
       PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
       PUBLIC_APP_VERSION: ${{ vars.PUBLIC_APP_VERSION }}
+      PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL }}
       PUBLIC_TIMEZONE: ${{ vars.PUBLIC_TIMEZONE }}
       PUBLIC_VAPID_KEY: ${{ vars.PUBLIC_VAPID_KEY }}
       PUBLIC_SENTRY_DSN: ${{ vars.PUBLIC_SENTRY_DSN }}
