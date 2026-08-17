@@ -20,9 +20,12 @@
 		<meta name="mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 		<meta name="apple-mobile-web-app-title" content="ФАН ФАН" />
-		<!-- Tints the mobile browser UI; watermelon pink in light, dark gray in dark mode. -->
-		<meta name="theme-color" media="(prefers-color-scheme: light)" content="#d61450" />
-		<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#111827" />
+		<!-- Tints the mobile browser UI. A single media-less tag (not the media-scoped
+			pair) so it can follow the *app* theme, not the OS: the boot script below and
+			theme.svelte.ts rewrite content to match the resolved theme, which the manual
+			toggle can override away from the system scheme. Default is the light tint;
+			the boot script corrects it to the dark shell before paint when needed. -->
+		<meta name="theme-color" content="#d61450" />
 		<!-- Social share preview (Open Graph + Twitter Card). This app is a
 			client-rendered SPA (ssr = false), and social crawlers (Telegram, VK,
 			WhatsApp, Facebook, X) don't run JS — they read only this static shell,
@@ -62,11 +65,16 @@
 		<script>
 			(function () {
 				var m = localStorage.getItem('theme-mode');
-				if (
+				var isDark =
 					m === 'dark' ||
-					(m !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-				) {
+					(m !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+				if (isDark) {
 					document.documentElement.classList.add('dark');
+					// Seed the shell tint to match the resolved theme before first paint,
+					// so an overriding toggle doesn't flash the light tint. theme.svelte.ts
+					// keeps it in sync afterwards. Value mirrors THEME_COLOR_DARK there.
+					var meta = document.querySelector('meta[name="theme-color"]');
+					if (meta) meta.setAttribute('content', '#111827');
 				}
 			})();
 		</script>
