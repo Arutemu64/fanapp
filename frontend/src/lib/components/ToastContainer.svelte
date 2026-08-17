@@ -147,9 +147,11 @@
 {/snippet}
 
 <!-- Push notifications: inbound events, pinned to the top like OS notifications.
-     Sticky inside the page container so the stack never covers the top navbar. -->
+     Sticky inside the page container so the stack never covers the top navbar.
+     gap-3 + space-y-0 replaces Flowbite's default space-y-3 so both stacks space
+     the same way — gap is direction-agnostic where space-y is not (see below). -->
 <ToastContainer
-	class="pointer-events-none !sticky !top-4 !right-auto !bottom-auto !left-auto z-50 mx-auto flex h-0 w-full max-w-7xl flex-col overflow-visible px-4 md:px-6 lg:px-8"
+	class="pointer-events-none !sticky !top-4 !right-auto !bottom-auto !left-auto z-50 mx-auto flex h-0 w-full max-w-7xl flex-col gap-3 space-y-0 overflow-visible px-4 md:px-6 lg:px-8"
 >
 	{#each toastService.pushItems as toast (toast.id)}
 		<div
@@ -167,11 +169,15 @@
 	{/each}
 </ToastContainer>
 
-<!-- Action feedback: bottom-center on mobile (raised above the fixed bottom nav,
-     h-16 + safe-area), bottom-right on desktop where that nav is hidden.
-     flex-col-reverse so the newest toast sits at the bottom, nearest its edge. -->
+<!-- Action feedback: bottom-center, raised above the fixed bottom nav on mobile
+     (h-16 + safe-area); the nav is hidden from md up, so it drops to bottom-4.
+     inset-x-0 gives mx-auto a definite width to centre the fixed box against — a
+     fixed element with left/right:auto falls back to its static position and never
+     centres once max-w binds. flex-col-reverse keeps the newest toast at the
+     bottom edge; gap-3 (space-y-0 cancels Flowbite's default space-y-3, whose
+     margin lands on the wrong side under flex-col-reverse) spaces the stack. -->
 <ToastContainer
-	class="pointer-events-none !fixed !top-auto !right-auto !bottom-[calc(4.5rem+env(safe-area-inset-bottom))] !left-auto z-50 mx-auto flex w-full max-w-7xl flex-col-reverse px-4 md:!bottom-4 md:px-6 lg:px-8"
+	class="pointer-events-none !fixed !inset-x-0 !top-auto !bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 mx-auto flex w-full max-w-7xl flex-col-reverse gap-3 space-y-0 px-4 md:!bottom-4 md:px-6 lg:px-8"
 >
 	{#each toastService.statusItems as toast (toast.id)}
 		<div
