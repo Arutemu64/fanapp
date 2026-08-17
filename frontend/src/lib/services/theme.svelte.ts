@@ -2,11 +2,25 @@ export type ThemeMode = 'system' | 'light' | 'dark';
 
 const STORAGE_KEY = 'theme-mode';
 
+// Browser-UI tints (address/status bar). Must match app.html: the light value is
+// the watermelon pink, the dark value the gray-900 shell background. The inline
+// boot script in app.html seeds <meta name="theme-color"> with the same two
+// values before paint; keep all three in sync.
+const THEME_COLOR_LIGHT = '#d61450';
+const THEME_COLOR_DARK = '#111827';
+
 function applyTheme(mode: ThemeMode): void {
 	const isDark =
 		mode === 'dark' ||
 		(mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 	document.documentElement.classList.toggle('dark', isDark);
+
+	// Drive the shell tint from the resolved theme, not the OS preference. A single
+	// media-less <meta name="theme-color"> is updated here so a manual toggle that
+	// overrides the system scheme (e.g. dark app on a light OS) tints the browser
+	// chrome to match the app, not the OS.
+	const meta = document.querySelector('meta[name="theme-color"]');
+	if (meta) meta.setAttribute('content', isDark ? THEME_COLOR_DARK : THEME_COLOR_LIGHT);
 }
 
 class ThemeService {
