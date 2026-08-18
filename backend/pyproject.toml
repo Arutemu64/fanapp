@@ -66,7 +66,7 @@ dev = [
     "testcontainers>=4.15.0",
     "types-authlib>=1.7.2.20260807",
     "uv-sort>=0.7.1",
-    "ty>=0.0.69",
+    "ty>=0.0.70",
     "import-linter>=2.13",
     # Writing .xlsx, needed only by the schedule-template generator script and
     # the parser tests. The app itself only ever reads spreadsheets (polars +
