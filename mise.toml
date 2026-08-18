@@ -5,7 +5,7 @@
 # Docker + Docker Compose are NOT managed here (system-level); install them
 # separately for the full `just run-dev` environment.
 [tools]
-python = "3.14.6"   # backend requires-python >= 3.14
+python = "3.14.7"   # backend requires-python >= 3.14
 node = "24.19.0"       # LTS; matches frontend/Dockerfile and CI setup-node
 pnpm = "11.21.0"  # matches frontend/package.json "packageManager" and frontend/Dockerfile
 uv = "0.12.1"  # matches backend/Dockerfile and backend/pyproject.toml [tool.uv]
