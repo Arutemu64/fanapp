@@ -11,12 +11,43 @@ from sentry_sdk.types import Event
 from fanfan.core.exceptions.base import AppException
 
 
+def _is_asyncpg_teardown_timeout(exc_value: BaseException) -> bool:
+    """Recognise the benign asyncpg connection-teardown TimeoutError.
+
+    SQLAlchemy's asyncpg dialect closes an invalidated or recycled connection
+    by awaiting `_terminate_graceful_close` under `asyncio.shield` (needed here
+    by `pool_pre_ping` + `pool_recycle`). When the driving greenlet is cancelled
+    or moves on, the shield keeps that coroutine running as an orphaned task; its
+    2s graceful-close timeout then fires with nobody awaiting it, so the
+    `TimeoutError` surfaces via the event loop's exception handler as an
+    unhandled asyncio error (mechanism=asyncio, handled=false). The doomed
+    connection is discarded regardless — the request that borrowed the pool has
+    already succeeded — so this is teardown noise, not a request failure, and it
+    cannot be caught in app code. See sqlalchemy/sqlalchemy#13338.
+    """
+    if not isinstance(exc_value, TimeoutError):
+        return False
+    tb = exc_value.__traceback__
+    while tb is not None:
+        frame = tb.tb_frame
+        if (
+            frame.f_code.co_name == "_terminate_graceful_close"
+            and frame.f_globals.get("__name__")
+            == "sqlalchemy.dialects.postgresql.asyncpg"
+        ):
+            return True
+        tb = tb.tb_next
+    return False
+
+
 def _scrub_sensitive_data(event: Event, hint: dict) -> Event | None:
     """Scrub potential PII from Sentry events before sending."""
     # Filter out domain business exceptions and request validation exceptions
     if "exc_info" in hint:
         _, exc_value, _ = hint["exc_info"]
         if isinstance(exc_value, (AppException, RequestValidationError)):
+            return None
+        if _is_asyncpg_teardown_timeout(exc_value):
             return None
 
     if event.get("request", {}).get("headers"):
