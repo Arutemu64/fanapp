@@ -17,7 +17,16 @@ export function registerServiceWorker(): void {
 	const register = () => {
 		navigator.serviceWorker
 			.register(`${base}/service-worker.js`, { type: dev ? 'module' : 'classic' })
-			.catch(() => undefined);
+			.catch((err) => {
+				// Logged, not reported. Reporting brings back the noise this wrapper
+				// exists to remove — the high-volume rejections are benign (see above)
+				// — and the failures worth acting on (a 404 from a broken deploy, an
+				// install-time throw) already fail far more loudly: the same deploy
+				// 404s the app's own hashed assets, and a script bug is caught by the
+				// build. console.debug keeps the real message to hand when someone is
+				// actually looking (devtools, a deploy check).
+				console.debug('Service worker registration failed:', err);
+			});
 	};
 
 	// `load` has already fired by the time the app hydrates on a warm/back-forward
