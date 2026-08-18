@@ -77,7 +77,7 @@
 </svelte:head>
 
 <SectionIntro
-	description="Расскажи, что нравится в приложении, а что хотелось бы улучшить. Мы читаем каждое сообщение."
+	description="Расскажи о фестивале или о приложении — что понравилось, а что хотелось бы улучшить. Мы читаем каждое сообщение."
 />
 
 <Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
@@ -89,7 +89,7 @@
 				name="text"
 				rows={6}
 				maxlength={MAX_LENGTH}
-				placeholder="Поделись впечатлениями, идеями или сообщи о проблеме…"
+				placeholder="Поделись впечатлениями о фестивале, идеями по приложению или сообщи о проблеме…"
 				bind:value={feedbackText}
 				disabled={isSending}
 				oninput={handleInput}
