@@ -136,6 +136,37 @@ IMAGE_TAG=sha-1a2b3c4
 Every push to `main` publishes a `sha-<short-sha>` tag, and every `v*` tag
 publishes that release, so any past build is reachable by tag.
 
+## Monitoring
+
+Two layers watch health, and they catch different failures — keep both:
+
+- **Container healthchecks** (internal) live in the images and are inherited by
+  Compose — nothing is configured per service here. The frontend NGINX container
+  probes its own `/healthz` (a dedicated `return 200`, `access_log off` location
+  in [`nginx.conf`](../frontend/nginx.conf)); the backing services and API carry
+  their own. These answer "should this container restart?" and drive Compose's
+  `depends_on: condition: service_healthy` ordering. They are blind to anything
+  upstream of the container — DNS, TLS, the reverse proxy, the host.
+- **External uptime monitoring** (outside-in) is what catches those. Point any
+  prober at the public origin; a plain HTTP GET/HEAD is enough. We use
+  [GlitchTip](https://glitchtip.com/documentation/uptime-monitoring/), which also
+  doubles as the Sentry-compatible sink for the `PUBLIC_SENTRY_DSN` errors the
+  frontend already emits — but any uptime service works.
+
+Set up **two** monitors so an alert names which half is down — the frontend is
+deliberately decoupled from the API (see the `depends_on` note in
+[`docker-compose.yml`](../docker-compose.yml)), so the SPA keeps serving while the
+backend is down:
+
+| Monitor | URL | Green means |
+| --- | --- | --- |
+| Site | `https://<domain>/healthz` | NGINX is serving the static SPA |
+| API | `https://<domain>/api/debug/health` | The backend is up (Caddy strips `/api` → backend `/debug/health`) |
+
+Both are unauthenticated and cheap. Note the site check only confirms NGINX
+returns `200` — not that the SPA bundle boots; for that you'd need synthetic
+browser monitoring, which HTTP uptime checks don't cover.
+
 ## Sizing and tuning for a small VPS
 
 The Compose resource limits and database settings are budgeted for the smallest
