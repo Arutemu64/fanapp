@@ -13,7 +13,14 @@ description = "Backend for the FAN FAN convention companion web app: HTTP API an
 # The LICENSE file lives at the monorepo root, outside this project dir, so
 # PEP 639 `license-files` cannot reference it (no `..` allowed).
 license = "MIT"
-requires-python = ">=3.14.6"
+# Compatibility floor, not an exact pin: the minimum interpreter the code needs,
+# so it stays at the minor and does not chase the patch (PEP 621 requires-python
+# expresses version *requirements*, not the build you run). The exact runtime pin
+# lives in backend/.python-version and mise.toml. Tying this to the latest patch
+# made a trailing .python-version — whose pyenv/docker datasource lags the CPython
+# release the other sites read — violate the floor and break `uv sync` in the
+# image build; Renovate is told to leave it alone (renovate.json, `python` floor).
+requires-python = ">=3.14"
 dependencies = [
     "adaptix>=3.0.0b12",
     "aiogram>=3.30.0",

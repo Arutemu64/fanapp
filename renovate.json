@@ -106,7 +106,7 @@
       "matchDepNames": ["node"]
     },
     {
-      "description": "Shared pin (docs/dependencies.md): keep every Python pin identical. Three managers see three different files — mise.toml (mise), backend/.python-version (pyenv) and requires-python in backend/pyproject.toml (pep621) — each with its own datasource, so without this group one Python release arrives as three PRs that can settle on different versions.",
+      "description": "Shared pin (docs/dependencies.md): keep the two *exact* Python pins identical — mise.toml (mise) and backend/.python-version (pyenv) — so one release does not arrive as two PRs settling on different versions. requires-python in backend/pyproject.toml (pep621) is matched too, but it is a compatibility floor, not an exact pin: the 'python floor' rule below freezes it at the minor, so it contributes no bump to this group and can never re-tighten onto a trailing .python-version whose datasource lags.",
       "groupName": "python",
       "matchDepNames": ["python"]
     },
@@ -147,6 +147,13 @@
       ],
       "automerge": false,
       "addLabels": ["major-review"]
+    },
+    {
+      "description": "python floor: requires-python in backend/pyproject.toml is a compatibility floor, not a pin (https://packaging.python.org/en/latest/specifications/pyproject-toml/#requires-python) — it declares the minimum interpreter the code needs, so unlike the exact pins in mise.toml and backend/.python-version it must not chase every patch. The global rangeStrategy 'bump' would re-raise '>=3.14' to the latest patch on each release, which then makes a trailing .python-version — whose pyenv/docker datasource lags the CPython release the pep621 site reads — violate the floor and break `uv sync` in the image build (PR #565). 'replace' leaves the floor untouched while any 3.14.x satisfies it; raising it (dropping a minor) stays a deliberate human edit.",
+      "matchManagers": ["pep621"],
+      "matchFileNames": ["backend/pyproject.toml"],
+      "matchDepNames": ["python"],
+      "rangeStrategy": "replace"
     }
   ],
   "customManagers": [
