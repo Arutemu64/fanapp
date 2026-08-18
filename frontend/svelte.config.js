@@ -20,7 +20,14 @@ const config = {
 		// router take over. See https://svelte.dev/docs/kit/single-page-apps
 		adapter: adapter({
 			fallback: '200.html'
-		})
+		}),
+		// We register the worker manually (src/lib/utils/serviceWorker.ts) so the
+		// register() promise gets a .catch(). SvelteKit's built-in registration
+		// doesn't, so a browser that refuses registration (storage-partitioned
+		// embeds, private modes) surfaces an uncaught "Error: Rejected" to Sentry.
+		serviceWorker: {
+			register: false
+		}
 	}
 };
 
