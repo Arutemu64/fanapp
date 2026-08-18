@@ -113,8 +113,10 @@ COPY --from=build /app/build /usr/share/nginx/html
 
 EXPOSE 80
 
+# Probe the dedicated /healthz location (nginx.conf), not /: it skips the SPA
+# fallback and stays out of the access log.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD ["wget", "-qO-", "http://127.0.0.1:80/"]
+  CMD ["wget", "-qO-", "http://127.0.0.1:80/healthz"]
 
 # nginx:alpine already drops to an unprivileged worker; the master needs root to
 # bind :80 and read its config, matching the stock image's intended use.
