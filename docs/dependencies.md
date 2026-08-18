@@ -20,9 +20,22 @@ mismatch unexplained.
 | `hadolint` | `mise.toml`, `.pre-commit-config.yaml` (`rev`), the image behind the `.claude/setup.sh` shim |
 | `pnpm` | `mise.toml`, `frontend/package.json` (`packageManager`), `frontend/Dockerfile` (`PNPM_VERSION`), `.claude/setup.sh`, CI (`pnpm/action-setup` input) |
 | `node` | `mise.toml`, `frontend/Dockerfile`, `.claude/setup.sh`, CI (`setup-node`) |
-| `python` | `mise.toml`, `backend/.python-version`, `backend/pyproject.toml` (`requires-python` floor) |
+| `python` (exact runtime pin) | `mise.toml`, `backend/.python-version` |
 
 Prefer an exact pin over a floating tag so every consumer resolves identically.
+
+`backend/pyproject.toml`'s `requires-python` is deliberately **not** a lockstep
+site. It is a compatibility floor — the minimum interpreter the code needs
+([PEP 621](https://packaging.python.org/en/latest/specifications/pyproject-toml/#requires-python)
+defines it as version *requirements*, not the build you run) — so it stays at
+the minor (`>=3.14`) while the two exact pins above move per patch. Pinning it to
+the latest patch is what turned a trailing `.python-version` from harmless drift
+into a hard failure: [PR #565](https://github.com/Arutemu64/fanapp/pull/565)
+raised `requires-python` to `>=3.14.7` while `.python-version` — read by the
+pyenv/docker datasource, which lags the CPython release the other sites read —
+was still `3.14.6`, and every `uv run`/`uv sync` then rejected it. Renovate keeps
+the floor frozen (the `python floor` rule in `renovate.json`, `rangeStrategy:
+replace`); raising it is a deliberate human edit when a minor is dropped.
 
 `just` is pinned too (`mise.toml`), but it is deliberately **not** in the table
 above: `mise.toml` is its only exact-pin site, so there is nothing to keep in
@@ -39,9 +52,11 @@ same script, which are exact and Renovate-tracked.
 * **Grouped `packageRules`** (`uv`, `postgres`, `node`, `pnpm`, `hadolint`,
   `python`) consolidate each shared pin into a single PR, so no site is left
   behind. A shared pin whose sites are read by different managers — and so by
-  different datasources — needs its group most: `python` is seen three times
-  (mise, pyenv, pep621) and would otherwise arrive as three PRs that can settle
-  on different versions.
+  different datasources — needs its group most: the exact `python` pin is read
+  twice (mise, pyenv) and would otherwise arrive as two PRs that can settle on
+  different versions. The `requires-python` floor (pep621) is matched by the same
+  group but frozen by a follow-on `rangeStrategy: replace` rule, so it never
+  chases the patch and never re-tightens onto a lagging `.python-version`.
 * **`customManagers`** (regex) cover the pins the built-in managers cannot see:
   the Postgres image literals in `backend/scripts/generate_migration.py` and
   `backend/tests/fixtures/db_provider.py`; the hadolint image behind the
