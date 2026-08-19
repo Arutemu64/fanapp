@@ -167,6 +167,70 @@ Both are unauthenticated and cheap. Note the site check only confirms NGINX
 returns `200` — not that the SPA bundle boots; for that you'd need synthetic
 browser monitoring, which HTTP uptime checks don't cover.
 
+## Backups and restore
+
+The `pgbackup` service (`ops` profile, in
+[`docker-compose.yml`](../docker-compose.yml)) runs
+[`prodrigestivill/postgres-backup-local`](https://github.com/prodrigestivill/docker-postgres-backup-local),
+pinned to the same Postgres major as `db` — `pg_dump` refuses to dump a server
+newer than itself, so the two image tags **must** move together on every major
+bump. It takes a logical dump (`pg_dump`, plain SQL, gzipped) every 6h plus one
+on start, keeping 7 daily / 4 weekly / 6 monthly copies in the `pgbackup-data`
+volume under `/backups/{daily,weekly,monthly}/` (the newest daily is also linked
+as `/backups/last/`). `--schema=public --blobs` dumps the `public` schema and its
+large objects — `--schema` alone would drop large objects, which is why `--blobs`
+is paired with it.
+
+**Two limits to know before you rely on it.** These are logical dumps, so there
+is no point-in-time recovery — a restore loses everything written since the last
+6-hourly dump. And the dumps live in a Docker volume **on the same host as the
+database**: a lost or wiped host takes the backups with it. For off-host copies,
+sync `/backups` to object storage in another failure domain (3-2-1); that is not
+wired up yet.
+
+The health of the backup loop is monitored — the `pgbackup` container reports
+unhealthy once the last dump is older than the schedule (see its `healthcheck` in
+Compose), so a silently failing backup shows up in `docker ps` and any prober
+watching container health.
+
+### Verify a backup (do this periodically — an untested backup is a hope)
+
+`docker ps` health only says a dump *ran*, not that it can be *loaded*. Confirm
+the archive is intact and restorable into a throwaway database — never against
+the live one:
+
+```sh
+# 1. Archive isn't truncated/corrupt (gzip integrity), and isn't suspiciously small
+docker compose exec pgbackup sh -c 'gzip -t /backups/last/*.sql.gz && ls -l /backups/last/'
+
+# 2. It actually restores: load the newest dump into a scratch Postgres and eyeball it
+BACKUP=$(docker compose exec -T pgbackup sh -c 'ls -t /backups/last/*.sql.gz | head -1')
+docker compose exec -T pgbackup sh -c "zcat $BACKUP" \
+  | docker run --rm -i --network fanapp_backend-network \
+      -e PGPASSWORD="$DB__PASSWORD" postgres:18.4-alpine \
+      psql -h db -U "$DB__USER" -d restore_check
+```
+
+(Create the `restore_check` database first with `createdb`, and drop it after.)
+Check the row counts of a couple of core tables look right.
+
+### Restore for real
+
+Only into a database you intend to overwrite. Stop the app services first so
+nothing writes mid-restore, then pipe the chosen dump back through `psql`:
+
+```sh
+docker compose stop api frontend migration scheduler stream
+docker compose exec -T pgbackup sh -c 'zcat /backups/last/<file>.sql.gz' \
+  | docker compose exec -T db psql -U "$DB__USER" -d "$DB__NAME"
+docker compose start api frontend migration scheduler stream
+```
+
+Because the dump is `--schema=public`, restore into a database that already
+exists with the right owner/roles (the dump carries table data and DDL, not
+global objects like roles). Pick an older copy from `/backups/daily`,
+`/backups/weekly` or `/backups/monthly` instead of `last/` to roll further back.
+
 ## Sizing and tuning for a small VPS
 
 The Compose resource limits and database settings are budgeted for the smallest
