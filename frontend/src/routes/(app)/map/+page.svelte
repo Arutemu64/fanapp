@@ -110,24 +110,30 @@ each other on desktop. items-start keeps each frame at its own height. -->
 			aria-label="Закрыть просмотр"
 		></button>
 
-		<!-- Panzoom target. Caps are viewport units, not max-h-full: enhanced:img
-		wraps the <img> in an inline <picture> with no definite height, so a
-		percentage max-height never resolves and a tall portrait map overflows the
-		viewport. 2rem matches the overlay's p-4. w-auto sizes to the intrinsic ratio
-		and never upscales. relative keeps it above the backdrop, and hugging (w-fit)
-		means the black area beside a portrait map is the backdrop button, so a tap
-		there still closes the viewer. touch-none hands pinch/drag to Panzoom instead
-		of the browser; double-tap resets the zoom. -->
+		<!-- Panzoom frame: the parent Panzoom measures for its wheel/pinch focal
+		point, so it must hug the image with no gap. Panzoom assumes the zoom target
+		sits at its parent's top-left; if the overlay's flex-centering were the only
+		parent, the focal point would be off by the letterbox gap and zoom would
+		drift sideways on a narrow portrait map. This frame is what the overlay
+		centers instead, so parent and target share one box. overflow-hidden (which
+		Panzoom also sets) clips the zoomed map to the frame, keeping the black area
+		beside it as the backdrop button so a tap there still closes the viewer.
+		Caps are viewport units, not max-h-full: enhanced:img wraps the <img> in an
+		inline <picture> with no definite height, so a percentage max-height never
+		resolves and a tall map overflows. 2rem matches the overlay's p-4. w-auto
+		sizes to the intrinsic ratio and never upscales. touch-none hands pinch/drag
+		to Panzoom instead of the browser; double-tap resets the zoom. -->
 		<div
-			{@attach zoomable}
-			class="relative block h-fit max-h-[calc(100dvh-2rem)] w-fit max-w-[calc(100vw-2rem)] touch-none"
+			class="relative block h-fit max-h-[calc(100dvh-2rem)] w-fit max-w-[calc(100vw-2rem)] touch-none overflow-hidden rounded-xl shadow-2xl"
 		>
-			<enhanced:img
-				src={active.picture}
-				alt={active.alt}
-				sizes="(min-width: 1024px) 1024px, 100vw"
-				class="block max-h-[calc(100dvh-2rem)] w-auto max-w-[calc(100vw-2rem)] rounded-xl shadow-2xl select-none"
-			/>
+			<div {@attach zoomable} class="block">
+				<enhanced:img
+					src={active.picture}
+					alt={active.alt}
+					sizes="(min-width: 1024px) 1024px, 100vw"
+					class="block max-h-[calc(100dvh-2rem)] w-auto max-w-[calc(100vw-2rem)] select-none"
+				/>
+			</div>
 		</div>
 
 		<div class="absolute end-4 top-4 z-10 flex items-center gap-2">
