@@ -46,6 +46,16 @@ function delay(ms: number): Promise<void> {
  * This reflects whether the *backend* is reachable, not `navigator.onLine` —
  * so it stays correct on a dead VPN / captive network that lies about being
  * online. Distinct from the SSE `EventsClient` reconnect state.
+ *
+ * How a probe result reaches the banner (the flow is indirect, via a listener):
+ *   1. `probeReachability()` fetches the health endpoint and calls
+ *      `markReachable(ok)` in `reachability.ts` — it does *not* return the state
+ *      to us.
+ *   2. `markReachable` notifies subscribers, so the `onReachableChange` handler
+ *      below runs. It classifies the change and updates `#online`.
+ *   3. `#online` is `$state`, so `ConnectionBanner` re-renders from it.
+ * So everywhere here "trigger a probe" is how we *ask*; the handler is where we
+ * *react*.
  */
 export class OfflineService {
 	#online = $state(isReachable());
