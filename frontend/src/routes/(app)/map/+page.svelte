@@ -21,28 +21,31 @@
 	// box and clamps zoom to ~1x here, defeating the feature. overflow:'visible'
 	// (Panzoom defaults to 'hidden') lets the map grow past its frame as it scales
 	// instead of being clipped inside it — the clip read as "scrolling inside a
-	// card". Free panning is the trade; reset and double-tap recentre. step halves
-	// the default (0.3): Panzoom zooms one step per wheel *event* regardless of
-	// delta, so trackpads (a burst per scroll) shoot to max at the default — 0.15
-	// keeps a notch gentle. It rides zoomIn/zoomOut too, but we use neither.
+	// card". Free panning is the trade; reset and double-tap recentre. The global
+	// step stays at its 0.3 default: pinch gain is proportional to it, so lowering
+	// it to soften the wheel would also slow pinch. The wheel gets its own step
+	// per-call below instead, keeping the two gestures independent.
 	function zoomable(element: HTMLElement) {
 		const instance = Panzoom(element, {
 			minScale: 1,
 			maxScale: 6,
-			step: 0.15,
 			overflow: 'visible'
 		});
 		panzoom = instance;
 		// Wheel-to-zoom is opt-in in Panzoom; bind it to the scrolling container.
+		// step is halved for the wheel only: Panzoom zooms one step per wheel *event*
+		// regardless of delta, so trackpads (a burst per scroll) shoot to max at the
+		// 0.3 default; 0.15 keeps a notch gentle without touching pinch.
 		const parent = element.parentElement;
-		parent?.addEventListener('wheel', instance.zoomWithWheel);
+		const onWheel = (event: WheelEvent) => instance.zoomWithWheel(event, { step: 0.15 });
+		parent?.addEventListener('wheel', onWheel);
 		// Double-tap/double-click to reset — a pointer gesture shortcut for the
 		// keyboard-accessible reset button in the controls. Bound here rather than
 		// as a template handler so the target stays a non-interactive image.
 		const reset = () => instance.reset();
 		element.addEventListener('dblclick', reset);
 		return () => {
-			parent?.removeEventListener('wheel', instance.zoomWithWheel);
+			parent?.removeEventListener('wheel', onWheel);
 			element.removeEventListener('dblclick', reset);
 			instance.destroy();
 			panzoom = null;
