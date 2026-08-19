@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { type ConnectionStatus, getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService } from '$lib/services/offline.svelte';
+	import { reachability } from '$lib/services/reachability';
 	import { ExclamationCircleOutline, RefreshOutline } from 'flowbite-svelte-icons';
 
 	// Wait this long before showing the "reconnecting" strip, so a quick blip
@@ -23,11 +24,15 @@
 	const client = getEventsClient();
 	let health = $derived<Health>(HEALTH_BY_STATUS[client.connectionStatus]);
 
-	// Browser-level connectivity. When the device is offline, show a dedicated
+	// Backend reachability. When the server can't be reached, show a dedicated
 	// strip instead of the SSE "connection lost" one — it is the real cause and
 	// the clearer message for the user.
 	const offline = getOfflineService();
 	let isOnline = $derived(offline.isOnline);
+
+	// Device-level connectivity, to tell "no internet" apart from "server
+	// unreachable" — see reachability.ts. A `false` is a trustworthy negative.
+	let deviceOnline = $derived(reachability.deviceOnline);
 
 	// Latches true only after the connection has stayed in `recovering` past the
 	// grace window. Recovery (or hard failure) clears it immediately.
@@ -65,10 +70,12 @@
 		showRetry: boolean;
 	}
 
-	// Pick at most one banner; offline (real cause) outranks a lost SSE stream,
-	// which outranks the delayed "reconnecting" strip. Honest reconnecting wording
-	// covers an offline device whose navigator.onLine wrongly reports online
-	// (common in installed PWAs).
+	// Pick at most one banner; an unreachable server (the real cause) outranks a
+	// lost SSE stream, which outranks the delayed "reconnecting" strip. When the
+	// server can't be reached, distinguish a truly offline device ("Нет
+	// интернета") from an online device that just can't reach the server ("Нет
+	// связи с сервером") — never blame the user's internet for a server outage.
+	// The recovery poll clears both on its own, so neither offers a retry button.
 	let banner = $derived.by<Banner | null>(() => {
 		if (!isOnline) {
 			return {
@@ -76,7 +83,7 @@
 				role: 'status',
 				icon: ExclamationCircleOutline,
 				iconClass: 'h-5 w-5',
-				message: 'Нет соединения',
+				message: deviceOnline ? 'Нет связи с сервером' : 'Нет интернета',
 				showRetry: false
 			};
 		}
@@ -96,7 +103,7 @@
 				role: 'status',
 				icon: RefreshOutline,
 				iconClass: 'h-4 w-4 motion-safe:animate-spin',
-				message: 'Нет соединения. Переподключаемся…',
+				message: 'Восстанавливаем связь…',
 				showRetry: false
 			};
 		}
