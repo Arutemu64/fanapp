@@ -17,18 +17,20 @@
 
 	// Wire pinch/drag/wheel zoom onto the map image once the overlay mounts.
 	// Panzoom transforms this element via CSS, so the enhanced:img markup is
-	// untouched. No `contain`: because the framed image is smaller than the
-	// overlay (letterboxed), Panzoom's contain math clamps the *scale* — it caps
-	// zoom at ~1.3x, defeating the feature. Free panning is the trade; the reset
-	// button and double-tap bring an off-screen map straight back. step halves the
-	// default (0.3): Panzoom zooms one step per wheel *event* regardless of delta,
-	// so trackpads (which fire a burst per scroll) shoot to max at the default —
-	// 0.15 keeps a notch gentle. It rides zoomIn/zoomOut too, but we use neither.
+	// untouched. No `contain`: it derives scale limits from the element-vs-parent
+	// box and clamps zoom to ~1x here, defeating the feature. overflow:'visible'
+	// (Panzoom defaults to 'hidden') lets the map grow past its frame as it scales
+	// instead of being clipped inside it — the clip read as "scrolling inside a
+	// card". Free panning is the trade; reset and double-tap recentre. step halves
+	// the default (0.3): Panzoom zooms one step per wheel *event* regardless of
+	// delta, so trackpads (a burst per scroll) shoot to max at the default — 0.15
+	// keeps a notch gentle. It rides zoomIn/zoomOut too, but we use neither.
 	function zoomable(element: HTMLElement) {
 		const instance = Panzoom(element, {
 			minScale: 1,
 			maxScale: 6,
-			step: 0.15
+			step: 0.15,
+			overflow: 'visible'
 		});
 		panzoom = instance;
 		// Wheel-to-zoom is opt-in in Panzoom; bind it to the scrolling container.
@@ -117,23 +119,25 @@ each other on desktop. items-start keeps each frame at its own height. -->
 		sits at its parent's top-left; if the overlay's flex-centering were the only
 		parent, the focal point would be off by the letterbox gap and zoom would
 		drift sideways on a narrow portrait map. This frame is what the overlay
-		centers instead, so parent and target share one box. overflow-hidden (which
-		Panzoom also sets) clips the zoomed map to the frame, keeping the black area
-		beside it as the backdrop button so a tap there still closes the viewer.
+		centers instead, so parent and target share one box — but it does not clip
+		(see overflow:'visible' in zoomable), so the map grows past it as it scales.
 		Caps are viewport units, not max-h-full: enhanced:img wraps the <img> in an
 		inline <picture> with no definite height, so a percentage max-height never
 		resolves and a tall map overflows. 2rem matches the overlay's p-4. w-auto
-		sizes to the intrinsic ratio and never upscales. touch-none hands pinch/drag
-		to Panzoom instead of the browser; double-tap resets the zoom. -->
+		sizes to the intrinsic ratio and never upscales. touch-none must sit on the
+		actual touch target (the <img>) and the zoom element, not only the frame:
+		iOS Safari lets a gesture that starts on a touch-action:auto element fall
+		through to native page pinch/scroll, which starves Panzoom of pointer events
+		and kills zooming. double-tap resets the zoom. -->
 		<div
-			class="relative block h-fit max-h-[calc(100dvh-2rem)] w-fit max-w-[calc(100vw-2rem)] touch-none overflow-hidden rounded-xl shadow-2xl"
+			class="relative block h-fit max-h-[calc(100dvh-2rem)] w-fit max-w-[calc(100vw-2rem)] touch-none"
 		>
-			<div {@attach zoomable} class="block">
+			<div {@attach zoomable} class="block touch-none">
 				<enhanced:img
 					src={active.picture}
 					alt={active.alt}
 					sizes="(min-width: 1024px) 1024px, 100vw"
-					class="block max-h-[calc(100dvh-2rem)] w-auto max-w-[calc(100vw-2rem)] select-none"
+					class="block max-h-[calc(100dvh-2rem)] w-auto max-w-[calc(100vw-2rem)] touch-none rounded-xl shadow-2xl select-none"
 				/>
 			</div>
 		</div>
