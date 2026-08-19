@@ -139,12 +139,17 @@
 	>
 		<Toast
 			align={false}
-			color={undefined}
+			color="primary"
 			dismissable={false}
 			class="pointer-events-auto w-full max-w-sm shadow"
 		>
+			<!-- Icon colour is pinned per theme against the Toast's tonal badge box
+				(primary-100 light / primary-800 dark). Each shade is picked for
+				contrast on its own background: 600-on-100 is 4.28:1, 200-on-800 is
+				6.16:1 — both clear WCAG 1.4.11's 3:1 for non-text. A single fixed shade
+				can't: 600 that reads in light collapses to 1.69:1 on the dark badge. -->
 			{#snippet icon()}
-				<RefreshOutline class="h-5 w-5 text-primary-600" aria-hidden="true" />
+				<RefreshOutline class="h-5 w-5 text-primary-600 dark:text-primary-200" aria-hidden="true" />
 			{/snippet}
 			<div class="text-sm leading-snug font-normal text-gray-700 dark:text-gray-200">
 				Доступна новая версия приложения.
