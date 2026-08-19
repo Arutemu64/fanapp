@@ -66,7 +66,7 @@
 	avatar/bell pin to the right edge; without it Flowbite caps content in a `container`. -->
 <Navbar
 	fluid
-	class="sticky top-0 z-40 border-b border-gray-200/50 bg-white/80 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] backdrop-blur-md transition-colors duration-300 sm:px-6 dark:border-gray-700/50 dark:bg-gray-900/80"
+	class="sticky top-0 z-(--z-chrome) border-b border-gray-200/50 bg-white/80 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] backdrop-blur-md transition-colors duration-300 sm:px-6 dark:border-gray-700/50 dark:bg-gray-900/80"
 >
 	<!-- SidebarButton hardcodes an English "Open sidebar" in an sr-only span; aria-label
 		wins over element content, so this is the name Russian screen readers announce. -->
@@ -83,7 +83,7 @@
 		<div class="flex-1"></div>
 	{/if}
 
-	<div class="flex items-center gap-2 md:order-2">
+	<div class="flex items-center gap-2">
 		{#if user}
 			<NotificationBell />
 		{/if}

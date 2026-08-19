@@ -56,9 +56,11 @@ each other on desktop. items-start keeps each frame at its own height. -->
 </div>
 
 {#if active}
-	<!-- Fullscreen viewer overlay. Tap the backdrop or the close button to dismiss. -->
+	<!-- Fullscreen viewer overlay. Tap the backdrop or the close button to dismiss.
+	     An inline (non-portaled) modal, so it takes the --z-modal rung to cover the
+	     fixed bottom nav — see docs/frontend.md "Z-Index Scale". -->
 	<div
-		class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+		class="fixed inset-0 z-(--z-modal) flex items-center justify-center bg-black/80 p-4"
 		role="dialog"
 		aria-modal="true"
 		aria-label="Просмотр карты"

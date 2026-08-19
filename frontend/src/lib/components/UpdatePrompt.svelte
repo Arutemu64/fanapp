@@ -135,7 +135,7 @@
 		role="status"
 		aria-live="polite"
 		aria-atomic="true"
-		class="pointer-events-none fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 flex justify-center px-4 md:bottom-4 md:px-6 lg:px-8"
+		class="pointer-events-none fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-(--z-overlay) flex justify-center px-4 md:bottom-4 md:px-6 lg:px-8"
 	>
 		<Toast
 			align={false}
