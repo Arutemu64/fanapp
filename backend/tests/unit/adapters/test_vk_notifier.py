@@ -96,15 +96,18 @@ class _VkTransport:
     def __call__(self, request: httpx2.Request) -> httpx2.Response:
         self.requests.append(request)
         if self._error_code is not None:
-            body = {"error": {"error_code": self._error_code, "error_msg": "boom"}}
+            body: dict = {
+                "error": {"error_code": self._error_code, "error_msg": "boom"}
+            }
         else:
-            body = {"response": {"message_id": 1}}
+            # For a single peer_id, messages.send answers with the bare integer
+            # message id; messages.delete answers with a truthy value we ignore.
+            body = {"response": 1}
         return httpx2.Response(200, json=body)
 
-    @property
-    def form_body(self) -> dict[str, str]:
+    def form_body(self, index: int = 0) -> dict[str, str]:
         # httpx sends the client's `data=` dict as a urlencoded form body.
-        content = self.requests[0].content.decode()
+        content = self.requests[index].content.decode()
         return {key: values[0] for key, values in parse_qs(content).items()}
 
 
@@ -117,9 +120,11 @@ async def test_client_posts_token_version_and_message() -> None:
     transport = _VkTransport()
     client = _api_client(transport)
 
-    await client.send_message(peer_id=VK_USER_ID, message="привет")
+    message_id = await client.send_message(peer_id=VK_USER_ID, message="привет")
 
-    sent = transport.form_body
+    # For a single peer_id VK returns the bare integer id of the sent message.
+    assert message_id == 1
+    sent = transport.form_body()
     assert sent["peer_id"] == str(VK_USER_ID)
     assert sent["message"] == "привет"
     # The group token and pinned API version travel in the POST body.
@@ -127,6 +132,21 @@ async def test_client_posts_token_version_and_message() -> None:
     assert sent["v"] == "5.199"
     # random_id 0 keeps VK from deduplicating distinct notifications.
     assert sent["random_id"] == "0"
+
+
+async def test_client_deletes_message_only_on_group_side() -> None:
+    transport = _VkTransport()
+    client = _api_client(transport)
+
+    await client.delete_message(message_id=42)
+
+    sent = transport.form_body()
+    assert sent["message_ids"] == "42"
+    # delete_for_all=0 removes the message from the group's side only, keeping it
+    # in the user's inbox; the token and version still travel in the body.
+    assert sent["delete_for_all"] == "0"
+    assert sent["access_token"] == "group-token"
+    assert sent["v"] == "5.199"
 
 
 async def test_client_raises_vk_api_error_on_error_object() -> None:
@@ -163,17 +183,33 @@ class _StubSocialIdentityGateway:
         return self._identity
 
 
+_SENT_MESSAGE_ID = 42
+
+
 class _StubVkClient:
-    """Stands in for VkApiClient, recording sends and optionally raising."""
+    """Stands in for VkApiClient, recording sends/deletes and optionally raising."""
 
-    def __init__(self, error: VkApiError | None = None) -> None:
+    def __init__(
+        self,
+        error: VkApiError | None = None,
+        *,
+        delete_error: Exception | None = None,
+    ) -> None:
         self._error = error
+        self._delete_error = delete_error
         self.calls: list[dict] = []
+        self.deleted: list[int] = []
 
-    async def send_message(self, *, peer_id: int, message: str) -> None:
+    async def send_message(self, *, peer_id: int, message: str) -> int:
         self.calls.append({"peer_id": peer_id, "message": message})
         if self._error is not None:
             raise self._error
+        return _SENT_MESSAGE_ID
+
+    async def delete_message(self, *, message_id: int) -> None:
+        self.deleted.append(message_id)
+        if self._delete_error is not None:
+            raise self._delete_error
 
 
 def _notifier(
@@ -205,6 +241,32 @@ async def test_sends_plain_text_to_linked_user() -> None:
     assert "уведомления" in sent["message"]
     # The deep-link is appended as a bare, auto-linked URL.
     assert "https://app.example/schedule" in sent["message"]
+    # The group's own copy is deleted so it doesn't clutter the community inbox.
+    assert client.deleted == [_SENT_MESSAGE_ID]
+
+
+async def test_delete_failure_does_not_fail_delivery() -> None:
+    user = _make_user()
+    # The message was delivered; a failing cleanup must not surface as an error,
+    # or the consumer would redeliver and re-send a duplicate to the user.
+    client = _StubVkClient(delete_error=VkApiError(code=100500, message="boom"))
+    notifier = _notifier(user=user, identity=_identity_for(user), client=client)
+
+    await notifier.send_notification(_make_notification(user.id))
+
+    assert len(client.calls) == 1
+    assert client.deleted == [_SENT_MESSAGE_ID]
+
+
+async def test_delete_skipped_when_send_fails() -> None:
+    user = _make_user()
+    client = _StubVkClient(VkApiError(code=901, message="not allowed"))
+    notifier = _notifier(user=user, identity=_identity_for(user), client=client)
+
+    with pytest.raises(UserNotReachable):
+        await notifier.send_notification(_make_notification(user.id))
+    # No message id to delete when the send itself never went through.
+    assert client.deleted == []
 
 
 async def test_opted_out_user_is_unreachable() -> None:

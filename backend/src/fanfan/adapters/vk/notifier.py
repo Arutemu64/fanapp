@@ -69,13 +69,34 @@ class VkNotifier(Notifier):
         if social_identity is None:
             raise UserNotReachable
 
+        message_id: int
         try:
-            await self.client.send_message(
+            message_id = await self.client.send_message(
                 peer_id=social_identity.provider_user_id,
                 message=self._render_message_text(notification),
             )
         except VkApiError as e:
             self._handle_api_error(e, notification)
+            raise  # _handle_api_error always raises; this keeps message_id bound
+
+        await self._delete_group_copy(message_id=message_id, notification=notification)
+
+    async def _delete_group_copy(
+        self, *, message_id: int, notification: Notification
+    ) -> None:
+        # The message is already delivered; this only tidies the group's own copy
+        # out of the community inbox organizers see. Best-effort on purpose: a
+        # failed cleanup must not fail the notification, or the consumer would
+        # redeliver and re-send a duplicate to the user. Swallow everything —
+        # a VK error, a network blip — so delivery stands regardless.
+        try:
+            await self.client.delete_message(message_id=message_id)
+        except Exception:
+            logger.warning(
+                "Failed to delete VK group copy of notification %s",
+                notification.id,
+                exc_info=True,
+            )
 
     @staticmethod
     def _handle_api_error(error: VkApiError, notification: Notification) -> None:
