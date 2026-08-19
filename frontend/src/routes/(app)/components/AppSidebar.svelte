@@ -205,6 +205,12 @@
      real <nav> would beat the role override, but wrapping a flex child the layout sizes
      costs more than it buys. Labels omit "навигация" — the role is announced already. The
      drawer's differs from the bottom nav's because both are exposed while it is open. -->
+<!-- The open drawer is modal: both its panel and its backdrop must sit above the
+     fixed bottom nav (z-50, AppBottomNav), so the scrim covers it and its links
+     aren't tappable through the overlay. Flowbite's theme ships the panel at z-50
+     (ties with the bottom nav, which then wins on DOM order) and the backdrop at
+     z-40 (below it entirely); both are lifted to the z-[60] "Modal drawer" rung —
+     see docs/frontend.md "Z-Index Scale". -->
 <Sidebar
 	{activeUrl}
 	backdrop={true}
@@ -213,7 +219,8 @@
 	position="fixed"
 	role="navigation"
 	ariaLabel="Меню"
-	class="z-50 h-full md:hidden"
+	class="z-[60] h-full md:hidden"
+	classes={{ backdrop: 'z-[60]' }}
 >
 	{@render sidebarLinks(true)}
 </Sidebar>

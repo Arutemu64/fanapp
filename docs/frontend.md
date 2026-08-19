@@ -132,12 +132,19 @@ Keep stacking on this fixed ladder — never invent ad-hoc `z-*` values:
 | Layer | Class | Elements |
 |---|---|---|
 | Base content | `z-0` / auto | In-flow page content |
+| In-page sticky | `z-10` – `z-30` | Page-local sticky headers and FABs that must stay *below* chrome (schedule day-tab bar, sub-headers, floating "now" button; overlay-internal controls). |
 | Sticky chrome | `z-40` | Top navbar (`AppNavbar`, `sticky top-0`) |
-| Overlays | `z-50` | Mobile bottom nav, mobile sidebar drawer, toasts, modals/backdrops |
+| Overlays | `z-50` | Mobile bottom nav, toasts, update prompt, skip link, fullscreen viewers, Flowbite `<Modal>` backdrops |
+| Modal drawer | `z-[60]` | Mobile sidebar drawer **and its backdrop** (`AppSidebar`) — an open modal drawer must cover the bottom nav |
+| Top feedback | `z-[100]` | Global navigation spinner (`pointer-events-none`, above everything) |
 
 **Rules:**
 * Sticky navbar stays *below* overlays (`z-40` < `z-50`) so drawers/modals cover it.
-* Flowbite `<Modal>` manages its own backdrop + `z-50` — don't override it.
+* In-page sticky content stays *below* the navbar (`≤ z-30` < `z-40`) — it scrolls under the chrome, never over it.
+* The mobile drawer outranks the bottom nav. Flowbite's Sidebar theme ships the panel at `z-50` (a tie the bottom nav wins on DOM order) and the backdrop at `z-40` (below it), so `AppSidebar` lifts **both** to `z-[60]` (`class` for the panel, `classes.backdrop` for the scrim). Raising only one leaves the nav tappable through the overlay.
+* Flowbite `<Modal>` manages its own backdrop + `z-50` — don't override it. Modals portal to `body` (after the bottom nav in the DOM), so they cover it without a dedicated rung; the inline drawer does not, which is why it needs one.
+
+The boot splash (`#app-splash`, `z-index: 9999` in `app.html`) sits off this ladder on purpose: it is plain pre-bundle CSS that must cover everything until the root layout mounts and removes it.
 
 ### Dark Mode
 
