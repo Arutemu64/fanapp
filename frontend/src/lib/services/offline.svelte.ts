@@ -34,6 +34,10 @@ function deviceOnlineNow(): boolean {
 	return typeof navigator === 'undefined' ? true : navigator.onLine;
 }
 
+function delay(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
  * Reactive view over server reachability (see `reachability.ts`), driving the
  * offline banner. Re-probes on the events that usually coincide with a
@@ -49,26 +53,15 @@ export class OfflineService {
 	#pollDelay = RECOVERY_POLL_MIN_MS;
 	#lastReconnectRefresh = 0;
 	#unsubscribeReachable: (() => void) | null = null;
-	// Confirm-window bookkeeping (see OFFLINE_CONFIRM_WINDOW_MS). #confirming is
-	// true for the whole window, including while a re-probe is in flight and the
-	// timer is momentarily null.
+	// True while a confirm window is running (see #runConfirmWindow). Setting it
+	// false is how every caller cancels the window — the loop checks it and bails.
 	#confirming = false;
-	#confirmDeadline = 0;
-	#confirmId: ReturnType<typeof setTimeout> | null = null;
 
 	constructor() {
 		this.#unsubscribeReachable = onReachableChange(() => {
-			const reachable = isReachable();
-
-			// Any reachable signal ends a running confirm window — including one that
-			// classifies as 'noop' below (a success while we never left "online",
-			// e.g. the SSE handshake reporting the backend reachable). Without this
-			// the window would keep probing until its own next tick noticed.
-			if (reachable && this.#confirming) this.#cancelConfirm();
-
 			const transition = classifyReachabilityChange({
 				wasOnline: this.#online,
-				probeReachable: reachable,
+				probeReachable: isReachable(),
 				deviceOnline: deviceOnlineNow()
 			});
 
@@ -82,9 +75,9 @@ export class OfflineService {
 					this.#commit(false);
 					return;
 				case 'confirm':
-					// Might be a transient blip; verify before showing the offline
-					// banner. A re-entrant "still offline" notification while a window
-					// is already running is ignored — the window's own loop drives it.
+					// A failed probe while the device still reports online — maybe just
+					// a transient blip. Verify before alarming. If a window is already
+					// running, let it finish rather than restarting it.
 					if (!this.#confirming) this.#startConfirm();
 					return;
 				case 'noop':
@@ -121,45 +114,36 @@ export class OfflineService {
 		}
 	}
 
-	// Keep re-probing for OFFLINE_CONFIRM_WINDOW_MS before trusting a probe
-	// failure as an outage. A probe that succeeds mid-window flips reachability
-	// back, which routes through the 'go-online' branch above and cancels this.
 	#startConfirm() {
 		this.#confirming = true;
-		this.#confirmDeadline = Date.now() + OFFLINE_CONFIRM_WINDOW_MS;
-		this.#scheduleConfirmProbe();
-	}
-
-	#scheduleConfirmProbe() {
-		this.#confirmId = setTimeout(() => {
-			this.#confirmId = null;
-			void (async () => {
-				const reachable = await probeReachability();
-				// The blip cleared — end the window and stay online. We never left
-				// the "online" state during the window, so there is nothing to
-				// commit or refresh here; just stop probing.
-				if (reachable) {
-					this.#cancelConfirm();
-					return;
-				}
-				// A cancel (a trustworthy `offline` event, or teardown) also ends it.
-				if (!this.#confirming) return;
-
-				if (Date.now() >= this.#confirmDeadline) {
-					this.#confirming = false;
-					this.#commit(false);
-					return;
-				}
-				this.#scheduleConfirmProbe();
-			})();
-		}, OFFLINE_CONFIRM_PROBE_GAP_MS);
+		void this.#runConfirmWindow();
 	}
 
 	#cancelConfirm() {
 		this.#confirming = false;
-		if (this.#confirmId) {
-			clearTimeout(this.#confirmId);
-			this.#confirmId = null;
+	}
+
+	// Re-probe the server until one attempt reaches it or the window elapses.
+	// While this runs the app stays "online", so a quick reconnect never shows
+	// the offline banner. Only if the whole window fails do we commit to offline.
+	async #runConfirmWindow() {
+		const deadline = Date.now() + OFFLINE_CONFIRM_WINDOW_MS;
+		while (Date.now() < deadline) {
+			await delay(OFFLINE_CONFIRM_PROBE_GAP_MS);
+			// Cancelled while we waited (a trustworthy `offline` event, teardown, or
+			// a definite state committed elsewhere). A stale timer from `delay` can
+			// resolve after teardown — this check is what makes that harmless.
+			if (!this.#confirming) return;
+			// The blip cleared. We never left "online", so there's nothing to commit.
+			if (await probeReachability()) {
+				this.#confirming = false;
+				return;
+			}
+		}
+		// Every probe in the window failed: the server really is unreachable.
+		if (this.#confirming) {
+			this.#confirming = false;
+			this.#commit(false);
 		}
 	}
 
