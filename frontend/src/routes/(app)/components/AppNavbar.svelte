@@ -83,7 +83,7 @@
 		<div class="flex-1"></div>
 	{/if}
 
-	<div class="flex items-center gap-2 md:order-2">
+	<div class="flex items-center gap-2">
 		{#if user}
 			<NotificationBell />
 		{/if}
