@@ -3,10 +3,45 @@
 
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { maps } from '$lib/data/maps';
-	import { CloseOutline, DownloadOutline } from 'flowbite-svelte-icons';
+	import Panzoom from '@panzoom/panzoom';
+	import { CloseOutline, CompressOutline, DownloadOutline } from 'flowbite-svelte-icons';
 
 	// Currently opened map for the fullscreen viewer, or null when closed.
 	let active = $state<MapEntry | null>(null);
+
+	// The live Panzoom instance for the open viewer, so the reset button can
+	// reach it. Null while the viewer is closed. Reassigned by the attachment
+	// below, which the {#if active} block recreates on every open — so each map
+	// starts un-zoomed with no stale transform carried over.
+	let panzoom = $state<ReturnType<typeof Panzoom> | null>(null);
+
+	// Wire pinch/drag/wheel zoom onto the map image once the overlay mounts.
+	// Panzoom transforms this element via CSS; contain:'inside' keeps it within
+	// the overlay so a zoomed map can't be dragged off-screen. The element hugs
+	// the image (w-fit), so the black area beside a portrait map stays the
+	// backdrop button and a tap there still closes the viewer.
+	function zoomable(element: HTMLElement) {
+		const instance = Panzoom(element, {
+			minScale: 1,
+			maxScale: 6,
+			contain: 'inside'
+		});
+		panzoom = instance;
+		// Wheel-to-zoom is opt-in in Panzoom; bind it to the scrolling container.
+		const parent = element.parentElement;
+		parent?.addEventListener('wheel', instance.zoomWithWheel);
+		// Double-tap/double-click to reset — a pointer gesture shortcut for the
+		// keyboard-accessible reset button in the controls. Bound here rather than
+		// as a template handler so the target stays a non-interactive image.
+		const reset = () => instance.reset();
+		element.addEventListener('dblclick', reset);
+		return () => {
+			parent?.removeEventListener('wheel', instance.zoomWithWheel);
+			element.removeEventListener('dblclick', reset);
+			instance.destroy();
+			panzoom = null;
+		};
+	}
 
 	function close() {
 		active = null;
@@ -73,20 +108,37 @@ each other on desktop. items-start keeps each frame at its own height. -->
 			aria-label="Закрыть просмотр"
 		></button>
 
-		<!-- Caps are viewport units, not max-h-full: enhanced:img wraps the <img> in
-		an inline <picture> with no definite height, so a percentage max-height never
-		resolves and a tall portrait map overflows the viewport. 2rem matches the
-		overlay's p-4. w-auto sizes to the intrinsic ratio and never upscales.
-		relative keeps it above the backdrop, and hugging means the black area beside
-		a portrait map is the backdrop button, so a tap there still closes the viewer. -->
-		<enhanced:img
-			src={active.picture}
-			alt={active.alt}
-			sizes="(min-width: 1024px) 1024px, 100vw"
-			class="relative block max-h-[calc(100dvh-2rem)] w-auto max-w-[calc(100vw-2rem)] rounded-xl shadow-2xl"
-		/>
+		<!-- Panzoom target. Caps are viewport units, not max-h-full: enhanced:img
+		wraps the <img> in an inline <picture> with no definite height, so a
+		percentage max-height never resolves and a tall portrait map overflows the
+		viewport. 2rem matches the overlay's p-4. w-auto sizes to the intrinsic ratio
+		and never upscales. relative keeps it above the backdrop, and hugging (w-fit)
+		means the black area beside a portrait map is the backdrop button, so a tap
+		there still closes the viewer. touch-none hands pinch/drag to Panzoom instead
+		of the browser; double-tap resets the zoom. -->
+		<div
+			{@attach zoomable}
+			class="relative block h-fit max-h-[calc(100dvh-2rem)] w-fit max-w-[calc(100vw-2rem)] touch-none"
+		>
+			<enhanced:img
+				src={active.picture}
+				alt={active.alt}
+				sizes="(min-width: 1024px) 1024px, 100vw"
+				class="block max-h-[calc(100dvh-2rem)] w-auto max-w-[calc(100vw-2rem)] rounded-xl shadow-2xl select-none"
+			/>
+		</div>
 
 		<div class="absolute end-4 top-4 z-10 flex items-center gap-2">
+			<!-- Keyboard-accessible counterpart to double-tap: pinch/wheel have no key
+			equivalent, so this is the only way to undo a zoom without a pointer. -->
+			<button
+				type="button"
+				onclick={() => panzoom?.reset()}
+				class="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+				aria-label="Сбросить масштаб"
+			>
+				<CompressOutline class="h-6 w-6" />
+			</button>
 			<!-- Download the full-size fallback (img.src is the largest, original-format variant). -->
 			<a
 				href={active.picture.img.src}
