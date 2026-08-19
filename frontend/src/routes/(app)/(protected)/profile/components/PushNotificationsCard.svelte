@@ -24,6 +24,9 @@
 	let { user, onSettingsUpdate }: Props = $props();
 
 	let isSubscribed = $state(false);
+	// Once the browser permission is "denied" it never prompts again, so the
+	// toggle is a dead end — surface a persistent hint on how to unblock instead.
+	let notificationsBlocked = $state(false);
 	const toastService = getToastService();
 	let isLoading = $state(true);
 	// Writable $derived: the toggles bind to these and flip them optimistically,
@@ -46,6 +49,8 @@
 
 	async function checkSubscription() {
 		try {
+			notificationsBlocked =
+				typeof Notification !== 'undefined' && Notification.permission === 'denied';
 			if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
 				isLoading = false;
 				return;
@@ -131,13 +136,17 @@
 			if (Notification.permission === 'default') {
 				const permission = await Notification.requestPermission();
 				if (permission !== 'granted') {
+					notificationsBlocked = permission === 'denied';
 					toastService.add('Уведомления не разрешены', 'error');
 					return;
 				}
 			} else if (Notification.permission === 'denied') {
-				toastService.add('Уведомления заблокированы в настройках браузера', 'error');
+				notificationsBlocked = true;
+				toastService.add('Уведомления заблокированы в браузере', 'error');
 				return;
 			}
+
+			notificationsBlocked = false;
 
 			const registration = await navigator.serviceWorker.ready;
 
@@ -269,14 +278,20 @@
 
 		<div class="flex items-start justify-between gap-3 p-3 sm:p-4">
 			<div class="min-w-0">
-				<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Пуш-уведомления</span>
+				<span class="text-sm font-medium text-gray-900 dark:text-gray-300">На этом устройстве</span>
 				<p class="mt-1 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
-					Получать на этом устройстве.
+					Приходят как обычные уведомления телефона, даже когда приложение закрыто.
 				</p>
+				{#if notificationsBlocked}
+					<p class="mt-2 text-sm leading-relaxed text-red-600 dark:text-red-400">
+						Уведомления заблокированы в браузере. Открой настройки сайта (значок замка рядом с
+						адресом) и разреши уведомления.
+					</p>
+				{/if}
 			</div>
 			<Toggle
 				checked={isSubscribed}
-				aria-label="Включить пуш-уведомления на этом устройстве"
+				aria-label="Включить уведомления на этом устройстве"
 				disabled={isLoading}
 				onclick={(e) => {
 					e.preventDefault();

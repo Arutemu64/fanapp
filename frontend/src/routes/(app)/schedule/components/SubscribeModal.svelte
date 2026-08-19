@@ -2,6 +2,7 @@
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 
 	import { invalidate } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
@@ -124,6 +125,13 @@
 			</button>
 		</div>
 	</div>
+
+	<p class="text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+		Напоминание придёт в уведомления — проверь, что они включены в <a
+			href={resolve('/profile')}
+			class="font-medium text-primary-600 hover:underline dark:text-primary-400">профиле</a
+		>.
+	</p>
 
 	{#snippet footer()}
 		<Button type="button" color="alternative" onclick={() => (open = false)}>Отмена</Button>
