@@ -151,7 +151,7 @@
      gap-3 + space-y-0 replaces Flowbite's default space-y-3 so both stacks space
      the same way — gap is direction-agnostic where space-y is not (see below). -->
 <ToastContainer
-	class="pointer-events-none !sticky !top-4 !right-auto !bottom-auto !left-auto z-50 mx-auto flex h-0 w-full max-w-7xl flex-col gap-3 space-y-0 overflow-visible px-4 md:px-6 lg:px-8"
+	class="pointer-events-none !sticky !top-4 !right-auto !bottom-auto !left-auto z-(--z-overlay) mx-auto flex h-0 w-full max-w-7xl flex-col gap-3 space-y-0 overflow-visible px-4 md:px-6 lg:px-8"
 >
 	{#each toastService.pushItems as toast (toast.id)}
 		<div
@@ -177,7 +177,7 @@
      bottom edge; gap-3 (space-y-0 cancels Flowbite's default space-y-3, whose
      margin lands on the wrong side under flex-col-reverse) spaces the stack. -->
 <ToastContainer
-	class="pointer-events-none !fixed !inset-x-0 !top-auto !bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 mx-auto flex w-full max-w-7xl flex-col-reverse gap-3 space-y-0 px-4 md:!bottom-4 md:px-6 lg:px-8"
+	class="pointer-events-none !fixed !inset-x-0 !top-auto !bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-(--z-overlay) mx-auto flex w-full max-w-7xl flex-col-reverse gap-3 space-y-0 px-4 md:!bottom-4 md:px-6 lg:px-8"
 >
 	{#each toastService.statusItems as toast (toast.id)}
 		<div

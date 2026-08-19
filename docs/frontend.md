@@ -127,24 +127,27 @@ So:
 
 ### Z-Index Scale
 
-Keep stacking on this fixed ladder — never invent ad-hoc `z-*` values:
+The cross-component ladder is defined once as CSS variables in `app.css`
+(`@theme`) and referenced with the Tailwind v4 shorthand `z-(--z-overlay)`.
+Tailwind v4 has no named `z-*` utilities, so CSS variables are the idiomatic
+single source of truth — **never invent ad-hoc `z-*` values or hardcode a rung
+number in a component.**
 
-| Layer | Class | Elements |
+| Layer | Token / class | Elements |
 |---|---|---|
 | Base content | `z-0` / auto | In-flow page content |
-| In-page sticky | `z-10` – `z-30` | Page-local sticky headers and FABs that must stay *below* chrome (schedule day-tab bar, sub-headers, floating "now" button; overlay-internal controls). |
-| Sticky chrome | `z-40` | Top navbar (`AppNavbar`, `sticky top-0`) |
-| Overlays | `z-50` | Mobile bottom nav, toasts, update prompt, skip link, fullscreen viewers, Flowbite `<Modal>` backdrops |
-| Modal drawer | `z-[60]` | Mobile sidebar drawer **and its backdrop** (`AppSidebar`) — an open modal drawer must cover the bottom nav |
-| Top feedback | `z-[100]` | Global navigation spinner (`pointer-events-none`, above everything) |
+| In-page sticky | `z-10` – `z-30` | Page-local sticky headers and FABs that must stay *below* chrome (schedule day-tab bar, sub-headers, floating "now" button; overlay-internal controls). Local stacking, **not** tokenized. |
+| Sticky chrome | `z-(--z-chrome)` = 40 | Top navbar (`AppNavbar`, `sticky top-0`) |
+| Overlays | `z-(--z-overlay)` = 50 | Mobile bottom nav, toasts, update prompt, skip link, Flowbite `<Modal>` backdrops |
+| Inline modal | `z-(--z-modal)` = 60 | Inline (non-portaled) modals that must cover the bottom nav: the mobile sidebar drawer **and its backdrop** (`AppSidebar`), the fullscreen map viewer (`map/+page.svelte`) |
+| Top feedback | `z-(--z-feedback)` = 100 | Global navigation spinner (`pointer-events-none`, above everything) |
 
 **Rules:**
-* Sticky navbar stays *below* overlays (`z-40` < `z-50`) so drawers/modals cover it.
-* In-page sticky content stays *below* the navbar (`≤ z-30` < `z-40`) — it scrolls under the chrome, never over it.
-* The mobile drawer outranks the bottom nav. Flowbite's Sidebar theme ships the panel at `z-50` (a tie the bottom nav wins on DOM order) and the backdrop at `z-40` (below it), so `AppSidebar` lifts **both** to `z-[60]` (`class` for the panel, `classes.backdrop` for the scrim). Raising only one leaves the nav tappable through the overlay.
-* Flowbite `<Modal>` manages its own backdrop + `z-50` — don't override it. Modals portal to `body` (after the bottom nav in the DOM), so they cover it without a dedicated rung; the inline drawer does not, which is why it needs one.
+* Sticky navbar stays *below* overlays (`--z-chrome` < `--z-overlay`) so drawers/modals cover it.
+* In-page sticky content stays *below* the navbar (`≤ z-30` < 40) — it scrolls under the chrome, never over it. This band is page-local and intentionally left on plain utilities, not tokens.
+* **Inline vs portaled modals.** Flowbite `<Modal>` portals to `body` (after the bottom nav in the DOM), so `--z-overlay` already covers the nav via paint order — don't override its `z-50`. A modal rendered **inline** (the sidebar drawer, the map viewer) sits at its source position *before* the bottom nav, so it needs `--z-modal` to win. For the drawer, lift **both** the panel (`class`) and the backdrop (`classes.backdrop`): Flowbite's theme ships the panel at `z-50` (a tie the nav wins on DOM order) and the backdrop at `z-40` (below it), and raising only one leaves the nav tappable through the overlay.
 
-The boot splash (`#app-splash`, `z-index: 9999` in `app.html`) sits off this ladder on purpose: it is plain pre-bundle CSS that must cover everything until the root layout mounts and removes it.
+The boot splash (`#app-splash`, `z-index: 9999` in `app.html`) sits off this ladder on purpose: it is plain pre-bundle CSS with no access to the token layer, and must cover everything until the root layout mounts and removes it.
 
 ### Dark Mode
 

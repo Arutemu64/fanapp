@@ -39,6 +39,28 @@
 	--color-secondary-700: #0a6173;
 	--color-secondary-800: #0e4f5e;
 	--color-secondary-900: #103f4c;
+
+	/*
+	 * Global stacking ladder — single source of truth for the z-index scale
+	 * documented in docs/frontend.md "Z-Index Scale". Referenced in markup with
+	 * the v4 shorthand, e.g. `z-(--z-modal)`. Tailwind v4 has no named z-index
+	 * utilities, so CSS variables are the idiomatic way to name the scale.
+	 *
+	 * These cover cross-component chrome and overlays only — the layers that
+	 * stack against each other app-wide. In-page local stacking (e.g. schedule
+	 * sticky headers) stays on plain z-10..z-30 utilities and is not tokenized.
+	 *
+	 * --z-overlay matches Flowbite's own z-50 modal/backdrop so our overlays
+	 * share that rung. --z-modal sits one above for inline (non-portaled) modal
+	 * surfaces that must still cover the fixed bottom nav — the mobile sidebar
+	 * drawer and the fullscreen map viewer. Flowbite's <Modal> does NOT use this:
+	 * it portals to <body> (after the bottom nav in the DOM) so z-overlay already
+	 * covers the nav via paint order.
+	 */
+	--z-chrome: 40;
+	--z-overlay: 50;
+	--z-modal: 60;
+	--z-feedback: 100;
 }
 
 @source '../node_modules/flowbite-svelte/dist';

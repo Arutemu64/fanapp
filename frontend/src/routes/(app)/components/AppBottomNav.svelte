@@ -42,7 +42,7 @@
 	position="fixed"
 	role="navigation"
 	aria-label="Разделы"
-	class="bottom-0 left-0 z-50 w-full border-t border-gray-200 bg-white pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] md:hidden dark:border-gray-700 dark:bg-gray-900"
+	class="bottom-0 left-0 z-(--z-overlay) w-full border-t border-gray-200 bg-white pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] md:hidden dark:border-gray-700 dark:bg-gray-900"
 	classes={{ inner: 'grid-cols-4' }}
 >
 	{@render navItem('Главная', '/', HomeOutline, HomeSolid)}

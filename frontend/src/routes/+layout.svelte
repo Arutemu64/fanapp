@@ -110,7 +110,7 @@
 -->
 	{#if navigating.to}
 		<div
-			class="pointer-events-none fixed inset-x-0 top-0 z-[100] flex justify-center pt-[calc(env(safe-area-inset-top)+0.75rem)]"
+			class="pointer-events-none fixed inset-x-0 top-0 z-(--z-feedback) flex justify-center pt-[calc(env(safe-area-inset-top)+0.75rem)]"
 			role="status"
 			aria-live="polite"
 		>
