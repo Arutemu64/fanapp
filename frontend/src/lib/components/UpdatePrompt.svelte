@@ -139,12 +139,16 @@
 	>
 		<Toast
 			align={false}
-			color={undefined}
+			color="primary"
 			dismissable={false}
 			class="pointer-events-auto w-full max-w-sm shadow"
 		>
+			<!-- No text-* override on the icon: it inherits the Toast icon badge's
+				tonal colour (primary-500 light / primary-200 dark), which is what keeps
+				it legible on the primary-100 / primary-800 badge in both themes. Hard-
+				coding a single shade collapsed the contrast in dark mode. -->
 			{#snippet icon()}
-				<RefreshOutline class="h-5 w-5 text-primary-600" aria-hidden="true" />
+				<RefreshOutline class="h-5 w-5" aria-hidden="true" />
 			{/snippet}
 			<div class="text-sm leading-snug font-normal text-gray-700 dark:text-gray-200">
 				Доступна новая версия приложения.
