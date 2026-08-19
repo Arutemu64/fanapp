@@ -81,7 +81,7 @@ echo "[setup] Installing pinned uv (for stable Python 3.14 support)..."
 # a future image restores that marker this call starts failing - hence the
 # guard, and hence the verification block at the bottom that names `uv` as
 # missing rather than letting the environment build silently broken.
-python3 -m pip install --quiet --user "uv==0.12.1" \
+python3 -m pip install --quiet --user "uv==0.12.3" \
   || echo "[setup]   WARN: uv install failed (PyPI unreachable, or pip refused the --user install)."
 
 echo "[setup] Installing stable Python 3.14..."
