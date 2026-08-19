@@ -346,12 +346,26 @@ services:
       - BACKUP_KEEP_DAYS=7
       - BACKUP_KEEP_WEEKS=4
       - BACKUP_KEEP_MONTHS=6
+      - HEALTHCHECK_PORT=8080
     deploy:
       resources:
         limits:
           cpus: '0.5'
           memory: 96M
     restart: unless-stopped
+    # The image runs a tiny HTTP server that reports unhealthy once the last
+    # scheduled dump is older than the SCHEDULE window — so a backup that starts
+    # failing silently (bad credentials, full disk, version skew after a Postgres
+    # bump) surfaces in `docker ps` and any prober watching container health,
+    # instead of being discovered only when a restore is needed. start_period
+    # covers the BACKUP_ON_START dump, which must finish before health goes green.
+    # test command is the one upstream documents for this image.
+    healthcheck:
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:8080" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     profiles: [ "ops" ]
     networks:
       - backend-network
