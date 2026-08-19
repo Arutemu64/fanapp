@@ -32,7 +32,25 @@
 	// ignored — the next check retries.
 	function checkForUpdate() {
 		if (document.visibilityState !== 'visible') return;
+		// Skip while offline (nothing to fetch) or while an install is already in
+		// flight — re-checking then just races our own update flow. navigator.onLine
+		// is trusted only as a negative here, matching the reachability layer.
+		if (!navigator.onLine) return;
+		if (registration?.installing) return;
 		registration?.update().catch(() => undefined);
+	}
+
+	// Watch an installing worker and prompt once it reaches `installed`. The
+	// controller check distinguishes an update (prompt) from the first-ever
+	// install (no prompt — nothing to replace). Shared by the two entry points
+	// below: the `updatefound` event and a worker found already mid-install at
+	// mount, whose `updatefound` has already fired.
+	function watchInstalling(reg: ServiceWorkerRegistration, worker: ServiceWorker) {
+		worker.addEventListener('statechange', () => {
+			if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+				promptFor(reg);
+			}
+		});
 	}
 
 	function applyUpdate() {
@@ -62,17 +80,20 @@
 			// A build may already be waiting from a previous visit.
 			promptFor(reg);
 
+			// Or one may already be installing when this mounts — e.g. the browser's
+			// own on-navigation update check started it before we got here. Its
+			// `updatefound` has already fired, so the listener below would miss it and
+			// `reg.waiting` is still null; watch it directly or the prompt never shows
+			// (an intermittent miss depending on install timing).
+			if (reg.installing) {
+				watchInstalling(reg, reg.installing);
+			}
+
 			// Or one finishes installing while this tab is open.
 			reg.addEventListener('updatefound', () => {
-				const installing = reg.installing;
-				if (!installing) return;
-				installing.addEventListener('statechange', () => {
-					// `installed` + an existing controller means it's an update,
-					// not the first install — only then do we prompt.
-					if (installing.state === 'installed' && navigator.serviceWorker.controller) {
-						promptFor(reg);
-					}
-				});
+				if (reg.installing) {
+					watchInstalling(reg, reg.installing);
+				}
 			});
 
 			// Re-check immediately in case a deploy landed while the app was closed,
