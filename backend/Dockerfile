@@ -41,7 +41,6 @@ FROM debian:trixie-slim
 # hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates \
-    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Setup a non-root user
