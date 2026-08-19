@@ -16,15 +16,17 @@
 	let panzoom = $state<ReturnType<typeof Panzoom> | null>(null);
 
 	// Wire pinch/drag/wheel zoom onto the map image once the overlay mounts.
-	// Panzoom transforms this element via CSS; contain:'inside' keeps it within
-	// the overlay so a zoomed map can't be dragged off-screen. The element hugs
-	// the image (w-fit), so the black area beside a portrait map stays the
-	// backdrop button and a tap there still closes the viewer.
+	// Panzoom transforms this element via CSS, so the enhanced:img markup is
+	// untouched. The element hugs the image (w-fit), so the black area beside a
+	// portrait map stays the backdrop button and a tap there still closes the
+	// viewer. No `contain`: because the target is smaller than the overlay
+	// (letterboxed), Panzoom's contain math clamps the *scale* — it caps zoom at
+	// ~1.3x, defeating the feature. Free panning is the trade; the reset button
+	// and double-tap bring an off-screen map straight back.
 	function zoomable(element: HTMLElement) {
 		const instance = Panzoom(element, {
 			minScale: 1,
-			maxScale: 6,
-			contain: 'inside'
+			maxScale: 6
 		});
 		panzoom = instance;
 		// Wheel-to-zoom is opt-in in Panzoom; bind it to the scrolling container.
