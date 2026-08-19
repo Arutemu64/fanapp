@@ -1,4 +1,5 @@
 import { invalidateAll } from '$app/navigation';
+import { classifyReachabilityChange } from '$lib/utils/reachabilityTransition';
 import { createContext } from 'svelte';
 
 import { isReachable, markReachable, onReachableChange, probeReachability } from './reachability';
@@ -6,14 +7,32 @@ import { isReachable, markReachable, onReachableChange, probeReachability } from
 // While offline, poll for recovery so the banner clears on its own. We don't
 // poll while online — load outcomes, the SSE stream, and the `online` event
 // already keep the state fresh, so there's no need to spend battery/data.
-// The delay backs off (5s → 30s) the longer we stay offline to save battery on
-// a long outage, while still reacting quickly to a brief blip.
-const RECOVERY_POLL_MIN_MS = 5000;
+// The delay backs off (3s → 30s) the longer we stay offline to save battery on
+// a long outage, while still reacting quickly once a real outage ends.
+const RECOVERY_POLL_MIN_MS = 3000;
 const RECOVERY_POLL_MAX_MS = 30000;
 
 // Ignore repeat reconnects within this window so a flapping connection doesn't
 // trigger a storm of full `invalidateAll` reloads.
 const RECONNECT_REFRESH_DEBOUNCE_MS = 3000;
+
+// A failed probe while the device still reports online is treated as a possibly
+// transient blip (radio waking after the app is foregrounded, a brief NAT drop)
+// rather than an outage: we keep re-probing for this long before committing to
+// the "Нет связи с сервером" banner. During the window the app stays "online",
+// so the SSE client's own honest "Восстанавливаем связь…" strip is what shows —
+// never a premature offline error. Any probe that succeeds ends the window at
+// once. See classifyReachabilityChange and docs — this is the transient-fault
+// "let it self-correct before alarming" rule applied to reachability.
+const OFFLINE_CONFIRM_WINDOW_MS = 5000;
+// Gap between confirm re-probes. Kept short so a genuine recovery is noticed
+// almost as soon as the network returns; each probe carries its own 3s timeout.
+const OFFLINE_CONFIRM_PROBE_GAP_MS = 500;
+
+function deviceOnlineNow(): boolean {
+	// SSR / non-browser: assume online, matching reachability.ts.
+	return typeof navigator === 'undefined' ? true : navigator.onLine;
+}
 
 /**
  * Reactive view over server reachability (see `reachability.ts`), driving the
@@ -30,23 +49,46 @@ export class OfflineService {
 	#pollDelay = RECOVERY_POLL_MIN_MS;
 	#lastReconnectRefresh = 0;
 	#unsubscribeReachable: (() => void) | null = null;
+	// Confirm-window bookkeeping (see OFFLINE_CONFIRM_WINDOW_MS). #confirming is
+	// true for the whole window, including while a re-probe is in flight and the
+	// timer is momentarily null.
+	#confirming = false;
+	#confirmDeadline = 0;
+	#confirmId: ReturnType<typeof setTimeout> | null = null;
 
 	constructor() {
 		this.#unsubscribeReachable = onReachableChange(() => {
-			const wasOnline = this.#online;
-			this.#online = isReachable();
-			this.#syncPolling();
+			const reachable = isReachable();
 
-			// Recovered from offline: re-run every load so pages still showing the
-			// last cached copy refresh and drop their stale notices. Live SSE events
-			// only cover data that *changed* server-side; this catches the rest.
-			// Debounced so a flapping connection can't trigger reload storms.
-			if (!wasOnline && this.#online) {
-				const now = Date.now();
-				if (now - this.#lastReconnectRefresh > RECONNECT_REFRESH_DEBOUNCE_MS) {
-					this.#lastReconnectRefresh = now;
-					void invalidateAll();
-				}
+			// Any reachable signal ends a running confirm window — including one that
+			// classifies as 'noop' below (a success while we never left "online",
+			// e.g. the SSE handshake reporting the backend reachable). Without this
+			// the window would keep probing until its own next tick noticed.
+			if (reachable && this.#confirming) this.#cancelConfirm();
+
+			const transition = classifyReachabilityChange({
+				wasOnline: this.#online,
+				probeReachable: reachable,
+				deviceOnline: deviceOnlineNow()
+			});
+
+			switch (transition) {
+				case 'go-online':
+					this.#cancelConfirm();
+					this.#commit(true);
+					return;
+				case 'go-offline':
+					this.#cancelConfirm();
+					this.#commit(false);
+					return;
+				case 'confirm':
+					// Might be a transient blip; verify before showing the offline
+					// banner. A re-entrant "still offline" notification while a window
+					// is already running is ignored — the window's own loop drives it.
+					if (!this.#confirming) this.#startConfirm();
+					return;
+				case 'noop':
+					return;
 			}
 		});
 
@@ -61,8 +103,76 @@ export class OfflineService {
 		this.#syncPolling();
 	}
 
+	// Apply a confirmed connectivity state and, on a real offline→online edge,
+	// refresh stale pages. Live SSE events only cover data that *changed*
+	// server-side; the reload catches the rest. Debounced so a flapping
+	// connection can't trigger reload storms.
+	#commit(online: boolean) {
+		const wasOnline = this.#online;
+		this.#online = online;
+		this.#syncPolling();
+
+		if (!wasOnline && online) {
+			const now = Date.now();
+			if (now - this.#lastReconnectRefresh > RECONNECT_REFRESH_DEBOUNCE_MS) {
+				this.#lastReconnectRefresh = now;
+				void invalidateAll();
+			}
+		}
+	}
+
+	// Keep re-probing for OFFLINE_CONFIRM_WINDOW_MS before trusting a probe
+	// failure as an outage. A probe that succeeds mid-window flips reachability
+	// back, which routes through the 'go-online' branch above and cancels this.
+	#startConfirm() {
+		this.#confirming = true;
+		this.#confirmDeadline = Date.now() + OFFLINE_CONFIRM_WINDOW_MS;
+		this.#scheduleConfirmProbe();
+	}
+
+	#scheduleConfirmProbe() {
+		this.#confirmId = setTimeout(() => {
+			this.#confirmId = null;
+			void (async () => {
+				const reachable = await probeReachability();
+				// The blip cleared — end the window and stay online. We never left
+				// the "online" state during the window, so there is nothing to
+				// commit or refresh here; just stop probing.
+				if (reachable) {
+					this.#cancelConfirm();
+					return;
+				}
+				// A cancel (a trustworthy `offline` event, or teardown) also ends it.
+				if (!this.#confirming) return;
+
+				if (Date.now() >= this.#confirmDeadline) {
+					this.#confirming = false;
+					this.#commit(false);
+					return;
+				}
+				this.#scheduleConfirmProbe();
+			})();
+		}, OFFLINE_CONFIRM_PROBE_GAP_MS);
+	}
+
+	#cancelConfirm() {
+		this.#confirming = false;
+		if (this.#confirmId) {
+			clearTimeout(this.#confirmId);
+			this.#confirmId = null;
+		}
+	}
+
 	// Arrow functions so they keep `this` and stay removable by reference.
-	#handleOffline = () => markReachable(false);
+	#handleOffline = () => {
+		// Trustworthy negative: the device has no network. Abandon any confirm
+		// window and go offline at once so "Нет интернета" shows without delay.
+		// markReachable may not notify (reachability could already be false from a
+		// failed confirm probe), so commit explicitly rather than via the listener.
+		this.#cancelConfirm();
+		markReachable(false);
+		this.#commit(false);
+	};
 	#handleOnline = () => void probeReachability();
 	#handleVisibilityChange = () => {
 		if (document.visibilityState === 'visible') void probeReachability();
@@ -77,6 +187,7 @@ export class OfflineService {
 	destroy() {
 		this.#unsubscribeReachable?.();
 		this.#unsubscribeReachable = null;
+		this.#cancelConfirm();
 		window.removeEventListener('offline', this.#handleOffline);
 		window.removeEventListener('online', this.#handleOnline);
 		document.removeEventListener('visibilitychange', this.#handleVisibilityChange);
