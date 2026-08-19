@@ -64,12 +64,27 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
+# Alembic 1.19 added the `checkconstraint_byname` autogenerate plugin, which
+# compares named CHECK constraints by name. It cannot see the type-bound CHECK
+# constraints our `str_enum_column` emits (Enum with native_enum=False): those
+# live on the column's SchemaType, not as table-level constraints the plugin
+# enumerates, so every reflected `ck_*_<enum>` looks orphaned and autogenerate
+# proposes a spurious `remove_constraint` for it — reproduced on a DB built from
+# our own metadata even after the 1.19.1 column-bound fix. Excluding the plugin
+# restores the pre-1.19 behaviour (named CHECK constraints were never diffed).
+AUTOGENERATE_PLUGINS = [
+    "alembic.autogenerate.*",
+    "~alembic.autogenerate.checkconstraint_byname",
+]
+
+
 def do_run_migrations(connection: Connection) -> None:
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
         compare_type=True,
         compare_server_default=True,
+        autogenerate_plugins=AUTOGENERATE_PLUGINS,
     )
 
     with context.begin_transaction():
