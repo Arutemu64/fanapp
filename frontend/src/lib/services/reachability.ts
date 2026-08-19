@@ -46,6 +46,30 @@ export function onReachableChange(listener: () => void): () => void {
 const subscribeReachable = createSubscriber((update) => onReachableChange(update));
 
 /**
+ * Device-level connectivity (`navigator.onLine`), as a *reactive* read.
+ *
+ * Unlike `reachable` (a server probe), this only says whether a network
+ * interface exists — it reports online on a captive portal or dead VPN. Reading
+ * it alongside `current` lets the UI tell "the device has no internet" apart
+ * from "the device is online but the server can't be reached", so an outage is
+ * never miscast as the user's connection dropping. A `false` here is a
+ * trustworthy negative (the device really is offline); a `true` is not.
+ */
+function deviceOnlineNow(): boolean {
+	// SSR / non-browser: assume online so the first paint still attempts the network.
+	return typeof navigator === 'undefined' ? true : navigator.onLine;
+}
+
+const subscribeDeviceOnline = createSubscriber((update) => {
+	window.addEventListener('online', update);
+	window.addEventListener('offline', update);
+	return () => {
+		window.removeEventListener('online', update);
+		window.removeEventListener('offline', update);
+	};
+});
+
+/**
  * Reachability as a *reactive* read, for components and deriveds.
  *
  * `isReachable()` stays the plain read: `load` functions run outside any effect,
@@ -55,6 +79,10 @@ export const reachability = {
 	get current(): boolean {
 		subscribeReachable();
 		return reachable;
+	},
+	get deviceOnline(): boolean {
+		subscribeDeviceOnline();
+		return deviceOnlineNow();
 	}
 };
 

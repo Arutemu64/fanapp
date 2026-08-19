@@ -13,9 +13,10 @@ export const load: LayoutLoad = async ({ parent, url }) => {
 		// no cached identity we can't prove the user is logged out — their session
 		// cookie may still be valid — so bouncing them to a login page that can't
 		// work offline would log out an authenticated user on a flaky connection.
-		// Show the offline state instead (ErrorState reframes this as "Нет соединения").
+		// Show the offline state instead (ErrorState reframes this into a
+		// "нет интернета" or "нет связи с сервером" page from live reachability).
 		if (!isReachable()) {
-			error(503, 'Нет соединения');
+			error(503, 'Нет связи с сервером');
 		}
 
 		// Reachable and still no user: a genuine guest — send them to login,
