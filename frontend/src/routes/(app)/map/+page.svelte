@@ -61,6 +61,43 @@
 			close();
 		}
 	}
+
+	// Focus trap for the viewer (ARIA APG dialog pattern): aria-modal alone can
+	// strand a screen-reader/keyboard user behind the overlay, so move focus into
+	// the dialog on open, keep Tab inside it, and hand focus back to the trigger on
+	// close. The overlay is hand-rolled — Flowbite <Modal> would give this for free
+	// but portals to body, losing the inline --z-modal rung this viewer needs.
+	function trapFocus(dialog: HTMLElement) {
+		const previouslyFocused = document.activeElement as HTMLElement | null;
+		dialog.focus();
+
+		function onKeydown(event: KeyboardEvent) {
+			if (event.key !== 'Tab') return;
+			// tabIndex >= 0 drops the dialog itself and the backdrop (both tabindex=-1);
+			// filtering the property, not the selector, catches every -1 element.
+			const items = Array.from(
+				dialog.querySelectorAll<HTMLElement>('a[href], button, [tabindex]')
+			).filter((el) => el.tabIndex >= 0 && !el.hasAttribute('disabled'));
+			const first = items[0];
+			const last = items[items.length - 1];
+			if (!first || !last) return;
+			const inside = dialog.contains(document.activeElement);
+			// Wrap at the ends, and pull focus back in if a click left it outside.
+			if (event.shiftKey && (!inside || document.activeElement === first)) {
+				event.preventDefault();
+				last.focus();
+			} else if (!event.shiftKey && (!inside || document.activeElement === last)) {
+				event.preventDefault();
+				first.focus();
+			}
+		}
+
+		dialog.addEventListener('keydown', onKeydown);
+		return () => {
+			dialog.removeEventListener('keydown', onKeydown);
+			previouslyFocused?.focus?.();
+		};
+	}
 </script>
 
 <svelte:head>
@@ -104,16 +141,21 @@ each other on desktop. items-start keeps each frame at its own height. -->
 	     An inline (non-portaled) modal, so it takes the --z-modal rung to cover the
 	     fixed bottom nav — see docs/frontend.md "Z-Index Scale". -->
 	<div
+		{@attach trapFocus}
 		class="fixed inset-0 z-(--z-modal) flex items-center justify-center bg-black/80 p-4"
 		role="dialog"
 		aria-modal="true"
 		aria-label="Просмотр карты"
+		tabindex="-1"
 	>
-		<!-- Full-size backdrop button sits behind the image so a tap outside it closes the viewer. -->
+		<!-- Full-size backdrop button sits behind the image so a tap outside it closes
+		the viewer. tabindex=-1 keeps it out of the keyboard tab order — it's a
+		pointer-only affordance, duplicating the close button and Escape. -->
 		<button
 			type="button"
 			onclick={close}
 			class="absolute inset-0 cursor-default"
+			tabindex="-1"
 			aria-label="Закрыть просмотр"
 		></button>
 
