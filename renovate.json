@@ -12,6 +12,7 @@
   "configMigration": true,
   "description": [
     "ignorePaths restates the :ignoreModulesAndTests default (part of config:recommended) minus '**/tests/**': the postgres custom manager below must see backend/tests/fixtures/db_provider.py, which the default ignore silently excludes.",
+    "'.agents/skills/**' takes the vendored skills tree out of scope. These skills are upstream packages managed by `npx skills` and pinned in skills-lock.json, not code we hand-maintain, yet some ship their own manifests — humanizer bundles .github/workflows/validate.yml, whose hard-coded `node-version` and `python-version` the github-actions manager scanned recursively and folded into our real 'node'/'python' groups (PR #641 was a lone bump of that vendored workflow). Ignoring the tree keeps Renovate on the pins we own; the skills move only when their lockfile does. Renovate is denylist-only — there is no positive includePaths — so exclusion is the mechanism. The sibling '.skills/**' mirror is a generated, git-ignored symlink directory Renovate never reads, so it needs no entry here.",
     "One dependency, one PR: bumps are deliberately NOT batched into weekly grouped PRs. This repo is public and every CI job runs on a standard GitHub-hosted runner, which GitHub does not meter (https://docs.github.com/en/billing/concepts/product-billing/github-actions), so grouping bought nothing but cost atomicity: a grouped branch passes or fails as a whole, Renovate cannot split it, and one bad bump then holds back every other update in the batch ('grouping dependencies increases the chance that the branch has an error' — https://docs.renovatebot.com/noise-reduction/). Per-package PRs give one revertable commit per dependency instead. The shared-pin groups below are the exception, and they exist for correctness — every site of one pin must move together — not to save minutes.",
     "customManagers:dockerfileVersions reads `# renovate: datasource=… depName=…` annotations above `ENV`/`ARG` *_VERSION lines in Dockerfiles — the built-in dockerfile manager sees FROM lines only. Preferred over a hand-rolled regex manager per https://docs.renovatebot.com/modules/manager/regex/ ('you only need one customManager instead of four', and the annotation documents the pin where a reader of the Dockerfile will see it). Currently one site: PNPM_VERSION in frontend/Dockerfile. The preset only matches annotated lines, so it cannot pick anything up by accident.",
     "osvVulnerabilityAlerts adds OSV-sourced CVE detection for direct dependencies on top of GitHub's own alerts, so a vulnerable backend package is caught even where the Dependabot dependency graph does not read uv.lock. Security fixes need no further wiring: Renovate's vulnerabilityAlerts defaults already override the weekly schedule and the minimumReleaseAge cooldown below (schedule [], minimumReleaseAge null, prCreation 'immediate').",
@@ -24,7 +25,8 @@
     "**/examples/**",
     "**/__tests__/**",
     "**/test/**",
-    "**/__fixtures__/**"
+    "**/__fixtures__/**",
+    ".agents/skills/**"
   ],
   "timezone": "Europe/Moscow",
   "schedule": ["before 6am on monday"],
