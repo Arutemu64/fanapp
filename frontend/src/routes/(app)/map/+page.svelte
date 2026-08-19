@@ -9,11 +9,11 @@
 	// Currently opened map for the fullscreen viewer, or null when closed.
 	let active = $state<MapEntry | null>(null);
 
-	// The live Panzoom instance for the open viewer, so the reset button can
-	// reach it. Null while the viewer is closed. Reassigned by the attachment
-	// below, which the {#if active} block recreates on every open — so each map
-	// starts un-zoomed with no stale transform carried over.
-	let panzoom = $state<ReturnType<typeof Panzoom> | null>(null);
+	// The live Panzoom instance for the open viewer, so the reset button's click
+	// handler can reach it. Not $state: nothing renders from it, so it needs no
+	// reactivity. Null while closed; reassigned by the attachment below, which the
+	// {#if active} block recreates on every open — so each map starts un-zoomed.
+	let panzoom: ReturnType<typeof Panzoom> | null = null;
 
 	// Wire pinch/drag/wheel zoom onto the map image once the overlay mounts.
 	// Panzoom transforms this element via CSS, so the enhanced:img markup is
