@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
+	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Alert, Button, Card, Checkbox, Helper, Label, Spinner, Textarea } from 'flowbite-svelte';
@@ -95,6 +96,8 @@
 <svelte:head>
 	<title>Рассылка уведомлений · ФАН ФАН</title>
 </svelte:head>
+
+<BackLink href="/tools" label="Назад к инструментам" />
 
 <SectionIntro
 	description="Создавай массовые рассылки уведомлений для выбранных категорий участников фестиваля."
