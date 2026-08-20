@@ -7,6 +7,7 @@
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
+	import { canManageSchedule } from '$lib/utils/permissions';
 	import {
 		buildScheduleGroups,
 		filterScheduleGroups,
@@ -16,6 +17,7 @@
 	import { Button, Search, Toggle } from 'flowbite-svelte';
 	import {
 		ChevronUpOutline,
+		ClockArrowOutline,
 		CloseOutline,
 		InfoCircleOutline,
 		PlaySolid
@@ -171,6 +173,18 @@
 			message="Нет связи. Показана сохранённая программа — обновится при подключении."
 			cachedAt={data.cachedAt}
 		/>
+	{/if}
+
+	<!-- Operator shortcut: the schedule-changes log lives with the schedule it
+	     tracks, not in the tools section, so the operator reaches it in one tap
+	     from here. Gated by the same permission the changes page enforces. -->
+	{#if canManageSchedule(user)}
+		<div class="flex justify-end">
+			<Button href="/schedule/changes" color="alternative" size="sm" class="gap-2">
+				<ClockArrowOutline class="h-4 w-4 shrink-0" aria-hidden="true" />
+				Изменения программы
+			</Button>
+		</div>
 	{/if}
 
 	<!-- Keep filters compact and static so the schedule itself can use sticky headers. -->
