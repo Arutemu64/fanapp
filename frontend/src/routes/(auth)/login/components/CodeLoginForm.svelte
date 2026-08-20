@@ -3,7 +3,7 @@
 	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import CaptchaWidget, { captchaEnabled } from '$lib/components/CaptchaWidget.svelte';
-	import { CaptchaGate } from '$lib/utils/captcha.svelte';
+	import { CaptchaGate } from '$lib/services/captcha.svelte';
 	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
 	import { Alert, Button, Helper, Input, Label, Spinner } from 'flowbite-svelte';
 	import { ArrowLeftOutline, EnvelopeSolid } from 'flowbite-svelte-icons';

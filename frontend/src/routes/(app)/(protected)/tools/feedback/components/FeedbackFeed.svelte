@@ -5,8 +5,8 @@
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
 	import { FEEDBACK_PAGE_REQUEST_LIMIT, FEEDBACK_PAGE_SIZE } from '$lib/constants/feedback';
+	import { PaginatedFeed } from '$lib/services/feed.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { PaginatedFeed } from '$lib/utils/feed.svelte';
 
 	import FeedbackCard from './FeedbackCard.svelte';
 

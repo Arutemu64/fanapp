@@ -4,11 +4,11 @@
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import CaptchaWidget, { captchaEnabled } from '$lib/components/CaptchaWidget.svelte';
 	import OtpInput from '$lib/components/OtpInput.svelte';
+	import { CaptchaGate } from '$lib/services/captcha.svelte';
+	import { ResendCooldown } from '$lib/services/cooldown.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { completeLogin } from '$lib/utils/auth';
-	import { CaptchaGate } from '$lib/utils/captcha.svelte';
-	import { ResendCooldown } from '$lib/utils/cooldown.svelte';
 	import { isValidOtp } from '$lib/utils/validation';
 	import { Alert, Button, Helper, Label, Spinner } from 'flowbite-svelte';
 	import { ArrowLeftOutline, RefreshOutline } from 'flowbite-svelte-icons';

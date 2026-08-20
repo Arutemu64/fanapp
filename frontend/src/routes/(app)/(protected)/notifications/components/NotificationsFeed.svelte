@@ -11,9 +11,9 @@
 		NOTIFICATION_PAGE_SIZE
 	} from '$lib/constants/notifications';
 	import { getEventsClient } from '$lib/services/events.svelte';
+	import { PaginatedFeed } from '$lib/services/feed.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { dedupeById } from '$lib/utils/feed';
-	import { PaginatedFeed } from '$lib/utils/feed.svelte';
 	import { onMount } from 'svelte';
 
 	const client = createApiClient();

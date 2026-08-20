@@ -4,8 +4,8 @@
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import OtpInput from '$lib/components/OtpInput.svelte';
+	import { ResendCooldown } from '$lib/services/cooldown.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { ResendCooldown } from '$lib/utils/cooldown.svelte';
 	import { isValidEmail, isValidOtp, normalizeEmail } from '$lib/utils/validation';
 	import { Alert, Button, Helper, Input, Label, Modal, Spinner } from 'flowbite-svelte';
 	import { EnvelopeSolid } from 'flowbite-svelte-icons';
