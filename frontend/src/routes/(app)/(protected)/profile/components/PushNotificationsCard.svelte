@@ -9,11 +9,11 @@
 	import { PUBLIC_VAPID_KEY, PUBLIC_VK_GROUP_ID } from '$env/static/public';
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { urlBase64ToUint8Array } from '$lib/utils/push';
 	import { onMount } from 'svelte';
 
 	import IosPwaModal from './IosPwaModal.svelte';
 	import ProfileCardShell from './ProfileCardShell.svelte';
+	import { urlBase64ToUint8Array } from './push';
 	import VkNotificationsModal from './VkNotificationsModal.svelte';
 
 	interface Props {

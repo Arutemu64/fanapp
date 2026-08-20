@@ -8,11 +8,6 @@
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
 	import { canManageSchedule } from '$lib/utils/permissions';
-	import {
-		buildScheduleGroups,
-		filterScheduleGroups,
-		type ScheduleBlockGroup
-	} from '$lib/utils/scheduleGrouping';
 	import { createSearchIndex } from '$lib/utils/search';
 	import { Button, Search, Toggle } from 'flowbite-svelte';
 	import {
@@ -27,6 +22,11 @@
 	import type { PageProps } from './$types';
 
 	import EventCard from './components/EventCard.svelte';
+	import {
+		buildScheduleGroups,
+		filterScheduleGroups,
+		type ScheduleBlockGroup
+	} from './scheduleGrouping';
 
 	// Mirror the loaded page data so the component reads schedule from one local source.
 	let { data }: PageProps = $props();

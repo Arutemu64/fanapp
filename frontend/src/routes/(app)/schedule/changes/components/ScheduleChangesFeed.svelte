@@ -8,8 +8,8 @@
 		SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT,
 		SCHEDULE_CHANGES_PAGE_SIZE
 	} from '$lib/constants/schedule_changes';
+	import { PaginatedFeed } from '$lib/services/feed.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { PaginatedFeed } from '$lib/utils/feed.svelte';
 
 	import ScheduleChangeCard from './ScheduleChangeCard.svelte';
 
