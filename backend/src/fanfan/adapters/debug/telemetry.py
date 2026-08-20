@@ -3,7 +3,9 @@ from typing import cast
 import sentry_sdk
 from fastapi.exceptions import RequestValidationError
 from sentry_sdk.integrations.asyncio import AsyncioIntegration
+from sentry_sdk.integrations.asyncpg import AsyncPGIntegration
 from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.httpx2 import Httpx2Integration
 from sentry_sdk.integrations.redis import RedisIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from sentry_sdk.types import Event
@@ -58,13 +60,22 @@ def setup_telemetry(  # noqa: PLR0913, PLR0917 — one parameter per Sentry knob
             enable_logs=False,
             send_default_pii=False,
             before_send=_scrub_sensitive_data,
+            # Every integration is listed explicitly (even the ones that would
+            # auto-enable from the installed package) so the observability
+            # surface is auditable in one place instead of split between this
+            # list and the SDK's auto-detection.
             integrations=[
                 # Captures unhandled exceptions in detached asyncio tasks
                 # (e.g. SSE fan-out, scheduler/stream background work) that
-                # would otherwise escape the framework integrations.
+                # would otherwise escape the framework integrations. Unlike the
+                # others here, this one is not auto-enabled, so it must be listed.
                 AsyncioIntegration(),
                 FastApiIntegration(failed_request_status_codes={*range(500, 600)}),
                 SqlalchemyIntegration(),
+                # Driver-level DB spans beneath what SQLAlchemy already reports.
+                AsyncPGIntegration(),
+                # Outbound-request spans for the httpx2 clients (OAuth, mail).
+                Httpx2Integration(),
                 RedisIntegration(),
             ],
         )
