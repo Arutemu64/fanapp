@@ -1,4 +1,4 @@
-import { isReachable } from '$lib/services/reachability';
+import { isReachable, SERVER_UNREACHABLE_CODE } from '$lib/services/reachability';
 import { LOGIN_NEXT_PARAM } from '$lib/utils/auth';
 import { error, redirect } from '@sveltejs/kit';
 
@@ -16,7 +16,9 @@ export const load: LayoutLoad = async ({ parent, url }) => {
 		// Show the offline state instead (ErrorState reframes this into a
 		// "нет интернета" or "нет связи с сервером" page from live reachability).
 		if (!isReachable()) {
-			error(503, 'Нет связи с сервером');
+			// Carry a code so hooks.client.ts can drop this from Sentry — an
+			// expected offline blip, not an app bug (ErrorState reframes the copy).
+			error(503, { message: 'Нет связи с сервером', code: SERVER_UNREACHABLE_CODE });
 		}
 
 		// Reachable and still no user: a genuine guest — send them to login,

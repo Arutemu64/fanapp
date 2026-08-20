@@ -5,7 +5,27 @@ import {
 	PUBLIC_SENTRY_ENVIRONMENT,
 	PUBLIC_SENTRY_TRACES_SAMPLE_RATE
 } from '$env/static/public';
+import { SERVER_UNREACHABLE_CODE } from '$lib/services/reachability';
 import * as Sentry from '@sentry/sveltekit';
+
+// The `(protected)` layout throws a 503 HttpError when the backend is
+// unreachable, so the offline ErrorState renders instead of bouncing a
+// possibly-authenticated user to a login page that can't work offline. Sentry's
+// SvelteKit load wrapper reports HttpErrors with status >= 500, which would turn
+// every mobile connectivity blip into a GlitchTip issue. This is an expected
+// network condition, not an application bug — recognise it by the code the
+// layout attaches and drop it. A genuine backend 503 (a real HTTP_ERROR without
+// this code) still reports.
+function isServerUnreachableError(exception: unknown): boolean {
+	if (!exception || typeof exception !== 'object') {
+		return false;
+	}
+	const body = (exception as { body?: unknown }).body;
+	if (!body || typeof body !== 'object') {
+		return false;
+	}
+	return (body as { code?: unknown }).code === SERVER_UNREACHABLE_CODE;
+}
 
 // `Number('')` is 0 and `Number('half')` is NaN — neither is a sane sample rate
 // to infer from a missing or fat-fingered value, so both fall back to the
@@ -28,7 +48,11 @@ if (PUBLIC_SENTRY_DSN) {
 		// over its defaults, so even `release: undefined` overwrites the injected
 		// value (see applyDefaultOptions in @sentry/browser).
 		tracesSampleRate,
-		beforeSend(event) {
+		beforeSend(event, hint) {
+			if (isServerUnreachableError(hint?.originalException)) {
+				return null;
+			}
+
 			// Scrub potential PII from request headers and cookies
 			if (event.request) {
 				delete event.request.cookies;
