@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
+	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import {
@@ -122,6 +123,8 @@
 <svelte:head>
 	<title>Генерация билетов · ФАН ФАН</title>
 </svelte:head>
+
+<BackLink href="/tools" label="Назад к инструментам" />
 
 <SectionIntro
 	description="Создавай новые билеты для выбранной роли. Получатель привязывает билет по номеру и получает роль."

@@ -3,6 +3,7 @@
 
 	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
+	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
@@ -106,6 +107,8 @@
 		};
 	});
 </script>
+
+<BackLink href="/tools" label="Назад к инструментам" />
 
 <SectionIntro
 	description="Данные подтягиваются автоматически по расписанию. Запусти вручную, если нужно увидеть свежие данные прямо сейчас."

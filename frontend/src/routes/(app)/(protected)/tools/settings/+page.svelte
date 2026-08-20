@@ -2,6 +2,7 @@
 	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
+	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { fromEventDateTimeLocal, toEventDateTimeLocal } from '$lib/utils/formatters';
@@ -180,6 +181,8 @@
 <svelte:head>
 	<title>Настройки фестиваля · ФАН ФАН</title>
 </svelte:head>
+
+<BackLink href="/tools" label="Назад к инструментам" />
 
 <SectionIntro description="Управляй фестивалем, голосованием и таймингами расписания." />
 

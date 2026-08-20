@@ -2,12 +2,12 @@
 	import type { GetVotingNominationResult } from '$lib/types/voting';
 
 	import { invalidate } from '$app/navigation';
+	import BackLink from '$lib/components/BackLink.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { createSearchIndex } from '$lib/utils/search';
 	import { Button, Search } from 'flowbite-svelte';
 	import {
-		ArrowLeftOutline,
 		ArrowUpRightFromSquareOutline,
 		CheckCircleSolid,
 		ExclamationCircleOutline,
@@ -55,17 +55,7 @@
 	<title>{nomination ? `${nomination.title} · ` : ''}Голосование · ФАН ФАН</title>
 </svelte:head>
 
-<Button
-	href="/voting"
-	outline
-	size="sm"
-	color="alternative"
-	class="mb-2 sm:mb-3"
-	aria-label="Назад к номинациям"
->
-	<ArrowLeftOutline class="mr-1 h-4 w-4" />
-	Назад к номинациям
-</Button>
+<BackLink href="/voting" label="Назад к номинациям" />
 
 {#if data.offlineUnavailable || !nomination}
 	<!-- Voting is uncached and online-only, so there is no saved copy to show —

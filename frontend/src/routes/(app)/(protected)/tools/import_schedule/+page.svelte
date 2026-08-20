@@ -3,6 +3,7 @@
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
+	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { Alert, Button, Card, Fileupload, Helper, Label, Spinner } from 'flowbite-svelte';
 
@@ -72,6 +73,8 @@
 <svelte:head>
 	<title>Импорт программы · ФАН ФАН</title>
 </svelte:head>
+
+<BackLink href="/tools" label="Назад к инструментам" />
 
 <SectionIntro description="Загрузи Excel-файл, чтобы обновить программу мероприятия." />
 

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
+	import BackLink from '$lib/components/BackLink.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { feedSnapshotKey } from '$lib/utils/feed';
 	import { onMount } from 'svelte';
@@ -45,6 +46,8 @@
 <svelte:head>
 	<title>Изменения программы · ФАН ФАН</title>
 </svelte:head>
+
+<BackLink href="/schedule" label="Назад к программе" />
 
 {#key changesKey}
 	<ScheduleChangesFeed initialChanges={data.schedule_changes} initialHasMore={data.hasMore} />
