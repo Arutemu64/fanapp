@@ -5,27 +5,24 @@ import {
 	PUBLIC_SENTRY_ENVIRONMENT,
 	PUBLIC_SENTRY_TRACES_SAMPLE_RATE
 } from '$env/static/public';
-import { SERVER_UNREACHABLE_CODE } from '$lib/services/reachability';
 import { readStorage, writeStorage } from '$lib/utils/safeStorage';
 import * as Sentry from '@sentry/sveltekit';
 
-// The `(protected)` layout throws a 503 HttpError when the backend is
-// unreachable, so the offline ErrorState renders instead of bouncing a
-// possibly-authenticated user to a login page that can't work offline. Sentry's
-// SvelteKit load wrapper reports HttpErrors with status >= 500, which would turn
-// every mobile connectivity blip into a GlitchTip issue. This is an expected
-// network condition, not an application bug — recognise it by the code the
-// layout attaches and drop it. A genuine backend 503 (a real HTTP_ERROR without
-// this code) still reports.
-function isServerUnreachableError(exception: unknown): boolean {
+// Server errors belong to the backend, which reports them with a full stack
+// trace and request context; a frontend mirror is a duplicate with none of that,
+// and a transient gateway blip (502/503/504) or the 503 the `(protected)` layout
+// throws when the backend is unreachable is an expected network condition, not an
+// app bug. Sentry's SvelteKit load wrapper reports every HttpError with status
+// >= 500, which would file each of these as a GlitchTip issue — so drop them.
+// A SvelteKit HttpError is the only thing here carrying a numeric `status`; a
+// genuine frontend JS bug is a real Error (no `status`) and still reports.
+// See https://swiftmade.co/blog/2026-01-05-sentry-error-reporting-best-practices/
+function isServerSideHttpError(exception: unknown): boolean {
 	if (!exception || typeof exception !== 'object') {
 		return false;
 	}
-	const body = (exception as { body?: unknown }).body;
-	if (!body || typeof body !== 'object') {
-		return false;
-	}
-	return (body as { code?: unknown }).code === SERVER_UNREACHABLE_CODE;
+	const status = (exception as { status?: unknown }).status;
+	return typeof status === 'number' && status >= 500;
 }
 
 // `Number('')` is 0 and `Number('half')` is NaN — neither is a sane sample rate
@@ -50,7 +47,7 @@ if (PUBLIC_SENTRY_DSN) {
 		// value (see applyDefaultOptions in @sentry/browser).
 		tracesSampleRate,
 		beforeSend(event, hint) {
-			if (isServerUnreachableError(hint?.originalException)) {
+			if (isServerSideHttpError(hint?.originalException)) {
 				return null;
 			}
 

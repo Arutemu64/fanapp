@@ -17,14 +17,17 @@ const HEALTH_URL = `${PUBLIC_API_URL}/debug/health`;
 const PROBE_TIMEOUT_MS = 3000;
 
 /**
- * `App.Error.code` on the 503 the `(protected)` layout throws when the backend
- * is unreachable. It lets `hooks.client.ts` recognise and drop that error from
- * Sentry: the offline ErrorState is an expected reaction to a flaky mobile
- * connection, not an application bug, but Sentry's SvelteKit load wrapper
- * reports every 5xx HttpError, so without this each blip becomes a GlitchTip
- * issue.
+ * Statuses a reverse proxy returns when it is up but the backend behind it is
+ * not: the request never reached a working app server, so it means the same
+ * thing as a network failure — the backend is unreachable, not that it processed
+ * the request and rejected it. Deliberately excludes a plain 500: there the
+ * backend answered, so it is reachable and the app must not reframe to offline.
  */
-export const SERVER_UNREACHABLE_CODE = 'SERVER_UNREACHABLE';
+const BACKEND_UNREACHABLE_STATUSES = new Set([502, 503, 504]);
+
+export function isBackendUnreachableStatus(status: number): boolean {
+	return BACKEND_UNREACHABLE_STATUSES.has(status);
+}
 
 // Optimistic default so the very first paint still attempts the network; the
 // first probe corrects it within PROBE_TIMEOUT_MS.

@@ -1,6 +1,6 @@
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
-import { isReachable, markReachable } from '$lib/services/reachability';
+import { isBackendUnreachableStatus, isReachable, markReachable } from '$lib/services/reachability';
 import { isHttpError } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
@@ -32,6 +32,14 @@ export const load: PageLoad = async ({ params, fetch, depends }) => {
 		});
 
 		if (apiError || !data) {
+			// A gateway 5xx (502/503/504) is the backend being unreachable behind a
+			// live proxy, not a missing nomination. Mirror the offline path above —
+			// mark unreachable, show the honest online-only state — instead of the
+			// misleading "Номинация не найдена" on the generic error page.
+			if (response && isBackendUnreachableStatus(response.status)) {
+				markReachable(false);
+				return { title: 'Голосование', nomination: undefined, offlineUnavailable: true };
+			}
 			throwApiError(apiError, response, 'Номинация не найдена');
 		}
 
