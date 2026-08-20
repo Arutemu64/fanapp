@@ -2,6 +2,28 @@ export type ThemeMode = 'system' | 'light' | 'dark';
 
 const STORAGE_KEY = 'theme-mode';
 
+// Reading or writing `localStorage` throws (not returns null) when storage is
+// partitioned or blocked — sandboxed iframes and in-app webviews with cookies
+// disabled. This runs in the root layout's init, so an unguarded throw fails
+// hydration: SvelteKit never assigns its `root`, and the next client navigation
+// crashes on `root.$set(...)`. Treat storage as best-effort, same as the
+// sessionStorage guard in hooks.client.ts.
+function readStoredMode(): string | null {
+	try {
+		return localStorage.getItem(STORAGE_KEY);
+	} catch {
+		return null;
+	}
+}
+
+function persistMode(mode: ThemeMode): void {
+	try {
+		localStorage.setItem(STORAGE_KEY, mode);
+	} catch {
+		// Storage unavailable — the choice just won't survive a reload.
+	}
+}
+
 // Browser-UI tints (address/status bar). Must match app.html: the light value is
 // the watermelon pink, the dark value the gray-900 shell background. The inline
 // boot script in app.html seeds <meta name="theme-color"> with the same two
@@ -27,7 +49,7 @@ class ThemeService {
 	mode = $state<ThemeMode>('system');
 
 	constructor() {
-		const stored = localStorage.getItem(STORAGE_KEY);
+		const stored = readStoredMode();
 		if (stored === 'light' || stored === 'dark' || stored === 'system') {
 			this.mode = stored;
 		}
@@ -40,7 +62,7 @@ class ThemeService {
 
 	setMode(mode: ThemeMode): void {
 		this.mode = mode;
-		localStorage.setItem(STORAGE_KEY, mode);
+		persistMode(mode);
 		applyTheme(mode);
 	}
 }

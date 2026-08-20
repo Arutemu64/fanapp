@@ -64,7 +64,13 @@
 		<meta name="twitter:image:alt" content="ФАН ФАН — приложение-компаньон фестиваля" />
 		<script>
 			(function () {
-				var m = localStorage.getItem('theme-mode');
+				// localStorage access throws (not returns null) when storage is partitioned
+				// or blocked — in-app webviews, sandboxed contexts. Fall back to the OS
+				// preference there rather than letting the boot script throw.
+				var m = null;
+				try {
+					m = localStorage.getItem('theme-mode');
+				} catch (e) {}
 				var isDark =
 					m === 'dark' ||
 					(m !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
