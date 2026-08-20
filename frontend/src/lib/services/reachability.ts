@@ -20,8 +20,8 @@ const PROBE_TIMEOUT_MS = 3000;
  * Statuses a reverse proxy returns when it is up but the backend behind it is
  * not: the request never reached a working app server, so it means the same
  * thing as a network failure — the backend is unreachable, not that it processed
- * the request and rejected it. Deliberately excludes a plain 500 (the backend
- * answered with a real application error, which we DO want surfaced and reported).
+ * the request and rejected it. Deliberately excludes a plain 500: there the
+ * backend answered, so it is reachable and the app must not reframe to offline.
  */
 const BACKEND_UNREACHABLE_STATUSES = new Set([502, 503, 504]);
 

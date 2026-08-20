@@ -16,8 +16,7 @@ import * as Sentry from '@sentry/sveltekit';
 // >= 500, which would file each of these as a GlitchTip issue — so drop them.
 // A SvelteKit HttpError is the only thing here carrying a numeric `status`; a
 // genuine frontend JS bug is a real Error (no `status`) and still reports.
-// Best practice: report server errors from the backend only.
-// https://swiftmade.co/blog/2026-01-05-sentry-error-reporting-best-practices/
+// See https://swiftmade.co/blog/2026-01-05-sentry-error-reporting-best-practices/
 function isServerSideHttpError(exception: unknown): boolean {
 	if (!exception || typeof exception !== 'object') {
 		return false;

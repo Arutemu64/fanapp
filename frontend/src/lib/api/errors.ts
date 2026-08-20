@@ -281,13 +281,10 @@ export function throwApiError(
 	const status = response && response.status >= 400 ? response.status : 500;
 
 	// A gateway 5xx (502/503/504) means the proxy is up but the backend never
-	// handled the request — the same "backend unreachable" condition as a network
-	// throw, not a fault in this request. Record it so ErrorState reframes to the
-	// calm "нет связи с сервером" page and sibling loads skip their own doomed
-	// requests. A genuine app 500 (backend answered with a real error body) is not
-	// a gateway status and must not flip us to unreachable. The Sentry noise from
-	// any 5xx is dropped centrally in hooks.client.ts — the frontend does not
-	// report server errors; the backend owns them.
+	// handled the request — as unreachable as a network throw, so record it: that
+	// reframes ErrorState to the offline page and lets sibling loads skip their own
+	// doomed requests. A real app 500 (backend answered, with an error body) is
+	// reachable and must not flip us offline.
 	if (isBackendUnreachableStatus(status)) {
 		markReachable(false);
 	}

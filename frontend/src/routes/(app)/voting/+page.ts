@@ -22,10 +22,9 @@ export const load: PageLoad = async ({ fetch }) => {
 
 		if (apiError) {
 			// A gateway 5xx (502/503/504) is the backend being unreachable behind a
-			// live proxy, not a real load failure — treat it like the offline path
-			// above. throwApiError already marks us unreachable and drops the Sentry
-			// noise for these; short-circuiting here keeps the tailored voting empty
-			// state instead of the generic error page.
+			// live proxy, not a real load failure. Mirror the offline path above —
+			// mark unreachable, show the honest online-only state — instead of the
+			// generic error page.
 			if (response && isBackendUnreachableStatus(response.status)) {
 				markReachable(false);
 				return { title: 'Голосование', nominations: [], offlineUnavailable: true };
