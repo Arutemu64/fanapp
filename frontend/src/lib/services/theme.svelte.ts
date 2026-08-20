@@ -1,3 +1,5 @@
+import { readStorage, writeStorage } from '$lib/utils/safeStorage';
+
 export type ThemeMode = 'system' | 'light' | 'dark';
 
 const STORAGE_KEY = 'theme-mode';
@@ -27,7 +29,7 @@ class ThemeService {
 	mode = $state<ThemeMode>('system');
 
 	constructor() {
-		const stored = localStorage.getItem(STORAGE_KEY);
+		const stored = readStorage('local', STORAGE_KEY);
 		if (stored === 'light' || stored === 'dark' || stored === 'system') {
 			this.mode = stored;
 		}
@@ -40,7 +42,9 @@ class ThemeService {
 
 	setMode(mode: ThemeMode): void {
 		this.mode = mode;
-		localStorage.setItem(STORAGE_KEY, mode);
+		// Storage may be blocked (in-app webview) — the preference just won't
+		// survive a reload there; safeStorage swallows the failure.
+		writeStorage('local', STORAGE_KEY, mode);
 		applyTheme(mode);
 	}
 }

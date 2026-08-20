@@ -6,6 +6,7 @@ import {
 	PUBLIC_SENTRY_TRACES_SAMPLE_RATE
 } from '$env/static/public';
 import { SERVER_UNREACHABLE_CODE } from '$lib/services/reachability';
+import { readStorage, writeStorage } from '$lib/utils/safeStorage';
 import * as Sentry from '@sentry/sveltekit';
 
 // The `(protected)` layout throws a 503 HttpError when the backend is
@@ -86,21 +87,16 @@ if (PUBLIC_SENTRY_DSN) {
 // The reload is guarded against looping: if the chunk is genuinely unreachable the
 // reload would fail identically, so we record each attempt and skip a fresh one
 // within a short window, letting a persistent failure fall through to the error page.
-// We only auto-recover when the marker can be persisted — a browser whose
-// sessionStorage throws (storage-partitioned in-app browsers) is exactly where an
-// unguarded reload would spin, so there we leave the error to surface instead.
 const PRELOAD_RELOAD_MARKER = 'preload-error-reloaded-at';
 const PRELOAD_RELOAD_WINDOW_MS = 30_000;
 
 addEventListener('vite:preloadError', (event) => {
-	try {
-		const lastReloadAt = Number(sessionStorage.getItem(PRELOAD_RELOAD_MARKER)) || 0;
-		if (Date.now() - lastReloadAt < PRELOAD_RELOAD_WINDOW_MS) return;
-		sessionStorage.setItem(PRELOAD_RELOAD_MARKER, String(Date.now()));
-	} catch {
-		// sessionStorage unavailable — can't guard against a loop, so don't reload.
-		return;
-	}
+	const lastReloadAt = Number(readStorage('session', PRELOAD_RELOAD_MARKER)) || 0;
+	if (Date.now() - lastReloadAt < PRELOAD_RELOAD_WINDOW_MS) return;
+	// Only auto-recover when the marker can be persisted. A browser whose
+	// sessionStorage is blocked (storage-partitioned in-app browsers) is exactly
+	// where an unguarded reload would spin, so there we leave the error to surface.
+	if (!writeStorage('session', PRELOAD_RELOAD_MARKER, String(Date.now()))) return;
 
 	// Stop Vite from re-throwing so this recovered failure isn't also reported to Sentry.
 	event.preventDefault();
