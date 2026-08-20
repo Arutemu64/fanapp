@@ -37,7 +37,13 @@ dependencies = [
     "greenlet>=3.5.5",
     "itsdangerous>=2.2.0",
     "jinja2>=3.1.6",
-    "sentry-sdk[fastapi,sqlalchemy]>=2.68.0",
+    # Cap below 3.0: the 3.x line is a breaking rewrite onto OpenTelemetry-based
+    # scope management, published so far only as alphas. Without the cap, uv can
+    # resolve a bare `>=2.68.0` to `3.0.0a7` whenever the newest 2.x is still
+    # inside the `exclude-newer` cooldown, and that alpha crashes at
+    # `sentry_sdk.init()` against opentelemetry-api 1.44.0 on Python 3.14. The
+    # 3.x migration is a deliberate, separate change.
+    "sentry-sdk[fastapi,sqlalchemy]>=2.68.0,<3",
     "nh3>=0.3.6",
     "pwdlib[argon2]>=0.3.1",
     "pydantic-extra-types>=2.11.1",
