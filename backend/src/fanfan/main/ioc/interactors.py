@@ -30,6 +30,7 @@ from fanfan.application.interactors.current_user.update_user_settings import (
     UpdateUserSettings,
 )
 from fanfan.application.interactors.demo.seed_demo_data import SeedDemoData
+from fanfan.application.interactors.feedback.list_feedback import ListFeedback
 from fanfan.application.interactors.feedback.submit_feedback import SubmitFeedback
 from fanfan.application.interactors.notifications.config import NotificationConfig
 from fanfan.application.interactors.notifications.create_notification import (
@@ -178,6 +179,7 @@ class InteractorsProvider(Provider):
     link_ticket = provide(LinkTicket)
 
     submit_feedback = provide(SubmitFeedback)
+    list_feedback = provide(ListFeedback)
 
     authenticate_user = provide(AuthenticateUser)
     get_current_user = provide(GetCurrentUser)

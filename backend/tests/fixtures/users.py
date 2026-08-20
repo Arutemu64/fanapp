@@ -168,3 +168,30 @@ async def schedule_editor(dishka_request: AsyncContainer) -> User:
         )
     await uow.commit()
     return schedule_editor
+
+
+@pytest_asyncio.fixture
+async def feedback_reader(dishka_request: AsyncContainer) -> User:
+    """
+    Create a user granted feedback:read.
+    """
+    user_gateway = await dishka_request.get(UserGateway)
+    user_permission_gateway = await dishka_request.get(UserPermissionGateway)
+    uow = await dishka_request.get(UnitOfWork)
+
+    feedback_reader = User(
+        id=UserId(uuid7()),
+        username=Username("feedback_reader"),
+        hashed_password=None,
+        role=UserRole.ORG,
+    )
+    await user_gateway.add(feedback_reader)
+    await user_permission_gateway.add(
+        UserPermission(
+            id=generate_user_permission_id(),
+            permission=Permission.FEEDBACK_READ,
+            user_id=feedback_reader.id,
+        )
+    )
+    await uow.commit()
+    return feedback_reader

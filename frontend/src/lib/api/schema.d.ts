@@ -842,7 +842,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List app feedback
+         * @description Returns a paginated list of feedback submitted by users, newest first. Requires the feedback:read permission.
+         */
+        get: operations["list_feedback"];
         put?: never;
         /**
          * Submit app feedback
@@ -1062,6 +1066,32 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** FeedbackDTO */
+        FeedbackDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Text */
+            text: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            user: components["schemas"]["FeedbackUserDTO"];
+        };
+        /** FeedbackUserDTO */
+        FeedbackUserDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Username */
+            username: string;
+        };
         /** GenerateTicketsInput */
         GenerateTicketsInput: {
             role: components["schemas"]["UserRole"];
@@ -1127,6 +1157,11 @@ export interface components {
         LinkTicketInput: {
             /** Barcode */
             barcode: string;
+        };
+        /** ListFeedbackResult */
+        ListFeedbackResult: {
+            /** Feedback */
+            feedback: components["schemas"]["FeedbackDTO"][];
         };
         /** ListScheduleChangesResult */
         ListScheduleChangesResult: {
@@ -1252,7 +1287,7 @@ export interface components {
          * Permission
          * @enum {string}
          */
-        Permission: "schedule:manage" | "schedule:import" | "notifications:send" | "settings:manage" | "tickets:generate" | "sync:run" | "demo:seed";
+        Permission: "schedule:manage" | "schedule:import" | "notifications:send" | "settings:manage" | "tickets:generate" | "sync:run" | "demo:seed" | "feedback:read";
         /**
          * PublicConfigDTO
          * @description Public, unauthenticated projection of AppSettings served at GET /config.
@@ -3986,6 +4021,56 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    list_feedback: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Feedback retrieved successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListFeedbackResult"];
+                };
             };
             /** @description Not authenticated. */
             401: {

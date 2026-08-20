@@ -9,11 +9,13 @@
 		canGenerateTickets,
 		canImportSchedule,
 		canManageSettings,
+		canReadFeedback,
 		canRunSync,
 		canSendNotifications
 	} from '$lib/utils/permissions';
 	import {
 		AdjustmentsHorizontalOutline,
+		AnnotationOutline,
 		BullhornOutline,
 		FileImportOutline,
 		RefreshOutline,
@@ -76,6 +78,14 @@
 			icon: RefreshOutline,
 			href: '/tools/sync',
 			canAccess: canRunSync(user)
+		},
+		{
+			key: 'feedback',
+			title: 'Отзывы',
+			description: 'Что участники пишут о приложении — свежие отзывы сверху.',
+			icon: AnnotationOutline,
+			href: '/tools/feedback',
+			canAccess: canReadFeedback(user)
 		}
 	]);
 </script>

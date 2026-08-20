@@ -2973,15 +2973,20 @@
         "summary": "Submit app feedback",
         "description": "Submits free-text feedback about the app from the current user.",
         "operationId": "submit_feedback",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SubmitFeedbackInput"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -3024,12 +3029,84 @@
               }
             }
           }
-        },
+        }
+      },
+      "get": {
+        "summary": "List app feedback",
+        "description": "Returns a paginated list of feedback submitted by users, newest first. Requires the feedback:read permission.",
+        "operationId": "list_feedback",
         "security": [
           {
             "SessionCookie": []
           }
-        ]
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Feedback retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListFeedbackResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/tickets/generate": {
@@ -3633,6 +3710,54 @@
         ],
         "title": "ErrorMessage"
       },
+      "FeedbackDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "user": {
+            "$ref": "#/components/schemas/FeedbackUserDTO"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "text",
+          "created_at",
+          "user"
+        ],
+        "title": "FeedbackDTO"
+      },
+      "FeedbackUserDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username"
+        ],
+        "title": "FeedbackUserDTO"
+      },
       "GenerateTicketsInput": {
         "properties": {
           "role": {
@@ -3822,6 +3947,22 @@
           "barcode"
         ],
         "title": "LinkTicketInput"
+      },
+      "ListFeedbackResult": {
+        "properties": {
+          "feedback": {
+            "items": {
+              "$ref": "#/components/schemas/FeedbackDTO"
+            },
+            "type": "array",
+            "title": "Feedback"
+          }
+        },
+        "type": "object",
+        "required": [
+          "feedback"
+        ],
+        "title": "ListFeedbackResult"
       },
       "ListScheduleChangesResult": {
         "properties": {
@@ -4139,7 +4280,8 @@
           "settings:manage",
           "tickets:generate",
           "sync:run",
-          "demo:seed"
+          "demo:seed",
+          "feedback:read"
         ],
         "title": "Permission"
       },
