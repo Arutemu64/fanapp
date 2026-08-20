@@ -1,4 +1,5 @@
 from fanfan.adapters.db.models import FeedbackORM
+from fanfan.application.dto.feedback import FeedbackDTO, FeedbackUserDTO
 from fanfan.core.models.feedback import Feedback
 from fanfan.core.vo.feedback import FeedbackId
 from fanfan.core.vo.user import UserId
@@ -19,4 +20,16 @@ class FeedbackMapper:
             id=FeedbackId(orm.id),
             user_id=UserId(orm.user_id),
             text=orm.text,
+        )
+
+    @staticmethod
+    def parse_dto(orm: FeedbackORM) -> FeedbackDTO:
+        return FeedbackDTO(
+            id=FeedbackId(orm.id),
+            text=orm.text,
+            created_at=orm.created_at,
+            user=FeedbackUserDTO(
+                id=UserId(orm.user.id),
+                username=orm.user.username,
+            ),
         )

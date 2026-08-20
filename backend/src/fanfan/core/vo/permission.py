@@ -17,3 +17,4 @@ class Permission(enum.StrEnum):
     TICKETS_GENERATE = "tickets:generate"
     SYNC_RUN = "sync:run"
     DEMO_SEED = "demo:seed"
+    FEEDBACK_READ = "feedback:read"
