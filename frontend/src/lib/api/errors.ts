@@ -1,5 +1,10 @@
 import type { components } from '$lib/api/schema';
 
+import {
+	isBackendUnreachableStatus,
+	markReachable,
+	SERVER_UNREACHABLE_CODE
+} from '$lib/services/reachability';
 import { error as kitError } from '@sveltejs/kit';
 
 // The closed set of error codes the API can return, generated from the backend
@@ -278,6 +283,19 @@ export function throwApiError(
 	// Clamp to an error status: a non-error response here means data was missing
 	// without an HTTP error, which we treat as a server-side problem.
 	const status = response && response.status >= 400 ? response.status : 500;
+
+	// A gateway 5xx (502/503/504) means the proxy is up but the backend never
+	// handled the request — the same "backend unreachable" condition as a network
+	// failure, not a fault in this request. Record it so ErrorState reframes to the
+	// calm "нет связи с сервером" page, and tag it with SERVER_UNREACHABLE_CODE so
+	// hooks.client.ts drops it from Sentry instead of filing every transient
+	// gateway blip as an issue. A genuine app 500 (backend answered with a real
+	// error body) is not a gateway status and still surfaces and reports normally.
+	if (isBackendUnreachableStatus(status)) {
+		markReachable(false);
+		return kitError(status, { message: fallback, code: SERVER_UNREACHABLE_CODE });
+	}
+
 	const message = getApiErrorDetail(apiError) ?? fallback;
 	const code = getApiErrorCode(apiError);
 	return kitError(status, code ? { message, code } : { message });

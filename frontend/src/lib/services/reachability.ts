@@ -26,6 +26,19 @@ const PROBE_TIMEOUT_MS = 3000;
  */
 export const SERVER_UNREACHABLE_CODE = 'SERVER_UNREACHABLE';
 
+/**
+ * Statuses a reverse proxy returns when it is up but the backend behind it is
+ * not: the request never reached a working app server, so it means the same
+ * thing as a network failure — the backend is unreachable, not that it processed
+ * the request and rejected it. Deliberately excludes a plain 500 (the backend
+ * answered with a real application error, which we DO want surfaced and reported).
+ */
+const BACKEND_UNREACHABLE_STATUSES = new Set([502, 503, 504]);
+
+export function isBackendUnreachableStatus(status: number): boolean {
+	return BACKEND_UNREACHABLE_STATUSES.has(status);
+}
+
 // Optimistic default so the very first paint still attempts the network; the
 // first probe corrects it within PROBE_TIMEOUT_MS.
 let reachable = true;
