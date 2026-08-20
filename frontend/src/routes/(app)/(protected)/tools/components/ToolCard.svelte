@@ -23,8 +23,10 @@
 
 	const BASE =
 		'group flex h-full flex-col rounded-2xl border p-4 text-left shadow-sm transition-colors';
+	// The focus-visible ring mirrors flowbiteTheme.card: hand-rolled card links
+	// don't inherit it, and without it the keyboard focus indicator is missing.
 	const OPEN =
-		'border-gray-200 bg-white hover:border-primary-300 hover:bg-primary-50/40 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-primary-500 dark:hover:bg-primary-900/10';
+		'border-gray-200 bg-white hover:border-primary-300 hover:bg-primary-50/40 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:outline-none dark:border-gray-800 dark:bg-gray-900 dark:hover:border-primary-500 dark:hover:bg-primary-900/10';
 	const LOCKED =
 		'cursor-not-allowed border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/50';
 </script>

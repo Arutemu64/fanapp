@@ -48,7 +48,7 @@
 		{
 			key: 'import_schedule',
 			title: 'Импорт программы',
-			description: 'Загрузи программу выступлений из Excel-файла.',
+			description: 'Загрузи программу из Excel-файла.',
 			icon: FileImportOutline,
 			href: '/tools/import_schedule',
 			canAccess: canImportSchedule(user)
@@ -81,7 +81,7 @@
 </script>
 
 <SectionIntro
-	description="Инструменты организатора фестиваля. Заблокированные требуют отдельного доступа."
+	description="Для работы организаторов фестиваля. Серые карточки — те, к которым у тебя пока нет доступа."
 />
 
 <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
