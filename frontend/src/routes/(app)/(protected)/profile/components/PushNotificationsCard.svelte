@@ -27,6 +27,12 @@
 	// Once the browser permission is "denied" it never prompts again, so the
 	// toggle is a dead end — surface a persistent hint on how to unblock instead.
 	let notificationsBlocked = $state(false);
+	// In-app browsers (Telegram, VK, Instagram, …) run a WebView without Service
+	// Worker / Push support, so push can never work there — and on Android they
+	// report a plain Chrome UA, so we detect the missing capability rather than
+	// sniffing the user agent. Surfaces a hint to open the app in a real browser
+	// instead of letting the toggle fail with a generic error.
+	let pushUnsupported = $state(false);
 	const toastService = getToastService();
 	let isLoading = $state(true);
 	// Writable $derived: the toggles bind to these and flip them optimistically,
@@ -52,6 +58,7 @@
 			notificationsBlocked =
 				typeof Notification !== 'undefined' && Notification.permission === 'denied';
 			if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+				pushUnsupported = true;
 				isLoading = false;
 				return;
 			}
@@ -282,7 +289,12 @@
 				<p class="mt-1 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
 					Приходят как обычные уведомления телефона, даже когда приложение закрыто.
 				</p>
-				{#if notificationsBlocked}
+				{#if pushUnsupported}
+					<p class="mt-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+						Чтобы получать уведомления, открой приложение в браузере — Chrome или Safari. Во
+						встроенном браузере они не работают.
+					</p>
+				{:else if notificationsBlocked}
 					<p class="mt-2 text-sm leading-relaxed text-red-600 dark:text-red-400">
 						Уведомления заблокированы в браузере. Открой настройки сайта (значок замка рядом с
 						адресом) и разреши уведомления.
@@ -292,7 +304,7 @@
 			<Toggle
 				checked={isSubscribed}
 				aria-label="Включить уведомления на этом устройстве"
-				disabled={isLoading}
+				disabled={isLoading || pushUnsupported}
 				onclick={(e) => {
 					e.preventDefault();
 					void toggleSubscription();
