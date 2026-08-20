@@ -23,14 +23,33 @@ function applyTheme(mode: ThemeMode): void {
 	if (meta) meta.setAttribute('content', isDark ? THEME_COLOR_DARK : THEME_COLOR_LIGHT);
 }
 
+// In-app browsers (notably Telegram's Android webview) can partition or block
+// storage, so any localStorage access throws SecurityError. Treat that as "no
+// stored preference" rather than letting it crash app boot.
+function readStoredMode(): ThemeMode | null {
+	try {
+		const stored = localStorage.getItem(STORAGE_KEY);
+		if (stored === 'light' || stored === 'dark' || stored === 'system') return stored;
+	} catch {
+		// Storage blocked — fall back to the default mode.
+	}
+	return null;
+}
+
+function persistMode(mode: ThemeMode): void {
+	try {
+		localStorage.setItem(STORAGE_KEY, mode);
+	} catch {
+		// Storage blocked — the preference just won't survive a reload.
+	}
+}
+
 class ThemeService {
 	mode = $state<ThemeMode>('system');
 
 	constructor() {
-		const stored = localStorage.getItem(STORAGE_KEY);
-		if (stored === 'light' || stored === 'dark' || stored === 'system') {
-			this.mode = stored;
-		}
+		const stored = readStoredMode();
+		if (stored) this.mode = stored;
 		applyTheme(this.mode);
 
 		window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
@@ -40,7 +59,7 @@ class ThemeService {
 
 	setMode(mode: ThemeMode): void {
 		this.mode = mode;
-		localStorage.setItem(STORAGE_KEY, mode);
+		persistMode(mode);
 		applyTheme(mode);
 	}
 }

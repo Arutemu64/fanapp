@@ -64,7 +64,12 @@
 		<meta name="twitter:image:alt" content="ФАН ФАН — приложение-компаньон фестиваля" />
 		<script>
 			(function () {
-				var m = localStorage.getItem('theme-mode');
+				// In-app browsers (notably Telegram's Android webview) can block
+				// storage, making localStorage throw; fall back to system preference.
+				var m = null;
+				try {
+					m = localStorage.getItem('theme-mode');
+				} catch (e) {}
 				var isDark =
 					m === 'dark' ||
 					(m !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
