@@ -1,43 +1,23 @@
 <script lang="ts">
 	import type { CurrentUserDTO } from '$lib/types/user';
-	import type { Component, Snippet } from 'svelte';
+	import type { Component } from 'svelte';
 
 	// Bundled (not static/) so Vite content-hashes it like the other brand assets.
 	import logo from '$lib/assets/logo.svg';
 	import { isActivePath } from '$lib/utils/nav';
+	import { isOrg } from '$lib/utils/permissions';
+	import { Sidebar, SidebarBrand, SidebarGroup, SidebarItem } from 'flowbite-svelte';
 	import {
-		canGenerateTickets,
-		canImportSchedule,
-		canManageSchedule,
-		canManageSettings,
-		canRunSync,
-		canSendNotifications
-	} from '$lib/utils/permissions';
-	import {
-		Sidebar,
-		SidebarBrand,
-		SidebarDropdownWrapper,
-		SidebarGroup,
-		SidebarItem
-	} from 'flowbite-svelte';
-	import {
-		AdjustmentsHorizontalOutline,
 		AnnotationOutline,
 		AnnotationSolid,
-		BullhornOutline,
 		CalendarWeekOutline,
 		CalendarWeekSolid,
-		ClockArrowOutline,
-		FileImportOutline,
 		HomeOutline,
 		HomeSolid,
-		LockOutline,
 		MapPinAltOutline,
 		MapPinAltSolid,
-		RefreshOutline,
 		ThumbsUpOutline,
 		ThumbsUpSolid,
-		TicketOutline,
 		ToolsOutline
 	} from 'flowbite-svelte-icons';
 
@@ -52,16 +32,11 @@
 
 	let { user, activeUrl, isSidebarOpen, closeSidebar }: Props = $props();
 
-	// The "Инструменты" dropdown is the staff toolbox. Role decides only whether to
-	// show the toolbox at all — a visitor/participant can never hold these and would
-	// just see a wall of locks. Every item inside is gated purely by effective
-	// permission (incl. the former org-only tools), so helpers can discover what
-	// they'd need access to. Permissions are not role-bound: any staff member can
-	// hold any of them, and the backend enforces each action — locked rows are a
-	// discovery affordance only.
-	let isStaff = $derived(user?.role === 'helper' || user?.role === 'org');
-	let iconClass =
-		'h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white';
+	// "Инструменты" is the organiser toolbox, now a single link to the /tools
+	// dashboard instead of a dropdown of every tool — the sidebar stays short as
+	// the tool list grows. The section is org-only for now; per-tool permission
+	// gating lives on the dashboard, where locked tools show as a discovery cue.
+	let showTools = $derived(isOrg(user));
 </script>
 
 <!-- A primary destination row. Active state mirrors the bottom nav: solid icon
@@ -81,56 +56,9 @@
 	</SidebarItem>
 {/snippet}
 
-<!-- A staff navigation entry: a real link when the user holds the permission,
-     otherwise a non-navigable, greyed-out row with a lock badge + tooltip. -->
-{#snippet staffLink(label: string, href: string, allowed: boolean, itemIcon: Snippet)}
-	{#if allowed}
-		<SidebarItem {label} {href} active={isActivePath(activeUrl, href)}>
-			{#snippet icon()}
-				{@render itemIcon()}
-			{/snippet}
-		</SidebarItem>
-	{:else}
-		<!-- No href keeps the row non-navigable; reusing SidebarItem keeps the
-		     markup identical to unlocked rows so the lock badge causes no drift. -->
-		<SidebarItem
-			{label}
-			aClass="flex items-center rounded-lg p-2 text-gray-400 cursor-not-allowed dark:text-gray-600"
-			aria-disabled="true"
-			title="Нужен доступ — попроси организатора"
-		>
-			{#snippet icon()}
-				{@render itemIcon()}
-			{/snippet}
-			{#snippet subtext()}
-				<LockOutline class="h-4 w-4 shrink-0" />
-			{/snippet}
-		</SidebarItem>
-	{/if}
-{/snippet}
-
-{#snippet scheduleChangesIcon()}
-	<ClockArrowOutline class={iconClass} />
-{/snippet}
-{#snippet settingsIcon()}
-	<AdjustmentsHorizontalOutline class={iconClass} />
-{/snippet}
-{#snippet importScheduleIcon()}
-	<FileImportOutline class={iconClass} />
-{/snippet}
-{#snippet broadcastIcon()}
-	<BullhornOutline class={iconClass} />
-{/snippet}
-{#snippet generateTicketsIcon()}
-	<TicketOutline class={iconClass} />
-{/snippet}
-{#snippet syncIcon()}
-	<RefreshOutline class={iconClass} />
-{/snippet}
-
 <!-- `isMobile` slims the hamburger sheet: on phones the four primary
      destinations live in the bottom nav, so the drawer only carries what the
-     bottom nav can't (feedback, staff/org sections, theme). Desktop has no
+     bottom nav can't (feedback, the org toolbox, theme). Desktop has no
      bottom nav, so its static sidebar keeps the full set. -->
 {#snippet sidebarLinks(isMobile: boolean)}
 	<div class="flex h-full flex-col">
@@ -156,43 +84,10 @@
 			{#if user}
 				{@render navLink('Обратная связь', '/feedback', AnnotationOutline, AnnotationSolid)}
 			{/if}
-			{#if isStaff}
-				<SidebarDropdownWrapper label="Инструменты" classes={{ btn: 'p-2' }}>
-					{#snippet icon()}
-						<ToolsOutline class={iconClass} />
-					{/snippet}
-					{@render staffLink(
-						'Изменения программы',
-						'/schedule/changes',
-						canManageSchedule(user),
-						scheduleChangesIcon
-					)}
-					{@render staffLink(
-						'Настройки фестиваля',
-						'/tools/settings',
-						canManageSettings(user),
-						settingsIcon
-					)}
-					{@render staffLink(
-						'Импорт программы',
-						'/tools/import_schedule',
-						canImportSchedule(user),
-						importScheduleIcon
-					)}
-					{@render staffLink(
-						'Рассылка уведомлений',
-						'/tools/broadcast',
-						canSendNotifications(user),
-						broadcastIcon
-					)}
-					{@render staffLink(
-						'Генерация билетов',
-						'/tools/generate_tickets',
-						canGenerateTickets(user),
-						generateTicketsIcon
-					)}
-					{@render staffLink('Синхронизация', '/tools/sync', canRunSync(user), syncIcon)}
-				</SidebarDropdownWrapper>
+			{#if showTools}
+				<!-- ToolsOutline has no solid twin; reuse navLink with the same icon in
+				     both slots so the active state is a primary tint, not a shape swap. -->
+				{@render navLink('Инструменты', '/tools', ToolsOutline, ToolsOutline)}
 			{/if}
 		</SidebarGroup>
 		<div class="mt-auto border-t border-gray-200 p-3 dark:border-gray-700">

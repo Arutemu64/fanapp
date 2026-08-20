@@ -24,6 +24,13 @@ export function hasPermission(user: CurrentUserDTO | null, permission: Permissio
 	return user.permissions?.includes(permission) ?? false;
 }
 
+// The staff toolbox is an organiser surface: only the org role reaches it at all.
+// Access to each individual tool inside stays permission-based (an org may hold
+// any subset), so this gate governs visibility of the section, never the actions.
+export function isOrg(user: CurrentUserDTO | null): boolean {
+	return user?.role === 'org';
+}
+
 export function canManageSchedule(user: CurrentUserDTO | null): boolean {
 	return hasPermission(user, SCHEDULE_MANAGE);
 }
