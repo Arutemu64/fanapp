@@ -1,7 +1,7 @@
 import type { components } from '$lib/api/schema';
 
 import { isBackendUnreachableStatus, isReachable, markReachable } from '$lib/services/reachability';
-import { isHttpError, isRedirect, error as kitError } from '@sveltejs/kit';
+import { error as kitError } from '@sveltejs/kit';
 
 // The closed set of error codes the API can return, generated from the backend
 // OpenAPI spec (ErrorMessage.code enum). Drives both typo safety on the message
@@ -295,16 +295,27 @@ export function throwApiError(
 }
 
 /**
- * Fail an online-only `load` as an offline state rather than a crash.
+ * A request that never produced a response — the connection failed, CORS refused
+ * it, or it was aborted. Raised by the `networkFailure` middleware in
+ * `$lib/api/index.ts`, which is where openapi-fetch surfaces these
+ * ([onError](https://openapi-ts.dev/openapi-fetch/middleware-auth)); an HTTP
+ * error status is a real response and comes back as `error` instead.
  *
- * Mirrors the 503 the `(protected)` layout throws when the backend is
- * unreachable: ErrorState reframes it into the calm "нет интернета" /
- * "нет связи с сервером" page from live reachability, and hooks.client.ts drops
- * every 5xx HttpError from Sentry, so a dropped connection never becomes a
- * GlitchTip issue.
+ * It exists so a `catch` can tell an outage apart from a genuine bug thrown in
+ * the same block. Matching on the raw rejection instead would mean treating
+ * *any* throw as an outage — which hides real crashes behind the offline page,
+ * and can only be done by message, which differs per browser ("Failed to fetch"
+ * in Chrome, "NetworkError when attempting to fetch resource." in Firefox).
  */
-function throwOffline(): never {
-	return kitError(503, { message: 'Нет связи с сервером' });
+export class NetworkError extends Error {
+	constructor(cause: unknown) {
+		super('Запрос не дошёл до сервера', { cause });
+		this.name = 'NetworkError';
+	}
+}
+
+export function isNetworkError(value: unknown): value is NetworkError {
+	return value instanceof NetworkError;
 }
 
 /**
@@ -312,15 +323,23 @@ function throwOffline(): never {
  * data is deliberately uncached because a stale copy would misrepresent live
  * state (festival settings, sync, feedback, schedule changes).
  *
- * openapi-fetch hands HTTP failures back as `error`, but a *network* failure
- * (offline, dropped connection, a preload fired as the radio died) rejects the
- * underlying `fetch` with a raw `TypeError`. Unguarded, that escapes the load as
- * an unhandled exception: the user gets the generic crash page and Sentry files
- * it as a bug. Here it becomes the honest offline page instead.
+ * Without this, a dropped connection escapes the load as an unhandled exception:
+ * the user gets the generic crash page and Sentry files the outage as an app bug.
+ * Here it becomes the same 503 the `(protected)` layout throws when offline —
+ * ErrorState reframes that into the calm "нет интернета" / "нет связи с сервером"
+ * page from live reachability, and hooks.client.ts drops every 5xx HttpError, so
+ * a blip never reaches GlitchTip. A preload that fails this way (`/tools` hovers
+ * its tool cards) is discarded by SvelteKit and the user sees nothing at all.
  *
- * A SvelteKit error or redirect thrown inside `run` — `throwApiError`, a
- * permission `error(403)` — is a verdict from a server that answered, so it
- * passes through with its own status.
+ * Only a {@link NetworkError} is reframed. Everything else keeps its own meaning:
+ * a `throwApiError` result or a permission `error(403)` is a verdict from a
+ * server that answered, and a genuine bug in `run` must still reach Sentry rather
+ * than hide behind an offline page that blames the user's connection.
+ *
+ * The policy lives here rather than in the client middleware because it is not
+ * shared: `fetchWithCache` wants the same failure to mean "serve the cached
+ * copy", and the voting loads want "показать «только онлайн»". The middleware
+ * only labels the failure; each call site decides what it costs.
  */
 export async function loadOnline<T>(run: () => Promise<T>): Promise<T> {
 	// Known unreachable: skip the doomed request instead of waiting for it to fail.
@@ -334,12 +353,20 @@ export async function loadOnline<T>(run: () => Promise<T>): Promise<T> {
 		markReachable(true);
 		return result;
 	} catch (caught) {
-		if (isHttpError(caught) || isRedirect(caught)) {
+		if (!isNetworkError(caught)) {
 			throw caught;
 		}
 		markReachable(false);
 		throwOffline();
 	}
+}
+
+/**
+ * The offline failure for a load with no cached copy to fall back on. Mirrors the
+ * 503 the `(protected)` layout throws, down to the message.
+ */
+function throwOffline(): never {
+	return kitError(503, { message: 'Нет связи с сервером' });
 }
 
 // Compile-time drift guard: every client-facing code must be covered by the

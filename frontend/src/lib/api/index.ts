@@ -3,6 +3,7 @@ import type { Middleware } from 'openapi-fetch';
 
 import { invalidate } from '$app/navigation';
 import { PUBLIC_API_URL } from '$env/static/public';
+import { NetworkError } from '$lib/api/errors';
 import createClient from 'openapi-fetch';
 
 // True while a 401-triggered identity refresh is in flight, so a burst of
@@ -38,11 +39,25 @@ const sessionExpiryWatch: Middleware = {
 	}
 };
 
+// openapi-fetch returns HTTP failures as `error`, but re-throws whatever `fetch`
+// rejected with when no response ever arrived — a bare TypeError worded
+// differently in every browser. Label it here, the hook the library documents for
+// exactly this (network failure, CORS, abort), so callers can branch on the type
+// instead of guessing from a message. Deliberately still a throw: each caller
+// decides what an outage costs it (cached copy, "только онлайн" state, offline
+// page), and only `NetworkError` may be treated that way — a real bug must not
+// be mistaken for a dropped connection.
+const networkFailure: Middleware = {
+	onError({ error }) {
+		return new NetworkError(error);
+	}
+};
+
 export function createApiClient() {
 	const client = createClient<paths>({
 		baseUrl: PUBLIC_API_URL,
 		credentials: 'include'
 	});
-	client.use(sessionExpiryWatch);
+	client.use(sessionExpiryWatch, networkFailure);
 	return client;
 }

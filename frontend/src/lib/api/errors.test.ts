@@ -2,7 +2,7 @@ import { isReachable, markReachable } from '$lib/services/reachability';
 import { isHttpError, error as kitError, redirect } from '@sveltejs/kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { loadOnline } from './errors';
+import { loadOnline, NetworkError } from './errors';
 
 describe('loadOnline', () => {
 	beforeEach(() => {
@@ -10,17 +10,27 @@ describe('loadOnline', () => {
 		markReachable(true);
 	});
 
-	it('turns a network rejection into the offline 503 instead of letting it escape', async () => {
-		// The bug this guards: openapi-fetch re-throws the raw fetch TypeError, which
-		// escaped the load as an unhandled crash and was filed as a Sentry bug.
+	it('turns a network failure into the offline 503 instead of letting it escape', async () => {
+		// The bug this guards: the raw rejection escaped the load as an unhandled
+		// crash — the user got the generic error page and Sentry filed the outage.
 		const promise = loadOnline(() =>
-			Promise.reject(new TypeError('NetworkError when attempting to fetch resource.'))
+			Promise.reject(
+				new NetworkError(new TypeError('NetworkError when attempting to fetch resource.'))
+			)
 		);
 
 		await expect(promise).rejects.toSatisfy(
 			(thrown: unknown) => isHttpError(thrown) && thrown.status === 503
 		);
 		expect(isReachable()).toBe(false);
+	});
+
+	it('lets a genuine bug through instead of blaming the connection', async () => {
+		// An offline page here would hide a real crash and leave reachability lying.
+		const bug = new TypeError('event.participants is undefined');
+
+		await expect(loadOnline(() => Promise.reject(bug))).rejects.toBe(bug);
+		expect(isReachable()).toBe(true);
 	});
 
 	it('skips the doomed request when the backend is already known unreachable', async () => {
