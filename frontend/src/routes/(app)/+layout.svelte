@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import SkipLink from '$lib/components/SkipLink.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
@@ -19,6 +20,19 @@
 	const sidebarUi = uiHelpers();
 	let isSidebarOpen = $derived(sidebarUi.isOpen);
 	const closeSidebar = sidebarUi.close;
+
+	// <main> is the scroll region and lives in this layout, so it persists across
+	// navigation — SvelteKit's scroll handling only resets the window, never this
+	// element, leaving a new page scrolled to wherever the last one was. Reset it
+	// on forward navigation; skip popstate so browser back/forward keeps its own
+	// scroll behaviour. behavior:'instant' overrides the element's scroll-smooth,
+	// which would otherwise animate the jump to top.
+	let mainElement = $state<HTMLElement | null>(null);
+
+	afterNavigate((navigation) => {
+		if (navigation.type === 'popstate') return;
+		mainElement?.scrollTo({ top: 0, behavior: 'instant' });
+	});
 </script>
 
 <div class="flex h-dvh w-full overflow-hidden bg-gray-50 dark:bg-gray-950">
@@ -35,6 +49,7 @@
 
 		<!-- Also the SkipLink target, which focuses it by id — hence tabindex="-1". -->
 		<main
+			bind:this={mainElement}
 			id="main-content"
 			tabindex="-1"
 			class="relative flex-1 overflow-y-auto scroll-smooth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
