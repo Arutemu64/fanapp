@@ -23,12 +23,12 @@
 
 	// <main> is the scroll region and lives in this layout, so it persists across
 	// navigation — SvelteKit's scroll handling only resets the window, never this
-	// element. Manage it by hand: forward navigation starts a fresh page at the
-	// top; back/forward (popstate) restores where the user left the target page,
+	// element. Drive it from the navigation callbacks, which fire on every
+	// navigation while mounted: forward navigation starts a fresh page at the top,
+	// and back/forward (popstate) restores where the user left the target page,
 	// which the browser's own restoration can't do for a non-window scroller.
-	// Snapshots would be the idiomatic tool, but their restore has open issues on
-	// popstate for layout-level state (sveltejs/kit#10233), so drive it from the
-	// navigation callbacks, which fire reliably on every navigation while mounted.
+	// (A snapshot restores DOM state on back too, but only that half — it wouldn't
+	// reset forward navigations — so one mechanism here is simpler.)
 	// behavior:'instant' overrides the element's scroll-smooth, which would
 	// otherwise animate the jump.
 	let mainElement = $state<HTMLElement | null>(null);
