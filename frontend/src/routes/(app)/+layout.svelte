@@ -3,7 +3,7 @@
 	import { page } from '$app/state';
 	import SkipLink from '$lib/components/SkipLink.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
-	import { TAB_ROOTS } from '$lib/utils/nav';
+	import { TAB_ROOTS } from '$lib/data/nav';
 	import { uiHelpers } from 'flowbite-svelte';
 
 	import type { LayoutProps, Snapshot } from './$types';

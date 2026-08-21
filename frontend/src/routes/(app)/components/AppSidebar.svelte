@@ -4,22 +4,11 @@
 
 	// Bundled (not static/) so Vite content-hashes it like the other brand assets.
 	import logo from '$lib/assets/logo.svg';
+	import { PRIMARY_NAV_ITEMS } from '$lib/data/nav';
 	import { isActivePath } from '$lib/utils/nav';
 	import { isOrg } from '$lib/utils/permissions';
 	import { Sidebar, SidebarBrand, SidebarGroup, SidebarItem } from 'flowbite-svelte';
-	import {
-		AnnotationOutline,
-		AnnotationSolid,
-		CalendarWeekOutline,
-		CalendarWeekSolid,
-		HomeOutline,
-		HomeSolid,
-		MapPinAltOutline,
-		MapPinAltSolid,
-		ThumbsUpOutline,
-		ThumbsUpSolid,
-		ToolsOutline
-	} from 'flowbite-svelte-icons';
+	import { AnnotationOutline, AnnotationSolid, ToolsOutline } from 'flowbite-svelte-icons';
 
 	import ThemeToggle from './ThemeToggle.svelte';
 
@@ -91,12 +80,12 @@
 		</SidebarBrand>
 		<SidebarGroup>
 			{#if !isMobile}
-				{@render navLink('Главная', '/', HomeOutline, HomeSolid)}
-				{@render navLink('Программа', '/schedule', CalendarWeekOutline, CalendarWeekSolid)}
-				<!-- Order matches the bottom nav: voting before the map. -->
-				{@render navLink('Голосование', '/voting', ThumbsUpOutline, ThumbsUpSolid)}
-				<!-- Keep the venue map in the main navigation so it is reachable in one tap. -->
-				{@render navLink('Карта', '/map', MapPinAltOutline, MapPinAltSolid)}
+				<!-- Same source as the bottom nav (PRIMARY_NAV_ITEMS), so label, order and
+				     icons can't drift between the two surfaces. On phones these four live
+				     in the bottom nav instead. -->
+				{#each PRIMARY_NAV_ITEMS as item (item.href)}
+					{@render navLink(item.label, item.href, item.outlineIcon, item.solidIcon)}
+				{/each}
 			{/if}
 			{#if user}
 				{@render navLink('Обратная связь', '/feedback', AnnotationOutline, AnnotationSolid)}
