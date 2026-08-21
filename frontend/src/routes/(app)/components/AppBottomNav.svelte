@@ -16,14 +16,28 @@
 
 	interface Props {
 		activeUrl: string;
+		scrollToTop: () => void;
 	}
 
-	let { activeUrl }: Props = $props();
+	let { activeUrl, scrollToTop }: Props = $props();
 </script>
 
 {#snippet navItem(label: string, href: string, OutlineIcon: Component, SolidIcon: Component)}
 	{@const active = isActivePath(activeUrl, href)}
-	<BottomNavItem btnName={label} {href} aria-current={active ? 'page' : undefined}>
+	<BottomNavItem
+		btnName={label}
+		{href}
+		aria-current={active ? 'page' : undefined}
+		onclick={(event: MouseEvent) => {
+			// Re-tapping the tab whose root you're already on returns to the top, the
+			// native bottom-bar affordance. From a nested page (active by prefix, not
+			// exact) the tap should navigate to the root instead, so gate on an exact match.
+			if (activeUrl === href) {
+				event.preventDefault();
+				scrollToTop();
+			}
+		}}
+	>
 		{#if active}
 			<SolidIcon class="mb-1 h-6 w-6 text-primary-600 dark:text-primary-400" />
 		{:else}

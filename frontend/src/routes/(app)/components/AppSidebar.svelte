@@ -28,9 +28,10 @@
 		activeUrl: string;
 		isSidebarOpen: boolean;
 		closeSidebar: () => void;
+		scrollToTop: () => void;
 	}
 
-	let { user, activeUrl, isSidebarOpen, closeSidebar }: Props = $props();
+	let { user, activeUrl, isSidebarOpen, closeSidebar, scrollToTop }: Props = $props();
 
 	// "Инструменты" is the organiser toolbox, now a single link to the /tools
 	// dashboard instead of a dropdown of every tool — the sidebar stays short as
@@ -43,7 +44,23 @@
      in primary, idle outline icon in gray with a primary hover. -->
 {#snippet navLink(label: string, href: string, OutlineIcon: Component, SolidIcon: Component)}
 	{@const active = isActivePath(activeUrl, href)}
-	<SidebarItem {label} {href} {active}>
+	<SidebarItem
+		{label}
+		{href}
+		{active}
+		onclick={(event: MouseEvent) => {
+			// Mirror the bottom nav: re-tapping the current root eases back to the top,
+			// only on an exact match so a nested page still navigates to the root.
+			if (activeUrl === href) {
+				event.preventDefault();
+				scrollToTop();
+			}
+			// SidebarItem's built-in drawer close runs through its own onclick, which
+			// this prop overrides, so close the mobile drawer here. A no-op on the
+			// static desktop sidebar, which has no drawer state to close.
+			closeSidebar();
+		}}
+	>
 		{#snippet icon()}
 			{#if active}
 				<SolidIcon class="h-5 w-5 shrink-0 text-primary-600 dark:text-primary-400" />
