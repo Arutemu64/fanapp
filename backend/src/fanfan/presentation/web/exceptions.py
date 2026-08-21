@@ -14,6 +14,7 @@ from fanfan.core.exceptions.base import (
     ConstraintViolation,
     NotFound,
     RateLimited,
+    UpstreamServiceError,
 )
 from fanfan.presentation.web.schemas.error import (
     ErrorMessage,
@@ -40,6 +41,7 @@ EXCEPTION_STATUS_MAP: dict[type[AppException], int] = {
     NotFound: status.HTTP_404_NOT_FOUND,
     Conflict: status.HTTP_409_CONFLICT,
     RateLimited: status.HTTP_429_TOO_MANY_REQUESTS,
+    UpstreamServiceError: status.HTTP_502_BAD_GATEWAY,
 }
 
 

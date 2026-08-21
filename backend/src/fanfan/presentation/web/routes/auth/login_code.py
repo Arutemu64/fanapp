@@ -33,6 +33,11 @@ login_code_router = APIRouter()
         **RATE_LIMIT_RESPONSES,
         200: {"description": "The login code was sent to the email address."},
         403: {"model": ErrorMessage, "description": "Captcha verification failed."},
+        502: {
+            "model": ErrorMessage,
+            "description": "The email could not be delivered — the mail service "
+            "was unreachable or refused the message.",
+        },
     },
 )
 @inject

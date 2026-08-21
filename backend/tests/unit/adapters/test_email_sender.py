@@ -1,8 +1,12 @@
 import pytest
+from aiosmtplib.errors import SMTPServerDisconnected
 from fastapi_mail import MessageSchema, MessageType
+from fastapi_mail.errors import ConnectionErrors
 from pydantic import NameEmail
 
-from fanfan.adapters.mail.email_sender import _encode_display_name
+from fanfan.adapters.mail.email_sender import FastEmailSender, _encode_display_name
+from fanfan.application.ports.email_sender import EmailMessage, EmailRecipient
+from fanfan.core.exceptions.email import EmailDeliveryFailed
 
 pytestmark = pytest.mark.unit
 
@@ -41,3 +45,37 @@ def test_display_name_keeps_to_header_ascii(display_name: str):
 def test_plain_ascii_name_is_left_readable():
     # A simple ASCII name needs no encoding and stays human-readable.
     assert _encode_display_name("Ivan") == "Ivan"
+
+
+class _FailingFastMail:
+    def __init__(self, error: Exception):
+        self._error = error
+
+    async def send_message(self, message: object) -> None:
+        _ = message
+        raise self._error
+
+
+def _message() -> EmailMessage:
+    return EmailMessage(
+        subject="x",
+        recipients=[EmailRecipient(name="Ivan", email="user@example.com")],
+        html_body="<p>hi</p>",
+    )
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        # fastapi-mail wraps connection setup failures in ConnectionErrors...
+        ConnectionErrors("connect failed"),
+        # ...and aiosmtplib errors bubble from the send itself (the production case).
+        SMTPServerDisconnected("Unexpected EOF received"),
+    ],
+)
+async def test_smtp_failure_becomes_domain_error(error: Exception):
+    # A relay outage must surface as a domain error (mapped to 502) instead of an
+    # unhandled exception, so the caller reports it and it stays out of Sentry.
+    sender = FastEmailSender(_FailingFastMail(error))  # type: ignore[arg-type]
+    with pytest.raises(EmailDeliveryFailed):
+        await sender.send(_message())

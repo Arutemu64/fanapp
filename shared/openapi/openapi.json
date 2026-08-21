@@ -266,6 +266,16 @@
                 }
               }
             }
+          },
+          "502": {
+            "description": "The email could not be delivered — the mail service was unreachable or refused the message.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
           }
         }
       }
@@ -3656,6 +3666,7 @@
               "CURRENT_EVENT_NOT_ALLOWED",
               "EMAIL_ALREADY_EXISTS",
               "EMAIL_CODE_REQUEST_TOO_FAST",
+              "EMAIL_DELIVERY_FAILED",
               "EVENT_NOT_FOUND",
               "HTTP_ERROR",
               "INCORRECT_PASSWORD",

@@ -1,11 +1,15 @@
 import logging
 from email.utils import formataddr
 
+import sentry_sdk
+from aiosmtplib.errors import SMTPException
 from fastapi_mail import FastMail, MessageSchema, MessageType
+from fastapi_mail.errors import ConnectionErrors
 from fastapi_mail.schemas import MultipartSubtypeEnum
 from pydantic import NameEmail
 
 from fanfan.application.ports.email_sender import EmailMessage, EmailSender
+from fanfan.core.exceptions.email import EmailDeliveryFailed
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +63,21 @@ class FastEmailSender(EmailSender):
                 body=message.html_body,
                 subtype=MessageType.html,
             )
-        await self.mail.send_message(fast_mail_message)
+        # fastapi-mail wraps connection setup failures in ConnectionErrors and lets
+        # aiosmtplib's SMTPException (disconnect, timeout, auth/recipient refusal)
+        # bubble from the send itself. Both mean the relay could not take the
+        # message — translate them into a domain error so the caller reports a
+        # transient outage (502) instead of an unhandled 500.
+        try:
+            await self.mail.send_message(fast_mail_message)
+        except (ConnectionErrors, SMTPException) as e:
+            logger.warning("Email delivery failed: %s", e)
+            # Report the raw transport error, not the EmailDeliveryFailed we raise:
+            # domain exceptions are scrubbed from Sentry on purpose (telemetry.py),
+            # so capturing the SMTP error keeps an ops-visible, grouped signal that
+            # mail is down — one issue with an event count, not a per-request crash.
+            sentry_sdk.capture_exception(e)
+            raise EmailDeliveryFailed from e
 
 
 class LogOnlyEmailSender(EmailSender):

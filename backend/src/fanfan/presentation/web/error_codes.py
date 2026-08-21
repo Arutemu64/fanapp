@@ -49,7 +49,12 @@ def all_concrete_exceptions() -> set[type[AppException]]:
 
 
 def resolves_to_status(cls: type[AppException]) -> bool:
-    """True if the exception maps to a 4xx via a marker (i.e. reaches a client)."""
+    """True if the exception maps to a client-facing status via a marker.
+
+    Client-facing means a 4xx or the 502 upstream-failure marker — anything with a
+    reason the client can act on. Exceptions with no marker resolve to a generic
+    500 and are treated as internal-only.
+    """
     return any(base in EXCEPTION_STATUS_MAP for base in cls.__mro__)
 
 
