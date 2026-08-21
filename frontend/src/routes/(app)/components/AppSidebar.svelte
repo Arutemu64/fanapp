@@ -4,22 +4,11 @@
 
 	// Bundled (not static/) so Vite content-hashes it like the other brand assets.
 	import logo from '$lib/assets/logo.svg';
+	import { PRIMARY_NAV_ITEMS } from '$lib/data/nav';
 	import { isActivePath } from '$lib/utils/nav';
 	import { isOrg } from '$lib/utils/permissions';
 	import { Sidebar, SidebarBrand, SidebarGroup, SidebarItem } from 'flowbite-svelte';
-	import {
-		AnnotationOutline,
-		AnnotationSolid,
-		CalendarWeekOutline,
-		CalendarWeekSolid,
-		HomeOutline,
-		HomeSolid,
-		MapPinAltOutline,
-		MapPinAltSolid,
-		ThumbsUpOutline,
-		ThumbsUpSolid,
-		ToolsOutline
-	} from 'flowbite-svelte-icons';
+	import { AnnotationOutline, AnnotationSolid, ToolsOutline } from 'flowbite-svelte-icons';
 
 	import ThemeToggle from './ThemeToggle.svelte';
 
@@ -28,9 +17,10 @@
 		activeUrl: string;
 		isSidebarOpen: boolean;
 		closeSidebar: () => void;
+		scrollToTop: () => void;
 	}
 
-	let { user, activeUrl, isSidebarOpen, closeSidebar }: Props = $props();
+	let { user, activeUrl, isSidebarOpen, closeSidebar, scrollToTop }: Props = $props();
 
 	// "Инструменты" is the organiser toolbox, now a single link to the /tools
 	// dashboard instead of a dropdown of every tool — the sidebar stays short as
@@ -43,7 +33,23 @@
      in primary, idle outline icon in gray with a primary hover. -->
 {#snippet navLink(label: string, href: string, OutlineIcon: Component, SolidIcon: Component)}
 	{@const active = isActivePath(activeUrl, href)}
-	<SidebarItem {label} {href} {active}>
+	<SidebarItem
+		{label}
+		{href}
+		{active}
+		onclick={(event: MouseEvent) => {
+			// Mirror the bottom nav: re-tapping the current root eases back to the top,
+			// only on an exact match so a nested page still navigates to the root.
+			if (activeUrl === href) {
+				event.preventDefault();
+				scrollToTop();
+			}
+			// SidebarItem's built-in drawer close runs through its own onclick, which
+			// this prop overrides, so close the mobile drawer here. A no-op on the
+			// static desktop sidebar, which has no drawer state to close.
+			closeSidebar();
+		}}
+	>
 		{#snippet icon()}
 			{#if active}
 				<SolidIcon class="h-5 w-5 shrink-0 text-primary-600 dark:text-primary-400" />
@@ -74,12 +80,12 @@
 		</SidebarBrand>
 		<SidebarGroup>
 			{#if !isMobile}
-				{@render navLink('Главная', '/', HomeOutline, HomeSolid)}
-				{@render navLink('Программа', '/schedule', CalendarWeekOutline, CalendarWeekSolid)}
-				<!-- Order matches the bottom nav: voting before the map. -->
-				{@render navLink('Голосование', '/voting', ThumbsUpOutline, ThumbsUpSolid)}
-				<!-- Keep the venue map in the main navigation so it is reachable in one tap. -->
-				{@render navLink('Карта', '/map', MapPinAltOutline, MapPinAltSolid)}
+				<!-- Same source as the bottom nav (PRIMARY_NAV_ITEMS), so label, order and
+				     icons can't drift between the two surfaces. On phones these four live
+				     in the bottom nav instead. -->
+				{#each PRIMARY_NAV_ITEMS as item (item.href)}
+					{@render navLink(item.label, item.href, item.outlineIcon, item.solidIcon)}
+				{/each}
 			{/if}
 			{#if user}
 				{@render navLink('Обратная связь', '/feedback', AnnotationOutline, AnnotationSolid)}

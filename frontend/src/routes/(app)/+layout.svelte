@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { afterNavigate } from '$app/navigation';
+	import { afterNavigate, beforeNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import SkipLink from '$lib/components/SkipLink.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
+	import { TAB_ROOTS } from '$lib/data/nav';
 	import { uiHelpers } from 'flowbite-svelte';
 
 	import type { LayoutProps, Snapshot } from './$types';
@@ -23,32 +24,57 @@
 
 	// <main> is the scroll region and lives in this layout, so it persists across
 	// navigation — SvelteKit's scroll handling only manages the window, never this
-	// element. A snapshot captures the container's offset per history entry and
-	// restores it on back/forward — the framework's tool for exactly this ("scroll
-	// positions on sidebars" in the docs), persisted to sessionStorage so it also
-	// survives a reload. Snapshots only restore on back, so a forward navigation
-	// still needs an explicit reset to the top. behavior:'instant' overrides the
-	// element's scroll-smooth, which would otherwise animate the jump.
+	// element. Two mechanisms cover the two axes of return:
+	//   - snapshot captures the container's offset per history entry and restores
+	//     it on back/forward — the framework's tool for exactly this ("scroll
+	//     positions on sidebars" in the docs), persisted to sessionStorage so it
+	//     survives a reload.
+	//   - scrollPositions remembers each primary tab's offset so re-entering a tab
+	//     by a fresh tap (a push, which snapshots never restore) lands where you
+	//     left it, the native bottom-tab-bar convention. Any other forward
+	//     navigation — opening a detail page — resets to the top.
+	// The two never fire on the same navigation: snapshot restores on popstate,
+	// the tab restore on a push. behavior:'instant' overrides the element's
+	// scroll-smooth, which would otherwise animate the jump.
 	let mainElement = $state<HTMLElement | null>(null);
+
+	// Per-tab scroll offsets keyed by pathname. A plain component-scoped object,
+	// never a module singleton, so it is discarded when a logout unmounts this
+	// layout rather than leaking into the next session.
+	const scrollPositions: Record<string, number> = {};
 
 	export const snapshot: Snapshot<number> = {
 		capture: () => mainElement?.scrollTop ?? 0,
 		restore: (top) => mainElement?.scrollTo({ top, behavior: 'instant' })
 	};
 
-	afterNavigate((navigation) => {
-		// Back/forward is handled by snapshot.restore above; only a fresh forward
-		// navigation needs the container reset to the top.
-		if (navigation.type !== 'popstate') {
-			mainElement?.scrollTo({ top: 0, behavior: 'instant' });
+	// Smooth (via the element's scroll-smooth, honoured because behavior is
+	// omitted) so re-tapping the active tab eases to the top like a native tab bar.
+	function scrollMainToTop() {
+		mainElement?.scrollTo({ top: 0 });
+	}
+
+	beforeNavigate((navigation) => {
+		const from = navigation.from?.url.pathname;
+		if (from && TAB_ROOTS.has(from)) {
+			scrollPositions[from] = mainElement?.scrollTop ?? 0;
 		}
+	});
+
+	afterNavigate((navigation) => {
+		// Back/forward is handled by snapshot.restore above.
+		if (navigation.type === 'popstate') return;
+		// A fresh push: restore a primary tab to where it was left, else reset.
+		const to = navigation.to?.url.pathname ?? '';
+		const top = TAB_ROOTS.has(to) ? (scrollPositions[to] ?? 0) : 0;
+		mainElement?.scrollTo({ top, behavior: 'instant' });
 	});
 </script>
 
 <div class="flex h-dvh w-full overflow-hidden bg-gray-50 dark:bg-gray-950">
 	<SkipLink />
 
-	<AppSidebar {user} {activeUrl} {isSidebarOpen} {closeSidebar} />
+	<AppSidebar {user} {activeUrl} {isSidebarOpen} {closeSidebar} scrollToTop={scrollMainToTop} />
 
 	<!-- <main> is the scrolling region, not this column: the landmark for the page's primary
 		content must not also swallow the top bar and the connection banner. -->
@@ -75,5 +101,5 @@
 		</main>
 	</div>
 
-	<AppBottomNav {activeUrl} />
+	<AppBottomNav {activeUrl} scrollToTop={scrollMainToTop} />
 </div>
