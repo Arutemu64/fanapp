@@ -85,7 +85,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
-          version: "0.12.3"  # matches backend/pyproject.toml [tool.uv] and Dockerfile
+          version: "0.12.5"  # matches backend/pyproject.toml [tool.uv] and Dockerfile
           enable-cache: true
           # Cache invalidates when the backend lockfile changes.
           cache-dependency-glob: backend/uv.lock
