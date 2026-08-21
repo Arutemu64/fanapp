@@ -131,9 +131,11 @@ grants (`sync:run`, `demo:seed`) are seeded by migration; real organisers are
 granted by hand. Do it with the operator CLI rather than raw SQL — it validates
 the permission name and resolves the username for you:
 
+On a Docker deployment, run it one-off against the already-running stack.
+`--no-deps` because the CLI only needs Postgres (already up); `--rm` so no
+stopped container is left behind:
+
 ```sh
-# Run one-off against the already-running deployment. --no-deps because the CLI
-# only needs Postgres (already up); --rm so no stopped container is left behind.
 docker compose -f docker-compose.yml -f docker-compose.prod.yml \
   run --rm --no-deps api cli permissions grant <username> schedule:manage
 
@@ -141,11 +143,19 @@ docker compose ... run --rm --no-deps api cli permissions list <username>
 docker compose ... run --rm --no-deps api cli permissions revoke <username> schedule:manage
 ```
 
+Running the app outside Docker, invoke the same CLI on the host against your
+configured DB:
+
+```sh
+cd backend && uv run python -m fanfan.main.cli permissions grant <username> schedule:manage
+```
+
 `grant`/`revoke` are idempotent. The command is deliberately unauthenticated —
 it is the bootstrap for the first organiser's permissions, so it cannot itself
 require one, and shell access to the server is the trust boundary. There is no
-dedicated CLI container: management commands are ephemeral `run --rm`
-invocations against the same image the `api` service runs.
+dedicated CLI container, and no `just` recipe: this is a rare admin operation,
+not a dev-loop task, so it stays a plain CLI command with one documented home
+here rather than a thin wrapper on a second surface.
 
 ### Pinning a build, and rolling back
 

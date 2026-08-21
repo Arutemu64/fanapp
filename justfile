@@ -91,11 +91,6 @@ backend-sync TARGET:
 backend-seed-demo:
     cd backend && uv run python -m fanfan.main.cli demo seed
 
-# Grant a permission to a user by username (idempotent). On a server run the
-# same command against the deployed image — see docs/deployment.md.
-backend-grant USERNAME PERMISSION:
-    cd backend && uv run python -m fanfan.main.cli permissions grant {{ USERNAME }} {{ PERMISSION }}
-
 backend-typecheck:
     cd backend && uv run ty check src/fanfan
 
