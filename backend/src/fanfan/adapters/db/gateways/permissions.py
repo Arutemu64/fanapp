@@ -1,4 +1,4 @@
-from sqlalchemy import and_, select
+from sqlalchemy import and_, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.mappers.permission import UserPermissionMapper
@@ -23,6 +23,12 @@ class SqlUserPermissionGateway(UserPermissionGateway):
         self.session.add(user_perm_orm)
         await self.session.flush()
 
+    async def delete(self, user_permission: UserPermission) -> None:
+        await self.session.execute(
+            delete(UserPermissionORM).where(UserPermissionORM.id == user_permission.id)
+        )
+        await self.session.flush()
+
     async def get_by_permission(
         self,
         user_id: UserId,
@@ -41,3 +47,11 @@ class SqlUserPermissionGateway(UserPermissionGateway):
             if user_perm_orm
             else None
         )
+
+    async def get_all_for_user(self, user_id: UserId) -> list[UserPermission]:
+        user_perm_orms = await self.session.scalars(
+            select(UserPermissionORM)
+            .where(UserPermissionORM.user_id == user_id)
+            .order_by(UserPermissionORM.permission)
+        )
+        return [self.user_permission_mapper.to_model(orm) for orm in user_perm_orms]
