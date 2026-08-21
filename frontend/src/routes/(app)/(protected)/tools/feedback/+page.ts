@@ -1,5 +1,5 @@
 import { createApiClient } from '$lib/api';
-import { throwApiError } from '$lib/api/errors';
+import { loadOnline, throwApiError } from '$lib/api/errors';
 import { FEEDBACK_PAGE_REQUEST_LIMIT, FEEDBACK_PAGE_SIZE } from '$lib/constants/feedback';
 import { canReadFeedback } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
@@ -18,22 +18,25 @@ export const load: PageLoad = async ({ fetch, parent }) => {
 
 	const client = createApiClient();
 
-	// Staff-only operational feed: stale data would misrepresent live state, so
-	// no offline cache here — fail hard when unreachable instead.
+	// Staff-only operational feed: stale data would misrepresent live state, so no
+	// offline cache here — loadOnline fails to the offline page when unreachable.
 	// Over-fetch one item so the client can tell whether a next page exists.
-	const {
-		data,
-		error: fetchError,
-		response
-	} = await client.GET('/feedback/', {
-		fetch,
-		params: { query: { limit: FEEDBACK_PAGE_REQUEST_LIMIT, offset: 0 } }
-	});
-	if (fetchError || !data) {
-		throwApiError(fetchError, response, 'Не удалось загрузить отзывы');
-	}
+	const feedback = await loadOnline(async () => {
+		const {
+			data,
+			error: fetchError,
+			response
+		} = await client.GET('/feedback/', {
+			fetch,
+			params: { query: { limit: FEEDBACK_PAGE_REQUEST_LIMIT, offset: 0 } }
+		});
+		if (fetchError || !data) {
+			throwApiError(fetchError, response, 'Не удалось загрузить отзывы');
+		}
 
-	const feedback = data.feedback ?? [];
+		return data.feedback ?? [];
+	});
+
 	return {
 		title: 'Отзывы',
 		feedback: feedback.slice(0, FEEDBACK_PAGE_SIZE),

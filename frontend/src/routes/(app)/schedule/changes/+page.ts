@@ -1,5 +1,5 @@
 import { createApiClient } from '$lib/api';
-import { throwApiError } from '$lib/api/errors';
+import { loadOnline, throwApiError } from '$lib/api/errors';
 import {
 	SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT,
 	SCHEDULE_CHANGES_PAGE_SIZE
@@ -24,22 +24,25 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 
 	const client = createApiClient();
 
-	// Staff-only operational feed: stale data would misrepresent live state, so
-	// no offline cache here — fail hard when unreachable instead.
+	// Staff-only operational feed: stale data would misrepresent live state, so no
+	// offline cache here — loadOnline fails to the offline page when unreachable.
 	// Over-fetch one item so the client can tell whether a next page exists.
-	const {
-		data,
-		error: fetchError,
-		response
-	} = await client.GET('/schedule/changes/', {
-		fetch,
-		params: { query: { limit: SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT, offset: 0 } }
-	});
-	if (fetchError || !data) {
-		throwApiError(fetchError, response, 'Не удалось загрузить изменения программы');
-	}
+	const changes = await loadOnline(async () => {
+		const {
+			data,
+			error: fetchError,
+			response
+		} = await client.GET('/schedule/changes/', {
+			fetch,
+			params: { query: { limit: SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT, offset: 0 } }
+		});
+		if (fetchError || !data) {
+			throwApiError(fetchError, response, 'Не удалось загрузить изменения программы');
+		}
 
-	const changes = data.schedule_changes ?? [];
+		return data.schedule_changes ?? [];
+	});
+
 	return {
 		title: 'Изменения программы',
 		schedule_changes: changes.slice(0, SCHEDULE_CHANGES_PAGE_SIZE),

@@ -1,5 +1,5 @@
 import { createApiClient } from '$lib/api';
-import { throwApiError } from '$lib/api/errors';
+import { loadOnline, throwApiError } from '$lib/api/errors';
 import { canManageSettings } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
 
@@ -18,14 +18,22 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	depends('app:festival-settings');
 
 	const client = createApiClient();
-	const { data, error: requestError, response } = await client.GET('/settings', { fetch });
 
-	if (requestError || !response.ok || !data) {
-		throwApiError(requestError, response, 'Не удалось загрузить настройки фестиваля');
-	}
+	// Live festival state, deliberately uncached: a stale copy would misrepresent
+	// what the festival is actually running on. loadOnline turns an unreachable
+	// backend into the offline page instead of a crash.
+	const settings = await loadOnline(async () => {
+		const { data, error: requestError, response } = await client.GET('/settings', { fetch });
+
+		if (requestError || !response.ok || !data) {
+			throwApiError(requestError, response, 'Не удалось загрузить настройки фестиваля');
+		}
+
+		return data;
+	});
 
 	return {
 		title: 'Настройки фестиваля',
-		settings: data
+		settings
 	};
 };

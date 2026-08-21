@@ -1,7 +1,7 @@
 import type { components } from '$lib/api/schema';
 
-import { isBackendUnreachableStatus, markReachable } from '$lib/services/reachability';
-import { error as kitError } from '@sveltejs/kit';
+import { isBackendUnreachableStatus, isReachable, markReachable } from '$lib/services/reachability';
+import { isHttpError, isRedirect, error as kitError } from '@sveltejs/kit';
 
 // The closed set of error codes the API can return, generated from the backend
 // OpenAPI spec (ErrorMessage.code enum). Drives both typo safety on the message
@@ -292,6 +292,54 @@ export function throwApiError(
 	const message = getApiErrorDetail(apiError) ?? fallback;
 	const code = getApiErrorCode(apiError);
 	return kitError(status, code ? { message, code } : { message });
+}
+
+/**
+ * Fail an online-only `load` as an offline state rather than a crash.
+ *
+ * Mirrors the 503 the `(protected)` layout throws when the backend is
+ * unreachable: ErrorState reframes it into the calm "нет интернета" /
+ * "нет связи с сервером" page from live reachability, and hooks.client.ts drops
+ * every 5xx HttpError from Sentry, so a dropped connection never becomes a
+ * GlitchTip issue.
+ */
+function throwOffline(): never {
+	return kitError(503, { message: 'Нет связи с сервером' });
+}
+
+/**
+ * Run the network half of an **online-only** `load` — a staff-facing page whose
+ * data is deliberately uncached because a stale copy would misrepresent live
+ * state (festival settings, sync, feedback, schedule changes).
+ *
+ * openapi-fetch hands HTTP failures back as `error`, but a *network* failure
+ * (offline, dropped connection, a preload fired as the radio died) rejects the
+ * underlying `fetch` with a raw `TypeError`. Unguarded, that escapes the load as
+ * an unhandled exception: the user gets the generic crash page and Sentry files
+ * it as a bug. Here it becomes the honest offline page instead.
+ *
+ * A SvelteKit error or redirect thrown inside `run` — `throwApiError`, a
+ * permission `error(403)` — is a verdict from a server that answered, so it
+ * passes through with its own status.
+ */
+export async function loadOnline<T>(run: () => Promise<T>): Promise<T> {
+	// Known unreachable: skip the doomed request instead of waiting for it to fail.
+	if (!isReachable()) {
+		throwOffline();
+	}
+
+	try {
+		const result = await run();
+		// Resolved → the server answered, whatever it said.
+		markReachable(true);
+		return result;
+	} catch (caught) {
+		if (isHttpError(caught) || isRedirect(caught)) {
+			throw caught;
+		}
+		markReachable(false);
+		throwOffline();
+	}
 }
 
 // Compile-time drift guard: every client-facing code must be covered by the

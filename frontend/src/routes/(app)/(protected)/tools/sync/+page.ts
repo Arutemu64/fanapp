@@ -1,5 +1,5 @@
 import { createApiClient } from '$lib/api';
-import { throwApiError } from '$lib/api/errors';
+import { loadOnline, throwApiError } from '$lib/api/errors';
 import { canRunSync } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
 
@@ -17,14 +17,22 @@ export const load: PageLoad = async ({ parent, fetch, depends }) => {
 	}
 
 	const client = createApiClient();
-	const { data, error: apiError, response } = await client.GET('/sync/sources', { fetch });
 
-	if (apiError || !response.ok || !data) {
-		throwApiError(apiError, response, 'Не удалось загрузить состояние синхронизации');
-	}
+	// Live sync state, deliberately uncached: a stale "last synced" would invite an
+	// organiser to skip a sync they still need. loadOnline turns an unreachable
+	// backend into the offline page instead of a crash.
+	const sources = await loadOnline(async () => {
+		const { data, error: apiError, response } = await client.GET('/sync/sources', { fetch });
+
+		if (apiError || !response.ok || !data) {
+			throwApiError(apiError, response, 'Не удалось загрузить состояние синхронизации');
+		}
+
+		return data;
+	});
 
 	return {
 		title: 'Синхронизация',
-		sources: data
+		sources
 	};
 };
