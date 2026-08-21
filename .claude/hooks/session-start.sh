@@ -51,13 +51,6 @@ fi
 # Run sudo correctly whether or not we are already root.
 if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo"; fi
 
-# Sync project dependencies against the current branch code. These are fast when
-# the lockfile is unchanged (uv/pnpm short-circuit) and only fetch the delta
-# after a real bump, since the caches persist in the snapshot. Kept here rather
-# than in setup.sh so a dependency change is picked up without an env rebuild.
-echo "[session-start] Syncing backend dependencies (uv sync)..."
-(cd "$REPO_ROOT/backend" && uv sync --all-groups)
-
 # Seed / reconcile the root .env so `$env/static/public` resolves during the
 # svelte-kit sync that pnpm's `prepare` runs below (the frontend reads env from
 # the repo root — see frontend/svelte.config.js). SvelteKit inlines static
@@ -92,6 +85,21 @@ else
     } >> "$REPO_ROOT/.env"
   fi
 fi
+
+# Sync project dependencies against the current branch code. These are fast when
+# the lockfile is unchanged (uv/pnpm short-circuit) and only fetch the delta
+# after a real bump, since the caches persist in the snapshot. Kept here rather
+# than in setup.sh so a dependency change is picked up without an env rebuild.
+#
+# The backend sync runs AFTER the .env seed above, and best-effort: it fetches
+# from the network, so a registry hiccup must not abort the hook under `set -e`
+# and strand the frontend gate without its .env (that ordering bug made "no .env
+# → frontend lint fails" a recurring web-session failure). A backend dep problem
+# surfaces on its own when a backend command runs; it must not take the frontend
+# down with it.
+echo "[session-start] Syncing backend dependencies (uv sync)..."
+(cd "$REPO_ROOT/backend" && uv sync --all-groups) \
+  || echo "[session-start] WARN: backend uv sync failed; run 'just backend-install' before backend work."
 
 echo "[session-start] Syncing frontend dependencies (pnpm install)..."
 (cd "$REPO_ROOT/frontend" && pnpm install)
