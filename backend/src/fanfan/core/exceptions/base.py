@@ -46,6 +46,16 @@ class RateLimited(AppException):
     """The caller exceeded an allowed rate; carries a retry_after detail (429)."""
 
 
+class UpstreamServiceError(AppException):
+    """A third-party service the app calls out to failed or was unreachable (502).
+
+    The request itself is valid, so it is not a 500 (our bug) — the app acted as a
+    gateway to an external provider (SMTP relay, vendor API) and that provider gave
+    back a failed response. Distinguishing it lets the client show a "try again"
+    message and keeps these transient outages out of the unhandled-error bucket.
+    """
+
+
 class AccessDenied(AppException):
     # Doubles as the "forbidden" marker (403) and a concrete exception raised
     # directly with a `reason` detail.

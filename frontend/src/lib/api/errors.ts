@@ -176,6 +176,7 @@ const ERROR_MESSAGES = {
 	CAPTCHA_VERIFICATION_FAILED: 'Не удалось пройти проверку. Попробуй ещё раз.',
 	CURRENT_EVENT_NOT_ALLOWED: 'Это выступление нельзя отметить как текущее',
 	EMAIL_ALREADY_EXISTS: 'Этот адрес уже используется',
+	EMAIL_DELIVERY_FAILED: 'Не удалось отправить код. Попробуй позже',
 	EVENT_NOT_FOUND: 'Выступление не найдено',
 	INCORRECT_PASSWORD: 'Неверная почта или пароль',
 	INVALID_CREDENTIALS: 'Неверная почта или пароль',
