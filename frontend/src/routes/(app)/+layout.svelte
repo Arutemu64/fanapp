@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { afterNavigate } from '$app/navigation';
+	import { afterNavigate, beforeNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import SkipLink from '$lib/components/SkipLink.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
@@ -23,15 +23,41 @@
 
 	// <main> is the scroll region and lives in this layout, so it persists across
 	// navigation — SvelteKit's scroll handling only resets the window, never this
-	// element, leaving a new page scrolled to wherever the last one was. Reset it
-	// on forward navigation; skip popstate so browser back/forward keeps its own
-	// scroll behaviour. behavior:'instant' overrides the element's scroll-smooth,
-	// which would otherwise animate the jump to top.
+	// element. Manage it by hand: forward navigation starts a fresh page at the
+	// top; back/forward (popstate) restores where the user left the target page,
+	// which the browser's own restoration can't do for a non-window scroller.
+	// Snapshots would be the idiomatic tool, but their restore has open issues on
+	// popstate for layout-level state (sveltejs/kit#10233), so drive it from the
+	// navigation callbacks, which fire reliably on every navigation while mounted.
+	// behavior:'instant' overrides the element's scroll-smooth, which would
+	// otherwise animate the jump.
 	let mainElement = $state<HTMLElement | null>(null);
 
+	// Saved scroll offsets keyed by path+query. Plain storage, not reactive, and
+	// held on the component rather than a module singleton so it stays scoped to
+	// the app-shell session and is dropped on logout (the SPA state rule).
+	const scrollPositions: Record<string, number> = {};
+
+	function scrollKey(url: URL): string {
+		return url.pathname + url.search;
+	}
+
+	beforeNavigate((navigation) => {
+		if (navigation.from) {
+			scrollPositions[scrollKey(navigation.from.url)] = mainElement?.scrollTop ?? 0;
+		}
+	});
+
 	afterNavigate((navigation) => {
-		if (navigation.type === 'popstate') return;
-		mainElement?.scrollTo({ top: 0, behavior: 'instant' });
+		if (!mainElement) return;
+
+		if (navigation.type === 'popstate' && navigation.to) {
+			const saved = scrollPositions[scrollKey(navigation.to.url)] ?? 0;
+			mainElement.scrollTo({ top: saved, behavior: 'instant' });
+			return;
+		}
+
+		mainElement.scrollTo({ top: 0, behavior: 'instant' });
 	});
 </script>
 
