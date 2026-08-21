@@ -25,6 +25,21 @@ function isServerSideHttpError(exception: unknown): boolean {
 	return typeof status === 'number' && status >= 500;
 }
 
+// A dynamically imported chunk that fails to load. Each browser words it
+// differently, so we match on the parts that are stable across engines:
+// Chrome/Edge "Failed to fetch dynamically imported module", Firefox "error
+// loading dynamically imported module", Safari "Importing a module script failed".
+// https://bugzilla.mozilla.org/show_bug.cgi?id=1826110 (Firefox wording)
+// https://github.com/sveltejs/kit/issues/5208 (Safari wording)
+const STALE_CHUNK_MESSAGE = /dynamically imported module|Importing a module script failed/i;
+
+function isStaleChunkError(exception: unknown): boolean {
+	if (!exception) return false;
+	const message =
+		typeof exception === 'string' ? exception : (exception as { message?: unknown }).message;
+	return typeof message === 'string' && STALE_CHUNK_MESSAGE.test(message);
+}
+
 // `Number('')` is 0 and `Number('half')` is NaN — neither is a sane sample rate
 // to infer from a missing or fat-fingered value, so both fall back to the
 // documented default. An explicit `0` (sampling off) is honoured.
@@ -51,6 +66,16 @@ if (PUBLIC_SENTRY_DSN) {
 				return null;
 			}
 
+			// A stale-chunk load failure is version skew after a deploy, not an app
+			// bug: the recovery below reloads the user onto the fresh build, and a
+			// chunk that stays unreachable is re-filed once as a distinct message.
+			// Drop the raw TypeError here so it never files as a JS error — the
+			// SvelteKit load wrapper, the browser's unhandledrejection handler and
+			// Vite's re-thrown preload error all funnel through here.
+			if (isStaleChunkError(hint?.originalException)) {
+				return null;
+			}
+
 			// Scrub potential PII from request headers and cookies
 			if (event.request) {
 				delete event.request.cookies;
@@ -70,34 +95,67 @@ if (PUBLIC_SENTRY_DSN) {
 	});
 }
 
-// Vite dispatches `vite:preloadError` when a dynamically imported chunk fails to
-// load. For this app that is almost always a boot node (root layout / error page)
-// dropping on a flaky mobile connection before the SW has it cached, and
-// occasionally version skew after a deploy removed the old hashed chunk a still-open
-// document points at. SvelteKit self-heals this during client-side navigation (it
-// reloads on a detected version change), but not on the very first load — there the
-// rejection instead surfaces to `handleError` below and strands the user on the error
-// page. Recover the way Vite recommends: a full-page reload re-requests the shell
-// (served `no-cache`, see frontend/nginx.conf) and its chunks.
-// https://vite.dev/guide/build#load-error-handling
+// A dynamically imported chunk can fail to load two ways: a boot node (root
+// layout / error page) dropping on a flaky mobile connection before the SW has it
+// cached, or version skew after a deploy removed the old hashed chunk a still-open
+// document points at. Recover the way Vite recommends — a full-page reload
+// re-requests the shell (served `no-cache`, see frontend/nginx.conf) and its
+// fresh chunks. https://vite.dev/guide/build#load-error-handling
 //
 // The reload is guarded against looping: if the chunk is genuinely unreachable the
 // reload would fail identically, so we record each attempt and skip a fresh one
-// within a short window, letting a persistent failure fall through to the error page.
+// within a short window.
 const PRELOAD_RELOAD_MARKER = 'preload-error-reloaded-at';
 const PRELOAD_RELOAD_WINDOW_MS = 30_000;
 
-addEventListener('vite:preloadError', (event) => {
+type StaleChunkRecovery = 'reload' | 'persistent' | 'blocked';
+
+function planStaleChunkRecovery(): StaleChunkRecovery {
 	const lastReloadAt = Number(readStorage('session', PRELOAD_RELOAD_MARKER)) || 0;
-	if (Date.now() - lastReloadAt < PRELOAD_RELOAD_WINDOW_MS) return;
+	// Already reloaded once within the window and the chunk is still failing — a
+	// second reload can't help, so this is a deploy that left a chunk unreachable.
+	if (Date.now() - lastReloadAt < PRELOAD_RELOAD_WINDOW_MS) return 'persistent';
 	// Only auto-recover when the marker can be persisted. A browser whose
 	// sessionStorage is blocked (storage-partitioned in-app browsers) is exactly
 	// where an unguarded reload would spin, so there we leave the error to surface.
-	if (!writeStorage('session', PRELOAD_RELOAD_MARKER, String(Date.now()))) return;
+	if (!writeStorage('session', PRELOAD_RELOAD_MARKER, String(Date.now()))) return 'blocked';
+	return 'reload';
+}
 
-	// Stop Vite from re-throwing so this recovered failure isn't also reported to Sentry.
-	event.preventDefault();
-	location.reload();
+// Shared recovery for a stale-chunk failure, whichever event surfaced it.
+// `preventDefault` is called only when we reload: for `vite:preloadError` it also
+// resolves the import to `undefined`, so on the non-reload paths we must let the
+// event run its course (Vite re-throws → SvelteKit renders the error page).
+function recoverFromStaleChunk(preventDefault: () => void): void {
+	const plan = planStaleChunkRecovery();
+	if (plan === 'reload') {
+		preventDefault();
+		location.reload();
+		return;
+	}
+	if (plan === 'persistent') {
+		// Re-file the guarded-out failure as a distinct, deduped signal that a deploy
+		// left a chunk unreachable — the raw TypeError is dropped in `beforeSend`.
+		Sentry.captureMessage('Stale chunk unreachable after recovery reload', 'warning');
+	}
+	// 'persistent' / 'blocked': let the failure fall through to the error page.
+}
+
+// Vite dispatches `vite:preloadError` when a chunk it preloads fails. SvelteKit
+// also self-heals this during client-side navigation (it reloads on a detected
+// version change), so this mainly catches the flaky-connection case.
+addEventListener('vite:preloadError', (event) => {
+	recoverFromStaleChunk(() => event.preventDefault());
+});
+
+// The same failure can instead surface as a bare unhandled rejection that never
+// reaches `vite:preloadError` — e.g. the error-page node failing to import during
+// initial hydration, or a speculative link preload not wrapped by Vite's preload
+// helper. Without this the user is stranded on the error page and the TypeError is
+// filed as an app bug (GlitchTip #19, /voting/art after a deploy).
+addEventListener('unhandledrejection', (event) => {
+	if (!isStaleChunkError(event.reason)) return;
+	recoverFromStaleChunk(() => event.preventDefault());
 });
 
 export const handleError: HandleClientError = Sentry.handleErrorWithSentry(({ error }) => {
