@@ -31,7 +31,7 @@ MIGRATIONS_DIR = BACKEND_DIR / "src" / "fanfan" / "adapters" / "db" / "migration
 # prepull (.claude/setup.sh) exactly — a different image risks false diffs
 # (e.g. server-default rendering) — and the cloud session reuses the prepulled
 # image instead of lazy-pulling another.
-POSTGRES_IMAGE = "postgres:18.4-alpine"
+POSTGRES_IMAGE = "postgres:18.6-alpine"
 
 # argv is [script_path, migration_name] — exactly two entries when called right.
 EXPECTED_ARGC = 2
