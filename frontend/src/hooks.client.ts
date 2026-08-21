@@ -25,20 +25,31 @@ function isServerSideHttpError(exception: unknown): boolean {
 	return typeof status === 'number' && status >= 500;
 }
 
-// A `fetch` that fails at the network layer — offline, connection reset, DNS,
-// or a request cancelled because the user navigated away mid-load — rejects with
-// a `TypeError`, worded per browser: Chromium "Failed to fetch", Firefox
-// "NetworkError when attempting to fetch resource.", Safari "Load failed".
-// Sentry's fetch instrumentation appends the origin ("… (app.fancom.info)"), so
-// we match the phrase rather than the whole string. When one of these escapes a
-// `load` (SvelteKit's wrapper reports it unhandled) it is the same expected
-// network condition as the 5xx blip above — the offline-first shell already
-// falls back to cache and live reachability — not an app bug, so drop it. This
-// is safe here specifically: every API call is same-origin, so this is never the
+// A `fetch` that fails at the network layer — offline, connection reset, DNS, or
+// a request cancelled because the user navigated away mid-load — rejects with a
+// `TypeError`, and the message is the only discriminator the fetch spec offers.
+// openapi-fetch only returns `{ error }` for HTTP responses (4xx/5xx); a network
+// failure propagates this raw `TypeError` unchanged. Each engine words it its own
+// way: Chromium "Failed to fetch", Firefox "NetworkError when attempting to fetch
+// resource.", Safari "Load failed". These prefixes mirror the allowlist in the
+// canonical `is-network-error` package; the Node/Deno wordings it also carries
+// don't occur in a browser, so they're omitted.
+//
+// We match the prefix, not the whole string, because Sentry's fetch instrumentation
+// appends the origin as a suffix ("NetworkError when attempting to fetch resource.
+// (app.fancom.info)") — a mutation that makes `is-network-error`'s exact match miss
+// this very error (getsentry/sentry-javascript#18449). `startsWith` absorbs that
+// suffix while still anchoring at the start, so it can't match one of these phrases
+// buried mid-message.
+//
+// When such an error escapes a `load` (SvelteKit's wrapper reports it unhandled) it
+// is the same expected network condition as the 5xx blip above — the offline-first
+// shell already falls back to cache and live reachability — not an app bug, so drop
+// it. Safe here specifically: every API call is same-origin, so this is never the
 // CORS misconfiguration a cross-origin "Failed to fetch" could hide, and a failed
 // chunk load is recovered separately by the `vite:preloadError` handler below.
 // See https://swiftmade.co/blog/2026-01-05-sentry-error-reporting-best-practices/
-const NETWORK_FETCH_ERROR_PHRASES = [
+const NETWORK_FETCH_ERROR_PREFIXES = [
 	'Failed to fetch',
 	'NetworkError when attempting to fetch resource',
 	'Load failed'
@@ -48,7 +59,7 @@ function isNetworkFetchError(exception: unknown): boolean {
 	if (!(exception instanceof TypeError)) {
 		return false;
 	}
-	return NETWORK_FETCH_ERROR_PHRASES.some((phrase) => exception.message.includes(phrase));
+	return NETWORK_FETCH_ERROR_PREFIXES.some((prefix) => exception.message.startsWith(prefix));
 }
 
 // `Number('')` is 0 and `Number('half')` is NaN — neither is a sane sample rate
