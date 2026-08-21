@@ -123,6 +123,30 @@ just deploy                   # docker compose ... -f docker-compose.prod.yml pu
 This pulls the images and restarts, building nothing on the host. Migrations run
 automatically via the `migration` service before the API starts.
 
+### Granting organiser permissions
+
+Permissions are per-user rows (`schedule:manage`, `notifications:send`,
+`feedback:read`, …), checked with no role-based bypass. The system user's own
+grants (`sync:run`, `demo:seed`) are seeded by migration; real organisers are
+granted by hand. Do it with the operator CLI rather than raw SQL — it validates
+the permission name and resolves the username for you:
+
+```sh
+# Run one-off against the already-running deployment. --no-deps because the CLI
+# only needs Postgres (already up); --rm so no stopped container is left behind.
+docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+  run --rm --no-deps api cli permissions grant <username> schedule:manage
+
+docker compose ... run --rm --no-deps api cli permissions list <username>
+docker compose ... run --rm --no-deps api cli permissions revoke <username> schedule:manage
+```
+
+`grant`/`revoke` are idempotent. The command is deliberately unauthenticated —
+it is the bootstrap for the first organiser's permissions, so it cannot itself
+require one, and shell access to the server is the trust boundary. There is no
+dedicated CLI container: management commands are ephemeral `run --rm`
+invocations against the same image the `api` service runs.
+
 ### Pinning a build, and rolling back
 
 By default `just deploy` tracks the latest `main` build (the `latest` tag). Pin a

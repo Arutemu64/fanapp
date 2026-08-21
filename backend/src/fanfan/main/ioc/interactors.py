@@ -74,6 +74,15 @@ from fanfan.application.interactors.outbox.publish_outbox_events import (
 from fanfan.application.interactors.outbox.purge_outbox_events import (
     PurgeOutboxEvents,
 )
+from fanfan.application.interactors.permissions.grant_permission import (
+    GrantPermission,
+)
+from fanfan.application.interactors.permissions.list_user_permissions import (
+    ListUserPermissions,
+)
+from fanfan.application.interactors.permissions.revoke_permission import (
+    RevokePermission,
+)
 from fanfan.application.interactors.push_sub.check_push_subscription import (
     CheckPushSubscription,
 )
@@ -158,6 +167,10 @@ class InteractorsProvider(Provider):
     import_schedule = provide(ImportSchedule)
 
     seed_demo_data = provide(SeedDemoData)
+
+    grant_permission = provide(GrantPermission)
+    revoke_permission = provide(RevokePermission)
+    list_user_permissions = provide(ListUserPermissions)
 
     send_broadcast = provide(SendBroadcast)
     get_notification = provide(GetNotification)
