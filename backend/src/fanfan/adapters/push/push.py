@@ -6,7 +6,7 @@ from fanfan.adapters.push.client import MessageData, WebPushClient
 from fanfan.application.ports.gateways.push_subscriptions import (
     PushSubscriptionGateway,
 )
-from fanfan.application.ports.notifier import Notifier
+from fanfan.application.ports.notifier import PushNotifierPort, PushTarget
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.notification import Notification
 from fanfan.core.vo.notification import NotificationType
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 _GONE_STATUS_CODES = frozenset({404, 410})
 
 
-class PushNotifier(Notifier):
+class PushNotifier(PushNotifierPort):
     def __init__(
         self,
         push_sub_gateway: PushSubscriptionGateway,
@@ -50,21 +50,19 @@ class PushNotifier(Notifier):
             "test": notification.type == NotificationType.TEST,
         }
 
-    async def send_notification(self, notification: Notification) -> None:
+    async def resolve(self, notification: Notification) -> PushTarget:
         # Resolve WebPush up front so a misconfigured channel fails fast (and is
         # caught by the consumer) before we hit the gateway.
         self.client.ensure_available()
-        push_subs = await self.push_sub_gateway.list_by_user(notification.user_id)
-        # End the read transaction before the network sends below. Sending is
-        # read-only towards the DB (only pruning a dead endpoint writes), yet a
-        # webpush round-trip is slow and we loop it per subscription — holding
-        # the pooled connection across it would, under a mailing fan-out, pin one
-        # connection per in-flight notification and exhaust the pool. Releasing
-        # here returns it for the duration of the sends; a prune re-opens a short
-        # transaction of its own.
-        await self.uow.rollback()
+        subscriptions = await self.push_sub_gateway.list_by_user(notification.user_id)
+        return PushTarget(subscriptions=subscriptions)
+
+    async def deliver(self, notification: Notification, target: PushTarget) -> None:
+        # Runs after the caller has released its read transaction, so the network
+        # sends below hold no DB connection. Pruning a dead endpoint re-opens a
+        # short transaction of its own (delete + commit).
         message_data = self._build_message_data(notification)
-        for sub in push_subs:
+        for sub in target.subscriptions:
             status_code = await self.client.send(
                 subscription=sub,
                 message_data=message_data,

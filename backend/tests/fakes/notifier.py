@@ -1,7 +1,10 @@
 from fanfan.application.ports.notifier import (
     PushNotifierPort,
+    PushTarget,
     TelegramNotifierPort,
+    TelegramTarget,
     VkNotifierPort,
+    VkTarget,
 )
 from fanfan.core.models.notification import Notification
 
@@ -12,7 +15,17 @@ class FakeTelegramNotifier(TelegramNotifierPort):
     def __init__(self) -> None:
         self.sent_notifications: list[Notification] = []
 
-    async def send_notification(self, notification: Notification) -> None:
+    async def resolve(
+        self,
+        notification: Notification,  # noqa: ARG002  # part of the port contract
+    ) -> TelegramTarget:
+        return TelegramTarget(chat_id=0)
+
+    async def deliver(
+        self,
+        notification: Notification,
+        target: TelegramTarget,  # noqa: ARG002  # part of the port contract
+    ) -> None:
         self.sent_notifications.append(notification)
 
 
@@ -22,7 +35,17 @@ class FakePushNotifier(PushNotifierPort):
     def __init__(self) -> None:
         self.sent_notifications: list[Notification] = []
 
-    async def send_notification(self, notification: Notification) -> None:
+    async def resolve(
+        self,
+        notification: Notification,  # noqa: ARG002  # part of the port contract
+    ) -> PushTarget:
+        return PushTarget(subscriptions=[])
+
+    async def deliver(
+        self,
+        notification: Notification,
+        target: PushTarget,  # noqa: ARG002  # part of the port contract
+    ) -> None:
         self.sent_notifications.append(notification)
 
 
@@ -32,5 +55,15 @@ class FakeVkNotifier(VkNotifierPort):
     def __init__(self) -> None:
         self.sent_notifications: list[Notification] = []
 
-    async def send_notification(self, notification: Notification) -> None:
+    async def resolve(
+        self,
+        notification: Notification,  # noqa: ARG002  # part of the port contract
+    ) -> VkTarget:
+        return VkTarget(peer_id=0)
+
+    async def deliver(
+        self,
+        notification: Notification,
+        target: VkTarget,  # noqa: ARG002  # part of the port contract
+    ) -> None:
         self.sent_notifications.append(notification)

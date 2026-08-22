@@ -183,14 +183,6 @@ class _StubSocialIdentityGateway:
         return self._identity
 
 
-class _StubUow:
-    def __init__(self) -> None:
-        self.rollbacks = 0
-
-    async def rollback(self) -> None:
-        self.rollbacks += 1
-
-
 _SENT_MESSAGE_ID = 42
 
 
@@ -230,9 +222,15 @@ def _notifier(
         client=client,  # type: ignore[arg-type]
         user_gateway=_StubUserGateway(user),  # type: ignore[arg-type]
         social_identity_gateway=_StubSocialIdentityGateway(identity),  # type: ignore[arg-type]
-        uow=_StubUow(),  # type: ignore[arg-type]
         web_config=_web_config(),
     )
+
+
+async def _send(notifier: VkNotifier, notification: Notification) -> None:
+    # Drive the two-phase port the way the interactor does: resolve the recipient
+    # (DB reads), then deliver over the network.
+    target = await notifier.resolve(notification)
+    await notifier.deliver(notification, target)
 
 
 async def test_sends_plain_text_to_linked_user() -> None:
@@ -240,7 +238,7 @@ async def test_sends_plain_text_to_linked_user() -> None:
     client = _StubVkClient()
     notifier = _notifier(user=user, identity=_identity_for(user), client=client)
 
-    await notifier.send_notification(_make_notification(user.id))
+    await _send(notifier, _make_notification(user.id))
 
     assert len(client.calls) == 1
     sent = client.calls[0]
@@ -261,7 +259,7 @@ async def test_delete_failure_does_not_fail_delivery() -> None:
     client = _StubVkClient(delete_error=VkApiError(code=100500, message="boom"))
     notifier = _notifier(user=user, identity=_identity_for(user), client=client)
 
-    await notifier.send_notification(_make_notification(user.id))
+    await _send(notifier, _make_notification(user.id))
 
     assert len(client.calls) == 1
     assert client.deleted == [_SENT_MESSAGE_ID]
@@ -273,7 +271,7 @@ async def test_delete_skipped_when_send_fails() -> None:
     notifier = _notifier(user=user, identity=_identity_for(user), client=client)
 
     with pytest.raises(UserNotReachable):
-        await notifier.send_notification(_make_notification(user.id))
+        await _send(notifier, _make_notification(user.id))
     # No message id to delete when the send itself never went through.
     assert client.deleted == []
 
@@ -284,7 +282,7 @@ async def test_opted_out_user_is_unreachable() -> None:
     notifier = _notifier(user=user, identity=_identity_for(user), client=client)
 
     with pytest.raises(UserNotReachable):
-        await notifier.send_notification(_make_notification(user.id))
+        await _send(notifier, _make_notification(user.id))
     # Short-circuits before touching the API.
     assert client.calls == []
 
@@ -295,7 +293,7 @@ async def test_unlinked_user_is_unreachable() -> None:
     notifier = _notifier(user=user, identity=None, client=client)
 
     with pytest.raises(UserNotReachable):
-        await notifier.send_notification(_make_notification(user.id))
+        await _send(notifier, _make_notification(user.id))
     assert client.calls == []
 
 
@@ -306,7 +304,7 @@ async def test_messages_not_allowed_is_unreachable() -> None:
     notifier = _notifier(user=user, identity=_identity_for(user), client=client)
 
     with pytest.raises(UserNotReachable):
-        await notifier.send_notification(_make_notification(user.id))
+        await _send(notifier, _make_notification(user.id))
 
 
 async def test_flood_control_asks_to_retry() -> None:
@@ -316,7 +314,7 @@ async def test_flood_control_asks_to_retry() -> None:
     notifier = _notifier(user=user, identity=_identity_for(user), client=client)
 
     with pytest.raises(NotificationRetryAfter):
-        await notifier.send_notification(_make_notification(user.id))
+        await _send(notifier, _make_notification(user.id))
 
 
 async def test_invalid_token_is_unreachable() -> None:
@@ -326,7 +324,7 @@ async def test_invalid_token_is_unreachable() -> None:
     notifier = _notifier(user=user, identity=_identity_for(user), client=client)
 
     with pytest.raises(UserNotReachable):
-        await notifier.send_notification(_make_notification(user.id))
+        await _send(notifier, _make_notification(user.id))
 
 
 async def test_unknown_error_propagates() -> None:
@@ -335,4 +333,4 @@ async def test_unknown_error_propagates() -> None:
     notifier = _notifier(user=user, identity=_identity_for(user), client=client)
 
     with pytest.raises(VkApiError):
-        await notifier.send_notification(_make_notification(user.id))
+        await _send(notifier, _make_notification(user.id))

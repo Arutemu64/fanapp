@@ -12,8 +12,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
 from fanfan.application.ports.gateways.users import UserGateway
-from fanfan.application.ports.notifier import Notifier
-from fanfan.application.ports.uow import UnitOfWork
+from fanfan.application.ports.notifier import TelegramNotifierPort, TelegramTarget
 from fanfan.core.exceptions.notifications import (
     NotificationRetryAfter,
     UserNotReachable,
@@ -25,19 +24,17 @@ from fanfan.presentation.web.config import WebConfig
 logger = logging.getLogger(__name__)
 
 
-class TelegramNotifier(Notifier):
+class TelegramNotifier(TelegramNotifierPort):
     def __init__(
         self,
         bot: Bot,
         user_gateway: UserGateway,
         social_identity_gateway: SocialIdentityGateway,
-        uow: UnitOfWork,
         web_config: WebConfig,
     ) -> None:
         self.social_identity_gateway = social_identity_gateway
         self.bot = bot
         self.user_gateway = user_gateway
-        self.uow = uow
         self.web_config = web_config
 
     @staticmethod
@@ -58,7 +55,7 @@ class TelegramNotifier(Notifier):
             ]
         )
 
-    async def send_notification(self, notification: Notification) -> None:
+    async def resolve(self, notification: Notification) -> TelegramTarget:
         user = await self.user_gateway.get_by_id(notification.user_id)
         if user is None or not user.settings.receive_telegram_notifications:
             raise UserNotReachable
@@ -70,13 +67,12 @@ class TelegramNotifier(Notifier):
         # created from an `openid`-only token has no address to send to.
         if social_identity is None or social_identity.provider_user_id is None:
             raise UserNotReachable
-        # End the read transaction before the Bot API call — sending touches no
-        # DB, so holding the pooled connection across the network round-trip only
-        # pins it needlessly under a mailing fan-out.
-        await self.uow.rollback()
+        return TelegramTarget(chat_id=social_identity.provider_user_id)
+
+    async def deliver(self, notification: Notification, target: TelegramTarget) -> None:
         try:
             await self.bot.send_message(
-                chat_id=social_identity.provider_user_id,
+                chat_id=target.chat_id,
                 text=self._render_message_text(notification),
                 parse_mode=ParseMode.HTML,
                 reply_markup=self._build_reply_markup(notification),

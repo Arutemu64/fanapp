@@ -148,13 +148,9 @@ class _StubGateway:
 class _StubUow:
     def __init__(self) -> None:
         self.commits = 0
-        self.rollbacks = 0
 
     async def commit(self) -> None:
         self.commits += 1
-
-    async def rollback(self) -> None:
-        self.rollbacks += 1
 
 
 def _notification(
@@ -183,11 +179,13 @@ async def test_notifier_passes_domain_subscription_and_flattens_html() -> None:
         client=client,  # type: ignore[arg-type]
     )
 
-    await notifier.send_notification(_notification())
+    notification = _notification()
+    target = await notifier.resolve(notification)
+    await notifier.deliver(notification, target)
 
-    # The read transaction is released before the network send, and nothing is
-    # pruned here so no write is committed.
-    assert uow.rollbacks == 1
+    # Resolution reads the subscriptions; delivery sends them. Nothing is pruned
+    # here, so no write is committed during the send.
+    assert target.subscriptions == [sub]
     assert uow.commits == 0
     assert len(client.calls) == 1
     call = client.calls[0]
@@ -214,7 +212,9 @@ async def test_notifier_prunes_gone_subscription() -> None:
         client=_RecordingClient(status=410),  # type: ignore[arg-type]
     )
 
-    await notifier.send_notification(_notification())
+    notification = _notification()
+    target = await notifier.resolve(notification)
+    await notifier.deliver(notification, target)
 
     assert gateway.deleted == [live, dead]
     assert uow.commits == 2
@@ -229,7 +229,9 @@ async def test_notifier_test_type_sets_foreground_flag() -> None:
         client=client,  # type: ignore[arg-type]
     )
 
-    await notifier.send_notification(_notification(NotificationType.TEST))
+    notification = _notification(NotificationType.TEST)
+    target = await notifier.resolve(notification)
+    await notifier.deliver(notification, target)
 
     assert client.calls[0]["message_data"]["test"] is True
 

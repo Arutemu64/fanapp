@@ -5,8 +5,7 @@ import nh3
 from fanfan.adapters.vk.client import VkApiClient, VkApiError
 from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
 from fanfan.application.ports.gateways.users import UserGateway
-from fanfan.application.ports.notifier import Notifier
-from fanfan.application.ports.uow import UnitOfWork
+from fanfan.application.ports.notifier import VkNotifierPort, VkTarget
 from fanfan.core.exceptions.notifications import (
     NotificationRetryAfter,
     UserNotReachable,
@@ -32,19 +31,17 @@ _AUTH_CODES = frozenset({5, 27, 28})
 _FLOOD_RETRY_AFTER_SECONDS = 1
 
 
-class VkNotifier(Notifier):
+class VkNotifier(VkNotifierPort):
     def __init__(
         self,
         client: VkApiClient,
         user_gateway: UserGateway,
         social_identity_gateway: SocialIdentityGateway,
-        uow: UnitOfWork,
         web_config: WebConfig,
     ) -> None:
         self.client = client
         self.user_gateway = user_gateway
         self.social_identity_gateway = social_identity_gateway
-        self.uow = uow
         self.web_config = web_config
 
     def _render_message_text(self, notification: Notification) -> str:
@@ -58,7 +55,7 @@ class VkNotifier(Notifier):
             f"🔔 {notification.title.upper()}\n\n{body}\n\n🌐 Открыть приложение: {url}"
         )
 
-    async def send_notification(self, notification: Notification) -> None:
+    async def resolve(self, notification: Notification) -> VkTarget:
         user = await self.user_gateway.get_by_id(notification.user_id)
         if user is None or not user.settings.receive_vk_notifications:
             raise UserNotReachable
@@ -71,17 +68,13 @@ class VkNotifier(Notifier):
         # identity at all, which is the real unreachable case here.
         if social_identity is None:
             raise UserNotReachable
+        return VkTarget(peer_id=social_identity.provider_user_id)
 
-        # End the read transaction before the VK API calls — sending (and the
-        # best-effort group-copy delete) touches no DB, so holding the pooled
-        # connection across the network round-trip only pins it needlessly under
-        # a mailing fan-out.
-        await self.uow.rollback()
-
+    async def deliver(self, notification: Notification, target: VkTarget) -> None:
         message_id: int
         try:
             message_id = await self.client.send_message(
-                peer_id=social_identity.provider_user_id,
+                peer_id=target.peer_id,
                 message=self._render_message_text(notification),
             )
         except VkApiError as e:
