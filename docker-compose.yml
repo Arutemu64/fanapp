@@ -55,8 +55,10 @@ services:
     # set limits only. A `cpus` limit may not exceed the host core count, or the
     # container fails to create. Memory limits are hard caps — breach one and the
     # container is OOM-killed — so each is sized above the service's real peak,
-    # not at it; the sum across services stays near 1.6 GB, leaving ~20% of the
-    # 2 GB for the kernel, Docker and sshd. Raise everything to match a bigger host.
+    # not at it; the sum of core+ops ceilings stays near 1.9 GB. That sum is a
+    # worst-case (every service pinned at once, which never happens) — real
+    # concurrent usage runs far below it, so the caps coexist on a 2 GB host with
+    # room for the kernel, Docker and sshd. Raise everything to match a bigger host.
     # A hit limit shows up as CPU throttling or an OOM kill.
     deploy:
       resources:
@@ -113,7 +115,13 @@ services:
       resources:
         limits:
           cpus: '1.0'
-          memory: 256M
+          # The only service with real request concurrency, so it runs hottest
+          # under event load: ~220M observed during a live event leaves too
+          # little over a 256M cap once momentary peaks (bigger crowd, larger
+          # serialized responses) top the averaged reading — below the ~20%
+          # headroom the db/faststream ceilings target. An OOM kill here darkens
+          # the whole backend, so size it for the event peak, not the average.
+          memory: 384M
     profiles: [ "core" ]
     networks:
       - frontend-network
