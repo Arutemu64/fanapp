@@ -44,12 +44,19 @@ class CreateNotification:
     async def __call__(self, data: CreateNotificationInput) -> NotificationId:
         mailing_id = data.notification.mailing_id
         notification = self._to_model(data.notification)
-        await self.notification_gateway.add(notification)
+        # Lock the mailing row (SELECT ... FOR UPDATE) before inserting the
+        # notification, not after. The INSERT takes a FOR KEY SHARE lock on the
+        # referenced mailing row via its foreign key; if two consumers fanning
+        # out the same mailing both insert first and then try to upgrade to
+        # FOR UPDATE, they hold each other's shared lock and deadlock. Taking
+        # the exclusive lock first gives every consumer the same one-directional
+        # lock order, so they serialize on the mailing instead.
         if mailing_id is not None:
             mailing = await self.mailing_gateway.get(mailing_id)
             if mailing is None:
                 raise MailingNotFound
             mailing.ensure_active()
             await self.mailing_gateway.increment_sent(mailing_id=mailing_id)
+        await self.notification_gateway.add(notification)
         await self.uow.commit()
         return notification.id
