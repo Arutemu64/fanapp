@@ -40,6 +40,14 @@ function isStaleChunkError(exception: unknown): boolean {
 	return typeof message === 'string' && STALE_CHUNK_MESSAGE.test(message);
 }
 
+// `navigator.onLine === false` is a trustworthy negative — the device really has
+// no connection (a `true` can still lie behind a captive portal, so we never infer
+// "online" from it, only "offline" from `false`). `navigator` is always present in
+// the client hooks, but the guard keeps this safe if it is ever called elsewhere.
+function isDeviceOffline(): boolean {
+	return typeof navigator !== 'undefined' && navigator.onLine === false;
+}
+
 // `Number('')` is 0 and `Number('half')` is NaN — neither is a sane sample rate
 // to infer from a missing or fat-fingered value, so both fall back to the
 // documented default. An explicit `0` (sampling off) is honoured.
@@ -133,9 +141,14 @@ function recoverFromStaleChunk(preventDefault: () => void): void {
 		location.reload();
 		return;
 	}
-	if (plan === 'persistent') {
+	if (plan === 'persistent' && !isDeviceOffline()) {
 		// Re-file the guarded-out failure as a distinct, deduped signal that a deploy
 		// left a chunk unreachable — the raw TypeError is dropped in `beforeSend`.
+		// Skip it when the device is offline: there the reload simply couldn't reach
+		// the network again, an expected offline blip (the error page renders "Нет
+		// интернета") rather than a chunk a deploy actually removed. Same stance as
+		// the 5xx/offline drops above — `navigator.onLine === false` is a trustworthy
+		// negative, so we only report when the device is genuinely online.
 		Sentry.captureMessage('Stale chunk unreachable after recovery reload', 'warning');
 	}
 	// 'persistent' / 'blocked': let the failure fall through to the error page.
