@@ -9,8 +9,13 @@ from fanfan.application.ports.notifier import (
     TelegramNotifierPort,
     VkNotifierPort,
 )
-from fanfan.core.exceptions.notifications import MailingNotFound, NotificationNotFound
+from fanfan.core.exceptions.notifications import (
+    MailingAlreadyCancelled,
+    MailingNotFound,
+    NotificationNotFound,
+)
 from fanfan.core.models.notification import Notification
+from fanfan.core.vo.mailing import MailingStatus
 from fanfan.core.vo.notification import NotificationId
 
 logger = logging.getLogger(__name__)
@@ -40,10 +45,19 @@ class SendNotification:
         if notification is None:
             raise NotificationNotFound
         if notification.mailing_id:
-            mailing = await self.mailing_gateway.get(notification.mailing_id)
+            # Read the mailing without locking it. Sending is read-only towards
+            # the mailing — we only gate on whether it was cancelled — and it
+            # holds the transaction open across the network send (webpush / VK /
+            # Telegram). Loading via get() would take SELECT ... FOR UPDATE and
+            # hold that exclusive row lock across the send, so the three send
+            # subscribers fanning out one mailing serialize on that row (and
+            # contend with the writers that legitimately lock it) until a waiter
+            # exceeds lock_timeout. A plain read observes the status instead.
+            mailing = await self.mailing_gateway.read_mailing(notification.mailing_id)
             if mailing is None:
                 raise MailingNotFound
-            mailing.ensure_active()
+            if mailing.status is MailingStatus.CANCELLED:
+                raise MailingAlreadyCancelled
         return notification
 
     async def send_notification_to_telegram(self, data: SendNotificationInput) -> None:
