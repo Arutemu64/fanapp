@@ -183,6 +183,14 @@ class _StubSocialIdentityGateway:
         return self._identity
 
 
+class _StubUow:
+    def __init__(self) -> None:
+        self.rollbacks = 0
+
+    async def rollback(self) -> None:
+        self.rollbacks += 1
+
+
 _SENT_MESSAGE_ID = 42
 
 
@@ -222,6 +230,7 @@ def _notifier(
         client=client,  # type: ignore[arg-type]
         user_gateway=_StubUserGateway(user),  # type: ignore[arg-type]
         social_identity_gateway=_StubSocialIdentityGateway(identity),  # type: ignore[arg-type]
+        uow=_StubUow(),  # type: ignore[arg-type]
         web_config=_web_config(),
     )
 

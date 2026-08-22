@@ -6,6 +6,7 @@ from fanfan.adapters.vk.client import VkApiClient, VkApiError
 from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.notifier import Notifier
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import (
     NotificationRetryAfter,
     UserNotReachable,
@@ -37,11 +38,13 @@ class VkNotifier(Notifier):
         client: VkApiClient,
         user_gateway: UserGateway,
         social_identity_gateway: SocialIdentityGateway,
+        uow: UnitOfWork,
         web_config: WebConfig,
     ) -> None:
         self.client = client
         self.user_gateway = user_gateway
         self.social_identity_gateway = social_identity_gateway
+        self.uow = uow
         self.web_config = web_config
 
     def _render_message_text(self, notification: Notification) -> str:
@@ -68,6 +71,12 @@ class VkNotifier(Notifier):
         # identity at all, which is the real unreachable case here.
         if social_identity is None:
             raise UserNotReachable
+
+        # End the read transaction before the VK API calls — sending (and the
+        # best-effort group-copy delete) touches no DB, so holding the pooled
+        # connection across the network round-trip only pins it needlessly under
+        # a mailing fan-out.
+        await self.uow.rollback()
 
         message_id: int
         try:

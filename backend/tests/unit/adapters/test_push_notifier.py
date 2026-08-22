@@ -148,9 +148,13 @@ class _StubGateway:
 class _StubUow:
     def __init__(self) -> None:
         self.commits = 0
+        self.rollbacks = 0
 
     async def commit(self) -> None:
         self.commits += 1
+
+    async def rollback(self) -> None:
+        self.rollbacks += 1
 
 
 def _notification(
@@ -172,14 +176,19 @@ async def test_notifier_passes_domain_subscription_and_flattens_html() -> None:
     sub = _browser_subscription(endpoint="https://push.example/one")
     gateway = _StubGateway([sub])
     client = _RecordingClient()
+    uow = _StubUow()
     notifier = PushNotifier(
         push_sub_gateway=gateway,  # type: ignore[arg-type]
-        uow=_StubUow(),  # type: ignore[arg-type]
+        uow=uow,  # type: ignore[arg-type]
         client=client,  # type: ignore[arg-type]
     )
 
     await notifier.send_notification(_notification())
 
+    # The read transaction is released before the network send, and nothing is
+    # pruned here so no write is committed.
+    assert uow.rollbacks == 1
+    assert uow.commits == 0
     assert len(client.calls) == 1
     call = client.calls[0]
     # The unmapped domain aggregate is handed straight to the client.

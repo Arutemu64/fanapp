@@ -55,6 +55,14 @@ class PushNotifier(Notifier):
         # caught by the consumer) before we hit the gateway.
         self.client.ensure_available()
         push_subs = await self.push_sub_gateway.list_by_user(notification.user_id)
+        # End the read transaction before the network sends below. Sending is
+        # read-only towards the DB (only pruning a dead endpoint writes), yet a
+        # webpush round-trip is slow and we loop it per subscription — holding
+        # the pooled connection across it would, under a mailing fan-out, pin one
+        # connection per in-flight notification and exhaust the pool. Releasing
+        # here returns it for the duration of the sends; a prune re-opens a short
+        # transaction of its own.
+        await self.uow.rollback()
         message_data = self._build_message_data(notification)
         for sub in push_subs:
             status_code = await self.client.send(
