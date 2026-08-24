@@ -73,6 +73,11 @@
 				var isDark =
 					m === 'dark' ||
 					(m !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+				// Declare the resolved scheme before first paint so Chromium's Auto Dark
+				// Theme (Android Chrome/Brave) won't force-darken a light app under a dark
+				// OS and drag the shell tint dark with it. theme.svelte.ts keeps it in sync
+				// afterwards. https://developer.chrome.com/blog/auto-dark-theme
+				document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
 				if (isDark) {
 					document.documentElement.classList.add('dark');
 					// Seed the shell tint to match the resolved theme before first paint,
