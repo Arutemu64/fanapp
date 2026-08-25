@@ -1,6 +1,6 @@
 import { createApiClient } from '$lib/api';
 import { NOTIFICATION_PREVIEW_LIMIT } from '$lib/constants/notifications';
-import { isReachable, markReachable } from '$lib/services/reachability';
+import { isReachable } from '$lib/services/reachability';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 
 import type { LayoutLoad } from './$types';
@@ -28,8 +28,11 @@ export const load: LayoutLoad = async ({ fetch, depends, parent }) => {
 	// capped preview length (a preview of 5 can hide dozens of unread items).
 	//
 	// The two requests fire in parallel but their failures stay independent: the
-	// preview alone decides reachability (as it did before the count was added), and
-	// a timed-out count must not discard a good preview or mark the API unreachable.
+	// preview alone decides the returned shape (as it did before the count was
+	// added), so a timed-out count never discards a good preview. Both calls report
+	// their own reachability through the client middleware; a lone transient count
+	// failure can't wrongly flip the offline banner because OfflineService re-probes
+	// the health endpoint before committing (see offline.svelte.ts).
 	const [previewResult, unreadResult] = await Promise.allSettled([
 		client.GET('/notifications/', {
 			fetch,
@@ -43,10 +46,8 @@ export const load: LayoutLoad = async ({ fetch, depends, parent }) => {
 	]);
 
 	if (previewResult.status === 'rejected') {
-		markReachable(false);
 		return { notificationPreview: [], notificationUnreadCount: 0 };
 	}
-	markReachable(true);
 
 	const preview = previewResult.value;
 	const unread = unreadResult.status === 'fulfilled' ? unreadResult.value : undefined;

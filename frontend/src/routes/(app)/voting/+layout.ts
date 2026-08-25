@@ -1,5 +1,5 @@
 import { createApiClient } from '$lib/api';
-import { isReachable, markReachable } from '$lib/services/reachability';
+import { isReachable } from '$lib/services/reachability';
 
 import type { LayoutLoad } from './$types';
 
@@ -24,9 +24,9 @@ export const load: LayoutLoad = async ({ fetch }) => {
 		return { votingStatus: data };
 	} catch {
 		// A network failure (offline / timeout) is thrown by fetch, not returned as
-		// `error`. Mark us unreachable so the page loads skip their own doomed
-		// requests, and hide the banner instead of crashing the whole load.
-		markReachable(false);
+		// `error`. The client middleware marks us unreachable so the page loads
+		// skip their own doomed requests; hide the banner instead of crashing the
+		// whole load.
 		return { votingStatus: undefined };
 	}
 };

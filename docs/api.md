@@ -31,6 +31,11 @@ A shared global/module singleton API client can accumulate mutable state that bl
 
 Instead, always instantiate a local client per context using `createApiClient()`.
 
+`createApiClient()` (`$lib/api/index.ts`) wires two `openapi-fetch` middlewares into every client, so these cross-cutting concerns live in one place instead of in each `load`:
+
+* **Session-expiry watch**: a 401 on anything other than the credential-check paths re-runs the root identity load (`invalidate('app:current-user')`) once, flipping the whole app to the guest state in one spot rather than per page.
+* **Reachability watch**: records backend reachability from each HTTP outcome (`markReachable`). A response marks us reachable — even a 4xx/5xx body proves the backend answered — except a gateway 5xx (502/503/504), which means the same as a network failure. A thrown error marks us unreachable, unless it is a bare navigation `AbortError` (a superseded `load`, not an outage). So `load`/cache code no longer calls `markReachable` itself; it only reads `isReachable()` to skip doomed requests. A stray `false` is safe — while the device still reports online, `OfflineService` re-probes the health endpoint before showing the offline banner.
+
 ### 1. Universal load functions (`+page.ts` / `+layout.ts`)
 Inside universal load functions, initialize the client locally and **always inject the SvelteKit-provided `fetch`**:
 

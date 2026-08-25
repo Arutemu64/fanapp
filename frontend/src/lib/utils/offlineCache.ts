@@ -1,4 +1,4 @@
-import { isReachable, markReachable } from '$lib/services/reachability';
+import { isReachable } from '$lib/services/reachability';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 import { createStore, delMany, get, keys, set, type UseStore } from 'idb-keyval';
 
@@ -151,14 +151,14 @@ export interface FetchWithCacheOptions<T> {
  *
  *   1. If the server is known unreachable, skip the doomed request and serve the
  *      cached copy immediately so first paint isn't blocked.
- *   2. Otherwise run `fetcher` under a timeout. A resolved promise proves the
- *      server answered (`markReachable(true)`); a returned value is cached and
+ *   2. Otherwise run `fetcher` under a timeout. A returned value is cached and
  *      returned fresh, while `undefined` falls back to the cache.
- *   3. A thrown error (network failure / timeout) marks us unreachable and serves
- *      the cached copy.
+ *   3. A thrown error (network failure / timeout) serves the cached copy.
  *
- * `fetcher` should close over the `load`'s own `fetch` so SvelteKit can track the
- * request; this helper only supplies the timeout `signal`.
+ * Reachability is not tracked here: the `fetcher` calls the API client, whose
+ * reachability middleware records the outcome (see api/index.ts). `fetcher`
+ * should close over the `load`'s own `fetch` so SvelteKit can track the request;
+ * this helper only supplies the timeout `signal`.
  */
 export async function fetchWithCache<T>({
 	key,
@@ -174,8 +174,6 @@ export async function fetchWithCache<T>({
 
 	try {
 		const value = await fetcher({ signal: timeoutSignal(timeoutMs) });
-		// Resolved → the server responded, even if the payload was unusable.
-		markReachable(true);
 
 		if (value === undefined) {
 			// Reachable but errored/empty — prefer the cached copy over a hard failure.
@@ -188,7 +186,6 @@ export async function fetchWithCache<T>({
 		return { data: value, cachedAt, stale: false };
 	} catch {
 		// Network failure / timeout: serve the last synced copy.
-		markReachable(false);
 		const cached = await readEnvelope<T>(key, scope);
 		return { data: cached?.value, cachedAt: cached?.cachedAt, stale: true };
 	}
@@ -227,7 +224,6 @@ export async function warmCache<T>({
 		if ((await readCache<unknown>(key, scope)) !== undefined) return;
 
 		const value = await fetcher({ signal: timeoutSignal(timeoutMs) });
-		markReachable(true);
 		if (value === undefined) return;
 
 		void writeCache<CachedEnvelope<T>>(key, { value, cachedAt: Date.now() }, scope);

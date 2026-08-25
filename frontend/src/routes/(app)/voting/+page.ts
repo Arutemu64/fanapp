@@ -1,6 +1,6 @@
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
-import { isBackendUnreachableStatus, isReachable, markReachable } from '$lib/services/reachability';
+import { isBackendUnreachableStatus, isReachable } from '$lib/services/reachability';
 import { isHttpError } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
@@ -23,10 +23,9 @@ export const load: PageLoad = async ({ fetch }) => {
 		if (apiError) {
 			// A gateway 5xx (502/503/504) is the backend being unreachable behind a
 			// live proxy, not a real load failure. Mirror the offline path above —
-			// mark unreachable, show the honest online-only state — instead of the
-			// generic error page.
+			// show the honest online-only state (the client middleware already marked
+			// us unreachable) instead of the generic error page.
 			if (response && isBackendUnreachableStatus(response.status)) {
-				markReachable(false);
 				return { title: 'Голосование', nominations: [], offlineUnavailable: true };
 			}
 			throwApiError(apiError, response, 'Не удалось загрузить номинации');
@@ -40,9 +39,9 @@ export const load: PageLoad = async ({ fetch }) => {
 	} catch (err) {
 		// A reachable failure surfaced by throwApiError: re-throw so the error page
 		// shows the mapped status. Anything else is a network failure (offline /
-		// timeout) — mark us unreachable and fall to the honest online-only state.
+		// timeout, already marked unreachable by the client middleware) — fall to
+		// the honest online-only state.
 		if (isHttpError(err)) throw err;
-		markReachable(false);
 		return { title: 'Голосование', nominations: [], offlineUnavailable: true };
 	}
 };

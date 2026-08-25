@@ -12,8 +12,14 @@ export function timeoutSignal(ms: number): AbortSignal {
 		return AbortSignal.timeout(ms);
 	}
 
+	// Abort with a `TimeoutError`, matching native `AbortSignal.timeout`, so a
+	// timeout stays distinguishable from a bare navigation `AbortError` (the API
+	// client's reachability middleware ignores the latter but not the former).
 	const controller = new AbortController();
-	setTimeout(() => controller.abort(), ms);
+	setTimeout(
+		() => controller.abort(new DOMException('The operation timed out.', 'TimeoutError')),
+		ms
+	);
 	return controller.signal;
 }
 
