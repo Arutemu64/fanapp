@@ -13,8 +13,10 @@
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { PaginatedFeed } from '$lib/services/feed.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { getUnreadCountService } from '$lib/services/unreadCount.svelte';
 	import { dedupeById } from '$lib/utils/feed';
 	import { onMount } from 'svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	const client = createApiClient();
 
@@ -27,6 +29,7 @@
 
 	const toastService = getToastService();
 	const eventsClient = getEventsClient();
+	const unread = getUnreadCountService();
 
 	const feed = new PaginatedFeed<NotificationDTO>({
 		pageSize: NOTIFICATION_PAGE_SIZE,
@@ -47,11 +50,51 @@
 
 	// Fresh SSE items on top, then the server page and anything loaded after it.
 	let notifications = $derived(dedupeById(liveNotifications, feed.items));
-	let unreadCount = $derived(notifications.filter((notification) => !notification.seen_at).length);
+
+	// Opening the page marks the items already loaded as read (mark-on-open). We
+	// don't mutate the fetched DTOs — they still carry seen_at: null — so overlay
+	// the read state locally: their "new" dots clear and the header settles without
+	// waiting for a refetch. On the next visit the server returns them seen.
+	let locallyReadIds = new SvelteSet<NotificationDTO['id']>();
+	const readAt = new Date().toISOString();
+	let displayNotifications = $derived(
+		notifications.map((notification) =>
+			notification.seen_at || !locallyReadIds.has(notification.id)
+				? notification
+				: { ...notification, seen_at: readAt }
+		)
+	);
+	let unreadCount = $derived(
+		displayNotifications.filter((notification) => !notification.seen_at).length
+	);
 
 	function addLiveNotification(notification: NotificationDTO) {
 		liveNotifications = dedupeById([notification], liveNotifications);
 		toastService.push(notification);
+	}
+
+	// Mark the currently-loaded unread items read on the server so the bell badge
+	// clears when the user opens their notifications, then reconcile the shared
+	// count. Scoped to what's loaded now: later pages and live arrivals stay unread.
+	async function markLoadedRead() {
+		const unseenIds = notifications
+			.filter((notification) => !notification.seen_at)
+			.map((notification) => notification.id);
+		if (unseenIds.length === 0) return;
+
+		try {
+			const { error, response } = await client.POST('/notifications/mark-read', {
+				body: { notification_ids: unseenIds }
+			});
+			if (!error && response.ok) {
+				for (const id of unseenIds) {
+					locallyReadIds.add(id);
+				}
+				await unread.refresh();
+			}
+		} catch (error) {
+			console.error('Failed to mark notifications as read', error);
+		}
 	}
 
 	// Refetch the first page and lift anything not yet in the list to the top, so we
@@ -79,6 +122,9 @@
 	}
 
 	onMount(() => {
+		// Opening the page is the "mark-on-open" moment for the items on screen.
+		void markLoadedRead();
+
 		eventsClient.on('notification_created', addLiveNotification);
 		// 'connection_established' fires on the first connect and on every reconnect.
 		eventsClient.on('connection_established', syncAfterReconnect);
@@ -102,11 +148,11 @@
 	{/if}
 </SectionIntro>
 
-{#if notifications.length === 0}
+{#if displayNotifications.length === 0}
 	<EmptyState message="Уведомлений пока нет" />
 {:else}
 	<div class="space-y-3">
-		{#each notifications as notification (notification.id)}
+		{#each displayNotifications as notification (notification.id)}
 			<NotificationListItem {notification} />
 		{/each}
 	</div>

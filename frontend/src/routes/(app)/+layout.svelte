@@ -4,7 +4,9 @@
 	import SkipLink from '$lib/components/SkipLink.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
 	import { TAB_ROOTS } from '$lib/data/nav';
+	import { setUnreadCountService } from '$lib/services/unreadCount.svelte';
 	import { uiHelpers } from 'flowbite-svelte';
+	import { untrack } from 'svelte';
 
 	import type { LayoutProps, Snapshot } from './$types';
 
@@ -17,6 +19,12 @@
 
 	let activeUrl = $derived(page.url.pathname);
 	let user = $derived(data.user);
+
+	// Shared unread count for the bell badge and the notifications page. Seeded once
+	// from the layout load so the badge is right on first paint; the bell and page
+	// own it from there (SSE, mark-read, reconnect), so untrack the seed rather than
+	// have it fight later loads.
+	setUnreadCountService(untrack(() => data.notificationUnreadCount) ?? 0);
 
 	const sidebarUi = uiHelpers();
 	let isSidebarOpen = $derived(sidebarUi.isOpen);

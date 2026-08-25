@@ -42,10 +42,16 @@ from fanfan.application.interactors.notifications.delete_mailing_notifications i
 from fanfan.application.interactors.notifications.get_notification import (
     GetNotification,
 )
+from fanfan.application.interactors.notifications.get_unread_count import (
+    GetUnreadNotificationsCount,
+)
 from fanfan.application.interactors.notifications.list_user_notifications import (
     ListUserNotifications,
 )
 from fanfan.application.interactors.notifications.mark_all_read import MarkAllRead
+from fanfan.application.interactors.notifications.mark_read import (
+    MarkNotificationsRead,
+)
 from fanfan.application.interactors.notifications.process_broadcast import (
     ProcessBroadcast,
 )
@@ -246,4 +252,6 @@ class InteractorsProvider(Provider):
     create_notification = provide(CreateNotification)
     list_user_notifications = provide(ListUserNotifications)
     mark_all_read = provide(MarkAllRead)
+    mark_notifications_read = provide(MarkNotificationsRead)
+    get_unread_notifications_count = provide(GetUnreadNotificationsCount)
     send_test_notification = provide(SendTestNotification)
