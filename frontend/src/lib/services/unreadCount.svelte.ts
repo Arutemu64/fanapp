@@ -9,44 +9,62 @@ const [getUnread, setUnread] = createContext<UnreadCountService>();
  * agree — a component-local count in each would let visiting the page leave a
  * stale badge on the bell. Scoped to the (app) layout via context (not a module
  * singleton), so it unmounts on logout and never leaks into the next session.
+ *
+ * The server's unread-count endpoint is the single source of truth: every change
+ * (an SSE notification, a reconnect, a mark-read) calls refresh(), and the badge
+ * converges to the server total within a round-trip. There is deliberately no
+ * optimistic local delta — a delta and an authoritative total can't be ordered
+ * against each other without an "as-of" token the endpoint doesn't return, so
+ * mixing them leaves the badge off by one (a live increment racing a reconnect
+ * refresh would either be lost or discard the reconciliation). The push toast
+ * already signals a notification arrived, so the badge trailing it by a request
+ * is fine.
  */
 export class UnreadCountService {
 	#count = $state(0);
-	// Bumped on every local mutation (increment/clear/set). A refresh() snapshots
-	// it before its request and discards the response if anything changed meanwhile,
-	// so a slow count fetch can't clobber a live SSE increment that raced it — the
-	// local mutation wins and the next refresh reconciles.
-	#mutation = 0;
+	#inFlight = false;
+	#pending = false;
 	readonly #client = createApiClient();
 
 	get count() {
 		return this.#count;
 	}
 
+	// Seed from the layout load for a correct first paint.
 	set(count: number) {
 		this.#count = Math.max(0, count);
-		this.#mutation += 1;
 	}
 
-	increment() {
-		this.#count += 1;
-		this.#mutation += 1;
-	}
-
+	// Marking every notification read zeros the server side, so reflect it at once
+	// rather than waiting for the refresh round-trip.
 	clear() {
 		this.#count = 0;
-		this.#mutation += 1;
 	}
 
-	async refresh() {
-		const mutationAtStart = this.#mutation;
+	// Authoritative reconcile with the server, coalesced: a call while one is in
+	// flight schedules exactly one follow-up instead of a parallel request, so a
+	// burst of SSE events costs at most two round-trips and the freshest response
+	// is the one that sticks (requests never overlap, so none can arrive out of
+	// order and regress the count).
+	async refresh(): Promise<void> {
+		if (this.#inFlight) {
+			this.#pending = true;
+			return;
+		}
+		this.#inFlight = true;
 		try {
 			const { data, error, response } = await this.#client.GET('/notifications/unread-count');
-			if (!error && response.ok && data && this.#mutation === mutationAtStart) {
+			if (!error && response.ok && data) {
 				this.#count = data.count;
 			}
 		} catch (error) {
 			console.error('Failed to load unread count', error);
+		} finally {
+			this.#inFlight = false;
+			if (this.#pending) {
+				this.#pending = false;
+				void this.refresh();
+			}
 		}
 	}
 }

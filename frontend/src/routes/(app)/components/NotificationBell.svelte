@@ -99,9 +99,10 @@
 	function handleNewNotification(notification: NotificationDTO) {
 		const isNewNotification = addNotificationToPreview(notification);
 		if (isNewNotification) {
-			// A freshly created notification is unread by definition, so bump the badge
-			// without a round-trip to the count endpoint.
-			unread.increment();
+			// Reconcile the badge with the server rather than optimistically bumping it,
+			// so the count can't drift out of sync with the true total (coalesced, so a
+			// broadcast burst costs at most two round-trips).
+			void unread.refresh();
 			toastService.push(notification);
 		}
 	}
