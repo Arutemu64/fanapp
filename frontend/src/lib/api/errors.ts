@@ -280,9 +280,6 @@ export function throwApiError(
 	// without an HTTP error, which we treat as a server-side problem.
 	const status = response && response.status >= 400 ? response.status : 500;
 
-	// Gateway 5xx reachability is now handled by the reachabilityWatch middleware
-	// in lib/api/index.ts, which covers every openapi-fetch call uniformly.
-
 	const message = getApiErrorDetail(apiError) ?? fallback;
 	const code = getApiErrorCode(apiError);
 	return kitError(status, code ? { message, code } : { message });

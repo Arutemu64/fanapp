@@ -25,10 +25,8 @@ let reconcilingSession = false;
 //     is exactly what we want.)
 const CREDENTIAL_CHECK_PATHS = new Set(['/me/', '/auth/login', '/auth/login-with-code']);
 
-// Feed reachability from every API response so sibling loads and the offline
-// banner reflect reality without each call site having to remember. A non-
-// gateway response proves the backend answered; 502/503/504 means the proxy
-// is up but the backend behind it is not — same as a network failure.
+// A non-gateway response proves the backend answered; 502/503/504 means the
+// proxy is up but the backend behind it is not — same as a network failure.
 const reachabilityWatch: Middleware = {
 	onResponse({ response }) {
 		markReachable(!isBackendUnreachableStatus(response.status));

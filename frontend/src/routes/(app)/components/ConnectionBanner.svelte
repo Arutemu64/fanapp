@@ -5,22 +5,16 @@
 	import { ExclamationCircleOutline, RefreshOutline } from 'flowbite-svelte-icons';
 	import { slide } from 'svelte/transition';
 
-	// Wait this long before showing the "reconnecting" strip. 8s absorbs the
-	// normal SSE reconnect after foregrounding (visibility resume, radio wake)
-	// without alarming the user — the SSE client reconnects in 1-3s on a healthy
-	// network. Only a genuinely struggling connection exceeds this window.
+	// 8s absorbs the normal SSE reconnect after foregrounding without alarming
+	// the user; only a genuinely struggling connection exceeds this window.
 	const RECOVERING_GRACE_MS = 8000;
 
-	// Once shown, keep the banner visible for at least this long even if the
-	// issue resolves sooner. Prevents the jarring flash of a banner appearing
-	// and vanishing in under a second on brief connectivity blips.
-	// Material Design 3 snackbar spec recommends a 4s minimum display.
+	// Material Design 3 snackbar minimum; prevents flash on brief blips.
 	const MIN_DISPLAY_MS = 4000;
 
 	type Health = 'healthy' | 'recovering' | 'down';
 
-	// Collapse the six raw connection statuses into three buckets the UI cares about.
-	// `disconnected` only happens on logout (intentional), so it stays silent.
+	// `disconnected` is intentional (logout) — stays silent.
 	const HEALTH_BY_STATUS: Record<ConnectionStatus, Health> = {
 		connected: 'healthy',
 		transport_open: 'healthy',
@@ -33,18 +27,10 @@
 	const client = getEventsClient();
 	let health = $derived<Health>(HEALTH_BY_STATUS[client.connectionStatus]);
 
-	// Backend reachability. When the server can't be reached, show a dedicated
-	// strip instead of the SSE "connection lost" one — it is the real cause and
-	// the clearer message for the user.
 	const offline = getOfflineService();
 	let isOnline = $derived(offline.isOnline);
-
-	// Device-level connectivity, to tell "no internet" apart from "server
-	// unreachable" — see reachability.ts. A `false` is a trustworthy negative.
 	let deviceOnline = $derived(reachability.deviceOnline);
 
-	// Latches true only after the connection has stayed in `recovering` past the
-	// grace window. Recovery (or hard failure) clears it immediately.
 	let recoveringVisible = $state(false);
 
 	$effect(() => {
@@ -56,11 +42,6 @@
 		const timeoutId = setTimeout(() => (recoveringVisible = true), RECOVERING_GRACE_MS);
 		return () => clearTimeout(timeoutId);
 	});
-
-	function reconnect() {
-		// restart() resets the attempt counter and re-dials the stream.
-		client.restart();
-	}
 
 	type BannerTone = 'yellow' | 'red';
 
@@ -79,12 +60,7 @@
 		showRetry: boolean;
 	}
 
-	// Pick at most one banner; an unreachable server (the real cause) outranks a
-	// lost SSE stream, which outranks the delayed "reconnecting" strip. When the
-	// server can't be reached, distinguish a truly offline device ("Нет
-	// интернета") from an online device that just can't reach the server ("Нет
-	// связи с сервером") — never blame the user's internet for a server outage.
-	// The recovery poll clears both on its own, so neither offers a retry button.
+	// Unreachable server outranks lost SSE stream outranks delayed "reconnecting".
 	let desiredBanner = $derived.by<Banner | null>(() => {
 		if (!isOnline) {
 			return {
@@ -119,9 +95,6 @@
 		return null;
 	});
 
-	// Enforce a minimum display: once the banner appears, keep it for MIN_DISPLAY_MS
-	// even if the underlying issue resolves sooner. This prevents the quick flash
-	// of a banner appearing and vanishing on a brief blip.
 	let banner = $state<Banner | null>(null);
 	let hideLockedUntil = 0;
 	let holdTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -171,7 +144,7 @@
 		{#if banner.showRetry}
 			<button
 				type="button"
-				onclick={reconnect}
+				onclick={() => client.restart()}
 				class="inline-flex min-h-9 shrink-0 items-center rounded-lg bg-red-600 px-2.5 text-xs font-medium text-white hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-red-50 focus-visible:outline-none dark:focus-visible:ring-offset-red-950"
 			>
 				Обновить
