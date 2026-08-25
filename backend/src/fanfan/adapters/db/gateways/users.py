@@ -115,7 +115,6 @@ class SqlUserGateway(UserGateway):
         return [self.mapper.parse_base_dto(u) for u in users_orm]
 
     def _voting_contest_pool(self) -> Subquery:
-        # The prize-draw pool is everyone who has voted in every votable nomination.
         # Count only votes that land in a currently-votable nomination and match the
         # number of distinct ones against the votable total: a stale vote in a
         # nomination that has since become non-votable must not stand in for a

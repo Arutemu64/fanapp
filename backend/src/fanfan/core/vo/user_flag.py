@@ -10,8 +10,7 @@ def generate_user_flag_id() -> UserFlagId:
 
 
 class UserFlagName(enum.StrEnum):
-    # Per-user boolean markers. None is defined right now — the flag system is kept
-    # for future markers. Adding a member also needs a hand-written CHECK-constraint
-    # swap migration (Alembic does not diff CHECK bodies); see the fanfan-migrations
-    # skill.
+    # Per-user boolean markers. No members are defined; the flag system is kept for
+    # future markers. Adding one also needs a hand-written CHECK-constraint swap
+    # migration (Alembic does not diff CHECK bodies); see the fanfan-migrations skill.
     pass
