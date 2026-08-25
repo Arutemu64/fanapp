@@ -32,9 +32,9 @@
 	const MAX_AMOUNT = 100;
 
 	let selectedRole = $state<Role>('visitor');
-	// Kept as the raw input string: a cleared number field yields '' (not null),
-	// which keeps the Flowbite Input binding well-typed. Parsed on validate.
-	let amountInput = $state('10');
+	// A `type="number"` binding yields a number, or an empty value when the field is
+	// cleared — never a string. Validated as an integer in range on submit.
+	let amountInput = $state<number | undefined>(10);
 	let isGenerating = $state(false);
 
 	let amountError = $state('');
@@ -46,12 +46,11 @@
 	let barcodesText = $derived(generatedBarcodes.join('\n'));
 
 	function parseAmount(): number | null {
-		const trimmed = amountInput.trim();
-		if (trimmed === '') {
+		// Guards both the cleared field (null/undefined) and non-integer input.
+		if (!Number.isInteger(amountInput)) {
 			return null;
 		}
-		const parsed = Number(trimmed);
-		return Number.isInteger(parsed) ? parsed : null;
+		return amountInput as number;
 	}
 
 	function validateAmount(): boolean {
