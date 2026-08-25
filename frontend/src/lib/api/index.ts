@@ -3,7 +3,8 @@ import type { Middleware } from 'openapi-fetch';
 
 import { invalidate } from '$app/navigation';
 import { PUBLIC_API_URL } from '$env/static/public';
-import { isBackendUnreachableStatus, markReachable } from '$lib/services/reachability';
+import { isBackendUnreachableStatus, reportRequestReachability } from '$lib/services/reachability';
+import { FIRST_PAINT_TIMEOUT_MS } from '$lib/utils/fetchTimeout';
 import createClient from 'openapi-fetch';
 
 // True while a 401-triggered identity refresh is in flight, so a burst of
@@ -55,18 +56,19 @@ function isAbortError(error: unknown): boolean {
 // `load`/cache fetch no longer repeats the same `markReachable` branches. A
 // response means the backend answered — even a 4xx/5xx body is proof it is
 // reachable — except a gateway 5xx (502/503/504), where the proxy is up but the
-// backend behind it never handled the request: as unreachable as a network
-// throw. A thrown error is a network failure or timeout, unless it is a bare
-// navigation abort. A stray `false` here is safe: while the device still reports
-// online, OfflineService treats it as a "confirm" and re-probes the health
-// endpoint before showing the offline banner (see offline.svelte.ts).
+// backend behind it never handled the request: a failure like a network throw.
+// A thrown error is a network failure or timeout, unless it is a bare navigation
+// abort. `reportRequestReachability` guards the failure case against concurrency:
+// several requests run per navigation (the notification preview alongside its
+// unread count), and one slow endpoint failing after a sibling has already
+// succeeded must not flip the shared flag — the timeout budget bounds the window.
 const reachabilityWatch: Middleware = {
 	onResponse({ response }) {
-		markReachable(!isBackendUnreachableStatus(response.status));
+		reportRequestReachability(!isBackendUnreachableStatus(response.status), FIRST_PAINT_TIMEOUT_MS);
 	},
 	onError({ error }) {
 		if (isAbortError(error)) return;
-		markReachable(false);
+		reportRequestReachability(false, FIRST_PAINT_TIMEOUT_MS);
 	}
 };
 

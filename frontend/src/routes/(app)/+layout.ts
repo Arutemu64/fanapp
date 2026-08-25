@@ -30,9 +30,10 @@ export const load: LayoutLoad = async ({ fetch, depends, parent }) => {
 	// The two requests fire in parallel but their failures stay independent: the
 	// preview alone decides the returned shape (as it did before the count was
 	// added), so a timed-out count never discards a good preview. Both calls report
-	// their own reachability through the client middleware; a lone transient count
-	// failure can't wrongly flip the offline banner because OfflineService re-probes
-	// the health endpoint before committing (see offline.svelte.ts).
+	// their own reachability through the client middleware, but a lone count failure
+	// settling after the preview succeeds can't flip the shared flag — the
+	// middleware's concurrency guard keeps a recent success authoritative (see
+	// reportRequestReachability in reachability.ts).
 	const [previewResult, unreadResult] = await Promise.allSettled([
 		client.GET('/notifications/', {
 			fetch,

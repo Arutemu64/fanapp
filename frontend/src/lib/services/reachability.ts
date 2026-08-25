@@ -46,6 +46,35 @@ export function markReachable(value: boolean): void {
 	for (const listener of listeners) listener();
 }
 
+// Epoch millis of the last API request that reached the backend. Drives the
+// concurrency guard below; the health probe deliberately bypasses it.
+let lastRequestReachableAt = Number.NEGATIVE_INFINITY;
+
+/**
+ * Record reachability from a *normal API request* outcome (the client
+ * middleware), as opposed to the health probe which is authoritative and calls
+ * {@link markReachable} directly.
+ *
+ * A success is authoritative — the backend answered — so it always marks us
+ * reachable and remembers when. A failure is only *suggestive*: several requests
+ * run concurrently per navigation (e.g. the notification preview alongside its
+ * unread count), and one slow endpoint timing out after another has already
+ * succeeded is not an outage. So a failure marks us unreachable only when no
+ * request has succeeded within `windowMs` — long enough to span a concurrent
+ * request's own timeout budget. If the backend is genuinely down every request
+ * fails, no success lands, and the guard lapses; the health probe remains the
+ * arbiter either way.
+ */
+export function reportRequestReachability(ok: boolean, windowMs: number): void {
+	if (ok) {
+		lastRequestReachableAt = Date.now();
+		markReachable(true);
+		return;
+	}
+	if (Date.now() - lastRequestReachableAt < windowMs) return;
+	markReachable(false);
+}
+
 /** Subscribe to reachability changes; returns an unsubscribe function. */
 export function onReachableChange(listener: () => void): () => void {
 	listeners.add(listener);
