@@ -36,7 +36,6 @@ class DrawVotingContestWinner:
             user=current_user, permission=Permission.VOTING_MANAGE
         )
 
-        pool_size = await self.user_gateway.count_voting_contest_pool()
-        winner = await self.user_gateway.read_random_voting_contest_entrant()
+        winner, pool_size = await self.user_gateway.draw_voting_contest_winner()
 
         return DrawVotingContestWinnerOutput(winner=winner, pool_size=pool_size)

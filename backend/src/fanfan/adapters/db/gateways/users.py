@@ -143,19 +143,26 @@ class SqlUserGateway(UserGateway):
         stmt = select(func.count()).select_from(pool)
         return await self.session.scalar(stmt) or 0
 
-    async def read_random_voting_contest_entrant(self) -> UserBaseDTO | None:
-        # ORDER BY random() LIMIT 1 draws a uniformly random entrant. The pool is
-        # small (a live convention audience) and this is a one-off organiser action,
-        # so the full sort scan is cheap and this is not a hot path.
+    async def draw_voting_contest_winner(self) -> tuple[UserBaseDTO | None, int]:
+        # Winner and pool size come from one statement so a vote committing
+        # mid-draw cannot make them describe different snapshots (the session runs
+        # READ COMMITTED, under which two separate queries could). count() OVER ()
+        # tallies the whole eligible set before ORDER BY random()/LIMIT picks the
+        # winner, so the surviving row carries the full pool size; an empty pool
+        # yields no row. The pool is small (a live convention audience) and this is
+        # a one-off organiser action, so the sort scan is cheap.
         pool = self._voting_contest_pool()
         stmt = (
-            select(UserORM)
+            select(UserORM, func.count().over().label("pool_size"))
             .join(pool, pool.c.user_id == UserORM.id)
             .order_by(func.random())
             .limit(1)
         )
-        user_orm = await self.session.scalar(stmt)
-        return self.mapper.parse_base_dto(user_orm) if user_orm else None
+        row = (await self.session.execute(stmt)).first()
+        if row is None:
+            return None, 0
+        user_orm, pool_size = row
+        return self.mapper.parse_base_dto(user_orm), pool_size
 
     async def read_all_by_receive_all_announcements(self) -> list[UserBaseDTO]:
         # Bare boolean predicate (not .is_(True)) so it matches the partial
