@@ -4,7 +4,12 @@ from sqlalchemy.orm import joinedload, selectinload
 
 from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.mappers.user import UserMapper
-from fanfan.adapters.db.models import NominationORM, UserORM, VoteORM
+from fanfan.adapters.db.models import (
+    NominationORM,
+    ParticipantORM,
+    UserORM,
+    VoteORM,
+)
 from fanfan.adapters.db.models.permission import UserPermissionORM
 from fanfan.application.dto.page import Pagination
 from fanfan.application.dto.user import (
@@ -111,9 +116,10 @@ class SqlUserGateway(UserGateway):
 
     def _voting_contest_pool(self) -> Subquery:
         # The prize-draw pool is everyone who has voted in every votable nomination.
-        # A user votes at most once per nomination, so their vote-row count equals
-        # the nominations they have completed; requiring that to reach the votable
-        # count is the eligibility rule. Both the threshold and the tally come from
+        # Count only votes that land in a currently-votable nomination and match the
+        # number of distinct ones against the votable total: a stale vote in a
+        # nomination that has since become non-votable must not stand in for a
+        # missing vote in a votable one. Both the threshold and the tally come from
         # the same statement, so the pool is always internally consistent.
         votable_count = (
             select(func.count(NominationORM.id))
@@ -122,8 +128,13 @@ class SqlUserGateway(UserGateway):
         )
         return (
             select(VoteORM.user_id.label("user_id"))
+            .join(ParticipantORM, VoteORM.participant_id == ParticipantORM.id)
+            .join(NominationORM, ParticipantORM.nomination_id == NominationORM.id)
+            .where(NominationORM.is_votable.is_(True))
             .group_by(VoteORM.user_id)
-            .having(func.count(VoteORM.id) >= votable_count)
+            .having(
+                func.count(func.distinct(ParticipantORM.nomination_id)) >= votable_count
+            )
             .subquery()
         )
 
