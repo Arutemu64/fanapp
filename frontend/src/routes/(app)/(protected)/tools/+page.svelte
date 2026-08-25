@@ -9,6 +9,7 @@
 		canGenerateTickets,
 		canImportSchedule,
 		canManageSettings,
+		canManageVoting,
 		canReadFeedback,
 		canRunSync,
 		canSendNotifications
@@ -16,6 +17,7 @@
 	import {
 		AdjustmentsHorizontalOutline,
 		AnnotationOutline,
+		AwardOutline,
 		BullhornOutline,
 		FileImportOutline,
 		RefreshOutline,
@@ -42,10 +44,18 @@
 		{
 			key: 'settings',
 			title: 'Настройки фестиваля',
-			description: 'Фестиваль, голосование и тайминги программы.',
+			description: 'Даты фестиваля и тайминги программы.',
 			icon: AdjustmentsHorizontalOutline,
 			href: '/tools/settings',
 			canAccess: canManageSettings(user)
+		},
+		{
+			key: 'voting',
+			title: 'Голосование',
+			description: 'Включай голосование, следи за лидерами и разыгрывай приз.',
+			icon: AwardOutline,
+			href: '/tools/voting',
+			canAccess: canManageVoting(user)
 		},
 		{
 			key: 'import_schedule',

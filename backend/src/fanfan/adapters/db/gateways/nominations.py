@@ -6,9 +6,11 @@ from fanfan.adapters.db.mappers.nomination import NominationMapper
 from fanfan.adapters.db.models import NominationORM, ParticipantORM, VoteORM
 from fanfan.application.dto.nomination import NominationVotingDTO
 from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.voting import ContenderDTO, NominationContenderDTO
 from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.core.models.nomination import Nomination
-from fanfan.core.vo.nomination import NominationCode
+from fanfan.core.vo.nomination import NominationCode, NominationId
+from fanfan.core.vo.participant import ParticipantId
 from fanfan.core.vo.user import UserId
 
 
@@ -52,6 +54,84 @@ class SqlNominationGateway(NominationGateway):
             NominationORM.is_votable.is_(True)
         )
         return await self.session.scalar(stmt) or 0
+
+    async def read_voting_contenders(self) -> list[NominationContenderDTO]:
+        # Rank participants within each nomination by vote count, so the leader is
+        # rank 1. voting_number breaks ties for a stable, deterministic pick.
+        votes_count = func.count(VoteORM.id)
+        ranked = (
+            select(
+                ParticipantORM.id.label("participant_id"),
+                ParticipantORM.title.label("participant_title"),
+                ParticipantORM.nomination_id.label("nomination_id"),
+                votes_count.label("votes_count"),
+                func.row_number()
+                .over(
+                    partition_by=ParticipantORM.nomination_id,
+                    order_by=(votes_count.desc(), ParticipantORM.voting_number.asc()),
+                )
+                .label("rank"),
+            )
+            .outerjoin(VoteORM, VoteORM.participant_id == ParticipantORM.id)
+            .group_by(ParticipantORM.id)
+            .subquery()
+        )
+
+        # Total votes in the nomination — context for how commanding the lead is.
+        total_votes = (
+            select(func.count(VoteORM.id))
+            .join(ParticipantORM, VoteORM.participant_id == ParticipantORM.id)
+            .where(ParticipantORM.nomination_id == NominationORM.id)
+            .correlate(NominationORM)
+            .scalar_subquery()
+        )
+
+        stmt = (
+            select(
+                NominationORM.id,
+                NominationORM.code,
+                NominationORM.title,
+                total_votes.label("total_votes"),
+                ranked.c.participant_id,
+                ranked.c.participant_title,
+                ranked.c.votes_count,
+            )
+            .outerjoin(
+                ranked,
+                and_(
+                    ranked.c.nomination_id == NominationORM.id,
+                    ranked.c.rank == 1,
+                ),
+            )
+            .where(NominationORM.is_votable.is_(True))
+            .order_by(NominationORM.title)
+        )
+
+        rows = (await self.session.execute(stmt)).all()
+
+        contenders: list[NominationContenderDTO] = []
+        for row in rows:
+            # A rank-1 participant on zero votes is not a real leader: keep
+            # leader=None until at least one vote is cast (also covers a
+            # nomination with no participants, where the outer join is NULL).
+            if row.participant_id is not None and row.votes_count > 0:
+                leader = ContenderDTO(
+                    participant_id=ParticipantId(row.participant_id),
+                    title=row.participant_title,
+                    votes_count=row.votes_count,
+                )
+            else:
+                leader = None
+            contenders.append(
+                NominationContenderDTO(
+                    id=NominationId(row.id),
+                    code=NominationCode(row.code),
+                    title=row.title,
+                    total_votes=row.total_votes,
+                    leader=leader,
+                )
+            )
+        return contenders
 
     async def save(self, nomination: Nomination) -> None:
         nomination_orm = await self.session.merge(self.mapper.from_model(nomination))

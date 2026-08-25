@@ -143,6 +143,33 @@ async def settings_editor(dishka_request: AsyncContainer) -> User:
 
 
 @pytest_asyncio.fixture
+async def voting_manager(dishka_request: AsyncContainer) -> User:
+    """
+    Create a user granted voting:manage.
+    """
+    user_gateway = await dishka_request.get(UserGateway)
+    user_permission_gateway = await dishka_request.get(UserPermissionGateway)
+    uow = await dishka_request.get(UnitOfWork)
+
+    voting_manager = User(
+        id=UserId(uuid7()),
+        username=Username("voting_manager"),
+        hashed_password=None,
+        role=UserRole.ORG,
+    )
+    await user_gateway.add(voting_manager)
+    await user_permission_gateway.add(
+        UserPermission(
+            id=generate_user_permission_id(),
+            permission=Permission.VOTING_MANAGE,
+            user_id=voting_manager.id,
+        )
+    )
+    await uow.commit()
+    return voting_manager
+
+
+@pytest_asyncio.fixture
 async def schedule_editor(dishka_request: AsyncContainer) -> User:
     """
     Create a user granted schedule:manage and schedule:import.

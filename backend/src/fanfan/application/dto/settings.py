@@ -14,7 +14,8 @@ class LimitsConfigDTO(BaseModel):
 class AppSettingsDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    voting_enabled: bool
+    # Voting availability is managed separately, under voting:manage — see the
+    # voting dashboard (GET/PATCH /voting/dashboard). It is deliberately not here.
     festival_start: datetime
     festival_ended: bool
     limits: LimitsConfigDTO

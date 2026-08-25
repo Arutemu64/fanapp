@@ -16,6 +16,7 @@ const SETTINGS_MANAGE: Permission = 'settings:manage';
 const TICKETS_GENERATE: Permission = 'tickets:generate';
 const SYNC_RUN: Permission = 'sync:run';
 const FEEDBACK_READ: Permission = 'feedback:read';
+const VOTING_MANAGE: Permission = 'voting:manage';
 
 export function hasPermission(user: CurrentUserDTO | null, permission: Permission): boolean {
 	if (!user) {
@@ -58,4 +59,8 @@ export function canRunSync(user: CurrentUserDTO | null): boolean {
 
 export function canReadFeedback(user: CurrentUserDTO | null): boolean {
 	return hasPermission(user, FEEDBACK_READ);
+}
+
+export function canManageVoting(user: CurrentUserDTO | null): boolean {
+	return hasPermission(user, VOTING_MANAGE);
 }

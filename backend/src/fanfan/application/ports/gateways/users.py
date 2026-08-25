@@ -3,6 +3,7 @@ from typing import Protocol
 from fanfan.application.dto.user import CurrentUserDTO, UserBaseDTO
 from fanfan.core.models.user import User
 from fanfan.core.vo.user import UserId, UserRole
+from fanfan.core.vo.user_flag import UserFlagName
 
 
 class UserGateway(Protocol):
@@ -15,6 +16,12 @@ class UserGateway(Protocol):
     async def read_current_user(self, user_id: UserId) -> CurrentUserDTO | None: ...
 
     async def read_all_by_roles(self, *roles: UserRole) -> list[UserBaseDTO]: ...
+
+    async def count_by_flag(self, flag_name: UserFlagName) -> int: ...
+
+    async def read_random_by_flag(
+        self, flag_name: UserFlagName
+    ) -> UserBaseDTO | None: ...
 
     async def read_all_by_receive_all_announcements(self) -> list[UserBaseDTO]: ...
 

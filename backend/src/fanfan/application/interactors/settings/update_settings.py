@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 
 class UpdateAppSettingsInput(BaseModel):
-    voting_enabled: bool | None = None
     festival_start: datetime | None = None
     festival_ended: bool | None = None
     announcement_timeout: int | None = Field(default=None, ge=1)
@@ -56,11 +55,6 @@ class UpdateSettings:
         # broadcast fires only when a public-facing value actually moved — a
         # limits-only edit would send every client to refetch identical config.
         public_config_changed = False
-
-        if (voting_enabled := data_to_update.get("voting_enabled")) is not None:
-            settings.set_voting_enabled(enabled=voting_enabled)
-            update_flag = True
-            public_config_changed = True
 
         if (festival_start := data_to_update.get("festival_start")) is not None:
             settings.set_festival_start(start=festival_start)
