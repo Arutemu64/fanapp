@@ -6,9 +6,8 @@ from adaptix import Retort
 #
 # Adaptix caches per-type morphers inside a Retort, so a Retort is meant to
 # be created once and reused — not instantiated per call. This factory keeps
-# the base recipe in one place; specialized configurations (e.g. the Redis
-# retort in adapters/redis/utils.py) extend the same idea behind their own
-# NewType so dependency injection can tell them apart.
+# the base recipe in one place; a specialized configuration would extend the
+# same idea behind its own NewType so dependency injection can tell them apart.
 
 
 def create_retort() -> Retort:

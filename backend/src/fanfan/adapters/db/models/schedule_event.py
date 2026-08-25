@@ -1,6 +1,4 @@
-from datetime import datetime
-
-from sqlalchemy import DateTime, Index, func, select, text
+from sqlalchemy import Index, func, select, text
 from sqlalchemy.orm import (
     Mapped,
     column_property,
@@ -24,16 +22,13 @@ class ScheduleEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, OrderMixin, BaseORM)
     # Not indexed: nothing filters or sorts on title. Reads go by id, queue,
     # order or is_current.
     title: Mapped[str] = mapped_column()
-    # Seconds, never minutes — sub-minute acts exist and the expected-start
-    # projection reads this column as seconds (ADR-0008).
+    # Seconds, never minutes — sub-minute acts exist, and rounding a per-event
+    # duration would accumulate error across the programme.
     duration: Mapped[int] = mapped_column(server_default=text("0"))
     is_current: Mapped[bool] = mapped_column(server_default=text("false"))
     is_skipped: Mapped[bool] = mapped_column(server_default=text("false"))
     nomination_title: Mapped[str | None] = mapped_column()
     block_title: Mapped[str | None] = mapped_column()
-    # Timezone-aware anchor for drift-aware projection (ADR-0008); we store and
-    # compare in UTC, so the column must be tz-aware to avoid naive/aware mixups.
-    actual_start_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (
         Index(
@@ -54,9 +49,7 @@ class ScheduleEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, OrderMixin, BaseORM)
         # ranking: the ``queue`` column_property correlates it per row (cheap for
         # single-row reads and reusable as a WHERE expression in get_by_queue /
         # subscription-distance filters), while the schedule list query joins it
-        # once to avoid re-running it per row. Absolute event times are no longer
-        # derived here — they depend on wall-clock ``now`` and live in the
-        # schedule timing application service (see ADR-0008).
+        # once to avoid re-running it per row.
         return (
             select(
                 cls.id,

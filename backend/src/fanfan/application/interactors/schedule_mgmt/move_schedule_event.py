@@ -15,6 +15,7 @@ from fanfan.application.ports.gateways.schedule_events import (
 )
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.rate_lock import RateLockFactory
+from fanfan.application.ports.schedule_cache import ScheduleCacheGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
@@ -50,6 +51,7 @@ class MoveScheduleEvent:
         uow: UnitOfWork,
         current_user_provider: CurrentUserProvider,
         rate_lock_factory: RateLockFactory,
+        schedule_cache: ScheduleCacheGateway,
     ) -> None:
         self.schedule_gateway = schedule_gateway
         self.user_gateway = user_gateway
@@ -60,6 +62,7 @@ class MoveScheduleEvent:
         self.uow = uow
         self.current_user_provider = current_user_provider
         self.rate_lock_factory = rate_lock_factory
+        self.schedule_cache = schedule_cache
 
     async def __call__(self, data: MoveScheduleEventInput) -> None:
         current_user = await self.current_user_provider.require_user()
@@ -112,6 +115,11 @@ class MoveScheduleEvent:
                 await self.changes_gateway.add(schedule_change)
 
                 await self.uow.commit()
+
+                # Invalidate after commit so the operator's read-your-writes
+                # refetch (and every SSE-driven refetch) recomputes from the
+                # committed state instead of serving the pre-edit cache (ADR-0014).
+                await self.schedule_cache.invalidate()
 
                 logger.info(
                     "Schedule event moved",

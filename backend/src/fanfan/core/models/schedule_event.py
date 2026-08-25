@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Any
 
 from fanfan.core.exceptions.schedule import (
@@ -18,29 +17,20 @@ class ScheduleEvent(AggregateRoot):
     # on stage gets one — breaks and other filler are announced by title alone.
     number: int | None
     title: str
-    # Planned stage time in seconds — the unit shared by `transition_buffer` and
-    # the expected-start projection (ADR-0008). Seconds rather than minutes
-    # because acts shorter than a minute are real, and because rounding a
-    # per-event duration compounds into schedule-wide drift.
+    # Planned stage time in seconds. Seconds rather than minutes because acts
+    # shorter than a minute are real, and rounding a per-event duration would
+    # accumulate error across the programme.
     duration: int
     order: float
     is_current: bool
     is_skipped: bool
     nomination_title: str | None
     block_title: str | None
-    # Wall-clock moment the event actually went on stage; the anchor for
-    # drift-aware expected-time projection (ADR-0008). None until first set.
-    actual_start_time: datetime | None = None
 
-    def set_current(self, now: datetime) -> None:
+    def set_current(self) -> None:
         # A skipped event cannot be announced as currently on stage.
         if self.is_skipped:
             raise SkippedEventNotAllowed
-        # Stamp the real start only on the False->True transition so a repeated
-        # call (or re-marking an already-current event) never overwrites the
-        # genuine anchor with a later timestamp.
-        if not self.is_current:
-            self.actual_start_time = now
         self.is_current = True
 
     def unset_current(self) -> None:

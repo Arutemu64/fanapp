@@ -8,6 +8,7 @@ from fanfan.application.ports.gateways.schedule_events import (
 )
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.realtime_gateway import RealtimeGateway
+from fanfan.application.ports.schedule_cache import ScheduleCacheGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
@@ -48,6 +49,7 @@ class ImportSchedule:
         user_gateway: UserGateway,
         perm_service: PermissionService,
         realtime: RealtimeGateway,
+        schedule_cache: ScheduleCacheGateway,
     ):
         self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
@@ -55,6 +57,7 @@ class ImportSchedule:
         self.schedule_gateway = schedule_gateway
         self.perm_service = perm_service
         self.realtime = realtime
+        self.schedule_cache = schedule_cache
 
     @staticmethod
     def _match_existing_event(
@@ -130,6 +133,10 @@ class ImportSchedule:
                 },
             )
         await self.uow.commit()
+
+        # Invalidate after commit so the refetch triggered below recomputes from
+        # the committed state instead of serving the pre-import cache (ADR-0014).
+        await self.schedule_cache.invalidate()
 
         # Import rewrites the whole schedule but deliberately records no
         # ScheduleChange, so nothing reaches the outbox → NATS → SSE path the

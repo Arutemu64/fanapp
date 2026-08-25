@@ -1,5 +1,4 @@
 from dishka import Provider, Scope, provide
-from pydantic_extra_types.timezone_name import TimeZoneName
 
 from fanfan.adapters.jinja.factory import JinjaEnvironment, create_jinja_env
 from fanfan.adapters.jinja.renderer import JinjaTemplateRenderer
@@ -10,8 +9,8 @@ class JinjaProvider(Provider):
     scope = Scope.APP
 
     @provide
-    def get_stream_jinja_env(self, timezone: TimeZoneName) -> JinjaEnvironment:
-        return create_jinja_env(timezone=timezone)
+    def get_stream_jinja_env(self) -> JinjaEnvironment:
+        return create_jinja_env()
 
     @provide
     def get_template_renderer(self, env: JinjaEnvironment) -> TemplateRenderer:

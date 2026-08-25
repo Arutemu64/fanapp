@@ -127,7 +127,7 @@ Two naming edges are intentional, not drift:
 ## Dependency Injection (Dishka)
 * **DI Container**: Wired in `main/di.py` using Dishka providers (defined under `main/ioc/`).
 * **Config narrowing**: `EnvConfig` (`adapters/config/models.py`) is the single settings aggregate, but a factory should depend on the **narrowest slice it needs**, never the whole aggregate. The provider that *owns a domain* unpacks that domain's slice from `EnvConfig` (e.g. `StreamProvider` → `NatsConfig`, `BotProvider` → `TelegramConfig`, `MailProvider` → `MailConfig | None`, `PushProvider` → `PushConfig`, `VkProvider` → `VkConfig`, `CaptchaProvider` → `SmartCaptchaConfig | None`, `InteractorsProvider` → `OutboxConfig`/`NotificationConfig`). Only genuinely cross-cutting leaves (`WebConfig`, `DebugConfig`, `timezone`) plus the `EnvConfig` root itself stay in `ConfigProvider` (`main/ioc/config.py`). Consuming the full `EnvConfig` is reserved for the composition roots (`parsers.get_config`, `main/scheduler.py`).
-* **Serialization (adaptix `Retort`)**: The base `Retort` used to (de)serialize plain-dataclass models is built once in `adapters/serialization.py` (`create_retort`) and provided app-scoped by `SerializationProvider` (`main/ioc/serialization.py`). Inject `Retort` wherever you serialize (mappers via their gateway, the NATS realtime gateway, vendor API clients). Dishka resolves by type, so a configuration that needs different rules gets its **own `NewType` alias** keyed separately — e.g. `RedisRetort` (`adapters/redis/utils.py`) carries Redis-specific loaders/dumpers and is injected as `RedisRetort`, never colliding with the base `Retort`.
+* **Serialization (adaptix `Retort`)**: The base `Retort` used to (de)serialize plain-dataclass models is built once in `adapters/serialization.py` (`create_retort`) and provided app-scoped by `SerializationProvider` (`main/ioc/serialization.py`). Inject `Retort` wherever you serialize (mappers via their gateway, the NATS realtime gateway, vendor API clients). Dishka resolves by type, so a configuration that needs different rules gets its **own `NewType` alias** keyed separately — provide it under that alias and inject the alias, so it never collides with the base `Retort`.
 * **Router/Presenter Injection**: Use the `@inject` decorator and `FromDishka[...]` type annotations to inject interactors into routes or presenters. Do not use standard FastAPI `Depends(...)` for dependencies managed by Dishka.
   ```python
   from dishka import FromDishka
@@ -255,6 +255,16 @@ Two distinct rate-limiting ports exist — pick by semantics, do not overload on
 * **`RateLimiter`** (`application/ports/rate_limiter.py`): a fixed-window attempt **counter** that locks a key once a number of attempts is exceeded, regardless of success. Use it to penalize failures — password login brute-force, OTP guessing. Call `hit(key, limit=, window_seconds=)` on each attempt and `reset(key)` after success. It raises `TooManyAttempts`; callers catch and re-raise a flow-specific subclass (`TooManyLoginAttempts`, `TooManyOtpAttempts`) so each feature keeps its own error code/copy.
 
 The Redis adapters live in `adapters/redis/rate_lock.py` and `adapters/redis/rate_limiter.py`. The login interactor passes the client IP in via its input DTO (filled by the web route through `presentation/web/utils.get_client_ip`) so the application layer never touches `Request`.
+
+## Caching
+
+The public schedule (`GET /schedule/`) is cached in Redis behind the `ScheduleCacheGateway` port (`application/ports/schedule_cache.py`, adapter `adapters/redis/schedule_cache.py`). It is the one read worth caching: universal (identical for every viewer, no per-user data) and read far more often than it changes. It became cacheable once the request-time schedule timing was removed — every field on `ScheduleEventFullDTO` is now derived purely from stored columns, so the payload is byte-stable between edits (see [ADR-0014](adr/0014-cache-the-schedule-in-redis-with-etag.md), which supersedes ADR-0008).
+
+The pattern, should another universal read want it:
+
+* **`GetSchedule`** serves the cached serialized payload if present; on a miss it reads, serializes, hashes the body into a strong `ETag`, stores `CachedSchedule(etag, payload)`, and returns it. The cache holds the *rendered* response, not domain objects.
+* **The web route** owns the HTTP conditional-request semantics — it sets `ETag` + `Cache-Control: no-cache` and returns `304` when the client's `If-None-Match` already holds that version. The interactor stays free of `Request`/`Response`.
+* **Invalidation is explicit and synchronous.** Every schedule-mutating interactor calls `schedule_cache.invalidate()` *after* `uow.commit()`, so the operator's read-your-writes refetch (and every SSE-driven refetch) recomputes from committed state instead of serving a pre-edit body. A long TTL on the entry is only a safety net for out-of-band writes (the demo seeder) and the rare read that repopulates with a snapshot taken microseconds before a concurrent commit — it never substitutes for the explicit invalidation.
 
 ## Captcha
 

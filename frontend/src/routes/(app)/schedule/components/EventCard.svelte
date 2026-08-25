@@ -94,14 +94,12 @@
 
 	let queueUntil = $derived(currentEvent ? aheadOf(event.queue, currentEvent.queue) : null);
 
-	// Static countdown, no ticker: Date.now() is captured when this re-derives,
-	// which happens on every schedule reload — queueUntil decrements as the
-	// current-event pointer advances (one set-current SSE per sub-5-minute act),
-	// so the label refreshes at least that often without a per-second interval.
-	let untilLabel = $derived.by(() => {
-		if (queueUntil === null || queueUntil <= 0) return null;
-		return formatUntil(queueUntil, event.expected_start_time ?? null, Date.now());
-	});
+	// Queue distance only ("how many acts away"): the schedule carries no predicted
+	// clock time (ADR-0014), and the distance decrements as the current-event
+	// pointer advances (one set-current SSE per act reloads the schedule).
+	let untilLabel = $derived(
+		queueUntil === null || queueUntil <= 0 ? null : formatUntil(queueUntil)
+	);
 
 	// Read-your-writes: after our own successful mutation, refetch straight off the
 	// response instead of waiting for the schedule_updated SSE echo. That echo
