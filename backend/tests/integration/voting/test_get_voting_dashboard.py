@@ -72,11 +72,14 @@ async def _add_votes(
     count: int,
 ) -> None:
     # Each vote needs a distinct real voter (votes FK users, and the unique
-    # (user_id, participant_id) forbids one voter counting twice).
+    # (user_id, participant_id) forbids one voter counting twice). Key the username
+    # off the full id — uuid7's leading bits are the shared millisecond timestamp,
+    # so a short prefix collides for voters created in the same tick.
     for _ in range(count):
+        voter_id = UserId(uuid7())
         voter = User(
-            id=UserId(uuid7()),
-            username=Username(f"voter_{uuid7().hex[:12]}"),
+            id=voter_id,
+            username=Username(f"voter_{voter_id.hex}"),
             hashed_password=None,
             role=UserRole.VISITOR,
         )
