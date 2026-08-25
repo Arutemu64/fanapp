@@ -19,3 +19,4 @@ class Permission(enum.StrEnum):
     DEMO_SEED = "demo:seed"
     FEEDBACK_READ = "feedback:read"
     VOTING_MANAGE = "voting:manage"
+    USERS_READ = "users:read"

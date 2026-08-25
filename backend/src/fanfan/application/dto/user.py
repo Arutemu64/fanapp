@@ -14,6 +14,36 @@ class UserBaseDTO(BaseModel):
     role: UserRole
 
 
+class UserListItemDTO(BaseModel):
+    # A row in the organiser user directory (users:read). Email is carried so it
+    # shows in the table and is matched by the server-side search.
+    id: UserId
+    username: str
+    role: UserRole
+    email: EmailStr | None
+
+
+class UserSocialLinkDTO(BaseModel):
+    # The provider's native account id (Telegram chat_id / VK id), exposed only
+    # on the organiser user viewer (users:read) so staff can jump to the linked
+    # account. The self-profile UserSocialIdentityDTO deliberately withholds it —
+    # this is a different, permission-gated trust surface. Serialised as a string:
+    # Telegram ids are BIGINT and can exceed JS's safe integer range, so a JSON
+    # number would risk precision loss client-side.
+    provider: SocialProvider
+    id: str
+
+
+class UserDetailsDTO(BaseModel):
+    # Full organiser view of one user (users:read): the profile basics plus the
+    # linked external accounts with their ids.
+    id: UserId
+    username: str
+    role: UserRole
+    email: EmailStr | None
+    social_links: list[UserSocialLinkDTO]
+
+
 class UserTicketDTO(BaseModel):
     id: TicketId
     barcode: str

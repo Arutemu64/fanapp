@@ -128,6 +128,8 @@ from fanfan.application.interactors.tickets.process_ticket_order import (
     ProcessTicketOrder,
 )
 from fanfan.application.interactors.tickets.sync_tickets import SyncTickets
+from fanfan.application.interactors.users.get_user import GetUser
+from fanfan.application.interactors.users.list_users import ListUsers
 from fanfan.application.interactors.voting.add_vote import AddVote
 from fanfan.application.interactors.voting.cancel_vote import (
     CancelVote,
@@ -200,6 +202,9 @@ class InteractorsProvider(Provider):
 
     submit_feedback = provide(SubmitFeedback)
     list_feedback = provide(ListFeedback)
+
+    list_users = provide(ListUsers)
+    get_user = provide(GetUser)
 
     authenticate_user = provide(AuthenticateUser)
     get_current_user = provide(GetCurrentUser)

@@ -11,6 +11,7 @@
 		canManageSettings,
 		canManageVoting,
 		canReadFeedback,
+		canReadUsers,
 		canRunSync,
 		canSendNotifications
 	} from '$lib/utils/permissions';
@@ -21,7 +22,8 @@
 		BullhornOutline,
 		FileImportOutline,
 		RefreshOutline,
-		TicketOutline
+		TicketOutline,
+		UsersGroupOutline
 	} from 'flowbite-svelte-icons';
 
 	import ToolCard from './components/ToolCard.svelte';
@@ -96,6 +98,14 @@
 			icon: AnnotationOutline,
 			href: '/tools/feedback',
 			canAccess: canReadFeedback(user)
+		},
+		{
+			key: 'users',
+			title: 'Пользователи',
+			description: 'Список всех пользователей с поиском и карточкой каждого.',
+			icon: UsersGroupOutline,
+			href: '/tools/users',
+			canAccess: canReadUsers(user)
 		}
 	]);
 </script>

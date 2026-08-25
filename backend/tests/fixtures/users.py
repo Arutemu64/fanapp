@@ -222,3 +222,30 @@ async def feedback_reader(dishka_request: AsyncContainer) -> User:
     )
     await uow.commit()
     return feedback_reader
+
+
+@pytest_asyncio.fixture
+async def users_reader(dishka_request: AsyncContainer) -> User:
+    """
+    Create a user granted users:read.
+    """
+    user_gateway = await dishka_request.get(UserGateway)
+    user_permission_gateway = await dishka_request.get(UserPermissionGateway)
+    uow = await dishka_request.get(UnitOfWork)
+
+    users_reader = User(
+        id=UserId(uuid7()),
+        username=Username("users_reader"),
+        hashed_password=None,
+        role=UserRole.ORG,
+    )
+    await user_gateway.add(users_reader)
+    await user_permission_gateway.add(
+        UserPermission(
+            id=generate_user_permission_id(),
+            permission=Permission.USERS_READ,
+            user_id=users_reader.id,
+        )
+    )
+    await uow.commit()
+    return users_reader

@@ -1,6 +1,12 @@
 from typing import Protocol
 
-from fanfan.application.dto.user import CurrentUserDTO, UserBaseDTO
+from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.user import (
+    CurrentUserDTO,
+    UserBaseDTO,
+    UserDetailsDTO,
+    UserListItemDTO,
+)
 from fanfan.core.models.user import User
 from fanfan.core.vo.user import UserId, UserRole
 from fanfan.core.vo.user_flag import UserFlagName
@@ -26,3 +32,14 @@ class UserGateway(Protocol):
     async def read_all_by_receive_all_announcements(self) -> list[UserBaseDTO]: ...
 
     async def read_schedule_editors(self) -> list[UserBaseDTO]: ...
+
+    # `search` filters by a case-insensitive substring of username or email;
+    # None (or blank) returns everyone. count_users applies the same filter so
+    # the two agree for pagination.
+    async def read_users_page(
+        self, *, pagination: Pagination, search: str | None
+    ) -> list[UserListItemDTO]: ...
+
+    async def count_users(self, *, search: str | None) -> int: ...
+
+    async def read_user_details(self, user_id: UserId) -> UserDetailsDTO | None: ...
