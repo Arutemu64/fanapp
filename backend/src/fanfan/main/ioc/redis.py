@@ -9,9 +9,11 @@ from fanfan.adapters.redis.config import RedisConfig
 from fanfan.adapters.redis.factory import create_redis
 from fanfan.adapters.redis.rate_limiter import RedisRateLimiter
 from fanfan.adapters.redis.rate_lock import RedisRateLockFactory
+from fanfan.adapters.redis.schedule_cache import RedisScheduleCache
 from fanfan.adapters.redis.utils import RedisRetort, get_redis_retort
 from fanfan.application.ports.rate_limiter import RateLimiter
 from fanfan.application.ports.rate_lock import RateLockFactory
+from fanfan.application.ports.schedule_cache import ScheduleCacheGateway
 from fanfan.application.ports.session_store import SessionStore
 from fanfan.application.ports.token_registry import TokenRegistry
 from fanfan.presentation.web.config import WebConfig
@@ -50,5 +52,10 @@ class RedisProvider(Provider):
     rate_limiter = provide(
         RedisRateLimiter,
         provides=RateLimiter,
+        scope=Scope.APP,
+    )
+    schedule_cache = provide(
+        RedisScheduleCache,
+        provides=ScheduleCacheGateway,
         scope=Scope.APP,
     )

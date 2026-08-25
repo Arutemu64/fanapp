@@ -149,11 +149,10 @@ class SqlScheduleEventGateway(ScheduleEventGateway):
         return None
 
     async def read_list_schedule(self) -> list[ScheduleEventFullDTO]:
-        # The whole schedule is read uncached, so queue comes from a single
+        # The whole schedule is read at once, so queue comes from a single
         # ranking subquery joined once here, rather than the per-row correlated
         # column_property (which would re-run the window for every one of the
-        # ~hundreds of rows). Absolute expected times are filled afterwards by
-        # the schedule timing service (ADR-0008).
+        # ~hundreds of rows).
         ranked = ScheduleEventORM.ranking_subquery()
         stmt = (
             select(ScheduleEventORM, ranked.c.queue)

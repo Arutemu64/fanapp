@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from pydantic import BaseModel
 
 from fanfan.core.vo.schedule_event import ScheduleEventId
@@ -19,11 +17,7 @@ class ScheduleEventFullDTO(BaseModel):
     nomination_title: str | None
     block_title: str | None
 
-    # Real moment this event went on stage; the anchor for the projection below.
-    actual_start_time: datetime | None = None
-
-    # Calculated values
+    # Calculated value: dense 1..N position among non-skipped events (ADR-0008).
+    # Every field on this DTO is now derived purely from stored columns, so the
+    # whole schedule read is stable between edits and cacheable (see ADR-0014).
     queue: int | None
-    # Absolute drift-aware predicted start, filled by the schedule timing service
-    # (ADR-0008). None for past/skipped events and when nothing is on stage yet.
-    expected_start_time: datetime | None = None

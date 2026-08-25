@@ -1,5 +1,4 @@
 import asyncio
-from datetime import UTC, datetime
 from typing import cast
 
 from pydantic import BaseModel
@@ -10,7 +9,6 @@ from fanfan.application.dto.schedule_change import (
     ScheduleChangeFullDTO,
 )
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.schedule_changes import (
     ScheduleChangeGateway,
@@ -22,13 +20,11 @@ from fanfan.application.ports.gateways.subscriptions import SubscriptionGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.template_renderer import TemplateRenderer
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.application.services.schedule_timing import apply_expected_start_times
 from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.schedule import ScheduleChangeNotFound
 from fanfan.core.models.notification import NewNotification
 from fanfan.core.vo.notification import NotificationType, generate_notification_id
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
-from fanfan.core.vo.schedule_event import ScheduleEventId
 
 
 class SendScheduleChangeNotificationsInput(BaseModel):
@@ -44,7 +40,6 @@ class SendScheduleChangeNotifications:
         user_gateway: UserGateway,
         subscription_gateway: SubscriptionGateway,
         mailing_gateway: MailingGateway,
-        settings_gateway: AppSettingsGateway,
         uow: UnitOfWork,
         events_broker: EventBroker,
     ):
@@ -54,7 +49,6 @@ class SendScheduleChangeNotifications:
         self.user_gateway = user_gateway
         self.subscription_gateway = subscription_gateway
         self.mailing_gateway = mailing_gateway
-        self.settings_gateway = settings_gateway
         self.uow = uow
         self.events_broker = events_broker
 
@@ -166,7 +160,6 @@ class SendScheduleChangeNotifications:
         current_event: ScheduleEventFullDTO,
         changed_event: ScheduleChangeEventDTO,
         reason_msg: str | None,
-        expected_start_times: dict[ScheduleEventId, datetime | None],
     ) -> list[NotificationQueued]:
         events: list[NotificationQueued] = []
         # Queue always exists for the (non-skipped) current event.
@@ -187,9 +180,6 @@ class SendScheduleChangeNotifications:
                         "event_number": s.event.number,
                         "event_title": s.event.title,
                         "queue_difference": s.event.queue - current_event_queue,
-                        # Absolute drift-aware start (ADR-0008); None when there is
-                        # no live anchor yet, and the template omits the time then.
-                        "expected_start_time": expected_start_times.get(s.event.id),
                         "reason_msg": reason_msg,
                     },
                 )
@@ -232,27 +222,12 @@ class SendScheduleChangeNotifications:
                 )
             )
         if current_event and changed_event:
-            # Project absolute start times once, reusing the same schedule-read
-            # timing service the schedule uses. The push renders the absolute
-            # "примерно в HH:MM" — not the screen's live countdown: a delivered
-            # notification is read at an unknown later time and can't tick, so an
-            # absolute time stays correct where a relative one would be stale.
-            settings = await self.settings_gateway.get()
-            projected = apply_expected_start_times(
-                await self.schedule_gateway.read_list_schedule(),
-                transition_buffer=settings.limits.transition_buffer,
-                now=datetime.now(UTC),
-            )
-            expected_start_times: dict[ScheduleEventId, datetime | None] = {
-                e.id: e.expected_start_time for e in projected
-            }
             notification_events.extend(
                 await self._build_subscription_notifications(
                     schedule_change=schedule_change,
                     current_event=current_event,
                     changed_event=changed_event,
                     reason_msg=reason_msg,
-                    expected_start_times=expected_start_times,
                 )
             )
 

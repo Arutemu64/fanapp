@@ -52,9 +52,10 @@ permanent — it is how other ADRs and commits reference the decision.
 | [0005](0005-ports-as-protocol-with-explicit-adapter-subclassing.md) | Ports as `Protocol` with explicit adapter subclassing | Accepted |
 | [0006](0006-dishka-for-dependency-injection.md) | Dishka for dependency injection | Accepted |
 | [0007](0007-client-rendered-spa-frontend.md) | Client-rendered SvelteKit SPA frontend | Accepted |
-| [0008](0008-schedule-timing-computed-in-application-layer.md) | Absolute schedule times computed in the application layer | Accepted |
+| [0008](0008-schedule-timing-computed-in-application-layer.md) | Absolute schedule times computed in the application layer | Superseded by [0014](0014-cache-the-schedule-in-redis-with-etag.md) |
 | [0009](0009-yandex-smartcaptcha-over-cloudflare-turnstile.md) | Yandex SmartCaptcha over Cloudflare Turnstile | Accepted |
 | [0010](0010-http-triggered-background-jobs.md) | HTTP-triggered background jobs use a status row, outbox and durable consumer | Accepted |
 | [0011](0011-vitest-for-frontend-unit-tests.md) | Vitest for frontend unit tests | Accepted |
 | [0012](0012-single-oauth-callback-keyed-on-the-oidc-subject.md) | One OAuth callback per provider, identity keyed on the OIDC subject | Accepted |
 | [0013](0013-provider-agnostic-social-identity-flows.md) | Provider-agnostic social identity flows, last-sign-in-method unlink rule | Accepted |
+| [0014](0014-cache-the-schedule-in-redis-with-etag.md) | Cache the schedule in Redis with an ETag; drop request-time schedule timing | Accepted |

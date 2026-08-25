@@ -1,6 +1,6 @@
 # ADR-0008: Absolute schedule times computed in the application layer
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0014](0014-cache-the-schedule-in-redis-with-etag.md)
 - **Date:** 2026-07-09
 - **Deciders:** Project maintainers
 

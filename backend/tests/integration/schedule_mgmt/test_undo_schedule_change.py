@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from datetime import UTC, datetime
 from uuid import UUID
 
 import pytest
@@ -46,7 +45,6 @@ def _schedule_event(
     *,
     is_current: bool = False,
     is_skipped: bool = False,
-    actual_start_time: datetime | None = None,
 ) -> ScheduleEvent:
     return ScheduleEvent(
         id=generate_schedule_event_id(),
@@ -58,7 +56,6 @@ def _schedule_event(
         is_skipped=is_skipped,
         nomination_title=None,
         block_title=None,
-        actual_start_time=actual_start_time,
     )
 
 
@@ -215,10 +212,8 @@ async def test_undo_set_as_current_restores_previous_event(
     mailing_gateway = await dishka_request.get(MailingGateway)
     login(schedule_editor)
 
-    # "previous" ran earlier (it keeps its original start anchor), then
-    # "changed" was set as current.
-    anchor = datetime(2026, 7, 15, 12, 0, tzinfo=UTC)
-    previous = _schedule_event(1, 1, actual_start_time=anchor)
+    # "previous" ran earlier, then "changed" was set as current.
+    previous = _schedule_event(1, 1)
     changed = _schedule_event(2, 2, is_current=True)
     await schedule_gateway.add(previous)
     await schedule_gateway.add(changed)
@@ -242,9 +237,6 @@ async def test_undo_set_as_current_restores_previous_event(
     # Current is handed back to the previously-current event.
     assert saved_changed.is_current is False
     assert saved_previous.is_current is True
-    # The restored event keeps its original start anchor rather than being
-    # re-stamped with the undo moment.
-    assert saved_previous.actual_start_time == anchor
     assert await changes_gateway.get_by_id(change.id) is None
 
     assert [

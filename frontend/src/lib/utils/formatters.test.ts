@@ -49,57 +49,14 @@ describe('formatDuration', () => {
 	});
 });
 
-// The countdown is a static label re-derived on each schedule reload, so `now`
-// is an argument. These cases pin the queue-distance pluralization, the drift
-// fallback (a projected start in the past drops the time), and the accusative
-// forms "через" requires ("через 1 минуту", not the nominative "1 минута").
+// The label is just the queue distance ("how many acts away") — the schedule
+// carries no predicted clock time (ADR-0014). These cases pin the three-form
+// Russian pluralization of the distance.
 describe('formatUntil', () => {
-	const NOW = Date.parse('2026-08-22T12:00:00+03:00');
-	const MINUTE = 60_000;
-	const HOUR = 60 * MINUTE;
-
-	// ISO start time `ms` from NOW, the shape the API sends.
-	function startingIn(ms: number): string {
-		return new Date(NOW + ms).toISOString();
-	}
-
-	it('shows only the queue distance when no start time is projected', () => {
-		expect(formatUntil(3, null, NOW)).toBe('Осталось 3 выступления');
-		expect(formatUntil(1, null, NOW)).toBe('Осталось 1 выступление');
-		expect(formatUntil(5, null, NOW)).toBe('Осталось 5 выступлений');
-	});
-
-	it('drops the countdown when the projected start is already in the past', () => {
-		// A stale snapshot after drift: the queue distance stays exact, the time doesn't.
-		expect(formatUntil(2, startingIn(-MINUTE), NOW)).toBe('Осталось 2 выступления');
-	});
-
-	it('appends a spelled-out countdown to the projected start', () => {
-		expect(formatUntil(3, startingIn(2 * HOUR + 15 * MINUTE), NOW)).toBe(
-			'Осталось 3 выступления · через 2 часа 15 минут'
-		);
-	});
-
-	it('omits a zero unit', () => {
-		expect(formatUntil(3, startingIn(2 * HOUR), NOW)).toBe('Осталось 3 выступления · через 2 часа');
-		expect(formatUntil(3, startingIn(15 * MINUTE), NOW)).toBe(
-			'Осталось 3 выступления · через 15 минут'
-		);
-	});
-
-	it('uses accusative plural forms after "через"', () => {
-		expect(formatUntil(2, startingIn(HOUR), NOW)).toBe('Осталось 2 выступления · через 1 час');
-		expect(formatUntil(2, startingIn(5 * HOUR), NOW)).toBe(
-			'Осталось 2 выступления · через 5 часов'
-		);
-		expect(formatUntil(2, startingIn(MINUTE), NOW)).toBe('Осталось 2 выступления · через 1 минуту');
-		expect(formatUntil(2, startingIn(21 * MINUTE), NOW)).toBe(
-			'Осталось 2 выступления · через 21 минуту'
-		);
-	});
-
-	it('collapses a sub-minute countdown', () => {
-		expect(formatUntil(2, startingIn(30_000), NOW)).toBe('Осталось 2 выступления · меньше минуты');
+	it('pluralizes the queue distance', () => {
+		expect(formatUntil(1)).toBe('Осталось 1 выступление');
+		expect(formatUntil(3)).toBe('Осталось 3 выступления');
+		expect(formatUntil(5)).toBe('Осталось 5 выступлений');
 	});
 });
 

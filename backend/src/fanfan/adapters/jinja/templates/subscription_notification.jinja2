@@ -14,8 +14,7 @@
 {% if queue_difference == 0 -%}
 <b>Выступление {{ event_number_prefix(event_number) }}«{{ event_title }}» началось!</b>
 {%- else -%}
-{% set time_suffix = (' (примерно в ' ~ (expected_start_time | event_time) ~ ')') if expected_start_time else '' -%}
-До начала выступления <b>{{ event_number_prefix(event_number) }}«{{ event_title }}»</b> осталось <b>{{ queue_difference }} {{ events_pluralize(queue_difference) }}</b>{{ time_suffix }}
+До начала выступления <b>{{ event_number_prefix(event_number) }}«{{ event_title }}»</b> осталось <b>{{ queue_difference }} {{ events_pluralize(queue_difference) }}</b>
 {% if reason_msg %}
 {{ reason_msg }}
 {%- endif %}

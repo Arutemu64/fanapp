@@ -1,5 +1,4 @@
 import logging
-from datetime import UTC, datetime
 
 from pydantic import BaseModel
 
@@ -14,6 +13,7 @@ from fanfan.application.ports.gateways.schedule_events import (
 )
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.rate_lock import RateLockFactory
+from fanfan.application.ports.schedule_cache import ScheduleCacheGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
@@ -46,6 +46,7 @@ class SetCurrentScheduleEvent:
         rate_lock_factory: RateLockFactory,
         current_user_provider: CurrentUserProvider,
         mailing_gateway: MailingGateway,
+        schedule_cache: ScheduleCacheGateway,
     ) -> None:
         self.schedule_gateway = schedule_gateway
         self.settings_gateway = settings_gateway
@@ -56,6 +57,7 @@ class SetCurrentScheduleEvent:
         self.current_user_provider = current_user_provider
         self.mailing_gateway = mailing_gateway
         self.changes_gateway = changes_gateway
+        self.schedule_cache = schedule_cache
 
     async def __call__(self, data: SetCurrentScheduleEventInput) -> None:
         current_user = await self.current_user_provider.require_user()
@@ -80,7 +82,7 @@ class SetCurrentScheduleEvent:
                     event = await self.schedule_gateway.get_by_id(data.event_id)
                     if event is None:
                         raise EventNotFound
-                    event.set_current(now=datetime.now(UTC))
+                    event.set_current()
                     await self.schedule_gateway.save(event)
                 else:
                     event = None
@@ -98,6 +100,11 @@ class SetCurrentScheduleEvent:
                 await self.changes_gateway.add(schedule_change)
 
                 await self.uow.commit()
+
+                # Invalidate after commit so the operator's read-your-writes
+                # refetch (and every SSE-driven refetch) recomputes from the
+                # committed state instead of serving the pre-edit cache (ADR-0014).
+                await self.schedule_cache.invalidate()
 
                 logger.info(
                     "Schedule event set as current",

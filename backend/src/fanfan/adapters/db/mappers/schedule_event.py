@@ -17,7 +17,6 @@ class ScheduleEventMapper:
             order=model.order,
             nomination_title=model.nomination_title,
             block_title=model.block_title,
-            actual_start_time=model.actual_start_time,
         )
 
     @staticmethod
@@ -32,7 +31,6 @@ class ScheduleEventMapper:
             order=orm.order,
             nomination_title=orm.nomination_title,
             block_title=orm.block_title,
-            actual_start_time=orm.actual_start_time,
         )
 
     @staticmethod
@@ -54,6 +52,5 @@ class ScheduleEventMapper:
             is_skipped=event_orm.is_skipped,
             nomination_title=event_orm.nomination_title,
             block_title=event_orm.block_title,
-            actual_start_time=event_orm.actual_start_time,
             queue=queue,
         )

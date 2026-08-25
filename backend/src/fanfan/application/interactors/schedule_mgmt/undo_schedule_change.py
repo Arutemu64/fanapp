@@ -1,5 +1,4 @@
 import logging
-from datetime import UTC, datetime
 
 from pydantic import BaseModel
 
@@ -10,6 +9,7 @@ from fanfan.application.ports.gateways.schedule_events import (
     ScheduleEventGateway,
 )
 from fanfan.application.ports.gateways.users import UserGateway
+from fanfan.application.ports.schedule_cache import ScheduleCacheGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
@@ -39,6 +39,7 @@ class UndoScheduleChange:
         schedule_gateway: ScheduleEventGateway,
         current_user_provider: CurrentUserProvider,
         perm_service: PermissionService,
+        schedule_cache: ScheduleCacheGateway,
     ):
         self.uow = uow
         self.changes_gateway = changes_gateway
@@ -46,6 +47,7 @@ class UndoScheduleChange:
         self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
         self.perm_service = perm_service
+        self.schedule_cache = schedule_cache
 
     async def _handle_set_as_current(
         self,
@@ -62,13 +64,8 @@ class UndoScheduleChange:
             await self.schedule_gateway.save(changed_event)
 
         if previous_event:
-            # Undo puts the previously-current event back on stage. It already
-            # ran, so keep its original actual_start_time anchor instead of
-            # stamping the undo moment (set_current stamps on any False->True
-            # transition, which this is).
-            original_anchor = previous_event.actual_start_time
-            previous_event.set_current(now=datetime.now(UTC))
-            previous_event.actual_start_time = original_anchor
+            # Undo puts the previously-current event back on stage.
+            previous_event.set_current()
             await self.schedule_gateway.save(previous_event)
 
     async def _handle_moved(
@@ -132,6 +129,10 @@ class UndoScheduleChange:
         schedule_change.mark_undone()
         await self.changes_gateway.delete(schedule_change)
         await self.uow.commit()
+
+        # Invalidate after commit so every SSE-driven refetch recomputes from the
+        # committed state instead of serving the pre-undo cache (ADR-0014).
+        await self.schedule_cache.invalidate()
 
         logger.info(
             "Schedule change reverted",

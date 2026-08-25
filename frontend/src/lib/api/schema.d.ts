@@ -1535,12 +1535,8 @@ export interface components {
             nomination_title: string | null;
             /** Block Title */
             block_title: string | null;
-            /** Actual Start Time */
-            actual_start_time?: string | null;
             /** Queue */
             queue: number | null;
-            /** Expected Start Time */
-            expected_start_time?: string | null;
         };
         /** SendBroadcastInput */
         SendBroadcastInput: {
@@ -2969,6 +2965,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["GetScheduleOutput"];
                 };
+            };
+            /** @description Schedule unchanged since the client's cached version. */
+            304: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Request validation error. */
             422: {
