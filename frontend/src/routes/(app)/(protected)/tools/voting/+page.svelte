@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { components } from '$lib/api/schema';
 
-	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
 	import BackLink from '$lib/components/BackLink.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
@@ -28,8 +27,8 @@
 	let votingEnabled = $state(untrack(() => data.dashboard.voting_enabled));
 	let isTogglingVoting = $state(false);
 
-	// Draw is stateless server-side; the pool size seeds from the dashboard and is
-	// refreshed with every draw so the "1 из N" stays honest as people finish voting.
+	// Seeded from the dashboard, then refreshed from each draw's response, so the
+	// displayed pool tracks who is currently eligible even as people finish voting.
 	let poolSize = $state(untrack(() => data.dashboard.contest_pool_size));
 	let isDrawing = $state(false);
 	let winner = $state<Winner | null>(null);
@@ -82,11 +81,12 @@
 				return;
 			}
 
+			// The draw is read-only: the server draws from the live pool and returns
+			// both the winner and the current pool size, so there is nothing to
+			// refetch — trust the response.
 			poolSize = result.pool_size;
 			winner = result.winner;
 			hasDrawn = true;
-			// Fresh contenders and pool size after a draw — turnout may have moved.
-			await invalidate('app:voting:dashboard');
 		} catch (err) {
 			console.error('Contest draw failed:', err);
 			drawError = 'Не удалось провести розыгрыш';

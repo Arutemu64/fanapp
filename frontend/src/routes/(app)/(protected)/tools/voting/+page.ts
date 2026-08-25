@@ -5,7 +5,7 @@ import { error } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ fetch, depends, parent }) => {
+export const load: PageLoad = async ({ fetch, parent }) => {
 	const { user } = await parent();
 
 	// Mirror the backend voting:manage check before hitting the API, so the page
@@ -13,9 +13,6 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	if (!canManageVoting(user)) {
 		error(403, 'У тебя нет доступа к управлению голосованием');
 	}
-
-	// Reused after toggling voting so the enable flag and contenders stay fresh.
-	depends('app:voting:dashboard');
 
 	const client = createApiClient();
 	const { data, error: requestError, response } = await client.GET('/voting/dashboard', { fetch });

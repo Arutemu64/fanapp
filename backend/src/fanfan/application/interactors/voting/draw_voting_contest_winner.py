@@ -11,7 +11,8 @@ from fanfan.core.vo.user_flag import UserFlagName
 class DrawVotingContestWinnerOutput(BaseModel):
     # None when nobody has voted in every nomination yet.
     winner: UserBaseDTO | None
-    # Size of the pool the winner was drawn from, so the UI can show "1 of N".
+    # Size of the live pool the winner was drawn from, so the UI can reflect who is
+    # currently eligible without a separate refetch.
     pool_size: int
 
 
