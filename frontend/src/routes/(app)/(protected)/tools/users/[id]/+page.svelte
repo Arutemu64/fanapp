@@ -80,19 +80,17 @@
 							</p>
 						</div>
 						{#if url}
-							<!-- External account deep link (vk.com / tg://), not an internal
-							     route — resolve() is only for app pathnames. -->
-							<!-- eslint-disable svelte/no-navigation-without-resolve -->
+							<!-- rel="external": account deep link (vk.com / tg://), not an
+							     internal route — resolve() is only for app pathnames. -->
 							<a
 								href={url}
 								target="_blank"
-								rel="noopener noreferrer"
+								rel="external noopener noreferrer"
 								class="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-primary-600 hover:underline dark:text-primary-400"
 							>
 								Открыть
 								<ArrowUpRightFromSquareOutline class="h-4 w-4" aria-hidden="true" />
 							</a>
-							<!-- eslint-enable svelte/no-navigation-without-resolve -->
 						{/if}
 					</li>
 				{/each}
