@@ -143,8 +143,12 @@
 		};
 	});
 
+	// No `display` utility here: each trigger sets its own responsively. Baking
+	// `inline-flex` in would collide with the desktop button's `hidden` at the same
+	// specificity, and Tailwind emits `.inline-flex` after `.hidden`, so it would win
+	// and leak the button onto mobile beside the `<a>` — a duplicate bell.
 	const triggerClass =
-		'relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none dark:text-gray-400 dark:hover:bg-gray-700 dark:focus-visible:ring-gray-500 dark:focus-visible:ring-offset-gray-900';
+		'relative h-11 w-11 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none dark:text-gray-400 dark:hover:bg-gray-700 dark:focus-visible:ring-gray-500 dark:focus-visible:ring-offset-gray-900';
 </script>
 
 {#snippet bellContent()}
@@ -164,7 +168,11 @@
 <!-- On phones a cramped popover anchored to the corner is worse than the real
 	screen, so the bell navigates straight to the full page. The dropdown preview
 	is a desktop affordance where the extra viewport width makes it worthwhile. -->
-<a href={resolve('/notifications')} aria-label={bellLabel} class="{triggerClass} md:hidden">
+<a
+	href={resolve('/notifications')}
+	aria-label={bellLabel}
+	class="{triggerClass} inline-flex md:hidden"
+>
 	{@render bellContent()}
 </a>
 
