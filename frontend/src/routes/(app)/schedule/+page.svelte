@@ -364,7 +364,7 @@
 				     Skipped when a block's rows carry no nomination — there is nothing to label. -->
 				{#if nomination.title !== null}
 					<div
-						class="sticky top-12 z-10 rounded-t-xl border-b border-gray-100 bg-white/95 px-3 py-2 backdrop-blur dark:border-gray-700 dark:bg-gray-800/95"
+						class="sticky top-11 z-10 rounded-t-xl border-b border-gray-100 bg-white/95 px-3 py-2 backdrop-blur dark:border-gray-700 dark:bg-gray-800/95"
 					>
 						<div class="flex items-center justify-between gap-3">
 							<h3 class="min-w-0 truncate text-sm font-semibold text-gray-700 dark:text-gray-300">
