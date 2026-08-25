@@ -24,6 +24,15 @@ export class UnreadCountService {
 	#count = $state(0);
 	#inFlight = false;
 	#pending = false;
+	// Bumped by every authoritative local write (set/clear). A refresh() snapshots
+	// it and drops its response if a write landed while the GET was in flight, so a
+	// stale total can't overwrite the zero that "mark all read" just established.
+	// Safe here precisely because the only local writes are authoritative values,
+	// not deltas: a write that races a refresh is strictly newer, so discarding the
+	// older in-flight response is correct (an earlier attempt guarded an optimistic
+	// increment this way and wrongly discarded reconnect reconciliations — there is
+	// no such delta now).
+	#generation = 0;
 	readonly #client = createApiClient();
 
 	get count() {
@@ -33,12 +42,14 @@ export class UnreadCountService {
 	// Seed from the layout load for a correct first paint.
 	set(count: number) {
 		this.#count = Math.max(0, count);
+		this.#generation += 1;
 	}
 
 	// Marking every notification read zeros the server side, so reflect it at once
 	// rather than waiting for the refresh round-trip.
 	clear() {
 		this.#count = 0;
+		this.#generation += 1;
 	}
 
 	// Authoritative reconcile with the server, coalesced: a call while one is in
@@ -52,9 +63,10 @@ export class UnreadCountService {
 			return;
 		}
 		this.#inFlight = true;
+		const generationAtStart = this.#generation;
 		try {
 			const { data, error, response } = await this.#client.GET('/notifications/unread-count');
-			if (!error && response.ok && data) {
+			if (!error && response.ok && data && this.#generation === generationAtStart) {
 				this.#count = data.count;
 			}
 		} catch (error) {
