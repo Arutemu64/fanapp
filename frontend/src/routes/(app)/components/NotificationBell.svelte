@@ -113,8 +113,13 @@
 		try {
 			const { error, response } = await client.POST('/notifications/mark-all-read');
 			if (!error && response.ok) {
+				// Clear for instant feedback, then reconcile with the server: a
+				// notification committed in the window between mark-all-read committing
+				// and this handler running is still unread, and only a follow-up refresh
+				// surfaces it on the badge (the clear's own guard drops a truly stale
+				// pre-mark refresh, so this can't restore the old total).
 				unread.clear();
-				await loadNotifications();
+				await Promise.all([unread.refresh(), loadNotifications()]);
 			}
 		} catch (error) {
 			console.error('Failed to mark notifications as read', error);
