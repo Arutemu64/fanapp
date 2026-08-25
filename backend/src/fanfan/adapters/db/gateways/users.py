@@ -4,7 +4,7 @@ from sqlalchemy.orm import joinedload, selectinload
 
 from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.mappers.user import UserMapper
-from fanfan.adapters.db.models import UserORM
+from fanfan.adapters.db.models import UserFlagORM, UserORM
 from fanfan.adapters.db.models.permission import UserPermissionORM
 from fanfan.application.dto.user import CurrentUserDTO, UserBaseDTO
 from fanfan.application.ports.gateways.users import UserGateway
@@ -18,6 +18,7 @@ from fanfan.core.models.user import User
 from fanfan.core.utils.email import normalize_email
 from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.user import UserId, UserRole
+from fanfan.core.vo.user_flag import UserFlagName
 
 
 class SqlUserGateway(UserGateway):
@@ -102,6 +103,24 @@ class SqlUserGateway(UserGateway):
         stmt = select(UserORM).where(UserORM.role.in_(roles))
         users_orm = await self.session.scalars(stmt)
         return [self.mapper.parse_base_dto(u) for u in users_orm]
+
+    async def count_by_flag(self, flag_name: UserFlagName) -> int:
+        stmt = select(func.count(UserFlagORM.id)).where(UserFlagORM.name == flag_name)
+        return await self.session.scalar(stmt) or 0
+
+    async def read_random_by_flag(self, flag_name: UserFlagName) -> UserBaseDTO | None:
+        # ORDER BY random() LIMIT 1 draws a uniformly random holder. The flag pool
+        # is small (users who voted in every nomination), so the full sort scan is
+        # cheap and this stays a one-off organiser action, not a hot path.
+        stmt = (
+            select(UserORM)
+            .join(UserFlagORM, UserFlagORM.user_id == UserORM.id)
+            .where(UserFlagORM.name == flag_name)
+            .order_by(func.random())
+            .limit(1)
+        )
+        user_orm = await self.session.scalar(stmt)
+        return self.mapper.parse_base_dto(user_orm) if user_orm else None
 
     async def read_all_by_receive_all_announcements(self) -> list[UserBaseDTO]:
         # Bare boolean predicate (not .is_(True)) so it matches the partial

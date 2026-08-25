@@ -18,3 +18,4 @@ class Permission(enum.StrEnum):
     SYNC_RUN = "sync:run"
     DEMO_SEED = "demo:seed"
     FEEDBACK_READ = "feedback:read"
+    VOTING_MANAGE = "voting:manage"

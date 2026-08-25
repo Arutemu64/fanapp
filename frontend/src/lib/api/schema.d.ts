@@ -707,6 +707,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/voting/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the organizer voting dashboard
+         * @description Voting enable flag, the leading participant in each votable nomination, and the size of the prize-draw pool. Requires voting:manage.
+         */
+        get: operations["get_voting_dashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Enable or disable voting
+         * @description Turns voting on or off for visitors. Requires voting:manage.
+         */
+        patch: operations["set_voting_enabled"];
+        trace?: never;
+    };
+    "/voting/contest/draw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Draw a random voting-contest winner
+         * @description Picks one random user who voted in every votable nomination. Stateless — repeated draws may return the same user. Requires voting:manage.
+         */
+        post: operations["draw_voting_contest_winner"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/webhooks/tcloud/{token}": {
         parameters: {
             query?: never;
@@ -941,8 +985,6 @@ export interface components {
         };
         /** AppSettingsDTO */
         AppSettingsDTO: {
-            /** Voting Enabled */
-            voting_enabled: boolean;
             /**
              * Festival Start
              * Format: date-time
@@ -989,6 +1031,18 @@ export interface components {
         ConfirmEmailCodeInput: {
             /** Code */
             code: string;
+        };
+        /** ContenderDTO */
+        ContenderDTO: {
+            /**
+             * Participant Id
+             * Format: uuid
+             */
+            participant_id: string;
+            /** Title */
+            title: string;
+            /** Votes Count */
+            votes_count: number;
         };
         /** CreatePushSubscriptionInput */
         CreatePushSubscriptionInput: {
@@ -1054,6 +1108,12 @@ export interface components {
             /** Endpoint */
             endpoint: string;
         };
+        /** DrawVotingContestWinnerOutput */
+        DrawVotingContestWinnerOutput: {
+            winner: components["schemas"]["UserBaseDTO"] | null;
+            /** Pool Size */
+            pool_size: number;
+        };
         /** ErrorMessage */
         ErrorMessage: {
             /**
@@ -1112,6 +1172,15 @@ export interface components {
         GetSubscriptionsOutput: {
             /** Subscriptions */
             subscriptions: components["schemas"]["SubscriptionFullDTO"][];
+        };
+        /** GetVotingDashboardOutput */
+        GetVotingDashboardOutput: {
+            /** Voting Enabled */
+            voting_enabled: boolean;
+            /** Contest Pool Size */
+            contest_pool_size: number;
+            /** Nominations */
+            nominations: components["schemas"]["NominationContenderDTO"][];
         };
         /** GetVotingNominationOutput */
         GetVotingNominationOutput: {
@@ -1195,6 +1264,21 @@ export interface components {
              * Format: uuid
              */
             place_after_event_id: string;
+        };
+        /** NominationContenderDTO */
+        NominationContenderDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
+            /** Title */
+            title: string;
+            /** Total Votes */
+            total_votes: number;
+            leader: components["schemas"]["ContenderDTO"] | null;
         };
         /** NominationVoteDTO */
         NominationVoteDTO: {
@@ -1287,7 +1371,7 @@ export interface components {
          * Permission
          * @enum {string}
          */
-        Permission: "schedule:manage" | "schedule:import" | "notifications:send" | "settings:manage" | "tickets:generate" | "sync:run" | "demo:seed" | "feedback:read";
+        Permission: "schedule:manage" | "schedule:import" | "notifications:send" | "settings:manage" | "tickets:generate" | "sync:run" | "demo:seed" | "feedback:read" | "voting:manage";
         /**
          * PublicConfigDTO
          * @description Public, unauthenticated projection of AppSettings served at GET /config.
@@ -1426,6 +1510,11 @@ export interface components {
              */
             mailing_id: string;
         };
+        /** SetVotingEnabledInput */
+        SetVotingEnabledInput: {
+            /** Enabled */
+            enabled: boolean;
+        };
         /**
          * SocialProvider
          * @description External identity providers the app accepts.
@@ -1550,8 +1639,6 @@ export interface components {
         };
         /** UpdateAppSettingsInput */
         UpdateAppSettingsInput: {
-            /** Voting Enabled */
-            voting_enabled?: boolean | null;
             /** Festival Start */
             festival_start?: string | null;
             /** Festival Ended */
@@ -1579,6 +1666,17 @@ export interface components {
             receive_telegram_notifications?: boolean | null;
             /** Receive Vk Notifications */
             receive_vk_notifications?: boolean | null;
+        };
+        /** UserBaseDTO */
+        UserBaseDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Username */
+            username: string;
+            role: components["schemas"]["UserRole"];
         };
         /**
          * UserRole
@@ -3644,6 +3742,158 @@ export interface operations {
             };
             /** @description No vote found to cancel. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    get_voting_dashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dashboard retrieved successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetVotingDashboardOutput"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Missing voting:manage. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    set_voting_enabled: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetVotingEnabledInput"];
+            };
+        };
+        responses: {
+            /** @description Voting availability updated successfully. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Missing voting:manage. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Festival settings not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    draw_voting_contest_winner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Winner drawn (or an empty pool reported). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DrawVotingContestWinnerOutput"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Missing voting:manage. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

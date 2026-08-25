@@ -24,10 +24,8 @@
 	let festivalStart = $state(untrack(() => toEventDateTimeLocal(data.settings.festival_start)));
 	let festivalEnded = $state(untrack(() => data.settings.festival_ended));
 	let festivalStartError = $state('');
-	let savedVotingEnabled = $state(untrack(() => data.settings.voting_enabled));
 	let savedAnnouncementTimeout = $state(untrack(() => data.settings.limits.announcement_timeout));
 	let savedTransitionBuffer = $state(untrack(() => data.settings.limits.transition_buffer));
-	let votingEnabled = $state(untrack(() => data.settings.voting_enabled));
 	let announcementTimeout = $state<number | undefined>(
 		untrack(() => data.settings.limits.announcement_timeout)
 	);
@@ -41,7 +39,6 @@
 	let hasChanges = $derived(
 		festivalStart !== savedFestivalStart ||
 			festivalEnded !== savedFestivalEnded ||
-			votingEnabled !== savedVotingEnabled ||
 			announcementTimeout !== savedAnnouncementTimeout ||
 			transitionBuffer !== savedTransitionBuffer
 	);
@@ -135,7 +132,6 @@
 		try {
 			const { error, response } = await client.PATCH('/settings', {
 				body: {
-					voting_enabled: votingEnabled,
 					festival_start: fromEventDateTimeLocal(festivalStart),
 					festival_ended: festivalEnded,
 					announcement_timeout: nextAnnouncementTimeout,
@@ -161,7 +157,6 @@
 
 			savedFestivalStart = festivalStart;
 			savedFestivalEnded = festivalEnded;
-			savedVotingEnabled = votingEnabled;
 			savedAnnouncementTimeout = nextAnnouncementTimeout;
 			savedTransitionBuffer = nextTransitionBuffer;
 			festivalStartError = '';
@@ -184,7 +179,7 @@
 
 <BackLink href="/tools" label="Назад к инструментам" />
 
-<SectionIntro description="Управляй фестивалем, голосованием и таймингами расписания." />
+<SectionIntro description="Управляй датами фестиваля и таймингами расписания." />
 
 <form class="mx-auto w-full max-w-2xl space-y-5" onsubmit={handleSubmit}>
 	{#if submitError}
@@ -226,25 +221,6 @@
 			</div>
 			<Toggle
 				bind:checked={festivalEnded}
-				color="primary"
-				disabled={isSaving}
-				onchange={() => (submitError = '')}
-			/>
-		</div>
-	</Card>
-
-	<Card class="w-full max-w-none space-y-3 rounded-2xl p-4 sm:p-6">
-		<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Голосование</h2>
-
-		<div class="flex items-start justify-between gap-3">
-			<div class="min-w-0">
-				<h3 class="text-base font-medium text-gray-900 dark:text-white">Голосование активно</h3>
-				<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-300">
-					Если отключить эту настройку, посетители временно не смогут голосовать.
-				</p>
-			</div>
-			<Toggle
-				bind:checked={votingEnabled}
 				color="primary"
 				disabled={isSaving}
 				onchange={() => (submitError = '')}

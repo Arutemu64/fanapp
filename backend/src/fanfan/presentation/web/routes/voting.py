@@ -13,6 +13,14 @@ from fanfan.application.interactors.voting.cancel_vote import (
     CancelVote,
     CancelVoteInput,
 )
+from fanfan.application.interactors.voting.draw_voting_contest_winner import (
+    DrawVotingContestWinner,
+    DrawVotingContestWinnerOutput,
+)
+from fanfan.application.interactors.voting.get_voting_dashboard import (
+    GetVotingDashboard,
+    GetVotingDashboardOutput,
+)
 from fanfan.application.interactors.voting.get_voting_nomination import (
     GetVotingNomination,
     GetVotingNominationInput,
@@ -25,6 +33,10 @@ from fanfan.application.interactors.voting.get_voting_state import (
 from fanfan.application.interactors.voting.list_voting_nominations import (
     ListVotingNominations,
     ListVotingNominationsOutput,
+)
+from fanfan.application.interactors.voting.set_voting_enabled import (
+    SetVotingEnabled,
+    SetVotingEnabledInput,
 )
 from fanfan.core.vo.nomination import NominationCode
 from fanfan.core.vo.vote import VoteId
@@ -138,3 +150,68 @@ async def cancel_vote(
     interactor: FromDishka[CancelVote],
 ) -> None:
     await interactor(CancelVoteInput(vote_id=vote_id))
+
+
+@voting_router.get(
+    "/dashboard",
+    summary="Get the organizer voting dashboard",
+    description="Voting enable flag, the leading participant in each votable "
+    "nomination, and the size of the prize-draw pool. Requires voting:manage.",
+    dependencies=[session_security],
+    responses={
+        **AUTH_RESPONSES,
+        200: {
+            "model": GetVotingDashboardOutput,
+            "description": "Dashboard retrieved successfully.",
+        },
+        403: {"model": ErrorMessage, "description": "Missing voting:manage."},
+    },
+)
+@inject
+async def get_voting_dashboard(
+    interactor: FromDishka[GetVotingDashboard],
+) -> GetVotingDashboardOutput:
+    return await interactor()
+
+
+@voting_router.patch(
+    "/dashboard",
+    status_code=204,
+    summary="Enable or disable voting",
+    description="Turns voting on or off for visitors. Requires voting:manage.",
+    dependencies=[session_security],
+    responses={
+        **AUTH_RESPONSES,
+        204: {"description": "Voting availability updated successfully."},
+        403: {"model": ErrorMessage, "description": "Missing voting:manage."},
+        404: {"model": ErrorMessage, "description": "Festival settings not found."},
+    },
+)
+@inject
+async def set_voting_enabled(
+    data: SetVotingEnabledInput,
+    interactor: FromDishka[SetVotingEnabled],
+) -> None:
+    await interactor(data)
+
+
+@voting_router.post(
+    "/contest/draw",
+    summary="Draw a random voting-contest winner",
+    description="Picks one random user who voted in every votable nomination. "
+    "Stateless — repeated draws may return the same user. Requires voting:manage.",
+    dependencies=[session_security],
+    responses={
+        **AUTH_RESPONSES,
+        200: {
+            "model": DrawVotingContestWinnerOutput,
+            "description": "Winner drawn (or an empty pool reported).",
+        },
+        403: {"model": ErrorMessage, "description": "Missing voting:manage."},
+    },
+)
+@inject
+async def draw_voting_contest_winner(
+    interactor: FromDishka[DrawVotingContestWinner],
+) -> DrawVotingContestWinnerOutput:
+    return await interactor()
