@@ -791,6 +791,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/notifications/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Count unread notifications
+         * @description Returns the total number of unread notifications for the authenticated user, independent of any page size — the bell badge is driven by this.
+         */
+        get: operations["count_unread_notifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/notifications/mark-all-read": {
         parameters: {
             query?: never;
@@ -805,6 +825,26 @@ export interface paths {
          * @description Marks all unread notifications for the authenticated user as read.
          */
         post: operations["mark_all_notifications_read"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/mark-read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark specific notifications as read
+         * @description Marks the given notifications as read for the authenticated user. Used when opening the notifications panel or page marks the visible items seen.
+         */
+        post: operations["mark_notifications_read"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1304,6 +1344,11 @@ export interface components {
             /** Code */
             code: string;
         };
+        /** MarkNotificationsReadInput */
+        MarkNotificationsReadInput: {
+            /** Notification Ids */
+            notification_ids: string[];
+        };
         /** MoveScheduleEventRequest */
         MoveScheduleEventRequest: {
             /**
@@ -1679,6 +1724,11 @@ export interface components {
         TCloudWebhookResponse: {
             /** New Tickets Count */
             new_tickets_count: number;
+        };
+        /** UnreadNotificationsCountOutput */
+        UnreadNotificationsCountOutput: {
+            /** Count */
+            count: number;
         };
         /** UpdateAppSettingsInput */
         UpdateAppSettingsInput: {
@@ -4097,6 +4147,53 @@ export interface operations {
             };
         };
     };
+    count_unread_notifications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Unread count retrieved successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnreadNotificationsCountOutput"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
     mark_all_notifications_read: {
         parameters: {
             query?: never;
@@ -4107,6 +4204,55 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description All notifications marked as read. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    mark_notifications_read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarkNotificationsReadInput"];
+            };
+        };
+        responses: {
+            /** @description Notifications marked as read. */
             204: {
                 headers: {
                     [name: string]: unknown;

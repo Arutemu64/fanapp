@@ -49,6 +49,34 @@ class SqlNotificationGateway(NotificationGateway):
         )
         await self.session.execute(stmt)
 
+    async def mark_read_for_user(
+        self,
+        user_id: UserId,
+        notification_ids: list[NotificationId],
+        timestamp: datetime,
+    ) -> None:
+        stmt = (
+            update(NotificationORM)
+            .where(
+                and_(
+                    NotificationORM.user_id == user_id,
+                    NotificationORM.id.in_(notification_ids),
+                    NotificationORM.seen_at.is_(None),
+                )
+            )
+            .values({"seen_at": timestamp})
+        )
+        await self.session.execute(stmt)
+
+    async def count_unread_for_user(self, user_id: UserId) -> int:
+        stmt = select(func.count()).where(
+            and_(
+                NotificationORM.user_id == user_id,
+                NotificationORM.seen_at.is_(None),
+            )
+        )
+        return await self.session.scalar(stmt) or 0
+
     async def delete_all_by_mailing_id(self, mailing_id: MailingId) -> None:
         stmt = delete(NotificationORM).where(NotificationORM.mailing_id == mailing_id)
         await self.session.execute(stmt)
