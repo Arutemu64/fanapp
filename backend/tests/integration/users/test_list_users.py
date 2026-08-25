@@ -72,9 +72,7 @@ async def test_search_matches_username_and_email(
     login(users_reader)
 
     await _add_user(user_gateway, username="searchtarget_user")
-    await _add_user(
-        user_gateway, username="other_user", email="findme@example.com"
-    )
+    await _add_user(user_gateway, username="other_user", email="findme@example.com")
     await uow.commit()
 
     by_username = await interactor(
