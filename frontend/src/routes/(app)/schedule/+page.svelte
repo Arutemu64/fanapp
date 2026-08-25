@@ -136,6 +136,11 @@
 		});
 	}
 
+	// Minimum interval between visibility-triggered refetches: a quick app-switch
+	// (glance at a message, switch back) shouldn't hammer the server.
+	const VISIBILITY_REFETCH_THROTTLE_MS = 30000;
+	let lastRefetch = 0;
+
 	onMount(() => {
 		const scrollContainer = getScrollContainer();
 
@@ -147,16 +152,30 @@
 		// missed while the SSE stream was down doesn't leave a stale schedule. Firing on
 		// first connect just refetches the freshly loaded data once — harmless and idempotent.
 		const reloadSchedule = () => {
+			lastRefetch = Date.now();
 			void invalidate('app:schedule');
+		};
+
+		// Catch missed SSE events after backgrounding: the EventsClient's visibility
+		// resume covers long pauses (>60s), but shorter background trips — locking the
+		// phone for 20s, checking a message — can silently lose a schedule_updated
+		// event without triggering an SSE reconnect. Throttled so rapid app-switches
+		// don't storm the server.
+		const handleVisibilityChange = () => {
+			if (document.visibilityState !== 'visible') return;
+			if (Date.now() - lastRefetch < VISIBILITY_REFETCH_THROTTLE_MS) return;
+			reloadSchedule();
 		};
 
 		updateScrollState();
 		scrollContainer?.addEventListener('scroll', updateScrollState, { passive: true });
+		document.addEventListener('visibilitychange', handleVisibilityChange);
 		eventsClient.on('schedule_updated', reloadSchedule);
 		eventsClient.on('connection_established', reloadSchedule);
 
 		return () => {
 			scrollContainer?.removeEventListener('scroll', updateScrollState);
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
 			eventsClient.off('schedule_updated', reloadSchedule);
 			eventsClient.off('connection_established', reloadSchedule);
 		};

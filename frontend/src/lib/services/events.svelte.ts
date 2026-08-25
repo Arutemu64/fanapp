@@ -46,14 +46,14 @@ const DIAL_TIMEOUT_MS = 15000;
 const HANDSHAKE_TIMEOUT_MS = 5000;
 /**
  * Reconnect when nothing arrives on the stream for this long. The backend emits
- * a named `ping` event after 30s of idle time (HEARTBEAT_INTERVAL_SECONDS in
+ * a named `ping` event after 15s of idle time (HEARTBEAT_INTERVAL_SECONDS in
  * backend/src/fanfan/presentation/web/routes/sse.py), so a healthy connection
  * always delivers *something* within that window. The browser cannot see the
  * transport die without a clean close (Wi-Fi roaming, NAT timeouts), so this
  * watchdog is the only thing that notices a silently dead stream. 3x the ping
  * interval tolerates slow networks and timer jitter.
  */
-const HEARTBEAT_TIMEOUT_MS = 90000;
+const HEARTBEAT_TIMEOUT_MS = 45000;
 /**
  * Pause the stream once the app has been backgrounded this long. Web Push covers
  * notifications while hidden, so holding SSE open only churns the mobile radio.

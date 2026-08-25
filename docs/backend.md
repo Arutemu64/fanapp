@@ -228,7 +228,7 @@ Naming standard for new events:
 * Prefer `<entity>_<event>` for new names.
 * The backend enum and frontend `SSEEventMap` are kept in sync **by hand** — SSE events are not part of the OpenAPI spec, so `just frontend-generate-api` does not cover them. Every enum value must have a matching `SSEEventMap` key.
 
-**Liveness heartbeat**: the `/events` route injects a named `ping` event after `HEARTBEAT_INTERVAL_SECONDS` (30s) of stream silence — `ping` is the one `SSEEventName` never published via `RealtimeGateway`. Comment-based keepalives are invisible to the browser `EventSource` API, so the frontend watchdog (`HEARTBEAT_TIMEOUT_MS`, 3x the interval, in `events.svelte.ts`) relies on these pings to detect silently dead connections (Wi-Fi roaming, NAT timeouts) and reconnect. If you change the interval, keep it below common proxy idle timeouts (60s) and update the frontend timeout to match.
+**Liveness heartbeat**: the `/events` route injects a named `ping` event after `HEARTBEAT_INTERVAL_SECONDS` (15s) of stream silence — `ping` is the one `SSEEventName` never published via `RealtimeGateway`. Comment-based keepalives are invisible to the browser `EventSource` API, so the frontend watchdog (`HEARTBEAT_TIMEOUT_MS`, 3x the interval = 45s, in `events.svelte.ts`) relies on these pings to detect silently dead connections (Wi-Fi roaming, NAT timeouts) and reconnect. 15s sits inside the 30s floor of cellular NAT gateway idle timeouts. If you change the interval, keep it below common proxy idle timeouts (60s) and update the frontend timeout to match.
 
 ## Notification Formatting
 
