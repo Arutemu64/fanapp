@@ -23,7 +23,7 @@ class TestDbProvider(Provider):
         # libc has different collation/locale behavior than the glibc-based
         # image, so testing against the same variant as production avoids
         # sorting bugs that wouldn't show up against a different libc.
-        postgres = PostgresContainer("postgres:18.4-alpine", driver="asyncpg")
+        postgres = PostgresContainer("postgres:18.6-alpine", driver="asyncpg")
         # TODO: workaround from testcontainers/testcontainers-python#108.
         # Use 127.0.0.1, not "localhost": redis.asyncio resolves "localhost"
         # to ::1 (IPv6) on Windows, but Docker only binds mapped ports on IPv4.
