@@ -22,6 +22,17 @@ target_metadata = BaseORM.metadata
 # app settings instead, while tests may still override sqlalchemy.url explicitly.
 DEFAULT_ALEMBIC_DATABASE_URL = "driver://user:pass@localhost/dbname"
 
+# Alembic ≥1.19 ships checkconstraint_byname, which detects named CHECK
+# constraints automatically. It false-positives on the Enum CHECK constraints
+# created by str_enum_column (create_constraint=True, native_enum=False): it
+# finds them in the DB but can't match them to the model metadata, so it
+# generates spurious DROP operations. We manage those constraints by hand in
+# migrations, so disable the plugin.
+_AUTOGENERATE_PLUGINS = [
+    "alembic.autogenerate.*",
+    "~alembic.autogenerate.checkconstraint_byname",
+]
+
 
 def get_database_url() -> str:
     # Explicit override for tooling that has no full app config to load (e.g.
@@ -58,6 +69,7 @@ def run_migrations_offline() -> None:
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
         compare_server_default=True,
+        autogenerate_plugins=_AUTOGENERATE_PLUGINS,
     )
 
     with context.begin_transaction():
@@ -70,6 +82,7 @@ def do_run_migrations(connection: Connection) -> None:
         target_metadata=target_metadata,
         compare_type=True,
         compare_server_default=True,
+        autogenerate_plugins=_AUTOGENERATE_PLUGINS,
     )
 
     with context.begin_transaction():
