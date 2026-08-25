@@ -1,6 +1,5 @@
 import type { components } from '$lib/api/schema';
 
-import { isBackendUnreachableStatus, markReachable } from '$lib/services/reachability';
 import { error as kitError } from '@sveltejs/kit';
 
 // The closed set of error codes the API can return, generated from the backend
@@ -280,15 +279,6 @@ export function throwApiError(
 	// Clamp to an error status: a non-error response here means data was missing
 	// without an HTTP error, which we treat as a server-side problem.
 	const status = response && response.status >= 400 ? response.status : 500;
-
-	// A gateway 5xx (502/503/504) means the proxy is up but the backend never
-	// handled the request — as unreachable as a network throw, so record it: that
-	// reframes ErrorState to the offline page and lets sibling loads skip their own
-	// doomed requests. A real app 500 (backend answered, with an error body) is
-	// reachable and must not flip us offline.
-	if (isBackendUnreachableStatus(status)) {
-		markReachable(false);
-	}
 
 	const message = getApiErrorDetail(apiError) ?? fallback;
 	const code = getApiErrorCode(apiError);

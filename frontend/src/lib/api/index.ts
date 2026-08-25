@@ -3,6 +3,7 @@ import type { Middleware } from 'openapi-fetch';
 
 import { invalidate } from '$app/navigation';
 import { PUBLIC_API_URL } from '$env/static/public';
+import { isBackendUnreachableStatus, markReachable } from '$lib/services/reachability';
 import createClient from 'openapi-fetch';
 
 // True while a 401-triggered identity refresh is in flight, so a burst of
@@ -24,6 +25,14 @@ let reconcilingSession = false;
 //     is exactly what we want.)
 const CREDENTIAL_CHECK_PATHS = new Set(['/me/', '/auth/login', '/auth/login-with-code']);
 
+// A non-gateway response proves the backend answered; 502/503/504 means the
+// proxy is up but the backend behind it is not — same as a network failure.
+const reachabilityWatch: Middleware = {
+	onResponse({ response }) {
+		markReachable(!isBackendUnreachableStatus(response.status));
+	}
+};
+
 const sessionExpiryWatch: Middleware = {
 	onResponse({ response, schemaPath }) {
 		if (response.status !== 401) return;
@@ -43,6 +52,7 @@ export function createApiClient() {
 		baseUrl: PUBLIC_API_URL,
 		credentials: 'include'
 	});
+	client.use(reachabilityWatch);
 	client.use(sessionExpiryWatch);
 	return client;
 }

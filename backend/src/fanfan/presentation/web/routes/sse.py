@@ -19,8 +19,10 @@ logger = logging.getLogger(__name__)
 # frontend liveness watchdog (HEARTBEAT_TIMEOUT_MS in
 # frontend/src/lib/services/events.svelte.ts) relies on these named pings to
 # detect silently dead connections. Keep this comfortably below common proxy
-# idle timeouts (60s) and below the frontend watchdog timeout.
-HEARTBEAT_INTERVAL_SECONDS = 30
+# idle timeouts (60s) and below the frontend watchdog timeout. 15s sits well
+# inside the 30s floor of cellular NAT gateway idle timeouts that silently drop
+# TCP mappings on mobile networks.
+HEARTBEAT_INTERVAL_SECONDS = 15
 
 
 def _to_sse(message: SSEMessage) -> ServerSentEvent:
