@@ -35,10 +35,6 @@
 	let bellLabel = $derived(
 		unread.count > 0 ? `Открыть уведомления, непрочитанных: ${unread.count}` : 'Открыть уведомления'
 	);
-	let dropdownOpen = $state(false);
-	// Rising-edge guard: mark the visible items read the moment the dropdown opens,
-	// not on every reactive re-run while it stays open.
-	let dropdownWasOpen = false;
 	const eventsClient = getEventsClient();
 	const toastService = getToastService();
 
@@ -47,15 +43,6 @@
 	// with the exact number once the app opens; logout clears it (AppNavbar).
 	$effect(() => {
 		setAppBadgeCount(unread.count);
-	});
-
-	// Opening the dropdown counts as seeing the previewed items (mark-on-open), so
-	// clear their unread state server-side and reconcile the badge with the total.
-	$effect(() => {
-		if (dropdownOpen && !dropdownWasOpen) {
-			void markVisibleRead();
-		}
-		dropdownWasOpen = dropdownOpen;
 	});
 
 	async function loadNotifications() {
@@ -72,6 +59,10 @@
 		}
 	}
 
+	// Clicking the bell to open the dropdown counts as seeing the previewed items
+	// (mark-on-open), so clear their unread state server-side and reconcile the
+	// badge with the total. Idempotent: a click that closes the dropdown finds
+	// nothing unseen and no-ops.
 	async function markVisibleRead() {
 		const unseenIds = notifications
 			.filter((notification) => !notification.seen_at)
@@ -171,13 +162,17 @@
 	{@render bellContent()}
 </a>
 
-<button id="notification-bell" aria-label={bellLabel} class="{triggerClass} hidden md:inline-flex">
+<button
+	id="notification-bell"
+	aria-label={bellLabel}
+	onclick={markVisibleRead}
+	class="{triggerClass} hidden md:inline-flex"
+>
 	{@render bellContent()}
 </button>
 
 <Dropdown
 	triggeredBy="#notification-bell"
-	bind:isOpen={dropdownOpen}
 	class="w-full max-w-sm divide-y divide-gray-100 dark:divide-gray-700 dark:bg-gray-800"
 >
 	<div class="flex items-center justify-between px-4 py-2">
