@@ -2,8 +2,11 @@ from fanfan.adapters.db.models import UserORM
 from fanfan.application.dto.user import (
     CurrentUserDTO,
     UserBaseDTO,
+    UserDetailsDTO,
+    UserListItemDTO,
     UserSettingsDTO,
     UserSocialIdentityDTO,
+    UserSocialLinkDTO,
     UserTicketDTO,
 )
 from fanfan.core.models.user import User, UserSettings
@@ -49,6 +52,33 @@ class UserMapper:
             id=UserId(orm.id),
             username=orm.username,
             role=orm.role,
+        )
+
+    @staticmethod
+    def parse_list_item_dto(orm: UserORM) -> UserListItemDTO:
+        return UserListItemDTO(
+            id=UserId(orm.id),
+            username=orm.username,
+            role=orm.role,
+            email=orm.email,
+        )
+
+    @staticmethod
+    def parse_details_dto(orm: UserORM) -> UserDetailsDTO:
+        return UserDetailsDTO(
+            id=UserId(orm.id),
+            username=orm.username,
+            role=orm.role,
+            email=orm.email,
+            social_links=[
+                UserSocialLinkDTO(
+                    provider=identity.provider,
+                    # provider_user_id is BIGINT; stringify so a >2^53 Telegram
+                    # id survives the JSON round-trip without precision loss.
+                    id=str(identity.provider_user_id),
+                )
+                for identity in orm.social_identities
+            ],
         )
 
     def parse_current_user_dto(self, orm: UserORM) -> CurrentUserDTO:

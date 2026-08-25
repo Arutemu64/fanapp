@@ -1,4 +1,4 @@
-from sqlalchemy import func, select
+from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -6,7 +6,13 @@ from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.mappers.user import UserMapper
 from fanfan.adapters.db.models import UserFlagORM, UserORM
 from fanfan.adapters.db.models.permission import UserPermissionORM
-from fanfan.application.dto.user import CurrentUserDTO, UserBaseDTO
+from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.user import (
+    CurrentUserDTO,
+    UserBaseDTO,
+    UserDetailsDTO,
+    UserListItemDTO,
+)
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.users import (
@@ -137,3 +143,47 @@ class SqlUserGateway(UserGateway):
         )
         users_orm = await self.session.scalars(stmt)
         return [self.mapper.parse_base_dto(u) for u in users_orm]
+
+    async def read_users_page(
+        self, *, pagination: Pagination, search: str | None
+    ) -> list[UserListItemDTO]:
+        stmt = select(UserORM)
+        stmt = self._apply_user_search(stmt, search)
+        # Order by username case-insensitively, with id (uuid7) as the tiebreaker
+        # so rows sharing a username spelling keep a stable order across pages.
+        stmt = (
+            stmt.order_by(func.lower(UserORM.username), UserORM.id)
+            .limit(pagination.limit)
+            .offset(pagination.offset)
+        )
+        users_orm = await self.session.scalars(stmt)
+        return [self.mapper.parse_list_item_dto(u) for u in users_orm]
+
+    async def count_users(self, *, search: str | None) -> int:
+        stmt = select(func.count(UserORM.id))
+        stmt = self._apply_user_search(stmt, search)
+        return await self.session.scalar(stmt) or 0
+
+    async def read_user_details(self, user_id: UserId) -> UserDetailsDTO | None:
+        stmt = (
+            select(UserORM)
+            .where(UserORM.id == user_id)
+            .options(selectinload(UserORM.social_identities))
+        )
+        user_orm = await self.session.scalar(stmt)
+        return self.mapper.parse_details_dto(user_orm) if user_orm else None
+
+    @staticmethod
+    def _apply_user_search(stmt: Select, search: str | None) -> Select:
+        # Blank query means "no filter". ILIKE gives a case-insensitive substring
+        # match on username or email; %/_ in the term are escaped so a literal
+        # '100%' searches for that text rather than acting as a wildcard.
+        if not search or not search.strip():
+            return stmt
+        escaped = (
+            search.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        )
+        pattern = f"%{escaped}%"
+        return stmt.where(
+            UserORM.username.ilike(pattern) | UserORM.email.ilike(pattern)
+        )

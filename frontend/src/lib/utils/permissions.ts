@@ -17,6 +17,7 @@ const TICKETS_GENERATE: Permission = 'tickets:generate';
 const SYNC_RUN: Permission = 'sync:run';
 const FEEDBACK_READ: Permission = 'feedback:read';
 const VOTING_MANAGE: Permission = 'voting:manage';
+const USERS_READ: Permission = 'users:read';
 
 export function hasPermission(user: CurrentUserDTO | null, permission: Permission): boolean {
 	if (!user) {
@@ -63,4 +64,8 @@ export function canReadFeedback(user: CurrentUserDTO | null): boolean {
 
 export function canManageVoting(user: CurrentUserDTO | null): boolean {
 	return hasPermission(user, VOTING_MANAGE);
+}
+
+export function canReadUsers(user: CurrentUserDTO | null): boolean {
+	return hasPermission(user, USERS_READ);
 }
