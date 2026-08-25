@@ -134,9 +134,6 @@ from fanfan.application.interactors.voting.add_vote import AddVote
 from fanfan.application.interactors.voting.cancel_vote import (
     CancelVote,
 )
-from fanfan.application.interactors.voting.check_voting_contest_entry import (
-    CheckVotingContestEntry,
-)
 from fanfan.application.interactors.voting.draw_voting_contest_winner import (
     DrawVotingContestWinner,
 )
@@ -226,7 +223,6 @@ class InteractorsProvider(Provider):
     add_vote = provide(AddVote)
     cancel_vote = provide(CancelVote)
     get_voting_state = provide(GetVotingState)
-    check_voting_contest_entry = provide(CheckVotingContestEntry)
     get_voting_dashboard = provide(GetVotingDashboard)
     set_voting_enabled = provide(SetVotingEnabled)
     draw_voting_contest_winner = provide(DrawVotingContestWinner)

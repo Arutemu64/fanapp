@@ -7,14 +7,20 @@ from dishka import AsyncContainer
 from fanfan.application.interactors.voting.draw_voting_contest_winner import (
     DrawVotingContestWinner,
 )
-from fanfan.application.ports.gateways.user_flags import UserFlagGateway
+from fanfan.application.ports.gateways.nominations import NominationGateway
+from fanfan.application.ports.gateways.participants import ParticipantGateway
 from fanfan.application.ports.gateways.users import UserGateway
+from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.base import AccessDenied
+from fanfan.core.models.nomination import Nomination
+from fanfan.core.models.participant import Participant
 from fanfan.core.models.user import User
-from fanfan.core.models.user_flag import UserFlag
+from fanfan.core.models.vote import Vote
+from fanfan.core.vo.nomination import generate_nomination_id
+from fanfan.core.vo.participant import generate_participant_id
 from fanfan.core.vo.user import UserId, Username, UserRole
-from fanfan.core.vo.user_flag import UserFlagName, generate_user_flag_id
+from fanfan.core.vo.vote import generate_vote_id
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -22,11 +28,38 @@ pytestmark = [
 ]
 
 
-async def _add_flagged_user(
+async def _add_votable_nomination(
+    nomination_gateway: NominationGateway,
+    participant_gateway: ParticipantGateway,
+    cosplay2_id: int,
+) -> Participant:
+    nomination = Nomination(
+        id=generate_nomination_id(),
+        cosplay2_id=cosplay2_id,
+        code=f"draw-{cosplay2_id}",
+        title=f"Номинация {cosplay2_id}",
+        is_votable=True,
+    )
+    await nomination_gateway.add(nomination)
+    participant = Participant(
+        id=generate_participant_id(),
+        cosplay2_id=cosplay2_id + 1,
+        title=f"Участник {cosplay2_id}",
+        nomination_id=nomination.id,
+        voting_number=1,
+    )
+    await participant_gateway.add(participant)
+    return participant
+
+
+async def _add_voter(
     user_gateway: UserGateway,
-    user_flag_gateway: UserFlagGateway,
+    vote_gateway: VoteGateway,
     username: str,
+    participants: list[Participant],
 ) -> User:
+    # A voter is in the prize-draw pool once they have voted in every votable
+    # nomination — one vote per participant listed here.
     user = User(
         id=UserId(uuid7()),
         username=Username(username),
@@ -34,13 +67,14 @@ async def _add_flagged_user(
         role=UserRole.VISITOR,
     )
     await user_gateway.add(user)
-    await user_flag_gateway.add(
-        UserFlag(
-            id=generate_user_flag_id(),
-            name=UserFlagName.VOTING_CONTEST,
-            user_id=user.id,
+    for participant in participants:
+        await vote_gateway.add(
+            Vote(
+                id=generate_vote_id(),
+                user_id=user.id,
+                participant_id=participant.id,
+            )
         )
-    )
     return user
 
 
@@ -51,12 +85,24 @@ async def test_draws_a_winner_from_the_pool(
     uow: UnitOfWork,
 ):
     user_gateway = await dishka_request.get(UserGateway)
-    user_flag_gateway = await dishka_request.get(UserFlagGateway)
+    nomination_gateway = await dishka_request.get(NominationGateway)
+    participant_gateway = await dishka_request.get(ParticipantGateway)
+    vote_gateway = await dishka_request.get(VoteGateway)
     interactor = await dishka_request.get(DrawVotingContestWinner)
     login(voting_manager)
 
-    first = await _add_flagged_user(user_gateway, user_flag_gateway, "draw_a")
-    second = await _add_flagged_user(user_gateway, user_flag_gateway, "draw_b")
+    first_nom = await _add_votable_nomination(
+        nomination_gateway, participant_gateway, cosplay2_id=5000
+    )
+    second_nom = await _add_votable_nomination(
+        nomination_gateway, participant_gateway, cosplay2_id=5010
+    )
+    every_nomination = [first_nom, second_nom]
+
+    first = await _add_voter(user_gateway, vote_gateway, "draw_a", every_nomination)
+    second = await _add_voter(user_gateway, vote_gateway, "draw_b", every_nomination)
+    # Voted in only one of the two nominations — not eligible for the draw.
+    await _add_voter(user_gateway, vote_gateway, "draw_partial", [first_nom])
     await uow.commit()
 
     result = await interactor()

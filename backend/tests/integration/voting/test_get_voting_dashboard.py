@@ -9,7 +9,6 @@ from fanfan.application.interactors.voting.get_voting_dashboard import (
 )
 from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.application.ports.gateways.participants import ParticipantGateway
-from fanfan.application.ports.gateways.user_flags import UserFlagGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
@@ -17,12 +16,10 @@ from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.models.participant import Participant
 from fanfan.core.models.user import User
-from fanfan.core.models.user_flag import UserFlag
 from fanfan.core.models.vote import Vote
 from fanfan.core.vo.nomination import generate_nomination_id
 from fanfan.core.vo.participant import generate_participant_id
 from fanfan.core.vo.user import UserId, Username, UserRole
-from fanfan.core.vo.user_flag import UserFlagName, generate_user_flag_id
 from fanfan.core.vo.vote import generate_vote_id
 
 pytestmark = [
@@ -178,25 +175,38 @@ async def test_reports_contest_pool_size(
     uow: UnitOfWork,
 ):
     user_gateway = await dishka_request.get(UserGateway)
-    user_flag_gateway = await dishka_request.get(UserFlagGateway)
+    nomination_gateway = await dishka_request.get(NominationGateway)
+    participant_gateway = await dishka_request.get(ParticipantGateway)
+    vote_gateway = await dishka_request.get(VoteGateway)
     interactor = await dishka_request.get(GetVotingDashboard)
     login(voting_manager)
 
+    first_nom = await _add_nomination(nomination_gateway, cosplay2_id=4030)
+    first_participant = await _add_participant(
+        participant_gateway, first_nom, cosplay2_id=4031, voting_number=1
+    )
+    second_nom = await _add_nomination(nomination_gateway, cosplay2_id=4032)
+    second_participant = await _add_participant(
+        participant_gateway, second_nom, cosplay2_id=4033, voting_number=1
+    )
+
+    # Two members who each voted in every votable nomination form the pool.
     for i in range(2):
-        holder = User(
+        member = User(
             id=UserId(uuid7()),
             username=Username(f"pool_member_{i}"),
             hashed_password=None,
             role=UserRole.VISITOR,
         )
-        await user_gateway.add(holder)
-        await user_flag_gateway.add(
-            UserFlag(
-                id=generate_user_flag_id(),
-                name=UserFlagName.VOTING_CONTEST,
-                user_id=holder.id,
+        await user_gateway.add(member)
+        for participant in (first_participant, second_participant):
+            await vote_gateway.add(
+                Vote(
+                    id=generate_vote_id(),
+                    user_id=member.id,
+                    participant_id=participant.id,
+                )
             )
-        )
     await uow.commit()
 
     result = await interactor()
