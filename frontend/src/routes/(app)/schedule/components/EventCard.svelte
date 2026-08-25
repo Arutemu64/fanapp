@@ -2,6 +2,7 @@
 	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
 	import type { CurrentUserDTO } from '$lib/types/user';
 
+	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { formatDuration, formatUntil, pluralize } from '$lib/utils/formatters';
@@ -70,8 +71,8 @@
 	let eventNumber = $derived(event.number === null ? null : String(event.number).padStart(3, '0'));
 
 	// Optimistic skip flag: the row reflects the toggle instantly instead of waiting
-	// for the schedule_updated SSE reload (flaky con wifi can delay it for seconds).
-	// null = trust the server-loaded prop; otherwise show our pending guess.
+	// for the schedule refetch to round-trip (a flaky connection can delay it for
+	// seconds). null = trust the server-loaded prop; otherwise show our pending guess.
 	let optimisticSkipped = $state<boolean | null>(null);
 	let isSkipped = $derived(optimisticSkipped ?? event.is_skipped);
 
@@ -102,6 +103,18 @@
 		return formatUntil(queueUntil, event.expected_start_time ?? null, Date.now());
 	});
 
+	// Read-your-writes: after our own successful mutation, refetch straight off the
+	// response instead of waiting for the schedule_updated SSE echo. That echo
+	// travels DB → outbox relay → NATS → SSE fan-out before it reaches us, and on a
+	// flaky operator connection it can arrive late or be dropped — which would leave
+	// the operator who made the change on a stale schedule while everyone else
+	// already sees it. The refetch reads committed state (the write closed before
+	// the 200), so it is correct even before the relay has ticked; the SSE echo
+	// still drives every other client.
+	function reloadSchedule() {
+		void invalidate('app:schedule');
+	}
+
 	async function handleMarkCurrent() {
 		const { error, response } = await client.PATCH('/schedule/{event_id}/current', {
 			params: { path: { event_id: event.id } }
@@ -112,8 +125,7 @@
 			return;
 		}
 
-		// Instant ack: the inline state only updates after the schedule_updated
-		// SSE reload round-trips, so a toast confirms the action immediately.
+		reloadSchedule();
 		toastService.add('Выступление отмечено как текущее', 'success');
 	}
 
@@ -125,6 +137,7 @@
 			return;
 		}
 
+		reloadSchedule();
 		toastService.add('Отметка снята', 'success');
 	}
 
@@ -147,6 +160,7 @@
 			return;
 		}
 
+		reloadSchedule();
 		const toastMessage = skip
 			? 'Выступление помечено как пропущенное'
 			: 'Выступление возвращено в программу';

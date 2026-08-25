@@ -1,11 +1,12 @@
 <script lang="ts">
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 
+	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { createSearchIndex } from '$lib/utils/search';
-	import { Alert, Button, Modal, Search } from 'flowbite-svelte';
+	import { Alert, Button, Modal, Search, Spinner } from 'flowbite-svelte';
 	import { ArrowUpDownOutline, BellActiveOutline } from 'flowbite-svelte-icons';
 
 	const client = createApiClient();
@@ -22,6 +23,10 @@
 	let query = $state('');
 	let selectedId: string | null = $state(null);
 	let formError = $state('');
+	// Blocks re-entry while the move request is in flight. A move fans out an
+	// irreversible push to every subscriber, so a double-tap on a slow venue cell
+	// must not fire the request — and the mailing — twice.
+	let isSubmitting = $state(false);
 
 	// Reset the picker each time the modal opens so a cancelled selection never lingers.
 	$effect(() => {
@@ -29,6 +34,7 @@
 			formError = '';
 			selectedId = null;
 			query = '';
+			isSubmitting = false;
 		}
 	});
 
@@ -45,29 +51,37 @@
 	}
 
 	async function handleSubmit() {
-		if (selectedId) {
-			formError = '';
-			try {
-				const { error, response } = await client.PATCH('/schedule/{event_id}/move', {
-					params: { path: { event_id: event.id } },
-					body: { place_after_event_id: selectedId }
-				});
+		if (!selectedId || isSubmitting) return;
 
-				if (error || !response.ok) {
-					console.error('Error moving event:', error);
-					formError = getApiErrorDetail(error) ?? 'Не удалось перенести выступление';
-					return;
-				}
+		formError = '';
+		isSubmitting = true;
+		try {
+			const { error, response } = await client.PATCH('/schedule/{event_id}/move', {
+				params: { path: { event_id: event.id } },
+				body: { place_after_event_id: selectedId }
+			});
 
-				toastService.add('Выступление перенесено', 'success');
-
-				open = false;
-				selectedId = null;
-				query = '';
-			} catch (error) {
+			if (error || !response.ok) {
 				console.error('Error moving event:', error);
-				formError = 'Произошла непредвиденная ошибка при переносе';
+				formError = getApiErrorDetail(error) ?? 'Не удалось перенести выступление';
+				return;
 			}
+
+			// Read-your-writes: refetch our own schedule off the successful response
+			// rather than waiting for the schedule_updated SSE echo, which can arrive
+			// late or be dropped on a flaky operator connection. See EventCard's
+			// reloadSchedule for the full rationale.
+			void invalidate('app:schedule');
+			toastService.add('Выступление перенесено', 'success');
+
+			open = false;
+			selectedId = null;
+			query = '';
+		} catch (error) {
+			console.error('Error moving event:', error);
+			formError = 'Произошла непредвиденная ошибка при переносе';
+		} finally {
+			isSubmitting = false;
 		}
 	}
 </script>
@@ -141,7 +155,21 @@
 	</div>
 
 	{#snippet footer()}
-		<Button type="button" color="alternative" onclick={() => (open = false)}>Отмена</Button>
-		<Button type="button" onclick={handleSubmit} disabled={!selectedId}>Перенести</Button>
+		<Button
+			type="button"
+			color="alternative"
+			onclick={() => (open = false)}
+			disabled={isSubmitting}
+		>
+			Отмена
+		</Button>
+		<Button type="button" onclick={handleSubmit} disabled={!selectedId || isSubmitting}>
+			{#if isSubmitting}
+				<Spinner size="4" class="me-2 fill-white" />
+				Перенос…
+			{:else}
+				Перенести
+			{/if}
+		</Button>
 	{/snippet}
 </Modal>
