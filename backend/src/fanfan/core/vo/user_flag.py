@@ -10,5 +10,8 @@ def generate_user_flag_id() -> UserFlagId:
 
 
 class UserFlagName(enum.StrEnum):
-    # Set once a user has voted in every votable nomination; cleared otherwise.
-    VOTING_CONTEST = "voting_contest"
+    # Per-user boolean markers. None is defined right now — the flag system is kept
+    # for future markers. Adding a member also needs a hand-written CHECK-constraint
+    # swap migration (Alembic does not diff CHECK bodies); see the fanfan-migrations
+    # skill.
+    pass

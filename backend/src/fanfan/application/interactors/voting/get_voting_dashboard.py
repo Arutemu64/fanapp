@@ -7,7 +7,6 @@ from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
 from fanfan.core.vo.permission import Permission
-from fanfan.core.vo.user_flag import UserFlagName
 
 
 class GetVotingDashboardOutput(BaseModel):
@@ -43,9 +42,7 @@ class GetVotingDashboard:
 
         settings = await self.app_settings_gateway.get()
         contenders = await self.nomination_gateway.read_voting_contenders()
-        contest_pool_size = await self.user_gateway.count_by_flag(
-            UserFlagName.VOTING_CONTEST
-        )
+        contest_pool_size = await self.user_gateway.count_voting_contest_pool()
 
         return GetVotingDashboardOutput(
             voting_enabled=settings.voting_enabled,

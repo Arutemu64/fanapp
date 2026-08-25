@@ -9,7 +9,6 @@ from fanfan.application.dto.user import (
 )
 from fanfan.core.models.user import User
 from fanfan.core.vo.user import UserId, UserRole
-from fanfan.core.vo.user_flag import UserFlagName
 
 
 class UserGateway(Protocol):
@@ -23,11 +22,12 @@ class UserGateway(Protocol):
 
     async def read_all_by_roles(self, *roles: UserRole) -> list[UserBaseDTO]: ...
 
-    async def count_by_flag(self, flag_name: UserFlagName) -> int: ...
+    # The prize-draw pool: users who have voted in every votable nomination.
+    # Computed on request from the votes table (see the SQL adapter), so a draw
+    # always reflects who is eligible right now.
+    async def count_voting_contest_pool(self) -> int: ...
 
-    async def read_random_by_flag(
-        self, flag_name: UserFlagName
-    ) -> UserBaseDTO | None: ...
+    async def read_random_voting_contest_entrant(self) -> UserBaseDTO | None: ...
 
     async def read_all_by_receive_all_announcements(self) -> list[UserBaseDTO]: ...
 

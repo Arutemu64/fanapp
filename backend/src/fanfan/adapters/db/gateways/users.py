@@ -1,10 +1,10 @@
-from sqlalchemy import Select, func, select
+from sqlalchemy import Select, Subquery, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from fanfan.adapters.db.constraints import translate_integrity_error
 from fanfan.adapters.db.mappers.user import UserMapper
-from fanfan.adapters.db.models import UserFlagORM, UserORM
+from fanfan.adapters.db.models import NominationORM, UserORM, VoteORM
 from fanfan.adapters.db.models.permission import UserPermissionORM
 from fanfan.application.dto.page import Pagination
 from fanfan.application.dto.user import (
@@ -24,7 +24,6 @@ from fanfan.core.models.user import User
 from fanfan.core.utils.email import normalize_email
 from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.user import UserId, UserRole
-from fanfan.core.vo.user_flag import UserFlagName
 
 
 class SqlUserGateway(UserGateway):
@@ -110,18 +109,37 @@ class SqlUserGateway(UserGateway):
         users_orm = await self.session.scalars(stmt)
         return [self.mapper.parse_base_dto(u) for u in users_orm]
 
-    async def count_by_flag(self, flag_name: UserFlagName) -> int:
-        stmt = select(func.count(UserFlagORM.id)).where(UserFlagORM.name == flag_name)
+    def _voting_contest_pool(self) -> Subquery:
+        # The prize-draw pool is everyone who has voted in every votable nomination.
+        # A user votes at most once per nomination, so their vote-row count equals
+        # the nominations they have completed; requiring that to reach the votable
+        # count is the eligibility rule. Both the threshold and the tally come from
+        # the same statement, so the pool is always internally consistent.
+        votable_count = (
+            select(func.count(NominationORM.id))
+            .where(NominationORM.is_votable.is_(True))
+            .scalar_subquery()
+        )
+        return (
+            select(VoteORM.user_id.label("user_id"))
+            .group_by(VoteORM.user_id)
+            .having(func.count(VoteORM.id) >= votable_count)
+            .subquery()
+        )
+
+    async def count_voting_contest_pool(self) -> int:
+        pool = self._voting_contest_pool()
+        stmt = select(func.count()).select_from(pool)
         return await self.session.scalar(stmt) or 0
 
-    async def read_random_by_flag(self, flag_name: UserFlagName) -> UserBaseDTO | None:
-        # ORDER BY random() LIMIT 1 draws a uniformly random holder. The flag pool
-        # is small (users who voted in every nomination), so the full sort scan is
-        # cheap and this stays a one-off organiser action, not a hot path.
+    async def read_random_voting_contest_entrant(self) -> UserBaseDTO | None:
+        # ORDER BY random() LIMIT 1 draws a uniformly random entrant. The pool is
+        # small (a live convention audience) and this is a one-off organiser action,
+        # so the full sort scan is cheap and this is not a hot path.
+        pool = self._voting_contest_pool()
         stmt = (
             select(UserORM)
-            .join(UserFlagORM, UserFlagORM.user_id == UserORM.id)
-            .where(UserFlagORM.name == flag_name)
+            .join(pool, pool.c.user_id == UserORM.id)
             .order_by(func.random())
             .limit(1)
         )

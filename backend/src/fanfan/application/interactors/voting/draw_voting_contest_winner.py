@@ -5,7 +5,6 @@ from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
 from fanfan.core.vo.permission import Permission
-from fanfan.core.vo.user_flag import UserFlagName
 
 
 class DrawVotingContestWinnerOutput(BaseModel):
@@ -37,9 +36,7 @@ class DrawVotingContestWinner:
             user=current_user, permission=Permission.VOTING_MANAGE
         )
 
-        pool_size = await self.user_gateway.count_by_flag(UserFlagName.VOTING_CONTEST)
-        winner = await self.user_gateway.read_random_by_flag(
-            UserFlagName.VOTING_CONTEST
-        )
+        pool_size = await self.user_gateway.count_voting_contest_pool()
+        winner = await self.user_gateway.read_random_voting_contest_entrant()
 
         return DrawVotingContestWinnerOutput(winner=winner, pool_size=pool_size)
