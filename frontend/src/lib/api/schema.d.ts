@@ -716,7 +716,7 @@ export interface paths {
         };
         /**
          * Get the organizer voting dashboard
-         * @description Voting enable flag, the leading participant in each votable nomination, and the size of the prize-draw pool. Requires voting:manage.
+         * @description Voting time range, the leading participant in each votable nomination, and the size of the prize-draw pool. Requires voting:manage.
          */
         get: operations["get_voting_dashboard"];
         put?: never;
@@ -725,10 +725,10 @@ export interface paths {
         options?: never;
         head?: never;
         /**
-         * Enable or disable voting
-         * @description Turns voting on or off for visitors. Requires voting:manage.
+         * Set voting time range
+         * @description Sets the time range during which visitors can vote. Requires voting:manage.
          */
-        patch: operations["set_voting_enabled"];
+        patch: operations["set_voting_time_range"];
         trace?: never;
     };
     "/voting/contest/draw": {
@@ -1200,7 +1200,7 @@ export interface components {
              * Code
              * @enum {string}
              */
-            code: "ACCESS_DENIED" | "ALREADY_VOTED_IN_THIS_NOMINATION" | "APP_SETTINGS_NOT_FOUND" | "AUTHENTICATION_ERROR" | "CANNOT_REMOVE_LAST_SIGN_IN_METHOD" | "CAPTCHA_VERIFICATION_FAILED" | "CURRENT_EVENT_NOT_ALLOWED" | "EMAIL_ALREADY_EXISTS" | "EMAIL_CODE_REQUEST_TOO_FAST" | "EMAIL_DELIVERY_FAILED" | "EVENT_NOT_FOUND" | "HTTP_ERROR" | "INCORRECT_PASSWORD" | "INTERNAL_ERROR" | "INVALID_CREDENTIALS" | "INVALID_EMAIL" | "INVALID_OTP_CODE" | "INVALID_SCHEDULE_FILE" | "INVALID_TELEGRAM_AUTH_PAYLOAD" | "LINK_INITIATOR_MISMATCH" | "NOMINATION_NOT_FOUND" | "OUTDATED_SCHEDULE_CHANGE" | "PARTICIPANT_NOT_FOUND" | "PUSH_SUBSCRIPTION_ALREADY_EXISTS" | "PUSH_SUBSCRIPTION_NOT_FOUND" | "SAME_EVENTS_ARE_NOT_ALLOWED" | "SCHEDULE_CHANGE_NOT_FOUND" | "SCHEDULE_EDIT_TOO_FAST" | "SKIPPED_EVENT_NOT_ALLOWED" | "SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER" | "SUBSCRIPTION_ALREADY_EXISTS" | "SUBSCRIPTION_NOT_FOUND" | "SYNC_ALREADY_RUNNING" | "TICKET_ALREADY_USED" | "TICKET_BARCODE_COLLISION" | "TICKET_NOT_FOUND" | "TICKET_NOT_LINKED" | "TOO_MANY_ATTEMPTS" | "TOO_MANY_LOGIN_ATTEMPTS" | "TOO_MANY_OTP_ATTEMPTS" | "USERNAME_ALREADY_TAKEN" | "USERNAME_PROFANITY" | "USER_ALREADY_EXISTS" | "USER_ALREADY_HAS_PROVIDER_LINKED" | "USER_ALREADY_HAS_TICKET_LINKED" | "USER_HAS_NO_EMAIL" | "USER_NOT_AUTHENTICATED" | "USER_NOT_FOUND" | "VALIDATION_ERROR" | "VOTE_NOT_FOUND";
+            code: "ACCESS_DENIED" | "ALREADY_VOTED_IN_THIS_NOMINATION" | "APP_SETTINGS_NOT_FOUND" | "AUTHENTICATION_ERROR" | "CANNOT_REMOVE_LAST_SIGN_IN_METHOD" | "CAPTCHA_VERIFICATION_FAILED" | "CURRENT_EVENT_NOT_ALLOWED" | "EMAIL_ALREADY_EXISTS" | "EMAIL_CODE_REQUEST_TOO_FAST" | "EMAIL_DELIVERY_FAILED" | "EVENT_NOT_FOUND" | "HTTP_ERROR" | "INCORRECT_PASSWORD" | "INTERNAL_ERROR" | "INVALID_CREDENTIALS" | "INVALID_EMAIL" | "INVALID_OTP_CODE" | "INVALID_SCHEDULE_FILE" | "INVALID_TELEGRAM_AUTH_PAYLOAD" | "INVALID_VOTING_TIME_RANGE" | "LINK_INITIATOR_MISMATCH" | "NOMINATION_NOT_FOUND" | "OUTDATED_SCHEDULE_CHANGE" | "PARTICIPANT_NOT_FOUND" | "PUSH_SUBSCRIPTION_ALREADY_EXISTS" | "PUSH_SUBSCRIPTION_NOT_FOUND" | "SAME_EVENTS_ARE_NOT_ALLOWED" | "SCHEDULE_CHANGE_NOT_FOUND" | "SCHEDULE_EDIT_TOO_FAST" | "SKIPPED_EVENT_NOT_ALLOWED" | "SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER" | "SUBSCRIPTION_ALREADY_EXISTS" | "SUBSCRIPTION_NOT_FOUND" | "SYNC_ALREADY_RUNNING" | "TICKET_ALREADY_USED" | "TICKET_BARCODE_COLLISION" | "TICKET_NOT_FOUND" | "TICKET_NOT_LINKED" | "TOO_MANY_ATTEMPTS" | "TOO_MANY_LOGIN_ATTEMPTS" | "TOO_MANY_OTP_ATTEMPTS" | "USERNAME_ALREADY_TAKEN" | "USERNAME_PROFANITY" | "USER_ALREADY_EXISTS" | "USER_ALREADY_HAS_PROVIDER_LINKED" | "USER_ALREADY_HAS_TICKET_LINKED" | "USER_HAS_NO_EMAIL" | "USER_NOT_AUTHENTICATED" | "USER_NOT_FOUND" | "VALIDATION_ERROR" | "VOTE_NOT_FOUND";
             /** Details */
             details?: {
                 [key: string]: unknown;
@@ -1255,8 +1255,10 @@ export interface components {
         };
         /** GetVotingDashboardOutput */
         GetVotingDashboardOutput: {
-            /** Voting Enabled */
-            voting_enabled: boolean;
+            /** Voting Start */
+            voting_start: string | null;
+            /** Voting End */
+            voting_end: string | null;
             /** Contest Pool Size */
             contest_pool_size: number;
             /** Nominations */
@@ -1286,6 +1288,10 @@ export interface components {
             /** Can Vote */
             can_vote: boolean;
             status: components["schemas"]["VotingStatus"];
+            /** Voting Start */
+            voting_start?: string | null;
+            /** Voting End */
+            voting_end?: string | null;
         };
         /** HealthCheckResponse */
         HealthCheckResponse: {
@@ -1473,8 +1479,8 @@ export interface components {
          *     plus `festival_ended` so the UI can pick its phase without provoking a 403 on
          *     a guarded endpoint. Voting availability is intentionally not here: the UI
          *     reads it per-user from GET /voting/status (which already reflects the
-         *     `voting_enabled` flag as a DISABLED state), so a second public copy would only
-         *     be a redundant source of truth to drift.
+         *     time range as a DISABLED state), so a second public copy would only be a
+         *     redundant source of truth to drift.
          */
         PublicConfigDTO: {
             /**
@@ -1598,10 +1604,12 @@ export interface components {
              */
             mailing_id: string;
         };
-        /** SetVotingEnabledInput */
-        SetVotingEnabledInput: {
-            /** Enabled */
-            enabled: boolean;
+        /** SetVotingTimeRangeInput */
+        SetVotingTimeRangeInput: {
+            /** Voting Start */
+            voting_start: string | null;
+            /** Voting End */
+            voting_end: string | null;
         };
         /**
          * SocialProvider
@@ -3945,7 +3953,7 @@ export interface operations {
             };
         };
     };
-    set_voting_enabled: {
+    set_voting_time_range: {
         parameters: {
             query?: never;
             header?: never;
@@ -3954,11 +3962,11 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SetVotingEnabledInput"];
+                "application/json": components["schemas"]["SetVotingTimeRangeInput"];
             };
         };
         responses: {
-            /** @description Voting availability updated successfully. */
+            /** @description Voting time range updated successfully. */
             204: {
                 headers: {
                     [name: string]: unknown;

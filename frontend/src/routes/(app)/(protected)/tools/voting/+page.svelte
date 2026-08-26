@@ -7,7 +7,7 @@
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { pluralize } from '$lib/utils/formatters';
-	import { Alert, Badge, Button, Card, Spinner, Toggle } from 'flowbite-svelte';
+	import { Alert, Badge, Button, Card, Label, Spinner } from 'flowbite-svelte';
 	import { AwardOutline, GiftBoxOutline, UsersGroupOutline } from 'flowbite-svelte-icons';
 	import { untrack } from 'svelte';
 
@@ -22,10 +22,9 @@
 
 	let nominations = $derived<NominationContender[]>(data.dashboard.nominations);
 
-	// The toggle owns its state locally so it can flip instantly and roll back on a
-	// failed save, rather than waiting for a full reload of the dashboard.
-	let votingEnabled = $state(untrack(() => data.dashboard.voting_enabled));
-	let isTogglingVoting = $state(false);
+	let votingStart = $state(untrack(() => toLocalInput(data.dashboard.voting_start)));
+	let votingEnd = $state(untrack(() => toLocalInput(data.dashboard.voting_end)));
+	let isSaving = $state(false);
 
 	// Seeded from the dashboard, then refreshed from each draw's response, so the
 	// displayed pool tracks who is currently eligible even as people finish voting.
@@ -37,33 +36,51 @@
 
 	let canDraw = $derived(poolSize > 0);
 
-	async function handleVotingToggle(next: boolean) {
-		isTogglingVoting = true;
+	function toLocalInput(iso: string | null): string {
+		if (!iso) return '';
+		const d = new Date(iso);
+		const offset = d.getTimezoneOffset();
+		const local = new Date(d.getTime() - offset * 60_000);
+		return local.toISOString().slice(0, 16);
+	}
+
+	function fromLocalInput(value: string): string | null {
+		if (!value) return null;
+		return new Date(value).toISOString();
+	}
+
+	async function handleSave() {
+		isSaving = true;
 		try {
 			const { error, response } = await client.PATCH('/voting/dashboard', {
-				body: { enabled: next }
+				body: {
+					voting_start: fromLocalInput(votingStart),
+					voting_end: fromLocalInput(votingEnd)
+				}
 			});
 
 			if (error || !response.ok) {
-				// Roll back the optimistic flip so the switch never lies about the
-				// real server state.
-				votingEnabled = !next;
 				if (response.status === 403) {
 					toastService.add('У тебя нет доступа к управлению голосованием', 'error');
 				} else {
-					toastService.add('Не удалось изменить статус голосования', 'error');
+					toastService.add('Не удалось сохранить время голосования', 'error');
 				}
 				return;
 			}
 
-			toastService.add(next ? 'Голосование включено' : 'Голосование выключено', 'success');
+			toastService.add('Время голосования обновлено', 'success');
 		} catch (err) {
-			votingEnabled = !next;
-			console.error('Voting toggle failed:', err);
-			toastService.add('Не удалось изменить статус голосования', 'error');
+			console.error('Voting time range save failed:', err);
+			toastService.add('Не удалось сохранить время голосования', 'error');
 		} finally {
-			isTogglingVoting = false;
+			isSaving = false;
 		}
+	}
+
+	async function handleClear() {
+		votingStart = '';
+		votingEnd = '';
+		await handleSave();
 	}
 
 	async function handleDraw() {
@@ -103,31 +120,62 @@
 <BackLink href="/tools" label="Назад к инструментам" />
 
 <SectionIntro
-	description="Включай голосование, следи за лидерами номинаций и разыгрывай приз среди тех, кто проголосовал во всех номинациях."
+	description="Задавай период голосования, следи за лидерами номинаций и разыгрывай приз среди тех, кто проголосовал во всех номинациях."
 />
 
 <div class="mx-auto w-full max-w-2xl space-y-5">
-	<Card class="w-full max-w-none space-y-3 rounded-2xl p-4 sm:p-6">
-		<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Статус</h2>
+	<Card class="w-full max-w-none space-y-4 rounded-2xl p-4 sm:p-6">
+		<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Период голосования</h2>
 
-		<div class="flex items-start justify-between gap-3">
-			<div class="min-w-0">
-				<h3 class="text-base font-medium text-gray-900 dark:text-white">Голосование активно</h3>
-				<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-300">
-					Если отключить, посетители временно не смогут голосовать.
-				</p>
-			</div>
-			<div class="flex shrink-0 items-center gap-2">
-				{#if isTogglingVoting}
-					<Spinner size="4" />
-				{/if}
-				<Toggle
-					bind:checked={votingEnabled}
-					color="primary"
-					disabled={isTogglingVoting}
-					onchange={(event) => handleVotingToggle(event.currentTarget.checked)}
+		<p class="text-xs leading-5 text-gray-500 dark:text-gray-300">
+			Посетители смогут голосовать только в указанный период.
+		</p>
+
+		<div class="grid gap-4 sm:grid-cols-2">
+			<div>
+				<Label for="voting-start" class="mb-1.5">Начало</Label>
+				<input
+					id="voting-start"
+					type="datetime-local"
+					bind:value={votingStart}
+					disabled={isSaving}
+					class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
 				/>
 			</div>
+			<div>
+				<Label for="voting-end" class="mb-1.5">Конец</Label>
+				<input
+					id="voting-end"
+					type="datetime-local"
+					bind:value={votingEnd}
+					disabled={isSaving}
+					class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
+				/>
+			</div>
+		</div>
+
+		<div class="flex flex-wrap gap-2">
+			<Button
+				type="button"
+				color="primary"
+				class="min-h-11 justify-center"
+				disabled={isSaving}
+				onclick={handleSave}
+			>
+				{#if isSaving}
+					<Spinner size="4" class="mr-2 fill-white" />
+				{/if}
+				Сохранить
+			</Button>
+			<Button
+				type="button"
+				color="alternative"
+				class="min-h-11 justify-center"
+				disabled={isSaving || (!votingStart && !votingEnd)}
+				onclick={handleClear}
+			>
+				Сбросить
+			</Button>
 		</div>
 	</Card>
 

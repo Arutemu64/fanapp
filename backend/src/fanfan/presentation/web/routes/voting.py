@@ -34,9 +34,9 @@ from fanfan.application.interactors.voting.list_voting_nominations import (
     ListVotingNominations,
     ListVotingNominationsOutput,
 )
-from fanfan.application.interactors.voting.set_voting_enabled import (
-    SetVotingEnabled,
-    SetVotingEnabledInput,
+from fanfan.application.interactors.voting.set_voting_time_range import (
+    SetVotingTimeRange,
+    SetVotingTimeRangeInput,
 )
 from fanfan.core.vo.nomination import NominationCode
 from fanfan.core.vo.vote import VoteId
@@ -155,7 +155,7 @@ async def cancel_vote(
 @voting_router.get(
     "/dashboard",
     summary="Get the organizer voting dashboard",
-    description="Voting enable flag, the leading participant in each votable "
+    description="Voting time range, the leading participant in each votable "
     "nomination, and the size of the prize-draw pool. Requires voting:manage.",
     dependencies=[session_security],
     responses={
@@ -177,20 +177,21 @@ async def get_voting_dashboard(
 @voting_router.patch(
     "/dashboard",
     status_code=204,
-    summary="Enable or disable voting",
-    description="Turns voting on or off for visitors. Requires voting:manage.",
+    summary="Set voting time range",
+    description="Sets the time range during which visitors can vote. "
+    "Requires voting:manage.",
     dependencies=[session_security],
     responses={
         **AUTH_RESPONSES,
-        204: {"description": "Voting availability updated successfully."},
+        204: {"description": "Voting time range updated successfully."},
         403: {"model": ErrorMessage, "description": "Missing voting:manage."},
         404: {"model": ErrorMessage, "description": "Festival settings not found."},
     },
 )
 @inject
-async def set_voting_enabled(
-    data: SetVotingEnabledInput,
-    interactor: FromDishka[SetVotingEnabled],
+async def set_voting_time_range(
+    data: SetVotingTimeRangeInput,
+    interactor: FromDishka[SetVotingTimeRange],
 ) -> None:
     await interactor(data)
 

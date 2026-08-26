@@ -153,7 +153,9 @@ from fanfan.application.interactors.voting.get_voting_state import GetVotingStat
 from fanfan.application.interactors.voting.list_voting_nominations import (
     ListVotingNominations,
 )
-from fanfan.application.interactors.voting.set_voting_enabled import SetVotingEnabled
+from fanfan.application.interactors.voting.set_voting_time_range import (
+    SetVotingTimeRange,
+)
 
 
 class InteractorsProvider(Provider):
@@ -230,7 +232,7 @@ class InteractorsProvider(Provider):
     cancel_vote = provide(CancelVote)
     get_voting_state = provide(GetVotingState)
     get_voting_dashboard = provide(GetVotingDashboard)
-    set_voting_enabled = provide(SetVotingEnabled)
+    set_voting_time_range = provide(SetVotingTimeRange)
     draw_voting_contest_winner = provide(DrawVotingContestWinner)
 
     sync_tickets = provide(SyncTickets)

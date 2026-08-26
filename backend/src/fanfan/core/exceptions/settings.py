@@ -1,4 +1,4 @@
-from fanfan.core.exceptions.base import AppException, NotFound
+from fanfan.core.exceptions.base import AppException, ConstraintViolation, NotFound
 
 
 class AppSettingsException(AppException):
@@ -7,3 +7,7 @@ class AppSettingsException(AppException):
 
 class AppSettingsNotFound(NotFound, AppSettingsException):
     code = "APP_SETTINGS_NOT_FOUND"
+
+
+class InvalidVotingTimeRange(ConstraintViolation, AppSettingsException):
+    code = "INVALID_VOTING_TIME_RANGE"

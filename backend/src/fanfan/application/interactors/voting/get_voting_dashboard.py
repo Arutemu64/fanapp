@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 from fanfan.application.dto.voting import NominationContenderDTO
@@ -10,15 +12,16 @@ from fanfan.core.vo.permission import Permission
 
 
 class GetVotingDashboardOutput(BaseModel):
-    voting_enabled: bool
+    voting_start: datetime | None
+    voting_end: datetime | None
     # Users who have voted in every votable nomination — the prize-draw pool.
     contest_pool_size: int
     nominations: list[NominationContenderDTO]
 
 
 class GetVotingDashboard:
-    """Organizer view of the running vote: the enable flag, the leader in each
-    votable nomination, and the size of the prize-draw pool."""
+    """Organizer view of the running vote: the voting time range, the leader in
+    each votable nomination, and the size of the prize-draw pool."""
 
     def __init__(
         self,
@@ -45,7 +48,8 @@ class GetVotingDashboard:
         contest_pool_size = await self.user_gateway.count_voting_contest_pool()
 
         return GetVotingDashboardOutput(
-            voting_enabled=settings.voting_enabled,
+            voting_start=settings.voting_start,
+            voting_end=settings.voting_end,
             contest_pool_size=contest_pool_size,
             nominations=contenders,
         )

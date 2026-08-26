@@ -2478,7 +2478,7 @@
           "Voting"
         ],
         "summary": "Get the organizer voting dashboard",
-        "description": "Voting enable flag, the leading participant in each votable nomination, and the size of the prize-draw pool. Requires voting:manage.",
+        "description": "Voting time range, the leading participant in each votable nomination, and the size of the prize-draw pool. Requires voting:manage.",
         "operationId": "get_voting_dashboard",
         "responses": {
           "200": {
@@ -2532,14 +2532,14 @@
         "tags": [
           "Voting"
         ],
-        "summary": "Enable or disable voting",
-        "description": "Turns voting on or off for visitors. Requires voting:manage.",
-        "operationId": "set_voting_enabled",
+        "summary": "Set voting time range",
+        "description": "Sets the time range during which visitors can vote. Requires voting:manage.",
+        "operationId": "set_voting_time_range",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SetVotingEnabledInput"
+                "$ref": "#/components/schemas/SetVotingTimeRangeInput"
               }
             }
           },
@@ -2547,7 +2547,7 @@
         },
         "responses": {
           "204": {
-            "description": "Voting availability updated successfully."
+            "description": "Voting time range updated successfully."
           },
           "422": {
             "description": "Request validation error.",
@@ -4201,6 +4201,7 @@
               "INVALID_OTP_CODE",
               "INVALID_SCHEDULE_FILE",
               "INVALID_TELEGRAM_AUTH_PAYLOAD",
+              "INVALID_VOTING_TIME_RANGE",
               "LINK_INITIATOR_MISMATCH",
               "NOMINATION_NOT_FOUND",
               "OUTDATED_SCHEDULE_CHANGE",
@@ -4363,9 +4364,29 @@
       },
       "GetVotingDashboardOutput": {
         "properties": {
-          "voting_enabled": {
-            "type": "boolean",
-            "title": "Voting Enabled"
+          "voting_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voting Start"
+          },
+          "voting_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voting End"
           },
           "contest_pool_size": {
             "type": "integer",
@@ -4381,7 +4402,8 @@
         },
         "type": "object",
         "required": [
-          "voting_enabled",
+          "voting_start",
+          "voting_end",
           "contest_pool_size",
           "nominations"
         ],
@@ -4454,6 +4476,30 @@
           },
           "status": {
             "$ref": "#/components/schemas/VotingStatus"
+          },
+          "voting_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voting Start"
+          },
+          "voting_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voting End"
           }
         },
         "type": "object",
@@ -4945,7 +4991,7 @@
           "festival_ended"
         ],
         "title": "PublicConfigDTO",
-        "description": "Public, unauthenticated projection of AppSettings served at GET /config.\n\nDeliberately omits `limits` (ADR-0008 projection tuning is organizer-only).\nCarries the raw `festival_start` so the client can run the live countdown,\nplus `festival_ended` so the UI can pick its phase without provoking a 403 on\na guarded endpoint. Voting availability is intentionally not here: the UI\nreads it per-user from GET /voting/status (which already reflects the\n`voting_enabled` flag as a DISABLED state), so a second public copy would only\nbe a redundant source of truth to drift."
+        "description": "Public, unauthenticated projection of AppSettings served at GET /config.\n\nDeliberately omits `limits` (ADR-0008 projection tuning is organizer-only).\nCarries the raw `festival_start` so the client can run the live countdown,\nplus `festival_ended` so the UI can pick its phase without provoking a 403 on\na guarded endpoint. Voting availability is intentionally not here: the UI\nreads it per-user from GET /voting/status (which already reflects the\ntime range as a DISABLED state), so a second public copy would only be a\nredundant source of truth to drift."
       },
       "PushSubscriptionStatus": {
         "properties": {
@@ -5255,18 +5301,39 @@
         ],
         "title": "SendBroadcastOutput"
       },
-      "SetVotingEnabledInput": {
+      "SetVotingTimeRangeInput": {
         "properties": {
-          "enabled": {
-            "type": "boolean",
-            "title": "Enabled"
+          "voting_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voting Start"
+          },
+          "voting_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voting End"
           }
         },
         "type": "object",
         "required": [
-          "enabled"
+          "voting_start",
+          "voting_end"
         ],
-        "title": "SetVotingEnabledInput"
+        "title": "SetVotingTimeRangeInput"
       },
       "SocialProvider": {
         "type": "string",
