@@ -1,4 +1,4 @@
-from dishka import Provider, Scope, provide
+from dishka import Provider, Scope, provide, provide_all
 
 from fanfan.adapters.config.models import EnvConfig
 from fanfan.application.interactors.sync.execute_cosplay_sync import ExecuteCosplaySync
@@ -20,8 +20,7 @@ class SyncProvider(Provider):
     # One interactor per vendor rather than one that dispatches on source:
     # resolving either would otherwise pull in *both* vendor configs, and each
     # raises when its vendor is unset — breaking single-vendor deployments.
-    execute_cosplay_sync = provide(ExecuteCosplaySync)
-    execute_tickets_sync = provide(ExecuteTicketsSync)
+    execute_syncs = provide_all(ExecuteCosplaySync, ExecuteTicketsSync)
 
     @provide(scope=Scope.APP)
     def get_available_sync_sources(self, config: EnvConfig) -> AvailableSyncSources:
