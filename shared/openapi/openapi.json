@@ -5733,6 +5733,17 @@
             ],
             "title": "Email"
           },
+          "ticket_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ticket Number"
+          },
           "social_links": {
             "items": {
               "$ref": "#/components/schemas/UserSocialLinkDTO"
@@ -5747,6 +5758,7 @@
           "username",
           "role",
           "email",
+          "ticket_number",
           "social_links"
         ],
         "title": "UserDetailsDTO"
@@ -5776,6 +5788,17 @@
               }
             ],
             "title": "Email"
+          },
+          "ticket_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ticket Number"
           }
         },
         "type": "object",
@@ -5783,7 +5806,8 @@
           "id",
           "username",
           "role",
-          "email"
+          "email",
+          "ticket_number"
         ],
         "title": "UserListItemDTO"
       },

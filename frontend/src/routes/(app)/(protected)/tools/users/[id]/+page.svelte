@@ -55,6 +55,12 @@
 					{profile.email ?? '—'}
 				</dd>
 			</div>
+			<div class="flex flex-col gap-0.5">
+				<dt class="text-xs text-gray-500 dark:text-gray-400">Номер билета</dt>
+				<dd class="font-mono text-xs break-all text-gray-700 select-all dark:text-gray-300">
+					{profile.ticket_number ?? '—'}
+				</dd>
+			</div>
 		</dl>
 	</Card>
 

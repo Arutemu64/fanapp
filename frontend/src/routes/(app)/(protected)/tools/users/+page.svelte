@@ -89,6 +89,7 @@
 				<TableHead>
 					<TableHeadCell>Имя</TableHeadCell>
 					<TableHeadCell>Почта</TableHeadCell>
+					<TableHeadCell>Билет</TableHeadCell>
 					<TableHeadCell>Роль</TableHeadCell>
 				</TableHead>
 				<TableBody>
@@ -106,6 +107,9 @@
 							</TableBodyCell>
 							<TableBodyCell class="text-gray-500 dark:text-gray-400">
 								{listedUser.email ?? '—'}
+							</TableBodyCell>
+							<TableBodyCell class="font-mono text-xs text-gray-500 dark:text-gray-400">
+								{listedUser.ticket_number ?? '—'}
 							</TableBodyCell>
 							<TableBodyCell>
 								<Badge color={getRoleColor(listedUser.role)}>

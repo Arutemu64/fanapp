@@ -61,6 +61,7 @@ class UserMapper:
             username=orm.username,
             role=orm.role,
             email=orm.email,
+            ticket_number=orm.ticket.barcode if orm.ticket else None,
         )
 
     @staticmethod
@@ -70,6 +71,7 @@ class UserMapper:
             username=orm.username,
             role=orm.role,
             email=orm.email,
+            ticket_number=orm.ticket.barcode if orm.ticket else None,
             social_links=[
                 UserSocialLinkDTO(
                     provider=identity.provider,
