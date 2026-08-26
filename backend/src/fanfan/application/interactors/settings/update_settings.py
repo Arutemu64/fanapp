@@ -55,13 +55,18 @@ class UpdateSettings:
         # limits-only edit would send every client to refetch identical config.
         public_config_changed = False
 
-        if (festival_start := data_to_update.get("festival_start")) is not None:
-            settings.set_festival_start(start=festival_start)
-            update_flag = True
-            public_config_changed = True
-
-        if (festival_end := data_to_update.get("festival_end")) is not None:
-            settings.set_festival_end(end=festival_end)
+        festival_start = data_to_update.get("festival_start")
+        festival_end = data_to_update.get("festival_end")
+        if festival_start is not None or festival_end is not None:
+            # PATCH may carry either boundary alone, so validate the range as a
+            # whole — filling the untouched side from the persisted value — rather
+            # than each field in isolation, which could reject a valid shift of both.
+            settings.set_festival_schedule(
+                start=festival_start
+                if festival_start is not None
+                else settings.festival_start,
+                end=festival_end if festival_end is not None else settings.festival_end,
+            )
             update_flag = True
             public_config_changed = True
 

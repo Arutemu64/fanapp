@@ -1,7 +1,10 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 
-from fanfan.core.exceptions.settings import InvalidVotingTimeRange
+from fanfan.core.exceptions.settings import (
+    InvalidFestivalTimeRange,
+    InvalidVotingTimeRange,
+)
 from fanfan.core.models.base import AggregateRoot
 
 # Programme opening and close, Moscow time (UTC+3). The defaults the app ships
@@ -51,10 +54,15 @@ class AppSettings(AggregateRoot):
             return False
         return self.voting_start <= now < self.voting_end
 
-    def set_festival_start(self, *, start: datetime) -> None:
+    def set_festival_schedule(self, *, start: datetime, end: datetime) -> None:
+        # The home page derives its before/during/after phase from this range, so
+        # an end at or before the start would erase the "during" phase and jump the
+        # countdown straight to the farewell. The two instants can be PATCHed
+        # independently and no other layer guards their order, so the aggregate
+        # enforces it — the same shape as set_voting_time_range above.
+        if end <= start:
+            raise InvalidFestivalTimeRange
         self.festival_start = start
-
-    def set_festival_end(self, *, end: datetime) -> None:
         self.festival_end = end
 
     def update_limits(

@@ -11,3 +11,7 @@ class AppSettingsNotFound(NotFound, AppSettingsException):
 
 class InvalidVotingTimeRange(ConstraintViolation, AppSettingsException):
     code = "INVALID_VOTING_TIME_RANGE"
+
+
+class InvalidFestivalTimeRange(ConstraintViolation, AppSettingsException):
+    code = "INVALID_FESTIVAL_TIME_RANGE"

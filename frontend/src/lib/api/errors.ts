@@ -180,6 +180,7 @@ const ERROR_MESSAGES = {
 	INCORRECT_PASSWORD: 'Неверная почта или пароль',
 	INVALID_CREDENTIALS: 'Неверная почта или пароль',
 	INVALID_EMAIL: 'Неверный адрес эл. почты',
+	INVALID_FESTIVAL_TIME_RANGE: 'Конец фестиваля должен быть позже начала',
 	INVALID_OTP_CODE: 'Неверный или устаревший код',
 	INVALID_TELEGRAM_AUTH_PAYLOAD: 'Не удалось подтвердить Telegram',
 	INVALID_VOTING_TIME_RANGE: 'Конец голосования должен быть позже начала',
