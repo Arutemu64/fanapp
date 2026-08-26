@@ -1070,8 +1070,11 @@ export interface components {
              * Format: date-time
              */
             festival_start: string;
-            /** Festival Ended */
-            festival_ended: boolean;
+            /**
+             * Festival End
+             * Format: date-time
+             */
+            festival_end: string;
             limits: components["schemas"]["LimitsConfigDTO"];
         };
         /** Body_import_schedule */
@@ -1305,8 +1308,6 @@ export interface components {
         LimitsConfigDTO: {
             /** Announcement Timeout */
             announcement_timeout: number;
-            /** Transition Buffer */
-            transition_buffer: number;
         };
         /** LinkTicketInput */
         LinkTicketInput: {
@@ -1475,12 +1476,13 @@ export interface components {
          * @description Public, unauthenticated projection of AppSettings served at GET /config.
          *
          *     Deliberately omits `limits` (ADR-0008 projection tuning is organizer-only).
-         *     Carries the raw `festival_start` so the client can run the live countdown,
-         *     plus `festival_ended` so the UI can pick its phase without provoking a 403 on
-         *     a guarded endpoint. Voting availability is intentionally not here: the UI
-         *     reads it per-user from GET /voting/status (which already reflects the
-         *     time range as a DISABLED state), so a second public copy would only be a
-         *     redundant source of truth to drift.
+         *     Carries the raw `festival_start` and `festival_end` so the client can run the
+         *     live countdown and pick its before/during/after phase itself — flipping at
+         *     each boundary without provoking a 403 on a guarded endpoint. Voting
+         *     availability is intentionally not here: the UI reads it per-user from
+         *     GET /voting/status (which already reflects the time range as a DISABLED
+         *     state), so a second public copy would only be a redundant source of truth to
+         *     drift.
          */
         PublicConfigDTO: {
             /**
@@ -1488,8 +1490,11 @@ export interface components {
              * Format: date-time
              */
             festival_start: string;
-            /** Festival Ended */
-            festival_ended: boolean;
+            /**
+             * Festival End
+             * Format: date-time
+             */
+            festival_end: string;
         };
         /** PushSubscriptionStatus */
         PushSubscriptionStatus: {
@@ -1742,12 +1747,10 @@ export interface components {
         UpdateAppSettingsInput: {
             /** Festival Start */
             festival_start?: string | null;
-            /** Festival Ended */
-            festival_ended?: boolean | null;
+            /** Festival End */
+            festival_end?: string | null;
             /** Announcement Timeout */
             announcement_timeout?: number | null;
-            /** Transition Buffer */
-            transition_buffer?: number | null;
         };
         /** UpdateCurrentUserInput */
         UpdateCurrentUserInput: {

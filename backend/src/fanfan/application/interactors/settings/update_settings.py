@@ -18,9 +18,8 @@ logger = logging.getLogger(__name__)
 
 class UpdateAppSettingsInput(BaseModel):
     festival_start: datetime | None = None
-    festival_ended: bool | None = None
+    festival_end: datetime | None = None
     announcement_timeout: int | None = Field(default=None, ge=1)
-    transition_buffer: int | None = Field(default=None, ge=0)
 
 
 class UpdateSettings:
@@ -61,8 +60,8 @@ class UpdateSettings:
             update_flag = True
             public_config_changed = True
 
-        if (festival_ended := data_to_update.get("festival_ended")) is not None:
-            settings.set_festival_ended(ended=festival_ended)
+        if (festival_end := data_to_update.get("festival_end")) is not None:
+            settings.set_festival_end(end=festival_end)
             update_flag = True
             public_config_changed = True
 
@@ -70,10 +69,6 @@ class UpdateSettings:
             announcement_timeout := data_to_update.get("announcement_timeout")
         ) is not None:
             settings.update_limits(announcement_timeout=announcement_timeout)
-            update_flag = True
-
-        if (transition_buffer := data_to_update.get("transition_buffer")) is not None:
-            settings.update_limits(transition_buffer=transition_buffer)
             update_flag = True
 
         if not update_flag:

@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from datetime import UTC, datetime
 
 import pytest
 from dishka import AsyncContainer
@@ -28,9 +29,10 @@ async def test_public_field_change_broadcasts_config_updated(
     realtime = await dishka_request.get(FakeRealtimeGateway)
     login(settings_editor)
 
-    await interactor(UpdateAppSettingsInput(festival_ended=True))
+    new_end = datetime(2026, 8, 23, 20, 0, tzinfo=UTC)
+    await interactor(UpdateAppSettingsInput(festival_end=new_end))
 
-    assert (await settings_gateway.get()).festival_ended is True
+    assert (await settings_gateway.get()).festival_end == new_end
     # A single broadcast (user_id=None) so every open home page refetches /config.
     assert [
         (user_id, message.event_name) for user_id, message in realtime.published
