@@ -131,13 +131,13 @@ Docker Hub rate-limit below.)
 
 ## Docker images
 
-The cloud daemon's in-session job is autogenerating Alembic migrations against a
-throwaway Postgres (`just backend-generate-auto`). The `@pytest.mark.integration`
-suite runs against real Postgres + Valkey via testcontainers (see
-[testing.md](testing.md)), but per AGENTS.md it is **left to CI** even here —
-it's slow, and a green run in CI is the gate that matters — so a session does not
-run it. The setup script still prepulls the images it *would* need, so the option
-exists and CI-parity images are cached; each is baked into the snapshot and on
+The cloud daemon's routine in-session job is autogenerating Alembic migrations
+against a throwaway Postgres (`just backend-generate-auto`). The
+`@pytest.mark.integration` suite runs against real Postgres + Valkey via
+testcontainers (see [testing.md](testing.md)); you *can* run it in-session, but
+per AGENTS.md **prefer CI** even here — it's slow, CI runs it regardless, and a
+green run in CI is the gate that matters. The setup script prepulls the images
+either use, so both are a warm pull away; each is baked into the snapshot and on
 disk at session start:
 
 * `postgres:18.4-alpine` — pinned (not a floating minor tag) to match
@@ -149,8 +149,9 @@ disk at session start:
   so a mismatched variant could hide or fabricate sorting bugs.
 * `valkey/valkey:9.1-alpine` — the testcontainers image
   `backend/tests/fixtures/db_provider.py` boots for `@pytest.mark.integration`
-  tests, matching what CI (`.github/workflows/ci.yml`) uses; prepulled for
-  parity though the suite itself runs in CI, not in-session.
+  tests, matching what CI (`.github/workflows/ci.yml`) uses; prepulled so the
+  suite runs without a cold pull in-session, though CI stays the default place
+  to run it.
 * `hadolint/hadolint` — backs the `hadolint` shim above, so the Dockerfile gate
   (`just dockerfile-lint`) runs in-session instead of only in CI. Pinned to the same version
   as `mise.toml` and the `.pre-commit-config.yaml` rev (docs/dependencies.md);
@@ -158,7 +159,7 @@ disk at session start:
 
 Only the daemon (a process) is restarted per session by the hook; containers
 themselves are booted and torn down on demand by `just backend-generate-auto`
-(or by a test run, should one be invoked). The hook
+(or by a test run when you invoke one). The hook
 also sets `TESTCONTAINERS_RYUK_DISABLED=true`, matching CI — dockerd itself
 doesn't survive between sessions and the fixtures stop their own containers in
 `finally:` blocks, so the Ryuk cleanup reaper isn't needed and skipping it

@@ -259,8 +259,9 @@ just frontend-check
 just dockerfile-lint
 ```
 
-The integration suite (`just backend-test-integration`) is slow and left to
-CI — you don't need it before pushing.
+The integration suite (`just backend-test-integration`) is slow and CI runs it
+anyway, so you don't need it before pushing — run it locally only when you're
+debugging a failure.
 
 Questions and bug reports go in [GitHub issues](https://github.com/Arutemu64/fanapp/issues),
 except security reports, which are private ([see below](#security)).
