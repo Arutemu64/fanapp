@@ -241,7 +241,11 @@
 				receive_vk_notifications: receiveVk
 			},
 			() => {
-				receiveVk = user.settings.receive_vk_notifications;
+				// Roll back to the effective state, not the raw flag: if VK was
+				// unlinked while the request was in flight, restoring the raw `true`
+				// would force the disabled toggle back ON — the misleading state this
+				// card avoids. Mirrors the receiveVk derived above.
+				receiveVk = hasVkAccount && user.settings.receive_vk_notifications;
 			}
 		);
 	}
