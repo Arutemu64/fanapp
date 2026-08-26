@@ -1,7 +1,6 @@
 import logging
-from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import AwareDatetime, BaseModel
 
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
@@ -16,8 +15,12 @@ logger = logging.getLogger(__name__)
 
 
 class SetVotingTimeRangeInput(BaseModel):
-    voting_start: datetime | None
-    voting_end: datetime | None
+    # Require an offset: the stored range is later compared against an aware clock
+    # in AppSettings.is_voting_open(now), so a persisted naive bound would raise
+    # TypeError on every voting-status check, not just here. The dashboard form
+    # always sends an instant.
+    voting_start: AwareDatetime | None
+    voting_end: AwareDatetime | None
 
 
 class SetVotingTimeRange:

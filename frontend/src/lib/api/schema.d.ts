@@ -1070,8 +1070,11 @@ export interface components {
              * Format: date-time
              */
             festival_start: string;
-            /** Festival Ended */
-            festival_ended: boolean;
+            /**
+             * Festival End
+             * Format: date-time
+             */
+            festival_end: string;
             limits: components["schemas"]["LimitsConfigDTO"];
         };
         /** Body_import_schedule */
@@ -1200,7 +1203,7 @@ export interface components {
              * Code
              * @enum {string}
              */
-            code: "ACCESS_DENIED" | "ALREADY_VOTED_IN_THIS_NOMINATION" | "APP_SETTINGS_NOT_FOUND" | "AUTHENTICATION_ERROR" | "CANNOT_REMOVE_LAST_SIGN_IN_METHOD" | "CAPTCHA_VERIFICATION_FAILED" | "CURRENT_EVENT_NOT_ALLOWED" | "EMAIL_ALREADY_EXISTS" | "EMAIL_CODE_REQUEST_TOO_FAST" | "EMAIL_DELIVERY_FAILED" | "EVENT_NOT_FOUND" | "HTTP_ERROR" | "INCORRECT_PASSWORD" | "INTERNAL_ERROR" | "INVALID_CREDENTIALS" | "INVALID_EMAIL" | "INVALID_OTP_CODE" | "INVALID_SCHEDULE_FILE" | "INVALID_TELEGRAM_AUTH_PAYLOAD" | "INVALID_VOTING_TIME_RANGE" | "LINK_INITIATOR_MISMATCH" | "NOMINATION_NOT_FOUND" | "OUTDATED_SCHEDULE_CHANGE" | "PARTICIPANT_NOT_FOUND" | "PUSH_SUBSCRIPTION_ALREADY_EXISTS" | "PUSH_SUBSCRIPTION_NOT_FOUND" | "SAME_EVENTS_ARE_NOT_ALLOWED" | "SCHEDULE_CHANGE_NOT_FOUND" | "SCHEDULE_EDIT_TOO_FAST" | "SKIPPED_EVENT_NOT_ALLOWED" | "SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER" | "SUBSCRIPTION_ALREADY_EXISTS" | "SUBSCRIPTION_NOT_FOUND" | "SYNC_ALREADY_RUNNING" | "TICKET_ALREADY_USED" | "TICKET_BARCODE_COLLISION" | "TICKET_NOT_FOUND" | "TICKET_NOT_LINKED" | "TOO_MANY_ATTEMPTS" | "TOO_MANY_LOGIN_ATTEMPTS" | "TOO_MANY_OTP_ATTEMPTS" | "USERNAME_ALREADY_TAKEN" | "USERNAME_PROFANITY" | "USER_ALREADY_EXISTS" | "USER_ALREADY_HAS_PROVIDER_LINKED" | "USER_ALREADY_HAS_TICKET_LINKED" | "USER_HAS_NO_EMAIL" | "USER_NOT_AUTHENTICATED" | "USER_NOT_FOUND" | "VALIDATION_ERROR" | "VOTE_NOT_FOUND";
+            code: "ACCESS_DENIED" | "ALREADY_VOTED_IN_THIS_NOMINATION" | "APP_SETTINGS_NOT_FOUND" | "AUTHENTICATION_ERROR" | "CANNOT_REMOVE_LAST_SIGN_IN_METHOD" | "CAPTCHA_VERIFICATION_FAILED" | "CURRENT_EVENT_NOT_ALLOWED" | "EMAIL_ALREADY_EXISTS" | "EMAIL_CODE_REQUEST_TOO_FAST" | "EMAIL_DELIVERY_FAILED" | "EVENT_NOT_FOUND" | "HTTP_ERROR" | "INCORRECT_PASSWORD" | "INTERNAL_ERROR" | "INVALID_CREDENTIALS" | "INVALID_EMAIL" | "INVALID_FESTIVAL_TIME_RANGE" | "INVALID_OTP_CODE" | "INVALID_SCHEDULE_FILE" | "INVALID_TELEGRAM_AUTH_PAYLOAD" | "INVALID_VOTING_TIME_RANGE" | "LINK_INITIATOR_MISMATCH" | "NOMINATION_NOT_FOUND" | "OUTDATED_SCHEDULE_CHANGE" | "PARTICIPANT_NOT_FOUND" | "PUSH_SUBSCRIPTION_ALREADY_EXISTS" | "PUSH_SUBSCRIPTION_NOT_FOUND" | "SAME_EVENTS_ARE_NOT_ALLOWED" | "SCHEDULE_CHANGE_NOT_FOUND" | "SCHEDULE_EDIT_TOO_FAST" | "SKIPPED_EVENT_NOT_ALLOWED" | "SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER" | "SUBSCRIPTION_ALREADY_EXISTS" | "SUBSCRIPTION_NOT_FOUND" | "SYNC_ALREADY_RUNNING" | "TICKET_ALREADY_USED" | "TICKET_BARCODE_COLLISION" | "TICKET_NOT_FOUND" | "TICKET_NOT_LINKED" | "TOO_MANY_ATTEMPTS" | "TOO_MANY_LOGIN_ATTEMPTS" | "TOO_MANY_OTP_ATTEMPTS" | "USERNAME_ALREADY_TAKEN" | "USERNAME_PROFANITY" | "USER_ALREADY_EXISTS" | "USER_ALREADY_HAS_PROVIDER_LINKED" | "USER_ALREADY_HAS_TICKET_LINKED" | "USER_HAS_NO_EMAIL" | "USER_NOT_AUTHENTICATED" | "USER_NOT_FOUND" | "VALIDATION_ERROR" | "VOTE_NOT_FOUND";
             /** Details */
             details?: {
                 [key: string]: unknown;
@@ -1305,8 +1308,6 @@ export interface components {
         LimitsConfigDTO: {
             /** Announcement Timeout */
             announcement_timeout: number;
-            /** Transition Buffer */
-            transition_buffer: number;
         };
         /** LinkTicketInput */
         LinkTicketInput: {
@@ -1475,12 +1476,13 @@ export interface components {
          * @description Public, unauthenticated projection of AppSettings served at GET /config.
          *
          *     Deliberately omits `limits` (ADR-0008 projection tuning is organizer-only).
-         *     Carries the raw `festival_start` so the client can run the live countdown,
-         *     plus `festival_ended` so the UI can pick its phase without provoking a 403 on
-         *     a guarded endpoint. Voting availability is intentionally not here: the UI
-         *     reads it per-user from GET /voting/status (which already reflects the
-         *     time range as a DISABLED state), so a second public copy would only be a
-         *     redundant source of truth to drift.
+         *     Carries the raw `festival_start` and `festival_end` so the client can run the
+         *     live countdown and pick its before/during/after phase itself — flipping at
+         *     each boundary without provoking a 403 on a guarded endpoint. Voting
+         *     availability is intentionally not here: the UI reads it per-user from
+         *     GET /voting/status (which already reflects the time range as a DISABLED
+         *     state), so a second public copy would only be a redundant source of truth to
+         *     drift.
          */
         PublicConfigDTO: {
             /**
@@ -1488,8 +1490,11 @@ export interface components {
              * Format: date-time
              */
             festival_start: string;
-            /** Festival Ended */
-            festival_ended: boolean;
+            /**
+             * Festival End
+             * Format: date-time
+             */
+            festival_end: string;
         };
         /** PushSubscriptionStatus */
         PushSubscriptionStatus: {
@@ -1742,12 +1747,10 @@ export interface components {
         UpdateAppSettingsInput: {
             /** Festival Start */
             festival_start?: string | null;
-            /** Festival Ended */
-            festival_ended?: boolean | null;
+            /** Festival End */
+            festival_end?: string | null;
             /** Announcement Timeout */
             announcement_timeout?: number | null;
-            /** Transition Buffer */
-            transition_buffer?: number | null;
         };
         /** UpdateCurrentUserInput */
         UpdateCurrentUserInput: {

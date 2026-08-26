@@ -6,7 +6,7 @@
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { fromEventDateTimeLocal, toEventDateTimeLocal } from '$lib/utils/formatters';
-	import { Alert, Button, Card, Helper, Input, Label, Spinner, Toggle } from 'flowbite-svelte';
+	import { Alert, Button, Card, Helper, Input, Label, Spinner } from 'flowbite-svelte';
 	import { untrack } from 'svelte';
 
 	import type { PageProps } from './$types';
@@ -15,32 +15,27 @@
 	const toastService = getToastService();
 
 	let isSaving = $state(false);
-	// festival_start is an instant; edit it on the venue clock via a zone-naive
-	// datetime-local, converting back to an ISO instant only when saving.
+	// festival_start and festival_end are instants; edit them on the venue clock
+	// via zone-naive datetime-locals, converting back to ISO instants on save.
 	let savedFestivalStart = $state(
 		untrack(() => toEventDateTimeLocal(data.settings.festival_start))
 	);
-	let savedFestivalEnded = $state(untrack(() => data.settings.festival_ended));
+	let savedFestivalEnd = $state(untrack(() => toEventDateTimeLocal(data.settings.festival_end)));
 	let festivalStart = $state(untrack(() => toEventDateTimeLocal(data.settings.festival_start)));
-	let festivalEnded = $state(untrack(() => data.settings.festival_ended));
+	let festivalEnd = $state(untrack(() => toEventDateTimeLocal(data.settings.festival_end)));
 	let festivalStartError = $state('');
+	let festivalEndError = $state('');
 	let savedAnnouncementTimeout = $state(untrack(() => data.settings.limits.announcement_timeout));
-	let savedTransitionBuffer = $state(untrack(() => data.settings.limits.transition_buffer));
 	let announcementTimeout = $state<number | undefined>(
 		untrack(() => data.settings.limits.announcement_timeout)
 	);
-	let transitionBuffer = $state<number | undefined>(
-		untrack(() => data.settings.limits.transition_buffer)
-	);
 	let announcementTimeoutError = $state('');
-	let transitionBufferError = $state('');
 	let submitError = $state('');
 
 	let hasChanges = $derived(
 		festivalStart !== savedFestivalStart ||
-			festivalEnded !== savedFestivalEnded ||
-			announcementTimeout !== savedAnnouncementTimeout ||
-			transitionBuffer !== savedTransitionBuffer
+			festivalEnd !== savedFestivalEnd ||
+			announcementTimeout !== savedAnnouncementTimeout
 	);
 
 	function validateFestivalStart() {
@@ -61,6 +56,32 @@
 		}
 	}
 
+	function validateFestivalEnd() {
+		if (!festivalEnd) {
+			festivalEndError = 'Укажи дату и время конца фестиваля';
+			return false;
+		}
+
+		// Guard the range: the backend stores the two instants independently with no
+		// ordering check, and an end at or before the start collapses the home page's
+		// "during" phase entirely — the countdown would jump straight to the farewell.
+		if (festivalStart && festivalEnd <= festivalStart) {
+			festivalEndError = 'Конец фестиваля должен быть позже начала';
+			return false;
+		}
+
+		festivalEndError = '';
+		return true;
+	}
+
+	function handleFestivalEndInput() {
+		submitError = '';
+		// Re-validate live only after the field has already shown an error once.
+		if (festivalEndError) {
+			validateFestivalEnd();
+		}
+	}
+
 	function validateAnnouncementTimeout() {
 		if (announcementTimeout === undefined || Number.isNaN(announcementTimeout)) {
 			announcementTimeoutError = 'Укажи таймаут анонсов';
@@ -76,34 +97,11 @@
 		return true;
 	}
 
-	function validateTransitionBuffer() {
-		if (transitionBuffer === undefined || Number.isNaN(transitionBuffer)) {
-			transitionBufferError = 'Укажи буфер перехода';
-			return false;
-		}
-
-		if (!Number.isInteger(transitionBuffer) || transitionBuffer < 0) {
-			transitionBufferError = 'Введи целое число не меньше 0';
-			return false;
-		}
-
-		transitionBufferError = '';
-		return true;
-	}
-
 	function handleAnnouncementTimeoutInput() {
 		submitError = '';
 		// Re-validate live only after the field has already shown an error once.
 		if (announcementTimeoutError) {
 			validateAnnouncementTimeout();
-		}
-	}
-
-	function handleTransitionBufferInput() {
-		submitError = '';
-		// Re-validate live only after the field has already shown an error once.
-		if (transitionBufferError) {
-			validateTransitionBuffer();
 		}
 	}
 
@@ -113,17 +111,16 @@
 
 		// Validate every field so all errors surface at once, not one at a time.
 		const isFestivalStartValid = validateFestivalStart();
+		const isFestivalEndValid = validateFestivalEnd();
 		const isAnnouncementTimeoutValid = validateAnnouncementTimeout();
-		const isTransitionBufferValid = validateTransitionBuffer();
 
-		if (!isFestivalStartValid || !isAnnouncementTimeoutValid || !isTransitionBufferValid) {
+		if (!isFestivalStartValid || !isFestivalEndValid || !isAnnouncementTimeoutValid) {
 			return;
 		}
 
 		const nextAnnouncementTimeout = announcementTimeout;
-		const nextTransitionBuffer = transitionBuffer;
 
-		if (nextAnnouncementTimeout === undefined || nextTransitionBuffer === undefined) {
+		if (nextAnnouncementTimeout === undefined) {
 			return;
 		}
 
@@ -133,9 +130,8 @@
 			const { error, response } = await client.PATCH('/settings', {
 				body: {
 					festival_start: fromEventDateTimeLocal(festivalStart),
-					festival_ended: festivalEnded,
-					announcement_timeout: nextAnnouncementTimeout,
-					transition_buffer: nextTransitionBuffer
+					festival_end: fromEventDateTimeLocal(festivalEnd),
+					announcement_timeout: nextAnnouncementTimeout
 				}
 			});
 
@@ -156,12 +152,11 @@
 			}
 
 			savedFestivalStart = festivalStart;
-			savedFestivalEnded = festivalEnded;
+			savedFestivalEnd = festivalEnd;
 			savedAnnouncementTimeout = nextAnnouncementTimeout;
-			savedTransitionBuffer = nextTransitionBuffer;
 			festivalStartError = '';
+			festivalEndError = '';
 			announcementTimeoutError = '';
-			transitionBufferError = '';
 			toastService.add('Настройки фестиваля сохранены', 'success');
 			await invalidate('app:festival-settings');
 		} catch (err) {
@@ -212,19 +207,26 @@
 			{/if}
 		</div>
 
-		<div class="flex items-start justify-between gap-3">
-			<div class="min-w-0">
-				<h3 class="text-base font-medium text-gray-900 dark:text-white">Фестиваль завершён</h3>
-				<p class="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-300">
-					Включи, когда фестиваль закончится — на главной вместо отсчёта появится прощание.
-				</p>
-			</div>
-			<Toggle
-				bind:checked={festivalEnded}
-				color="primary"
+		<div class="space-y-2">
+			<Label for="festival-end">Конец фестиваля (МСК)</Label>
+			<Input
+				id="festival-end"
+				name="festival_end"
+				type="datetime-local"
+				autocomplete="off"
+				bind:value={festivalEnd}
 				disabled={isSaving}
-				onchange={() => (submitError = '')}
+				oninput={handleFestivalEndInput}
+				onblur={validateFestivalEnd}
 			/>
+			{#if festivalEndError}
+				<Helper color="red">{festivalEndError}</Helper>
+			{:else}
+				<Helper>
+					После него на главной вместо отсчёта появится прощание. Сдвинь позже, если фестиваль
+					затянулся.
+				</Helper>
+			{/if}
 		</div>
 	</Card>
 
@@ -250,30 +252,6 @@
 				<Helper color="red">{announcementTimeoutError}</Helper>
 			{:else}
 				<Helper>Минимум 1 секунда. Ограничение помогает не отправлять анонсы слишком часто.</Helper>
-			{/if}
-		</div>
-
-		<div class="space-y-2">
-			<Label for="transition-buffer">Буфер перехода, сек</Label>
-			<Input
-				id="transition-buffer"
-				name="transition_buffer"
-				type="number"
-				min="0"
-				step="1"
-				inputmode="numeric"
-				autocomplete="off"
-				bind:value={transitionBuffer}
-				disabled={isSaving}
-				oninput={handleTransitionBufferInput}
-				onblur={validateTransitionBuffer}
-			/>
-			{#if transitionBufferError}
-				<Helper color="red">{transitionBufferError}</Helper>
-			{:else}
-				<Helper>
-					Запас времени между выступлениями. Учитывается при расчёте ожидаемого времени начала.
-				</Helper>
 			{/if}
 		</div>
 	</Card>

@@ -7,14 +7,12 @@
 		GlobeOutline,
 		MapPinAltOutline
 	} from 'flowbite-svelte-icons';
-	import { onMount } from 'svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import TelegramIcon from '~icons/simple-icons/telegram';
 	import TiktokIcon from '~icons/simple-icons/tiktok';
 	import VkIcon from '~icons/simple-icons/vk';
 
-	let { festivalStart, festivalEnded }: { festivalStart: string; festivalEnded: boolean } =
-		$props();
+	let { festivalStart, festivalEnd }: { festivalStart: string; festivalEnd: string } = $props();
 
 	const socials = [
 		{ label: 'Официальный сайт fancom.info', href: 'https://fancom.info', icon: GlobeOutline },
@@ -23,26 +21,28 @@
 		{ label: 'TikTok', href: 'https://www.tiktok.com/@fan_fan_official', icon: TiktokIcon }
 	];
 
-	// Program start, on the venue clock. Configurable via GET /config and passed in
-	// by the page so the hero renders for guests and on a cold/offline load.
-	let target = $derived(new Date(festivalStart).getTime());
+	// Program start/end, on the venue clock. Configurable via GET /config and passed
+	// in by the page so the hero renders for guests and on a cold/offline load.
+	let startMs = $derived(new Date(festivalStart).getTime());
+	let endMs = $derived(new Date(festivalEnd).getTime());
 	let festivalDate = $derived(formatFestivalDateTime(festivalStart));
 
 	let now = $state(Date.now());
-	let intervalId: ReturnType<typeof setInterval> | null = null;
+	let documentVisible = $state(true);
 
 	// Key art can fail to load on flaky con-venue wifi; fall back to a branded bed
 	// instead of the browser's broken-image icon.
 	let imageFailed = $state(false);
 
-	let remaining = $derived(Math.max(0, target - now));
-	let hasStarted = $derived(remaining <= 0);
+	let remaining = $derived(Math.max(0, startMs - now));
 
-	// before → countdown to the start; during → the festival is running; after →
-	// organizers flipped festival_ended, a deliberate switch (not a guessed end).
+	// before → counting down to the start; during → the festival is running;
+	// after → it has wrapped up. Both boundaries are instants, so the phase flips
+	// on its own as `now` crosses them (see the ticker and boundary effects below);
+	// there is no operator switch to forget to press.
 	let phase = $derived.by(() => {
-		if (festivalEnded) return 'after';
-		if (hasStarted) return 'during';
+		if (now >= endMs) return 'after';
+		if (now >= startMs) return 'during';
 		return 'before';
 	});
 
@@ -67,39 +67,53 @@
 		return value.toString().padStart(2, '0');
 	}
 
-	// Stop the 1s ticker. Safe to call when already stopped.
-	function stopTicking() {
-		if (intervalId === null) return;
-		clearInterval(intervalId);
-		intervalId = null;
-	}
+	// The 1s ticker drives the visible countdown, so it only needs to run while we
+	// are counting down to the start and the tab is in front — paused when hidden
+	// because background timers aren't reliably throttled (an open SSE stream can
+	// keep the tab awake). Svelte's guidance is to own timers in an $effect and
+	// return their teardown; the interval is then cleared automatically when the
+	// phase leaves 'before', the tab hides, or the component unmounts. Resyncing on
+	// (re)entry keeps a return-from-hidden from painting a stale second, and lets
+	// `now` cross `startMs` so the phase advances to 'during' on its own.
+	$effect(() => {
+		if (phase !== 'before' || !documentVisible) return;
+		now = Date.now();
+		const id = setInterval(() => (now = Date.now()), SECOND);
+		return () => clearInterval(id);
+	});
 
-	// Start the 1s ticker, only while counting down to the start.
-	function startTicking() {
-		if (intervalId !== null || phase !== 'before') return;
-		now = Date.now(); // resync after any pause so the time doesn't jump visibly
-		intervalId = setInterval(() => {
-			now = Date.now();
-			// Countdown reached zero — nothing left to tick, so stop for good.
-			if (remaining <= 0) stopTicking();
-		}, 1000);
-	}
+	// setTimeout delays are stored in a signed 32-bit int of milliseconds; a delay
+	// past this (~24.8 days) overflows and fires immediately. A festival configured
+	// to run that long would otherwise leave the hero stuck in 'during'.
+	const MAX_TIMEOUT_MS = 2_147_483_647;
 
-	// Pause the ticker while the tab is hidden to save battery: background timers
-	// aren't reliably throttled (an open SSE stream can keep the tab awake), so we
-	// stop it explicitly and resume when the user returns.
-	function handleVisibility() {
-		if (document.visibilityState === 'visible') startTicking();
-		else stopTicking();
-	}
+	// Flip 'during' → 'after' the moment festival_end passes. A boundary timeout
+	// beats a 1s interval ticking pointlessly through the whole festival: it bumps
+	// `now` once at the end, and the phase derives the rest. The delay comes off the
+	// live clock, not the `now` state, so this effect tracks only phase and endMs
+	// and never re-runs on a tick. A delay longer than one timeout can hold is
+	// re-armed in chunks rather than firing early and never rescheduling.
+	$effect(() => {
+		if (phase !== 'during') return;
 
-	onMount(() => {
-		startTicking();
-		return stopTicking;
+		let id: ReturnType<typeof setTimeout>;
+		const arm = () => {
+			const msUntilEnd = endMs - Date.now();
+			if (msUntilEnd <= 0) {
+				now = Date.now();
+				return;
+			}
+			id = setTimeout(arm, Math.min(msUntilEnd, MAX_TIMEOUT_MS));
+		};
+		arm();
+
+		return () => clearTimeout(id);
 	});
 </script>
 
-<svelte:document onvisibilitychange={handleVisibility} />
+<svelte:document
+	onvisibilitychange={() => (documentVisible = document.visibilityState === 'visible')}
+/>
 
 <section
 	aria-labelledby="hero-title"

@@ -2,8 +2,15 @@ from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
 
-from fanfan.core.exceptions.settings import InvalidVotingTimeRange
-from fanfan.core.models.app_settings import DEFAULT_FESTIVAL_START, AppSettings
+from fanfan.core.exceptions.settings import (
+    InvalidFestivalTimeRange,
+    InvalidVotingTimeRange,
+)
+from fanfan.core.models.app_settings import (
+    DEFAULT_FESTIVAL_END,
+    DEFAULT_FESTIVAL_START,
+    AppSettings,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -20,26 +27,35 @@ def test_festival_defaults():
     settings = AppSettings()
 
     assert settings.festival_start == DEFAULT_FESTIVAL_START
-    assert settings.festival_ended is False
+    assert settings.festival_end == DEFAULT_FESTIVAL_END
 
 
-def test_set_festival_start_updates_value():
+def test_set_festival_schedule_updates_values():
     settings = AppSettings()
     new_start = datetime(2027, 8, 21, 10, 0, tzinfo=UTC)
+    new_end = datetime(2027, 8, 22, 20, 0, tzinfo=UTC)
 
-    settings.set_festival_start(start=new_start)
+    settings.set_festival_schedule(start=new_start, end=new_end)
 
     assert settings.festival_start == new_start
+    assert settings.festival_end == new_end
 
 
-def test_set_festival_ended_toggles_value():
+def test_set_festival_schedule_rejects_reversed_range():
     settings = AppSettings()
+    start = datetime(2027, 8, 22, 20, 0, tzinfo=UTC)
+    end = datetime(2027, 8, 21, 10, 0, tzinfo=UTC)
 
-    settings.set_festival_ended(ended=True)
-    assert settings.festival_ended is True
+    with pytest.raises(InvalidFestivalTimeRange):
+        settings.set_festival_schedule(start=start, end=end)
 
-    settings.set_festival_ended(ended=False)
-    assert settings.festival_ended is False
+
+def test_set_festival_schedule_rejects_zero_length():
+    settings = AppSettings()
+    point = datetime(2027, 8, 22, 20, 0, tzinfo=UTC)
+
+    with pytest.raises(InvalidFestivalTimeRange):
+        settings.set_festival_schedule(start=point, end=point)
 
 
 def test_set_voting_time_range_updates_values():

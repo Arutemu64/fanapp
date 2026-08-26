@@ -1,7 +1,6 @@
 import logging
-from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import AwareDatetime, BaseModel, Field
 
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
@@ -17,10 +16,12 @@ logger = logging.getLogger(__name__)
 
 
 class UpdateAppSettingsInput(BaseModel):
-    festival_start: datetime | None = None
-    festival_ended: bool | None = None
+    # Require an offset: the range check compares an incoming boundary against the
+    # persisted (tz-aware) counterpart, and a naive value would raise TypeError —
+    # a 500 — instead of a clean 422. The organizer form always sends an instant.
+    festival_start: AwareDatetime | None = None
+    festival_end: AwareDatetime | None = None
     announcement_timeout: int | None = Field(default=None, ge=1)
-    transition_buffer: int | None = Field(default=None, ge=0)
 
 
 class UpdateSettings:
@@ -56,13 +57,17 @@ class UpdateSettings:
         # limits-only edit would send every client to refetch identical config.
         public_config_changed = False
 
-        if (festival_start := data_to_update.get("festival_start")) is not None:
-            settings.set_festival_start(start=festival_start)
-            update_flag = True
-            public_config_changed = True
-
-        if (festival_ended := data_to_update.get("festival_ended")) is not None:
-            settings.set_festival_ended(ended=festival_ended)
+        festival_start = data_to_update.get("festival_start")
+        festival_end = data_to_update.get("festival_end")
+        if festival_start is not None or festival_end is not None:
+            # PATCH may carry either boundary alone, so validate the range as a
+            # whole — filling the untouched side from the persisted value — rather
+            # than each field in isolation, which could reject a valid shift of both.
+            # A datetime is always truthy, so `or` picks the persisted value only
+            # when this PATCH left the boundary out.
+            new_start = festival_start or settings.festival_start
+            new_end = festival_end or settings.festival_end
+            settings.set_festival_schedule(start=new_start, end=new_end)
             update_flag = True
             public_config_changed = True
 
@@ -70,10 +75,6 @@ class UpdateSettings:
             announcement_timeout := data_to_update.get("announcement_timeout")
         ) is not None:
             settings.update_limits(announcement_timeout=announcement_timeout)
-            update_flag = True
-
-        if (transition_buffer := data_to_update.get("transition_buffer")) is not None:
-            settings.update_limits(transition_buffer=transition_buffer)
             update_flag = True
 
         if not update_flag:
