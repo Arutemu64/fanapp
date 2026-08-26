@@ -1,7 +1,6 @@
 import logging
-from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import AwareDatetime, BaseModel, Field
 
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
@@ -17,8 +16,11 @@ logger = logging.getLogger(__name__)
 
 
 class UpdateAppSettingsInput(BaseModel):
-    festival_start: datetime | None = None
-    festival_end: datetime | None = None
+    # Require an offset: the range check compares an incoming boundary against the
+    # persisted (tz-aware) counterpart, and a naive value would raise TypeError —
+    # a 500 — instead of a clean 422. The organizer form always sends an instant.
+    festival_start: AwareDatetime | None = None
+    festival_end: AwareDatetime | None = None
     announcement_timeout: int | None = Field(default=None, ge=1)
 
 

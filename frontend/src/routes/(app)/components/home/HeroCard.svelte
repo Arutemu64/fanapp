@@ -82,16 +82,31 @@
 		return () => clearInterval(id);
 	});
 
-	// Flip 'during' → 'after' the moment festival_end passes. A single timeout to
-	// the boundary beats a 1s interval ticking pointlessly through the whole
-	// festival: it fires once, bumps `now`, and the phase derives the rest. Clamped
-	// to 0 so an end already in the past resolves on the next frame.
+	// setTimeout delays are stored in a signed 32-bit int of milliseconds; a delay
+	// past this (~24.8 days) overflows and fires immediately. A festival configured
+	// to run that long would otherwise leave the hero stuck in 'during'.
+	const MAX_TIMEOUT_MS = 2_147_483_647;
+
+	// Flip 'during' → 'after' the moment festival_end passes. A boundary timeout
+	// beats a 1s interval ticking pointlessly through the whole festival: it bumps
+	// `now` once at the end, and the phase derives the rest. The delay comes off the
+	// live clock, not the `now` state, so this effect tracks only phase and endMs
+	// and never re-runs on a tick. A delay longer than one timeout can hold is
+	// re-armed in chunks rather than firing early and never rescheduling.
 	$effect(() => {
 		if (phase !== 'during') return;
-		// Delay off the live clock, not the `now` state, so this effect tracks only
-		// phase and endMs — it schedules once on entering 'during' and never re-runs
-		// on a tick.
-		const id = setTimeout(() => (now = Date.now()), Math.max(0, endMs - Date.now()));
+
+		let id: ReturnType<typeof setTimeout>;
+		const arm = () => {
+			const remaining = endMs - Date.now();
+			if (remaining <= 0) {
+				now = Date.now();
+				return;
+			}
+			id = setTimeout(arm, Math.min(remaining, MAX_TIMEOUT_MS));
+		};
+		arm();
+
 		return () => clearTimeout(id);
 	});
 </script>
