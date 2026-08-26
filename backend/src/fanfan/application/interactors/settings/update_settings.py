@@ -63,12 +63,11 @@ class UpdateSettings:
             # PATCH may carry either boundary alone, so validate the range as a
             # whole — filling the untouched side from the persisted value — rather
             # than each field in isolation, which could reject a valid shift of both.
-            settings.set_festival_schedule(
-                start=festival_start
-                if festival_start is not None
-                else settings.festival_start,
-                end=festival_end if festival_end is not None else settings.festival_end,
-            )
+            # A datetime is always truthy, so `or` picks the persisted value only
+            # when this PATCH left the boundary out.
+            new_start = festival_start or settings.festival_start
+            new_end = festival_end or settings.festival_end
+            settings.set_festival_schedule(start=new_start, end=new_end)
             update_flag = True
             public_config_changed = True
 

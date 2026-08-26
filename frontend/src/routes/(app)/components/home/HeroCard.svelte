@@ -98,12 +98,12 @@
 
 		let id: ReturnType<typeof setTimeout>;
 		const arm = () => {
-			const remaining = endMs - Date.now();
-			if (remaining <= 0) {
+			const msUntilEnd = endMs - Date.now();
+			if (msUntilEnd <= 0) {
 				now = Date.now();
 				return;
 			}
-			id = setTimeout(arm, Math.min(remaining, MAX_TIMEOUT_MS));
+			id = setTimeout(arm, Math.min(msUntilEnd, MAX_TIMEOUT_MS));
 		};
 		arm();
 
