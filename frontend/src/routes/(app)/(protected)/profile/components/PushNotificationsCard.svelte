@@ -35,19 +35,24 @@
 	let pushUnsupported = $state(false);
 	const toastService = getToastService();
 	let isLoading = $state(true);
+	let hasVkAccount = $derived(
+		user.social_identities.some((socialIdentity) => socialIdentity.provider === 'vk')
+	);
 	// Writable $derived: the toggles bind to these and flip them optimistically,
 	// then the rollback in updateSettings reassigns from `user.settings` on failure.
 	// Because they derive from the prop, a successful refetch re-syncs them for free.
 	let receiveAll = $derived(user.settings.receive_all_announcements);
-	let receiveVk = $derived(user.settings.receive_vk_notifications);
+	// The backend won't deliver VK messages until a VK identity is linked, so the
+	// stored flag is inert while unlinked. Reflect the effective state — off until
+	// VK is connected — rather than the raw setting, which would read "on" next to
+	// the "connect VK first" hint. Only interactive once linked (Toggle is disabled
+	// otherwise), so the optimistic flip and rollback still see the raw value.
+	let receiveVk = $derived(hasVkAccount && user.settings.receive_vk_notifications);
 	let isSavingSettings = $state(false);
 	let isSendingTest = $state(false);
 	const pwa = getPwaService();
 	let showIosPwaModal = $state(false);
 	let showVkModal = $state(false);
-	let hasVkAccount = $derived(
-		user.social_identities.some((socialIdentity) => socialIdentity.provider === 'vk')
-	);
 	// Link to the group's chat where the user grants "allow messages". Built from
 	// the build-time group id, so it may be empty if VK notifications were not
 	// configured for this deployment — the modal hides the button then.
@@ -236,7 +241,11 @@
 				receive_vk_notifications: receiveVk
 			},
 			() => {
-				receiveVk = user.settings.receive_vk_notifications;
+				// Roll back to the effective state, not the raw flag: if VK was
+				// unlinked while the request was in flight, restoring the raw `true`
+				// would force the disabled toggle back ON — the misleading state this
+				// card avoids. Mirrors the receiveVk derived above.
+				receiveVk = hasVkAccount && user.settings.receive_vk_notifications;
 			}
 		);
 	}
