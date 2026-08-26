@@ -3,7 +3,13 @@ import { isReachable, markReachable } from '$lib/services/reachability';
 
 import type { LayoutLoad } from './$types';
 
-export const load: LayoutLoad = async ({ fetch }) => {
+export const load: LayoutLoad = async ({ fetch, depends }) => {
+	// Voting availability now derives from the configured [start, end) range, so the
+	// status banner must refresh when organizers change it. Tie this read to the
+	// same 'app:config' key the home hero uses; +layout.svelte re-invalidates it on
+	// a config_updated SSE event (and on reconnect, to self-heal a missed one).
+	depends('app:config');
+
 	// Voting status is a live, online-only read like the nominations it frames (see
 	// ./+page.ts). When the backend is known unreachable, skip the doomed request;
 	// the status banner simply hides on an undefined status.
