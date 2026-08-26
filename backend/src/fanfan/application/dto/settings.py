@@ -14,7 +14,7 @@ class LimitsConfigDTO(BaseModel):
 class AppSettingsDTO(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    # Voting availability is managed separately, under voting:manage — see the
+    # Voting time range is managed separately, under voting:manage — see the
     # voting dashboard (GET/PATCH /voting/dashboard). It is deliberately not here.
     festival_start: datetime
     festival_ended: bool
@@ -29,8 +29,8 @@ class PublicConfigDTO(BaseModel):
     plus `festival_ended` so the UI can pick its phase without provoking a 403 on
     a guarded endpoint. Voting availability is intentionally not here: the UI
     reads it per-user from GET /voting/status (which already reflects the
-    `voting_enabled` flag as a DISABLED state), so a second public copy would only
-    be a redundant source of truth to drift.
+    time range as a DISABLED state), so a second public copy would only be a
+    redundant source of truth to drift.
     """
 
     model_config = ConfigDict(from_attributes=True)

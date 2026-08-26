@@ -24,16 +24,22 @@ class _FakeAppSettingsGateway:
 
 async def test_projects_public_fields_from_settings():
     start = datetime(2026, 8, 22, 11, 30, tzinfo=UTC)
+    voting_start = datetime(2026, 8, 22, 12, 0, tzinfo=UTC)
+    voting_end = datetime(2026, 8, 22, 18, 0, tzinfo=UTC)
     settings = AppSettings(
-        voting_enabled=True, festival_start=start, festival_ended=True
+        voting_start=voting_start,
+        voting_end=voting_end,
+        festival_start=start,
+        festival_ended=True,
     )
 
     result = await GetPublicConfig(_FakeAppSettingsGateway(settings))()
 
     assert result.festival_start == start
     assert result.festival_ended is True
-    # Neither limits (organizer-only) nor voting_enabled leak into the public
-    # projection: voting availability is served per-user from GET /voting/status,
-    # so the enabled input above must not appear here.
+    # Neither limits (organizer-only) nor the voting time range leak into the
+    # public projection: voting availability is served per-user from
+    # GET /voting/status, so the time range must not appear here.
     assert not hasattr(result, "limits")
-    assert not hasattr(result, "voting_enabled")
+    assert not hasattr(result, "voting_start")
+    assert not hasattr(result, "voting_end")

@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass, replace
+from datetime import UTC, datetime, timedelta
 
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.nominations import NominationGateway
@@ -291,10 +292,12 @@ class SeedDemoData:
                 await self.participant_gateway.add(participant)
 
     async def _enable_voting(self) -> None:
-        # Voting entries are invisible until the global flag is on, so flip it —
-        # the whole point of the seed is a voting flow that works out of the box.
+        # Voting entries are invisible until the time range includes "now", so
+        # open a wide window — the whole point of the seed is a voting flow
+        # that works out of the box.
         settings = await self.settings_gateway.get_for_update()
-        settings.set_voting_enabled(enabled=True)
+        now = datetime.now(UTC)
+        settings.set_voting_time_range(start=now, end=now + timedelta(days=1))
         await self.settings_gateway.save(settings)
 
     async def __call__(self) -> None:

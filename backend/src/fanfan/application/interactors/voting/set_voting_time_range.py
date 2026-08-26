@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from pydantic import BaseModel
 
@@ -14,13 +15,15 @@ from fanfan.core.vo.permission import Permission
 logger = logging.getLogger(__name__)
 
 
-class SetVotingEnabledInput(BaseModel):
-    enabled: bool
+class SetVotingTimeRangeInput(BaseModel):
+    voting_start: datetime | None
+    voting_end: datetime | None
 
 
-class SetVotingEnabled:
-    """Toggle whether visitors can vote. Split out from festival settings so
-    running the vote is gated by voting:manage, not settings:manage."""
+class SetVotingTimeRange:
+    """Set the time range during which visitors can vote. Split out from
+    festival settings so running the vote is gated by voting:manage, not
+    settings:manage."""
 
     def __init__(
         self,
@@ -36,7 +39,7 @@ class SetVotingEnabled:
         self.uow = uow
         self.realtime = realtime
 
-    async def __call__(self, data: SetVotingEnabledInput) -> None:
+    async def __call__(self, data: SetVotingTimeRangeInput) -> None:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
             user=current_user, permission=Permission.VOTING_MANAGE
@@ -46,17 +49,19 @@ class SetVotingEnabled:
         if settings is None:
             raise AppSettingsNotFound
 
-        # No change means no write and no broadcast — a redundant refetch would
-        # only churn every open client for identical state.
-        if settings.voting_enabled == data.enabled:
+        if (
+            settings.voting_start == data.voting_start
+            and settings.voting_end == data.voting_end
+        ):
             return
 
-        settings.set_voting_enabled(enabled=data.enabled)
+        settings.set_voting_time_range(start=data.voting_start, end=data.voting_end)
         await self.settings_gateway.save(settings)
         await self.uow.commit()
         logger.info(
-            "Voting %s",
-            "enabled" if data.enabled else "disabled",
+            "Voting time range updated: %s – %s",
+            data.voting_start,
+            data.voting_end,
             extra={"actor_id": str(current_user.id)},
         )
 

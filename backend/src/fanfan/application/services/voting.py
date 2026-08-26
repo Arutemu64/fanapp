@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.models.ticket import Ticket
@@ -13,7 +15,7 @@ class VotingService:
         if ticket is None or ticket.used_by_user_id != user.id:
             return VotingStatus.NO_TICKET
         settings = await self.settings_gateway.get()
-        if not settings.voting_enabled:
+        if not settings.is_voting_open(now=datetime.now(UTC)):
             return VotingStatus.DISABLED
         return VotingStatus.OPEN
 

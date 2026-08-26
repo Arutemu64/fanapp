@@ -716,7 +716,7 @@ export interface paths {
         };
         /**
          * Get the organizer voting dashboard
-         * @description Voting enable flag, the leading participant in each votable nomination, and the size of the prize-draw pool. Requires voting:manage.
+         * @description Voting time range, the leading participant in each votable nomination, and the size of the prize-draw pool. Requires voting:manage.
          */
         get: operations["get_voting_dashboard"];
         put?: never;
@@ -725,10 +725,10 @@ export interface paths {
         options?: never;
         head?: never;
         /**
-         * Enable or disable voting
-         * @description Turns voting on or off for visitors. Requires voting:manage.
+         * Set voting time range
+         * @description Sets the time range during which visitors can vote. Requires voting:manage.
          */
-        patch: operations["set_voting_enabled"];
+        patch: operations["set_voting_time_range"];
         trace?: never;
     };
     "/voting/contest/draw": {
@@ -1255,8 +1255,10 @@ export interface components {
         };
         /** GetVotingDashboardOutput */
         GetVotingDashboardOutput: {
-            /** Voting Enabled */
-            voting_enabled: boolean;
+            /** Voting Start */
+            voting_start: string | null;
+            /** Voting End */
+            voting_end: string | null;
             /** Contest Pool Size */
             contest_pool_size: number;
             /** Nominations */
@@ -1473,8 +1475,8 @@ export interface components {
          *     plus `festival_ended` so the UI can pick its phase without provoking a 403 on
          *     a guarded endpoint. Voting availability is intentionally not here: the UI
          *     reads it per-user from GET /voting/status (which already reflects the
-         *     `voting_enabled` flag as a DISABLED state), so a second public copy would only
-         *     be a redundant source of truth to drift.
+         *     time range as a DISABLED state), so a second public copy would only be a
+         *     redundant source of truth to drift.
          */
         PublicConfigDTO: {
             /**
@@ -1598,10 +1600,12 @@ export interface components {
              */
             mailing_id: string;
         };
-        /** SetVotingEnabledInput */
-        SetVotingEnabledInput: {
-            /** Enabled */
-            enabled: boolean;
+        /** SetVotingTimeRangeInput */
+        SetVotingTimeRangeInput: {
+            /** Voting Start */
+            voting_start: string | null;
+            /** Voting End */
+            voting_end: string | null;
         };
         /**
          * SocialProvider
@@ -3941,7 +3945,7 @@ export interface operations {
             };
         };
     };
-    set_voting_enabled: {
+    set_voting_time_range: {
         parameters: {
             query?: never;
             header?: never;
@@ -3950,11 +3954,11 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SetVotingEnabledInput"];
+                "application/json": components["schemas"]["SetVotingTimeRangeInput"];
             };
         };
         responses: {
-            /** @description Voting availability updated successfully. */
+            /** @description Voting time range updated successfully. */
             204: {
                 headers: {
                     [name: string]: unknown;
