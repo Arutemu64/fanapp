@@ -74,8 +74,8 @@ rather than failing the build.
   image instead. It bind-mounts the caller's working directory read-only at the
   same path and matches the caller's uid/gid, which is what lets hadolint
   resolve relative Dockerfile arguments and discover `.hadolint.yaml` exactly as
-  the native binary does. `just dockerfile-lint`, `just ci` and the pre-commit
-  `hadolint` hook therefore all work unchanged, calling a plain `hadolint` the
+  the native binary does. `just dockerfile-lint` and the pre-commit
+  `hadolint` hook therefore both work unchanged, calling a plain `hadolint` the
   same way they do on a laptop where `mise` supplies the real binary.
 * CodeGraph (`@colbymchenry/codegraph`, the code-navigation graph — see
   [AGENTS.md](../AGENTS.md) "Code navigation") — installed from the **npm
@@ -131,30 +131,34 @@ Docker Hub rate-limit below.)
 
 ## Docker images
 
-The cloud agent flow does two container-bound tasks: autogenerating Alembic
-migrations against a throwaway Postgres, and running the `@pytest.mark.integration`
-suite against real Postgres + Valkey via testcontainers (see
-[testing.md](testing.md)). So the setup script prepulls two images, baked into
-the snapshot and on disk at session start:
+The cloud daemon's in-session job is autogenerating Alembic migrations against a
+throwaway Postgres (`just backend-generate-auto`). The `@pytest.mark.integration`
+suite runs against real Postgres + Valkey via testcontainers (see
+[testing.md](testing.md)), but per AGENTS.md it is **left to CI** even here —
+it's slow, and a green run in CI is the gate that matters — so a session does not
+run it. The setup script still prepulls the images it *would* need, so the option
+exists and CI-parity images are cached; each is baked into the snapshot and on
+disk at session start:
 
 * `postgres:18.4-alpine` — pinned (not a floating minor tag) to match
-  production (`docker-compose.yml`) exactly; used both by
-  `just backend-generate-auto` and by the testcontainers integration suite
-  (`backend/tests/fixtures/db_provider.py`). One image everywhere avoids
-  running tests against a different Postgres build than production — Alpine's
+  production (`docker-compose.yml`) exactly; used by
+  `just backend-generate-auto`, and shared with the testcontainers integration
+  suite (`backend/tests/fixtures/db_provider.py`). One image everywhere avoids
+  running against a different Postgres build than production — Alpine's
   musl libc has different collation/locale behavior than glibc-based images,
   so a mismatched variant could hide or fabricate sorting bugs.
 * `valkey/valkey:9.1-alpine` — the testcontainers image
   `backend/tests/fixtures/db_provider.py` boots for `@pytest.mark.integration`
-  tests, matching what CI (`.github/workflows/ci.yml`) uses.
+  tests, matching what CI (`.github/workflows/ci.yml`) uses; prepulled for
+  parity though the suite itself runs in CI, not in-session.
 * `hadolint/hadolint` — backs the `hadolint` shim above, so the Dockerfile gate
-  in `just ci` runs in-session instead of only in CI. Pinned to the same version
+  (`just dockerfile-lint`) runs in-session instead of only in CI. Pinned to the same version
   as `mise.toml` and the `.pre-commit-config.yaml` rev (docs/dependencies.md);
   the `renovate.json` `hadolint` group bumps all three together.
 
 Only the daemon (a process) is restarted per session by the hook; containers
 themselves are booted and torn down on demand by `just backend-generate-auto`
-or a test run (`just backend-test` / `backend-test-integration`). The hook
+(or by a test run, should one be invoked). The hook
 also sets `TESTCONTAINERS_RYUK_DISABLED=true`, matching CI — dockerd itself
 doesn't survive between sessions and the fixtures stop their own containers in
 `finally:` blocks, so the Ryuk cleanup reaper isn't needed and skipping it

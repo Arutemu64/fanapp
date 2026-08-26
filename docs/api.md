@@ -15,7 +15,7 @@ Forgetting to regenerate is not a silent failure — two committed artifacts eac
 
 | Artifact | Generated from | Checked by |
 | --- | --- | --- |
-| `shared/openapi/openapi.json` | the routers and DTOs | `backend/tests/unit/presentation/test_openapi_spec.py` (runs with `just backend-test` and `just ci`) |
+| `shared/openapi/openapi.json` | the routers and DTOs | `backend/tests/unit/presentation/test_openapi_spec.py` (runs with `just backend-test`) |
 | `frontend/src/lib/api/schema.d.ts` | that spec | `just frontend-check-api` (`pnpm generate-api:check`; its own CI job) |
 
 `just frontend-generate-api` regenerates both and fixes either failure.

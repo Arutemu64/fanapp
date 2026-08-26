@@ -71,15 +71,18 @@ PostgreSQL and Redis). They cannot run in environments without a Docker daemon.
 
 ### Running them on Claude Code on the web
 
-Cloud sessions run integration tests in-session (`just backend-test` /
-`backend-test-integration`), same as CI (`.github/workflows/ci.yml`). The
-setup script prepulls the testcontainers images (`postgres:18.4-alpine` —
-pinned, and shared with Alembic autogenerate and production — and
-`valkey/valkey:9.1-alpine`) and the SessionStart hook starts `dockerd` and sets
-`TESTCONTAINERS_RYUK_DISABLED=true` (matching CI — the fixtures already stop
-their own containers in `finally:` blocks, so the Ryuk reaper isn't needed).
-Provisioning details — setup script vs. hook, image prepull, Docker Hub auth,
-network access — are in [claude-cloud.md](claude-cloud.md).
+Cloud sessions **have** a Docker daemon (the SessionStart hook starts `dockerd`),
+but per AGENTS.md they still **leave the integration suite to CI**
+(`.github/workflows/ci.yml`) — it's slow, and CI is the gate that counts. The
+daemon's in-session job is migration autogenerate (`just backend-generate-auto`),
+not `just backend-test-integration`. The setup script prepulls the
+testcontainers images for parity (`postgres:18.4-alpine` — pinned, and shared
+with Alembic autogenerate and production — and `valkey/valkey:9.1-alpine`) and
+the hook sets `TESTCONTAINERS_RYUK_DISABLED=true` (matching CI — the fixtures
+already stop their own containers in `finally:` blocks, so the Ryuk reaper isn't
+needed), so the suite *can* run if ever needed. Provisioning details — setup
+script vs. hook, image prepull, Docker Hub auth, network access — are in
+[claude-cloud.md](claude-cloud.md).
 
 ## Unit tests — for `core/`
 

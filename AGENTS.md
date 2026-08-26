@@ -10,7 +10,7 @@ Companion web app for the "FAN FAN" Russian anime convention. Audience: teen to 
 * **Never** keep request- or user-scoped state in a frontend module singleton — modules outlive navigation and login/logout in the SPA.
 * **Never** add, rename or remove an env var without updating `.env.example` in the same change. Its header explains the three consumers and the grouping; the backend's `extra="ignore"` means a drifted key fails silently at runtime instead of at boot.
 * **Never** call work done with a failing gate: `just backend-lint` + `just backend-typecheck` after Python, `just frontend-lint` + `just frontend-check` after frontend, `just dockerfile-lint` after a `Dockerfile`. Whether a change needs a *new* test is a judgment call — make it deliberately, per [docs/testing.md](docs/testing.md). The existing suites (pytest, Vitest) run in CI either way.
-* **Never** block on the integration suite (`just backend-test-integration`) — it is slow and needs a Docker daemon that isn't available everywhere, so leave it to CI rather than running it locally. Writing an integration test when the change warrants one is still right; *executing* the suite is CI's job.
+* **Never** block on the integration suite (`just backend-test-integration`) — it is slow, so leave it to CI rather than running it locally, even where Docker is available. Writing an integration test when the change warrants one is still right; *executing* the suite is CI's job. (Cloud web sessions do run a Docker daemon — use it for migration autogenerate via `just backend-generate-auto`, just not for the integration suite. See [docs/claude-cloud.md](docs/claude-cloud.md).)
 
 ## Load before you edit
 
@@ -75,7 +75,6 @@ named `fanfan-*` are project-local and live only here.
 | `just frontend-generate-api` | Regenerate the OpenAPI spec and `schema.d.ts` from it |
 | `just frontend-check-api` | Fail if `schema.d.ts` has drifted from the spec (the spec itself is guarded by a backend test) |
 | `just backend-generate-schedule-template` | Rebuild the schedule-import template `.xlsx` offered for download |
-| `just ci` | Every CI gate locally, check-only. Cheaper than spending an Actions run. |
 
 Always review a generated migration: autogenerate emits renames as drop+create and does not see enum-member changes.
 
