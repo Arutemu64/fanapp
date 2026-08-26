@@ -1,4 +1,4 @@
-from dishka import Provider, Scope, provide
+from dishka import Provider, Scope, provide, provide_all
 
 from fanfan.adapters.config.models import EnvConfig
 from fanfan.application.interactors.auth.authenticate_user import AuthenticateUser
@@ -171,89 +171,76 @@ class InteractorsProvider(Provider):
     def get_notification_config(self, config: EnvConfig) -> NotificationConfig:
         return config.notification
 
-    get_schedule = provide(GetSchedule)
-    move_schedule_event = provide(MoveScheduleEvent)
-    set_current_schedule_event = provide(SetCurrentScheduleEvent)
-    update_schedule_event_skip = provide(UpdateScheduleEventSkip)
-    undo_schedule_change = provide(UndoScheduleChange)
-    send_schedule_change_notifications = provide(SendScheduleChangeNotifications)
-    list_schedule_changes = provide(ListScheduleChanges)
-    import_schedule = provide(ImportSchedule)
-
-    seed_demo_data = provide(SeedDemoData)
-
-    grant_permission = provide(GrantPermission)
-    revoke_permission = provide(RevokePermission)
-    list_user_permissions = provide(ListUserPermissions)
-
-    send_broadcast = provide(SendBroadcast)
-    get_notification = provide(GetNotification)
-    delete_mailing_notifications = provide(DeleteMailingNotifications)
-    send_notification = provide(SendNotification)
-    send_personal_notification = provide(SendPersonalNotification)
-    process_broadcast = provide(ProcessBroadcast)
-
-    list_voting_nominations = provide(ListVotingNominations)
-
-    get_public_config = provide(GetPublicConfig)
-    get_settings = provide(GetSettings)
-    update_settings = provide(UpdateSettings)
-
-    create_subscription = provide(CreateSubscription)
-    delete_subscription = provide(DeleteSubscription)
-    get_subscriptions = provide(GetSubscriptions)
-
-    link_ticket = provide(LinkTicket)
-
-    submit_feedback = provide(SubmitFeedback)
-    list_feedback = provide(ListFeedback)
-
-    list_users = provide(ListUsers)
-    get_user = provide(GetUser)
-
-    authenticate_user = provide(AuthenticateUser)
-    get_current_user = provide(GetCurrentUser)
-    link_social_account = provide(LinkSocialAccount)
-    unlink_social_account = provide(UnlinkSocialAccount)
-    update_current_user = provide(UpdateCurrentUser)
-    update_user_settings = provide(UpdateUserSettings)
-    change_password = provide(ChangePassword)
-    send_email_confirmation_code = provide(SendEmailConfirmationCode)
-    send_login_code_email = provide(SendLoginCodeEmail)
-    request_login_code = provide(RequestLoginCode)
-    confirm_email_code = provide(ConfirmEmailCode)
-    change_email = provide(ChangeEmail)
-    login_with_code = provide(LoginWithCode)
-    logout_user = provide(LogoutUser)
-    authorize_social_login = provide(AuthorizeSocialLogin)
-
-    get_voting_nomination = provide(GetVotingNomination)
-    add_vote = provide(AddVote)
-    cancel_vote = provide(CancelVote)
-    get_voting_state = provide(GetVotingState)
-    get_voting_dashboard = provide(GetVotingDashboard)
-    set_voting_time_range = provide(SetVotingTimeRange)
-    draw_voting_contest_winner = provide(DrawVotingContestWinner)
-
-    sync_tickets = provide(SyncTickets)
-    process_ticket_order = provide(ProcessTicketOrder)
-    generate_tickets = provide(GenerateTickets)
-
-    sync_cosplay = provide(SyncCosplay)
-
-    stream_events = provide(StreamEvents)
-
-    create_push_subscription = provide(CreatePushSubscription)
-    check_push_subscription = provide(CheckPushSubscription)
-    delete_push_subscription = provide(DeletePushSubscription)
-
-    publish_outbox_events = provide(PublishOutboxEvents)
-    purge_outbox_events = provide(PurgeOutboxEvents)
-    purge_notifications = provide(PurgeNotifications)
-
-    create_notification = provide(CreateNotification)
-    list_user_notifications = provide(ListUserNotifications)
-    mark_all_read = provide(MarkAllRead)
-    mark_notifications_read = provide(MarkNotificationsRead)
-    get_unread_notifications_count = provide(GetUnreadNotificationsCount)
-    send_test_notification = provide(SendTestNotification)
+    # Every interactor is request-scoped and provides itself, so one
+    # provide_all keeps the roster flat instead of one binding line each.
+    interactors = provide_all(
+        GetSchedule,
+        MoveScheduleEvent,
+        SetCurrentScheduleEvent,
+        UpdateScheduleEventSkip,
+        UndoScheduleChange,
+        SendScheduleChangeNotifications,
+        ListScheduleChanges,
+        ImportSchedule,
+        SeedDemoData,
+        GrantPermission,
+        RevokePermission,
+        ListUserPermissions,
+        SendBroadcast,
+        GetNotification,
+        DeleteMailingNotifications,
+        SendNotification,
+        SendPersonalNotification,
+        ProcessBroadcast,
+        ListVotingNominations,
+        GetPublicConfig,
+        GetSettings,
+        UpdateSettings,
+        CreateSubscription,
+        DeleteSubscription,
+        GetSubscriptions,
+        LinkTicket,
+        SubmitFeedback,
+        ListFeedback,
+        ListUsers,
+        GetUser,
+        AuthenticateUser,
+        GetCurrentUser,
+        LinkSocialAccount,
+        UnlinkSocialAccount,
+        UpdateCurrentUser,
+        UpdateUserSettings,
+        ChangePassword,
+        SendEmailConfirmationCode,
+        SendLoginCodeEmail,
+        RequestLoginCode,
+        ConfirmEmailCode,
+        ChangeEmail,
+        LoginWithCode,
+        LogoutUser,
+        AuthorizeSocialLogin,
+        GetVotingNomination,
+        AddVote,
+        CancelVote,
+        GetVotingState,
+        GetVotingDashboard,
+        SetVotingTimeRange,
+        DrawVotingContestWinner,
+        SyncTickets,
+        ProcessTicketOrder,
+        GenerateTickets,
+        SyncCosplay,
+        StreamEvents,
+        CreatePushSubscription,
+        CheckPushSubscription,
+        DeletePushSubscription,
+        PublishOutboxEvents,
+        PurgeOutboxEvents,
+        PurgeNotifications,
+        CreateNotification,
+        ListUserNotifications,
+        MarkAllRead,
+        MarkNotificationsRead,
+        GetUnreadNotificationsCount,
+        SendTestNotification,
+    )
