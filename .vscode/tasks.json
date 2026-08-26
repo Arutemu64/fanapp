@@ -5,17 +5,6 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			// One-keystroke pre-push gate (default test task, Run Test Task): the
-			// fast, no-Docker checks. The integration suite is left to CI
-			// (AGENTS.md), so it is not here. These recipes auto-fix; CI re-runs
-			// the same steps check-only.
-			"label": "check: fast gates",
-			"type": "shell",
-			"command": "just backend-lint && just backend-typecheck && just frontend-lint && just frontend-check && just dockerfile-lint",
-			"group": { "kind": "test", "isDefault": true },
-			"problemMatcher": []
-		},
-		{
 			"label": "bootstrap: .env + secrets",
 			"type": "shell",
 			"command": "just bootstrap",
@@ -54,8 +43,10 @@
 			"problemMatcher": []
 		},
 		{
-			// Auto-fixing counterparts of the CI gate — use these while working,
-			// `check: fast gates` before pushing.
+			// Auto-fixing gate tasks — run the ones for the area you touched while
+			// working. There is deliberately no aggregate "run everything" task:
+			// it would drift from .github/workflows/ci.yml, which is the
+			// authoritative gate. Run Test Task lists these to pick from.
 			"label": "lint: backend (fix)",
 			"type": "shell",
 			"command": "just backend-lint",

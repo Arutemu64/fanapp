@@ -1,7 +1,7 @@
 {
 	// Extensions that make the repo's own gates work in the editor. Each one
 	// mirrors a command in the justfile, so a save shows what CI would say
-	// instead of leaving it for `just ci`.
+	// instead of leaving it for a push through CI.
 	"recommendations": [
 		// Frontend: prettier + eslint back `just frontend-lint`, svelte-vscode
 		// backs `just frontend-check` (svelte-check).
