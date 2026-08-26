@@ -65,8 +65,8 @@ class PostgresOutboxSignal(OutboxSignal):
         self._closing = True
         if self._task is not None:
             self._task.cancel()
-            # Await the cancelled task so its connection is closed before we
-            # return (the supervisor's finally block does the cleanup).
+            # Await it out so the supervisor's finally block closes the
+            # connection before stop() returns.
             with contextlib.suppress(asyncio.CancelledError):
                 await self._task
             self._task = None

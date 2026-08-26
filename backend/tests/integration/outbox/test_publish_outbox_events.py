@@ -75,6 +75,34 @@ async def test_relay_publishes_pending_events_in_creation_order(
     assert await outbox.fetch_unpublished(10) == []
 
 
+async def test_relay_drains_a_backlog_larger_than_one_batch(
+    dishka_request: AsyncContainer,
+    outbox: OutboxGateway,
+):
+    session = await dishka_request.get(AsyncSession)
+    # Three rows against a batch size of two: a single wake must drain all of
+    # them, not stop after the first batch and leave the rest for the next tick.
+    rows = [
+        OutboxEventORM(id=uuid7(), subject="test.event", payload={"n": n})
+        for n in range(3)
+    ]
+    for row in rows:
+        session.add(row)
+    await session.flush()
+
+    events_broker = FakeEventBroker()
+    relay = PublishOutboxEvents(
+        outbox_gateway=await dishka_request.get(OutboxGateway),
+        events_broker=events_broker,
+        uow=await dishka_request.get(UnitOfWork),
+        config=OutboxConfig(batch_size=2),
+    )
+    await relay()
+
+    assert [payload["n"] for _, payload, _ in events_broker.published_raw] == [0, 1, 2]
+    assert await outbox.fetch_unpublished(10) == []
+
+
 async def test_relay_marks_delivered_prefix_when_a_publish_fails(
     dishka_request: AsyncContainer,
     outbox: OutboxGateway,

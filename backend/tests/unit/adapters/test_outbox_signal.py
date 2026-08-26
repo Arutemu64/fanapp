@@ -16,7 +16,6 @@ def _signal() -> PostgresOutboxSignal:
 
 
 def _notify(signal: PostgresOutboxSignal) -> None:
-    # Stand in for asyncpg delivering a NOTIFY on the listen connection.
     signal._on_notify(object(), 0, "outbox_new", "")
 
 
