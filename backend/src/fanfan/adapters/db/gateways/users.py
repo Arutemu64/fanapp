@@ -182,7 +182,7 @@ class SqlUserGateway(UserGateway):
     async def read_users_page(
         self, *, pagination: Pagination, search: str | None
     ) -> list[UserListItemDTO]:
-        stmt = select(UserORM)
+        stmt = select(UserORM).options(joinedload(UserORM.ticket))
         stmt = self._apply_user_search(stmt, search)
         # Order by username case-insensitively, with id (uuid7) as the tiebreaker
         # so rows sharing a username spelling keep a stable order across pages.
@@ -191,7 +191,8 @@ class SqlUserGateway(UserGateway):
             .limit(pagination.limit)
             .offset(pagination.offset)
         )
-        users_orm = await self.session.scalars(stmt)
+        result = await self.session.execute(stmt)
+        users_orm = result.scalars().unique()
         return [self.mapper.parse_list_item_dto(u) for u in users_orm]
 
     async def count_users(self, *, search: str | None) -> int:
@@ -203,7 +204,10 @@ class SqlUserGateway(UserGateway):
         stmt = (
             select(UserORM)
             .where(UserORM.id == user_id)
-            .options(selectinload(UserORM.social_identities))
+            .options(
+                joinedload(UserORM.ticket),
+                selectinload(UserORM.social_identities),
+            )
         )
         user_orm = await self.session.scalar(stmt)
         return self.mapper.parse_details_dto(user_orm) if user_orm else None

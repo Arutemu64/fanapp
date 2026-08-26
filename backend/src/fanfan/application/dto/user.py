@@ -21,6 +21,7 @@ class UserListItemDTO(BaseModel):
     username: str
     role: UserRole
     email: EmailStr | None
+    ticket_number: str | None
 
 
 class UserSocialLinkDTO(BaseModel):
@@ -41,6 +42,7 @@ class UserDetailsDTO(BaseModel):
     username: str
     role: UserRole
     email: EmailStr | None
+    ticket_number: str | None
     social_links: list[UserSocialLinkDTO]
 
 

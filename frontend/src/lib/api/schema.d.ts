@@ -1783,6 +1783,8 @@ export interface components {
             role: components["schemas"]["UserRole"];
             /** Email */
             email: string | null;
+            /** Ticket Number */
+            ticket_number: string | null;
             /** Social Links */
             social_links: components["schemas"]["UserSocialLinkDTO"][];
         };
@@ -1798,6 +1800,8 @@ export interface components {
             role: components["schemas"]["UserRole"];
             /** Email */
             email: string | null;
+            /** Ticket Number */
+            ticket_number: string | null;
         };
         /**
          * UserRole
