@@ -1288,6 +1288,10 @@ export interface components {
             /** Can Vote */
             can_vote: boolean;
             status: components["schemas"]["VotingStatus"];
+            /** Voting Start */
+            voting_start?: string | null;
+            /** Voting End */
+            voting_end?: string | null;
         };
         /** HealthCheckResponse */
         HealthCheckResponse: {

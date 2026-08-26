@@ -4476,6 +4476,30 @@
           },
           "status": {
             "$ref": "#/components/schemas/VotingStatus"
+          },
+          "voting_start": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voting Start"
+          },
+          "voting_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voting End"
           }
         },
         "type": "object",
