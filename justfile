@@ -164,26 +164,6 @@ deploy:
     docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile core --profile ops pull
     docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile core --profile ops up -d
 
-# ---- CI ----
-# Check-only, exactly like the workflow: no --fix and no reformat, so a green
-# run here means a green run there. Use `just backend-lint` / `just frontend-lint`
-# while developing instead — those auto-fix; this one only reports.
-# Running this before pushing catches a failure in seconds, instead of finding
-# out a few minutes later via a round trip through Actions.
-
-# Run every gate from .github/workflows/ci.yml locally
-ci:
-    cd backend && uv run ruff check src/fanfan tests --respect-gitignore
-    cd backend && uv run ruff format --check src/fanfan tests --respect-gitignore
-    cd backend && uv run ty check src/fanfan
-    cd backend && uv run pytest tests
-    cd frontend && pnpm lint
-    cd frontend && pnpm check
-    cd frontend && pnpm test
-    cd frontend && pnpm generate-api:check
-    cd frontend && pnpm build
-    hadolint backend/Dockerfile frontend/Dockerfile
-
 dev:
     @echo "Run in separate terminals:"
     @echo "  just backend-dev"

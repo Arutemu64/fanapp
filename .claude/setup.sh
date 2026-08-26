@@ -42,8 +42,8 @@
 #           mise pin via Renovate's "node" group (docs/dependencies.md).
 #   * hadolint - Ships only as a GitHub release binary (403 here) and is not in
 #           apt, so we install a shim that runs the pinned Docker image instead
-#           (Docker Hub is on the allowlist). Keeps `just dockerfile-lint`,
-#           `just ci` and the pre-commit hook working with the plain `hadolint`
+#           (Docker Hub is on the allowlist). Keeps `just dockerfile-lint`
+#           and the pre-commit hook working with the plain `hadolint`
 #           command, exactly as they do on a laptop with mise.
 #   * npm  - Used as-is (bundled with Node 24) purely to install pnpm below.
 #           Deliberately NOT self-upgraded: `npm install -g npm@latest` has a
@@ -219,10 +219,10 @@ else
   echo "[setup] WARN: dockerd not found; skipping image prepull."
 fi
 
-# hadolint is the one gate in `just ci` that has no native install channel here:
+# hadolint is the one Dockerfile-lint gate with no native install channel here:
 # upstream ships GitHub release binaries (403 in this environment) and Ubuntu
 # does not package it. Install a shim that runs the pinned image prepulled above,
-# so `just dockerfile-lint`, `just ci` and the pre-commit `hadolint` hook all
+# so `just dockerfile-lint` and the pre-commit `hadolint` hook both
 # invoke a plain `hadolint` exactly as they do on a laptop, where mise supplies
 # the real binary.
 #
@@ -252,7 +252,7 @@ fi
 # the toolchain is there - so name anything missing. The environment still comes
 # up; the gap is visible in the setup log and the tool can be installed
 # in-session. CodeGraph is deliberately not checked (a navigation convenience
-# that degrades to grep/read); hadolint is, because `just ci` gates on it.
+# that degrades to grep/read); hadolint is, because `just dockerfile-lint` and CI gate on it.
 MISSING_TOOLS=""
 for tool in just uv node pnpm hadolint; do
   command -v "$tool" >/dev/null 2>&1 || MISSING_TOOLS="$MISSING_TOOLS $tool"

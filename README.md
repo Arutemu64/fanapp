@@ -243,11 +243,25 @@ for the area you're touching). The guides in [`docs/`](docs/) go deeper per area
 and [`docs/adr/`](docs/adr/README.md) records why the significant choices were
 made.
 
-Before pushing, run every gate locally:
+Before pushing, run the gates locally for the area you touched:
 
 ```sh
-just ci
+# backend
+just backend-lint
+just backend-typecheck
+cd backend && uv run pytest -m unit   # fast, no Docker
+
+# frontend
+just frontend-lint
+just frontend-check
+
+# dockerfiles
+just dockerfile-lint
 ```
+
+The integration suite (`just backend-test-integration`) is slow and CI runs it
+anyway, so you don't need it before pushing — run it locally only when you're
+debugging a failure.
 
 Questions and bug reports go in [GitHub issues](https://github.com/Arutemu64/fanapp/issues),
 except security reports, which are private ([see below](#security)).
@@ -261,7 +275,7 @@ mirrors the local quality gates:
 - **Backend**: Ruff lint + format check, `ty` type check, and the full `pytest` suite. Integration tests spin up Postgres and Redis automatically via testcontainers (Docker is preinstalled on the runner).
 - **Frontend**: Prettier + ESLint, `svelte-check`, and a production build.
 - **Dockerfiles**: [hadolint](https://github.com/hadolint/hadolint) best-practice linting (config in [`.hadolint.yaml`](.hadolint.yaml)). Run locally with `just dockerfile-lint` (hadolint comes from `mise`) or via the pre-commit hook.
-- **Images**: builds both Docker images without pushing, so a broken build fails on the PR instead of after merge. This is the one gate `just ci` skips; `just run-prod` builds the same two images locally.
+- **Images**: builds both Docker images without pushing, so a broken build fails on the PR instead of after merge. There's no local `just` gate for this one; `just run-prod` builds the same two images locally.
 
 CI is check-only: unlike `just backend-lint`, it never auto-fixes, so a violation
 fails the run. Each area is its own job so branch protection can require them

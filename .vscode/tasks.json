@@ -5,15 +5,6 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			// The pre-push gate: check-only, same steps as .github/workflows/ci.yml.
-			// Default test task, so it is one keystroke (Run Test Task).
-			"label": "ci: all gates",
-			"type": "shell",
-			"command": "just ci",
-			"group": { "kind": "test", "isDefault": true },
-			"problemMatcher": []
-		},
-		{
 			"label": "bootstrap: .env + secrets",
 			"type": "shell",
 			"command": "just bootstrap",
@@ -52,8 +43,10 @@
 			"problemMatcher": []
 		},
 		{
-			// Auto-fixing counterparts of the CI gate — use these while working,
-			// `ci: all gates` before pushing.
+			// Auto-fixing gate tasks — run the ones for the area you touched while
+			// working. There is deliberately no aggregate "run everything" task:
+			// it would drift from .github/workflows/ci.yml, which is the
+			// authoritative gate. Run Test Task lists these to pick from.
 			"label": "lint: backend (fix)",
 			"type": "shell",
 			"command": "just backend-lint",
