@@ -22,6 +22,12 @@ class VotingService:
     def __init__(self, settings_gateway: AppSettingsGateway):
         self.settings_gateway = settings_gateway
 
+    async def get_voting_window(self) -> tuple[datetime | None, datetime | None]:
+        # The window without the per-user status, for callers (e.g. a guest's voting
+        # page) that show when voting runs but have no ticket/status to resolve.
+        settings = await self.settings_gateway.get()
+        return settings.voting_start, settings.voting_end
+
     async def get_voting_state(self, user: User, ticket: Ticket | None) -> VotingState:
         settings = await self.settings_gateway.get()
         start, end = settings.voting_start, settings.voting_end

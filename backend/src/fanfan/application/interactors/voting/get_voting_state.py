@@ -12,8 +12,8 @@ class GetVotingStateOutput(BaseModel):
     can_vote: bool
     status: VotingStatus
     # The configured voting window, so the client can flip its banner exactly when
-    # the clock crosses a boundary. Only exposed to authenticated users — a guest's
-    # banner just asks them to sign in and never changes on the window alone.
+    # the clock crosses a boundary. Returned to everyone, guests included — the
+    # schedule is public info and lets a signed-out visitor see when voting runs.
     voting_start: datetime | None = None
     voting_end: datetime | None = None
 
@@ -32,8 +32,12 @@ class GetVotingState:
     async def __call__(self) -> GetVotingStateOutput:
         current_user = await self.current_user_provider.get_user()
         if current_user is None:
+            start, end = await self.voting_service.get_voting_window()
             return GetVotingStateOutput(
-                can_vote=False, status=VotingStatus.NOT_AUTHENTICATED
+                can_vote=False,
+                status=VotingStatus.NOT_AUTHENTICATED,
+                voting_start=start,
+                voting_end=end,
             )
         ticket = await self.ticket_gateway.get_by_user_id(current_user.id)
         state = await self.voting_service.get_voting_state(current_user, ticket)
