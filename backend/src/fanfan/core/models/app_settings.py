@@ -41,6 +41,8 @@ class AppSettings(AggregateRoot):
         start: datetime | None,
         end: datetime | None,
     ) -> None:
+        if (start is None) != (end is None):
+            raise InvalidVotingTimeRange
         if start is not None and end is not None and end <= start:
             raise InvalidVotingTimeRange
         self.voting_start = start

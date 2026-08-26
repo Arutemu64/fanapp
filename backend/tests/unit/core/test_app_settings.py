@@ -115,6 +115,24 @@ def test_set_voting_time_range_rejects_zero_length():
         settings.set_voting_time_range(start=point, end=point)
 
 
+def test_set_voting_time_range_rejects_partial_start_only():
+    settings = AppSettings()
+
+    with pytest.raises(InvalidVotingTimeRange):
+        settings.set_voting_time_range(
+            start=datetime(2026, 8, 22, 12, 0, tzinfo=UTC), end=None
+        )
+
+
+def test_set_voting_time_range_rejects_partial_end_only():
+    settings = AppSettings()
+
+    with pytest.raises(InvalidVotingTimeRange):
+        settings.set_voting_time_range(
+            start=None, end=datetime(2026, 8, 22, 18, 0, tzinfo=UTC)
+        )
+
+
 def test_announcement_timeout_has_default():
     settings = AppSettings()
 
