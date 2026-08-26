@@ -1,9 +1,10 @@
 import asyncio
 import os
 from logging.config import fileConfig
+from typing import Any
 
 from alembic import context
-from sqlalchemy import pool
+from sqlalchemy import CheckConstraint, pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
@@ -26,12 +27,27 @@ DEFAULT_ALEMBIC_DATABASE_URL = "driver://user:pass@localhost/dbname"
 # constraints by default. Its all_table_check_constraints() filters out
 # type-bound constraints (_type_bound=True) from the metadata side, but the
 # reflected DB side still has them — so every Enum(create_constraint=True,
-# native_enum=False) constraint shows up as a spurious "removed" op. We manage
-# enum CHECK constraints by hand in migrations, so disable the plugin.
-_AUTOGENERATE_PLUGINS = [
-    "alembic.autogenerate.*",
-    "~alembic.autogenerate.checkconstraint_byname",
-]
+# native_enum=False) constraint shows up as a spurious "removed" op. We hide
+# only those reflected constraints whose names match a type-bound metadata
+# constraint, keeping the plugin active for non-enum CHECK constraints.
+_TYPE_BOUND_CK_NAMES: frozenset[str] = frozenset(
+    str(ck.name)
+    for table in target_metadata.sorted_tables
+    for ck in table.constraints
+    if isinstance(ck, CheckConstraint) and getattr(ck, "_type_bound", False) and ck.name
+)
+
+
+def _include_object(
+    obj: Any,
+    name: str | None,
+    type_: str,
+    reflected: bool,  # noqa: FBT001
+    compare_to: Any,
+) -> bool:
+    if type_ == "check_constraint" and reflected:
+        return name not in _TYPE_BOUND_CK_NAMES
+    return True
 
 
 def get_database_url() -> str:
@@ -69,7 +85,7 @@ def run_migrations_offline() -> None:
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
         compare_server_default=True,
-        autogenerate_plugins=_AUTOGENERATE_PLUGINS,
+        include_object=_include_object,
     )
 
     with context.begin_transaction():
@@ -82,7 +98,7 @@ def do_run_migrations(connection: Connection) -> None:
         target_metadata=target_metadata,
         compare_type=True,
         compare_server_default=True,
-        autogenerate_plugins=_AUTOGENERATE_PLUGINS,
+        include_object=_include_object,
     )
 
     with context.begin_transaction():
