@@ -23,11 +23,11 @@ target_metadata = BaseORM.metadata
 DEFAULT_ALEMBIC_DATABASE_URL = "driver://user:pass@localhost/dbname"
 
 # Alembic ≥1.19 ships checkconstraint_byname, which detects named CHECK
-# constraints automatically. It false-positives on the Enum CHECK constraints
-# created by str_enum_column (create_constraint=True, native_enum=False): it
-# finds them in the DB but can't match them to the model metadata, so it
-# generates spurious DROP operations. We manage those constraints by hand in
-# migrations, so disable the plugin.
+# constraints by default. Its all_table_check_constraints() filters out
+# type-bound constraints (_type_bound=True) from the metadata side, but the
+# reflected DB side still has them — so every Enum(create_constraint=True,
+# native_enum=False) constraint shows up as a spurious "removed" op. We manage
+# enum CHECK constraints by hand in migrations, so disable the plugin.
 _AUTOGENERATE_PLUGINS = [
     "alembic.autogenerate.*",
     "~alembic.autogenerate.checkconstraint_byname",
