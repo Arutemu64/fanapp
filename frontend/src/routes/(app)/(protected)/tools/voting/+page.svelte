@@ -26,6 +26,8 @@
 	let votingEnd = $state(untrack(() => toLocalInput(data.dashboard.voting_end)));
 	let isSaving = $state(false);
 
+	// Seeded from the dashboard, then refreshed from each draw's response, so the
+	// displayed pool tracks who is currently eligible even as people finish voting.
 	let poolSize = $state(untrack(() => data.dashboard.contest_pool_size));
 	let isDrawing = $state(false);
 	let winner = $state<Winner | null>(null);
@@ -96,6 +98,9 @@
 				return;
 			}
 
+			// The draw is read-only: the server draws from the live pool and returns
+			// both the winner and the current pool size, so there is nothing to
+			// refetch — trust the response.
 			poolSize = result.pool_size;
 			winner = result.winner;
 			hasDrawn = true;

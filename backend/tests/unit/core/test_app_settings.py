@@ -2,6 +2,7 @@ from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
 
+from fanfan.core.exceptions.settings import InvalidVotingTimeRange
 from fanfan.core.models.app_settings import DEFAULT_FESTIVAL_START, AppSettings
 
 pytestmark = pytest.mark.unit
@@ -95,6 +96,23 @@ def test_is_voting_closed_when_range_cleared():
     settings.set_voting_time_range(start=None, end=None)
 
     assert settings.is_voting_open(now=datetime.now(UTC)) is False
+
+
+def test_set_voting_time_range_rejects_reversed_range():
+    settings = AppSettings()
+    start = datetime(2026, 8, 22, 18, 0, tzinfo=UTC)
+    end = datetime(2026, 8, 22, 12, 0, tzinfo=UTC)
+
+    with pytest.raises(InvalidVotingTimeRange):
+        settings.set_voting_time_range(start=start, end=end)
+
+
+def test_set_voting_time_range_rejects_zero_length():
+    settings = AppSettings()
+    point = datetime(2026, 8, 22, 12, 0, tzinfo=UTC)
+
+    with pytest.raises(InvalidVotingTimeRange):
+        settings.set_voting_time_range(start=point, end=point)
 
 
 def test_announcement_timeout_has_default():

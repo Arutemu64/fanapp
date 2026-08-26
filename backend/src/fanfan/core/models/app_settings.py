@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 
+from fanfan.core.exceptions.settings import InvalidVotingTimeRange
 from fanfan.core.models.base import AggregateRoot
 
 # Programme opening, Moscow time (UTC+3). The default the app ships with until
@@ -40,6 +41,8 @@ class AppSettings(AggregateRoot):
         start: datetime | None,
         end: datetime | None,
     ) -> None:
+        if start is not None and end is not None and end <= start:
+            raise InvalidVotingTimeRange
         self.voting_start = start
         self.voting_end = end
 

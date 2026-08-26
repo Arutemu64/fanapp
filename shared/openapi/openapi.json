@@ -4201,6 +4201,7 @@
               "INVALID_OTP_CODE",
               "INVALID_SCHEDULE_FILE",
               "INVALID_TELEGRAM_AUTH_PAYLOAD",
+              "INVALID_VOTING_TIME_RANGE",
               "LINK_INITIATOR_MISMATCH",
               "NOMINATION_NOT_FOUND",
               "OUTDATED_SCHEDULE_CHANGE",
