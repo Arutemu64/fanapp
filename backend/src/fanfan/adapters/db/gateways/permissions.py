@@ -1,7 +1,6 @@
 from sqlalchemy import and_, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fanfan.adapters.db.mappers.permission import UserPermissionMapper
 from fanfan.adapters.db.models.permission import UserPermissionORM
 from fanfan.application.ports.gateways import (
     UserPermissionGateway,
@@ -9,17 +8,33 @@ from fanfan.application.ports.gateways import (
 from fanfan.core.models.permission import UserPermission
 from fanfan.core.vo.permission import (
     Permission,
+    UserPermissionId,
 )
 from fanfan.core.vo.user import UserId
+
+
+def _from_model(model: UserPermission) -> UserPermissionORM:
+    return UserPermissionORM(
+        id=model.id,
+        permission=model.permission,
+        user_id=model.user_id,
+    )
+
+
+def _to_model(orm: UserPermissionORM) -> UserPermission:
+    return UserPermission(
+        id=UserPermissionId(orm.id),
+        permission=Permission(orm.permission),
+        user_id=UserId(orm.user_id),
+    )
 
 
 class SqlUserPermissionGateway(UserPermissionGateway):
     def __init__(self, session: AsyncSession):
         self.session = session
-        self.user_permission_mapper = UserPermissionMapper()
 
     async def add(self, user_permission: UserPermission) -> None:
-        user_perm_orm = self.user_permission_mapper.from_model(user_permission)
+        user_perm_orm = _from_model(user_permission)
         self.session.add(user_perm_orm)
         await self.session.flush()
 
@@ -42,11 +57,7 @@ class SqlUserPermissionGateway(UserPermissionGateway):
                 )
             )
         )
-        return (
-            self.user_permission_mapper.to_model(user_perm_orm)
-            if user_perm_orm
-            else None
-        )
+        return _to_model(user_perm_orm) if user_perm_orm else None
 
     async def get_all_for_user(self, user_id: UserId) -> list[UserPermission]:
         user_perm_orms = await self.session.scalars(
@@ -54,4 +65,4 @@ class SqlUserPermissionGateway(UserPermissionGateway):
             .where(UserPermissionORM.user_id == user_id)
             .order_by(UserPermissionORM.permission)
         )
-        return [self.user_permission_mapper.to_model(orm) for orm in user_perm_orms]
+        return [_to_model(orm) for orm in user_perm_orms]
