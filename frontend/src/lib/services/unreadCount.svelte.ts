@@ -22,9 +22,13 @@ const [getUnread, setUnread] = createContext<UnreadCountService>();
  */
 export class UnreadCountService {
 	#count = $state(0);
+	// True once an authoritative value (a clear, or a successful server refresh) has
+	// been established. After that the provisional streamed seed must not apply — the
+	// initial count is otherwise indistinguishable from an authoritative zero.
+	#hasAuthoritativeValue = false;
 	#inFlight = false;
 	#pending = false;
-	// Bumped by every authoritative local write (set/clear). A refresh() snapshots
+	// Bumped by every authoritative local write (clear). A refresh() snapshots
 	// it and drops its response if a write landed while the GET was in flight, so a
 	// stale total can't overwrite the zero that "mark all read" just established.
 	// Safe here precisely because the only local writes are authoritative values,
@@ -39,15 +43,19 @@ export class UnreadCountService {
 		return this.#count;
 	}
 
-	// Seed from the layout load for a correct first paint.
-	set(count: number) {
+	// Provisional seed from the streamed layout load (see (app)/+layout.svelte).
+	// Applies only until an authoritative value lands, so a late seed can never
+	// overwrite a fresher server read — including an authoritative zero. Leaves the
+	// generation untouched so a refresh already in flight still wins over the seed.
+	seed(count: number) {
+		if (this.#hasAuthoritativeValue) return;
 		this.#count = Math.max(0, count);
-		this.#generation += 1;
 	}
 
 	// Marking every notification read zeros the server side, so reflect it at once
 	// rather than waiting for the refresh round-trip.
 	clear() {
+		this.#hasAuthoritativeValue = true;
 		this.#count = 0;
 		this.#generation += 1;
 	}
@@ -67,6 +75,7 @@ export class UnreadCountService {
 		try {
 			const { data, error, response } = await this.#client.GET('/notifications/unread-count');
 			if (!error && response.ok && data && this.#generation === generationAtStart) {
+				this.#hasAuthoritativeValue = true;
 				this.#count = data.count;
 			}
 		} catch (error) {
@@ -81,9 +90,8 @@ export class UnreadCountService {
 	}
 }
 
-export function setUnreadCountService(initialCount = 0) {
+export function setUnreadCountService() {
 	const service = new UnreadCountService();
-	service.set(initialCount);
 	setUnread(service);
 	return service;
 }

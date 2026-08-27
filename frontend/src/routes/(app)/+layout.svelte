@@ -23,15 +23,15 @@
 
 	// Shared unread count for the bell badge and the notifications page. Seeded from
 	// the streamed notification load once it resolves (first paint no longer waits on
-	// it), and owned by the bell and page from there (SSE, mark-read, reconnect). The
-	// `count === 0` guard keeps a late seed from clobbering a fresher value an SSE
-	// reconnect refresh may already have written; a true count of 0 seeds a no-op.
+	// it), and owned by the bell and page from there (SSE, mark-read, reconnect).
+	// `seed()` applies only while the count is still provisional, so a fresher value
+	// an SSE refresh may already have written — an authoritative zero included — wins.
 	// `page.data` is loosely typed, so narrow the streamed promise back to its load type.
-	const unread = setUnreadCountService(0);
+	const unread = setUnreadCountService();
 	const notificationSeed = page.data.notifications as Promise<NotificationSeed | null>;
 	void notificationSeed
 		.then((seed) => {
-			if (seed && unread.count === 0) unread.set(seed.unreadCount);
+			if (seed) unread.seed(seed.unreadCount);
 		})
 		.catch(() => {});
 
