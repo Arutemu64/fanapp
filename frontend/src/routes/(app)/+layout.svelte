@@ -11,10 +11,12 @@
 
 	import type { LayoutProps, Snapshot } from './$types';
 
+	import NotificationsSkeleton from './(protected)/notifications/components/NotificationsSkeleton.svelte';
 	import AppBottomNav from './components/AppBottomNav.svelte';
 	import AppNavbar from './components/AppNavbar.svelte';
 	import AppSidebar from './components/AppSidebar.svelte';
 	import ConnectionBanner from './components/ConnectionBanner.svelte';
+	import HomeSkeleton from './components/home/HomeSkeleton.svelte';
 	import SectionSpinner from './components/SectionSpinner.svelte';
 	import ScheduleSkeleton from './schedule/components/ScheduleSkeleton.svelte';
 	import VotingSkeleton from './voting/components/VotingSkeleton.svelte';
@@ -146,10 +148,14 @@
 				class="mx-auto max-w-5xl p-4 pb-[calc(6rem+env(safe-area-inset-bottom))] md:p-6 md:pt-4 lg:p-8 lg:pt-4"
 			>
 				{#if showLoader}
-					{#if loaderRoute === '/(app)/schedule'}
+					{#if loaderRoute === '/(app)'}
+						<HomeSkeleton />
+					{:else if loaderRoute === '/(app)/schedule'}
 						<ScheduleSkeleton />
 					{:else if loaderRoute === '/(app)/voting'}
 						<VotingSkeleton />
+					{:else if loaderRoute === '/(app)/(protected)/notifications'}
+						<NotificationsSkeleton />
 					{:else}
 						<SectionSpinner />
 					{/if}
