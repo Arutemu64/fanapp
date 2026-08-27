@@ -25,13 +25,18 @@
 	// dropdown shows empty. The dropdown is a desktop-only affordance that is rarely
 	// open before the SSE 'connection_established' handler refreshes it, so streaming
 	// the seed (rather than blocking the shell's first paint on it) is invisible here.
-	// `page.data` is loosely typed (any), so narrow back to the load type.
-	const notificationSeed = page.data.notifications as Promise<NotificationSeed | null> | undefined;
-	void notificationSeed
-		?.then((seed) => {
-			if (seed && !hasLoadedPreview) notifications = seed.preview;
-		})
-		.catch(() => {});
+	// `page.data` is the route-tree-merged data: the notifications page's load exposes
+	// its own `notifications` array on this key, shadowing the layout's streamed promise.
+	// Consume it only when it really is that promise; on that page SSE seeds the bell
+	// instead. Without the guard, `array.then` throws and takes down the app shell.
+	const notificationSeed: unknown = page.data.notifications;
+	if (notificationSeed instanceof Promise) {
+		void (notificationSeed as Promise<NotificationSeed | null>)
+			.then((seed) => {
+				if (seed && !hasLoadedPreview) notifications = seed.preview;
+			})
+			.catch(() => {});
+	}
 
 	// The badge is the true unread total, shared with the notifications page (which
 	// clears it on open) — NOT the number of unread items in the capped preview,
