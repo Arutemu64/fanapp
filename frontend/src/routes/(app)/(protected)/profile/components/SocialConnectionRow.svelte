@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
+	import { offlineWriteGate } from '$lib/utils/offlineAction';
 	import { Badge, Button, Spinner } from 'flowbite-svelte';
 	import { TrashBinOutline } from 'flowbite-svelte-icons';
 
@@ -36,6 +37,10 @@
 		hasEmail,
 		onUnlink
 	}: Props = $props();
+
+	// Connecting (a backend OAuth redirect) and unlinking (a DELETE) both need the
+	// network — gate them offline. The linked/not-linked badge still renders.
+	const offlineGate = offlineWriteGate();
 
 	let isUnlinking = $state(false);
 	// Gate the destructive unlink behind a deliberate second tap (inline, no modal).
@@ -81,7 +86,8 @@
 							color="red"
 							size="sm"
 							class="min-h-11 flex-1 sm:flex-initial"
-							disabled={isUnlinking || !hasEmail}
+							disabled={isUnlinking || !hasEmail || offlineGate.disabled}
+							title={offlineGate.title}
 							onclick={confirmUnlink}
 						>
 							{#if isUnlinking}
@@ -107,7 +113,8 @@
 						color="red"
 						size="sm"
 						class="min-h-11 w-full sm:w-auto"
-						disabled={!hasEmail}
+						disabled={!hasEmail || offlineGate.disabled}
+						title={offlineGate.title}
 						onclick={() => (isConfirming = true)}
 					>
 						<TrashBinOutline class="me-2 h-4 w-4" />
@@ -115,7 +122,15 @@
 					</Button>
 				{/if}
 			{:else}
-				<Button href={connectHref} color="alternative" class="min-h-11 w-full sm:w-auto">
+				<!-- Offline: drop href so Flowbite renders a real <button> that honours
+					`disabled` (an <a> ignores it), blocking the OAuth redirect. -->
+				<Button
+					href={offlineGate.disabled ? undefined : connectHref}
+					color="alternative"
+					class="min-h-11 w-full sm:w-auto"
+					disabled={offlineGate.disabled}
+					title={offlineGate.title}
+				>
 					Подключить
 				</Button>
 			{/if}

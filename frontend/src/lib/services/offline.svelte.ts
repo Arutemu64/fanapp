@@ -1,4 +1,5 @@
 import { invalidateAll } from '$app/navigation';
+import { flushPendingLogout } from '$lib/utils/pendingLogout';
 import { classifyReachabilityChange } from '$lib/utils/reachabilityTransition';
 import { createContext } from 'svelte';
 
@@ -104,6 +105,11 @@ export class OfflineService {
 		// Initial check, then poll only if it turns out we're offline.
 		void probeReachability();
 		this.#syncPolling();
+
+		// Fire any logout queued while offline. A boot that is already online never
+		// crosses the offline→online edge below, so flush here too; when offline this
+		// is a no-op and the edge handler picks it up on reconnect.
+		void flushPendingLogout();
 	}
 
 	// Apply a confirmed connectivity state and, on a real offline→online edge,
@@ -116,6 +122,11 @@ export class OfflineService {
 		this.#syncPolling();
 
 		if (!wasOnline && online) {
+			// Revoke a session the user logged out of while offline, before the
+			// refresh below re-runs /me — the pending flag keeps identity logged-out
+			// until this clears, so there's no "logged back in" flicker in between.
+			void flushPendingLogout();
+
 			const now = Date.now();
 			if (now - this.#lastReconnectRefresh > RECONNECT_REFRESH_DEBOUNCE_MS) {
 				this.#lastReconnectRefresh = now;

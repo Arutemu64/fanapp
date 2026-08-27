@@ -5,6 +5,7 @@
 
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { offlineWriteGate } from '$lib/utils/offlineAction';
 	import { Alert, Button, Input, Label, Spinner } from 'flowbite-svelte';
 	import { CheckCircleOutline, TicketOutline, TicketSolid } from 'flowbite-svelte-icons';
 
@@ -17,6 +18,9 @@
 
 	let { user, onTicketLinked }: Props = $props();
 	const toastService = getToastService();
+
+	// Linking a ticket is a mutation — online only. A linked ticket still shows.
+	const offlineGate = offlineWriteGate();
 
 	let barcode = $state('');
 	let isSubmitting = $state(false);
@@ -91,11 +95,17 @@
 				autocomplete="off"
 				autocapitalize="off"
 				spellcheck={false}
-				disabled={isSubmitting}
+				disabled={isSubmitting || offlineGate.disabled}
 				size="md"
 				oninput={() => (submitError = '')}
 			/>
-			<Button onclick={handleLinkTicket} class="min-h-11 w-full" disabled={isSubmitting} size="md">
+			<Button
+				onclick={handleLinkTicket}
+				class="min-h-11 w-full"
+				disabled={isSubmitting || offlineGate.disabled}
+				title={offlineGate.title}
+				size="md"
+			>
 				{#if isSubmitting}
 					<Spinner class="me-2 h-4 w-4 fill-white" />
 					Привязка…

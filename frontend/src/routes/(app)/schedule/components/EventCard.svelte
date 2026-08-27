@@ -6,6 +6,7 @@
 	import { createApiClient } from '$lib/api';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { formatDuration, formatUntil, pluralize } from '$lib/utils/formatters';
+	import { offlineWriteGate } from '$lib/utils/offlineAction';
 	import { canManageSchedule } from '$lib/utils/permissions';
 	import { Badge } from 'flowbite-svelte';
 	import {
@@ -44,6 +45,13 @@
 	let { event, schedule, currentEvent, user, variant = 'default' }: Props = $props();
 	const toastService = getToastService();
 
+	// Subscribe/unsubscribe and the staff actions all POST to the server — online
+	// only. The cached schedule (and each row's subscription state) still renders.
+	const offlineGate = offlineWriteGate();
+	// Staff-action labels, hoisted so each button's title stays a single ternary
+	// (offline hint vs. action) rather than a nested one in the markup.
+	let currentActionLabel = $derived(event.is_current ? 'Снять отметку' : 'Отметить текущим');
+
 	let moveModal = $state(false);
 	let subscribeModal = $state(false);
 	let unsubscribeModal = $state(false);
@@ -75,6 +83,7 @@
 	// seconds). null = trust the server-loaded prop; otherwise show our pending guess.
 	let optimisticSkipped = $state<boolean | null>(null);
 	let isSkipped = $derived(optimisticSkipped ?? event.is_skipped);
+	let skipActionLabel = $derived(isSkipped ? 'Вернуть' : 'Пропустить');
 
 	// Once the reloaded schedule confirms our guess, drop the override so external
 	// changes (another staffer skipping the same event) flow through again.
@@ -350,8 +359,10 @@
 				<!-- Inline bell: subscribe/unsubscribe in one tap. -->
 				<button
 					onclick={event.user_subscription ? handleUnsubscribe : handleSubscribe}
+					disabled={offlineGate.disabled}
+					title={offlineGate.title}
 					class={[
-						'flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none',
+						'flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40',
 						event.user_subscription
 							? 'text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/20'
 							: 'text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300'
@@ -380,9 +391,10 @@
 					<button
 						type="button"
 						onclick={askToggleCurrent}
-						aria-label={event.is_current ? 'Снять отметку' : 'Отметить текущим'}
-						title={event.is_current ? 'Снять отметку' : 'Отметить текущим'}
-						class="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-primary-50 text-primary-700 transition-colors hover:bg-primary-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/50"
+						disabled={offlineGate.disabled}
+						aria-label={currentActionLabel}
+						title={offlineGate.disabled ? offlineGate.title : currentActionLabel}
+						class="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-primary-50 text-primary-700 transition-colors hover:bg-primary-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/50"
 					>
 						{#if event.is_current}
 							<CloseCircleOutline class="h-5 w-5" />
@@ -395,9 +407,10 @@
 				<button
 					type="button"
 					onclick={() => (moveModal = true)}
+					disabled={offlineGate.disabled}
 					aria-label="Перенести"
-					title="Перенести"
-					class="inline-flex h-11 w-11 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none dark:text-gray-300 dark:hover:bg-gray-700"
+					title={offlineGate.disabled ? offlineGate.title : 'Перенести'}
+					class="inline-flex h-11 w-11 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-300 dark:hover:bg-gray-700"
 				>
 					<ShuffleOutline class="h-5 w-5" />
 				</button>
@@ -405,10 +418,11 @@
 				<button
 					type="button"
 					onclick={askToggleSkip}
-					aria-label={isSkipped ? 'Вернуть' : 'Пропустить'}
-					title={isSkipped ? 'Вернуть' : 'Пропустить'}
+					disabled={offlineGate.disabled}
+					aria-label={skipActionLabel}
+					title={offlineGate.disabled ? offlineGate.title : skipActionLabel}
 					class={[
-						'inline-flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none',
+						'inline-flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40',
 						isSkipped
 							? 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
 							: 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20'

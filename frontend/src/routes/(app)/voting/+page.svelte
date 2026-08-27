@@ -2,7 +2,8 @@
 	import type { NominationVotingDTO } from '$lib/types/nominations';
 
 	import EmptyState from '$lib/components/EmptyState.svelte';
-	import { ExclamationCircleOutline, ThumbsUpOutline } from 'flowbite-svelte-icons';
+	import OfflineUnavailableState from '$lib/components/OfflineUnavailableState.svelte';
+	import { ThumbsUpOutline } from 'flowbite-svelte-icons';
 
 	import type { PageProps } from './$types';
 
@@ -21,8 +22,7 @@
 {#if data.offlineUnavailable}
 	<!-- Voting is uncached and online-only, so there is no saved copy to show —
 	     say so plainly instead of an empty "no nominations" state. -->
-	<EmptyState
-		icon={ExclamationCircleOutline}
+	<OfflineUnavailableState
 		title="Голосование доступно только онлайн"
 		message="Подключись к интернету, чтобы голосовать за участников."
 	/>

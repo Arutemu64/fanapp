@@ -43,6 +43,13 @@
 			return;
 		}
 
+		// Don't cancel a pending offline-logout here — clearing it before OAuth
+		// *succeeds* would let a cancelled/abandoned login drop the revoke, leaving the
+		// valid HttpOnly cookie to restore the old account. The reconnect/boot flush
+		// clears the intent once the old session is actually revoked, which in practice
+		// runs before the user reaches this button, so a genuine new login still starts
+		// from a cleared intent. (A client-only "did OAuth succeed?" signal can't tell
+		// success from an abandoned flow, so we don't try — see the PR discussion.)
 		isOpeningVk = true;
 	}
 
