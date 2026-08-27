@@ -1,4 +1,6 @@
 <script lang="ts">
+	import type { NotificationSeed } from '$lib/types/notifications';
+
 	import { afterNavigate, beforeNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import SkipLink from '$lib/components/SkipLink.svelte';
@@ -6,7 +8,6 @@
 	import { TAB_ROOTS } from '$lib/data/nav';
 	import { setUnreadCountService } from '$lib/services/unreadCount.svelte';
 	import { uiHelpers } from 'flowbite-svelte';
-	import { untrack } from 'svelte';
 
 	import type { LayoutProps, Snapshot } from './$types';
 
@@ -20,11 +21,19 @@
 	let activeUrl = $derived(page.url.pathname);
 	let user = $derived(data.user);
 
-	// Shared unread count for the bell badge and the notifications page. Seeded once
-	// from the layout load so the badge is right on first paint; the bell and page
-	// own it from there (SSE, mark-read, reconnect), so untrack the seed rather than
-	// have it fight later loads.
-	setUnreadCountService(untrack(() => data.notificationUnreadCount) ?? 0);
+	// Shared unread count for the bell badge and the notifications page. Seeded from
+	// the streamed notification load once it resolves (first paint no longer waits on
+	// it), and owned by the bell and page from there (SSE, mark-read, reconnect). The
+	// `count === 0` guard keeps a late seed from clobbering a fresher value an SSE
+	// reconnect refresh may already have written; a true count of 0 seeds a no-op.
+	// `page.data` is loosely typed, so narrow the streamed promise back to its load type.
+	const unread = setUnreadCountService(0);
+	const notificationSeed = page.data.notifications as Promise<NotificationSeed | null>;
+	void notificationSeed
+		.then((seed) => {
+			if (seed && unread.count === 0) unread.set(seed.unreadCount);
+		})
+		.catch(() => {});
 
 	const sidebarUi = uiHelpers();
 	let isSidebarOpen = $derived(sidebarUi.isOpen);
