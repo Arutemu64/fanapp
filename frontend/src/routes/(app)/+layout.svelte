@@ -11,6 +11,7 @@
 
 	import type { LayoutProps, Snapshot } from './$types';
 
+	import NotificationsSkeleton from './(protected)/notifications/components/NotificationsSkeleton.svelte';
 	import AppBottomNav from './components/AppBottomNav.svelte';
 	import AppNavbar from './components/AppNavbar.svelte';
 	import AppSidebar from './components/AppSidebar.svelte';
@@ -150,6 +151,8 @@
 						<ScheduleSkeleton />
 					{:else if loaderRoute === '/(app)/voting'}
 						<VotingSkeleton />
+					{:else if loaderRoute === '/(app)/(protected)/notifications'}
+						<NotificationsSkeleton />
 					{:else}
 						<SectionSpinner />
 					{/if}
