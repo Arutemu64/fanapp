@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
-	import EmptyState from '$lib/components/EmptyState.svelte';
+	import OfflineUnavailableState from '$lib/components/OfflineUnavailableState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Alert, Button, Card, Helper, Label, Spinner, Textarea } from 'flowbite-svelte';
-	import { ExclamationCircleOutline } from 'flowbite-svelte-icons';
 
 	import type { PageProps } from './$types';
 
@@ -85,8 +84,7 @@
 {#if data.offlineUnavailable}
 	<!-- Submit-only surface with nothing to cache: say so plainly rather than
 	     showing a form that can't send. -->
-	<EmptyState
-		icon={ExclamationCircleOutline}
+	<OfflineUnavailableState
 		title="Обратная связь доступна только онлайн"
 		message="Подключись к интернету, чтобы отправить отзыв."
 	/>
