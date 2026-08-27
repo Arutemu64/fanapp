@@ -4,34 +4,104 @@
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
 
-// Ensures that the `$service-worker` import has proper type definitions
+// Ensures that virtual imports (`$env/static/public`) have type definitions
 /// <reference types="@sveltejs/kit" />
-
-// Only necessary if you have an import from `$env/static/public`
 /// <reference types="../.svelte-kit/ambient.d.ts" />
 
 import { PUBLIC_API_URL } from '$env/static/public';
-import { build, files, version } from '$service-worker';
+import { clientsClaim } from 'workbox-core';
+import { ExpirationPlugin } from 'workbox-expiration';
+import {
+	cleanupOutdatedCaches,
+	createHandlerBoundToURL,
+	precacheAndRoute,
+	type PrecacheEntry
+} from 'workbox-precaching';
+import { NavigationRoute, registerRoute } from 'workbox-routing';
+import { CacheFirst } from 'workbox-strategies';
 
-// This gives `self` the correct types
-const self = globalThis.self as unknown as ServiceWorkerGlobalScope;
+// `self` with SW types, plus the manifest vite-pwa injects at build. It is
+// absent in `vite dev` (injectManifest only runs on a production build); the
+// guard below treats that absence as the signal to stay inert.
+declare let self: ServiceWorkerGlobalScope & {
+	__WB_MANIFEST: (string | PrecacheEntry)[] | undefined;
+};
 
 // The backend is deployed under a path on the *same* origin as the app
 // (e.g. https://host/api), so an origin check can't tell API calls apart from
 // the app shell. Derive the API's origin + base path from PUBLIC_API_URL and
-// treat anything under it as network-only: the SW must never cache or replay
-// user-specific, dynamic API data — the app's own IndexedDB layer owns offline
-// caching, and a cached health/probe response would make us look online while
-// the device is offline.
+// keep it network-only: the SW must never cache or replay user-specific,
+// dynamic API data — the app's own IndexedDB layer owns offline caching, and a
+// cached health/probe response would make us look online while the device is
+// offline. Workbox never intercepts these (no route below matches the API path,
+// and the navigation fallback denylists it), so they hit the network directly.
 // PUBLIC_API_URL is relative by default (e.g. `/api`), so resolve it against
 // this worker's own origin — `new URL` throws on a bare path without a base.
 const API_URL = new URL(PUBLIC_API_URL, self.location.origin);
 // Drop any trailing slash so the prefix match below is exact.
 const API_BASE_PATH = API_URL.pathname.replace(/\/+$/, '');
 
-function isApiRequest(url: URL): boolean {
-	if (url.origin !== API_URL.origin) return false;
-	return url.pathname === API_BASE_PATH || url.pathname.startsWith(`${API_BASE_PATH}/`);
+// Matches the API base path and anything under it, anchored at the start.
+const API_PATH_PATTERN = new RegExp(`^${API_BASE_PATH}(/|$)`);
+
+// Caching only runs in a production build, where the manifest is injected. Its
+// absence in dev means cache-first would be wrong anyway — that strategy assumes
+// the immutable, versioned shell only a real build emits — so the worker stays
+// inert. The push/notificationclick handlers below register either way, so push
+// still works in dev.
+const precacheManifest = self.__WB_MANIFEST;
+if (precacheManifest) {
+	// --- Precaching -----------------------------------------------------------
+	// Precache the shell and serve it cache-first. Revisions are content hashes,
+	// so a cache hit is never stale, and cleanupOutdatedCaches prunes entries left
+	// by superseded revisions. The responsive image variants are kept out of the
+	// manifest (vite.config globIgnores) and runtime-cached below instead.
+	precacheAndRoute(precacheManifest);
+	cleanupOutdatedCaches();
+
+	// --- SPA navigation fallback ----------------------------------------------
+	// Every route renders from the same client-built shell, precached above as
+	// the adapter-static fallback (200.html). Serving it for navigations means
+	// startup never depends on the origin being healthy — a reachable-but-broken
+	// upstream (502/503/504) can't block the app from booting. API paths are
+	// denylisted so a navigation-shaped API request still hits the network.
+	registerRoute(
+		new NavigationRoute(createHandlerBoundToURL('/200.html'), {
+			denylist: [API_PATH_PATTERN]
+		})
+	);
+
+	// --- Responsive image variants: runtime cache-first -----------------------
+	// The AVIF/WebP/… variants <enhanced:img> emits are content-hashed and
+	// immutable, so cache-first is safe (a hit is never stale) and they become
+	// available offline after the first online view. Precached shell images
+	// (icons) are already served by the precache route, so this only catches the
+	// excluded hashed variants. API paths never have an `image` destination.
+	//
+	// Content-hashing means each deploy mints fresh URLs, and this cache isn't
+	// versioned (cleanupOutdatedCaches only prunes the precache), so without a
+	// bound the superseded variants would accumulate across deploys. Cap it by
+	// count and age and let it yield under storage pressure — evicted images just
+	// re-fetch when next online.
+	registerRoute(
+		({ url, request }) => url.origin === self.location.origin && request.destination === 'image',
+		new CacheFirst({
+			cacheName: 'image-variants',
+			plugins: [
+				new ExpirationPlugin({
+					maxEntries: 60,
+					maxAgeSeconds: 30 * 24 * 60 * 60,
+					purgeOnQuotaError: true
+				})
+			]
+		})
+	);
+
+	// Take control of open pages after a controlled update (the in-app prompt
+	// reloads them on `controllerchange`). We do NOT call skipWaiting here: a new
+	// worker waits until the user accepts the prompt, which posts the `skipWaiting`
+	// message handled below — never swapping assets mid-session.
+	clientsClaim();
 }
 
 interface PushNotificationPayload {
@@ -60,62 +130,6 @@ async function hasVisibleAppClient() {
 	return windowClients.some((client) => client.visibilityState === 'visible');
 }
 
-const CACHE = `cache-${version}`;
-
-// `build` lists the Vite-generated app files: empty during `vite dev` (the app is
-// not bundled) and populated in production builds. We use that as a reliable dev
-// signal to disable the fetch/caching handler in dev — its cache-first app shell
-// goes stale across HMR rebuilds and serves an outdated shell on hard navigations,
-// 404ing deep links the live dev server actually has. Push notifications still work
-// in dev because the `push`/`notificationclick` handlers below stay registered.
-const dev = build.length === 0;
-
-// Content-hashed responsive image variants (AVIF/WebP/… emitted by
-// <enhanced:img>) live in `build`. Precaching the whole set would store every
-// width and format at install when a device only ever displays one — wasteful of
-// bandwidth and storage, and explicitly discouraged for responsive image sets
-// (https://developer.chrome.com/docs/workbox/precaching-dos-and-donts). Keep them
-// out of the precache and serve them cache-first at runtime instead (see below).
-const IMAGE_ASSET = /\.(avif|webp|png|jpe?g|gif)$/;
-const imageBuild = build.filter((path) => IMAGE_ASSET.test(path));
-
-const ASSETS = [
-	...build.filter((path) => !IMAGE_ASSET.test(path)), // app shell (JS/CSS), minus image sets
-	...files // everything in `static`
-];
-
-self.addEventListener('install', (event) => {
-	async function addFilesToCache() {
-		const cache = await caches.open(CACHE);
-		await cache.addAll(ASSETS);
-
-		// Precache the app-shell entry so an offline navigation to any never-visited
-		// route can fall back to it (see the navigate handler below). Done separately
-		// and tolerantly: a failure here must not abort the whole install.
-		try {
-			await cache.add('/');
-		} catch {
-			// Best-effort — the opportunistic cache.put in the fetch handler still
-			// captures '/' on the first online visit.
-		}
-	}
-
-	event.waitUntil(addFilesToCache());
-});
-
-self.addEventListener('activate', (event) => {
-	async function activate() {
-		for (const key of await caches.keys()) {
-			if (key !== CACHE) await caches.delete(key);
-		}
-		// Take control of open pages immediately after a controlled update
-		// (the in-app prompt reloads them on `controllerchange`).
-		await self.clients.claim();
-	}
-
-	event.waitUntil(activate());
-});
-
 // The new worker waits by default so the user is never interrupted mid-session.
 // The in-app "new version" prompt posts this message when the user accepts,
 // which activates the waiting worker and triggers a reload.
@@ -123,104 +137,6 @@ self.addEventListener('message', (event) => {
 	if (event.data === 'skipWaiting') {
 		self.skipWaiting();
 	}
-});
-
-self.addEventListener('fetch', (event) => {
-	// In dev, never intercept: let every request hit the network (vite) directly so
-	// the browser always gets a fresh shell. The cache-first strategy below assumes
-	// an immutable, versioned shell — an invariant only production builds satisfy.
-	if (dev) return;
-
-	// ignore POST requests etc
-	if (event.request.method !== 'GET') return;
-
-	// Skip EventSource requests
-	if (event.request.headers.get('Accept') === 'text/event-stream') return;
-
-	// Never intercept API calls: let them hit the network directly so they fail
-	// honestly when offline. Serving a cached API response here would falsely
-	// report the server as reachable and replay stale data.
-	if (isApiRequest(new URL(event.request.url))) return;
-
-	async function respond() {
-		const url = new URL(event.request.url);
-		const cache = await caches.open(CACHE);
-
-		// `build`/`files` can always be served from the cache. The origin check
-		// matters: ASSETS holds bare pathnames, so without it a cross-origin GET
-		// whose path happens to match a precached file (e.g. any host's
-		// /robots.txt) would be answered with our local copy.
-		if (url.origin === self.location.origin && ASSETS.includes(url.pathname)) {
-			const response = await cache.match(url.pathname);
-
-			if (response) {
-				return response;
-			}
-		}
-
-		// Responsive image variants are deliberately not precached (see ASSETS), but
-		// they're content-hashed and immutable, so cache-first is safe: a hit can
-		// never be stale. The network branch below cache.puts on the first request,
-		// so every load after that is served from cache — the instant repeat-load of
-		// precaching without storing widths and formats the device never requests.
-		if (url.origin === self.location.origin && imageBuild.includes(url.pathname)) {
-			const response = await cache.match(url.pathname);
-
-			if (response) {
-				return response;
-			}
-		}
-
-		// App-shell, cache-first: every route renders from the same client-built
-		// shell, which is immutable per deploy and versioned by `version` (updates
-		// ride the in-app prompt + skipWaiting, never the network). Serving the
-		// precached shell for navigations means startup never depends on the
-		// origin being healthy — a reachable-but-broken upstream (502/503/504) can
-		// no longer block the app from booting, where a network-first navigation
-		// would return the gateway error page instead.
-		if (event.request.mode === 'navigate') {
-			const shell = await cache.match('/');
-			if (shell) {
-				return shell;
-			}
-		}
-
-		// for everything else, try the network first, but
-		// fall back to the cache if we're offline
-		try {
-			const response = await fetch(event.request);
-
-			// if we're offline, fetch can return a value that is not a Response
-			// instead of throwing - and we can't pass this non-Response to respondWith
-			if (!(response instanceof Response)) {
-				throw new Error('invalid response from fetch');
-			}
-
-			// Only cache same-origin GETs (the app shell and static assets).
-			// API calls (same origin under PUBLIC_API_URL's base path) are
-			// filtered out before reaching here by `isApiRequest`, so they are
-			// never stored — the app layer owns their offline caching.
-			if (response.status === 200 && url.origin === self.location.origin) {
-				cache.put(event.request, response.clone());
-			}
-
-			return response;
-		} catch (err) {
-			// No shell fallback here: navigations already tried the cached shell
-			// before hitting the network, so re-matching it now can never succeed.
-			const response = await cache.match(event.request);
-
-			if (response) {
-				return response;
-			}
-
-			// if there's no cache, then just error out
-			// as there is nothing we can do to respond to this request
-			throw err;
-		}
-	}
-
-	event.respondWith(respond());
 });
 
 self.addEventListener('push', (event: PushEvent) => {

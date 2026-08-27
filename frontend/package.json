@@ -29,6 +29,7 @@
 		"@sveltejs/vite-plugin-svelte": "7.3.0",
 		"@tailwindcss/vite": "4.3.3",
 		"@types/node": "26.2.0",
+		"@vite-pwa/sveltekit": "1.1.0",
 		"eslint": "10.8.1",
 		"eslint-config-prettier": "10.1.8",
 		"eslint-plugin-perfectionist": "5.10.1",
@@ -48,7 +49,12 @@
 		"typescript-eslint": "8.67.0",
 		"unplugin-icons": "23.0.1",
 		"vite": "8.2.2",
-		"vitest": "4.1.11"
+		"vitest": "4.1.11",
+		"workbox-core": "7.4.1",
+		"workbox-expiration": "7.4.1",
+		"workbox-precaching": "7.4.1",
+		"workbox-routing": "7.4.1",
+		"workbox-strategies": "7.4.1"
 	},
 	"dependencies": {
 		"@fontsource-variable/inter": "5.3.0",

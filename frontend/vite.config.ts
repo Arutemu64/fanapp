@@ -2,6 +2,7 @@ import { sentrySvelteKit } from '@sentry/sveltekit';
 import { enhancedImages } from '@sveltejs/enhanced-img';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
+import { SvelteKitPWA } from '@vite-pwa/sveltekit';
 import { fileURLToPath } from 'node:url';
 import Icons from 'unplugin-icons/vite';
 import { loadEnv } from 'vite';
@@ -58,6 +59,42 @@ export default defineConfig(({ mode }) => {
 			// must precede sveltekit().
 			enhancedImages(),
 			sveltekit(),
+			// injectManifest strategy: SvelteKit compiles our hand-written SW
+			// (src/service-worker.ts), then vite-pwa runs Workbox over the built output
+			// to generate the precache manifest and inject it at `self.__WB_MANIFEST`.
+			// We keep the SW — push, update handshake, API bypass, image runtime cache —
+			// and only offload precache assembly + cache versioning to Workbox.
+			// `filename` stays the SvelteKit default so the emitted worker remains
+			// /service-worker.js (registered by $lib/utils/serviceWorker.ts) and
+			// `manifest: false` keeps static/manifest.json as the web app manifest.
+			SvelteKitPWA({
+				strategies: 'injectManifest',
+				srcDir: 'src',
+				filename: 'service-worker.js',
+				manifest: false,
+				injectRegister: false,
+				// SPA (adapter-static fallback): include the fallback page in the
+				// precache manifest so navigations resolve offline. adapterFallback
+				// mirrors svelte.config.js's `fallback: '200.html'`.
+				kit: {
+					spa: true,
+					adapterFallback: '200.html'
+				},
+				injectManifest: {
+					// Precache the app shell. Exclude the content-hashed responsive image
+					// variants <enhanced:img> emits (served cache-first at runtime in sw.ts
+					// instead — precaching every width/format at install is wasteful and
+					// discouraged: https://developer.chrome.com/docs/workbox/precaching-dos-and-donts).
+					globPatterns: ['**/*.{js,css,html,svg,ico,webmanifest,woff2,json}', 'icons/*.png'],
+					globIgnores: ['**/_app/immutable/assets/**/*.{avif,webp,png,jpeg,jpg,gif}']
+				},
+				devOptions: {
+					// No SW in dev: cache-first assumes the immutable versioned shell only a
+					// production build emits. The worker guards on the manifest's presence,
+					// so it stays inert in dev even if a stale registration lingers.
+					enabled: false
+				}
+			}),
 			Icons({
 				compiler: 'svelte'
 			})
