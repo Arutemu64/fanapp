@@ -17,6 +17,7 @@
 	import ConnectionBanner from './components/ConnectionBanner.svelte';
 	import SectionSpinner from './components/SectionSpinner.svelte';
 	import ScheduleSkeleton from './schedule/components/ScheduleSkeleton.svelte';
+	import VotingSkeleton from './voting/components/VotingSkeleton.svelte';
 
 	let { data, children }: LayoutProps = $props();
 
@@ -114,9 +115,9 @@
 		return () => clearTimeout(timer);
 	});
 
-	// The schedule has a regular, predictable layout worth a bespoke skeleton;
-	// everything else falls back to a centred spinner.
-	let loaderIsSchedule = $derived(navigating.to?.route?.id === '/(app)/schedule');
+	// Sections with a regular, predictable layout get a bespoke skeleton keyed off
+	// the destination route; everything else falls back to a centred spinner.
+	let loaderRoute = $derived(navigating.to?.route?.id);
 </script>
 
 <div class="flex h-dvh w-full overflow-hidden bg-gray-50 dark:bg-gray-950">
@@ -145,8 +146,10 @@
 				class="mx-auto max-w-5xl p-4 pb-[calc(6rem+env(safe-area-inset-bottom))] md:p-6 md:pt-4 lg:p-8 lg:pt-4"
 			>
 				{#if showLoader}
-					{#if loaderIsSchedule}
+					{#if loaderRoute === '/(app)/schedule'}
 						<ScheduleSkeleton />
+					{:else if loaderRoute === '/(app)/voting'}
+						<VotingSkeleton />
 					{:else}
 						<SectionSpinner />
 					{/if}
