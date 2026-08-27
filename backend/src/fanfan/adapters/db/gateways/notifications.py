@@ -4,24 +4,62 @@ from typing import cast
 from sqlalchemy import CursorResult, and_, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from fanfan.adapters.db.mappers.notification import NotificationMapper
 from fanfan.adapters.db.models import NotificationORM
 from fanfan.application.dto.notification import NotificationDTO
 from fanfan.application.dto.page import Pagination
 from fanfan.application.ports.gateways.notifications import NotificationGateway
 from fanfan.core.models.notification import Notification
 from fanfan.core.vo.mailing import MailingId
-from fanfan.core.vo.notification import NotificationId
+from fanfan.core.vo.notification import NotificationId, NotificationType
 from fanfan.core.vo.user import UserId
+
+
+def _from_model(model: Notification) -> NotificationORM:
+    return NotificationORM(
+        id=model.id,
+        user_id=model.user_id,
+        title=model.title,
+        body=model.body,
+        type=model.type,
+        path=model.path,
+        mailing_id=model.mailing_id,
+        seen_at=model.seen_at,
+    )
+
+
+def _to_model(orm: NotificationORM) -> Notification:
+    return Notification(
+        id=NotificationId(orm.id),
+        user_id=UserId(orm.user_id),
+        title=orm.title,
+        body=orm.body,
+        type=NotificationType(orm.type),
+        path=orm.path,
+        mailing_id=MailingId(orm.mailing_id) if orm.mailing_id is not None else None,
+        seen_at=orm.seen_at,
+    )
+
+
+def _parse_dto(orm: NotificationORM) -> NotificationDTO:
+    return NotificationDTO(
+        id=NotificationId(orm.id),
+        user_id=UserId(orm.user_id),
+        title=orm.title,
+        body=orm.body,
+        type=NotificationType(orm.type),
+        path=orm.path,
+        mailing_id=MailingId(orm.mailing_id) if orm.mailing_id is not None else None,
+        created_at=orm.created_at,
+        seen_at=orm.seen_at,
+    )
 
 
 class SqlNotificationGateway(NotificationGateway):
     def __init__(self, session: AsyncSession):
         self.session = session
-        self.mapper = NotificationMapper()
 
     async def add(self, notification: Notification) -> None:
-        notification_orm = self.mapper.from_model(notification)
+        notification_orm = _from_model(notification)
         self.session.add(notification_orm)
         await self.session.flush([notification_orm])
 
@@ -32,7 +70,7 @@ class SqlNotificationGateway(NotificationGateway):
             .with_for_update()
         )
         notification_orm = await self.session.scalar(stmt)
-        return self.mapper.to_model(notification_orm) if notification_orm else None
+        return _to_model(notification_orm) if notification_orm else None
 
     async def mark_all_read_for_user(
         self, user_id: UserId, timestamp: datetime
@@ -94,7 +132,7 @@ class SqlNotificationGateway(NotificationGateway):
     ) -> NotificationDTO | None:
         stmt = select(NotificationORM).where(NotificationORM.id == notification_id)
         notification_orm = await self.session.scalar(stmt)
-        return self.mapper.parse_dto(notification_orm) if notification_orm else None
+        return _parse_dto(notification_orm) if notification_orm else None
 
     async def read_list_user_notifications(
         self, user_id: UserId, pagination: Pagination
@@ -106,4 +144,4 @@ class SqlNotificationGateway(NotificationGateway):
         )
         stmt = stmt.limit(pagination.limit).offset(pagination.offset)
         notifications = await self.session.scalars(stmt)
-        return [self.mapper.parse_dto(n) for n in notifications]
+        return [_parse_dto(n) for n in notifications]

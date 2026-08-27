@@ -2,9 +2,8 @@ from sqlalchemy import Select, and_, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import undefer
 
-from fanfan.adapters.db.mappers.nomination import NominationMapper
 from fanfan.adapters.db.models import NominationORM, ParticipantORM, VoteORM
-from fanfan.application.dto.nomination import NominationVotingDTO
+from fanfan.application.dto.nomination import NominationVoteDTO, NominationVotingDTO
 from fanfan.application.dto.page import Pagination
 from fanfan.application.dto.voting import ContenderDTO, NominationContenderDTO
 from fanfan.application.ports.gateways.nominations import NominationGateway
@@ -12,6 +11,47 @@ from fanfan.core.models.nomination import Nomination
 from fanfan.core.vo.nomination import NominationCode, NominationId
 from fanfan.core.vo.participant import ParticipantId
 from fanfan.core.vo.user import UserId
+from fanfan.core.vo.vote import VoteId
+
+
+def _from_model(model: Nomination) -> NominationORM:
+    return NominationORM(
+        id=model.id,
+        cosplay2_id=model.cosplay2_id,
+        code=model.code,
+        title=model.title,
+        is_votable=model.is_votable,
+        works_url=model.works_url,
+    )
+
+
+def _to_model(orm: NominationORM) -> Nomination:
+    return Nomination(
+        id=NominationId(orm.id),
+        cosplay2_id=orm.cosplay2_id,
+        code=orm.code,
+        title=orm.title,
+        is_votable=orm.is_votable,
+        works_url=orm.works_url,
+    )
+
+
+def _parse_voting_dto(
+    nomination_orm: NominationORM, vote_orm: VoteORM | None
+) -> NominationVotingDTO:
+    return NominationVotingDTO(
+        id=NominationId(nomination_orm.id),
+        code=NominationCode(nomination_orm.code),
+        title=nomination_orm.title,
+        works_url=nomination_orm.works_url,
+        participants_count=nomination_orm.participants_count,
+        user_vote=NominationVoteDTO(
+            id=VoteId(vote_orm.id),
+            participant_id=ParticipantId(vote_orm.participant_id),
+        )
+        if vote_orm
+        else None,
+    )
 
 
 def _select_nomination_voting_dto(user_id: UserId | None) -> Select:
@@ -33,10 +73,9 @@ def _select_nomination_voting_dto(user_id: UserId | None) -> Select:
 class SqlNominationGateway(NominationGateway):
     def __init__(self, session: AsyncSession):
         self.session = session
-        self.mapper = NominationMapper()
 
     async def add(self, nomination: Nomination) -> None:
-        nomination_orm = self.mapper.from_model(nomination)
+        nomination_orm = _from_model(nomination)
         self.session.add(nomination_orm)
         await self.session.flush([nomination_orm])
 
@@ -47,7 +86,7 @@ class SqlNominationGateway(NominationGateway):
             .with_for_update()
         )
         nomination_orm = await self.session.scalar(stmt)
-        return self.mapper.to_model(nomination_orm) if nomination_orm else None
+        return _to_model(nomination_orm) if nomination_orm else None
 
     async def count_votable(self) -> int:
         stmt = select(func.count(NominationORM.id)).where(
@@ -134,7 +173,7 @@ class SqlNominationGateway(NominationGateway):
         return contenders
 
     async def save(self, nomination: Nomination) -> None:
-        nomination_orm = await self.session.merge(self.mapper.from_model(nomination))
+        nomination_orm = await self.session.merge(_from_model(nomination))
         await self.session.flush([nomination_orm])
 
     async def list_cosplay2_ids(self) -> list[int]:
@@ -159,9 +198,7 @@ class SqlNominationGateway(NominationGateway):
 
         if result:
             nomination_orm, vote_orm = result
-            return self.mapper.parse_voting_dto(
-                nomination_orm=nomination_orm, vote_orm=vote_orm
-            )
+            return _parse_voting_dto(nomination_orm=nomination_orm, vote_orm=vote_orm)
         return None
 
     async def read_list_votable_nominations(
@@ -179,8 +216,6 @@ class SqlNominationGateway(NominationGateway):
         results = (await self.session.execute(stmt)).all()
 
         return [
-            self.mapper.parse_voting_dto(
-                nomination_orm=nomination_orm, vote_orm=vote_orm
-            )
+            _parse_voting_dto(nomination_orm=nomination_orm, vote_orm=vote_orm)
             for nomination_orm, vote_orm in results
         ]

@@ -2,7 +2,6 @@ from sqlalchemy import and_, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.constraints import translate_integrity_error
-from fanfan.adapters.db.mappers.social_identity import SocialIdentityMapper
 from fanfan.adapters.db.models import SocialIdentityORM
 from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
 from fanfan.core.exceptions.users import (
@@ -10,17 +9,36 @@ from fanfan.core.exceptions.users import (
     UserAlreadyHasProviderLinked,
 )
 from fanfan.core.models.social_identity import SocialIdentity
-from fanfan.core.vo.social_identity import SocialProvider
+from fanfan.core.vo.social_identity import SocialIdentityId, SocialProvider
 from fanfan.core.vo.user import UserId
+
+
+def _from_model(model: SocialIdentity) -> SocialIdentityORM:
+    return SocialIdentityORM(
+        id=model.id,
+        user_id=model.user_id,
+        provider=model.provider,
+        subject=model.subject,
+        provider_user_id=model.provider_user_id,
+    )
+
+
+def _to_model(orm: SocialIdentityORM) -> SocialIdentity:
+    return SocialIdentity(
+        id=SocialIdentityId(orm.id),
+        user_id=UserId(orm.user_id),
+        provider=orm.provider,
+        subject=orm.subject,
+        provider_user_id=orm.provider_user_id,
+    )
 
 
 class SqlSocialIdentityGateway(SocialIdentityGateway):
     def __init__(self, session: AsyncSession):
         self.session = session
-        self.social_mapper = SocialIdentityMapper()
 
     async def add(self, social_identity: SocialIdentity) -> None:
-        social_identity_orm = self.social_mapper.from_model(social_identity)
+        social_identity_orm = _from_model(social_identity)
         with translate_integrity_error(
             {
                 # UNIQUE(provider, subject): the external account is taken.
@@ -46,11 +64,7 @@ class SqlSocialIdentityGateway(SocialIdentityGateway):
             .with_for_update()
         )
         social_identity_orm = await self.session.scalar(stmt)
-        return (
-            self.social_mapper.to_model(social_identity_orm)
-            if social_identity_orm
-            else None
-        )
+        return _to_model(social_identity_orm) if social_identity_orm else None
 
     async def get_by_subject(
         self, provider: SocialProvider, subject: str
@@ -66,11 +80,7 @@ class SqlSocialIdentityGateway(SocialIdentityGateway):
             .with_for_update()
         )
         social_identity_orm = await self.session.scalar(stmt)
-        return (
-            self.social_mapper.to_model(social_identity_orm)
-            if social_identity_orm
-            else None
-        )
+        return _to_model(social_identity_orm) if social_identity_orm else None
 
     async def count_by_user(self, user_id: UserId) -> int:
         stmt = (
