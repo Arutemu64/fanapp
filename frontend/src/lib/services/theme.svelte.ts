@@ -1,8 +1,10 @@
-import { readStorage, writeStorage } from '$lib/utils/safeStorage';
+import { Persisted } from './persisted.svelte';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 
-const STORAGE_KEY = 'theme-mode';
+function parseThemeMode(raw: string): ThemeMode | undefined {
+	return raw === 'light' || raw === 'dark' || raw === 'system' ? raw : undefined;
+}
 
 // Browser-UI tints (address/status bar). Must match app.html: the light value is
 // the watermelon pink, the dark value the gray-900 shell background. The inline
@@ -35,25 +37,24 @@ function applyTheme(mode: ThemeMode): void {
 }
 
 class ThemeService {
-	mode = $state<ThemeMode>('system');
+	// Device-wide preference, persisted through safeStorage (see the singleton
+	// note below for why surviving login/logout is wanted here, not a leak).
+	#mode = new Persisted<ThemeMode>('theme-mode', 'system', { parse: parseThemeMode });
+
+	get mode(): ThemeMode {
+		return this.#mode.current;
+	}
 
 	constructor() {
-		const stored = readStorage('local', STORAGE_KEY);
-		if (stored === 'light' || stored === 'dark' || stored === 'system') {
-			this.mode = stored;
-		}
-		applyTheme(this.mode);
+		applyTheme(this.#mode.current);
 
 		window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-			if (this.mode === 'system') applyTheme('system');
+			if (this.#mode.current === 'system') applyTheme('system');
 		});
 	}
 
 	setMode(mode: ThemeMode): void {
-		this.mode = mode;
-		// Storage may be blocked (in-app webview) — the preference just won't
-		// survive a reload there; safeStorage swallows the failure.
-		writeStorage('local', STORAGE_KEY, mode);
+		this.#mode.current = mode;
 		applyTheme(mode);
 	}
 }
