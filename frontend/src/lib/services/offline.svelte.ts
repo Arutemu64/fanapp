@@ -1,4 +1,5 @@
 import { invalidateAll } from '$app/navigation';
+import { listen } from '$lib/utils/listen';
 import { flushPendingLogout } from '$lib/utils/pendingLogout';
 import { classifyReachabilityChange } from '$lib/utils/reachabilityTransition';
 import { createContext } from 'svelte';
@@ -97,10 +98,11 @@ export class OfflineService {
 		});
 
 		// The `offline` event firing is a trustworthy negative; `online` only means
-		// an interface appeared, so verify it with a probe.
-		window.addEventListener('offline', this.#handleOffline);
-		window.addEventListener('online', this.#handleOnline);
-		document.addEventListener('visibilitychange', this.#handleVisibilityChange);
+		// an interface appeared, so verify it with a probe. `listen` removes these
+		// on component destroy, so they don't need mirroring in `destroy()` below.
+		listen(window, 'offline', this.#handleOffline);
+		listen(window, 'online', this.#handleOnline);
+		listen(document, 'visibilitychange', this.#handleVisibilityChange);
 
 		// Initial check, then poll only if it turns out we're offline.
 		void probeReachability();
@@ -184,18 +186,16 @@ export class OfflineService {
 	};
 
 	/**
-	 * Remove the global listeners and stop the recovery poll. The root layout
-	 * lives for the app's lifetime in production, but dev HMR re-creates it —
-	 * without this each cycle would stack another set of listeners (same reason
-	 * EventsClient has destroy()).
+	 * Drop the reachability subscription and stop the recovery poll. The root
+	 * layout lives for the app's lifetime in production, but dev HMR re-creates
+	 * it — without this each cycle would stack another poll timer (same reason
+	 * EventsClient has destroy()). The DOM listeners are owned by `listen`, which
+	 * removes them on the same component-destroy, so they aren't torn down here.
 	 */
 	destroy() {
 		this.#unsubscribeReachable?.();
 		this.#unsubscribeReachable = null;
 		this.#cancelConfirm();
-		window.removeEventListener('offline', this.#handleOffline);
-		window.removeEventListener('online', this.#handleOnline);
-		document.removeEventListener('visibilitychange', this.#handleVisibilityChange);
 		if (this.#pollId) {
 			clearTimeout(this.#pollId);
 			this.#pollId = null;
