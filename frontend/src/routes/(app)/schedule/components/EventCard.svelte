@@ -31,7 +31,6 @@
 
 	interface Props {
 		event: ScheduleEventWithSubscription;
-		schedule: ScheduleEventWithSubscription[];
 		currentEvent: ScheduleEventWithSubscription | null;
 		user: CurrentUserDTO | null;
 		// 'interlude' for a block-less row (a break, the opening, the closing):
@@ -42,7 +41,7 @@
 		variant?: 'default' | 'interlude';
 	}
 
-	let { event, schedule, currentEvent, user, variant = 'default' }: Props = $props();
+	let { event, currentEvent, user, variant = 'default' }: Props = $props();
 	const toastService = getToastService();
 
 	// Subscribe/unsubscribe and the staff actions all POST to the server — online
@@ -452,7 +451,7 @@
 {/if}
 
 {#if moveModal}
-	<MoveEventModal bind:open={moveModal} {event} {schedule} />
+	<MoveEventModal bind:open={moveModal} {event} />
 {/if}
 
 <!-- Shared confirm dialog for the staff strip's broadcast actions. -->

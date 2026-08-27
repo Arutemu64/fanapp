@@ -2,6 +2,7 @@
 	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
 
 	import { invalidate } from '$app/navigation';
+	import { page } from '$app/state';
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { getToastService } from '$lib/services/toasts.svelte';
@@ -14,11 +15,17 @@
 	interface Props {
 		open: boolean;
 		event: ScheduleEventFullDTO;
-		schedule: ScheduleEventFullDTO[];
 	}
 
-	let { open = $bindable(), event, schedule }: Props = $props();
+	let { open = $bindable(), event }: Props = $props();
 	const toastService = getToastService();
+
+	// The move picker searches the whole programme. It reads that off the route's
+	// loaded schedule rather than a prop, so the full array isn't drilled through
+	// every EventCard row just to reach this rarely-opened dialog. The cast is
+	// needed because merged page.data is untyped; this dialog only ever mounts
+	// under the schedule route, where the load supplies `schedule`.
+	let schedule = $derived(page.data.schedule as ScheduleEventFullDTO[]);
 
 	let query = $state('');
 	let selectedId: string | null = $state(null);

@@ -255,7 +255,7 @@
 					data-event-id={node.event.id}
 					class="scroll-mt-28 overflow-clip rounded-xl border border-dashed border-gray-300 bg-gray-50/70 dark:border-gray-600 dark:bg-gray-800/40"
 				>
-					<EventCard event={node.event} {schedule} {currentEvent} {user} variant="interlude" />
+					<EventCard event={node.event} {currentEvent} {user} variant="interlude" />
 				</div>
 			{:else}
 				{@render blockSection(node)}
@@ -383,7 +383,7 @@
 				<div class="divide-y divide-gray-200 dark:divide-gray-700">
 					{#each nomination.events as event (event.id)}
 						<div data-event-id={event.id} class="scroll-mt-28">
-							<EventCard {event} {schedule} {currentEvent} {user} />
+							<EventCard {event} {currentEvent} {user} />
 						</div>
 					{/each}
 				</div>
