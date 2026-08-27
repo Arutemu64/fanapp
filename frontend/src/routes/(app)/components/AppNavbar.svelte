@@ -6,9 +6,11 @@
 	import { page } from '$app/state';
 	import { createApiClient } from '$lib/api';
 	import { getEventsClient } from '$lib/services/events.svelte';
+	import { getOfflineService } from '$lib/services/offline.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { setAppBadgeCount } from '$lib/utils/appBadge';
 	import { clearUserCache } from '$lib/utils/offlineCache';
+	import { markLogoutPending } from '$lib/utils/pendingLogout';
 	import { getAvatarInitials } from '$lib/utils/users';
 	import {
 		Avatar,
@@ -40,8 +42,19 @@
 
 	const toastService = getToastService();
 	const eventsClient = getEventsClient();
+	const offline = getOfflineService();
 
 	async function handleLogout() {
+		// Offline: we can't reach the server to end the session, and the session
+		// cookie is HttpOnly so JS can't clear it either. Record the intent — the
+		// queued POST /auth/logout fires on reconnect (see pendingLogout) — and tear
+		// down local state now so a shared device stops showing this account at once.
+		if (!offline.isOnline) {
+			markLogoutPending();
+			await finishLogout();
+			return;
+		}
+
 		const { error, response } = await client.POST('/auth/logout');
 
 		if (error || !response.ok) {
@@ -49,6 +62,10 @@
 			return;
 		}
 
+		await finishLogout();
+	}
+
+	async function finishLogout() {
 		// Drop the previous user's cached data so it can't surface for the next
 		// account (or offline) on a shared device. Universal caches (e.g. schedule)
 		// stay warm by design.

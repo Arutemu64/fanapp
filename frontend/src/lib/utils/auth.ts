@@ -4,6 +4,8 @@ import type { ToastService } from '$lib/services/toasts.svelte';
 import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
 
+import { clearLogoutPending } from './pendingLogout';
+
 /**
  * Query param carrying the in-app path a guest was trying to reach when the
  * `(protected)` guard bounced them to `/login`. Read back after a successful
@@ -38,6 +40,10 @@ export async function completeLogin(
 	eventsClient: EventsClient,
 	message: string
 ): Promise<void> {
+	// A logout queued while offline must not outlive a deliberate re-login: clear
+	// it so the reconnect flush can't revoke this fresh session (see pendingLogout).
+	clearLogoutPending();
+
 	toastService.add(message, 'success');
 	const next = sanitizeNextPath(new URL(window.location.href).searchParams.get(LOGIN_NEXT_PARAM));
 	// `next` was captured by the (protected) guard from `url.pathname`, which is

@@ -1,9 +1,15 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
+	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Alert, Button, Card, Helper, Label, Spinner, Textarea } from 'flowbite-svelte';
+	import { ExclamationCircleOutline } from 'flowbite-svelte-icons';
+
+	import type { PageProps } from './$types';
+
+	let { data }: PageProps = $props();
 
 	const toastService = getToastService();
 
@@ -76,52 +82,62 @@
 	<title>Обратная связь · ФАН ФАН</title>
 </svelte:head>
 
-<SectionIntro
-	description="Расскажи о фестивале или о приложении — что понравилось, а что хотелось бы улучшить. Мы читаем каждое сообщение."
-/>
+{#if data.offlineUnavailable}
+	<!-- Submit-only surface with nothing to cache: say so plainly rather than
+	     showing a form that can't send. -->
+	<EmptyState
+		icon={ExclamationCircleOutline}
+		title="Обратная связь доступна только онлайн"
+		message="Подключись к интернету, чтобы отправить отзыв."
+	/>
+{:else}
+	<SectionIntro
+		description="Расскажи о фестивале или о приложении — что понравилось, а что хотелось бы улучшить. Мы читаем каждое сообщение."
+	/>
 
-<Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
-	<form class="space-y-6" onsubmit={handleSubmit}>
-		<div class="space-y-2">
-			<Label for="feedback-text" class="text-gray-900 dark:text-white">Твой отзыв</Label>
-			<Textarea
-				id="feedback-text"
-				name="text"
-				rows={6}
-				maxlength={MAX_LENGTH}
-				placeholder="Поделись впечатлениями о фестивале, идеями по приложению или сообщи о проблеме…"
-				bind:value={feedbackText}
+	<Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
+		<form class="space-y-6" onsubmit={handleSubmit}>
+			<div class="space-y-2">
+				<Label for="feedback-text" class="text-gray-900 dark:text-white">Твой отзыв</Label>
+				<Textarea
+					id="feedback-text"
+					name="text"
+					rows={6}
+					maxlength={MAX_LENGTH}
+					placeholder="Поделись впечатлениями о фестивале, идеями по приложению или сообщи о проблеме…"
+					bind:value={feedbackText}
+					disabled={isSending}
+					oninput={handleInput}
+					class="w-full rounded-xl"
+				/>
+				{#if feedbackError}
+					<Helper color="red" class="mt-1">{feedbackError}</Helper>
+				{:else}
+					<Helper class="text-sm text-gray-500 dark:text-gray-400">
+						Осталось символов: {charsLeft}
+					</Helper>
+				{/if}
+			</div>
+
+			{#if submitError}
+				<Alert color="red">
+					{submitError}
+				</Alert>
+			{/if}
+
+			<Button
+				type="submit"
+				color="primary"
+				class="min-h-11 w-full justify-center sm:w-auto"
 				disabled={isSending}
-				oninput={handleInput}
-				class="w-full rounded-xl"
-			/>
-			{#if feedbackError}
-				<Helper color="red" class="mt-1">{feedbackError}</Helper>
-			{:else}
-				<Helper class="text-sm text-gray-500 dark:text-gray-400">
-					Осталось символов: {charsLeft}
-				</Helper>
-			{/if}
-		</div>
-
-		{#if submitError}
-			<Alert color="red">
-				{submitError}
-			</Alert>
-		{/if}
-
-		<Button
-			type="submit"
-			color="primary"
-			class="min-h-11 w-full justify-center sm:w-auto"
-			disabled={isSending}
-		>
-			{#if isSending}
-				<Spinner size="4" class="mr-2 fill-white" />
-				Отправка…
-			{:else}
-				Отправить отзыв
-			{/if}
-		</Button>
-	</form>
-</Card>
+			>
+				{#if isSending}
+					<Spinner size="4" class="mr-2 fill-white" />
+					Отправка…
+				{:else}
+					Отправить отзыв
+				{/if}
+			</Button>
+		</form>
+	</Card>
+{/if}

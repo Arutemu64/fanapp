@@ -9,6 +9,7 @@ import {
 	userScope,
 	warmCache
 } from '$lib/utils/offlineCache';
+import { isLogoutPending } from '$lib/utils/pendingLogout';
 
 import type { LayoutLoad } from './$types';
 
@@ -20,6 +21,15 @@ const USER_CACHE_KEY = 'me:user';
 
 export const load: LayoutLoad = async ({ fetch, depends }) => {
 	depends('app:current-user');
+
+	// A logout requested offline is still pending server-side (the HttpOnly cookie
+	// can't be cleared by JS). Present as logged-out until the queued POST
+	// /auth/logout revokes the session — otherwise a still-valid cookie would let
+	// /me resurrect the account we just left. The flush (OfflineService) clears the
+	// intent once it succeeds; a fresh login clears it too (completeLogin).
+	if (isLogoutPending()) {
+		return { user: null };
+	}
 
 	const client = createApiClient();
 

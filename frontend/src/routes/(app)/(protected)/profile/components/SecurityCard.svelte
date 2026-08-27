@@ -4,6 +4,7 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { createApiClient } from '$lib/api';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { offlineWriteGate } from '$lib/utils/offlineAction';
 	import { Alert, Badge, Button } from 'flowbite-svelte';
 	import {
 		EnvelopeSolid,
@@ -26,6 +27,10 @@
 	}
 
 	let { user, onUpdate }: Props = $props();
+
+	// Email/password/unlink are all mutations — online only. The current state
+	// (which methods are set) still renders from the cached user.
+	const offlineGate = offlineWriteGate();
 
 	let changePasswordModalOpen = $state(false);
 	let changeEmailModalOpen = $state(false);
@@ -87,6 +92,8 @@
 						color="alternative"
 						size="sm"
 						class="min-h-11 w-full sm:w-auto"
+						disabled={offlineGate.disabled}
+						title={offlineGate.title}
 						onclick={() => (changeEmailModalOpen = true)}
 					>
 						{user.email ? 'Изменить' : 'Добавить'}
@@ -119,6 +126,8 @@
 					color="alternative"
 					size="sm"
 					class="min-h-11 w-full sm:w-auto"
+					disabled={offlineGate.disabled}
+					title={offlineGate.title}
 					onclick={() => (changePasswordModalOpen = true)}
 				>
 					{user.has_password ? 'Изменить' : 'Установить'}

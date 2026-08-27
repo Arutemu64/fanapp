@@ -9,6 +9,7 @@
 	import { PUBLIC_VAPID_KEY, PUBLIC_VK_GROUP_ID } from '$env/static/public';
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { offlineWriteGate } from '$lib/utils/offlineAction';
 	import { onMount } from 'svelte';
 
 	import IosPwaModal from './IosPwaModal.svelte';
@@ -22,6 +23,10 @@
 	}
 
 	let { user, onSettingsUpdate }: Props = $props();
+
+	// Every control here writes to the server (push subscribe/unsubscribe, settings
+	// PATCH, test send) — online only. The current toggle states still render.
+	const offlineGate = offlineWriteGate();
 
 	let isSubscribed = $state(false);
 	// Once the browser permission is "denied" it never prompts again, so the
@@ -313,7 +318,8 @@
 			<Toggle
 				checked={isSubscribed}
 				aria-label="Включить уведомления на этом устройстве"
-				disabled={isLoading || pushUnsupported}
+				disabled={isLoading || pushUnsupported || offlineGate.disabled}
+				title={offlineGate.title}
 				onclick={(e) => {
 					e.preventDefault();
 					void toggleSubscription();
@@ -344,7 +350,8 @@
 				<Toggle
 					bind:checked={receiveVk}
 					aria-label="Получать уведомления во ВКонтакте"
-					disabled={isSavingSettings || !hasVkAccount}
+					disabled={isSavingSettings || !hasVkAccount || offlineGate.disabled}
+					title={offlineGate.title}
 					onchange={toggleReceiveVk}
 					color="primary"
 				/>
@@ -368,7 +375,8 @@
 				<Toggle
 					bind:checked={receiveAll}
 					aria-label="Получать уведомления обо всех анонсах"
-					disabled={isSavingSettings}
+					disabled={isSavingSettings || offlineGate.disabled}
+					title={offlineGate.title}
 					onchange={toggleReceiveAll}
 					color="primary"
 				/>
@@ -383,7 +391,8 @@
 		<Button
 			color="alternative"
 			class="min-h-11 w-full sm:w-auto"
-			disabled={isSendingTest}
+			disabled={isSendingTest || offlineGate.disabled}
+			title={offlineGate.title}
 			onclick={sendTestNotification}
 		>
 			{#if isSendingTest}

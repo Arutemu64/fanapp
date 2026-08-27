@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { CurrentUserDTO } from '$lib/types/user';
 
+	import { offlineWriteGate } from '$lib/utils/offlineAction';
 	import { getAvatarInitials, getRoleColor, getRoleLabel } from '$lib/utils/users';
 	import { Avatar, Badge, Button, Card } from 'flowbite-svelte';
 	import { PenSolid } from 'flowbite-svelte-icons';
@@ -14,6 +15,9 @@
 
 	let { user, onUpdate }: Props = $props();
 	let avatarInitials = $derived(getAvatarInitials(user.username));
+
+	// Editing the profile is a mutation — online only. Cached identity still renders.
+	const offlineGate = offlineWriteGate();
 
 	let editProfileModalOpen = $state(false);
 </script>
@@ -49,6 +53,8 @@
 			color="alternative"
 			size="sm"
 			class="min-h-11 shrink-0"
+			disabled={offlineGate.disabled}
+			title={offlineGate.title}
 			onclick={() => (editProfileModalOpen = true)}
 		>
 			<PenSolid class="me-2 h-4 w-4" />

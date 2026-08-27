@@ -2,6 +2,7 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { clearOAuthErrorParam, OAUTH_LOGIN_ERROR_PARAM } from '$lib/utils/oauthErrors';
+	import { clearLogoutPending } from '$lib/utils/pendingLogout';
 	import { Button, Card, Spinner } from 'flowbite-svelte';
 	import { EnvelopeSolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
@@ -42,6 +43,11 @@
 			event.preventDefault();
 			return;
 		}
+
+		// OAuth login is a full-page navigation that bypasses completeLogin, so cancel
+		// any offline-logout intent here: the user is deliberately re-authenticating,
+		// and a stale intent would otherwise revoke the new session on the return boot.
+		clearLogoutPending();
 
 		isOpeningVk = true;
 	}
