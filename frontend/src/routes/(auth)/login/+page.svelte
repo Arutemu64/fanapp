@@ -2,7 +2,6 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { clearOAuthErrorParam, OAUTH_LOGIN_ERROR_PARAM } from '$lib/utils/oauthErrors';
-	import { isLogoutPending, markReauthAttempt } from '$lib/utils/pendingLogout';
 	import { Button, Card, Spinner } from 'flowbite-svelte';
 	import { EnvelopeSolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
@@ -45,14 +44,12 @@
 		}
 
 		// Don't cancel a pending offline-logout here — clearing it before OAuth
-		// *succeeds* would let a cancelled login drop the revoke, leaving the valid
-		// HttpOnly cookie to restore the old account. Instead mark the attempt so the
-		// return boot (root +layout.ts) can drop the intent only if a new session was
-		// actually installed, and keep it on cancel. In practice the reconnect/boot
-		// flush has already cleared the intent before the user reaches this button;
-		// the marker only matters inside that narrow window.
-		if (isLogoutPending()) markReauthAttempt();
-
+		// *succeeds* would let a cancelled/abandoned login drop the revoke, leaving the
+		// valid HttpOnly cookie to restore the old account. The reconnect/boot flush
+		// clears the intent once the old session is actually revoked, which in practice
+		// runs before the user reaches this button, so a genuine new login still starts
+		// from a cleared intent. (A client-only "did OAuth succeed?" signal can't tell
+		// success from an abandoned flow, so we don't try — see the PR discussion.)
 		isOpeningVk = true;
 	}
 

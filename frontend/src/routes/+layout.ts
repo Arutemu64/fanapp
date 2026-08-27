@@ -2,7 +2,6 @@ import type { ScheduleEventFullDTO, SubscriptionFullDTO } from '$lib/types/sched
 import type { CurrentUserDTO } from '$lib/types/user';
 
 import { createApiClient } from '$lib/api';
-import { OAUTH_LOGIN_ERROR_PARAM } from '$lib/utils/oauthErrors';
 import {
 	clearUserCache,
 	fetchWithCache,
@@ -10,11 +9,7 @@ import {
 	userScope,
 	warmCache
 } from '$lib/utils/offlineCache';
-import {
-	clearLogoutPending,
-	consumeReauthAttempt,
-	isLogoutPending
-} from '$lib/utils/pendingLogout';
+import { isLogoutPending } from '$lib/utils/pendingLogout';
 
 import type { LayoutLoad } from './$types';
 
@@ -24,7 +19,7 @@ export const ssr = false;
 // Single current-session user; cached so the app can still boot offline.
 const USER_CACHE_KEY = 'me:user';
 
-export const load: LayoutLoad = async ({ fetch, depends, url }) => {
+export const load: LayoutLoad = async ({ fetch, depends }) => {
 	depends('app:current-user');
 
 	// A logout requested offline is still pending server-side (the HttpOnly cookie
@@ -33,17 +28,7 @@ export const load: LayoutLoad = async ({ fetch, depends, url }) => {
 	// /me resurrect the account we just left. The flush (OfflineService) clears the
 	// intent once it succeeds; a fresh login clears it too (completeLogin).
 	if (isLogoutPending()) {
-		// Exception: an OAuth re-auth started with this intent pending. If it returned
-		// without an error param it installed a *new* session — drop the stale intent
-		// so the boot flush doesn't revoke the freshly authenticated session. A return
-		// *with* an error (cancel/fail) left the old session intact, so keep suppressing.
-		const reauthReturned = consumeReauthAttempt();
-		const oauthFailed = url.searchParams.has(OAUTH_LOGIN_ERROR_PARAM);
-		if (reauthReturned && !oauthFailed) {
-			clearLogoutPending();
-		} else {
-			return { user: null };
-		}
+		return { user: null };
 	}
 
 	const client = createApiClient();

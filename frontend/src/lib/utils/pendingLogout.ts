@@ -38,27 +38,6 @@ export function clearLogoutPending(): void {
 }
 
 /**
- * Marks that an OAuth re-auth is starting while a logout is still pending, so the
- * return boot can tell a *successful* new session (drop the stale intent, don't
- * revoke it) from a cancelled one (keep the intent — the old session was never
- * revoked). Session-scoped on purpose: abandoning the flow by closing the app
- * clears the marker, so the pending revoke is then honoured as normal.
- */
-const REAUTH_ATTEMPT_KEY = 'fanfan:reauth-attempt';
-
-/** Record that an OAuth re-auth is starting (call only when a logout is pending). */
-export function markReauthAttempt(): void {
-	writeStorage('session', REAUTH_ATTEMPT_KEY, '1');
-}
-
-/** Read and clear the re-auth marker; true if a re-auth was in flight. */
-export function consumeReauthAttempt(): boolean {
-	const attempted = readStorage('session', REAUTH_ATTEMPT_KEY) === '1';
-	if (attempted) removeStorage('session', REAUTH_ATTEMPT_KEY);
-	return attempted;
-}
-
-/**
  * Fire a queued offline logout, if one is pending. Clears the intent on any
  * definitive outcome — a 2xx, or a 401/403 that means the session is already
  * gone. A network failure (still offline) or a 5xx leaves it pending so the next
