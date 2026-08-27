@@ -2,7 +2,7 @@
 	import type { NotificationSeed } from '$lib/types/notifications';
 
 	import { afterNavigate, beforeNavigate } from '$app/navigation';
-	import { page } from '$app/state';
+	import { navigating, page } from '$app/state';
 	import SkipLink from '$lib/components/SkipLink.svelte';
 	import ToastContainer from '$lib/components/ToastContainer.svelte';
 	import { TAB_ROOTS } from '$lib/data/nav';
@@ -15,6 +15,8 @@
 	import AppNavbar from './components/AppNavbar.svelte';
 	import AppSidebar from './components/AppSidebar.svelte';
 	import ConnectionBanner from './components/ConnectionBanner.svelte';
+	import SectionSpinner from './components/SectionSpinner.svelte';
+	import ScheduleSkeleton from './schedule/components/ScheduleSkeleton.svelte';
 
 	let { data, children }: LayoutProps = $props();
 
@@ -86,6 +88,35 @@
 		const top = TAB_ROOTS.has(to) ? (scrollPositions[to] ?? 0) : 0;
 		mainElement?.scrollTo({ top, behavior: 'instant' });
 	});
+
+	// In-shell loading indicator. Section pages block on their `load`, so during a
+	// switch the previous page stays painted until the new one commits; we replace
+	// the content region with a skeleton (or a spinner) so feedback is local to
+	// where the content will appear, the way a persistent app shell should behave.
+	// Only real route changes populate `navigating` — an `invalidate()` data refresh
+	// (e.g. the schedule's SSE reload) never does, so those never flash the loader.
+	const LOADER_DELAY_MS = 250;
+
+	// Gate on a short delay so fast navigations swap straight to the new page with
+	// no placeholder flash; only a load that outlasts the delay reveals the loader.
+	let showLoader = $state(false);
+	$effect(() => {
+		const target = navigating.to;
+		// Scope to in-app section switches — auth navigations (login/logout) keep
+		// their own form-level feedback and shouldn't paint a section loader.
+		if (!target?.route?.id?.startsWith('/(app)')) {
+			showLoader = false;
+			return;
+		}
+		const timer = setTimeout(() => {
+			showLoader = true;
+		}, LOADER_DELAY_MS);
+		return () => clearTimeout(timer);
+	});
+
+	// The schedule has a regular, predictable layout worth a bespoke skeleton;
+	// everything else falls back to a centred spinner.
+	let loaderIsSchedule = $derived(navigating.to?.route?.id === '/(app)/schedule');
 </script>
 
 <div class="flex h-dvh w-full overflow-hidden bg-gray-50 dark:bg-gray-950">
@@ -113,7 +144,15 @@
 			<div
 				class="mx-auto max-w-5xl p-4 pb-[calc(6rem+env(safe-area-inset-bottom))] md:p-6 md:pt-4 lg:p-8 lg:pt-4"
 			>
-				{@render children()}
+				{#if showLoader}
+					{#if loaderIsSchedule}
+						<ScheduleSkeleton />
+					{:else}
+						<SectionSpinner />
+					{/if}
+				{:else}
+					{@render children()}
+				{/if}
 			</div>
 		</main>
 	</div>

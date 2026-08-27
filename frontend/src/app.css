@@ -60,7 +60,6 @@
 	--z-chrome: 40;
 	--z-overlay: 50;
 	--z-modal: 60;
-	--z-feedback: 100;
 }
 
 @source '../node_modules/flowbite-svelte/dist';
