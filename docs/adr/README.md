@@ -60,3 +60,4 @@ permanent — it is how other ADRs and commits reference the decision.
 | [0013](0013-provider-agnostic-social-identity-flows.md) | Provider-agnostic social identity flows, last-sign-in-method unlink rule | Accepted |
 | [0014](0014-cache-the-schedule-in-redis-with-etag.md) | Cache the schedule in Redis with an ETag; drop request-time schedule timing | Accepted |
 | [0015](0015-listen-notify-wakes-the-outbox-relay.md) | LISTEN/NOTIFY wakes the outbox relay, polling stays the backstop | Accepted |
+| [0016](0016-workbox-precaching-via-vite-pwa.md) | Workbox precaching via vite-pwa for the service worker | Accepted |
