@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { NotificationDTO } from '$lib/types/notifications';
+	import type { NotificationDTO, NotificationSeed } from '$lib/types/notifications';
 
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
@@ -16,12 +16,22 @@
 
 	const client = createApiClient();
 
-	// Seed the preview from the layout-loaded data so the dropdown is correct on the
-	// first paint. The SSE 'connection_established' handler refreshes it once the
-	// stream is up. `page.data` is loosely typed (any), so narrow back to the load
-	// type.
-	const notificationPreview = page.data.notificationPreview as NotificationDTO[] | undefined;
-	let notifications = $state<NotificationDTO[]>(notificationPreview ?? []);
+	let notifications = $state<NotificationDTO[]>([]);
+	// True once an authoritative load (SSE connect or a user action) has populated
+	// the preview, so the streamed seed below can never overwrite a fresher list.
+	let hasLoadedPreview = false;
+
+	// Seed the preview from the streamed layout load once it resolves; until then the
+	// dropdown shows empty. The dropdown is a desktop-only affordance that is rarely
+	// open before the SSE 'connection_established' handler refreshes it, so streaming
+	// the seed (rather than blocking the shell's first paint on it) is invisible here.
+	// `page.data` is loosely typed (any), so narrow back to the load type.
+	const notificationSeed = page.data.notifications as Promise<NotificationSeed | null> | undefined;
+	void notificationSeed
+		?.then((seed) => {
+			if (seed && !hasLoadedPreview) notifications = seed.preview;
+		})
+		.catch(() => {});
 
 	// The badge is the true unread total, shared with the notifications page (which
 	// clears it on open) — NOT the number of unread items in the capped preview,
@@ -53,6 +63,7 @@
 
 			if (!error && response.ok && data) {
 				notifications = data.notifications;
+				hasLoadedPreview = true;
 			}
 		} catch (error) {
 			console.error('Failed to load notifications', error);
