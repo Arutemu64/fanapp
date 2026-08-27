@@ -10,6 +10,7 @@
 
 import { PUBLIC_API_URL } from '$env/static/public';
 import { clientsClaim } from 'workbox-core';
+import { ExpirationPlugin } from 'workbox-expiration';
 import {
 	cleanupOutdatedCaches,
 	createHandlerBoundToURL,
@@ -76,9 +77,24 @@ if (precacheManifest) {
 	// available offline after the first online view. Precached shell images
 	// (icons) are already served by the precache route, so this only catches the
 	// excluded hashed variants. API paths never have an `image` destination.
+	//
+	// Content-hashing means each deploy mints fresh URLs, and this cache isn't
+	// versioned (cleanupOutdatedCaches only prunes the precache), so without a
+	// bound the superseded variants would accumulate across deploys. Cap it by
+	// count and age and let it yield under storage pressure — evicted images just
+	// re-fetch when next online.
 	registerRoute(
 		({ url, request }) => url.origin === self.location.origin && request.destination === 'image',
-		new CacheFirst({ cacheName: 'image-variants' })
+		new CacheFirst({
+			cacheName: 'image-variants',
+			plugins: [
+				new ExpirationPlugin({
+					maxEntries: 60,
+					maxAgeSeconds: 30 * 24 * 60 * 60,
+					purgeOnQuotaError: true
+				})
+			]
+		})
 	);
 
 	// Take control of open pages after a controlled update (the in-app prompt

@@ -31,8 +31,9 @@ and emits the worker at the unchanged `/service-worker.js` path.
 
 The worker uses `precacheAndRoute` + `cleanupOutdatedCaches` for the shell, a
 `NavigationRoute` bound to the precached `200.html` fallback for SPA
-navigations, and a `CacheFirst` runtime route for the content-hashed responsive
-image variants (kept out of the precache via `globIgnores`). We keep everything
+navigations, and a `CacheFirst` runtime route (bounded by an `ExpirationPlugin`)
+for the content-hashed responsive image variants (kept out of the precache via
+`globIgnores`). We keep everything
 that carried real product logic: the manual registration wrapper (its `.catch`
 suppresses benign Sentry noise), the user-prompted update flow (`clientsClaim`
 without `skipWaiting`; the waiting worker activates only on the prompt's
