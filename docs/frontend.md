@@ -143,7 +143,6 @@ number in a component.**
 | Sticky chrome | `z-(--z-chrome)` = 40 | Top navbar (`AppNavbar`, `sticky top-0`) |
 | Overlays | `z-(--z-overlay)` = 50 | Mobile bottom nav, toasts, update prompt, skip link, Flowbite `<Modal>` backdrops |
 | Inline modal | `z-(--z-modal)` = 60 | Inline (non-portaled) modals that must cover the bottom nav: the mobile sidebar drawer **and its backdrop** (`AppSidebar`), the fullscreen map viewer (`map/+page.svelte`) |
-| Top feedback | `z-(--z-feedback)` = 100 | Global navigation spinner (`pointer-events-none`, above everything) |
 
 **Rules:**
 * Sticky navbar stays *below* overlays (`--z-chrome` < `--z-overlay`) so drawers/modals cover it.
@@ -170,6 +169,7 @@ Contrast targets and dark-mode mechanics → `accessibility` / `ui-ux-pro-max`.
 * **Touch & Inputs**: Generic mobile rules (≥44px touch targets, semantic input `type`, `autocomplete`, password show/hide) live in `ui-ux-pro-max` — apply them; not restated here.
 * **Form Submissions**: Disable submit buttons and display inline spinners/loading messages when submissions are in-flight.
 * **Feedback Scopes**: Place validation errors inline (directly near the related input field). Reserve toasts for transient action results.
+* **Section loading**: Pages block on their `load`, so a section switch keeps the previous page painted until the new one commits. The app shell (`(app)/+layout.svelte`) covers that gap *locally*: after a short delay gate (skip the flash on fast loads) it swaps the content region for a placeholder — a bespoke skeleton that mirrors the incoming layout where the shape is predictable (schedule), a centred `SectionSpinner` otherwise. It's gated on `navigating.to` (a route change), so an `invalidate()` data refresh — e.g. the schedule's SSE reload — never triggers it. A new section that's list/card-shaped deserves its own skeleton; anything irregular takes the spinner.
 
 ---
 
