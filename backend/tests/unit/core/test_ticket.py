@@ -43,20 +43,3 @@ def test_set_as_used_twice_raises():
 
     with pytest.raises(TicketAlreadyUsed):
         ticket.set_as_used(UserId(uuid7()))
-
-
-def test_unlink_returns_previous_user_and_clears_it():
-    user_id = UserId(uuid7())
-    ticket = _ticket(used_by=user_id)
-
-    unlinked = ticket.unlink()
-
-    assert unlinked == user_id
-    assert ticket.is_used is False
-
-
-def test_unlink_unused_ticket_returns_none():
-    ticket = _ticket()
-
-    assert ticket.unlink() is None
-    assert ticket.is_used is False

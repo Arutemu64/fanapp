@@ -44,8 +44,3 @@ class Ticket(AggregateRoot):
         if self.is_used:
             raise TicketAlreadyUsed
         self.used_by_user_id = user_id
-
-    def unlink(self) -> UserId | None:
-        linked_user_id = self.used_by_user_id
-        self.used_by_user_id = None
-        return linked_user_id
