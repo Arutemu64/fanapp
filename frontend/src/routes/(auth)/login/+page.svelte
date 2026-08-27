@@ -2,7 +2,6 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { clearOAuthErrorParam, OAUTH_LOGIN_ERROR_PARAM } from '$lib/utils/oauthErrors';
-	import { clearLogoutPending } from '$lib/utils/pendingLogout';
 	import { Button, Card, Spinner } from 'flowbite-svelte';
 	import { EnvelopeSolid } from 'flowbite-svelte-icons';
 	import { onMount } from 'svelte';
@@ -44,11 +43,12 @@
 			return;
 		}
 
-		// OAuth login is a full-page navigation that bypasses completeLogin, so cancel
-		// any offline-logout intent here: the user is deliberately re-authenticating,
-		// and a stale intent would otherwise revoke the new session on the return boot.
-		clearLogoutPending();
-
+		// Deliberately do NOT cancel a pending offline-logout here. Clearing it before
+		// OAuth *succeeds* would let a cancelled/failed login drop the revoke, leaving
+		// the still-valid HttpOnly cookie to restore the old account. The reconnect/
+		// boot flush clears the intent once the old session is actually revoked — which
+		// in practice runs before the user reaches this button — so a genuine new login
+		// starts from a cleared intent without this shortcut.
 		isOpeningVk = true;
 	}
 
