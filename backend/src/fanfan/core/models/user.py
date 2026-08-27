@@ -49,9 +49,6 @@ class User(AggregateRoot):
     def set_role(self, role: UserRole) -> None:
         self.role = role
 
-    def reset_ticket_role(self) -> None:
-        self.role = UserRole.VISITOR
-
     def update_settings(
         self,
         *,
