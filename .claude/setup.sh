@@ -143,8 +143,18 @@ npm install -g pnpm@11.22.0 || echo "[setup]   WARN: pnpm install failed."
 #
 # Best-effort: CodeGraph is a navigation convenience, so a failed install must
 # not fail environment creation - it just leaves code navigation to grep/read.
-echo "[setup] Installing CodeGraph (npm)..."
-if npm install -g @colbymchenry/codegraph >/dev/null 2>&1; then
+#
+# Pinned (docs/dependencies.md), unlike the other cloud-only installs above:
+# this script is CodeGraph's only site, cached for the environment snapshot's
+# lifetime (~7 days), so an unpinned `npm install -g` would silently pick up
+# whatever the registry serves that day - including a breaking CLI/index-format
+# change - with no review and no way to tell "did CodeGraph break this, or did
+# my code." A version bump here is a deliberate edit, same as the uv/node/pnpm
+# pins below it; the SessionStart hook only keeps the *index* current each
+# session; it deliberately does not re-run this install to check for updates.
+CODEGRAPH_VERSION=1.6.0
+echo "[setup] Installing CodeGraph $CODEGRAPH_VERSION (npm)..."
+if npm install -g "@colbymchenry/codegraph@$CODEGRAPH_VERSION" >/dev/null 2>&1; then
   # Expose codegraph on the base PATH via /usr/local/bin so the project's
   # .mcp.json server (bare `command: codegraph`) starts regardless of PATH:
   # Claude Code may spawn MCP servers with a PATH that predates the
