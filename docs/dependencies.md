@@ -45,6 +45,14 @@ with `apt-get install just`, which cannot pin a version: that is the one
 cloud-install exception left untracked, unlike the uv, pnpm and node pins in the
 same script, which are exact and Renovate-tracked.
 
+`codegraph` (`CODEGRAPH_VERSION` in `.claude/setup.sh`) is the same
+single-site case, cloud-only and not in the table above, but pinned rather
+than left to float: it has no `mise.toml` entry (locally it is opt-in, per
+AGENTS.md "Code navigation"), and the install is cached in the environment
+snapshot for days at a time, so an unpinned `npm install -g` would let a
+breaking CLI/index-format change onto every session in that window with no
+review. Bumping it is a manual edit, not yet a tracked Renovate site.
+
 ## How Renovate enforces it
 
 [`renovate.json`](../renovate.json) automates the bump-together part:

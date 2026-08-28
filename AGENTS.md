@@ -98,7 +98,7 @@ Always review a generated migration: autogenerate emits renames as drop+create a
 
 ## Code navigation (codegraph)
 
-`.codegraph/` at the repo root means the index is live — web sessions provision it automatically ([docs/claude-cloud.md](docs/claude-cloud.md)); locally it is opt-in. When it exists, reach for the `codegraph_explore` MCP tool (or the `codegraph` CLI) before Grep/Glob/Read for any symbol question, and run `codegraph sync` after editing. When it does not exist, use Grep/Glob/Read and **do not** install codegraph unless asked. Grep is still the right tool for non-symbol lookups — string literals, regexes, config values.
+`.codegraph/` at the repo root means the index is live — web sessions provision it automatically ([docs/claude-cloud.md](docs/claude-cloud.md)); locally it is opt-in, and **do not** install codegraph yourself unless asked. When it exists, run `codegraph sync` after editing so the index doesn't drift stale mid-session. Day-to-day usage (when to reach for `codegraph_explore` vs Grep/Glob/Read) is covered by the vendor-managed CodeGraph block in `.claude/CLAUDE.md` — refreshed by `codegraph upgrade`/`install`, so don't restate or hand-edit it here.
 
 ## Staying in sync
 
