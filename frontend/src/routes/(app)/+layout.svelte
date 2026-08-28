@@ -68,8 +68,20 @@
 
 	export const snapshot: Snapshot<number> = {
 		capture: () => mainElement?.scrollTop ?? 0,
-		restore: (top) => mainElement?.scrollTo({ top, behavior: 'instant' })
+		restore: (top) => restoreScroll(top)
 	};
+
+	// Programmatic scroll restore (snapshot back/forward, or a tab re-entry below).
+	// A restore is not a user gesture, so it keeps the bar shown and re-baselines the
+	// hide-on-scroll tracker to the restored offset — otherwise the `scroll` event the
+	// jump fires would read as a full-height downward scroll and hide the bar with no
+	// input. snapshot.restore and afterNavigate can run in either order on popstate, so
+	// both must leave the same baseline; this is the single place that guarantees it.
+	function restoreScroll(top: number) {
+		mainElement?.scrollTo({ top, behavior: 'instant' });
+		navbarHidden = false;
+		lastScrollTop = top;
+	}
 
 	// Smooth (via the element's scroll-smooth, honoured because behavior is
 	// omitted) so re-tapping the active tab eases to the top like a native tab bar.
@@ -122,8 +134,7 @@
 		// A fresh push: restore a primary tab to where it was left, else reset.
 		const to = navigation.to?.url.pathname ?? '';
 		const top = TAB_ROOTS.has(to) ? (scrollPositions[to] ?? 0) : 0;
-		mainElement?.scrollTo({ top, behavior: 'instant' });
-		revealNavbar();
+		restoreScroll(top);
 	});
 
 	// In-shell loading indicator. Section pages block on their `load`, so during a
