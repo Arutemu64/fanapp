@@ -51,7 +51,8 @@ than left to float: it has no `mise.toml` entry (locally it is opt-in, per
 AGENTS.md "Code navigation"), and the install is cached in the environment
 snapshot for days at a time, so an unpinned `npm install -g` would let a
 breaking CLI/index-format change onto every session in that window with no
-review. Bumping it is a manual edit, not yet a tracked Renovate site.
+review. Unlike `just`, it does have a Renovate regex manager (below) — single
+site needs no group, just its own review PR.
 
 ## How Renovate enforces it
 

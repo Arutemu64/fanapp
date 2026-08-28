@@ -212,6 +212,15 @@
       "depNameTemplate": "node",
       "datasourceTemplate": "node-version",
       "versioningTemplate": "node"
+    },
+    {
+      "description": "Pin (docs/dependencies.md): CodeGraph CLI installed via `npm install -g @colbymchenry/codegraph@X.Y.Z` in the cloud setup script. Single-site, so no group like uv/pnpm/node above — it just gets its own review PR, same shell-script invisibility as the pnpm/node lines otherwise leaves it unbumped.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.claude/setup\\.sh$/"],
+      "matchStrings": ["CODEGRAPH_VERSION=(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"],
+      "depNameTemplate": "@colbymchenry/codegraph",
+      "datasourceTemplate": "npm",
+      "versioningTemplate": "npm"
     }
   ]
 }
