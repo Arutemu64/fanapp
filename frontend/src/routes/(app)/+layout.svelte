@@ -175,18 +175,17 @@
 	<!-- <main> is the scrolling region, not this column: the landmark for the page's primary
 		content must not also swallow the top bar and the connection banner. -->
 	<div class="relative flex flex-1 flex-col overflow-hidden">
-		<!-- Hide-on-scroll clip: `justify-end` pins the bar to the bottom of the shrinking
-			box so it slides up under the top edge (not squished), and the animated px height
-			reclaims the space via the flex column — no transform, so the bar keeps its blur.
-			Dropdowns inside AppNavbar use the native Popover top layer, so overflow-hidden
-			never clips them. See handleMainScroll for the direction logic. -->
+		<!-- Hide-on-scroll: a negative top margin of the bar's measured height slides it up
+			out of view, clipped by this column's own overflow-hidden, while the flex column
+			reclaims the freed space below. No transform (so the bar keeps its backdrop blur)
+			and no wrapper around the bar's own content — its dropdowns render in the native
+			Popover top layer either way. See handleMainScroll for the direction logic. -->
 		<div
-			class="flex flex-col justify-end overflow-hidden transition-[height] duration-300 ease-out motion-reduce:transition-none"
-			style:height={navbarHidden ? '0px' : navbarHeight ? `${navbarHeight}px` : undefined}
+			bind:offsetHeight={navbarHeight}
+			class="transition-[margin-top] duration-300 ease-out motion-reduce:transition-none"
+			style:margin-top={navbarHidden ? `-${navbarHeight}px` : '0px'}
 		>
-			<div bind:offsetHeight={navbarHeight}>
-				<AppNavbar {user} toggleSidebar={sidebarUi.toggle} />
-			</div>
+			<AppNavbar {user} toggleSidebar={sidebarUi.toggle} />
 		</div>
 
 		<ConnectionBanner />
