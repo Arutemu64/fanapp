@@ -68,13 +68,54 @@
 
 	export const snapshot: Snapshot<number> = {
 		capture: () => mainElement?.scrollTop ?? 0,
-		restore: (top) => mainElement?.scrollTo({ top, behavior: 'instant' })
+		restore: (top) => restoreScroll(top)
 	};
+
+	// Programmatic scroll restore (snapshot back/forward, or a tab re-entry below).
+	// A restore is not a user gesture, so it keeps the bar shown and re-baselines the
+	// hide-on-scroll tracker to the restored offset — otherwise the `scroll` event the
+	// jump fires would read as a full-height downward scroll and hide the bar with no
+	// input. snapshot.restore and afterNavigate can run in either order on popstate, so
+	// both must leave the same baseline; this is the single place that guarantees it.
+	function restoreScroll(top: number) {
+		mainElement?.scrollTo({ top, behavior: 'instant' });
+		navbarHidden = false;
+		lastScrollTop = top;
+	}
 
 	// Smooth (via the element's scroll-smooth, honoured because behavior is
 	// omitted) so re-tapping the active tab eases to the top like a native tab bar.
 	function scrollMainToTop() {
 		mainElement?.scrollTo({ top: 0 });
+		revealNavbar();
+	}
+
+	// Hide-on-scroll for the top bar: collapse it as the user scrolls down past the
+	// bar's own height, reveal it the instant they scroll back up, so content gets the
+	// full viewport while the page title stays one gesture away — the standard mobile
+	// "hidey bar". The bottom nav (primary navigation) deliberately stays put. We track
+	// <main>, not the window, because <main> is the scroll region in this shell.
+	// `navbarHeight` is measured (bind:offsetHeight below) so the collapse animates a
+	// real px height with no transform on the blurred bar — a transformed ancestor would
+	// break its backdrop-filter.
+	const HIDE_NAVBAR_AFTER_PX = 64; // never hide while the bar's own content is still on screen
+	const SCROLL_DELTA_PX = 6; // ignore inertia/subpixel jitter that would flicker the bar
+	let navbarHidden = $state(false);
+	let navbarHeight = $state(0);
+	let lastScrollTop = 0;
+
+	function revealNavbar() {
+		navbarHidden = false;
+		lastScrollTop = mainElement?.scrollTop ?? 0;
+	}
+
+	function handleMainScroll() {
+		const top = mainElement?.scrollTop ?? 0;
+		const delta = top - lastScrollTop;
+		if (Math.abs(delta) < SCROLL_DELTA_PX) return;
+		// Reveal near the top or on any upward move; hide only while moving down past the bar.
+		navbarHidden = delta > 0 && top > HIDE_NAVBAR_AFTER_PX;
+		lastScrollTop = top;
 	}
 
 	beforeNavigate((navigation) => {
@@ -86,11 +127,14 @@
 
 	afterNavigate((navigation) => {
 		// Back/forward is handled by snapshot.restore above.
-		if (navigation.type === 'popstate') return;
+		if (navigation.type === 'popstate') {
+			revealNavbar();
+			return;
+		}
 		// A fresh push: restore a primary tab to where it was left, else reset.
 		const to = navigation.to?.url.pathname ?? '';
 		const top = TAB_ROOTS.has(to) ? (scrollPositions[to] ?? 0) : 0;
-		mainElement?.scrollTo({ top, behavior: 'instant' });
+		restoreScroll(top);
 	});
 
 	// In-shell loading indicator. Section pages block on their `load`, so during a
@@ -131,13 +175,25 @@
 	<!-- <main> is the scrolling region, not this column: the landmark for the page's primary
 		content must not also swallow the top bar and the connection banner. -->
 	<div class="relative flex flex-1 flex-col overflow-hidden">
-		<AppNavbar {user} toggleSidebar={sidebarUi.toggle} />
+		<!-- Hide-on-scroll: a negative top margin of the bar's measured height slides it up
+			out of view, clipped by this column's own overflow-hidden, while the flex column
+			reclaims the freed space below. No transform (so the bar keeps its backdrop blur)
+			and no wrapper around the bar's own content — its dropdowns render in the native
+			Popover top layer either way. See handleMainScroll for the direction logic. -->
+		<div
+			bind:offsetHeight={navbarHeight}
+			class="transition-[margin-top] duration-300 ease-out motion-reduce:transition-none"
+			style:margin-top={navbarHidden ? `-${navbarHeight}px` : '0px'}
+		>
+			<AppNavbar {user} toggleSidebar={sidebarUi.toggle} />
+		</div>
 
 		<ConnectionBanner />
 
 		<!-- Also the SkipLink target, which focuses it by id — hence tabindex="-1". -->
 		<main
 			bind:this={mainElement}
+			onscroll={handleMainScroll}
 			id="main-content"
 			tabindex="-1"
 			class="relative flex-1 overflow-y-auto scroll-smooth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
