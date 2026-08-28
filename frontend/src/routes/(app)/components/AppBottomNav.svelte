@@ -13,13 +13,16 @@
 
 <!-- BottomNav renders a plain <div>, so the bar is no landmark until `role` names it. The
      label omits "навигация" — the role is announced already — and matches the desktop
-     sidebar's: same navigation at the opposite breakpoint, never in the tree together. -->
+     sidebar's: same navigation at the opposite breakpoint, never in the tree together.
+     Frosted-glass surface (translucent bg + backdrop blur) matching AppNavbar: content
+     scrolls under it rather than stopping at an opaque band. 80% opacity keeps the icon
+     contrast above WCAG AA even over busy content behind the blur. -->
 <BottomNav
 	{activeUrl}
 	position="fixed"
 	role="navigation"
 	aria-label="Разделы"
-	class="z-(--z-overlay) pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] md:hidden dark:border-gray-700 dark:bg-gray-900"
+	class="z-(--z-overlay) border-gray-200/50 bg-white/80 pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] backdrop-blur-md transition-colors duration-300 md:hidden dark:border-gray-700/50 dark:bg-gray-900/80"
 	classes={{ inner: 'grid-cols-4' }}
 >
 	{#each PRIMARY_NAV_ITEMS as { label, href, outlineIcon: OutlineIcon, solidIcon: SolidIcon } (href)}
