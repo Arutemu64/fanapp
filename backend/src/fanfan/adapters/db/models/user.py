@@ -61,9 +61,7 @@ class UserORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     permissions: Mapped[list[UserPermissionORM]] = relationship(
         cascade="all, delete-orphan"
     )
-    social_identities: Mapped[list[SocialIdentityORM]] = relationship(
-        back_populates="user"
-    )
+    social_identities: Mapped[list[SocialIdentityORM]] = relationship()
 
     __table_args__ = (
         # Case-insensitive uniqueness; get_by_username compares lower(username),

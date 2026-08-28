@@ -1,16 +1,12 @@
-from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import BigInteger, ForeignKey, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from fanfan.adapters.db.models.base import BaseORM, str_enum_column
 from fanfan.adapters.db.models.mixins.pk import UUIDPrimaryKeyMixin
 from fanfan.adapters.db.models.mixins.timestamps import UpdatedAtMixin
 from fanfan.core.vo.social_identity import SocialProvider
-
-if TYPE_CHECKING:
-    from fanfan.adapters.db.models.user import UserORM
 
 
 class SocialIdentityORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
@@ -34,5 +30,3 @@ class SocialIdentityORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     # address outbound messages. NOT NULL: both providers always supply it and a
     # login/link lacking it is refused. BIGINT because Telegram ids exceed 32 bits.
     provider_user_id: Mapped[int] = mapped_column(BigInteger)
-
-    user: Mapped[UserORM] = relationship(back_populates="social_identities")
