@@ -4,7 +4,6 @@ from sqlalchemy.orm import (
     column_property,
     declared_attr,
     mapped_column,
-    relationship,
 )
 
 from fanfan.adapters.db.models.base import BaseORM
@@ -21,10 +20,6 @@ class NominationORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     title: Mapped[str] = mapped_column(unique=True)
     is_votable: Mapped[bool] = mapped_column(server_default=text("false"))
     works_url: Mapped[str | None] = mapped_column()
-
-    participants: Mapped[list[ParticipantORM]] = relationship(
-        back_populates="nomination"
-    )
 
     @declared_attr
     @classmethod
