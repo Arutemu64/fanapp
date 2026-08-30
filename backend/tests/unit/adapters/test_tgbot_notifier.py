@@ -1,3 +1,4 @@
+import logging
 from uuid import uuid7
 
 import pytest
@@ -172,8 +173,20 @@ async def test_bad_request_is_unreachable_and_logged(
     )
     notifier = _notifier(identity=_identity(), bot=_RecordingBot(error=error))
 
-    with caplog.at_level("WARNING"), pytest.raises(UserNotReachable):
-        await notifier.send_notification(_notification())
+    # Attach the capture handler to the notifier's own logger rather than relying
+    # on caplog's root handler: the app's setup_logging() (run by integration
+    # tests earlier in the same CI process) clears root handlers, so a root-level
+    # caplog would see nothing.
+    notifier_logger = logging.getLogger("fanfan.adapters.tgbot.notifier")
+    notifier_logger.addHandler(caplog.handler)
+    try:
+        with (
+            caplog.at_level(logging.WARNING, logger=notifier_logger.name),
+            pytest.raises(UserNotReachable),
+        ):
+            await notifier.send_notification(_notification())
+    finally:
+        notifier_logger.removeHandler(caplog.handler)
     assert "can't parse entities" in caplog.text
 
 
