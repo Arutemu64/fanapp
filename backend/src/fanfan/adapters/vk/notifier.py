@@ -115,16 +115,18 @@ class VkNotifier(VkNotifierPort):
             # traceback: it fires on every VK notification while the token is
             # broken, and the cause is chained onto the raised exception.
             logger.error(
-                "VK group token is invalid or unauthorized (code %s) — "
+                "VK group token is invalid or unauthorized — "
                 "cannot deliver notifications via VK",
-                error.code,
+                extra={"error_code": error.code},
             )
             raise NotificationChannelUnavailable from error
         # An unfamiliar VK error — let it propagate so the consumer nacks and the
         # failure surfaces, rather than silently swallowing an unknown condition.
         logger.warning(
-            "Unhandled VK API error %s sending notification %s",
-            error.code,
-            notification.id,
+            "Unhandled VK API error sending notification",
+            extra={
+                "error_code": error.code,
+                "notification_id": str(notification.id),
+            },
         )
         raise error

@@ -77,6 +77,22 @@ class _RecordingBot:
             raise self._error
 
 
+class _ListHandler(logging.Handler):
+    """Captures records emitted to one logger, independent of root handlers.
+
+    The app's setup_logging() clears root handlers, so a caplog assertion that
+    relies on the root handler is empty once an integration test has run in the
+    same process. Attaching this to the notifier's own logger sidesteps that.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.records: list[logging.LogRecord] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.records.append(record)
+
+
 class _StubSocialIdentityGateway:
     def __init__(self, identity: SocialIdentity | None) -> None:
         self._identity = identity
@@ -162,9 +178,7 @@ async def test_forbidden_is_unreachable() -> None:
         await notifier.send_notification(_notification())
 
 
-async def test_bad_request_is_unreachable_and_logged(
-    caplog: pytest.LogCaptureFixture,
-) -> None:
+async def test_bad_request_is_unreachable_and_logged() -> None:
     # A malformed request (e.g. unparseable message HTML) is dropped, not retried,
     # and logged so a template/sanitizer regression is diagnosable.
     error = TelegramBadRequest(
@@ -172,22 +186,27 @@ async def test_bad_request_is_unreachable_and_logged(
         message="Bad Request: can't parse entities",
     )
     notifier = _notifier(identity=_identity(), bot=_RecordingBot(error=error))
+    notification = _notification()
 
-    # Attach the capture handler to the notifier's own logger rather than relying
-    # on caplog's root handler: the app's setup_logging() (run by integration
-    # tests earlier in the same CI process) clears root handlers, so a root-level
-    # caplog would see nothing.
+    handler = _ListHandler()
     notifier_logger = logging.getLogger("fanfan.adapters.tgbot.notifier")
-    notifier_logger.addHandler(caplog.handler)
+    notifier_logger.addHandler(handler)
+    previous_level = notifier_logger.level
+    notifier_logger.setLevel(logging.WARNING)
     try:
-        with (
-            caplog.at_level(logging.WARNING, logger=notifier_logger.name),
-            pytest.raises(UserNotReachable),
-        ):
-            await notifier.send_notification(_notification())
+        with pytest.raises(UserNotReachable):
+            await notifier.send_notification(notification)
     finally:
-        notifier_logger.removeHandler(caplog.handler)
-    assert "can't parse entities" in caplog.text
+        notifier_logger.removeHandler(handler)
+        notifier_logger.setLevel(previous_level)
+
+    # The reason and id are structured fields (extra=), not baked into the
+    # message, so a JSON log can filter on them.
+    assert len(handler.records) == 1
+    record = handler.records[0]
+    assert record.getMessage() == "Telegram rejected notification as a bad request"
+    assert record.reason == "Bad Request: can't parse entities"
+    assert record.notification_id == str(notification.id)
 
 
 async def test_unauthorized_token_is_channel_unavailable() -> None:

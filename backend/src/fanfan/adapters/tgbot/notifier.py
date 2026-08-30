@@ -83,9 +83,11 @@ class TelegramNotifier(TelegramNotifierPort):
             # problem. Log the reason so the bug is diagnosable, then drop this
             # notification rather than redeliver a message that can never parse.
             logger.warning(
-                "Telegram rejected notification %s as a bad request: %s",
-                notification.id,
-                e.message,
+                "Telegram rejected notification as a bad request",
+                extra={
+                    "notification_id": str(notification.id),
+                    "reason": e.message,
+                },
             )
             raise UserNotReachable from e
         except TelegramUnauthorizedError as e:

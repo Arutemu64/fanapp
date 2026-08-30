@@ -96,10 +96,12 @@ class PushNotifier(PushNotifierPort):
                 # and let the consumer drop the message — retrying can't fix a
                 # channel-wide config error.
                 logger.error(
-                    "Push service rejected notification %s with status %s — "
-                    "VAPID keys or authorization are misconfigured",
-                    notification.id,
-                    status_code,
+                    "Push service rejected notification — VAPID keys or "
+                    "authorization are misconfigured",
+                    extra={
+                        "notification_id": str(notification.id),
+                        "status_code": status_code,
+                    },
                 )
                 raise NotificationChannelUnavailable
             elif (
@@ -109,20 +111,23 @@ class PushNotifier(PushNotifierPort):
                 # consumer to redeliver later instead of dropping the message.
                 retry_after = self._retry_after_seconds(response)
                 logger.warning(
-                    "Push service throttled or failed on notification %s "
-                    "(status %s) — retrying in %s",
-                    notification.id,
-                    status_code,
-                    retry_after,
+                    "Push service throttled or failed; will retry",
+                    extra={
+                        "notification_id": str(notification.id),
+                        "status_code": status_code,
+                        "retry_after": retry_after,
+                    },
                 )
             elif status_code >= _CLIENT_ERROR_STATUS:
                 # An unexpected failure we don't specifically translate (e.g. 413
                 # payload too large). Log it so it's diagnosable; skip this
                 # endpoint without pruning, since the cause may be per-message.
                 logger.warning(
-                    "Unexpected push service status %s for notification %s",
-                    status_code,
-                    notification.id,
+                    "Unexpected push service status",
+                    extra={
+                        "notification_id": str(notification.id),
+                        "status_code": status_code,
+                    },
                 )
         if retry_after is not None:
             raise NotificationRetryAfter(retry_after=retry_after)
