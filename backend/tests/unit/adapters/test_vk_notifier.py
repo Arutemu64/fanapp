@@ -8,6 +8,7 @@ from fanfan.adapters.vk.client import VkApiClient, VkApiError
 from fanfan.adapters.vk.config import VkConfig
 from fanfan.adapters.vk.notifier import VkNotifier
 from fanfan.core.exceptions.notifications import (
+    NotificationChannelUnavailable,
     NotificationRetryAfter,
     UserNotReachable,
 )
@@ -310,13 +311,14 @@ async def test_flood_control_asks_to_retry() -> None:
         await notifier.send_notification(_make_notification(user.id))
 
 
-async def test_invalid_token_is_unreachable() -> None:
+async def test_invalid_token_is_channel_unavailable() -> None:
     user = _make_user()
-    # 5: authorization failed — a channel misconfiguration, dropped per-message.
+    # 5: authorization failed — a channel-wide misconfiguration. The consumer
+    # drops the message rather than redelivering forever against a bad token.
     client = _StubVkClient(VkApiError(code=5, message="auth failed"))
     notifier = _notifier(user=user, identity=_identity_for(user), client=client)
 
-    with pytest.raises(UserNotReachable):
+    with pytest.raises(NotificationChannelUnavailable):
         await notifier.send_notification(_make_notification(user.id))
 
 

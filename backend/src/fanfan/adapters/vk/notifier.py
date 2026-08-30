@@ -1,3 +1,4 @@
+import html
 import logging
 
 import nh3
@@ -7,6 +8,7 @@ from fanfan.application.ports.gateways.social_identity import SocialIdentityGate
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.notifier import Notifier
 from fanfan.core.exceptions.notifications import (
+    NotificationChannelUnavailable,
     NotificationRetryAfter,
     UserNotReachable,
 )
@@ -45,11 +47,15 @@ class VkNotifier(Notifier):
         self.web_config = web_config
 
     def _render_message_text(self, notification: Notification) -> str:
-        # VK group messages are plain text (no HTML). The stored body is a
-        # safe HTML subset, so strip every tag the same way the push adapter
-        # does, turning <br> into newlines first. VK auto-links the bare URL, so
-        # a trailing "open the app" line replaces Telegram's inline button.
-        body = nh3.clean(notification.body.replace("<br>", "\n"), tags=set())
+        # VK group messages are plain text (no HTML). The stored body is a safe
+        # HTML subset, so strip every tag the same way the push adapter does,
+        # turning <br> into newlines first, then decode HTML entities — nh3 leaves
+        # them encoded, so without unescape a body like "5 < 10 & up" would arrive
+        # as "5 &lt; 10 &amp; up". VK auto-links the bare URL, so a trailing "open
+        # the app" line replaces Telegram's inline button.
+        body = html.unescape(
+            nh3.clean(notification.body.replace("<br>", "\n"), tags=set())
+        )
         url = self.web_config.build_url(notification.path or "/")
         return (
             f"🔔 {notification.title.upper()}\n\n{body}\n\n🌐 Открыть приложение: {url}"
@@ -107,18 +113,18 @@ class VkNotifier(Notifier):
         if error.code in _USER_UNREACHABLE_CODES:
             raise UserNotReachable from error
         if error.code in _AUTH_CODES:
-            # The group token is invalid or lacks the messages scope. This is
-            # a global misconfiguration, not a per-user problem, so log it loudly.
-            # A concise one-liner, not a traceback: it fires on every VK
-            # notification while the token is broken, and the cause is chained
-            # onto the raised UserNotReachable. Treated as unreachable so the
-            # consumer drops the message instead of redelivering it forever.
+            # The group token is invalid or lacks the messages scope. This is a
+            # channel-wide misconfiguration, not a per-user problem, so signal it
+            # as such: the consumer drops the message instead of redelivering it
+            # forever (retrying can't fix a bad token). A concise one-liner, not a
+            # traceback: it fires on every VK notification while the token is
+            # broken, and the cause is chained onto the raised exception.
             logger.error(
                 "VK group token is invalid or unauthorized (code %s) — "
                 "cannot deliver notifications via VK",
                 error.code,
             )
-            raise UserNotReachable from error
+            raise NotificationChannelUnavailable from error
         # An unfamiliar VK error — let it propagate so the consumer nacks and the
         # failure surfaces, rather than silently swallowing an unknown condition.
         logger.warning(

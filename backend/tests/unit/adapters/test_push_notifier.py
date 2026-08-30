@@ -11,6 +11,10 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from fanfan.adapters.push.client import MessageData, WebPushClient
 from fanfan.adapters.push.config import PushConfig
 from fanfan.adapters.push.push import PushNotifier
+from fanfan.core.exceptions.notifications import (
+    NotificationChannelUnavailable,
+    NotificationRetryAfter,
+)
 from fanfan.core.models.notification import Notification
 from fanfan.core.models.push_subscription import PushSubscription
 from fanfan.core.vo.notification import NotificationType, generate_notification_id
@@ -81,7 +85,7 @@ async def test_send_posts_encrypted_push_to_endpoint(tmp_path: Path) -> None:
 
     client = _client(tmp_path, httpx2.MockTransport(handler))
 
-    status = await client.send(
+    response = await client.send(
         subscription=_browser_subscription(endpoint=endpoint),
         message_data=_message_data(),
     )
@@ -89,7 +93,7 @@ async def test_send_posts_encrypted_push_to_endpoint(tmp_path: Path) -> None:
     # A malformed subscription (the flat dict the notifier used to pass) would
     # raise inside the library before any request went out; reaching the
     # endpoint at all is the regression guard.
-    assert status == 201
+    assert response.status_code == 201
     assert len(requests) == 1
     sent = requests[0]
     assert str(sent.url) == endpoint
@@ -99,25 +103,30 @@ async def test_send_posts_encrypted_push_to_endpoint(tmp_path: Path) -> None:
     assert b"\xd0\xa2" not in sent.content  # "Т" in UTF-8 — the title's first byte
 
 
-async def test_send_returns_gone_status(tmp_path: Path) -> None:
+async def test_send_returns_response_with_status(tmp_path: Path) -> None:
     client = _client(tmp_path, httpx2.MockTransport(lambda _: httpx2.Response(410)))
 
-    status = await client.send(
+    response = await client.send(
         subscription=_browser_subscription(endpoint="https://push.example/x"),
         message_data=_message_data(),
     )
 
-    assert status == 410
+    # The notifier reads the whole response (status + headers), so send returns
+    # it rather than the bare status code.
+    assert response.status_code == 410
 
 
 # --- PushNotifier: message shaping and pruning of dead subscriptions -----------
 
 
 class _RecordingClient:
-    """Stands in for WebPushClient, recording each send and replaying a status."""
+    """Stands in for WebPushClient, recording each send and replaying a response."""
 
-    def __init__(self, *, status: int = 201) -> None:
+    def __init__(
+        self, *, status: int = 201, headers: dict[str, str] | None = None
+    ) -> None:
         self._status = status
+        self._headers = headers or {}
         self.calls: list[dict] = []
 
     def ensure_available(self) -> None:
@@ -125,9 +134,9 @@ class _RecordingClient:
 
     async def send(
         self, *, subscription: PushSubscription, message_data: MessageData
-    ) -> int:
+    ) -> httpx2.Response:
         self.calls.append({"subscription": subscription, "message_data": message_data})
-        return self._status
+        return httpx2.Response(self._status, headers=self._headers)
 
 
 class _StubGateway:
@@ -209,6 +218,93 @@ async def test_notifier_prunes_gone_subscription() -> None:
 
     assert gateway.deleted == [live, dead]
     assert uow.commits == 2
+
+
+async def test_notifier_decodes_html_entities_to_plain_text() -> None:
+    sub = _browser_subscription(endpoint="https://push.example/one")
+    client = _RecordingClient()
+    notifier = PushNotifier(
+        push_sub_gateway=_StubGateway([sub]),  # type: ignore[arg-type]
+        uow=_StubUow(),  # type: ignore[arg-type]
+        client=client,  # type: ignore[arg-type]
+    )
+    notification = Notification(
+        id=generate_notification_id(),
+        user_id=USER_ID,
+        title="Кафе «U & I»",
+        body="Скидка 5 &lt; 10 &amp; выше",
+        type=NotificationType.DEFAULT,
+        path=None,
+        mailing_id=None,
+        seen_at=None,
+    )
+
+    await notifier.send_notification(notification)
+
+    data = client.calls[0]["message_data"]
+    # nh3 leaves entities encoded; the notifier decodes them so the OS
+    # notification shows real characters, not "&amp;"/"&lt;".
+    assert data["body"] == "Скидка 5 < 10 & выше"
+    assert data["title"] == "Кафе «U & I»"
+    assert data["url"] == "/"
+
+
+async def test_notifier_raises_channel_unavailable_on_auth_failure() -> None:
+    sub = _browser_subscription(endpoint="https://push.example/one")
+    gateway = _StubGateway([sub])
+    notifier = PushNotifier(
+        push_sub_gateway=gateway,  # type: ignore[arg-type]
+        uow=_StubUow(),  # type: ignore[arg-type]
+        client=_RecordingClient(status=401),  # type: ignore[arg-type]
+    )
+
+    # 401 is a VAPID/auth failure: a channel-wide misconfiguration the consumer
+    # must drop, not a per-subscription problem, so the endpoint is not pruned.
+    with pytest.raises(NotificationChannelUnavailable):
+        await notifier.send_notification(_notification())
+    assert gateway.deleted == []
+
+
+async def test_notifier_retries_on_throttle_with_default_backoff() -> None:
+    notifier = PushNotifier(
+        push_sub_gateway=_StubGateway(
+            [_browser_subscription(endpoint="https://push.example/one")]
+        ),  # type: ignore[arg-type]
+        uow=_StubUow(),  # type: ignore[arg-type]
+        client=_RecordingClient(status=429),  # type: ignore[arg-type]
+    )
+
+    with pytest.raises(NotificationRetryAfter) as exc:
+        await notifier.send_notification(_notification())
+    # No Retry-After header → the fixed fallback interval.
+    assert exc.value.retry_after == 5
+
+
+async def test_notifier_honors_retry_after_header() -> None:
+    notifier = PushNotifier(
+        push_sub_gateway=_StubGateway(
+            [_browser_subscription(endpoint="https://push.example/one")]
+        ),  # type: ignore[arg-type]
+        uow=_StubUow(),  # type: ignore[arg-type]
+        client=_RecordingClient(status=429, headers={"Retry-After": "30"}),  # type: ignore[arg-type]
+    )
+
+    with pytest.raises(NotificationRetryAfter) as exc:
+        await notifier.send_notification(_notification())
+    assert exc.value.retry_after == 30
+
+
+async def test_notifier_retries_on_server_error() -> None:
+    notifier = PushNotifier(
+        push_sub_gateway=_StubGateway(
+            [_browser_subscription(endpoint="https://push.example/one")]
+        ),  # type: ignore[arg-type]
+        uow=_StubUow(),  # type: ignore[arg-type]
+        client=_RecordingClient(status=503),  # type: ignore[arg-type]
+    )
+
+    with pytest.raises(NotificationRetryAfter):
+        await notifier.send_notification(_notification())
 
 
 async def test_notifier_test_type_sets_foreground_flag() -> None:

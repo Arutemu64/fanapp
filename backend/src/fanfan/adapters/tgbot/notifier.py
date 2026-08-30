@@ -14,6 +14,7 @@ from fanfan.application.ports.gateways.social_identity import SocialIdentityGate
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.notifier import Notifier
 from fanfan.core.exceptions.notifications import (
+    NotificationChannelUnavailable,
     NotificationRetryAfter,
     UserNotReachable,
 )
@@ -80,14 +81,14 @@ class TelegramNotifier(Notifier):
             raise UserNotReachable from e
         except TelegramUnauthorizedError as e:
             # Invalid bot token (e.g. the placeholder used when no real bot is
-            # configured). This is a global misconfiguration, not a per-user
-            # problem, so log it loudly. Treat as unreachable so the consumer
-            # drops the message instead of redelivering it forever.
-            # A concise one-liner, not a traceback: this fires on every
+            # configured). This is a channel-wide misconfiguration, not a per-user
+            # problem, so signal it as such: the consumer drops the message instead
+            # of redelivering it forever (retrying can't fix a bad token). Logged
+            # loudly as a concise one-liner, not a traceback — it fires on every
             # notification while the token is a placeholder, and the cause is
-            # already chained onto the raised UserNotReachable.
+            # chained onto the raised exception.
             logger.error(  # noqa: TRY400
                 "Telegram bot token is invalid or unauthorized — "
                 "cannot deliver notifications via Telegram"
             )
-            raise UserNotReachable from e
+            raise NotificationChannelUnavailable from e
