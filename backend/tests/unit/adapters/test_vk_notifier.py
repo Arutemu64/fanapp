@@ -14,7 +14,7 @@ from fanfan.core.exceptions.notifications import (
 )
 from fanfan.core.models.notification import Notification
 from fanfan.core.models.social_identity import SocialIdentity
-from fanfan.core.models.user import User, UserSettings
+from fanfan.core.models.user import User
 from fanfan.core.vo.notification import (
     NotificationType,
     generate_notification_id,
@@ -29,13 +29,14 @@ from fanfan.presentation.web.config import WebConfig
 VK_USER_ID = 555
 
 
-def _make_user(*, receive_vk: bool = True) -> User:
+def _make_user() -> User:
+    # Only supplies an id for the notification and social identity — the VK
+    # notifier no longer loads the user (channel opt-out is the interactor's job).
     return User(
         id=UserId(uuid7()),
         username=Username("tester"),
         hashed_password=None,
         role=UserRole.VISITOR,
-        settings=UserSettings(receive_vk_notifications=receive_vk),
     )
 
 
@@ -161,17 +162,6 @@ async def test_client_raises_vk_api_error_on_error_object() -> None:
 # --- VkNotifier: gateway guards and error-code translation --------------------
 
 
-class _StubUserGateway:
-    def __init__(self, user: User | None) -> None:
-        self._user = user
-
-    async def get_by_id(
-        self,
-        user_id: UserId,  # noqa: ARG002  # part of the port contract
-    ) -> User | None:
-        return self._user
-
-
 class _StubSocialIdentityGateway:
     def __init__(self, identity: SocialIdentity | None) -> None:
         self._identity = identity
@@ -215,13 +205,11 @@ class _StubVkClient:
 
 def _notifier(
     *,
-    user: User | None,
     identity: SocialIdentity | None,
     client: _StubVkClient,
 ) -> VkNotifier:
     return VkNotifier(
         client=client,  # type: ignore[arg-type]
-        user_gateway=_StubUserGateway(user),  # type: ignore[arg-type]
         social_identity_gateway=_StubSocialIdentityGateway(identity),  # type: ignore[arg-type]
         web_config=_web_config(),
     )
@@ -230,7 +218,7 @@ def _notifier(
 async def test_sends_plain_text_to_linked_user() -> None:
     user = _make_user()
     client = _StubVkClient()
-    notifier = _notifier(user=user, identity=_identity_for(user), client=client)
+    notifier = _notifier(identity=_identity_for(user), client=client)
 
     await notifier.send_notification(_make_notification(user.id))
 
@@ -251,7 +239,7 @@ async def test_delete_failure_does_not_fail_delivery() -> None:
     # The message was delivered; a failing cleanup must not surface as an error,
     # or the consumer would redeliver and re-send a duplicate to the user.
     client = _StubVkClient(delete_error=VkApiError(code=100500, message="boom"))
-    notifier = _notifier(user=user, identity=_identity_for(user), client=client)
+    notifier = _notifier(identity=_identity_for(user), client=client)
 
     await notifier.send_notification(_make_notification(user.id))
 
@@ -262,7 +250,7 @@ async def test_delete_failure_does_not_fail_delivery() -> None:
 async def test_delete_skipped_when_send_fails() -> None:
     user = _make_user()
     client = _StubVkClient(VkApiError(code=901, message="not allowed"))
-    notifier = _notifier(user=user, identity=_identity_for(user), client=client)
+    notifier = _notifier(identity=_identity_for(user), client=client)
 
     with pytest.raises(UserNotReachable):
         await notifier.send_notification(_make_notification(user.id))
@@ -270,21 +258,10 @@ async def test_delete_skipped_when_send_fails() -> None:
     assert client.deleted == []
 
 
-async def test_opted_out_user_is_unreachable() -> None:
-    user = _make_user(receive_vk=False)
-    client = _StubVkClient()
-    notifier = _notifier(user=user, identity=_identity_for(user), client=client)
-
-    with pytest.raises(UserNotReachable):
-        await notifier.send_notification(_make_notification(user.id))
-    # Short-circuits before touching the API.
-    assert client.calls == []
-
-
 async def test_unlinked_user_is_unreachable() -> None:
     user = _make_user()
     client = _StubVkClient()
-    notifier = _notifier(user=user, identity=None, client=client)
+    notifier = _notifier(identity=None, client=client)
 
     with pytest.raises(UserNotReachable):
         await notifier.send_notification(_make_notification(user.id))
@@ -295,7 +272,7 @@ async def test_messages_not_allowed_is_unreachable() -> None:
     user = _make_user()
     # 901: the user never allowed the group to message them.
     client = _StubVkClient(VkApiError(code=901, message="not allowed"))
-    notifier = _notifier(user=user, identity=_identity_for(user), client=client)
+    notifier = _notifier(identity=_identity_for(user), client=client)
 
     with pytest.raises(UserNotReachable):
         await notifier.send_notification(_make_notification(user.id))
@@ -305,7 +282,7 @@ async def test_flood_control_asks_to_retry() -> None:
     user = _make_user()
     # 6: too many requests — a transient condition worth retrying.
     client = _StubVkClient(VkApiError(code=6, message="too many requests"))
-    notifier = _notifier(user=user, identity=_identity_for(user), client=client)
+    notifier = _notifier(identity=_identity_for(user), client=client)
 
     with pytest.raises(NotificationRetryAfter):
         await notifier.send_notification(_make_notification(user.id))
@@ -316,7 +293,7 @@ async def test_invalid_token_is_channel_unavailable() -> None:
     # 5: authorization failed — a channel-wide misconfiguration. The consumer
     # drops the message rather than redelivering forever against a bad token.
     client = _StubVkClient(VkApiError(code=5, message="auth failed"))
-    notifier = _notifier(user=user, identity=_identity_for(user), client=client)
+    notifier = _notifier(identity=_identity_for(user), client=client)
 
     with pytest.raises(NotificationChannelUnavailable):
         await notifier.send_notification(_make_notification(user.id))
@@ -325,7 +302,7 @@ async def test_invalid_token_is_channel_unavailable() -> None:
 async def test_unknown_error_propagates() -> None:
     user = _make_user()
     client = _StubVkClient(VkApiError(code=100500, message="mystery"))
-    notifier = _notifier(user=user, identity=_identity_for(user), client=client)
+    notifier = _notifier(identity=_identity_for(user), client=client)
 
     with pytest.raises(VkApiError):
         await notifier.send_notification(_make_notification(user.id))

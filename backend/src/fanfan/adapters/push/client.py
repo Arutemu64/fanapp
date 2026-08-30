@@ -13,6 +13,11 @@ from fanfan.core.models.push_subscription import PushSubscription
 
 logger = logging.getLogger(__name__)
 
+# How long a push service holds an undelivered message before discarding it. One
+# hour: a convention notification is stale well before then, and the service
+# worker collapses a late duplicate by its `tag` anyway.
+_PUSH_TTL_SECONDS = 3600
+
 
 class MessageData(TypedDict):
     # The payload the service worker unpacks in its `push` handler. Serialized to
@@ -81,7 +86,7 @@ class WebPushClient:
             # (json.dumps), never mutating, so the cast is sound.
             message=cast("dict[Any, Any]", message_data),
             subscription=push_subscription,
-            ttl=3600,
+            ttl=_PUSH_TTL_SECONDS,
         )
         return await self._client.post(
             url=str(push_subscription.endpoint),

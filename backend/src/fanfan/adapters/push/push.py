@@ -8,7 +8,7 @@ from fanfan.adapters.push.client import MessageData, WebPushClient
 from fanfan.application.ports.gateways.push_subscriptions import (
     PushSubscriptionGateway,
 )
-from fanfan.application.ports.notifier import Notifier
+from fanfan.application.ports.notifier import PushNotifierPort
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import (
     NotificationChannelUnavailable,
@@ -35,7 +35,7 @@ _SERVER_ERROR_STATUS = 500
 _RETRY_AFTER_DEFAULT_SECONDS = 5
 
 
-class PushNotifier(Notifier):
+class PushNotifier(PushNotifierPort):
     def __init__(
         self,
         push_sub_gateway: PushSubscriptionGateway,
