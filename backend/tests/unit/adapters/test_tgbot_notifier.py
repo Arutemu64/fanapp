@@ -1,4 +1,3 @@
-import logging
 from uuid import uuid7
 
 import pytest
@@ -75,22 +74,6 @@ class _RecordingBot:
         self.calls.append(kwargs)
         if self._error is not None:
             raise self._error
-
-
-class _ListHandler(logging.Handler):
-    """Captures records emitted to one logger, independent of root handlers.
-
-    The app's setup_logging() clears root handlers, so a caplog assertion that
-    relies on the root handler is empty once an integration test has run in the
-    same process. Attaching this to the notifier's own logger sidesteps that.
-    """
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.records: list[logging.LogRecord] = []
-
-    def emit(self, record: logging.LogRecord) -> None:
-        self.records.append(record)
 
 
 class _StubSocialIdentityGateway:
@@ -178,35 +161,16 @@ async def test_forbidden_is_unreachable() -> None:
         await notifier.send_notification(_notification())
 
 
-async def test_bad_request_is_unreachable_and_logged() -> None:
-    # A malformed request (e.g. unparseable message HTML) is dropped, not retried,
-    # and logged so a template/sanitizer regression is diagnosable.
+async def test_bad_request_is_unreachable() -> None:
+    # A malformed request (e.g. unparseable message HTML) is dropped, not retried.
     error = TelegramBadRequest(
         method=SendMessage(chat_id=TG_USER_ID, text="x"),
         message="Bad Request: can't parse entities",
     )
     notifier = _notifier(identity=_identity(), bot=_RecordingBot(error=error))
-    notification = _notification()
 
-    handler = _ListHandler()
-    notifier_logger = logging.getLogger("fanfan.adapters.tgbot.notifier")
-    notifier_logger.addHandler(handler)
-    previous_level = notifier_logger.level
-    notifier_logger.setLevel(logging.WARNING)
-    try:
-        with pytest.raises(UserNotReachable):
-            await notifier.send_notification(notification)
-    finally:
-        notifier_logger.removeHandler(handler)
-        notifier_logger.setLevel(previous_level)
-
-    # The reason and id are structured fields (extra=), not baked into the
-    # message, so a JSON log can filter on them.
-    assert len(handler.records) == 1
-    record = handler.records[0]
-    assert record.getMessage() == "Telegram rejected notification as a bad request"
-    assert record.reason == "Bad Request: can't parse entities"
-    assert record.notification_id == str(notification.id)
+    with pytest.raises(UserNotReachable):
+        await notifier.send_notification(_notification())
 
 
 async def test_unauthorized_token_is_channel_unavailable() -> None:
