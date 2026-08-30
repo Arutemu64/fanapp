@@ -1,12 +1,13 @@
+import html
 import logging
 
 import nh3
 
 from fanfan.adapters.vk.client import VkApiClient, VkApiError
 from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
-from fanfan.application.ports.gateways.users import UserGateway
-from fanfan.application.ports.notifier import Notifier
+from fanfan.application.ports.notifier import VkNotifierPort
 from fanfan.core.exceptions.notifications import (
+    NotificationChannelUnavailable,
     NotificationRetryAfter,
     UserNotReachable,
 )
@@ -31,41 +32,41 @@ _AUTH_CODES = frozenset({5, 27, 28})
 _FLOOD_RETRY_AFTER_SECONDS = 1
 
 
-class VkNotifier(Notifier):
+class VkNotifier(VkNotifierPort):
     def __init__(
         self,
         client: VkApiClient,
-        user_gateway: UserGateway,
         social_identity_gateway: SocialIdentityGateway,
         web_config: WebConfig,
     ) -> None:
         self.client = client
-        self.user_gateway = user_gateway
         self.social_identity_gateway = social_identity_gateway
         self.web_config = web_config
 
     def _render_message_text(self, notification: Notification) -> str:
-        # VK group messages are plain text (no HTML). The stored body is a
-        # safe HTML subset, so strip every tag the same way the push adapter
-        # does, turning <br> into newlines first. VK auto-links the bare URL, so
-        # a trailing "open the app" line replaces Telegram's inline button.
-        body = nh3.clean(notification.body.replace("<br>", "\n"), tags=set())
+        # VK group messages are plain text (no HTML). The stored body is a safe
+        # HTML subset, so strip every tag the same way the push adapter does,
+        # turning <br> into newlines first, then decode HTML entities — nh3 leaves
+        # them encoded, so without unescape a body like "5 < 10 & up" would arrive
+        # as "5 &lt; 10 &amp; up". VK auto-links the bare URL, so a trailing "open
+        # the app" line replaces Telegram's inline button.
+        body = html.unescape(
+            nh3.clean(notification.body.replace("<br>", "\n"), tags=set())
+        )
         url = self.web_config.build_url(notification.path or "/")
         return (
             f"🔔 {notification.title.upper()}\n\n{body}\n\n🌐 Открыть приложение: {url}"
         )
 
     async def send_notification(self, notification: Notification) -> None:
-        user = await self.user_gateway.get_by_id(notification.user_id)
-        if user is None or not user.settings.receive_vk_notifications:
-            raise UserNotReachable
-
+        # Whether the user wants VK notifications is application policy, checked by
+        # the SendNotification interactor before we get here; this adapter only
+        # decides whether the user is physically reachable.
         social_identity = await self.social_identity_gateway.get_by_provider(
             user_id=notification.user_id, provider=SocialProvider.VK
         )
-        # provider_user_id is the VK numeric user id we message. Guarded the same
-        # way the Telegram notifier guards its address: an unlinked user has no
-        # identity at all, which is the real unreachable case here.
+        # provider_user_id is the VK numeric user id we message. An unlinked user
+        # has no identity at all, which is the real unreachable case here.
         if social_identity is None:
             raise UserNotReachable
 
@@ -107,23 +108,25 @@ class VkNotifier(Notifier):
         if error.code in _USER_UNREACHABLE_CODES:
             raise UserNotReachable from error
         if error.code in _AUTH_CODES:
-            # The group token is invalid or lacks the messages scope. This is
-            # a global misconfiguration, not a per-user problem, so log it loudly.
-            # A concise one-liner, not a traceback: it fires on every VK
-            # notification while the token is broken, and the cause is chained
-            # onto the raised UserNotReachable. Treated as unreachable so the
-            # consumer drops the message instead of redelivering it forever.
+            # The group token is invalid or lacks the messages scope. This is a
+            # channel-wide misconfiguration, not a per-user problem, so signal it
+            # as such: the consumer drops the message instead of redelivering it
+            # forever (retrying can't fix a bad token). A concise one-liner, not a
+            # traceback: it fires on every VK notification while the token is
+            # broken, and the cause is chained onto the raised exception.
             logger.error(
-                "VK group token is invalid or unauthorized (code %s) — "
+                "VK group token is invalid or unauthorized — "
                 "cannot deliver notifications via VK",
-                error.code,
+                extra={"error_code": error.code},
             )
-            raise UserNotReachable from error
+            raise NotificationChannelUnavailable from error
         # An unfamiliar VK error — let it propagate so the consumer nacks and the
         # failure surfaces, rather than silently swallowing an unknown condition.
         logger.warning(
-            "Unhandled VK API error %s sending notification %s",
-            error.code,
-            notification.id,
+            "Unhandled VK API error sending notification",
+            extra={
+                "error_code": error.code,
+                "notification_id": str(notification.id),
+            },
         )
         raise error

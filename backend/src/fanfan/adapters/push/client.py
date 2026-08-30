@@ -13,6 +13,11 @@ from fanfan.core.models.push_subscription import PushSubscription
 
 logger = logging.getLogger(__name__)
 
+# How long a push service holds an undelivered message before discarding it. One
+# hour: a convention notification is stale well before then, and the service
+# worker collapses a late duplicate by its `tag` anyway.
+_PUSH_TTL_SECONDS = 3600
+
 
 class MessageData(TypedDict):
     # The payload the service worker unpacks in its `push` handler. Serialized to
@@ -63,10 +68,11 @@ class WebPushClient:
 
     async def send(
         self, *, subscription: PushSubscription, message_data: MessageData
-    ) -> int:
+    ) -> httpx2.Response:
         # Encrypt per subscription (each has its own keys) and POST to that
-        # endpoint. Returns the HTTP status so the notifier can prune a
-        # subscription the push service has retired (404/410).
+        # endpoint. Returns the raw response so the notifier can act on the push
+        # service's status: prune a retired subscription (404/410), honor a 429's
+        # Retry-After, or flag a channel-wide auth failure (400/401/403).
         # The library's WebPushSubscription nests the keys under `keys`; our
         # domain model keeps them flat, so map explicitly here rather than
         # feeding it a dict of the wrong shape.
@@ -80,13 +86,12 @@ class WebPushClient:
             # (json.dumps), never mutating, so the cast is sound.
             message=cast("dict[Any, Any]", message_data),
             subscription=push_subscription,
-            ttl=3600,
+            ttl=_PUSH_TTL_SECONDS,
         )
-        response = await self._client.post(
+        return await self._client.post(
             url=str(push_subscription.endpoint),
             content=message.encrypted,
             # message.headers is a TypedDict (all-str values); httpx wants a plain
             # Mapping[str, str], which a TypedDict is not assignable to.
             headers=cast("dict[str, str]", message.headers),
         )
-        return response.status_code

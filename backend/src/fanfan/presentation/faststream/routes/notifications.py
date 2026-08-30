@@ -1,3 +1,5 @@
+from collections.abc import Awaitable, Callable
+
 from dishka import FromDishka
 from dishka_faststream import inject
 from faststream import AckPolicy, Logger
@@ -38,9 +40,52 @@ from fanfan.core.exceptions.notifications import (
     NotificationRetryAfter,
     UserNotReachable,
 )
+from fanfan.core.vo.notification import NotificationId
 from fanfan.presentation.faststream.jstream import stream
 
 notifications_router = NatsRouter()
+
+
+async def _deliver_to_channel(
+    *,
+    channel: str,
+    notification_id: NotificationId,
+    deliver: Callable[[], Awaitable[None]],
+    msg: NatsMessage,
+    logger: Logger,
+) -> None:
+    """Drive one channel's send and translate the Notifier port's exceptions into
+    JetStream ack decisions, so every channel honors the full contract the same
+    way instead of each subscriber re-implementing (and drifting on) the set.
+    """
+    try:
+        await deliver()
+    except NotificationRetryAfter as e:
+        logger.warning(
+            "Retry sending notification %s to %s in %s",
+            notification_id,
+            channel,
+            e.retry_after,
+        )
+        await msg.nack(delay=e.retry_after)
+    except UserNotReachable:
+        logger.info("Skip sending notification %s to %s", notification_id, channel)
+        await msg.reject()
+    except MailingAlreadyCancelled:
+        logger.info("Mailing for notification %s was cancelled", notification_id)
+        await msg.reject()
+    except NotificationChannelUnavailable:
+        # The whole channel is misconfigured (bad token, missing VAPID keys).
+        # Retrying can't fix it, so drop the message instead of redelivering.
+        logger.warning(
+            "%s channel unavailable — dropping notification %s",
+            channel,
+            notification_id,
+        )
+        await msg.reject()
+    else:
+        await msg.ack()
+        logger.info("Sent notification %s to %s", notification_id, channel)
 
 
 @notifications_router.subscriber(
@@ -113,29 +158,15 @@ async def send_notification_to_telegram(
     msg: NatsMessage,
     logger: Logger,
 ) -> None:
-    try:
-        await interactor.send_notification_to_telegram(
+    await _deliver_to_channel(
+        channel="Telegram",
+        notification_id=data.notification_id,
+        deliver=lambda: interactor.send_notification_to_telegram(
             SendNotificationInput(notification_id=data.notification_id)
-        )
-    except NotificationRetryAfter as e:
-        logger.warning(
-            "Retry sending notification %s to Telegram in %s",
-            data.notification_id,
-            e.retry_after,
-        )
-        await msg.nack(delay=e.retry_after)
-        return
-    except UserNotReachable:
-        logger.info("Skip sending notification %s to Telegram", data.notification_id)
-        await msg.reject()
-        return
-    except MailingAlreadyCancelled:
-        logger.info("Mailing for notification %s was cancelled", data.notification_id)
-        await msg.reject()
-        return
-    else:
-        await msg.ack()
-        logger.info("Sent notification %s to Telegram", data.notification_id)
+        ),
+        msg=msg,
+        logger=logger,
+    )
 
 
 @notifications_router.subscriber(
@@ -152,29 +183,15 @@ async def send_notification_to_vk(
     msg: NatsMessage,
     logger: Logger,
 ) -> None:
-    try:
-        await interactor.send_notification_to_vk(
+    await _deliver_to_channel(
+        channel="VK",
+        notification_id=data.notification_id,
+        deliver=lambda: interactor.send_notification_to_vk(
             SendNotificationInput(notification_id=data.notification_id)
-        )
-    except NotificationRetryAfter as e:
-        logger.warning(
-            "Retry sending notification %s to VK in %s",
-            data.notification_id,
-            e.retry_after,
-        )
-        await msg.nack(delay=e.retry_after)
-        return
-    except UserNotReachable:
-        logger.info("Skip sending notification %s to VK", data.notification_id)
-        await msg.reject()
-        return
-    except MailingAlreadyCancelled:
-        logger.info("Mailing for notification %s was cancelled", data.notification_id)
-        await msg.reject()
-        return
-    else:
-        await msg.ack()
-        logger.info("Sent notification %s to VK", data.notification_id)
+        ),
+        msg=msg,
+        logger=logger,
+    )
 
 
 @notifications_router.subscriber(
@@ -191,26 +208,15 @@ async def send_push_notification(
     msg: NatsMessage,
     logger: Logger,
 ) -> None:
-    try:
-        await interactor.send_notification_to_push(
+    await _deliver_to_channel(
+        channel="push",
+        notification_id=data.notification_id,
+        deliver=lambda: interactor.send_notification_to_push(
             SendNotificationInput(notification_id=data.notification_id)
-        )
-    except MailingAlreadyCancelled:
-        logger.info("Mailing for notification %s was cancelled", data.notification_id)
-        await msg.reject()
-        return
-    except NotificationChannelUnavailable:
-        # Push channel is misconfigured (missing/invalid VAPID keys). Retrying
-        # can't fix it, so drop the message instead of redelivering forever.
-        logger.warning(
-            "Push channel unavailable — dropping notification %s",
-            data.notification_id,
-        )
-        await msg.reject()
-        return
-    else:
-        await msg.ack()
-        logger.info("Sent notification %s to push", data.notification_id)
+        ),
+        msg=msg,
+        logger=logger,
+    )
 
 
 @notifications_router.subscriber(

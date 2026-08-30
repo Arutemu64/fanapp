@@ -11,9 +11,9 @@ from aiogram.exceptions import (
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
-from fanfan.application.ports.gateways.users import UserGateway
-from fanfan.application.ports.notifier import Notifier
+from fanfan.application.ports.notifier import TelegramNotifierPort
 from fanfan.core.exceptions.notifications import (
+    NotificationChannelUnavailable,
     NotificationRetryAfter,
     UserNotReachable,
 )
@@ -24,17 +24,15 @@ from fanfan.presentation.web.config import WebConfig
 logger = logging.getLogger(__name__)
 
 
-class TelegramNotifier(Notifier):
+class TelegramNotifier(TelegramNotifierPort):
     def __init__(
         self,
         bot: Bot,
-        user_gateway: UserGateway,
         social_identity_gateway: SocialIdentityGateway,
         web_config: WebConfig,
     ) -> None:
         self.social_identity_gateway = social_identity_gateway
         self.bot = bot
-        self.user_gateway = user_gateway
         self.web_config = web_config
 
     @staticmethod
@@ -56,10 +54,9 @@ class TelegramNotifier(Notifier):
         )
 
     async def send_notification(self, notification: Notification) -> None:
-        user = await self.user_gateway.get_by_id(notification.user_id)
-        if user is None or not user.settings.receive_telegram_notifications:
-            raise UserNotReachable
-
+        # Whether the user wants Telegram notifications is application policy,
+        # checked by the SendNotification interactor before we get here; this
+        # adapter only decides whether the user is physically reachable.
         social_identity = await self.social_identity_gateway.get_by_provider(
             user_id=notification.user_id, provider=SocialProvider.TELEGRAM
         )
@@ -76,18 +73,33 @@ class TelegramNotifier(Notifier):
             )
         except TelegramRetryAfter as e:
             raise NotificationRetryAfter(retry_after=e.retry_after) from e
-        except (TelegramBadRequest, TelegramForbiddenError) as e:
+        except TelegramForbiddenError as e:
+            # The user blocked the bot or deleted their account — genuinely
+            # unreachable, and nothing to log per delivery.
+            raise UserNotReachable from e
+        except TelegramBadRequest as e:
+            # Telegram rejected the request itself — most likely the message HTML
+            # failed to parse (a sanitizer/template regression), not a per-user
+            # problem. Log the reason so the bug is diagnosable, then drop this
+            # notification rather than redeliver a message that can never parse.
+            logger.warning(
+                "Telegram rejected notification as a bad request",
+                extra={
+                    "notification_id": str(notification.id),
+                    "reason": e.message,
+                },
+            )
             raise UserNotReachable from e
         except TelegramUnauthorizedError as e:
             # Invalid bot token (e.g. the placeholder used when no real bot is
-            # configured). This is a global misconfiguration, not a per-user
-            # problem, so log it loudly. Treat as unreachable so the consumer
-            # drops the message instead of redelivering it forever.
-            # A concise one-liner, not a traceback: this fires on every
+            # configured). This is a channel-wide misconfiguration, not a per-user
+            # problem, so signal it as such: the consumer drops the message instead
+            # of redelivering it forever (retrying can't fix a bad token). Logged
+            # loudly as a concise one-liner, not a traceback — it fires on every
             # notification while the token is a placeholder, and the cause is
-            # already chained onto the raised UserNotReachable.
+            # chained onto the raised exception.
             logger.error(  # noqa: TRY400
                 "Telegram bot token is invalid or unauthorized — "
                 "cannot deliver notifications via Telegram"
             )
-            raise UserNotReachable from e
+            raise NotificationChannelUnavailable from e
