@@ -102,8 +102,13 @@
 	//     and gave its space back on hide, the scroll region grew, which clamped scrollTop
 	//     near the bottom and fired a spurious upward `scroll` event — reveal, regrow,
 	//     re-hide: the resize/reveal loop that made the bar blink and stutter on desktop.
-	//   - `top`, not `transform`: a transform on the blurred bar (or an ancestor) re-roots
-	//     its backdrop and kills the blur.
+	//   - `top` on this wrapper, not `transform`: a transform on the wrapper (an ancestor
+	//     of the blurred bar) re-roots the backdrop and kills the blur. Transforming the
+	//     bar element alone would keep the blur, but it would leave the connection banner
+	//     stranded below instead of sliding it up — and the moving bar must repaint its
+	//     backdrop each frame regardless, so the compositor win a transform normally buys
+	//     doesn't apply here anyway. Moving one out-of-flow wrapper via `top` costs a
+	//     cheap layout of just that element; <main> never reflows.
 	// `navbarHeight` (the bar alone) is how far we slide up on hide; `chromeHeight` (bar +
 	// connection banner, bind:offsetHeight below) is <main>'s top padding so content clears
 	// whatever chrome is showing.
@@ -113,19 +118,29 @@
 	let navbarHeight = $state(0);
 	let chromeHeight = $state(0);
 	let lastScrollTop = 0;
+	let scrollFrame = 0;
 
 	function revealNavbar() {
 		navbarHidden = false;
 		lastScrollTop = mainElement?.scrollTop ?? 0;
 	}
 
+	// Coalesce the scroll listener to one rAF per frame: many `scroll` events fire
+	// per animation frame during momentum/inertial scrolling on mobile, so reading
+	// scrollTop and flipping state once per frame — off the event — keeps the work
+	// off the critical path and the scroll smooth, instead of running it inline on
+	// every event. See https://developer.chrome.com/blog/inside-browser-part4.
 	function handleMainScroll() {
-		const top = mainElement?.scrollTop ?? 0;
-		const delta = top - lastScrollTop;
-		if (Math.abs(delta) < SCROLL_DELTA_PX) return;
-		// Reveal near the top or on any upward move; hide only while moving down past the bar.
-		navbarHidden = delta > 0 && top > HIDE_NAVBAR_AFTER_PX;
-		lastScrollTop = top;
+		if (scrollFrame) return;
+		scrollFrame = requestAnimationFrame(() => {
+			scrollFrame = 0;
+			const top = mainElement?.scrollTop ?? 0;
+			const delta = top - lastScrollTop;
+			if (Math.abs(delta) < SCROLL_DELTA_PX) return;
+			// Reveal near the top or on any upward move; hide only while moving down past the bar.
+			navbarHidden = delta > 0 && top > HIDE_NAVBAR_AFTER_PX;
+			lastScrollTop = top;
+		});
 	}
 
 	beforeNavigate((navigation) => {
