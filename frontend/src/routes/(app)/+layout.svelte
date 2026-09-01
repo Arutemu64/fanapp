@@ -95,13 +95,23 @@
 	// full viewport while the page title stays one gesture away — the standard mobile
 	// "hidey bar". The bottom nav (primary navigation) deliberately stays put. We track
 	// <main>, not the window, because <main> is the scroll region in this shell.
-	// `navbarHeight` is measured (bind:offsetHeight below) so the collapse animates a
-	// real px height with no transform on the blurred bar — a transformed ancestor would
-	// break its backdrop-filter.
+	//
+	// The chrome overlays <main> (absolute, out of flow) rather than sharing its flex
+	// column, and we slide it with `top`, never `transform`. Two constraints force this:
+	//   - Out of flow so hiding the bar can't resize <main>. When the bar shared the flow
+	//     and gave its space back on hide, the scroll region grew, which clamped scrollTop
+	//     near the bottom and fired a spurious upward `scroll` event — reveal, regrow,
+	//     re-hide: the resize/reveal loop that made the bar blink and stutter on desktop.
+	//   - `top`, not `transform`: a transform on the blurred bar (or an ancestor) re-roots
+	//     its backdrop and kills the blur.
+	// `navbarHeight` (the bar alone) is how far we slide up on hide; `chromeHeight` (bar +
+	// connection banner, bind:offsetHeight below) is <main>'s top padding so content clears
+	// whatever chrome is showing.
 	const HIDE_NAVBAR_AFTER_PX = 64; // never hide while the bar's own content is still on screen
 	const SCROLL_DELTA_PX = 6; // ignore inertia/subpixel jitter that would flicker the bar
 	let navbarHidden = $state(false);
 	let navbarHeight = $state(0);
+	let chromeHeight = $state(0);
 	let lastScrollTop = 0;
 
 	function revealNavbar() {
@@ -175,27 +185,33 @@
 	<!-- <main> is the scrolling region, not this column: the landmark for the page's primary
 		content must not also swallow the top bar and the connection banner. -->
 	<div class="relative flex flex-1 flex-col overflow-hidden">
-		<!-- Hide-on-scroll: a negative top margin of the bar's measured height slides it up
-			out of view, clipped by this column's own overflow-hidden, while the flex column
-			reclaims the freed space below. No transform (so the bar keeps its backdrop blur)
-			and no wrapper around the bar's own content — its dropdowns render in the native
-			Popover top layer either way. See handleMainScroll for the direction logic. -->
+		<!-- Top chrome overlays <main> instead of sharing its flex flow, so hiding the bar
+			never resizes the scroll region (see the hide-on-scroll note above for why that
+			loop is what made the bar blink). The column's overflow-hidden clips it as it
+			slides to a negative `top`; sliding `top` rather than transforming keeps the bar's
+			backdrop blur intact. The banner sits below the bar and stays put when the bar
+			hides. Dropdowns render in the native Popover top layer regardless of the wrapper.
+			See handleMainScroll for the direction logic. -->
 		<div
-			bind:offsetHeight={navbarHeight}
-			class="transition-[margin-top] duration-300 ease-out motion-reduce:transition-none"
-			style:margin-top={navbarHidden ? `-${navbarHeight}px` : '0px'}
+			bind:offsetHeight={chromeHeight}
+			class="absolute inset-x-0 top-0 z-(--z-chrome) transition-[top] duration-300 ease-out motion-reduce:transition-none"
+			style:top={navbarHidden ? `-${navbarHeight}px` : '0px'}
 		>
-			<AppNavbar {user} toggleSidebar={sidebarUi.toggle} />
+			<div bind:offsetHeight={navbarHeight}>
+				<AppNavbar {user} toggleSidebar={sidebarUi.toggle} />
+			</div>
+			<ConnectionBanner />
 		</div>
 
-		<ConnectionBanner />
-
-		<!-- Also the SkipLink target, which focuses it by id — hence tabindex="-1". -->
+		<!-- Also the SkipLink target, which focuses it by id — hence tabindex="-1". padding-top
+			clears the overlaid chrome; because the bar only hides once you've scrolled past it,
+			that padding has already left the viewport by the time the bar is gone. -->
 		<main
 			bind:this={mainElement}
 			onscroll={handleMainScroll}
 			id="main-content"
 			tabindex="-1"
+			style:padding-top={`${chromeHeight}px`}
 			class="relative flex-1 overflow-y-auto scroll-smooth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
 		>
 			<ToastContainer />

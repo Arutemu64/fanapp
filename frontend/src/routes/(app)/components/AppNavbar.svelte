@@ -80,10 +80,12 @@
 </script>
 
 <!-- `fluid` makes the navbar content span the full width of the main area so the
-	avatar/bell pin to the right edge; without it Flowbite caps content in a `container`. -->
+	avatar/bell pin to the right edge; without it Flowbite caps content in a `container`.
+	Positioning (overlay, z-index, hide-on-scroll) is owned by the (app) layout, which
+	slides this bar with `top` to keep its backdrop blur intact. -->
 <Navbar
 	fluid
-	class="sticky top-0 z-(--z-chrome) border-b border-gray-200/50 bg-white/80 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] backdrop-blur-md transition-colors duration-300 sm:px-6 dark:border-gray-700/50 dark:bg-gray-900/80"
+	class="border-b border-gray-200/50 bg-white/80 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] backdrop-blur-md transition-colors duration-300 sm:px-6 dark:border-gray-700/50 dark:bg-gray-900/80"
 >
 	<!-- SidebarButton hardcodes an English "Open sidebar" in an sr-only span; aria-label
 		wins over element content, so this is the name Russian screen readers announce. -->
