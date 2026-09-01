@@ -225,13 +225,23 @@
 
 		<!-- Also the SkipLink target, which focuses it by id — hence tabindex="-1". padding-top
 			clears the overlaid chrome; because the bar only hides once you've scrolled past it,
-			that padding has already left the viewport by the time the bar is gone. -->
+			that padding has already left the viewport by the time the bar is gone.
+
+			--sticky-top is the top offset that in-flow sticky descendants (the schedule's block
+			and nomination headers) must use instead of a bare top-0. A sticky element's offset is
+			measured from the scroll container's padding edge, so top-0 would pin it at padding-top
+			(chromeHeight) below the viewport — right under the chrome while it's shown, but a blank
+			gap once the chrome has slid away. Shifting it up by navbarHeight when the bar is hidden
+			cancels that: the header rests at the viewport top (or just below the connection banner,
+			which stays), tracking the chrome's slide via the same duration. -->
 		<main
 			bind:this={mainElement}
 			onscroll={handleMainScroll}
 			id="main-content"
 			tabindex="-1"
 			style:padding-top={`${chromeHeight}px`}
+			style:--sticky-top={navbarHidden ? `-${navbarHeight}px` : '0px'}
+			style:--sticky-top-duration={`${chromeTransitionMs}ms`}
 			class="relative flex-1 overflow-y-auto scroll-smooth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
 		>
 			<ToastContainer />
