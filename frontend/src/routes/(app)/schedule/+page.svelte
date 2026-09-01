@@ -338,7 +338,13 @@
 	<section class="space-y-2">
 		<!-- Keep the active block visible while the user scrolls through dense rows. -->
 		<!-- Inter (not display): block headers are repeated structural data, and DESIGN reserves Unbounded for rare identity moments. Size/weight + filled count chip carry the hierarchy; no accent stripe. -->
-		<div class="sticky top-0 z-20">
+		<!-- top / transition come from the (app) layout's <main> (--sticky-top): a bare top-0
+			would leave a gap under the hidden top bar. See the note there. -->
+		<div
+			class="sticky z-20 transition-[top] ease-out motion-reduce:transition-none"
+			style:top="var(--sticky-top, 0px)"
+			style:transition-duration="var(--sticky-top-duration, 0ms)"
+		>
 			<div
 				class="flex min-h-11 items-center justify-between gap-3 overflow-hidden rounded-xl border border-gray-200 bg-white/95 px-3 py-2 shadow-sm backdrop-blur dark:border-gray-700 dark:bg-gray-900/95"
 			>
@@ -363,8 +369,12 @@
 				<!-- Stick the nomination header below the block header for better context.
 				     Skipped when a block's rows carry no nomination — there is nothing to label. -->
 				{#if nomination.title !== null}
+					<!-- Stacks 2.75rem below the block header (its min-h-11), sharing the layout's
+						--sticky-top offset so both track the top bar together. -->
 					<div
-						class="sticky top-11 z-10 rounded-t-xl border-b border-gray-100 bg-white/95 px-3 py-2 backdrop-blur dark:border-gray-700 dark:bg-gray-800/95"
+						class="sticky z-10 rounded-t-xl border-b border-gray-100 bg-white/95 px-3 py-2 backdrop-blur transition-[top] ease-out motion-reduce:transition-none dark:border-gray-700 dark:bg-gray-800/95"
+						style:top="calc(var(--sticky-top, 0px) + 2.75rem)"
+						style:transition-duration="var(--sticky-top-duration, 0ms)"
 					>
 						<div class="flex items-center justify-between gap-3">
 							<h3 class="min-w-0 truncate text-sm font-semibold text-gray-700 dark:text-gray-300">
