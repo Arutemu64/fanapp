@@ -140,12 +140,12 @@ number in a component.**
 |---|---|---|
 | Base content | `z-0` / auto | In-flow page content |
 | In-page sticky | `z-10` – `z-30` | Page-local sticky headers and FABs that must stay *below* chrome (schedule day-tab bar, sub-headers, floating "now" button; overlay-internal controls). Local stacking, **not** tokenized. |
-| Sticky chrome | `z-(--z-chrome)` = 40 | Top navbar (`AppNavbar`, `sticky top-0`) |
+| Top chrome | `z-(--z-chrome)` = 40 | The hide-on-scroll top chrome overlay in `(app)/+layout.svelte` — the `AppNavbar` and connection banner. The layout owns its positioning (an absolute overlay it slides with `top`), not `AppNavbar`. |
 | Overlays | `z-(--z-overlay)` = 50 | Mobile bottom nav, toasts, update prompt, skip link, Flowbite `<Modal>` backdrops |
 | Inline modal | `z-(--z-modal)` = 60 | Inline (non-portaled) modals that must cover the bottom nav: the mobile sidebar drawer **and its backdrop** (`AppSidebar`), the fullscreen map viewer (`map/+page.svelte`) |
 
 **Rules:**
-* Sticky navbar stays *below* overlays (`--z-chrome` < `--z-overlay`) so drawers/modals cover it.
+* Top chrome stays *below* overlays (`--z-chrome` < `--z-overlay`) so drawers/modals cover it.
 * In-page sticky content stays *below* the navbar (`≤ z-30` < 40) — it scrolls under the chrome, never over it. This band is page-local and intentionally left on plain utilities, not tokens.
 * **Inline vs portaled modals.** Flowbite `<Modal>` portals to `body` (after the bottom nav in the DOM), so `--z-overlay` already covers the nav via paint order — don't override its `z-50`. A modal rendered **inline** (the sidebar drawer, the map viewer) sits at its source position *before* the bottom nav, so it needs `--z-modal` to win. For the drawer, lift **both** the panel (`class`) and the backdrop (`classes.backdrop`): Flowbite's theme ships the panel at `z-50` (a tie the nav wins on DOM order) and the backdrop at `z-40` (below it), and raising only one leaves the nav tappable through the overlay.
 

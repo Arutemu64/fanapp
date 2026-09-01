@@ -72,7 +72,7 @@
 	};
 
 	// Programmatic scroll restore (snapshot back/forward, or a tab re-entry below).
-	// A restore is not a user gesture, so it keeps the bar shown and re-baselines the
+	// A restore is not a user gesture, so it shows the bar and re-baselines the
 	// hide-on-scroll tracker to the restored offset — otherwise the `scroll` event the
 	// jump fires would read as a full-height downward scroll and hide the bar with no
 	// input. snapshot.restore and afterNavigate can run in either order on popstate, so
@@ -90,32 +90,61 @@
 		revealNavbar();
 	}
 
-	// Hide-on-scroll for the top bar: collapse it as the user scrolls down past the
-	// bar's own height, reveal it the instant they scroll back up, so content gets the
-	// full viewport while the page title stays one gesture away — the standard mobile
-	// "hidey bar". The bottom nav (primary navigation) deliberately stays put. We track
+	// Hide-on-scroll for the top bar: hide it as the user scrolls down past the bar's
+	// own height, reveal it on any scroll back up, so content gets the viewport while
+	// the page title stays one flick away — the standard mobile "hidey bar". Reveal is
+	// deliberately faster than hide (see chromeTransitionMs) so the nav snaps back the
+	// instant you flick up. The bottom nav (primary navigation) stays put. We track
 	// <main>, not the window, because <main> is the scroll region in this shell.
-	// `navbarHeight` is measured (bind:offsetHeight below) so the collapse animates a
-	// real px height with no transform on the blurred bar — a transformed ancestor would
-	// break its backdrop-filter.
+	//
+	// The chrome overlays <main> (absolute, out of flow) rather than sharing its flex
+	// column, and we slide it with `top`, never `transform`. Two constraints force this:
+	//   - Out of flow so hiding the bar can't resize <main>. When the bar shared the flow
+	//     and gave its space back on hide, the scroll region grew, which clamped scrollTop
+	//     near the bottom and fired a spurious upward `scroll` event — reveal, regrow,
+	//     re-hide: the resize/reveal loop that made the bar blink and stutter.
+	//   - `top` on this wrapper, not `transform`: a transform on the wrapper (an ancestor
+	//     of the blurred bar) re-roots the backdrop and kills the blur. Transforming the
+	//     bar element alone would keep the blur, but it would leave the connection banner
+	//     stranded below instead of sliding it up — and the moving bar must repaint its
+	//     backdrop each frame regardless, so the compositor win a transform normally buys
+	//     doesn't apply here anyway. Moving one out-of-flow wrapper via `top` costs a
+	//     cheap layout of just that element; <main> never reflows.
+	// `navbarHeight` (the bar alone) is how far we slide up on hide; `chromeHeight` (bar +
+	// connection banner, bind:offsetHeight below) is <main>'s top padding so content clears
+	// whatever chrome is showing.
 	const HIDE_NAVBAR_AFTER_PX = 64; // never hide while the bar's own content is still on screen
 	const SCROLL_DELTA_PX = 6; // ignore inertia/subpixel jitter that would flicker the bar
 	let navbarHidden = $state(false);
 	let navbarHeight = $state(0);
+	let chromeHeight = $state(0);
 	let lastScrollTop = 0;
+	let scrollFrame = 0;
+
+	// Reveal fast so the nav is back the instant you flick up; hide a touch slower so it
+	// glides away rather than snapping. This asymmetry is the "headroom" feel.
+	let chromeTransitionMs = $derived(navbarHidden ? 240 : 120);
 
 	function revealNavbar() {
 		navbarHidden = false;
 		lastScrollTop = mainElement?.scrollTop ?? 0;
 	}
 
+	// Coalesce the scroll listener to one rAF per frame: many `scroll` events fire per
+	// animation frame during momentum/inertial scrolling on mobile, so reading scrollTop
+	// and flipping state once per frame — off the event — keeps the work off the critical
+	// path and the scroll smooth. See https://developer.chrome.com/blog/inside-browser-part4.
 	function handleMainScroll() {
-		const top = mainElement?.scrollTop ?? 0;
-		const delta = top - lastScrollTop;
-		if (Math.abs(delta) < SCROLL_DELTA_PX) return;
-		// Reveal near the top or on any upward move; hide only while moving down past the bar.
-		navbarHidden = delta > 0 && top > HIDE_NAVBAR_AFTER_PX;
-		lastScrollTop = top;
+		if (scrollFrame) return;
+		scrollFrame = requestAnimationFrame(() => {
+			scrollFrame = 0;
+			const top = mainElement?.scrollTop ?? 0;
+			const delta = top - lastScrollTop;
+			if (Math.abs(delta) < SCROLL_DELTA_PX) return;
+			// Reveal on any upward move; hide only while moving down past the bar's height.
+			navbarHidden = delta > 0 && top > HIDE_NAVBAR_AFTER_PX;
+			lastScrollTop = top;
+		});
 	}
 
 	beforeNavigate((navigation) => {
@@ -175,27 +204,34 @@
 	<!-- <main> is the scrolling region, not this column: the landmark for the page's primary
 		content must not also swallow the top bar and the connection banner. -->
 	<div class="relative flex flex-1 flex-col overflow-hidden">
-		<!-- Hide-on-scroll: a negative top margin of the bar's measured height slides it up
-			out of view, clipped by this column's own overflow-hidden, while the flex column
-			reclaims the freed space below. No transform (so the bar keeps its backdrop blur)
-			and no wrapper around the bar's own content — its dropdowns render in the native
-			Popover top layer either way. See handleMainScroll for the direction logic. -->
+		<!-- Top chrome overlays <main> instead of sharing its flex flow, so hiding the bar
+			never resizes the scroll region (see the hide-on-scroll note above for why that
+			loop is what made the bar blink). The column's overflow-hidden clips it as it
+			slides to a negative `top`; sliding `top` rather than transforming keeps the bar's
+			backdrop blur intact, and the connection banner below it rides up with it.
+			transition-duration is set per state (fast reveal, slower hide). Dropdowns render
+			in the native Popover top layer regardless of the wrapper. See handleMainScroll. -->
 		<div
-			bind:offsetHeight={navbarHeight}
-			class="transition-[margin-top] duration-300 ease-out motion-reduce:transition-none"
-			style:margin-top={navbarHidden ? `-${navbarHeight}px` : '0px'}
+			bind:offsetHeight={chromeHeight}
+			class="absolute inset-x-0 top-0 z-(--z-chrome) transition-[top] ease-out motion-reduce:transition-none"
+			style:top={navbarHidden ? `-${navbarHeight}px` : '0px'}
+			style:transition-duration={`${chromeTransitionMs}ms`}
 		>
-			<AppNavbar {user} toggleSidebar={sidebarUi.toggle} />
+			<div bind:offsetHeight={navbarHeight}>
+				<AppNavbar {user} toggleSidebar={sidebarUi.toggle} />
+			</div>
+			<ConnectionBanner />
 		</div>
 
-		<ConnectionBanner />
-
-		<!-- Also the SkipLink target, which focuses it by id — hence tabindex="-1". -->
+		<!-- Also the SkipLink target, which focuses it by id — hence tabindex="-1". padding-top
+			clears the overlaid chrome; because the bar only hides once you've scrolled past it,
+			that padding has already left the viewport by the time the bar is gone. -->
 		<main
 			bind:this={mainElement}
 			onscroll={handleMainScroll}
 			id="main-content"
 			tabindex="-1"
+			style:padding-top={`${chromeHeight}px`}
 			class="relative flex-1 overflow-y-auto scroll-smooth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
 		>
 			<ToastContainer />
