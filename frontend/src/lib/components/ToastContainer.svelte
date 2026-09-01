@@ -148,10 +148,14 @@
 
 <!-- Push notifications: inbound events, pinned to the top like OS notifications.
      Sticky inside the page container so the stack never covers the top navbar.
+     The top offset tracks the (app) layout's --sticky-top (see that note): a bare
+     top-4 measures from <main>'s padding edge, so the stack would float a
+     chrome-height too low once the hide-on-scroll bar has slid away. Adding the
+     offset lets it ride up to just below the top and back in step with the bar.
      gap-3 + space-y-0 replaces Flowbite's default space-y-3 so both stacks space
      the same way — gap is direction-agnostic where space-y is not (see below). -->
 <ToastContainer
-	class="pointer-events-none !sticky !top-4 !right-auto !bottom-auto !left-auto z-(--z-overlay) mx-auto flex h-0 w-full max-w-7xl flex-col gap-3 space-y-0 overflow-visible px-4 md:px-6 lg:px-8"
+	class="pointer-events-none !sticky !top-[calc(var(--sticky-top,0px)+1rem)] !right-auto !bottom-auto !left-auto z-(--z-overlay) mx-auto flex h-0 w-full max-w-7xl flex-col gap-3 space-y-0 overflow-visible px-4 transition-[top] duration-(--sticky-top-duration) ease-out motion-reduce:transition-none md:px-6 lg:px-8"
 >
 	{#each toastService.pushItems as toast (toast.id)}
 		<div
