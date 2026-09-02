@@ -91,7 +91,7 @@ uv python install 3.14 || echo "[setup]   WARN: Python 3.14 install failed; the 
 # setup-node); the renovate.json "node" group keeps them together via a
 # customManager (docs/dependencies.md). One literal, referenced twice, so the
 # install and the default alias cannot drift apart on a bump.
-NODE_VERSION=24.19.0
+NODE_VERSION=24.20.0
 echo "[setup] Installing Node.js $NODE_VERSION (nvm)..."
 export NVM_DIR="/opt/nvm"
 if [ -s "$NVM_DIR/nvm.sh" ]; then
