@@ -268,7 +268,7 @@
 			<dl>
 				<div class="flex items-center gap-3">
 					<span
-						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-secondary/10 text-secondary"
+						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-info/10 text-info"
 					>
 						<MapPin class="size-5" aria-hidden="true" />
 					</span>
