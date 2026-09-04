@@ -53,6 +53,17 @@ services:
 
   api:
     read_only: false
+    # The base compose caps these workers at 256M, budgeted for the 2 GB prod
+    # VPS. In dev they run under watchfiles reload (UVICORN_RELOAD here, --reload
+    # on the workers below), which forks a child worker off the reloader parent —
+    # so two interpreter copies plus the watcher's in-memory tree of the synced
+    # source sit well above 256M. At the prod cap the worker gets OOM-killed and
+    # the restart policy crash-loops it. Dev hosts aren't the 2 GB VPS, so lift
+    # the ceiling.
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     environment:
       UVICORN_RELOAD: "true"
     develop:
@@ -73,6 +84,11 @@ services:
     # faststream[cli]) reloads the process in place, mirroring the api's
     # UVICORN_RELOAD, so a synced change actually takes effect.
     command: [ "faststream", "run", "--factory", "--reload", "fanfan.main.faststream:create_app" ]
+    # Reload forks a worker off the parent — see api for why 256M OOM-kills it.
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     develop:
       watch:
         - action: sync
