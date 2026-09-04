@@ -196,17 +196,16 @@
 	--sidebar-accent-foreground: oklch(0.205 0 0);
 	--sidebar-border: oklch(0.922 0 0);
 	--sidebar-ring: oklch(0.708 0 0);
-}
 
-/*
- * Toast insets — keep Sonner toasts clear of the app chrome. Values trace the
- * real chrome heights: the top bar (~3.5rem + safe-area-inset-top) is present on
- * every app route, so the top inset is constant; the bottom nav (h-16 = 4rem,
- * md:hidden) only exists below the md breakpoint, where the sidebar replaces it,
- * so the bottom inset collapses to a plain viewport gap on desktop. Consumed by
- * the Sonner offset in $lib/components/ui/sonner/sonner.svelte.
- */
-:root {
+	/*
+	 * Toast insets — keep Sonner toasts clear of the app chrome. Values trace the
+	 * real chrome heights: the top bar (~3.5rem + safe-area-inset-top) is present on
+	 * every app route, so the top inset is constant; the bottom nav (h-16 = 4rem,
+	 * md:hidden) only exists below the md breakpoint, where the sidebar replaces it,
+	 * so the bottom inset collapses to a plain viewport gap on desktop. Consumed by
+	 * the Sonner offset in $lib/components/ui/sonner/sonner.svelte. The responsive
+	 * bottom override lives in the @media rule below.
+	 */
 	--toast-top-offset: calc(env(safe-area-inset-top) + 4rem);
 	--toast-bottom-offset: 1.5rem;
 }
