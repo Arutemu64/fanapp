@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Button, Spinner } from 'flowbite-svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Spinner } from '$lib/components/ui/spinner';
 
 	interface Props {
 		loading: boolean;
@@ -10,9 +11,9 @@
 </script>
 
 <div class="mt-4 flex justify-center">
-	<Button color="light" class="w-full sm:w-auto" {onclick} disabled={loading}>
+	<Button variant="outline" class="w-full sm:w-auto" {onclick} disabled={loading}>
 		{#if loading}
-			<Spinner size="4" class="me-2" />
+			<Spinner data-icon="inline-start" />
 		{/if}
 		{loading ? 'Загрузка…' : 'Показать ещё'}
 	</Button>

@@ -38,7 +38,7 @@
 {#if feed.items.length === 0}
 	<EmptyState message="Отзывов пока нет" />
 {:else}
-	<div class="space-y-3">
+	<div class="flex flex-col gap-3">
 		{#each feed.items as item (item.id)}
 			<FeedbackCard feedback={item} />
 		{/each}

@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
-	import { Button, Toggle } from 'flowbite-svelte';
-	import { BellOutline, BellSolid } from 'flowbite-svelte-icons';
+	import { Button } from '$lib/components/ui/button';
+	import { Switch } from '$lib/components/ui/switch';
+	import { Bell } from '@lucide/svelte';
 	const client = createApiClient();
 	import type { components } from '$lib/api/schema';
 	import type { CurrentUserDTO } from '$lib/types/user';
@@ -10,9 +11,8 @@
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { offlineWriteGate } from '$lib/utils/offlineAction';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 
-	import IosPwaModal from './IosPwaModal.svelte';
 	import ProfileCardShell from './ProfileCardShell.svelte';
 	import { urlBase64ToUint8Array } from './push';
 	import VkNotificationsModal from './VkNotificationsModal.svelte';
@@ -43,20 +43,16 @@
 	let hasVkAccount = $derived(
 		user.social_identities.some((socialIdentity) => socialIdentity.provider === 'vk')
 	);
-	// Writable $derived: the toggles bind to these and flip them optimistically,
-	// then the rollback in updateSettings reassigns from `user.settings` on failure.
-	// Because they derive from the prop, a successful refetch re-syncs them for free.
-	let receiveAll = $derived(user.settings.receive_all_announcements);
-	// The backend won't deliver VK messages until a VK identity is linked, so the
-	// stored flag is inert while unlinked. Reflect the effective state — off until
-	// VK is connected — rather than the raw setting, which would read "on" next to
-	// the "connect VK first" hint. Only interactive once linked (Toggle is disabled
-	// otherwise), so the optimistic flip and rollback still see the raw value.
-	let receiveVk = $derived(hasVkAccount && user.settings.receive_vk_notifications);
+	let receiveAll = $state(untrack(() => user.settings.receive_all_announcements));
+	let receiveVk = $state(untrack(() => hasVkAccount && user.settings.receive_vk_notifications));
+
+	$effect(() => {
+		receiveAll = user.settings.receive_all_announcements;
+		receiveVk = hasVkAccount && user.settings.receive_vk_notifications;
+	});
 	let isSavingSettings = $state(false);
 	let isSendingTest = $state(false);
 	const pwa = getPwaService();
-	let showIosPwaModal = $state(false);
 	let showVkModal = $state(false);
 	// Link to the group's chat where the user grants "allow messages". Built from
 	// the build-time group id, so it may be empty if VK notifications were not
@@ -131,7 +127,7 @@
 		}
 
 		if (pwa.isApplePlatform && !pwa.isInstalled) {
-			showIosPwaModal = true;
+			pwa.showInstallDialog();
 			return;
 		}
 
@@ -289,50 +285,48 @@
 	description="Настрой уведомления, чтобы не пропустить анонсы и важные сообщения."
 >
 	{#snippet icon()}
-		<BellOutline class="h-5 w-5" />
+		<Bell class="size-5" />
 	{/snippet}
 
-	<div class="rounded-lg border border-gray-200 dark:border-gray-700">
-		<div class="border-b border-gray-200 px-3 py-2.5 sm:px-4 dark:border-gray-700">
-			<h4 class="text-sm font-semibold text-gray-900 dark:text-white">Каналы</h4>
+	<div class="rounded-lg border border-border">
+		<div class="border-b border-border px-3 py-2.5 sm:px-4">
+			<h4 class="text-sm font-semibold text-foreground">Каналы</h4>
 		</div>
 
 		<div class="flex items-start justify-between gap-3 p-3 sm:p-4">
 			<div class="min-w-0">
-				<span class="text-sm font-medium text-gray-900 dark:text-gray-300">На этом устройстве</span>
-				<p class="mt-1 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+				<span class="text-sm font-medium text-foreground">На этом устройстве</span>
+				<p class="mt-1 text-sm leading-relaxed text-muted-foreground">
 					Приходят как обычные уведомления телефона, даже когда приложение закрыто.
 				</p>
 				{#if pushUnsupported}
-					<p class="mt-2 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+					<p class="mt-2 text-sm leading-relaxed text-muted-foreground">
 						Чтобы получать уведомления, открой приложение в браузере — Chrome или Safari. Во
 						встроенном браузере они не работают.
 					</p>
 				{:else if notificationsBlocked}
-					<p class="mt-2 text-sm leading-relaxed text-red-600 dark:text-red-400">
+					<p class="mt-2 text-sm leading-relaxed text-destructive">
 						Уведомления заблокированы в браузере. Открой настройки сайта (значок замка рядом с
 						адресом) и разреши уведомления.
 					</p>
 				{/if}
 			</div>
-			<Toggle
+			<Switch
 				checked={isSubscribed}
 				aria-label="Включить уведомления на этом устройстве"
 				disabled={isLoading || pushUnsupported || offlineGate.disabled}
 				title={offlineGate.title}
-				onclick={(e) => {
-					e.preventDefault();
+				onCheckedChange={() => {
 					void toggleSubscription();
 				}}
-				color="primary"
 			/>
 		</div>
 
-		<div class="border-t border-gray-200 p-3 sm:p-4 dark:border-gray-700">
+		<div class="border-t border-border p-3 sm:p-4">
 			<div class="flex items-start justify-between gap-3">
 				<div class="min-w-0">
-					<span class="text-sm font-medium text-gray-900 dark:text-gray-300">ВКонтакте</span>
-					<p class="mt-1 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+					<span class="text-sm font-medium text-foreground">ВКонтакте</span>
+					<p class="mt-1 text-sm leading-relaxed text-muted-foreground">
 						{#if hasVkAccount}
 							Получать сообщения от сообщества во ВКонтакте.
 						{:else}
@@ -341,55 +335,53 @@
 					</p>
 					<button
 						type="button"
-						class="mt-1 text-sm font-medium text-primary-600 hover:underline dark:text-primary-400"
+						class="mt-1 text-sm font-medium text-primary hover:underline"
 						onclick={() => (showVkModal = true)}
 					>
 						Как это работает?
 					</button>
 				</div>
-				<Toggle
+				<Switch
 					bind:checked={receiveVk}
 					aria-label="Получать уведомления во ВКонтакте"
 					disabled={isSavingSettings || !hasVkAccount || offlineGate.disabled}
 					title={offlineGate.title}
-					onchange={toggleReceiveVk}
-					color="primary"
+					onCheckedChange={toggleReceiveVk}
 				/>
 			</div>
 		</div>
 	</div>
 
-	<div class="rounded-lg border border-gray-200 dark:border-gray-700">
-		<div class="border-b border-gray-200 px-3 py-2.5 sm:px-4 dark:border-gray-700">
-			<h4 class="text-sm font-semibold text-gray-900 dark:text-white">Типы уведомлений</h4>
+	<div class="rounded-lg border border-border">
+		<div class="border-b border-border px-3 py-2.5 sm:px-4">
+			<h4 class="text-sm font-semibold text-foreground">Типы уведомлений</h4>
 		</div>
 
 		<div class="p-3 sm:p-4">
 			<div class="flex items-start justify-between gap-3">
 				<div class="min-w-0">
-					<span class="text-sm font-medium text-gray-900 dark:text-gray-300">Все анонсы</span>
-					<p class="mt-1 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+					<span class="text-sm font-medium text-foreground">Все анонсы</span>
+					<p class="mt-1 text-sm leading-relaxed text-muted-foreground">
 						Получать уведомления о начале каждого выступления.
 					</p>
 				</div>
-				<Toggle
+				<Switch
 					bind:checked={receiveAll}
 					aria-label="Получать уведомления обо всех анонсах"
 					disabled={isSavingSettings || offlineGate.disabled}
 					title={offlineGate.title}
-					onchange={toggleReceiveAll}
-					color="primary"
+					onCheckedChange={toggleReceiveAll}
 				/>
 			</div>
 		</div>
 	</div>
 
-	<div class="rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
-		<p class="mb-3 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+	<div class="rounded-lg border border-border p-3 sm:p-4">
+		<p class="mb-3 text-sm leading-relaxed text-muted-foreground">
 			Попробуй отправить себе пробное уведомление, чтобы убедиться, что всё работает.
 		</p>
 		<Button
-			color="alternative"
+			variant="outline"
 			class="min-h-11 w-full sm:w-auto"
 			disabled={isSendingTest || offlineGate.disabled}
 			title={offlineGate.title}
@@ -398,13 +390,10 @@
 			{#if isSendingTest}
 				Отправка…
 			{:else}
-				<BellSolid class="me-2 h-4 w-4" />
 				Проверить уведомления
 			{/if}
 		</Button>
 	</div>
 </ProfileCardShell>
-
-<IosPwaModal bind:open={showIosPwaModal} />
 
 <VkNotificationsModal bind:open={showVkModal} {vkGroupUrl} />

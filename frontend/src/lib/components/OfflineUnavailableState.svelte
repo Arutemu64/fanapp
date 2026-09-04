@@ -1,6 +1,6 @@
 <script lang="ts">
 	import EmptyState from '$lib/components/EmptyState.svelte';
-	import { ExclamationCircleOutline } from 'flowbite-svelte-icons';
+	import { AlertCircle } from '@lucide/svelte';
 
 	interface Props {
 		/** Heading, e.g. «Голосование доступно только онлайн». Kept explicit rather
@@ -17,4 +17,4 @@
 <!-- Shared render for surfaces that never cache and are useless offline (voting,
 	feedback, tools): a mutation-only page has no saved copy to show, so it says so
 	plainly. The load flags these with `offlineUnavailable` — see docs/frontend.md §2. -->
-<EmptyState icon={ExclamationCircleOutline} {title} {message} />
+<EmptyState icon={AlertCircle} {title} {message} />

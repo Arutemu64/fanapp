@@ -16,15 +16,15 @@
 		canSendNotifications
 	} from '$lib/utils/permissions';
 	import {
-		AdjustmentsHorizontalOutline,
-		AnnotationOutline,
-		AwardOutline,
-		BullhornOutline,
-		FileImportOutline,
-		RefreshOutline,
-		TicketOutline,
-		UsersGroupOutline
-	} from 'flowbite-svelte-icons';
+		Award,
+		FileUp,
+		Megaphone,
+		MessageSquare,
+		RotateCw,
+		SlidersHorizontal,
+		Ticket,
+		Users
+	} from '@lucide/svelte';
 
 	import ToolCard from './components/ToolCard.svelte';
 
@@ -47,7 +47,7 @@
 			key: 'settings',
 			title: 'Настройки фестиваля',
 			description: 'Даты фестиваля и тайминги программы.',
-			icon: AdjustmentsHorizontalOutline,
+			icon: SlidersHorizontal,
 			href: '/tools/settings',
 			canAccess: canManageSettings(user)
 		},
@@ -55,7 +55,7 @@
 			key: 'voting',
 			title: 'Голосование',
 			description: 'Включай голосование, следи за лидерами и разыгрывай приз.',
-			icon: AwardOutline,
+			icon: Award,
 			href: '/tools/voting',
 			canAccess: canManageVoting(user)
 		},
@@ -63,7 +63,7 @@
 			key: 'import_schedule',
 			title: 'Импорт программы',
 			description: 'Загрузи программу из Excel-файла.',
-			icon: FileImportOutline,
+			icon: FileUp,
 			href: '/tools/import_schedule',
 			canAccess: canImportSchedule(user)
 		},
@@ -71,7 +71,7 @@
 			key: 'broadcast',
 			title: 'Рассылка уведомлений',
 			description: 'Массовые уведомления для выбранных категорий участников.',
-			icon: BullhornOutline,
+			icon: Megaphone,
 			href: '/tools/broadcast',
 			canAccess: canSendNotifications(user)
 		},
@@ -79,7 +79,7 @@
 			key: 'generate_tickets',
 			title: 'Генерация билетов',
 			description: 'Новые билеты для выбранной роли — получатель привязывает по номеру.',
-			icon: TicketOutline,
+			icon: Ticket,
 			href: '/tools/generate_tickets',
 			canAccess: canGenerateTickets(user)
 		},
@@ -87,7 +87,7 @@
 			key: 'sync',
 			title: 'Синхронизация',
 			description: 'Подтяни свежие данные вручную, не дожидаясь автообновления.',
-			icon: RefreshOutline,
+			icon: RotateCw,
 			href: '/tools/sync',
 			canAccess: canRunSync(user)
 		},
@@ -95,7 +95,7 @@
 			key: 'feedback',
 			title: 'Отзывы',
 			description: 'Что участники пишут о приложении — свежие отзывы сверху.',
-			icon: AnnotationOutline,
+			icon: MessageSquare,
 			href: '/tools/feedback',
 			canAccess: canReadFeedback(user)
 		},
@@ -103,7 +103,7 @@
 			key: 'users',
 			title: 'Пользователи',
 			description: 'Список всех пользователей с поиском и карточкой каждого.',
-			icon: UsersGroupOutline,
+			icon: Users,
 			href: '/tools/users',
 			canAccess: canReadUsers(user)
 		}

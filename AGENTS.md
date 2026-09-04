@@ -21,8 +21,9 @@ Load the listed skills and read the guide **before** implementing, not after.
 | Backend / FastAPI | `fastapi`, `clean-ddd-hexagonal` | [docs/backend.md](docs/backend.md) (start at "Rules at a glance") |
 | ORM models / migrations | `fanfan-migrations`, `sqlalchemy-alembic-expert-best-practices-code-review` | [docs/backend.md](docs/backend.md) "Persistence & Transaction Management" |
 | `.svelte`, `.svelte.ts`, `.svelte.js` | `svelte-code-writer`, `svelte-core-bestpractices` | [docs/frontend.md](docs/frontend.md) |
-| Styling / layout | `impeccable`, `ui-ux-pro-max` | [docs/frontend.md](docs/frontend.md) §3–4 |
-| Design review before shipping UI | `kill-ai-slop`, `accessibility`, `core-web-vitals` | [docs/frontend.md](docs/frontend.md) |
+| UI components (shadcn-svelte) | `shadcn-svelte` | [docs/frontend.md](docs/frontend.md) §3, §7–8 |
+| Styling / layout | `ui-ux-pro-max` | [docs/frontend.md](docs/frontend.md) §3–4, [.agents/context/DESIGN.md](.agents/context/DESIGN.md) (design intent & named rules) |
+| Design review before shipping UI | `kill-ai-slop`, `accessibility`, `core-web-vitals` | [docs/frontend.md](docs/frontend.md), [.agents/context/DESIGN.md](.agents/context/DESIGN.md) |
 | Russian user-facing copy | `ux-copy`, `fanfan-russian-copy` | [.agents/redpolitika.md](.agents/redpolitika.md), [.agents/context/PRODUCT.md](.agents/context/PRODUCT.md) |
 | Service worker / manifest / offline / push | — | [docs/frontend.md](docs/frontend.md) §2 "PWA & Offline Support" |
 | Frontend ↔ API contracts | — | [docs/api.md](docs/api.md) |
@@ -50,7 +51,7 @@ named `fanfan-*` are project-local and live only here.
 
 ## Stack & commands
 
-* **Frontend**: SvelteKit (Svelte 5 runes) + Flowbite-Svelte + Tailwind v4 | `pnpm`
+* **Frontend**: SvelteKit (Svelte 5 runes) + shadcn-svelte + Tailwind v4 | `pnpm`
 * **Backend**: FastAPI + PostgreSQL (SQLAlchemy + Alembic) + Redis + NATS (FastStream) | `uv`
 * **Runner**: `just`, from the repo root.
 

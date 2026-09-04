@@ -4,23 +4,23 @@
 
 	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
+	import { Badge } from '$lib/components/ui/badge';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { formatDuration, formatUntil, pluralize } from '$lib/utils/formatters';
 	import { offlineWriteGate } from '$lib/utils/offlineAction';
 	import { canManageSchedule } from '$lib/utils/permissions';
-	import { Badge } from 'flowbite-svelte';
 	import {
-		BanOutline,
-		BellActiveOutline,
-		BellActiveSolid,
-		ClockOutline,
-		CloseCircleOutline,
-		EyeOutline,
-		EyeSlashOutline,
-		HourglassOutline,
-		PlayOutline,
-		ShuffleOutline
-	} from 'flowbite-svelte-icons';
+		Ban,
+		Bell,
+		BellRing,
+		Clock,
+		Eye,
+		EyeOff,
+		Hourglass,
+		Play,
+		Shuffle,
+		XCircle
+	} from '@lucide/svelte';
 
 	import ConfirmActionModal from './ConfirmActionModal.svelte';
 	import MoveEventModal from './MoveEventModal.svelte';
@@ -233,8 +233,8 @@
 <div
 	class={[
 		'flex items-start gap-3 px-3 py-4 transition-colors sm:px-4',
-		event.is_current && 'bg-green-50 dark:bg-green-900/20',
-		isSkipped && !event.is_current && 'bg-gray-50/70 dark:bg-gray-900/40'
+		event.is_current && 'bg-success/10',
+		isSkipped && !event.is_current && 'bg-muted/50'
 	]}
 >
 	<!-- Interludes stand alone, not in the numbered list, so they drop the number
@@ -245,19 +245,12 @@
 			<div
 				class={[
 					'flex w-12 shrink-0 flex-col items-center rounded-lg border px-1.5 py-1.5 text-center',
-					event.is_current
-						? 'border-green-200 bg-white dark:border-green-600 dark:bg-gray-800'
-						: 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900'
+					event.is_current ? 'border-success/40 bg-card' : 'border-border bg-muted'
 				]}
 			>
 				<!-- Signature element: scrolls past hundreds of times, so it carries the brand. -->
-				<span
-					class="text-xs font-bold tracking-widest text-primary-500 uppercase dark:text-primary-400"
-				>
-					№
-				</span>
-				<span
-					class="font-display text-base leading-none font-bold text-gray-900 tabular-nums dark:text-white"
+				<span class="text-xs font-bold tracking-widest text-primary uppercase"> № </span>
+				<span class="font-display text-base leading-none font-bold text-foreground tabular-nums"
 					>{eventNumber}</span
 				>
 			</div>
@@ -274,7 +267,7 @@
 			<div class="min-w-0 flex-1">
 				<h3
 					class={[
-						'text-base leading-snug font-semibold text-gray-900 dark:text-white',
+						'text-base leading-snug font-semibold text-foreground',
 						isSkipped && 'line-through'
 					]}
 				>
@@ -286,16 +279,15 @@
 					<div class="mt-1.5 flex flex-wrap items-center gap-1.5">
 						{#if event.is_current}
 							<Badge
-								color="green"
-								border
-								class="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium"
+								variant="outline"
+								class="inline-flex items-center gap-1.5 border-success/30 bg-success/10 px-2 py-0.5 text-xs font-medium text-success"
 							>
 								<!-- Pulsing live dot reads as "on stage now" at a glance. animate-ping is muted under reduced-motion via global CSS. -->
 								<span class="relative flex h-2 w-2" aria-hidden="true">
 									<span
-										class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75"
+										class="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75"
 									></span>
-									<span class="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+									<span class="relative inline-flex h-2 w-2 rounded-full bg-success"></span>
 								</span>
 								Сейчас
 							</Badge>
@@ -303,11 +295,10 @@
 
 						{#if isSkipped}
 							<Badge
-								color="red"
-								border
+								variant="destructive"
 								class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium"
 							>
-								<BanOutline class="h-3.5 w-3.5" />
+								<Ban class="size-3.5" />
 								Пропущено
 							</Badge>
 						{/if}
@@ -319,28 +310,22 @@
 				     not the centre: any chip can wrap to two lines on a narrow phone, and a centred
 				     icon would then float in the gap beside the first line. -->
 				<div class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-					<span
-						class="inline-flex items-start gap-1 text-xs font-medium text-gray-500 dark:text-gray-400"
-					>
-						<ClockOutline class="mt-px h-3.5 w-3.5 shrink-0" />
+					<span class="inline-flex items-start gap-1 text-xs font-medium text-muted-foreground">
+						<Clock class="mt-px size-3.5 shrink-0" />
 						{formatDuration(event.duration)}
 					</span>
 
 					{#if untilLabel}
-						<span
-							class="inline-flex items-start gap-1 text-xs font-medium text-gray-500 dark:text-gray-400"
-						>
-							<HourglassOutline class="mt-px h-3.5 w-3.5 shrink-0" />
+						<span class="inline-flex items-start gap-1 text-xs font-medium text-muted-foreground">
+							<Hourglass class="mt-px size-3.5 shrink-0" />
 							{untilLabel}
 						</span>
 					{/if}
 
 					{#if event.user_subscription}
 						<!-- Subscription threshold is personal meta, not event state: muted text like duration. The right-side bell carries the colored "subscribed" marker. -->
-						<span
-							class="inline-flex items-start gap-1 text-xs font-medium text-gray-500 dark:text-gray-400"
-						>
-							<BellActiveSolid class="mt-px h-3.5 w-3.5 shrink-0" />
+						<span class="inline-flex items-start gap-1 text-xs font-medium text-muted-foreground">
+							<BellRing class="mt-px size-3.5 shrink-0" />
 							Напомним за {event.user_subscription.counter}
 							{pluralize(
 								event.user_subscription.counter,
@@ -361,18 +346,18 @@
 					disabled={offlineGate.disabled}
 					title={offlineGate.title}
 					class={[
-						'flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40',
+						'flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40',
 						event.user_subscription
-							? 'text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/20'
-							: 'text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300'
+							? 'text-primary hover:bg-primary/10'
+							: 'text-muted-foreground hover:bg-accent hover:text-foreground'
 					]}
 					aria-label={event.user_subscription ? 'Отписаться' : 'Подписаться'}
 					aria-pressed={event.user_subscription !== null}
 				>
 					{#if event.user_subscription}
-						<BellActiveSolid class="h-5 w-5" />
+						<BellRing class="size-5" />
 					{:else}
-						<BellActiveOutline class="h-5 w-5" />
+						<Bell class="size-5" />
 					{/if}
 				</button>
 			</div>
@@ -381,7 +366,7 @@
 		<!-- Staff management strip: broadcast actions live on their own row so they never crowd the title, and read as "changes the show for everyone" distinct from the personal bell above. -->
 		{#if canManageSchedule(user)}
 			<div
-				class="mt-3 flex flex-wrap items-center justify-end gap-1.5 border-t border-gray-100 pt-2.5 dark:border-gray-800"
+				class="mt-3 flex flex-wrap items-center justify-end gap-1.5 border-t border-border/50 pt-2.5"
 			>
 				<!-- Icon-only staff actions: 44px square tap targets keep mobile usable while the strip stays compact on dense rows. Labels live in aria-label/title. -->
 				<!-- Mark-current is the hot, repeated live-show action, so it carries a primary tint while move/skip stay quiet ghosts. -->
@@ -393,12 +378,12 @@
 						disabled={offlineGate.disabled}
 						aria-label={currentActionLabel}
 						title={offlineGate.disabled ? offlineGate.title : currentActionLabel}
-						class="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-primary-50 text-primary-700 transition-colors hover:bg-primary-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/50"
+						class="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
 					>
 						{#if event.is_current}
-							<CloseCircleOutline class="h-5 w-5" />
+							<XCircle class="size-5" />
 						{:else}
-							<PlayOutline class="h-5 w-5" />
+							<Play class="size-5" />
 						{/if}
 					</button>
 				{/if}
@@ -409,9 +394,9 @@
 					disabled={offlineGate.disabled}
 					aria-label="Перенести"
 					title={offlineGate.disabled ? offlineGate.title : 'Перенести'}
-					class="inline-flex h-11 w-11 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-300 dark:hover:bg-gray-700"
+					class="inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
 				>
-					<ShuffleOutline class="h-5 w-5" />
+					<Shuffle class="size-5" />
 				</button>
 
 				<button
@@ -421,16 +406,16 @@
 					aria-label={skipActionLabel}
 					title={offlineGate.disabled ? offlineGate.title : skipActionLabel}
 					class={[
-						'inline-flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40',
+						'inline-flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40',
 						isSkipped
-							? 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-							: 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20'
+							? 'text-muted-foreground hover:bg-accent hover:text-foreground'
+							: 'text-destructive hover:bg-destructive/10'
 					]}
 				>
 					{#if isSkipped}
-						<EyeOutline class="h-5 w-5" />
+						<Eye class="size-5" />
 					{:else}
-						<EyeSlashOutline class="h-5 w-5" />
+						<EyeOff class="size-5" />
 					{/if}
 				</button>
 			</div>
@@ -440,8 +425,7 @@
 
 <!-- Mounted only while open. This card renders once per schedule row, so
 	always-mounted dialogs cost four component instances — and four API clients —
-	per row for something almost never opened. Flowbite's dialog transition is
-	`|global`, so it still animates out when this block removes it. -->
+	per row for something almost never opened. -->
 {#if subscribeModal}
 	<SubscribeModal bind:open={subscribeModal} {event} />
 {/if}

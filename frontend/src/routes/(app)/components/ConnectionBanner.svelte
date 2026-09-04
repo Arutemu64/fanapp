@@ -2,7 +2,7 @@
 	import { type ConnectionStatus, getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService } from '$lib/services/offline.svelte';
 	import { reachability } from '$lib/services/reachability';
-	import { ExclamationCircleOutline, RefreshOutline } from 'flowbite-svelte-icons';
+	import { AlertCircle, RotateCw } from '@lucide/svelte';
 	import { slide } from 'svelte/transition';
 
 	// 8s absorbs the normal SSE reconnect after foregrounding without alarming
@@ -46,15 +46,14 @@
 	type BannerTone = 'yellow' | 'red';
 
 	const TONE_CLASSES: Record<BannerTone, string> = {
-		yellow:
-			'border-yellow-200/60 bg-yellow-50/80 text-yellow-800 dark:border-yellow-900/30 dark:bg-yellow-950/40 dark:text-yellow-200/90',
-		red: 'border-red-200/60 bg-red-50/80 text-red-800 dark:border-red-900/30 dark:bg-red-950/40 dark:text-red-200/90'
+		yellow: 'border-warning/30 bg-warning/10 text-warning',
+		red: 'border-destructive/30 bg-destructive/10 text-destructive'
 	};
 
 	interface Banner {
 		tone: BannerTone;
 		role: 'status' | 'alert';
-		icon: typeof ExclamationCircleOutline;
+		icon: typeof AlertCircle;
 		iconClass: string;
 		message: string;
 		showRetry: boolean;
@@ -66,7 +65,7 @@
 			return {
 				tone: 'yellow',
 				role: 'status',
-				icon: ExclamationCircleOutline,
+				icon: AlertCircle,
 				iconClass: 'h-4 w-4',
 				message: deviceOnline ? 'Нет связи с сервером' : 'Нет интернета',
 				showRetry: false
@@ -76,7 +75,7 @@
 			return {
 				tone: 'red',
 				role: 'alert',
-				icon: ExclamationCircleOutline,
+				icon: AlertCircle,
 				iconClass: 'h-4 w-4',
 				message: 'Соединение потеряно',
 				showRetry: true
@@ -86,7 +85,7 @@
 			return {
 				tone: 'yellow',
 				role: 'status',
-				icon: RefreshOutline,
+				icon: RotateCw,
 				iconClass: 'h-3.5 w-3.5 motion-safe:animate-spin',
 				message: 'Восстанавливаем связь…',
 				showRetry: false
@@ -145,7 +144,7 @@
 			<button
 				type="button"
 				onclick={() => client.restart()}
-				class="inline-flex min-h-9 shrink-0 items-center rounded-lg bg-red-600 px-2.5 text-xs font-medium text-white hover:bg-red-700 focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 focus-visible:ring-offset-red-50 focus-visible:outline-none dark:focus-visible:ring-offset-red-950"
+				class="inline-flex min-h-9 shrink-0 items-center rounded-lg bg-destructive px-2.5 text-xs font-medium text-white hover:bg-destructive/90 focus-visible:ring-2 focus-visible:ring-destructive/40 focus-visible:ring-offset-2 focus-visible:outline-none"
 			>
 				Обновить
 			</button>

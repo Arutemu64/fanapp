@@ -1,14 +1,21 @@
 <script lang="ts">
 	import type { components } from '$lib/api/schema';
+	import type { PinInputCell } from 'bits-ui';
 
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
-	import OtpInput from '$lib/components/OtpInput.svelte';
+	import * as Alert from '$lib/components/ui/alert';
+	import { Button } from '$lib/components/ui/button';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import * as Field from '$lib/components/ui/field';
+	import { Input } from '$lib/components/ui/input';
+	import * as InputOTP from '$lib/components/ui/input-otp';
+	import { Label } from '$lib/components/ui/label';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { ResendCooldown } from '$lib/services/cooldown.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { isValidEmail, isValidOtp, normalizeEmail } from '$lib/utils/validation';
-	import { Alert, Button, Helper, Input, Label, Modal, Spinner } from 'flowbite-svelte';
-	import { EnvelopeSolid } from 'flowbite-svelte-icons';
+	import { Mail } from '@lucide/svelte';
 	import { onDestroy } from 'svelte';
 
 	const client = createApiClient();
@@ -39,11 +46,12 @@
 	const toastService = getToastService();
 	let formError = $state('');
 
-	let emailColor = $derived.by((): 'green' | 'red' | undefined => {
-		if (emailError) return 'red';
-		if (!newEmail) return undefined;
-		return isValidEmail(normalizeEmail(newEmail)) ? 'green' : 'red';
-	});
+	// Screen-reader description for the dialog (visually the form speaks for itself).
+	let dialogDescription = $derived(
+		currentEmail
+			? 'Измени адрес электронной почты — понадобится код из письма.'
+			: 'Добавь адрес электронной почты — понадобится код из письма.'
+	);
 
 	function handleEmailInput() {
 		emailError = '';
@@ -167,158 +175,170 @@
 	});
 </script>
 
-<Modal bind:open size="sm" outsideclose={step !== 'verify'}>
-	{#snippet header()}
-		<div class="flex items-center gap-2">
-			<EnvelopeSolid class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-			<h3 class="text-lg font-bold text-gray-900 dark:text-white">
+<Dialog.Root bind:open>
+	<Dialog.Content class="sm:max-w-md">
+		<Dialog.Header>
+			<Dialog.Title class="flex items-center gap-2">
+				<Mail class="size-5 text-muted-foreground" />
 				{currentEmail ? 'Изменить эл. почту' : 'Добавить эл. почту'}
-			</h3>
-		</div>
-	{/snippet}
+			</Dialog.Title>
+			<Dialog.Description class="sr-only">{dialogDescription}</Dialog.Description>
+		</Dialog.Header>
 
-	{#if step === 'email'}
-		<form onsubmit={handleSubmit} class="space-y-4">
-			{#if formError}
-				<Alert color="red">
-					{formError}
-				</Alert>
-			{/if}
-
-			{#if currentEmail}
-				<div>
-					<Label class="mb-2 block text-gray-500 dark:text-gray-400">Текущая эл. почта</Label>
-					<Input
-						type="text"
-						name="current_email"
-						value={currentEmail}
-						disabled
-						autocomplete="email"
-						class="ps-9"
-					>
-						{#snippet left()}
-							<EnvelopeSolid class="h-5 w-5 text-gray-400" />
-						{/snippet}
-					</Input>
-				</div>
-			{/if}
-
-			<div>
-				<Label for="new_email" color={emailColor} class="mb-2 block">Новая эл. почта</Label>
-				<Input
-					id="new_email"
-					name="new_email"
-					type="email"
-					placeholder="name@example.com"
-					autocomplete="email"
-					inputmode="email"
-					autocapitalize="off"
-					spellcheck={false}
-					bind:value={newEmail}
-					class="ps-9"
-					color={emailColor}
-					oninput={handleEmailInput}
-				>
-					{#snippet left()}
-						<EnvelopeSolid class="h-5 w-5" />
-					{/snippet}
-				</Input>
-				{#if emailError}
-					<Helper color="red" class="mt-1">{emailError}</Helper>
-				{:else}
-					<Helper class="mt-1">
-						{currentEmail
-							? 'На новый адрес придёт код. Почта изменится только после подтверждения.'
-							: 'На этот адрес придёт письмо с кодом подтверждения.'}
-					</Helper>
+		{#if step === 'email'}
+			<form onsubmit={handleSubmit} class="flex flex-col gap-4">
+				{#if formError}
+					<Alert.Root variant="destructive">
+						<Alert.Description>{formError}</Alert.Description>
+					</Alert.Root>
 				{/if}
-			</div>
 
-			<Button
-				type="submit"
-				color="primary"
-				class="w-full"
-				disabled={isLoading || !isValidEmail(normalizeEmail(newEmail))}
-			>
-				{#if isLoading}
-					<span class="flex items-center gap-2">
-						<Spinner size="4" class="fill-white" />
+				<Field.FieldGroup class="gap-4">
+					{#if currentEmail}
+						<Field.Field data-disabled={true}>
+							<Field.FieldLabel>Текущая эл. почта</Field.FieldLabel>
+							<div class="relative flex items-center">
+								<Mail class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+								<Input
+									type="text"
+									name="current_email"
+									value={currentEmail}
+									disabled
+									autocomplete="email"
+									class="pl-9"
+								/>
+							</div>
+						</Field.Field>
+					{/if}
+
+					<Field.Field data-invalid={emailError ? true : undefined}>
+						<Field.FieldLabel for="new_email">Новая эл. почта</Field.FieldLabel>
+						<div class="relative flex items-center">
+							<Mail class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+							<Input
+								id="new_email"
+								name="new_email"
+								type="email"
+								placeholder="name@example.com"
+								autocomplete="email"
+								inputmode="email"
+								autocapitalize="off"
+								spellcheck={false}
+								bind:value={newEmail}
+								class="pl-9"
+								aria-invalid={emailError ? true : undefined}
+								oninput={handleEmailInput}
+							/>
+						</div>
+						{#if emailError}
+							<Field.FieldError>{emailError}</Field.FieldError>
+						{:else}
+							<Field.FieldDescription>
+								{currentEmail
+									? 'На новый адрес придёт код. Почта изменится только после подтверждения.'
+									: 'На этот адрес придёт письмо с кодом подтверждения.'}
+							</Field.FieldDescription>
+						{/if}
+					</Field.Field>
+				</Field.FieldGroup>
+
+				<Button
+					type="submit"
+					class="w-full"
+					disabled={isLoading || !isValidEmail(normalizeEmail(newEmail))}
+				>
+					{#if isLoading}
+						<Spinner data-icon="inline-start" />
 						Отправка кода…
-					</span>
-				{:else}
-					{currentEmail ? 'Отправить код' : 'Добавить адрес'}
-				{/if}
-			</Button>
-		</form>
-	{:else}
-		<div class="space-y-4">
-			{#if formError}
-				<Alert color="red">
-					{formError}
-				</Alert>
-			{/if}
-
-			<div>
-				<Label class="mb-2 block text-gray-500 dark:text-gray-400">Новая эл. почта</Label>
-				<Input type="text" value={normalizeEmail(newEmail)} disabled class="ps-9">
-					{#snippet left()}
-						<EnvelopeSolid class="h-5 w-5 text-gray-400" />
-					{/snippet}
-				</Input>
-				<Helper class="mt-1">Код подтверждения отправлен на этот адрес.</Helper>
-			</div>
-
-			<div>
-				<Label class="mb-2 block text-center">Код подтверждения</Label>
-				<OtpInput
-					bind:value={verificationCode}
-					disabled={isVerifying || isRequestingVerification}
-					hasError={Boolean(verificationCodeError)}
-					onInput={() => {
-						verificationCodeError = '';
-						formError = '';
-					}}
-					onComplete={submitVerificationCode}
-				/>
-				{#if verificationCodeError}
-					<Helper color="red" class="mt-1 block text-center">{verificationCodeError}</Helper>
-				{:else}
-					<Helper class="mt-1 block text-center">Введи 6 цифр из письма.</Helper>
-				{/if}
-			</div>
-
-			<div class="flex flex-col space-y-2 pt-2">
-				<Button
-					color="primary"
-					class="min-h-11 w-full font-medium"
-					disabled={isVerifying || isRequestingVerification || verificationCode.length < 6}
-					onclick={submitVerificationCode}
-				>
-					{#if isVerifying}
-						<Spinner size="4" class="me-2 fill-white" />
-						Проверяем…
 					{:else}
-						Подтвердить код
+						{currentEmail ? 'Отправить код' : 'Добавить адрес'}
 					{/if}
 				</Button>
+			</form>
+		{:else}
+			<div class="flex flex-col gap-4">
+				{#if formError}
+					<Alert.Root variant="destructive">
+						<Alert.Description>{formError}</Alert.Description>
+					</Alert.Root>
+				{/if}
 
-				<Button
-					type="button"
-					color="alternative"
-					class="min-h-11 w-full font-medium"
-					disabled={isVerifying || isRequestingVerification || cooldown.remaining > 0}
-					onclick={sendOtp}
-				>
-					{#if isRequestingVerification}
-						<Spinner size="4" class="me-2" />
-						Отправляем…
-					{:else if cooldown.remaining > 0}
-						Отправить код ещё раз ({cooldown.remaining} сек.)
+				<Field.Field data-disabled={true}>
+					<Field.FieldLabel>Новая эл. почта</Field.FieldLabel>
+					<div class="relative flex items-center">
+						<Mail class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+						<Input type="text" value={normalizeEmail(newEmail)} disabled class="pl-9" />
+					</div>
+					<Field.FieldDescription>Код подтверждения отправлен на этот адрес.</Field.FieldDescription
+					>
+				</Field.Field>
+
+				<div class="flex flex-col items-center gap-2">
+					<Label>Код подтверждения</Label>
+					<InputOTP.Root
+						maxlength={6}
+						bind:value={verificationCode}
+						disabled={isVerifying || isRequestingVerification}
+						aria-invalid={Boolean(verificationCodeError)}
+						onValueChange={() => {
+							verificationCodeError = '';
+							formError = '';
+						}}
+						onComplete={submitVerificationCode}
+					>
+						{#snippet children({ cells }: { cells: PinInputCell[] })}
+							<InputOTP.Group>
+								{#each cells.slice(0, 3) as cell, index (index)}
+									<InputOTP.Slot {cell} class="size-11 text-lg font-bold sm:size-12 sm:text-xl" />
+								{/each}
+							</InputOTP.Group>
+							<InputOTP.Separator />
+							<InputOTP.Group>
+								{#each cells.slice(3, 6) as cell, index (index + 3)}
+									<InputOTP.Slot {cell} class="size-11 text-lg font-bold sm:size-12 sm:text-xl" />
+								{/each}
+							</InputOTP.Group>
+						{/snippet}
+					</InputOTP.Root>
+					{#if verificationCodeError}
+						<p class="text-center text-xs text-destructive">{verificationCodeError}</p>
 					{:else}
-						Отправить код ещё раз
+						<p class="text-center text-xs text-muted-foreground">Введи 6 цифр из письма.</p>
 					{/if}
-				</Button>
+				</div>
+
+				<div class="flex flex-col gap-2 pt-2">
+					<Button
+						class="min-h-11 w-full font-medium"
+						disabled={isVerifying || isRequestingVerification || verificationCode.length < 6}
+						onclick={submitVerificationCode}
+					>
+						{#if isVerifying}
+							<Spinner data-icon="inline-start" />
+							Проверяем…
+						{:else}
+							Подтвердить код
+						{/if}
+					</Button>
+
+					<Button
+						type="button"
+						variant="outline"
+						class="min-h-11 w-full font-medium"
+						disabled={isVerifying || isRequestingVerification || cooldown.remaining > 0}
+						onclick={sendOtp}
+					>
+						{#if isRequestingVerification}
+							<Spinner data-icon="inline-start" />
+							Отправляем…
+						{:else if cooldown.remaining > 0}
+							Отправить код ещё раз ({cooldown.remaining} сек.)
+						{:else}
+							Отправить код ещё раз
+						{/if}
+					</Button>
+				</div>
 			</div>
-		</div>
-	{/if}
-</Modal>
+		{/if}
+	</Dialog.Content>
+</Dialog.Root>

@@ -5,7 +5,7 @@
 	import { getOfflineService } from '$lib/services/offline.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { clearOAuthErrorParam, OAUTH_LINK_ERROR_PARAM } from '$lib/utils/oauthErrors';
-	import { HeartOutline } from 'flowbite-svelte-icons';
+	import { Heart } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 	import IconFastapi from '~icons/simple-icons/fastapi';
 	import IconSvelte from '~icons/simple-icons/svelte';
@@ -96,7 +96,7 @@
 	</div>
 </div>
 
-<footer class="mt-6 pb-4 text-center text-xs text-gray-500 dark:text-gray-400">
+<footer class="mt-6 pb-4 text-center text-xs text-muted-foreground">
 	<p class="flex items-center justify-center gap-1">
 		Работает на
 		<IconSvelte class="inline size-3.5 text-[#FF3E00]" />
@@ -110,11 +110,11 @@
 			href="https://arutemu64.com/"
 			target="_blank"
 			rel="noopener noreferrer"
-			class="underline hover:text-gray-700 dark:hover:text-gray-300"
+			class="underline hover:text-foreground"
 		>
 			Arutemu64
 		</a>
-		<HeartOutline class="inline size-3.5 text-red-400" />
+		<Heart class="inline size-3.5 text-red-400" />
 	</p>
 	{#if buildId}
 		<p class="mt-0.5">Сборка {buildId}</p>

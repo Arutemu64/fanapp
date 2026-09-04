@@ -138,7 +138,7 @@
 
 <SectionIntro>
 	{#if notifications.length > 0}
-		<div class="text-sm text-gray-500 dark:text-gray-400">
+		<div class="text-sm text-muted-foreground">
 			{#if unreadCount > 0}
 				Непрочитанных: {unreadCount}
 			{:else}
@@ -151,7 +151,7 @@
 {#if displayNotifications.length === 0}
 	<EmptyState message="Уведомлений пока нет" />
 {:else}
-	<div class="space-y-3">
+	<div class="flex flex-col gap-3">
 		{#each displayNotifications as notification (notification.id)}
 			<NotificationListItem {notification} />
 		{/each}

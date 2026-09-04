@@ -4,7 +4,6 @@
 	// Bundled (not static/) so Vite content-hashes it like the other brand assets.
 	import logo from '$lib/assets/logo.svg';
 	import SkipLink from '$lib/components/SkipLink.svelte';
-	import ToastContainer from '$lib/components/ToastContainer.svelte';
 
 	import type { LayoutProps } from './$types';
 
@@ -12,14 +11,13 @@
 </script>
 
 <SkipLink />
-<ToastContainer />
 
 <main
 	id="main-content"
 	tabindex="-1"
-	class="relative flex min-h-dvh items-center justify-center bg-gray-50 px-4 py-6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 sm:py-10 dark:bg-gray-950"
+	class="relative flex min-h-dvh items-center justify-center bg-background px-4 py-6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 sm:py-10"
 >
-	<div class="w-full max-w-sm space-y-3">
+	<div class="flex w-full max-w-sm flex-col gap-3">
 		<!-- Same mark as the sidebar; see AppSidebar.svelte for why `dark:invert` is enough
 			on its own to cover both themes. -->
 		<img src={logo} alt="ФАН ФАН" class="mx-auto h-12 w-auto dark:invert" />
@@ -36,7 +34,7 @@
 		<div class="text-center">
 			<button
 				type="button"
-				class="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium text-gray-600 hover:text-gray-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 dark:text-gray-400 dark:hover:text-gray-200"
+				class="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
 				onclick={() => goto(resolve('/'))}
 			>
 				Продолжить без входа

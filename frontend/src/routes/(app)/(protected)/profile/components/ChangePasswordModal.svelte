@@ -4,9 +4,13 @@
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import PasswordInput from '$lib/components/PasswordInput.svelte';
+	import * as Alert from '$lib/components/ui/alert';
+	import { Button } from '$lib/components/ui/button';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import * as Field from '$lib/components/ui/field';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { Alert, Button, Label, Modal, Spinner } from 'flowbite-svelte';
-	import { CheckCircleSolid, CloseCircleOutline, LockSolid } from 'flowbite-svelte-icons';
+	import { CheckCircle2, Lock, XCircle } from '@lucide/svelte';
 
 	const client = createApiClient();
 
@@ -29,6 +33,11 @@
 	// Password rules mirror the backend PASSWORD_FIELD (10-128 chars, no complexity rule).
 	const MIN_PASSWORD_LENGTH = 10;
 	const MAX_PASSWORD_LENGTH = 128;
+
+	// Screen-reader description for the dialog (visually the form speaks for itself).
+	let dialogDescription = $derived(
+		hasPassword ? 'Смени пароль от своего аккаунта.' : 'Задай пароль для входа в аккаунт.'
+	);
 
 	let hasMinLength = $derived(newPassword.length >= MIN_PASSWORD_LENGTH);
 	let withinMaxLength = $derived(newPassword.length <= MAX_PASSWORD_LENGTH);
@@ -76,74 +85,75 @@
 	}
 </script>
 
-<Modal bind:open size="sm">
-	{#snippet header()}
-		<div class="flex items-center gap-2">
-			<LockSolid class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-			<h3 class="text-lg font-bold text-gray-900 dark:text-white">
+<Dialog.Root bind:open>
+	<Dialog.Content class="sm:max-w-md">
+		<Dialog.Header>
+			<Dialog.Title class="flex items-center gap-2">
+				<Lock class="size-5 text-muted-foreground" />
 				{hasPassword ? 'Изменение пароля' : 'Установка пароля'}
-			</h3>
-		</div>
-	{/snippet}
+			</Dialog.Title>
+			<Dialog.Description class="sr-only">{dialogDescription}</Dialog.Description>
+		</Dialog.Header>
 
-	<form onsubmit={handleSubmit} class="space-y-4">
-		{#if formError}
-			<Alert role="alert" color="red">
-				{formError}
-			</Alert>
-		{/if}
-
-		{#if hasPassword}
-			<div>
-				<Label for="old_password" class="mb-2 block">Старый пароль</Label>
-				<PasswordInput
-					id="old_password"
-					name="current_password"
-					autocomplete="current-password"
-					revealLabel="старый пароль"
-					bind:value={oldPassword}
-					oninput={() => (formError = '')}
-				/>
-			</div>
-		{/if}
-		<div>
-			<Label for="new_password" class="mb-2 block">Новый пароль</Label>
-			<PasswordInput
-				id="new_password"
-				name="new_password"
-				autocomplete="new-password"
-				revealLabel="новый пароль"
-				maxlength={MAX_PASSWORD_LENGTH}
-				bind:value={newPassword}
-				oninput={() => (formError = '')}
-			/>
-
-			<!-- Live password requirements; reflects the backend PASSWORD_FIELD rules. -->
-			<ul class="mt-2 space-y-1">
-				<li
-					class="flex items-center gap-2 text-sm {hasMinLength
-						? 'text-green-600 dark:text-green-400'
-						: 'text-gray-500 dark:text-gray-400'}"
-				>
-					{#if hasMinLength}
-						<CheckCircleSolid class="h-4 w-4 shrink-0" />
-					{:else}
-						<CloseCircleOutline class="h-4 w-4 shrink-0" />
-					{/if}
-					Минимум {MIN_PASSWORD_LENGTH} символов
-				</li>
-			</ul>
-		</div>
-
-		<Button type="submit" color="primary" class="w-full" disabled={isLoading || !isValid}>
-			{#if isLoading}
-				<span class="flex items-center gap-2">
-					<Spinner size="4" class="fill-white" />
-					Сохранение…
-				</span>
-			{:else}
-				{hasPassword ? 'Сменить пароль' : 'Установить пароль'}
+		<form onsubmit={handleSubmit} class="flex flex-col gap-4">
+			{#if formError}
+				<Alert.Root variant="destructive">
+					<Alert.Description>{formError}</Alert.Description>
+				</Alert.Root>
 			{/if}
-		</Button>
-	</form>
-</Modal>
+
+			<Field.FieldGroup class="gap-4">
+				{#if hasPassword}
+					<Field.Field>
+						<Field.FieldLabel for="old_password">Старый пароль</Field.FieldLabel>
+						<PasswordInput
+							id="old_password"
+							name="current_password"
+							autocomplete="current-password"
+							revealLabel="старый пароль"
+							bind:value={oldPassword}
+							oninput={() => (formError = '')}
+						/>
+					</Field.Field>
+				{/if}
+				<Field.Field>
+					<Field.FieldLabel for="new_password">Новый пароль</Field.FieldLabel>
+					<PasswordInput
+						id="new_password"
+						name="new_password"
+						autocomplete="new-password"
+						revealLabel="новый пароль"
+						maxlength={MAX_PASSWORD_LENGTH}
+						bind:value={newPassword}
+						oninput={() => (formError = '')}
+					/>
+
+					<!-- Live password requirements; reflects the backend PASSWORD_FIELD rules. -->
+					<ul class="mt-1 flex flex-col gap-1">
+						<li
+							class="flex items-center gap-2 text-sm {hasMinLength
+								? 'text-success'
+								: 'text-muted-foreground'}"
+						>
+							{#if hasMinLength}
+								<CheckCircle2 class="size-4 shrink-0" />
+							{:else}
+								<XCircle class="size-4 shrink-0" />
+							{/if}
+							Минимум {MIN_PASSWORD_LENGTH} символов
+						</li>
+					</ul>
+				</Field.Field>
+			</Field.FieldGroup>
+
+			<Button type="submit" class="w-full" disabled={isLoading || !isValid}>
+				{#if isLoading}
+					<Spinner data-icon="inline-start" />
+					Сохранение…
+				{:else}
+					{hasPassword ? 'Сменить пароль' : 'Установить пароль'}
+				{/if}
+			</Button>
+		</form>
+	</Dialog.Content>
+</Dialog.Root>

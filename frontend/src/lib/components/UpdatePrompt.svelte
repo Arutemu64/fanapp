@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Button, Toast } from 'flowbite-svelte';
-	import { RefreshOutline } from 'flowbite-svelte-icons';
+	import { Button } from '$lib/components/ui/button';
+	import { RotateCw } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
 	// A waiting service worker means a newer build is cached and ready. We never
@@ -137,26 +137,18 @@
 		aria-atomic="true"
 		class="pointer-events-none fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-(--z-overlay) flex justify-center px-4 md:bottom-4 md:px-6 lg:px-8"
 	>
-		<Toast
-			align={false}
-			color="primary"
-			dismissable={false}
-			class="pointer-events-auto w-full max-w-sm shadow"
+		<div
+			class="pointer-events-auto flex w-full max-w-sm flex-col gap-3 rounded-xl border border-border bg-card p-4 text-card-foreground shadow-lg"
 		>
-			<!-- Icon colour is pinned per theme against the Toast's tonal badge box
-				(primary-100 light / primary-800 dark). Each shade is picked for
-				contrast on its own background: 600-on-100 is 4.28:1, 200-on-800 is
-				6.16:1 — both clear WCAG 1.4.11's 3:1 for non-text. A single fixed shade
-				can't: 600 that reads in light collapses to 1.69:1 on the dark badge. -->
-			{#snippet icon()}
-				<RefreshOutline class="h-5 w-5 text-primary-600 dark:text-primary-200" aria-hidden="true" />
-			{/snippet}
-			<div class="text-sm leading-snug font-normal text-gray-700 dark:text-gray-200">
-				Доступна новая версия приложения.
+			<div class="flex items-center gap-3">
+				<div
+					class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+				>
+					<RotateCw class="size-4 animate-spin" aria-hidden="true" />
+				</div>
+				<div class="text-sm leading-snug font-medium">Доступна новая версия приложения.</div>
 			</div>
-			<div class="mt-3">
-				<Button size="sm" color="primary" class="w-full" onclick={applyUpdate}>Обновить</Button>
-			</div>
-		</Toast>
+			<Button size="sm" class="w-full" onclick={applyUpdate}>Обновить</Button>
+		</div>
 	</div>
 {/if}

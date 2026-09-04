@@ -4,9 +4,15 @@
 	const client = createApiClient();
 	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
+	import * as Alert from '$lib/components/ui/alert';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import * as Field from '$lib/components/ui/field';
+	import { Input } from '$lib/components/ui/input';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { fromEventDateTimeLocal, toEventDateTimeLocal } from '$lib/utils/formatters';
-	import { Alert, Button, Card, Helper, Input, Label, Spinner } from 'flowbite-svelte';
+	import { AlertCircle } from '@lucide/svelte';
 	import { untrack } from 'svelte';
 
 	import type { PageProps } from './$types';
@@ -176,65 +182,70 @@
 
 <SectionIntro description="Управляй датами фестиваля и таймингами расписания." />
 
-<form class="mx-auto w-full max-w-2xl space-y-5" onsubmit={handleSubmit}>
+<form class="mx-auto flex w-full max-w-2xl flex-col gap-5" onsubmit={handleSubmit}>
 	{#if submitError}
-		<Alert color="red">
-			{submitError}
-		</Alert>
+		<Alert.Root variant="destructive">
+			<AlertCircle class="size-4" />
+			<Alert.Description>{submitError}</Alert.Description>
+		</Alert.Root>
 	{/if}
 
-	<Card class="w-full max-w-none space-y-4 rounded-2xl p-4 sm:p-6">
-		<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Фестиваль</h2>
+	<Card.Root class="flex w-full max-w-none flex-col gap-4 rounded-2xl p-4 sm:p-6">
+		<h2 class="text-lg font-semibold text-foreground">Фестиваль</h2>
 
-		<div class="space-y-2">
-			<Label for="festival-start">Начало фестиваля (МСК)</Label>
-			<Input
-				id="festival-start"
-				name="festival_start"
-				type="datetime-local"
-				autocomplete="off"
-				bind:value={festivalStart}
-				disabled={isSaving}
-				oninput={handleFestivalStartInput}
-				onblur={validateFestivalStart}
-			/>
-			{#if festivalStartError}
-				<Helper color="red">{festivalStartError}</Helper>
-			{:else}
-				<Helper>
-					Дата и время по московскому времени. От неё считается обратный отсчёт на главной.
-				</Helper>
-			{/if}
-		</div>
+		<Field.FieldGroup class="gap-4">
+			<Field.Field data-invalid={festivalStartError ? true : undefined}>
+				<Field.FieldLabel for="festival-start">Начало фестиваля (МСК)</Field.FieldLabel>
+				<Input
+					id="festival-start"
+					name="festival_start"
+					type="datetime-local"
+					autocomplete="off"
+					bind:value={festivalStart}
+					disabled={isSaving}
+					oninput={handleFestivalStartInput}
+					onblur={validateFestivalStart}
+					aria-invalid={festivalStartError ? true : undefined}
+				/>
+				{#if festivalStartError}
+					<Field.FieldError>{festivalStartError}</Field.FieldError>
+				{:else}
+					<Field.FieldDescription>
+						Дата и время по московскому времени. От неё считается обратный отсчёт на главной.
+					</Field.FieldDescription>
+				{/if}
+			</Field.Field>
 
-		<div class="space-y-2">
-			<Label for="festival-end">Конец фестиваля (МСК)</Label>
-			<Input
-				id="festival-end"
-				name="festival_end"
-				type="datetime-local"
-				autocomplete="off"
-				bind:value={festivalEnd}
-				disabled={isSaving}
-				oninput={handleFestivalEndInput}
-				onblur={validateFestivalEnd}
-			/>
-			{#if festivalEndError}
-				<Helper color="red">{festivalEndError}</Helper>
-			{:else}
-				<Helper>
-					После него на главной вместо отсчёта появится прощание. Сдвинь позже, если фестиваль
-					затянулся.
-				</Helper>
-			{/if}
-		</div>
-	</Card>
+			<Field.Field data-invalid={festivalEndError ? true : undefined}>
+				<Field.FieldLabel for="festival-end">Конец фестиваля (МСК)</Field.FieldLabel>
+				<Input
+					id="festival-end"
+					name="festival_end"
+					type="datetime-local"
+					autocomplete="off"
+					bind:value={festivalEnd}
+					disabled={isSaving}
+					oninput={handleFestivalEndInput}
+					onblur={validateFestivalEnd}
+					aria-invalid={festivalEndError ? true : undefined}
+				/>
+				{#if festivalEndError}
+					<Field.FieldError>{festivalEndError}</Field.FieldError>
+				{:else}
+					<Field.FieldDescription>
+						После него на главной вместо отсчёта появится прощание. Сдвинь позже, если фестиваль
+						затянулся.
+					</Field.FieldDescription>
+				{/if}
+			</Field.Field>
+		</Field.FieldGroup>
+	</Card.Root>
 
-	<Card class="w-full max-w-none space-y-4 rounded-2xl p-4 sm:p-6">
-		<h2 class="text-lg font-semibold text-gray-900 dark:text-white">Программа</h2>
+	<Card.Root class="flex w-full max-w-none flex-col gap-4 rounded-2xl p-4 sm:p-6">
+		<h2 class="text-lg font-semibold text-foreground">Программа</h2>
 
-		<div class="space-y-2">
-			<Label for="announcement-timeout">Таймаут анонсов, сек</Label>
+		<Field.Field data-invalid={announcementTimeoutError ? true : undefined}>
+			<Field.FieldLabel for="announcement-timeout">Таймаут анонсов, сек</Field.FieldLabel>
 			<Input
 				id="announcement-timeout"
 				name="announcement_timeout"
@@ -247,23 +258,25 @@
 				disabled={isSaving}
 				oninput={handleAnnouncementTimeoutInput}
 				onblur={validateAnnouncementTimeout}
+				aria-invalid={announcementTimeoutError ? true : undefined}
 			/>
 			{#if announcementTimeoutError}
-				<Helper color="red">{announcementTimeoutError}</Helper>
+				<Field.FieldError>{announcementTimeoutError}</Field.FieldError>
 			{:else}
-				<Helper>Минимум 1 секунда. Ограничение помогает не отправлять анонсы слишком часто.</Helper>
+				<Field.FieldDescription>
+					Минимум 1 секунда. Ограничение помогает не отправлять анонсы слишком часто.
+				</Field.FieldDescription>
 			{/if}
-		</div>
-	</Card>
+		</Field.Field>
+	</Card.Root>
 
 	<Button
 		type="submit"
-		color="primary"
 		class="min-h-11 w-full justify-center sm:w-auto"
 		disabled={isSaving || !hasChanges}
 	>
 		{#if isSaving}
-			<Spinner size="4" class="mr-2 fill-white" />
+			<Spinner data-icon="inline-start" />
 			Сохраняем…
 		{:else}
 			Сохранить

@@ -4,10 +4,14 @@
 	import type { CurrentUserDTO } from '$lib/types/user';
 
 	import { getApiErrorDetail } from '$lib/api/errors';
+	import * as Alert from '$lib/components/ui/alert';
+	import { Button } from '$lib/components/ui/button';
+	import * as Field from '$lib/components/ui/field';
+	import { Input } from '$lib/components/ui/input';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { offlineWriteGate } from '$lib/utils/offlineAction';
-	import { Alert, Button, Input, Label, Spinner } from 'flowbite-svelte';
-	import { CheckCircleOutline, TicketOutline, TicketSolid } from 'flowbite-svelte-icons';
+	import { CheckCircle2, Ticket } from '@lucide/svelte';
 
 	import ProfileCardShell from './ProfileCardShell.svelte';
 
@@ -61,56 +65,55 @@
 
 <ProfileCardShell title="Билет" description="Привяжи билет, чтобы получить доступ к голосованию.">
 	{#snippet icon()}
-		<TicketOutline class="h-5 w-5" />
+		<Ticket class="size-5" />
 	{/snippet}
 
 	{#if user.ticket}
-		<div class="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
+		<div class="rounded-lg bg-success/10 p-4">
 			<div class="flex items-center gap-2">
-				<CheckCircleOutline class="h-5 w-5 text-green-600 dark:text-green-400" />
-				<span class="font-medium text-green-700 dark:text-green-300">Билет привязан</span>
+				<CheckCircle2 class="size-5 text-success" />
+				<span class="font-medium text-success">Билет привязан</span>
 			</div>
-			<p class="mt-2 text-sm text-green-600 dark:text-green-400">
+			<p class="mt-2 text-sm text-success">
 				Номер: <span class="font-mono font-medium">{user.ticket.barcode}</span>
 			</p>
 		</div>
 	{:else}
-		<div class="space-y-3 rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
+		<div class="flex flex-col gap-3 rounded-lg border border-border p-3 sm:p-4">
 			{#if submitError}
-				<Alert role="alert" color="red">
-					{submitError}
-				</Alert>
+				<Alert.Root variant="destructive">
+					<Alert.Description>{submitError}</Alert.Description>
+				</Alert.Root>
 			{/if}
 
-			<Label for="ticket-barcode">Номер билета</Label>
-			<p class="text-sm leading-relaxed text-gray-500 dark:text-gray-400">
-				Введи цифры штрихкода с бумажного или электронного билета. Если билета нет — попроси
-				специальный код у оргкомитета или волонтёра.
-			</p>
-			<Input
-				id="ticket-barcode"
-				name="ticket_barcode"
-				bind:value={barcode}
-				placeholder="Например, 1234567890"
-				autocomplete="off"
-				autocapitalize="off"
-				spellcheck={false}
-				disabled={isSubmitting || offlineGate.disabled}
-				size="md"
-				oninput={() => (submitError = '')}
-			/>
+			<Field.Field>
+				<Field.FieldLabel for="ticket-barcode">Номер билета</Field.FieldLabel>
+				<Field.FieldDescription>
+					Введи цифры штрихкода с бумажного или электронного билета. Если билета нет — попроси
+					специальный код у оргкомитета или волонтёра.
+				</Field.FieldDescription>
+				<Input
+					id="ticket-barcode"
+					name="ticket_barcode"
+					bind:value={barcode}
+					placeholder="Например, 1234567890"
+					autocomplete="off"
+					autocapitalize="off"
+					spellcheck={false}
+					disabled={isSubmitting || offlineGate.disabled}
+					oninput={() => (submitError = '')}
+				/>
+			</Field.Field>
 			<Button
 				onclick={handleLinkTicket}
 				class="min-h-11 w-full"
 				disabled={isSubmitting || offlineGate.disabled}
 				title={offlineGate.title}
-				size="md"
 			>
 				{#if isSubmitting}
-					<Spinner class="me-2 h-4 w-4 fill-white" />
+					<Spinner data-icon="inline-start" />
 					Привязка…
 				{:else}
-					<TicketSolid class="me-2 h-4 w-4" />
 					Привязать билет
 				{/if}
 			</Button>

@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { PUBLIC_API_URL } from '$env/static/public';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { clearOAuthErrorParam, OAUTH_LOGIN_ERROR_PARAM } from '$lib/utils/oauthErrors';
-	import { Button, Card, Spinner } from 'flowbite-svelte';
-	import { EnvelopeSolid } from 'flowbite-svelte-icons';
+	import { Mail } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 	import IconVk from '~icons/simple-icons/vk';
 
@@ -90,46 +92,43 @@
 	<title>Вход · ФАН ФАН</title>
 </svelte:head>
 
-<Card class="w-full rounded-2xl p-4 sm:p-6">
-	<div class="space-y-4">
-		<div class="space-y-1 text-center">
-			<h1 class="text-2xl font-bold text-gray-900 dark:text-white">Вход в ФАН ФАН</h1>
+<Card.Root class="w-full rounded-2xl p-4 sm:p-6">
+	<div class="flex flex-col gap-4">
+		<div class="flex flex-col gap-1 text-center">
+			<h1 class="text-2xl font-bold text-foreground">Вход в ФАН ФАН</h1>
 			{#if view === 'options'}
 				<!-- Benefits belong on the entry screen only: once a method is chosen the
 					sub-steps are the task, not the pitch. -->
-				<p class="text-sm text-gray-600 dark:text-gray-400">
+				<p class="text-sm text-muted-foreground">
 					Получай персональные уведомления, голосуй за участников и оставляй обратную связь.
 				</p>
 			{/if}
 		</div>
 
 		{#if view === 'options'}
-			<!-- Use the configured API base so OAuth works in every environment.
-				Flowbite drops `disabled` on an href Button (it renders a bare <a>),
-				so the pending state is aria-disabled plus the guard in the handler. -->
 			<Button
 				href={`${PUBLIC_API_URL}/auth/oauth/vk/start`}
-				color="alternative"
+				variant="outline"
 				class="min-h-11 w-full font-medium"
 				aria-disabled={isOpeningVk}
 				onclick={handleVkClick}
 			>
 				{#if isOpeningVk}
-					<Spinner class="me-2 h-5 w-5" />
+					<Spinner data-icon="inline-start" />
 					Открываем VK ID…
 				{:else}
-					<IconVk class="me-2 h-5 w-5 text-[#0077FF]" />
+					<IconVk class="text-[#0077FF]" data-icon="inline-start" />
 					Войти через VK ID
 				{/if}
 			</Button>
 
 			<Button
 				type="button"
-				color="alternative"
+				variant="outline"
 				class="min-h-11 w-full font-medium"
 				onclick={showEmailLogin}
 			>
-				<EnvelopeSolid class="me-2 h-5 w-5" />
+				<Mail data-icon="inline-start" />
 				Войти по почте
 			</Button>
 		{:else if view === 'email'}
@@ -138,4 +137,4 @@
 			<PasswordLoginForm bind:email onBack={showEmailLogin} />
 		{/if}
 	</div>
-</Card>
+</Card.Root>

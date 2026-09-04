@@ -31,7 +31,7 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 
 | Layer | Tech |
 |---|---|
-| Frontend | SvelteKit (Svelte 5 runes), Flowbite-Svelte, Tailwind CSS v4, `pnpm` |
+| Frontend | SvelteKit (Svelte 5 runes), shadcn-svelte, Tailwind CSS v4, `pnpm` |
 | Backend | FastAPI, aiogram (Telegram Bot API), SQLAlchemy + Alembic, Dishka (DI), `uv` |
 | Data / infra | PostgreSQL, Redis (Valkey), NATS + FastStream |
 | Jobs | APScheduler (periodic syncs), FastStream consumers (domain events) |
@@ -330,6 +330,6 @@ who consented to a festival photo, not to redistribution under MIT. Excluded:
 Fork the code freely; swap in your own branding.
 
 **Vendored third-party agent skills**, under `.agents/skills/`,
-`.claude/skills/`, `.cline/`, `.gemini/` and `.impeccable/`. Each keeps its
+`.claude/skills/`, `.cline/` and `.gemini/`. Each keeps its
 upstream license and copyright; `skills-lock.json` records the source repository
 for every one of them.

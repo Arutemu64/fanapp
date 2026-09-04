@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Button } from 'flowbite-svelte';
-	import { ArrowLeftOutline } from 'flowbite-svelte-icons';
+	import { Button } from '$lib/components/ui/button';
+	import { ArrowLeft } from '@lucide/svelte';
 
 	interface Props {
 		/** Parent route this detail page returns to. */
@@ -12,7 +12,7 @@
 	let { href, label }: Props = $props();
 </script>
 
-<Button {href} outline size="sm" color="alternative" class="mb-2 sm:mb-3" aria-label={label}>
-	<ArrowLeftOutline class="mr-1 h-4 w-4" />
+<Button {href} variant="outline" size="sm" class="mb-2 sm:mb-3" aria-label={label}>
+	<ArrowLeft data-icon="inline-start" />
 	{label}
 </Button>

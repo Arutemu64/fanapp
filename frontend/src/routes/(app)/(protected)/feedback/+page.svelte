@@ -3,8 +3,13 @@
 	const client = createApiClient();
 	import OfflineUnavailableState from '$lib/components/OfflineUnavailableState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
+	import * as Alert from '$lib/components/ui/alert';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import * as Field from '$lib/components/ui/field';
+	import { Spinner } from '$lib/components/ui/spinner';
+	import { Textarea } from '$lib/components/ui/textarea';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { Alert, Button, Card, Helper, Label, Spinner, Textarea } from 'flowbite-svelte';
 
 	import type { PageProps } from './$types';
 
@@ -93,10 +98,10 @@
 		description="Расскажи о фестивале или о приложении — что понравилось, а что хотелось бы улучшить. Мы читаем каждое сообщение."
 	/>
 
-	<Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
-		<form class="space-y-6" onsubmit={handleSubmit}>
-			<div class="space-y-2">
-				<Label for="feedback-text" class="text-gray-900 dark:text-white">Твой отзыв</Label>
+	<Card.Root class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
+		<form class="flex flex-col gap-6" onsubmit={handleSubmit}>
+			<Field.Field data-invalid={feedbackError ? true : undefined}>
+				<Field.FieldLabel for="feedback-text">Твой отзыв</Field.FieldLabel>
 				<Textarea
 					id="feedback-text"
 					name="text"
@@ -106,36 +111,32 @@
 					bind:value={feedbackText}
 					disabled={isSending}
 					oninput={handleInput}
-					class="w-full rounded-xl"
+					aria-invalid={feedbackError ? true : undefined}
+					class="w-full resize-none rounded-xl"
 				/>
 				{#if feedbackError}
-					<Helper color="red" class="mt-1">{feedbackError}</Helper>
+					<Field.FieldError>{feedbackError}</Field.FieldError>
 				{:else}
-					<Helper class="text-sm text-gray-500 dark:text-gray-400">
+					<Field.FieldDescription>
 						Осталось символов: {charsLeft}
-					</Helper>
+					</Field.FieldDescription>
 				{/if}
-			</div>
+			</Field.Field>
 
 			{#if submitError}
-				<Alert color="red">
-					{submitError}
-				</Alert>
+				<Alert.Root variant="destructive">
+					<Alert.Description>{submitError}</Alert.Description>
+				</Alert.Root>
 			{/if}
 
-			<Button
-				type="submit"
-				color="primary"
-				class="min-h-11 w-full justify-center sm:w-auto"
-				disabled={isSending}
-			>
+			<Button type="submit" class="min-h-11 w-full justify-center sm:w-auto" disabled={isSending}>
 				{#if isSending}
-					<Spinner size="4" class="mr-2 fill-white" />
+					<Spinner data-icon="inline-start" />
 					Отправка…
 				{:else}
 					Отправить отзыв
 				{/if}
 			</Button>
 		</form>
-	</Card>
+	</Card.Root>
 {/if}

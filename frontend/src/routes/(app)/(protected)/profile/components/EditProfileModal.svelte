@@ -1,14 +1,20 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
-	import { Alert, Button, Helper, Input, Label, Modal, Spinner } from 'flowbite-svelte';
-	import { UserCircleSolid, UserSolid } from 'flowbite-svelte-icons';
-	import { untrack } from 'svelte';
-	const client = createApiClient();
 	import type { components } from '$lib/api/schema';
 	import type { CurrentUserDTO } from '$lib/types/user';
 
+	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
+	import * as Alert from '$lib/components/ui/alert';
+	import { Button } from '$lib/components/ui/button';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import * as Field from '$lib/components/ui/field';
+	import { Input } from '$lib/components/ui/input';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { User } from '@lucide/svelte';
+	import { untrack } from 'svelte';
+
+	const client = createApiClient();
 
 	type UpdateCurrentUserInput = components['schemas']['UpdateCurrentUserInput'];
 
@@ -118,59 +124,59 @@
 	}
 </script>
 
-<Modal bind:open size="sm">
-	{#snippet header()}
-		<div class="flex items-center gap-2">
-			<UserCircleSolid class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-			<h3 class="text-lg font-bold text-gray-900 dark:text-white">Редактирование профиля</h3>
-		</div>
-	{/snippet}
+<Dialog.Root bind:open>
+	<Dialog.Content class="sm:max-w-md">
+		<Dialog.Header>
+			<Dialog.Title class="flex items-center gap-2">
+				<User class="size-5 text-muted-foreground" />
+				Редактирование профиля
+			</Dialog.Title>
+			<Dialog.Description class="sr-only">Измени имя пользователя.</Dialog.Description>
+		</Dialog.Header>
 
-	<form onsubmit={handleSubmit} class="space-y-4">
-		{#if formError}
-			<Alert color="red">
-				{formError}
-			</Alert>
-		{/if}
-
-		<div>
-			<Label for="username" class="mb-2 block">Имя пользователя</Label>
-			<Input
-				id="username"
-				name="username"
-				type="text"
-				placeholder="Например, sakura_chan"
-				autocomplete="nickname"
-				autocapitalize="off"
-				spellcheck={false}
-				bind:value={username}
-				oninput={handleUsernameInput}
-				color={usernameError ? 'red' : undefined}
-				class="ps-9"
-			>
-				{#snippet left()}
-					<UserSolid class="h-5 w-5" />
-				{/snippet}
-			</Input>
-			{#if usernameError}
-				<Helper class="mt-1" color="red">{usernameError}</Helper>
+		<form onsubmit={handleSubmit} class="flex flex-col gap-4">
+			{#if formError}
+				<Alert.Root variant="destructive">
+					<Alert.Description>{formError}</Alert.Description>
+				</Alert.Root>
 			{/if}
-			<ul class="mt-2 space-y-1 text-xs text-gray-500 dark:text-gray-400">
-				<li>от 3 до 25 символов</li>
-				<li>начинается с буквы (латиница или кириллица)</li>
-				<li>далее буквы, цифры и подчёркивание</li>
-			</ul>
-		</div>
 
-		<Button type="submit" color="primary" class="w-full" disabled={!isValid() || isLoading}>
-			{#if isLoading}
-				<span class="flex items-center gap-2">
-					<Spinner size="4" class="fill-white" />
+			<Field.Field data-invalid={usernameError ? true : undefined}>
+				<Field.FieldLabel for="username">Имя пользователя</Field.FieldLabel>
+				<div class="relative flex items-center">
+					<User class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+					<Input
+						id="username"
+						name="username"
+						type="text"
+						placeholder="Например, sakura_chan"
+						autocomplete="nickname"
+						autocapitalize="off"
+						spellcheck={false}
+						bind:value={username}
+						oninput={handleUsernameInput}
+						aria-invalid={usernameError ? true : undefined}
+						class="pl-9"
+					/>
+				</div>
+				{#if usernameError}
+					<Field.FieldError>{usernameError}</Field.FieldError>
+				{/if}
+				<ul class="flex flex-col gap-1 text-xs text-muted-foreground">
+					<li>от 3 до 25 символов</li>
+					<li>начинается с буквы (латиница или кириллица)</li>
+					<li>далее буквы, цифры и подчёркивание</li>
+				</ul>
+			</Field.Field>
+
+			<Button type="submit" class="w-full" disabled={!isValid() || isLoading}>
+				{#if isLoading}
+					<Spinner data-icon="inline-start" />
 					Сохранение…
-				</span>
-			{:else}
-				Сохранить
-			{/if}
-		</Button>
-	</form>
-</Modal>
+				{:else}
+					Сохранить
+				{/if}
+			</Button>
+		</form>
+	</Dialog.Content>
+</Dialog.Root>

@@ -2,11 +2,10 @@
 	import { afterNavigate, beforeNavigate } from '$app/navigation';
 	import { navigating, page } from '$app/state';
 	import SkipLink from '$lib/components/SkipLink.svelte';
-	import ToastContainer from '$lib/components/ToastContainer.svelte';
 	import { TAB_ROOTS } from '$lib/data/nav';
 	import { setUnreadCountService } from '$lib/services/unreadCount.svelte';
-	import { uiHelpers } from 'flowbite-svelte';
 	import { untrack } from 'svelte';
+	import { MediaQuery } from 'svelte/reactivity';
 
 	import type { LayoutProps, Snapshot } from './$types';
 
@@ -41,9 +40,13 @@
 		})
 		.catch(() => {});
 
-	const sidebarUi = uiHelpers();
-	let isSidebarOpen = $derived(sidebarUi.isOpen);
-	const closeSidebar = sidebarUi.close;
+	let isSidebarOpen = $state(false);
+	const closeSidebar = () => {
+		isSidebarOpen = false;
+	};
+	const toggleSidebar = () => {
+		isSidebarOpen = !isSidebarOpen;
+	};
 
 	// <main> is the scroll region and lives in this layout, so it persists across
 	// navigation — SvelteKit's scroll handling only manages the window, never this
@@ -121,9 +124,18 @@
 	let lastScrollTop = 0;
 	let scrollFrame = 0;
 
+	// Hide-on-scroll is a mobile pattern: it reclaims scarce vertical space where a thumb
+	// flick reads scroll intent cleanly. On desktop space is plentiful, the thin bar saves
+	// almost nothing, and wheel/trackpad scrolling flip-flops direction enough to make the
+	// slide flicker — so at md+ (matching the breakpoint that hides the hamburger and bottom
+	// nav) the bar stays put. We keep tracking scroll everywhere and mask the result here, so
+	// resizing across the breakpoint reveals the bar at once without a stale hidden state.
+	const isDesktop = new MediaQuery('(min-width: 48rem)');
+	let chromeHidden = $derived(navbarHidden && !isDesktop.current);
+
 	// Reveal fast so the nav is back the instant you flick up; hide a touch slower so it
 	// glides away rather than snapping. This asymmetry is the "headroom" feel.
-	let chromeTransitionMs = $derived(navbarHidden ? 240 : 120);
+	let chromeTransitionMs = $derived(chromeHidden ? 240 : 120);
 
 	function revealNavbar() {
 		navbarHidden = false;
@@ -196,7 +208,7 @@
 	let loaderRoute = $derived(navigating.to?.route?.id);
 </script>
 
-<div class="flex h-dvh w-full overflow-hidden bg-gray-50 dark:bg-gray-950">
+<div class="flex h-dvh w-full overflow-hidden bg-background">
 	<SkipLink />
 
 	<AppSidebar {user} {activeUrl} {isSidebarOpen} {closeSidebar} scrollToTop={scrollMainToTop} />
@@ -214,11 +226,11 @@
 		<div
 			bind:offsetHeight={chromeHeight}
 			class="absolute inset-x-0 top-0 z-(--z-chrome) transition-[top] ease-out motion-reduce:transition-none"
-			style:top={navbarHidden ? `-${navbarHeight}px` : '0px'}
+			style:top={chromeHidden ? `-${navbarHeight}px` : '0px'}
 			style:transition-duration={`${chromeTransitionMs}ms`}
 		>
 			<div bind:offsetHeight={navbarHeight}>
-				<AppNavbar {user} toggleSidebar={sidebarUi.toggle} />
+				<AppNavbar {user} {toggleSidebar} />
 			</div>
 			<ConnectionBanner />
 		</div>
@@ -240,11 +252,10 @@
 			id="main-content"
 			tabindex="-1"
 			style:padding-top={`${chromeHeight}px`}
-			style:--sticky-top={navbarHidden ? `-${navbarHeight}px` : '0px'}
+			style:--sticky-top={chromeHidden ? `-${navbarHeight}px` : '0px'}
 			style:--sticky-top-duration={`${chromeTransitionMs}ms`}
 			class="relative flex-1 overflow-y-auto scroll-smooth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
 		>
-			<ToastContainer />
 			<!-- Bottom padding clears the fixed mobile bottom nav (h-16 + safe-area inset);
 				md:p-6 resets it on desktop where the bottom nav is hidden. -->
 			<div

@@ -52,7 +52,7 @@
       "automerge": true
     },
     {
-      "description": "Carve-out from the rule above: SvelteKit convention puts the framework, bundler, CSS engine and component library in devDependencies, but their output ships in the bundle, so 'breaks loudly in CI' does not hold for them — a Tailwind or Flowbite minor can move the layout, and an icon-pack minor can redraw a glyph, with every gate green. These get a review PR like any other shipped dependency. Everything else in devDependencies (eslint, prettier, typescript, svelte-check, vitest, openapi-typescript) keeps automerging.",
+      "description": "Carve-out from the rule above: SvelteKit convention puts the framework, bundler, CSS engine and the shadcn-svelte component substrate in devDependencies, but their output ships in the bundle, so 'breaks loudly in CI' does not hold for them — a Tailwind or bits-ui/shadcn minor can move the layout, and an icon-pack minor can redraw a glyph, with every gate green. shadcn-svelte components are vendored as source, but the CLI's tailwind.css and the class-generation utilities (tailwind-variants, tailwind-merge, clsx) plus tw-animate-css and mode-watcher still ship. These get a review PR like any other shipped dependency. Everything else in devDependencies (eslint, prettier, typescript, svelte-check, vitest, openapi-typescript) keeps automerging.",
       "matchFileNames": ["frontend/package.json"],
       "matchPackageNames": [
         "svelte",
@@ -60,9 +60,14 @@
         "vite",
         "tailwindcss",
         "@tailwindcss/**",
-        "flowbite",
-        "flowbite-svelte",
-        "flowbite-svelte-icons",
+        "bits-ui",
+        "shadcn-svelte",
+        "tailwind-variants",
+        "tailwind-merge",
+        "clsx",
+        "mode-watcher",
+        "tw-animate-css",
+        "@lucide/svelte",
         "unplugin-icons",
         "@iconify-json/**"
       ],
@@ -136,8 +141,8 @@
         "@sveltejs/kit",
         "vite",
         "tailwindcss",
-        "flowbite",
-        "flowbite-svelte",
+        "bits-ui",
+        "shadcn-svelte",
         "postgres",
         "prodrigestivill/postgres-backup-local",
         "node",

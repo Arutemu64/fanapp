@@ -5,10 +5,14 @@
 	import { page } from '$app/state';
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
+	import * as Alert from '$lib/components/ui/alert';
+	import { Button } from '$lib/components/ui/button';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import { Input } from '$lib/components/ui/input';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { createSearchIndex } from '$lib/utils/search';
-	import { Alert, Button, Modal, Search, Spinner } from 'flowbite-svelte';
-	import { ArrowUpDownOutline, BellActiveOutline } from 'flowbite-svelte-icons';
+	import { ArrowUpDown, BellRing, Search as SearchIcon, X } from '@lucide/svelte';
 
 	const client = createApiClient();
 
@@ -93,90 +97,102 @@
 	}
 </script>
 
-<Modal bind:open size="sm">
-	{#snippet header()}
-		<div class="flex items-center gap-2">
-			<ArrowUpDownOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-			<h3 class="text-lg font-bold text-gray-900 dark:text-white">Перенести выступление</h3>
-		</div>
-	{/snippet}
+<Dialog.Root bind:open>
+	<Dialog.Content class="sm:max-w-md">
+		<Dialog.Header>
+			<Dialog.Title class="flex items-center gap-2">
+				<ArrowUpDown class="size-5 text-muted-foreground" />
+				Перенести выступление
+			</Dialog.Title>
+		</Dialog.Header>
 
-	<div class="flex flex-col gap-4 sm:gap-5">
-		{#if formError}
-			<Alert color="red">
-				{formError}
-			</Alert>
-		{/if}
-
-		<p class="text-sm text-gray-600 sm:text-base dark:text-gray-400">
-			Выбери выступление, <strong class="text-gray-900 dark:text-white">после</strong> которого
-			разместить:
-			<strong class="text-primary-600 dark:text-primary-400">{event.title}</strong>
-		</p>
-
-		<!-- Moving an event broadcasts a mailing to every subscriber. Push notifications cannot be recalled, so warn before sending. -->
-		<Alert color="yellow">
-			{#snippet icon()}
-				<BellActiveOutline class="h-5 w-5 shrink-0" />
-			{/snippet}
-			Все подписчики получат уведомление. Пуш-уведомление нельзя будет отозвать.
-		</Alert>
-
-		<Search
-			name="schedule_move_search"
-			size="md"
-			aria-label="Поиск выступления для переноса"
-			placeholder="Поиск выступления…"
-			autocomplete="off"
-			spellcheck={false}
-			clearable
-			bind:value={query}
-			oninput={() => (formError = '')}
-		/>
-		<div
-			class="max-h-48 overflow-y-auto rounded-lg border border-gray-200 sm:max-h-60 dark:border-gray-700"
-		>
-			{#each filtered as ev (ev.id)}
-				<button
-					type="button"
-					class={[
-						'w-full cursor-pointer px-3 py-2.5 text-left text-sm transition-colors hover:bg-primary-50 focus:outline-none focus-visible:bg-primary-50 focus-visible:ring-2 focus-visible:ring-primary-500 sm:py-3 sm:text-base dark:hover:bg-primary-900/20 dark:focus-visible:bg-primary-900/20',
-						selectedId === ev.id && 'bg-primary-100 dark:bg-primary-900/40'
-					]}
-					onclick={() => handleSelect(ev)}
-				>
-					{#if ev.number !== null}
-						<span class="font-medium text-gray-900 dark:text-white">№{ev.number}</span>
-						<span class="text-gray-600 dark:text-gray-400"> — {ev.title}</span>
-					{:else}
-						<!-- No number to lead with (a break), so the title carries the row. -->
-						<span class="font-medium text-gray-900 dark:text-white">{ev.title}</span>
-					{/if}
-				</button>
-			{:else}
-				<div class="px-3 py-4 text-center text-sm text-gray-400 sm:py-5 sm:text-base">
-					Нет совпадений
-				</div>
-			{/each}
-		</div>
-	</div>
-
-	{#snippet footer()}
-		<Button
-			type="button"
-			color="alternative"
-			onclick={() => (open = false)}
-			disabled={isSubmitting}
-		>
-			Отмена
-		</Button>
-		<Button type="button" onclick={handleSubmit} disabled={!selectedId || isSubmitting}>
-			{#if isSubmitting}
-				<Spinner size="4" class="me-2 fill-white" />
-				Перенос…
-			{:else}
-				Перенести
+		<div class="flex flex-col gap-4 sm:gap-5">
+			{#if formError}
+				<Alert.Root variant="destructive">
+					<Alert.Description>{formError}</Alert.Description>
+				</Alert.Root>
 			{/if}
-		</Button>
-	{/snippet}
-</Modal>
+
+			<Dialog.Description class="sm:text-base">
+				Выбери выступление, <strong class="text-foreground">после</strong> которого разместить:
+				<strong class="text-primary">{event.title}</strong>
+			</Dialog.Description>
+
+			<!-- Moving an event broadcasts a mailing to every subscriber. Push notifications cannot be recalled, so warn before sending. -->
+			<Alert.Root variant="warning">
+				<BellRing class="shrink-0" />
+				<Alert.Description>
+					Все подписчики получат уведомление. Пуш-уведомление нельзя будет отозвать.
+				</Alert.Description>
+			</Alert.Root>
+
+			<div class="relative flex items-center">
+				<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+				<Input
+					name="schedule_move_search"
+					aria-label="Поиск выступления для переноса"
+					placeholder="Поиск выступления…"
+					autocomplete="off"
+					spellcheck={false}
+					class="pr-8 pl-9"
+					bind:value={query}
+					oninput={() => (formError = '')}
+				/>
+				{#if query}
+					<button
+						type="button"
+						class="absolute right-2 text-muted-foreground hover:text-foreground"
+						onclick={() => (query = '')}
+						aria-label="Очистить поиск"
+					>
+						<X class="size-4" />
+					</button>
+				{/if}
+			</div>
+
+			<div class="max-h-48 overflow-y-auto rounded-lg border border-border sm:max-h-60">
+				{#each filtered as ev (ev.id)}
+					<button
+						type="button"
+						class={[
+							'w-full cursor-pointer px-3 py-2.5 text-left text-sm transition-colors hover:bg-primary/10 focus:outline-none focus-visible:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary sm:py-3 sm:text-base',
+							selectedId === ev.id && 'bg-primary/20'
+						]}
+						onclick={() => handleSelect(ev)}
+					>
+						{#if ev.number !== null}
+							<span class="font-medium text-foreground">№{ev.number}</span>
+							<span class="text-muted-foreground"> — {ev.title}</span>
+						{:else}
+							<!-- No number to lead with (a break), so the title carries the row. -->
+							<span class="font-medium text-foreground">{ev.title}</span>
+						{/if}
+					</button>
+				{:else}
+					<div class="px-3 py-4 text-center text-sm text-muted-foreground sm:py-5 sm:text-base">
+						Нет совпадений
+					</div>
+				{/each}
+			</div>
+		</div>
+
+		<Dialog.Footer class="flex flex-row justify-end gap-2">
+			<Button
+				type="button"
+				variant="outline"
+				onclick={() => (open = false)}
+				disabled={isSubmitting}
+			>
+				Отмена
+			</Button>
+			<Button type="button" onclick={handleSubmit} disabled={!selectedId || isSubmitting}>
+				{#if isSubmitting}
+					<Spinner data-icon="inline-start" />
+					Перенос…
+				{:else}
+					Перенести
+				{/if}
+			</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>

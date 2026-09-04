@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Spinner } from 'flowbite-svelte';
+	import { Spinner } from '$lib/components/ui/spinner';
 
 	// Generic content-area fallback shown by the app shell while a section whose
 	// layout we can't meaningfully skeletonise loads. A spinner (not a skeleton) is
@@ -8,6 +8,6 @@
 </script>
 
 <div class="flex min-h-[40vh] items-center justify-center" role="status" aria-live="polite">
-	<Spinner size="8" color="primary" />
+	<Spinner class="size-8 text-primary" />
 	<span class="sr-only">Загрузка…</span>
 </div>

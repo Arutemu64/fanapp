@@ -38,7 +38,7 @@
 	<title>ФАН ФАН</title>
 </svelte:head>
 
-<div class="space-y-5 sm:space-y-6">
+<div class="flex flex-col gap-5 sm:gap-6">
 	<HeroCard festivalStart={config.festival_start} festivalEnd={config.festival_end} />
 	<GetReadySection {user} />
 </div>

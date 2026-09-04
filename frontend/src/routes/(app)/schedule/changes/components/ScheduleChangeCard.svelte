@@ -1,8 +1,4 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
-	import { Badge, type BadgeProps, Button, Card, Spinner } from 'flowbite-svelte';
-	import { UndoOutline } from 'flowbite-svelte-icons';
-	const client = createApiClient();
 	import type {
 		ScheduleChangeEventDTO,
 		ScheduleChangeFullDTO,
@@ -10,7 +6,15 @@
 	} from '$lib/types/schedule';
 
 	import { invalidate } from '$app/navigation';
+	import { createApiClient } from '$lib/api';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { Undo2 } from '@lucide/svelte';
+
+	const client = createApiClient();
 
 	interface Props {
 		change: ScheduleChangeFullDTO;
@@ -51,11 +55,12 @@
 		unskipped: 'Восстановлено'
 	};
 
-	const changeTypeColors: Record<ScheduleChangeType, BadgeProps['color']> = {
-		set_as_current: 'green',
-		moved: 'blue',
-		skipped: 'yellow',
-		unskipped: 'purple'
+	const changeTypeBadgeClasses: Record<ScheduleChangeType, string> = {
+		set_as_current: 'border-success/30 bg-success/10 text-success',
+		moved: 'border-info/30 bg-info/10 text-info',
+		skipped: 'border-warning/30 bg-warning/10 text-warning',
+		// "Восстановлено" = back to normal, a neutral reset rather than a semantic state.
+		unskipped: 'border-border bg-muted text-muted-foreground'
 	};
 
 	function formatEvent(event: ScheduleChangeEventDTO | null | undefined): string {
@@ -66,27 +71,23 @@
 	}
 </script>
 
-<!-- Feed card: inherits the app-wide flat, standard rounded-xl Card surface set in
-	the root +layout.svelte theme (matches the notifications feed). -->
-<Card class="w-full max-w-none p-4">
+<Card.Root as="article" class="w-full max-w-none p-4">
 	<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 		<div class="flex-1">
 			<div class="mb-2 flex flex-wrap items-center gap-2">
-				<Badge color={changeTypeColors[change.type]} border class="text-sm">
+				<Badge variant="outline" class={['text-sm', changeTypeBadgeClasses[change.type]]}>
 					{changeTypeLabels[change.type]}
 				</Badge>
-				<!-- The backend broadcasts a global announcement exactly when the
-				     next event changed, so use that flag to flag the change here. -->
 				{#if change.next_event_changed}
-					<Badge color="red" border class="text-sm">Объявление</Badge>
+					<Badge variant="destructive" class="text-sm">Объявление</Badge>
 				{/if}
 			</div>
 
-			<div class="space-y-1 text-sm">
+			<div class="flex flex-col gap-1 text-sm">
 				{#if change.changed_event}
 					<p>
-						<span class="font-bold text-gray-700 dark:text-gray-300">Выступление:</span>
-						<span class="text-gray-900 dark:text-white">
+						<span class="font-bold text-muted-foreground">Выступление:</span>
+						<span class="text-foreground">
 							{formatEvent(change.changed_event)}
 						</span>
 					</p>
@@ -94,10 +95,10 @@
 
 				{#if change.argument_event}
 					<p>
-						<span class="font-bold text-gray-700 dark:text-gray-300">
+						<span class="font-bold text-muted-foreground">
 							{change.type === 'moved' ? 'После:' : 'Связанное выступление:'}
 						</span>
-						<span class="text-gray-900 dark:text-white">
+						<span class="text-foreground">
 							{formatEvent(change.argument_event)}
 						</span>
 					</p>
@@ -105,8 +106,8 @@
 
 				{#if change.user}
 					<p>
-						<span class="font-bold text-gray-700 dark:text-gray-300">Пользователь:</span>
-						<span class="text-gray-900 dark:text-white">
+						<span class="font-bold text-muted-foreground">Пользователь:</span>
+						<span class="text-foreground">
 							{change.user.username}
 						</span>
 					</p>
@@ -114,8 +115,8 @@
 
 				{#if change.mailing_id}
 					<p>
-						<span class="font-bold text-gray-700 dark:text-gray-300">ID рассылки:</span>
-						<span class="text-gray-900 dark:text-white">
+						<span class="font-bold text-muted-foreground">ID рассылки:</span>
+						<span class="text-foreground">
 							{change.mailing_id}
 						</span>
 					</p>
@@ -124,17 +125,17 @@
 		</div>
 
 		<div class="flex items-center gap-2 sm:shrink-0">
-			<span class="text-xs text-gray-500 dark:text-gray-400">
+			<span class="text-xs text-muted-foreground">
 				ID: {change.id}
 			</span>
-			<Button color="light" size="xs" onclick={undoChange} disabled={isUndoing}>
+			<Button variant="outline" size="sm" onclick={undoChange} disabled={isUndoing}>
 				{#if isUndoing}
-					<Spinner size="4" />
+					<Spinner data-icon="inline-start" />
 				{:else}
-					<UndoOutline class="h-4 w-4" />
+					<Undo2 data-icon="inline-start" />
 				{/if}
 				Отменить
 			</Button>
 		</div>
 	</div>
-</Card>
+</Card.Root>

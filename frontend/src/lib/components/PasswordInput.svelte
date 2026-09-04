@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Input } from 'flowbite-svelte';
-	import { EyeOutline, EyeSlashOutline, LockSolid } from 'flowbite-svelte-icons';
+	import * as InputGroup from '$lib/components/ui/input-group';
+	import { Eye, EyeOff, Lock } from '@lucide/svelte';
 
 	interface Props {
 		value: string;
@@ -32,38 +32,39 @@
 	}: Props = $props();
 
 	let show = $state(false);
+	let invalid = $derived(color === 'red');
 </script>
 
-<Input
-	{id}
-	{name}
-	type={show ? 'text' : 'password'}
-	bind:value
-	{placeholder}
-	{autocomplete}
-	{required}
-	{disabled}
-	{maxlength}
-	class="ps-9"
-	{color}
-	{oninput}
->
-	{#snippet left()}
-		<LockSolid class="h-5 w-5" />
-	{/snippet}
-	{#snippet right()}
-		<button
-			type="button"
-			class="pointer-events-auto -mr-2 flex min-h-11 min-w-11 items-center justify-center rounded-lg hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-gray-700"
+<InputGroup.Root>
+	<InputGroup.Addon>
+		<Lock aria-hidden="true" />
+	</InputGroup.Addon>
+	<InputGroup.Input
+		{id}
+		{name}
+		type={show ? 'text' : 'password'}
+		bind:value
+		{placeholder}
+		{autocomplete}
+		{required}
+		{disabled}
+		{maxlength}
+		aria-invalid={invalid ? true : undefined}
+		{oninput}
+	/>
+	<InputGroup.Addon align="inline-end">
+		<InputGroup.Button
+			size="icon-sm"
+			{disabled}
 			onclick={() => (show = !show)}
 			aria-label={show ? `Скрыть ${revealLabel}` : `Показать ${revealLabel}`}
 			aria-pressed={show}
 		>
 			{#if show}
-				<EyeOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+				<Eye />
 			{:else}
-				<EyeSlashOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+				<EyeOff />
 			{/if}
-		</button>
-	{/snippet}
-</Input>
+		</InputGroup.Button>
+	</InputGroup.Addon>
+</InputGroup.Root>

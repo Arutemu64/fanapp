@@ -3,7 +3,7 @@
 This document outlines the codebase-specific constraints, SvelteKit SPA rules, styling standards, layout designs, and custom component inventory.
 
 > [!NOTE]
-> **Scope of this doc**: only FAN FAN–specific decisions and bindings live here — chosen scales, tokens, component wiring, conventions. Generic best-practice (Svelte 5 runes and event syntax, accessibility, UX, responsive + dark-mode mechanics) lives in the `svelte-code-writer`, `svelte-core-bestpractices`, `ui-ux-pro-max`, `impeccable`, `accessibility` and `core-web-vitals` skills — load those (AGENTS.md, "Load before you edit"). **Rule of thumb**: if a skill that has never seen this repo could state a rule, it belongs in the skill, not here. What only this repo knows belongs *here* — or in a code comment next to the constraint it explains. A `fanfan-*` skill is for the narrow remainder that fits neither: knowledge with no single file to live beside, like the Russian glossary or the migration traps.
+> **Scope of this doc**: only FAN FAN–specific decisions and bindings live here — chosen scales, tokens, component wiring, conventions. Generic best-practice (Svelte 5 runes and event syntax, accessibility, UX, responsive + dark-mode mechanics) lives in the `svelte-code-writer`, `svelte-core-bestpractices`, `ui-ux-pro-max`, `accessibility` and `core-web-vitals` skills — load those (AGENTS.md, "Load before you edit"). **Rule of thumb**: if a skill that has never seen this repo could state a rule, it belongs in the skill, not here. What only this repo knows belongs *here* — or in a code comment next to the constraint it explains. A `fanfan-*` skill is for the narrow remainder that fits neither: knowledge with no single file to live beside, like the Russian glossary or the migration traps.
 
 ---
 
@@ -65,8 +65,8 @@ The app is an installable PWA: `static/manifest.json` (icons, standalone display
 ## 3. Styling & Custom UI Rules
 
 * **Tailwind CSS v4**: Theme styling is configured directly in `frontend/src/app.css`. Avoid adding Tailwind v3 style configurations or tailwind.config files.
-* **Component Preference**: Always prioritize official Flowbite-Svelte components instead of writing custom elements.
-* **Icons**: Use `flowbite-svelte-icons` as the single UI icon set — don't add a second general-purpose icon pack (Lucide, Heroicons, etc.); pick the closest Flowbite equivalent instead. The one exception is brand logos (Telegram, TikTok, VK, and framework marks), which come from `@iconify-json/simple-icons` via `~icons/simple-icons/*` — those official marks have no Flowbite equivalent. Add icons only when they improve navigation or scanning.
+* **Component Preference**: Always prioritize the vendored shadcn-svelte components in `$lib/components/ui/` over writing custom elements. They live in the repo as source, so add a missing one with the CLI (`pnpm dlx shadcn-svelte@latest add <name>`) rather than hand-rolling — load the `shadcn-svelte` skill first. Compose them (`Card` + `Field` + `Input`), reach for built-in variants (`variant="outline"`, `size="sm"`) before custom classes, and use semantic tokens for colour. Forms use `Field.FieldGroup` + `Field.Field` (label, control, `Field.FieldError`/`Field.FieldDescription`) — never a raw `div` + `Label` + `<p>`.
+* **Icons**: Use `@lucide/svelte` (shadcn's configured `iconLibrary`, set in `components.json`) as the single UI icon set — don't add a second general-purpose icon pack (Heroicons, Tabler, etc.); pick the closest Lucide glyph instead. The one exception is brand logos (Telegram, TikTok, VK, and framework marks), which come from `@iconify-json/simple-icons` via `~icons/simple-icons/*` — those official marks have no Lucide equivalent. An icon inside a `<Button>` carries `data-icon="inline-start"` / `inline-end` (the button owns its size and spacing via CSS) — never a manual `size-*` or `me-*`/`mr-*`; the same applies to a `Spinner` swapped in for a loading state. Add icons only when they improve navigation or scanning.
 
 ### Typography Scale
 
@@ -101,32 +101,31 @@ Three tiers — pick by element role:
 | Circular | `rounded-full` | Avatars, dot indicators, step-number badges |
 
 **Rules:**
-* Never use `rounded-sm`, `rounded-md`, or bare `rounded` — they have no role in this scale.
+* These tiers govern **your own** layout and custom markup. The vendored `ui/` components carry their own `--radius`-derived radii (e.g. `button.svelte`'s `rounded-md`) — leave those alone; don't override a component to force it onto a tier.
+* In custom markup, never use `rounded-sm`, `rounded-md`, or bare `rounded` — they have no role in this scale.
 * `rounded-2xl` on the outermost container, `rounded-lg` on inner borders/rows inside it.
 
-### Centralized component theme (don't re-specify these defaults)
+### Component defaults live in the component source (don't re-specify them)
 
-Flowbite components ship their own radius defaults; re-overriding them on every instance is exactly how the design drifts. Instead, the root `src/routes/+layout.svelte` wraps the app in Flowbite's `<ThemeProvider>` with a `flowbiteTheme` object that sets the app-wide surface baseline once.
+shadcn-svelte components are **vendored into the repo as source** under `$lib/components/ui/` — there is no `ThemeProvider` and no central theme object. Each component owns its base classes, usually through a `tv()` (`tailwind-variants`) block at the top of its file (see `button.svelte`, `badge.svelte`). Colour, radius and spacing come from the CSS variables in `src/app.css`, and `cn()` (clsx + `tailwind-merge`) lets a call site's `class` override any base class it needs to — the consumer's `class` is merged *after* the base, so it wins.
 
-**Standing rule:** any class you'd otherwise repeat on 3+ instances of the same Flowbite component belongs in `flowbiteTheme`, not on each instance. This is a rule about de-duplicating *our* overrides — **not** a reason to preserve Flowbite's defaults. Diverging from a Flowbite default is fine and deliberate (the radius scale below does exactly that, overriding `rounded-lg` app-wide); the point is only to encode each divergence *once*, centrally, so no single call site can forget it and drift. A one-off override that genuinely belongs on a single element stays on that element.
+**Standing rule:** change an app-wide default in **one** place — the component's own source (its `tv()` base) or the shared token in `app.css` — never by repeating the same override on every instance. `class` on an instance is for *layout* (width, margin, grid placement) and genuine one-off deviations, not for re-setting a colour or radius the component already carries.
 
-The current set:
+Where the app-wide knobs live:
 
-| Component | Flowbite default | Themed to |
-|---|---|---|
-| `Card` | `shadow-md rounded-lg` | `shadow-none rounded-xl` + a `focus-visible` ring (only renders on `href` cards — Flowbite emits an `<a>` there; inert on non-focusable `<div>` cards) |
-| `Alert` | `rounded-lg` | `rounded-xl` |
-| `Button` | `rounded-lg` | `rounded-xl` |
-| `Dropdown` | `rounded-lg` | `rounded-xl` |
-| `Modal` | `rounded-lg` (base/header/footer) | `rounded-2xl` / `rounded-t-2xl` / `rounded-b-2xl` |
+| Knob | Source of truth |
+|---|---|
+| Radius scale | `--radius` in `src/app.css` (`--radius-sm/md/lg/xl` derive from it); components read it as `rounded-md`/`rounded-lg`/`rounded-xl` |
+| Semantic colours | the `--background`/`--foreground`/`--card`/`--muted`/`--primary`/… tokens in `src/app.css` (`:root` + `.dark`), exposed as `bg-*`/`text-*` utilities. `--primary` is wired to the watermelon brand and is mode-aware, so `bg-primary`/`text-primary` are on-brand with **no** `dark:` needed (see Dark Mode) |
+| Brand palette | the `--color-primary-*` / `--color-secondary-*` watermelon scales in `@theme`, used directly as `bg-primary-600` / `text-primary-400`; the semantic `--primary` points into this scale (`600` light, `400` dark) |
+| A component's own base style | the `tv()` block at the top of that component's `.svelte` file in `ui/` |
 
 So:
 
-* A plain instance of any themed component is already correct — **do not** re-add the class the theme already sets (e.g. `rounded-xl` on a `<Button>`, `shadow-none` on a `<Card>`); that reintroduces the duplication the theme exists to remove.
-* Opt **up** only where an instance genuinely deviates: `rounded-2xl` for large feature/settings/error cards, `shadow-sm` for a genuinely tappable standalone card (`NominationCard`, notification rows), `rounded-full` for a deliberately circular button (the PWA install prompt's floating actions). Its own class wins via `tailwind-merge`, because the theme's class is merged *before* the consumer's `class`.
-* `Button`'s `min-h-11` (44px touch target) is **not** themed — it's a per-instance call between a full-width primary CTA and a compact secondary/icon button, not a surface default.
-* `Textarea`'s unwrapped render path (no `header`/`footer`/`addon` snippet — the only path this app uses) does not read the `ThemeProvider` theme at all; that's a flowbite-svelte quirk, not a choice. Its `rounded-xl` has to stay a per-instance `class` until upstream fixes it — don't move it into `flowbiteTheme` expecting it to take effect.
-* Changing one of these baselines is a one-line edit in `flowbiteTheme` — not a sweep across every instance.
+* A plain instance of a `ui/` component is already correct — **do not** re-add a class it already carries (`rounded-xl` on a `<Button>` is redundant; the button sets its own radius).
+* Reach for a **variant** before a class: `variant="outline"`/`"secondary"`/`"destructive"`, `size="sm"`/`"icon"`. Add `class` only for layout or a genuine one-off (`rounded-2xl` on a large feature card, `class="w-full"` on a stacked CTA); it wins via `cn()`/`tailwind-merge`.
+* **`Button` sizes meet the 44px touch target in the base**, one rung above the upstream shadcn defaults (see the comment in `button.svelte`): `default`/`icon` are 44px, `sm`/`icon-sm` 40px, `lg`/`icon-lg` 48px — this is a phone-first app, so a plain `<Button>` is already tappable and needs **no** `min-h-11`. `xs`/`icon-xs` stay 24px (WCAG 2.2 AA min) as a deliberate opt-in for dense desktop-only chrome — never a mobile tap target. Existing `class="min-h-11"` on instances is now redundant on a `default` button (harmless) and only still forces the extra 4px on an `sm` one; don't add it to new buttons.
+* Need a different app-wide default (say every `Card` flatter)? Edit `card.svelte` once, or the relevant token in `app.css` — one edit, not a sweep across every call site.
 
 ### Z-Index Scale
 
@@ -141,21 +140,23 @@ number in a component.**
 | Base content | `z-0` / auto | In-flow page content |
 | In-page sticky | `z-10` – `z-30` | Page-local sticky headers and FABs that must stay *below* chrome (schedule day-tab bar, sub-headers, floating "now" button; overlay-internal controls). Local stacking, **not** tokenized. |
 | Top chrome | `z-(--z-chrome)` = 40 | The hide-on-scroll top chrome overlay in `(app)/+layout.svelte` — the `AppNavbar` and connection banner. The layout owns its positioning (an absolute overlay it slides with `top`), not `AppNavbar`. |
-| Overlays | `z-(--z-overlay)` = 50 | Mobile bottom nav, toasts, update prompt, skip link, Flowbite `<Modal>` backdrops |
-| Inline modal | `z-(--z-modal)` = 60 | Inline (non-portaled) modals that must cover the bottom nav: the mobile sidebar drawer **and its backdrop** (`AppSidebar`), the fullscreen map viewer (`map/+page.svelte`) |
+| Overlays | `z-(--z-overlay)` = 50 | Mobile bottom nav, toasts, update prompt, skip link, and the portaled shadcn overlays — `Dialog`, and the `Sheet` behind the mobile sidebar (`AppSidebar`), both portaled to `body` |
+| Inline modal | `z-(--z-modal)` = 60 | The one inline (non-portaled) modal that must cover the bottom nav from its source position: the fullscreen map viewer (`map/+page.svelte`) |
 
 **Rules:**
 * Top chrome stays *below* overlays (`--z-chrome` < `--z-overlay`) so drawers/modals cover it.
 * In-page sticky content stays *below* the navbar (`≤ z-30` < 40) — it scrolls under the chrome, never over it. This band is page-local and intentionally left on plain utilities, not tokens.
-* **Inline vs portaled modals.** Flowbite `<Modal>` portals to `body` (after the bottom nav in the DOM), so `--z-overlay` already covers the nav via paint order — don't override its `z-50`. A modal rendered **inline** (the sidebar drawer, the map viewer) sits at its source position *before* the bottom nav, so it needs `--z-modal` to win. For the drawer, lift **both** the panel (`class`) and the backdrop (`classes.backdrop`): Flowbite's theme ships the panel at `z-50` (a tie the nav wins on DOM order) and the backdrop at `z-40` (below it), and raising only one leaves the nav tappable through the overlay.
+* **`--z-overlay` is pinned to `50` to match the vendored shadcn overlays.** `Dialog` and `Sheet` (bits-ui) hardcode `z-50` on their content and backdrop and never read the token, so the two must stay numerically equal — change one, change the other, or the portaled surfaces drift off the ladder.
+* **Inline vs portaled overlays.** The shadcn `Dialog` and `Sheet` portal to `body` (via bits-ui, after the bottom nav in the DOM) and carry their own `z-50`, so `--z-overlay` already covers the nav via paint order — don't override it. The mobile sidebar is such a `Sheet` (`AppSidebar`), so it needs nothing extra. An overlay rendered **inline** sits at its source position *before* the bottom nav and so needs `--z-modal` to win: the only one is the fullscreen map viewer (`map/+page.svelte`), a hand-rolled overlay that sets **both** its panel and its backdrop to `z-(--z-modal)` — raising only one would leave the nav tappable through it.
 
 The boot splash (`#app-splash`, `z-index: 9999` in `app.html`) sits off this ladder on purpose: it is plain pre-bundle CSS with no access to the token layer, and must cover everything until the root layout mounts and removes it.
 
 ### Dark Mode
 
-Theming is wired via `@custom-variant dark` in `app.css` with `.dark` on `<html>`. Project rules:
-* Ship a `dark:` variant for every surface — never light-only.
-* Use semantic tokens (`primary-*`, `secondary-*`, `gray-*`), never raw hex.
+Theming is wired via `@custom-variant dark` in `app.css` with `.dark` on `<html>` (toggled by the theme service / `mode-watcher`). Project rules:
+* **Neutrals ride the semantic tokens.** Surfaces and text use `bg-background`/`bg-card`/`bg-muted`, `text-foreground`/`text-muted-foreground`, `border-border` — one token is already correct in both modes, so they take **no** `dark:` override. Don't reach for raw `gray-*` + a `dark:gray-*` pair; that's the pattern the shadcn migration removed.
+* **The semantic `--primary` is brand-wired and mode-aware** — watermelon `--color-primary-600` in light, the lighter `-400` in dark (so `text-primary` clears AA on the dark surface; `--primary-foreground` flips white→dark to stay AA on the fill). Because it switches by mode itself, `bg-primary`/`text-primary` take **no** `dark:` override.
+* **Raw brand-scale and status colours stay explicit.** A fixed brand-scale utility used directly (`bg-primary-600`, `text-primary-400`) or a status hue (green/amber/red/blue) is one shade, so it *does* ship a `dark:` variant for every surface — never light-only. Never raw hex.
 * "Active/selected" = ring/border + badge, not a bold fill (don't signal by color alone; keep dark text contrast). Cards: `ring-2 ring-green-600 dark:ring-green-500` (ring only, no fill either mode — keeps neutral card + readable green badge; ring shade tuned per mode for 3:1 non-text contrast). Rows: left accent bar (`border-l-4 border-transparent` everywhere, `border-green-500` active — reserves space, no shift) + `bg-green-100 dark:bg-green-900/40`.
 
 Contrast targets and dark-mode mechanics → `accessibility` / `ui-ux-pro-max`.
@@ -189,47 +190,71 @@ Russian copy is mandatory for all user-facing text — buttons, placeholders, er
 
 ## 7. Modal Conventions
 
-All modals use Flowbite-Svelte `<Modal bind:open size="sm">`. Follow these structural rules:
+Two overlay families, by intent: informational and form modals use the shadcn `Dialog` (`$lib/components/ui/dialog`); confirmations that gate an action use `AlertDialog` (`$lib/components/ui/alert-dialog`) — see "Confirmations" below. Both are driven by `bind:open`. (`Sheet` and `Drawer` are also in the registry — add them with the CLI if a side panel or bottom sheet is ever needed.) Follow these structural rules:
 
-### Required: `{#snippet header()}`
+### Structure: Root → Content → Header → Title + Description
 
-Every modal **must** use the `header` snippet — never put a raw `<h3>` inside the modal body. Always pair the title with a contextual icon:
+Every modal is a `Dialog.Root` + `Dialog.Content`, and the title is a real `Dialog.Title` — **required**, because bits-ui wires it to the dialog for screen readers (never a raw `<h3>`; use `class="sr-only"` to hide it visually). Add a `Dialog.Description` too — also **required**: bits-ui wires it as `aria-describedby` and logs a dev warning when it is absent. When a modal has a natural lead sentence, make *that* the `Dialog.Description`; when the body speaks for itself (a form), add a concise `class="sr-only"` one stating the purpose. Pair the title with a contextual icon and constrain the width on `Content`:
 
 ```svelte
-<Modal bind:open size="sm">
-  {#snippet header()}
-    <div class="flex items-center gap-2">
-      <SomeIcon class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-      <h3 class="text-lg font-bold text-gray-900 dark:text-white">Заголовок</h3>
-    </div>
-  {/snippet}
+<Dialog.Root bind:open>
+  <Dialog.Content class="sm:max-w-md">
+    <Dialog.Header>
+      <Dialog.Title class="flex items-center gap-2">
+        <SomeIcon class="size-5 text-muted-foreground" />
+        Заголовок
+      </Dialog.Title>
+      <Dialog.Description class="sr-only">Что делает это окно.</Dialog.Description>
+    </Dialog.Header>
 
-  <!-- body -->
-</Modal>
+    <!-- body -->
+  </Dialog.Content>
+</Dialog.Root>
 ```
 
-### Footer snippet: action-only modals
+Open state is a `$bindable` prop on the modal component (`bind:open`); for a click-to-open trigger use `Dialog.Trigger`. There is **no `autoclose`** — close explicitly with `onclick={() => (open = false)}` or a `Dialog.Close`.
 
-Use `{#snippet footer()}` for modals whose primary content is not a form — confirmation dialogs, single-action prompts. Flowbite renders a top-border separator automatically:
+### Confirmations: AlertDialog
+
+A modal that confirms an action — especially an irreversible one (the schedule broadcasts fire un-recallable pushes) — uses `AlertDialog`, not `Dialog`. It carries `role="alertdialog"` and, unlike `Dialog`, **does not dismiss on an outside click** (bits-ui defaults `interactOutsideBehavior` to `"ignore"`), so the user must make an explicit choice. Focus lands on the first focusable control, so put `AlertDialog.Cancel` before the confirm in the DOM — the safe choice gets focus (WAI-ARIA APG).
+
+Keep the **library's default layout** — centered header, stacked buttons on mobile — deliberately. It reads as a distinct "stop and decide" surface, and matching the app's left-aligned `Dialog` shape would mean fighting the component's `data-size` widths with `!important`. Do not re-add width/alignment overrides.
 
 ```svelte
-{#snippet footer()}
-  <Button type="button" color="alternative" onclick={() => (open = false)}>Отмена</Button>
-  <Button type="button" color="red" onclick={handleDelete}>Удалить</Button>
-{/snippet}
+<AlertDialog.Root bind:open>
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title class="flex items-center gap-2">…</AlertDialog.Title>
+      <AlertDialog.Description>{message}</AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel>Отмена</AlertDialog.Cancel>
+      <AlertDialog.Action variant="destructive" onclick={onconfirm}>Удалить</AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog.Root>
+```
+
+`AlertDialog.Action` and `AlertDialog.Cancel` **close on click on their own** (via `bind:open`). That suits a confirm whose work is fired by the parent (errors surface as a toast there). But when the modal fires the request itself and must **stay open on failure** to show an in-dialog error, use a plain `<Button>` for the confirm instead of `AlertDialog.Action` — Action would auto-close and drop the message (see `UnsubscribeModal`).
+
+### Footer: non-form Dialog actions
+
+A `Dialog` whose primary content is neither a form nor a confirmation (a picker, an info panel with a CTA — `SubscribeModal`, `VkNotificationsModal`) puts its action row in `Dialog.Footer`, closing explicitly:
+
+```svelte
+<Dialog.Footer class="flex flex-row justify-end gap-2">
+  <Button type="button" variant="outline" onclick={() => (open = false)}>Отмена</Button>
+  <Button type="button" onclick={handleSubmit}>Подписаться</Button>
+</Dialog.Footer>
 ```
 
 ### Form modals: submit button stays in body
 
-When the modal contains a real `<form onsubmit={...}>`, put the submit button **inside the form** in the body — not in the footer snippet. This keeps the button as part of the form flow, and the visual separation is intentional (no footer divider).
+When the modal contains a real `<form onsubmit={...}>`, put the submit button **inside the form** in the body — not in `Dialog.Footer`. This keeps the button in the form flow. Lay the fields out with `Field.FieldGroup` + `Field.Field` (see "Component Preference" above and the `shadcn-svelte` skill), not raw `div`s.
 
 ### Destructive actions
 
-Destructive confirm buttons use `color="red"`. Always pair with a neutral cancel (`color="alternative"` or `color="light"`).
-
-### No `autoclose`
-
-Do not use the deprecated `autoclose` prop. Wire close explicitly: `onclick={() => (open = false)}`.
+Destructive confirm buttons use `variant="destructive"`. Always pair with a neutral cancel (`variant="outline"`).
 
 ### Curly-quote hazard
 
@@ -242,7 +267,7 @@ Never copy-paste class attribute values from rich-text sources. Unicode curly qu
 **Placement rule** — decide where a component lives by *who uses it*:
 
 * Used by **one route subtree** → put it in a `components/` subfolder next to the page that uses it (e.g. `routes/(app)/schedule/components/EventCard.svelte`). Always the `components/` subfolder — never loose in the route folder.
-* Used across **different route subtrees** → promote it to `frontend/src/lib/components/` (e.g. `SectionIntro`, `OtpInput`, `ToastContainer`).
+* Used across **different route subtrees** → promote it to `frontend/src/lib/components/` (e.g. `SectionIntro`, `SkipLink`, `EmptyState`). The reusable UI primitives themselves (`Button`, `Dialog`, `Field`, …) are the vendored shadcn set in `frontend/src/lib/components/ui/` — don't hand-roll a component that already has a `ui/` equivalent.
 * App-shell pieces used only once (navbar/sidebar/banner) stay colocated under `routes/(app)/components/` — single-use does **not** justify `lib/`.
 
 **Module placement (`.ts` / `.svelte.ts`)** — the same *who-uses-it* test, plus a *what-kind* test. SvelteKit itself prescribes only `$lib` and `$lib/server`; the `utils/` vs `services/` split is our convention, so its value is entirely in keeping it consistent:
@@ -254,13 +279,13 @@ Never copy-paste class attribute values from rich-text sources. Unicode curly qu
 
 ### When to split a large component
 
-Line count is a *smell*, not a threshold — never split to hit a number. Split when a file carries more than one responsibility or repeats a block; leave a long-but-cohesive file whole. The generic case *for* splitting (single responsibility, don't-repeat-yourself) lives in `svelte-core-bestpractices` / `impeccable` — load those. What this repo pins is **where each kind of extraction goes**, so a split lands in the conventional shape instead of a bespoke one:
+Line count is a *smell*, not a threshold — never split to hit a number. Split when a file carries more than one responsibility or repeats a block; leave a long-but-cohesive file whole. The generic case *for* splitting (single responsibility, don't-repeat-yourself) lives in `svelte-core-bestpractices` — load that. What this repo pins is **where each kind of extraction goes**, so a split lands in the conventional shape instead of a bespoke one:
 
 * **Pure logic** (grouping, formatting, parsing, filtering) → a plain function in a `.ts` module with a colocated `*.test.ts`, placed per the module-placement rule above (`$lib/utils/` if shared, colocated beside the route if single-use — as `scheduleGrouping.ts` is). Keep it a `.ts`, not `.svelte.ts`, unless it genuinely needs runes — a pure function is testable in the node-only Vitest env (DOM is out of scope, ADR-0011). Moving logic out of a `.svelte` file is usually the highest-value split: it shrinks the component *and* buys a test.
 * **A repeated markup block** (≥2 near-identical instances, like the Telegram/VK rows that became `SocialConnectionRow`) → a component in the folder the placement rule above dictates. Parameterise the differences with props, and pass variant markup as a `{#snippet}` prop (e.g. an `icon` snippet) rather than a `boolean`-per-shape.
 * **Repeated markup used only inside one component** → a local `{#snippet}`, *not* a new file. A file earns its own module only when something else renders it.
 * **A self-contained dialog** → its own component, mounted behind `{#if open}` where always-mounting would cost real instances (see `EventCard`'s modals). An extracted modal keeps the §7 conventions.
-* **A Flowbite class repeated on 3+ instances** → `flowbiteTheme` (§3), *not* a wrapper component — that's a theming divergence, not a new abstraction.
+* **A base style repeated on 3+ instances of a `ui/` component** → the component's own `tv()` base or an `app.css` token (§3), *not* a wrapper component — that's a theming change, not a new abstraction.
 
 Two guardrails on the result:
 
@@ -271,8 +296,8 @@ A split that changes rendered layout is not done until you've *seen* it render �
 
 Before writing any new component, check existing items in `frontend/src/lib/components/`:
 * **Page titles**: The screen title lives in the top `AppNavbar`, not in the page body. Each page sets it by returning `title` from its `load` (`page.data.title`); `AppNavbar` renders it as the page `<h1>`. For optional intro text or extra context below the navbar, use `$lib/components/SectionIntro.svelte` (description + children, no title).
-* **Toasts**: Trigger alerts via `$lib/services/toasts.svelte.ts` and display them with `$lib/components/ToastContainer.svelte`. The service keeps two independent queues so a burst of one category can never evict the other: **status** toasts (action feedback — `add`/`error`) and **push** toasts (inbound SSE notifications — `push`). `ToastContainer` renders them in separate regions — push at the top (like OS notifications), status bottom-centered above the mobile bottom nav (bottom-right on desktop where that nav is hidden).
-* **Notification bodies**: A notification `body` arrives as a pre-sanitized, safe HTML subset (the backend's `HtmlSanitizer` is the single source of truth — see [backend.md](backend.md)). Render it with `{@html notification.body}` (in `ToastContainer.svelte` and `NotificationListItem.svelte`), keeping `whitespace-pre-line` so the stored `\n` line breaks show. The notification `title` is plain text — render it with normal `{title}` interpolation. Do **not** add a client-side sanitizer or `{@html}` any other API field.
+* **Toasts**: Trigger toasts through `$lib/services/toasts.svelte.ts` (`getToastService()` for the context instance): `add(message, type)` for status feedback, `error(err)` for a mapped API error, `push(notification)` for an inbound SSE notification. The service wraps [`svelte-sonner`](https://svelte-sonner.vercel.app/)'s `toast()`; toasts render through the `Sonner` wrapper (`$lib/components/ui/sonner`, theme-aware, Lucide status icons) mounted once as `<Toaster />` in the root `+layout.svelte`. `push` dedupes by notification id (`#seenPushIds`) and strips the notification's HTML to plain text for the toast description. Don't hand-roll toast markup — go through the service.
+* **Notification bodies**: A notification `body` arrives as a pre-sanitized, safe HTML subset (the backend's `HtmlSanitizer` is the single source of truth — see [backend.md](backend.md)). Render it with `{@html notification.body}` in `NotificationListItem.svelte`, keeping `whitespace-pre-line` so the stored `\n` line breaks show. The push **toast** shows the same body as *plain text* — the toast service strips its tags before handing it to `svelte-sonner`, whose description is not HTML. The notification `title` is plain text — render it with normal `{title}` interpolation. Do **not** add a client-side sanitizer or `{@html}` any other API field.
 * **Page Containers**: Match the spacing/layout patterns established in `frontend/src/routes/(app)/+layout.svelte`.
 * **Captcha**: `$lib/components/CaptchaWidget.svelte` wraps the Yandex SmartCaptcha widget in invisible mode (loaded via `$lib/utils/smartcaptcha.ts`). It renders nothing unless `PUBLIC_SMARTCAPTCHA_CLIENT_KEY` is set, so callers must gate their submit logic on the exported `captchaEnabled` flag and pass the bound `token` to the API. Invisible mode mints a token only after `execute()`, so callers bind `execute` and call it when submitting; the bound `reset` fetches a fresh single-use token for the next request. Used on the login-code request and resend. Yandex (rather than Cloudflare Turnstile) because Cloudflare is often throttled in Russia — see [docs/adr/](adr/README.md).
 
@@ -284,8 +309,8 @@ Project a11y bindings — keep wired, don't regress:
 
 * **Skip link**: `$lib/components/SkipLink.svelte` is wired in `(app)/+layout.svelte` and targets `#main-content`. Keep both the link and the target id.
 * **Focus on route**: the main scroll region carries the `#main-content` id and is focusable (`tabindex="-1"` + `focus-visible` ring) — keyboard/screen-reader users land in content after navigation.
-* **Toast a11y contract**: `ToastContainer` sets `role="alert"`/`aria-live="assertive"` for errors and `role="status"`/`aria-live="polite"` otherwise, with `aria-atomic`. Match this on any new toast markup; toasts must not steal focus.
-* **Reduced motion**: a global `@media (prefers-reduced-motion: reduce)` rule in `app.css` near-instantly finishes all CSS animations/transitions and disables `scroll-smooth`. CSS-only motion is covered automatically. JS-driven Svelte transitions are **not** affected by that rule — gate them on `prefersReducedMotion.current` from `svelte/motion` instead (see `ToastContainer` toast `fly` + swipe-dismiss and `HeroCard` countdown).
+* **Toast a11y**: `svelte-sonner` owns the toast region's ARIA (`aria-live`, roles) and does not steal focus. Trigger toasts through the toast service (§8) rather than hand-rolling toast markup, so that contract holds.
+* **Reduced motion**: a global `@media (prefers-reduced-motion: reduce)` rule in `app.css` near-instantly finishes all CSS animations/transitions and disables `scroll-smooth`. CSS-only motion is covered automatically. JS-driven Svelte transitions are **not** affected by that rule — gate them on `prefersReducedMotion.current` from `svelte/motion` instead (see the `HeroCard` countdown; `svelte-sonner` manages its own toast motion).
 
 Everything generic — contrast ratios, keyboard/tab order, `aria-label` on icon-only buttons, heading hierarchy, color-not-sole-signal — lives in `ui-ux-pro-max`. Load it; don't restate here.
 

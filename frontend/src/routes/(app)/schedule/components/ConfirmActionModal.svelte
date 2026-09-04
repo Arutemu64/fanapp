@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { Alert, Button, Modal } from 'flowbite-svelte';
-	import { BellActiveOutline, ExclamationCircleOutline } from 'flowbite-svelte-icons';
+	import * as Alert from '$lib/components/ui/alert';
+	import * as AlertDialog from '$lib/components/ui/alert-dialog';
+	import { AlertCircle, BellRing } from '@lucide/svelte';
 
 	interface Props {
 		open: boolean;
@@ -32,39 +33,42 @@
 			? 'Все подписчики получат уведомление. Пуш-уведомление нельзя будет отозвать.'
 			: 'Подписчики получат уведомление об изменении.'
 	);
-
-	// Loud broadcasts get the yellow warning alert; quiet updates a muted gray one.
-	let notifyColor: 'yellow' | 'gray' = $derived(notifyTone === 'warning' ? 'yellow' : 'gray');
-
-	function handleConfirm() {
-		// Close first so a slow request never leaves the dialog hanging open.
-		open = false;
-		onconfirm();
-	}
 </script>
 
-<Modal bind:open size="sm">
-	{#snippet header()}
-		<div class="flex items-center gap-2">
-			<ExclamationCircleOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-			<h3 class="text-lg font-bold text-gray-900 dark:text-white">{title}</h3>
-		</div>
-	{/snippet}
-
-	<div class="flex flex-col gap-3">
-		<p class="text-sm text-gray-600 sm:text-base dark:text-gray-400">{message}</p>
+<!-- AlertDialog (role="alertdialog"), not Dialog: these confirm an irreversible push
+	broadcast, so the surface must not dismiss on an outside click and must force an
+	explicit choice. AlertDialog.Action/Cancel close on their own via bind:open. -->
+<AlertDialog.Root bind:open>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<AlertDialog.Title class="flex items-center gap-2">
+				<AlertCircle class="size-5 text-muted-foreground" />
+				{title}
+			</AlertDialog.Title>
+			<AlertDialog.Description>{message}</AlertDialog.Description>
+		</AlertDialog.Header>
 
 		<!-- These actions fan out a mailing to every subscriber. Telegram messages can be undone, but delivered push notifications cannot, so warn before sending. -->
-		<Alert color={notifyColor}>
-			{#snippet icon()}
-				<BellActiveOutline class="h-5 w-5 shrink-0" />
-			{/snippet}
-			{notifyMessage}
-		</Alert>
-	</div>
+		{#if notifyTone === 'warning'}
+			<Alert.Root variant="warning">
+				<BellRing class="shrink-0" />
+				<Alert.Description>{notifyMessage}</Alert.Description>
+			</Alert.Root>
+		{:else}
+			<Alert.Root class="border-border bg-muted/50 text-muted-foreground">
+				<BellRing class="size-4 shrink-0" />
+				<Alert.Description>{notifyMessage}</Alert.Description>
+			</Alert.Root>
+		{/if}
 
-	{#snippet footer()}
-		<Button type="button" color="alternative" onclick={() => (open = false)}>Отмена</Button>
-		<Button type="button" color={confirmColor} onclick={handleConfirm}>{confirmLabel}</Button>
-	{/snippet}
-</Modal>
+		<AlertDialog.Footer>
+			<AlertDialog.Cancel>Отмена</AlertDialog.Cancel>
+			<AlertDialog.Action
+				variant={confirmColor === 'red' ? 'destructive' : 'default'}
+				onclick={onconfirm}
+			>
+				{confirmLabel}
+			</AlertDialog.Action>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>

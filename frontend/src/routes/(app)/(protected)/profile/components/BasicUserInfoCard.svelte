@@ -1,10 +1,13 @@
 <script lang="ts">
 	import type { CurrentUserDTO } from '$lib/types/user';
 
+	import * as Avatar from '$lib/components/ui/avatar';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
 	import { offlineWriteGate } from '$lib/utils/offlineAction';
-	import { getAvatarInitials, getRoleColor, getRoleLabel } from '$lib/utils/users';
-	import { Avatar, Badge, Button, Card } from 'flowbite-svelte';
-	import { PenSolid } from 'flowbite-svelte-icons';
+	import { getAvatarInitials, getRoleLabel } from '$lib/utils/users';
+	import { Pencil } from '@lucide/svelte';
 
 	import EditProfileModal from './EditProfileModal.svelte';
 
@@ -27,40 +30,43 @@
 	settings cards share and leads with the avatar + name, so it reads as "who you are" and
 	anchors the page above the settings group rather than looking like a fifth settings panel.
 -->
-<Card
-	class="w-full max-w-none rounded-2xl border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
->
+<Card.Root class="w-full max-w-none rounded-2xl">
 	<!--
 		Mobile: centered vertical stack (avatar / name / role / edit) so the full username gets
 		the card's width and never clips. sm+: the horizontal banner — avatar left, name + role
 		in the middle, edit action on the right.
 	-->
+	<!-- Horizontal padding only: Card.Root's py-(--card-spacing) owns the vertical. -->
 	<div
-		class="flex flex-col items-center gap-3 p-5 text-center sm:flex-row sm:gap-5 sm:p-6 sm:text-left"
+		class="flex flex-col items-center gap-3 px-5 text-center sm:flex-row sm:gap-5 sm:px-6 sm:text-left"
 	>
-		<Avatar size="lg" class="shrink-0">{avatarInitials}</Avatar>
+		<Avatar.Root class="size-16 shrink-0 text-xl font-bold">
+			<Avatar.Fallback class="bg-primary/10 text-primary">
+				{avatarInitials}
+			</Avatar.Fallback>
+		</Avatar.Root>
 
 		<div class="flex min-w-0 flex-col items-center gap-2 sm:flex-1 sm:items-start">
-			<h2 class="min-w-0 text-xl font-bold break-words text-gray-900 sm:text-2xl dark:text-white">
+			<h2 class="min-w-0 text-xl font-bold break-words text-foreground sm:text-2xl">
 				@{user.username}
 			</h2>
-			<Badge color={getRoleColor(user.role)} border class="text-xs">
+			<Badge variant="secondary" class="text-xs">
 				{getRoleLabel(user.role)}
 			</Badge>
 		</div>
 
 		<Button
-			color="alternative"
+			variant="outline"
 			size="sm"
 			class="min-h-11 shrink-0"
 			disabled={offlineGate.disabled}
 			title={offlineGate.title}
 			onclick={() => (editProfileModalOpen = true)}
 		>
-			<PenSolid class="me-2 h-4 w-4" />
+			<Pencil data-icon="inline-start" />
 			Редактировать
 		</Button>
 	</div>
-</Card>
+</Card.Root>
 
 <EditProfileModal {user} bind:open={editProfileModalOpen} {onUpdate} />
