@@ -99,6 +99,20 @@ export default defineConfig(({ mode }) => {
 				compiler: 'svelte'
 			})
 		],
+		optimizeDeps: {
+			// The service worker (src/service-worker.ts) is a separate SvelteKit entry
+			// that Vite's initial dep scan doesn't crawl, so these workbox packages get
+			// discovered only when /service-worker.js is first requested — triggering a
+			// second optimize pass and a full page reload mid-session. Pre-declaring
+			// them folds them into the first pass, so the dev server settles once.
+			include: [
+				'workbox-core',
+				'workbox-expiration',
+				'workbox-precaching',
+				'workbox-routing',
+				'workbox-strategies'
+			]
+		},
 		// Tests live here rather than in a vitest.config.ts of their own so they run
 		// through the SvelteKit plugin above: that is what resolves `$lib`/`$app`
 		// and compiles runes in `*.svelte.test.ts` files. See docs/testing.md.

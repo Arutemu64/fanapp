@@ -89,6 +89,30 @@ export default defineConfig(
 		}
 	},
 	{
+		// Design-system primitive renders <a href={...}> from an external/variable href.
+		files: ['src/lib/components/ui/button/button.svelte'],
+		rules: {
+			'svelte/no-navigation-without-resolve': 'off'
+		}
+	},
+	{
+		// Vendored shadcn-svelte primitives. Some wrap another local primitive via
+		// `ComponentProps<typeof Input>` etc.; typescript-eslint's type service does
+		// not run svelte2tsx, so a type originating in a `.svelte` file resolves to
+		// `any` and trips the no-unsafe family — a false positive (svelte-check/tsc
+		// type these correctly). Relax only that family here, and only for the
+		// generated `ui/` sources, so `shadcn-svelte` components stay unedited and
+		// `shadcn-svelte update`-able. See sveltejs/svelte#16264.
+		files: ['src/lib/components/ui/**'],
+		rules: {
+			'@typescript-eslint/no-unsafe-argument': 'off',
+			'@typescript-eslint/no-unsafe-assignment': 'off',
+			'@typescript-eslint/no-unsafe-call': 'off',
+			'@typescript-eslint/no-unsafe-member-access': 'off',
+			'@typescript-eslint/no-unsafe-return': 'off'
+		}
+	},
+	{
 		// These files live outside the SvelteKit TS project: root config files,
 		// build scripts, and the service worker (which SvelteKit deliberately
 		// excludes from the app tsconfig). The project service can't resolve

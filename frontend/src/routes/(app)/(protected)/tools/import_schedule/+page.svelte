@@ -5,11 +5,17 @@
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
-	import { Alert, Button, Card, Fileupload, Helper, Label, Spinner } from 'flowbite-svelte';
+	import * as Alert from '$lib/components/ui/alert';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import * as Field from '$lib/components/ui/field';
+	import { Input } from '$lib/components/ui/input';
+	import { Spinner } from '$lib/components/ui/spinner';
+	import { AlertCircle, CheckCircle2 } from '@lucide/svelte';
 
 	import FileFormatGuide from './components/FileFormatGuide.svelte';
 
-	let selectedFiles = $state<FileList | null>(null);
+	let selectedFiles = $state<FileList | undefined>(undefined);
 	let isUploading = $state(false);
 	let inlineError = $state('');
 	let successMessage = $state('');
@@ -57,7 +63,7 @@
 			}
 
 			successMessage = 'Файл загружен. Программа обновлена.';
-			selectedFiles = null;
+			selectedFiles = undefined;
 			form.reset();
 
 			await invalidate('app:schedule');
@@ -80,54 +86,50 @@
 
 <FileFormatGuide />
 
-<Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
-	<form class="space-y-4" onsubmit={handleSubmit}>
-		<div class="space-y-2">
-			<Label for="schedule-file">Excel-файл</Label>
-			<Fileupload
+<Card.Root class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
+	<form class="flex flex-col gap-4" onsubmit={handleSubmit}>
+		<Field.Field>
+			<Field.FieldLabel for="schedule-file">Excel-файл</Field.FieldLabel>
+			<Input
 				id="schedule-file"
+				type="file"
 				name="schedule_file"
 				accept={ACCEPTED_FILE_TYPES}
 				bind:files={selectedFiles}
-				clearable
-				size="lg"
-				class="w-full"
+				class="w-full cursor-pointer file:cursor-pointer"
 				disabled={isUploading}
 				onchange={handleFileChange}
 			/>
-			<Helper class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+			<Field.FieldDescription>
 				{#if selectedFileName}
 					Выбран файл: {selectedFileName}
 				{:else}
 					Поддерживаются файлы .xls и .xlsx.
 				{/if}
-			</Helper>
-		</div>
+			</Field.FieldDescription>
+		</Field.Field>
 
 		{#if inlineError}
-			<Alert color="red">
-				{inlineError}
-			</Alert>
+			<Alert.Root variant="destructive">
+				<AlertCircle class="size-4" />
+				<Alert.Description>{inlineError}</Alert.Description>
+			</Alert.Root>
 		{/if}
 
 		{#if successMessage}
-			<Alert color="green">
-				{successMessage}
-			</Alert>
+			<Alert.Root variant="success">
+				<CheckCircle2 />
+				<Alert.Description>{successMessage}</Alert.Description>
+			</Alert.Root>
 		{/if}
 
-		<Button
-			type="submit"
-			color="primary"
-			class="min-h-11 w-full justify-center sm:w-auto"
-			disabled={isUploading}
-		>
+		<Button type="submit" class="min-h-11 w-full justify-center sm:w-auto" disabled={isUploading}>
 			{#if isUploading}
-				<Spinner size="4" class="mr-2 fill-white" />
+				<Spinner data-icon="inline-start" />
 				Импортируем…
 			{:else}
 				Импортировать
 			{/if}
 		</Button>
 	</form>
-</Card>
+</Card.Root>

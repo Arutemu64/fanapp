@@ -82,9 +82,10 @@
 					document.documentElement.classList.add('dark');
 					// Seed the shell tint to match the resolved theme before first paint,
 					// so an overriding toggle doesn't flash the light tint. theme.svelte.ts
-					// keeps it in sync afterwards. Value mirrors THEME_COLOR_DARK there.
+					// keeps it in sync afterwards. Value mirrors THEME_COLOR_DARK there,
+					// which matches app.css's dark --background (oklch(0.145 0 0) = #0a0a0a).
 					var meta = document.querySelector('meta[name="theme-color"]');
-					if (meta) meta.setAttribute('content', '#111827');
+					if (meta) meta.setAttribute('content', '#0a0a0a');
 				}
 			})();
 		</script>
@@ -102,10 +103,11 @@
 				display: flex;
 				align-items: center;
 				justify-content: center;
-				background: #ffffff;
-			}
-			.dark #app-splash {
-				background: #111827;
+				/* Reads app.css's --background custom property (light/dark set on
+					documentElement) so the splash always matches the app shell instead
+					of drifting from a second hardcoded value; falls back to white if
+					app.css hasn't loaded yet. */
+				background: var(--background, #ffffff);
 			}
 			.app-splash__spinner {
 				width: 2.5rem;
@@ -129,7 +131,7 @@
 		%sveltekit.head%
 	</head>
 
-	<body class="bg-white dark:bg-gray-900" data-sveltekit-preload-data="hover">
+	<body class="bg-background" data-sveltekit-preload-data="hover">
 		<div id="app-splash" aria-hidden="true">
 			<div class="app-splash__spinner"></div>
 		</div>

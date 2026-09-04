@@ -1,15 +1,10 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
 	import { reachability } from '$lib/services/reachability';
 	import { statusTitle } from '$lib/utils/errorTitle';
-	import { Button, Card } from 'flowbite-svelte';
-	import {
-		ArrowLeftOutline,
-		ExclamationCircleSolid,
-		HomeOutline,
-		LockSolid,
-		RefreshOutline
-	} from 'flowbite-svelte-icons';
+	import { AlertCircle, ArrowLeft, Home, Lock, RotateCw } from '@lucide/svelte';
 
 	type Variant = 'fullscreen' | 'inline';
 
@@ -44,11 +39,9 @@
 	// A genuine 403 gets the lock icon; everything else (including offline, which
 	// is never a 403) gets the generic alert icon. Offline is the only yellow
 	// state; all others are red.
-	let StatusIcon = $derived(status === 403 ? LockSolid : ExclamationCircleSolid);
+	let StatusIcon = $derived(status === 403 ? Lock : AlertCircle);
 	let iconColorClass = $derived(
-		offline
-			? 'bg-yellow-100 text-yellow-500 dark:bg-yellow-900/30 dark:text-yellow-400'
-			: 'bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400'
+		offline ? 'bg-warning/15 text-warning' : 'bg-destructive/15 text-destructive'
 	);
 
 	let description = $derived.by(() => {
@@ -64,7 +57,7 @@
 	// Fullscreen owns the viewport background; inline inherits the shell's surface.
 	let wrapperClass = $derived(
 		variant === 'fullscreen'
-			? 'flex min-h-dvh items-center justify-center bg-gray-50 px-4 py-6 sm:py-10 dark:bg-gray-950'
+			? 'flex min-h-dvh items-center justify-center bg-background px-4 py-6 sm:py-10'
 			: 'flex min-h-[60dvh] items-center justify-center px-4 py-6'
 	);
 
@@ -78,53 +71,51 @@
 </script>
 
 <div class={wrapperClass}>
-	<Card class="w-full max-w-md rounded-2xl p-6 text-center sm:p-8">
+	<Card.Root class="w-full max-w-md rounded-2xl p-6 text-center sm:p-8">
 		<div class="flex flex-col items-center justify-center">
 			<div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full {iconColorClass}">
 				<StatusIcon class="h-8 w-8" />
 			</div>
 
-			<span
-				class="mb-1 text-xs font-semibold tracking-wider text-gray-400 uppercase dark:text-gray-500"
-			>
+			<span class="mb-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
 				{offline ? 'Офлайн' : `Ошибка ${status}`}
 			</span>
 
-			<h2 class="mb-2 text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
+			<h2 class="mb-2 text-xl font-bold text-foreground sm:text-2xl">
 				{title}
 			</h2>
 
-			<p class="mb-6 text-sm text-gray-500 dark:text-gray-400">
+			<p class="mb-6 text-sm text-muted-foreground">
 				{description}
 			</p>
 
 			<div class="flex w-full flex-col gap-2">
 				{#if offline || status >= 500}
-					<Button color="primary" class="min-h-11 w-full font-medium" onclick={handleRetry}>
-						<RefreshOutline class="me-2 h-4 w-4" />
+					<Button class="min-h-11 w-full font-medium" onclick={handleRetry}>
+						<RotateCw data-icon="inline-start" />
 						Попробовать снова
 					</Button>
 				{/if}
 
 				<Button
 					href="/"
-					color={offline || status >= 500 ? 'alternative' : 'primary'}
+					variant={offline || status >= 500 ? 'outline' : 'default'}
 					class="min-h-11 w-full font-medium"
 				>
-					<HomeOutline class="me-2 h-4 w-4" />
+					<Home data-icon="inline-start" />
 					На главную
 				</Button>
 
 				<Button
 					type="button"
-					color="light"
+					variant="ghost"
 					class="min-h-11 w-full font-medium"
 					onclick={handleGoBack}
 				>
-					<ArrowLeftOutline class="me-2 h-4 w-4" />
+					<ArrowLeft data-icon="inline-start" />
 					Вернуться назад
 				</Button>
 			</div>
 		</div>
-	</Card>
+	</Card.Root>
 </div>

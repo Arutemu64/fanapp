@@ -3,15 +3,12 @@
 
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { createApiClient } from '$lib/api';
+	import * as Alert from '$lib/components/ui/alert';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { offlineWriteGate } from '$lib/utils/offlineAction';
-	import { Alert, Badge, Button } from 'flowbite-svelte';
-	import {
-		EnvelopeSolid,
-		ExclamationCircleSolid,
-		LinkOutline,
-		ShieldOutline
-	} from 'flowbite-svelte-icons';
+	import { AlertCircle, Link, Mail, Shield } from '@lucide/svelte';
 	import IconVk from '~icons/simple-icons/vk';
 
 	import ChangeEmailModal from './ChangeEmailModal.svelte';
@@ -35,7 +32,6 @@
 	let changePasswordModalOpen = $state(false);
 	let changeEmailModalOpen = $state(false);
 	const toastService = getToastService();
-	let emailStatusColor = $derived<'green' | 'gray'>(user.email ? 'green' : 'gray');
 	let emailStatusLabel = $derived(user.email ? 'Привязана' : 'Не добавлена');
 
 	let vkAccount = $derived(user.social_identities.find((si) => si.provider === 'vk') ?? null);
@@ -64,24 +60,25 @@
 	description="Настрой почту, пароль и привязки для входа и восстановления доступа."
 >
 	{#snippet icon()}
-		<LinkOutline class="h-5 w-5" />
+		<Link class="size-5" />
 	{/snippet}
 
-	<!-- Compact inner sections keep related account settings easy to scan. -->
-	<div class="space-y-3">
-		<div class="rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
+	<!-- One bordered group with hairline dividers between rows, so related account
+	     settings read as a set rather than as separate boxes-inside-a-box. -->
+	<div class="divide-y divide-border overflow-hidden rounded-lg border border-border">
+		<div class="p-3 sm:p-4">
 			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 				<div class="min-w-0">
 					<div class="flex flex-wrap items-center gap-2">
-						<EnvelopeSolid class="h-4 w-4 text-gray-500 dark:text-gray-400" />
-						<p class="font-medium text-gray-900 dark:text-white">Эл. почта</p>
-						<Badge color={emailStatusColor} border>{emailStatusLabel}</Badge>
+						<Mail class="size-4 text-muted-foreground" />
+						<p class="font-medium text-foreground">Эл. почта</p>
+						<Badge variant={user.email ? 'default' : 'secondary'}>{emailStatusLabel}</Badge>
 					</div>
 
 					{#if user.email}
-						<p class="mt-1.5 text-sm break-all text-gray-500 dark:text-gray-400">{user.email}</p>
+						<p class="mt-1.5 text-sm break-all text-muted-foreground">{user.email}</p>
 					{:else}
-						<p class="mt-1.5 text-sm leading-5 text-gray-500 dark:text-gray-400">
+						<p class="mt-1.5 text-sm leading-5 text-muted-foreground">
 							Добавь email для восстановления доступа и важных уведомлений.
 						</p>
 					{/if}
@@ -89,7 +86,7 @@
 
 				<div class="flex w-full flex-col gap-2 sm:w-auto">
 					<Button
-						color="alternative"
+						variant="outline"
 						size="sm"
 						class="min-h-11 w-full sm:w-auto"
 						disabled={offlineGate.disabled}
@@ -102,18 +99,18 @@
 			</div>
 		</div>
 
-		<div class="rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
+		<div class="p-3 sm:p-4">
 			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 				<div class="min-w-0">
 					<div class="flex flex-wrap items-center gap-2">
-						<ShieldOutline class="h-4 w-4 text-gray-500 dark:text-gray-400" />
-						<p class="font-medium text-gray-900 dark:text-white">Пароль</p>
-						<Badge color={user.has_password ? 'green' : 'gray'} border>
+						<Shield class="size-4 text-muted-foreground" />
+						<p class="font-medium text-foreground">Пароль</p>
+						<Badge variant={user.has_password ? 'default' : 'secondary'}>
 							{user.has_password ? 'Установлен' : 'Не установлен'}
 						</Badge>
 					</div>
 
-					<p class="mt-1.5 text-sm leading-5 text-gray-500 dark:text-gray-400">
+					<p class="mt-1.5 text-sm leading-5 text-muted-foreground">
 						{#if user.has_password}
 							Используй пароль как дополнительный способ входа.
 						{:else}
@@ -123,7 +120,7 @@
 				</div>
 
 				<Button
-					color="alternative"
+					variant="outline"
 					size="sm"
 					class="min-h-11 w-full sm:w-auto"
 					disabled={offlineGate.disabled}
@@ -146,21 +143,19 @@
 			onUnlink={unlinkVk}
 		>
 			{#snippet icon()}
-				<IconVk class="h-4 w-4 text-gray-500 dark:text-gray-400" />
+				<IconVk class="size-4 text-muted-foreground" />
 			{/snippet}
 		</SocialConnectionRow>
 	</div>
 
 	{#if !user.email}
-		<Alert color="yellow">
-			<div class="flex items-start gap-2">
-				<ExclamationCircleSolid class="mt-0.5 h-4 w-4 shrink-0" />
-				<p>
-					Добавь почту. Так будет проще восстановить доступ, и только после этого можно безопасно
-					отвязать привязки.
-				</p>
-			</div>
-		</Alert>
+		<Alert.Root variant="warning">
+			<AlertCircle />
+			<Alert.Description>
+				Добавь почту. Так будет проще восстановить доступ, и только после этого можно безопасно
+				отвязать привязки.
+			</Alert.Description>
+		</Alert.Root>
 	{/if}
 </ProfileCardShell>
 

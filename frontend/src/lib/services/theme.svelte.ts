@@ -7,11 +7,12 @@ function parseThemeMode(raw: string): ThemeMode | undefined {
 }
 
 // Browser-UI tints (address/status bar). Must match app.html: the light value is
-// the watermelon pink, the dark value the gray-900 shell background. The inline
-// boot script in app.html seeds <meta name="theme-color"> with the same two
-// values before paint; keep all three in sync.
+// the watermelon pink, the dark value app.css's dark --background
+// (oklch(0.145 0 0) = #0a0a0a). The inline boot script in app.html seeds
+// <meta name="theme-color"> with the same two values before paint; keep all
+// three in sync.
 const THEME_COLOR_LIGHT = '#d61450';
-const THEME_COLOR_DARK = '#111827';
+const THEME_COLOR_DARK = '#0a0a0a';
 
 function applyTheme(mode: ThemeMode): void {
 	const isDark =

@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { Button } from '$lib/components/ui/button';
 	import { getPwaService } from '$lib/services/pwa.svelte';
-	import { Button } from 'flowbite-svelte';
-	import { DownloadSolid } from 'flowbite-svelte-icons';
+	import { Download } from '@lucide/svelte';
 
 	import ProfileCardShell from './ProfileCardShell.svelte';
 
@@ -18,15 +18,11 @@
 		description="Добавь ФАН ФАН на главный экран, чтобы быстрее открывать приложение и получать пуш-уведомления."
 	>
 		{#snippet icon()}
-			<DownloadSolid class="h-5 w-5" />
+			<Download class="size-5" />
 		{/snippet}
 
-		<Button
-			color="primary"
-			class="min-h-11 w-full sm:w-auto"
-			onclick={() => pwa.showInstallDialog()}
-		>
-			<DownloadSolid class="me-2 h-5 w-5" />
+		<Button class="min-h-11 w-full sm:w-auto" onclick={() => pwa.showInstallDialog()}>
+			<Download data-icon="inline-start" />
 			Установить
 		</Button>
 	</ProfileCardShell>

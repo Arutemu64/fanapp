@@ -5,6 +5,9 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { createApiClient } from '$lib/api';
+	import * as Avatar from '$lib/components/ui/avatar';
+	import { Button } from '$lib/components/ui/button';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService } from '$lib/services/offline.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
@@ -12,17 +15,7 @@
 	import { clearUserCache } from '$lib/utils/offlineCache';
 	import { markLogoutPending } from '$lib/utils/pendingLogout';
 	import { getAvatarInitials } from '$lib/utils/users';
-	import {
-		Avatar,
-		Button,
-		Dropdown,
-		DropdownGroup,
-		DropdownHeader,
-		DropdownItem,
-		Navbar,
-		SidebarButton
-	} from 'flowbite-svelte';
-	import { ArrowRightToBracketOutline } from 'flowbite-svelte-icons';
+	import { LogOut, Menu, User } from '@lucide/svelte';
 
 	import NotificationBell from './NotificationBell.svelte';
 
@@ -79,23 +72,25 @@
 	}
 </script>
 
-<!-- `fluid` makes the navbar content span the full width of the main area so the
-	avatar/bell pin to the right edge; without it Flowbite caps content in a `container`.
+<!-- Full width so the avatar/bell pin to the right edge.
 	Positioning (overlay, z-index, hide-on-scroll) is owned by the (app) layout, which
 	slides this bar with `top` to keep its backdrop blur intact. -->
-<Navbar
-	fluid
-	class="border-b border-gray-200/50 bg-white/80 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] backdrop-blur-md transition-colors duration-300 sm:px-6 dark:border-gray-700/50 dark:bg-gray-900/80"
+<header
+	class="flex items-center justify-between border-b border-border/50 bg-background/80 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] backdrop-blur-md transition-colors duration-300 sm:px-6"
 >
-	<!-- SidebarButton hardcodes an English "Open sidebar" in an sr-only span; aria-label
-		wins over element content, so this is the name Russian screen readers announce. -->
-	<SidebarButton onclick={toggleSidebar} aria-label="Открыть меню" class="md:hidden" />
+	<Button
+		variant="ghost"
+		size="icon"
+		onclick={toggleSidebar}
+		aria-label="Открыть меню"
+		class="mr-2 shrink-0 md:hidden"
+	>
+		<Menu class="size-5" />
+	</Button>
 	<!-- Page title comes from each page's `load` via `page.data.title`; render it
 		as the single page <h1> in the space the navbar used to leave empty. -->
 	{#if pageTitle}
-		<h1
-			class="min-w-0 flex-1 truncate text-lg font-semibold text-gray-900 sm:text-xl dark:text-white"
-		>
+		<h1 class="min-w-0 flex-1 truncate text-lg font-semibold text-foreground sm:text-xl">
 			{pageTitle}
 		</h1>
 	{:else}
@@ -107,23 +102,41 @@
 			<NotificationBell />
 		{/if}
 		{#if user}
-			<Avatar id="avatar-menu" class="cursor-pointer">{avatarInitials}</Avatar>
-			<Dropdown placement="bottom-end" triggeredBy="#avatar-menu">
-				<DropdownHeader>
-					<span class="block truncate text-sm font-medium text-gray-900 dark:text-white"
-						>@{user.username}</span
-					>
-				</DropdownHeader>
-				<DropdownGroup>
-					<DropdownItem href="/profile">Профиль</DropdownItem>
-					<DropdownItem onclick={handleLogout}>Выйти</DropdownItem>
-				</DropdownGroup>
-			</Dropdown>
+			<DropdownMenu.Root>
+				<DropdownMenu.Trigger>
+					{#snippet child({ props })}
+						<button
+							{...props}
+							class="cursor-pointer rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+						>
+							<Avatar.Root class="size-11">
+								<Avatar.Fallback class="bg-primary/10 text-sm font-semibold text-primary">
+									{avatarInitials}
+								</Avatar.Fallback>
+							</Avatar.Root>
+						</button>
+					{/snippet}
+				</DropdownMenu.Trigger>
+				<!-- sideOffset above the usual ~4 because the trigger is recessed inside the
+					taller top bar: it must clear the bar's bottom padding, not just the avatar,
+					or the menu tucks under the bar (which paints below it at a lower z-index). -->
+				<DropdownMenu.Content align="end" sideOffset={16} class="w-48">
+					<DropdownMenu.Label class="truncate font-medium text-foreground">
+						@{user.username}
+					</DropdownMenu.Label>
+					<DropdownMenu.Separator />
+					<DropdownMenu.Item onSelect={() => goto(resolve('/profile'))}>
+						<User aria-hidden="true" />
+						Профиль
+					</DropdownMenu.Item>
+					<DropdownMenu.Item onSelect={handleLogout}>
+						<LogOut aria-hidden="true" />
+						Выйти
+					</DropdownMenu.Item>
+				</DropdownMenu.Content>
+			</DropdownMenu.Root>
 		{:else}
-			<Button href="/login" size="sm">
-				<ArrowRightToBracketOutline class="me-2 h-4 w-4" />
-				Войти
-			</Button>
+			<Button href="/login" size="sm">Войти</Button>
 		{/if}
 	</div>
-</Navbar>
+</header>

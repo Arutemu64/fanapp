@@ -219,9 +219,9 @@ const RETRY_AFTER_CODES = [
 // Codes intentionally left to the generic fallback toast: not individually
 // actionable by the user (server/internal errors) or surfaced by dedicated UI
 // elsewhere (not-found states). Listed explicitly so the drift guard passes.
-// Consumed only by the type-level guard below, hence not read at runtime.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const GENERIC_FALLBACK_CODES = [
+// Underscore-prefixed: consumed only by the type-level guard below, never at
+// runtime (matches the `_exhaustiveErrorCodes` convention).
+const _GENERIC_FALLBACK_CODES = [
 	'AUTHENTICATION_ERROR',
 	'HTTP_ERROR',
 	'INTERNAL_ERROR',
@@ -292,11 +292,11 @@ export function throwApiError(
 // explicit generic-fallback list. If the backend adds a new code that is none of
 // these, UnhandledCode stops being `never` and this line fails `pnpm check` —
 // naming the missing code(s). Resolve by adding copy to ERROR_MESSAGES or
-// listing the code in GENERIC_FALLBACK_CODES.
+// listing the code in _GENERIC_FALLBACK_CODES.
 type HandledCode =
 	| keyof typeof ERROR_MESSAGES
 	| (typeof RETRY_AFTER_CODES)[number]
-	| (typeof GENERIC_FALLBACK_CODES)[number]
+	| (typeof _GENERIC_FALLBACK_CODES)[number]
 	| 'ACCESS_DENIED'
 	| 'INVALID_SCHEDULE_FILE'
 	| 'VALIDATION_ERROR';

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { Skeleton } from '$lib/components/ui/skeleton';
+
 	// Placeholder that mirrors the notifications feed — an intro line then a stack
 	// of list-item cards (round bell avatar, title line, timestamp) — so the layout
 	// doesn't jump when the loaded page replaces it. Shown by the app shell during a
@@ -15,23 +17,17 @@
 	<span class="sr-only">Загрузка уведомлений…</span>
 
 	<!-- Intro line (the real page shows an unread-count summary here) -->
-	<div class="mb-4 h-4 w-40 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700"></div>
+	<Skeleton class="mb-4 h-4 w-40 rounded-full" />
 
-	<div class="space-y-3">
+	<div class="flex flex-col gap-3">
 		{#each rows as titleWidth, rowIndex (rowIndex)}
-			<div
-				class="flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800"
-			>
+			<div class="flex items-start gap-3 rounded-xl border bg-card p-4 shadow-sm">
 				<!-- Round bell avatar -->
-				<div
-					class="h-10 w-10 shrink-0 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700"
-				></div>
+				<Skeleton class="size-10 shrink-0 rounded-full" />
 				<!-- Title line + timestamp -->
-				<div class="w-full min-w-0 space-y-2 pt-1">
-					<div
-						class="h-3.5 {titleWidth} animate-pulse rounded-full bg-gray-200 dark:bg-gray-700"
-					></div>
-					<div class="h-3 w-20 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700"></div>
+				<div class="flex w-full min-w-0 flex-col gap-2 pt-1">
+					<Skeleton class="h-3.5 {titleWidth} rounded-full" />
+					<Skeleton class="h-3 w-20 rounded-full" />
 				</div>
 			</div>
 		{/each}

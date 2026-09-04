@@ -4,13 +4,7 @@
 	import type { Component } from 'svelte';
 
 	import { getPwaService } from '$lib/services/pwa.svelte';
-	import {
-		BellOutline,
-		CalendarWeekOutline,
-		DownloadOutline,
-		TicketOutline,
-		UserAddOutline
-	} from 'flowbite-svelte-icons';
+	import { Bell, Calendar, Download, Ticket, UserPlus } from '@lucide/svelte';
 
 	import GetReadyCard from './GetReadyCard.svelte';
 
@@ -45,7 +39,7 @@
 				key: 'account',
 				title: 'Создать аккаунт',
 				description: 'Нужен для голосования и подписки на выступления программы.',
-				icon: UserAddOutline,
+				icon: UserPlus,
 				actionLabel: 'Создать',
 				href: '/login'
 			});
@@ -56,7 +50,7 @@
 				key: 'ticket',
 				title: 'Привязать билет',
 				description: 'Открывает доступ к голосованию в конкурсных номинациях.',
-				icon: TicketOutline,
+				icon: Ticket,
 				actionLabel: 'Привязать',
 				href: '/profile'
 			});
@@ -67,7 +61,7 @@
 				key: 'schedule',
 				title: 'Посмотреть программу',
 				description: 'Подпишись на номера, чтобы не пропустить интересные выступления.',
-				icon: CalendarWeekOutline,
+				icon: Calendar,
 				actionLabel: 'Смотреть',
 				href: '/schedule'
 			});
@@ -76,7 +70,7 @@
 				key: 'notifications',
 				title: 'Настроить уведомления',
 				description: 'Получай напоминания о начале выступлений и изменениях в программе.',
-				icon: BellOutline,
+				icon: Bell,
 				actionLabel: 'Настроить',
 				href: '/profile'
 			});
@@ -87,7 +81,7 @@
 				key: 'pwa',
 				title: 'Установить приложение',
 				description: 'Быстрый доступ с главного экрана и пуш-уведомления.',
-				icon: DownloadOutline,
+				icon: Download,
 				actionLabel: 'Установить',
 				// Open the install dialog directly; the library handles per-platform UX.
 				onclick: () => pwa.showInstallDialog()
@@ -103,17 +97,17 @@
 </script>
 
 {#if featured}
-	<section aria-labelledby="get-ready-heading" class="space-y-3">
-		<div class="max-w-3xl space-y-1">
-			<h2 id="get-ready-heading" class="text-lg font-semibold text-gray-900 dark:text-white">
+	<section aria-labelledby="get-ready-heading" class="flex flex-col gap-3">
+		<div class="flex max-w-3xl flex-col gap-1">
+			<h2 id="get-ready-heading" class="text-lg font-semibold text-foreground">
 				Подготовься к фестивалю
 			</h2>
-			<p class="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+			<p class="text-sm leading-relaxed text-muted-foreground">
 				Несколько шагов, чтобы получить максимум от приложения на мероприятии.
 			</p>
 		</div>
 
-		<div class="space-y-3">
+		<div class="flex flex-col gap-3">
 			<GetReadyCard
 				featured
 				title={featured.title}

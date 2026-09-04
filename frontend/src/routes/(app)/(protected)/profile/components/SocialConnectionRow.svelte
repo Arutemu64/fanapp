@@ -1,9 +1,11 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
+	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { offlineWriteGate } from '$lib/utils/offlineAction';
-	import { Badge, Button, Spinner } from 'flowbite-svelte';
-	import { TrashBinOutline } from 'flowbite-svelte-icons';
+	import { Trash2 } from '@lucide/svelte';
 
 	interface Props {
 		/** Provider mark, rendered next to the label. */
@@ -59,18 +61,20 @@
 	}
 </script>
 
-<div class="rounded-lg border border-gray-200 p-3 sm:p-4 dark:border-gray-700">
+<!-- No border/radius of its own: the parent SecurityCard groups this row with the
+	others in a single bordered container and supplies the divider between them. -->
+<div class="p-3 sm:p-4">
 	<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 		<div class="min-w-0">
 			<div class="flex flex-wrap items-center gap-2">
 				{@render icon()}
-				<p class="font-medium text-gray-900 dark:text-white">{label}</p>
-				<Badge color={connected ? 'green' : 'gray'} border>
+				<p class="font-medium text-foreground">{label}</p>
+				<Badge variant={connected ? 'default' : 'secondary'}>
 					{connected ? 'Подключён' : 'Не подключён'}
 				</Badge>
 			</div>
 
-			<p class="mt-1.5 text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+			<p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">
 				{connected ? connectedDescription : notConnectedDescription}
 			</p>
 		</div>
@@ -78,12 +82,12 @@
 		<div class="flex w-full flex-col gap-2 sm:w-auto">
 			{#if connected}
 				{#if isConfirming}
-					<p class="text-sm font-medium text-gray-900 sm:text-right dark:text-white">
+					<p class="text-sm font-medium text-foreground sm:text-right">
 						{unlinkPrompt}
 					</p>
 					<div class="flex gap-2">
 						<Button
-							color="red"
+							variant="destructive"
 							size="sm"
 							class="min-h-11 flex-1 sm:flex-initial"
 							disabled={isUnlinking || !hasEmail || offlineGate.disabled}
@@ -91,15 +95,15 @@
 							onclick={confirmUnlink}
 						>
 							{#if isUnlinking}
-								<Spinner class="me-2 h-4 w-4 fill-white" />
+								<Spinner data-icon="inline-start" />
 								Отвязка…
 							{:else}
-								<TrashBinOutline class="me-2 h-4 w-4" />
+								<Trash2 data-icon="inline-start" />
 								Отвязать
 							{/if}
 						</Button>
 						<Button
-							color="alternative"
+							variant="outline"
 							size="sm"
 							class="min-h-11 flex-1 sm:flex-initial"
 							disabled={isUnlinking}
@@ -110,23 +114,21 @@
 					</div>
 				{:else}
 					<Button
-						color="red"
+						variant="destructive"
 						size="sm"
 						class="min-h-11 w-full sm:w-auto"
 						disabled={!hasEmail || offlineGate.disabled}
 						title={offlineGate.title}
 						onclick={() => (isConfirming = true)}
 					>
-						<TrashBinOutline class="me-2 h-4 w-4" />
+						<Trash2 data-icon="inline-start" />
 						Отвязать
 					</Button>
 				{/if}
 			{:else}
-				<!-- Offline: drop href so Flowbite renders a real <button> that honours
-					`disabled` (an <a> ignores it), blocking the OAuth redirect. -->
 				<Button
 					href={offlineGate.disabled ? undefined : connectHref}
-					color="alternative"
+					variant="outline"
 					class="min-h-11 w-full sm:w-auto"
 					disabled={offlineGate.disabled}
 					title={offlineGate.title}

@@ -16,7 +16,7 @@
 {#if description || children}
 	<div class="mb-4 sm:mb-6">
 		{#if description}
-			<p class="text-base leading-relaxed text-gray-500 dark:text-gray-400">
+			<p class="text-base leading-relaxed text-muted-foreground">
 				{description}
 			</p>
 		{/if}

@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { Button, Modal } from 'flowbite-svelte';
-	import { AnnotationOutline } from 'flowbite-svelte-icons';
+	import { Button } from '$lib/components/ui/button';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import { MessageSquare } from '@lucide/svelte';
 
 	interface Props {
 		open: boolean;
@@ -15,31 +16,31 @@
 	let { open = $bindable(false), vkGroupUrl }: Props = $props();
 </script>
 
-<Modal bind:open size="sm">
-	{#snippet header()}
-		<div class="flex items-center gap-2">
-			<AnnotationOutline class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-			<h3 class="text-lg font-bold text-gray-900 dark:text-white">Уведомления во ВКонтакте</h3>
-		</div>
-	{/snippet}
+<Dialog.Root bind:open>
+	<Dialog.Content class="sm:max-w-md">
+		<Dialog.Header>
+			<Dialog.Title class="flex items-center gap-2">
+				<MessageSquare class="size-5 text-muted-foreground" />
+				Уведомления во ВКонтакте
+			</Dialog.Title>
+		</Dialog.Header>
 
-	<p class="text-sm leading-relaxed text-gray-500 dark:text-gray-400">
-		Чтобы получать уведомления во ВКонтакте, нужно разрешить сообществу писать тебе — без этого
-		ВКонтакте не доставит сообщения.
-	</p>
-	<p class="mt-3 text-sm font-medium text-gray-900 dark:text-gray-300">Что сделать:</p>
-	<ul
-		class="mt-1 list-disc space-y-1 ps-5 text-sm leading-relaxed text-gray-500 dark:text-gray-400"
-	>
-		<li>Подключи аккаунт ВКонтакте в блоке «Способы входа».</li>
-		<li>Открой сообщество и нажми «Разрешить сообщения».</li>
-	</ul>
-	{#snippet footer()}
-		{#if vkGroupUrl}
-			<Button color="primary" class="w-full" href={vkGroupUrl} target="_blank" rel="noopener">
-				Открыть сообщество
-			</Button>
-		{/if}
-		<Button color="alternative" class="w-full" onclick={() => (open = false)}>Понятно</Button>
-	{/snippet}
-</Modal>
+		<Dialog.Description class="leading-relaxed">
+			Чтобы получать уведомления во ВКонтакте, нужно разрешить сообществу писать тебе — без этого
+			ВКонтакте не доставит сообщения.
+		</Dialog.Description>
+		<p class="text-sm font-medium text-foreground">Что сделать:</p>
+		<ul class="flex flex-col gap-1 text-sm leading-relaxed text-muted-foreground">
+			<li>Подключи аккаунт ВКонтакте в блоке «Способы входа».</li>
+			<li>Открой сообщество и нажми «Разрешить сообщения».</li>
+		</ul>
+		<Dialog.Footer class="flex flex-col gap-2 sm:flex-col">
+			{#if vkGroupUrl}
+				<Button class="w-full" href={vkGroupUrl} target="_blank" rel="noopener">
+					Открыть сообщество
+				</Button>
+			{/if}
+			<Button variant="outline" class="w-full" onclick={() => (open = false)}>Понятно</Button>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>

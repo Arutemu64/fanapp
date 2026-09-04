@@ -1,114 +1,6 @@
----
-name: FAN FAN
-description: Mobile-first PWA that puts a Russian anime convention in the attendee's pocket.
-colors:
-  primary-50: "#fff1f5"
-  primary-100: "#ffe3ea"
-  primary-200: "#ffccd9"
-  primary-300: "#ff9fb9"
-  primary-400: "#fb6491"
-  primary-500: "#f4316b"
-  primary-600: "#d61450"
-  primary-700: "#b30f43"
-  primary-800: "#960d3a"
-  primary-900: "#7d1035"
-  secondary-50: "#ecfdff"
-  secondary-100: "#cff7fc"
-  secondary-200: "#a3eef9"
-  secondary-300: "#66dfef"
-  secondary-400: "#1fc6d9"
-  secondary-500: "#0c9fb8"
-  secondary-600: "#07788c"
-  secondary-700: "#0a6173"
-  secondary-800: "#0e4f5e"
-  secondary-900: "#103f4c"
-  surface-light: "#ffffff"
-  surface-dark: "#1f2937"
-  app-bg-light: "#f9fafb"
-  app-bg-dark: "#030712"
-  ink: "#111827"
-  ink-inverse: "#ffffff"
-  muted-light: "#6b7280"
-  muted-dark: "#9ca3af"
-  border-light: "#e5e7eb"
-  border-dark: "#374151"
-  danger: "#ef4444"
-  warning: "#eab308"
-  success: "#22c55e"
-typography:
-  display:
-    fontFamily: "Unbounded Variable, Inter Variable, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "1.5rem"
-    fontWeight: 700
-    lineHeight: 1.15
-    letterSpacing: "normal"
-  headline:
-    fontFamily: "Inter Variable, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "1.25rem"
-    fontWeight: 700
-    lineHeight: 1.25
-    letterSpacing: "normal"
-  title:
-    fontFamily: "Inter Variable, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "1rem"
-    fontWeight: 600
-    lineHeight: 1.4
-    letterSpacing: "normal"
-  body:
-    fontFamily: "Inter Variable, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "0.875rem"
-    fontWeight: 400
-    lineHeight: 1.6
-    letterSpacing: "normal"
-  label:
-    fontFamily: "Inter Variable, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "0.75rem"
-    fontWeight: 600
-    lineHeight: 1.2
-    letterSpacing: "0.05em"
-rounded:
-  md: "8px"
-  lg: "12px"
-  xl: "16px"
-  full: "9999px"
-spacing:
-  xs: "8px"
-  sm: "12px"
-  md: "16px"
-  lg: "24px"
-  xl: "32px"
-components:
-  button-primary:
-    backgroundColor: "{colors.primary-600}"
-    textColor: "{colors.ink-inverse}"
-    rounded: "{rounded.lg}"
-    height: "44px"
-  button-primary-hover:
-    backgroundColor: "{colors.primary-700}"
-    textColor: "{colors.ink-inverse}"
-  button-alternative:
-    backgroundColor: "{colors.surface-light}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.lg}"
-    height: "44px"
-  input-default:
-    backgroundColor: "{colors.surface-light}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.md}"
-    height: "42px"
-  card:
-    backgroundColor: "{colors.surface-light}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.lg}"
-    padding: "16px"
-  notice-warning:
-    backgroundColor: "{colors.warning}"
-    textColor: "{colors.warning}"
-    rounded: "{rounded.lg}"
-    padding: "10px 12px"
----
-
 # Design System: FAN FAN
+
+> **Token values are not defined here.** The source of truth for colors, typography, spacing, radii and component defaults is the code: `frontend/src/app.css` (Tailwind theme + semantic tokens) and the vendored shadcn source in `frontend/src/lib/components/ui/`. This document carries the *why* — the principles, named rules, and do's/don'ts that the code can't express. When a value below is illustrative (e.g. a hex in a rule), the code wins.
 
 ## 1. Overview
 
@@ -137,8 +29,8 @@ A watermelon duo over a cool gray neutral field: warm crimson-pink for action an
 ### Secondary
 - **Cyan-Teal Rind** (`#0c9fb8`, `secondary-500`): Support accent for secondary emphasis, complementary chips/highlights, and the occasional informational moment. Never competes with primary for the same action; it is the cooler counterweight that keeps the crimson from going one-note.
 
-### Tertiary
-- **Festival Green & Yellow** (Tailwind `green-500` `#22c55e`, `yellow-500` `#eab308`): Drawn from the rind and key-art yellow, used only as semantic accents — green for success, yellow for warning/offline/stale notices. Not decoration.
+### Tertiary — semantic status
+- **Success / Warning / Info** are semantic tokens (`--success`, `--warning`, `--info` in `app.css`), not raw palette classes. Success is festival green (from the rind), warning is key-art amber (offline/stale/caution), info is the cyan-teal secondary hue (DESIGN's "occasional informational moment"). Error reuses the existing `--destructive`. Each token doubles as a readable text colour on its own `/10` tint and as a solid fill with its `-foreground`, and flips value between light and dark, so call sites use `text-success` / `bg-warning/10` / `border-info/30` with **no `dark:` override**. Used only as semantic accents on state — success (voted, live, linked), warning (offline/stale/destructive-confirm), info (sync/status) — never as decoration.
 
 ### Neutral
 - **Ink** (`#111827`, `gray-900` / white in dark): Headings and high-emphasis text.
@@ -178,40 +70,41 @@ Both are self-hosted via Fontsource with Cyrillic subsets — all copy is Russia
 This system is **near-flat by default**. Depth is conveyed by tonal layering (a recessed `gray-50`/`gray-950` background under a `white`/`gray-800` surface) and by 1px borders — not by drop shadows. The result reads calm and modern rather than lifted.
 
 ### Shadow Vocabulary
-- **Resting list shadow** (`box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05)`, Tailwind `shadow-sm`): The single sanctioned shadow. A whisper under standalone list items (notification cards) to lift them off the field. Nothing heavier ships at rest.
-- **Floating overlays** (Flowbite default for dropdowns, toasts, modals): Larger ambient shadow, owned by the component library, reserved for genuinely floating layers above the page.
+- **Resting card surface** (`shadow-xs` + a `ring-1 ring-foreground/10` hairline, set once in `card.svelte`): the near-flat default for every `Card`. The hairline ring does the separating — it *is* the border in the two-layer scheme — and the `shadow-xs` is barely-there. This is the vendored default; don't add a heavier shadow to a resting card.
+- **Resting list shadow** (`shadow-sm`): a slightly stronger whisper reserved for standalone tappable list items (e.g. notification cards) to lift them off the field. Nothing heavier ships at rest.
+- **Floating overlays** (dropdowns, toasts, dialogs): Larger ambient shadow, owned by the shadcn component, reserved for genuinely floating layers above the page.
 
 ### Named Rules
-**The Border-Before-Shadow Rule.** To separate a surface from its background, reach for a `border-gray-200`/`gray-700` and a tonal step first. A shadow is only justified on something that genuinely floats (overlay) or is a tappable standalone card (`shadow-sm`). No `shadow-md`/`lg`/`xl` on resting content.
+**The Border-Before-Shadow Rule.** To separate a surface from its background, reach for a border (or the `Card`'s hairline `ring`) and a tonal step first. A shadow beyond the resting `shadow-xs`/`shadow-sm` is only justified on something that genuinely floats (overlay). No `shadow-md`/`lg`/`xl` on resting content.
 
 ## 5. Components
 
-Flowbite-Svelte is the component substrate; these are the project's tuned defaults and the vocabulary every new screen must match.
+shadcn-svelte (vendored as source in `$lib/components/ui/`) is the component substrate; these are the project's tuned defaults and the vocabulary every new screen must match. The semantic `--primary` is wired to the **watermelon brand** in `app.css` (`--color-primary-600` in light, the lighter `-400` in dark), so `bg-primary` / `text-primary` — the default `<Button>`, links, active nav, checked controls, `primary/10` accent tiles — all render on-brand. `--primary-foreground` is white in light / dark in dark so text clears AA on the fill either way.
 
 ### Buttons
-- **Shape:** Gently rounded, `rounded-xl` (12px) for app actions; `font-medium`.
-- **Sizing:** `min-h-11` (44px) minimum — thumb-first tap target, non-negotiable on a phone-first app.
-- **Primary:** Watermelon Crimson fill (`primary-600`, `color="primary"`), white text, full-width in stacked action groups. Hover deepens to `primary-700`.
-- **Alternative / Light / Ghost:** `color="alternative"` (white/bordered) for the secondary action in a stack; `color="light"` for tertiary ("back"). `color="red"` reserved for destructive confirms.
+- **Shape:** The vendored `<Button>` carries its own `--radius`-derived corner (`rounded-md`) and `font-medium` — leave it; don't force a radius tier onto it.
+- **Sizing:** The base already meets the thumb-first 44px tap target (default/icon 44px, sm 40px, lg 48px; `xs` 24px is a dense desktop-only opt-in), so a plain `<Button>` needs no `min-h-11`. Non-negotiable on a phone-first app — set in `button.svelte`'s `tv()` base, one rung above upstream shadcn.
+- **Primary:** the default `<Button>` (`variant="default"`) — watermelon fill via the semantic `--primary`, full-width in stacked action groups.
+- **Secondary / Ghost / Destructive:** `variant="outline"` (bordered) for the secondary action in a stack; `variant="ghost"` for tertiary ("back"); `variant="destructive"` reserved for destructive confirms.
 - **Hover / Focus:** Background shift on hover; visible `focus-visible` outline. Transitions 150–250ms.
 
 ### Inputs / Fields
-- **Style:** Flowbite `Input`, `rounded-lg` (8px), light border on surface, ~42px height.
-- **Focus:** Border shifts to primary with a soft ring (Flowbite default).
-- **Error:** `color="red"` — red border + helper text. Never color alone; pair with a message.
-- **OTP (signature):** Six individual `h-11 w-11` (44px, `sm:h-12`) center-aligned `text-lg font-extrabold` digit boxes with auto-advance, backspace-back, and paste-to-fill. Error state flips all six to `color="red"`.
+- **Style:** shadcn `Input`, `--radius`-derived corners, light border on surface. Lay fields out with `Field.FieldGroup` + `Field.Field` (`FieldLabel`, control, `FieldError`/`FieldDescription`), not raw `div` + `Label`.
+- **Focus:** Border + ring shift to the ring token (shadcn default).
+- **Error:** `data-invalid` on the `Field` + `aria-invalid` on the control → destructive border and `FieldError` text. Never colour alone; pair with a message.
+- **OTP (signature):** `InputOTP` — six individual `h-11 w-11` (44px, `sm:h-12`) center-aligned `text-lg font-bold` digit boxes with auto-advance, backspace-back, and paste-to-fill. Error state sets `aria-invalid`.
 
 ### Cards / Containers
 - **Corner Style:** `rounded-xl` (12px) standard; `rounded-2xl` (16px) for large feature/error cards.
 - **Background:** `white` / `dark:bg-gray-800` surface.
 - **Border:** `border-gray-200` / `dark:border-gray-700` — the primary separator.
 - **Shadow Strategy:** `shadow-sm` only on standalone tappable list items; otherwise none (see Elevation).
-- **Focus (link cards):** a whole-card link (`<a href>`) shows a visible `focus-visible` ring for keyboard users; non-interactive cards have no focus state. Wired once in the central Card theme (root `+layout.svelte`), so it can't be forgotten per card.
-- **Defaults are centralized:** the flat, `rounded-xl` surface is the app-wide Card default (Flowbite `ThemeProvider` in the root layout), not something each card re-specifies. Deviate up (`rounded-2xl`, `shadow-sm`) only where noted above.
+- **Focus (clickable cards):** a clickable card uses a stretched-link overlay (an `<a href>` whose `::after` covers the card), never a whole-card anchor; the link shows a visible `focus-visible` ring for keyboard users. Non-interactive cards have no focus state.
+- **Defaults live in the component source:** the flat Card surface is set once in `card.svelte` (the vendored shadcn source), not re-specified per card. Deviate up (`rounded-2xl`, `shadow-sm`) only where noted above.
 - **Internal Padding:** `p-4` (16px) mobile, `p-6`–`p-8` desktop.
 
 ### Notices (signature)
-- **Style:** Full-width `rounded-xl` tinted strip — icon + text. Tinted background, matching border, darker same-hue text (e.g. offline/stale: `bg-yellow-50` + `border-yellow-200` + `text-yellow-800`).
+- **Style:** Full-width `rounded-xl` tinted strip — icon + text, built from a status token (e.g. offline/stale: `bg-warning/10` + `border-warning/30` + `text-warning`; success/info follow the same shape).
 - **Use:** Stale-data, offline, connection banners. Calm and informative, never alarming.
 
 ### Navigation

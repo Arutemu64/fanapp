@@ -4,9 +4,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn-svelte/tailwind.css';
-@import '@fontsource-variable/inter';
-
-@plugin 'flowbite/plugin';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -53,12 +50,13 @@
 	 * stack against each other app-wide. In-page local stacking (e.g. schedule
 	 * sticky headers) stays on plain z-10..z-30 utilities and is not tokenized.
 	 *
-	 * --z-overlay matches Flowbite's own z-50 modal/backdrop so our overlays
-	 * share that rung. --z-modal sits one above for inline (non-portaled) modal
-	 * surfaces that must still cover the fixed bottom nav — the mobile sidebar
-	 * drawer and the fullscreen map viewer. Flowbite's <Modal> does NOT use this:
-	 * it portals to <body> (after the bottom nav in the DOM) so z-overlay already
-	 * covers the nav via paint order.
+	 * --z-overlay is 50 to match the z-50 the vendored shadcn overlays (Dialog,
+	 * Sheet) hardcode on their content and backdrop — keep the two equal, or those
+	 * portaled surfaces (which never read this token) drift off the ladder. Portaled
+	 * to <body>, they land after the bottom nav in the DOM, so at an equal rung paint
+	 * order already covers the nav. --z-modal sits one above for an inline
+	 * (non-portaled) modal that must cover the fixed bottom nav from its source
+	 * position — now only the fullscreen map viewer (the sidebar drawer is a Sheet).
 	 */
 	--z-chrome: 40;
 	--z-overlay: 50;
@@ -80,6 +78,12 @@
 	--color-input: var(--input);
 	--color-border: var(--border);
 	--color-destructive: var(--destructive);
+	--color-success: var(--success);
+	--color-success-foreground: var(--success-foreground);
+	--color-warning: var(--warning);
+	--color-warning-foreground: var(--warning-foreground);
+	--color-info: var(--info);
+	--color-info-foreground: var(--info-foreground);
 	--color-accent-foreground: var(--accent-foreground);
 	--color-accent: var(--accent);
 	--color-muted-foreground: var(--muted-foreground);
@@ -102,9 +106,6 @@
 	--radius-3xl: calc(var(--radius) * 2.2);
 	--radius-4xl: calc(var(--radius) * 2.6);
 }
-
-@source '../node_modules/flowbite-svelte/dist';
-@source '../node_modules/flowbite-svelte-icons/dist';
 
 @layer base {
 	html {
@@ -148,7 +149,13 @@
 	--card-foreground: oklch(0.145 0 0);
 	--popover: oklch(1 0 0);
 	--popover-foreground: oklch(0.145 0 0);
-	--primary: oklch(0.205 0 0);
+	/*
+	 * Brand identity wired into the semantic primary: bg-primary / text-primary
+	 * (the default Button, links, checked Checkbox/Switch, primary/10 accent tiles)
+	 * render the watermelon crimson, not shadcn's neutral default. The 600 shade is
+	 * darkened enough that the white --primary-foreground clears WCAG AA on the fill.
+	 */
+	--primary: var(--color-primary-600);
 	--primary-foreground: oklch(0.985 0 0);
 	--secondary: oklch(0.97 0 0);
 	--secondary-foreground: oklch(0.205 0 0);
@@ -157,6 +164,21 @@
 	--accent: oklch(0.97 0 0);
 	--accent-foreground: oklch(0.205 0 0);
 	--destructive: oklch(0.577 0.245 27.325);
+	/*
+	 * Semantic status tokens (DESIGN.md "Tertiary"). Each doubles as a readable
+	 * text colour on its own /10 tint and as a solid fill with its -foreground,
+	 * mirroring how --destructive is used both ways. Light values sit at the dark
+	 * end of the hue so `text-success`/`text-warning`/`text-info` clear AA on a
+	 * light surface; .dark lightens them for the same job on a dark surface — so
+	 * call sites need no `dark:` override. success = festival green, warning =
+	 * key-art amber, info = the cyan-teal brand secondary hue.
+	 */
+	--success: oklch(0.52 0.15 150);
+	--success-foreground: oklch(0.985 0 0);
+	--warning: oklch(0.52 0.13 65);
+	--warning-foreground: oklch(0.985 0 0);
+	--info: oklch(0.52 0.09 218);
+	--info-foreground: oklch(0.985 0 0);
 	--border: oklch(0.922 0 0);
 	--input: oklch(0.922 0 0);
 	--ring: oklch(0.708 0 0);
@@ -176,6 +198,25 @@
 	--sidebar-ring: oklch(0.708 0 0);
 }
 
+/*
+ * Toast insets — keep Sonner toasts clear of the app chrome. Values trace the
+ * real chrome heights: the top bar (~3.5rem + safe-area-inset-top) is present on
+ * every app route, so the top inset is constant; the bottom nav (h-16 = 4rem,
+ * md:hidden) only exists below the md breakpoint, where the sidebar replaces it,
+ * so the bottom inset collapses to a plain viewport gap on desktop. Consumed by
+ * the Sonner offset in $lib/components/ui/sonner/sonner.svelte.
+ */
+:root {
+	--toast-top-offset: calc(env(safe-area-inset-top) + 4rem);
+	--toast-bottom-offset: 1.5rem;
+}
+
+@media (width < 48rem) {
+	:root {
+		--toast-bottom-offset: calc(env(safe-area-inset-bottom) + 4.5rem);
+	}
+}
+
 .dark {
 	--background: oklch(0.145 0 0);
 	--foreground: oklch(0.985 0 0);
@@ -183,7 +224,13 @@
 	--card-foreground: oklch(0.985 0 0);
 	--popover: oklch(0.205 0 0);
 	--popover-foreground: oklch(0.985 0 0);
-	--primary: oklch(0.922 0 0);
+	/*
+	 * Dark mode lightens the watermelon (400, not 600) so text-primary — nav
+	 * labels, links, accents, the bulk of primary usage — clears WCAG AA on the
+	 * dark surface, mirroring how shadcn's own dark theme lightens --primary. The
+	 * fill then needs dark text, so --primary-foreground flips dark (AA on the 400).
+	 */
+	--primary: var(--color-primary-400);
 	--primary-foreground: oklch(0.205 0 0);
 	--secondary: oklch(0.269 0 0);
 	--secondary-foreground: oklch(0.985 0 0);
@@ -192,6 +239,13 @@
 	--accent: oklch(0.269 0 0);
 	--accent-foreground: oklch(0.985 0 0);
 	--destructive: oklch(0.704 0.191 22.216);
+	/* Lightened so `text-success`/`text-warning`/`text-info` read on dark surfaces. */
+	--success: oklch(0.8 0.19 151);
+	--success-foreground: oklch(0.205 0 0);
+	--warning: oklch(0.85 0.15 85);
+	--warning-foreground: oklch(0.205 0 0);
+	--info: oklch(0.78 0.11 210);
+	--info-foreground: oklch(0.205 0 0);
 	--border: oklch(1 0 0 / 10%);
 	--input: oklch(1 0 0 / 15%);
 	--ring: oklch(0.556 0 0);

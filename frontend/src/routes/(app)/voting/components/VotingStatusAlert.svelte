@@ -2,8 +2,8 @@
 	import type { GetVotingStateResult, VotingStatus } from '$lib/types/voting';
 
 	import { resolve } from '$app/paths';
-	import { Alert } from 'flowbite-svelte';
-	import { ExclamationCircleSolid } from 'flowbite-svelte-icons';
+	import * as Alert from '$lib/components/ui/alert';
+	import { AlertCircle } from '@lucide/svelte';
 
 	interface Props {
 		votingState?: GetVotingStateResult;
@@ -11,6 +11,12 @@
 	}
 
 	let { votingState, class: className = '' }: Props = $props();
+
+	// Closed voting reads as an error; a missing login/ticket is a warning the user
+	// can act on. Both map to Alert's semantic variants (tinting lives there now).
+	let variant: Alert.AlertVariant = $derived(
+		votingState?.status === 'disabled' ? 'destructive' : 'warning'
+	);
 
 	// Centralize banner copy so list and nomination pages stay consistent.
 	function getStatusMessage(status: VotingStatus): string {
@@ -27,33 +33,16 @@
 				return '';
 		}
 	}
-
-	// Keep the banner color tied to the same backend status enum everywhere.
-	function getStatusColor(status: VotingStatus): 'green' | 'yellow' | 'red' {
-		switch (status) {
-			case 'open':
-				return 'green';
-			case 'not_authenticated':
-			case 'no_ticket':
-				return 'yellow';
-			case 'disabled':
-				return 'red';
-			default:
-				return 'yellow';
-		}
-	}
 </script>
 
 {#if votingState && votingState.status !== 'open'}
-	<Alert color={getStatusColor(votingState.status)} class={className}>
-		<div class="flex items-center gap-2">
-			<ExclamationCircleSolid class="h-5 w-5 shrink-0" />
-			<span>
-				{getStatusMessage(votingState.status)}
-				{#if votingState.status === 'no_ticket'}
-					<a href={resolve('/profile')} class="font-medium underline">Привязать билет</a>
-				{/if}
-			</span>
-		</div>
-	</Alert>
+	<Alert.Root {variant} class={className}>
+		<AlertCircle class="shrink-0" />
+		<Alert.Description class="flex items-center gap-1">
+			<span>{getStatusMessage(votingState.status)}</span>
+			{#if votingState.status === 'no_ticket'}
+				<a href={resolve('/profile')} class="font-medium underline">Привязать билет</a>
+			{/if}
+		</Alert.Description>
+	</Alert.Root>
 {/if}

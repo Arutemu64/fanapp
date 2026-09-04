@@ -3,7 +3,7 @@
 
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import OfflineUnavailableState from '$lib/components/OfflineUnavailableState.svelte';
-	import { ThumbsUpOutline } from 'flowbite-svelte-icons';
+	import { ThumbsUp } from '@lucide/svelte';
 
 	import type { PageProps } from './$types';
 
@@ -30,7 +30,7 @@
 	<VotingStatusAlert votingState={votingStatus} class="mb-4" />
 
 	{#if nominations.length === 0}
-		<EmptyState icon={ThumbsUpOutline} message="Номинаций пока нет" />
+		<EmptyState icon={ThumbsUp} message="Номинаций пока нет" />
 	{:else}
 		<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
 			{#each nominations as nomination (nomination.id)}

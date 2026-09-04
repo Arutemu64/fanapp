@@ -1,12 +1,7 @@
 <script lang="ts">
+	import { Button } from '$lib/components/ui/button';
 	import { formatFestivalDateTime, pluralize } from '$lib/utils/formatters';
-	import { Button } from 'flowbite-svelte';
-	import {
-		AnnotationOutline,
-		CalendarMonthOutline,
-		GlobeOutline,
-		MapPinAltOutline
-	} from 'flowbite-svelte-icons';
+	import { Calendar, Globe, MapPin } from '@lucide/svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import TelegramIcon from '~icons/simple-icons/telegram';
 	import TiktokIcon from '~icons/simple-icons/tiktok';
@@ -15,7 +10,7 @@
 	let { festivalStart, festivalEnd }: { festivalStart: string; festivalEnd: string } = $props();
 
 	const socials = [
-		{ label: 'Официальный сайт fancom.info', href: 'https://fancom.info', icon: GlobeOutline },
+		{ label: 'Официальный сайт fancom.info', href: 'https://fancom.info', icon: Globe },
 		{ label: 'Telegram', href: 'https://t.me/fanfan_fest_news', icon: TelegramIcon },
 		{ label: 'ВКонтакте', href: 'https://vk.ru/fan_fest', icon: VkIcon },
 		{ label: 'TikTok', href: 'https://www.tiktok.com/@fan_fan_official', icon: TiktokIcon }
@@ -117,7 +112,7 @@
 
 <section
 	aria-labelledby="hero-title"
-	class="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900"
+	class="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
 >
 	<div class="relative grid lg:grid-cols-2 lg:items-stretch">
 		<!-- Key art: full-bleed on top for mobile, full-bleed on the right for desktop.
@@ -125,7 +120,7 @@
 			 in on weak con-venue wifi, and replaces the broken-image icon if the art
 			 fails to load at all. -->
 		<div
-			class="relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-primary-100 via-primary-50 to-secondary-100 sm:aspect-[4/3] lg:order-2 lg:aspect-auto dark:from-primary-900/40 dark:via-gray-900 dark:to-secondary-900/40"
+			class="relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-primary-100 via-primary-50 to-secondary-100 sm:aspect-[4/3] lg:order-2 lg:aspect-auto dark:from-primary-900/40 dark:via-background dark:to-secondary-900/40"
 		>
 			{#if imageFailed}
 				<!-- Keep the alt available to screen readers even when the image is gone -->
@@ -168,17 +163,15 @@
 			{/if}
 		</div>
 
-		<div class="space-y-4 p-5 sm:p-7 lg:order-1 lg:p-9">
-			<div class="space-y-2">
+		<div class="flex flex-col gap-4 p-5 sm:p-7 lg:order-1 lg:p-9">
+			<div class="flex flex-col gap-2">
 				<h1
 					id="hero-title"
-					class="font-display text-2xl leading-tight font-bold text-gray-900 sm:text-3xl lg:text-4xl dark:text-white"
+					class="font-display text-2xl leading-tight font-bold text-foreground sm:text-3xl lg:text-4xl"
 				>
 					ФАН ФАН 2026
 				</h1>
-				<p
-					class="max-w-prose text-sm leading-relaxed text-gray-600 sm:text-base dark:text-gray-300"
-				>
+				<p class="max-w-prose text-sm leading-relaxed text-muted-foreground sm:text-base">
 					Добро пожаловать на главное событие года для всех поклонников косплея и популярной
 					культуры в Нижнем Новгороде — фестиваль анимации и фантастики ФАН ФАН.
 				</p>
@@ -199,7 +192,7 @@
 						{#each units as unit, index (unit.id)}
 							<div
 								class={[
-									'countdown-cell flex flex-col items-center rounded-lg bg-white px-1 py-2.5 shadow-sm dark:bg-gray-800',
+									'countdown-cell flex flex-col items-center rounded-lg bg-card px-1 py-2.5 shadow-sm',
 									!prefersReducedMotion.current && 'countdown-cell--animated'
 								]}
 								style:--enter-delay="{index * 80}ms"
@@ -207,26 +200,26 @@
 								{#if prefersReducedMotion.current || unit.id === 'seconds'}
 									<!-- Seconds change every tick; flipping them constantly is distracting -->
 									<span
-										class="font-display text-xl leading-none font-bold text-gray-900 tabular-nums sm:text-2xl dark:text-white"
+										class="font-display text-xl leading-none font-bold text-foreground tabular-nums sm:text-2xl"
 									>
 										{pad(unit.value)}
 									</span>
 								{:else}
 									{#key unit.value}
 										<span
-											class="tick font-display text-xl leading-none font-bold text-gray-900 tabular-nums sm:text-2xl dark:text-white"
+											class="tick font-display text-xl leading-none font-bold text-foreground tabular-nums sm:text-2xl"
 										>
 											{pad(unit.value)}
 										</span>
 									{/key}
 								{/if}
-								<span class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+								<span class="mt-1 text-xs text-muted-foreground">
 									{unit.label}
 								</span>
 							</div>
 						{/each}
 					</div>
-					<p class="mt-2 text-xs text-gray-600 dark:text-gray-400">{festivalDate}</p>
+					<p class="mt-2 text-xs text-muted-foreground">{festivalDate}</p>
 				</div>
 			{:else if phase === 'during'}
 				<div
@@ -235,27 +228,22 @@
 					<p class="text-sm font-semibold text-primary-700 dark:text-primary-300">
 						Фестиваль идёт прямо сейчас
 					</p>
-					<p class="mt-1 text-xs leading-5 text-gray-600 dark:text-gray-400">
+					<p class="mt-1 text-xs leading-5 text-muted-foreground">
 						Загляни в программу, чтобы не пропустить ближайшие выступления.
 					</p>
 				</div>
 			{:else}
-				<div
-					class="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/60"
-				>
-					<p class="text-sm font-semibold text-gray-900 dark:text-white">Фестиваль завершён</p>
-					<p class="mt-1 text-xs leading-5 text-gray-600 dark:text-gray-400">
+				<div class="rounded-xl border border-border bg-muted p-3">
+					<p class="text-sm font-semibold text-foreground">Фестиваль завершён</p>
+					<p class="mt-1 text-xs leading-5 text-muted-foreground">
 						Спасибо, что были с нами. До встречи в следующем году.
 					</p>
-					<p class="mt-2 text-xs leading-5 text-gray-600 dark:text-gray-400">
+					<p class="mt-2 text-xs leading-5 text-muted-foreground">
 						Поделись впечатлениями — расскажи, как для тебя прошёл фестиваль.
 					</p>
 					<!-- Guests land on the auth-gated feedback page, which bounces them to
 						 login and returns them here after (LOGIN_NEXT_PARAM). -->
-					<Button href="/feedback" color="primary" size="sm" class="mt-3">
-						<AnnotationOutline class="me-2 h-4 w-4" aria-hidden="true" />
-						Оставить отзыв
-					</Button>
+					<Button href="/feedback" size="sm" class="mt-3">Оставить отзыв</Button>
 				</div>
 			{/if}
 
@@ -263,13 +251,13 @@
 				<dl>
 					<div class="flex items-center gap-3">
 						<span
-							class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
+							class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
 						>
-							<CalendarMonthOutline class="h-5 w-5" aria-hidden="true" />
+							<Calendar class="size-5" aria-hidden="true" />
 						</span>
 						<div>
 							<dt class="sr-only">Когда</dt>
-							<dd class="text-sm font-semibold text-gray-900 sm:text-base dark:text-white">
+							<dd class="text-sm font-semibold text-foreground sm:text-base">
 								{festivalDate}
 							</dd>
 						</div>
@@ -280,18 +268,18 @@
 			<dl>
 				<div class="flex items-center gap-3">
 					<span
-						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-secondary-50 text-secondary-600 dark:bg-secondary-900/30 dark:text-secondary-400"
+						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-secondary/10 text-secondary"
 					>
-						<MapPinAltOutline class="h-5 w-5" aria-hidden="true" />
+						<MapPin class="size-5" aria-hidden="true" />
 					</span>
 					<div>
 						<dt class="sr-only">Где</dt>
-						<dd class="text-sm text-gray-600 sm:text-base dark:text-gray-300">
+						<dd class="text-sm text-muted-foreground sm:text-base">
 							<a
 								href="https://yandex.ru/maps/-/CPXxrYIR"
 								target="_blank"
 								rel="noopener noreferrer"
-								class="font-medium text-gray-900 underline decoration-secondary-400 decoration-2 underline-offset-2 transition-colors hover:text-secondary-600 dark:text-white dark:hover:text-secondary-400"
+								class="font-medium text-foreground underline decoration-secondary-400 decoration-2 underline-offset-2 transition-colors hover:text-secondary-600 dark:hover:text-secondary-400"
 							>
 								Нижний Новгород, ул. Героя Смирнова, 12, ДК «ГАЗ»
 							</a>
@@ -307,7 +295,7 @@
 						target="_blank"
 						rel="noopener noreferrer external"
 						aria-label={social.label}
-						class="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-gray-600 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-primary-500 dark:hover:bg-primary-900/20 dark:hover:text-primary-400"
+						class="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-muted text-muted-foreground transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 dark:hover:border-primary-500 dark:hover:bg-primary-900/20 dark:hover:text-primary-400"
 					>
 						<social.icon class="h-5 w-5" aria-hidden="true" />
 					</a>

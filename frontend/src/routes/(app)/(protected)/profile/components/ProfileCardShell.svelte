@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
-	import { Card } from 'flowbite-svelte';
+	import * as Card from '$lib/components/ui/card';
 
 	interface Props {
 		title: string;
@@ -13,36 +13,34 @@
 	let { title, description, icon, children }: Props = $props();
 </script>
 
-<!-- rounded-2xl opts up from the standard tier for this large settings card. The
-	flat, shadow-free surface (Border-Before-Shadow) is the app-wide Card default,
-	set once in the root +layout.svelte theme. -->
-<Card
-	class="w-full max-w-none rounded-2xl border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
->
-	<div class="p-5 sm:p-6">
+<!-- rounded-2xl opts up from the standard tier for this large settings card. -->
+<Card.Root class="w-full max-w-none rounded-2xl">
+	<!-- Only horizontal padding here: Card.Root already supplies vertical padding
+	     via py-(--card-spacing), so re-adding p-* would double the top/bottom gap. -->
+	<div class="px-5 sm:px-6">
 		<div class="flex flex-col gap-4">
 			<!-- Shared header keeps all profile cards visually aligned. -->
 			<div class="flex items-start gap-3">
 				{#if icon}
 					<div
-						class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+						class="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
 					>
 						{@render icon()}
 					</div>
 				{/if}
 
 				<div class="min-w-0">
-					<h3 class="text-lg font-bold text-gray-900 dark:text-white">{title}</h3>
+					<h3 class="text-lg font-bold text-foreground">{title}</h3>
 
 					{#if description}
-						<p class="mt-1 text-sm leading-5 text-gray-500 dark:text-gray-400">{description}</p>
+						<p class="mt-1 text-sm leading-5 text-muted-foreground">{description}</p>
 					{/if}
 				</div>
 			</div>
 
-			<div class="space-y-4">
+			<div class="flex flex-col gap-4">
 				{@render children()}
 			</div>
 		</div>
 	</div>
-</Card>
+</Card.Root>

@@ -2,10 +2,13 @@
 	import type { ParticipantFullDTO } from '$lib/types/participant';
 
 	import { createApiClient } from '$lib/api';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { pluralize } from '$lib/utils/formatters';
-	import { Badge, Button, Card } from 'flowbite-svelte';
-	import { CheckCircleSolid, CheckOutline, CloseOutline, HeartSolid } from 'flowbite-svelte-icons';
+	import { Check, CheckCircle2, Heart, X } from '@lucide/svelte';
 
 	const client = createApiClient();
 
@@ -22,17 +25,14 @@
 	let isLoading = $state(false);
 	let areActionsDisabled = $derived(isLoading || !canVote);
 
-	// Optimistic count so a vote/cancel moves the number instantly on flaky con-wifi,
-	// before the full refetch lands. A writable $derived lets us reassign it on click
-	// and snaps it back to the authoritative server value whenever fresh data arrives
-	// (after onVoted -> invalidate), so there's no double-counting to reconcile.
-	let votesCount = $derived(participant.votes_count);
+	let optimisticDelta = $state(0);
+	let votesCount = $derived(participant.votes_count + optimisticDelta);
 
 	async function handleVote() {
 		if (areActionsDisabled || participant.user_vote !== null) return;
 
 		isLoading = true;
-		votesCount += 1; // optimistic
+		optimisticDelta += 1;
 		try {
 			const { data, error, response } = await client.POST('/voting/votes', {
 				body: {
@@ -41,17 +41,18 @@
 			});
 
 			if (error || !response.ok) {
-				votesCount -= 1; // revert
+				optimisticDelta -= 1;
 				toastService.error(error);
 				return;
 			}
 
 			if (data) {
 				toastService.add('Голос учтён', 'success');
+				optimisticDelta = 0;
 				onVoted?.();
 			}
 		} catch (err) {
-			votesCount -= 1; // revert
+			optimisticDelta -= 1;
 			toastService.error(err);
 		} finally {
 			isLoading = false;
@@ -63,7 +64,7 @@
 		if (areActionsDisabled || vote === null) return;
 
 		isLoading = true;
-		votesCount -= 1; // optimistic
+		optimisticDelta -= 1;
 		try {
 			const { error, response } = await client.DELETE('/voting/votes/{vote_id}', {
 				params: {
@@ -72,15 +73,16 @@
 			});
 
 			if (error || !response.ok) {
-				votesCount += 1; // revert
+				optimisticDelta += 1;
 				toastService.error(error);
 				return;
 			}
 
 			toastService.add('Голос отменён', 'success');
+			optimisticDelta = 0;
 			onVoted?.();
 		} catch (err) {
-			votesCount += 1; // revert
+			optimisticDelta += 1;
 			toastService.error(err);
 		} finally {
 			isLoading = false;
@@ -88,15 +90,16 @@
 	}
 </script>
 
-<Card
+<Card.Root
+	as="article"
 	class={[
 		'flex w-full max-w-none flex-col p-4 transition-[box-shadow,border-color,background-color]',
-		participant.user_vote !== null ? 'ring-2 ring-green-600 dark:ring-green-500' : ''
+		participant.user_vote !== null ? 'ring-2 ring-success' : ''
 	]}
 >
 	<div class="mb-2 flex min-h-6 items-center justify-between gap-2">
 		{#if participant.voting_number}
-			<span class="text-xs font-semibold tracking-wide text-primary-600 dark:text-primary-400">
+			<span class="text-xs font-semibold tracking-wide text-primary">
 				№{participant.voting_number}
 			</span>
 		{:else}
@@ -104,16 +107,16 @@
 		{/if}
 
 		{#if participant.user_vote !== null}
-			<Badge color="green" border class="shrink-0">
+			<Badge variant="outline" class="shrink-0 border-success/30 bg-success/10 text-success">
 				<span class="flex items-center gap-1">
-					<CheckCircleSolid class="h-3.5 w-3.5" />
+					<CheckCircle2 class="size-3.5" />
 					Твой голос
 				</span>
 			</Badge>
 		{/if}
 	</div>
 
-	<h3 class="flex-1 text-base leading-snug font-bold break-words text-gray-900 dark:text-white">
+	<h3 class="flex-1 text-base leading-snug font-bold break-words text-foreground">
 		{participant.title}
 	</h3>
 
@@ -123,14 +126,9 @@
 	     in the nomination, other cards drop the button and the row would otherwise collapse
 	     and make the count jump. Both buttons share the same 44px height below so toggling
 	     vote<->cancel doesn't shift either. -->
-	<div
-		class="mt-3 flex min-h-14 items-center justify-between gap-2 border-t border-gray-100 pt-3 dark:border-gray-700"
-	>
-		<div class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
-			<HeartSolid
-				class="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
-				aria-hidden="true"
-			/>
+	<div class="mt-3 flex min-h-14 items-center justify-between gap-2 border-t border-border pt-3">
+		<div class="flex items-center gap-1.5 text-sm text-muted-foreground">
+			<Heart class="size-3.5 shrink-0 fill-current text-muted-foreground/60" aria-hidden="true" />
 			<span aria-live="polite">
 				{votesCount}
 				{pluralize(votesCount, 'голос', 'голоса', 'голосов')}
@@ -140,29 +138,34 @@
 		{#if participant.user_vote !== null}
 			<Button
 				size="sm"
-				color="alternative"
+				variant="outline"
 				class="min-h-11"
-				loading={isLoading}
 				disabled={areActionsDisabled}
 				onclick={handleCancelVote}
 				aria-label="Отменить голос"
 			>
-				<CloseOutline class="me-1.5 h-3.5 w-3.5" />
+				{#if isLoading}
+					<Spinner data-icon="inline-start" />
+				{:else}
+					<X data-icon="inline-start" />
+				{/if}
 				Отменить
 			</Button>
 		{:else if !hasVoted}
 			<Button
 				size="sm"
-				color="primary"
 				class="min-h-11"
-				loading={isLoading}
 				disabled={areActionsDisabled}
 				onclick={handleVote}
 				aria-label={`Голосовать за ${participant.title}`}
 			>
-				<CheckOutline class="me-1.5 h-3.5 w-3.5" />
+				{#if isLoading}
+					<Spinner data-icon="inline-start" />
+				{:else}
+					<Check data-icon="inline-start" />
+				{/if}
 				Голосовать
 			</Button>
 		{/if}
 	</div>
-</Card>
+</Card.Root>

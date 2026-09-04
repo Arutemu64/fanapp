@@ -5,13 +5,13 @@
 	import { page } from '$app/state';
 	import { createApiClient } from '$lib/api';
 	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { NOTIFICATION_BADGE_MAX, NOTIFICATION_PREVIEW_LIMIT } from '$lib/constants/notifications';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { getUnreadCountService } from '$lib/services/unreadCount.svelte';
 	import { setAppBadgeCount } from '$lib/utils/appBadge';
-	import { Dropdown, DropdownGroup } from 'flowbite-svelte';
-	import { BellSolid, EyeSolid } from 'flowbite-svelte-icons';
+	import { Bell, Eye } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
 	const client = createApiClient();
@@ -164,16 +164,16 @@
 	// specificity, and Tailwind emits `.inline-flex` after `.hidden`, so it would win
 	// and leak the button onto mobile beside the `<a>` — a duplicate bell.
 	const triggerClass =
-		'relative h-11 w-11 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none dark:text-gray-400 dark:hover:bg-gray-700 dark:focus-visible:ring-gray-500 dark:focus-visible:ring-offset-gray-900';
+		'relative h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none';
 </script>
 
 {#snippet bellContent()}
-	<BellSolid class="h-5 w-5" aria-hidden="true" />
+	<Bell class="h-5 w-5" aria-hidden="true" />
 	{#if unread.count > 0}
 		<!-- Watermelon-primary badge per the design system (unseen dots are primary,
 			not red — red reads as an error). The label is announced via aria-label. -->
 		<span
-			class="absolute top-0.5 right-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-primary-600 px-1 text-[10px] leading-none font-semibold text-white dark:border-gray-900 dark:bg-primary-500"
+			class="absolute top-0.5 right-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-background bg-primary px-1 text-[10px] leading-none font-semibold text-primary-foreground"
 			aria-hidden="true"
 		>
 			{badgeLabel}
@@ -192,52 +192,57 @@
 	{@render bellContent()}
 </a>
 
-<button
-	id="notification-bell"
-	aria-label={bellLabel}
-	onclick={markVisibleRead}
-	class="{triggerClass} hidden md:inline-flex"
+<DropdownMenu.Root
+	onOpenChange={(open) => {
+		if (open) void markVisibleRead();
+	}}
 >
-	{@render bellContent()}
-</button>
+	<DropdownMenu.Trigger>
+		{#snippet child({ props })}
+			<button
+				{...props}
+				id="notification-bell"
+				aria-label={bellLabel}
+				class="{triggerClass} hidden md:inline-flex"
+			>
+				{@render bellContent()}
+			</button>
+		{/snippet}
+	</DropdownMenu.Trigger>
+	<!-- sideOffset above the usual ~4 because the trigger is recessed inside the taller
+		top bar: it must clear the bar's bottom padding, not just the bell button, or the
+		menu tucks under the bar (which paints below it at a lower z-index). -->
+	<DropdownMenu.Content align="end" sideOffset={16} class="w-80 max-w-sm p-0">
+		<div class="flex items-center justify-between border-b border-border px-4 py-2">
+			<div class="text-sm font-bold text-foreground">Уведомления</div>
+			<button
+				type="button"
+				class="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+				onclick={markAllRead}
+				disabled={unread.count === 0}
+			>
+				Прочитать все
+			</button>
+		</div>
 
-<Dropdown
-	triggeredBy="#notification-bell"
-	class="w-full max-w-sm divide-y divide-gray-100 dark:divide-gray-700 dark:bg-gray-800"
->
-	<div class="flex items-center justify-between px-4 py-2">
-		<div class="text-center font-bold text-gray-900 dark:text-white">Уведомления</div>
-		<button
-			type="button"
-			class="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-primary-600 transition-colors hover:bg-primary-50 focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:text-primary-400 dark:hover:bg-gray-700"
-			onclick={markAllRead}
-			disabled={unread.count === 0}
-		>
-			Прочитать все
-		</button>
-	</div>
-
-	<div class="max-h-96 overflow-y-auto">
-		{#if notifications.length > 0}
-			<DropdownGroup>
+		<div class="max-h-96 divide-y divide-border overflow-y-auto">
+			{#if notifications.length > 0}
 				{#each notifications as notification (notification.id)}
 					<NotificationListItem {notification} compact={true} />
 				{/each}
-			</DropdownGroup>
-		{:else}
-			<div class="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
-				Уведомлений пока нет
-			</div>
-		{/if}
-	</div>
-
-	<a
-		href={resolve('/notifications')}
-		class="-my-1 block bg-gray-50 py-2 text-center text-sm font-medium text-gray-900 hover:bg-gray-100 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
-	>
-		<div class="inline-flex items-center">
-			<EyeSolid class="me-2 h-4 w-4 text-gray-500 dark:text-gray-400" />
-			Все уведомления
+			{:else}
+				<div class="p-4 text-center text-sm text-muted-foreground">Уведомлений пока нет</div>
+			{/if}
 		</div>
-	</a>
-</Dropdown>
+
+		<a
+			href={resolve('/notifications')}
+			class="block border-t border-border bg-muted/50 py-2.5 text-center text-sm font-medium text-foreground hover:bg-muted"
+		>
+			<div class="inline-flex items-center">
+				<Eye class="me-2 size-4 text-muted-foreground" />
+				Все уведомления
+			</div>
+		</a>
+	</DropdownMenu.Content>
+</DropdownMenu.Root>

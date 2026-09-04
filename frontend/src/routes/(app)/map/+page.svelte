@@ -3,8 +3,8 @@
 
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { maps } from '$lib/data/maps';
+	import { Download, Minimize2, X } from '@lucide/svelte';
 	import Panzoom from '@panzoom/panzoom';
-	import { CloseOutline, CompressOutline, DownloadOutline } from 'flowbite-svelte-icons';
 
 	// Currently opened map for the fullscreen viewer, or null when closed.
 	let active = $state<MapEntry | null>(null);
@@ -65,8 +65,7 @@
 	// Focus trap for the viewer (ARIA APG dialog pattern): aria-modal alone can
 	// strand a screen-reader/keyboard user behind the overlay, so move focus into
 	// the dialog on open, keep Tab inside it, and hand focus back to the trigger on
-	// close. The overlay is hand-rolled — Flowbite <Modal> would give this for free
-	// but portals to body, losing the inline --z-modal rung this viewer needs.
+	// close. The overlay is hand-rolled so it preserves the inline --z-modal rung this viewer needs.
 	function trapFocus(dialog: HTMLElement) {
 		const previouslyFocused = document.activeElement as HTMLElement | null;
 		dialog.focus();
@@ -116,7 +115,7 @@ each other on desktop. items-start keeps each frame at its own height. -->
 		<button
 			type="button"
 			onclick={() => (active = map)}
-			class="mx-auto block w-fit max-w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-100 p-2 shadow-sm transition-colors hover:bg-gray-200/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 dark:border-gray-800 dark:bg-gray-950 dark:hover:bg-gray-800/80"
+			class="mx-auto block w-fit max-w-full overflow-hidden rounded-2xl border bg-muted p-2 shadow-sm transition-colors hover:bg-muted/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
 			aria-label={`Открыть карту на весь экран: ${map.alt}`}
 		>
 			<enhanced:img
@@ -129,7 +128,7 @@ each other on desktop. items-start keeps each frame at its own height. -->
 		</button>
 	{:else}
 		<div
-			class="rounded-2xl border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 lg:col-span-2 dark:border-gray-700 dark:text-gray-400"
+			class="rounded-2xl border border-dashed p-6 text-center text-sm text-muted-foreground lg:col-span-2"
 		>
 			Карты пока не добавлены.
 		</div>
@@ -196,7 +195,7 @@ each other on desktop. items-start keeps each frame at its own height. -->
 				class="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
 				aria-label="Сбросить масштаб"
 			>
-				<CompressOutline class="h-6 w-6" />
+				<Minimize2 class="size-6" />
 			</button>
 			<!-- Download the full-size fallback (img.src is the largest, original-format variant). -->
 			<a
@@ -206,7 +205,7 @@ each other on desktop. items-start keeps each frame at its own height. -->
 				class="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
 				aria-label="Скачать карту"
 			>
-				<DownloadOutline class="h-6 w-6" />
+				<Download class="size-6" />
 			</a>
 			<button
 				type="button"
@@ -214,7 +213,7 @@ each other on desktop. items-start keeps each frame at its own height. -->
 				class="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
 				aria-label="Закрыть"
 			>
-				<CloseOutline class="h-6 w-6" />
+				<X class="size-6" />
 			</button>
 		</div>
 	</div>

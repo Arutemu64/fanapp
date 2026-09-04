@@ -1,6 +1,8 @@
 <script lang="ts">
 	import type { Component, Snippet } from 'svelte';
 
+	import * as Empty from '$lib/components/ui/empty';
+
 	interface Props {
 		// Optional leading icon (e.g. for richer empty states like voting lists).
 		icon?: Component<{ class?: string }>;
@@ -14,19 +16,25 @@
 	let { icon: Icon, title, message, children }: Props = $props();
 </script>
 
-<div
-	class="rounded-lg border border-gray-200 bg-white p-6 text-center dark:border-gray-700 dark:bg-gray-800"
->
-	{#if Icon}
-		<Icon class="mx-auto h-10 w-10 text-gray-300 sm:h-12 sm:w-12 dark:text-gray-600" />
-	{/if}
-	{#if title}
-		<p class="text-base font-bold text-gray-900 dark:text-white">{title}</p>
-		<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{message}</p>
-	{:else}
-		<p class={['text-gray-500 dark:text-gray-400', Icon && 'mt-2 text-sm']}>{message}</p>
-	{/if}
+<!-- App-wide empty state: shadcn Empty on the app's card surface (solid border +
+	bg-card + calm p-6), understated per DESIGN.md — a teaching state, not "nothing
+	here". The icon stays bare and muted (default media variant) rather than a
+	filled tile, keeping color for action and semantic state only. -->
+<Empty.Root class="border border-solid bg-card p-6">
+	<Empty.Header>
+		{#if Icon}
+			<Empty.Media class="mb-0 text-muted-foreground">
+				<Icon class="size-10 sm:size-12" />
+			</Empty.Media>
+		{/if}
+		{#if title}
+			<Empty.Title class="text-base font-bold">{title}</Empty.Title>
+		{/if}
+		<Empty.Description>{message}</Empty.Description>
+	</Empty.Header>
 	{#if children}
-		{@render children()}
+		<Empty.Content>
+			{@render children()}
+		</Empty.Content>
 	{/if}
-</div>
+</Empty.Root>

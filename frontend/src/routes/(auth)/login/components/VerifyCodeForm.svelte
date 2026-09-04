@@ -1,17 +1,22 @@
 <script lang="ts">
+	import type { PinInputCell } from 'bits-ui';
+
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import CaptchaWidget, { captchaEnabled } from '$lib/components/CaptchaWidget.svelte';
-	import OtpInput from '$lib/components/OtpInput.svelte';
+	import * as Alert from '$lib/components/ui/alert';
+	import { Button } from '$lib/components/ui/button';
+	import * as InputOTP from '$lib/components/ui/input-otp';
+	import { Label } from '$lib/components/ui/label';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { CaptchaGate } from '$lib/services/captcha.svelte';
 	import { ResendCooldown } from '$lib/services/cooldown.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { completeLogin } from '$lib/utils/auth';
 	import { isValidOtp } from '$lib/utils/validation';
-	import { Alert, Button, Helper, Label, Spinner } from 'flowbite-svelte';
-	import { ArrowLeftOutline, RefreshOutline } from 'flowbite-svelte-icons';
+	import { ArrowLeft, RotateCw } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
 	interface Props {
@@ -162,50 +167,61 @@
 	}
 </script>
 
-<form onsubmit={handleSubmit} class="space-y-4">
+<form onsubmit={handleSubmit} class="flex flex-col gap-4">
 	{#if formError}
-		<Alert color="red">
-			{formError}
-		</Alert>
+		<Alert.Root variant="destructive">
+			<Alert.Description>{formError}</Alert.Description>
+		</Alert.Root>
 	{/if}
 
-	<Alert color="green">
-		Код отправлен на <span class="font-medium">{email}</span>.
-	</Alert>
+	<Alert.Root variant="success">
+		<Alert.Description>Код отправлен на <span class="font-medium">{email}</span>.</Alert.Description
+		>
+	</Alert.Root>
 
-	<div>
-		<Label class="mb-2 block text-center">Код подтверждения</Label>
-		<OtpInput
+	<div class="flex flex-col items-center gap-2">
+		<Label>Код подтверждения</Label>
+		<InputOTP.Root
+			maxlength={6}
 			bind:value={loginCode}
 			disabled={busy}
-			hasError={Boolean(loginCodeError)}
-			onInput={resetLoginCodeFeedback}
+			aria-invalid={Boolean(loginCodeError)}
+			onValueChange={resetLoginCodeFeedback}
 			onComplete={submitLoginCode}
-		/>
+		>
+			{#snippet children({ cells }: { cells: PinInputCell[] })}
+				<InputOTP.Group>
+					{#each cells.slice(0, 3) as cell, index (index)}
+						<InputOTP.Slot {cell} class="size-11 text-lg font-bold sm:size-12 sm:text-xl" />
+					{/each}
+				</InputOTP.Group>
+				<InputOTP.Separator />
+				<InputOTP.Group>
+					{#each cells.slice(3, 6) as cell, index (index + 3)}
+						<InputOTP.Slot {cell} class="size-11 text-lg font-bold sm:size-12 sm:text-xl" />
+					{/each}
+				</InputOTP.Group>
+			{/snippet}
+		</InputOTP.Root>
 		{#if loginCodeError}
-			<Helper color="red" class="mt-1 block text-center">{loginCodeError}</Helper>
+			<p class="text-center text-xs text-destructive">{loginCodeError}</p>
 		{:else}
-			<Helper class="mt-1 block text-center">
+			<p class="text-center text-xs text-muted-foreground">
 				Введи 6 цифр из письма. Не пришло — проверь папку «Спам».
-			</Helper>
+			</p>
 		{/if}
 	</div>
 
-	<Button
-		type="submit"
-		color="primary"
-		class="min-h-11 w-full font-medium"
-		disabled={busy || loginCode.length < 6}
-	>
+	<Button type="submit" class="min-h-11 w-full font-medium" disabled={busy || loginCode.length < 6}>
 		{#if activeAction === 'code-login'}
-			<Spinner size="4" class="mr-2 fill-white" />
+			<Spinner data-icon="inline-start" />
 			Проверяем…
 		{:else}
 			Войти по коду
 		{/if}
 	</Button>
 
-	<div class="flex flex-col space-y-2">
+	<div class="flex flex-col gap-2">
 		<CaptchaWidget
 			bind:token={captchaToken}
 			bind:reset={resetCaptcha}
@@ -215,30 +231,30 @@
 
 		<Button
 			type="button"
-			color="alternative"
+			variant="outline"
 			class="min-h-11 w-full font-medium"
 			disabled={busy || cooldown.remaining > 0}
 			onclick={() => void handleLoginCodeRequest()}
 		>
 			{#if isResending}
-				<Spinner size="4" class="mr-2" color="primary" />
+				<Spinner data-icon="inline-start" />
 				Отправляем…
 			{:else if cooldown.remaining > 0}
 				Отправить код ещё раз ({cooldown.remaining} сек.)
 			{:else}
-				<RefreshOutline class="me-2 h-4 w-4" />
+				<RotateCw data-icon="inline-start" />
 				Отправить код ещё раз
 			{/if}
 		</Button>
 
 		<Button
 			type="button"
-			color="light"
+			variant="outline"
 			class="min-h-11 w-full font-medium"
 			disabled={busy}
 			onclick={() => onBack?.()}
 		>
-			<ArrowLeftOutline class="me-2 h-4 w-4" />
+			<ArrowLeft data-icon="inline-start" />
 			Назад
 		</Button>
 	</div>

@@ -3,10 +3,14 @@
 	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import CaptchaWidget, { captchaEnabled } from '$lib/components/CaptchaWidget.svelte';
+	import * as Alert from '$lib/components/ui/alert';
+	import { Button } from '$lib/components/ui/button';
+	import * as Field from '$lib/components/ui/field';
+	import { Input } from '$lib/components/ui/input';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { CaptchaGate } from '$lib/services/captcha.svelte';
 	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
-	import { Alert, Button, Helper, Input, Label, Spinner } from 'flowbite-svelte';
-	import { ArrowLeftOutline, EnvelopeSolid } from 'flowbite-svelte-icons';
+	import { ArrowLeft, Mail } from '@lucide/svelte';
 	import { onDestroy } from 'svelte';
 
 	import VerifyCodeForm from './VerifyCodeForm.svelte';
@@ -56,11 +60,6 @@
 
 	let normalizedEmail = $derived(normalizeEmail(email));
 	let isEmailValid = $derived(email ? isValidEmail(normalizedEmail) : null);
-	let emailColor = $derived.by((): 'green' | 'red' | undefined => {
-		if (emailError) return 'red';
-		if (!email) return undefined;
-		return isEmailValid ? 'green' : 'red';
-	});
 
 	function resetEmailFeedback() {
 		emailError = '';
@@ -127,7 +126,7 @@
 				return;
 			}
 
-			// OtpInput auto-focuses its first box on mount, so no manual focus here.
+			// OTP input auto-focuses its first box on mount, so no manual focus here.
 			codeSentTo = trimmedEmail;
 		} catch (err) {
 			console.error('Login code request exception:', err);
@@ -149,41 +148,40 @@
 {#if codeSentTo}
 	<VerifyCodeForm email={codeSentTo} onBack={() => (codeSentTo = '')} />
 {:else}
-	<form onsubmit={handleSubmit} class="space-y-4">
+	<form onsubmit={handleSubmit} class="flex flex-col gap-4">
 		{#if formError}
-			<Alert color="red">
-				{formError}
-			</Alert>
+			<Alert.Root variant="destructive">
+				<Alert.Description>{formError}</Alert.Description>
+			</Alert.Root>
 		{/if}
 
-		<div>
-			<Label for="code-email" color={emailColor} class="mb-2">Эл. почта</Label>
-			<Input
-				id="code-email"
-				name="email"
-				type="email"
-				bind:value={email}
-				placeholder="name@example.com"
-				autocomplete="email"
-				inputmode="email"
-				autocapitalize="off"
-				spellcheck={false}
-				required
-				disabled={isRequesting}
-				class="ps-9"
-				color={emailColor}
-				oninput={resetEmailFeedback}
-			>
-				{#snippet left()}
-					<EnvelopeSolid class="h-5 w-5" />
-				{/snippet}
-			</Input>
+		<Field.Field data-invalid={emailError || (email && isEmailValid === false) ? true : undefined}>
+			<Field.FieldLabel for="code-email">Эл. почта</Field.FieldLabel>
+			<div class="relative flex items-center">
+				<Mail class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+				<Input
+					id="code-email"
+					name="email"
+					type="email"
+					bind:value={email}
+					placeholder="name@example.com"
+					autocomplete="email"
+					inputmode="email"
+					autocapitalize="off"
+					spellcheck={false}
+					required
+					disabled={isRequesting}
+					class="pl-9"
+					aria-invalid={emailError || (email && isEmailValid === false) ? true : undefined}
+					oninput={resetEmailFeedback}
+				/>
+			</div>
 			{#if emailError}
-				<Helper color="red" class="mt-1">{emailError}</Helper>
+				<Field.FieldError>{emailError}</Field.FieldError>
 			{:else if email && isEmailValid === false}
-				<Helper color="red" class="mt-1">Введи адрес в формате name@example.com</Helper>
+				<Field.FieldError>Введи адрес в формате name@example.com</Field.FieldError>
 			{/if}
-		</div>
+		</Field.Field>
 
 		<CaptchaWidget
 			bind:token={captchaToken}
@@ -192,14 +190,9 @@
 			onSolve={handleCaptchaSolved}
 		/>
 
-		<Button
-			type="submit"
-			color="primary"
-			class="min-h-11 w-full font-medium"
-			disabled={isRequesting}
-		>
+		<Button type="submit" class="min-h-11 w-full font-medium" disabled={isRequesting}>
 			{#if isRequesting}
-				<Spinner size="4" class="mr-2 fill-white" />
+				<Spinner data-icon="inline-start" />
 				Отправляем…
 			{:else}
 				Продолжить
@@ -210,7 +203,7 @@
 		<div class="text-center">
 			<button
 				type="button"
-				class="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium text-primary-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-50 dark:text-primary-400"
+				class="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
 				onclick={() => onPasswordLogin?.()}
 				disabled={isRequesting}
 			>
@@ -220,12 +213,12 @@
 
 		<Button
 			type="button"
-			color="light"
+			variant="outline"
 			class="min-h-11 w-full font-medium"
 			disabled={isRequesting}
 			onclick={() => onBack?.()}
 		>
-			<ArrowLeftOutline class="me-2 h-4 w-4" />
+			<ArrowLeft data-icon="inline-start" />
 			Назад
 		</Button>
 	</form>

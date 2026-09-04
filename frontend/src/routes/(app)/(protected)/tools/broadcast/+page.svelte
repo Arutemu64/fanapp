@@ -3,8 +3,14 @@
 	const client = createApiClient();
 	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
+	import * as Alert from '$lib/components/ui/alert';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import { Checkbox } from '$lib/components/ui/checkbox';
+	import * as Field from '$lib/components/ui/field';
+	import { Spinner } from '$lib/components/ui/spinner';
+	import { Textarea } from '$lib/components/ui/textarea';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { Alert, Button, Card, Checkbox, Helper, Label, Spinner, Textarea } from 'flowbite-svelte';
 
 	const toastService = getToastService();
 
@@ -46,6 +52,15 @@
 		if (rolesError) {
 			rolesError = selectedRoles.length > 0 ? '' : 'Выбери хотя бы одну группу пользователей';
 		}
+	}
+
+	function toggleRole(role: string, checked: boolean) {
+		if (checked) {
+			if (!selectedRoles.includes(role)) selectedRoles = [...selectedRoles, role];
+		} else {
+			selectedRoles = selectedRoles.filter((r) => r !== role);
+		}
+		handleRoleChange();
 	}
 
 	async function handleSubmit(event: Event) {
@@ -103,10 +118,10 @@
 	description="Создавай массовые рассылки уведомлений для выбранных категорий участников фестиваля."
 />
 
-<Card class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
-	<form class="space-y-6" onsubmit={handleSubmit}>
-		<div class="space-y-2">
-			<Label for="broadcast-body" class="text-gray-900 dark:text-white">Текст уведомления</Label>
+<Card.Root class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
+	<form class="flex flex-col gap-6" onsubmit={handleSubmit}>
+		<Field.Field data-invalid={bodyError ? true : undefined}>
+			<Field.FieldLabel for="broadcast-body">Текст уведомления</Field.FieldLabel>
 			<Textarea
 				id="broadcast-body"
 				name="body"
@@ -115,76 +130,87 @@
 				bind:value={bodyText}
 				disabled={isSending}
 				oninput={handleBodyInput}
-				class="w-full rounded-xl"
+				class="w-full resize-none rounded-xl"
+				aria-invalid={bodyError ? true : undefined}
 			/>
 			{#if bodyError}
-				<Helper color="red" class="mt-1">{bodyError}</Helper>
+				<Field.FieldError>{bodyError}</Field.FieldError>
 			{:else}
-				<Helper class="text-sm text-gray-500 dark:text-gray-400">
+				<Field.FieldDescription>
 					Это сообщение будет моментально отправлено всем пользователям с выбранными ролями.
-				</Helper>
+				</Field.FieldDescription>
 			{/if}
-		</div>
+		</Field.Field>
 
-		<div class="space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-			<span class="block text-sm font-medium text-gray-900 dark:text-white">Кому отправить</span>
-			<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-				<Checkbox
-					bind:group={selectedRoles}
-					value="visitor"
-					disabled={isSending}
-					onchange={handleRoleChange}
-				>
-					Зрители
-				</Checkbox>
-				<Checkbox
-					bind:group={selectedRoles}
-					value="participant"
-					disabled={isSending}
-					onchange={handleRoleChange}
-				>
-					Участники
-				</Checkbox>
-				<Checkbox
-					bind:group={selectedRoles}
-					value="helper"
-					disabled={isSending}
-					onchange={handleRoleChange}
-				>
-					Волонтёры
-				</Checkbox>
-				<Checkbox
-					bind:group={selectedRoles}
-					value="org"
-					disabled={isSending}
-					onchange={handleRoleChange}
-				>
-					Организаторы
-				</Checkbox>
-			</div>
+		<Field.FieldSet
+			class="rounded-lg border border-border p-4"
+			data-invalid={rolesError ? true : undefined}
+		>
+			<Field.FieldLegend variant="label">Кому отправить</Field.FieldLegend>
+			<Field.FieldGroup data-slot="checkbox-group" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+				<Field.Field orientation="horizontal">
+					<Checkbox
+						id="role-visitor"
+						checked={selectedRoles.includes('visitor')}
+						onCheckedChange={(v) => toggleRole('visitor', !!v)}
+						disabled={isSending}
+					/>
+					<Field.FieldLabel for="role-visitor" class="cursor-pointer font-normal">
+						Зрители
+					</Field.FieldLabel>
+				</Field.Field>
+				<Field.Field orientation="horizontal">
+					<Checkbox
+						id="role-participant"
+						checked={selectedRoles.includes('participant')}
+						onCheckedChange={(v) => toggleRole('participant', !!v)}
+						disabled={isSending}
+					/>
+					<Field.FieldLabel for="role-participant" class="cursor-pointer font-normal">
+						Участники
+					</Field.FieldLabel>
+				</Field.Field>
+				<Field.Field orientation="horizontal">
+					<Checkbox
+						id="role-helper"
+						checked={selectedRoles.includes('helper')}
+						onCheckedChange={(v) => toggleRole('helper', !!v)}
+						disabled={isSending}
+					/>
+					<Field.FieldLabel for="role-helper" class="cursor-pointer font-normal">
+						Волонтёры
+					</Field.FieldLabel>
+				</Field.Field>
+				<Field.Field orientation="horizontal">
+					<Checkbox
+						id="role-org"
+						checked={selectedRoles.includes('org')}
+						onCheckedChange={(v) => toggleRole('org', !!v)}
+						disabled={isSending}
+					/>
+					<Field.FieldLabel for="role-org" class="cursor-pointer font-normal">
+						Организаторы
+					</Field.FieldLabel>
+				</Field.Field>
+			</Field.FieldGroup>
 			{#if rolesError}
-				<Helper color="red" class="mt-1">{rolesError}</Helper>
+				<Field.FieldError>{rolesError}</Field.FieldError>
 			{/if}
-		</div>
+		</Field.FieldSet>
 
 		{#if submitError}
-			<Alert color="red">
-				{submitError}
-			</Alert>
+			<Alert.Root variant="destructive">
+				<Alert.Description>{submitError}</Alert.Description>
+			</Alert.Root>
 		{/if}
 
-		<Button
-			type="submit"
-			color="primary"
-			class="min-h-11 w-full justify-center sm:w-auto"
-			disabled={isSending}
-		>
+		<Button type="submit" class="min-h-11 w-full justify-center sm:w-auto" disabled={isSending}>
 			{#if isSending}
-				<Spinner size="4" class="mr-2 fill-white" />
+				<Spinner data-icon="inline-start" />
 				Отправка…
 			{:else}
 				Отправить рассылку
 			{/if}
 		</Button>
 	</form>
-</Card>
+</Card.Root>

@@ -41,7 +41,7 @@
 {#if feed.items.length === 0}
 	<EmptyState message="Изменений пока нет" />
 {:else}
-	<div class="space-y-3">
+	<div class="flex flex-col gap-3">
 		{#each feed.items as change (change.id)}
 			<ScheduleChangeCard {change} />
 		{/each}

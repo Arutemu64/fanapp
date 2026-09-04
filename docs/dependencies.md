@@ -139,8 +139,10 @@ measure — they exist so that every site of one pin moves in lockstep.
 Dev tooling automerges on minor/patch because it fails loudly in CI. That
 argument does not extend to everything in `frontend/package.json`
 `devDependencies`: SvelteKit convention puts `svelte`, `@sveltejs/*`, `vite`,
-`tailwindcss` and `flowbite*` there, but their output ships in the bundle, and a
-CSS or component-library minor can move the layout with every gate green. Those
+`tailwindcss` and the shadcn-svelte component substrate (`bits-ui`,
+`shadcn-svelte`, `tailwind-variants`, `tailwind-merge`, `clsx`, `mode-watcher`,
+`tw-animate-css`, `@lucide/svelte`) there, but their output ships in the bundle,
+and a CSS or component-substrate minor can move the layout with every gate green. Those
 are carved back out into review PRs; `eslint`, `prettier`, `typescript`,
 `svelte-check`, `vitest` and `openapi-typescript` keep automerging.
 
