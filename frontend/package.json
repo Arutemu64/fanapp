@@ -20,7 +20,7 @@
 		"generate-api:check": "node ./scripts/generate-api.mjs --check"
 	},
 	"devDependencies": {
-		"@eslint/compat": "2.1.0",
+		"@eslint/compat": "2.1.1",
 		"@eslint/js": "10.0.1",
 		"@iconify-json/simple-icons": "1.2.94",
 		"@internationalized/date": "^3.12.3",
