@@ -21,5 +21,15 @@ class PermissionService:
             user_id=user.id,
             permission=permission,
         )
-        if user_perm is None:
+        if user_perm is not None:
+            return
+
+        # Fall back to the wildcard only when the specific grant is absent: the
+        # common case (an org holding the exact permission) stays a single point
+        # lookup, and a superuser holding "*" passes every check.
+        wildcard = await self.perm_gateway.get_by_permission(
+            user_id=user.id,
+            permission=Permission.WILDCARD,
+        )
+        if wildcard is None:
             raise AccessDenied

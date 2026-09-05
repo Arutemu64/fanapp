@@ -27,6 +27,7 @@ from fanfan.core.models.user import User
 from fanfan.main.ioc.db import DbProvider, SqlGatewaysProvider
 from fanfan.main.ioc.interactors import InteractorsProvider
 from fanfan.main.ioc.jinja import JinjaProvider
+from fanfan.main.ioc.profanity import ProfanityProvider
 from fanfan.main.ioc.redis import RedisProvider
 from fanfan.main.ioc.security import SecurityProvider
 from fanfan.main.ioc.serialization import SerializationProvider
@@ -97,6 +98,8 @@ async def dishka() -> AsyncIterable[AsyncContainer]:
         SecurityProvider(),
         SerializationProvider(),
         JinjaProvider(),
+        # Real word-list filter — pure and offline, so no fake is needed.
+        ProfanityProvider(),
         # Override DbProvider's session with the rollback-per-test session.
         # Must come after DbProvider so it wins the AsyncSession key.
         TestSessionProvider(),

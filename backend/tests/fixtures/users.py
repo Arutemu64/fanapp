@@ -89,6 +89,33 @@ async def sync_operator(dishka_request: AsyncContainer) -> User:
 
 
 @pytest_asyncio.fixture
+async def superuser(dishka_request: AsyncContainer) -> User:
+    """
+    Create a user granted the wildcard "*" (passes every permission check).
+    """
+    user_gateway = await dishka_request.get(UserGateway)
+    user_permission_gateway = await dishka_request.get(UserPermissionGateway)
+    uow = await dishka_request.get(UnitOfWork)
+
+    superuser = User(
+        id=UserId(uuid7()),
+        username=Username("superuser"),
+        hashed_password=None,
+        role=UserRole.ORG,
+    )
+    await user_gateway.add(superuser)
+    await user_permission_gateway.add(
+        UserPermission(
+            id=generate_user_permission_id(),
+            permission=Permission.WILDCARD,
+            user_id=superuser.id,
+        )
+    )
+    await uow.commit()
+    return superuser
+
+
+@pytest_asyncio.fixture
 async def demo_seeder(dishka_request: AsyncContainer) -> User:
     """
     Create a user granted demo:seed.

@@ -134,6 +134,7 @@ from fanfan.application.interactors.tickets.process_ticket_order import (
     ProcessTicketOrder,
 )
 from fanfan.application.interactors.tickets.sync_tickets import SyncTickets
+from fanfan.application.interactors.users.create_user import CreateUser
 from fanfan.application.interactors.users.get_user import GetUser
 from fanfan.application.interactors.users.list_users import ListUsers
 from fanfan.application.interactors.voting.add_vote import AddVote
@@ -204,6 +205,7 @@ class InteractorsProvider(Provider):
         ListFeedback,
         ListUsers,
         GetUser,
+        CreateUser,
         AuthenticateUser,
         GetCurrentUser,
         LinkSocialAccount,

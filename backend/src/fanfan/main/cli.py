@@ -11,6 +11,7 @@ from fanfan.presentation.cli.commands.permissions import (
 )
 from fanfan.presentation.cli.commands.program import sync_cosplay2_command
 from fanfan.presentation.cli.commands.tickets import sync_tcloud_command
+from fanfan.presentation.cli.commands.users import create_user_command
 
 
 @click.group()
@@ -35,6 +36,11 @@ def permissions_group():
     """Grant, revoke and list per-user permissions."""
 
 
+@click.group(name="users")
+def users_group():
+    """Manage user accounts."""
+
+
 def main():
     init(service_name="cli")
 
@@ -47,9 +53,12 @@ def main():
     permissions_group.add_command(revoke_permission_command)
     permissions_group.add_command(list_permissions_command)
 
+    users_group.add_command(create_user_command)
+
     cli.add_command(sync_group)
     cli.add_command(demo_group)
     cli.add_command(permissions_group)
+    cli.add_command(users_group)
 
     cli()
 

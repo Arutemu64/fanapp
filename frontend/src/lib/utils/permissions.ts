@@ -9,6 +9,10 @@ import type { CurrentUserDTO } from '$lib/types/user';
 // at runtime.
 export type Permission = components['schemas']['Permission'];
 
+// Superuser grant: a holder passes every permission check. Kept in sync with the
+// backend Permission enum through the generated union above.
+const WILDCARD: Permission = '*';
+
 const SCHEDULE_MANAGE: Permission = 'schedule:manage';
 const SCHEDULE_IMPORT: Permission = 'schedule:import';
 const NOTIFICATIONS_SEND: Permission = 'notifications:send';
@@ -24,7 +28,12 @@ export function hasPermission(user: CurrentUserDTO | null, permission: Permissio
 		return false;
 	}
 
-	return user.permissions?.includes(permission) ?? false;
+	const granted = user.permissions;
+	if (!granted) {
+		return false;
+	}
+
+	return granted.includes(WILDCARD) || granted.includes(permission);
 }
 
 // The staff toolbox is an organiser surface: only the org role reaches it at all.

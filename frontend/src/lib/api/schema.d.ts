@@ -1470,7 +1470,7 @@ export interface components {
          * Permission
          * @enum {string}
          */
-        Permission: "schedule:manage" | "schedule:import" | "notifications:send" | "settings:manage" | "tickets:generate" | "sync:run" | "demo:seed" | "feedback:read" | "voting:manage" | "users:read";
+        Permission: "*" | "schedule:manage" | "schedule:import" | "notifications:send" | "settings:manage" | "tickets:generate" | "sync:run" | "demo:seed" | "feedback:read" | "voting:manage" | "users:read";
         /**
          * PublicConfigDTO
          * @description Public, unauthenticated projection of AppSettings served at GET /config.
