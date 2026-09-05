@@ -160,6 +160,10 @@ function getInvalidScheduleFileMessage(details: ApiErrorDetails): string {
 			return `${at}: нужно целое число.`;
 		case 'DUPLICATE_NUMBER':
 			return `Номер ${String(details.number)} встречается дважды (строка ${String(details.row)}). Номера должны быть уникальными.`;
+		case 'FILE_TOO_LARGE':
+			return 'Файл слишком большой. Максимальный размер — 5 МБ.';
+		case 'UNSUPPORTED_FILE_TYPE':
+			return 'Нужен файл в формате .xlsx.';
 		default:
 			return 'Не удалось прочитать файл. Нужен .xlsx или .xls с нужными колонками.';
 	}

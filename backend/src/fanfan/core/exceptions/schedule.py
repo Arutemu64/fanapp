@@ -27,6 +27,12 @@ class InvalidScheduleFileReason(enum.StrEnum):
     EMPTY_CELL = "EMPTY_CELL"
     INVALID_NUMBER = "INVALID_NUMBER"
     DUPLICATE_NUMBER = "DUPLICATE_NUMBER"
+    # Caught by the route before the file is even opened, not by the parser —
+    # still travels as an InvalidScheduleFile so the client has one code to
+    # handle for "this upload can't become a schedule" regardless of which
+    # layer rejected it.
+    FILE_TOO_LARGE = "FILE_TOO_LARGE"
+    UNSUPPORTED_FILE_TYPE = "UNSUPPORTED_FILE_TYPE"
 
 
 class EventNotFound(NotFound, ScheduleException):

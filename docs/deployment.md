@@ -419,8 +419,15 @@ Then point the proxy at the **project-prefixed aliases**, not the bare service
 names:
 
 ```caddy
-handle_path /api* { reverse_proxy http://fanapp-api:8000 }
-handle          { reverse_proxy http://fanapp-frontend:80 }
+# Keep the request_body cap from Caddyfile.example here too — it is what
+# sheds an oversized unauthenticated upload before it reaches FastAPI.
+handle_path /api* {
+	request_body {
+		max_size 10MB
+	}
+	reverse_proxy http://fanapp-api:8000
+}
+handle { reverse_proxy http://fanapp-frontend:80 }
 ```
 
 The aliases (`fanapp-api`, `fanapp-frontend`) are deliberate: on a shared

@@ -17,6 +17,7 @@ from fanfan.presentation.web.exceptions import (
 )
 from fanfan.presentation.web.middlewares import (
     bind_request_context,
+    limit_request_body_size,
     no_store_cache_control,
     refresh_session_cookie,
     security_headers,
@@ -83,6 +84,10 @@ def create_app() -> FastAPI:
     # Hardening headers (nosniff, anti-framing, referrer policy) on every
     # response, so the API stays secure-by-default behind any proxy.
     app.middleware("http")(security_headers)
+
+    # Reject an oversized body by Content-Length before anything reads it, so
+    # the app is not solely dependent on the reverse proxy's own cap.
+    app.middleware("http")(limit_request_body_size)
 
     # Registered last so it runs first (outermost): the request id is bound
     # before any other middleware or route handler, so all of their logs

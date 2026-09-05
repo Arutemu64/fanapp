@@ -57,6 +57,12 @@
 
     # Route all requests starting with /api to FastAPI
 	handle_path /api* {
+		# Bound incoming request bodies before reverse-proxying. The schedule-import
+		# endpoint buffers the multipart body in memory, so a proxy-level cap sheds
+		# hostile payloads before they reach FastAPI.
+		request_body {
+			max_size 10MB
+		}
 		reverse_proxy http://127.0.0.1:8000
 	}
 

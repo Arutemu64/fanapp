@@ -2175,7 +2175,7 @@
             }
           },
           "400": {
-            "description": "The spreadsheet could not be read as a schedule.",
+            "description": "The upload is not an acceptable schedule spreadsheet: too large, the wrong type, or unreadable as a schedule.",
             "content": {
               "application/json": {
                 "schema": {

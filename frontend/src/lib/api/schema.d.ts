@@ -3646,7 +3646,7 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description The spreadsheet could not be read as a schedule. */
+            /** @description The upload is not an acceptable schedule spreadsheet: too large, the wrong type, or unreadable as a schedule. */
             400: {
                 headers: {
                     [name: string]: unknown;
