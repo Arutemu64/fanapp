@@ -97,7 +97,13 @@ backend-typecheck:
 backend-import-lint:
     cd backend && uv run lint-imports
 
-backend-lint: backend-format backend-check backend-typecheck backend-import-lint
+# Sort the dependency tables in backend/pyproject.toml alphabetically. uv has no
+# native sort and `uv add` appends to the end (pnpm keeps the frontend sorted on
+# its own), so this keeps the list canonical and cuts Renovate merge conflicts.
+backend-sort-deps:
+    cd backend && uv run uv-sort
+
+backend-lint: backend-sort-deps backend-format backend-check backend-typecheck backend-import-lint
 
 backend-migrate:
     cd backend && uv run alembic upgrade head
