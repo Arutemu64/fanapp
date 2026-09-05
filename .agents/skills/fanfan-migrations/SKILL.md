@@ -59,6 +59,27 @@ system user (`00000000-…-0000`). See `sync:run` and
 `server_default`s are not reliably detected and are sometimes emitted wrong —
 check them by hand.
 
+## 4. The app is in production — assume the table has rows
+
+**The app is deployed with real user data.** Autogenerate writes migrations
+against an empty throwaway Postgres (`just backend-generate-auto`), so it will
+happily emit a one-step `add_column(..., nullable=False)` or a constraint that
+only holds on a clean table — that migration then fails, or silently corrupts
+data, against the real database. For any column tightening or new constraint on
+an existing table:
+
+1. Add the column/relaxed constraint first.
+2. Backfill with an explicit `op.execute(...)` (a plain `UPDATE`, joined against
+   whatever table has the source data) or a short data-migration function.
+3. Tighten (`op.alter_column(..., nullable=False)`, then create the constraint).
+
+`2026_09_05_2245-b8575c07d24a_add_votes_nomination_uniqueness.py` is the worked
+example: nullable column → `UPDATE ... FROM participants` backfill → `alter_column`
+NOT NULL → index/constraint/FK. If a new `UNIQUE` constraint could fail against
+existing duplicate rows, that failure is correct behavior (it surfaces bad data
+that needs a human decision), not a bug in the migration — say so in a comment,
+don't silently drop or dedupe rows to force it through.
+
 ## Reviewing safety
 
 `sqlalchemy-alembic-expert-best-practices-code-review` covers the general safety
