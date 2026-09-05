@@ -123,10 +123,31 @@ just deploy                   # docker compose ... -f docker-compose.prod.yml pu
 This pulls the images and restarts, building nothing on the host. Migrations run
 automatically via the `migration` service before the API starts.
 
+### Creating a user
+
+Most accounts self-register (email code or a linked social account). To seed the
+first organiser before any of that is set up — a fresh deployment has no users —
+create one with the operator CLI. The password is prompted (never passed as an
+argument, so it stays out of shell history) and confirmed:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+  run --rm --no-deps api cli users create <username>
+```
+
+`--role` defaults to `org` (a CLI-created account is a staff account; the toolbox
+is org-only). The role is only a UI label — it grants no access — so pair this
+with a permission grant below. On the host: `cd backend && uv run python -m
+fanfan.main.cli users create <username>`.
+
+The usual bootstrap is create-then-grant-`*`: one account, one wildcard grant,
+full organiser access.
+
 ### Granting organiser permissions
 
 Permissions are per-user rows (`schedule:manage`, `notifications:send`,
-`feedback:read`, …), checked with no role-based bypass. The system user's own
+`feedback:read`, …, plus the wildcard `*` that stands in for all of them),
+checked with no role-based bypass. The system user's own
 grants (`sync:run`, `demo:seed`) are seeded by migration; real organisers are
 granted by hand. Do it with the operator CLI rather than raw SQL — it validates
 the permission name and resolves the username for you:
@@ -139,9 +160,13 @@ stopped container is left behind:
 docker compose -f docker-compose.yml -f docker-compose.prod.yml \
   run --rm --no-deps api cli permissions grant <username> schedule:manage
 
+docker compose ... run --rm --no-deps api cli permissions grant <username> '*'
 docker compose ... run --rm --no-deps api cli permissions list <username>
 docker compose ... run --rm --no-deps api cli permissions revoke <username> schedule:manage
 ```
+
+Grant `'*'` (quote it so the shell does not glob it) for a superuser that clears
+every permission check with one grant — the usual companion to `users create`.
 
 Running the app outside Docker, invoke the same CLI on the host against your
 configured DB:
