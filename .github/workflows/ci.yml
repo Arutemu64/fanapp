@@ -14,6 +14,18 @@ name: CI
 # Run the identical gates locally with `just ci` before pushing — except the
 # `images` job, which needs a Docker daemon (`just run-prod` builds the same
 # two images locally).
+#
+# Runner hardening applied to every job below (2026 supply-chain practice):
+#   - runs-on is pinned to ubuntu-24.04, not the floating `ubuntu-latest`
+#     label GitHub migrates without notice; bumping it is a deliberate step.
+#   - step-security/harden-runner runs first in egress-policy: audit — it only
+#     records outbound network calls (never blocks), so a compromised action or
+#     dependency surfaces in the run's network log.
+#   - checkout uses persist-credentials: false so the GITHUB_TOKEN is not left
+#     in .git/config for a later step to read — safe here because no job pushes
+#     with git (the images job builds only; publishing lives in its own workflow).
+#   - timeout-minutes caps each job so a hung test or build can't hold a runner
+#     for the 6-hour default.
 on:
   pull_request:
   push:
@@ -39,13 +51,20 @@ jobs:
   # filter so changes to CI always re-run everything.
   changes:
     name: Detect changed areas
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
       dockerfiles: ${{ steps.filter.outputs.dockerfiles }}
     steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4
         id: filter
         with:
@@ -69,8 +88,9 @@ jobs:
     name: Backend (lint, types, tests)
     needs: changes
     if: needs.changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
-    # Docker is preinstalled and running on ubuntu-latest, which is all the
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    # Docker is preinstalled and running on ubuntu-24.04, which is all the
     # testcontainers-based integration tests (Postgres + Redis) need.
     defaults:
       run:
@@ -80,7 +100,14 @@ jobs:
       # ephemeral VM is thrown away after the job, so cleanup isn't needed.
       TESTCONTAINERS_RYUK_DISABLED: "true"
     steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
@@ -130,7 +157,8 @@ jobs:
     name: Frontend (${{ matrix.task.name }})
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     # `check`, `build` and `test` read PUBLIC_* via `$env/static/public`, which
     # errors on any referenced var that is undefined at build time (`test` pulls
     # PUBLIC_TIMEZONE in through the formatters it covers). Supply them from the
@@ -165,7 +193,14 @@ jobs:
       run:
         working-directory: frontend
     steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Install pnpm
         uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
@@ -194,9 +229,17 @@ jobs:
     name: Dockerfiles (hadolint)
     needs: changes
     if: needs.changes.outputs.dockerfiles == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       # Lint the Dockerfiles against best practices with hadolint. `recursive`
       # scans every Dockerfile from the repo root, so new ones are covered without
@@ -224,7 +267,8 @@ jobs:
       needs.changes.outputs.backend == 'true' ||
       needs.changes.outputs.frontend == 'true' ||
       needs.changes.outputs.dockerfiles == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     # Overrides the workflow-level permissions for this job only (the others keep
     # pull-requests: read for paths-filter). packages: read lets the GHCR
     # `:buildcache` pull authenticate once the image packages go private; while
@@ -246,7 +290,14 @@ jobs:
             context: ./frontend
             target: prod
     steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
