@@ -19,6 +19,7 @@ from fanfan.core.exceptions.votes import VoteAlreadyExists
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.models.participant import Participant
 from fanfan.core.models.user import User
+from fanfan.core.models.vote import Vote
 from fanfan.core.vo.nomination import generate_nomination_id
 from fanfan.core.vo.participant import (
     ParticipantId,
@@ -285,6 +286,63 @@ async def test_add_vote_twice_in_same_nomination_raises_already_voted(
             participant_id=first_participant.id,
         )
     )
+
+
+async def test_gateway_add_second_vote_in_same_nomination_raises_already_voted(
+    dishka_request: AsyncContainer,
+    visitor_with_ticket: User,
+    login: Callable[[User], None],
+    outbox: OutboxGateway,
+    uow: UnitOfWork,
+):
+    """The DB unique constraint is the backstop, not just the app-level check.
+
+    Calling the gateway directly (bypassing AddVote's get_user_vote_by_nomination
+    check) simulates the concurrent race where two requests both see no existing
+    vote and both attempt to insert — the constraint must still reject the second.
+    """
+    nomination_gateway = await dishka_request.get(NominationGateway)
+    participant_gateway = await dishka_request.get(ParticipantGateway)
+    vote_gateway = await dishka_request.get(VoteGateway)
+    login(visitor_with_ticket)
+
+    nomination = Nomination(
+        id=generate_nomination_id(),
+        cosplay2_id=1007,
+        code="add-vote-db-backstop-test",
+        title="Тестовая номинация add-vote-db-backstop-test",
+        is_votable=True,
+    )
+    first_participant = Participant(
+        id=generate_participant_id(),
+        cosplay2_id=2008,
+        title="Первый участник backstop-теста",
+        nomination_id=nomination.id,
+        voting_number=1,
+    )
+    second_participant = Participant(
+        id=generate_participant_id(),
+        cosplay2_id=2009,
+        title="Второй участник backstop-теста",
+        nomination_id=nomination.id,
+        voting_number=2,
+    )
+    await nomination_gateway.add(nomination)
+    await participant_gateway.add(first_participant)
+    await participant_gateway.add(second_participant)
+    await uow.commit()
+
+    await vote_gateway.add(
+        Vote.create(user_id=visitor_with_ticket.id, participant_id=first_participant.id)
+    )
+    await uow.commit()
+
+    with pytest.raises(VoteAlreadyExists):
+        await vote_gateway.add(
+            Vote.create(
+                user_id=visitor_with_ticket.id, participant_id=second_participant.id
+            )
+        )
 
 
 async def test_add_vote_allows_votes_in_different_nominations(

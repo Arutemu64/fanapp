@@ -14,15 +14,24 @@ if TYPE_CHECKING:
 
 class VoteORM(UUIDPrimaryKeyMixin, BaseORM):
     __tablename__ = "votes"
-    __table_args__ = (UniqueConstraint("user_id", "participant_id"),)
+    __table_args__ = (
+        UniqueConstraint("user_id", "participant_id"),
+        # One vote per nomination per user, enforced in the DB: the app-level
+        # check in AddVote can race (its FOR UPDATE locks nothing when no vote
+        # exists yet), so this constraint is the real backstop against a
+        # concurrent double-vote across two participants in the same nomination.
+        UniqueConstraint("user_id", "nomination_id", name="uq_votes_user_nomination"),
+    )
 
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     participant_id: Mapped[UUID] = mapped_column(
         ForeignKey("participants.id", ondelete="CASCADE"), index=True
     )
+    # Denormalised from the participant so a unique constraint can enforce the
+    # per-nomination rule (a constraint cannot span the participants join).
+    nomination_id: Mapped[UUID] = mapped_column(
+        ForeignKey("nominations.id", ondelete="CASCADE"), index=True
+    )
 
     participant: Mapped[ParticipantORM] = relationship()
-    nomination: Mapped[NominationORM] = relationship(
-        secondary="participants",
-        viewonly=True,
-    )
+    nomination: Mapped[NominationORM] = relationship()
