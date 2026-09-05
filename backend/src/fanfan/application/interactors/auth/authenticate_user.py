@@ -1,4 +1,5 @@
 import logging
+from typing import ClassVar
 
 from pydantic import BaseModel, EmailStr
 
@@ -29,6 +30,12 @@ class AuthenticateUserInput(BaseModel):
 
 
 class AuthenticateUser:
+    # Argon2 is deliberately slow; the dummy hash used to equalise timing on the
+    # user-not-found branch only needs computing once per process, not per
+    # request. Cached on the class, filled lazily from the injected hasher so the
+    # application layer stays free of the concrete crypto library.
+    _dummy_hash: ClassVar[str | None] = None
+
     def __init__(
         self,
         user_gateway: UserGateway,
@@ -40,7 +47,9 @@ class AuthenticateUser:
         self.password_hasher = password_hasher
         self.session_store = session_store
         self.rate_limiter = rate_limiter
-        self.dummy_hash = self.password_hasher.hash("dummy_password")
+        if AuthenticateUser._dummy_hash is None:
+            AuthenticateUser._dummy_hash = self.password_hasher.hash("dummy_password")
+        self.dummy_hash = AuthenticateUser._dummy_hash
 
     async def __call__(self, data: AuthenticateUserInput) -> str:
         normalized_email = normalize_email(data.email)
