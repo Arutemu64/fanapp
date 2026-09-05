@@ -30,7 +30,7 @@ importers:
         specifier: 0.17.0
         version: 0.17.0
       svelte-sonner:
-        specifier: ^1.2.1
+        specifier: 1.2.1
         version: 1.2.1(svelte@5.57.0(@typescript-eslint/types@8.68.0))
     devDependencies:
       '@eslint/compat':
@@ -43,10 +43,10 @@ importers:
         specifier: 1.2.94
         version: 1.2.94
       '@internationalized/date':
-        specifier: ^3.12.3
+        specifier: 3.12.3
         version: 3.12.3
       '@lucide/svelte':
-        specifier: ^1.35.0
+        specifier: 1.35.0
         version: 1.35.0(svelte@5.57.0(@typescript-eslint/types@8.68.0))
       '@sveltejs/adapter-static':
         specifier: 3.0.10
@@ -70,10 +70,10 @@ importers:
         specifier: 1.1.0
         version: 1.1.0(@sveltejs/kit@2.70.3(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.68.0))(vite@8.2.2(@types/node@26.4.0)(jiti@2.7.0)(terser@5.50.0)))(svelte@5.57.0(@typescript-eslint/types@8.68.0))(typescript@6.0.3)(vite@8.2.2(@types/node@26.4.0)(jiti@2.7.0)(terser@5.50.0)))(supports-color@10.2.2)(vite@8.2.2(@types/node@26.4.0)(jiti@2.7.0)(terser@5.50.0))(workbox-build@7.4.1(supports-color@10.2.2))(workbox-window@7.4.1)
       bits-ui:
-        specifier: ^2.19.0
+        specifier: 2.19.0
         version: 2.19.0(@internationalized/date@3.12.3)(@sveltejs/kit@2.70.3(@opentelemetry/api@1.9.1)(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0(@typescript-eslint/types@8.68.0))(vite@8.2.2(@types/node@26.4.0)(jiti@2.7.0)(terser@5.50.0)))(svelte@5.57.0(@typescript-eslint/types@8.68.0))(typescript@6.0.3)(vite@8.2.2(@types/node@26.4.0)(jiti@2.7.0)(terser@5.50.0)))(svelte@5.57.0(@typescript-eslint/types@8.68.0))
       clsx:
-        specifier: ^2.1.1
+        specifier: 2.1.1
         version: 2.1.1
       eslint:
         specifier: 10.9.1
@@ -103,7 +103,7 @@ importers:
         specifier: 0.8.1
         version: 0.8.1(prettier-plugin-svelte@4.1.1(prettier@3.9.6)(svelte@5.57.0(@typescript-eslint/types@8.68.0)))(prettier@3.9.6)
       shadcn-svelte:
-        specifier: ^1.5.0
+        specifier: 1.5.0
         version: 1.5.0(svelte@5.57.0(@typescript-eslint/types@8.68.0))
       svelte:
         specifier: 5.57.0
@@ -112,16 +112,16 @@ importers:
         specifier: 4.7.6
         version: 4.7.6(picomatch@4.0.5)(svelte@5.57.0(@typescript-eslint/types@8.68.0))(typescript@6.0.3)
       tailwind-merge:
-        specifier: ^3.6.0
+        specifier: 3.6.0
         version: 3.6.0
       tailwind-variants:
-        specifier: ^3.3.1
+        specifier: 3.3.1
         version: 3.3.1(tailwind-merge@3.6.0)(tailwindcss@4.3.3)
       tailwindcss:
         specifier: 4.3.3
         version: 4.3.3
       tw-animate-css:
-        specifier: ^1.4.0
+        specifier: 1.4.0
         version: 1.4.0
       typescript:
         specifier: 6.0.3
