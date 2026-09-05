@@ -15,7 +15,9 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
 		"test": "vitest run",
-		"lint": "prettier --check --cache . && eslint --cache --cache-location .eslintcache .",
+		"lint": "pnpm run --parallel --no-bail \"/^lint:/\"",
+		"lint:format": "prettier --check --cache .",
+		"lint:eslint": "eslint --cache --cache-strategy content --cache-location .eslintcache .",
 		"generate-api": "node ./scripts/generate-api.mjs",
 		"generate-api:check": "node ./scripts/generate-api.mjs --check"
 	},
