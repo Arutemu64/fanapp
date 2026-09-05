@@ -1,6 +1,3 @@
-from collections.abc import Awaitable
-from typing import cast
-
 from redis.asyncio import Redis
 
 from fanfan.application.ports.rate_limiter import RateLimiter
@@ -19,13 +16,15 @@ class RedisRateLimiter(RateLimiter):
 
     async def hit(self, key: str, *, limit: int, window_seconds: int) -> None:
         counter_key = self._counter_key(key)
-        # redis-py's async stubs mistype incr() as a plain int, so cast the
-        # call to its real awaitable return type before awaiting it.
-        attempts = await cast("Awaitable[int]", self.redis.incr(counter_key))
-        # Start the window on the first hit so the counter eventually expires
-        # instead of living forever once the key goes quiet.
-        if attempts == 1:
-            await self.redis.expire(counter_key, max(1, window_seconds))
+        # INCR and EXPIRE NX run as one MULTI/EXEC round-trip so a crash between
+        # them can never leave the counter without a TTL. NX starts the window
+        # only when the key has none yet — the same "first hit" behavior as
+        # before, plus it self-heals a key that was orphaned before this fix
+        # shipped (no TTL, whatever the counter value).
+        async with self.redis.pipeline(transaction=True) as pipe:
+            pipe.incr(counter_key)
+            pipe.expire(counter_key, max(1, window_seconds), nx=True)
+            attempts, _ = await pipe.execute()
         if attempts > limit:
             retry_after = await self.redis.ttl(counter_key)
             raise TooManyAttempts(retry_after=max(1, retry_after))
