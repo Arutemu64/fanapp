@@ -2183,6 +2183,26 @@
                 }
               }
             }
+          },
+          "413": {
+            "description": "The uploaded file exceeds the allowed size limit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "The uploaded file is not a supported spreadsheet (.xlsx).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
           }
         },
         "security": [
