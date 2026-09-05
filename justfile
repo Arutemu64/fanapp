@@ -45,6 +45,11 @@ frontend-check-api:
 backend-install:
     cd backend && uv sync --all-groups
 
+# Install the git hooks. `default_install_hook_types` in .pre-commit-config.yaml
+# makes this install both the pre-commit and pre-push stages. Anyone who ran
+# this before the pre-push hooks (ty, svelte-check) were added must re-run it,
+# or those checks are silently skipped locally until they do — CI still runs
+# them on every PR either way.
 backend-setup-hooks:
     cd backend && uv run pre-commit install
 
