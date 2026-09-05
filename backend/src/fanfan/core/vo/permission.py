@@ -10,6 +10,13 @@ def generate_user_permission_id() -> UserPermissionId:
 
 
 class Permission(enum.StrEnum):
+    # Superuser grant: a user holding it satisfies every ensure() check, so one
+    # grant covers all organiser surfaces (bootstrap, dev, single-admin deploys).
+    # It is a real, storable member — grantable/revocable through the same CLI,
+    # gateway and CHECK constraint as any other — and the wildcard only short-
+    # circuits at check time (PermissionService.ensure, frontend hasPermission);
+    # nothing here expands audience queries that filter on a specific permission.
+    WILDCARD = "*"
     SCHEDULE_MANAGE = "schedule:manage"
     SCHEDULE_IMPORT = "schedule:import"
     NOTIFICATIONS_SEND = "notifications:send"
