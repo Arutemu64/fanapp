@@ -3673,6 +3673,24 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorMessage"];
                 };
             };
+            /** @description The uploaded file exceeds the allowed size limit. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description The uploaded file is not a supported spreadsheet (.xlsx). */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
             /** @description Request validation error. */
             422: {
                 headers: {
