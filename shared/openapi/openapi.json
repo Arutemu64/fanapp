@@ -2175,27 +2175,7 @@
             }
           },
           "400": {
-            "description": "The spreadsheet could not be read as a schedule.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "413": {
-            "description": "The uploaded file exceeds the allowed size limit.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorMessage"
-                }
-              }
-            }
-          },
-          "415": {
-            "description": "The uploaded file is not a supported spreadsheet (.xlsx).",
+            "description": "The upload is not an acceptable schedule spreadsheet: too large, the wrong type, or unreadable as a schedule.",
             "content": {
               "application/json": {
                 "schema": {

@@ -2,7 +2,7 @@ from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, UploadFile
 from starlette.concurrency import run_in_threadpool
 
 from fanfan.adapters.parsers.schedule import parse_schedule_from_excel
@@ -12,6 +12,10 @@ from fanfan.application.interactors.schedule_mgmt.import_schedule import (
 )
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
+from fanfan.core.exceptions.schedule import (
+    InvalidScheduleFile,
+    InvalidScheduleFileReason,
+)
 from fanfan.core.vo.permission import Permission
 from fanfan.presentation.web.responses import AUTH_RESPONSES
 from fanfan.presentation.web.schemas.error import ErrorMessage
@@ -29,20 +33,23 @@ _ALLOWED_CONTENT_TYPES = frozenset(
 )
 
 
-def _ensure_within_size_limit(file: UploadFile) -> None:
+def _ensure_valid_upload(file: UploadFile) -> None:
+    # Raises the same InvalidScheduleFile the parser raises on unreadable
+    # content, so the client has one error code to handle for "this upload
+    # can't become a schedule" regardless of which layer rejected it — a
+    # plain HTTPException(detail=...) here would not: the central handler
+    # only preserves a string `detail` for the internal HTTP_ERROR fallback,
+    # so a hand-picked Russian message set that way would never reach the
+    # client (presentation/web/exceptions.py:http_exception_handler).
     if file.size is not None and file.size > _MAX_IMPORT_BYTES:
-        raise HTTPException(
-            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
-            detail="Файл расписания слишком большой.",
-        )
+        raise InvalidScheduleFile(reason=InvalidScheduleFileReason.FILE_TOO_LARGE)
     filename = file.filename or ""
     if not filename.lower().endswith(".xlsx") or (
         file.content_type is not None
         and file.content_type not in _ALLOWED_CONTENT_TYPES
     ):
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail="Ожидается файл .xlsx.",
+        raise InvalidScheduleFile(
+            reason=InvalidScheduleFileReason.UNSUPPORTED_FILE_TYPE
         )
 
 
@@ -58,15 +65,8 @@ importing_router = APIRouter(
     responses={
         400: {
             "model": ErrorMessage,
-            "description": "The spreadsheet could not be read as a schedule.",
-        },
-        413: {
-            "model": ErrorMessage,
-            "description": "The uploaded file exceeds the allowed size limit.",
-        },
-        415: {
-            "model": ErrorMessage,
-            "description": "The uploaded file is not a supported spreadsheet (.xlsx).",
+            "description": "The upload is not an acceptable schedule spreadsheet: "
+            "too large, the wrong type, or unreadable as a schedule.",
         },
     },
 )
@@ -82,7 +82,7 @@ async def import_schedule(
     # be rejected before it, not by the interactor afterwards.
     current_user = await current_user_provider.require_user()
     await perm_service.ensure(user=current_user, permission=Permission.SCHEDULE_IMPORT)
-    _ensure_within_size_limit(file)
+    _ensure_valid_upload(file)
     # Parse in a worker thread because polars/fastexcel are synchronous libraries.
     # This keeps the async FastAPI event loop responsive during file imports.
     schedule = await run_in_threadpool(parse_schedule_from_excel, file.file)

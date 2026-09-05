@@ -3646,7 +3646,7 @@ export interface operations {
                     "application/json": unknown;
                 };
             };
-            /** @description The spreadsheet could not be read as a schedule. */
+            /** @description The upload is not an acceptable schedule spreadsheet: too large, the wrong type, or unreadable as a schedule. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -3666,24 +3666,6 @@ export interface operations {
             };
             /** @description Access denied. */
             403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description The uploaded file exceeds the allowed size limit. */
-            413: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorMessage"];
-                };
-            };
-            /** @description The uploaded file is not a supported spreadsheet (.xlsx). */
-            415: {
                 headers: {
                     [name: string]: unknown;
                 };
