@@ -4,7 +4,7 @@
 # patch on its own, so a patch release produces no diff here and this site drops
 # out of the grouped "node" Renovate PR — leaving it silently behind mise.toml
 # and the CI setup-node input. The full patch keeps all three moving together.
-FROM node:24.19.0-alpine AS base
+FROM node:24.20.0-alpine AS base
 
 # PNPM_HOME makes pnpm keep its content-addressable store under /pnpm/store,
 # which is where the cache mounts below point.
