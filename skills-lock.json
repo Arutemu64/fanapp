@@ -97,6 +97,12 @@
       "skillPath": "SKILL.md",
       "computedHash": "a9e52ffc97e9d8fdda35a6fb3967ace6fbc1ae3a0b7703774ad077fcf1e27153"
     },
+    "improve": {
+      "source": "shadcn/improve",
+      "sourceType": "github",
+      "skillPath": "skills/improve/SKILL.md",
+      "computedHash": "553713a1b9af40ec50c4018f75b8974bf728fe5abc8e125b748e2d718d5c31ea"
+    },
     "kill-ai-slop": {
       "source": "yetone/kill-ai-slop",
       "sourceType": "github",
