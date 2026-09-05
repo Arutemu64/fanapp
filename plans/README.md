@@ -16,9 +16,9 @@ but not turned into plans are listed at the bottom so they aren't re-audited.
 |------|-------|----------|--------|------------|--------|
 | 001 | Compute the login dummy-hash once per process | P1 | S | — | DONE |
 | 002 | Authorize and size-cap the schedule import before parsing | P1 | S | — | DONE |
-| 003 | Make the Redis rate-limiter window atomic (no orphaned TTL) | P1 | S | — | TODO |
+| 003 | Make the Redis rate-limiter window atomic (no orphaned TTL) | P1 | S | — | DONE |
 | 004 | Fail closed in prod when `WEB__COOKIE_SECURE` is False | P1 | S | — | TODO |
-| 005 | Enforce one-vote-per-nomination with a DB unique constraint | P1 | M | — | TODO |
+| 005 | Enforce one-vote-per-nomination with a DB unique constraint | P1 | M | — | DONE |
 | 006 | Integration coverage: notifications, subscriptions, push | P2 | L | — | TODO |
 | 007 | Make broadcast notifications idempotent on redelivery | P2 | M | 006 | TODO |
 

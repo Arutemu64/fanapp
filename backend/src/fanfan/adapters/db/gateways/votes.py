@@ -1,8 +1,11 @@
+from typing import cast
+from uuid import UUID
+
 from sqlalchemy import and_, delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.constraints import translate_integrity_error
-from fanfan.adapters.db.models import NominationORM, VoteORM
+from fanfan.adapters.db.models import ParticipantORM, VoteORM
 from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.participants import ParticipantNotFound
@@ -37,10 +40,24 @@ class SqlVoteGateway(VoteGateway):
 
     async def add(self, vote: Vote) -> None:
         vote_orm = _from_model(vote)
+        # Denormalise the nomination from the participant so the DB can enforce
+        # one vote per nomination; the domain Vote doesn't carry it. A missing
+        # participant surfaces below as the existing FK violation (ParticipantNotFound),
+        # so the None case needs no handling here — the cast just satisfies the
+        # type checker, which can't see that guarantee.
+        vote_orm.nomination_id = cast(
+            "UUID",
+            await self.session.scalar(
+                select(ParticipantORM.nomination_id).where(
+                    ParticipantORM.id == vote.participant_id
+                )
+            ),
+        )
         with translate_integrity_error(
             {
                 "fk_votes_participant_id_participants": ParticipantNotFound,
                 "uq_votes_user_id": VoteAlreadyExists,
+                "uq_votes_user_nomination": VoteAlreadyExists,
             }
         ):
             self.session.add(vote_orm)
@@ -65,7 +82,7 @@ class SqlVoteGateway(VoteGateway):
             .where(
                 and_(
                     VoteORM.user_id == user_id,
-                    VoteORM.nomination.has(NominationORM.id == nomination_id),
+                    VoteORM.nomination_id == nomination_id,
                 ),
             )
             .with_for_update()

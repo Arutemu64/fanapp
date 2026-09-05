@@ -19,6 +19,7 @@ from fanfan.core.exceptions.votes import VoteAlreadyExists
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.models.participant import Participant
 from fanfan.core.models.user import User
+from fanfan.core.models.vote import Vote
 from fanfan.core.vo.nomination import generate_nomination_id
 from fanfan.core.vo.participant import (
     ParticipantId,
@@ -285,6 +286,136 @@ async def test_add_vote_twice_in_same_nomination_raises_already_voted(
             participant_id=first_participant.id,
         )
     )
+
+
+async def test_gateway_add_second_vote_in_same_nomination_raises_already_voted(
+    dishka_request: AsyncContainer,
+    visitor_with_ticket: User,
+    login: Callable[[User], None],
+    outbox: OutboxGateway,
+    uow: UnitOfWork,
+):
+    """The DB unique constraint is the backstop, not just the app-level check.
+
+    Calling the gateway directly (bypassing AddVote's get_user_vote_by_nomination
+    check) simulates the concurrent race where two requests both see no existing
+    vote and both attempt to insert — the constraint must still reject the second.
+    """
+    nomination_gateway = await dishka_request.get(NominationGateway)
+    participant_gateway = await dishka_request.get(ParticipantGateway)
+    vote_gateway = await dishka_request.get(VoteGateway)
+    login(visitor_with_ticket)
+
+    nomination = Nomination(
+        id=generate_nomination_id(),
+        cosplay2_id=1007,
+        code="add-vote-db-backstop-test",
+        title="Тестовая номинация add-vote-db-backstop-test",
+        is_votable=True,
+    )
+    first_participant = Participant(
+        id=generate_participant_id(),
+        cosplay2_id=2008,
+        title="Первый участник backstop-теста",
+        nomination_id=nomination.id,
+        voting_number=1,
+    )
+    second_participant = Participant(
+        id=generate_participant_id(),
+        cosplay2_id=2009,
+        title="Второй участник backstop-теста",
+        nomination_id=nomination.id,
+        voting_number=2,
+    )
+    await nomination_gateway.add(nomination)
+    await participant_gateway.add(first_participant)
+    await participant_gateway.add(second_participant)
+    await uow.commit()
+
+    await vote_gateway.add(
+        Vote.create(user_id=visitor_with_ticket.id, participant_id=first_participant.id)
+    )
+    await uow.commit()
+
+    with pytest.raises(VoteAlreadyExists):
+        await vote_gateway.add(
+            Vote.create(
+                user_id=visitor_with_ticket.id, participant_id=second_participant.id
+            )
+        )
+
+
+async def test_reassigning_participant_nomination_updates_existing_vote(
+    dishka_request: AsyncContainer,
+    visitor_with_ticket: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+):
+    """Cosplay sync can move a participant to a different nomination.
+
+    votes.nomination_id is a denormalised copy backing uq_votes_user_nomination,
+    so ParticipantGateway.save must keep it in lockstep — otherwise the
+    constraint (and get_user_vote_by_nomination) would keep enforcing the
+    participant's *old* nomination, letting a user cast a second effective
+    vote in its new one.
+    """
+    nomination_gateway = await dishka_request.get(NominationGateway)
+    participant_gateway = await dishka_request.get(ParticipantGateway)
+    vote_gateway = await dishka_request.get(VoteGateway)
+    login(visitor_with_ticket)
+
+    old_nomination = Nomination(
+        id=generate_nomination_id(),
+        cosplay2_id=1008,
+        code="reassign-old-nomination-test",
+        title="Старая номинация reassign-теста",
+        is_votable=True,
+    )
+    new_nomination = Nomination(
+        id=generate_nomination_id(),
+        cosplay2_id=1009,
+        code="reassign-new-nomination-test",
+        title="Новая номинация reassign-теста",
+        is_votable=True,
+    )
+    participant = Participant(
+        id=generate_participant_id(),
+        cosplay2_id=2010,
+        title="Переназначаемый участник",
+        nomination_id=old_nomination.id,
+        voting_number=1,
+    )
+    await nomination_gateway.add(old_nomination)
+    await nomination_gateway.add(new_nomination)
+    await participant_gateway.add(participant)
+    await uow.commit()
+
+    await vote_gateway.add(
+        Vote.create(user_id=visitor_with_ticket.id, participant_id=participant.id)
+    )
+    await uow.commit()
+
+    reassigned = Participant(
+        id=participant.id,
+        cosplay2_id=participant.cosplay2_id,
+        title=participant.title,
+        nomination_id=new_nomination.id,
+        voting_number=participant.voting_number,
+    )
+    await participant_gateway.save(reassigned)
+    await uow.commit()
+
+    assert (
+        await vote_gateway.get_user_vote_by_nomination(
+            nomination_id=old_nomination.id, user_id=visitor_with_ticket.id
+        )
+        is None
+    )
+    moved_vote = await vote_gateway.get_user_vote_by_nomination(
+        nomination_id=new_nomination.id, user_id=visitor_with_ticket.id
+    )
+    assert moved_vote is not None
+    assert moved_vote.participant_id == participant.id
 
 
 async def test_add_vote_allows_votes_in_different_nominations(

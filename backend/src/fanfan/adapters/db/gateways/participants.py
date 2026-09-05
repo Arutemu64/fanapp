@@ -1,4 +1,4 @@
-from sqlalchemy import Select, and_, delete, select
+from sqlalchemy import Select, and_, delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import undefer
 
@@ -92,6 +92,19 @@ class SqlParticipantGateway(ParticipantGateway):
     async def save(self, participant: Participant) -> None:
         participant_orm = await self.session.merge(_from_model(participant))
         await self.session.flush([participant_orm])
+        # Cosplay sync can reassign a participant to a different nomination
+        # after votes for it exist. votes.nomination_id is a denormalised
+        # copy backing uq_votes_user_nomination (a unique constraint can't
+        # span the participants join), so it must be kept in lockstep here
+        # or the constraint enforces the *old* nomination and a user could
+        # cast a second effective vote in the participant's new one. If the
+        # user already holds a vote in that nomination, this correctly
+        # raises an IntegrityError instead of silently allowing a duplicate.
+        await self.session.execute(
+            update(VoteORM)
+            .where(VoteORM.participant_id == participant.id)
+            .values(nomination_id=participant.nomination_id)
+        )
 
     async def list_cosplay2_ids(self) -> list[int]:
         stmt = select(ParticipantORM.cosplay2_id)
