@@ -3,10 +3,12 @@ from collections.abc import Awaitable, Callable
 
 import structlog
 from starlette.requests import Request
-from starlette.responses import Response
+from starlette.responses import JSONResponse, Response
 
 from fanfan.presentation.web.config import WebConfig
+from fanfan.presentation.web.exceptions import HTTP_ERROR_CODE
 from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
+from fanfan.presentation.web.schemas.error import ErrorMessage
 
 # An HTTP middleware as registered via `app.middleware("http")`.
 HttpMiddleware = Callable[
@@ -17,6 +19,11 @@ HttpMiddleware = Callable[
 # when present so logs can be correlated across services, and generate one
 # otherwise.
 _REQUEST_ID_HEADER = "X-Request-ID"
+
+# Matches the reverse proxy's own cap (Caddyfile.example's request_body
+# max_size). Generous: the largest legitimate body today is a schedule
+# spreadsheet, capped at 5MB in the import route itself.
+_MAX_REQUEST_BODY_BYTES = 10 * 1024 * 1024
 
 
 def refresh_session_cookie(web_config: WebConfig) -> HttpMiddleware:
@@ -77,6 +84,36 @@ async def no_store_cache_control(request: Request, call_next) -> Response:
     response = await call_next(request)
     response.headers.setdefault("Cache-Control", "no-store")
     return response
+
+
+async def limit_request_body_size(request: Request, call_next) -> Response:
+    """Reject a body that declares itself oversized, before anything reads it.
+
+    Defence-in-depth that travels with the app (see `security_headers`): the
+    normal hard backstop against a hostile multi-hundred-MB upload is the
+    reverse proxy's own `request_body` cap (Caddyfile.example), documented as
+    required for the schedule-import endpoint. A deployment that skips or
+    misconfigures that proxy setting would otherwise let FastAPI spool the
+    whole body into memory before any route or exception handler runs — this
+    catches that case from a `Content-Length` a client sent honestly. A
+    chunked body with no `Content-Length` still reaches the route unbounded;
+    the proxy cap remains the only defence against that.
+    """
+    content_length = request.headers.get("content-length")
+    if content_length is not None:
+        try:
+            declared_size = int(content_length)
+        except ValueError:
+            declared_size = None
+        if declared_size is not None and declared_size > _MAX_REQUEST_BODY_BYTES:
+            return JSONResponse(
+                status_code=413,
+                content=ErrorMessage(
+                    code=HTTP_ERROR_CODE, details={"status_code": 413}
+                ).model_dump(),
+            )
+
+    return await call_next(request)
 
 
 async def bind_request_context(request: Request, call_next) -> Response:
