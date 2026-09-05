@@ -22,7 +22,7 @@
 	"devDependencies": {
 		"@eslint/compat": "2.1.0",
 		"@eslint/js": "10.0.1",
-		"@iconify-json/simple-icons": "1.2.93",
+		"@iconify-json/simple-icons": "1.2.94",
 		"@internationalized/date": "^3.12.3",
 		"@lucide/svelte": "^1.35.0",
 		"@sveltejs/adapter-static": "3.0.10",
