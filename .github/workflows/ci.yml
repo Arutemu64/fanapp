@@ -17,7 +17,10 @@ name: CI
 #
 # Runner hardening applied to every job below (2026 supply-chain practice):
 #   - runs-on is pinned to ubuntu-24.04, not the floating `ubuntu-latest`
-#     label GitHub migrates without notice; bumping it is a deliberate step.
+#     label GitHub migrates without notice. Pinning also brings the runner
+#     under Renovate: its github-actions manager bumps a pinned `ubuntu-24.04`
+#     via the github-runners datasource (it ignores the `ubuntu-latest`
+#     variable), so the next stable image (e.g. 26.04) arrives as a review PR.
 #   - step-security/harden-runner runs first in egress-policy: audit — it only
 #     records outbound network calls (never blocks), so a compromised action or
 #     dependency surfaces in the run's network log.

@@ -24,8 +24,10 @@ env:
 jobs:
   build:
     name: Build and push (${{ matrix.name }})
-    # Pinned to ubuntu-24.04, not the floating `ubuntu-latest` label — bumping
-    # the runner image is a deliberate step, matching the pin-everything stance.
+    # Pinned to ubuntu-24.04, not the floating `ubuntu-latest` label GitHub
+    # migrates without notice. Pinning also lets Renovate's github-actions
+    # manager propose the runner bump via the github-runners datasource; it
+    # ignores the `ubuntu-latest` variable, so a pin is what gets tracked.
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
