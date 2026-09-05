@@ -107,6 +107,12 @@ jobs:
         if: ${{ !cancelled() }}
         run: uv run ruff format --check src/fanfan tests --respect-gitignore
 
+      # --check only: fail if pyproject.toml's dependency tables aren't sorted,
+      # never rewrite them here (same check-only stance as ruff above).
+      - name: Dependency sort check (uv-sort)
+        if: ${{ !cancelled() }}
+        run: uv run uv-sort --check
+
       - name: Type check (ty)
         if: ${{ !cancelled() }}
         run: uv run ty check src/fanfan

@@ -46,6 +46,21 @@ repos:
         types: [ python ]
         pass_filenames: false
 
+      # Keep backend/pyproject.toml's dependency tables alphabetical. Local hook
+      # (not the ninoseki/uv-sort mirror) for the same single-source-of-truth
+      # reason as ruff/ty above: the version comes from backend/uv.lock, so a
+      # mirror `rev` can't drift from the pinned tool. uv has no native sort and
+      # `uv add` appends to the end, so without this the list rots out of order;
+      # pnpm already keeps the frontend sorted on its own, so only the backend
+      # needs a hook. pass_filenames is off because `--directory backend` moves
+      # cwd, where uv-sort finds pyproject.toml on its own.
+      - id: uv-sort
+        name: uv-sort
+        entry: uv run --directory backend uv-sort
+        language: system
+        files: ^backend/pyproject\.toml$
+        pass_filenames: false
+
       - id: ty
         name: ty
         entry: uv run --directory backend ty check src/fanfan

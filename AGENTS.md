@@ -64,7 +64,7 @@ named `fanfan-*` are project-local and live only here.
 | `just backend-dev` / `just frontend-dev` | Run one side on the host (pair with `just run-infra`) |
 | `just backend-stream` / `just backend-scheduler` | Run the FastStream consumer / scheduler (outbox relay + syncs) on the host (pair with `just run-infra`) |
 | `just backend-seed-demo` | Fill an empty environment with a demo programme and voting (idempotent) |
-| `just backend-lint` / `just backend-typecheck` | Format + ruff + `ty` + import-linter / `ty` alone |
+| `just backend-lint` / `just backend-typecheck` | Sort deps + format + ruff + `ty` + import-linter / `ty` alone |
 | `just frontend-lint` / `just frontend-check` | Prettier + ESLint / `svelte-check` |
 | `just dockerfile-lint` | hadolint (config `.hadolint.yaml`) |
 | `just backend-test` / `just backend-test-integration` | pytest (integration needs a Docker daemon) |
