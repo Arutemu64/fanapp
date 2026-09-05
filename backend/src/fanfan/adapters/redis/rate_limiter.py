@@ -16,11 +16,11 @@ class RedisRateLimiter(RateLimiter):
 
     async def hit(self, key: str, *, limit: int, window_seconds: int) -> None:
         counter_key = self._counter_key(key)
-        # INCR and EXPIRE NX run as one MULTI/EXEC round-trip so a crash between
-        # them can never leave the counter without a TTL. NX starts the window
-        # only when the key has none yet — the same "first hit" behavior as
-        # before, plus it self-heals a key that was orphaned before this fix
-        # shipped (no TTL, whatever the counter value).
+        # INCR and EXPIRE NX run as one MULTI/EXEC round-trip: two separate
+        # calls would leave a window where a crash or dropped connection
+        # between them strands the counter without a TTL, so it never
+        # resets. NX sets the window only when the key has none yet, which
+        # also covers a counter that lost its TTL for any other reason.
         async with self.redis.pipeline(transaction=True) as pipe:
             pipe.incr(counter_key)
             pipe.expire(counter_key, max(1, window_seconds), nx=True)
