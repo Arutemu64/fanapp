@@ -8,6 +8,6 @@
 python = "3.14.7"   # backend requires-python >= 3.14
 node = "24.20.0"       # LTS; matches frontend/Dockerfile and CI setup-node
 pnpm = "11.25.0"  # matches frontend/package.json "packageManager" and frontend/Dockerfile
-uv = "0.12.3"  # matches backend/Dockerfile and backend/pyproject.toml [tool.uv]
+uv = "0.12.7"  # matches backend/Dockerfile and backend/pyproject.toml [tool.uv]
 just = "1.58.0"  # single-site pin — no other file to keep in sync (docs/dependencies.md)
 hadolint = "2.15.1"  # Dockerfile linter; keep in sync with .pre-commit-config.yaml rev (CI uses hadolint-action)
