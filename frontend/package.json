@@ -4,7 +4,7 @@
 	"version": "0.0.0",
 	"description": "Frontend for the FAN FAN convention companion web app: mobile-first SvelteKit PWA",
 	"license": "MIT",
-	"packageManager": "pnpm@11.24.0",
+	"packageManager": "pnpm@11.25.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
