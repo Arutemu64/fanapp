@@ -64,7 +64,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "import-linter>=2.13",
+    "import-linter>=2.14",
     "pre-commit>=4.6.2",
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
