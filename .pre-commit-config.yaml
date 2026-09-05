@@ -2,17 +2,41 @@
 # See https://pre-commit.com/hooks.html for more hooks
 exclude: '^(\.agent|\.agents|\.claude)/'
 
+# ty and svelte-check scan the whole project on any file change (both are
+# pass_filenames: false), which is seconds per commit — too slow for the
+# commit path, so they run at pre-push while the fast formatters/linters stay
+# on pre-commit. `just backend-setup-hooks` runs a plain `pre-commit install`,
+# which installs every hook type listed here.
+default_install_hook_types: [pre-commit, pre-push]
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
+      # Strict load for every YAML except the Compose files, which need --unsafe
+      # (below) for their custom merge tags. Splitting the hook keeps full
+      # construction — the real syntax check — on workflows and everything else,
+      # instead of weakening it repo-wide.
       - id: check-yaml
+        exclude: '^docker-compose(\.[a-z0-9]+)?\.ya?ml$'
+      - id: check-yaml
+        name: check-yaml (compose)
         # --unsafe checks YAML syntax without constructing custom tags, which
         # docker-compose uses (!reset / !override for merge control).
         args: [--unsafe]
+        files: '^docker-compose(\.[a-z0-9]+)?\.ya?ml$'
       - id: check-added-large-files
+
+  # Scan staged content for hardcoded secrets before it can be committed. The
+  # golang hook self-installs the gitleaks binary (no Docker daemon at commit
+  # time), scans only what is staged, and redacts any match in its output.
+  # Renovate's :enablePreCommit manager keeps this rev current.
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
 
   # Lint Dockerfiles with hadolint. Uses the system binary (installed via mise,
   # see mise.toml) — no Docker daemon needed at commit time. Reads .hadolint.yaml
@@ -27,12 +51,13 @@ repos:
     hooks:
       # Ruff runs as a local hook (not the astral-sh/ruff-pre-commit mirror) so
       # its version has a single source of truth: backend/uv.lock. This avoids
-      # drift between a mirror `rev` and the pinned ruff. Same targets as CI
-      # (src/fanfan tests); pass_filenames is off because `uv run --directory
-      # backend` changes cwd, which would break repo-root-relative file args.
+      # drift between a mirror `rev` and the pinned ruff. Same targets as CI and
+      # `just backend-lint` (src/fanfan tests scripts); pass_filenames is off
+      # because `uv run --directory backend` changes cwd, which would break
+      # repo-root-relative file args.
       - id: ruff-check
         name: ruff check
-        entry: uv run --directory backend ruff check --fix src/fanfan tests
+        entry: uv run --directory backend ruff check --fix src/fanfan tests scripts
         language: system
         files: ^backend/
         types: [ python ]
@@ -40,7 +65,7 @@ repos:
 
       - id: ruff-format
         name: ruff format
-        entry: uv run --directory backend ruff format src/fanfan tests
+        entry: uv run --directory backend ruff format src/fanfan tests scripts
         language: system
         files: ^backend/
         types: [ python ]
@@ -61,12 +86,16 @@ repos:
         files: ^backend/pyproject\.toml$
         pass_filenames: false
 
+      # Whole-project type check: too slow for every commit (it re-checks all of
+      # src/fanfan regardless of what changed), so it runs at pre-push. CI runs
+      # the same check on every PR.
       - id: ty
         name: ty
         entry: uv run --directory backend ty check src/fanfan
         language: system
         types: [ python ]
         pass_filenames: false
+        stages: [ pre-push ]
 
       - id: frontend-prettier
         name: frontend prettier
@@ -82,6 +111,9 @@ repos:
         files: ^frontend/
         types_or: [ svelte, ts, javascript ]
 
+      # svelte-check types the whole frontend on any .svelte/.ts change, which is
+      # seconds — too slow for the commit path, so it runs at pre-push. CI runs
+      # `pnpm check` on every PR.
       - id: frontend-check
         name: frontend svelte-check
         entry: bash -c 'cd frontend && pnpm check'
@@ -89,3 +121,4 @@ repos:
         files: ^frontend/
         types_or: [ svelte, ts ]
         pass_filenames: false
+        stages: [ pre-push ]

@@ -101,11 +101,11 @@ jobs:
       # fail on violations, not silently "fix" them like the local justfile does.
       - name: Ruff lint
         if: ${{ !cancelled() }}
-        run: uv run ruff check src/fanfan tests --respect-gitignore
+        run: uv run ruff check src/fanfan tests scripts --respect-gitignore
 
       - name: Ruff format check
         if: ${{ !cancelled() }}
-        run: uv run ruff format --check src/fanfan tests --respect-gitignore
+        run: uv run ruff format --check src/fanfan tests scripts --respect-gitignore
 
       # --check only: fail if pyproject.toml's dependency tables aren't sorted,
       # never rewrite them here (same check-only stance as ruff above).
