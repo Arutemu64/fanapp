@@ -46,9 +46,14 @@ async def create_user_command(
             username=username, password=password, role=UserRole(role)
         )
     except ValidationError as err:
-        # Turn Pydantic's field errors (username pattern, password length) into a
-        # clean CLI message instead of a traceback.
-        raise click.ClickException(str(err)) from err
+        # Turn Pydantic's field errors (username pattern, password too short) into
+        # a clean one-line-per-field message — its default str() leaks the model
+        # name and a docs URL that mean nothing to an operator.
+        problems = "\n".join(
+            f"{'.'.join(str(part) for part in issue['loc'])}: {issue['msg']}"
+            for issue in err.errors()
+        )
+        raise click.ClickException(problems) from err
 
     container: AsyncContainer = context.meta[CONTAINER_NAME]
     async with container() as r_container:
