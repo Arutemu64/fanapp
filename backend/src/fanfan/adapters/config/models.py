@@ -114,12 +114,22 @@ class EnvConfig(BaseSettings):
                 self.debug.logging_level = logging.DEBUG
             if "json_logs" not in explicit:
                 self.debug.json_logs = False
-        elif self.env is Environment.PROD and self.debug.enabled:
-            # FastAPI debug mode leaks stack traces in HTTP responses, so it
-            # must never reach production — refuse to start rather than leak.
-            msg = (
-                "DEBUG__ENABLED must be False when APP_ENV=prod "
-                "(FastAPI debug mode leaks stack traces in HTTP responses)."
-            )
-            raise ValueError(msg)
+        elif self.env is Environment.PROD:
+            if self.debug.enabled:
+                # FastAPI debug mode leaks stack traces in HTTP responses, so it
+                # must never reach production — refuse to start rather than leak.
+                msg = (
+                    "DEBUG__ENABLED must be False when APP_ENV=prod "
+                    "(FastAPI debug mode leaks stack traces in HTTP responses)."
+                )
+                raise ValueError(msg)
+            if not self.web.cookie_secure:
+                # Without Secure, the browser sends the session and OAuth-state
+                # cookies over plain HTTP — refuse to start rather than ship them
+                # unprotected.
+                msg = (
+                    "WEB__COOKIE_SECURE must be True when APP_ENV=prod "
+                    "(cookies without Secure are sent over plain HTTP)."
+                )
+                raise ValueError(msg)
         return self
