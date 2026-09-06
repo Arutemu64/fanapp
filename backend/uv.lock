@@ -670,7 +670,7 @@ dev = [
     { name = "testcontainers", specifier = ">=4.15.0" },
     { name = "ty", specifier = ">=0.0.75" },
     { name = "types-authlib", specifier = ">=1.7.2.20260827" },
-    { name = "uv-sort", specifier = ">=0.7.1" },
+    { name = "uv-sort", specifier = ">=0.8.0" },
     { name = "xlsxwriter", specifier = ">=3.2.9" },
 ]
 
@@ -1909,15 +1909,15 @@ wheels = [
 
 [[package]]
 name = "uv-sort"
-version = "0.7.1"
+version = "0.8.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "tomlrt" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/24/5d/0a5c6b997437ceebe0ef813442e29dcc0b294298e153629a72ba463f690f/uv_sort-0.7.1.tar.gz", hash = "sha256:085af2f7ec36f12f0c856812a911bc1534134377989f13b9c52810222ff19a47", size = 21857, upload-time = "2026-06-27T23:51:29.938Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b2/ba/6ff0f9bad3a04f5841e2e6509637e1e19707610f782030e3f8797f067af9/uv_sort-0.8.0.tar.gz", hash = "sha256:19747d68ddacd2bc8597628c103f608143edddd7577ceaf3b1d50d93286c4fa1", size = 26296, upload-time = "2026-08-30T01:25:59.664Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f5/fd/c617a8edf311d8e5082f25b71fc18eac8846d9a374bff23a003052ee1d54/uv_sort-0.7.1-py3-none-any.whl", hash = "sha256:14098ecd46b32ed1b351a6757f2b7591009b6992cf91e762bd83bf9adfab499c", size = 4519, upload-time = "2026-06-27T23:51:28.57Z" },
+    { url = "https://files.pythonhosted.org/packages/38/0b/33ba36f338b203878795d2e726dec309173cdaa41fda434940ab1e84f263/uv_sort-0.8.0-py3-none-any.whl", hash = "sha256:84015c9246ec58ccb116b12e705114a14c9eb73344f88f69975700cd654685d7", size = 4816, upload-time = "2026-08-30T01:25:58.365Z" },
 ]
 
 [[package]]

@@ -73,7 +73,7 @@ dev = [
     "testcontainers>=4.15.0",
     "ty>=0.0.75",
     "types-authlib>=1.7.2.20260827",
-    "uv-sort>=0.7.1",
+    "uv-sort>=0.8.0",
     # Writing .xlsx, needed only by the schedule-template generator script and
     # the parser tests. The app itself only ever reads spreadsheets (polars +
     # fastexcel), so this stays out of the runtime dependencies.
