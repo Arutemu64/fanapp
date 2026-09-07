@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { components } from '$lib/api/schema';
 	import type { CurrentUserDTO } from '$lib/types/user';
 
 	import { PUBLIC_API_URL } from '$env/static/public';
@@ -6,24 +7,28 @@
 	import * as Alert from '$lib/components/ui/alert';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
+	import { SOCIAL_PROVIDER_PRESENTATION } from '$lib/data/socialProviders';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { offlineWriteGate } from '$lib/utils/offlineAction';
 	import { AlertCircle, Link, Mail, Shield } from '@lucide/svelte';
-	import IconVk from '~icons/simple-icons/vk';
 
 	import ChangeEmailModal from './ChangeEmailModal.svelte';
 	import ChangePasswordModal from './ChangePasswordModal.svelte';
 	import ProfileCardShell from './ProfileCardShell.svelte';
 	import SocialConnectionRow from './SocialConnectionRow.svelte';
 
+	type SocialProvider = components['schemas']['SocialProvider'];
+
 	const client = createApiClient();
 
 	interface Props {
 		user: CurrentUserDTO;
+		/** Providers this deployment offers for linking (see /auth/oauth/providers). */
+		enabledProviders: SocialProvider[];
 		onUpdate?: () => void | Promise<void>;
 	}
 
-	let { user, onUpdate }: Props = $props();
+	let { user, enabledProviders, onUpdate }: Props = $props();
 
 	// Email/password/unlink are all mutations — online only. The current state
 	// (which methods are set) still renders from the cached user.
@@ -34,20 +39,37 @@
 	const toastService = getToastService();
 	let emailStatusLabel = $derived(user.email ? 'Привязана' : 'Не добавлена');
 
-	let vkAccount = $derived(user.social_identities.find((si) => si.provider === 'vk') ?? null);
+	let linkedProviders = $derived(user.social_identities.map((si) => si.provider));
 
-	// The unlink DELETEs differ only in path + copy; SocialConnectionRow owns the
-	// confirm-and-loading UI and calls one of these to perform the action.
-	async function unlinkVk() {
+	// Rows are the enabled providers (in the backend's display order) plus any the
+	// user already linked that are no longer enabled — those must stay visible so a
+	// linked account can always be unlinked, even after its provider is turned off.
+	// A non-enabled row is therefore always connected, so it shows unlink and no
+	// connect; SocialConnectionRow needs no notion of "enabled" for that to hold.
+	let connectionRows = $derived([
+		...enabledProviders,
+		...linkedProviders.filter((provider) => !enabledProviders.includes(provider))
+	]);
+
+	// SocialConnectionRow owns the confirm-and-loading UI and calls this to perform
+	// the unlink. The DELETE path is per-provider (ADR-0012's distinct routes), so a
+	// literal is picked here rather than an interpolated path the typed client can't
+	// check. Unlink is never gated by enablement — that is what keeps a disabled-but-
+	// linked provider removable.
+	async function unlinkProvider(provider: SocialProvider) {
+		const { name } = SOCIAL_PROVIDER_PRESENTATION[provider];
 		try {
-			const { error, response } = await client.DELETE('/me/connections/vk', {});
+			const { error, response } =
+				provider === 'vk'
+					? await client.DELETE('/me/connections/vk', {})
+					: await client.DELETE('/me/connections/telegram', {});
 
 			if (error || !response.ok) {
 				toastService.error(error);
 				return;
 			}
 
-			toastService.add('VK отвязан', 'success');
+			toastService.add(`${name} отвязан`, 'success');
 			await onUpdate?.();
 		} catch (err) {
 			toastService.error(err);
@@ -132,20 +154,24 @@
 			</div>
 		</div>
 
-		<SocialConnectionRow
-			label="VK ID"
-			connected={vkAccount !== null}
-			connectedDescription="Через VK ID можно быстро входить без пароля."
-			notConnectedDescription="Подключи VK ID для быстрого входа без пароля."
-			connectHref={`${PUBLIC_API_URL}/me/connections/vk`}
-			unlinkPrompt="Отвязать VK ID?"
-			hasEmail={Boolean(user.email)}
-			onUnlink={unlinkVk}
-		>
-			{#snippet icon()}
-				<IconVk class="size-4 text-muted-foreground" />
-			{/snippet}
-		</SocialConnectionRow>
+		{#each connectionRows as provider (provider)}
+			{@const meta = SOCIAL_PROVIDER_PRESENTATION[provider]}
+			{@const Icon = meta.icon}
+			<SocialConnectionRow
+				label={meta.name}
+				connected={linkedProviders.includes(provider)}
+				connectedDescription={`Через ${meta.name} можно быстро входить без пароля.`}
+				notConnectedDescription={`Подключи ${meta.name} для быстрого входа без пароля.`}
+				connectHref={`${PUBLIC_API_URL}/me/connections/${provider}`}
+				unlinkPrompt={`Отвязать ${meta.name}?`}
+				hasEmail={Boolean(user.email)}
+				onUnlink={() => unlinkProvider(provider)}
+			>
+				{#snippet icon()}
+					<Icon class="size-4 text-muted-foreground" />
+				{/snippet}
+			</SocialConnectionRow>
+		{/each}
 	</div>
 
 	{#if !user.email}

@@ -1,3 +1,6 @@
+import type { components } from '$lib/api/schema';
+
+import { createApiClient } from '$lib/api';
 import {
 	OAUTH_ERROR_CODES,
 	OAUTH_LINK_ERROR_PARAM,
@@ -5,6 +8,8 @@ import {
 } from '$lib/utils/oauthErrors';
 
 import type { PageLoad } from './$types';
+
+type SocialProvider = components['schemas']['SocialProvider'];
 
 // The shared OAuth outcomes (cancelled, failed) plus the conflicts only the
 // linking flow can hit.
@@ -15,12 +20,28 @@ const LINK_ERROR_CODES = [
 	'session_changed'
 ] as const;
 
-// Social accounts now arrive with the current user from the root layout's `/me/`
-// load, so this page fetches nothing — it only reads the one-time link error
-// code off the URL.
-export const load: PageLoad = ({ url }) => {
+// Which providers can be *linked* is the same deployment gate the login screen
+// reads — a provider unreachable from this host offers no "connect" button. Read
+// at runtime, not baked in. An already-linked provider stays unlinkable even when
+// disabled (that row comes from the user, and the unlink route is never gated), so
+// a failure here just drops the connect affordances, never the ability to unlink.
+export const load: PageLoad = async ({ url, fetch }) => {
+	let enabledProviders: SocialProvider[] = [];
+	try {
+		const client = createApiClient();
+		const { data, error } = await client.GET('/auth/oauth/providers', { fetch });
+		if (error) {
+			console.error('Error fetching enabled OAuth providers:', error);
+		} else {
+			enabledProviders = data.providers;
+		}
+	} catch {
+		// Offline / timeout throws rather than returning `error`; offer no linking.
+	}
+
 	return {
 		title: 'Профиль',
-		oauthLinkError: readOAuthErrorCode(url, OAUTH_LINK_ERROR_PARAM, LINK_ERROR_CODES)
+		oauthLinkError: readOAuthErrorCode(url, OAUTH_LINK_ERROR_PARAM, LINK_ERROR_CODES),
+		enabledProviders
 	};
 };

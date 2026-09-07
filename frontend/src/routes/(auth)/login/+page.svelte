@@ -1,17 +1,15 @@
 <script lang="ts">
 	import type { components } from '$lib/api/schema';
-	import type { Component } from 'svelte';
 
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Spinner } from '$lib/components/ui/spinner';
+	import { SOCIAL_PROVIDER_PRESENTATION } from '$lib/data/socialProviders';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { clearOAuthErrorParam, OAUTH_LOGIN_ERROR_PARAM } from '$lib/utils/oauthErrors';
 	import { Mail } from '@lucide/svelte';
 	import { onMount } from 'svelte';
-	import IconTelegram from '~icons/simple-icons/telegram';
-	import IconVk from '~icons/simple-icons/vk';
 
 	import type { PageProps } from './$types';
 
@@ -19,29 +17,6 @@
 	import PasswordLoginForm from './components/PasswordLoginForm.svelte';
 
 	type SocialProvider = components['schemas']['SocialProvider'];
-
-	// Presentation metadata per provider. The backend owns which providers are
-	// enabled and their order (data.enabledProviders); this only maps a known id
-	// to its button label, "opening" label, icon and brand colour — labels and
-	// icons stay the frontend's concern. Adding a SocialProvider member surfaces
-	// here as a type error until its button is defined.
-	const PROVIDER_META: Record<
-		SocialProvider,
-		{ label: string; opening: string; icon: Component; iconClass: string }
-	> = {
-		vk: {
-			label: 'Войти через VK ID',
-			opening: 'Открываем VK ID…',
-			icon: IconVk,
-			iconClass: 'text-[#0077FF]'
-		},
-		telegram: {
-			label: 'Войти через Telegram',
-			opening: 'Открываем Telegram…',
-			icon: IconTelegram,
-			iconClass: 'text-[#26A5E4]'
-		}
-	};
 
 	let { data }: PageProps = $props();
 	const toastService = getToastService();
@@ -137,7 +112,7 @@
 
 		{#if view === 'options'}
 			{#each data.enabledProviders as provider (provider)}
-				{@const meta = PROVIDER_META[provider]}
+				{@const meta = SOCIAL_PROVIDER_PRESENTATION[provider]}
 				{@const Icon = meta.icon}
 				<Button
 					href={`${PUBLIC_API_URL}/auth/oauth/${provider}/start`}
@@ -148,10 +123,10 @@
 				>
 					{#if openingProvider === provider}
 						<Spinner data-icon="inline-start" />
-						{meta.opening}
+						Открываем {meta.name}…
 					{:else}
 						<Icon class={meta.iconClass} data-icon="inline-start" />
-						{meta.label}
+						Войти через {meta.name}
 					{/if}
 				</Button>
 			{/each}
