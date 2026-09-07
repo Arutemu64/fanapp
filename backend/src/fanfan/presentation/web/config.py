@@ -2,6 +2,8 @@ from urllib.parse import urlencode, urlsplit
 
 from pydantic import BaseModel, HttpUrl, SecretStr, field_validator
 
+from fanfan.core.vo.social_identity import SocialProvider
+
 
 class WebConfig(BaseModel):
     # Where the process binds — not how the outside world reaches it.
@@ -25,6 +27,15 @@ class WebConfig(BaseModel):
     session_ttl_seconds: int = 60 * 60 * 24 * 30
     # Refresh Redis TTL only when remaining time drops below this threshold.
     session_touch_threshold_seconds: int = 60 * 60 * 6
+
+    # Social login providers the login screen offers, in display order. Gating is
+    # by deployment, NOT by whether credentials exist: a provider can be fully
+    # configured yet unreachable from where the app runs — oauth.telegram.org is
+    # blocked on Russian hosting — so availability is an explicit operator choice,
+    # not inferred from client_id/secret. `/auth/oauth/providers` returns this
+    # list; the login and account-link start routes reject a provider absent from
+    # it. Defaults to VK only, the provider reachable from the production host.
+    enabled_oauth_providers: list[SocialProvider] = [SocialProvider.VK]
 
     @field_validator("public_url", mode="after")
     @classmethod

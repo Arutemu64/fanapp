@@ -5,6 +5,7 @@ from authlib.integrations.starlette_client import OAuth, StarletteOAuth2App
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Request
+from pydantic import BaseModel
 from starlette import status
 from starlette.responses import RedirectResponse, Response
 
@@ -51,6 +52,32 @@ LINK_ERROR_USER_ALREADY_HAS_PROVIDER = "user_already_has_provider"
 LINK_ERROR_SESSION_CHANGED = "session_changed"
 
 
+class OAuthProvidersResponse(BaseModel):
+    """The social login providers the login screen should offer, in order.
+
+    Only the provider ids: labels, icons and brand colours are the frontend's to
+    own. This is deployment config, not a fixed set — a provider may be built in
+    yet withheld here because it is unreachable from this host.
+    """
+
+    providers: list[SocialProvider]
+
+
+@oauth_router.get(
+    "/oauth/providers",
+    summary="List enabled social login providers",
+    description="Returns the social login providers this deployment offers, in "
+    "display order. The login screen renders one button per provider; a provider "
+    "missing here is disabled and its start endpoint is rejected. Unauthenticated "
+    "on purpose — it only reveals which buttons to draw, which is not sensitive.",
+)
+@inject
+async def list_oauth_providers(
+    config: FromDishka[WebConfig],
+) -> OAuthProvidersResponse:
+    return OAuthProvidersResponse(providers=config.enabled_oauth_providers)
+
+
 def build_login_redirect(error_code: str | None = None) -> RedirectResponse:
     return _build_redirect("/login", OAUTH_LOGIN_ERROR_QUERY_PARAM, error_code)
 
@@ -90,7 +117,18 @@ async def start_social_login(
     provider: SocialProvider,
     request: Request,
     oauth: FromDishka[OAuth],
+    config: FromDishka[WebConfig],
 ) -> Response:
+    if provider not in config.enabled_oauth_providers:
+        # Defence in depth: the login screen hides a disabled provider's button,
+        # but its start URL is still guessable. Entered by a top-level navigation,
+        # so it leaves as a redirect like every other failure here, not a body.
+        logger.info(
+            "Rejected social login start for a disabled provider",
+            extra={"provider": provider.value},
+        )
+        return build_login_redirect(OAUTH_ERROR_FAILED)
+
     try:
         client: StarletteOAuth2App = oauth.create_client(provider.value)
         url = await build_authorization_url(

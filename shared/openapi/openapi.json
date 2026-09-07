@@ -360,6 +360,38 @@
         }
       }
     },
+    "/auth/oauth/providers": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "List enabled social login providers",
+        "description": "Returns the social login providers this deployment offers, in display order. The login screen renders one button per provider; a provider missing here is disabled and its start endpoint is rejected. Unauthenticated on purpose — it only reveals which buttons to draw, which is not sensitive.",
+        "operationId": "list_oauth_providers",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthProvidersResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/auth/oauth/{provider}/start": {
       "get": {
         "tags": [
@@ -4891,6 +4923,23 @@
           "test"
         ],
         "title": "NotificationType"
+      },
+      "OAuthProvidersResponse": {
+        "properties": {
+          "providers": {
+            "items": {
+              "$ref": "#/components/schemas/SocialProvider"
+            },
+            "type": "array",
+            "title": "Providers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "providers"
+        ],
+        "title": "OAuthProvidersResponse",
+        "description": "The social login providers the login screen should offer, in order.\n\nOnly the provider ids: labels, icons and brand colours are the frontend's to\nown. This is deployment config, not a fixed set — a provider may be built in\nyet withheld here because it is unreachable from this host."
       },
       "ParticipantFullDTO": {
         "properties": {
