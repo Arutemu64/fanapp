@@ -5389,7 +5389,7 @@
           "vk"
         ],
         "title": "SocialProvider",
-        "description": "External identity providers the app accepts.\n\nDoubles as the `iss` stand-in when matching an identity: there is exactly one\nissuer per member, so `(provider, subject)` is the `(iss, sub)` pair OpenID\nConnect asks relying parties to key on. Adding a member means adding an\nAuthlib client in `main/ioc/auth.py`, its **own** callback URI (RFC 9700\n§4.4.2.2 — see the module docstring in `presentation/web/oauth.py`), and a\nhand-written migration for the CHECK constraint backing the column."
+        "description": "External identity providers the app accepts.\n\nDoubles as the `iss` stand-in when matching an identity: there is exactly one\nissuer per member, so `(provider, subject)` is the `(iss, sub)` pair OpenID\nConnect asks relying parties to key on. Adding a member means adding an\nAuthlib client in `main/ioc/auth.py`, its **own** callback URI (RFC 9700\n§4.4.2.2 — see the module docstring in `presentation/web/oauth.py`), a\nhand-written migration for the CHECK constraint backing the column, an entry\nin the frontend's `PROVIDER_META` (its login button), and — to actually offer\nit — its name in `WEB__ENABLED_OAUTH_PROVIDERS` (`WebConfig`), the deployment\ngate the login screen reads via `/auth/oauth/providers`."
       },
       "SubmitFeedbackInput": {
         "properties": {

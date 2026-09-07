@@ -1656,8 +1656,11 @@ export interface components {
          *     issuer per member, so `(provider, subject)` is the `(iss, sub)` pair OpenID
          *     Connect asks relying parties to key on. Adding a member means adding an
          *     Authlib client in `main/ioc/auth.py`, its **own** callback URI (RFC 9700
-         *     §4.4.2.2 — see the module docstring in `presentation/web/oauth.py`), and a
-         *     hand-written migration for the CHECK constraint backing the column.
+         *     §4.4.2.2 — see the module docstring in `presentation/web/oauth.py`), a
+         *     hand-written migration for the CHECK constraint backing the column, an entry
+         *     in the frontend's `PROVIDER_META` (its login button), and — to actually offer
+         *     it — its name in `WEB__ENABLED_OAUTH_PROVIDERS` (`WebConfig`), the deployment
+         *     gate the login screen reads via `/auth/oauth/providers`.
          * @enum {string}
          */
         SocialProvider: "telegram" | "vk";
