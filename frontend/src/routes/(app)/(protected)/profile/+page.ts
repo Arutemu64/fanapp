@@ -1,6 +1,7 @@
 import type { components } from '$lib/api/schema';
 
 import { createApiClient } from '$lib/api';
+import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 import {
 	OAUTH_ERROR_CODES,
 	OAUTH_LINK_ERROR_PARAM,
@@ -29,7 +30,11 @@ export const load: PageLoad = async ({ url, fetch }) => {
 	let enabledProviders: SocialProvider[] = [];
 	try {
 		const client = createApiClient();
-		const { data, error } = await client.GET('/auth/oauth/providers', { fetch });
+		// Timeout-bounded so a stalled connection can't block the profile page.
+		const { data, error } = await client.GET('/auth/oauth/providers', {
+			fetch,
+			signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
+		});
 		if (error) {
 			console.error('Error fetching enabled OAuth providers:', error);
 		} else {

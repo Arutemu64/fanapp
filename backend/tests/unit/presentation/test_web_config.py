@@ -38,3 +38,20 @@ def test_oauth_providers_preserve_configured_order():
 
 def test_oauth_providers_can_be_emptied():
     assert _config(enabled_oauth_providers=[]).enabled_oauth_providers == []
+
+
+# A repeated id (a config typo) would collide the keyed `{#each provider}` on the
+# frontend, so the config normalises to a unique list, keeping first-seen order.
+def test_oauth_providers_are_deduplicated_preserving_order():
+    config = _config(
+        enabled_oauth_providers=[
+            SocialProvider.TELEGRAM,
+            SocialProvider.VK,
+            SocialProvider.TELEGRAM,
+        ]
+    )
+
+    assert config.enabled_oauth_providers == [
+        SocialProvider.TELEGRAM,
+        SocialProvider.VK,
+    ]

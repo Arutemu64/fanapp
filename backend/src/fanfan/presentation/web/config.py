@@ -37,6 +37,27 @@ class WebConfig(BaseModel):
     # it. Defaults to VK only, the provider reachable from the production host.
     enabled_oauth_providers: list[SocialProvider] = [SocialProvider.VK]
 
+    @field_validator("enabled_oauth_providers", mode="after")
+    @classmethod
+    def _dedupe_oauth_providers(
+        cls, value: list[SocialProvider]
+    ) -> list[SocialProvider]:
+        """Drop duplicates while preserving order.
+
+        The frontend renders this list with a keyed `{#each provider}` (login
+        screen and profile card), so a repeated id — a config typo like
+        `["vk","vk"]` — would collide those keys and break the render. Normalising
+        to a unique list protects every consumer, and is gentler than refusing to
+        boot over a harmless typo.
+        """
+        seen: set[SocialProvider] = set()
+        unique: list[SocialProvider] = []
+        for provider in value:
+            if provider not in seen:
+                seen.add(provider)
+                unique.append(provider)
+        return unique
+
     @field_validator("public_url", mode="after")
     @classmethod
     def ensure_trailing_slash(cls, value: HttpUrl) -> HttpUrl:
