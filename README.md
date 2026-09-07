@@ -22,7 +22,7 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 - **Schedule**: public event schedule with live changes, per-user subscriptions, and organizer management/import tools.
 - **Voting**: nominations and voting, with cosplay data synced from Cosplay2.
 - **Notifications**: in-app feed plus Web Push (VAPID) for broadcasts and per-user alerts.
-- **Auth**: sign in via VK ID, email code, one-time login code, or credentials; cookie-based sessions.
+- **Auth**: sign in via VK ID or Telegram (social providers are enabled per deployment), email code, one-time login code, or credentials; cookie-based sessions.
 - **Profiles & tickets**: user profile, linked tickets (synced from TicketsCloud), account connections, and security settings.
 - **Feedback**: user feedback submission.
 - **Live updates**: Server-Sent Events (SSE) push real-time changes to the client.
@@ -71,10 +71,12 @@ Both the web API and the bootstrap defaults are designed to boot with no real
 third-party credentials, so you can start exploring immediately:
 
 - `BOT__*`: the placeholder values are format-valid, so the web API starts with
-  them. Telegram login and Telegram notifications stay disabled until you set a
-  real bot (create one via [@BotFather](https://t.me/BotFather)); email and
-  credentials login work without it. There is no standalone bot process — the
-  token is used only as a Bot API client for the notifier and OAuth login.
+  them. Telegram notifications stay disabled until you set a real bot (create one
+  via [@BotFather](https://t.me/BotFather)); Telegram *login* additionally needs
+  `telegram` in `WEB__ENABLED_OAUTH_PROVIDERS` (default `["vk"]`), since a provider
+  can be configured yet unreachable from a given host. Email and credentials login
+  work without any of this. There is no standalone bot process — the token is used
+  only as a Bot API client for the notifier and OAuth login.
 - `MAIL__*` (SMTP): optional. Leave unset and outgoing emails are logged instead
   of sent (email login/confirmation codes appear in the app logs).
 - `PUSH__SUBSCRIBER`: your contact email for Web Push.

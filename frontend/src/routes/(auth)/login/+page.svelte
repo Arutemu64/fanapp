@@ -1,18 +1,22 @@
 <script lang="ts">
+	import type { components } from '$lib/api/schema';
+
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Spinner } from '$lib/components/ui/spinner';
+	import { SOCIAL_PROVIDER_PRESENTATION } from '$lib/data/socialProviders';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { clearOAuthErrorParam, OAUTH_LOGIN_ERROR_PARAM } from '$lib/utils/oauthErrors';
 	import { Mail } from '@lucide/svelte';
 	import { onMount } from 'svelte';
-	import IconVk from '~icons/simple-icons/vk';
 
 	import type { PageProps } from './$types';
 
 	import CodeLoginForm from './components/CodeLoginForm.svelte';
 	import PasswordLoginForm from './components/PasswordLoginForm.svelte';
+
+	type SocialProvider = components['schemas']['SocialProvider'];
 
 	let { data }: PageProps = $props();
 	const toastService = getToastService();
@@ -36,11 +40,12 @@
 
 	// Starting an OAuth login is a full-page navigation that waits on our backend
 	// and on the provider's discovery/authorize page, so the button has to say it
-	// was heard. One flag per provider prevents a double-click on either.
-	let isOpeningVk = $state(false);
+	// was heard. Tracking which provider is opening lets each button show its own
+	// spinner while a pending navigation blocks starting a second one.
+	let openingProvider = $state<SocialProvider | null>(null);
 
-	function handleVkClick(event: MouseEvent) {
-		if (isOpeningVk) {
+	function handleProviderClick(event: MouseEvent, provider: SocialProvider) {
+		if (openingProvider !== null) {
 			event.preventDefault();
 			return;
 		}
@@ -52,7 +57,7 @@
 		// runs before the user reaches this button, so a genuine new login still starts
 		// from a cleared intent. (A client-only "did OAuth succeed?" signal can't tell
 		// success from an abandoned flow, so we don't try — see the PR discussion.)
-		isOpeningVk = true;
+		openingProvider = provider;
 	}
 
 	function showOptions() {
@@ -81,10 +86,10 @@
 
 <!-- Coming back from a provider restores this page from the bfcache with its DOM
 	frozen mid-navigation, so the spinner would still be running. `pageshow` fires
-	on that restore (and on a normal load, where the flags are already false). -->
+	on that restore (and on a normal load, where the flag is already null). -->
 <svelte:window
 	onpageshow={() => {
-		isOpeningVk = false;
+		openingProvider = null;
 	}}
 />
 
@@ -106,21 +111,25 @@
 		</div>
 
 		{#if view === 'options'}
-			<Button
-				href={`${PUBLIC_API_URL}/auth/oauth/vk/start`}
-				variant="outline"
-				class="min-h-11 w-full font-medium"
-				aria-disabled={isOpeningVk}
-				onclick={handleVkClick}
-			>
-				{#if isOpeningVk}
-					<Spinner data-icon="inline-start" />
-					Открываем VK ID…
-				{:else}
-					<IconVk class="text-[#0077FF]" data-icon="inline-start" />
-					Войти через VK ID
-				{/if}
-			</Button>
+			{#each data.enabledProviders as provider (provider)}
+				{@const meta = SOCIAL_PROVIDER_PRESENTATION[provider]}
+				{@const Icon = meta.icon}
+				<Button
+					href={`${PUBLIC_API_URL}/auth/oauth/${provider}/start`}
+					variant="outline"
+					class="min-h-11 w-full font-medium"
+					aria-disabled={openingProvider === provider}
+					onclick={(event: MouseEvent) => handleProviderClick(event, provider)}
+				>
+					{#if openingProvider === provider}
+						<Spinner data-icon="inline-start" />
+						Открываем {meta.name}…
+					{:else}
+						<Icon class={meta.iconClass} data-icon="inline-start" />
+						Войти через {meta.name}
+					{/if}
+				</Button>
+			{/each}
 
 			<Button
 				type="button"

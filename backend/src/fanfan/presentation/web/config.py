@@ -2,6 +2,8 @@ from urllib.parse import urlencode, urlsplit
 
 from pydantic import BaseModel, HttpUrl, SecretStr, field_validator
 
+from fanfan.core.vo.social_identity import SocialProvider
+
 
 class WebConfig(BaseModel):
     # Where the process binds — not how the outside world reaches it.
@@ -25,6 +27,36 @@ class WebConfig(BaseModel):
     session_ttl_seconds: int = 60 * 60 * 24 * 30
     # Refresh Redis TTL only when remaining time drops below this threshold.
     session_touch_threshold_seconds: int = 60 * 60 * 6
+
+    # Social login providers the login screen offers, in display order. Gating is
+    # by deployment, NOT by whether credentials exist: a provider can be fully
+    # configured yet unreachable from where the app runs — oauth.telegram.org is
+    # blocked on Russian hosting — so availability is an explicit operator choice,
+    # not inferred from client_id/secret. `/auth/oauth/providers` returns this
+    # list; the login and account-link start routes reject a provider absent from
+    # it. Defaults to VK only, the provider reachable from the production host.
+    enabled_oauth_providers: list[SocialProvider] = [SocialProvider.VK]
+
+    @field_validator("enabled_oauth_providers", mode="after")
+    @classmethod
+    def _dedupe_oauth_providers(
+        cls, value: list[SocialProvider]
+    ) -> list[SocialProvider]:
+        """Drop duplicates while preserving order.
+
+        The frontend renders this list with a keyed `{#each provider}` (login
+        screen and profile card), so a repeated id — a config typo like
+        `["vk","vk"]` — would collide those keys and break the render. Normalising
+        to a unique list protects every consumer, and is gentler than refusing to
+        boot over a harmless typo.
+        """
+        seen: set[SocialProvider] = set()
+        unique: list[SocialProvider] = []
+        for provider in value:
+            if provider not in seen:
+                seen.add(provider)
+                unique.append(provider)
+        return unique
 
     @field_validator("public_url", mode="after")
     @classmethod

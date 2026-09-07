@@ -138,6 +138,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/oauth/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List enabled social login providers
+         * @description Returns the social login providers this deployment offers, in display order. The login screen renders one button per provider; a provider missing here is disabled and its start endpoint is rejected. Unauthenticated on purpose — it only reveals which buttons to draw, which is not sensitive.
+         */
+        get: operations["list_oauth_providers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/oauth/{provider}/start": {
         parameters: {
             query?: never;
@@ -1443,6 +1463,18 @@ export interface components {
          * @enum {string}
          */
         NotificationType: "default" | "schedule_change" | "schedule_subscription" | "message" | "points_received" | "broadcast" | "test";
+        /**
+         * OAuthProvidersResponse
+         * @description The social login providers the login screen should offer, in order.
+         *
+         *     Only the provider ids: labels, icons and brand colours are the frontend's to
+         *     own. This is deployment config, not a fixed set — a provider may be built in
+         *     yet withheld here because it is unreachable from this host.
+         */
+        OAuthProvidersResponse: {
+            /** Providers */
+            providers: components["schemas"]["SocialProvider"][];
+        };
         /** ParticipantFullDTO */
         ParticipantFullDTO: {
             /**
@@ -1624,8 +1656,11 @@ export interface components {
          *     issuer per member, so `(provider, subject)` is the `(iss, sub)` pair OpenID
          *     Connect asks relying parties to key on. Adding a member means adding an
          *     Authlib client in `main/ioc/auth.py`, its **own** callback URI (RFC 9700
-         *     §4.4.2.2 — see the module docstring in `presentation/web/oauth.py`), and a
-         *     hand-written migration for the CHECK constraint backing the column.
+         *     §4.4.2.2 — see the module docstring in `presentation/web/oauth.py`), a
+         *     hand-written migration for the CHECK constraint backing the column, an entry
+         *     in the frontend's `PROVIDER_META` (its login button), and — to actually offer
+         *     it — its name in `WEB__ENABLED_OAUTH_PROVIDERS` (`WebConfig`), the deployment
+         *     gate the login screen reads via `/auth/oauth/providers`.
          * @enum {string}
          */
         SocialProvider: "telegram" | "vk";
@@ -2191,6 +2226,35 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    list_oauth_providers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OAuthProvidersResponse"];
+                };
             };
             /** @description Request validation error. */
             422: {

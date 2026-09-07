@@ -20,6 +20,7 @@
 
 	let { data }: PageProps = $props();
 	let user = $derived(data.user!);
+	let enabledProviders = $derived(data.enabledProviders);
 	const toastService = getToastService();
 
 	// The whole profile (identity + connections) renders from the layout-cached
@@ -85,7 +86,7 @@
 	<div class="grid items-start gap-4 sm:grid-cols-2 sm:gap-5">
 		<div class="flex flex-col gap-4">
 			<TicketLinkCard {user} onTicketLinked={refreshProfile} />
-			<SecurityCard {user} onUpdate={refreshProfile} />
+			<SecurityCard {user} {enabledProviders} onUpdate={refreshProfile} />
 		</div>
 
 		<div class="flex flex-col gap-4">

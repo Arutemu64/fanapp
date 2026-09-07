@@ -87,8 +87,15 @@ the public PEM.
 
 ### Telegram login: register the URLs with BotFather
 
-Telegram login needs one step that is not in `.env`. In [@BotFather](https://t.me/BotFather),
-open **Bot Settings → Web Login** and register, for your domain:
+First enable the provider: add `telegram` to `WEB__ENABLED_OAUTH_PROVIDERS` (it
+defaults to `["vk"]`, because `oauth.telegram.org` is unreachable from some hosts
+— notably Russian ones — so a configured bot is not enough on its own). The login
+screen reads the enabled list from `/api/auth/oauth/providers`, and the start
+routes reject a provider left off it.
+
+Telegram login then needs one more step that is not in `.env`. In
+[@BotFather](https://t.me/BotFather), open **Bot Settings → Web Login** and
+register, for your domain:
 
 | Kind | Value |
 | --- | --- |

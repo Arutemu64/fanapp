@@ -13,6 +13,7 @@ from fanfan.application.interactors.current_user.unlink_social_account import (
 )
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.vo.social_identity import SocialProvider
+from fanfan.presentation.web.config import WebConfig
 from fanfan.presentation.web.oauth import OAUTH_ERROR_FAILED, OAuthIntent
 from fanfan.presentation.web.routes.auth.oauth import (
     build_authorization_url,
@@ -47,7 +48,18 @@ async def start_account_link(
     request: Request,
     oauth: FromDishka[OAuth],
     current_user_provider: FromDishka[CurrentUserProvider],
+    config: FromDishka[WebConfig],
 ) -> Response:
+    if provider not in config.enabled_oauth_providers:
+        # A globally disabled provider cannot be linked either. The profile screen
+        # hides its button, but the start URL is guessable — redirect back like any
+        # other link failure rather than begin a flow that login won't accept.
+        logger.info(
+            "Rejected account link for a disabled provider",
+            extra={"provider": provider.value},
+        )
+        return build_profile_redirect(OAUTH_ERROR_FAILED)
+
     try:
         client: StarletteOAuth2App = oauth.create_client(provider.value)
         # Recorded in the OAuth state and compared against the session at the
