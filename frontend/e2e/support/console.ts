@@ -2,14 +2,6 @@ import type { Page } from '@playwright/test';
 
 import { expect } from '@playwright/test';
 
-// Browser-level network noise, not an app JS error: an aborted or 404'd request —
-// how the mocked tier drives offline states (`route.abort()`) and the "loud 404"
-// a forgotten mock hits — makes Chromium log a resource-load error to the console.
-// Tests already assert on the app's *handling* of those (the offline copy, the
-// `api.unmatched` guard), so this transport noise is never what the guard watches
-// for; only app-emitted errors and uncaught exceptions are.
-const IGNORED_BY_DEFAULT: RegExp[] = [/Failed to load resource/i];
-
 export interface ConsoleGuard {
 	/**
 	 * Permit console errors matching any of these patterns for the current test —
@@ -21,7 +13,11 @@ export interface ConsoleGuard {
 }
 
 function matches(text: string, pattern: string | RegExp): boolean {
-	return typeof pattern === 'string' ? text.includes(pattern) : pattern.test(text);
+	if (typeof pattern === 'string') return text.includes(pattern);
+	// A caller could hand us a global/sticky RegExp, whose lastIndex persists
+	// between .test() calls and would misclassify a later error — reset it first.
+	pattern.lastIndex = 0;
+	return pattern.test(text);
 }
 
 /**
@@ -34,7 +30,17 @@ export function watchConsole(page: Page): { guard: ConsoleGuard; assertClean: ()
 	const allowed: Array<string | RegExp> = [];
 
 	page.on('console', (message) => {
-		if (message.type() === 'error') collected.push(message.text());
+		if (message.type() !== 'error') return;
+		const text = message.text();
+		// A resource-load failure against the mocked backend is expected noise, not an
+		// app error: the API double answers 401 for a guest, a loud 404 for a route
+		// nobody mocked (asserted separately via `api.unmatched`), and offline specs
+		// abort `/api` reads outright. Ignore those by resource URL — but never a
+		// failed *app* asset (a missing script or stylesheet is a real regression the
+		// guard must still catch).
+		const url = message.location()?.url ?? '';
+		if (/Failed to load resource/i.test(text) && url.includes('/api/')) return;
+		collected.push(text);
 	});
 	// An uncaught exception never reaches console.error, so `pageerror` is a
 	// separate channel — a thrown-but-swallowed render error would slip past a
@@ -49,7 +55,7 @@ export function watchConsole(page: Page): { guard: ConsoleGuard; assertClean: ()
 		},
 		assertClean() {
 			const unexpected = collected.filter(
-				(text) => ![...IGNORED_BY_DEFAULT, ...allowed].some((pattern) => matches(text, pattern))
+				(text) => !allowed.some((pattern) => matches(text, pattern))
 			);
 			expect(unexpected, `Unexpected browser console errors:\n${unexpected.join('\n')}`).toEqual(
 				[]
