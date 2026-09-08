@@ -1,6 +1,7 @@
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
 import { isBackendUnreachableStatus, isReachable, markReachable } from '$lib/services/reachability';
+import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 import { isHttpError } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
@@ -18,7 +19,14 @@ export const load: PageLoad = async ({ fetch }) => {
 	const client = createApiClient();
 
 	try {
-		const { data, error: apiError, response } = await client.GET('/voting/nominations', { fetch });
+		const {
+			data,
+			error: apiError,
+			response
+		} = await client.GET('/voting/nominations', {
+			fetch,
+			signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
+		});
 
 		if (apiError) {
 			// A gateway 5xx (502/503/504) is the backend being unreachable behind a

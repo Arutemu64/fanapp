@@ -30,3 +30,13 @@ export const SOCIAL_PROVIDER_PRESENTATION: Record<SocialProvider, SocialProvider
 	vk: { name: 'VK ID', icon: IconVk, iconClass: 'text-[#0077FF]' },
 	telegram: { name: 'Telegram', icon: IconTelegram, iconClass: 'text-[#26A5E4]' }
 };
+
+/**
+ * Every known provider, in display order. The login screen falls back to this when
+ * it could not reach `/auth/oauth/providers` — showing all of them fails open so a
+ * social-only account (whose one button is its only way in) is never hidden by a
+ * network hiccup. A provider disabled on this deployment is still rejected by its
+ * start endpoint, so an extra button degrades to a handled error, never a lockout.
+ * Derived from the presentation record's keys so it stays complete by construction.
+ */
+export const ALL_SOCIAL_PROVIDERS = Object.keys(SOCIAL_PROVIDER_PRESENTATION) as SocialProvider[];
