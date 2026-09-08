@@ -213,7 +213,7 @@ jobs:
           # (docs/dependencies.md). We can't omit it and read packageManager
           # instead: v6 fails to resolve it from a subdirectory package.json
           # (pnpm/action-setup#227), and there is no root package.json here.
-          version: 12.1.0
+          version: 12.2.1
 
       - name: Install Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -272,7 +272,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
         with:
-          version: 12.1.0
+          version: 12.2.1
 
       - name: Install Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
