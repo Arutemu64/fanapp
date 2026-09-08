@@ -133,7 +133,7 @@ await page.screenshot({ path: 'test-results/voting.png', fullPage: true });
 
 ## Layout
 
-```
+```text
 e2e/
   fixtures.ts        # test/expect + `api` fixture; re-exports helpers — import from here
   mocks/

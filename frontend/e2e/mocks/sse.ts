@@ -17,7 +17,9 @@ export async function installSseDouble(context: BrowserContext): Promise<void> {
 			static readonly CLOSED = 2;
 
 			readonly url: string;
-			readyState = FakeEventSource.OPEN;
+			// Per WHATWG, a fresh EventSource starts CONNECTING and only reaches OPEN
+			// once the connection is established (the microtask below).
+			readyState = FakeEventSource.CONNECTING;
 			onopen: ((event: Event) => void) | null = null;
 			onmessage: ((event: MessageEvent) => void) | null = null;
 			onerror: ((event: Event) => void) | null = null;
@@ -31,6 +33,8 @@ export async function installSseDouble(context: BrowserContext): Promise<void> {
 				// it the client stays in `transport_open` and its liveness watchdog
 				// would eventually reconnect — model a real, stable connection instead.
 				queueMicrotask(() => {
+					// A source closed before this ran stays closed and never opens.
+					if (this.readyState === FakeEventSource.CLOSED) return;
 					this.readyState = FakeEventSource.OPEN;
 					this.onopen?.(new Event('open'));
 					this.dispatchEvent(new Event('open'));
@@ -45,6 +49,9 @@ export async function installSseDouble(context: BrowserContext): Promise<void> {
 
 			close(): void {
 				this.readyState = FakeEventSource.CLOSED;
+				// Drop it so __sse.emit() never dispatches to a closed source.
+				const index = instances.indexOf(this);
+				if (index !== -1) instances.splice(index, 1);
 			}
 		}
 

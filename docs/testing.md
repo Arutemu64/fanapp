@@ -336,17 +336,19 @@ and the boundaries.
 routing and guards, the service worker, offline / PWA behaviour, and real DOM
 interaction. It drives a **production `vite preview` build**, not `vite dev` —
 the SW and offline caching are inert in dev (docs/frontend.md §2), so only a real
-build exercises them. `context.setOffline(true)` against that build is the one
-place the offline surface (stale notices, `offlineUnavailable`, queued logout) is
-tested for real.
+build exercises them. Aborting the relevant reads simulates a dead network and
+exercises the offline surface (stale notices, `offlineUnavailable`, queued logout)
+against that build — a mocked route still fulfils under `context.setOffline`, so
+failing the read is what reaches the offline path.
 
 **Mocked, not full-stack — on purpose.** Each test mocks the backend over
 `**/api/**` (typed off `schema.d.ts`, so a drifted mock fails to compile). This
 is deliberate for *this* repo, not a shortcut: backend behaviour already has the
 `@pytest.mark.integration` suite, and the frontend↔backend contract already has
 the OpenAPI drift guards (`test_openapi_spec.py` + `frontend-check-api`). So the
-E2E tier stays about the UI and mocks the rest — the 2026 consensus of *mock
-selectively, keep the contract guarded elsewhere*. Auth is faked by mocking
+E2E tier stays about the UI and mocks the rest: re-proving backend behaviour
+through the browser would be slower and no more trustworthy than those guards.
+Auth is faked by mocking
 `/me/` (the session cookie is HttpOnly and can't be forged in JS); a flow that
 must prove the real login handshake or a persisted write belongs in a full-stack
 run (boot the stack with `just run-infra` + the backend processes + `just
