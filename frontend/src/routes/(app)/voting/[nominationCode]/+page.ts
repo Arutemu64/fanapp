@@ -1,6 +1,7 @@
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
 import { isBackendUnreachableStatus, isReachable, markReachable } from '$lib/services/reachability';
+import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 import { isHttpError } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
@@ -24,6 +25,7 @@ export const load: PageLoad = async ({ params, fetch, depends }) => {
 			response
 		} = await client.GET('/voting/nominations/{nomination_code}', {
 			fetch,
+			signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS),
 			params: {
 				path: {
 					nomination_code: params.nominationCode
