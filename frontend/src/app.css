@@ -160,7 +160,12 @@
 	--secondary: oklch(0.97 0 0);
 	--secondary-foreground: oklch(0.205 0 0);
 	--muted: oklch(0.97 0 0);
-	--muted-foreground: oklch(0.556 0 0);
+	/*
+	 * DESIGN.md wants muted text at the cool gray-500 end; darkened a step past the
+	 * stock shadcn neutral so it clears WCAG AA (4.5:1) even on the --muted (#f5f5f5)
+	 * tint, not just on white — muted-on-muted was the one pairing that failed.
+	 */
+	--muted-foreground: oklch(0.53 0.02 264);
 	--accent: oklch(0.97 0 0);
 	--accent-foreground: oklch(0.205 0 0);
 	--destructive: oklch(0.577 0.245 27.325);

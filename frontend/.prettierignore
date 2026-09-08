@@ -14,3 +14,8 @@ build/
 
 # Generated (just frontend-generate-api)
 src/lib/api/schema.d.ts
+
+# Playwright artifacts
+/playwright-report/
+/test-results/
+/blob-report/

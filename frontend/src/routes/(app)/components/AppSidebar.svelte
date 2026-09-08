@@ -41,7 +41,9 @@
 		class={[
 			'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
 			active
-				? 'bg-primary/10 text-primary'
+				? // primary-700 (not the semantic primary-600) so the label clears WCAG AA
+					// on the primary/10 tint in light mode; dark keeps the lit brand hue.
+					'bg-primary/10 text-primary-700 dark:text-primary'
 				: 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
 		]}
 		onclick={(event: MouseEvent) => {
@@ -57,7 +59,9 @@
 		<Icon
 			class={[
 				'size-5 shrink-0 transition-colors',
-				active ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
+				active
+					? 'text-primary-700 dark:text-primary'
+					: 'text-muted-foreground group-hover:text-foreground'
 			]}
 		/>
 		<span>{label}</span>
