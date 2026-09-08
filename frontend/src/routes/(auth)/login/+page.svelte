@@ -5,7 +5,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { SOCIAL_PROVIDER_PRESENTATION } from '$lib/data/socialProviders';
+	import { ALL_SOCIAL_PROVIDERS, SOCIAL_PROVIDER_PRESENTATION } from '$lib/data/socialProviders';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { clearOAuthErrorParam, OAUTH_LOGIN_ERROR_PARAM } from '$lib/utils/oauthErrors';
 	import { Mail } from '@lucide/svelte';
@@ -20,6 +20,10 @@
 
 	let { data }: PageProps = $props();
 	const toastService = getToastService();
+
+	// `null` means the providers probe couldn't be reached (see +page.ts); fail open
+	// to every known provider so a social-only account is never hidden by a hiccup.
+	const providers = $derived(data.enabledProviders ?? ALL_SOCIAL_PROVIDERS);
 
 	// The first screen offers the login options only; the email form (and its
 	// third-party captcha script) lives on its own step, so someone using an
@@ -111,7 +115,7 @@
 		</div>
 
 		{#if view === 'options'}
-			{#each data.enabledProviders as provider (provider)}
+			{#each providers as provider (provider)}
 				{@const meta = SOCIAL_PROVIDER_PRESENTATION[provider]}
 				{@const Icon = meta.icon}
 				<Button
