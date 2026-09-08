@@ -1,6 +1,6 @@
 import { expect, loggedInAs, test } from '../fixtures';
 
-test.describe('app boot', () => {
+test.describe('app boot', { tag: ['@smoke', '@critical'] }, () => {
 	test('renders the home shell for a logged-out visitor', async ({ page, api }) => {
 		await page.goto('/');
 

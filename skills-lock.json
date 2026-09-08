@@ -109,6 +109,12 @@
       "skillPath": "skill/SKILL.md",
       "computedHash": "459c60c76a498a08096117c9735ee5b1dccfaa72838b8de58c18cb667abdd2c0"
     },
+    "playwright-best-practices": {
+      "source": "currents-dev/playwright-best-practices-skill",
+      "sourceType": "github",
+      "skillPath": "playwright-best-practices/SKILL.md",
+      "computedHash": "7eb144f734450fee649dc1d209114775ddda07cbf45be84fe969d3d4f3971dce"
+    },
     "receiving-code-review": {
       "source": "obra/superpowers",
       "sourceType": "github",

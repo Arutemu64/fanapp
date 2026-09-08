@@ -25,7 +25,7 @@ const NOMINATION: ApiSchemas['NominationVotingDTO'] = {
 	user_vote: null
 };
 
-test.describe('voting', () => {
+test.describe('voting', { tag: '@critical' }, () => {
 	test('shows the closed banner when voting is disabled', async ({ page, api }) => {
 		api.use({
 			'GET /voting/status': json(CLOSED),

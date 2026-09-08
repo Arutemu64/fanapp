@@ -27,5 +27,9 @@ export const baselineHandlers: Handlers = {
 	'GET /notifications/': json<ApiSchemas['ListUserNotificationOutput']>({ notifications: [] }),
 	'GET /notifications/unread-count': json<ApiSchemas['UnreadNotificationsCountOutput']>({
 		count: 0
-	})
+	}),
+	// Not a boot request, but the login surface fetches it on mount — and any test
+	// that lands on /login (e.g. a protected route bouncing a guest) would otherwise
+	// hit the loud 404 and trip the console guard. Empty = email-only login.
+	'GET /auth/oauth/providers': json<ApiSchemas['OAuthProvidersResponse']>({ providers: [] })
 };

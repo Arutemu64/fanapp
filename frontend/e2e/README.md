@@ -112,12 +112,74 @@ import { emitSse } from '../fixtures';
 await emitSse(page, 'schedule_updated', {});
 ```
 
+### Console errors (on by default)
+
+Every test fails if the page logs a browser **console error** or throws an
+**uncaught exception** — a silent `TypeError` in a handler or a bad reactive read
+is a real regression even when the visible assertions still pass. The guard is an
+auto fixture (`support/console.ts`), so there's nothing to opt into.
+
+Browser network noise (`Failed to load resource` from an aborted or 404'd request —
+how offline states and the loud-404 are driven) is ignored by default. When a test
+_deliberately_ drives a path the app logs on, allow just that line — reference the
+`consoleErrors` fixture and pass a tight pattern:
+
+```ts
+test('...', async ({ page, api, consoleErrors }) => {
+	consoleErrors.allow(/Error fetching voting status/);
+	// ...
+});
+```
+
+### Accessibility (axe)
+
+`accessibility.spec.ts` scans key screens with `@axe-core/playwright` and asserts
+zero WCAG 2.0/2.1 A/AA violations. Use the `makeAxeBuilder` fixture (pre-scoped to
+the WCAG tags):
+
+```ts
+test('home is accessible', async ({ page, makeAxeBuilder }) => {
+	await page.goto('/');
+	await expect(page.getByRole('heading', { name: 'ФАН ФАН 2026' })).toBeVisible();
+	const { violations } = await makeAxeBuilder().analyze();
+	expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+});
+```
+
+Scan the settled page — wait for a real landmark first (or axe flags the boot
+splash), and for entrance animations to finish (the home countdown fades in, so
+the scans wait for its cells to reach full opacity, and emulate reduced motion).
+Narrow with `.include(selector)`. All WCAG A/AA rules are enforced, contrast
+included.
+
+### Tags (running a subset)
+
+Specs carry tags via the describe details object, filtered with `--grep`:
+
+- `@smoke` — the fastest boot/render checks (a PR-gate lane).
+- `@critical` — core user journeys that must never break (boot, voting, casting a
+  vote, notifications, realtime, offline, the auth gate).
+- `@a11y` — the axe scans.
+
+```sh
+pnpm e2e --grep @smoke                 # quick gate
+pnpm e2e --grep @critical              # core journeys
+pnpm e2e --grep-invert @a11y           # everything but the a11y scans
+```
+
 ### Devices
 
-Every spec runs on two Chromium projects — `mobile-chromium` (Pixel 7, the
-mobile-first primary) and `desktop-chromium` (Desktop Chrome, catches the wide
-sidebar-shell layout). Run one while iterating with `pnpm e2e --project=mobile-chromium`.
-No WebKit/Firefox: the pre-baked Chromium is the only zero-install browser.
+Locally (and in web sessions) every spec runs on two Chromium projects —
+`mobile-chromium` (Pixel 7, the mobile-first primary) and `desktop-chromium`
+(Desktop Chrome, catches the wide sidebar-shell layout). Run one while iterating
+with `pnpm e2e --project=mobile-chromium`. The pre-baked Chromium is the only
+zero-install browser, so those are all that run outside CI.
+
+**On CI, a third project `mobile-webkit` (iPhone 14, iOS Safari) also runs** — the
+engine that matters most for this mobile-first audience and the one Chromium can't
+stand in for. It's gated on `process.env.CI` because it needs
+`playwright install webkit`; to run it locally, install WebKit once and force the
+gate: `CI=1 pnpm e2e --project=mobile-webkit`.
 
 ### Screenshots (seeing a change, not just asserting it)
 
@@ -135,12 +197,15 @@ await page.screenshot({ path: 'test-results/voting.png', fullPage: true });
 
 ```text
 e2e/
-  fixtures.ts        # test/expect + `api` fixture; re-exports helpers — import from here
+  fixtures.ts        # test/expect + api / consoleErrors / makeAxeBuilder fixtures — import from here
   mocks/
     api.ts           # ApiMock: catch-all route registry + json() helper + ApiSchemas
     defaults.ts      # baseline (guest) boot handlers
     personas.ts      # loggedInAs() / organizer() / user()
     sse.ts           # EventSource double + emitSse()
+  support/
+    axe.ts           # WCAG-scoped AxeBuilder factory (color-contrast token debt parked here)
+    console.ts       # console-error / pageerror guard (auto fixture)
   specs/             # *.spec.ts live here
   tsconfig.json
 ```
