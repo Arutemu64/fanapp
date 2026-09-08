@@ -322,3 +322,44 @@ encodes a rule that can break silently, skip it for copy, styling and config.
 4. **Russian fixtures for Russian text.** The normalization rules exist for
    Cyrillic input; assert them with real Russian strings, not ASCII stand-ins.
 5. Prettier and ESLint apply to test files like any other source file.
+
+---
+
+# Frontend E2E (Playwright)
+
+A third frontend tier, run with `just frontend-e2e` (`pnpm --dir frontend e2e`).
+Specs live in `frontend/e2e/`; the how-to for **writing** one is
+[frontend/e2e/README.md](../frontend/e2e/README.md) — this section is the *why*
+and the boundaries.
+
+**What it's for.** The surface Vitest can't reach (node-only, ADR-0011): SPA
+routing and guards, the service worker, offline / PWA behaviour, and real DOM
+interaction. It drives a **production `vite preview` build**, not `vite dev` —
+the SW and offline caching are inert in dev (docs/frontend.md §2), so only a real
+build exercises them. `context.setOffline(true)` against that build is the one
+place the offline surface (stale notices, `offlineUnavailable`, queued logout) is
+tested for real.
+
+**Mocked, not full-stack — on purpose.** Each test mocks the backend over
+`**/api/**` (typed off `schema.d.ts`, so a drifted mock fails to compile). This
+is deliberate for *this* repo, not a shortcut: backend behaviour already has the
+`@pytest.mark.integration` suite, and the frontend↔backend contract already has
+the OpenAPI drift guards (`test_openapi_spec.py` + `frontend-check-api`). So the
+E2E tier stays about the UI and mocks the rest — the 2026 consensus of *mock
+selectively, keep the contract guarded elsewhere*. Auth is faked by mocking
+`/me/` (the session cookie is HttpOnly and can't be forged in JS); a flow that
+must prove the real login handshake or a persisted write belongs in a full-stack
+run (boot the stack with `just run-infra` + the backend processes + `just
+backend-seed-demo`), which is opt-in, not the default a session reaches for.
+
+**Zero browser install in web sessions.** `@playwright/test` is pinned to the
+version whose Chromium build the cloud environment pre-bakes, so a web session
+runs the suite with no `playwright install` (see `playwright.config.ts` and
+[claude-cloud.md](claude-cloud.md)). Bumping that pin is deliberate — hold it to
+the line the environment bakes. On CI / a fresh laptop, install the browser once:
+`pnpm --dir frontend exec playwright install chromium`.
+
+**Not a blocking gate (yet).** Like the backend integration suite, this isn't
+required to call a change done — it's a tool a session uses to *see* a UI change
+work. Wiring it into `ci.yml` (its own job, with a `playwright install` step) is a
+reasonable next step but a maintainer call, so it's left un-gated for now.
