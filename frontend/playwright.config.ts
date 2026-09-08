@@ -59,14 +59,26 @@ export default defineConfig({
 		},
 		{
 			// Desktop viewport catches layout that only appears on the wide breakpoint
-			// (the sidebar shell instead of the bottom nav). Chromium only — the
-			// pre-baked env ships no WebKit/Firefox, so adding them would break the
-			// zero-install story.
+			// (the sidebar shell instead of the bottom nav).
 			name: 'desktop-chromium',
 			use: {
 				...devices['Desktop Chrome'],
 				launchOptions: { executablePath: prebakedChromium() }
 			}
-		}
+		},
+		// iOS Safari (WebKit) is the app's real primary surface — it is mobile-first
+		// and its audience is largely on iPhones — and the one engine Chromium can't
+		// stand in for. CI installs WebKit (`playwright install --with-deps`), so the
+		// project runs there; it's gated off everywhere the pre-baked env ships only
+		// Chromium (local dev, Claude Code web sessions) to keep the zero-install
+		// story. No `executablePath` override: it uses Playwright's own WebKit build.
+		...(process.env.CI
+			? [
+					{
+						name: 'mobile-webkit',
+						use: { ...devices['iPhone 14'] }
+					}
+				]
+			: [])
 	]
 });
