@@ -30,6 +30,16 @@ frontend-build:
 frontend-test:
     cd frontend && pnpm test
 
+# Playwright E2E against a production build with the backend mocked (docs/testing.md,
+# frontend/e2e/README.md). In a Claude Code web session the pre-baked Chromium is used
+# with no install; on CI/local first run `pnpm --dir frontend exec playwright install chromium`.
+frontend-e2e:
+    cd frontend && pnpm e2e
+
+# Same, with the Playwright UI for debugging a spec (local, headed).
+frontend-e2e-ui:
+    cd frontend && pnpm e2e:ui
+
 frontend-generate-api: backend-generate-openapi
     cd frontend && pnpm generate-api
 

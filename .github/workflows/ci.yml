@@ -3,10 +3,10 @@ name: CI
 # Run the same quality gates we run locally (see justfile / .pre-commit-config.yaml)
 # on every pull request and on pushes to main.
 #
-# Split into one job per area (backend, frontend, dockerfiles, images) plus a
-# `changes` job that gates them, so each area reports its own red/green check
-# and branch protection can require them individually — a docs-only PR then
-# shows backend/frontend as skipped instead of buried inside one job's log.
+# Split into one job per area (backend, frontend, frontend-e2e, dockerfiles,
+# images) plus a `changes` job that gates them, so each area reports its own
+# red/green check and branch protection can require them individually — a docs-only
+# PR then shows backend/frontend as skipped instead of buried inside one job's log.
 # Frontend further fans out into a lint/check/test/build matrix so those
 # independent tasks run in parallel: wall-clock time drops to the slowest
 # single task instead of their sum.
@@ -227,6 +227,97 @@ jobs:
 
       - name: Run ${{ matrix.task.name }}
         run: ${{ matrix.task.command }}
+
+  # Playwright E2E: drives a production build in a real browser with the backend
+  # mocked per test (frontend/e2e/README.md). Its own job, not a frontend-matrix
+  # task, because unlike the plain `pnpm <task>` matrix it needs a browser binary
+  # + system libs and builds the app to preview it. Mocked-only, so it stays gated
+  # on the frontend filter (the frontend↔backend contract is guarded separately by
+  # the `api`/`check` matrix tasks). Not marked required in branch protection yet —
+  # let a browser tier prove stable under CI timing first, then gate it.
+  frontend-e2e:
+    name: Frontend (e2e)
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    # The build reads PUBLIC_* via `$env/static/public`, which errors on any
+    # referenced-but-undefined var — supply the same repository variables the
+    # frontend matrix and publish workflow use (empty is fine; the names just
+    # have to exist).
+    env:
+      PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
+      PUBLIC_APP_VERSION: ${{ vars.PUBLIC_APP_VERSION }}
+      PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL }}
+      PUBLIC_TIMEZONE: ${{ vars.PUBLIC_TIMEZONE }}
+      PUBLIC_VAPID_KEY: ${{ vars.PUBLIC_VAPID_KEY }}
+      PUBLIC_SENTRY_DSN: ${{ vars.PUBLIC_SENTRY_DSN }}
+      PUBLIC_SENTRY_ENVIRONMENT: ${{ vars.PUBLIC_SENTRY_ENVIRONMENT }}
+      PUBLIC_SENTRY_TRACES_SAMPLE_RATE: ${{ vars.PUBLIC_SENTRY_TRACES_SAMPLE_RATE }}
+      PUBLIC_SMARTCAPTCHA_CLIENT_KEY: ${{ vars.PUBLIC_SMARTCAPTCHA_CLIENT_KEY }}
+      PUBLIC_VK_GROUP_ID: ${{ vars.PUBLIC_VK_GROUP_ID }}
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+        with:
+          version: 12.1.0
+
+      - name: Install Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24.20.0
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Cache the browser keyed on the resolved Playwright version — it only changes
+      # when @playwright/test is bumped, so this is the tightest key that still busts
+      # on a bump. PLAYWRIGHT_BROWSERS_PATH is unset on the runner (unlike the Claude
+      # web env), so Playwright installs to ~/.cache/ms-playwright.
+      - name: Resolve Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      # --with-deps installs the OS libraries headless Chromium needs on a clean
+      # runner. On a cache hit the browser is already present; the (fast) apt step
+      # still runs so a cached browser never lacks its system deps.
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      # `pnpm e2e` builds the app and serves it with `vite preview` via the config's
+      # webServer, then runs the suite (retries: 2 on CI).
+      - name: Run E2E tests
+        run: pnpm e2e
+
+      # The HTML reporter embeds traces (trace: on-first-retry), so this one
+      # artifact is enough to debug a red run.
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7
 
   dockerfiles:
     name: Dockerfiles (hadolint)

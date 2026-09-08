@@ -322,3 +322,48 @@ encodes a rule that can break silently, skip it for copy, styling and config.
 4. **Russian fixtures for Russian text.** The normalization rules exist for
    Cyrillic input; assert them with real Russian strings, not ASCII stand-ins.
 5. Prettier and ESLint apply to test files like any other source file.
+
+---
+
+# Frontend E2E (Playwright)
+
+A third frontend tier, run with `just frontend-e2e` (`pnpm --dir frontend e2e`).
+Specs live in `frontend/e2e/`; the how-to for **writing** one is
+[frontend/e2e/README.md](../frontend/e2e/README.md) — this section is the *why*
+and the boundaries.
+
+**What it's for.** The surface Vitest can't reach (node-only, ADR-0011): SPA
+routing and guards, the service worker, offline / PWA behaviour, and real DOM
+interaction. It drives a **production `vite preview` build**, not `vite dev` —
+the SW and offline caching are inert in dev (docs/frontend.md §2), so only a real
+build exercises them. Aborting the relevant reads simulates a dead network and
+exercises the offline surface (stale notices, `offlineUnavailable`, queued logout)
+against that build — a mocked route still fulfils under `context.setOffline`, so
+failing the read is what reaches the offline path.
+
+**Mocked, not full-stack — on purpose.** Each test mocks the backend over
+`**/api/**` (typed off `schema.d.ts`, so a drifted mock fails to compile). This
+is deliberate for *this* repo, not a shortcut: backend behaviour already has the
+`@pytest.mark.integration` suite, and the frontend↔backend contract already has
+the OpenAPI drift guards (`test_openapi_spec.py` + `frontend-check-api`). So the
+E2E tier stays about the UI and mocks the rest: re-proving backend behaviour
+through the browser would be slower and no more trustworthy than those guards.
+Auth is faked by mocking
+`/me/` (the session cookie is HttpOnly and can't be forged in JS); a flow that
+must prove the real login handshake or a persisted write belongs in a full-stack
+run (boot the stack with `just run-infra` + the backend processes + `just
+backend-seed-demo`), which is opt-in, not the default a session reaches for.
+
+**Zero browser install in web sessions.** `@playwright/test` is pinned to the
+version whose Chromium build the cloud environment pre-bakes, so a web session
+runs the suite with no `playwright install` (see `playwright.config.ts` and
+[claude-cloud.md](claude-cloud.md)). Bumping that pin is deliberate — hold it to
+the line the environment bakes. On CI / a fresh laptop, install the browser once:
+`pnpm --dir frontend exec playwright install chromium`.
+
+**Runs in CI, not yet a required check.** `ci.yml` has a `frontend-e2e` job (its
+own job — it needs a browser and builds the app, unlike the plain matrix tasks),
+gated on the frontend paths filter, with the browser cached by Playwright version.
+It isn't marked required in branch protection yet: let a browser tier prove stable
+under CI timing first, then gate it. Like the backend integration suite, treat it
+as a tool to *see* a UI change work, not a local gate you must run before pushing.

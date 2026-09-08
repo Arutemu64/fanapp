@@ -70,6 +70,7 @@ named `fanfan-*` are project-local and live only here.
 | `just dockerfile-lint` | hadolint (config `.hadolint.yaml`) |
 | `just backend-test` / `just backend-test-integration` | pytest (integration needs a Docker daemon) |
 | `just frontend-test` | Vitest unit tests for pure `src/lib/` logic |
+| `just frontend-e2e` | Playwright E2E against a production build, backend mocked ([frontend/e2e/README.md](frontend/e2e/README.md)) |
 | `just backend-migrate` | Apply migrations |
 | `just backend-check-migrations` | Fail if the ORM models have drifted from the migrations |
 | `just backend-generate <name>` | Autogenerate a migration against the running app DB |

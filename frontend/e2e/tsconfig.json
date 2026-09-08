@@ -1,0 +1,13 @@
+{
+	// Editor / type-checking config for the Playwright suite. It is NOT part of the
+	// SvelteKit app project (which builds src/), so it lives here and Playwright is
+	// pointed at it via `tsconfig` in playwright.config.ts. Type-only imports of the
+	// generated schema.d.ts are erased at runtime, so no path alias is needed.
+	"extends": "../tsconfig.json",
+	"compilerOptions": {
+		"types": ["node"],
+		"allowJs": false,
+		"checkJs": false
+	},
+	"include": ["**/*.ts", "../playwright.config.ts"]
+}
