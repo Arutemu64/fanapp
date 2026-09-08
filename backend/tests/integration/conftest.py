@@ -25,6 +25,7 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.base import AppEvent
 from fanfan.core.models.user import User
 from fanfan.main.ioc.db import DbProvider, SqlGatewaysProvider
+from fanfan.main.ioc.html import HtmlProvider
 from fanfan.main.ioc.interactors import InteractorsProvider
 from fanfan.main.ioc.jinja import JinjaProvider
 from fanfan.main.ioc.profanity import ProfanityProvider
@@ -100,6 +101,8 @@ async def dishka() -> AsyncIterable[AsyncContainer]:
         JinjaProvider(),
         # Real word-list filter — pure and offline, so no fake is needed.
         ProfanityProvider(),
+        # Real HTML sanitizer (nh3) — pure and offline, same reasoning.
+        HtmlProvider(),
         # Override DbProvider's session with the rollback-per-test session.
         # Must come after DbProvider so it wins the AsyncSession key.
         TestSessionProvider(),

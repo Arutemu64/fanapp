@@ -56,7 +56,12 @@ class CreateNotification:
             if mailing is None:
                 raise MailingNotFound
             mailing.ensure_active()
+        inserted = await self.notification_gateway.add(notification)
+        # Only count a genuinely new notification: a redelivered
+        # NotificationQueued re-runs this with the same id, and the gateway
+        # upsert above no-ops it, so incrementing here as well would drift
+        # sent_count above the true delivered count.
+        if inserted and mailing_id is not None:
             await self.mailing_gateway.increment_sent(mailing_id=mailing_id)
-        await self.notification_gateway.add(notification)
         await self.uow.commit()
         return notification.id

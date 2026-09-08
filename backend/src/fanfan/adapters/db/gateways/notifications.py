@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import cast
 
 from sqlalchemy import CursorResult, and_, delete, func, select, update
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.models import NotificationORM
@@ -12,19 +13,6 @@ from fanfan.core.models.notification import Notification
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.notification import NotificationId, NotificationType
 from fanfan.core.vo.user import UserId
-
-
-def _from_model(model: Notification) -> NotificationORM:
-    return NotificationORM(
-        id=model.id,
-        user_id=model.user_id,
-        title=model.title,
-        body=model.body,
-        type=model.type,
-        path=model.path,
-        mailing_id=model.mailing_id,
-        seen_at=model.seen_at,
-    )
 
 
 def _to_model(orm: NotificationORM) -> Notification:
@@ -58,10 +46,28 @@ class SqlNotificationGateway(NotificationGateway):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def add(self, notification: Notification) -> None:
-        notification_orm = _from_model(notification)
-        self.session.add(notification_orm)
-        await self.session.flush([notification_orm])
+    async def add(self, notification: Notification) -> bool:
+        values = {
+            "id": notification.id,
+            "user_id": notification.user_id,
+            "title": notification.title,
+            "body": notification.body,
+            "type": notification.type,
+            "path": notification.path,
+            "mailing_id": notification.mailing_id,
+            "seen_at": notification.seen_at,
+        }
+        # A redelivered NotificationQueued carries the same (deterministic)
+        # id, so the conflicting insert is a clean no-op rather than an
+        # IntegrityError that would nack-and-redeliver forever.
+        stmt = (
+            pg_insert(NotificationORM)
+            .values(**values)
+            .on_conflict_do_nothing(index_elements=["id"])
+            .returning(NotificationORM.id)
+        )
+        result = await self.session.scalar(stmt)
+        return result is not None
 
     async def get(self, notification_id: NotificationId) -> Notification | None:
         stmt = (
