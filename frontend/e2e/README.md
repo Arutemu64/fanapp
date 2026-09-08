@@ -38,17 +38,28 @@ Import from `../fixtures` (not `@playwright/test`) — it injects the mocked
 backend as `api` and re-exports the persona/SSE helpers.
 
 ```ts
-import { expect, loggedInAs, test } from '../fixtures';
+import type { ApiSchemas } from '../fixtures';
 
-test('closed voting shows the closed state', async ({ page, api }) => {
-	api.use(loggedInAs()).use({
-		'GET /voting/status': { json: { can_vote: false, status: 'disabled' } }
+import { expect, json, test } from '../fixtures';
+
+test('closed voting shows the closed banner', async ({ page, api }) => {
+	api.use({
+		'GET /voting/status': json<ApiSchemas['GetVotingStateOutput']>({
+			can_vote: false,
+			status: 'disabled',
+			voting_start: null,
+			voting_end: null
+		}),
+		'GET /voting/nominations': json<ApiSchemas['ListVotingNominationsOutput']>({ nominations: [] })
 	});
 	await page.goto('/voting');
-	await expect(page.getByText('Голосование закрыто')).toBeVisible();
+	await expect(page.getByText('Голосование сейчас закрыто.')).toBeVisible();
 	expect(api.unmatched).toEqual([]); // no endpoint went unmocked
 });
 ```
+
+See `specs/voting.spec.ts`, `specs/offline.spec.ts` and `specs/realtime.spec.ts`
+for the closed/open, offline and SSE patterns respectively.
 
 ### How mocking works
 
@@ -73,12 +84,23 @@ The session is an HttpOnly cookie JS can't forge, so auth is faked by mocking
 must exercise the **real** cookie/login handshake belong in a full-stack run, not
 here.
 
-### Offline / PWA
+### Offline / network failure
 
-The build ships a real service worker, so offline is testable for real: load a
-page online (populate the cache), then `await context.setOffline(true)` and
-reload / navigate to assert the stale-notice, `offlineUnavailable`, or queued-logout
-behaviour.
+The app's offline states are driven by failed requests and the reachability probe,
+not `navigator.onLine`. **Simulate a dead network by aborting the reads** — a
+mocked route still _fulfils_ under `context.setOffline(true)`, so aborting is what
+actually reaches the offline path:
+
+```ts
+api.use({ 'GET /voting/nominations': (route) => route.abort() });
+await page.goto('/voting');
+await expect(page.getByText('Голосование доступно только онлайн')).toBeVisible();
+```
+
+The build ships a real service worker, so a cache-backed page can also be tested
+across a genuine online→offline edge (load online to populate the cache, then
+fail the reads and reload to assert the stale notice) — that's the tier only a
+real build reaches.
 
 ### Realtime (SSE)
 

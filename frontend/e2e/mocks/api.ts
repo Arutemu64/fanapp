@@ -22,8 +22,12 @@ export interface MockResponse {
 }
 
 // A handler is either a fixed response or a function of the intercepted request —
-// use the function form to branch on query params or assert on the request body.
-export type MockHandler = MockResponse | ((route: Route) => MockResponse | Promise<MockResponse>);
+// use the function form to branch on query params, assert on the request body, or
+// take the route over entirely (e.g. `route.abort()` to simulate a dead network,
+// which is how the mocked tier drives the app's offline states). A function that
+// fulfils/aborts the route itself returns nothing.
+export type MockHandler =
+	MockResponse | ((route: Route) => MockResponse | void | Promise<MockResponse | void>);
 
 export type Handlers = Partial<Record<RouteKey, MockHandler>>;
 
@@ -35,12 +39,14 @@ export function json<T>(value: T, status = 200): MockResponse {
 /**
  * Installs a single catch-all route over every `/api` request, backed by a
  * registry of per-endpoint handlers. Tests start from a baseline and narrow it
- * with `.use()`;
- * an endpoint nobody mocked returns a loud 404 and is recorded in `unmatched`, so
- * a forgotten mock fails the test instead of hanging on a doomed request.
+ * with `.use()`; an endpoint nobody mocked returns a loud 404 and is recorded in
+ * `unmatched`, so a forgotten mock fails the test instead of hanging on a doomed
+ * request. Every matched request is recorded in `calls` (see `countCalls`), which
+ * lets a test assert that, say, an SSE event triggered a refetch.
  */
 export class ApiMock {
 	readonly unmatched: string[] = [];
+	readonly calls: string[] = [];
 	#handlers: Handlers;
 
 	constructor(
@@ -56,11 +62,18 @@ export class ApiMock {
 		return this;
 	}
 
+	/** How many times a route was requested — for asserting refetches. */
+	countCalls(key: RouteKey): number {
+		return this.calls.filter((call) => call === key).length;
+	}
+
 	async install(): Promise<void> {
 		await this.context.route('**/api/**', async (route) => {
 			const request = route.request();
 			const { pathname } = new URL(request.url());
 			const key = `${request.method()} ${pathname.replace(/^\/api/, '')}` as RouteKey;
+
+			this.calls.push(key);
 
 			const handler = this.#handlers[key];
 			if (handler === undefined) {
@@ -73,6 +86,9 @@ export class ApiMock {
 			}
 
 			const response = typeof handler === 'function' ? await handler(route) : handler;
+			// A function handler that fulfilled or aborted the route itself returns
+			// nothing — there is no response left for us to send.
+			if (response === undefined) return;
 			return route.fulfill({
 				status: response.status ?? 200,
 				contentType: response.contentType ?? 'application/json',
