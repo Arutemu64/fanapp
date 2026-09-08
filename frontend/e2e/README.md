@@ -112,6 +112,25 @@ import { emitSse } from '../fixtures';
 await emitSse(page, 'schedule_updated', {});
 ```
 
+### Devices
+
+Every spec runs on two Chromium projects — `mobile-chromium` (Pixel 7, the
+mobile-first primary) and `desktop-chromium` (Desktop Chrome, catches the wide
+sidebar-shell layout). Run one while iterating with `pnpm e2e --project=mobile-chromium`.
+No WebKit/Firefox: the pre-baked Chromium is the only zero-install browser.
+
+### Screenshots (seeing a change, not just asserting it)
+
+A failing test auto-captures a screenshot (`screenshot: 'only-on-failure'`),
+embedded in the HTML report. To _look_ at a state on purpose — the fastest way to
+verify a UI change in a headless session — screenshot it and read the PNG back:
+
+```ts
+await page.goto('/voting');
+await page.screenshot({ path: 'test-results/voting.png', fullPage: true });
+// then Read test-results/voting.png to inspect it
+```
+
 ## Layout
 
 ```

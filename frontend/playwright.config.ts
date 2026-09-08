@@ -35,7 +35,10 @@ export default defineConfig({
 	reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : [['list']],
 	use: {
 		baseURL: BASE_URL,
-		trace: 'on-first-retry'
+		trace: 'on-first-retry',
+		// Capture a screenshot when a test fails; the HTML reporter embeds it, so a
+		// red CI run is debuggable from the uploaded report alone.
+		screenshot: 'only-on-failure'
 	},
 	// Build once, then serve the static build. The build reads the root .env
 	// (vite `envDir`), which a web session's session-start hook seeds/backfills.
@@ -47,10 +50,21 @@ export default defineConfig({
 	},
 	projects: [
 		{
-			// Mobile-first app → a phone viewport is the default surface under test.
+			// Mobile-first app → a phone viewport is the primary surface under test.
 			name: 'mobile-chromium',
 			use: {
 				...devices['Pixel 7'],
+				launchOptions: { executablePath: prebakedChromium() }
+			}
+		},
+		{
+			// Desktop viewport catches layout that only appears on the wide breakpoint
+			// (the sidebar shell instead of the bottom nav). Chromium only — the
+			// pre-baked env ships no WebKit/Firefox, so adding them would break the
+			// zero-install story.
+			name: 'desktop-chromium',
+			use: {
+				...devices['Desktop Chrome'],
 				launchOptions: { executablePath: prebakedChromium() }
 			}
 		}
