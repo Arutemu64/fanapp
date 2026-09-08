@@ -146,9 +146,11 @@ test('home is accessible', async ({ page, makeAxeBuilder }) => {
 });
 ```
 
-Scan the settled page (wait for a real landmark first, or axe flags the boot
-splash). Narrow with `.include(selector)`; the `color-contrast` rule is parked as
-documented token debt in `support/axe.ts` — everything else is enforced.
+Scan the settled page — wait for a real landmark first (or axe flags the boot
+splash), and for entrance animations to finish (the home countdown fades in, so
+the scans wait for its cells to reach full opacity, and emulate reduced motion).
+Narrow with `.include(selector)`. All WCAG A/AA rules are enforced, contrast
+included.
 
 ### Tags (running a subset)
 

@@ -345,8 +345,9 @@ Two guards ride along on every spec: an **accessibility** scan
 (`@axe-core/playwright`, WCAG 2.0/2.1 A/AA) on key screens, and a **console-error /
 uncaught-exception** guard that fails a test on a silent browser error the visible
 assertions would miss. Specs are tagged (`@smoke`, `@critical`, `@a11y`) for
-lane filtering. See the README for the how-to; `color-contrast` is parked as
-documented design-token debt (`e2e/support/axe.ts`).
+lane filtering. See the README for the how-to. Full WCAG A/AA is enforced,
+contrast included — the suite drove the muted-text and active-nav token fixes
+that got it there.
 
 **Mocked, not full-stack — on purpose.** Each test mocks the backend over
 `**/api/**` (typed off `schema.d.ts`, so a drifted mock fails to compile). This

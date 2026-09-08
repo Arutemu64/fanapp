@@ -110,7 +110,9 @@
 							class="cursor-pointer rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
 						>
 							<Avatar.Root class="size-11">
-								<Avatar.Fallback class="bg-primary/10 text-sm font-semibold text-primary">
+								<Avatar.Fallback
+									class="bg-primary/10 text-sm font-semibold text-primary-700 dark:text-primary"
+								>
 									{avatarInitials}
 								</Avatar.Fallback>
 							</Avatar.Root>
