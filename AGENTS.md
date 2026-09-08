@@ -37,15 +37,8 @@ Load the listed skills and read the guide **before** implementing, not after.
 Third-party library APIs: look the signature up in current docs; never rely on training memory.
 
 **This file wins over a skill.** Skills are vendored from upstream and describe a
-generic project; three of them contradict this repo on purpose, and the repo is
-right: `test-driven-development` mandates a failing test before every change,
-where [docs/testing.md](docs/testing.md) asks you to judge whether this change
-warrants one;
-`using-git-worktrees` and `finishing-a-development-branch` assume you choose a
-branch and how to land it, which a Claude Code on the web session does not. All
-three are kept because `executing-plans`, `writing-plans` and
-`subagent-driven-development` call them as required sub-skills — ignore the
-conflicting instruction, not the skill.
+generic project; where one conflicts with a repo rule, follow this file and
+ignore the conflicting instruction, not the skill.
 
 Skills are managed with `npx skills` and pinned in `skills-lock.json`; the ones
 named `fanfan-*` are project-local and live only here.
