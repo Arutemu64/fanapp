@@ -82,6 +82,11 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "f
     "T201",    # setup CLIs print progress/next-steps to stdout — that's the point
     "INP001",  # standalone scripts, not an importable package
 ]
+# SSE load-test harness; a standalone CLI, not part of the fanfan package.
+"loadtest/*.py" = [
+    "T201",    # the runner prints its progress and results table to stdout
+    "INP001",  # standalone script, not an importable package
+]
 "tests/**/*.py" = [
     "S101",    # asserts are the assertion mechanism in tests. Production code keeps S101
     #            enabled: asserts vanish under `python -O`, so an invariant or security
