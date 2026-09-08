@@ -19,7 +19,7 @@ but not turned into plans are listed at the bottom so they aren't re-audited.
 | 003 | Make the Redis rate-limiter window atomic (no orphaned TTL) | P1 | S | — | DONE |
 | 004 | Fail closed in prod when `WEB__COOKIE_SECURE` is False | P1 | S | — | DONE |
 | 005 | Enforce one-vote-per-nomination with a DB unique constraint | P1 | M | — | DONE |
-| 006 | Integration coverage: notifications, subscriptions, push | P2 | L | — | TODO |
+| 006 | Integration coverage: notifications, subscriptions, push | P2 | L | — | DONE (executed + reviewed 2026-09-08; 16 integration tests, lint+typecheck green, no `src/` changes) |
 | 007 | Make broadcast notifications idempotent on redelivery | P2 | M | 006 | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (one-line reason) | REJECTED
@@ -36,6 +36,11 @@ idempotency fix must land on top of 006's characterization tests.
   `tests/integration/notifications/` harness and the `ProcessBroadcast` /
   `CreateNotification` characterization tests that 006 creates, so the
   idempotency behavior is pinned before and after the change.
+  **Note (post-006 execution)**: 006 delivered the harness and
+  `test_process_broadcast.py`, but **not** a `create_notification` test — that
+  case was in neither 006's Scope nor its Steps. Plan 007 must add
+  `tests/integration/notifications/test_create_notification.py` itself as part of
+  its own characterization step.
 - 001–005 have no inter-dependencies.
 - 002 and 005 regenerate committed artifacts (the OpenAPI spec / a migration);
   each plan states the exact regenerate command and its drift-guard test.
