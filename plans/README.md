@@ -20,7 +20,7 @@ but not turned into plans are listed at the bottom so they aren't re-audited.
 | 004 | Fail closed in prod when `WEB__COOKIE_SECURE` is False | P1 | S | — | DONE |
 | 005 | Enforce one-vote-per-nomination with a DB unique constraint | P1 | M | — | DONE |
 | 006 | Integration coverage: notifications, subscriptions, push | P2 | L | — | DONE (executed + reviewed 2026-09-08; 16 integration tests, lint+typecheck green, no `src/` changes) |
-| 007 | Make broadcast notifications idempotent on redelivery | P2 | M | 006 | TODO |
+| 007 | Make broadcast notifications idempotent on redelivery | P2 | M | 006 | DONE (executed + reviewed 2026-09-08; deterministic ids + upsert, 2 new integration tests, lint+typecheck+unit+notifications-integration green, out-of-scope files unchanged) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (one-line reason) | REJECTED
 (one-line rationale).
