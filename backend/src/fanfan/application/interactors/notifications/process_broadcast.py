@@ -8,7 +8,7 @@ from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.notifications import MailingNotFound
 from fanfan.core.models.notification import NewNotification
 from fanfan.core.vo.mailing import MailingId
-from fanfan.core.vo.notification import NotificationType, generate_notification_id
+from fanfan.core.vo.notification import NotificationType, notification_id_for
 from fanfan.core.vo.user import UserRole
 
 
@@ -45,7 +45,10 @@ class ProcessBroadcast:
         events = [
             NotificationQueued(
                 notification=NewNotification(
-                    id=generate_notification_id(),
+                    # Deterministic per (mailing, user): a redelivered
+                    # NotificationQueued reruns this with the same id, so the
+                    # gateway upsert below no-ops instead of duplicating.
+                    id=notification_id_for(data.mailing_id, u.id),
                     user_id=u.id,
                     title="Рассылка от организаторов",
                     body=data.body,

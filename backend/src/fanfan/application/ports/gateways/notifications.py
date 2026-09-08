@@ -10,7 +10,14 @@ from fanfan.core.vo.user import UserId
 
 
 class NotificationGateway(Protocol):
-    async def add(self, notification: Notification) -> None: ...
+    async def add(self, notification: Notification) -> bool:
+        """Insert the notification; return True if a new row was created.
+
+        False means a row with this id already existed and the insert was a
+        no-op, which callers use to detect a redelivered fan-out.
+        """
+        ...
+
     async def get(self, notification_id: NotificationId) -> Notification | None: ...
     async def mark_all_read_for_user(
         self, user_id: UserId, timestamp: datetime

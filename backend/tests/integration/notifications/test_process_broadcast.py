@@ -120,3 +120,47 @@ async def test_process_broadcast_missing_mailing_raises_not_found(
     assert [
         e for e in broker.published_events if isinstance(e, NotificationQueued)
     ] == []
+
+
+async def test_process_broadcast_rerun_yields_identical_notification_ids(
+    dishka_request: AsyncContainer,
+    login: Callable[[User], None],
+    visitor: User,
+    uow: UnitOfWork,
+):
+    """Plan 007: a redelivered NotificationQueued must reuse the same id.
+
+    ProcessBroadcast derives each notification's id from (mailing_id, user_id),
+    so rerunning it for the same mailing (as a redelivery of the broadcast
+    message would) produces the exact same set of ids rather than duplicates.
+    """
+    interactor = await dishka_request.get(ProcessBroadcast)
+    mailing_gateway = await dishka_request.get(MailingGateway)
+    broker = await dishka_request.get(FakeEventBroker)
+    login(visitor)
+
+    await _add_users(dishka_request, uow, count=3, role=UserRole.HELPER)
+    mailing = Mailing.create(by_user_id=visitor.id)
+    await mailing_gateway.add(mailing)
+    await uow.commit()
+
+    run_input = ProcessBroadcastInput(
+        mailing_id=mailing.id, body="Повторная рассылка", roles=[UserRole.HELPER]
+    )
+    await interactor(run_input)
+    first_ids = {
+        e.notification.id
+        for e in broker.published_events
+        if isinstance(e, NotificationQueued)
+    }
+
+    broker.published_events.clear()
+    await interactor(run_input)
+    second_ids = {
+        e.notification.id
+        for e in broker.published_events
+        if isinstance(e, NotificationQueued)
+    }
+
+    assert first_ids
+    assert first_ids == second_ids
