@@ -359,7 +359,9 @@ runs the suite with no `playwright install` (see `playwright.config.ts` and
 the line the environment bakes. On CI / a fresh laptop, install the browser once:
 `pnpm --dir frontend exec playwright install chromium`.
 
-**Not a blocking gate (yet).** Like the backend integration suite, this isn't
-required to call a change done — it's a tool a session uses to *see* a UI change
-work. Wiring it into `ci.yml` (its own job, with a `playwright install` step) is a
-reasonable next step but a maintainer call, so it's left un-gated for now.
+**Runs in CI, not yet a required check.** `ci.yml` has a `frontend-e2e` job (its
+own job — it needs a browser and builds the app, unlike the plain matrix tasks),
+gated on the frontend paths filter, with the browser cached by Playwright version.
+It isn't marked required in branch protection yet: let a browser tier prove stable
+under CI timing first, then gate it. Like the backend integration suite, treat it
+as a tool to *see* a UI change work, not a local gate you must run before pushing.
