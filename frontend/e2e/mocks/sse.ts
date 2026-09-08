@@ -26,12 +26,20 @@ export async function installSseDouble(context: BrowserContext): Promise<void> {
 				super();
 				this.url = String(url);
 				instances.push(this);
-				// Report "connected" on the next tick so the app's stream watchdog
-				// treats the double as a healthy connection.
+				// Open on the next tick, then deliver the handshake the real backend
+				// writes as the stream's first frame (`connection_established`). Without
+				// it the client stays in `transport_open` and its liveness watchdog
+				// would eventually reconnect — model a real, stable connection instead.
 				queueMicrotask(() => {
 					this.readyState = FakeEventSource.OPEN;
 					this.onopen?.(new Event('open'));
 					this.dispatchEvent(new Event('open'));
+					const handshake = JSON.stringify({
+						server_time: new Date().toISOString(),
+						authenticated: false,
+						connection_id: 'e2e-fake-connection'
+					});
+					this.dispatchEvent(new MessageEvent('connection_established', { data: handshake }));
 				});
 			}
 
