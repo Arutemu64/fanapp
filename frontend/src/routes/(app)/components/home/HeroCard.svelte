@@ -248,45 +248,44 @@
 			{/if}
 
 			{#if phase !== 'before'}
-				<dl>
-					<div class="flex items-center gap-3">
-						<span
-							class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
-						>
-							<Calendar class="size-5" aria-hidden="true" />
-						</span>
-						<div>
-							<dt class="sr-only">Когда</dt>
-							<dd class="text-sm font-semibold text-foreground sm:text-base">
-								{festivalDate}
-							</dd>
-						</div>
-					</div>
-				</dl>
-			{/if}
-
-			<dl>
+				<!-- The icon sits outside the <dl> so the list directly contains only its
+				     <dt>/<dd> pair — a <dl> whose grouping element also holds the icon is
+				     invalid markup (WCAG 1.3.1). -->
 				<div class="flex items-center gap-3">
 					<span
-						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-info/10 text-info"
+						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
 					>
-						<MapPin class="size-5" aria-hidden="true" />
+						<Calendar class="size-5" aria-hidden="true" />
 					</span>
-					<div>
-						<dt class="sr-only">Где</dt>
-						<dd class="text-sm text-muted-foreground sm:text-base">
-							<a
-								href="https://yandex.ru/maps/-/CPXxrYIR"
-								target="_blank"
-								rel="noopener noreferrer"
-								class="font-medium text-foreground underline decoration-secondary-400 decoration-2 underline-offset-2 transition-colors hover:text-secondary-600 dark:hover:text-secondary-400"
-							>
-								Нижний Новгород, ул. Героя Смирнова, 12, ДК «ГАЗ»
-							</a>
+					<dl>
+						<dt class="sr-only">Когда</dt>
+						<dd class="text-sm font-semibold text-foreground sm:text-base">
+							{festivalDate}
 						</dd>
-					</div>
+					</dl>
 				</div>
-			</dl>
+			{/if}
+
+			<div class="flex items-center gap-3">
+				<span
+					class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-info/10 text-info"
+				>
+					<MapPin class="size-5" aria-hidden="true" />
+				</span>
+				<dl>
+					<dt class="sr-only">Где</dt>
+					<dd class="text-sm text-muted-foreground sm:text-base">
+						<a
+							href="https://yandex.ru/maps/-/CPXxrYIR"
+							target="_blank"
+							rel="noopener noreferrer"
+							class="font-medium text-foreground underline decoration-secondary-400 decoration-2 underline-offset-2 transition-colors hover:text-secondary-600 dark:hover:text-secondary-400"
+						>
+							Нижний Новгород, ул. Героя Смирнова, 12, ДК «ГАЗ»
+						</a>
+					</dd>
+				</dl>
+			</div>
 
 			<div class="flex flex-wrap items-center gap-2 pt-1">
 				{#each socials as social (social.href)}

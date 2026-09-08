@@ -112,6 +112,59 @@ import { emitSse } from '../fixtures';
 await emitSse(page, 'schedule_updated', {});
 ```
 
+### Console errors (on by default)
+
+Every test fails if the page logs a browser **console error** or throws an
+**uncaught exception** — a silent `TypeError` in a handler or a bad reactive read
+is a real regression even when the visible assertions still pass. The guard is an
+auto fixture (`support/console.ts`), so there's nothing to opt into.
+
+Browser network noise (`Failed to load resource` from an aborted or 404'd request —
+how offline states and the loud-404 are driven) is ignored by default. When a test
+_deliberately_ drives a path the app logs on, allow just that line — reference the
+`consoleErrors` fixture and pass a tight pattern:
+
+```ts
+test('...', async ({ page, api, consoleErrors }) => {
+	consoleErrors.allow(/Error fetching voting status/);
+	// ...
+});
+```
+
+### Accessibility (axe)
+
+`accessibility.spec.ts` scans key screens with `@axe-core/playwright` and asserts
+zero WCAG 2.0/2.1 A/AA violations. Use the `makeAxeBuilder` fixture (pre-scoped to
+the WCAG tags):
+
+```ts
+test('home is accessible', async ({ page, makeAxeBuilder }) => {
+	await page.goto('/');
+	await expect(page.getByRole('heading', { name: 'ФАН ФАН 2026' })).toBeVisible();
+	const { violations } = await makeAxeBuilder().analyze();
+	expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+});
+```
+
+Scan the settled page (wait for a real landmark first, or axe flags the boot
+splash). Narrow with `.include(selector)`; the `color-contrast` rule is parked as
+documented token debt in `support/axe.ts` — everything else is enforced.
+
+### Tags (running a subset)
+
+Specs carry tags via the describe details object, filtered with `--grep`:
+
+- `@smoke` — the fastest boot/render checks (a PR-gate lane).
+- `@critical` — core user journeys that must never break (boot, voting, casting a
+  vote, notifications, realtime, offline, the auth gate).
+- `@a11y` — the axe scans.
+
+```sh
+pnpm e2e --grep @smoke                 # quick gate
+pnpm e2e --grep @critical              # core journeys
+pnpm e2e --grep-invert @a11y           # everything but the a11y scans
+```
+
 ### Devices
 
 Every spec runs on two Chromium projects — `mobile-chromium` (Pixel 7, the
@@ -135,12 +188,15 @@ await page.screenshot({ path: 'test-results/voting.png', fullPage: true });
 
 ```text
 e2e/
-  fixtures.ts        # test/expect + `api` fixture; re-exports helpers — import from here
+  fixtures.ts        # test/expect + api / consoleErrors / makeAxeBuilder fixtures — import from here
   mocks/
     api.ts           # ApiMock: catch-all route registry + json() helper + ApiSchemas
     defaults.ts      # baseline (guest) boot handlers
     personas.ts      # loggedInAs() / organizer() / user()
     sse.ts           # EventSource double + emitSse()
+  support/
+    axe.ts           # WCAG-scoped AxeBuilder factory (color-contrast token debt parked here)
+    console.ts       # console-error / pageerror guard (auto fixture)
   specs/             # *.spec.ts live here
   tsconfig.json
 ```

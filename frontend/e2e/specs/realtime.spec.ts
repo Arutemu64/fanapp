@@ -1,6 +1,6 @@
 import { emitSse, expect, test } from '../fixtures';
 
-test.describe('realtime (SSE)', () => {
+test.describe('realtime (SSE)', { tag: '@critical' }, () => {
 	test('a schedule_updated event refetches the schedule', async ({ page, api }) => {
 		await page.goto('/schedule');
 		// Wait until the page has done its initial schedule load and attached its SSE

@@ -341,6 +341,13 @@ exercises the offline surface (stale notices, `offlineUnavailable`, queued logou
 against that build — a mocked route still fulfils under `context.setOffline`, so
 failing the read is what reaches the offline path.
 
+Two guards ride along on every spec: an **accessibility** scan
+(`@axe-core/playwright`, WCAG 2.0/2.1 A/AA) on key screens, and a **console-error /
+uncaught-exception** guard that fails a test on a silent browser error the visible
+assertions would miss. Specs are tagged (`@smoke`, `@critical`, `@a11y`) for
+lane filtering. See the README for the how-to; `color-contrast` is parked as
+documented design-token debt (`e2e/support/axe.ts`).
+
 **Mocked, not full-stack — on purpose.** Each test mocks the backend over
 `**/api/**` (typed off `schema.d.ts`, so a drifted mock fails to compile). This
 is deliberate for *this* repo, not a shortcut: backend behaviour already has the

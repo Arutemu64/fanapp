@@ -1,6 +1,6 @@
 import { expect, test } from '../fixtures';
 
-test.describe('offline', () => {
+test.describe('offline', { tag: '@critical' }, () => {
 	test('voting shows the online-only state when the network is down', async ({ page, api }) => {
 		// Voting is uncached and online-only, so a dead network must yield the honest
 		// "online only" state, not a generic error. Simulate the dead network by
