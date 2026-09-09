@@ -2,12 +2,21 @@ from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Path, Query
 
 from fanfan.application.dto.page import Pagination
+from fanfan.application.interactors.notifications.cancel_mailing import (
+    CancelMailing,
+    CancelMailingInput,
+)
 from fanfan.application.interactors.notifications.get_unread_count import (
     GetUnreadNotificationsCount,
     UnreadNotificationsCountOutput,
+)
+from fanfan.application.interactors.notifications.list_broadcasts import (
+    ListBroadcasts,
+    ListBroadcastsInput,
+    ListBroadcastsOutput,
 )
 from fanfan.application.interactors.notifications.list_user_notifications import (
     ListUserNotificationOutput,
@@ -27,7 +36,9 @@ from fanfan.application.interactors.notifications.send_broadcast import (
 from fanfan.application.interactors.notifications.send_test_notification import (
     SendTestNotification,
 )
+from fanfan.core.vo.mailing import MailingId
 from fanfan.presentation.web.responses import AUTH_RESPONSES
+from fanfan.presentation.web.schemas.error import ErrorMessage
 from fanfan.presentation.web.security import session_security
 
 notifications_router = APIRouter(
@@ -152,3 +163,49 @@ async def send_broadcast(
     interactor: FromDishka[SendBroadcast],
 ) -> SendBroadcastOutput:
     return await interactor(data)
+
+
+@notifications_router.get(
+    "/broadcast",
+    summary="List broadcasts",
+    description=(
+        "Returns organizer broadcasts newest-first, paginated. Schedule-change "
+        "fan-outs are excluded — only role-targeted broadcasts appear."
+    ),
+    responses={
+        200: {
+            "model": ListBroadcastsOutput,
+            "description": "Broadcasts retrieved successfully.",
+        },
+    },
+)
+@inject
+async def list_broadcasts(
+    interactor: FromDishka[ListBroadcasts],
+    limit: Annotated[int, Query(ge=1, le=100)] = 10,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> ListBroadcastsOutput:
+    data = ListBroadcastsInput(pagination=Pagination(limit=limit, offset=offset))
+    return await interactor(data)
+
+
+@notifications_router.post(
+    "/broadcast/{mailing_id}/cancel",
+    status_code=204,
+    summary="Cancel a mailing",
+    description=(
+        "Cancels a mailing: marks it cancelled and deletes its still-undelivered "
+        "notifications. Messages already delivered to a device cannot be recalled."
+    ),
+    responses={
+        204: {"description": "Mailing cancellation requested."},
+        404: {"model": ErrorMessage, "description": "Mailing not found."},
+        409: {"model": ErrorMessage, "description": "Mailing cannot be cancelled."},
+    },
+)
+@inject
+async def cancel_mailing(
+    mailing_id: Annotated[MailingId, Path(description="ID of the mailing to cancel.")],
+    interactor: FromDishka[CancelMailing],
+) -> None:
+    await interactor(CancelMailingInput(mailing_id=mailing_id))

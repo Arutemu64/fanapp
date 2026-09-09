@@ -51,6 +51,7 @@ class CreateNotification:
         # FOR UPDATE, they hold each other's shared lock and deadlock. Taking
         # the exclusive lock first gives every consumer the same one-directional
         # lock order, so they serialize on the mailing instead.
+        mailing = None
         if mailing_id is not None:
             mailing = await self.mailing_gateway.get(mailing_id)
             if mailing is None:
@@ -61,7 +62,19 @@ class CreateNotification:
         # NotificationQueued re-runs this with the same id, and the gateway
         # upsert above no-ops it, so incrementing here as well would drift
         # sent_count above the true delivered count.
-        if inserted and mailing_id is not None:
-            await self.mailing_gateway.increment_sent(mailing_id=mailing_id)
+        if inserted and mailing is not None:
+            sent_count, total_count = await self.mailing_gateway.increment_sent(
+                mailing_id=mailing.id
+            )
+            # The mailing row is still locked (get above took FOR UPDATE), so the
+            # increment and the aggregate's completion decision are serialized
+            # across the concurrent fan-out. The rule lives on the aggregate;
+            # persist only when this delivery is the one that finished it.
+            if mailing.register_delivery(
+                sent_count=sent_count, total_count=total_count
+            ):
+                await self.mailing_gateway.set_status(
+                    mailing_id=mailing.id, status=mailing.status
+                )
         await self.uow.commit()
         return notification.id

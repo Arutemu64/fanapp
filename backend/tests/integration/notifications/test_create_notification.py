@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from uuid import uuid7
 
 import pytest
 from dishka import AsyncContainer
@@ -9,16 +10,18 @@ from fanfan.application.interactors.notifications.create_notification import (
 )
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.notifications import NotificationGateway
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.mailing import Mailing
 from fanfan.core.models.notification import NewNotification, Notification
 from fanfan.core.models.user import User
+from fanfan.core.vo.mailing import MailingStatus
 from fanfan.core.vo.notification import (
     NotificationType,
     generate_notification_id,
     notification_id_for,
 )
-from fanfan.core.vo.user import UserId
+from fanfan.core.vo.user import UserId, Username
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -76,6 +79,74 @@ async def test_create_notification_redelivery_is_a_single_row_single_increment(
     stored_mailing = await mailing_gateway.read_mailing(mailing.id)
     assert stored_mailing is not None
     assert stored_mailing.sent_count == 1
+
+
+async def test_create_notification_flips_mailing_to_finished_on_last_delivery(
+    dishka_request: AsyncContainer,
+    login: Callable[[User], None],
+    visitor: User,
+    uow: UnitOfWork,
+):
+    """The completion rule lives on the aggregate: a SENDING mailing becomes
+    FINISHED only once sent_count reaches total_count, and not before."""
+    interactor = await dishka_request.get(CreateNotification)
+    mailing_gateway = await dishka_request.get(MailingGateway)
+    login(visitor)
+
+    mailing = Mailing.create(by_user_id=visitor.id)
+    await mailing_gateway.add(mailing)
+    await mailing_gateway.set_total(mailing_id=mailing.id, total_count=2)
+    await mailing_gateway.set_status(
+        mailing_id=mailing.id, status=MailingStatus.SENDING
+    )
+    await uow.commit()
+
+    await interactor(
+        CreateNotificationInput(
+            notification=NewNotification(
+                id=notification_id_for(mailing.id, visitor.id),
+                user_id=visitor.id,
+                title="Рассылка от организаторов",
+                body="Первое",
+                path="/notifications",
+                mailing_id=mailing.id,
+                type=NotificationType.BROADCAST,
+            )
+        )
+    )
+    midway = await mailing_gateway.read_mailing(mailing.id)
+    assert midway is not None
+    # One of two delivered — still sending.
+    assert midway.sent_count == 1
+    assert midway.status is MailingStatus.SENDING
+
+    other_user = User(
+        id=UserId(uuid7()),
+        username=Username("second_recipient"),
+        hashed_password=None,
+        role=visitor.role,
+    )
+    user_gateway = await dishka_request.get(UserGateway)
+    await user_gateway.add(other_user)
+    await uow.commit()
+
+    await interactor(
+        CreateNotificationInput(
+            notification=NewNotification(
+                id=notification_id_for(mailing.id, other_user.id),
+                user_id=other_user.id,
+                title="Рассылка от организаторов",
+                body="Второе",
+                path="/notifications",
+                mailing_id=mailing.id,
+                type=NotificationType.BROADCAST,
+            )
+        )
+    )
+    finished = await mailing_gateway.read_mailing(mailing.id)
+    assert finished is not None
+    assert finished.sent_count == 2
+    assert finished.status is MailingStatus.FINISHED
 
 
 async def test_create_notification_gateway_add_reports_whether_it_inserted(

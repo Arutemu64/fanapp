@@ -3,11 +3,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.models import MailingORM
 from fanfan.application.dto.mailing import MailingDTO
+from fanfan.application.dto.page import Pagination
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.mailing import Mailing
-from fanfan.core.vo.mailing import MailingId
-from fanfan.core.vo.user import UserId
+from fanfan.core.vo.mailing import MailingId, MailingStatus
+from fanfan.core.vo.user import UserId, UserRole
 
 
 def _from_model(model: Mailing) -> MailingORM:
@@ -15,6 +16,8 @@ def _from_model(model: Mailing) -> MailingORM:
         id=model.id,
         status=model.status,
         by_user_id=model.by_user_id,
+        body=model.body,
+        roles=[r.value for r in model.roles] if model.roles is not None else None,
     )
 
 
@@ -23,6 +26,8 @@ def _to_model(orm: MailingORM) -> Mailing:
         id=MailingId(orm.id),
         status=orm.status,
         by_user_id=UserId(orm.by_user_id) if orm.by_user_id is not None else None,
+        body=orm.body,
+        roles=[UserRole(r) for r in orm.roles] if orm.roles is not None else None,
     )
 
 
@@ -31,8 +36,11 @@ def _parse_dto(orm: MailingORM) -> MailingDTO:
         id=MailingId(orm.id),
         status=orm.status,
         by_user_id=UserId(orm.by_user_id) if orm.by_user_id is not None else None,
+        body=orm.body,
+        roles=[UserRole(r) for r in orm.roles] if orm.roles is not None else None,
         sent_count=orm.sent_count,
         total_count=orm.total_count,
+        created_at=orm.created_at,
     )
 
 
@@ -58,9 +66,15 @@ class SqlMailingGateway(MailingGateway):
         self.uow.register(mailing)
         return mailing
 
-    async def save(self, mailing: Mailing) -> None:
-        mailing_orm = _from_model(mailing)
-        await self.session.merge(mailing_orm)
+    async def set_status(self, mailing_id: MailingId, status: MailingStatus) -> None:
+        stmt = (
+            update(MailingORM).where(MailingORM.id == mailing_id).values(status=status)
+        )
+        await self.session.execute(stmt)
+
+    async def set_body(self, mailing_id: MailingId, body: str) -> None:
+        stmt = update(MailingORM).where(MailingORM.id == mailing_id).values(body=body)
+        await self.session.execute(stmt)
 
     async def set_total(self, mailing_id: MailingId, total_count: int) -> None:
         stmt = (
@@ -70,15 +84,39 @@ class SqlMailingGateway(MailingGateway):
         )
         await self.session.execute(stmt)
 
-    async def increment_sent(self, mailing_id: MailingId, incr_by: int = 1) -> None:
+    async def increment_sent(
+        self, mailing_id: MailingId, incr_by: int = 1
+    ) -> tuple[int, int]:
+        # Atomic increment; RETURNING hands back the post-increment (sent, total)
+        # so the caller's aggregate decides completion — the rule does not live in
+        # this UPDATE.
         stmt = (
             update(MailingORM)
             .where(MailingORM.id == mailing_id)
             .values(sent_count=MailingORM.sent_count + incr_by)
+            .returning(MailingORM.sent_count, MailingORM.total_count)
         )
-        await self.session.execute(stmt)
+        row = (await self.session.execute(stmt)).one()
+        return row.sent_count, row.total_count
 
     async def read_mailing(self, mailing_id: MailingId) -> MailingDTO | None:
         stmt = select(MailingORM).where(MailingORM.id == mailing_id)
         mailing_orm = await self.session.scalar(stmt)
         return _parse_dto(mailing_orm) if mailing_orm else None
+
+    async def read_broadcasts(self, pagination: Pagination) -> list[MailingDTO]:
+        # Organizer broadcasts only: a schedule-change fan-out leaves roles NULL,
+        # so it never surfaces in the mailing history. The table is small (manual
+        # broadcasts are infrequent), so a plain created_at sort needs no index.
+        stmt = (
+            select(MailingORM)
+            .where(MailingORM.roles.isnot(None))
+            # id (uuid7, time-ordered) breaks created_at ties so a stable total
+            # order holds across offset pages — otherwise same-timestamp rows can
+            # shift between pages and a mailing slips through unseen.
+            .order_by(MailingORM.created_at.desc(), MailingORM.id.desc())
+            .limit(pagination.limit)
+            .offset(pagination.offset)
+        )
+        rows = await self.session.scalars(stmt)
+        return [_parse_dto(m) for m in rows]

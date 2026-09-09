@@ -32,6 +32,7 @@ from fanfan.application.interactors.current_user.update_user_settings import (
 from fanfan.application.interactors.demo.seed_demo_data import SeedDemoData
 from fanfan.application.interactors.feedback.list_feedback import ListFeedback
 from fanfan.application.interactors.feedback.submit_feedback import SubmitFeedback
+from fanfan.application.interactors.notifications.cancel_mailing import CancelMailing
 from fanfan.application.interactors.notifications.config import NotificationConfig
 from fanfan.application.interactors.notifications.create_notification import (
     CreateNotification,
@@ -45,6 +46,7 @@ from fanfan.application.interactors.notifications.get_notification import (
 from fanfan.application.interactors.notifications.get_unread_count import (
     GetUnreadNotificationsCount,
 )
+from fanfan.application.interactors.notifications.list_broadcasts import ListBroadcasts
 from fanfan.application.interactors.notifications.list_user_notifications import (
     ListUserNotifications,
 )
@@ -188,6 +190,8 @@ class InteractorsProvider(Provider):
         RevokePermission,
         ListUserPermissions,
         SendBroadcast,
+        CancelMailing,
+        ListBroadcasts,
         GetNotification,
         DeleteMailingNotifications,
         SendNotification,

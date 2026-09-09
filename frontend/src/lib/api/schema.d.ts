@@ -898,13 +898,37 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List broadcasts
+         * @description Returns organizer broadcasts newest-first, paginated. Schedule-change fan-outs are excluded — only role-targeted broadcasts appear.
+         */
+        get: operations["list_broadcasts"];
         put?: never;
         /**
          * Send broadcast notification
          * @description Creates a new mailing broadcast for specified user roles.
          */
         post: operations["send_broadcast"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notifications/broadcast/{mailing_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel a mailing
+         * @description Cancels a mailing: marks it cancelled and deletes its still-undelivered notifications. Messages already delivered to a device cannot be recalled.
+         */
+        post: operations["cancel_mailing"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1223,7 +1247,7 @@ export interface components {
              * Code
              * @enum {string}
              */
-            code: "ACCESS_DENIED" | "ALREADY_VOTED_IN_THIS_NOMINATION" | "APP_SETTINGS_NOT_FOUND" | "AUTHENTICATION_ERROR" | "CANNOT_REMOVE_LAST_SIGN_IN_METHOD" | "CAPTCHA_VERIFICATION_FAILED" | "CURRENT_EVENT_NOT_ALLOWED" | "EMAIL_ALREADY_EXISTS" | "EMAIL_CODE_REQUEST_TOO_FAST" | "EMAIL_DELIVERY_FAILED" | "EVENT_NOT_FOUND" | "HTTP_ERROR" | "INCORRECT_PASSWORD" | "INTERNAL_ERROR" | "INVALID_CREDENTIALS" | "INVALID_EMAIL" | "INVALID_FESTIVAL_TIME_RANGE" | "INVALID_OTP_CODE" | "INVALID_SCHEDULE_FILE" | "INVALID_TELEGRAM_AUTH_PAYLOAD" | "INVALID_VOTING_TIME_RANGE" | "LINK_INITIATOR_MISMATCH" | "NOMINATION_NOT_FOUND" | "OUTDATED_SCHEDULE_CHANGE" | "PARTICIPANT_NOT_FOUND" | "PUSH_SUBSCRIPTION_ALREADY_EXISTS" | "PUSH_SUBSCRIPTION_NOT_FOUND" | "SAME_EVENTS_ARE_NOT_ALLOWED" | "SCHEDULE_CHANGE_NOT_FOUND" | "SCHEDULE_EDIT_TOO_FAST" | "SKIPPED_EVENT_NOT_ALLOWED" | "SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER" | "SUBSCRIPTION_ALREADY_EXISTS" | "SUBSCRIPTION_NOT_FOUND" | "SYNC_ALREADY_RUNNING" | "TICKET_ALREADY_USED" | "TICKET_BARCODE_COLLISION" | "TICKET_NOT_FOUND" | "TICKET_NOT_LINKED" | "TOO_MANY_ATTEMPTS" | "TOO_MANY_LOGIN_ATTEMPTS" | "TOO_MANY_OTP_ATTEMPTS" | "USERNAME_ALREADY_TAKEN" | "USERNAME_PROFANITY" | "USER_ALREADY_EXISTS" | "USER_ALREADY_HAS_PROVIDER_LINKED" | "USER_ALREADY_HAS_TICKET_LINKED" | "USER_HAS_NO_EMAIL" | "USER_NOT_AUTHENTICATED" | "USER_NOT_FOUND" | "VALIDATION_ERROR" | "VOTE_NOT_FOUND";
+            code: "ACCESS_DENIED" | "ALREADY_VOTED_IN_THIS_NOMINATION" | "APP_SETTINGS_NOT_FOUND" | "AUTHENTICATION_ERROR" | "CANNOT_REMOVE_LAST_SIGN_IN_METHOD" | "CAPTCHA_VERIFICATION_FAILED" | "CURRENT_EVENT_NOT_ALLOWED" | "EMAIL_ALREADY_EXISTS" | "EMAIL_CODE_REQUEST_TOO_FAST" | "EMAIL_DELIVERY_FAILED" | "EVENT_NOT_FOUND" | "HTTP_ERROR" | "INCORRECT_PASSWORD" | "INTERNAL_ERROR" | "INVALID_CREDENTIALS" | "INVALID_EMAIL" | "INVALID_FESTIVAL_TIME_RANGE" | "INVALID_OTP_CODE" | "INVALID_SCHEDULE_FILE" | "INVALID_TELEGRAM_AUTH_PAYLOAD" | "INVALID_VOTING_TIME_RANGE" | "LINK_INITIATOR_MISMATCH" | "MAILING_CANCELLED" | "MAILING_NOT_CANCELLABLE" | "MAILING_NOT_FOUND" | "NOMINATION_NOT_FOUND" | "OUTDATED_SCHEDULE_CHANGE" | "PARTICIPANT_NOT_FOUND" | "PUSH_SUBSCRIPTION_ALREADY_EXISTS" | "PUSH_SUBSCRIPTION_NOT_FOUND" | "SAME_EVENTS_ARE_NOT_ALLOWED" | "SCHEDULE_CHANGE_NOT_FOUND" | "SCHEDULE_EDIT_TOO_FAST" | "SKIPPED_EVENT_NOT_ALLOWED" | "SOCIAL_ACCOUNT_LINKED_TO_ANOTHER_USER" | "SUBSCRIPTION_ALREADY_EXISTS" | "SUBSCRIPTION_NOT_FOUND" | "SYNC_ALREADY_RUNNING" | "TICKET_ALREADY_USED" | "TICKET_BARCODE_COLLISION" | "TICKET_NOT_FOUND" | "TICKET_NOT_LINKED" | "TOO_MANY_ATTEMPTS" | "TOO_MANY_LOGIN_ATTEMPTS" | "TOO_MANY_OTP_ATTEMPTS" | "USERNAME_ALREADY_TAKEN" | "USERNAME_PROFANITY" | "USER_ALREADY_EXISTS" | "USER_ALREADY_HAS_PROVIDER_LINKED" | "USER_ALREADY_HAS_TICKET_LINKED" | "USER_HAS_NO_EMAIL" | "USER_NOT_AUTHENTICATED" | "USER_NOT_FOUND" | "VALIDATION_ERROR" | "VOTE_NOT_FOUND";
             /** Details */
             details?: {
                 [key: string]: unknown;
@@ -1334,6 +1358,11 @@ export interface components {
             /** Barcode */
             barcode: string;
         };
+        /** ListBroadcastsOutput */
+        ListBroadcastsOutput: {
+            /** Mailings */
+            mailings: components["schemas"]["MailingDTO"][];
+        };
         /** ListFeedbackResult */
         ListFeedbackResult: {
             /** Feedback */
@@ -1371,6 +1400,35 @@ export interface components {
             /** Code */
             code: string;
         };
+        /** MailingDTO */
+        MailingDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            status: components["schemas"]["MailingStatus"];
+            /** By User Id */
+            by_user_id: string | null;
+            /** Body */
+            body: string | null;
+            /** Roles */
+            roles: components["schemas"]["UserRole"][] | null;
+            /** Sent Count */
+            sent_count: number;
+            /** Total Count */
+            total_count: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * MailingStatus
+         * @enum {string}
+         */
+        MailingStatus: "pending" | "sending" | "finished" | "cancelled" | "failed";
         /** MarkNotificationsReadInput */
         MarkNotificationsReadInput: {
             /** Notification Ids */
@@ -4412,6 +4470,56 @@ export interface operations {
             };
         };
     };
+    list_broadcasts: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Broadcasts retrieved successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListBroadcastsOutput"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
     send_broadcast: {
         parameters: {
             query?: never;
@@ -4445,6 +4553,72 @@ export interface operations {
             };
             /** @description Access denied. */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    cancel_mailing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID of the mailing to cancel. */
+                mailing_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Mailing cancellation requested. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Mailing not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Mailing cannot be cancelled. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

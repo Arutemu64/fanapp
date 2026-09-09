@@ -66,6 +66,10 @@ async def test_send_broadcast_creates_mailing_and_enqueues_event(
     mailing = await mailing_gateway.get(result.mailing_id)
     assert mailing is not None
     assert mailing.by_user_id == broadcaster.id
+    # The sent text and targeted roles are preserved on the mailing itself, so it
+    # outlives the notifications it fans out.
+    assert mailing.body == "Всем привет!"
+    assert mailing.roles == roles
 
     assert [
         (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)

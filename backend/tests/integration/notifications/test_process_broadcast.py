@@ -15,7 +15,7 @@ from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.notifications import MailingNotFound
 from fanfan.core.models.mailing import Mailing
 from fanfan.core.models.user import User
-from fanfan.core.vo.mailing import MailingId
+from fanfan.core.vo.mailing import MailingId, MailingStatus
 from fanfan.core.vo.notification import NotificationType
 from fanfan.core.vo.user import UserId, Username, UserRole
 from tests.fakes.event_broker import FakeEventBroker
@@ -94,6 +94,45 @@ async def test_process_broadcast_sets_total_and_fans_out_one_per_user(
     stored = await mailing_gateway.read_mailing(mailing.id)
     assert stored is not None
     assert stored.total_count == len(expected_ids)
+    # Fan-out started: the mailing is SENDING until CreateNotification records the
+    # last delivery and flips it to FINISHED.
+    assert stored.status is MailingStatus.SENDING
+
+
+async def test_process_broadcast_with_no_recipients_finishes_immediately(
+    dishka_request: AsyncContainer,
+    login: Callable[[User], None],
+    visitor: User,
+    uow: UnitOfWork,
+):
+    """A broadcast that reaches nobody is done at once, not stuck SENDING forever.
+
+    With no matching users there is no CreateNotification to later flip the
+    status, so ProcessBroadcast must move it straight to FINISHED.
+    """
+    interactor = await dishka_request.get(ProcessBroadcast)
+    mailing_gateway = await dishka_request.get(MailingGateway)
+    broker = await dishka_request.get(FakeEventBroker)
+    login(visitor)
+
+    mailing = Mailing.create(by_user_id=visitor.id)
+    await mailing_gateway.add(mailing)
+    await uow.commit()
+
+    # No PARTICIPANT users exist in the isolated test transaction.
+    await interactor(
+        ProcessBroadcastInput(
+            mailing_id=mailing.id, body="Никому", roles=[UserRole.PARTICIPANT]
+        )
+    )
+
+    stored = await mailing_gateway.read_mailing(mailing.id)
+    assert stored is not None
+    assert stored.total_count == 0
+    assert stored.status is MailingStatus.FINISHED
+    assert [
+        e for e in broker.published_events if isinstance(e, NotificationQueued)
+    ] == []
 
 
 async def test_process_broadcast_missing_mailing_raises_not_found(
