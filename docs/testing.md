@@ -69,6 +69,21 @@ uv run pytest --cov             # with coverage (config in pyproject.toml)
 Integration tests need Docker available (testcontainers spins up real
 PostgreSQL and Redis). They cannot run in environments without a Docker daemon.
 
+### Coverage
+
+`just backend-test-cov` runs the whole suite under coverage with a
+term-missing report; config lives in `[tool.coverage.*]` in
+`backend/pyproject.toml`. **Measure over the full run, not `-m unit`:**
+interactor behavior lives in the integration tests (see rule 2 above), so a
+unit-only number reports the entire `application/` layer as uncovered and is
+misleading.
+
+CI renders coverage into each backend run's **job summary** (Actions → the
+run → *Summary*) — a headline total plus a collapsible per-file table. It's
+reporting only: there is no third-party upload, no token, and **no
+`--cov-fail-under` gate**, so a dip in coverage never fails a PR on its own.
+Read the number, don't let it block you.
+
 ### Running them on Claude Code on the web
 
 Cloud sessions **have** a Docker daemon (the SessionStart hook starts `dockerd`),

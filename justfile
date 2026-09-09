@@ -96,6 +96,15 @@ backend-check:
 backend-test:
     cd backend && uv run pytest tests
 
+# Whole suite (unit + integration) under coverage, printing a term-missing
+# report. Coverage is only honest measured over the full run: interactor
+# behavior lives in the integration tests (docs/testing.md), so a unit-only
+# number would report the whole application layer as uncovered. Config is
+# [tool.coverage.*] in backend/pyproject.toml. Needs a Docker daemon, like
+# backend-test-integration. CI renders the same run to its job summary.
+backend-test-cov:
+    cd backend && uv run pytest tests --cov --cov-report=term-missing
+
 backend-test-integration:
     cd backend && uv run pytest tests/integration
 

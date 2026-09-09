@@ -9,6 +9,7 @@ from dishka import AnyOf, AsyncContainer, Provider, Scope, make_async_container
 from redis.asyncio import Redis
 
 from fanfan.adapters.db.config import DatabaseConfig
+from fanfan.application.ports.captcha import CaptchaVerifier
 from fanfan.application.ports.email_sender import EmailSender
 from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.gateways.outbox import OutboxGateway
@@ -34,6 +35,7 @@ from fanfan.main.ioc.security import SecurityProvider
 from fanfan.main.ioc.serialization import SerializationProvider
 from fanfan.main.ioc.services import ServicesProvider
 from fanfan.main.ioc.sync import SyncProvider
+from tests.fakes.captcha import FakeCaptchaVerifier
 from tests.fakes.cosplay_source import FakeCosplaySource
 from tests.fakes.email_sender import FakeEmailSender
 from tests.fakes.event_broker import FakeEventBroker
@@ -83,6 +85,9 @@ async def dishka() -> AsyncIterable[AsyncContainer]:
     )
     fakes_provider.provide(
         FakeCosplaySource, provides=AnyOf[CosplaySource, FakeCosplaySource]
+    )
+    fakes_provider.provide(
+        FakeCaptchaVerifier, provides=AnyOf[CaptchaVerifier, FakeCaptchaVerifier]
     )
     container = make_async_container(
         # Test providers
