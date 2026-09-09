@@ -65,6 +65,7 @@ def _client(tmp_path: Path, transport: httpx2.MockTransport) -> WebPushClient:
 def _message_data() -> MessageData:
     return {
         "tag": "42",
+        "renotify": False,
         "title": "Внимание",
         "body": "Тело уведомления",
         "url": "/schedule",
@@ -199,6 +200,36 @@ async def test_notifier_passes_domain_subscription_and_flattens_html() -> None:
     assert data["body"] == "Тело уведомления\nвторая строка"
     assert data["url"] == "/schedule"
     assert data["test"] is False
+    # An ungrouped type keeps a unique per-notification tag and does not re-alert.
+    assert data["tag"] not in {"schedule", "org"}
+    assert data["renotify"] is False
+
+
+@pytest.mark.parametrize(
+    ("notification_type", "expected_tag"),
+    [
+        (NotificationType.SCHEDULE_CHANGE, "schedule"),
+        (NotificationType.SCHEDULE_SUBSCRIPTION, "schedule"),
+        (NotificationType.BROADCAST, "org"),
+    ],
+)
+async def test_notifier_groups_topic_notifications_by_tag(
+    notification_type: NotificationType, expected_tag: str
+) -> None:
+    """Schedule and broadcast pushes share a topic tag (and re-alert on replace),
+    so a burst collapses to the latest instead of stacking on the OS shade."""
+    sub = _browser_subscription(endpoint="https://push.example/one")
+    notifier = PushNotifier(
+        push_sub_gateway=_StubGateway([sub]),  # type: ignore[arg-type]
+        uow=_StubUow(),  # type: ignore[arg-type]
+        client=(client := _RecordingClient()),  # type: ignore[arg-type]
+    )
+
+    await notifier.send_notification(_notification(notification_type))
+
+    data = client.calls[0]["message_data"]
+    assert data["tag"] == expected_tag
+    assert data["renotify"] is True
 
 
 async def test_notifier_prunes_gone_subscription() -> None:

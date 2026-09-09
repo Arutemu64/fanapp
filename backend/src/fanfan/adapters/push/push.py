@@ -34,6 +34,17 @@ _SERVER_ERROR_STATUS = 500
 # before the consumer redelivers.
 _RETRY_AFTER_DEFAULT_SECONDS = 5
 
+# Notification types that share a device-level topic, so a burst collapses to the
+# latest on the OS shade instead of stacking. Schedule updates flip rapidly during
+# a live event (the reader only cares about the current state); organizer
+# broadcasts share one "org" lane. A type absent here keeps a unique tag (its
+# notification id) so distinct notifications never replace one another.
+_TOPIC_TAGS: dict[NotificationType, str] = {
+    NotificationType.SCHEDULE_CHANGE: "schedule",
+    NotificationType.SCHEDULE_SUBSCRIPTION: "schedule",
+    NotificationType.BROADCAST: "org",
+}
+
 
 class PushNotifier(PushNotifierPort):
     def __init__(
@@ -59,8 +70,14 @@ class PushNotifier(PushNotifierPort):
     def _build_message_data(self, notification: Notification) -> MessageData:
         # Identical for every subscription of this user, so build it once; only
         # the per-subscription encryption downstream varies.
+        topic = _TOPIC_TAGS.get(notification.type)
         return {
-            "tag": str(notification.id),
+            # A topic tag groups the notification with its lane so a new one
+            # replaces the displayed one; renotify keeps that replacement alerting.
+            # Falls back to the notification id, which still collapses re-pushes of
+            # the same notification across a user's devices without grouping.
+            "tag": topic or str(notification.id),
+            "renotify": topic is not None,
             "title": self._sanitize_text(notification.title),
             "body": self._sanitize_text(notification.body),
             # Deep-link the service worker navigates to on click; root when unset.

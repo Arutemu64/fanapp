@@ -23,6 +23,11 @@ class MessageData(TypedDict):
     # The payload the service worker unpacks in its `push` handler. Serialized to
     # JSON by the library, so every value must be JSON-native.
     tag: str
+    # Whether a replacement of the same tag should re-alert (sound/vibration).
+    # True only for topic-grouped notifications, where a new one replaces the
+    # displayed one and must still buzz; the Notification API requires a
+    # non-empty tag alongside it, which we always provide.
+    renotify: bool
     title: str
     body: str
     url: str

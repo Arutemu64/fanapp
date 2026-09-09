@@ -108,9 +108,14 @@ interface PushNotificationPayload {
 	title: string;
 	body: string;
 	url: string;
-	// Set by the backend to `notification.id` — collapses re-pushes of the same
-	// notification while keeping distinct notifications separate.
+	// Grouping key set by the backend: a topic ("schedule", "org") so a burst
+	// collapses to the latest, or `notification.id` for ungrouped types (which
+	// only collapses re-pushes of the same notification).
 	tag?: string;
+	// Set by the backend when `tag` is a topic: a replacement of the displayed
+	// notification should still re-alert (sound/vibration) rather than update
+	// silently. Requires a non-empty tag, which the topic path always provides.
+	renotify?: boolean;
 	// Set by the backend for self-test pushes. Forces the OS-level notification
 	// even when the app is visible, so the user can verify push delivery without
 	// backgrounding the app.
@@ -165,6 +170,10 @@ self.addEventListener('push', (event: PushEvent) => {
 		// transparent-background mark, not the opaque full-color app icon.
 		badge: '/icons/badge-96.png',
 		tag: data.tag,
+		// Re-alert on a same-tag replacement only for topic-grouped notifications;
+		// the OS ignores it without a tag, and a unique-tag push has nothing to
+		// replace anyway.
+		renotify: data.renotify ?? false,
 		data: {
 			url: data.url || '/'
 		}
