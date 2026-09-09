@@ -3,6 +3,7 @@ from typing import NewType
 from uuid import NAMESPACE_URL, UUID, uuid5, uuid7
 
 from fanfan.core.vo.mailing import MailingId
+from fanfan.core.vo.schedule_change import ScheduleChangeId
 from fanfan.core.vo.user import UserId
 
 NotificationId = NewType("NotificationId", UUID)
@@ -19,6 +20,30 @@ def notification_id_for(mailing_id: MailingId, user_id: UserId) -> NotificationI
     idempotent no-op instead of a duplicate.
     """
     return NotificationId(uuid5(NAMESPACE_URL, f"notification:{mailing_id}:{user_id}"))
+
+
+def schedule_notification_id_for(
+    schedule_change_id: ScheduleChangeId,
+    user_id: UserId,
+    discriminator: str,
+) -> NotificationId:
+    """Deterministic id for a schedule-change fan-out notification.
+
+    The schedule-change trigger is redelivered at-least-once; a rerun that
+    minted fresh random ids would slip past the notifications insert's
+    on-conflict-do-nothing dedup and duplicate every recipient's notification
+    (and drift the mailing's sent_count past total_count). The schedule change
+    id is the stable anchor across redeliveries; the discriminator separates the
+    distinct notifications one user can receive from a single change — an editor
+    notice, a global announcement, a per-subscription notice — so they keep
+    distinct ids instead of collapsing into one.
+    """
+    return NotificationId(
+        uuid5(
+            NAMESPACE_URL,
+            f"schedule_notification:{schedule_change_id}:{user_id}:{discriminator}",
+        )
+    )
 
 
 class NotificationType(StrEnum):

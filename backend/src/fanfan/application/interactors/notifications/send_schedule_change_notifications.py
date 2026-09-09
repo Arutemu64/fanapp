@@ -24,7 +24,10 @@ from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.notifications import MailingAlreadyCancelled
 from fanfan.core.exceptions.schedule import ScheduleChangeNotFound
 from fanfan.core.models.notification import NewNotification
-from fanfan.core.vo.notification import NotificationType, generate_notification_id
+from fanfan.core.vo.notification import (
+    NotificationType,
+    schedule_notification_id_for,
+)
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
 
 
@@ -101,7 +104,9 @@ class SendScheduleChangeNotifications:
             events.extend(
                 NotificationQueued(
                     notification=NewNotification(
-                        id=generate_notification_id(),
+                        id=schedule_notification_id_for(
+                            schedule_change.id, e.id, "editor"
+                        ),
                         user_id=e.id,
                         title="Изменение расписания",
                         body=f"@{editor.username} сделал изменение "
@@ -142,7 +147,9 @@ class SendScheduleChangeNotifications:
         events.extend(
             NotificationQueued(
                 notification=NewNotification(
-                    id=generate_notification_id(),
+                    id=schedule_notification_id_for(
+                        schedule_change.id, u.id, "announcement"
+                    ),
                     user_id=u.id,
                     title="На сцене",
                     body=body,
@@ -187,7 +194,9 @@ class SendScheduleChangeNotifications:
                 events.append(
                     NotificationQueued(
                         notification=NewNotification(
-                            id=generate_notification_id(),
+                            id=schedule_notification_id_for(
+                                schedule_change.id, s.user_id, f"subscription:{s.id}"
+                            ),
                             user_id=s.user_id,
                             title="Уведомление о подписке",
                             body=body,
