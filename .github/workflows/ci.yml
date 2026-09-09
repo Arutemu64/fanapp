@@ -147,11 +147,35 @@ jobs:
         if: ${{ !cancelled() }}
         run: uv run ty check src/fanfan
 
-      # Runs unit and integration tests. Integration tests start their own
-      # Postgres/Redis containers via testcontainers fixtures.
+      # Runs unit and integration tests under coverage. Integration tests start
+      # their own Postgres/Redis containers via testcontainers fixtures.
+      # Coverage is measured over the whole run on purpose: interactor behavior
+      # lives in the integration tests (docs/testing.md), so a unit-only number
+      # would report the entire application layer as uncovered. Config is
+      # [tool.coverage.*] in backend/pyproject.toml.
       - name: Tests
         if: ${{ !cancelled() }}
-        run: uv run pytest tests
+        run: uv run pytest tests --cov --cov-report=term-missing
+
+      # Self-contained coverage reporting: no third-party upload, no token —
+      # pytest-cov's `.coverage` data file is rendered straight into this run's
+      # job summary via coverage.py's own markdown/total formats. `!cancelled()`
+      # so it still posts when an earlier gate failed but the tests ran; the
+      # file guard skips it when collection failed before any data was written.
+      - name: Coverage summary
+        if: ${{ !cancelled() }}
+        run: |
+          if [ -f .coverage ]; then
+            {
+              echo "## Backend coverage: $(uv run coverage report --format=total)%"
+              echo ""
+              echo "<details><summary>Per-file coverage</summary>"
+              echo ""
+              uv run coverage report --format=markdown
+              echo ""
+              echo "</details>"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   frontend:
     # Lint, check, test and build are independent, so we run them as a matrix
