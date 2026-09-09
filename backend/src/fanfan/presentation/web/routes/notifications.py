@@ -2,9 +2,13 @@ from typing import Annotated
 
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Path, Query
 
 from fanfan.application.dto.page import Pagination
+from fanfan.application.interactors.notifications.cancel_mailing import (
+    CancelMailing,
+    CancelMailingInput,
+)
 from fanfan.application.interactors.notifications.get_unread_count import (
     GetUnreadNotificationsCount,
     UnreadNotificationsCountOutput,
@@ -27,6 +31,7 @@ from fanfan.application.interactors.notifications.send_broadcast import (
 from fanfan.application.interactors.notifications.send_test_notification import (
     SendTestNotification,
 )
+from fanfan.core.vo.mailing import MailingId
 from fanfan.presentation.web.responses import AUTH_RESPONSES
 from fanfan.presentation.web.security import session_security
 
@@ -152,3 +157,23 @@ async def send_broadcast(
     interactor: FromDishka[SendBroadcast],
 ) -> SendBroadcastOutput:
     return await interactor(data)
+
+
+@notifications_router.post(
+    "/broadcast/{mailing_id}/cancel",
+    status_code=204,
+    summary="Cancel a mailing",
+    description=(
+        "Cancels a mailing: marks it cancelled and deletes its still-undelivered "
+        "notifications. Messages already delivered to a device cannot be recalled."
+    ),
+    responses={
+        204: {"description": "Mailing cancellation requested."},
+    },
+)
+@inject
+async def cancel_mailing(
+    mailing_id: Annotated[MailingId, Path(description="ID of the mailing to cancel.")],
+    interactor: FromDishka[CancelMailing],
+) -> None:
+    await interactor(CancelMailingInput(mailing_id=mailing_id))

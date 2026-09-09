@@ -14,9 +14,9 @@ pytestmark = pytest.mark.unit
 # marker instead of adding it here.
 INTERNAL_ONLY: set[str] = {
     # Notification delivery — handled inside the NATS consumer, never HTTP.
+    # MAILING_NOT_FOUND / MAILING_CANCELLED are NOT here: they also surface from
+    # the CancelMailing HTTP command, so they carry 404/409 markers.
     "NOTIFICATION_NOT_FOUND",
-    "MAILING_NOT_FOUND",
-    "MAILING_CANCELLED",
     "USER_NOT_REACHABLE",
     "NOTIFICATION_CHANNEL_UNAVAILABLE",
     "NOTIFICATION_RETRY_AFTER",

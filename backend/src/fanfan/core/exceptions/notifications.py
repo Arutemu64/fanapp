@@ -1,4 +1,4 @@
-from fanfan.core.exceptions.base import AppException
+from fanfan.core.exceptions.base import AppException, Conflict, NotFound
 
 
 class NotificationException(AppException):
@@ -9,12 +9,21 @@ class NotificationNotFound(NotificationException):
     code = "NOTIFICATION_NOT_FOUND"
 
 
-class MailingNotFound(NotificationException):
+# Markers first so they win MRO precedence: these three are raised from the
+# CancelMailing HTTP command (as well as the NATS consumers), so they must
+# resolve to real 4xx statuses rather than the internal-only 500.
+class MailingNotFound(NotFound, NotificationException):
     code = "MAILING_NOT_FOUND"
 
 
-class MailingAlreadyCancelled(NotificationException):
+class MailingAlreadyCancelled(Conflict, NotificationException):
     code = "MAILING_CANCELLED"
+
+
+class MailingNotCancellable(Conflict, NotificationException):
+    # The mailing already reached a terminal non-cancelled state (finished or
+    # failed), so there is nothing left to cancel.
+    code = "MAILING_NOT_CANCELLABLE"
 
 
 class UserNotReachable(NotificationException):

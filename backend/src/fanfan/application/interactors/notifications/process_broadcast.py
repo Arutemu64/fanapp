@@ -1,3 +1,5 @@
+import logging
+
 from pydantic import BaseModel
 
 from fanfan.application.ports.events_broker import EventBroker
@@ -5,11 +7,16 @@ from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.notifications import NotificationQueued
-from fanfan.core.exceptions.notifications import MailingNotFound
+from fanfan.core.exceptions.notifications import (
+    MailingAlreadyCancelled,
+    MailingNotFound,
+)
 from fanfan.core.models.notification import NewNotification
 from fanfan.core.vo.mailing import MailingId
 from fanfan.core.vo.notification import NotificationType, notification_id_for
 from fanfan.core.vo.user import UserRole
+
+logger = logging.getLogger(__name__)
 
 
 class ProcessBroadcastInput(BaseModel):
@@ -36,10 +43,27 @@ class ProcessBroadcast:
         mailing = await self.mailing_gateway.get(data.mailing_id)
         if mailing is None:
             raise MailingNotFound
+
+        try:
+            # Cancelled between creation and this (at-least-once) fan-out trigger:
+            # stop here rather than queue notifications that would be rejected.
+            mailing.ensure_active()
+        except MailingAlreadyCancelled:
+            logger.info("Broadcast %s was cancelled before fan-out", mailing.id)
+            return
+
         await self.mailing_gateway.set_total(
             mailing_id=mailing.id, total_count=len(users)
         )
-        await self.mailing_gateway.save(mailing)
+        # No recipients means the mailing is already done; otherwise it moves to
+        # SENDING and CreateNotification flips it to FINISHED on the last insert.
+        if users:
+            mailing.start_sending()
+        else:
+            mailing.mark_finished()
+        await self.mailing_gateway.set_status(
+            mailing_id=mailing.id, status=mailing.status
+        )
         await self.uow.commit()
 
         events = [

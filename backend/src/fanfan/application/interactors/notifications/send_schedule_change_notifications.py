@@ -23,6 +23,7 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.notifications import NotificationQueued
 from fanfan.core.exceptions.schedule import ScheduleChangeNotFound
 from fanfan.core.models.notification import NewNotification
+from fanfan.core.vo.mailing import MailingStatus
 from fanfan.core.vo.notification import NotificationType, generate_notification_id
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
 
@@ -232,10 +233,31 @@ class SendScheduleChangeNotifications:
             )
 
         if schedule_change.mailing_id:
+            # Record a human-readable summary of the change on the mailing itself.
+            # The per-recipient notification texts are templated variants; this
+            # reason is their common thread and the only thing an organizer sees
+            # in a mailing history. None for change types without a reason.
+            if reason_msg is not None:
+                await self.mailing_gateway.set_body(
+                    mailing_id=schedule_change.mailing_id, body=reason_msg
+                )
             await self.mailing_gateway.set_total(
                 mailing_id=schedule_change.mailing_id,
                 total_count=len(notification_events),
             )
+            # Mirror the broadcast lifecycle: SENDING while CreateNotification
+            # fans out (it flips to FINISHED on the last insert), or straight to
+            # FINISHED when the change reached nobody.
+            if notification_events:
+                await self.mailing_gateway.set_status(
+                    mailing_id=schedule_change.mailing_id,
+                    status=MailingStatus.SENDING,
+                )
+            else:
+                await self.mailing_gateway.set_status(
+                    mailing_id=schedule_change.mailing_id,
+                    status=MailingStatus.FINISHED,
+                )
             await self.uow.commit()
 
         await asyncio.gather(

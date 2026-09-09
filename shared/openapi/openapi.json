@@ -3118,6 +3118,70 @@
         ]
       }
     },
+    "/notifications/broadcast/{mailing_id}/cancel": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "Cancel a mailing",
+        "description": "Cancels a mailing: marks it cancelled and deletes its still-undelivered notifications. Messages already delivered to a device cannot be recalled.",
+        "operationId": "cancel_mailing",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "mailing_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "ID of the mailing to cancel.",
+              "title": "Mailing Id"
+            },
+            "description": "ID of the mailing to cancel."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Mailing cancellation requested."
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/push/": {
       "post": {
         "tags": [
@@ -4237,6 +4301,9 @@
               "INVALID_TELEGRAM_AUTH_PAYLOAD",
               "INVALID_VOTING_TIME_RANGE",
               "LINK_INITIATOR_MISMATCH",
+              "MAILING_CANCELLED",
+              "MAILING_NOT_CANCELLABLE",
+              "MAILING_NOT_FOUND",
               "NOMINATION_NOT_FOUND",
               "OUTDATED_SCHEDULE_CHANGE",
               "PARTICIPANT_NOT_FOUND",
