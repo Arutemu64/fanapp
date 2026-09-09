@@ -60,11 +60,14 @@ async def test_request_login_code_reuses_existing_user(
     await interactor(RequestLoginCodeInput(email="Existing@Example.com"))
 
     # A known email must not create a second account; the code goes to the
-    # existing user.
+    # existing user. Asserting the recipient is the normalized existing address
+    # catches a case-handling regression that would provision a fresh account
+    # for the raw "Existing@Example.com" spelling and mail the code there.
     reloaded = await user_gateway.get_by_email("existing@example.com")
     assert reloaded is not None
     assert reloaded.id == existing.id
     assert len(email_sender.sent_messages) == 1
+    assert email_sender.sent_messages[0].recipients[0].email == "existing@example.com"
 
 
 async def test_request_login_code_rejected_by_captcha_does_nothing(
