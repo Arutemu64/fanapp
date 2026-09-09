@@ -25,6 +25,12 @@
       "skillPath": "skills/core-web-vitals/SKILL.md",
       "computedHash": "601b2cbb920fb0ea9814a3f11232d7883e1eb0923865218502ab1d73e9fc5172"
     },
+    "deslop": {
+      "source": "MrZoyo/deslop-GPT",
+      "sourceType": "github",
+      "skillPath": "skills/deslop/SKILL.md",
+      "computedHash": "6f7f25411f8337211fc1620aad33efa1f8dae7c97b893b11a3e462f8fd531961"
+    },
     "docker-expert": {
       "source": "sickn33/antigravity-awesome-skills",
       "sourceType": "github",
