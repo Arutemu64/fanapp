@@ -38,6 +38,7 @@ from fanfan.application.interactors.notifications.send_test_notification import 
 )
 from fanfan.core.vo.mailing import MailingId
 from fanfan.presentation.web.responses import AUTH_RESPONSES
+from fanfan.presentation.web.schemas.error import ErrorMessage
 from fanfan.presentation.web.security import session_security
 
 notifications_router = APIRouter(
@@ -198,6 +199,8 @@ async def list_broadcasts(
     ),
     responses={
         204: {"description": "Mailing cancellation requested."},
+        404: {"model": ErrorMessage, "description": "Mailing not found."},
+        409: {"model": ErrorMessage, "description": "Mailing cannot be cancelled."},
     },
 )
 @inject

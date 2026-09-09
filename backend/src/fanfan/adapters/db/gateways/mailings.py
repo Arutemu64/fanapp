@@ -111,7 +111,10 @@ class SqlMailingGateway(MailingGateway):
         stmt = (
             select(MailingORM)
             .where(MailingORM.roles.isnot(None))
-            .order_by(MailingORM.created_at.desc())
+            # id (uuid7, time-ordered) breaks created_at ties so a stable total
+            # order holds across offset pages — otherwise same-timestamp rows can
+            # shift between pages and a mailing slips through unseen.
+            .order_by(MailingORM.created_at.desc(), MailingORM.id.desc())
             .limit(pagination.limit)
             .offset(pagination.offset)
         )

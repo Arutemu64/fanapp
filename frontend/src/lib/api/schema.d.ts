@@ -4608,6 +4608,24 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorMessage"];
                 };
             };
+            /** @description Mailing not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Mailing cannot be cancelled. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
             /** @description Request validation error. */
             422: {
                 headers: {

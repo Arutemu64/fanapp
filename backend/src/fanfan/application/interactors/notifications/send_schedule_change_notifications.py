@@ -21,9 +21,9 @@ from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.template_renderer import TemplateRenderer
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.notifications import NotificationQueued
+from fanfan.core.exceptions.notifications import MailingAlreadyCancelled
 from fanfan.core.exceptions.schedule import ScheduleChangeNotFound
 from fanfan.core.models.notification import NewNotification
-from fanfan.core.vo.mailing import MailingStatus
 from fanfan.core.vo.notification import NotificationType, generate_notification_id
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
 
@@ -233,31 +233,41 @@ class SendScheduleChangeNotifications:
             )
 
         if schedule_change.mailing_id:
+            mailing = await self.mailing_gateway.get(schedule_change.mailing_id)
+            if mailing is None:
+                return
+            try:
+                # An overlapping schedule undo cancels this mailing via
+                # MailingCancelled. get() locked the row, so that cancel is
+                # serialized against us; ensure_active then stops us resurrecting a
+                # cancelled mailing (and sending notifications for an undone change).
+                mailing.ensure_active()
+            except MailingAlreadyCancelled:
+                await self.uow.commit()
+                return
+
             # Record a human-readable summary of the change on the mailing itself.
             # The per-recipient notification texts are templated variants; this
             # reason is their common thread and the only thing an organizer sees
             # in a mailing history. None for change types without a reason.
             if reason_msg is not None:
                 await self.mailing_gateway.set_body(
-                    mailing_id=schedule_change.mailing_id, body=reason_msg
+                    mailing_id=mailing.id, body=reason_msg
                 )
             await self.mailing_gateway.set_total(
-                mailing_id=schedule_change.mailing_id,
-                total_count=len(notification_events),
+                mailing_id=mailing.id, total_count=len(notification_events)
             )
             # Mirror the broadcast lifecycle: SENDING while CreateNotification
             # fans out (it flips to FINISHED on the last insert), or straight to
-            # FINISHED when the change reached nobody.
+            # FINISHED when the change reached nobody. start_sending() no-ops on a
+            # redelivery that finds the mailing already terminal.
             if notification_events:
-                await self.mailing_gateway.set_status(
-                    mailing_id=schedule_change.mailing_id,
-                    status=MailingStatus.SENDING,
-                )
+                mailing.start_sending()
             else:
-                await self.mailing_gateway.set_status(
-                    mailing_id=schedule_change.mailing_id,
-                    status=MailingStatus.FINISHED,
-                )
+                mailing.mark_finished()
+            await self.mailing_gateway.set_status(
+                mailing_id=mailing.id, status=mailing.status
+            )
             await self.uow.commit()
 
         await asyncio.gather(

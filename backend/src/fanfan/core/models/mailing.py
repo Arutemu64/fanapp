@@ -47,9 +47,14 @@ class Mailing(AggregateRoot):
 
     def start_sending(self) -> None:
         # Guard first: a mailing cancelled between creation and fan-out must not
-        # flip back to an active state. Re-entrant from SENDING (the fan-out
-        # trigger is redelivered at-least-once), so this is a no-op the 2nd time.
+        # flip back to an active state.
         self.ensure_active()
+        # A redelivered fan-out trigger can arrive after the mailing already
+        # finished; never resurrect a terminal mailing to SENDING (its duplicate
+        # notifications no-op, so nothing would move it back to FINISHED). Also
+        # makes the transition re-entrant from SENDING itself.
+        if self.status in (MailingStatus.FINISHED, MailingStatus.FAILED):
+            return
         self.status = MailingStatus.SENDING
 
     def mark_finished(self) -> None:
