@@ -128,3 +128,61 @@ async def test_schedule_change_notifies_only_subscribers_in_window(
     # queue_difference = 3 - 1 = 2 is rendered into the body.
     assert "2 выступления" in event.notification.body
     assert "Событие C" in event.notification.body
+
+
+async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
+    dishka_request: AsyncContainer,
+    visitor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+):
+    """A redelivered schedule-change trigger mints the same notification ids.
+
+    The trigger is delivered at-least-once, so the interactor can run twice for
+    one change. The notifications insert dedups on id (on-conflict-do-nothing),
+    so a rerun that produced fresh random ids would duplicate every recipient's
+    notification. Running the interactor twice must yield the same id for the
+    same recipient.
+    """
+    interactor = await dishka_request.get(SendScheduleChangeNotifications)
+    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    subscription_gateway = await dishka_request.get(SubscriptionGateway)
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
+    broker = await dishka_request.get(FakeEventBroker)
+    login(visitor)
+
+    current_event = _schedule_event(1, "Текущее", 1, is_current=True)
+    event_c = _schedule_event(3, "Событие C", 3)
+    await schedule_gateway.add(current_event)
+    await schedule_gateway.add(event_c)
+    await uow.commit()
+
+    await subscription_gateway.add(
+        Subscription(
+            id=generate_subscription_id(),
+            user_id=visitor.id,
+            event_id=event_c.id,
+            counter=5,
+        )
+    )
+    change = ScheduleChange.moved(
+        event_id=event_c.id,
+        previous_event_id=None,
+        mailing_id=None,
+        user_id=None,
+        next_event_changed=False,
+    )
+    await changes_gateway.add(change)
+    await uow.commit()
+
+    data = SendScheduleChangeNotificationsInput(schedule_change_id=change.id)
+    await interactor(data)
+    await interactor(data)
+
+    published = [
+        e for e in broker.published_events if isinstance(e, NotificationQueued)
+    ]
+    # Both runs target the one in-window subscriber; the id is identical, so the
+    # gateway upsert would no-op the second insert instead of duplicating it.
+    assert len(published) == 2
+    assert published[0].notification.id == published[1].notification.id
