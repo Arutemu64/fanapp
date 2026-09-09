@@ -9,3 +9,7 @@ export const NOTIFICATION_PAGE_SIZE = 20;
 
 // Fetch one extra item to determine whether a next page exists.
 export const NOTIFICATION_PAGE_REQUEST_LIMIT = NOTIFICATION_PAGE_SIZE + 1;
+
+// Broadcast history (organizer tool) pages the sent mailings the same way.
+export const BROADCAST_PAGE_SIZE = 10;
+export const BROADCAST_PAGE_REQUEST_LIMIT = BROADCAST_PAGE_SIZE + 1;

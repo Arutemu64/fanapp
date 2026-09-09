@@ -3059,15 +3059,20 @@
         "summary": "Send broadcast notification",
         "description": "Creates a new mailing broadcast for specified user roles.",
         "operationId": "send_broadcast",
+        "security": [
+          {
+            "SessionCookie": []
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SendBroadcastInput"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -3110,12 +3115,87 @@
               }
             }
           }
-        },
+        }
+      },
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "summary": "List broadcasts",
+        "description": "Returns organizer broadcasts newest-first, paginated. Schedule-change fan-outs are excluded — only role-targeted broadcasts appear.",
+        "operationId": "list_broadcasts",
         "security": [
           {
             "SessionCookie": []
           }
-        ]
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 10,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Broadcasts retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListBroadcastsOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request validation error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access denied.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/notifications/broadcast/{mailing_id}/cancel": {
@@ -4651,6 +4731,22 @@
         ],
         "title": "LinkTicketInput"
       },
+      "ListBroadcastsOutput": {
+        "properties": {
+          "mailings": {
+            "items": {
+              "$ref": "#/components/schemas/MailingDTO"
+            },
+            "type": "array",
+            "title": "Mailings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mailings"
+        ],
+        "title": "ListBroadcastsOutput"
+      },
       "ListFeedbackResult": {
         "properties": {
           "feedback": {
@@ -4757,6 +4853,91 @@
           "code"
         ],
         "title": "LoginWithCodeInput"
+      },
+      "MailingDTO": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MailingStatus"
+          },
+          "by_user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "By User Id"
+          },
+          "body": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body"
+          },
+          "roles": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/UserRole"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Roles"
+          },
+          "sent_count": {
+            "type": "integer",
+            "title": "Sent Count"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "by_user_id",
+          "body",
+          "roles",
+          "sent_count",
+          "total_count",
+          "created_at"
+        ],
+        "title": "MailingDTO"
+      },
+      "MailingStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "sending",
+          "finished",
+          "cancelled",
+          "failed"
+        ],
+        "title": "MailingStatus"
       },
       "MarkNotificationsReadInput": {
         "properties": {

@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.models import MailingORM
 from fanfan.application.dto.mailing import MailingDTO
+from fanfan.application.dto.page import Pagination
 from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.mailing import Mailing
@@ -39,6 +40,7 @@ def _parse_dto(orm: MailingORM) -> MailingDTO:
         roles=[UserRole(r) for r in orm.roles] if orm.roles is not None else None,
         sent_count=orm.sent_count,
         total_count=orm.total_count,
+        created_at=orm.created_at,
     )
 
 
@@ -101,3 +103,17 @@ class SqlMailingGateway(MailingGateway):
         stmt = select(MailingORM).where(MailingORM.id == mailing_id)
         mailing_orm = await self.session.scalar(stmt)
         return _parse_dto(mailing_orm) if mailing_orm else None
+
+    async def read_broadcasts(self, pagination: Pagination) -> list[MailingDTO]:
+        # Organizer broadcasts only: a schedule-change fan-out leaves roles NULL,
+        # so it never surfaces in the mailing history. The table is small (manual
+        # broadcasts are infrequent), so a plain created_at sort needs no index.
+        stmt = (
+            select(MailingORM)
+            .where(MailingORM.roles.isnot(None))
+            .order_by(MailingORM.created_at.desc())
+            .limit(pagination.limit)
+            .offset(pagination.offset)
+        )
+        rows = await self.session.scalars(stmt)
+        return [_parse_dto(m) for m in rows]

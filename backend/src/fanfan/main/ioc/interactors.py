@@ -46,6 +46,7 @@ from fanfan.application.interactors.notifications.get_notification import (
 from fanfan.application.interactors.notifications.get_unread_count import (
     GetUnreadNotificationsCount,
 )
+from fanfan.application.interactors.notifications.list_broadcasts import ListBroadcasts
 from fanfan.application.interactors.notifications.list_user_notifications import (
     ListUserNotifications,
 )
@@ -190,6 +191,7 @@ class InteractorsProvider(Provider):
         ListUserPermissions,
         SendBroadcast,
         CancelMailing,
+        ListBroadcasts,
         GetNotification,
         DeleteMailingNotifications,
         SendNotification,

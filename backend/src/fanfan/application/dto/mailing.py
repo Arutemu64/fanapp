@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 from fanfan.core.vo.mailing import MailingId, MailingStatus
@@ -12,3 +14,4 @@ class MailingDTO(BaseModel):
     roles: list[UserRole] | None
     sent_count: int
     total_count: int
+    created_at: datetime

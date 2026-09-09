@@ -898,7 +898,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List broadcasts
+         * @description Returns organizer broadcasts newest-first, paginated. Schedule-change fan-outs are excluded — only role-targeted broadcasts appear.
+         */
+        get: operations["list_broadcasts"];
         put?: never;
         /**
          * Send broadcast notification
@@ -1354,6 +1358,11 @@ export interface components {
             /** Barcode */
             barcode: string;
         };
+        /** ListBroadcastsOutput */
+        ListBroadcastsOutput: {
+            /** Mailings */
+            mailings: components["schemas"]["MailingDTO"][];
+        };
         /** ListFeedbackResult */
         ListFeedbackResult: {
             /** Feedback */
@@ -1391,6 +1400,35 @@ export interface components {
             /** Code */
             code: string;
         };
+        /** MailingDTO */
+        MailingDTO: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            status: components["schemas"]["MailingStatus"];
+            /** By User Id */
+            by_user_id: string | null;
+            /** Body */
+            body: string | null;
+            /** Roles */
+            roles: components["schemas"]["UserRole"][] | null;
+            /** Sent Count */
+            sent_count: number;
+            /** Total Count */
+            total_count: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * MailingStatus
+         * @enum {string}
+         */
+        MailingStatus: "pending" | "sending" | "finished" | "cancelled" | "failed";
         /** MarkNotificationsReadInput */
         MarkNotificationsReadInput: {
             /** Notification Ids */
@@ -4402,6 +4440,56 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    list_broadcasts: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Broadcasts retrieved successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListBroadcastsOutput"];
+                };
             };
             /** @description Not authenticated. */
             401: {

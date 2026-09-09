@@ -13,6 +13,11 @@ from fanfan.application.interactors.notifications.get_unread_count import (
     GetUnreadNotificationsCount,
     UnreadNotificationsCountOutput,
 )
+from fanfan.application.interactors.notifications.list_broadcasts import (
+    ListBroadcasts,
+    ListBroadcastsInput,
+    ListBroadcastsOutput,
+)
 from fanfan.application.interactors.notifications.list_user_notifications import (
     ListUserNotificationOutput,
     ListUserNotifications,
@@ -156,6 +161,30 @@ async def send_broadcast(
     data: SendBroadcastInput,
     interactor: FromDishka[SendBroadcast],
 ) -> SendBroadcastOutput:
+    return await interactor(data)
+
+
+@notifications_router.get(
+    "/broadcast",
+    summary="List broadcasts",
+    description=(
+        "Returns organizer broadcasts newest-first, paginated. Schedule-change "
+        "fan-outs are excluded — only role-targeted broadcasts appear."
+    ),
+    responses={
+        200: {
+            "model": ListBroadcastsOutput,
+            "description": "Broadcasts retrieved successfully.",
+        },
+    },
+)
+@inject
+async def list_broadcasts(
+    interactor: FromDishka[ListBroadcasts],
+    limit: Annotated[int, Query(ge=1, le=100)] = 10,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> ListBroadcastsOutput:
+    data = ListBroadcastsInput(pagination=Pagination(limit=limit, offset=offset))
     return await interactor(data)
 
 
