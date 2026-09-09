@@ -11,7 +11,7 @@
       "source": "better-auth/better-icons",
       "sourceType": "github",
       "skillPath": "skills/SKILL.md",
-      "computedHash": "b16a2f5830f3db40695fdd58d415a631e9fb6170a0cc5d3b56469d17e53596bc"
+      "computedHash": "656a618d6d5d5e9c567253eff57a06bee3be5d4fb983bdc401a46a209c5b76de"
     },
     "clean-ddd-hexagonal": {
       "source": "ccheney/robust-skills",
@@ -71,13 +71,13 @@
       "source": "blader/humanizer",
       "sourceType": "github",
       "skillPath": "SKILL.md",
-      "computedHash": "a9e52ffc97e9d8fdda35a6fb3967ace6fbc1ae3a0b7703774ad077fcf1e27153"
+      "computedHash": "0a4518725b506f6c83e65f2d6d87cb56fbc042ba92de5eecb1ef8b995ec69d70"
     },
     "improve": {
       "source": "shadcn/improve",
       "sourceType": "github",
       "skillPath": "skills/improve/SKILL.md",
-      "computedHash": "553713a1b9af40ec50c4018f75b8974bf728fe5abc8e125b748e2d718d5c31ea"
+      "computedHash": "39a9358732dcff385e9e4d3e60b4547856f834e54a58b35e455aa9bd49928c13"
     },
     "kill-ai-slop": {
       "source": "yetone/kill-ai-slop",
@@ -107,7 +107,7 @@
       "source": "huntabyte/shadcn-svelte",
       "sourceType": "github",
       "skillPath": "skills/shadcn-svelte/SKILL.md",
-      "computedHash": "f54ebcafcd4b80e64935671f6b096abcdb03d841a7736b32cea766a0824169ed"
+      "computedHash": "d4f3f983a71466a86649985a8a7fbce47da29f44de3a9d02540bbcf3167134e0"
     },
     "sqlalchemy-alembic-expert-best-practices-code-review": {
       "source": "wispbit-ai/skills",
@@ -131,7 +131,7 @@
       "source": "nextlevelbuilder/ui-ux-pro-max-skill",
       "sourceType": "github",
       "skillPath": ".claude/skills/ui-ux-pro-max/SKILL.md",
-      "computedHash": "523b8063c07eedd2b8a1ca94d7a0be9ad340026bd9f21a1eda0b6be2a855298f"
+      "computedHash": "4080ff883b26b670a5a224fb332e89ecc15319535f4d14279947ad7812fec558"
     },
     "ux-copy": {
       "source": "N1arko/redaktura-skills",
