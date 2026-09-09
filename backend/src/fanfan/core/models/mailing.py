@@ -28,9 +28,9 @@ class Mailing(AggregateRoot):
         # together (see docs/backend.md -> Transactional outbox).
         self.record_event(BroadcastQueued(mailing_id=self.id, body=body, roles=roles))
 
-    def set_as_cancelled(self) -> None:
-        self.status = MailingStatus.CANCELLED
-
     def ensure_active(self) -> None:
+        # No code path sets CANCELLED any more (the cancel-mailing feature was
+        # removed), but rows cancelled while it was live still exist, so loading
+        # one and acting on it must still be refused.
         if self.status == MailingStatus.CANCELLED:
             raise MailingAlreadyCancelled
