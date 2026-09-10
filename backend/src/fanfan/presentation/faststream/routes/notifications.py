@@ -4,6 +4,7 @@ from dishka import FromDishka
 from dishka_faststream import inject
 from faststream import AckPolicy, Logger
 from faststream.nats import NatsMessage, NatsRouter, PullSub
+from nats.js.api import ConsumerConfig
 
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.interactors.notifications.create_notification import (
@@ -44,6 +45,19 @@ from fanfan.core.vo.notification import NotificationId
 from fanfan.presentation.faststream.jstream import stream
 
 notifications_router = NatsRouter()
+
+# AckWait for the external-send channels, in seconds. Each send handler does a
+# network round-trip whose own client timeout is the real ceiling — Telegram
+# ~60s (aiogram default session), VK up to ~60s (send + delete, 30s each), push
+# 10s per device. This must sit above that ceiling so JetStream only redelivers
+# when a worker has genuinely stalled or died, not when a slow-but-live send is
+# still using its allotted time (the default 30s AckWait would redeliver
+# mid-flight and re-send). It does not create head-of-line blocking — NATS
+# subscribers already process one message per durable at a time (no max_workers
+# here); a slow send only delays its own channel's queue, and the client timeout
+# bounds how long. Raise the client timeouts and this together if a channel ever
+# needs longer.
+_SEND_ACK_WAIT_SECONDS = 90.0
 
 
 async def _deliver_to_channel(
@@ -150,6 +164,7 @@ async def create_new_notification(  # noqa: PLR0913, PLR0917 — all params fram
     pull_sub=PullSub(),
     durable="send_notification_to_telegram",
     ack_policy=AckPolicy.MANUAL,
+    config=ConsumerConfig(ack_wait=_SEND_ACK_WAIT_SECONDS),
 )
 @inject
 async def send_notification_to_telegram(
@@ -173,6 +188,7 @@ async def send_notification_to_telegram(
     pull_sub=PullSub(),
     durable="send_notification_to_vk",
     ack_policy=AckPolicy.MANUAL,
+    config=ConsumerConfig(ack_wait=_SEND_ACK_WAIT_SECONDS),
 )
 @inject
 async def send_notification_to_vk(
@@ -196,6 +212,7 @@ async def send_notification_to_vk(
     pull_sub=PullSub(),
     durable="send_push_notification",
     ack_policy=AckPolicy.MANUAL,
+    config=ConsumerConfig(ack_wait=_SEND_ACK_WAIT_SECONDS),
 )
 @inject
 async def send_push_notification(
