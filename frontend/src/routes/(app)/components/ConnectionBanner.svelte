@@ -2,6 +2,7 @@
 	import { type ConnectionStatus, getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService } from '$lib/services/offline.svelte';
 	import { reachability } from '$lib/services/reachability';
+	import { requestReconnectRefresh } from '$lib/utils/reconnectRefresh';
 	import { AlertCircle, RotateCw } from '@lucide/svelte';
 	import { slide } from 'svelte/transition';
 
@@ -94,6 +95,16 @@
 		return null;
 	});
 
+	// Manual retry from the down banner. `restart()` reconnects the stream but
+	// resets the attempt counter, so its handshake won't fire the catch-up refetch;
+	// and this banner only shows while the backend is reachable (a dead stream, not
+	// an outage), so no offline→online edge refetches either. Request the catch-up
+	// explicitly — the user tapped "refresh", so refreshing the data is the point.
+	function handleRetry() {
+		client.restart();
+		requestReconnectRefresh();
+	}
+
 	let banner = $state<Banner | null>(null);
 	let hideLockedUntil = 0;
 	let holdTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -143,7 +154,7 @@
 		{#if banner.showRetry}
 			<button
 				type="button"
-				onclick={() => client.restart()}
+				onclick={handleRetry}
 				class="inline-flex min-h-9 shrink-0 items-center rounded-lg bg-destructive px-2.5 text-xs font-medium text-white hover:bg-destructive/90 focus-visible:ring-2 focus-visible:ring-destructive/40 focus-visible:ring-offset-2 focus-visible:outline-none"
 			>
 				Обновить

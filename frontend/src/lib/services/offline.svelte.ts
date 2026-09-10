@@ -1,7 +1,7 @@
-import { invalidateAll } from '$app/navigation';
 import { listen } from '$lib/utils/listen';
 import { flushPendingLogout } from '$lib/utils/pendingLogout';
 import { classifyReachabilityChange } from '$lib/utils/reachabilityTransition';
+import { requestReconnectRefresh } from '$lib/utils/reconnectRefresh';
 import { createContext } from 'svelte';
 
 import { isReachable, markReachable, onReachableChange, probeReachability } from './reachability';
@@ -13,10 +13,6 @@ import { isReachable, markReachable, onReachableChange, probeReachability } from
 // a long outage, while still reacting quickly once a real outage ends.
 const RECOVERY_POLL_MIN_MS = 3000;
 const RECOVERY_POLL_MAX_MS = 30000;
-
-// Ignore repeat reconnects within this window so a flapping connection doesn't
-// trigger a storm of full `invalidateAll` reloads.
-const RECONNECT_REFRESH_DEBOUNCE_MS = 3000;
 
 // A failed probe while the device still reports online is treated as a possibly
 // transient blip (radio waking after the app is foregrounded, a brief NAT drop)
@@ -63,7 +59,6 @@ export class OfflineService {
 	#online = $state(isReachable());
 	#pollId: ReturnType<typeof setTimeout> | null = null;
 	#pollDelay = RECOVERY_POLL_MIN_MS;
-	#lastReconnectRefresh = 0;
 	#unsubscribeReachable: (() => void) | null = null;
 	// True while a confirm window is running (see #runConfirmWindow). Setting it
 	// false is how every caller cancels the window — the loop checks it and bails.
@@ -116,8 +111,9 @@ export class OfflineService {
 
 	// Apply a confirmed connectivity state and, on a real offline→online edge,
 	// refresh stale pages. Live SSE events only cover data that *changed*
-	// server-side; the reload catches the rest. Debounced so a flapping
-	// connection can't trigger reload storms.
+	// server-side; the reload catches the rest. The refresh is debounced (and
+	// shared with the SSE reconnect path) so a flapping connection can't trigger
+	// reload storms.
 	#commit(online: boolean) {
 		const wasOnline = this.#online;
 		this.#online = online;
@@ -129,11 +125,7 @@ export class OfflineService {
 			// until this clears, so there's no "logged back in" flicker in between.
 			void flushPendingLogout();
 
-			const now = Date.now();
-			if (now - this.#lastReconnectRefresh > RECONNECT_REFRESH_DEBOUNCE_MS) {
-				this.#lastReconnectRefresh = now;
-				void invalidateAll();
-			}
+			requestReconnectRefresh();
 		}
 	}
 

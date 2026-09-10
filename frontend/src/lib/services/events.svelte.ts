@@ -1,6 +1,5 @@
 import type { NotificationDTO } from '$lib/types/notifications';
 
-import { invalidateAll } from '$app/navigation';
 import { PUBLIC_API_URL } from '$env/static/public';
 import {
 	isReachable,
@@ -8,6 +7,7 @@ import {
 	onReachableChange,
 	probeReachability
 } from '$lib/services/reachability';
+import { requestReconnectRefresh } from '$lib/utils/reconnectRefresh';
 import { createContext } from 'svelte';
 
 const [getEvents, setEvents] = createContext<EventsClient>();
@@ -392,9 +392,10 @@ export class EventsClient {
 		if (this.#pausedForVisibility) {
 			this.#pausedForVisibility = false;
 			this.restart();
-			// Live events only carry server-side *changes*; a full refresh catches
-			// whatever updated while the stream was paused.
-			void invalidateAll();
+			// Catch whatever changed while the stream was paused. Shares the reconnect
+			// debounce so foregrounding onto a just-recovered network (which also fires
+			// the online edge and the fresh handshake below) refreshes once, not thrice.
+			requestReconnectRefresh();
 		}
 	};
 
@@ -419,12 +420,23 @@ export class EventsClient {
 			this.#handshake = null;
 		}
 
+		// A re-established stream (not the first dial) may have missed change signals
+		// while it was down — a silent drop the watchdog caught, or a long outage the
+		// slow retry recovered from. Neither crosses a reachability edge, so nothing
+		// else refetches on those paths; catch up now. The first connect is skipped
+		// because the page's own load already fetched fresh data. `restart()` (login,
+		// visibility, online) resets the counter to 0 before reconnecting, so those
+		// paths refetch through their own call, not here — no double refresh.
+		const wasReconnect = this.#reconnectAttempts > 0;
+
 		this.#clearStallTimer();
 		this.#connectionStatus = 'connected';
 		// A live stream proves the backend is reachable — feed that to the probe.
 		markReachable(true);
 		// Connection is fully online; reset backoff so the next blip starts fresh.
 		this.#reconnectAttempts = 0;
+
+		if (wasReconnect) requestReconnectRefresh();
 	};
 
 	// Guards both stages of coming online — the dial, then the handshake. Either
