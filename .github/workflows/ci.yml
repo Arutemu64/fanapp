@@ -4,16 +4,19 @@ name: CI
 # on every pull request and on pushes to main.
 #
 # Split into one job per area (backend, frontend, frontend-e2e, dockerfiles,
-# images) plus a `changes` job that gates them, so each area reports its own
-# red/green check and branch protection can require them individually — a docs-only
-# PR then shows backend/frontend as skipped instead of buried inside one job's log.
+# images, secrets, workflows) plus a `changes` job that gates them, so each area
+# reports its own red/green check and branch protection can require them
+# individually — a docs-only PR then shows backend/frontend as skipped instead
+# of buried inside one job's log.
 # Frontend further fans out into a lint/check/test/build matrix so those
 # independent tasks run in parallel: wall-clock time drops to the slowest
 # single task instead of their sum.
 #
-# Run the identical gates locally with `just ci` before pushing — except the
-# `images` job, which needs a Docker daemon (`just run-prod` builds the same
-# two images locally).
+# This workflow is the single source of truth for what "green" means. There is
+# deliberately NO aggregate `just ci` recipe mirroring it: a second copy of the
+# gate list is a second thing to forget to update, and the copy that rots is
+# always the local one. Run the individual recipes (`just backend-lint`,
+# `just frontend-lint`, …) while you work; let this file decide when it's done.
 #
 # Runner hardening applied to every job below (2026 supply-chain practice):
 #   - runs-on is pinned to ubuntu-24.04, not the floating `ubuntu-latest`
@@ -60,6 +63,7 @@ jobs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
       dockerfiles: ${{ steps.filter.outputs.dockerfiles }}
+      workflows: ${{ steps.filter.outputs.workflows }}
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -86,6 +90,12 @@ jobs:
               - '**/Dockerfile'
               - '.hadolint.yaml'
               - '.github/workflows/ci.yml'
+            # Every workflow, not just this one: the linters below audit them
+            # all. `.pre-commit-config.yaml` is in the list because zizmor is
+            # pointed at it too, so editing it has to re-run its only audit.
+            workflows:
+              - '.github/workflows/**'
+              - '.pre-commit-config.yaml'
 
   backend:
     name: Backend (lint, types, tests)
@@ -146,6 +156,14 @@ jobs:
       - name: Type check (ty)
         if: ${{ !cancelled() }}
         run: uv run ty check src/fanfan
+
+      # AGENTS.md's first "Never" — core/ and application/ must not import
+      # outward — is a machine-checkable contract ([tool.importlinter] in
+      # pyproject.toml), but nothing ran it on a PR: it lived only in
+      # `just backend-lint`, so the boundary held only when someone remembered.
+      - name: Import boundaries (import-linter)
+        if: ${{ !cancelled() }}
+        run: uv run lint-imports
 
       # Runs unit and integration tests under coverage. Integration tests start
       # their own Postgres/Redis containers via testcontainers fixtures.
@@ -308,6 +326,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # The suite has its own tsconfig (e2e/tsconfig.json, pointed at by
+      # playwright.config.ts), so `pnpm check` — which types the SvelteKit app —
+      # never sees these files, and Playwright transpiles without typing them.
+      # Runs before the browser download so a type error fails in seconds.
+      - name: Type check the e2e suite
+        run: pnpm e2e:typecheck
+
       # Cache the browser keyed on the resolved Playwright version — it only changes
       # when @playwright/test is bumped, so this is the tightest key that still busts
       # on a bump. PLAYWRIGHT_BROWSERS_PATH is unset on the runner (unlike the Claude
@@ -452,6 +477,99 @@ jobs:
           # ref the publish workflow writes: ghcr.io/<owner>/<repo>-<name>.
           cache-from: type=registry,ref=ghcr.io/${{ github.repository }}-${{ matrix.name }}:buildcache
 
+  # Secret scanning as a merge gate. The pre-commit gitleaks hook is the fast
+  # local pass, but it sees only staged content and `--no-verify` skips it
+  # outright, so the authoritative scan belongs here. Ungated by paths-filter on
+  # purpose: a secret can be added in any file, including a docs-only PR.
+  #
+  # `gitleaks dir` scans the checked-out tree rather than git history — no
+  # base/head commit-range logic to get wrong, and it answers the question that
+  # decides the merge ("is a secret in the code we are about to ship?") instead
+  # of "was one ever committed". Both entry points read .gitleaks.toml from the
+  # repo root, so the local and CI scopes cannot drift apart.
+  #
+  # Installed as a binary rather than via gitleaks/gitleaks-action: that action
+  # runs on the deprecated Node 20 runtime and stops working entirely on
+  # 2026-09-16, and it requires a paid licence for organisation-owned repos.
+  secrets:
+    name: Secrets (gitleaks)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      # Keep in sync with the gitleaks `rev` in .pre-commit-config.yaml; Renovate
+      # bumps both together via the "gitleaks" group (docs/dependencies.md).
+      GITLEAKS_VERSION: 8.30.1
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Install gitleaks
+        run: |
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin gitleaks
+
+      # --redact so a real hit names the rule and location without printing the
+      # secret itself into a public build log.
+      - name: Scan for secrets
+        run: gitleaks dir . --redact --no-banner
+
+  # Lint the workflows themselves. This file already carries a lot of hand-rolled
+  # hardening (SHA-pinned actions, persist-credentials: false, least-privilege
+  # permissions, job timeouts) that nothing enforced on the NEXT workflow anyone
+  # writes. actionlint covers correctness (expression typos, bad `uses:` refs,
+  # shellcheck over `run:` blocks); zizmor covers security (template injection,
+  # over-broad permissions, mutable action refs). They overlap barely, which is
+  # why both run rather than picking one.
+  workflows:
+    name: Workflows (actionlint, zizmor)
+    needs: changes
+    if: needs.changes.outputs.workflows == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Lint workflows (actionlint)
+        uses: raven-actions/actionlint@3d39aea434753780c3b3d4a1a31c854b4dbf49d7 # v2.2.0
+
+      # advanced-security: false keeps this a self-contained pass/fail gate. The
+      # default uploads SARIF to the Security tab, which needs code scanning
+      # enabled plus security-events: write, and *reports* findings rather than
+      # failing the job. With it off, a finding fails the build and
+      # annotations: true puts it inline on the PR diff.
+      #
+      # online-audits: false because those audits hit the GitHub API once per
+      # action ref — useful checks, but a network dependency and a rate limit on
+      # a merge gate. Enable deliberately if the extra supply-chain audits are
+      # wanted. A deliberate exception is suppressed inline in claude.yml.
+      - name: Audit workflows (zizmor)
+        uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        with:
+          # Our own workflows plus the pre-commit config (zizmor audits that
+          # too). NOT the action's default `.`, which walks the whole tree and
+          # picks up vendored `.github/workflows` inside `.agents/skills/*` —
+          # upstream files we neither own nor can fix, since `npx skills`
+          # rewrites them on the next sync. Same boundary .pre-commit-config.yaml
+          # and .gitleaks.toml already draw around vendored agent content, and it
+          # matches the `workflows` paths filter that gates this job.
+          inputs: .github/workflows/ .pre-commit-config.yaml
+          advanced-security: false
+          annotations: true
+          online-audits: false
+
   # Single always-run gate that branch protection requires INSTEAD of the
   # conditional/matrix jobs above. Two reasons the individual jobs can't be
   # required directly:
@@ -475,7 +593,7 @@ jobs:
   ci-ok:
     name: CI success
     if: always()
-    needs: [changes, backend, frontend, dockerfiles, images]
+    needs: [changes, backend, frontend, dockerfiles, images, secrets, workflows]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:

@@ -18,6 +18,7 @@ mismatch unexplained.
 | `postgres:18.4-alpine` | `docker-compose.yml`, `backend/scripts/generate_migration.py`, `backend/tests/fixtures/db_provider.py` |
 | `uv` | `mise.toml`, `backend/pyproject.toml` (`[tool.uv]` and the `uv_build` floor in `[build-system]`), `backend/Dockerfile`, `.claude/setup.sh`, CI (`setup-uv` input) |
 | `hadolint` | `mise.toml`, `.pre-commit-config.yaml` (`rev`), the image behind the `.claude/setup.sh` shim |
+| `gitleaks` | `.pre-commit-config.yaml` (`rev`), CI (`GITLEAKS_VERSION` in the `secrets` job) |
 | `pnpm` | `mise.toml`, `frontend/package.json` (`packageManager`), `frontend/Dockerfile` (`PNPM_VERSION`), `.claude/setup.sh`, CI (`pnpm/action-setup` input) |
 | `node` | `mise.toml`, `frontend/Dockerfile`, `.claude/setup.sh`, CI (`setup-node`) |
 | `python` (exact runtime pin) | `mise.toml`, `backend/.python-version` |

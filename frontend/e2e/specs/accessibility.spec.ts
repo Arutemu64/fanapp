@@ -23,7 +23,11 @@ test.describe('accessibility (axe)', { tag: '@a11y' }, () => {
 	// cells in) are stilled before the scan — axe would otherwise measure a colour
 	// mid-fade against its backdrop and flag a contrast the settled UI clears. The
 	// app already gates those animations on prefers-reduced-motion.
-	test.use({ reducedMotion: 'reduce' });
+	//
+	// Goes through `contextOptions`, not a top-level `reducedMotion` key: Playwright
+	// exposes it on BrowserContextOptions only, so the flat form silently emulates
+	// nothing. The config sets no other contextOptions, so nothing is clobbered here.
+	test.use({ contextOptions: { reducedMotion: 'reduce' } });
 
 	test('home has no WCAG A/AA violations for a guest', async ({ page, makeAxeBuilder }) => {
 		await page.goto('/');

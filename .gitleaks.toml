@@ -1,0 +1,18 @@
+# Shared gitleaks config: read automatically by BOTH the pre-commit hook and the
+# CI job, so the two can't drift into scanning different scopes.
+#
+# `useDefault` keeps gitleaks' full built-in ruleset — this file only narrows
+# WHERE it looks, never WHICH secrets it recognises.
+[extend]
+useDefault = true
+
+# Scope note: this allowlist covers ONLY `.agents/skills/`, the tree `npx skills`
+# owns. Everything else agent-related — `.claude/` (setup.sh, settings.json,
+# hooks), `.agents/context/`, `.agents/redpolitika.md` — is repository-owned and
+# stays scanned. `.claude/setup.sh` in particular handles Docker Hub
+# authentication (docs/claude-cloud.md), so it is precisely the file a required
+# secret gate must not skip. The pre-commit hook's own `exclude:` is broader for
+# speed; this narrower scope is the one that gates a merge.
+[[allowlists]]
+description = "Vendored upstream skills: their prose examples (`const mockToken = '...'`) trip the entropy rules, and a fix there cannot survive the next `npx skills` sync."
+paths = ['''^\.agents/skills/''']
