@@ -1,0 +1,56 @@
+name: Feature / enhancement
+description: New capability, or work promoted from a code TODO that needs design or discussion.
+labels: ["enhancement"]
+# English on purpose: an issue is a developer artifact, like code comments and
+# docs (AGENTS.md). Only user-facing app copy is Russian.
+#
+# The field shape mirrors issue #810 — the promotion criterion in AGENTS.md is
+# that a TODO becomes an issue only when it's schedulable work with trapped
+# context (cross-cutting, or needing design/discussion).
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for a new feature, or when promoting a code `TODO` that has
+        outgrown a comment. Keep the marker in code until the work lands — see
+        the TODO/issue policy in `AGENTS.md`.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What's missing or painful today, and who feels it.
+    validations:
+      required: true
+  - type: textarea
+    id: why-issue
+    attributes:
+      label: Why this needs an issue
+      description: >-
+        What makes it more than a self-contained TODO — is it cross-cutting,
+        or does it need a design decision or discussion?
+    validations:
+      required: true
+  - type: textarea
+    id: open-questions
+    attributes:
+      label: Open questions / proposed direction
+      description: Unknowns to resolve first, or a sketch of the approach if you have one.
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How we'll know it's done. Include removing any TODOs it resolves.
+      placeholder: |
+        - [ ] …
+        - [ ] The TODO at path:line is removed
+    validations:
+      required: false
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: Anything deliberately excluded, so the scope doesn't creep.
+    validations:
+      required: false

@@ -1,0 +1,3 @@
+# Keep the "Open a blank issue" escape hatch: this is a small maintainer-driven
+# tracker, and the forms below shouldn't add friction to a quick internal note.
+blank_issues_enabled: true
