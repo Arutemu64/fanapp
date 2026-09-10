@@ -43,7 +43,7 @@ function scopedKey(scope: CacheScope, key: string): string {
 	return `${scope === 'user' ? USER_KEY_PREFIX : UNIVERSAL_KEY_PREFIX}${key}`;
 }
 
-export async function readCache<T>(key: string, scope: CacheScope): Promise<T | undefined> {
+async function readCache<T>(key: string, scope: CacheScope): Promise<T | undefined> {
 	try {
 		return await get<T>(scopedKey(scope, key), cacheStore);
 	} catch {
@@ -51,7 +51,7 @@ export async function readCache<T>(key: string, scope: CacheScope): Promise<T | 
 	}
 }
 
-export async function writeCache<T>(key: string, value: T, scope: CacheScope): Promise<void> {
+async function writeCache<T>(key: string, value: T, scope: CacheScope): Promise<void> {
 	try {
 		await set(scopedKey(scope, key), value, cacheStore);
 	} catch {

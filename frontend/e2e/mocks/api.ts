@@ -26,7 +26,7 @@ export interface MockResponse {
 // take the route over entirely (e.g. `route.abort()` to simulate a dead network,
 // which is how the mocked tier drives the app's offline states). A function that
 // fulfils/aborts the route itself returns nothing.
-export type MockHandler =
+type MockHandler =
 	MockResponse | ((route: Route) => MockResponse | void | Promise<MockResponse | void>);
 
 export type Handlers = Partial<Record<RouteKey, MockHandler>>;

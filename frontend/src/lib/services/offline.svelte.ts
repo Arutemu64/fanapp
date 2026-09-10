@@ -55,7 +55,7 @@ function delay(ms: number): Promise<void> {
  * So everywhere here "trigger a probe" is how we *ask*; the handler is where we
  * *react*.
  */
-export class OfflineService {
+class OfflineService {
 	#online = $state(isReachable());
 	#pollId: ReturnType<typeof setTimeout> | null = null;
 	#pollDelay = RECOVERY_POLL_MIN_MS;

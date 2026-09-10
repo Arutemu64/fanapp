@@ -7,7 +7,7 @@ export type ScheduleChangeFullDTO = components['schemas']['ScheduleChangeFullDTO
 export type ScheduleChangeEventDTO = components['schemas']['ScheduleChangeEventDTO'];
 
 /** The viewer's subscription to a single event (id + reminder threshold). */
-export type EventSubscription = { id: string; counter: number };
+type EventSubscription = { id: string; counter: number };
 
 /**
  * Schedule row as the page renders it: the universal event plus the viewer's

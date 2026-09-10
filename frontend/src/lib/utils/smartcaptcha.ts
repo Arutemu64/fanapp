@@ -2,7 +2,7 @@
 // `window.smartCaptcha` API. The script is fetched lazily (only when a captcha
 // widget actually mounts) and shared across every widget on the page.
 
-export interface SmartCaptchaRenderParams {
+interface SmartCaptchaRenderParams {
 	/** Client-side key from the SmartCaptcha console. */
 	sitekey: string;
 	/** Invisible mode: a token is produced only after execute(), no checkbox. */

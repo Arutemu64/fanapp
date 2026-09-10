@@ -12,7 +12,7 @@ const ELEMENT_TAG = 'pwa-install';
  * Apple desktop, etc.), so this service only mirrors the element's state into
  * Svelte reactivity and exposes a single entry point to open the dialog.
  */
-export class PwaService {
+class PwaService {
 	#element: PWAInstallElement | null = null;
 	#canInstall = $state(false);
 	#isInstalled = $state(false);

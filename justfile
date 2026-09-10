@@ -30,6 +30,13 @@ frontend-build:
 frontend-test:
     cd frontend && pnpm test
 
+# Dead-code sweep (knip): unused files, exports, types and dependencies. A manual
+# aid, NOT a gate — deliberately out of `frontend-lint` and CI. Config in
+# frontend/knip.json ignores the vendored shadcn-svelte ui/. Findings are for a
+# human to judge, not blindly delete. See docs/frontend.md.
+frontend-deadcode:
+    cd frontend && pnpm deadcode
+
 # Playwright E2E against a production build with the backend mocked (docs/testing.md,
 # frontend/e2e/README.md). In a Claude Code web session the pre-baked Chromium is used
 # with no install; on CI/local first run `pnpm --dir frontend exec playwright install chromium`.
@@ -117,6 +124,14 @@ backend-seed-demo:
 
 backend-typecheck:
     cd backend && uv run ty check src/fanfan
+
+# Dead-code sweep (vulture): globally-unused code that ruff's local F401/F841
+# can't see. A manual aid, NOT a gate — deliberately out of `backend-lint` and
+# CI. Config in [tool.vulture] (pyproject.toml) quiets DI/route/DTO framework
+# false positives; genuine ones a rule can't express go in vulture_whitelist.py.
+# Findings are for a human to judge, not blindly delete. See docs/backend.md.
+backend-deadcode:
+    cd backend && uv run vulture
 
 backend-import-lint:
     cd backend && uv run lint-imports

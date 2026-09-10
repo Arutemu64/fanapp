@@ -75,7 +75,7 @@ export interface EventsHandshakePayload {
 // Broadcast whenever a vendor sync run changes state. Carries just enough to
 // log or filter; subscribers refetch GET /sync/sources rather than trusting it
 // as the source of truth, so a missed event self-heals on the next reconnect.
-export interface SyncRunUpdatedPayload {
+interface SyncRunUpdatedPayload {
 	source: string;
 	status: string;
 }
@@ -90,7 +90,7 @@ export interface SyncRunUpdatedPayload {
  * there is no code generation between them. Each key here must match an enum
  * value exactly (snake_case, no dots).
  */
-export interface SSEEventMap {
+interface SSEEventMap {
 	connection_established: EventsHandshakePayload;
 	schedule_updated: void;
 	notification_created: NotificationDTO;

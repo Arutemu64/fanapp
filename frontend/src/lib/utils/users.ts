@@ -5,19 +5,8 @@ const roleLabels: Record<string, string> = {
 	org: 'Организатор'
 };
 
-const roleColors: Record<string, 'gray' | 'blue' | 'green' | 'yellow'> = {
-	visitor: 'gray',
-	participant: 'blue',
-	helper: 'green',
-	org: 'yellow'
-};
-
 export function getRoleLabel(role: string): string {
 	return roleLabels[role] || role;
-}
-
-export function getRoleColor(role: string): 'gray' | 'blue' | 'green' | 'yellow' {
-	return roleColors[role] || 'gray';
 }
 
 const socialProviderLabels: Record<string, string> = {
