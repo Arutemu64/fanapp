@@ -8,6 +8,7 @@ import {
 	probeReachability
 } from '$lib/services/reachability';
 import { requestReconnectRefresh } from '$lib/utils/reconnectRefresh';
+import * as Sentry from '@sentry/sveltekit';
 import { createContext } from 'svelte';
 
 const [getEvents, setEvents] = createContext<EventsClient>();
@@ -160,6 +161,10 @@ export class EventsClient {
 	// Terminal flag set by destroy(); a destroyed client never reconnects.
 	#destroyed = false;
 	#unsubscribeReachable: (() => void) | null = null;
+	// Guards the one-issue-per-outage rule below: the slow retry re-enters
+	// #failAndReconnect once a minute while `failed`, and each of those must not
+	// file a fresh GlitchTip issue. Reset on the next successful handshake.
+	#failureReported = false;
 
 	// Tracks registered listeners so they survive reconnects.
 	// When EventSource reconnects, we re-attach all listeners to the new instance.
@@ -245,7 +250,7 @@ export class EventsClient {
 		this.#source.onerror = () => {
 			if (this.#manualDisconnect) return;
 			console.warn('EventSource error, attempting to reconnect...');
-			this.#failAndReconnect();
+			this.#failAndReconnect('transport_error');
 		};
 
 		this.#source.addEventListener('connection_established', this.#handleHandshake);
@@ -433,6 +438,14 @@ export class EventsClient {
 		this.#connectionStatus = 'connected';
 		// A live stream proves the backend is reachable — feed that to the probe.
 		markReachable(true);
+		// Leave a trail for whatever error fires next; on a recovery it also closes
+		// out the outage that #failAndReconnect may have filed as an issue.
+		Sentry.addBreadcrumb({
+			category: 'sse',
+			level: 'info',
+			message: wasReconnect ? 'SSE reconnected' : 'SSE connected'
+		});
+		this.#failureReported = false;
 		// Connection is fully online; reset backoff so the next blip starts fresh.
 		this.#reconnectAttempts = 0;
 
@@ -445,7 +458,7 @@ export class EventsClient {
 		this.#clearStallTimer();
 		this.#stallTimeoutId = setTimeout(() => {
 			console.warn(`SSE ${stage} timed out, reconnecting...`);
-			this.#failAndReconnect();
+			this.#failAndReconnect(`${stage}_timeout`);
 		}, timeoutMs);
 	}
 
@@ -458,16 +471,25 @@ export class EventsClient {
 		this.#clearHeartbeatTimer();
 		this.#heartbeatTimeoutId = setTimeout(() => {
 			console.warn('SSE stream went silent, reconnecting...');
-			this.#failAndReconnect();
+			this.#failAndReconnect('heartbeat_silence');
 		}, HEARTBEAT_TIMEOUT_MS);
 	}
 
-	#failAndReconnect() {
+	#failAndReconnect(reason: string) {
 		this.#clearStallTimer();
 		this.#clearHeartbeatTimer();
 		this.#closeSource();
 		this.#handshake = null;
 		this.#connectionStatus = 'error';
+
+		// Cheap trail (buffered, shipped only with the next captured event) so any
+		// later error carries how the realtime stream was behaving on this device.
+		Sentry.addBreadcrumb({
+			category: 'sse',
+			level: 'warning',
+			message: `SSE dropped (${reason})`,
+			data: { reason, attempts: this.#reconnectAttempts }
+		});
 
 		// A stream failure may mean the network died, not just an SSE hiccup. Probe
 		// the health endpoint so reachability (and the offline banner) reflect reality
@@ -476,6 +498,18 @@ export class EventsClient {
 
 		if (this.#reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
 			this.#connectionStatus = 'failed';
+			// Giving up on fast recovery is the one SSE state worth its own issue: on a
+			// saturated venue network it means realtime went silently dead for this
+			// attendee. File it once per outage — the slow retry re-enters here every
+			// minute while `failed`, and #handleHandshake clears the flag on recovery.
+			if (!this.#failureReported) {
+				this.#failureReported = true;
+				Sentry.captureMessage('SSE stream failed after retries', {
+					level: 'warning',
+					tags: { sse_outcome: 'failed', sse_reason: reason },
+					extra: { attempts: this.#reconnectAttempts }
+				});
+			}
 			// Give up on *fast* recovery only — keep a slow dial going so the stream
 			// self-heals without a manual refresh. See FAILED_RETRY_INTERVAL_MS for
 			// why no other recovery path covers this. The counter stays maxed out, so

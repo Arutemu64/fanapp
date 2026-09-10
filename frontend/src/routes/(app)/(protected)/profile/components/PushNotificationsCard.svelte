@@ -11,6 +11,7 @@
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { offlineWriteGate } from '$lib/utils/offlineAction';
+	import * as Sentry from '@sentry/sveltekit';
 	import { onMount, untrack } from 'svelte';
 
 	import ProfileCardShell from './ProfileCardShell.svelte';
@@ -142,6 +143,12 @@
 			// notifications were not configured for this deployment.
 			const vapidKey = PUBLIC_VAPID_KEY;
 			if (!vapidKey) {
+				// Deploy misconfig, not a user problem: the build shipped without a VAPID
+				// key, so push can never work here. One grouped GlitchTip issue surfaces it.
+				Sentry.captureMessage('Push subscribe blocked: missing VAPID key', {
+					level: 'warning',
+					tags: { push_outcome: 'no_vapid_key' }
+				});
 				toastService.add('Уведомления сейчас недоступны', 'error');
 				return;
 			}
@@ -150,6 +157,14 @@
 				const permission = await Notification.requestPermission();
 				if (permission !== 'granted') {
 					notificationsBlocked = permission === 'denied';
+					// User choice, not a bug — a breadcrumb (buffered, free) is enough to
+					// give context if a real error fires later in this attempt.
+					Sentry.addBreadcrumb({
+						category: 'push',
+						level: 'info',
+						message: 'Push permission not granted',
+						data: { permission }
+					});
 					toastService.add('Уведомления не разрешены', 'error');
 					return;
 				}
@@ -174,6 +189,12 @@
 			const auth = subJson.keys?.auth;
 
 			if (!endpoint || !p256dh || !auth) {
+				// The browser handed back a subscription missing the fields the backend
+				// needs — a real failure worth surfacing, not a user choice.
+				Sentry.captureMessage('Push subscribe returned an incomplete subscription', {
+					level: 'warning',
+					tags: { push_outcome: 'invalid_subscription' }
+				});
 				toastService.add('Не удалось подключить устройство. Попробуй ещё раз', 'error');
 				await subscription.unsubscribe();
 				return;
@@ -189,6 +210,13 @@
 
 			if (error || !response.ok) {
 				console.error('API Error:', error);
+				// The browser subscribed but the backend rejected it, so push stays off
+				// despite a granted permission — the failure mode worth catching.
+				Sentry.captureMessage('Push subscribe rejected by backend', {
+					level: 'warning',
+					tags: { push_outcome: 'backend_rejected' },
+					extra: { status: response?.status }
+				});
 				toastService.add('Не удалось включить уведомления. Попробуй ещё раз', 'error');
 				await subscription.unsubscribe();
 				return;
@@ -199,6 +227,9 @@
 			toastService.add('Пуш-уведомления включены', 'success');
 		} catch (error: unknown) {
 			console.error('Failed to subscribe:', error);
+			// pushManager.subscribe (or the SW readiness) threw — a genuine push
+			// failure with a stack worth keeping, tagged to group with the rest.
+			Sentry.captureException(error, { tags: { push_outcome: 'subscribe_threw' } });
 			toastService.add('Не удалось включить уведомления', 'error');
 		} finally {
 			isLoading = false;

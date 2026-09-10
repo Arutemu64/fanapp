@@ -233,6 +233,26 @@ Both are unauthenticated and cheap. Note the site check only confirms NGINX
 returns `200` — not that the SPA bundle boots; for that you'd need synthetic
 browser monitoring, which HTTP uptime checks don't cover.
 
+### Error reporting during a convention
+
+The Sentry/GlitchTip sink (`DEBUG__SENTRY_DSN` backend, `PUBLIC_SENTRY_DSN`
+frontend) catches more than crashes. Two burst-specific signals report through it
+so venue-network failures that never throw are still visible: **push
+subscription** failures the attendee actually hit (missing VAPID key, an
+incomplete subscription, a backend rejection, or `pushManager.subscribe` throwing
+— tagged `push_outcome`) and the **realtime SSE stream giving up** after its
+retries (`sse_outcome:failed`, one issue per outage, with the reason and attempt
+count). Routine reconnects stay as buffered breadcrumbs, so they cost nothing
+until a real event ships and then explain what led to it.
+
+Because real usage arrives in just **two short convention weekends a year**, treat
+those windows as the time to collect at full resolution: raise the trace and
+profile sample rates (`DEBUG__SENTRY_TRACES_SAMPLE_RATE` → `1.0`,
+`DEBUG__SENTRY_PROFILES_SAMPLE_RATE` → `1.0`, and the frontend's
+`PUBLIC_SENTRY_TRACES_SAMPLE_RATE` in step) for the weekend, then drop them back.
+The bounded burst makes 100% sampling cheap, and the off-season default keeps the
+sink quiet the rest of the year.
+
 ## Backups and restore
 
 The `pgbackup` service (`ops` profile, in
