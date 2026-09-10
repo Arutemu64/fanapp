@@ -127,6 +127,11 @@
       "matchPackageNames": ["hadolint", "hadolint/hadolint"]
     },
     {
+      "description": "Shared pin (docs/dependencies.md): keep the gitleaks pin identical across the pre-commit hook (.pre-commit-config.yaml rev) and GITLEAKS_VERSION in the CI 'secrets' job. Both read the same .gitleaks.toml, so a version skew would let the local hook and CI disagree about what counts as a secret — the one drift this pair must never develop.",
+      "groupName": "gitleaks",
+      "matchPackageNames": ["gitleaks/gitleaks"]
+    },
+    {
       "description": "Major runtime/image and framework bumps are review-only: no automerge, explicit label so they surface on the dashboard.",
       "matchUpdateTypes": ["major"],
       "matchPackageNames": [
@@ -163,6 +168,16 @@
     }
   ],
   "customManagers": [
+    {
+      "description": "Shared pin (docs/dependencies.md): the gitleaks binary the CI 'secrets' job downloads, held in a single GITLEAKS_VERSION literal. The pre-commit manager already tracks the same tool through the `rev` in .pre-commit-config.yaml, but no built-in manager reads a version out of a workflow `env:` block, so without this the CI copy silently falls behind. extractVersion strips the tag's leading `v` because the download URL interpolates the bare version too. Feeds the 'gitleaks' group above.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/workflows/ci\\.yml$/"],
+      "matchStrings": ["GITLEAKS_VERSION: (?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)"],
+      "depNameTemplate": "gitleaks/gitleaks",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.*)$",
+      "versioningTemplate": "semver"
+    },
     {
       "description": "Shared pin (docs/dependencies.md): Postgres image tag hard-coded as a Python string literal in the migration generator and the integration-test fixture (not visible to the docker-compose manager).",
       "customType": "regex",

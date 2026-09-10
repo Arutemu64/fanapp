@@ -81,8 +81,10 @@ aren't re-audited). Any of these can become a plan on request.
 - **Frontend build-chain advisories** — `nanoid <3.3.18` (high), `cookie <0.7.0`
   (low), transitive under SvelteKit/Sentry/vite; build-path only. `pnpm update`
   or a `pnpm.overrides` pin. Trivial hygiene.
-- **`just ci` referenced by `.github/workflows/ci.yml` but no such recipe
-  exists** — onboarding friction. Add a `ci:` recipe or fix the comment. S, DX.
+- ~~**`just ci` referenced by `.github/workflows/ci.yml` but no such recipe
+  exists**~~ — RESOLVED by fixing the comment rather than adding the recipe:
+  a local aggregate would be a second copy of the gate list to keep in step,
+  and CI is the source of truth for what "green" means.
 - **Frontend micro-perf / test gaps** — `EventCard.svelte:30` builds one API
   client per schedule row; `offlineCache.ts` / `events.svelte.ts` /
   `validation.ts` / `feed.ts` / `cooldown.svelte.ts` have no Vitest coverage.

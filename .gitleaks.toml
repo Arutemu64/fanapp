@@ -1,0 +1,16 @@
+# Shared gitleaks config: read automatically by BOTH the pre-commit hook and the
+# CI job, so the two can't drift into scanning different scopes.
+#
+# `useDefault` keeps gitleaks' full built-in ruleset — this file only narrows
+# WHERE it looks, never WHICH secrets it recognises.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Vendored agent skills and configs: upstream docs, not our code. Their example snippets (`const mockToken = '...'`) trip the entropy rules, and we can't fix a false positive in a file `npx skills` overwrites on the next sync."
+paths = [
+    '''^\.agents/''',
+    '''^\.claude/''',
+    '''^\.cline/''',
+    '''^\.gemini/''',
+]
