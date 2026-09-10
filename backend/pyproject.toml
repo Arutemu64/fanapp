@@ -160,6 +160,7 @@ ignore_decorators = [
     "@model_validator",
     # SQLAlchemy declarative helper.
     "@declared_attr",
+    "@declared_attr.*",
 ]
 
 [tool.uv.build-backend]
