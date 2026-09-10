@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
+	import { documentVisibility } from '$lib/services/documentVisibility';
 	import { formatFestivalDateTime, pluralize } from '$lib/utils/formatters';
 	import { Calendar, Globe, MapPin } from '@lucide/svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
@@ -23,7 +24,6 @@
 	let festivalDate = $derived(formatFestivalDateTime(festivalStart));
 
 	let now = $state(Date.now());
-	let documentVisible = $state(true);
 
 	// Key art can fail to load on flaky con-venue wifi; fall back to a branded bed
 	// instead of the browser's broken-image icon.
@@ -71,7 +71,7 @@
 	// (re)entry keeps a return-from-hidden from painting a stale second, and lets
 	// `now` cross `startMs` so the phase advances to 'during' on its own.
 	$effect(() => {
-		if (phase !== 'before' || !documentVisible) return;
+		if (phase !== 'before' || !documentVisibility.current) return;
 		now = Date.now();
 		const id = setInterval(() => (now = Date.now()), SECOND);
 		return () => clearInterval(id);
@@ -105,10 +105,6 @@
 		return () => clearTimeout(id);
 	});
 </script>
-
-<svelte:document
-	onvisibilitychange={() => (documentVisible = document.visibilityState === 'visible')}
-/>
 
 <section
 	aria-labelledby="hero-title"

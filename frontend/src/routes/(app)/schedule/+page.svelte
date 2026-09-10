@@ -9,6 +9,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Switch } from '$lib/components/ui/switch';
+	import { documentVisibility } from '$lib/services/documentVisibility';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
 	import { canManageSchedule } from '$lib/utils/permissions';
@@ -134,7 +135,26 @@
 	}
 
 	const VISIBILITY_REFETCH_THROTTLE_MS = 30000;
-	let lastRefetch = 0;
+	// Seeded to now: the page has just loaded fresh data, so the initial visible
+	// state must not trip the foreground refetch below.
+	let lastRefetch = Date.now();
+
+	// Also refetch on every (re)connect, so a schedule_updated missed while the SSE
+	// stream was down doesn't leave a stale page.
+	function reloadSchedule() {
+		lastRefetch = Date.now();
+		void invalidate('app:schedule');
+	}
+
+	// Shorter background trips (<60s) can lose an SSE event without triggering a
+	// reconnect — refetch on return to the foreground to catch up, throttled so a
+	// quick tab-flip doesn't refetch what we just loaded. Tracks only visibility;
+	// lastRefetch is a plain read so an SSE-driven reload never re-runs this.
+	$effect(() => {
+		if (!documentVisibility.current) return;
+		if (Date.now() - lastRefetch < VISIBILITY_REFETCH_THROTTLE_MS) return;
+		reloadSchedule();
+	});
 
 	onMount(() => {
 		const scrollContainer = getScrollContainer();
@@ -143,30 +163,13 @@
 			showScrollTopButton = (scrollContainer?.scrollTop ?? 0) > 320;
 		};
 
-		// Also refetch on every (re)connect, so a schedule_updated missed while
-		// the SSE stream was down doesn't leave a stale page.
-		const reloadSchedule = () => {
-			lastRefetch = Date.now();
-			void invalidate('app:schedule');
-		};
-
-		// Shorter background trips (<60s) can lose an SSE event without triggering
-		// a reconnect — refetch on return to catch up.
-		const handleVisibilityChange = () => {
-			if (document.visibilityState !== 'visible') return;
-			if (Date.now() - lastRefetch < VISIBILITY_REFETCH_THROTTLE_MS) return;
-			reloadSchedule();
-		};
-
 		updateScrollState();
 		scrollContainer?.addEventListener('scroll', updateScrollState, { passive: true });
-		document.addEventListener('visibilitychange', handleVisibilityChange);
 		eventsClient.on('schedule_updated', reloadSchedule);
 		eventsClient.on('connection_established', reloadSchedule);
 
 		return () => {
 			scrollContainer?.removeEventListener('scroll', updateScrollState);
-			document.removeEventListener('visibilitychange', handleVisibilityChange);
 			eventsClient.off('schedule_updated', reloadSchedule);
 			eventsClient.off('connection_established', reloadSchedule);
 		};
