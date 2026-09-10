@@ -14,9 +14,15 @@ from fanfan.core.events.schedule import (
     ScheduleChangeCreated,
     ScheduleChangeUndone,
 )
+from fanfan.presentation.faststream.consumer import (
+    DEFAULT_ACK_POLICY,
+    FAST_ACK_WAIT,
+    SLOW_ACK_WAIT,
+    consumer_config,
+)
 from fanfan.presentation.faststream.jstream import stream
 
-schedule_router = NatsRouter()
+schedule_router = NatsRouter(ack_policy=DEFAULT_ACK_POLICY)
 
 
 @schedule_router.subscriber(
@@ -24,6 +30,7 @@ schedule_router = NatsRouter()
     stream=stream,
     pull_sub=PullSub(),
     durable="process_schedule_change",
+    config=consumer_config(ack_wait=SLOW_ACK_WAIT),
 )
 @inject
 async def process_schedule_change(
@@ -42,6 +49,7 @@ async def process_schedule_change(
     stream=stream,
     pull_sub=PullSub(),
     durable="undo_schedule_change",
+    config=consumer_config(ack_wait=FAST_ACK_WAIT),
 )
 @inject
 async def undo_schedule_change(

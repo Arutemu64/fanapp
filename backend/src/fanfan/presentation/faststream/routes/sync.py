@@ -6,9 +6,14 @@ from fanfan.application.interactors.sync.execute_cosplay_sync import ExecuteCosp
 from fanfan.application.interactors.sync.execute_tickets_sync import ExecuteTicketsSync
 from fanfan.core.events.sync import SyncRequested
 from fanfan.core.vo.sync import SyncSource
+from fanfan.presentation.faststream.consumer import (
+    DEFAULT_ACK_POLICY,
+    SLOW_ACK_WAIT,
+    consumer_config,
+)
 from fanfan.presentation.faststream.jstream import stream
 
-sync_router = NatsRouter()
+sync_router = NatsRouter(ack_policy=DEFAULT_ACK_POLICY)
 
 # Resolved lazily by source rather than declared as FromDishka parameters:
 # Dishka resolves constructor dependencies eagerly, and each vendor's config
@@ -25,6 +30,7 @@ EXECUTORS = {
     stream=stream,
     pull_sub=PullSub(),
     durable="run_requested_sync",
+    config=consumer_config(ack_wait=SLOW_ACK_WAIT),
 )
 @inject
 async def run_requested_sync(

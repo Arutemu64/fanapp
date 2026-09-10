@@ -14,7 +14,6 @@ from fanfan.application.ports.gateways.participants import ParticipantGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.core.events.voting import VoteDeleted
 from fanfan.core.exceptions.votes import VoteNotFound
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.models.participant import Participant
@@ -24,7 +23,6 @@ from fanfan.core.vo.nomination import generate_nomination_id
 from fanfan.core.vo.participant import generate_participant_id
 from fanfan.core.vo.user import UserId, Username, UserRole
 from fanfan.core.vo.vote import VoteId, generate_vote_id
-from tests.integration.conftest import as_outbox
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -59,8 +57,6 @@ async def test_cancel_vote_deletes_vote_and_publishes_event(
         nomination_id=nomination.id,
         voting_number=1,
     )
-    # Construct the vote directly (not Vote.create) so setup doesn't enqueue a
-    # VoteCreated event and pollute the outbox assertion below.
     vote = Vote(
         id=generate_vote_id(),
         user_id=visitor_with_ticket.id,
@@ -80,15 +76,8 @@ async def test_cancel_vote_deletes_vote_and_publishes_event(
         )
         is None
     )
-    assert [
-        (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(
-        VoteDeleted(
-            vote_id=vote.id,
-            user_id=visitor_with_ticket.id,
-            participant_id=participant.id,
-        )
-    )
+    # Voting records no domain events, so the outbox must stay empty.
+    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
 
 
 async def test_cancel_vote_for_missing_vote_raises_not_found(

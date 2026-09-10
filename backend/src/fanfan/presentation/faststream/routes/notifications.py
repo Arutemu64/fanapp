@@ -41,9 +41,15 @@ from fanfan.core.exceptions.notifications import (
     UserNotReachable,
 )
 from fanfan.core.vo.notification import NotificationId
+from fanfan.presentation.faststream.consumer import (
+    DEFAULT_ACK_POLICY,
+    FAST_ACK_WAIT,
+    SLOW_ACK_WAIT,
+    consumer_config,
+)
 from fanfan.presentation.faststream.jstream import stream
 
-notifications_router = NatsRouter()
+notifications_router = NatsRouter(ack_policy=DEFAULT_ACK_POLICY)
 
 
 async def _deliver_to_channel(
@@ -93,6 +99,7 @@ async def _deliver_to_channel(
     stream=stream,
     pull_sub=PullSub(),
     durable="create_new_notification",
+    config=consumer_config(ack_wait=FAST_ACK_WAIT),
     ack_policy=AckPolicy.MANUAL,
 )
 @notifications_router.publisher(
@@ -149,6 +156,7 @@ async def create_new_notification(  # noqa: PLR0913, PLR0917 — all params fram
     stream=stream,
     pull_sub=PullSub(),
     durable="send_notification_to_telegram",
+    config=consumer_config(ack_wait=FAST_ACK_WAIT),
     ack_policy=AckPolicy.MANUAL,
 )
 @inject
@@ -172,6 +180,7 @@ async def send_notification_to_telegram(
     stream=stream,
     pull_sub=PullSub(),
     durable="send_notification_to_vk",
+    config=consumer_config(ack_wait=FAST_ACK_WAIT),
     ack_policy=AckPolicy.MANUAL,
 )
 @inject
@@ -195,6 +204,7 @@ async def send_notification_to_vk(
     stream=stream,
     pull_sub=PullSub(),
     durable="send_push_notification",
+    config=consumer_config(ack_wait=FAST_ACK_WAIT),
     ack_policy=AckPolicy.MANUAL,
 )
 @inject
@@ -218,6 +228,7 @@ async def send_push_notification(
     stream=stream,
     pull_sub=PullSub(),
     durable="create_new_broadcast",
+    config=consumer_config(ack_wait=SLOW_ACK_WAIT),
 )
 @inject
 async def create_new_broadcast(
@@ -238,6 +249,7 @@ async def create_new_broadcast(
     stream=stream,
     pull_sub=PullSub(),
     durable="cancel_mailing",
+    config=consumer_config(ack_wait=FAST_ACK_WAIT),
 )
 @inject
 async def cancel_mailing(

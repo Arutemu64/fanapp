@@ -233,6 +233,36 @@ Both are unauthenticated and cheap. Note the site check only confirms NGINX
 returns `200` — not that the SPA bundle boots; for that you'd need synthetic
 browser monitoring, which HTTP uptime checks don't cover.
 
+### Reconfiguring a JetStream consumer
+
+The consumer settings in `backend/src/fanfan/presentation/faststream/consumer.py`
+(`ack_wait`, `max_deliver`) are applied **only when a durable is created**.
+`nats-py`'s `pull_subscribe` looks the durable up first and skips the config
+entirely when it already exists, so deploying a change to those values leaves the
+running consumers exactly as they were — silently, with no warning in the logs.
+
+The `ack_policy` is not affected: it is enforced client-side by FastStream, so it
+takes effect on the next restart of the `stream` service like any other code
+change.
+
+To roll new values onto the existing durables, edit them with the NATS CLI. The
+`nats` service image ships only the server, so run the CLI from a throwaway
+`nats-box` against the published port (durable names are the `durable=`
+arguments in `presentation/faststream/routes/`; the stream is named `stream`):
+
+```bash
+# Values must match consumer.py — SLOW_ACK_WAIT/FAST_ACK_WAIT and MAX_DELIVER.
+docker run --rm -it --network host natsio/nats-box \
+  nats --server nats://127.0.0.1:4222 --user "$NATS__USER" --password "$NATS__PASSWORD" \
+  consumer edit stream process_schedule_change --wait=10m --max-deliver=25 --force
+```
+
+Note the flag is `--wait`, not `--ack-wait`. Check the result with
+`... consumer info stream <durable>`. Deleting the consumer instead also works —
+FastStream recreates it with the current config on the next `stream` restart —
+but it loses the consumer's position and redelivers whatever the stream still
+retains, so prefer `edit` on a live system.
+
 ### Error reporting during a convention
 
 The Sentry/GlitchTip sink (`DEBUG__SENTRY_DSN` backend, `PUBLIC_SENTRY_DSN`

@@ -34,7 +34,6 @@ class CancelVote:
         # existence to other users.
         if vote is None or vote.user_id != current_user.id:
             raise VoteNotFound
-        vote.delete()
         await self.vote_gateway.delete(vote)
         await self.uow.commit()
         logger.info(
