@@ -218,6 +218,11 @@ async def send_push_notification(
     stream=stream,
     pull_sub=PullSub(),
     durable="create_new_broadcast",
+    # Redeliver on failure rather than TERM: this stream's guarantee is
+    # redelivery + idempotent consumers (see jstream.py), so a transient blip
+    # mid-broadcast must not silently drop a whole mailing. The default
+    # REJECT_ON_ERROR would discard it permanently.
+    ack_policy=AckPolicy.NACK_ON_ERROR,
 )
 @inject
 async def create_new_broadcast(
@@ -238,6 +243,9 @@ async def create_new_broadcast(
     stream=stream,
     pull_sub=PullSub(),
     durable="cancel_mailing",
+    # Same as create_new_broadcast: redeliver on a transient failure instead of
+    # TERMing, so a cancellation is not lost while notifications keep going out.
+    ack_policy=AckPolicy.NACK_ON_ERROR,
 )
 @inject
 async def cancel_mailing(
