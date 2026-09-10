@@ -555,6 +555,14 @@ jobs:
       - name: Audit workflows (zizmor)
         uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
         with:
+          # Our own workflows plus the pre-commit config (zizmor audits that
+          # too). NOT the action's default `.`, which walks the whole tree and
+          # picks up vendored `.github/workflows` inside `.agents/skills/*` —
+          # upstream files we neither own nor can fix, since `npx skills`
+          # rewrites them on the next sync. Same boundary .pre-commit-config.yaml
+          # and .gitleaks.toml already draw around vendored agent content, and it
+          # matches the `workflows` paths filter that gates this job.
+          inputs: .github/workflows/ .pre-commit-config.yaml
           advanced-security: false
           annotations: true
           online-audits: false
