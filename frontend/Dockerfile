@@ -14,7 +14,7 @@ ENV PATH=/pnpm:$PATH
 # mise.toml, package.json#packageManager and the CI `pnpm/action-setup` input.
 # The annotation below is what keeps it in their bump PR — the dockerfile
 # manager reads FROM lines only, so an ENV pin is invisible without it. It is
-# read by the customManagers:dockerfileVersions preset (renovate.json), which
+# read by the customManagers:dockerfileVersions preset (renovate.jsonc), which
 # requires the comment on the line directly above the ENV.
 # renovate: datasource=npm depName=pnpm versioning=npm
 ENV PNPM_VERSION=12.2.1
