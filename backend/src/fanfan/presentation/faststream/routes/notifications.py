@@ -50,7 +50,7 @@ async def _deliver_to_channel(
     *,
     channel: str,
     notification_id: NotificationId,
-    deliver: Callable[[], Awaitable[None]],
+    send: Callable[[SendNotificationInput], Awaitable[None]],
     msg: NatsMessage,
     logger: Logger,
 ) -> None:
@@ -59,7 +59,7 @@ async def _deliver_to_channel(
     way instead of each subscriber re-implementing (and drifting on) the set.
     """
     try:
-        await deliver()
+        await send(SendNotificationInput(notification_id=notification_id))
     except NotificationRetryAfter as e:
         logger.warning(
             "Retry sending notification %s to %s in %s",
@@ -161,9 +161,7 @@ async def send_notification_to_telegram(
     await _deliver_to_channel(
         channel="Telegram",
         notification_id=data.notification_id,
-        deliver=lambda: interactor.send_notification_to_telegram(
-            SendNotificationInput(notification_id=data.notification_id)
-        ),
+        send=interactor.send_notification_to_telegram,
         msg=msg,
         logger=logger,
     )
@@ -186,9 +184,7 @@ async def send_notification_to_vk(
     await _deliver_to_channel(
         channel="VK",
         notification_id=data.notification_id,
-        deliver=lambda: interactor.send_notification_to_vk(
-            SendNotificationInput(notification_id=data.notification_id)
-        ),
+        send=interactor.send_notification_to_vk,
         msg=msg,
         logger=logger,
     )
@@ -211,9 +207,7 @@ async def send_push_notification(
     await _deliver_to_channel(
         channel="push",
         notification_id=data.notification_id,
-        deliver=lambda: interactor.send_notification_to_push(
-            SendNotificationInput(notification_id=data.notification_id)
-        ),
+        send=interactor.send_notification_to_push,
         msg=msg,
         logger=logger,
     )
