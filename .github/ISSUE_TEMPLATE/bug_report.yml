@@ -1,5 +1,6 @@
 name: Bug report
 description: Something behaves incorrectly.
+title: "[Bug]: "
 labels: ["bug"]
 # English on purpose: an issue is a developer artifact, like code comments and
 # docs (AGENTS.md). Only user-facing app copy is Russian.
