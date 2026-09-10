@@ -1,3 +1,5 @@
+<!-- Title = the squash-merge commit on main (GitHub appends #N). Imperative, capitalised, no period, ≤~70 chars — name the change AND its effect in product terms. -->
+
 ## What & why
 <!-- Brief description of the change and why. Link related issue: Closes #123 -->
 
