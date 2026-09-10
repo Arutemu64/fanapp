@@ -88,7 +88,7 @@ echo "[setup] Installing stable Python 3.14..."
 uv python install 3.14 || echo "[setup]   WARN: Python 3.14 install failed; the backend's uv sync will try again per session."
 
 # Pinned to match the other node sites (mise.toml, frontend/Dockerfile, CI
-# setup-node); the renovate.json "node" group keeps them together via a
+# setup-node); the renovate.jsonc "node" group keeps them together via a
 # customManager (docs/dependencies.md). One literal, referenced twice, so the
 # install and the default alias cannot drift apart on a bump.
 NODE_VERSION=24.20.0
@@ -121,7 +121,7 @@ fi
 # caches persist in the snapshot).
 
 # Pinned to match the other pnpm sites (mise.toml, frontend/package.json
-# "packageManager", frontend/Dockerfile); the renovate.json "pnpm" group keeps
+# "packageManager", frontend/Dockerfile); the renovate.jsonc "pnpm" group keeps
 # them together via a customManager (docs/dependencies.md). Without that manager
 # this line is invisible to Renovate and drifts behind the other pnpm sites.
 echo "[setup] Installing pnpm 11..."
@@ -242,7 +242,7 @@ fi
 # matching the caller's uid/gid keeps both working unchanged.
 #
 # Keep the tag in sync with mise.toml and the .pre-commit-config.yaml rev
-# (docs/dependencies.md); the renovate.json "hadolint" group covers this site
+# (docs/dependencies.md); the renovate.jsonc "hadolint" group covers this site
 # via a customManager.
 echo "[setup] Installing hadolint shim (Docker-backed)..."
 if $SUDO tee /usr/local/bin/hadolint >/dev/null <<'HADOLINT_SHIM'

@@ -289,7 +289,7 @@ skip the rest, so a run reports every problem in that area instead of only the
 first. The reasoning behind the job split is in the header comment of
 [`ci.yml`](.github/workflows/ci.yml).
 
-[`renovate.json`](renovate.json) opens one PR per dependency every Monday
+[`renovate.jsonc`](renovate.jsonc) opens one PR per dependency every Monday
 morning, automerging the ones that break loudly in CI (see
 [`docs/dependencies.md`](docs/dependencies.md)).
 

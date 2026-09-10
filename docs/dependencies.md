@@ -34,7 +34,7 @@ into a hard failure: [PR #565](https://github.com/Arutemu64/fanapp/pull/565)
 raised `requires-python` to `>=3.14.7` while `.python-version` — read by the
 pyenv/docker datasource, which lags the CPython release the other sites read —
 was still `3.14.6`, and every `uv run`/`uv sync` then rejected it. Renovate keeps
-the floor frozen (the `python floor` rule in `renovate.json`, `rangeStrategy:
+the floor frozen (the `python floor` rule in `renovate.jsonc`, `rangeStrategy:
 replace`); raising it is a deliberate human edit when a minor is dropped.
 
 `just` is pinned too (`mise.toml`), but it is deliberately **not** in the table
@@ -56,7 +56,7 @@ site needs no group, just its own review PR.
 
 ## How Renovate enforces it
 
-[`renovate.json`](../renovate.json) automates the bump-together part:
+[`renovate.jsonc`](../renovate.jsonc) automates the bump-together part:
 
 * **Grouped `packageRules`** (`uv`, `postgres`, `node`, `pnpm`, `hadolint`,
   `python`) consolidate each shared pin into a single PR, so no site is left

@@ -19,7 +19,7 @@ license = "MIT"
 # lives in backend/.python-version and mise.toml. Tying this to the latest patch
 # made a trailing .python-version — whose pyenv/docker datasource lags the CPython
 # release the other sites read — violate the floor and break `uv sync` in the
-# image build; Renovate is told to leave it alone (renovate.json, `python` floor).
+# image build; Renovate is told to leave it alone (renovate.jsonc, `python` floor).
 requires-python = ">=3.14"
 dependencies = [
     "adaptix>=3.0.0b12",
@@ -89,13 +89,13 @@ build-backend = "uv_build"
 # .github/workflows/ci.yml; bump all five together.
 required-version = "==0.12.3"
 # Ignore releases younger than this when resolving, mirroring Renovate's
-# `minimumReleaseAge` in renovate.json. Renovate applies the cooldown when it
+# `minimumReleaseAge` in renovate.jsonc. Renovate applies the cooldown when it
 # *picks* a target version, but when it then calls uv to relock a bumped `>=`
 # floor, uv would otherwise resolve to the newest release available — which may
 # still be inside the cooldown — and Renovate rejects the lockfile as a pending
 # version (the `renovate/artifacts` failure seen on PR #310). Matching the two
 # keeps uv's own resolution inside the same window. Keep this in sync with
-# renovate.json `minimumReleaseAge`.
+# renovate.jsonc `minimumReleaseAge`.
 exclude-newer = "7 days"
 
 [tool.pytest.ini_options]
