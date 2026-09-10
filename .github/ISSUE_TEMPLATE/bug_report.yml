@@ -1,0 +1,54 @@
+name: Bug report
+description: Something behaves incorrectly.
+title: "[Bug]: "
+labels: ["bug"]
+# English on purpose: an issue is a developer artifact, like code comments and
+# docs (AGENTS.md). Only user-facing app copy is Russian.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Fill in what you can — the more precise the
+        repro, the faster it gets fixed.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: The actual behaviour, including any error message or screenshot.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to …
+        2. Tap …
+        3. See …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Where does it surface? Pick the closest.
+      options:
+        - Backend (FastAPI / DB / NATS)
+        - Frontend (SvelteKit PWA)
+        - Infra / deployment
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Device / browser
+      description: Only for frontend bugs — e.g. "iPhone 13, Safari" or "Chrome desktop".
+    validations:
+      required: false

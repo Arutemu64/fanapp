@@ -1,0 +1,9 @@
+# Keep the "Open a blank issue" escape hatch: this is a small maintainer-driven
+# tracker, and the forms below shouldn't add friction to a quick internal note.
+blank_issues_enabled: true
+contact_links:
+  # Intercept security reports at the chooser: SECURITY.md asks people not to
+  # file vulnerabilities as public issues, so route them there before they do.
+  - name: Report a security vulnerability
+    url: https://github.com/Arutemu64/fanapp/security/policy
+    about: Please report security problems privately via our security policy, not as a public issue.

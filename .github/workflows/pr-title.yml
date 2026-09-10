@@ -1,0 +1,76 @@
+name: PR title
+
+# We squash-merge, so the PR title becomes the commit that lands on main
+# (AGENTS.md "Commit & PR titles"). Branch commits are discarded by the squash,
+# so the title is the only message worth linting — this validates it against
+# Conventional Commits. It drives no release automation (versioning stays a
+# manual call); it only enforces the title's shape.
+#
+# Reports the "Validate PR title" check. To actually gate merges on it, mark
+# that check required in branch protection — otherwise a bad title is a red X,
+# not a block.
+
+on:
+  pull_request:
+    # `synchronize` is here for a reason: once this is a *required* check, a
+    # required check is evaluated per head commit. Without re-running on every
+    # push, a new commit would have no title check on its SHA and the PR would
+    # wait forever for a status that never reports. edited/reopened cover title
+    # changes; opened covers the first run.
+    types: [opened, edited, reopened, synchronize]
+
+# A rapid series of title edits should only leave the latest run standing.
+concurrency:
+  group: pr-title-${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+# Title comes from the event payload; the action only needs to read PR data.
+permissions:
+  pull-requests: read
+
+jobs:
+  validate:
+    name: Validate PR title
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Full Conventional Commits type set.
+          types: |
+            feat
+            fix
+            docs
+            chore
+            refactor
+            test
+            build
+            ci
+            perf
+            style
+            revert
+          # Fixed vocabulary, but a scope is optional: a repo-wide change
+          # legitimately carries none. `deps` mirrors renovate's semanticCommitScope.
+          scopes: |
+            backend
+            frontend
+            infra
+            deps
+            ci
+            docs
+          requireScope: false
+          # Subject follows the CC lowercase convention. It must still name the
+          # change AND its effect in product terms — the linter checks the case,
+          # a reviewer checks the substance.
+          subjectPattern: ^(?![A-Z]).+$
+          subjectPatternError: |
+            The subject "{subject}" must start lowercase (Conventional Commits style),
+            and still name the change and its effect, e.g.
+            "feat(voting): make voting honestly offline-only".

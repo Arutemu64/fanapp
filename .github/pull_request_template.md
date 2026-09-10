@@ -1,3 +1,7 @@
+<!-- Title = the squash-merge commit on main, and it's linted (Conventional Commits): type(scope): subject
+     type ∈ feat|fix|docs|chore|refactor|test|build|ci|perf|style|revert · scope optional ∈ backend|frontend|infra|deps|ci|docs
+     Subject lowercase, no period, ≤~70 chars — name the change AND its effect, e.g. "feat(voting): make voting honestly offline-only". -->
+
 ## What & why
 <!-- Brief description of the change and why. Link related issue: Closes #123 -->
 
