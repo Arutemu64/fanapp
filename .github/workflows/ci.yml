@@ -451,3 +451,39 @@ jobs:
           # PR build must not overwrite main's `:buildcache` tag. Matches the
           # ref the publish workflow writes: ghcr.io/<owner>/<repo>-<name>.
           cache-from: type=registry,ref=ghcr.io/${{ github.repository }}-${{ matrix.name }}:buildcache
+
+  # Single always-run gate that branch protection requires INSTEAD of the
+  # conditional/matrix jobs above. Two reasons the individual jobs can't be
+  # required directly:
+  #   - A skipped matrix job (area not changed) reports one check under the
+  #     un-interpolated name `Frontend (${{ matrix.task.name }})` /
+  #     `Images (${{ matrix.name }} build)`, not the expanded `Frontend (lint)`
+  #     … contexts. Requiring the expanded names would leave a PR outside that
+  #     area waiting forever on a context that never reports.
+  #   - If `changes` itself fails, its dependents skip, and a skipped required
+  #     check counts as satisfied — a PR could merge with no validation.
+  # This job `needs` every gating job and, via `if: always()`, runs even when
+  # they skip; it fails iff any need failed or was cancelled (`skipped` and
+  # `success` both pass). A failed `changes` therefore fails this gate, closing
+  # the bypass. Require exactly this check (name: "CI success") plus the PR-title
+  # check in the ruleset. frontend-e2e is deliberately excluded — not a required
+  # tier yet (see its job comment) — so it must not gate merges through here.
+  #
+  # The `needs` list is the one thing to maintain: a new gating job that isn't
+  # added here is silently ungated, since the ruleset only requires this gate.
+  # Add every new required job to the list (and leave advisory/unstable ones out).
+  ci-ok:
+    name: CI success
+    if: always()
+    needs: [changes, backend, frontend, dockerfiles, images]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Fail if any required job failed or was cancelled
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        run: exit 1

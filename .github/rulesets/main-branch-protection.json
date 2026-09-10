@@ -36,15 +36,7 @@
         "strict_required_status_checks_policy": false,
         "do_not_enforce_on_create": false,
         "required_status_checks": [
-          { "context": "Backend (lint, types, tests)" },
-          { "context": "Frontend (lint)" },
-          { "context": "Frontend (check)" },
-          { "context": "Frontend (test)" },
-          { "context": "Frontend (api)" },
-          { "context": "Frontend (build)" },
-          { "context": "Dockerfiles (hadolint)" },
-          { "context": "Images (backend build)" },
-          { "context": "Images (frontend build)" },
+          { "context": "CI success" },
           { "context": "Validate PR title" }
         ]
       }
