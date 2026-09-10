@@ -95,6 +95,17 @@
 		void checkSubscription();
 	});
 
+	// Best-effort rollback of a browser push subscription. A failing unsubscribe is
+	// itself a cleanup problem — it must not propagate and be reported as the
+	// original failure, whose real cause was already captured at the call site.
+	async function discardSubscription(subscription: PushSubscription) {
+		try {
+			await subscription.unsubscribe();
+		} catch (error) {
+			console.error('Failed to roll back push subscription:', error);
+		}
+	}
+
 	async function toggleSubscription() {
 		if (isSubscribed) {
 			try {
@@ -133,6 +144,9 @@
 		}
 
 		isLoading = true;
+		// Flips once the browser subscription exists, so the catch below can tell a
+		// genuine subscribe / service-worker failure from a later backend-request throw.
+		let browserSubscribed = false;
 		try {
 			if (typeof Notification === 'undefined') {
 				toastService.add('Твой браузер не поддерживает уведомления', 'error');
@@ -182,6 +196,7 @@
 				userVisibleOnly: true,
 				applicationServerKey: urlBase64ToUint8Array(vapidKey)
 			});
+			browserSubscribed = true;
 
 			const subJson = subscription.toJSON();
 			const endpoint = subJson.endpoint;
@@ -196,7 +211,7 @@
 					tags: { push_outcome: 'invalid_subscription' }
 				});
 				toastService.add('Не удалось подключить устройство. Попробуй ещё раз', 'error');
-				await subscription.unsubscribe();
+				await discardSubscription(subscription);
 				return;
 			}
 
@@ -218,7 +233,7 @@
 					extra: { status: response?.status }
 				});
 				toastService.add('Не удалось включить уведомления. Попробуй ещё раз', 'error');
-				await subscription.unsubscribe();
+				await discardSubscription(subscription);
 				return;
 			}
 
@@ -227,9 +242,12 @@
 			toastService.add('Пуш-уведомления включены', 'success');
 		} catch (error: unknown) {
 			console.error('Failed to subscribe:', error);
-			// pushManager.subscribe (or the SW readiness) threw — a genuine push
-			// failure with a stack worth keeping, tagged to group with the rest.
-			Sentry.captureException(error, { tags: { push_outcome: 'subscribe_threw' } });
+			// Classify by where it threw: before the browser subscription exists it's a
+			// genuine subscribe / service-worker failure; after, the only throw left is
+			// the backend registration request, which is a different failure mode.
+			Sentry.captureException(error, {
+				tags: { push_outcome: browserSubscribed ? 'backend_request_threw' : 'subscribe_threw' }
+			});
 			toastService.add('Не удалось включить уведомления', 'error');
 		} finally {
 			isLoading = false;
