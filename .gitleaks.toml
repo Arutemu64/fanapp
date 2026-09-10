@@ -6,11 +6,13 @@
 [extend]
 useDefault = true
 
+# Scope note: this allowlist covers ONLY `.agents/skills/`, the tree `npx skills`
+# owns. Everything else agent-related — `.claude/` (setup.sh, settings.json,
+# hooks), `.agents/context/`, `.agents/redpolitika.md` — is repository-owned and
+# stays scanned. `.claude/setup.sh` in particular handles Docker Hub
+# authentication (docs/claude-cloud.md), so it is precisely the file a required
+# secret gate must not skip. The pre-commit hook's own `exclude:` is broader for
+# speed; this narrower scope is the one that gates a merge.
 [[allowlists]]
-description = "Vendored agent skills and configs: upstream docs, not our code. Their example snippets (`const mockToken = '...'`) trip the entropy rules, and we can't fix a false positive in a file `npx skills` overwrites on the next sync."
-paths = [
-    '''^\.agents/''',
-    '''^\.claude/''',
-    '''^\.cline/''',
-    '''^\.gemini/''',
-]
+description = "Vendored upstream skills: their prose examples (`const mockToken = '...'`) trip the entropy rules, and a fix there cannot survive the next `npx skills` sync."
+paths = ['''^\.agents/skills/''']

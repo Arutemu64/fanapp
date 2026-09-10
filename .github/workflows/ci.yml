@@ -90,9 +90,12 @@ jobs:
               - '**/Dockerfile'
               - '.hadolint.yaml'
               - '.github/workflows/ci.yml'
-            # Every workflow, not just this one: the linters below audit them all.
+            # Every workflow, not just this one: the linters below audit them
+            # all. `.pre-commit-config.yaml` is in the list because zizmor is
+            # pointed at it too, so editing it has to re-run its only audit.
             workflows:
               - '.github/workflows/**'
+              - '.pre-commit-config.yaml'
 
   backend:
     name: Backend (lint, types, tests)
