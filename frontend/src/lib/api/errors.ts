@@ -269,7 +269,7 @@ export function getApiErrorDetail(error: unknown): string | null {
 	return null;
 }
 
-export function getApiErrorCode(error: unknown): string | null {
+function getApiErrorCode(error: unknown): string | null {
 	return getApiErrorPayload(error)?.code ?? null;
 }
 

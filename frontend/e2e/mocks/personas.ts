@@ -11,7 +11,7 @@ const DEFAULT_SETTINGS: ApiSchemas['UserSettingsDTO'] = {
 };
 
 /** Build a valid CurrentUserDTO; override any field per test. */
-export function user(overrides: Partial<User> = {}): User {
+function user(overrides: Partial<User> = {}): User {
 	return {
 		id: '01890000-0000-7000-8000-000000000001',
 		username: 'test_visitor',

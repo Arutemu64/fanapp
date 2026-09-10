@@ -6,7 +6,7 @@ import { getOfflineService } from '$lib/services/offline.svelte';
  * (voting, feedback, tools) so a disabled button and a blocked page speak with
  * one voice.
  */
-export const OFFLINE_ACTION_HINT = 'Доступно только онлайн';
+const OFFLINE_ACTION_HINT = 'Доступно только онлайн';
 
 /**
  * Reactive gate for write controls on pages that stay *readable* offline

@@ -6,7 +6,7 @@
 
 import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
 
-export type ScheduleNominationGroup = {
+type ScheduleNominationGroup = {
 	// Identity for the keyed {#each}. Assigned from the unfiltered schedule so
 	// it survives filtering — see `filterScheduleGroups`.
 	key: string;
@@ -26,7 +26,7 @@ export type ScheduleBlockGroup = {
 
 // A row with no block: a break, the opening or the closing. It renders as a
 // standalone row between block sections rather than inside one.
-export type ScheduleInterlude = {
+type ScheduleInterlude = {
 	kind: 'interlude';
 	key: string;
 	event: ScheduleEventWithSubscription;
