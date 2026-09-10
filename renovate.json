@@ -3,7 +3,7 @@
   "extends": [
     "config:recommended",
     ":pinDevDependencies",
-    ":semanticCommitsEnabled",
+    ":semanticCommits",
     ":enablePreCommit",
     "helpers:pinGitHubActionDigests",
     "abandonments:recommended",
@@ -17,7 +17,7 @@
     "customManagers:dockerfileVersions reads `# renovate: datasource=… depName=…` annotations above `ENV`/`ARG` *_VERSION lines in Dockerfiles — the built-in dockerfile manager sees FROM lines only. Preferred over a hand-rolled regex manager per https://docs.renovatebot.com/modules/manager/regex/ ('you only need one customManager instead of four', and the annotation documents the pin where a reader of the Dockerfile will see it). Currently one site: PNPM_VERSION in frontend/Dockerfile. The preset only matches annotated lines, so it cannot pick anything up by accident.",
     "osvVulnerabilityAlerts adds OSV-sourced CVE detection for direct dependencies on top of GitHub's own alerts, so a vulnerable backend package is caught even where the Dependabot dependency graph does not read uv.lock. Security fixes need no further wiring: Renovate's vulnerabilityAlerts defaults already override the weekly schedule and the minimumReleaseAge cooldown below (schedule [], minimumReleaseAge null, prCreation 'immediate').",
     "Concurrency, rebasing and platform automerge are left at Renovate's defaults (prConcurrentLimit 10, prHourlyLimit 2, rebaseWhen 'auto', platformAutomerge true), which suit unmetered CI. 'auto' resolves to 'behind-base-branch' on a branch with automerge enabled, so an automerged commit was green against current main rather than against a stale base.",
-    ":semanticCommitsEnabled makes Renovate title its PRs as `chore(deps): …` (semanticCommitType 'chore', semanticCommitScope 'deps', lowercased subject). Not cosmetic: the PR title is the squash-merge commit on main and is linted against Conventional Commits by .github/workflows/pr-title.yml, so a plain 'Update dependency …' title would fail that check — and jam dep automation the moment it becomes a required check. 'deps' is in that workflow's allowed scopes; keep the two in sync."
+    ":semanticCommits enables semantic prefixes, so Renovate titles its PRs as `chore(deps): …` (semanticCommitType 'chore', semanticCommitScope 'deps', lowercased subject). Not cosmetic: the PR title is the squash-merge commit on main and is linted against Conventional Commits by .github/workflows/pr-title.yml, so a plain 'Update dependency …' title would fail that check — and jam dep automation the moment it becomes a required check. 'deps' is in that workflow's allowed scopes; keep the two in sync."
   ],
   "ignorePaths": [
     "**/node_modules/**",
