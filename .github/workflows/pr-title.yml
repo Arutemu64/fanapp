@@ -12,7 +12,12 @@ name: PR title
 
 on:
   pull_request:
-    types: [opened, edited, reopened]
+    # `synchronize` is here for a reason: once this is a *required* check, a
+    # required check is evaluated per head commit. Without re-running on every
+    # push, a new commit would have no title check on its SHA and the PR would
+    # wait forever for a status that never reports. edited/reopened cover title
+    # changes; opened covers the first run.
+    types: [opened, edited, reopened, synchronize]
 
 # A rapid series of title edits should only leave the latest run standing.
 concurrency:
