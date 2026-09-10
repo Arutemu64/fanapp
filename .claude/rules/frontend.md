@@ -18,4 +18,4 @@ Loaded only when working with `frontend/**` files.
 - Never store user/session state in module-level singletons (client-rendered SPA).
 - Research the current best practice (web / current docs) before any non-trivial work — a refactor, a new feature, a library or framework API. Never decide from training memory alone; cite what you find.
 - Mobile-first; bottom padding for the floating nav bar.
-- After changes: run `just frontend-lint` and `just frontend-check`; fix all errors. Touched pure logic in `src/lib/`? Run `just frontend-test` too, and consider a colocated `*.test.ts` — see [docs/testing.md](../../docs/testing.md) "Frontend".
+- The `PostToolUse` hook already ran `prettier --check` on the file you just edited, and on a `.svelte` file flagged any user-facing English it spotted. It does NOT run eslint (too slow to sit in the edit loop) or `svelte-check` (whole-project), so a silent hook is not a green light. After changes: run `just frontend-lint` and `just frontend-check`; fix all errors. Touched pure logic in `src/lib/`? Run `just frontend-test` too, and consider a colocated `*.test.ts` — see [docs/testing.md](../../docs/testing.md) "Frontend".

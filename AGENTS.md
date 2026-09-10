@@ -97,6 +97,24 @@ Always review a generated migration: autogenerate emits renames as drop+create a
 
 `.codegraph/` at the repo root means the index is live — web sessions provision it automatically ([docs/claude-cloud.md](docs/claude-cloud.md)); locally it is opt-in, and **do not** install codegraph yourself unless asked. When it exists, run `codegraph sync` after editing so the index doesn't drift stale mid-session. Day-to-day usage (when to reach for `codegraph_explore` vs Grep/Glob/Read) is covered by the vendor-managed CodeGraph block in `.claude/CLAUDE.md` — refreshed by `codegraph upgrade`/`install`, so don't restate or hand-edit it here.
 
+## Automated guardrails
+
+Two mechanisms enforce the rules above without relying on anyone remembering them.
+
+* **`PostToolUse` hook** (`.claude/hooks/post-edit-check.py`, wired in
+  `.claude/settings.json`) — after every `Edit`/`Write` it checks *that one file*
+  and reports back: `ruff check` on `backend/**/*.py`, `prettier --check` on
+  `frontend/**`, plus a heuristic scan of `.svelte` markup for user-facing
+  English. Check-only, never `--fix`: a hook that rewrites the file invalidates
+  the next edit and removes the signal. It deliberately does **not** run
+  `eslint` (~9s even warm), `ty` or `svelte-check` (whole-project) — those stay
+  where `.pre-commit-config.yaml` already puts them, at pre-push and in CI. So a
+  silent hook means the fast checks passed, not that the work is done.
+* **Secret reads** — `.claude/settings.json` denies `secrets/**`, `*.pem` and
+  `*.key`. `.env` is deliberately **not** denied: fixing drift against
+  `.env.example` is a task we hand to an agent. Note these rules bind the `Read`
+  tool, not `cat` in Bash.
+
 ## Staying in sync
 
 Structural change → update the docs **in the same change**. Prefer documenting patterns over file lists that rot; keep the codebase map high-level.
