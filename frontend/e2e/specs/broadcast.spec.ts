@@ -40,7 +40,10 @@ test.describe('broadcast history', { tag: '@critical' }, () => {
 		});
 		await page.getByRole('button', { name: 'Отменить' }).click();
 
-		await expect(page.getByText('Отменена')).toBeVisible();
+		// Match the status badge exactly: the success toast that fires on cancel reads
+		// "Рассылка отменена", which a substring match also catches — two hits trip
+		// strict mode once the toast and the reloaded badge briefly coexist.
+		await expect(page.getByText('Отменена', { exact: true })).toBeVisible();
 		// The cancel action is gone for a terminal mailing.
 		await expect(page.getByRole('button', { name: 'Отменить' })).toHaveCount(0);
 		expect(api.unmatched).toEqual([]);
