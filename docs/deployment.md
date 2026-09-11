@@ -155,16 +155,15 @@ shell doesn't strip the unset `$NATS__*` first. Run it from the deploy directory
 (where `.env` is):
 
 ```sh
-docker run --rm -it --network fanapp_backend-network --env-file .env natsio/nats-box \
+# The network is <project>_backend-network, where the Compose project name
+# defaults to the deploy directory (usually fanapp) but can differ (a renamed
+# dir, or -p / COMPOSE_PROJECT_NAME). Derive it rather than hardcode a prefix:
+net=$(docker network ls --format '{{.Name}}' | grep backend-network)
+docker run --rm -it --network "$net" --env-file .env natsio/nats-box \
   sh -c 'nats --server "nats://$NATS__USER:$NATS__PASSWORD@nats:4222" \
     consumer rm stream send_notification_to_telegram'
 # repeat for send_notification_to_vk and send_push_notification
 ```
-
-The `fanapp_` prefix is the Compose project name, which defaults to the deploy
-directory. If yours differs (a renamed directory, or `-p` / `COMPOSE_PROJECT_NAME`
-set), the network is `<project>_backend-network` — confirm with
-`docker network ls | grep backend-network`.
 
 This applies to server-side config only. FastStream's `ack_policy`
 (`NACK_ON_ERROR` vs the default) is client-side handler behaviour, not consumer
