@@ -308,7 +308,11 @@ services:
     image: nats:2.14-alpine
     volumes:
       - nats-data:/data
-    command: "--js --sd=/data -m 8222 --user ${NATS__USER} --pass ${NATS__PASSWORD}"
+      - ./config/nats/nats.conf:/etc/nats/nats.conf:ro
+    # JetStream (enable + store_dir + fsync tuning) lives in the mounted config;
+    # auth stays on the CLI so the password never lands in the committed file
+    # (compose interpolates it from .env), same split as redis --requirepass.
+    command: "-c /etc/nats/nats.conf -m 8222 --user ${NATS__USER} --pass ${NATS__PASSWORD}"
     ports:
       - "127.0.0.1:4222:4222"
     deploy:
