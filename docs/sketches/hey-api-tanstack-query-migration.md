@@ -30,10 +30,18 @@ The 2026 stack that covers all three with less bespoke code:
   types. Replaces `openapi-typescript` + `openapi-fetch`.
 - **[TanStack Query] `@tanstack/svelte-query` v6** — the **Svelte 5 runes** adapter
   (the v5 adapter was store-based and unreliable under Svelte 5). Owns dedupe,
-  background refetch, stale-tracking, retries, invalidation.
-- **[`experimental_createQueryPersister`][createPersister]** — per-query IndexedDB
-  persistence, the modern replacement for the whole-cache `persistQueryClient`.
-  This is what subsumes `fetchWithCache`/`warmCache`.
+  background refetch, stale-tracking, retries, invalidation. The **v6 is only the
+  adapter's own version line** (bumped for the runes rewrite); it rides
+  `@tanstack/query-core` **v5**, so the cache/persistence engine — and the docs
+  for it — are **v5**. `@tanstack/svelte-query-persist-client` is the matching
+  Svelte companion (also on the 6.x adapter line, same v5 core).
+- **[`persistQueryClient`][persist] + [`createAsyncStoragePersister`][asyncpersister]**
+  — the **stable** whole-cache persistence path, wrapped over our existing
+  `idb-keyval` store. This is what subsumes `fetchWithCache`/`warmCache`. The
+  per-query `experimental_createQueryPersister` is tidier in theory but still
+  carries the `experimental` flag — **declined** for a production app; its only
+  real edge (per-key granularity) we get through query-key namespacing anyway
+  (see §4).
 
 All version/API claims below were checked against current docs (Sept 2026);
 **re-verify exact versions at implementation time** — do not trust this file's
@@ -46,7 +54,7 @@ memory of them (AGENTS.md "Research the current best practice").
 | `openapi-typescript` → `schema.d.ts` (types only)                          | `@hey-api/openapi-ts` → SDK + types + TanStack options                    | Same spec input; `just frontend-generate-api` rewires to the hey-api CLI |
 | `openapi-fetch` `createApiClient()` per context                            | `@hey-api/client-fetch` client + generated SDK fns                        | Interceptors replace middleware (below)                                  |
 | `reachabilityWatch` / `sessionExpiryWatch` middleware (`lib/api/index.ts`) | `client.interceptors.response.use(...)`                                   | Straight port — see §3                                                   |
-| `fetchWithCache` + `{value,cachedAt}` envelope                             | `createQueryPersister` over the existing `fanfan-cache` IDB store         | `cachedAt` → query `dataUpdatedAt`; `stale` → query `isStale`            |
+| `fetchWithCache` + `{value,cachedAt}` envelope                             | `persistQueryClient` (async idb-keyval persister) over `fanfan-cache`      | `cachedAt` → query `dataUpdatedAt`; `stale` → query `isStale`            |
 | `warmCache` on boot                                                        | `queryClient.prefetchQuery(opts)`                                         | Same fire-and-forget intent                                              |
 | `load` + `depends('app:x')` + `invalidate('app:x')`                        | `ensureQueryData` in `load` + `invalidateQueries({queryKey})`             | Keeps blocking-load UX (below)                                           |
 | `clearUserCache()` on logout                                               | `queryClient.removeQueries({queryKey})` by scope prefix + persister purge | Scope maps onto query-key prefixes                                       |
@@ -140,40 +148,65 @@ client.interceptors.response.use((response, request) => {
 Note the path match is now against the real URL, not openapi-fetch's `schemaPath`;
 keep the `CREDENTIAL_CHECK_PATHS` set and the `reconcilingSession` latch verbatim.
 
-### 4. Offline cache → per-query persister (reuse the existing IDB store)
+### 4. Offline cache → whole-client persistence (reuse the existing IDB store)
 
-`experimental_createQueryPersister` persists **each query by its hash** into an
-`AsyncStorage` adapter — wrap the existing `fanfan-cache` `idb-keyval` store so we
-do **not** open a second IndexedDB database (the Firefox double-upgrade race the
+Use the **stable** `persistQueryClient` path — **not** the experimental per-query
+persister. It dehydrates the whole cache to one key and restores it on boot,
+rewriting on a throttle (1s default). For our cache size (schedule +
+subscriptions + identity) the single-blob write is a non-issue, and it keeps
+production off any `experimental`-flagged dependency. Wrap the existing
+`fanfan-cache` `idb-keyval` store in a `createAsyncStoragePersister` so we do
+**not** open a second IndexedDB database (the Firefox double-upgrade race the
 current code documents still applies):
 
 ```ts
-const persister = experimental_createQueryPersister({
+const persister = createAsyncStoragePersister({
   storage: {
     getItem: (k) => idbGet(k, cacheStore),
     setItem: (k, v) => idbSet(k, v, cacheStore),
     removeItem: (k) => idbDel(k, cacheStore),
   },
+  throttleTime: 1000,
+});
+
+persistQueryClient({
+  queryClient,
+  persister,
   maxAge: OFFLINE_WINDOW_MS, // was implicit in fetchWithCache
   buster: OPENAPI_INFO_VERSION, // bust on schema/deploy — reuse info.version
+  dehydrateOptions: {
+    // only read-only surfaces persist; mutation-only pages never do
+    shouldDehydrateQuery: (q) => PERSIST_PREFIXES.has(q.queryKey[0] as string),
+  },
 });
 ```
 
-- `networkMode: 'offlineFirst'` so a cached query paints instantly and only hits
-  the network when reachable — this _is_ the `if (!isReachable()) serve cache`
-  branch, now declarative.
+- Set `networkMode: 'offlineFirst'` on persisted queries (via `defaultOptions`)
+  so a restored query paints instantly and only hits the network when reachable —
+  this _is_ the `if (!isReachable()) serve cache` branch, now declarative. The
+  whole-client persister does not imply it the way the experimental one does, so
+  set it explicitly.
 - **Scope (user vs universal)** maps onto **query-key prefixes**: per-user keys like
   `['me']`, `['subscriptions', userId]`, `['notifications']`; universal like
-  `['schedule']`. Logout removes + purges the user-prefixed ones; universal
-  persist-entries survive. We lose the blunt `u:`/`g:` string prefix but gain the
-  same guarantee expressed through keys. **Filter the persister** so mutation-only
-  surfaces (voting, feedback, tools) are never persisted — that is today's
-  `offlineUnavailable` contract.
+  `['schedule']`. Because the blob is re-dehydrated from **live client state**,
+  logout just `queryClient.removeQueries({ queryKey: ['me'] })` (+ the other
+  per-user keys) and the next throttled save rewrites the blob with only universal
+  queries left — no manual persister purge, no `u:`/`g:` string prefixes. Same
+  guarantee, expressed through keys. `shouldDehydrateQuery` additionally keeps
+  mutation-only surfaces (voting, feedback, tools) out of storage entirely — that
+  is today's `offlineUnavailable` contract.
 - `StaleDataNotice` reads `query.dataUpdatedAt` (→ `formatSyncedAt`) and
   `query.isStale`; `offlineMiss` = `status==='error' && data===undefined &&
 !isReachable()`. The three offline states (`offlineMiss` / `offlineUnavailable` /
   `offlineWriteGate`, §2 of frontend.md) keep their copy; only their _source_ flips
   from `fetchWithCache` bookkeeping to query state + reachability.
+
+**Why not `experimental_createQueryPersister`** (the per-query one): its only real
+edge over the whole-client path is per-key storage granularity, which we already
+get through query-key namespacing + `removeQueries`. Shipping an
+`experimental`-flagged dependency to production is not worth that. Revisit only if
+the cache grows large enough that one-blob writes measurably hurt (check via
+DevTools timing) — not the case at our size.
 
 ### 5. Mutations stay online-only
 
@@ -212,7 +245,8 @@ This does **not** have to be a big-bang. hey-api reads the same spec, and TanSta
 can be adopted one route at a time:
 
 1. **Scaffold** — add `@hey-api/openapi-ts`, `@tanstack/svelte-query` (v6),
-   `@tanstack/query-*-persister`; rewire `just frontend-generate-api` to emit both
+   `@tanstack/svelte-query-persist-client` + `@tanstack/query-async-storage-persister`;
+   rewire `just frontend-generate-api` to emit both
    the SDK and (temporarily) keep `schema.d.ts` types so nothing breaks. Mount
    `QueryClientProvider` in the root layout; build the persister over `fanfan-cache`.
 2. **Port the interceptors** (§3) and the error funnel (§6) behind the new client,
@@ -242,5 +276,6 @@ can be adopted one route at a time:
 
 [hey-api]: https://heyapi.dev/openapi-ts/plugins/tanstack-query
 [TanStack Query]: https://tanstack.com/query/latest/docs/framework/svelte/overview
-[createPersister]: https://tanstack.com/query/latest/docs/framework/react/plugins/createPersister
+[persist]: https://tanstack.com/query/latest/docs/framework/react/plugins/persistQueryClient
+[asyncpersister]: https://tanstack.com/query/latest/docs/framework/react/plugins/createAsyncStoragePersister
 [ADR-0007]: ../adr/0007-client-rendered-spa-frontend.md
