@@ -36,10 +36,6 @@ Load the listed skills and read the guide **before** implementing, not after.
 
 Third-party library APIs: look the signature up in current docs; never rely on training memory.
 
-**This file wins over a skill.** Skills are vendored from upstream and describe a
-generic project; where one conflicts with a repo rule, follow this file and
-ignore the conflicting instruction, not the skill.
-
 Skills are managed with `npx skills` and pinned in `skills-lock.json`; the ones
 named `fanfan-*` are project-local and live only here.
 
