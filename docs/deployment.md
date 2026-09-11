@@ -130,6 +130,49 @@ just deploy                   # docker compose ... -f docker-compose.prod.yml pu
 This pulls the images and restarts, building nothing on the host. Migrations run
 automatically via the `migration` service before the API starts.
 
+### Changing a JetStream consumer's config (e.g. AckWait)
+
+Server-side JetStream **consumer** config — `ack_wait`, `max_deliver`, and the
+like, set via `ConsumerConfig` on a FastStream subscriber — is written **only
+when the durable is first created**. On boot FastStream (through nats-py's
+`pull_subscribe`) calls `consumer_info` for the durable and, if it already
+exists, binds to it and **ignores the new config**; `add_consumer` runs only for
+a durable that isn't there yet. So editing `ack_wait` in code takes effect on a
+fresh environment but is silently a no-op against an already-deployed consumer —
+no error, it just keeps the old value.
+
+To apply such a change in production, delete the affected durables once so
+FastStream recreates them with the new config on the next boot. Deleting a
+*consumer* is safe: it is routing/cursor state, not the stream or its messages,
+and any un-acked in-flight message is redelivered after recreation (the
+notification consumers are idempotent, which is why this stream tolerates
+redelivery — see [backend.md](backend.md)). The `nats:2.14-alpine` image is the
+server only and carries no `nats` CLI, so run one from `nats-box` on the backend
+network. The server's creds live in `.env` (Compose's `env_file`), not your
+shell, so pass that file into the container with `--env-file` and let the
+container's shell expand them — hence `sh -c '…'` in single quotes, so the host
+shell doesn't strip the unset `$NATS__*` first. Run it from the deploy directory
+(where `.env` is):
+
+```sh
+# Look up the app's backend network, then substitute it below. It is named
+# <project>_backend-network, where the Compose project name defaults to the
+# deploy directory (usually fanapp) but can differ (a renamed dir, or -p /
+# COMPOSE_PROJECT_NAME). Look it up rather than auto-derive: a host running more
+# than one stack has several *_backend-network networks, and picking the wrong
+# one — or matching several — silently leaves the durables on their old AckWait.
+docker network ls | grep backend-network
+
+docker run --rm -it --network <project>_backend-network --env-file .env natsio/nats-box \
+  sh -c 'nats --server "nats://$NATS__USER:$NATS__PASSWORD@nats:4222" \
+    consumer rm stream send_notification_to_telegram'
+# repeat for send_notification_to_vk and send_push_notification
+```
+
+This applies to server-side config only. FastStream's `ack_policy`
+(`NACK_ON_ERROR` vs the default) is client-side handler behaviour, not consumer
+config, so a change to it takes effect on redeploy with no consumer recreation.
+
 ### Creating a user
 
 Most accounts self-register (email code or a linked social account). To seed the

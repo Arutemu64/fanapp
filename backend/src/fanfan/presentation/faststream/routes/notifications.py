@@ -4,6 +4,7 @@ from dishka import FromDishka
 from dishka_faststream import inject
 from faststream import AckPolicy, Logger
 from faststream.nats import NatsMessage, NatsRouter, PullSub
+from nats.js.api import ConsumerConfig
 
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.interactors.notifications.create_notification import (
@@ -45,12 +46,25 @@ from fanfan.presentation.faststream.jstream import stream
 
 notifications_router = NatsRouter()
 
+# AckWait for the external-send channels, in seconds: how long JetStream waits
+# for an ack before it redelivers. It must clear a send's own client-timeout
+# ceiling so a slow-but-live send is not redelivered mid-flight (the default 30s
+# would be) — Telegram ~60s (aiogram default session), VK up to ~60s (send +
+# delete, 30s each), and push 10s per device, which for the one or two devices a
+# real user has is ~10-20s. Only a user with ~9+ simultaneously-slow push
+# subscriptions could outlast this window; that redelivers, but the consumers are
+# idempotent and push collapses the duplicate by its `tag`, so the extra send is
+# harmless — not worth a heartbeat to prevent. No head-of-line blocking either:
+# NATS processes one message per durable at a time (no max_workers), so a slow
+# send only delays its own channel's queue, bounded by the client timeout.
+_SEND_ACK_WAIT_SECONDS = 90.0
+
 
 async def _deliver_to_channel(
     *,
     channel: str,
     notification_id: NotificationId,
-    deliver: Callable[[], Awaitable[None]],
+    send: Callable[[SendNotificationInput], Awaitable[None]],
     msg: NatsMessage,
     logger: Logger,
 ) -> None:
@@ -59,7 +73,7 @@ async def _deliver_to_channel(
     way instead of each subscriber re-implementing (and drifting on) the set.
     """
     try:
-        await deliver()
+        await send(SendNotificationInput(notification_id=notification_id))
     except NotificationRetryAfter as e:
         logger.warning(
             "Retry sending notification %s to %s in %s",
@@ -150,6 +164,7 @@ async def create_new_notification(  # noqa: PLR0913, PLR0917 — all params fram
     pull_sub=PullSub(),
     durable="send_notification_to_telegram",
     ack_policy=AckPolicy.MANUAL,
+    config=ConsumerConfig(ack_wait=_SEND_ACK_WAIT_SECONDS),
 )
 @inject
 async def send_notification_to_telegram(
@@ -161,9 +176,7 @@ async def send_notification_to_telegram(
     await _deliver_to_channel(
         channel="Telegram",
         notification_id=data.notification_id,
-        deliver=lambda: interactor.send_notification_to_telegram(
-            SendNotificationInput(notification_id=data.notification_id)
-        ),
+        send=interactor.send_notification_to_telegram,
         msg=msg,
         logger=logger,
     )
@@ -175,6 +188,7 @@ async def send_notification_to_telegram(
     pull_sub=PullSub(),
     durable="send_notification_to_vk",
     ack_policy=AckPolicy.MANUAL,
+    config=ConsumerConfig(ack_wait=_SEND_ACK_WAIT_SECONDS),
 )
 @inject
 async def send_notification_to_vk(
@@ -186,9 +200,7 @@ async def send_notification_to_vk(
     await _deliver_to_channel(
         channel="VK",
         notification_id=data.notification_id,
-        deliver=lambda: interactor.send_notification_to_vk(
-            SendNotificationInput(notification_id=data.notification_id)
-        ),
+        send=interactor.send_notification_to_vk,
         msg=msg,
         logger=logger,
     )
@@ -200,6 +212,7 @@ async def send_notification_to_vk(
     pull_sub=PullSub(),
     durable="send_push_notification",
     ack_policy=AckPolicy.MANUAL,
+    config=ConsumerConfig(ack_wait=_SEND_ACK_WAIT_SECONDS),
 )
 @inject
 async def send_push_notification(
@@ -211,9 +224,7 @@ async def send_push_notification(
     await _deliver_to_channel(
         channel="push",
         notification_id=data.notification_id,
-        deliver=lambda: interactor.send_notification_to_push(
-            SendNotificationInput(notification_id=data.notification_id)
-        ),
+        send=interactor.send_notification_to_push,
         msg=msg,
         logger=logger,
     )
@@ -224,6 +235,11 @@ async def send_push_notification(
     stream=stream,
     pull_sub=PullSub(),
     durable="create_new_broadcast",
+    # Redeliver on failure rather than TERM: this stream's guarantee is
+    # redelivery + idempotent consumers (see jstream.py), so a transient blip
+    # mid-broadcast must not silently drop a whole mailing. The default
+    # REJECT_ON_ERROR would discard it permanently.
+    ack_policy=AckPolicy.NACK_ON_ERROR,
 )
 @inject
 async def create_new_broadcast(
@@ -244,6 +260,9 @@ async def create_new_broadcast(
     stream=stream,
     pull_sub=PullSub(),
     durable="cancel_mailing",
+    # Same as create_new_broadcast: redeliver on a transient failure instead of
+    # TERMing, so a cancellation is not lost while notifications keep going out.
+    ack_policy=AckPolicy.NACK_ON_ERROR,
 )
 @inject
 async def cancel_mailing(
