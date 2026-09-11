@@ -15,9 +15,16 @@
 	let count = $state<number | null>(null);
 
 	async function refresh(): Promise<void> {
-		const { data, error, response } = await client.GET('/users/online-count');
-		if (!error && response.ok && data) {
-			count = data.count;
+		// Swallow failures: a dropped connection mid-poll must not become an
+		// unhandled rejection every interval. The stale count just stands until
+		// the next successful poll — this is a glanceable stat, not critical data.
+		try {
+			const { data, error, response } = await client.GET('/users/online-count');
+			if (!error && response.ok && data) {
+				count = data.count;
+			}
+		} catch (error) {
+			console.error('Failed to load online count', error);
 		}
 	}
 

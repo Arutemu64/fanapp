@@ -117,6 +117,13 @@ async def stream_events(
         async for event in stream:
             now = time.monotonic()
             if now - last_presence_refresh >= PRESENCE_REFRESH_INTERVAL_SECONDS:
-                await record_presence()
+                # Presence is auxiliary: a transient Redis failure must never
+                # tear down the user's realtime stream, so isolate the write and
+                # keep serving. The timestamp advances either way, so a failure
+                # retries at most once per interval instead of on every event.
+                try:
+                    await record_presence()
+                except Exception:
+                    logger.exception("Failed to refresh user presence")
                 last_presence_refresh = now
             yield event
