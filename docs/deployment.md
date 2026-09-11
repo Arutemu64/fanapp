@@ -161,6 +161,11 @@ docker run --rm -it --network fanapp_backend-network --env-file .env natsio/nats
 # repeat for send_notification_to_vk and send_push_notification
 ```
 
+The `fanapp_` prefix is the Compose project name, which defaults to the deploy
+directory. If yours differs (a renamed directory, or `-p` / `COMPOSE_PROJECT_NAME`
+set), the network is `<project>_backend-network` — confirm with
+`docker network ls | grep backend-network`.
+
 This applies to server-side config only. FastStream's `ack_policy`
 (`NACK_ON_ERROR` vs the default) is client-side handler behaviour, not consumer
 config, so a change to it takes effect on redeploy with no consumer recreation.
