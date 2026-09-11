@@ -1076,7 +1076,7 @@ export interface paths {
         };
         /**
          * Count online users
-         * @description How many users hold a live connection right now, for the organiser dashboard. Approximate and ephemeral. Requires users:read.
+         * @description How many users hold a live connection right now, for the organiser dashboard. Approximate and ephemeral. Any authenticated user.
          */
         get: operations["count_online_users"];
         put?: never;
@@ -5162,7 +5162,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorMessage"];
                 };
             };
-            /** @description Missing users:read. */
+            /** @description Access denied. */
             403: {
                 headers: {
                     [name: string]: unknown;

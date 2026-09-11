@@ -3937,7 +3937,7 @@
           "Users"
         ],
         "summary": "Count online users",
-        "description": "How many users hold a live connection right now, for the organiser dashboard. Approximate and ephemeral. Requires users:read.",
+        "description": "How many users hold a live connection right now, for the organiser dashboard. Approximate and ephemeral. Any authenticated user.",
         "operationId": "count_online_users",
         "responses": {
           "200": {
@@ -3971,7 +3971,7 @@
             }
           },
           "403": {
-            "description": "Missing users:read.",
+            "description": "Access denied.",
             "content": {
               "application/json": {
                 "schema": {

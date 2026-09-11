@@ -274,7 +274,7 @@ A coarse "how many users are connected right now" signal, behind the `PresenceGa
 
 * **Recording.** The `/events` SSE route (`presentation/web/routes/sse.py`) is the one place that sees every tick — a real event or an idle `ping` — so it drives `RecordPresence`, throttled to once per `PRESENCE_REFRESH_INTERVAL_SECONDS`. The interactor is a no-op for an unauthenticated stream. Recording stops the instant the connection closes and the route loop ends, so a marker ages out on its own; there is no disconnect bookkeeping.
 * **Storage.** A single Redis sorted set (`presence:online`) of user id → last-seen unix time. The member is the user id, so multiple tabs/devices collapse to one online user. `count_online()` trims everyone older than `_ONLINE_WINDOW_SECONDS` (45s, 3× the refresh interval — it survives a missed refresh yet a dead connection drops within the frontend watchdog's window) on read and returns the remaining `ZCARD`; the key also carries a TTL so it self-clears once the last user leaves.
-* **Reading.** `GetOnlineUsersCount` (`GET /users/online-count`) gates on `Permission.USERS_READ` — the online figure is a fact about the user base, so it reuses the grant that opens the user directory rather than adding a permission (and its CHECK-constraint migration) for one stat. The organiser tools hub polls it.
+* **Reading.** `GetOnlineUsersCount` (`GET /users/online-count`) requires only authentication, no permission — the count is a non-sensitive aggregate, and the organiser-only tools hub (gated to the org role in its layout load) is what scopes who sees it. Role governs UI discovery here, not API access, so the endpoint carries no hardcoded role check. The tools hub polls it.
 
 ## Captcha
 

@@ -59,13 +59,12 @@ async def list_users(
     "/online-count",
     summary="Count online users",
     description="How many users hold a live connection right now, for the "
-    "organiser dashboard. Approximate and ephemeral. Requires users:read.",
+    "organiser dashboard. Approximate and ephemeral. Any authenticated user.",
     responses={
         200: {
             "model": OnlineUsersCountOutput,
             "description": "Online user count retrieved successfully.",
         },
-        403: {"model": ErrorMessage, "description": "Missing users:read."},
     },
 )
 @inject

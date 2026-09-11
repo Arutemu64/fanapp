@@ -4,33 +4,22 @@ from fanfan.application.interactors.presence.get_online_users_count import (
     GetOnlineUsersCount,
 )
 from fanfan.application.interactors.presence.record_presence import RecordPresence
-from fanfan.core.exceptions.base import AccessDenied
-from fanfan.core.models.user import User
-from fanfan.core.vo.permission import Permission
-from fanfan.core.vo.user import UserId, Username, UserRole, generate_user_id
+from fanfan.core.exceptions.auth import UserNotAuthenticated
+from fanfan.core.vo.user import UserId, generate_user_id
 
 pytestmark = pytest.mark.unit
 
 
-def _make_user() -> User:
-    return User.create(
-        id=generate_user_id(),
-        username=Username("organizer"),
-        hashed_password=None,
-        role=UserRole.ORG,
-    )
-
-
 class _FakeCurrentUser:
-    def __init__(self, user: User | None = None, user_id: UserId | None = None) -> None:
-        self._user = user
+    def __init__(self, user_id: UserId | None = None) -> None:
         self._user_id = user_id
 
-    async def require_user(self) -> User:
-        assert self._user is not None
-        return self._user
-
     async def get_user_id(self) -> UserId | None:
+        return self._user_id
+
+    async def require_user_id(self) -> UserId:
+        if self._user_id is None:
+            raise UserNotAuthenticated
         return self._user_id
 
 
@@ -46,52 +35,24 @@ class _RecordingPresence:
         return self.count
 
 
-class _AllowPermissions:
-    def __init__(self) -> None:
-        self.checked: list[Permission] = []
-
-    async def ensure(
-        self,
-        *,
-        user: User,  # noqa: ARG002  # part of the PermissionService contract
-        permission: Permission,
-    ) -> None:
-        self.checked.append(permission)
-
-
-class _DenyPermissions:
-    async def ensure(
-        self,
-        *,
-        user: User,  # noqa: ARG002  # part of the PermissionService contract
-        permission: Permission,  # noqa: ARG002  # part of the PermissionService contract
-    ) -> None:
-        raise AccessDenied
-
-
-async def test_count_returns_presence_total_for_permitted_org() -> None:
-    perms = _AllowPermissions()
+async def test_count_returns_presence_total_for_authenticated_user() -> None:
     interactor = GetOnlineUsersCount(
         presence_gateway=_RecordingPresence(count=7),
-        current_user_provider=_FakeCurrentUser(user=_make_user()),
-        perm_service=perms,
+        current_user_provider=_FakeCurrentUser(user_id=generate_user_id()),
     )
 
     result = await interactor()
 
     assert result.count == 7
-    # The stat rides on the users:read grant, not a dedicated permission.
-    assert perms.checked == [Permission.USERS_READ]
 
 
-async def test_count_denied_without_users_read() -> None:
+async def test_count_requires_authentication() -> None:
     interactor = GetOnlineUsersCount(
         presence_gateway=_RecordingPresence(count=7),
-        current_user_provider=_FakeCurrentUser(user=_make_user()),
-        perm_service=_DenyPermissions(),
+        current_user_provider=_FakeCurrentUser(user_id=None),
     )
 
-    with pytest.raises(AccessDenied):
+    with pytest.raises(UserNotAuthenticated):
         await interactor()
 
 
