@@ -1,4 +1,6 @@
+import asyncio
 from collections.abc import Awaitable, Callable
+from contextlib import suppress
 
 from dishka import FromDishka
 from dishka_faststream import inject
@@ -46,18 +48,30 @@ from fanfan.presentation.faststream.jstream import stream
 
 notifications_router = NatsRouter()
 
-# AckWait for the external-send channels, in seconds. Each send handler does a
-# network round-trip whose own client timeout is the real ceiling — Telegram
-# ~60s (aiogram default session), VK up to ~60s (send + delete, 30s each), push
-# 10s per device. This must sit above that ceiling so JetStream only redelivers
-# when a worker has genuinely stalled or died, not when a slow-but-live send is
-# still using its allotted time (the default 30s AckWait would redeliver
-# mid-flight and re-send). It does not create head-of-line blocking — NATS
-# subscribers already process one message per durable at a time (no max_workers
-# here); a slow send only delays its own channel's queue, and the client timeout
-# bounds how long. Raise the client timeouts and this together if a channel ever
-# needs longer.
+# AckWait for the external-send channels, in seconds: how long JetStream waits
+# for an ack (or an in-progress ping) before it redelivers. _deliver_to_channel
+# pings in_progress() every _IN_PROGRESS_INTERVAL_SECONDS while a send runs, so a
+# legitimately long delivery keeps the message in flight — push in particular
+# fans out to every one of a user's subscriptions sequentially (10s client
+# timeout each), which a user with many devices can push past any fixed window.
+# Redelivery therefore means no ping for this whole window: a genuinely stalled
+# or dead worker, not a slow-but-live send. Kept well above the ping interval so
+# one missed tick can't trigger a spurious redeliver.
 _SEND_ACK_WAIT_SECONDS = 90.0
+
+# How often to tell JetStream the message is still being processed, resetting the
+# AckWait timer. Stays below _SEND_ACK_WAIT_SECONDS with margin; the send's own
+# client timeout (not this) is what guarantees the handler eventually returns
+# rather than pinging forever.
+_IN_PROGRESS_INTERVAL_SECONDS = 30.0
+
+
+async def _keep_in_progress(msg: NatsMessage) -> None:
+    # Refresh the AckWait timer on a fixed cadence for as long as the delivery is
+    # still running. Cancelled by _deliver_to_channel the moment the send settles.
+    while True:
+        await asyncio.sleep(_IN_PROGRESS_INTERVAL_SECONDS)
+        await msg.in_progress()
 
 
 async def _deliver_to_channel(
@@ -71,7 +85,12 @@ async def _deliver_to_channel(
     """Drive one channel's send and translate the Notifier port's exceptions into
     JetStream ack decisions, so every channel honors the full contract the same
     way instead of each subscriber re-implementing (and drifting on) the set.
+
+    A heartbeat pings in_progress() while the send runs so a delivery that
+    outlasts AckWait (push fanning out to many devices) is not redelivered from
+    under the still-running handler.
     """
+    heartbeat = asyncio.create_task(_keep_in_progress(msg))
     try:
         await send(SendNotificationInput(notification_id=notification_id))
     except NotificationRetryAfter as e:
@@ -100,6 +119,10 @@ async def _deliver_to_channel(
     else:
         await msg.ack()
         logger.info("Sent notification %s to %s", notification_id, channel)
+    finally:
+        heartbeat.cancel()
+        with suppress(asyncio.CancelledError):
+            await heartbeat
 
 
 @notifications_router.subscriber(

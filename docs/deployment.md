@@ -148,12 +148,16 @@ and any un-acked in-flight message is redelivered after recreation (the
 notification consumers are idempotent, which is why this stream tolerates
 redelivery — see [backend.md](backend.md)). The `nats:2.14-alpine` image is the
 server only and carries no `nats` CLI, so run one from `nats-box` on the backend
-network, authenticating with the same creds the server uses:
+network. The server's creds live in `.env` (Compose's `env_file`), not your
+shell, so pass that file into the container with `--env-file` and let the
+container's shell expand them — hence `sh -c '…'` in single quotes, so the host
+shell doesn't strip the unset `$NATS__*` first. Run it from the deploy directory
+(where `.env` is):
 
 ```sh
-docker run --rm -it --network fanapp_backend-network natsio/nats-box \
-  nats --server nats://"$NATS__USER":"$NATS__PASSWORD"@nats:4222 \
-  consumer rm stream send_notification_to_telegram
+docker run --rm -it --network fanapp_backend-network --env-file .env natsio/nats-box \
+  sh -c 'nats --server "nats://$NATS__USER:$NATS__PASSWORD@nats:4222" \
+    consumer rm stream send_notification_to_telegram'
 # repeat for send_notification_to_vk and send_push_notification
 ```
 
