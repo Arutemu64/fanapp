@@ -7,9 +7,11 @@ from fanfan.adapters.auth.session import SessionManager
 from fanfan.adapters.redis.auth_token_registry import RedisTokenRegistry
 from fanfan.adapters.redis.config import RedisConfig
 from fanfan.adapters.redis.factory import create_redis
+from fanfan.adapters.redis.presence import RedisPresenceGateway
 from fanfan.adapters.redis.rate_limiter import RedisRateLimiter
 from fanfan.adapters.redis.rate_lock import RedisRateLockFactory
 from fanfan.adapters.redis.schedule_cache import RedisScheduleCache
+from fanfan.application.ports.presence import PresenceGateway
 from fanfan.application.ports.rate_limiter import RateLimiter
 from fanfan.application.ports.rate_lock import RateLockFactory
 from fanfan.application.ports.schedule_cache import ScheduleCacheGateway
@@ -52,5 +54,10 @@ class RedisProvider(Provider):
     schedule_cache = provide(
         RedisScheduleCache,
         provides=ScheduleCacheGateway,
+        scope=Scope.APP,
+    )
+    presence = provide(
+        RedisPresenceGateway,
+        provides=PresenceGateway,
         scope=Scope.APP,
     )

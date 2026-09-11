@@ -268,6 +268,14 @@ The pattern, should another universal read want it:
 * **The web route** owns the HTTP conditional-request semantics — it sets `ETag` + `Cache-Control: no-cache` and returns `304` when the client's `If-None-Match` already holds that version. The interactor stays free of `Request`/`Response`.
 * **Invalidation is explicit and synchronous.** Every schedule-mutating interactor calls `schedule_cache.invalidate()` *after* `uow.commit()`, so the operator's read-your-writes refetch (and every SSE-driven refetch) recomputes from committed state instead of serving a pre-edit body. A long TTL on the entry is only a safety net for out-of-band writes (the demo seeder) and the rare read that repopulates with a snapshot taken microseconds before a concurrent commit — it never substitutes for the explicit invalidation.
 
+## Presence (who's online)
+
+A coarse "how many users are connected right now" signal, behind the `PresenceGateway` port (`application/ports/presence.py`, adapter `adapters/redis/presence.py`). It is **derived from the SSE connection**, not stored: the connection a client already holds *is* the presence signal, so nothing new is written to Postgres and there is no `last_seen` column (a per-request timestamp write is the write-amplification antipattern this deliberately avoids).
+
+* **Recording.** The `/events` SSE route (`presentation/web/routes/sse.py`) is the one place that sees every tick — a real event or an idle `ping` — so it drives `RecordPresence`, throttled to once per `PRESENCE_REFRESH_INTERVAL_SECONDS`. The interactor is a no-op for an unauthenticated stream. Recording stops the instant the connection closes and the route loop ends, so a marker ages out on its own; there is no disconnect bookkeeping.
+* **Storage.** A single Redis sorted set (`presence:online`) of user id → last-seen unix time. The member is the user id, so multiple tabs/devices collapse to one online user. `count_online()` trims everyone older than `_ONLINE_WINDOW_SECONDS` (45s, 3× the refresh interval — it survives a missed refresh yet a dead connection drops within the frontend watchdog's window) on read and returns the remaining `ZCARD`; the key also carries a TTL so it self-clears once the last user leaves.
+* **Reading.** `GetOnlineUsersCount` (`GET /users/online-count`) gates on `Permission.USERS_READ` — the online figure is a fact about the user base, so it reuses the grant that opens the user directory rather than adding a permission (and its CHECK-constraint migration) for one stat. The organiser tools hub polls it.
+
 ## Captcha
 
 The unauthenticated `request-login-code` flow is additionally guarded by a captcha, behind the `CaptchaVerifier` port (`application/ports/captcha.py`). The interactor calls `await captcha_verifier.verify(token)` before doing any work; a missing or rejected token raises `CaptchaVerificationFailed` (mapped to HTTP 403). The token rides in on the input DTO so the application layer never touches `Request`.
