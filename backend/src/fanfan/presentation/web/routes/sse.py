@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import logging
+import time
 from collections.abc import AsyncGenerator, AsyncIterable
 
 from dishka import FromDishka
@@ -9,6 +10,7 @@ from fastapi import APIRouter
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
+from fanfan.application.interactors.presence.record_presence import RecordPresence
 from fanfan.application.interactors.sse.stream_events import StreamEvents
 
 sse_router = APIRouter(tags=["SSE"])
@@ -23,6 +25,14 @@ logger = logging.getLogger(__name__)
 # inside the 30s floor of cellular NAT gateway idle timeouts that silently drop
 # TCP mappings on mobile networks.
 HEARTBEAT_INTERVAL_SECONDS = 15
+
+# Refresh the connected user's presence marker at most this often. Every event
+# and every idle ping is a chance to refresh, so a busy stream would otherwise
+# write to Redis on every message; throttling keeps it to one write per interval
+# whatever the traffic. It must stay below the presence online-window
+# (_ONLINE_WINDOW_SECONDS in adapters/redis/presence.py) so a still-connected
+# user never briefly ages out between refreshes.
+PRESENCE_REFRESH_INTERVAL_SECONDS = HEARTBEAT_INTERVAL_SECONDS
 
 
 def _to_sse(message: SSEMessage) -> ServerSentEvent:
@@ -88,13 +98,32 @@ async def _stream_with_heartbeat(
 @inject
 async def stream_events(
     interactor: FromDishka[StreamEvents],
+    record_presence: FromDishka[RecordPresence],
 ) -> AsyncIterable[ServerSentEvent]:
     # Native FastAPI SSE: routing layer handles encoding and client-disconnect
     # detection, so this generator only maps domain messages plus heartbeats.
     # aclosing() propagates a client disconnect (GeneratorExit) into the inner
     # generator's cleanup instead of leaving it to the garbage collector.
+    #
+    # This loop is the one place that sees every tick — a real event or an idle
+    # ping (<=HEARTBEAT_INTERVAL_SECONDS apart) — so it drives the presence
+    # refresh: mark the user online on the first tick and at most once per
+    # interval after, and it stops the moment the connection closes and this
+    # loop ends, letting the marker age out.
+    last_presence_refresh = 0.0
     async with contextlib.aclosing(
         _stream_with_heartbeat(interactor(), HEARTBEAT_INTERVAL_SECONDS)
     ) as stream:
         async for event in stream:
+            now = time.monotonic()
+            if now - last_presence_refresh >= PRESENCE_REFRESH_INTERVAL_SECONDS:
+                # Presence is auxiliary: a transient Redis failure must never
+                # tear down the user's realtime stream, so isolate the write and
+                # keep serving. The timestamp advances either way, so a failure
+                # retries at most once per interval instead of on every event.
+                try:
+                    await record_presence()
+                except Exception:
+                    logger.exception("Failed to refresh user presence")
+                last_presence_refresh = now
             yield event

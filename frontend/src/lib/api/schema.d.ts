@@ -1067,6 +1067,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/online-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Count online users
+         * @description How many users hold a live connection right now, for the organiser dashboard. Approximate and ephemeral. Any authenticated user.
+         */
+        get: operations["count_online_users"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users/{user_id}": {
         parameters: {
             query?: never;
@@ -1532,6 +1552,11 @@ export interface components {
         OAuthProvidersResponse: {
             /** Providers */
             providers: components["schemas"]["SocialProvider"][];
+        };
+        /** OnlineUsersCountOutput */
+        OnlineUsersCountOutput: {
+            /** Count */
+            count: number;
         };
         /** ParticipantFullDTO */
         ParticipantFullDTO: {
@@ -5091,6 +5116,53 @@ export interface operations {
                 };
             };
             /** @description Missing users:read. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Request validation error. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"];
+                };
+            };
+        };
+    };
+    count_online_users: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Online user count retrieved successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnlineUsersCountOutput"];
+                };
+            };
+            /** @description Not authenticated. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorMessage"];
+                };
+            };
+            /** @description Access denied. */
             403: {
                 headers: {
                     [name: string]: unknown;

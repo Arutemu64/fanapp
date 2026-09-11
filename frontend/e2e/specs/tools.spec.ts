@@ -1,13 +1,21 @@
-import { expect, organizer, test } from '../fixtures';
+import type { ApiSchemas } from '../fixtures';
+
+import { expect, json, organizer, test } from '../fixtures';
 
 test.describe('organizer tools', { tag: '@critical' }, () => {
 	test('an organizer sees the toolbox', async ({ page, api }) => {
-		api.use(organizer());
+		api.use({
+			...organizer(),
+			// The hub renders the live online-users card, which polls this endpoint.
+			'GET /users/online-count': json<ApiSchemas['OnlineUsersCountOutput']>({ count: 5 })
+		});
 		await page.goto('/tools');
 
 		await expect(
 			page.getByText('Для работы организаторов фестиваля.', { exact: false })
 		).toBeVisible();
+		// The online-now card renders for every org, above the tool grid.
+		await expect(page.getByText('сейчас в приложении')).toBeVisible();
 		// A couple of the permission-gated tool cards render for a full-permission org.
 		await expect(page.getByRole('link', { name: 'Пользователи' })).toBeVisible();
 		await expect(page.getByRole('link', { name: 'Синхронизация' })).toBeVisible();

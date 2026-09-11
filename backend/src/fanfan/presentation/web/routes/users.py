@@ -6,6 +6,10 @@ from fastapi import APIRouter, Path, Query
 
 from fanfan.application.dto.page import Pagination
 from fanfan.application.dto.user import UserDetailsDTO
+from fanfan.application.interactors.presence.get_online_users_count import (
+    GetOnlineUsersCount,
+    OnlineUsersCountOutput,
+)
 from fanfan.application.interactors.users.get_user import GetUser, GetUserInput
 from fanfan.application.interactors.users.list_users import (
     ListUsers,
@@ -49,6 +53,27 @@ async def list_users(
         pagination=Pagination(limit=limit, offset=offset), search=search
     )
     return await interactor(data)
+
+
+@users_router.get(
+    "/online-count",
+    summary="Count online users",
+    description="How many users hold a live connection right now, for the "
+    "organiser dashboard. Approximate and ephemeral. Any authenticated user.",
+    responses={
+        200: {
+            "model": OnlineUsersCountOutput,
+            "description": "Online user count retrieved successfully.",
+        },
+    },
+)
+@inject
+async def count_online_users(
+    interactor: FromDishka[GetOnlineUsersCount],
+) -> OnlineUsersCountOutput:
+    # Declared before /{user_id} so the literal path wins over the UUID path
+    # param, which would otherwise try to parse "online-count" as a user id.
+    return await interactor()
 
 
 @users_router.get(

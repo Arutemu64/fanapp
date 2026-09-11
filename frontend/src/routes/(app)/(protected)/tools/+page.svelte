@@ -26,6 +26,7 @@
 		Users
 	} from '@lucide/svelte';
 
+	import OnlineNowCard from './components/OnlineNowCard.svelte';
 	import ToolCard from './components/ToolCard.svelte';
 
 	let user: CurrentUserDTO | null = $derived(page.data.user);
@@ -113,6 +114,12 @@
 <SectionIntro
 	description="Для работы организаторов фестиваля. Серые карточки — те, к которым у тебя пока нет доступа."
 />
+
+<!-- Shown to every org: the tools layout already gates this whole section to the
+     org role, so no per-tool permission scopes the live count. -->
+<div class="mb-4">
+	<OnlineNowCard />
+</div>
 
 <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 	{#each tools as tool (tool.key)}
