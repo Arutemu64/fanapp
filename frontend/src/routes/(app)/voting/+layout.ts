@@ -1,4 +1,4 @@
-import { createApiClient } from '$lib/api';
+import { getVotingStatus } from '$lib/api/client';
 import { isReachable, markReachable } from '$lib/services/reachability';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 
@@ -18,15 +18,13 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 		return { votingStatus: undefined };
 	}
 
-	const client = createApiClient();
-
 	try {
-		const { data, error } = await client.GET('/voting/status', {
+		const { data, error } = await getVotingStatus({
 			fetch,
 			signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
 		});
 
-		if (error) {
+		if (error || !data) {
 			console.error('Error fetching voting status:', error);
 			return { votingStatus: undefined };
 		}

@@ -1,3 +1,3 @@
-import type { components } from '$lib/api/schema';
+import type { FeedbackDto } from '$lib/api/client';
 
-export type FeedbackDTO = components['schemas']['FeedbackDTO'];
+export type FeedbackDTO = FeedbackDto;

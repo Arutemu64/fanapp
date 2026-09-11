@@ -1,6 +1,6 @@
 import type { NotificationDTO } from '$lib/types/notifications';
 
-import { createApiClient } from '$lib/api';
+import { listUserNotifications } from '$lib/api/client';
 import {
 	NOTIFICATION_PAGE_REQUEST_LIMIT,
 	NOTIFICATION_PAGE_SIZE
@@ -18,21 +18,17 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	// Per-user key: notifications are the viewer's own feed.
 	const cacheKey = `notifications:${user?.id ?? 'guest'}`;
 
-	const client = createApiClient();
-
 	// Cache the raw first page (request limit length) so hasMore stays computable offline.
 	const { data, stale, cachedAt } = await fetchWithCache<NotificationDTO[]>({
 		key: cacheKey,
 		scope: userScope,
 		fetcher: async ({ signal }) => {
-			const { data, error: fetchError } = await client.GET('/notifications/', {
+			const { data, error: fetchError } = await listUserNotifications({
 				fetch,
 				signal,
-				params: {
-					query: {
-						limit: NOTIFICATION_PAGE_REQUEST_LIMIT,
-						offset: 0
-					}
+				query: {
+					limit: NOTIFICATION_PAGE_REQUEST_LIMIT,
+					offset: 0
 				}
 			});
 			// Reachable but errored → fall back to cache.

@@ -4,7 +4,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { createApiClient } from '$lib/api';
+	import { logoutUser } from '$lib/api/client';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
@@ -18,8 +18,6 @@
 	import { LogOut, Menu, User } from '@lucide/svelte';
 
 	import NotificationBell from './NotificationBell.svelte';
-
-	const client = createApiClient();
 
 	// Pages expose their heading through `load` -> `page.data.title`.
 	let pageTitle = $derived(page.data.title);
@@ -48,9 +46,9 @@
 			return;
 		}
 
-		const { error, response } = await client.POST('/auth/logout');
+		const { error, response } = await logoutUser();
 
-		if (error || !response.ok) {
+		if (error || !response?.ok) {
 			toastService.error(error);
 			return;
 		}

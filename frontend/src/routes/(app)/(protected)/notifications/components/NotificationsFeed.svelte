@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { NotificationDTO } from '$lib/types/notifications';
 
-	import { createApiClient } from '$lib/api';
+	import { listUserNotifications, markNotificationsRead } from '$lib/api/client';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
 	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
@@ -17,8 +17,6 @@
 	import { dedupeById } from '$lib/utils/feed';
 	import { onMount } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
-
-	const client = createApiClient();
 
 	interface Props {
 		initialNotifications: Array<NotificationDTO>;
@@ -37,8 +35,8 @@
 		getInitialItems: () => initialNotifications,
 		getInitialHasMore: () => initialHasMore,
 		fetchPage: async (limit, offset) => {
-			const { data, error } = await client.GET('/notifications/', {
-				params: { query: { limit, offset } }
+			const { data, error } = await listUserNotifications({
+				query: { limit, offset }
 			});
 			return error || !data ? null : data.notifications;
 		},
@@ -83,10 +81,10 @@
 		if (unseenIds.length === 0) return;
 
 		try {
-			const { error, response } = await client.POST('/notifications/mark-read', {
+			const { error, response } = await markNotificationsRead({
 				body: { notification_ids: unseenIds }
 			});
-			if (!error && response.ok) {
+			if (!error && response?.ok) {
 				for (const id of unseenIds) {
 					locallyReadIds.add(id);
 				}
@@ -101,8 +99,8 @@
 	// don't lose notifications that arrived while the SSE channel was disconnected.
 	async function syncLatestNotifications() {
 		try {
-			const { data: result, error } = await client.GET('/notifications/', {
-				params: { query: { limit: NOTIFICATION_PAGE_SIZE } }
+			const { data: result, error } = await listUserNotifications({
+				query: { limit: NOTIFICATION_PAGE_SIZE }
 			});
 
 			if (error || !result) {

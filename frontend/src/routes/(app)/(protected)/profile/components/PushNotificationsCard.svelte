@@ -1,16 +1,21 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
-	import { Button } from '$lib/components/ui/button';
-	import { Switch } from '$lib/components/ui/switch';
-	import { Bell } from '@lucide/svelte';
-	const client = createApiClient();
-	import type { components } from '$lib/api/schema';
+	import type { UpdateUserSettingsInput } from '$lib/api/client';
 	import type { CurrentUserDTO } from '$lib/types/user';
 
 	import { PUBLIC_VAPID_KEY, PUBLIC_VK_GROUP_ID } from '$env/static/public';
+	import {
+		checkSubscription as checkPushSubscription,
+		sendTestNotification as sendTestNotificationRequest,
+		subscribe as subscribePush,
+		unsubscribe as unsubscribePush,
+		updateCurrentUserSettings
+	} from '$lib/api/client';
+	import { Button } from '$lib/components/ui/button';
+	import { Switch } from '$lib/components/ui/switch';
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { offlineWriteGate } from '$lib/utils/offlineAction';
+	import { Bell } from '@lucide/svelte';
 	import * as Sentry from '@sentry/sveltekit';
 	import { onMount, untrack } from 'svelte';
 
@@ -80,8 +85,8 @@
 			// The browser has a local subscription; confirm the server still knows
 			// about this exact endpoint, otherwise treat it as not subscribed so the
 			// user can re-register (e.g. after the server lost the subscription).
-			const { data } = await client.GET('/push/', {
-				params: { query: { endpoint: subscription.endpoint } }
+			const { data } = await checkPushSubscription({
+				query: { endpoint: subscription.endpoint }
 			});
 			isSubscribed = data?.subscribed ?? false;
 		} catch (error) {
@@ -114,13 +119,13 @@
 				const subscription = await registration.pushManager.getSubscription();
 				if (subscription) {
 					// Remove the matching subscription on the backend before unsubscribing locally.
-					const { error, response } = await client.DELETE('/push/', {
+					const { error, response } = await unsubscribePush({
 						body: {
 							endpoint: subscription.endpoint
 						}
 					});
 
-					if (error || !response.ok) {
+					if (error || !response?.ok) {
 						console.error('Failed to remove subscription from server:', error);
 					}
 
@@ -215,7 +220,7 @@
 				return;
 			}
 
-			const { error, response } = await client.POST('/push/', {
+			const { error, response } = await subscribePush({
 				body: {
 					endpoint,
 					p256dh,
@@ -223,7 +228,7 @@
 				}
 			});
 
-			if (error || !response.ok) {
+			if (error || !response?.ok) {
 				console.error('API Error:', error);
 				// The browser subscribed but the backend rejected it, so push stays off
 				// despite a granted permission — the failure mode worth catching.
@@ -255,15 +260,15 @@
 	}
 
 	async function updateSettings(
-		nextSettings: Partial<components['schemas']['UpdateUserSettingsInput']>,
+		nextSettings: Partial<UpdateUserSettingsInput>,
 		rollback: () => void
 	) {
 		isSavingSettings = true;
-		const { error, response } = await client.PATCH('/me/settings', {
+		const { error, response } = await updateCurrentUserSettings({
 			body: nextSettings
 		});
 
-		if (error || !response.ok) {
+		if (error || !response?.ok) {
 			console.error('API Error:', error);
 			toastService.add('Не удалось обновить настройки', 'error');
 			rollback();
@@ -308,9 +313,9 @@
 		try {
 			isSendingTest = true;
 
-			const { error, response } = await client.POST('/notifications/test');
+			const { error, response } = await sendTestNotificationRequest();
 
-			if (error || !response.ok) {
+			if (error || !response?.ok) {
 				console.error('API Error:', error);
 				toastService.add('Не удалось отправить тестовое уведомление', 'error');
 				return;

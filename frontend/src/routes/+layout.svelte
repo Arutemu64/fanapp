@@ -3,6 +3,12 @@
 
 	import '../app.css';
 
+	// Side-effecting import: configures the shared hey-api client (base URL,
+	// credentials, reachability + session-expiry interceptors) once, before any
+	// generated SDK/query function runs. See lib/api/client-config.ts and
+	// docs/sketches/hey-api-tanstack-query-migration.md.
+	import '$lib/api/client-config';
+	import { queryClient } from '$lib/api/queryClient';
 	import Toaster from '$lib/components/ui/sonner/sonner.svelte';
 	import UpdatePrompt from '$lib/components/UpdatePrompt.svelte';
 	import { setEventsClient } from '$lib/services/events.svelte';
@@ -12,6 +18,7 @@
 	import { setToastService } from '$lib/services/toasts.svelte';
 	import { registerServiceWorker } from '$lib/utils/serviceWorker';
 	import * as Sentry from '@sentry/sveltekit';
+	import { QueryClientProvider } from '@tanstack/svelte-query';
 	import { onDestroy, onMount } from 'svelte';
 
 	import type { LayoutProps } from './$types';
@@ -60,7 +67,9 @@
 	<title>ФАН ФАН</title>
 </svelte:head>
 
-{@render children()}
+<QueryClientProvider client={queryClient}>
+	{@render children()}
+</QueryClientProvider>
 
 <Toaster />
 

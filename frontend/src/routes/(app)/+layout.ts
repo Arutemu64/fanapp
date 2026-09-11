@@ -1,6 +1,6 @@
 import type { NotificationSeed } from '$lib/types/notifications';
 
-import { createApiClient } from '$lib/api';
+import { countUnreadNotifications, listUserNotifications } from '$lib/api/client';
 import { NOTIFICATION_PREVIEW_LIMIT } from '$lib/constants/notifications';
 import { isReachable, markReachable } from '$lib/services/reachability';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
@@ -36,8 +36,6 @@ async function loadNotificationSeed(
 		return null;
 	}
 
-	const client = createApiClient();
-
 	// The bell is non-critical: on error/timeout (or offline) fall back to an empty
 	// preview. The live SSE stream refreshes it once the client reconnects. The
 	// preview feeds the dropdown list; the unread count is fetched separately
@@ -48,12 +46,12 @@ async function loadNotificationSeed(
 	// preview alone decides reachability (as it did before the count was added), and
 	// a timed-out count must not discard a good preview or mark the API unreachable.
 	const [previewResult, unreadResult] = await Promise.allSettled([
-		client.GET('/notifications/', {
+		listUserNotifications({
 			fetch,
-			params: { query: { limit: NOTIFICATION_PREVIEW_LIMIT } },
+			query: { limit: NOTIFICATION_PREVIEW_LIMIT },
 			signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
 		}),
-		client.GET('/notifications/unread-count', {
+		countUnreadNotifications({
 			fetch,
 			signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
 		})

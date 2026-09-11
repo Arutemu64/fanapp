@@ -1,4 +1,4 @@
-import { createApiClient } from '$lib/api';
+import { listScheduleChanges } from '$lib/api/client';
 import { throwApiError } from '$lib/api/errors';
 import {
 	SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT,
@@ -22,8 +22,6 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 
 	depends('app:schedule:changes');
 
-	const client = createApiClient();
-
 	// Staff-only operational feed: stale data would misrepresent live state, so
 	// no offline cache here — fail hard when unreachable instead.
 	// Over-fetch one item so the client can tell whether a next page exists.
@@ -31,9 +29,9 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 		data,
 		error: fetchError,
 		response
-	} = await client.GET('/schedule/changes/', {
+	} = await listScheduleChanges({
 		fetch,
-		params: { query: { limit: SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT, offset: 0 } }
+		query: { limit: SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT, offset: 0 }
 	});
 	if (fetchError || !data) {
 		throwApiError(fetchError, response, 'Не удалось загрузить изменения программы');

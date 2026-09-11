@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { components } from '$lib/api/schema';
+	import type { SocialProvider } from '$lib/api/client';
 
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { Button } from '$lib/components/ui/button';
@@ -15,8 +15,6 @@
 
 	import CodeLoginForm from './components/CodeLoginForm.svelte';
 	import PasswordLoginForm from './components/PasswordLoginForm.svelte';
-
-	type SocialProvider = components['schemas']['SocialProvider'];
 
 	let { data }: PageProps = $props();
 	const toastService = getToastService();

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ParticipantFullDTO } from '$lib/types/participant';
 
-	import { createApiClient } from '$lib/api';
+	import { addVote, cancelVote } from '$lib/api/client';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -9,8 +9,6 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { pluralize } from '$lib/utils/formatters';
 	import { Check, CheckCircle2, Heart, X } from '@lucide/svelte';
-
-	const client = createApiClient();
 
 	interface Props {
 		participant: ParticipantFullDTO;
@@ -34,13 +32,13 @@
 		isLoading = true;
 		optimisticDelta += 1;
 		try {
-			const { data, error, response } = await client.POST('/voting/votes', {
+			const { data, error, response } = await addVote({
 				body: {
 					participant_id: participant.id
 				}
 			});
 
-			if (error || !response.ok) {
+			if (error || !response?.ok) {
 				optimisticDelta -= 1;
 				toastService.error(error);
 				return;
@@ -66,13 +64,11 @@
 		isLoading = true;
 		optimisticDelta -= 1;
 		try {
-			const { error, response } = await client.DELETE('/voting/votes/{vote_id}', {
-				params: {
-					path: { vote_id: vote.id }
-				}
+			const { error, response } = await cancelVote({
+				path: { vote_id: vote.id }
 			});
 
-			if (error || !response.ok) {
+			if (error || !response?.ok) {
 				optimisticDelta += 1;
 				toastService.error(error);
 				return;

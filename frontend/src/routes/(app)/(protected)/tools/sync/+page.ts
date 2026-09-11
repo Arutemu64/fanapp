@@ -1,4 +1,4 @@
-import { createApiClient } from '$lib/api';
+import { getSyncSources } from '$lib/api/client';
 import { throwApiError } from '$lib/api/errors';
 import { canRunSync } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
@@ -16,10 +16,9 @@ export const load: PageLoad = async ({ parent, fetch, depends }) => {
 		error(403, 'У тебя нет доступа к синхронизации');
 	}
 
-	const client = createApiClient();
-	const { data, error: apiError, response } = await client.GET('/sync/sources', { fetch });
+	const { data, error: apiError, response } = await getSyncSources({ fetch });
 
-	if (apiError || !response.ok || !data) {
+	if (apiError || !response?.ok || !data) {
 		throwApiError(apiError, response, 'Не удалось загрузить состояние синхронизации');
 	}
 

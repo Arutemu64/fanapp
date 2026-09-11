@@ -1,4 +1,4 @@
-import { createApiClient } from '$lib/api';
+import { getUser } from '$lib/api/client';
 import { throwApiError } from '$lib/api/errors';
 import { canReadUsers } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
@@ -14,17 +14,16 @@ export const load: PageLoad = async ({ fetch, parent, params }) => {
 		error(403, 'У тебя нет доступа к карточкам пользователей');
 	}
 
-	const client = createApiClient();
 	const {
 		data,
 		error: fetchError,
 		response
-	} = await client.GET('/users/{user_id}', {
+	} = await getUser({
 		fetch,
-		params: { path: { user_id: params.id } }
+		path: { user_id: params.id }
 	});
 
-	if (response.status === 404) {
+	if (response?.status === 404) {
 		error(404, 'Пользователь не найден');
 	}
 	if (fetchError || !data) {

@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { components } from '$lib/api/schema';
+	import type { MailingDto, MailingStatus, UserRole } from '$lib/api/client';
 
 	import { invalidate } from '$app/navigation';
-	import { createApiClient } from '$lib/api';
+	import { cancelMailing, listBroadcasts } from '$lib/api/client';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
@@ -15,9 +15,7 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { formatFestivalDateTime } from '$lib/utils/formatters';
 
-	type Mailing = components['schemas']['MailingDTO'];
-	type MailingStatus = components['schemas']['MailingStatus'];
-	type UserRole = components['schemas']['UserRole'];
+	type Mailing = MailingDto;
 
 	interface Props {
 		initialMailings: Array<Mailing>;
@@ -26,7 +24,6 @@
 
 	let { initialMailings, initialHasMore }: Props = $props();
 
-	const client = createApiClient();
 	const toastService = getToastService();
 
 	let cancellingId = $state<string | null>(null);
@@ -37,8 +34,8 @@
 		getInitialItems: () => initialMailings,
 		getInitialHasMore: () => initialHasMore,
 		fetchPage: async (limit, offset) => {
-			const { data, error } = await client.GET('/notifications/broadcast', {
-				params: { query: { limit, offset } }
+			const { data, error } = await listBroadcasts({
+				query: { limit, offset }
 			});
 			return error || !data ? null : data.mailings;
 		},
@@ -80,11 +77,10 @@
 	async function cancel(mailing: Mailing): Promise<void> {
 		cancellingId = mailing.id;
 		try {
-			const { error, response } = await client.POST(
-				'/notifications/broadcast/{mailing_id}/cancel',
-				{ params: { path: { mailing_id: mailing.id } } }
-			);
-			if (error || !response.ok) {
+			const { error, response } = await cancelMailing({
+				path: { mailing_id: mailing.id }
+			});
+			if (error || !response?.ok) {
 				toastService.error(getApiErrorDetail(error) ?? 'Не удалось отменить рассылку');
 			} else {
 				toastService.add('Рассылка отменена', 'success');

@@ -6,15 +6,13 @@
 	} from '$lib/types/schedule';
 
 	import { invalidate } from '$app/navigation';
-	import { createApiClient } from '$lib/api';
+	import { undoScheduleChange } from '$lib/api/client';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Undo2 } from '@lucide/svelte';
-
-	const client = createApiClient();
 
 	interface Props {
 		change: ScheduleChangeFullDTO;
@@ -28,11 +26,11 @@
 	async function undoChange() {
 		isUndoing = true;
 		try {
-			const { error, response } = await client.DELETE('/schedule/changes/{schedule_change_id}', {
-				params: { path: { schedule_change_id: change.id } }
+			const { error, response } = await undoScheduleChange({
+				path: { schedule_change_id: change.id }
 			});
 
-			if (error || !response.ok) {
+			if (error || !response?.ok) {
 				console.error('Error undoing change:', error);
 				toastService.error(error);
 				return;

@@ -1,4 +1,4 @@
-import { createApiClient } from '$lib/api';
+import { getVotingNomination } from '$lib/api/client';
 import { throwApiError } from '$lib/api/errors';
 import { isBackendUnreachableStatus, isReachable, markReachable } from '$lib/services/reachability';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
@@ -16,20 +16,16 @@ export const load: PageLoad = async ({ params, fetch, depends }) => {
 		return { title: 'Голосование', nomination: undefined, offlineUnavailable: true };
 	}
 
-	const client = createApiClient();
-
 	try {
 		const {
 			data,
 			error: apiError,
 			response
-		} = await client.GET('/voting/nominations/{nomination_code}', {
+		} = await getVotingNomination({
 			fetch,
 			signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS),
-			params: {
-				path: {
-					nomination_code: params.nominationCode
-				}
+			path: {
+				nomination_code: params.nominationCode
 			}
 		});
 

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ScheduleChangeFullDTO } from '$lib/types/schedule';
 
-	import { createApiClient } from '$lib/api';
+	import { listScheduleChanges } from '$lib/api/client';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
 	import {
@@ -20,7 +20,6 @@
 
 	let { initialChanges, initialHasMore }: Props = $props();
 
-	const client = createApiClient();
 	const toastService = getToastService();
 
 	const feed = new PaginatedFeed<ScheduleChangeFullDTO>({
@@ -29,8 +28,8 @@
 		getInitialItems: () => initialChanges,
 		getInitialHasMore: () => initialHasMore,
 		fetchPage: async (limit, offset) => {
-			const { data, error } = await client.GET('/schedule/changes/', {
-				params: { query: { limit, offset } }
+			const { data, error } = await listScheduleChanges({
+				query: { limit, offset }
 			});
 			return error || !data ? null : data.schedule_changes;
 		},

@@ -1,7 +1,7 @@
 import type { ScheduleEventFullDTO, SubscriptionFullDTO } from '$lib/types/schedule';
 import type { CurrentUserDTO } from '$lib/types/user';
 
-import { createApiClient } from '$lib/api';
+import { getCurrentUser, getSchedule, getSubscriptions } from '$lib/api/client';
 import {
 	clearUserCache,
 	fetchWithCache,
@@ -31,21 +31,19 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 		return { user: null };
 	}
 
-	const client = createApiClient();
-
 	// `null` is a real cached value (logged out); `undefined` means "reachable but
 	// no verdict, keep the cached user" (see fetcher below), so the type spans both.
 	const { data } = await fetchWithCache<CurrentUserDTO | null>({
 		key: USER_CACHE_KEY,
 		scope: userScope,
 		fetcher: async ({ signal }) => {
-			const { data, response, error } = await client.GET('/me/', { fetch, signal });
+			const { data, response, error } = await getCurrentUser({ fetch, signal });
 
 			// Authoritative "session ended": cache logged-out AND drop per-user caches
 			// so no orphaned entries linger for the next account on a shared device.
 			// Universal caches (e.g. schedule) are kept warm. Mirrors explicit logout
 			// (AppNavbar.handleLogout).
-			if (response.status === 401 || response.status === 403) {
+			if (response?.status === 401 || response?.status === 403) {
 				void clearUserCache();
 				return null;
 			}
@@ -68,17 +66,15 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 	// Warm the offline caches on the first online boot so they're viewable even if
 	// the user never opens the schedule page. Fire-and-forget: each is a no-op when
 	// offline or already cached, so it never blocks first paint or refetches once
-	// warmed (the schedule page's own load + SSE keep them fresh after that). Uses
-	// the same keys the schedule page reads, and its own client so it isn't tied to
-	// this load's tracked `fetch`.
+	// warmed (the schedule page's own load + SSE keep them fresh after that). Not
+	// bound to this load's tracked `fetch` — it must survive past this call.
 
 	// Schedule is universal — one shared key for guests and every account.
 	void warmCache<ScheduleEventFullDTO[]>({
 		key: 'schedule',
 		scope: universalScope,
 		fetcher: async ({ signal }) => {
-			const warmClient = createApiClient();
-			const { data: schedule, error } = await warmClient.GET('/schedule/', { signal });
+			const { data: schedule, error } = await getSchedule({ signal });
 			if (error || !schedule) return undefined;
 			return schedule.schedule ?? [];
 		}
@@ -90,8 +86,7 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 			key: `subscriptions:${user.id}`,
 			scope: userScope,
 			fetcher: async ({ signal }) => {
-				const warmClient = createApiClient();
-				const { data, error } = await warmClient.GET('/schedule/subscriptions/', { signal });
+				const { data, error } = await getSubscriptions({ signal });
 				if (error || !data) return undefined;
 				return data.subscriptions ?? [];
 			}

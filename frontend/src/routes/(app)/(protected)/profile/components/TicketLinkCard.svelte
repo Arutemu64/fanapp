@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
-	const client = createApiClient();
 	import type { CurrentUserDTO } from '$lib/types/user';
 
+	import { linkTicket } from '$lib/api/client';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
@@ -41,13 +40,13 @@
 		isSubmitting = true;
 
 		try {
-			const { error, response } = await client.POST('/me/ticket', {
+			const { error, response } = await linkTicket({
 				body: { barcode: barcode.trim() }
 			});
 
 			isSubmitting = false;
 
-			if (error || !response.ok) {
+			if (error || !response?.ok) {
 				submitError = getApiErrorDetail(error) ?? 'Не удалось привязать билет';
 				return;
 			}

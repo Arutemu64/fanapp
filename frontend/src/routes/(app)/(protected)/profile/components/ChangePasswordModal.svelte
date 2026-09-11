@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { components } from '$lib/api/schema';
+	import type { ChangePasswordInput } from '$lib/api/client';
 
-	import { createApiClient } from '$lib/api';
+	import { changeCurrentUserPassword } from '$lib/api/client';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import PasswordInput from '$lib/components/PasswordInput.svelte';
 	import * as Alert from '$lib/components/ui/alert';
@@ -11,10 +11,6 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { CheckCircle2, Lock, XCircle } from '@lucide/svelte';
-
-	const client = createApiClient();
-
-	type ChangePasswordInput = components['schemas']['ChangePasswordInput'];
 
 	interface Props {
 		open: boolean;
@@ -66,13 +62,13 @@
 			new_password: newPassword
 		};
 
-		const { error, response } = await client.POST('/me/password', {
+		const { error, response } = await changeCurrentUserPassword({
 			body
 		});
 
 		isLoading = false;
 
-		if (error || !response.ok) {
+		if (error || !response?.ok) {
 			formError = getApiErrorDetail(error) ?? 'Не удалось сменить пароль';
 			return;
 		}

@@ -3,15 +3,13 @@
 
 	import { invalidate } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { createApiClient } from '$lib/api';
+	import { newSubscription } from '$lib/api/client';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { BellRing, Minus, Plus } from '@lucide/svelte';
-
-	const client = createApiClient();
 
 	interface Props {
 		open: boolean;
@@ -39,14 +37,14 @@
 	async function handleSubmit() {
 		setCounter(counter);
 		formError = '';
-		const { error, response } = await client.POST('/schedule/subscriptions/', {
+		const { error, response } = await newSubscription({
 			body: {
 				event_id: event.id,
 				counter
 			}
 		});
 
-		if (error || !response.ok) {
+		if (error || !response?.ok) {
 			formError = getApiErrorDetail(error) ?? 'Не удалось оформить подписку';
 			return;
 		}

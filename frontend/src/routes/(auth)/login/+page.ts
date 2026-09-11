@@ -1,6 +1,6 @@
-import type { components } from '$lib/api/schema';
+import type { SocialProvider } from '$lib/api/client';
 
-import { createApiClient } from '$lib/api';
+import { listOauthProviders } from '$lib/api/client';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 import {
 	OAUTH_ERROR_CODES,
@@ -9,8 +9,6 @@ import {
 } from '$lib/utils/oauthErrors';
 
 import type { PageLoad } from './$types';
-
-type SocialProvider = components['schemas']['SocialProvider'];
 
 export const load: PageLoad = async ({ url, fetch }) => {
 	// The one-time login error code the backend callback leaves on the URL when the
@@ -31,12 +29,11 @@ export const load: PageLoad = async ({ url, fetch }) => {
 	// never a lockout. An authoritative empty list stays empty.
 	let enabledProviders: SocialProvider[] | null = null;
 	try {
-		const client = createApiClient();
-		const { data, error } = await client.GET('/auth/oauth/providers', {
+		const { data, error } = await listOauthProviders({
 			fetch,
 			signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
 		});
-		if (error) {
+		if (error || !data) {
 			console.error('Error fetching enabled OAuth providers:', error);
 		} else {
 			enabledProviders = data.providers;

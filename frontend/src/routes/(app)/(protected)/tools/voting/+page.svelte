@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { components } from '$lib/api/schema';
+	import type { NominationContenderDto, UserBaseDto } from '$lib/api/client';
 
-	import { createApiClient } from '$lib/api';
+	import { drawVotingContestWinner, setVotingTimeRange } from '$lib/api/client';
 	import BackLink from '$lib/components/BackLink.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
@@ -19,14 +19,14 @@
 
 	import type { PageProps } from './$types';
 
-	type NominationContender = components['schemas']['NominationContenderDTO'];
-	type Winner = components['schemas']['UserBaseDTO'];
+	// UserBaseDto is aliased: "Winner" names its role in the draw, which the
+	// generic DTO name doesn't convey.
+	type Winner = UserBaseDto;
 
 	let { data }: PageProps = $props();
-	const client = createApiClient();
 	const toastService = getToastService();
 
-	let nominations = $derived<NominationContender[]>(data.dashboard.nominations);
+	let nominations = $derived<NominationContenderDto[]>(data.dashboard.nominations);
 
 	let votingStart = $state(untrack(() => toLocalInput(data.dashboard.voting_start)));
 	let votingEnd = $state(untrack(() => toLocalInput(data.dashboard.voting_end)));
@@ -58,15 +58,15 @@
 	async function handleSave() {
 		isSaving = true;
 		try {
-			const { error, response } = await client.PATCH('/voting/dashboard', {
+			const { error, response } = await setVotingTimeRange({
 				body: {
 					voting_start: fromLocalInput(votingStart),
 					voting_end: fromLocalInput(votingEnd)
 				}
 			});
 
-			if (error || !response.ok) {
-				if (response.status === 403) {
+			if (error || !response?.ok) {
+				if (response?.status === 403) {
 					toastService.add('У тебя нет доступа к управлению голосованием', 'error');
 				} else {
 					toastService.add('Не удалось сохранить время голосования', 'error');
@@ -93,10 +93,10 @@
 		isDrawing = true;
 		drawError = '';
 		try {
-			const { data: result, error, response } = await client.POST('/voting/contest/draw', {});
+			const { data: result, error, response } = await drawVotingContestWinner();
 
-			if (error || !response.ok || !result) {
-				if (response.status === 403) {
+			if (error || !response?.ok || !result) {
+				if (response?.status === 403) {
 					drawError = 'У тебя нет доступа к розыгрышу';
 				} else {
 					drawError = 'Не удалось провести розыгрыш';

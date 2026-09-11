@@ -1,4 +1,4 @@
-import { createApiClient } from '$lib/api';
+import { getVotingDashboard } from '$lib/api/client';
 import { throwApiError } from '$lib/api/errors';
 import { canManageVoting } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
@@ -14,10 +14,9 @@ export const load: PageLoad = async ({ fetch, parent }) => {
 		error(403, 'У тебя нет доступа к управлению голосованием');
 	}
 
-	const client = createApiClient();
-	const { data, error: requestError, response } = await client.GET('/voting/dashboard', { fetch });
+	const { data, error: requestError, response } = await getVotingDashboard({ fetch });
 
-	if (requestError || !response.ok || !data) {
+	if (requestError || !response?.ok || !data) {
 		throwApiError(requestError, response, 'Не удалось загрузить панель голосования');
 	}
 

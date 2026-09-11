@@ -1,4 +1,4 @@
-import { createApiClient } from '$lib/api';
+import { listUsers } from '$lib/api/client';
 import { throwApiError } from '$lib/api/errors';
 import { USERS_PAGE_SIZE } from '$lib/constants/users';
 import { canReadUsers } from '$lib/utils/permissions';
@@ -24,22 +24,18 @@ export const load: PageLoad = async ({ fetch, parent, url }) => {
 	const page = Number.isInteger(rawPage) && rawPage > 0 ? rawPage : 1;
 	const offset = (page - 1) * USERS_PAGE_SIZE;
 
-	const client = createApiClient();
-
 	// Staff-only operational directory: stale data would misrepresent live state,
 	// so no offline cache — fail hard when unreachable instead.
 	const {
 		data,
 		error: fetchError,
 		response
-	} = await client.GET('/users/', {
+	} = await listUsers({
 		fetch,
-		params: {
-			query: {
-				limit: USERS_PAGE_SIZE,
-				offset,
-				...(search ? { search } : {})
-			}
+		query: {
+			limit: USERS_PAGE_SIZE,
+			offset,
+			...(search ? { search } : {})
 		}
 	});
 	if (fetchError || !data) {

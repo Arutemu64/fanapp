@@ -14,7 +14,7 @@ const gitignorePath = path.resolve(import.meta.dirname, '.gitignore');
 
 export default defineConfig(
 	includeIgnoreFile(gitignorePath),
-	{ ignores: ['src/lib/api/schema.d.ts'] },
+	{ ignores: ['src/lib/api/client/**'] },
 	js.configs.recommended,
 	ts.configs.recommendedTypeChecked,
 	svelte.configs.recommended,
@@ -26,7 +26,13 @@ export default defineConfig(
 		languageOptions: {
 			globals: { ...globals.browser, ...globals.node },
 			parserOptions: {
-				projectService: true,
+				projectService: {
+					// `openapi-ts.config.ts` sits at the repo root outside `src/`, so it
+					// isn't in tsconfig.json's include (SvelteKit's generated base only
+					// special-cases `vite.config.ts`) — fall back to a default,
+					// non-type-checked project for it rather than erroring.
+					allowDefaultProject: ['openapi-ts.config.ts']
+				},
 				tsconfigRootDir: import.meta.dirname,
 				// Declare `.svelte` here, globally, not only in the Svelte override.
 				// With projectService, differing extraFileExtensions across files in

@@ -3,7 +3,7 @@
 
 	import { invalidate } from '$app/navigation';
 	import { page } from '$app/state';
-	import { createApiClient } from '$lib/api';
+	import { moveScheduleEvent } from '$lib/api/client';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
@@ -13,8 +13,6 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { createSearchIndex } from '$lib/utils/search';
 	import { ArrowUpDown, BellRing, Search as SearchIcon, X } from '@lucide/svelte';
-
-	const client = createApiClient();
 
 	interface Props {
 		open: boolean;
@@ -67,12 +65,12 @@
 		formError = '';
 		isSubmitting = true;
 		try {
-			const { error, response } = await client.PATCH('/schedule/{event_id}/move', {
-				params: { path: { event_id: event.id } },
+			const { error, response } = await moveScheduleEvent({
+				path: { event_id: event.id },
 				body: { place_after_event_id: selectedId }
 			});
 
-			if (error || !response.ok) {
+			if (error || !response?.ok) {
 				console.error('Error moving event:', error);
 				formError = getApiErrorDetail(error) ?? 'Не удалось перенести выступление';
 				return;

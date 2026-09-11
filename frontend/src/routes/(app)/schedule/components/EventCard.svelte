@@ -3,7 +3,7 @@
 	import type { CurrentUserDTO } from '$lib/types/user';
 
 	import { invalidate } from '$app/navigation';
-	import { createApiClient } from '$lib/api';
+	import { setEventAsCurrent, uncheckCurrentEvent, updateScheduleEvent } from '$lib/api/client';
 	import { Badge } from '$lib/components/ui/badge';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { formatDuration, formatUntil, pluralize } from '$lib/utils/formatters';
@@ -26,8 +26,6 @@
 	import MoveEventModal from './MoveEventModal.svelte';
 	import SubscribeModal from './SubscribeModal.svelte';
 	import UnsubscribeModal from './UnsubscribeModal.svelte';
-
-	const client = createApiClient();
 
 	interface Props {
 		event: ScheduleEventWithSubscription;
@@ -122,11 +120,11 @@
 	}
 
 	async function handleMarkCurrent() {
-		const { error, response } = await client.PATCH('/schedule/{event_id}/current', {
-			params: { path: { event_id: event.id } }
+		const { error, response } = await setEventAsCurrent({
+			path: { event_id: event.id }
 		});
 
-		if (error || !response.ok) {
+		if (error || !response?.ok) {
 			toastService.error(error);
 			return;
 		}
@@ -136,9 +134,9 @@
 	}
 
 	async function handleUnmarkCurrent() {
-		const { error, response } = await client.DELETE('/schedule/current');
+		const { error, response } = await uncheckCurrentEvent();
 
-		if (error || !response.ok) {
+		if (error || !response?.ok) {
 			toastService.error(error);
 			return;
 		}
@@ -155,12 +153,12 @@
 		// Flip the row immediately; revert below if the request fails.
 		optimisticSkipped = skip;
 
-		const { error, response } = await client.PATCH('/schedule/{event_id}', {
-			params: { path: { event_id: event.id } },
+		const { error, response } = await updateScheduleEvent({
+			path: { event_id: event.id },
 			body: { is_skipped: skip }
 		});
 
-		if (error || !response.ok) {
+		if (error || !response?.ok) {
 			optimisticSkipped = null;
 			toastService.error(error);
 			return;

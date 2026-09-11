@@ -19,8 +19,8 @@
 		"lint:format": "prettier --check --cache .",
 		"lint:eslint": "eslint --cache --cache-strategy content --cache-location .eslintcache .",
 		"deadcode": "knip --no-exit-code",
-		"generate-api": "node ./scripts/generate-api.mjs",
-		"generate-api:check": "node ./scripts/generate-api.mjs --check",
+		"generate-api": "openapi-ts",
+		"generate-api:check": "node ./scripts/check-generated-api.mjs",
 		"e2e": "playwright test",
 		"e2e:ui": "playwright test --ui",
 		"e2e:report": "playwright show-report",
@@ -30,6 +30,7 @@
 		"@axe-core/playwright": "^4.13.0",
 		"@eslint/compat": "2.1.1",
 		"@eslint/js": "10.0.1",
+		"@hey-api/openapi-ts": "0.99.0",
 		"@iconify-json/simple-icons": "1.2.94",
 		"@internationalized/date": "^3.12.3",
 		"@lucide/svelte": "^1.35.0",
@@ -49,7 +50,6 @@
 		"eslint-plugin-svelte": "3.23.0",
 		"globals": "17.12.0",
 		"knip": "^6.34.0",
-		"openapi-typescript": "7.13.0",
 		"prettier": "3.9.6",
 		"prettier-plugin-svelte": "4.1.1",
 		"prettier-plugin-tailwindcss": "0.8.1",
@@ -77,8 +77,8 @@
 		"@khmyznikov/pwa-install": "0.6.4",
 		"@panzoom/panzoom": "4.6.2",
 		"@sentry/sveltekit": "10.73.0",
+		"@tanstack/svelte-query": "6.1.38",
 		"idb-keyval": "6.3.0",
-		"openapi-fetch": "0.17.0",
 		"svelte-sonner": "^1.2.1"
 	}
 }

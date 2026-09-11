@@ -20,3 +20,5 @@ pnpm-debug.log
 /playwright-report
 /test-results
 /blob-report
+# scripts/check-generated-api.mjs scratch output
+/.api-check-tmp

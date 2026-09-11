@@ -2,15 +2,13 @@
 	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
 
 	import { invalidate } from '$app/navigation';
-	import { createApiClient } from '$lib/api';
+	import { deleteSubscription } from '$lib/api/client';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import * as Alert from '$lib/components/ui/alert';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { Button } from '$lib/components/ui/button';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Bell } from '@lucide/svelte';
-
-	const client = createApiClient();
 
 	interface Props {
 		open: boolean;
@@ -33,11 +31,11 @@
 		}
 
 		formError = '';
-		const { error, response } = await client.DELETE('/schedule/subscriptions/{subscription_id}', {
-			params: { path: { subscription_id: event.user_subscription.id } }
+		const { error, response } = await deleteSubscription({
+			path: { subscription_id: event.user_subscription.id }
 		});
 
-		if (error || !response.ok) {
+		if (error || !response?.ok) {
 			console.error('Error unsubscribing:', error);
 			formError = getApiErrorDetail(error) ?? 'Не удалось отключить уведомления';
 			return;

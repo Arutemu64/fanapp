@@ -1,4 +1,4 @@
-import { createApiClient } from '$lib/api';
+import { listFeedback } from '$lib/api/client';
 import { throwApiError } from '$lib/api/errors';
 import { FEEDBACK_PAGE_REQUEST_LIMIT, FEEDBACK_PAGE_SIZE } from '$lib/constants/feedback';
 import { canReadFeedback } from '$lib/utils/permissions';
@@ -16,8 +16,6 @@ export const load: PageLoad = async ({ fetch, parent }) => {
 		error(403, 'У тебя нет доступа к отзывам');
 	}
 
-	const client = createApiClient();
-
 	// Staff-only operational feed: stale data would misrepresent live state, so
 	// no offline cache here — fail hard when unreachable instead.
 	// Over-fetch one item so the client can tell whether a next page exists.
@@ -25,9 +23,9 @@ export const load: PageLoad = async ({ fetch, parent }) => {
 		data,
 		error: fetchError,
 		response
-	} = await client.GET('/feedback/', {
+	} = await listFeedback({
 		fetch,
-		params: { query: { limit: FEEDBACK_PAGE_REQUEST_LIMIT, offset: 0 } }
+		query: { limit: FEEDBACK_PAGE_REQUEST_LIMIT, offset: 0 }
 	});
 	if (fetchError || !data) {
 		throwApiError(fetchError, response, 'Не удалось загрузить отзывы');

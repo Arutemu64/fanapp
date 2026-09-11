@@ -3,7 +3,11 @@
 
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { createApiClient } from '$lib/api';
+	import {
+		listUserNotifications,
+		markAllNotificationsRead,
+		markNotificationsRead
+	} from '$lib/api/client';
 	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { NOTIFICATION_BADGE_MAX, NOTIFICATION_PREVIEW_LIMIT } from '$lib/constants/notifications';
@@ -13,8 +17,6 @@
 	import { setAppBadgeCount } from '$lib/utils/appBadge';
 	import { Bell, Eye } from '@lucide/svelte';
 	import { onMount } from 'svelte';
-
-	const client = createApiClient();
 
 	let notifications = $state<NotificationDTO[]>([]);
 	// True once an authoritative load (SSE connect or a user action) has populated
@@ -62,11 +64,11 @@
 
 	async function loadNotifications() {
 		try {
-			const { data, error, response } = await client.GET('/notifications/', {
-				params: { query: { limit: NOTIFICATION_PREVIEW_LIMIT } }
+			const { data, error, response } = await listUserNotifications({
+				query: { limit: NOTIFICATION_PREVIEW_LIMIT }
 			});
 
-			if (!error && response.ok && data) {
+			if (!error && response?.ok && data) {
 				notifications = data.notifications;
 				hasLoadedPreview = true;
 			}
@@ -86,10 +88,10 @@
 		if (unseenIds.length === 0) return;
 
 		try {
-			const { error, response } = await client.POST('/notifications/mark-read', {
+			const { error, response } = await markNotificationsRead({
 				body: { notification_ids: unseenIds }
 			});
-			if (!error && response.ok) {
+			if (!error && response?.ok) {
 				// Reload the preview (items now read) and the true total — marking the
 				// visible five read may still leave older unread items behind the badge.
 				await Promise.all([loadNotifications(), unread.refresh()]);
@@ -127,8 +129,8 @@
 		if (unread.count === 0) return;
 
 		try {
-			const { error, response } = await client.POST('/notifications/mark-all-read');
-			if (!error && response.ok) {
+			const { error, response } = await markAllNotificationsRead();
+			if (!error && response?.ok) {
 				// Clear for instant feedback, then reconcile with the server: a
 				// notification committed in the window between mark-all-read committing
 				// and this handler running is still unread, and only a follow-up refresh

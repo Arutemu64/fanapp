@@ -1,9 +1,15 @@
 # Sketch — migrate the data layer to hey-api + TanStack Query (with offline caching)
 
-> **STATUS: DRAFT PROPOSAL — not accepted.** This is a *sketch* to evaluate, not a
-> guide to how the app works today. Nothing here is wired in. If we decide to do
-> it, the decision itself becomes an ADR (the SPA choice is [ADR-0007]); this file
-> records the shape and the trade-offs so a reviewer can say yes/no/partial.
+> **STATUS: ADOPTED.** The codegen and transport swap (§ below, and the traps in
+> §1–§6) has landed for the whole app: `openapi-typescript` + `openapi-fetch` are
+> gone, every call site is on the hey-api SDK, and `docs/api.md` describes the
+> current stack. What has **not** landed is the offline persister (§4) — every
+> page's `fetchWithCache`/`warmCache` + `idb-keyval` caching is unchanged, and no
+> page has been moved onto `createQuery`/`createMutation` for its data yet except
+> `tools/settings` (online-only, no offline story to migrate). The rest of this
+> file is kept as the design record for that remaining work — the reasoning below
+> is still current, the "not accepted" framing is not. Consider promoting the
+> decision to an ADR (the SPA choice is [ADR-0007]) now that it has shipped.
 
 ## Why look at this
 
@@ -35,17 +41,17 @@ memory of them (AGENTS.md "Research the current best practice").
 
 ## What each piece replaces
 
-| Today | After | Notes |
-| --- | --- | --- |
-| `openapi-typescript` → `schema.d.ts` (types only) | `@hey-api/openapi-ts` → SDK + types + TanStack options | Same spec input; `just frontend-generate-api` rewires to the hey-api CLI |
-| `openapi-fetch` `createApiClient()` per context | `@hey-api/client-fetch` client + generated SDK fns | Interceptors replace middleware (below) |
-| `reachabilityWatch` / `sessionExpiryWatch` middleware (`lib/api/index.ts`) | `client.interceptors.response.use(...)` | Straight port — see §3 |
-| `fetchWithCache` + `{value,cachedAt}` envelope | `createQueryPersister` over the existing `fanfan-cache` IDB store | `cachedAt` → query `dataUpdatedAt`; `stale` → query `isStale` |
-| `warmCache` on boot | `queryClient.prefetchQuery(opts)` | Same fire-and-forget intent |
-| `load` + `depends('app:x')` + `invalidate('app:x')` | `ensureQueryData` in `load` + `invalidateQueries({queryKey})` | Keeps blocking-load UX (below) |
-| `clearUserCache()` on logout | `queryClient.removeQueries({queryKey})` by scope prefix + persister purge | Scope maps onto query-key prefixes |
-| SSE → `invalidate(...)` | SSE → `invalidateQueries(...)` | Unchanged in spirit |
-| `getApiErrorDetail` / `ERROR_MESSAGES` / typed `code` union | **kept**, called from a global `QueryCache`/`MutationCache` `onError` | The Russian-copy funnel stays; see §6 |
+| Today                                                                      | After                                                                     | Notes                                                                    |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `openapi-typescript` → `schema.d.ts` (types only)                          | `@hey-api/openapi-ts` → SDK + types + TanStack options                    | Same spec input; `just frontend-generate-api` rewires to the hey-api CLI |
+| `openapi-fetch` `createApiClient()` per context                            | `@hey-api/client-fetch` client + generated SDK fns                        | Interceptors replace middleware (below)                                  |
+| `reachabilityWatch` / `sessionExpiryWatch` middleware (`lib/api/index.ts`) | `client.interceptors.response.use(...)`                                   | Straight port — see §3                                                   |
+| `fetchWithCache` + `{value,cachedAt}` envelope                             | `createQueryPersister` over the existing `fanfan-cache` IDB store         | `cachedAt` → query `dataUpdatedAt`; `stale` → query `isStale`            |
+| `warmCache` on boot                                                        | `queryClient.prefetchQuery(opts)`                                         | Same fire-and-forget intent                                              |
+| `load` + `depends('app:x')` + `invalidate('app:x')`                        | `ensureQueryData` in `load` + `invalidateQueries({queryKey})`             | Keeps blocking-load UX (below)                                           |
+| `clearUserCache()` on logout                                               | `queryClient.removeQueries({queryKey})` by scope prefix + persister purge | Scope maps onto query-key prefixes                                       |
+| SSE → `invalidate(...)`                                                    | SSE → `invalidateQueries(...)`                                            | Unchanged in spirit                                                      |
+| `getApiErrorDetail` / `ERROR_MESSAGES` / typed `code` union                | **kept**, called from a global `QueryCache`/`MutationCache` `onError`     | The Russian-copy funnel stays; see §6                                    |
 
 ## The repo-specific traps (this is the actual work)
 
@@ -53,7 +59,7 @@ memory of them (AGENTS.md "Research the current best practice").
 
 `docs/api.md` and `docs/frontend.md` §1 **forbid** a module-singleton API client
 because mutable per-user state bleeds across login/logout in the SPA. A
-`QueryClient` *is* a long-lived singleton by design — so this rule has to be met,
+`QueryClient` _is_ a long-lived singleton by design — so this rule has to be met,
 not ignored:
 
 - The ban is on **mutable session state** leaking, not on a shared stateless fetch
@@ -83,11 +89,11 @@ Keep the `load` and have it warm the cache, so blocking + skeletons are unchange
 ```ts
 // +page.ts — load still blocks; TanStack owns the cache underneath
 export const load: PageLoad = async ({ fetch, parent }) => {
-  const { queryClient } = await parent();          // provided from root layout
+  const { queryClient } = await parent(); // provided from root layout
   await queryClient.ensureQueryData(
-    getScheduleOptions({ fetch })                   // hey-api-generated options
+    getScheduleOptions({ fetch }), // hey-api-generated options
   );
-  return { title: 'Программа' };
+  return { title: "Программа" };
 };
 ```
 
@@ -121,7 +127,10 @@ client.interceptors.response.use((response, request) => {
   markReachable(!isBackendUnreachableStatus(response.status));
 
   // sessionExpiryWatch: 401 (except /me and credential logins) → reconcile identity
-  if (response.status === 401 && !CREDENTIAL_CHECK_PATHS.has(new URL(request.url).pathname)) {
+  if (
+    response.status === 401 &&
+    !CREDENTIAL_CHECK_PATHS.has(new URL(request.url).pathname)
+  ) {
     // same debounced invalidate('app:current-user') → invalidateQueries(['me'])
   }
   return response;
@@ -145,13 +154,13 @@ const persister = experimental_createQueryPersister({
     setItem: (k, v) => idbSet(k, v, cacheStore),
     removeItem: (k) => idbDel(k, cacheStore),
   },
-  maxAge: OFFLINE_WINDOW_MS,          // was implicit in fetchWithCache
-  buster: OPENAPI_INFO_VERSION,       // bust on schema/deploy — reuse info.version
+  maxAge: OFFLINE_WINDOW_MS, // was implicit in fetchWithCache
+  buster: OPENAPI_INFO_VERSION, // bust on schema/deploy — reuse info.version
 });
 ```
 
 - `networkMode: 'offlineFirst'` so a cached query paints instantly and only hits
-  the network when reachable — this *is* the `if (!isReachable()) serve cache`
+  the network when reachable — this _is_ the `if (!isReachable()) serve cache`
   branch, now declarative.
 - **Scope (user vs universal)** maps onto **query-key prefixes**: per-user keys like
   `['me']`, `['subscriptions', userId]`, `['notifications']`; universal like
@@ -162,8 +171,8 @@ const persister = experimental_createQueryPersister({
   `offlineUnavailable` contract.
 - `StaleDataNotice` reads `query.dataUpdatedAt` (→ `formatSyncedAt`) and
   `query.isStale`; `offlineMiss` = `status==='error' && data===undefined &&
-  !isReachable()`. The three offline states (`offlineMiss` / `offlineUnavailable` /
-  `offlineWriteGate`, §2 of frontend.md) keep their copy; only their *source* flips
+!isReachable()`. The three offline states (`offlineMiss` / `offlineUnavailable` /
+  `offlineWriteGate`, §2 of frontend.md) keep their copy; only their _source_ flips
   from `fetchWithCache` bookkeeping to query state + reachability.
 
 ### 5. Mutations stay online-only

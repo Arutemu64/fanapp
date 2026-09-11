@@ -1,10 +1,8 @@
-import type { components } from '$lib/api/schema';
+import type { SocialProvider } from '$lib/api/client';
 import type { Component } from 'svelte';
 
 import IconTelegram from '~icons/simple-icons/telegram';
 import IconVk from '~icons/simple-icons/vk';
-
-type SocialProvider = components['schemas']['SocialProvider'];
 
 export interface SocialProviderPresentation {
 	/** Brand name shown to users, e.g. "VK ID". All login/link copy derives from it. */

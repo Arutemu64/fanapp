@@ -1,6 +1,6 @@
-import type { components } from '$lib/api/schema';
+import type { PublicConfigDto } from '$lib/api/client';
 
-export type PublicConfig = components['schemas']['PublicConfigDTO'];
+export type PublicConfig = PublicConfigDto;
 
 // Shared across every viewer: config carries no per-user data, so it lives in the
 // universal store — one entry serves guests and all accounts, surviving logout.

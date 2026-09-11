@@ -1,3 +1,3 @@
-import type { components } from '$lib/api/schema';
+import type { CurrentUserDto } from '$lib/api/client';
 
-export type CurrentUserDTO = components['schemas']['CurrentUserDTO'];
+export type CurrentUserDTO = CurrentUserDto;

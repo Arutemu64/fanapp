@@ -1,4 +1,4 @@
-import type { components } from '$lib/api/schema';
+import type { Permission as PermissionGen } from '$lib/api/client';
 import type { CurrentUserDTO } from '$lib/types/user';
 
 // Permission identifiers, generated from the backend `Permission` enum via the
@@ -7,7 +7,7 @@ import type { CurrentUserDTO } from '$lib/types/user';
 // literal stops being assignable to this union and `pnpm check` fails here —
 // instead of silently shipping a stale string that fails every permission check
 // at runtime.
-export type Permission = components['schemas']['Permission'];
+export type Permission = PermissionGen;
 
 // Superuser grant: a holder passes every permission check. Kept in sync with the
 // backend Permission enum through the generated union above.

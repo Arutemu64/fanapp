@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { components } from '$lib/api/schema';
+	import type { UpdateCurrentUserInput } from '$lib/api/client';
 	import type { CurrentUserDTO } from '$lib/types/user';
 
-	import { createApiClient } from '$lib/api';
+	import { updateCurrentUser } from '$lib/api/client';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
@@ -13,10 +13,6 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { User } from '@lucide/svelte';
 	import { untrack } from 'svelte';
-
-	const client = createApiClient();
-
-	type UpdateCurrentUserInput = components['schemas']['UpdateCurrentUserInput'];
 
 	interface Props {
 		user: CurrentUserDTO;
@@ -103,13 +99,13 @@
 		const body: UpdateCurrentUserInput = {};
 		if (username && username !== user.username) body.username = username;
 
-		const { error, response } = await client.PATCH('/me/', {
+		const { error, response } = await updateCurrentUser({
 			body
 		});
 
 		isLoading = false;
 
-		if (error || !response.ok) {
+		if (error || !response?.ok) {
 			formError = getApiErrorDetail(error) ?? 'Не удалось обновить профиль';
 			return;
 		}

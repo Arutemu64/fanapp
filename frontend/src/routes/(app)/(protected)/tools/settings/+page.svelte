@@ -1,7 +1,9 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
-	import { createApiClient } from '$lib/api';
-	const client = createApiClient();
+	import {
+		getSettingsOptions,
+		getSettingsQueryKey,
+		updateSettingsMutation
+	} from '$lib/api/client/@tanstack/svelte-query.gen';
 	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import * as Alert from '$lib/components/ui/alert';
@@ -13,27 +15,38 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { fromEventDateTimeLocal, toEventDateTimeLocal } from '$lib/utils/formatters';
 	import { AlertCircle } from '@lucide/svelte';
+	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 
-	import type { PageProps } from './$types';
-
-	let { data }: PageProps = $props();
 	const toastService = getToastService();
+	const queryClient = useQueryClient();
 
-	let isSaving = $state(false);
+	// `load` already `ensureQueryData`d this into the cache (see +page.ts), so
+	// `query.data` is populated on mount — no loading state to render here.
+	const query = createQuery(() => getSettingsOptions());
+	const settings = $derived(query.data!);
+
+	const mutation = createMutation(() => ({
+		...updateSettingsMutation(),
+		onSuccess: () => {
+			// Refetch rather than write the response into the cache directly: keeps
+			// this page's cache entry and any other reader of the same query key in
+			// exact agreement with the server, same as the old `invalidate(...)`.
+			void queryClient.invalidateQueries({ queryKey: getSettingsQueryKey() });
+		}
+	}));
+
 	// festival_start and festival_end are instants; edit them on the venue clock
 	// via zone-naive datetime-locals, converting back to ISO instants on save.
-	let savedFestivalStart = $state(
-		untrack(() => toEventDateTimeLocal(data.settings.festival_start))
-	);
-	let savedFestivalEnd = $state(untrack(() => toEventDateTimeLocal(data.settings.festival_end)));
-	let festivalStart = $state(untrack(() => toEventDateTimeLocal(data.settings.festival_start)));
-	let festivalEnd = $state(untrack(() => toEventDateTimeLocal(data.settings.festival_end)));
+	let savedFestivalStart = $state(untrack(() => toEventDateTimeLocal(settings.festival_start)));
+	let savedFestivalEnd = $state(untrack(() => toEventDateTimeLocal(settings.festival_end)));
+	let festivalStart = $state(untrack(() => toEventDateTimeLocal(settings.festival_start)));
+	let festivalEnd = $state(untrack(() => toEventDateTimeLocal(settings.festival_end)));
 	let festivalStartError = $state('');
 	let festivalEndError = $state('');
-	let savedAnnouncementTimeout = $state(untrack(() => data.settings.limits.announcement_timeout));
+	let savedAnnouncementTimeout = $state(untrack(() => settings.limits.announcement_timeout));
 	let announcementTimeout = $state<number | undefined>(
-		untrack(() => data.settings.limits.announcement_timeout)
+		untrack(() => settings.limits.announcement_timeout)
 	);
 	let announcementTimeoutError = $state('');
 	let submitError = $state('');
@@ -130,32 +143,14 @@
 			return;
 		}
 
-		isSaving = true;
-
 		try {
-			const { error, response } = await client.PATCH('/settings', {
+			await mutation.mutateAsync({
 				body: {
 					festival_start: fromEventDateTimeLocal(festivalStart),
 					festival_end: fromEventDateTimeLocal(festivalEnd),
 					announcement_timeout: nextAnnouncementTimeout
 				}
 			});
-
-			if (error || !response.ok) {
-				if (response.status === 401) {
-					submitError = 'Нужно войти в аккаунт заново';
-				} else if (response.status === 403) {
-					submitError = 'У тебя нет доступа к настройкам фестиваля';
-				} else if (response.status === 404) {
-					submitError = 'Настройки фестиваля не найдены';
-				} else if (response.status === 422) {
-					submitError = 'Проверь введённые значения и попробуй снова';
-				} else {
-					submitError = 'Не удалось сохранить настройки фестиваля';
-				}
-
-				return;
-			}
 
 			savedFestivalStart = festivalStart;
 			savedFestivalEnd = festivalEnd;
@@ -164,12 +159,27 @@
 			festivalEndError = '';
 			announcementTimeoutError = '';
 			toastService.add('Настройки фестиваля сохранены', 'success');
-			await invalidate('app:festival-settings');
 		} catch (err) {
-			console.error('Festival settings update failed:', err);
-			submitError = 'Не удалось сохранить настройки фестиваля';
-		} finally {
-			isSaving = false;
+			// `status` comes from the hey-api client's error interceptor
+			// (lib/api/client-config.ts), not from a Response — see throwHeyApiError.
+			const status = err && typeof err === 'object' && 'status' in err ? err.status : undefined;
+
+			if (status === 401) {
+				submitError = 'Нужно войти в аккаунт заново';
+			} else if (status === 403) {
+				submitError = 'У тебя нет доступа к настройкам фестиваля';
+			} else if (status === 404) {
+				submitError = 'Настройки фестиваля не найдены';
+			} else if (status === 422) {
+				submitError = 'Проверь введённые значения и попробуй снова';
+			} else {
+				if (status === undefined) {
+					// Not a mapped HTTP status — a genuine unexpected failure (network,
+					// parse) worth keeping in the console for debugging.
+					console.error('Festival settings update failed:', err);
+				}
+				submitError = 'Не удалось сохранить настройки фестиваля';
+			}
 		}
 	}
 </script>
@@ -202,7 +212,7 @@
 					type="datetime-local"
 					autocomplete="off"
 					bind:value={festivalStart}
-					disabled={isSaving}
+					disabled={mutation.isPending}
 					oninput={handleFestivalStartInput}
 					onblur={validateFestivalStart}
 					aria-invalid={festivalStartError ? true : undefined}
@@ -224,7 +234,7 @@
 					type="datetime-local"
 					autocomplete="off"
 					bind:value={festivalEnd}
-					disabled={isSaving}
+					disabled={mutation.isPending}
 					oninput={handleFestivalEndInput}
 					onblur={validateFestivalEnd}
 					aria-invalid={festivalEndError ? true : undefined}
@@ -255,7 +265,7 @@
 				inputmode="numeric"
 				autocomplete="off"
 				bind:value={announcementTimeout}
-				disabled={isSaving}
+				disabled={mutation.isPending}
 				oninput={handleAnnouncementTimeoutInput}
 				onblur={validateAnnouncementTimeout}
 				aria-invalid={announcementTimeoutError ? true : undefined}
@@ -273,9 +283,9 @@
 	<Button
 		type="submit"
 		class="min-h-11 w-full justify-center sm:w-auto"
-		disabled={isSaving || !hasChanges}
+		disabled={mutation.isPending || !hasChanges}
 	>
-		{#if isSaving}
+		{#if mutation.isPending}
 			<Spinner data-icon="inline-start" />
 			Сохраняем…
 		{:else}

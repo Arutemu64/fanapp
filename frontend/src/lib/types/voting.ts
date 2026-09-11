@@ -1,5 +1,9 @@
-import type { components } from '$lib/api/schema';
+import type {
+	GetVotingNominationOutput,
+	GetVotingStateOutput,
+	VotingStatus
+} from '$lib/api/client';
 
-export type GetVotingNominationResult = components['schemas']['GetVotingNominationOutput'];
-export type GetVotingStateResult = components['schemas']['GetVotingStateOutput'];
-export type VotingStatus = components['schemas']['VotingStatus'];
+export type GetVotingNominationResult = GetVotingNominationOutput;
+export type GetVotingStateResult = GetVotingStateOutput;
+export type { VotingStatus };

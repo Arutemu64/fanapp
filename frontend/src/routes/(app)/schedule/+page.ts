@@ -4,7 +4,7 @@ import type {
 	SubscriptionFullDTO
 } from '$lib/types/schedule';
 
-import { createApiClient } from '$lib/api';
+import { getSchedule, getSubscriptions } from '$lib/api/client';
 import { isReachable } from '$lib/services/reachability';
 import { fetchWithCache, universalScope, userScope } from '$lib/utils/offlineCache';
 import { error } from '@sveltejs/kit';
@@ -19,7 +19,6 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	depends('app:schedule');
 
 	const { user } = await parent();
-	const client = createApiClient();
 
 	// Schedule (universal) and subscriptions (per-user) come from two endpoints so
 	// each caches on its own. Fetch them concurrently — total latency is the slower
@@ -29,13 +28,13 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 			key: SCHEDULE_CACHE_KEY,
 			scope: universalScope,
 			fetcher: async ({ signal }) => {
-				const { data, error: fetchError } = await client.GET('/schedule/', { fetch, signal });
+				const { data, error: fetchError } = await getSchedule({ fetch, signal });
 				// Reachable but errored → fall back to cache.
 				if (fetchError || !data) return undefined;
 				return data.schedule ?? [];
 			}
 		}),
-		fetchSubscriptions(client, fetch, user?.id)
+		fetchSubscriptions(fetch, user?.id)
 	]);
 
 	const { data: schedule, stale, cachedAt } = scheduleResult;
@@ -70,7 +69,6 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
  * than failing the page — the schedule itself drives the offline empty state.
  */
 async function fetchSubscriptions(
-	client: ReturnType<typeof createApiClient>,
 	fetch: typeof globalThis.fetch,
 	userId: string | undefined
 ): Promise<SubscriptionFullDTO[]> {
@@ -80,10 +78,7 @@ async function fetchSubscriptions(
 		key: `subscriptions:${userId}`,
 		scope: userScope,
 		fetcher: async ({ signal }) => {
-			const { data, error: fetchError } = await client.GET('/schedule/subscriptions/', {
-				fetch,
-				signal
-			});
+			const { data, error: fetchError } = await getSubscriptions({ fetch, signal });
 			if (fetchError || !data) return undefined;
 			return data.subscriptions ?? [];
 		}

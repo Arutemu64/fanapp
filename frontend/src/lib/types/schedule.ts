@@ -1,10 +1,16 @@
-import type { components } from '$lib/api/schema';
+import type {
+	ScheduleChangeEventDto,
+	ScheduleChangeFullDto,
+	ScheduleChangeType as ScheduleChangeTypeGen,
+	ScheduleEventFullDto,
+	SubscriptionFullDto
+} from '$lib/api/client';
 
-export type ScheduleEventFullDTO = components['schemas']['ScheduleEventFullDTO'];
-export type SubscriptionFullDTO = components['schemas']['SubscriptionFullDTO'];
-export type ScheduleChangeType = components['schemas']['ScheduleChangeType'];
-export type ScheduleChangeFullDTO = components['schemas']['ScheduleChangeFullDTO'];
-export type ScheduleChangeEventDTO = components['schemas']['ScheduleChangeEventDTO'];
+export type ScheduleEventFullDTO = ScheduleEventFullDto;
+export type SubscriptionFullDTO = SubscriptionFullDto;
+export type ScheduleChangeType = ScheduleChangeTypeGen;
+export type ScheduleChangeFullDTO = ScheduleChangeFullDto;
+export type ScheduleChangeEventDTO = ScheduleChangeEventDto;
 
 /** The viewer's subscription to a single event (id + reminder threshold). */
 type EventSubscription = { id: string; counter: number };

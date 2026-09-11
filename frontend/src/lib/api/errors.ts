@@ -1,11 +1,11 @@
-import type { components } from '$lib/api/schema';
+import type { ErrorMessage } from '$lib/api/client';
 
 import { error as kitError } from '@sveltejs/kit';
 
 // The closed set of error codes the API can return, generated from the backend
 // OpenAPI spec (ErrorMessage.code enum). Drives both typo safety on the message
 // dictionary and the compile-time drift guard at the bottom of this file.
-type ApiErrorCode = components['schemas']['ErrorMessage']['code'];
+type ApiErrorCode = ErrorMessage['code'];
 
 type ApiErrorDetails = Record<string, unknown>;
 
@@ -292,6 +292,19 @@ export function throwApiError(
 	const message = getApiErrorDetail(apiError) ?? fallback;
 	const code = getApiErrorCode(apiError);
 	return kitError(status, code ? { message, code } : { message });
+}
+
+/**
+ * Same as {@link throwApiError}, for a `load` failure on the hey-api client
+ * (docs/sketches/hey-api-tanstack-query-migration.md). That client's error
+ * interceptor (`lib/api/client-config.ts`) stamps `status` onto the same object
+ * as `code`/`details` — unlike `openapi-fetch`'s separate `{ error, response }`
+ * pair — so one value covers both of {@link throwApiError}'s parameters.
+ */
+export function throwHeyApiError(apiError: unknown, fallback: string): never {
+	const status =
+		isRecord(apiError) && typeof apiError.status === 'number' ? apiError.status : undefined;
+	return throwApiError(apiError, status !== undefined ? { status } : undefined, fallback);
 }
 
 // Compile-time drift guard: every client-facing code must be covered by the

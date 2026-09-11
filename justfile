@@ -47,6 +47,9 @@ frontend-e2e:
 frontend-e2e-ui:
     cd frontend && pnpm e2e:ui
 
+# Generates the hey-api SDK + types + TanStack Query options into
+# src/lib/api/client/ (docs/sketches/hey-api-tanstack-query-migration.md) from
+# the committed OpenAPI spec.
 frontend-generate-api: backend-generate-openapi
     cd frontend && pnpm generate-api
 
@@ -54,7 +57,7 @@ frontend-generate-api: backend-generate-openapi
 # and DTOs — is a backend test (tests/unit/presentation/test_openapi_spec.py),
 # so it runs with `just backend-test`.
 
-# Fail if schema.d.ts has drifted from the committed OpenAPI spec
+# Fail if src/lib/api/client/ has drifted from the committed OpenAPI spec
 frontend-check-api:
     cd frontend && pnpm generate-api:check
 

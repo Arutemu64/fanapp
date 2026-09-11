@@ -1,3 +1,3 @@
-import type { components } from '$lib/api/schema';
+import type { ParticipantFullDto } from '$lib/api/client';
 
-export type ParticipantFullDTO = components['schemas']['ParticipantFullDTO'];
+export type ParticipantFullDTO = ParticipantFullDto;

@@ -1,6 +1,6 @@
-import type { components } from '$lib/api/schema';
+import type { NotificationDto } from '$lib/api/client';
 
-export type NotificationDTO = components['schemas']['NotificationDTO'];
+export type NotificationDTO = NotificationDto;
 
 /**
  * Streamed seed for the app-shell bell: the capped dropdown preview plus the true

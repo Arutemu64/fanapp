@@ -1,9 +1,9 @@
 <script lang="ts">
-	import type { components } from '$lib/api/schema';
+	import type { SocialProvider } from '$lib/api/client';
 	import type { CurrentUserDTO } from '$lib/types/user';
 
 	import { PUBLIC_API_URL } from '$env/static/public';
-	import { createApiClient } from '$lib/api';
+	import { unlinkTelegramAccount, unlinkVkAccount } from '$lib/api/client';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -16,10 +16,6 @@
 	import ChangePasswordModal from './ChangePasswordModal.svelte';
 	import ProfileCardShell from './ProfileCardShell.svelte';
 	import SocialConnectionRow from './SocialConnectionRow.svelte';
-
-	type SocialProvider = components['schemas']['SocialProvider'];
-
-	const client = createApiClient();
 
 	interface Props {
 		user: CurrentUserDTO;
@@ -60,11 +56,9 @@
 		const { name } = SOCIAL_PROVIDER_PRESENTATION[provider];
 		try {
 			const { error, response } =
-				provider === 'vk'
-					? await client.DELETE('/me/connections/vk', {})
-					: await client.DELETE('/me/connections/telegram', {});
+				provider === 'vk' ? await unlinkVkAccount() : await unlinkTelegramAccount();
 
-			if (error || !response.ok) {
+			if (error || !response?.ok) {
 				toastService.error(error);
 				return;
 			}

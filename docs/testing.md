@@ -14,8 +14,8 @@ Vitest ([Frontend](#frontend) below).
 >
 > The **existing** suite is not optional: CI runs `pytest tests` and
 > `pnpm test`, so a change that breaks a test is broken. And `just
-> backend-lint` + `just backend-typecheck` (or `just frontend-lint` + `just
-> frontend-check`) still run after every change.
+backend-lint` + `just backend-typecheck` (or `just frontend-lint` + `just
+frontend-check`) still run after every change.
 
 Everything from here to [Frontend](#frontend) describes the **backend** suite.
 
@@ -37,7 +37,7 @@ correct test.
    permission failure, rate limit, rollback on error).
 4. **Real vs fake**: everything behind PostgreSQL/Redis is real (gateways,
    `UnitOfWork`, rate limiter, sessions), and so are deterministic ports
-   (hasher, Jinja). Ports that reach *other* external systems (NATS, SMTP,
+   (hasher, Jinja). Ports that reach _other_ external systems (NATS, SMTP,
    Telegram, WebPush, realtime) are faked. New side-effecting port? Add a
    recording fake in `tests/fakes/` and register it in
    `tests/integration/conftest.py` via `AnyOf[ThePort, TheFake]`.
@@ -51,9 +51,9 @@ correct test.
 
 ## Two layers
 
-| Layer | Location | Marker | Infrastructure | Speed |
-|-------|----------|--------|----------------|-------|
-| Unit | `tests/unit/` | `@pytest.mark.unit` | none | instant |
+| Layer       | Location             | Marker                     | Infrastructure                           | Speed   |
+| ----------- | -------------------- | -------------------------- | ---------------------------------------- | ------- |
+| Unit        | `tests/unit/`        | `@pytest.mark.unit`        | none                                     | instant |
 | Integration | `tests/integration/` | `@pytest.mark.integration` | real PostgreSQL + Redis (testcontainers) | seconds |
 
 Run a subset by marker:
@@ -79,7 +79,7 @@ unit-only number reports the entire `application/` layer as uncovered and is
 misleading.
 
 CI renders coverage into each backend run's **job summary** (Actions → the
-run → *Summary*) — a headline total plus a collapsible per-file table. It's
+run → _Summary_) — a headline total plus a collapsible per-file table. It's
 reporting only: there is no third-party upload, no token, and **no
 `--cov-fail-under` gate**, so a dip in coverage never fails a PR on its own.
 Read the number, don't let it block you.
@@ -87,7 +87,7 @@ Read the number, don't let it block you.
 ### Running them on Claude Code on the web
 
 Cloud sessions **have** a Docker daemon (the SessionStart hook starts `dockerd`),
-so you *can* run the integration suite in-session — but per AGENTS.md **prefer
+so you _can_ run the integration suite in-session — but per AGENTS.md **prefer
 CI** (`.github/workflows/ci.yml`): it's slow, CI runs it regardless, and a green
 run there is the gate that counts. The daemon's routine in-session job is
 migration autogenerate (`just backend-generate-auto`); reach for
@@ -128,13 +128,13 @@ consistent, so every other gate goes green while it describes code that no
 longer exists. Each committed artifact therefore gets a test that regenerates
 it in memory and compares:
 
-| Test | Guards | Fix a failure with |
-|------|--------|--------------------|
-| `unit/presentation/test_openapi_spec.py` | `shared/openapi/openapi.json` vs. the routers and DTOs | `just frontend-generate-api` |
+| Test                                                                           | Guards                                                                     | Fix a failure with                        |
+| ------------------------------------------------------------------------------ | -------------------------------------------------------------------------- | ----------------------------------------- |
+| `unit/presentation/test_openapi_spec.py`                                       | `shared/openapi/openapi.json` vs. the routers and DTOs                     | `just frontend-generate-api`              |
 | `unit/adapters/test_schedule_parser.py::test_parses_the_downloadable_template` | `frontend/static/schedule-template.xlsx` vs. the parser's required columns | `just backend-generate-schedule-template` |
-| `integration/test_migrations.py` | the ORM models vs. the migrations (needs Docker) | `just backend-generate <name>` |
+| `integration/test_migrations.py`                                               | the ORM models vs. the migrations (needs Docker)                           | `just backend-generate <name>`            |
 
-The second half of the API contract chain — `frontend/src/lib/api/schema.d.ts`
+The second half of the API contract chain — `frontend/src/lib/api/client/`
 vs. the spec — is checked by `just frontend-check-api` rather than a test,
 because it belongs to the frontend toolchain. See [api.md](api.md).
 
@@ -196,11 +196,11 @@ These live in `tests/integration/conftest.py` and exist only to remove the
 identical `dishka_request.get(...)` boilerplate every test would otherwise
 repeat:
 
-| Fixture | Type | Use |
-|---------|------|-----|
-| `login` | `Callable[[User], None]` | `login(user)` sets the acting user (wraps `FakeIdProvider`) |
-| `outbox` | `OutboxGateway` | assert on enqueued aggregate events: compare `fetch_unpublished(...)` against the `as_outbox(...)` helper |
-| `uow` | `UnitOfWork` | commit setup state; `uow.rollback()` after an expected error |
+| Fixture  | Type                     | Use                                                                                                       |
+| -------- | ------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `login`  | `Callable[[User], None]` | `login(user)` sets the acting user (wraps `FakeIdProvider`)                                               |
+| `outbox` | `OutboxGateway`          | assert on enqueued aggregate events: compare `fetch_unpublished(...)` against the `as_outbox(...)` helper |
+| `uow`    | `UnitOfWork`             | commit setup state; `uow.rollback()` after an expected error                                              |
 
 Rule of thumb: take the plumbing you need from fixtures, but resolve the
 **interactor under test and its gateways explicitly** in the body
@@ -211,16 +211,16 @@ Rule of thumb: take the plumbing you need from fixtures, but resolve the
 The rule follows the architecture: **run everything behind the DB/Redis
 adapters for real; fake the ports that reach other external systems.**
 
-| Dependency | In tests | Why |
-|------------|----------|-----|
-| Gateways, `UnitOfWork` | **real** (PostgreSQL) | behavior is in the SQL |
-| `TokenRegistry`, `SessionStore`, `RateLimiter`, `RateLockFactory` | **real** (Redis) | behavior is in Redis semantics |
-| `PasswordHasher`, Jinja `TemplateRenderer` | **real** | deterministic, no external I/O |
-| `EventBroker` | **fake** (`FakeEventBroker`) | assert *what* was published, not NATS delivery |
-| `IdProvider` | **fake** (`FakeIdProvider`) | the test sets the acting user |
-| `EmailSender`, `TelegramNotifierPort`, `PushNotifierPort`, `RealtimeGateway` | **fake** | external side-effects (SMTP / Telegram / WebPush / NATS) |
-| `TicketsSource` (TicketsCloud) | **fake** (`FakeTicketsSource`) | external HTTP; test supplies the tickets a sync should see |
-| `CosplaySource` (Cosplay2) | **fake** (`FakeCosplaySource`) | external HTTP; test supplies nominations/participants, or sets `raises` to exercise the failure path |
+| Dependency                                                                   | In tests                       | Why                                                                                                  |
+| ---------------------------------------------------------------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| Gateways, `UnitOfWork`                                                       | **real** (PostgreSQL)          | behavior is in the SQL                                                                               |
+| `TokenRegistry`, `SessionStore`, `RateLimiter`, `RateLockFactory`            | **real** (Redis)               | behavior is in Redis semantics                                                                       |
+| `PasswordHasher`, Jinja `TemplateRenderer`                                   | **real**                       | deterministic, no external I/O                                                                       |
+| `EventBroker`                                                                | **fake** (`FakeEventBroker`)   | assert _what_ was published, not NATS delivery                                                       |
+| `IdProvider`                                                                 | **fake** (`FakeIdProvider`)    | the test sets the acting user                                                                        |
+| `EmailSender`, `TelegramNotifierPort`, `PushNotifierPort`, `RealtimeGateway` | **fake**                       | external side-effects (SMTP / Telegram / WebPush / NATS)                                             |
+| `TicketsSource` (TicketsCloud)                                               | **fake** (`FakeTicketsSource`) | external HTTP; test supplies the tickets a sync should see                                           |
+| `CosplaySource` (Cosplay2)                                                   | **fake** (`FakeCosplaySource`) | external HTTP; test supplies nominations/participants, or sets `raises` to exercise the failure path |
 
 Fakes live in `tests/fakes/` and record what they received so tests can assert
 on it. When you make a new side-effecting port testable, add a fake there and
@@ -242,11 +242,11 @@ production session (Dishka resolves the last provider registered for a type).
 
 Consequences:
 
-* You do **not** need to clean up database rows, and you do not need to
+- You do **not** need to clean up database rows, and you do not need to
   hand-pick unique ids to avoid collisions between tests.
-* Redis is **not** transactional, so it is flushed between tests by the
+- Redis is **not** transactional, so it is flushed between tests by the
   `reset_redis` autouse fixture.
-* Schema and seed data (the `system` user, permissions) are created once per
+- Schema and seed data (the `system` user, permissions) are created once per
   session by Alembic migrations and are visible to every test.
 
 ## Container wiring (`tests/integration/conftest.py`)
@@ -254,19 +254,19 @@ Consequences:
 The session-scoped `dishka` fixture builds a container from the real IoC
 providers plus test overrides:
 
-* Real: `InteractorsProvider`, `DbProvider`, `SqlGatewaysProvider`,
+- Real: `InteractorsProvider`, `DbProvider`, `SqlGatewaysProvider`,
   `RedisProvider`, `ServicesProvider`, `SecurityProvider`, `JinjaProvider`.
-* Test: `TestDbProvider` (testcontainers config), `TestConfigProvider`
+- Test: `TestDbProvider` (testcontainers config), `TestConfigProvider`
   (fixed test `WebConfig` for the session store and token registry — the full
   `EnvConfig` is not built in tests), `TestSessionProvider` (rollback session),
   and the fakes above.
-* `skip_validation=True` is intentional: external integrations (NATS broker,
+- `skip_validation=True` is intentional: external integrations (NATS broker,
   Telegram Bot API, SMTP, OAuth) are not wired, so interactors needing them are not
   yet resolvable. Everything else resolves. Both vendor syncs now sit behind
   ports with fakes (`FakeTicketsSource`, `FakeCosplaySource`), so the sync
   interactors are testable. When the remaining integrations gain a port + fake,
   register them and the flag can eventually be dropped.
-* `TestSyncProvider` overrides `AvailableSyncSources`, whose real factory in
+- `TestSyncProvider` overrides `AvailableSyncSources`, whose real factory in
   `SyncProvider` reads the `EnvConfig` tests never build. Like
   `TestSessionProvider`, it must be registered **after** the provider it
   overrides — Dishka resolves the last provider registered for a type.
@@ -276,8 +276,8 @@ providers plus test overrides:
 Reusable user fixtures (`visitor`, `visitor_with_ticket`, `schedule_editor`,
 `sync_operator`) live in `tests/fixtures/users.py` and are registered as a plugin in
 `tests/conftest.py`. The shared plumbing fixtures (`login`, `outbox`,
-`uow`) live in `tests/integration/conftest.py` — see *Shared plumbing
-fixtures* above. Add shared setup in these places rather than copying it
+`uow`) live in `tests/integration/conftest.py` — see _Shared plumbing
+fixtures_ above. Add shared setup in these places rather than copying it
 between tests.
 
 ---
@@ -344,7 +344,7 @@ encodes a rule that can break silently, skip it for copy, styling and config.
 
 A third frontend tier, run with `just frontend-e2e` (`pnpm --dir frontend e2e`).
 Specs live in `frontend/e2e/`; the how-to for **writing** one is
-[frontend/e2e/README.md](../frontend/e2e/README.md) — this section is the *why*
+[frontend/e2e/README.md](../frontend/e2e/README.md) — this section is the _why_
 and the boundaries.
 
 **What it's for.** The surface Vitest can't reach (node-only, ADR-0011): SPA
@@ -366,7 +366,7 @@ that got it there.
 
 **Mocked, not full-stack — on purpose.** Each test mocks the backend over
 `**/api/**` (typed off `schema.d.ts`, so a drifted mock fails to compile). This
-is deliberate for *this* repo, not a shortcut: backend behaviour already has the
+is deliberate for _this_ repo, not a shortcut: backend behaviour already has the
 `@pytest.mark.integration` suite, and the frontend↔backend contract already has
 the OpenAPI drift guards (`test_openapi_spec.py` + `frontend-check-api`). So the
 E2E tier stays about the UI and mocks the rest: re-proving backend behaviour
@@ -394,4 +394,4 @@ own job — it needs a browser and builds the app, unlike the plain matrix tasks
 gated on the frontend paths filter, with the browser cached by Playwright version.
 It isn't marked required in branch protection yet: let a browser tier prove stable
 under CI timing first, then gate it. Like the backend integration suite, treat it
-as a tool to *see* a UI change work, not a local gate you must run before pushing.
+as a tool to _see_ a UI change work, not a local gate you must run before pushing.
