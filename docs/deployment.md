@@ -155,11 +155,15 @@ shell doesn't strip the unset `$NATS__*` first. Run it from the deploy directory
 (where `.env` is):
 
 ```sh
-# The network is <project>_backend-network, where the Compose project name
-# defaults to the deploy directory (usually fanapp) but can differ (a renamed
-# dir, or -p / COMPOSE_PROJECT_NAME). Derive it rather than hardcode a prefix:
-net=$(docker network ls --format '{{.Name}}' | grep backend-network)
-docker run --rm -it --network "$net" --env-file .env natsio/nats-box \
+# Look up the app's backend network, then substitute it below. It is named
+# <project>_backend-network, where the Compose project name defaults to the
+# deploy directory (usually fanapp) but can differ (a renamed dir, or -p /
+# COMPOSE_PROJECT_NAME). Look it up rather than auto-derive: a host running more
+# than one stack has several *_backend-network networks, and picking the wrong
+# one — or matching several — silently leaves the durables on their old AckWait.
+docker network ls | grep backend-network
+
+docker run --rm -it --network <project>_backend-network --env-file .env natsio/nats-box \
   sh -c 'nats --server "nats://$NATS__USER:$NATS__PASSWORD@nats:4222" \
     consumer rm stream send_notification_to_telegram'
 # repeat for send_notification_to_vk and send_push_notification
