@@ -1,5 +1,6 @@
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
+import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 import { canManageSettings } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
 
@@ -18,7 +19,14 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	depends('app:festival-settings');
 
 	const client = createApiClient();
-	const { data, error: requestError, response } = await client.GET('/settings', { fetch });
+	const {
+		data,
+		error: requestError,
+		response
+	} = await client.GET('/settings', {
+		fetch,
+		signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
+	});
 
 	if (requestError || !response.ok || !data) {
 		throwApiError(requestError, response, 'Не удалось загрузить настройки фестиваля');
