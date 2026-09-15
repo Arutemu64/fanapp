@@ -16,7 +16,7 @@ Two separate questions were raised:
 
 **PR 1 (recommended, ready to implement):** swap codegen and client to hey-api. Mechanical, compiler-verified, no behavior change.
 
-**PR 2 (not ready — decide between options first):** the TanStack Query migration as originally scoped was a ~4× undercount. The app's invalidation architecture is a deliberate, well-documented system built on SvelteKit's load graph; replacing it is a much larger project than "migrate 5 cached endpoints". Three options are laid out below with honest cost/benefit.
+**PR 2 (recommend Option A):** the TanStack Query migration as originally scoped was a ~4× undercount. The app's invalidation architecture is a deliberate, well-documented system built on SvelteKit's load graph. The stated goal — cache-first paint — is achievable in one PR inside `offlineCache.ts` (Option A). Adopting TanStack Query (Option H, the upstream-recommended hybrid) buys a better architecture but not that goal, and lands on the least-documented part of the Svelte adapter. Both are laid out below.
 
 ---
 
@@ -194,49 +194,111 @@ Two assumptions must be confirmed against current hey-api docs, because the code
 
 ---
 
-## PR 2 — Client caching: three options
+## PR 2 — Client caching: two real options
 
-The original plan assumed TanStack Query replaces `offlineCache.ts` and that's that. The review above shows the real coupling: ~30 invalidation call sites, 5 permission guards, 2 error-boundary branches, a streaming load, a client-side join, and one hard `undefined` incompatibility.
+The driving complaint is **network-first paint**: online users wait a round-trip before seeing anything. Two ways to fix it.
 
-Decide between these before writing code.
+An earlier draft framed this as "TanStack Query inside loaders" (B) vs "TanStack Query in components" (C). Research killed that dichotomy — see *Upstream consensus* below. The live choice is between fixing `offlineCache.ts` in place and adopting TanStack Query in its recommended hybrid shape.
 
-### Option A — Do nothing (make `fetchWithCache` cache-first)
+### Upstream consensus: loaders and queries are complementary, not alternatives
 
-The actual complaint driving this is **network-first paint**: online users wait for a round-trip before seeing content. That can be fixed inside the existing file — return the cached copy immediately, revalidate in the background, and let the existing `invalidate()` paths pick up the fresh value.
+TkDodo (TanStack Query maintainer) states the principle plainly: *"A component should, if possible, probably never initiate data fetching on its own"* — it starts too late and creates waterfalls. The documented pattern is:
 
-- **Cost**: ~30 lines in `offlineCache.ts`, plus a way for the background revalidation to push its result to the page (the simplest is to keep the current shape and just reorder, accepting one extra render).
-- **Keeps**: every guard, every invalidation, the `undefined` sentinel, `stale`/`cachedAt`, offline degradation.
-- **Loses**: nothing. No new dependency, no bundle cost.
-- **Doesn't get**: per-component loading states, request deduplication, automatic GC.
+1. **Loader** — `ensureQueryData()` / `prefetchQuery()` starts the fetch at navigation
+2. **Component** — `createQuery()` reads the cache and gets reactive state + background refetch
+3. **After mutations** — `invalidateQueries()`
 
-### Option B — TanStack Query *inside* load functions
+The refinement that makes it work: **don't `await` non-critical prefetches**. Await what blocks first paint, let the rest stream.
 
-Keep `depends`/`invalidate` and the load graph. Use `queryClient.fetchQuery()` inside each load where `fetchWithCache` is called today, and let TanStack Query own caching + IDB persistence.
+TanStack Router's Query integration docs say the same: *"Preload critical data in the route loader to avoid waterfalls and loading flashes, then read it in the component."* The recurring Remix / React Router postmortem is that teams who moved queries into components *without* loader prefetching turned parallel fetches into sequential ones.
 
-- **Cost**: 5 load functions rewritten; a persister; the `undefined` sentinel still needs re-expressing.
-- **Keeps**: all permission guards, all error branches, all ~30 invalidation call sites unchanged, `reconnectRefresh`'s `invalidateAll`.
-- **Gains**: stale-while-revalidate, dedup, GC, a maintained cache layer instead of a bespoke one.
-- **Doesn't get**: per-component `isPending` / `isError` — data still arrives via `load` → `$page.data`.
+**This matters here specifically.** This codebase already fought that battle and left comments about it:
+- `(app)/+layout.ts:21` returns an *unresolved* promise on purpose — awaiting gated the shell behind `/me` plus two more round-trips
+- `schedule/+page.ts:27` uses `Promise.all` to run schedule and subscriptions concurrently
+- `(app)/+layout.ts:50` uses `Promise.allSettled` so a slow unread-count can't discard a good preview
 
-### Option C — Full TanStack Query (components own their queries)
+A component-only migration would dismantle exactly the structure those comments protect. So "pure C" is off the table; if TanStack Query is adopted, it is adopted as the hybrid.
 
-What the original plan described. Load functions shrink to guards only; components call `createQuery`.
+### Docs maturity: the Svelte adapter is thinner than React's
 
-- **Cost**: the whole review section above. ~30 invalidation sites → `invalidateQueries`; 5 `error(403)` guards need a new home (they can stay in slimmed loads); `error(503)` / `offlineMiss` branches become per-component states; `stale`/`cachedAt` → `isStale` / `dataUpdatedAt`; `mergeSubscriptions` → a derived combining two queries; the streaming load in `(app)/+layout.ts` becomes two independent queries (TanStack handles this better, but it's a rewrite); `reconnectRefresh` → `queryClient.invalidateQueries()`; login's `invalidateAll` → `queryClient.clear()`; plus the `undefined` sentinel.
-- **Gains**: per-component loading/error states, the full plugin ecosystem, auto-generated hooks via `@hey-api/tanstack-query`, one consistent data-fetching model.
-- **Realistically**: 3–5 PRs, not one. Slice by route group, with the schedule vertical first as the pattern prototype.
+Audited against the live v6 Svelte docs (see Sources). What exists and is current: Overview, Installation, Quick Start, SSR & SvelteKit, Migrate v5→v6.
+
+What is **404 or React-only**:
+
+| Topic | Status |
+|---|---|
+| Reactivity (dedicated page) | 404 — content only inline in quick-start / migration |
+| Mutations guide & `createMutation` reference | 404 — the API exists, the page doesn't |
+| Guides section ("important defaults", prefetching strategies) | 404 for Svelte |
+| Examples | 404 |
+| **Persistence / offline** | **Zero Svelte docs — React-only, port by hand** |
+
+The last row is the one that bites: replacing `offlineCache.ts` *is* the persistence story, and persistence is the least-documented corner of the Svelte adapter.
+
+Two documented Svelte API rules, both silent footguns across 49 files:
+
+```svelte
+// Thunk mandatory — options must be a function to stay reactive
+const query = createQuery(() => ({ queryKey: ['todos'], queryFn: fetchTodos }));
+
+const { data } = query;   // ✗ destructuring breaks reactivity (proxy getters)
+query.data                // ✓ dot access only
+```
+
+Requires Svelte ≥5.25 and runes mode; v5's stores syntax is gone.
+
+**SSR guidance is moot here.** The Svelte SSR page documents `initialData` vs `queryClient.prefetchQuery()` in a *client-side* load (explicitly not `+page.server.ts`), plus `enabled: browser` to suppress server execution. This app is `ssr = false` on `adapter-static` — no server render, no hydration boundary. Dehydrate/hydrate isn't documented on the Svelte side at all. None of that chapter applies.
+
+### Option A — Make `fetchWithCache` cache-first
+
+Flip the existing helper: return the cached copy immediately, revalidate in the background, and call `invalidate(key)` when fresh data lands so the load re-runs and picks it up.
+
+```
+load → cache hit → return stale (instant paint)
+     └→ background fetch → write cache → invalidate('app:schedule')
+                                          → load re-runs → returns fresh
+```
+
+- **Wrinkle**: the re-run must not refetch, or it loops. Needs a short per-key "just revalidated" guard. Realistically ~50 lines, not 30.
+- **Keeps**: every guard, every invalidation site, the `undefined` sentinel, `stale`/`cachedAt`, offline degradation, reachability-aware skipping.
+- **Costs**: no new dependency, no bundle, one file, one PR.
+- **Doesn't get**: per-component loading states, dedup, automatic GC.
+
+### Option H — TanStack Query, hybrid shape
+
+Loaders keep guards and start the fetch; components own the query and its reactive state.
+
+```ts
+// +page.ts — guards stay, fetch starts, non-critical not awaited
+export const load = async ({ parent }) => {
+  const { user } = await parent();
+  if (!user?.permissions.includes('…')) error(403, '…');
+  void queryClient.prefetchQuery(getScheduleOptions());
+  return {};
+};
+```
+```svelte
+<!-- +page.svelte -->
+const schedule = createQuery(() => getScheduleOptions());
+```
+
+- **Gains**: per-component `isPending` / `isStale` / `dataUpdatedAt`, dedup, GC, auto-generated hooks via `@hey-api/tanstack-query`, infinite-query support for paginated feeds.
+- **Costs**: ~30 `invalidate()` → `invalidateQueries()`; `error(503)` / `offlineMiss` branches become component states; `stale`/`cachedAt` → `isStale` / `dataUpdatedAt`; `mergeSubscriptions` → a derived over two queries; the streaming layout load rewritten as independent queries; `reconnectRefresh` → `queryClient.invalidateQueries()`; login's `invalidateAll` → `queryClient.clear()`; the `undefined` sentinel redesigned; an IDB persister ported from React docs.
+- **Realistically**: 3–5 PRs.
 
 ### Recommendation
 
-**Option A or B.** The existing architecture is deliberate and documented — the offline degradation, the reachability-aware skipping, the three-state session verdict, the debounced reconnect catch-up are all behaviors that took thought and that TanStack Query does not provide for free. Option C trades a working system for a more conventional one, and the stated pain (cache-first paint) doesn't require it.
+**Option A.** It delivers the stated goal — instant paint — in one PR, with no new dependency and nothing to re-verify. The existing architecture's deliberate behaviors (three-state session verdict, offline degradation, reachability-aware skipping, debounced reconnect catch-up) all survive untouched.
 
-Pick Option C only if a *new* requirement appears that the load graph genuinely can't serve — infinite scroll with cursor pagination, optimistic mutations, polling with per-component state. Note `lib/utils/feed.ts` already hints at pagination pressure; if paginated feeds are on the roadmap, that strengthens the case for C.
+Option H is the *correct* architecture if the app is going to be a TanStack Query app, and it is the shape to build if that call is made — not component-only. But it buys architecture, not the stated goal, and it lands on the thinnest-documented part of the Svelte adapter.
 
-### If Option C is chosen
+**Revisit Option H when a feature demands it**: cursor-paginated infinite feeds (`lib/utils/feed.ts` already hints at this pressure), optimistic mutations, or per-component polling. By then the Svelte docs will likely have filled in.
 
-Sequence, one PR each: (1) infra — `QueryClientProvider`, IDB persister, key hierarchy design, `@hey-api/tanstack-query` plugin; (2) schedule vertical as the prototype, including `mergeSubscriptions` and the offline branch; (3) voting + notifications; (4) tools routes; (5) root layout, session handling and `reconnectRefresh` last, since they're the riskiest.
+### If Option H is chosen
 
-Design the key hierarchy up front so the fan-out keys work: `['universal','schedule']`, `['user','notifications']`, etc., with `invalidateQueries({ queryKey: ['user'] })` for logout and prefix matching reproducing today's multi-load `depends()` fan-out.
+One PR each: (1) infra — `QueryClientProvider`, IDB persister (ported from React docs), key hierarchy design, `@hey-api/tanstack-query` plugin; (2) schedule vertical as the prototype, including `mergeSubscriptions` and the offline branch; (3) voting + notifications; (4) tools routes; (5) root layout, session handling and `reconnectRefresh` last, as the riskiest.
+
+Design the key hierarchy up front so today's fan-out survives: `['universal','schedule']`, `['user','notifications']`, with prefix matching reproducing the multi-load `depends()` fan-out (`app:config` and `app:notifications` are each declared by two loads) and `invalidateQueries({ queryKey: ['user'] })` covering logout.
 
 ---
 
@@ -248,11 +310,15 @@ Design the key hierarchy up front so the fan-out keys work: `['universal','sched
 | Per-call `fetch` override unsupported | PR 1 | Verify before starting; `ssr = false` limits the blast radius |
 | Module-singleton client vs AGENTS.md rule | PR 1 | Client holds no user state; record the decision explicitly |
 | hey-api output nondeterministic → false drift failures | PR 1 | Verify stable ordering before adopting the git-diff gate |
-| `undefined` sentinel has no TanStack equivalent | PR 2 B/C | Design and test the throw-based equivalent against session-expiry cases |
-| ~30 invalidation sites | PR 2 C | Slice by route group; design the key hierarchy first |
-| Permission guards lose the error boundary | PR 2 C | Keep slimmed `load` functions for `error(403)` |
-| Offline degradation branches | PR 2 C | Re-express per component; test with the backend down |
-| Bundle +15–20kb | PR 2 B/C | Acceptable for a PWA; partially offset by deleting `offlineCache.ts` |
+| Revalidation loop on `invalidate()` | PR 2 A | Per-key "just revalidated" guard; test that a re-run reads cache without refetching |
+| `undefined` sentinel has no TanStack equivalent | PR 2 H | Design and test the throw-based equivalent against session-expiry cases |
+| **Persistence undocumented for Svelte** | PR 2 H | React-only docs; port by hand and test IDB behavior explicitly — this is the core of the migration, not a detail |
+| Destructuring silently breaks reactivity | PR 2 H | `query.data`, never `const { data } = query`; no lint rule catches it — add a review checklist item |
+| ~30 invalidation sites | PR 2 H | Slice by route group; design the key hierarchy first |
+| Permission guards lose the error boundary | PR 2 H | Keep slimmed `load` functions for `error(403)` |
+| Offline degradation branches | PR 2 H | Re-express per component; test with the backend down |
+| Waterfalls from component-initiated fetches | PR 2 H | Prefetch in the loader (don't await non-critical); never let a component start its own fetch |
+| Bundle +15–20kb | PR 2 H | Acceptable for a PWA; partially offset by deleting `offlineCache.ts` |
 
 ## Out of scope
 
@@ -265,12 +331,27 @@ Design the key hierarchy up front so the fan-out keys work: `['universal','sched
 
 **Add (PR 1):** `@hey-api/openapi-ts` (dev, pinned)
 **Remove (PR 1):** `openapi-typescript`, `openapi-fetch`
-**Add (PR 2, options B/C only):** `@tanstack/svelte-query`, `@tanstack/query-persist-client-core`
+**Add (PR 2, Option H only):** `@tanstack/svelte-query` (v6, requires Svelte ≥5.25 and runes mode), `@tanstack/query-persist-client-core`
+**Option A adds nothing** — it is a change inside `offlineCache.ts`.
 
 ## Sources
 
-- [hey-api migration guide](https://heyapi.dev/openapi-ts/migrating)
-- [@tanstack/svelte-query v6 docs](https://tanstack.com/query/latest/docs/framework/svelte/overview) — v6 is runes-native, requires Svelte ≥5.25
-- [TanStack Query + SvelteKit](https://tanstack.com/query/latest/docs/svelte/ssr)
-- [Vercel: incremental migrations](https://vercel.com/blog/incremental-migrations)
+**hey-api**
+- [Migration guide](https://heyapi.dev/openapi-ts/migrating)
+
+**Loader vs component queries (the hybrid consensus)**
+- [TkDodo — Reliable Query Prefetching with TanStack Router](https://tkdodo.eu/blog/reliable-query-prefetching-with-tanstack-router)
+- [TkDodo — React Query Meets React Router](https://tkdodo.eu/blog/react-query-meets-react-router)
+- [TanStack Router — Query integration](https://tanstack.com/router/latest/docs/integrations/query)
+- [TanStack Query — Request waterfalls](https://tanstack.com/query/latest/docs/framework/react/guides/request-waterfalls)
+
+**Svelte adapter (v6) — audited for completeness**
+- [Overview](https://tanstack.com/query/latest/docs/framework/svelte/overview)
+- [Quick Start](https://tanstack.com/query/latest/docs/framework/svelte/quick-start) — thunk pattern, no-destructuring rule
+- [SSR & SvelteKit](https://tanstack.com/query/latest/docs/framework/svelte/ssr) — moot for this app (`ssr = false`)
+- [Migrate v5→v6](https://tanstack.com/query/latest/docs/framework/svelte/migrate-from-v5-to-v6)
+- Reactivity, Mutations, Guides, Examples and Persistence pages: **404 or React-only** as of 2026-09
+
+**Migration strategy**
+- [Vercel — incremental migrations](https://vercel.com/blog/incremental-migrations)
 - [Strangler fig pattern](https://stevekinney.com/courses/enterprise-ui/strangler-fig-introduction)
