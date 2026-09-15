@@ -115,6 +115,33 @@ Two mechanisms enforce the rules above without relying on anyone remembering the
   `.env.example` is a task we hand to an agent. Note these rules bind the `Read`
   tool, not `cat` in Bash.
 
+## Subagents
+
+`.claude/agents/` holds four project subagents. Each runs in its own context
+window and reports back a summary, so verbose work stays out of the main
+conversation — that buys context headroom, not a smaller token bill: total usage
+goes *up*, and the win is that the parent session doesn't degrade under a full
+context.
+
+| Agent | Does | Model |
+| --- | --- | --- |
+| `gate-runner` | Runs the lint/typecheck/test/drift gates, returns a compact pass/fail + trimmed failures. Fixes nothing. | sonnet |
+| `migration-reviewer` | Read-only safety review of a migration against the deployed database. Severity-tagged findings + a verdict. | opus |
+| `svelte-editor` | Implements a scoped `.svelte`/`.svelte.ts` change and leaves the frontend gates green. | inherit |
+| `ru-copy` | Writes and revises the Russian user-facing strings, across components, notifications and both halves of each email. | opus |
+
+Delegate verbose or well-bounded work (gate runs, a migration review, a
+multi-file investigation); keep targeted edits and anything needing
+cross-file design judgment inline. A subagent cannot see the conversation, so
+everything it needs goes in the prompt — a task it has to re-derive costs more
+than it saves. Nothing forces delegation: the `description` field is what the
+parent reads to decide, and explicit invocation stays available.
+
+Editing one of these: keep the body short and the output format explicit, push
+procedure into a skill via `skills:` rather than the prompt, and restrict
+`tools:` to what the job needs — a reviewer without `Edit` cannot quietly
+"fix" what it was asked to report.
+
 ## Staying in sync
 
 Structural change → update the docs **in the same change**. Prefer documenting patterns over file lists that rot; keep the codebase map high-level.
