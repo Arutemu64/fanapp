@@ -87,6 +87,34 @@ The transform is mechanical: path-string calls become named SDK functions, type 
 
    Work file by file. Run `just frontend-check` after each batch — zero type errors means zero missed sites.
 
+5. **Remove local type aliases.**
+
+   openapi-typescript's nested `components['schemas']` access pattern forced local aliases throughout the codebase (~15 aliases across 10 files). hey-api exports types directly, making these aliases pointless indirection — replace each with a direct import:
+   ```ts
+   // Before — alias needed because the access is verbose
+   import type { components } from '$lib/api/schema';
+   type Mailing = components['schemas']['MailingDTO'];
+
+   // After — direct import, no alias
+   import type { MailingDTO } from '$lib/api/generated';
+   ```
+
+   Files with aliases to remove:
+   | File | Aliases |
+   |------|---------|
+   | `lib/utils/permissions.ts` | `Permission` |
+   | `lib/data/socialProviders.ts` | `SocialProvider` |
+   | `lib/api/errors.ts` | `ApiErrorCode` (nested: `ErrorMessage['code']` — may stay if hey-api doesn't export the nested type) |
+   | `lib/constants/festival.ts` | `PublicConfig` (`PublicConfigDTO`) |
+   | `(auth)/login/+page.svelte` | `SocialProvider` |
+   | `(auth)/login/+page.ts` | `SocialProvider` |
+   | `(protected)/tools/voting/+page.svelte` | `NominationContender` (`NominationContenderDTO`), `Winner` (`UserBaseDTO`) |
+   | `(protected)/tools/broadcast/+page.ts` | `Mailing` (`MailingDTO`) |
+   | `(protected)/tools/broadcast/BroadcastHistory.svelte` | `Mailing`, `MailingStatus`, `UserRole` |
+   | `(protected)/tools/sync/+page.svelte` | `SyncSourceStatus` (`SyncSourceStatusDTO`), `SyncSource`, `SyncRunStatus` |
+
+   Where the alias renames a type (`Winner` for `UserBaseDTO`, `PublicConfig` for `PublicConfigDTO`), keep the rename if it conveys domain meaning at the use site; otherwise use the generated name directly.
+
    Call sites by area (for tracking progress):
    | Area | Files | ~Calls |
    |------|-------|--------|
@@ -100,7 +128,7 @@ The transform is mechanical: path-string calls become named SDK functions, type 
    | Root layouts/pages | 4 | 8 |
    | Services/utils (`lib/`) | 8 | 6 |
 
-5. **Update build tooling.**
+6. **Update build tooling.**
    - `package.json` scripts: `generate-api` calls `openapi-ts` (hey-api CLI) instead of `node generate-api.mjs`.
    - Justfile `frontend-generate-api`: runs `pnpm openapi-ts` (or the package.json script).
    - Justfile `frontend-check-api`: **regenerate-then-git-diff** replaces the custom `--check` comparator in `generate-api.mjs`. hey-api has no built-in `--check` flag; the standard approach across codegen tools (protobuf, GraphQL codegen, hey-api) is:
@@ -110,15 +138,15 @@ The transform is mechanical: path-string calls become named SDK functions, type 
      ```
      Regenerates in place, exits non-zero if the committed output doesn't match. Simpler than the current custom Node script — no temp dirs, no manual file comparison. The two-layer drift gate stays: the backend pytest guards `openapi.json` ↔ app, this gate guards `openapi.json` ↔ generated client.
 
-6. **Delete old artifacts.**
+7. **Delete old artifacts.**
    - `frontend/scripts/generate-api.mjs`
    - `frontend/src/lib/api/schema.d.ts`
    - Rewrite `frontend/src/lib/api/index.ts` — the `createApiClient()` factory and its middleware are replaced by hey-api's client config + interceptors.
 
-7. **Remove old dependencies.**
+8. **Remove old dependencies.**
    - `pnpm remove openapi-typescript openapi-fetch`
 
-8. **Run all gates.** `just frontend-lint && just frontend-check`. Manual smoke test: login, view schedule, vote, go offline, come back.
+9. **Run all gates.** `just frontend-lint && just frontend-check`. Manual smoke test: login, view schedule, vote, go offline, come back.
 
 **Deliverable**: every API call uses hey-api SDK; old codegen removed; behavior identical; all gates green.
 
