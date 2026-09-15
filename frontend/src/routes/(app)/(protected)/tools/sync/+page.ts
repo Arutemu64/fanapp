@@ -1,5 +1,6 @@
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
+import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 import { canRunSync } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
 
@@ -17,7 +18,14 @@ export const load: PageLoad = async ({ parent, fetch, depends }) => {
 	}
 
 	const client = createApiClient();
-	const { data, error: apiError, response } = await client.GET('/sync/sources', { fetch });
+	const {
+		data,
+		error: apiError,
+		response
+	} = await client.GET('/sync/sources', {
+		fetch,
+		signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
+	});
 
 	if (apiError || !response.ok || !data) {
 		throwApiError(apiError, response, 'Не удалось загрузить состояние синхронизации');
