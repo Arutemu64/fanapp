@@ -3,7 +3,11 @@ import type { Middleware } from 'openapi-fetch';
 
 import { invalidate } from '$app/navigation';
 import { PUBLIC_API_URL } from '$env/static/public';
-import { isBackendUnreachableStatus, markReachable } from '$lib/services/reachability';
+import {
+	isBackendUnreachableStatus,
+	markReachable,
+	probeReachability
+} from '$lib/services/reachability';
 import createClient from 'openapi-fetch';
 
 // True while a 401-triggered identity refresh is in flight, so a burst of
@@ -30,6 +34,14 @@ const CREDENTIAL_CHECK_PATHS = new Set(['/me/', '/auth/login', '/auth/login-with
 const reachabilityWatch: Middleware = {
 	onResponse({ response }) {
 		markReachable(!isBackendUnreachableStatus(response.status));
+	},
+	// A thrown fetch (network failure / timeout / abort) yields no Response, so
+	// `onResponse` never runs. A single rejection is ambiguous, though — a
+	// deliberate abort, one flaky request, a CORS hiccup — so it must not flip the
+	// whole app offline on its own. Kick the authoritative health probe instead and
+	// let it render the verdict; leave the error untouched so the caller still sees it.
+	onError() {
+		void probeReachability();
 	}
 };
 
