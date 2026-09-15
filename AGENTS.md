@@ -125,7 +125,7 @@ context.
 
 | Agent | Does | Model |
 | --- | --- | --- |
-| `gate-runner` | Runs the lint/typecheck/test gates, returns a compact pass/fail + trimmed failures. Fixes nothing. | sonnet |
+| `gate-runner` | Runs the lint/typecheck/test/drift gates, returns a compact pass/fail + trimmed failures. Fixes nothing. | sonnet |
 | `migration-reviewer` | Read-only safety review of a migration against the deployed database. Severity-tagged findings + a verdict. | opus |
 | `svelte-editor` | Implements a scoped `.svelte`/`.svelte.ts` change and leaves the frontend gates green. | inherit |
 | `ru-copy` | Writes and revises the Russian user-facing strings, across components, notifications and both halves of each email. | opus |
