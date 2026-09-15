@@ -15,7 +15,7 @@ Pain points:
 
 ## Decision
 
-Migrate to `@hey-api/openapi-ts` for codegen and `@tanstack/svelte-query` v6 for client-side caching, incrementally.
+Two-PR migration: swap the API client layer first (hey-api), then layer caching on top (TanStack Query). Each PR changes exactly one concern — call syntax or caching strategy — so bugs are easy to bisect and review stays focused.
 
 ## Current inventory
 
@@ -23,222 +23,238 @@ Migrate to `@hey-api/openapi-ts` for codegen and `@tanstack/svelte-query` v6 for
 |-------|------|-------|
 | Type codegen | `openapi-typescript` 7.13.0 | `scripts/generate-api.mjs` → `src/lib/api/schema.d.ts` |
 | Fetch client | `openapi-fetch` 0.17.0 | `src/lib/api/index.ts` (`createApiClient()`) |
+| Type imports | `$lib/api/schema` or `$lib/api` | 62 files, 73 import statements |
 | Middleware | Custom `reachabilityWatch`, `sessionExpiryWatch` | `src/lib/api/index.ts` lines 34–60 |
 | Offline cache | `idb-keyval` + custom `fetchWithCache` / `warmCache` | `src/lib/utils/offlineCache.ts` (5 call sites in `load` functions) |
 | Reachability | `markReachable` / `probeReachability` / `isReachable()` | `src/lib/services/reachability.ts` |
 | Real-time | Native `EventSource` → SSE | `src/lib/services/events.svelte.ts` |
 | API calls | 68 total (29 GET, 25 POST, 7 DELETE, 7 PATCH) | 49 files across routes and components |
 
-## Migration plan
+## PR 1 — Swap to hey-api (mechanical, one shot)
 
-### Phase 0: Preparation
+**Goal**: replace `openapi-typescript` + `openapi-fetch` with `@hey-api/openapi-ts` across the entire codebase in a single PR. Zero behavior change — same requests, same responses, same error handling. TypeScript catches every missed site.
 
-1. **Pin versions and read current docs:**
-   - `@hey-api/openapi-ts` — check latest stable, read migration guide at heyapi.dev/openapi-ts/migrating
-   - `@tanstack/svelte-query` v6 — confirm Svelte 5 runes support (requires Svelte ≥5.25.0)
-   - `@tanstack/query-persist-client-core` — for IDB persistence
+### Why big-bang is safe here
 
-2. **Create a feature branch** for the migration.
+The transform is mechanical: path-string calls become named SDK functions, type imports point at the new output. There is no logic change — it's a syntax migration. `svelte-check` / `tsc` surfaces every unmigrated call site as a type error, so the compiler tells you when you're done. At 68 call sites this is 2–3 hours of disciplined work, not a risky rewrite.
 
-### Phase 1: hey-api codegen (replaces openapi-typescript)
+### Steps
 
-**Goal**: swap the codegen layer without changing any runtime behavior.
+1. **Install and configure hey-api.**
+   - `pnpm add -D @hey-api/openapi-ts`
+   - Create `frontend/openapi-ts.config.ts` pointing at `shared/openapi/openapi.json`.
+   - Output: `src/lib/api/generated/` (types + SDK functions).
+   - Plugins: `@hey-api/typescript`, `@hey-api/sdk`.
+   - Blob handling is native — no custom transform script needed.
 
-1. Install `@hey-api/openapi-ts` as a devDependency.
-2. Create `frontend/hey-api.config.ts` (or equivalent config) pointing at `shared/openapi/openapi.json`.
-   - Output directory: `src/lib/api/generated/` (new, coexists with old `schema.d.ts` during migration).
-   - Enable plugins: `@hey-api/typescript` (types), `@hey-api/sdk` (SDK client functions).
-   - Blob handling is native — no custom transform needed (replaces the logic in `generate-api.mjs`).
-3. Update `package.json` scripts and justfile (`frontend-generate-api`, `frontend-check-api`) to call hey-api instead of `generate-api.mjs`.
-4. Delete `scripts/generate-api.mjs`.
-5. Verify generated output: types should match `schema.d.ts` semantically. Run `just frontend-check`.
-6. **Do not change any runtime call sites yet** — this phase only replaces the build-time codegen.
+2. **Run codegen, inspect output.**
+   - Verify generated types match `schema.d.ts` semantically.
+   - Check that every endpoint has a named SDK function (derived from `operationId`).
 
-**Deliverable**: `pnpm generate-api` produces hey-api output; old `schema.d.ts` still exists for now; all gates green.
+3. **Port middleware to hey-api interceptors (~30 lines of real logic).**
+   - `reachabilityWatch` → hey-api response/error interceptor calling `markReachable()` / `probeReachability()`.
+   - `sessionExpiryWatch` → hey-api response interceptor calling `invalidate('app:current-user')` on 401.
+   - Same logic, different registration API. Verify with manual testing (expired session, network down).
 
-### Phase 2: TanStack Query setup
+4. **Migrate all 68 call sites.**
 
-**Goal**: add the query infrastructure without migrating any endpoints.
-
-1. Install `@tanstack/svelte-query` and `@tanstack/query-persist-client-core`.
-2. Create `src/lib/api/queryClient.ts`:
-   - Instantiate `QueryClient` with sensible defaults:
-     - `staleTime: 30_000` (30s — schedule data is near-static during the con)
-     - `gcTime: 1000 * 60 * 60 * 24` (24h — keep cached data for offline)
-     - `retry: 1` (the reachability system handles longer outages)
-     - `networkMode: 'offlineFirst'` — serve cache even when offline
-   - Configure an IDB persister using `idb-keyval` (reuse the existing `fanfan-cache` database or a new `fanfan-query-cache` store).
-3. Wrap the root layout (`src/routes/+layout.svelte`) with `<QueryClientProvider>`.
-4. **Logout cache clearing**: on logout, call `queryClient.removeQueries({ queryKey: ['user'] })` to drop per-user queries. Universal queries (schedule, config) survive. This replaces the user/universal scope split in `offlineCache.ts`.
-5. Run all gates: `just frontend-lint && just frontend-check`.
-
-**Deliverable**: TanStack Query is wired up, no endpoints use it yet, all gates green.
-
-### Phase 3: Migrate cached read endpoints (the high-value moves)
-
-**Goal**: replace `fetchWithCache` call sites with TanStack Query, eliminating `offlineCache.ts`.
-
-These 5 `load` functions currently use `fetchWithCache`:
-
-| File | Cache key | Scope | Notes |
-|------|-----------|-------|-------|
-| `src/routes/+layout.ts` | `current-user`, `settings`, `schedule-config` + warms `schedule`, `notifications` | user + universal | Root loader; `current-user` drives auth state |
-| `src/routes/(app)/+page.ts` | `schedule` (partial), `voting-summary` | universal + user | Home page |
-| `src/routes/(app)/schedule/+page.ts` | `schedule`, `subscriptions` | universal + user | Schedule page |
-| `src/routes/(app)/(protected)/notifications/+page.ts` | `notifications` | user | Notifications feed |
-| `src/routes/(app)/voting/+page.ts` or `+layout.ts` | (check actual key) | user | Voting data |
-
-**Migration pattern per endpoint:**
-
-The key decision here is **where queries live**. Two approaches:
-
-**Option A — Queries in `load` functions (preserves current architecture):**
-```ts
-// +page.ts
-export async function load() {
-  const query = await prefetchQuery(queryClient, {
-    queryKey: ['universal', 'schedule'],
-    queryFn: () => client.GET('/schedule').then(r => r.data)
-  });
-  return { query };
-}
-```
-Keeps SSR-compatible `load` → component data flow. TanStack Query handles caching/revalidation after first load.
-
-**Option B — Queries in components (simpler, leverages TanStack fully):**
-```svelte
-<script lang="ts">
-  import { createQuery } from '@tanstack/svelte-query';
-
-  const schedule = createQuery(() => ({
-    queryKey: ['universal', 'schedule'],
-    queryFn: () => client.GET('/schedule').then(r => r.data),
-  }));
-</script>
-
-{#if schedule.isLoading}...{/if}
-{#if schedule.data}...{/if}
-```
-Simpler but loses SvelteKit's `load`-level data flow. Fine for this app since it's a client-rendered SPA (static adapter).
-
-**Recommendation**: Option B for most endpoints. The app uses `@sveltejs/adapter-static` — there's no SSR to lose. `load` functions currently exist only because `fetchWithCache` needed to run before the component rendered; TanStack Query's cache-first approach eliminates that need.
-
-**Steps:**
-1. Migrate one endpoint (e.g. schedule) as the pattern prototype. Verify:
-   - First visit: fetches from network, caches to IDB.
-   - Second visit: shows cached data instantly, refetches in background.
-   - Offline: shows cached data, no error.
-   - Logout: per-user queries cleared, universal queries survive.
-2. Migrate remaining `fetchWithCache` endpoints one by one.
-3. Migrate `warmCache` calls — replace with `queryClient.prefetchQuery()` calls in the root layout.
-4. Wire SSE events to query invalidation: when `schedule_updated` SSE fires, call `queryClient.invalidateQueries({ queryKey: ['universal', 'schedule'] })` instead of the current refetch pattern.
-5. Once all `fetchWithCache` consumers are migrated, delete `src/lib/utils/offlineCache.ts` and remove the `idb-keyval` dependency if nothing else uses it (check service worker).
-
-**Deliverable**: all 5 cached read endpoints use TanStack Query; `offlineCache.ts` deleted; offline + logout behavior verified; all gates green.
-
-### Phase 4: Migrate remaining API calls to hey-api SDK
-
-**Goal**: replace `client.GET('/path', ...)` calls with hey-api's generated SDK functions.
-
-This is the bulk migration: 68 call sites across 49 files. It's mechanical but large.
-
-**Before/after:**
-```ts
-// Before (openapi-fetch)
-const { data, error } = await client.GET('/schedule/events/{id}', {
-  params: { path: { id: eventId } },
-  signal
-});
-
-// After (hey-api SDK)
-const { data, error } = await getScheduleEvent({
-  path: { id: eventId },
-  signal
-});
-```
-
-**Steps:**
-1. Enable the `@hey-api/sdk` plugin in hey-api config to generate SDK functions.
-2. Port the two middleware (`reachabilityWatch`, `sessionExpiryWatch`) to hey-api's interceptor system — hey-api supports request/response interceptors with a similar API.
-3. Migrate call sites file by file. Group by route:
-   - `(app)/schedule/**` — 8 files, ~10 calls
-   - `(app)/voting/**` — 4 files, ~5 calls
-   - `(auth)/login/**` — 3 files, ~4 calls
-   - `(app)/(protected)/tools/**` — 10 files, ~12 calls
-   - `(app)/(protected)/profile/**` — 6 files, ~12 calls
-   - `(app)/(protected)/notifications/**` — 3 files, ~6 calls
-   - `(app)/components/**` — 3 files, ~5 calls
-   - Root layouts/pages — 4 files, ~8 calls
-   - Services/utils — 3 files, ~6 calls
-4. For mutation endpoints (POST/DELETE/PATCH), optionally wrap with `createMutation()` for loading/error state — but this is a convenience, not a requirement. Simple fire-and-forget mutations (logout, mark-read) can stay as plain SDK calls.
-5. After all call sites are migrated:
-   - Remove `openapi-fetch` from `package.json`.
-   - Remove `openapi-typescript` from `package.json`.
-   - Delete `src/lib/api/schema.d.ts` (replaced by hey-api's generated output).
-   - Delete or rewrite `src/lib/api/index.ts` (the `createApiClient()` function and its middleware are replaced by hey-api's client + interceptors).
-6. Update `just frontend-check-api` to verify hey-api output instead of `schema.d.ts`.
-7. Run all gates.
-
-**Deliverable**: all 68 call sites use hey-api SDK; openapi-fetch and openapi-typescript removed; all gates green.
-
-### Phase 5: hey-api TanStack Query plugin (optional, after Phase 3+4)
-
-**Goal**: replace hand-written `createQuery(() => ({ queryKey, queryFn }))` with auto-generated query hooks.
-
-1. Enable `@hey-api/tanstack-query` plugin in hey-api config.
-2. Replace manual `createQuery` calls with generated options functions:
+   The transform per call:
    ```ts
-   // Before (manual)
-   createQuery(() => ({
-     queryKey: ['universal', 'schedule'],
-     queryFn: () => getSchedule()
-   }))
+   // Before (openapi-fetch)
+   const { data, error } = await client.GET('/schedule/events/{id}', {
+     params: { path: { id: eventId } },
+     signal
+   });
 
-   // After (generated)
-   createQuery(() => getScheduleOptions())
+   // After (hey-api SDK)
+   import { getScheduleEvent } from '$lib/api/generated';
+
+   const { data, error } = await getScheduleEvent({
+     path: { id: eventId },
+     signal
+   });
    ```
-3. This eliminates hand-maintained query keys — hey-api generates them from the operation ID, so they're always consistent with the API.
 
-**This phase is optional.** It's a DX improvement, not a functional one. Evaluate after Phases 3–4 are stable.
+   The transform per type import:
+   ```ts
+   // Before
+   import type { components } from '$lib/api/schema';
+   type Event = components['schemas']['ScheduleEventDTO'];
+
+   // After
+   import type { ScheduleEventDTO } from '$lib/api/generated';
+   ```
+
+   Work file by file. Run `just frontend-check` after each batch — zero type errors means zero missed sites.
+
+   Call sites by area (for tracking progress):
+   | Area | Files | ~Calls |
+   |------|-------|--------|
+   | `(app)/schedule/**` | 8 | 10 |
+   | `(app)/voting/**` | 4 | 5 |
+   | `(auth)/login/**` | 3 | 4 |
+   | `(app)/(protected)/tools/**` | 10 | 12 |
+   | `(app)/(protected)/profile/**` | 6 | 12 |
+   | `(app)/(protected)/notifications/**` | 3 | 6 |
+   | `(app)/components/**` | 3 | 5 |
+   | Root layouts/pages | 4 | 8 |
+   | Services/utils (`lib/`) | 8 | 6 |
+
+5. **Update build tooling.**
+   - `package.json` scripts: `generate-api` calls hey-api instead of `generate-api.mjs`.
+   - Justfile: `frontend-generate-api`, `frontend-check-api` point at hey-api output.
+
+6. **Delete old artifacts.**
+   - `frontend/scripts/generate-api.mjs`
+   - `frontend/src/lib/api/schema.d.ts`
+   - Rewrite `frontend/src/lib/api/index.ts` — the `createApiClient()` factory and its middleware are replaced by hey-api's client config + interceptors.
+
+7. **Remove old dependencies.**
+   - `pnpm remove openapi-typescript openapi-fetch`
+
+8. **Run all gates.** `just frontend-lint && just frontend-check`. Manual smoke test: login, view schedule, vote, go offline, come back.
+
+**Deliverable**: every API call uses hey-api SDK; old codegen removed; behavior identical; all gates green.
+
+### What stays unchanged in this PR
+
+- `offlineCache.ts` — still used, still network-first. The `fetchWithCache` wrappers now call hey-api SDK functions instead of `client.GET`, but the caching logic is untouched.
+- `reachability.ts` — unchanged, hey-api interceptors call the same functions.
+- SSE — unchanged, event handlers call hey-api SDK functions for refetches.
+- Service worker — unchanged, has its own fetch strategy.
+
+## PR 2 — Add TanStack Query (behavior change)
+
+**Goal**: replace the hand-rolled `offlineCache.ts` with `@tanstack/svelte-query` v6. Switch from network-first to stale-while-revalidate. Add the hey-api TanStack Query plugin so query hooks are auto-generated.
+
+### Steps
+
+1. **Install dependencies.**
+   - `pnpm add @tanstack/svelte-query`
+   - `pnpm add @tanstack/query-persist-client-core`
+   - Enable `@hey-api/tanstack-query` plugin in `openapi-ts.config.ts` — this generates query option factories (`getScheduleOptions()`, etc.) with correct query keys derived from operation IDs.
+
+2. **Set up QueryClient** (`src/lib/api/queryClient.ts`).
+   - Defaults tuned for a convention companion app:
+     - `staleTime: 30_000` — schedule data is near-static during the con
+     - `gcTime: 1000 * 60 * 60 * 24` — 24h, keep cached data for offline
+     - `retry: 1` — reachability system handles longer outages
+     - `networkMode: 'offlineFirst'` — serve cache even when offline
+   - IDB persister using `idb-keyval` (new `fanfan-query-cache` store, or repurpose existing `fanfan-cache`).
+
+3. **Wire QueryClientProvider** in root layout (`src/routes/+layout.svelte`).
+
+4. **Migrate cached read endpoints** — the 5 `fetchWithCache` call sites.
+
+   | File | Cache key | Scope |
+   |------|-----------|-------|
+   | `src/routes/+layout.ts` | `current-user`, `settings`, `schedule-config` | user + universal |
+   | `src/routes/(app)/+page.ts` | `schedule`, `voting-summary` | universal + user |
+   | `src/routes/(app)/schedule/+page.ts` | `schedule`, `subscriptions` | universal + user |
+   | `src/routes/(app)/(protected)/notifications/+page.ts` | `notifications` | user |
+   | `src/routes/(app)/voting/+page.ts` or `+layout.ts` | voting data | user |
+
+   These move from `load` functions with `fetchWithCache` to component-level `createQuery` calls using the hey-api generated options:
+   ```svelte
+   <script lang="ts">
+     import { createQuery } from '@tanstack/svelte-query';
+     import { getScheduleOptions } from '$lib/api/generated';
+
+     const schedule = createQuery(() => ({
+       ...getScheduleOptions(),
+       staleTime: 60_000,
+     }));
+   </script>
+
+   {#if schedule.isPending}
+     <ScheduleSkeleton />
+   {:else if schedule.data}
+     <ScheduleView events={schedule.data} />
+   {/if}
+   ```
+
+   The app uses `@sveltejs/adapter-static` — no SSR to lose. `load` functions existed because `fetchWithCache` needed to run before the component rendered; TanStack Query's cache-first approach eliminates that need. `load` functions that only called `fetchWithCache` can be deleted; any that also do non-API work (auth guards, `depends()`) stay but lose their fetch logic.
+
+5. **Migrate cache warming.**
+   - Replace `warmCache` calls in the root layout with `queryClient.prefetchQuery()`.
+
+6. **Wire SSE → query invalidation.**
+   - `schedule_updated` SSE → `queryClient.invalidateQueries({ queryKey: getScheduleOptions().queryKey })`
+   - Same pattern for `notification_created`, `config_updated`, etc.
+
+7. **Logout cache clearing.**
+   - Convention: user-scoped queries use key prefix `['user', ...]`, universal use `['universal', ...]`.
+   - On logout: `queryClient.removeQueries({ queryKey: ['user'] })`.
+   - Replaces `clearUserCache()` from `offlineCache.ts`.
+
+8. **Optionally adopt `createMutation` for key mutations.**
+   - Where loading/error state is shown inline (voting, login forms, profile edits), wrap with `createMutation()` for `isPending` / `isError` reactive state. Not required — fire-and-forget mutations (logout, mark-read) stay as plain SDK calls.
+
+9. **Delete old caching layer.**
+   - `src/lib/utils/offlineCache.ts`
+   - Remove `idb-keyval` if the service worker doesn't use it (it does — check `service-worker.ts`; if shared, keep the dependency).
+   - Remove `src/lib/utils/fetchTimeout.ts` if nothing else uses `timeoutSignal` / `FIRST_PAINT_TIMEOUT_MS` (check `reachability.ts` — it uses `timeoutSignal` for the health probe, so it may stay).
+
+10. **Run all gates + manual verification.**
+    - `just frontend-lint && just frontend-check`
+    - First visit: fetches from network, caches to IDB.
+    - Second visit: shows cached data instantly, refetches in background.
+    - Offline: shows cached data, no network error.
+    - Logout on shared device: per-user queries cleared, schedule (universal) survives.
+    - SSE event: query invalidates and refetches in background.
+
+**Deliverable**: `offlineCache.ts` deleted; cached endpoints use auto-generated TanStack Query hooks; stale-while-revalidate replaces network-first; offline + logout + SSE behavior verified; all gates green.
 
 ## Risks and mitigations
 
 | Risk | Mitigation |
 |------|------------|
-| hey-api is pre-v1, breaking changes possible | Pin exact version in `package.json`; wrap codegen in a script that can be swapped back |
-| 68 call sites is a large migration surface | Migrate incrementally by route group; each group is a separate commit; old and new coexist |
-| TanStack Query's IDB persister loses user/universal scoping | Use query key prefixes (`['user', ...]` vs `['universal', ...]`) and `removeQueries` on logout |
-| Cache-first shows stale data | `staleTime` controls how long before background refetch; SSE invalidation keeps critical data fresh |
-| Bundle size increase (~15-20kb for TanStack Query) | Acceptable for a PWA; offset by removing `offlineCache.ts` and its `idb-keyval` usage |
-| Middleware/interceptor behavior changes | Port `reachabilityWatch` and `sessionExpiryWatch` to hey-api interceptors in a dedicated step; verify with manual testing |
-| Service worker also uses `idb-keyval` | Check if SW shares the same store; if so, keep `idb-keyval` as a dependency |
+| hey-api is pre-v1 | Pin exact version; codegen is a build step — easy to swap back if needed |
+| 68 call sites in one PR | Mechanical transform, compiler-verified; zero type errors = zero missed sites |
+| TanStack Query's IDB persister loses user/universal scoping | Query key prefixes (`['user', ...]` / `['universal', ...]`) + `removeQueries` on logout |
+| Cache-first shows stale data | `staleTime` per query; SSE invalidation keeps critical data fresh; `refetchOnWindowFocus` for catch-up |
+| Bundle size (+15–20kb for TanStack Query) | Acceptable for a PWA; offset by deleting `offlineCache.ts` |
+| Middleware → interceptor port | Same logic, different registration API; ~30 lines; verify with manual testing |
+| `load` functions removed → navigation behavior changes | Test that `goto()` and back/forward still work; TanStack Query's cache serves data without a `load` |
+| Service worker uses `idb-keyval` | Check `service-worker.ts` — if it shares the store, keep the dependency |
 
 ## Out of scope
 
 - Backend changes — the OpenAPI spec and endpoints are unchanged.
-- SSE architecture — stays as-is; TanStack Query hooks into it via `invalidateQueries` on SSE events.
-- Service worker fetch strategy — the SW has its own caching; this migration only affects the application-layer cache.
-- Mutations with optimistic updates — nice-to-have but not part of the initial migration.
+- SSE architecture — stays as-is; TanStack Query hooks into it via `invalidateQueries`.
+- Service worker fetch strategy — the SW has its own caching; this migration affects only the application-layer cache.
+- Optimistic mutations — nice-to-have, separate from this migration.
 
-## Dependencies to add
+## Dependencies
 
+### Add
 ```
-@hey-api/openapi-ts        (devDependency — codegen)
-@tanstack/svelte-query     (dependency — runtime)
-@tanstack/query-persist-client-core  (dependency — IDB persistence)
-```
-
-## Dependencies to remove (after full migration)
-
-```
-openapi-typescript         (devDependency)
-openapi-fetch              (dependency)
-idb-keyval                 (dependency — only if service worker doesn't need it)
+@hey-api/openapi-ts                   (devDependency — codegen, PR 1)
+@tanstack/svelte-query                (dependency — runtime, PR 2)
+@tanstack/query-persist-client-core   (dependency — IDB persistence, PR 2)
 ```
 
-## Files to delete (after full migration)
+### Remove
+```
+openapi-typescript   (devDependency — PR 1)
+openapi-fetch        (dependency — PR 1)
+idb-keyval           (dependency — PR 2, only if service worker doesn't need it)
+```
 
-- `frontend/scripts/generate-api.mjs` (Phase 1)
-- `frontend/src/lib/api/schema.d.ts` (Phase 4)
-- `frontend/src/lib/utils/offlineCache.ts` (Phase 3)
-- `frontend/src/lib/api/index.ts` — rewrite or delete (Phase 4)
+## Files to delete
+
+| File | When |
+|------|------|
+| `frontend/scripts/generate-api.mjs` | PR 1 |
+| `frontend/src/lib/api/schema.d.ts` | PR 1 |
+| `frontend/src/lib/api/index.ts` | PR 1 (rewrite as hey-api client config) |
+| `frontend/src/lib/utils/offlineCache.ts` | PR 2 |
+| `frontend/src/lib/utils/fetchTimeout.ts` | PR 2 (if nothing else uses it) |
+
+## Sources
+
+- [hey-api migration guide](https://heyapi.dev/openapi-ts/migrating)
+- [@tanstack/svelte-query v6 docs](https://tanstack.com/query/latest/docs/framework/svelte/overview)
+- [TanStack Query + SvelteKit SSR](https://tanstack.com/query/latest/docs/svelte/ssr)
+- [Vercel: incremental migrations](https://vercel.com/blog/incremental-migrations) — big-bang viable under ~20 routes; 68 mechanical call sites with compiler verification is the exception
+- [Strangler fig pattern](https://stevekinney.com/courses/enterprise-ui/strangler-fig-introduction)
