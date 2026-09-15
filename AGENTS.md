@@ -117,7 +117,7 @@ Two mechanisms enforce the rules above without relying on anyone remembering the
 
 ## Subagents
 
-`.claude/agents/` holds three project subagents. Each runs in its own context
+`.claude/agents/` holds four project subagents. Each runs in its own context
 window and reports back a summary, so verbose work stays out of the main
 conversation — that buys context headroom, not a smaller token bill: total usage
 goes *up*, and the win is that the parent session doesn't degrade under a full
@@ -128,6 +128,7 @@ context.
 | `gate-runner` | Runs the lint/typecheck/test gates, returns a compact pass/fail + trimmed failures. Fixes nothing. | sonnet |
 | `migration-reviewer` | Read-only safety review of a migration against the deployed database. Severity-tagged findings + a verdict. | opus |
 | `svelte-editor` | Implements a scoped `.svelte`/`.svelte.ts` change and leaves the frontend gates green. | inherit |
+| `ru-copy` | Writes and revises the Russian user-facing strings, across components, notifications and both halves of each email. | opus |
 
 Delegate verbose or well-bounded work (gate runs, a migration review, a
 multi-file investigation); keep targeted edits and anything needing

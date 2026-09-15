@@ -29,8 +29,8 @@ Fix your own gate failures and re-run. Do not hand back a red tree.
 
 - **User-facing copy is Russian.** Code comments and docstrings are English.
   Writing more than a label or two? Stop and hand the strings back to the
-  caller instead of inventing voice — the `ux-copy` / `fanfan-russian-copy`
-  skills own register and terminology, and you do not have them loaded.
+  caller, who has the `ru-copy` agent for it — register, terminology and the
+  three plural forms live in skills you do not have loaded.
 - **No user- or request-scoped state in module singletons.** Modules outlive
   navigation and login/logout in this SPA.
 - **Mobile-first**, with bottom padding clear of the floating nav bar.
