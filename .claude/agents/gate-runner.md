@@ -19,8 +19,14 @@ Run only the gates the caller names, or infer from the paths they give:
 | `frontend/src/lib/**` logic | also `just frontend-test` |
 | backend logic | also `just backend-test` |
 | any `Dockerfile` | `just dockerfile-lint` |
+| `adapters/db/models/**` or `migrations/**` | also `just backend-check-migrations` |
+| `shared/openapi/**`, or a changed API route or response schema | also `just frontend-check-api` |
 
 `just backend-typecheck` alone is a faster re-check once lint is known green.
+
+The two drift checks are the ones a caller most easily forgets, and neither
+shows up as a lint or type error — a `PASS` that skipped them is worse than
+no report. Run them whenever the paths above are in play.
 
 Run every applicable gate even after one fails — a caller fixing two problems
 in one pass beats two round-trips. Never run `just backend-test-integration`
