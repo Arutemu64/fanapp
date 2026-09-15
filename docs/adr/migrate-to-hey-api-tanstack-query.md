@@ -101,8 +101,14 @@ The transform is mechanical: path-string calls become named SDK functions, type 
    | Services/utils (`lib/`) | 8 | 6 |
 
 5. **Update build tooling.**
-   - `package.json` scripts: `generate-api` calls hey-api instead of `generate-api.mjs`.
-   - Justfile: `frontend-generate-api`, `frontend-check-api` point at hey-api output.
+   - `package.json` scripts: `generate-api` calls `openapi-ts` (hey-api CLI) instead of `node generate-api.mjs`.
+   - Justfile `frontend-generate-api`: runs `pnpm openapi-ts` (or the package.json script).
+   - Justfile `frontend-check-api`: **regenerate-then-git-diff** replaces the custom `--check` comparator in `generate-api.mjs`. hey-api has no built-in `--check` flag; the standard approach across codegen tools (protobuf, GraphQL codegen, hey-api) is:
+     ```just
+     frontend-check-api:
+         cd frontend && pnpm openapi-ts && git diff --exit-code src/lib/api/generated/
+     ```
+     Regenerates in place, exits non-zero if the committed output doesn't match. Simpler than the current custom Node script — no temp dirs, no manual file comparison. The two-layer drift gate stays: the backend pytest guards `openapi.json` ↔ app, this gate guards `openapi.json` ↔ generated client.
 
 6. **Delete old artifacts.**
    - `frontend/scripts/generate-api.mjs`
