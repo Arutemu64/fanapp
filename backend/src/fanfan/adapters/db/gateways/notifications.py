@@ -146,7 +146,11 @@ class SqlNotificationGateway(NotificationGateway):
         stmt = (
             select(NotificationORM)
             .where(NotificationORM.user_id == user_id)
-            .order_by(NotificationORM.created_at.desc())
+            # id (uuid7, time-ordered) breaks created_at ties so a stable total
+            # order holds across offset pages — a broadcast fan-out inserts many
+            # rows in one transaction sharing created_at, which would otherwise
+            # shift between pages and let a notification slip through unseen.
+            .order_by(NotificationORM.created_at.desc(), NotificationORM.id.desc())
         )
         stmt = stmt.limit(pagination.limit).offset(pagination.offset)
         notifications = await self.session.scalars(stmt)
