@@ -129,7 +129,7 @@ export interface paths {
         put?: never;
         /**
          * Logout user
-         * @description Clears session cookie and removes Redis session state.
+         * @description Clears session cookie and removes Redis session state; also emits Clear-Site-Data so the browser drops cookies itself.
          */
         post: operations["logout_user"];
         delete?: never;
