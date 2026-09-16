@@ -11,12 +11,12 @@ import { error } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ fetch, depends, parent }) => {
+export const load: PageLoad = async ({ fetch, depends }) => {
 	depends('app:notifications');
 
-	const { user } = await parent();
-	// Per-user key: notifications are the viewer's own feed.
-	const cacheKey = `notifications:${user?.id ?? 'guest'}`;
+	// Single per-user key (userScope): the viewer's own feed, dropped on logout so
+	// it can't surface for the next account.
+	const cacheKey = 'notifications';
 
 	const client = createApiClient();
 

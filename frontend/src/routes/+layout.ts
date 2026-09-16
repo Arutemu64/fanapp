@@ -87,7 +87,7 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 	// Subscriptions are per-user; only logged-in users have them.
 	if (user) {
 		void warmCache<SubscriptionFullDTO[]>({
-			key: `subscriptions:${user.id}`,
+			key: 'subscriptions',
 			scope: userScope,
 			fetcher: async ({ signal }) => {
 				const warmClient = createApiClient();
