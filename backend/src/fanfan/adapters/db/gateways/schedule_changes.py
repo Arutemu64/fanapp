@@ -134,7 +134,11 @@ class SqlScheduleChangeGateway(ScheduleChangeGateway):
     ) -> list[ScheduleChangeFullDTO]:
         stmt = (
             select(ScheduleChangeORM)
-            .order_by(ScheduleChangeORM.created_at.desc())
+            # id (uuid7, time-ordered) breaks created_at ties so a stable total
+            # order holds across offset pages — a bulk schedule edit inserts many
+            # change rows in one transaction sharing created_at, which would
+            # otherwise shift between pages and let a change slip through unseen.
+            .order_by(ScheduleChangeORM.created_at.desc(), ScheduleChangeORM.id.desc())
             .options(
                 joinedload(ScheduleChangeORM.changed_event),
                 joinedload(ScheduleChangeORM.argument_event),
