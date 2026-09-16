@@ -146,10 +146,12 @@ class SqlNotificationGateway(NotificationGateway):
         stmt = (
             select(NotificationORM)
             .where(NotificationORM.user_id == user_id)
-            # id (uuid7, time-ordered) breaks created_at ties so a stable total
-            # order holds across offset pages — a broadcast fan-out inserts many
-            # rows in one transaction sharing created_at, which would otherwise
+            # id is a unique PK, so appending it gives a stable total order across
+            # offset pages — a broadcast fan-out inserts many rows in one
+            # transaction sharing created_at, which without a tiebreaker could
             # shift between pages and let a notification slip through unseen.
+            # (Fan-out ids are deterministic uuid5, not time-ordered, so id only
+            # breaks the tie; created_at carries the recency the feed sorts on.)
             .order_by(NotificationORM.created_at.desc(), NotificationORM.id.desc())
         )
         stmt = stmt.limit(pagination.limit).offset(pagination.offset)

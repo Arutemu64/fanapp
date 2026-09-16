@@ -27,6 +27,13 @@ pytestmark = [
 async def _add_notification(
     dishka_request: AsyncContainer, owner: User, body: str
 ) -> NotificationId:
+    """Insert a notification and return its id.
+
+    The test runs in one wrapping transaction, so created_at (server-side
+    func.now(), the transaction clock) is identical across these rows; the
+    later-generated id (uuid7 here) then decides order under the gateway's
+    id.desc() tiebreaker — a regression guard for offset pages skipping rows.
+    """
     notification_gateway = await dishka_request.get(NotificationGateway)
     uow = await dishka_request.get(UnitOfWork)
     notification = Notification(
@@ -42,10 +49,6 @@ async def _add_notification(
     await notification_gateway.add(notification)
     await uow.commit()
     return notification.id
-    # The test runs in one wrapping transaction, so created_at (server-side
-    # func.now(), the transaction clock) is identical across these rows; the
-    # later-generated id (uuid7) then decides order under the gateway's
-    # id.desc() tiebreaker — a regression guard for offset pages skipping rows.
 
 
 async def test_list_user_notifications_newest_first_stable_under_created_at_tie(

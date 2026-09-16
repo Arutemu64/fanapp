@@ -22,6 +22,13 @@ pytestmark = [
 
 
 async def _add_change(dishka_request: AsyncContainer, author: User) -> ScheduleChangeId:
+    """Insert a schedule change and return its id.
+
+    The test runs in one wrapping transaction, so created_at (server-side
+    func.now(), the transaction clock) is identical across these rows; the
+    later-generated id (uuid7) then decides order under the gateway's
+    id.desc() tiebreaker — a regression guard for offset pages skipping rows.
+    """
     schedule_change_gateway = await dishka_request.get(ScheduleChangeGateway)
     uow = await dishka_request.get(UnitOfWork)
     change = ScheduleChange.set_as_current(
@@ -33,10 +40,6 @@ async def _add_change(dishka_request: AsyncContainer, author: User) -> ScheduleC
     await schedule_change_gateway.add(change)
     await uow.commit()
     return change.id
-    # The test runs in one wrapping transaction, so created_at (server-side
-    # func.now(), the transaction clock) is identical across these rows; the
-    # later-generated id (uuid7) then decides order under the gateway's
-    # id.desc() tiebreaker — a regression guard for offset pages skipping rows.
 
 
 async def test_list_schedule_changes_newest_first_stable_under_created_at_tie(
