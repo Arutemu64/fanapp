@@ -1,52 +1,100 @@
 <script lang="ts">
-	import type { CurrentUserDto } from '$lib/api/generated';
+	import type {
+		CurrentUserDto,
+		ScheduleEventFullDto,
+		SubscriptionFullDto
+	} from '$lib/api/generated';
 	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
 
-	import { invalidate } from '$app/navigation';
 	import { page } from '$app/state';
+	import { getApiClient } from '$lib/api/context';
+	import { getScheduleOptions, getSubscriptionsOptions } from '$lib/api/queries';
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Switch } from '$lib/components/ui/switch';
-	import { documentVisibility } from '$lib/services/documentVisibility';
+	import { invalidateSchedule } from '$lib/query/invalidate';
+	import { offlineQueryState } from '$lib/query/offlineState';
+	import { persisted } from '$lib/query/persist';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
 	import { canManageSchedule } from '$lib/utils/permissions';
 	import { createSearchIndex } from '$lib/utils/search';
 	import { ChevronUp, Info, Play, Search as SearchIcon, X } from '@lucide/svelte';
+	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 
-	import type { PageProps } from './$types';
-
 	import EventCard from './components/EventCard.svelte';
+	import ScheduleSkeleton from './components/ScheduleSkeleton.svelte';
 	import {
 		buildScheduleGroups,
 		filterScheduleGroups,
 		type ScheduleBlockGroup
 	} from './scheduleGrouping';
 
-	// Mirror the loaded page data so the component reads schedule from one local source.
-	let { data }: PageProps = $props();
-	let schedule: ScheduleEventWithSubscription[] = $derived(data.schedule);
+	const client = getApiClient();
+	const queryClient = useQueryClient();
 
 	// Store filter state locally because it only affects this page view.
 	let searchQuery: string = $state('');
 	let showOnlySubscribed: boolean = $state(false);
 
+	let user: CurrentUserDto | null = $derived(page.data.user);
+
+	// Two endpoints, two cache entries: the schedule is identical for everyone
+	// (universal scope, survives logout and serves guests), the subscriptions are
+	// the viewer's own (user scope, dropped on logout). Guests have none, so that
+	// query stays disabled and the rows render without badges.
+	const scheduleQuery = createQuery(() => persisted(getScheduleOptions({ client }), 'universal'));
+	const subscriptionsQuery = createQuery(() => ({
+		...persisted(getSubscriptionsOptions({ client }), 'user'),
+		enabled: user !== null
+	}));
+
+	let schedule: ScheduleEventWithSubscription[] = $derived(
+		mergeSubscriptions(
+			scheduleQuery.data?.schedule ?? [],
+			subscriptionsQuery.data?.subscriptions ?? []
+		)
+	);
+
 	// We use the full schedule current event for countdown labels inside every row.
 	let currentEvent = $derived(schedule.find((event) => event.is_current) ?? null);
-	let user: CurrentUserDto | null = $derived(page.data.user);
 
 	const offline = getOfflineService();
 	const eventsClient = getEventsClient();
+
+	// The schedule alone decides the offline story: a missing subscription list only
+	// costs badges, while a missing schedule is the page.
+	let offlineState = $derived(offlineQueryState(scheduleQuery, offline.isOnline));
 	let showStaleNotice = $derived(
 		shouldShowStaleNotice({
-			offlineMiss: data.offlineMiss,
-			stale: data.stale,
+			offlineMiss: offlineState.offlineMiss,
+			stale: offlineState.stale,
 			isOnline: offline.isOnline
 		})
 	);
+
+	// Nothing to show and nothing saved: tell a first paint (skeleton) apart from a
+	// reachable failure (retry) and from being offline (the page's own empty state).
+	let isLoadingFirstPaint = $derived(scheduleQuery.isPending && scheduleQuery.data === undefined);
+	let hasFailed = $derived(scheduleQuery.isError && scheduleQuery.data === undefined);
+
+	/** Attach each event's subscription (matched by event id) to reproduce the merged row shape. */
+	function mergeSubscriptions(
+		events: ScheduleEventFullDto[],
+		subscriptions: SubscriptionFullDto[]
+	): ScheduleEventWithSubscription[] {
+		const byEventId = new Map(
+			subscriptions.map((sub) => [sub.event.id, { id: sub.id, counter: sub.counter }])
+		);
+
+		return events.map((event) => ({
+			...event,
+			user_subscription: byEventId.get(event.id) ?? null
+		}));
+	}
 
 	// Rebuilt only when the schedule reloads, so a keystroke re-runs token
 	// comparisons instead of re-normalizing every field of every row.
@@ -134,27 +182,13 @@
 		});
 	}
 
-	const VISIBILITY_REFETCH_THROTTLE_MS = 30000;
-	// Seeded to now: the page has just loaded fresh data, so the initial visible
-	// state must not trip the foreground refetch below.
-	let lastRefetch = Date.now();
-
 	// Also refetch on every (re)connect, so a schedule_updated missed while the SSE
-	// stream was down doesn't leave a stale page.
+	// stream was down doesn't leave a stale page. Returning to the foreground is
+	// covered by the client's own refetch-on-focus, throttled by its staleTime —
+	// this page no longer tracks visibility by hand.
 	function reloadSchedule() {
-		lastRefetch = Date.now();
-		void invalidate('app:schedule');
+		void invalidateSchedule(queryClient);
 	}
-
-	// Shorter background trips (<60s) can lose an SSE event without triggering a
-	// reconnect — refetch on return to the foreground to catch up, throttled so a
-	// quick tab-flip doesn't refetch what we just loaded. Tracks only visibility;
-	// lastRefetch is a plain read so an SSE-driven reload never re-runs this.
-	$effect(() => {
-		if (!documentVisibility.current) return;
-		if (Date.now() - lastRefetch < VISIBILITY_REFETCH_THROTTLE_MS) return;
-		reloadSchedule();
-	});
 
 	onMount(() => {
 		const scrollContainer = getScrollContainer();
@@ -180,159 +214,182 @@
 	<title>Программа · ФАН ФАН</title>
 </svelte:head>
 
-<div {@attach capturePageRoot} class="flex flex-col gap-4">
-	{#if showStaleNotice}
-		<StaleDataNotice
-			message="Нет связи. Показана сохранённая программа — обновится при подключении."
-			cachedAt={data.cachedAt}
-		/>
-	{/if}
+<!-- The load no longer blocks on the network, so first paint owns the loading
+	state the shell's navigation skeleton used to cover. -->
+{#if isLoadingFirstPaint}
+	<ScheduleSkeleton />
+{:else}
+	<div {@attach capturePageRoot} class="flex flex-col gap-4">
+		{#if showStaleNotice}
+			<StaleDataNotice
+				message="Нет связи. Показана сохранённая программа — обновится при подключении."
+				cachedAt={offlineState.cachedAt}
+			/>
+		{/if}
 
-	<!-- Operator shortcut: the schedule-changes log lives with the schedule it
+		<!-- Operator shortcut: the schedule-changes log lives with the schedule it
 	     tracks, not in the tools section, so the operator reaches it in one tap
 	     from here. Gated by the same permission the changes page enforces. -->
-	{#if canManageSchedule(user)}
-		<div class="flex justify-end">
-			<Button href="/schedule/changes" variant="outline" size="sm">Изменения программы</Button>
-		</div>
-	{/if}
-
-	<!-- Keep filters compact and static so the schedule itself can use sticky headers. -->
-	<div class="rounded-2xl border border-border bg-card p-3">
-		<div class="flex flex-col gap-3">
-			<div class="relative flex items-center">
-				<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
-				<Input
-					bind:value={searchQuery}
-					name="schedule_search"
-					aria-label="Поиск по программе"
-					placeholder="Поиск по номеру или названию…"
-					autocomplete="off"
-					spellcheck={false}
-					class="pr-8 pl-9"
-				/>
-				{#if searchQuery}
-					<button
-						type="button"
-						class="absolute right-2 text-muted-foreground hover:text-foreground"
-						onclick={() => (searchQuery = '')}
-						aria-label="Очистить поиск"
-					>
-						<X class="size-4" />
-					</button>
-				{/if}
+		{#if canManageSchedule(user)}
+			<div class="flex justify-end">
+				<Button href="/schedule/changes" variant="outline" size="sm">Изменения программы</Button>
 			</div>
+		{/if}
 
-			<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-				<div class="flex items-center gap-2">
-					<Switch id="only-subscribed" bind:checked={showOnlySubscribed} size="sm" />
-					<Label for="only-subscribed" class="cursor-pointer text-sm font-medium">
-						Только подписки
-					</Label>
+		<!-- Keep filters compact and static so the schedule itself can use sticky headers. -->
+		<div class="rounded-2xl border border-border bg-card p-3">
+			<div class="flex flex-col gap-3">
+				<div class="relative flex items-center">
+					<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+					<Input
+						bind:value={searchQuery}
+						name="schedule_search"
+						aria-label="Поиск по программе"
+						placeholder="Поиск по номеру или названию…"
+						autocomplete="off"
+						spellcheck={false}
+						class="pr-8 pl-9"
+					/>
+					{#if searchQuery}
+						<button
+							type="button"
+							class="absolute right-2 text-muted-foreground hover:text-foreground"
+							onclick={() => (searchQuery = '')}
+							aria-label="Очистить поиск"
+						>
+							<X class="size-4" />
+						</button>
+					{/if}
 				</div>
 
-				<!-- Announce filter result changes to screen readers, which otherwise get no
+				<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+					<div class="flex items-center gap-2">
+						<Switch id="only-subscribed" bind:checked={showOnlySubscribed} size="sm" />
+						<Label for="only-subscribed" class="cursor-pointer text-sm font-medium">
+							Только подписки
+						</Label>
+					</div>
+
+					<!-- Announce filter result changes to screen readers, which otherwise get no
 				     feedback that the list shrank/grew. -->
-				<p class="text-xs text-muted-foreground" aria-live="polite" role="status">
-					{resultsSummary}
-				</p>
+					<p class="text-xs text-muted-foreground" aria-live="polite" role="status">
+						{resultsSummary}
+					</p>
+				</div>
 			</div>
 		</div>
-	</div>
 
-	<!-- Estimate disclaimer: the per-event countdowns are drift-projected, not
+		<!-- Estimate disclaimer: the per-event countdowns are drift-projected, not
 	     guaranteed. Kept as a quiet inline note (no border/panel) so it reads as
 	     guidance rather than a promo banner the eye skips. Shown only while an
 	     event is live, since that's the only time projected start times appear. -->
-	{#if currentEvent}
-		<p class="flex items-start gap-1.5 px-1 text-xs text-muted-foreground">
-			<Info class="mt-px size-3.5 shrink-0" />
-			<span>Время начала примерное — программа может сдвигаться.</span>
-		</p>
-	{/if}
+		{#if currentEvent}
+			<p class="flex items-start gap-1.5 px-1 text-xs text-muted-foreground">
+				<Info class="mt-px size-3.5 shrink-0" />
+				<span>Время начала примерное — программа может сдвигаться.</span>
+			</p>
+		{/if}
 
-	<div class="flex flex-col gap-6">
-		{#each groupedSchedule as node (node.key)}
-			{#if node.kind === 'interlude'}
-				<!-- A block-less row (break, opening, closing) sits between block sections
+		<div class="flex flex-col gap-6">
+			{#each groupedSchedule as node (node.key)}
+				{#if node.kind === 'interlude'}
+					<!-- A block-less row (break, opening, closing) sits between block sections
 				     as a lighter, dashed row so it reads as an interlude, not a block card.
 				     Still interactive (mark-current, skip) via EventCard's interlude variant. -->
-				<div
-					data-event-id={node.event.id}
-					class="scroll-mt-28 overflow-clip rounded-xl border border-dashed border-border bg-muted/40"
-				>
-					<EventCard event={node.event} {currentEvent} {user} variant="interlude" />
-				</div>
+					<div
+						data-event-id={node.event.id}
+						class="scroll-mt-28 overflow-clip rounded-xl border border-dashed border-border bg-muted/40"
+					>
+						<EventCard event={node.event} {currentEvent} {user} variant="interlude" />
+					</div>
+				{:else}
+					{@render blockSection(node)}
+				{/if}
 			{:else}
-				{@render blockSection(node)}
-			{/if}
-		{:else}
-			<div
-				class="rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center sm:py-14"
-			>
-				<p class="text-base font-bold text-foreground">
-					{#if data.offlineMiss}
-						Программа недоступна офлайн
-					{:else if hasActiveFilters}
-						Ничего не нашлось
-					{:else}
-						Программа пока пуста
-					{/if}
-				</p>
-				<p class="mt-1 text-sm text-muted-foreground">
-					{#if data.offlineMiss}
-						Появится после подключения к интернету
-					{:else if hasActiveFilters}
-						Попробуй изменить поиск или фильтры
-					{:else}
-						Программа появится ближе к фестивалю
-					{/if}
-				</p>
+				<div
+					class="rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center sm:py-14"
+				>
+					<p class="text-base font-bold text-foreground">
+						{#if offlineState.offlineMiss}
+							Программа недоступна офлайн
+						{:else if hasFailed}
+							Не удалось загрузить программу
+						{:else if hasActiveFilters}
+							Ничего не нашлось
+						{:else}
+							Программа пока пуста
+						{/if}
+					</p>
+					<p class="mt-1 text-sm text-muted-foreground">
+						{#if offlineState.offlineMiss}
+							Появится после подключения к интернету
+						{:else if hasFailed}
+							Проверь связь и попробуй ещё раз
+						{:else if hasActiveFilters}
+							Попробуй изменить поиск или фильтры
+						{:else}
+							Программа появится ближе к фестивалю
+						{/if}
+					</p>
 
-				<!-- No-results recovery: one tap clears every active filter. Hidden on the
+					<!-- A reachable failure is recoverable in place: retry the query instead of
+				     sending the visitor to a full error page for one bad response. -->
+					{#if hasFailed}
+						<Button
+							variant="outline"
+							size="sm"
+							class="mt-4"
+							onclick={() => void scheduleQuery.refetch()}
+						>
+							Повторить
+						</Button>
+					{/if}
+
+					<!-- No-results recovery: one tap clears every active filter. Hidden on the
 				     first-use empty state, where there's nothing to reset. -->
-				{#if hasActiveFilters}
-					<Button variant="outline" size="sm" class="mt-4" onclick={resetFilters}>
-						<X data-icon="inline-start" />
-						Сбросить фильтры
-					</Button>
-				{/if}
-			</div>
-		{/each}
-	</div>
-
-	{#if visibleCurrentEvent || showScrollTopButton}
-		<!-- Lift FAB actions above the bottom mobile navigation so they stay tappable. -->
-		<div class="pointer-events-none fixed right-4 bottom-24 z-30 md:bottom-6">
-			<div class="flex flex-col items-end gap-2">
-				{#if showScrollTopButton}
-					<Button
-						variant="outline"
-						size="sm"
-						class="pointer-events-auto size-12 rounded-full px-0 shadow-lg lg:w-32 lg:rounded-full lg:px-3"
-						onclick={scrollToTop}
-						aria-label="Подняться наверх"
-					>
-						<ChevronUp class="size-5 shrink-0" />
-						<span class="sr-only lg:not-sr-only lg:ml-2">Наверх</span>
-					</Button>
-				{/if}
-
-				{#if visibleCurrentEvent}
-					<Button
-						size="sm"
-						class="pointer-events-auto size-12 rounded-full bg-success px-0 text-success-foreground shadow-lg hover:bg-success/90 lg:w-32 lg:rounded-full lg:px-3"
-						onclick={scrollToCurrentEvent}
-						aria-label="Перейти к текущему выступлению"
-					>
-						<Play class="size-5 shrink-0 fill-current" />
-						<span class="sr-only lg:not-sr-only lg:ml-2">Текущее</span>
-					</Button>
-				{/if}
-			</div>
+					{#if hasActiveFilters}
+						<Button variant="outline" size="sm" class="mt-4" onclick={resetFilters}>
+							<X data-icon="inline-start" />
+							Сбросить фильтры
+						</Button>
+					{/if}
+				</div>
+			{/each}
 		</div>
-	{/if}
-</div>
+
+		{#if visibleCurrentEvent || showScrollTopButton}
+			<!-- Lift FAB actions above the bottom mobile navigation so they stay tappable. -->
+			<div class="pointer-events-none fixed right-4 bottom-24 z-30 md:bottom-6">
+				<div class="flex flex-col items-end gap-2">
+					{#if showScrollTopButton}
+						<Button
+							variant="outline"
+							size="sm"
+							class="pointer-events-auto size-12 rounded-full px-0 shadow-lg lg:w-32 lg:rounded-full lg:px-3"
+							onclick={scrollToTop}
+							aria-label="Подняться наверх"
+						>
+							<ChevronUp class="size-5 shrink-0" />
+							<span class="sr-only lg:not-sr-only lg:ml-2">Наверх</span>
+						</Button>
+					{/if}
+
+					{#if visibleCurrentEvent}
+						<Button
+							size="sm"
+							class="pointer-events-auto size-12 rounded-full bg-success px-0 text-success-foreground shadow-lg hover:bg-success/90 lg:w-32 lg:rounded-full lg:px-3"
+							onclick={scrollToCurrentEvent}
+							aria-label="Перейти к текущему выступлению"
+						>
+							<Play class="size-5 shrink-0 fill-current" />
+							<span class="sr-only lg:not-sr-only lg:ml-2">Текущее</span>
+						</Button>
+					{/if}
+				</div>
+			</div>
+		{/if}
+	</div>
+{/if}
 
 <!-- A block section: sticky block header + its nomination cards. Taken as a
 	snippet so the {#each} above narrows a node to a concrete ScheduleBlockGroup

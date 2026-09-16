@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { ScheduleEventFullDto } from '$lib/api/generated';
 
-	import { invalidate } from '$app/navigation';
 	import { page } from '$app/state';
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
@@ -11,11 +10,14 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Input } from '$lib/components/ui/input';
 	import { Spinner } from '$lib/components/ui/spinner';
+	import { invalidateSchedule } from '$lib/query/invalidate';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { createSearchIndex } from '$lib/utils/search';
 	import { ArrowUpDown, BellRing, Search as SearchIcon, X } from '@lucide/svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
 
 	const client = createApiClient();
+	const queryClient = useQueryClient();
 
 	interface Props {
 		open: boolean;
@@ -84,7 +86,7 @@
 			// rather than waiting for the schedule_updated SSE echo, which can arrive
 			// late or be dropped on a flaky operator connection. See EventCard's
 			// reloadSchedule for the full rationale.
-			void invalidate('app:schedule');
+			void invalidateSchedule(queryClient);
 			toastService.add('Выступление перенесено', 'success');
 
 			open = false;

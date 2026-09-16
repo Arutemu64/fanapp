@@ -13,14 +13,17 @@
 	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { NOTIFICATION_BADGE_MAX, NOTIFICATION_PREVIEW_LIMIT } from '$lib/constants/notifications';
+	import { invalidateNotifications } from '$lib/query/invalidate';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { getUnreadCountService } from '$lib/services/unreadCount.svelte';
 	import { setAppBadgeCount } from '$lib/utils/appBadge';
 	import { Bell, Eye } from '@lucide/svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 
 	const client = createApiClient();
+	const queryClient = useQueryClient();
 
 	let notifications = $state<NotificationDto[]>([]);
 	// True once an authoritative load (SSE connect or a user action) has populated
@@ -129,6 +132,11 @@
 			// so the count can't drift out of sync with the true total (coalesced, so a
 			// broadcast burst costs at most two round-trips).
 			void unread.refresh();
+			// The bell keeps its own short preview, but the notifications page reads a
+			// cached query that is now a notification behind — and that cache is what
+			// the page shows offline. Mark it stale here, in the always-mounted shell,
+			// so it is correct whether or not the page is open.
+			void invalidateNotifications(queryClient);
 			toastService.push(notification);
 		}
 	}
@@ -145,7 +153,11 @@
 				// surfaces it on the badge (the clear's own guard drops a truly stale
 				// pre-mark refresh, so this can't restore the old total).
 				unread.clear();
-				await Promise.all([unread.refresh(), loadNotifications()]);
+				await Promise.all([
+					unread.refresh(),
+					loadNotifications(),
+					invalidateNotifications(queryClient)
+				]);
 			}
 		} catch (error) {
 			console.error('Failed to mark notifications as read', error);
@@ -156,6 +168,7 @@
 		// Reload so notifications published while the stream was down aren't missed.
 		void loadNotifications();
 		void unread.refresh();
+		void invalidateNotifications(queryClient);
 	}
 
 	onMount(() => {

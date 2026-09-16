@@ -28,10 +28,10 @@
 	// it), and owned by the bell and page from there (SSE, mark-read, reconnect).
 	// `seed()` applies only while the count is still provisional, so a fresher value
 	// an SSE refresh may already have written — an authoritative zero included — wins.
-	// Read this layout's own `data`, not `page.data`: the notifications page's load
-	// returns a `notifications` array that clobbers the streamed promise in the merged
-	// `page.data`, and `.then` on that array throws. `untrack` captures the seed promise
-	// once at mount — the count is owned by SSE thereafter, so we don't re-seed on reload.
+	// Read this layout's own `data`, not `page.data`: a child load returning its own
+	// `notifications` key would clobber the streamed promise in the merged `page.data`,
+	// and `.then` on that value throws. `untrack` captures the seed promise once at
+	// mount — the count is owned by SSE thereafter, so we don't re-seed on reload.
 	const unread = setUnreadCountService();
 	const notificationSeed = untrack(() => data.notifications);
 	void notificationSeed

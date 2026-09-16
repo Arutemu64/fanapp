@@ -1,14 +1,8 @@
-import type { CurrentUserDto, ScheduleEventFullDto, SubscriptionFullDto } from '$lib/api/generated';
+import type { CurrentUserDto } from '$lib/api/generated';
 
 import { createApiClient } from '$lib/api';
-import { getCurrentUser, getSchedule, getSubscriptions } from '$lib/api/generated';
-import {
-	clearUserCache,
-	fetchWithCache,
-	universalScope,
-	userScope,
-	warmCache
-} from '$lib/utils/offlineCache';
+import { getCurrentUser } from '$lib/api/generated';
+import { clearUserCache, fetchWithCache, userScope } from '$lib/utils/offlineCache';
 import { isLogoutPending } from '$lib/utils/pendingLogout';
 
 import type { LayoutLoad } from './$types';
@@ -64,39 +58,6 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 
 	// A complete cache miss (offline first boot) is also "not logged in".
 	const user = data ?? null;
-
-	// Warm the offline caches on the first online boot so they're viewable even if
-	// the user never opens the schedule page. Fire-and-forget: each is a no-op when
-	// offline or already cached, so it never blocks first paint or refetches once
-	// warmed (the schedule page's own load + SSE keep them fresh after that). Uses
-	// the same keys the schedule page reads, and its own client so it isn't tied to
-	// this load's tracked `fetch`.
-
-	// Schedule is universal — one shared key for guests and every account.
-	void warmCache<ScheduleEventFullDto[]>({
-		key: 'schedule',
-		scope: universalScope,
-		fetcher: async ({ signal }) => {
-			const warmClient = createApiClient();
-			const { data: schedule, error } = await getSchedule({ client: warmClient, signal });
-			if (error || !schedule) return undefined;
-			return schedule.schedule ?? [];
-		}
-	});
-
-	// Subscriptions are per-user; only logged-in users have them.
-	if (user) {
-		void warmCache<SubscriptionFullDto[]>({
-			key: 'subscriptions',
-			scope: userScope,
-			fetcher: async ({ signal }) => {
-				const warmClient = createApiClient();
-				const { data, error } = await getSubscriptions({ client: warmClient, signal });
-				if (error || !data) return undefined;
-				return data.subscriptions ?? [];
-			}
-		});
-	}
 
 	return { user };
 };

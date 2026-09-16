@@ -2,7 +2,7 @@
 
 This guide details best practices for using [`@hey-api/openapi-ts`](https://heyapi.dev/) in the SvelteKit frontend to achieve type-safe communication with the FastAPI backend and clean per-request state isolation. The frontend is a client-rendered SPA, so the browser talks to the backend directly.
 
-The generator (config in `frontend/openapi-ts.config.ts`) emits, into `frontend/src/lib/api/generated/`, a typed **SDK** (one function per operation, in `sdk.gen.ts`), the **types** (`types.gen.ts`), and a bundled **fetch client** (`client/`). Each operation function returns `{ data, error, request?, response? }` — the same discriminated shape as before. `data`/`error` are narrowed by the `error` discriminant; `request`/`response` are optional because a network failure produces no response. Output is run through Prettier by the generator (`output.postProcess`), so it stays formatted and is checked by the format gate like any other source.
+The generator (config in `frontend/openapi-ts.config.ts`) emits, into `frontend/src/lib/api/generated/`, a typed **SDK** (one function per operation, in `sdk.gen.ts`), the **types** (`types.gen.ts`), a bundled **fetch client** (`client/`), and the **TanStack Query bindings** (`@tanstack/svelte-query.gen.ts`, re-exported as `$lib/api/queries`). Each operation function returns `{ data, error, request?, response? }` — the same discriminated shape as before. `data`/`error` are narrowed by the `error` discriminant; `request`/`response` are optional because a network failure produces no response. Output is run through Prettier by the generator (`output.postProcess`), so it stays formatted and is checked by the format gate like any other source.
 
 ---
 
@@ -28,10 +28,50 @@ The general rule when adding to the spec: **a value that is not derived from com
 
 ---
 
+## Cached reads: TanStack Query
+
+Surfaces that must stay readable offline (the programme, the notification feed,
+the home hero's config) don't call the SDK from a `load` — they create a query in
+the component from the generated options, and the cache is persisted to
+IndexedDB. The rationale is [ADR-0018](adr/0018-tanstack-query-for-cached-read-surfaces.md);
+the offline behaviour (scopes, stale notice, empty states, warming) is
+[frontend.md](frontend.md) §2.
+
+The `@tanstack/svelte-query` plugin emits, per operation,
+`<operation>Options()`, `<operation>QueryKey()`, `<operation>Mutation()` and —
+where the operation paginates — `<operation>InfiniteOptions()`. Import them from
+`$lib/api/queries`, never from the generated `@tanstack/` path, which is an
+implementation detail of the generator.
+
+```svelte
+<script lang="ts">
+	import { getApiClient } from '$lib/api/context';
+	import { getScheduleOptions } from '$lib/api/queries';
+	import { persisted } from '$lib/query/persist';
+	import { createQuery } from '@tanstack/svelte-query';
+
+	const client = getApiClient();
+	const scheduleQuery = createQuery(() => persisted(getScheduleOptions({ client }), 'universal'));
+</script>
+```
+
+Three rules make this safe:
+
+* **Options go in a thunk.** The Svelte adapter is runes-based: `createQuery(() => options)`, not `createQuery(options)`. A bare object is read once and never reacts to the state it closed over.
+* **Always pass the context client.** `getApiClient()` returns the one client the root layout created (`setApiClient`), carrying the 401 session-reconcile and reachability interceptors. Generated keys embed `baseUrl`, so an options call that omits the client keys against the generated module default — which has none — and silently misses the cache every other consumer hits. `load` functions still make their own client with `createApiClient()`: they run outside the component tree and must inject SvelteKit's tracked `fetch`.
+* **Invalidate by name, not by key.** After a successful mutation (or an SSE event), call the matching helper in `$lib/query/invalidate.ts`. Each matches on the operation id alone, so it covers every variant of an operation — the notification feed requested at two page sizes, say — without the caller rebuilding an exact key.
+
+The generated `queryFn` passes `throwOnError: true`, so a query rejects on an API
+error instead of resolving to `{ error }`. That is what TanStack wants; the
+`{ data, error, response }` shape described above is still how **mutations** and
+`load` functions read the SDK.
+
+---
+
 ## Client Isolation
 A shared global/module singleton API client can accumulate mutable state that bleeds across navigations and login/logout, so **never use one**.
 
-Instead, always instantiate a local client per context using `createApiClient()`, and pass it to each SDK call as `{ client }`. Operation functions fall back to a shared module-global client when none is given — **never rely on that**, since it is exactly the cross-navigation singleton this rule forbids.
+Instead, always instantiate a local client per context using `createApiClient()`, and pass it to each SDK call as `{ client }`. Inside the component tree there is one exception, and it is still not a module singleton: the root layout creates a client with `setApiClient()` and puts it in **context**, so it dies with the layout. Components read it with `getApiClient()`; queries must, because the generated keys embed its `baseUrl` (see "Cached reads" above). Operation functions fall back to a shared module-global client when none is given — **never rely on that**, since it is exactly the cross-navigation singleton this rule forbids.
 
 ### 1. Universal load functions (`+page.ts` / `+layout.ts`)
 Inside universal load functions, initialize the client locally and **always inject the SvelteKit-provided `fetch`**:
@@ -113,7 +153,7 @@ Backend `StrEnum`s that appear on a DTO field (`UserRole`, `Permission` in `core
 
 ## Mutations & Data Recovery
 * **UI Consistency**: Define how the UI becomes consistent after mutations (e.g. invalidate layout cache, optimistic update, or full state refetch).
-* **Dependency Invalidation**: When a route uses dependency invalidation, call `depends(...)` in the page load and trigger it with `invalidate('app:something')` after a successful mutation.
+* **Dependency Invalidation**: When a route loads its own data, call `depends(...)` in the page load and trigger it with `invalidate('app:something')` after a successful mutation. A surface backed by TanStack Query (the cached reads above) is not one of those — invalidate its query with the named helper in `$lib/query/invalidate.ts` instead; `invalidate()` would do nothing, because its `load` no longer fetches.
 * **Return Checking**: Success payload, error payload, and response metadata are checked through the SDK return (`data`, `error`, `response`). `response` is optional (`response?.ok`, `response?.status`) — a network failure yields `error` with no `response`.
 
 ### Long-running actions (202 Accepted)

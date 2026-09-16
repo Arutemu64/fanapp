@@ -1,17 +1,19 @@
 <script lang="ts">
 	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
 
-	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { deleteSubscription } from '$lib/api/generated';
 	import * as Alert from '$lib/components/ui/alert';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { Button } from '$lib/components/ui/button';
+	import { invalidateSubscriptions } from '$lib/query/invalidate';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Bell } from '@lucide/svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
 
 	const client = createApiClient();
+	const queryClient = useQueryClient();
 
 	interface Props {
 		open: boolean;
@@ -46,7 +48,7 @@
 		}
 
 		toastService.add('Подписка на уведомления отключена', 'success');
-		await invalidate('app:schedule');
+		await invalidateSubscriptions(queryClient);
 		open = false;
 	}
 </script>

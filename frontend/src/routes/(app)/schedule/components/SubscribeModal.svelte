@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { ScheduleEventFullDto } from '$lib/api/generated';
 
-	import { invalidate } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
@@ -9,10 +8,13 @@
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import { invalidateSubscriptions } from '$lib/query/invalidate';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { BellRing, Minus, Plus } from '@lucide/svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
 
 	const client = createApiClient();
+	const queryClient = useQueryClient();
 
 	interface Props {
 		open: boolean;
@@ -54,7 +56,7 @@
 		}
 
 		toastService.add('Подписка оформлена', 'success');
-		await invalidate('app:schedule');
+		await invalidateSubscriptions(queryClient);
 		open = false;
 	}
 </script>

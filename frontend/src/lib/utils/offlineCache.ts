@@ -1,32 +1,29 @@
 import { isReachable, markReachable } from '$lib/services/reachability';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
-import { createStore, delMany, get, keys, set, type UseStore } from 'idb-keyval';
+import { cacheStore } from '$lib/utils/idbStore';
+import { del, delMany, get, keys, set } from 'idb-keyval';
 
 /**
- * Thin wrappers over IndexedDB (via idb-keyval) for persisting the last good
- * copy of read-only API data, so pages can serve it when the network is down.
+ * IndexedDB persistence for the **identity** load (`/me` in the root layout), so
+ * the app can boot offline knowing who is signed in.
  *
- * Everything lives in ONE IndexedDB database with ONE object store. Data is
- * scoped by a key prefix rather than by a separate store/database:
+ * Page data (schedule, notifications, festival config) is NOT cached here — it
+ * lives in the TanStack Query cache, persisted by `$lib/query/persister.ts` into
+ * the same database. Identity stays on this path because it is the auth boundary
+ * the router is built on: `+layout.ts` must resolve a user before the
+ * `(protected)` guard runs, and a `load` cannot reach the QueryClient, which the
+ * root layout *component* owns (per-user state never lives in a module).
  *
- *   - `'universal'`: data identical for everyone (e.g. the public schedule).
- *     Survives logout and is reused by guests and the next account.
- *   - `'user'`: data belonging to the signed-in user (identity, subscriptions,
- *     notifications, connections). Cleared on logout so it can never surface for
- *     the next account on a shared device.
+ * Entries are scoped by key prefix, matching the query cache's persist scopes:
  *
- * Why one database, not two: opening two idb-keyval databases concurrently (each
- * triggering its own first-time upgrade) races in Firefox — it loses the upgrade
- * on the second database, leaving it permanently unusable so every write throws
- * and is silently swallowed. A single database has a single open/upgrade, so
- * there is no race. See idb-keyval issue #32.
+ *   - `'universal'`: data identical for everyone. Survives logout.
+ *   - `'user'`: data belonging to the signed-in user. Cleared on logout so it can
+ *     never surface for the next account on a shared device.
  *
  * All helpers swallow storage errors (private mode, disabled storage, quota) and
  * degrade to a cache miss / no-op — offline caching is best-effort and must never
  * break a normal online load.
  */
-
-const cacheStore: UseStore = createStore('fanfan-cache', 'keyval');
 
 // Monotonic epoch bumped by clearUserCache(). A user-scoped write captures it when
 // its fetch begins and is dropped if the epoch has moved before the write lands, so
@@ -219,47 +216,22 @@ export async function fetchWithCache<T>({
 	}
 }
 
-/** Options for {@link warmCache}. */
-export interface WarmCacheOptions<T> {
-	/** Cache key; must match the key (and scope) the page's `load` reads. */
-	key: string;
-	/** Whether this entry is per-user ({@link userScope}) or shared ({@link universalScope}). */
-	scope: CacheScope;
-	/** Runs the network request; return the value to cache, or `undefined` to skip. */
-	fetcher: (ctx: { signal: AbortSignal }) => Promise<T | undefined>;
-	/** Fetch timeout budget; defaults to {@link FIRST_PAINT_TIMEOUT_MS}. */
-	timeoutMs?: number;
-}
+// Page data that used to be cached here and now lives in the TanStack Query cache
+// (`$lib/query/persister.ts`). Installed apps still carry these entries, and
+// nothing reads them any more — they would sit in IndexedDB until the visitor
+// clears site data.
+const RETIRED_KEYS = ['g:schedule', 'g:public-config-v2', 'u:notifications', 'u:subscriptions'];
 
 /**
- * Proactively populate a cache entry for a page the user hasn't opened yet, so it
- * is viewable offline from the first run (e.g. warming the schedule on boot).
- *
- * Fire-and-forget: callers must not `await` it inside a `load`, so it never blocks
- * first paint. It is a no-op when the server is unreachable or an entry already
- * exists — once warmed, the normal `load` + SSE refresh keep it fresh, so this
- * never refetches on its own. Swallows every error (offline / timeout / storage).
+ * Delete the entries retired by the move to TanStack Query. Fire-and-forget from
+ * the root layout on boot; deleting a key that is already gone is a no-op, so
+ * this costs one IndexedDB transaction per launch and can be dropped once the
+ * installed base has turned over.
  */
-export async function warmCache<T>({
-	key,
-	scope,
-	fetcher,
-	timeoutMs = FIRST_PAINT_TIMEOUT_MS
-}: WarmCacheOptions<T>): Promise<void> {
-	// Snapshot the user-cache epoch before the fetch, so a clearUserCache() mid-flight
-	// invalidates the write below (see fetchWithCache).
-	const epoch = userCacheEpoch;
+export async function dropRetiredCacheEntries(): Promise<void> {
 	try {
-		if (!isReachable()) return;
-		// Already cached: leave refresh to the page's own load and SSE updates.
-		if ((await readCache<unknown>(key, scope)) !== undefined) return;
-
-		const value = await fetcher({ signal: timeoutSignal(timeoutMs) });
-		markReachable(true);
-		if (value === undefined) return;
-
-		void writeCache<CachedEnvelope<T>>(key, { value, cachedAt: Date.now() }, scope, epoch);
+		await Promise.all(RETIRED_KEYS.map((key) => del(key, cacheStore)));
 	} catch {
-		// Best-effort warm — ignore failures.
+		// Ignore — storage may be unavailable. Best-effort like the other helpers.
 	}
 }
