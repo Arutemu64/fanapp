@@ -12,7 +12,7 @@ class ListFeedbackInput(BaseModel):
     pagination: Pagination
 
 
-class ListFeedbackResult(BaseModel):
+class ListFeedbackOutput(BaseModel):
     feedback: list[FeedbackDTO]
 
 
@@ -27,7 +27,7 @@ class ListFeedback:
         self.current_user_provider = current_user_provider
         self.perm_service = perm_service
 
-    async def __call__(self, data: ListFeedbackInput) -> ListFeedbackResult:
+    async def __call__(self, data: ListFeedbackInput) -> ListFeedbackOutput:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
             user=current_user, permission=Permission.FEEDBACK_READ
@@ -35,4 +35,4 @@ class ListFeedback:
         feedback = await self.feedback_gateway.read_list_feedback(
             pagination=data.pagination
         )
-        return ListFeedbackResult(feedback=feedback)
+        return ListFeedbackOutput(feedback=feedback)

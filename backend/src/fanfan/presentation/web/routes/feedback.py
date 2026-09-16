@@ -8,7 +8,7 @@ from fanfan.application.dto.page import Pagination
 from fanfan.application.interactors.feedback.list_feedback import (
     ListFeedback,
     ListFeedbackInput,
-    ListFeedbackResult,
+    ListFeedbackOutput,
 )
 from fanfan.application.interactors.feedback.submit_feedback import (
     SubmitFeedback,
@@ -52,7 +52,7 @@ async def submit_feedback(
     "first. Requires the feedback:read permission.",
     responses={
         200: {
-            "model": ListFeedbackResult,
+            "model": ListFeedbackOutput,
             "description": "Feedback retrieved successfully.",
         },
     },
@@ -62,6 +62,6 @@ async def list_feedback(
     interactor: FromDishka[ListFeedback],
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
-) -> ListFeedbackResult:
+) -> ListFeedbackOutput:
     data = ListFeedbackInput(pagination=Pagination(limit=limit, offset=offset))
     return await interactor(data)

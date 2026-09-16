@@ -13,7 +13,7 @@ class ListUsersInput(BaseModel):
     search: str | None = None
 
 
-class ListUsersResult(BaseModel):
+class ListUsersOutput(BaseModel):
     users: list[UserListItemDTO]
     # Total matching the current search, so the client can render page controls
     # without walking every page.
@@ -33,7 +33,7 @@ class ListUsers:
         self.current_user_provider = current_user_provider
         self.perm_service = perm_service
 
-    async def __call__(self, data: ListUsersInput) -> ListUsersResult:
+    async def __call__(self, data: ListUsersInput) -> ListUsersOutput:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
             user=current_user, permission=Permission.USERS_READ
@@ -43,4 +43,4 @@ class ListUsers:
             pagination=data.pagination, search=data.search
         )
         total = await self.user_gateway.count_users(search=data.search)
-        return ListUsersResult(users=users, total=total)
+        return ListUsersOutput(users=users, total=total)

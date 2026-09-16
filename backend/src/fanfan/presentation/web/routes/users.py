@@ -14,7 +14,7 @@ from fanfan.application.interactors.users.get_user import GetUser, GetUserInput
 from fanfan.application.interactors.users.list_users import (
     ListUsers,
     ListUsersInput,
-    ListUsersResult,
+    ListUsersOutput,
 )
 from fanfan.core.vo.user import UserId
 from fanfan.presentation.web.responses import AUTH_RESPONSES
@@ -36,7 +36,7 @@ users_router = APIRouter(
     "case-insensitive substring of the username or email. Requires users:read.",
     responses={
         200: {
-            "model": ListUsersResult,
+            "model": ListUsersOutput,
             "description": "Users retrieved successfully.",
         },
         403: {"model": ErrorMessage, "description": "Missing users:read."},
@@ -48,7 +48,7 @@ async def list_users(
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
     search: Annotated[str | None, Query(max_length=100)] = None,
-) -> ListUsersResult:
+) -> ListUsersOutput:
     data = ListUsersInput(
         pagination=Pagination(limit=limit, offset=offset), search=search
     )

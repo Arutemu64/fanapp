@@ -14,7 +14,7 @@ class ListScheduleChangesInput(BaseModel):
     pagination: Pagination
 
 
-class ListScheduleChangesResult(BaseModel):
+class ListScheduleChangesOutput(BaseModel):
     schedule_changes: list[ScheduleChangeFullDTO]
 
 
@@ -31,7 +31,7 @@ class ListScheduleChanges:
 
     async def __call__(
         self, data: ListScheduleChangesInput
-    ) -> ListScheduleChangesResult:
+    ) -> ListScheduleChangesOutput:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
             user=current_user, permission=Permission.SCHEDULE_MANAGE
@@ -41,4 +41,4 @@ class ListScheduleChanges:
                 pagination=data.pagination
             )
         )
-        return ListScheduleChangesResult(schedule_changes=schedule_changes)
+        return ListScheduleChangesOutput(schedule_changes=schedule_changes)
