@@ -52,7 +52,7 @@ LINK_ERROR_USER_ALREADY_HAS_PROVIDER = "user_already_has_provider"
 LINK_ERROR_SESSION_CHANGED = "session_changed"
 
 
-class OAuthProvidersResponse(BaseModel):
+class OAuthProvidersOutput(BaseModel):
     """The social login providers the login screen should offer, in order.
 
     Only the provider ids: labels, icons and brand colours are the frontend's to
@@ -74,8 +74,8 @@ class OAuthProvidersResponse(BaseModel):
 @inject
 async def list_oauth_providers(
     config: FromDishka[WebConfig],
-) -> OAuthProvidersResponse:
-    return OAuthProvidersResponse(providers=config.enabled_oauth_providers)
+) -> OAuthProvidersOutput:
+    return OAuthProvidersOutput(providers=config.enabled_oauth_providers)
 
 
 def build_login_redirect(error_code: str | None = None) -> RedirectResponse:

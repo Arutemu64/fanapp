@@ -193,9 +193,9 @@ export type CurrentUserDto = {
 };
 
 /**
- * DebugResponse
+ * DebugOutput
  */
-export type DebugResponse = {
+export type DebugOutput = {
 	/**
 	 * Url
 	 */
@@ -451,9 +451,9 @@ export type GetVotingStateOutput = {
 };
 
 /**
- * HealthCheckResponse
+ * HealthCheckOutput
  */
-export type HealthCheckResponse = {
+export type HealthCheckOutput = {
 	/**
 	 * Status
 	 */
@@ -491,9 +491,9 @@ export type ListBroadcastsOutput = {
 };
 
 /**
- * ListFeedbackResult
+ * ListFeedbackOutput
  */
-export type ListFeedbackResult = {
+export type ListFeedbackOutput = {
 	/**
 	 * Feedback
 	 */
@@ -501,9 +501,9 @@ export type ListFeedbackResult = {
 };
 
 /**
- * ListScheduleChangesResult
+ * ListScheduleChangesOutput
  */
-export type ListScheduleChangesResult = {
+export type ListScheduleChangesOutput = {
 	/**
 	 * Schedule Changes
 	 */
@@ -521,9 +521,9 @@ export type ListUserNotificationOutput = {
 };
 
 /**
- * ListUsersResult
+ * ListUsersOutput
  */
-export type ListUsersResult = {
+export type ListUsersOutput = {
 	/**
 	 * Users
 	 */
@@ -734,7 +734,7 @@ export type NotificationType =
 	| 'test';
 
 /**
- * OAuthProvidersResponse
+ * OAuthProvidersOutput
  *
  * The social login providers the login screen should offer, in order.
  *
@@ -742,7 +742,7 @@ export type NotificationType =
  * own. This is deployment config, not a fixed set — a provider may be built in
  * yet withheld here because it is unreachable from this host.
  */
-export type OAuthProvidersResponse = {
+export type OAuthProvidersOutput = {
 	/**
 	 * Providers
 	 */
@@ -1437,10 +1437,10 @@ export type DebugResponses = {
 	/**
 	 * Successful Response
 	 */
-	200: DebugResponse;
+	200: DebugOutput;
 };
 
-export type DebugResponse2 = DebugResponses[keyof DebugResponses];
+export type DebugResponse = DebugResponses[keyof DebugResponses];
 
 export type HealthCheckData = {
 	body?: never;
@@ -1462,10 +1462,10 @@ export type HealthCheckResponses = {
 	/**
 	 * Successful Response
 	 */
-	200: HealthCheckResponse;
+	200: HealthCheckOutput;
 };
 
-export type HealthCheckResponse2 = HealthCheckResponses[keyof HealthCheckResponses];
+export type HealthCheckResponse = HealthCheckResponses[keyof HealthCheckResponses];
 
 export type LoginData = {
 	body: BodyLogin;
@@ -1654,7 +1654,7 @@ export type ListOauthProvidersResponses = {
 	/**
 	 * Successful Response
 	 */
-	200: OAuthProvidersResponse;
+	200: OAuthProvidersOutput;
 };
 
 export type ListOauthProvidersResponse =
@@ -2445,7 +2445,7 @@ export type ListScheduleChangesResponses = {
 	/**
 	 * Schedule changes retrieved successfully.
 	 */
-	200: ListScheduleChangesResult;
+	200: ListScheduleChangesOutput;
 };
 
 export type ListScheduleChangesResponse =
@@ -3423,7 +3423,7 @@ export type ListFeedbackResponses = {
 	/**
 	 * Feedback retrieved successfully.
 	 */
-	200: ListFeedbackResult;
+	200: ListFeedbackOutput;
 };
 
 export type ListFeedbackResponse = ListFeedbackResponses[keyof ListFeedbackResponses];
@@ -3613,7 +3613,7 @@ export type ListUsersResponses = {
 	/**
 	 * Users retrieved successfully.
 	 */
-	200: ListUsersResult;
+	200: ListUsersOutput;
 };
 
 export type ListUsersResponse = ListUsersResponses[keyof ListUsersResponses];

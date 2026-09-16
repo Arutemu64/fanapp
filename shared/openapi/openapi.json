@@ -18,7 +18,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/DebugResponse"
+                  "$ref": "#/components/schemas/DebugOutput"
                 }
               }
             }
@@ -49,7 +49,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HealthCheckResponse"
+                  "$ref": "#/components/schemas/HealthCheckOutput"
                 }
               }
             }
@@ -374,7 +374,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OAuthProvidersResponse"
+                  "$ref": "#/components/schemas/OAuthProvidersOutput"
                 }
               }
             }
@@ -1822,7 +1822,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListScheduleChangesResult"
+                  "$ref": "#/components/schemas/ListScheduleChangesOutput"
                 }
               }
             }
@@ -3579,7 +3579,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListFeedbackResult"
+                  "$ref": "#/components/schemas/ListFeedbackOutput"
                 }
               }
             }
@@ -3893,7 +3893,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListUsersResult"
+                  "$ref": "#/components/schemas/ListUsersOutput"
                 }
               }
             }
@@ -4367,7 +4367,7 @@
         ],
         "title": "CurrentUserDTO"
       },
-      "DebugResponse": {
+      "DebugOutput": {
         "properties": {
           "url": {
             "type": "string",
@@ -4391,7 +4391,7 @@
           "scheme",
           "headers"
         ],
-        "title": "DebugResponse"
+        "title": "DebugOutput"
       },
       "DeletePushSubscriptionInput": {
         "properties": {
@@ -4767,7 +4767,7 @@
         ],
         "title": "GetVotingStateOutput"
       },
-      "HealthCheckResponse": {
+      "HealthCheckOutput": {
         "properties": {
           "status": {
             "type": "string",
@@ -4779,7 +4779,7 @@
         "required": [
           "status"
         ],
-        "title": "HealthCheckResponse"
+        "title": "HealthCheckOutput"
       },
       "LimitsConfigDTO": {
         "properties": {
@@ -4824,7 +4824,7 @@
         ],
         "title": "ListBroadcastsOutput"
       },
-      "ListFeedbackResult": {
+      "ListFeedbackOutput": {
         "properties": {
           "feedback": {
             "items": {
@@ -4838,9 +4838,9 @@
         "required": [
           "feedback"
         ],
-        "title": "ListFeedbackResult"
+        "title": "ListFeedbackOutput"
       },
-      "ListScheduleChangesResult": {
+      "ListScheduleChangesOutput": {
         "properties": {
           "schedule_changes": {
             "items": {
@@ -4854,7 +4854,7 @@
         "required": [
           "schedule_changes"
         ],
-        "title": "ListScheduleChangesResult"
+        "title": "ListScheduleChangesOutput"
       },
       "ListUserNotificationOutput": {
         "properties": {
@@ -4872,7 +4872,7 @@
         ],
         "title": "ListUserNotificationOutput"
       },
-      "ListUsersResult": {
+      "ListUsersOutput": {
         "properties": {
           "users": {
             "items": {
@@ -4891,7 +4891,7 @@
           "users",
           "total"
         ],
-        "title": "ListUsersResult"
+        "title": "ListUsersOutput"
       },
       "ListVotingNominationsOutput": {
         "properties": {
@@ -5249,7 +5249,7 @@
         ],
         "title": "NotificationType"
       },
-      "OAuthProvidersResponse": {
+      "OAuthProvidersOutput": {
         "properties": {
           "providers": {
             "items": {
@@ -5263,7 +5263,7 @@
         "required": [
           "providers"
         ],
-        "title": "OAuthProvidersResponse",
+        "title": "OAuthProvidersOutput",
         "description": "The social login providers the login screen should offer, in order.\n\nOnly the provider ids: labels, icons and brand colours are the frontend's to\nown. This is deployment config, not a fixed set — a provider may be built in\nyet withheld here because it is unreachable from this host."
       },
       "OnlineUsersCountOutput": {

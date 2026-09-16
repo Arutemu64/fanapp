@@ -8,7 +8,7 @@ from fanfan.application.dto.page import Pagination
 from fanfan.application.interactors.schedule_mgmt.list_schedule_changes import (
     ListScheduleChanges,
     ListScheduleChangesInput,
-    ListScheduleChangesResult,
+    ListScheduleChangesOutput,
 )
 from fanfan.application.interactors.schedule_mgmt.undo_schedule_change import (
     UndoScheduleChange,
@@ -33,7 +33,7 @@ changes_router = APIRouter(
     "including skips, moves, and status changes.",
     responses={
         200: {
-            "model": ListScheduleChangesResult,
+            "model": ListScheduleChangesOutput,
             "description": "Schedule changes retrieved successfully.",
         },
     },
@@ -43,7 +43,7 @@ async def list_schedule_changes(
     interactor: FromDishka[ListScheduleChanges],
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
-) -> ListScheduleChangesResult:
+) -> ListScheduleChangesOutput:
     data = ListScheduleChangesInput(pagination=Pagination(limit=limit, offset=offset))
     return await interactor(data)
 

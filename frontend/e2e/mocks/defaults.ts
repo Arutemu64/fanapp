@@ -1,8 +1,8 @@
 import type {
 	GetScheduleOutput,
-	HealthCheckResponse,
+	HealthCheckOutput,
 	ListUserNotificationOutput,
-	OAuthProvidersResponse,
+	OAuthProvidersOutput,
 	PublicConfigDto,
 	UnreadNotificationsCountOutput
 } from '../../src/lib/api/generated';
@@ -23,7 +23,7 @@ const now = Date.now();
 export const baselineHandlers: Handlers = {
 	// Reachability probe (reachability.ts). Must succeed or the app paints the
 	// offline banner and every test fights it.
-	'GET /debug/health': json<HealthCheckResponse>({ status: 'healthy' }),
+	'GET /debug/health': json<HealthCheckOutput>({ status: 'healthy' }),
 	'GET /config': json<PublicConfigDto>({
 		festival_start: new Date(now + DAY_MS).toISOString(),
 		festival_end: new Date(now + 3 * DAY_MS).toISOString()
@@ -39,5 +39,5 @@ export const baselineHandlers: Handlers = {
 	// Not a boot request, but the login surface fetches it on mount — and any test
 	// that lands on /login (e.g. a protected route bouncing a guest) would otherwise
 	// hit the loud 404 and trip the console guard. Empty = email-only login.
-	'GET /auth/oauth/providers': json<OAuthProvidersResponse>({ providers: [] })
+	'GET /auth/oauth/providers': json<OAuthProvidersOutput>({ providers: [] })
 };

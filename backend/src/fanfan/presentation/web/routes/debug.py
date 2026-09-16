@@ -10,24 +10,24 @@ from fanfan.adapters.debug.config import DebugConfig
 debug_router = APIRouter(tags=["Debug"], prefix="/debug")
 
 
-class DebugResponse(BaseModel):
+class DebugOutput(BaseModel):
     url: str
     scheme: str
     headers: dict[str, str]
 
 
-class HealthCheckResponse(BaseModel):
+class HealthCheckOutput(BaseModel):
     status: Literal["healthy"]
 
 
 @debug_router.get("/")
 @inject
-async def debug(request: Request, config: FromDishka[DebugConfig]) -> DebugResponse:
+async def debug(request: Request, config: FromDishka[DebugConfig]) -> DebugOutput:
     # Echoes request headers (incl. cookies and proxy internals), so keep it to
     # debug builds. In production it must be indistinguishable from a missing route.
     if not config.enabled:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    return DebugResponse(
+    return DebugOutput(
         url=str(request.url),
         scheme=request.url.scheme,
         headers=dict(request.headers),
@@ -35,5 +35,5 @@ async def debug(request: Request, config: FromDishka[DebugConfig]) -> DebugRespo
 
 
 @debug_router.get("/health")
-def health_check() -> HealthCheckResponse:
-    return HealthCheckResponse(status="healthy")
+def health_check() -> HealthCheckOutput:
+    return HealthCheckOutput(status="healthy")
