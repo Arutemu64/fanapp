@@ -30,18 +30,24 @@ export const load: PageLoad = async ({ url, fetch }) => {
 	try {
 		const client = createApiClient();
 		// Timeout-bounded so a stalled connection can't block the profile page.
-		const { data, error } = await listOauthProviders({
+		const { data, error, response } = await listOauthProviders({
 			client,
 			fetch,
 			signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
 		});
 		if (error) {
-			console.error('Error fetching enabled OAuth providers:', error);
+			// A network failure (offline / timeout) comes back as an error with no
+			// `response`; stay silent and offer no linking. Only a real API error
+			// (response present) is worth logging.
+			if (response) {
+				console.error('Error fetching enabled OAuth providers:', error);
+			}
 		} else {
 			enabledProviders = data.providers;
 		}
 	} catch {
-		// Offline / timeout throws rather than returning `error`; offer no linking.
+		// Defensive: the client resolves failures into `error`, but an unexpected
+		// throw must still leave the linking section empty rather than break the page.
 	}
 
 	return {

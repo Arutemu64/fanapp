@@ -62,14 +62,21 @@ async function loadNotificationSeed(
 		})
 	]);
 
-	if (previewResult.status === 'rejected') {
+	// The client resolves failures into `error` rather than rejecting, so a settled
+	// rejection here would only be an unexpected throw, not an API/network failure.
+	const preview = previewResult.status === 'fulfilled' ? previewResult.value : undefined;
+	const unread = unreadResult.status === 'fulfilled' ? unreadResult.value : undefined;
+
+	// The preview alone decides reachability: a network failure (offline / timeout)
+	// comes back with an error and no `response`. A response — even an error one —
+	// proves the backend answered (the response interceptor sets reachability from
+	// its status), so only the no-response case forces us offline here.
+	if (!preview || (preview.error && !preview.response)) {
 		markReachable(false);
 		return { preview: [], unreadCount: 0 };
 	}
 	markReachable(true);
 
-	const preview = previewResult.value;
-	const unread = unreadResult.status === 'fulfilled' ? unreadResult.value : undefined;
 	return {
 		preview: preview.error || !preview.data ? [] : preview.data.notifications,
 		unreadCount: !unread || unread.error || !unread.data ? 0 : unread.data.count
