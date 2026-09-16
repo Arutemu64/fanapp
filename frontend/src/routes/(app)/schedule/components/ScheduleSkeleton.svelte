@@ -3,9 +3,10 @@
 
 	// Placeholder that mirrors the schedule's real structure — filter bar, then
 	// block sections of card rows (leading number box, two text lines, trailing
-	// bell) — so the layout doesn't jump when the loaded page replaces it. Shown
-	// by the app shell during a navigation whose load runs longer than the delay
-	// gate. Pulse is CSS-only, so app.css's prefers-reduced-motion rule stills it.
+	// bell) — so the layout doesn't jump when the page replaces it. Shown by the
+	// page itself while its schedule query has no data yet, and by the app shell
+	// during a navigation that outlasts the delay gate. Pulse is CSS-only, so
+	// app.css's prefers-reduced-motion rule stills it.
 
 	// Faux blocks, each an array of row indices. Uneven counts so the placeholder
 	// reads as content, not a repeating grid. Index keys are fine — these rows are
