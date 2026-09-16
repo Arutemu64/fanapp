@@ -55,7 +55,9 @@
 
 	// Mirror the unread count onto the installed app's icon (Badging API). This
 	// also replaces the count-less "flag" badge the service worker sets on push
-	// with the exact number once the app opens; logout clears it (AppNavbar).
+	// with the exact number once the app opens. The bell unmounts on every session
+	// end — explicit logout AND a passive 401 expiry — so the icon badge is cleared
+	// in the onMount teardown below, the one surface clearUserCache can't reach.
 	$effect(() => {
 		setAppBadgeCount(unread.count);
 	});
@@ -156,6 +158,10 @@
 		return () => {
 			eventsClient.off('notification_created', handleNewNotification);
 			eventsClient.off('connection_established', reloadAfterReconnect);
+			// Session ended (the bell only renders while logged in): drop the OS icon
+			// badge so the previous user's count can't linger on a shared or installed
+			// device. Covers passive 401 expiry too, which never runs AppNavbar's logout.
+			setAppBadgeCount(0);
 		};
 	});
 
