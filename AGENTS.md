@@ -69,8 +69,8 @@ named `fanfan-*` are project-local and live only here.
 | `just backend-check-migrations` | Fail if the ORM models have drifted from the migrations |
 | `just backend-generate <name>` | Autogenerate a migration against the running app DB |
 | `just backend-generate-auto <name>` | Autogenerate against a throwaway Postgres (no app DB needed; requires Docker) |
-| `just frontend-generate-api` | Regenerate the OpenAPI spec and `schema.d.ts` from it |
-| `just frontend-check-api` | Fail if `schema.d.ts` has drifted from the spec (the spec itself is guarded by a backend test) |
+| `just frontend-generate-api` | Regenerate the OpenAPI spec and the hey-api client (`src/lib/api/generated/`) from it |
+| `just frontend-check-api` | Fail if the generated client has drifted from the spec, via `git diff` (the spec itself is guarded by a backend test) |
 | `just backend-generate-schedule-template` | Rebuild the schedule-import template `.xlsx` offered for download |
 
 Always review a generated migration: autogenerate emits renames as drop+create and does not see enum-member changes.

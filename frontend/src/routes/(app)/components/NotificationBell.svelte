@@ -1,9 +1,15 @@
 <script lang="ts">
-	import type { NotificationDTO, NotificationSeed } from '$lib/types/notifications';
+	import type { NotificationDto } from '$lib/api/generated';
+	import type { NotificationSeed } from '$lib/types/notifications';
 
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { createApiClient } from '$lib/api';
+	import {
+		listUserNotifications,
+		markAllNotificationsRead,
+		markNotificationsRead
+	} from '$lib/api/generated';
 	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { NOTIFICATION_BADGE_MAX, NOTIFICATION_PREVIEW_LIMIT } from '$lib/constants/notifications';
@@ -16,7 +22,7 @@
 
 	const client = createApiClient();
 
-	let notifications = $state<NotificationDTO[]>([]);
+	let notifications = $state<NotificationDto[]>([]);
 	// True once an authoritative load (SSE connect or a user action) has populated
 	// the preview, so the streamed seed below can never overwrite a fresher list.
 	let hasLoadedPreview = false;
@@ -64,11 +70,12 @@
 
 	async function loadNotifications() {
 		try {
-			const { data, error, response } = await client.GET('/notifications/', {
-				params: { query: { limit: NOTIFICATION_PREVIEW_LIMIT } }
+			const { data, error, response } = await listUserNotifications({
+				client,
+				query: { limit: NOTIFICATION_PREVIEW_LIMIT }
 			});
 
-			if (!error && response.ok && data) {
+			if (!error && response?.ok && data) {
 				notifications = data.notifications;
 				hasLoadedPreview = true;
 			}
@@ -88,10 +95,11 @@
 		if (unseenIds.length === 0) return;
 
 		try {
-			const { error, response } = await client.POST('/notifications/mark-read', {
+			const { error, response } = await markNotificationsRead({
+				client,
 				body: { notification_ids: unseenIds }
 			});
-			if (!error && response.ok) {
+			if (!error && response?.ok) {
 				// Reload the preview (items now read) and the true total — marking the
 				// visible five read may still leave older unread items behind the badge.
 				await Promise.all([loadNotifications(), unread.refresh()]);
@@ -101,7 +109,7 @@
 		}
 	}
 
-	function addNotificationToPreview(notification: NotificationDTO) {
+	function addNotificationToPreview(notification: NotificationDto) {
 		const alreadyExists = notifications.some(
 			(existingNotification) => existingNotification.id === notification.id
 		);
@@ -114,7 +122,7 @@
 		return !alreadyExists;
 	}
 
-	function handleNewNotification(notification: NotificationDTO) {
+	function handleNewNotification(notification: NotificationDto) {
 		const isNewNotification = addNotificationToPreview(notification);
 		if (isNewNotification) {
 			// Reconcile the badge with the server rather than optimistically bumping it,
@@ -129,8 +137,8 @@
 		if (unread.count === 0) return;
 
 		try {
-			const { error, response } = await client.POST('/notifications/mark-all-read');
-			if (!error && response.ok) {
+			const { error, response } = await markAllNotificationsRead({ client });
+			if (!error && response?.ok) {
 				// Clear for instant feedback, then reconcile with the server: a
 				// notification committed in the window between mark-all-read committing
 				// and this handler running is still unread, and only a follow-up refresh

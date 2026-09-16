@@ -134,9 +134,10 @@ it in memory and compares:
 | `unit/adapters/test_schedule_parser.py::test_parses_the_downloadable_template` | `frontend/static/schedule-template.xlsx` vs. the parser's required columns | `just backend-generate-schedule-template` |
 | `integration/test_migrations.py` | the ORM models vs. the migrations (needs Docker) | `just backend-generate <name>` |
 
-The second half of the API contract chain — `frontend/src/lib/api/schema.d.ts`
-vs. the spec — is checked by `just frontend-check-api` rather than a test,
-because it belongs to the frontend toolchain. See [api.md](api.md).
+The second half of the API contract chain — the generated hey-api client
+(`frontend/src/lib/api/generated/`) vs. the spec — is checked by
+`just frontend-check-api` (regenerate + `git diff`) rather than a test, because
+it belongs to the frontend toolchain. See [api.md](api.md).
 
 Adding a generated file that gets committed? Add its guard in the same change,
 and state the regeneration command in the failure message — the person who
@@ -365,7 +366,7 @@ contrast included — the suite drove the muted-text and active-nav token fixes
 that got it there.
 
 **Mocked, not full-stack — on purpose.** Each test mocks the backend over
-`**/api/**` (typed off `schema.d.ts`, so a drifted mock fails to compile). This
+`**/api/**` (typed off the generated hey-api types, so a drifted mock fails to compile). This
 is deliberate for *this* repo, not a shortcut: backend behaviour already has the
 `@pytest.mark.integration` suite, and the frontend↔backend contract already has
 the OpenAPI drift guards (`test_openapi_spec.py` + `frontend-check-api`). So the

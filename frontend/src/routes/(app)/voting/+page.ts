@@ -1,5 +1,6 @@
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
+import { listVotingNominations } from '$lib/api/generated';
 import { isBackendUnreachableStatus, isReachable, markReachable } from '$lib/services/reachability';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 import { isHttpError } from '@sveltejs/kit';
@@ -23,17 +24,18 @@ export const load: PageLoad = async ({ fetch }) => {
 			data,
 			error: apiError,
 			response
-		} = await client.GET('/voting/nominations', {
+		} = await listVotingNominations({
+			client,
 			fetch,
 			signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
 		});
 
 		if (apiError) {
-			// A gateway 5xx (502/503/504) is the backend being unreachable behind a
-			// live proxy, not a real load failure. Mirror the offline path above —
-			// mark unreachable, show the honest online-only state — instead of the
-			// generic error page.
-			if (response && isBackendUnreachableStatus(response.status)) {
+			// A network failure (offline / timeout / abort) surfaces as an error with
+			// no `response`; a gateway 5xx (502/503/504) is a live proxy over a dead
+			// backend. Both mean unreachable — mirror the offline path above (honest
+			// online-only state) instead of the generic error page.
+			if (!response || isBackendUnreachableStatus(response.status)) {
 				markReachable(false);
 				return { title: 'Голосование', nominations: [], offlineUnavailable: true };
 			}

@@ -14,7 +14,7 @@ const gitignorePath = path.resolve(import.meta.dirname, '.gitignore');
 
 export default defineConfig(
 	includeIgnoreFile(gitignorePath),
-	{ ignores: ['src/lib/api/schema.d.ts'] },
+	{ ignores: ['src/lib/api/generated/'] },
 	js.configs.recommended,
 	ts.configs.recommendedTypeChecked,
 	svelte.configs.recommended,
@@ -121,7 +121,7 @@ export default defineConfig(
 		files: [
 			'eslint.config.js',
 			'svelte.config.js',
-			'scripts/**',
+			'openapi-ts.config.ts',
 			'src/service-worker.ts',
 			'playwright.config.ts',
 			'e2e/**'

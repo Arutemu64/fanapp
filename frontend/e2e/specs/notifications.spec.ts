@@ -1,8 +1,8 @@
-import type { ApiSchemas } from '../fixtures';
+import type { ListUserNotificationOutput, NotificationDto } from '../../src/lib/api/generated';
 
 import { expect, json, loggedInAs, test } from '../fixtures';
 
-const UNREAD: ApiSchemas['NotificationDTO'] = {
+const UNREAD: NotificationDto = {
 	id: '01890000-0000-7000-8000-0000000000e1',
 	user_id: '01890000-0000-7000-8000-000000000001',
 	title: 'Скоро твоё событие',
@@ -18,7 +18,7 @@ test.describe('notifications', { tag: '@critical' }, () => {
 	test('renders the feed and marks loaded items read on open', async ({ page, api }) => {
 		api.use(loggedInAs());
 		api.use({
-			'GET /notifications/': json<ApiSchemas['ListUserNotificationOutput']>({
+			'GET /notifications/': json<ListUserNotificationOutput>({
 				notifications: [UNREAD]
 			}),
 			// Opening the page marks the on-screen unread items read (mark-on-open).

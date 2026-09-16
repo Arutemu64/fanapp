@@ -1,6 +1,7 @@
 import type { NotificationSeed } from '$lib/types/notifications';
 
 import { createApiClient } from '$lib/api';
+import { countUnreadNotifications, listUserNotifications } from '$lib/api/generated';
 import { NOTIFICATION_PREVIEW_LIMIT } from '$lib/constants/notifications';
 import { isReachable, markReachable } from '$lib/services/reachability';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
@@ -48,25 +49,34 @@ async function loadNotificationSeed(
 	// preview alone decides reachability (as it did before the count was added), and
 	// a timed-out count must not discard a good preview or mark the API unreachable.
 	const [previewResult, unreadResult] = await Promise.allSettled([
-		client.GET('/notifications/', {
+		listUserNotifications({
+			client,
 			fetch,
-			params: { query: { limit: NOTIFICATION_PREVIEW_LIMIT } },
+			query: { limit: NOTIFICATION_PREVIEW_LIMIT },
 			signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
 		}),
-		client.GET('/notifications/unread-count', {
+		countUnreadNotifications({
+			client,
 			fetch,
 			signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
 		})
 	]);
 
-	if (previewResult.status === 'rejected') {
+	// The client resolves failures into `error` rather than rejecting, so a settled
+	// rejection here would only be an unexpected throw, not an API/network failure.
+	const preview = previewResult.status === 'fulfilled' ? previewResult.value : undefined;
+	const unread = unreadResult.status === 'fulfilled' ? unreadResult.value : undefined;
+
+	// The preview alone decides reachability: a network failure (offline / timeout)
+	// comes back with an error and no `response`. A response — even an error one —
+	// proves the backend answered (the response interceptor sets reachability from
+	// its status), so only the no-response case forces us offline here.
+	if (!preview || (preview.error && !preview.response)) {
 		markReachable(false);
 		return { preview: [], unreadCount: 0 };
 	}
 	markReachable(true);
 
-	const preview = previewResult.value;
-	const unread = unreadResult.status === 'fulfilled' ? unreadResult.value : undefined;
 	return {
 		preview: preview.error || !preview.data ? [] : preview.data.notifications,
 		unreadCount: !unread || unread.error || !unread.data ? 0 : unread.data.count

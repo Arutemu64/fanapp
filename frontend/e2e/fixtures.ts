@@ -52,7 +52,6 @@ export const test = base.extend<Fixtures>({
 	}
 });
 
-export type { ApiSchemas } from './mocks/api';
 export { json } from './mocks/api';
 export { loggedInAs, organizer } from './mocks/personas';
 export { emitSse } from './mocks/sse';

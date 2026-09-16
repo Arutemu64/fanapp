@@ -3,7 +3,7 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
 
-import type { CurrentUserDTO } from '$lib/types/user';
+import type { CurrentUserDto } from '$lib/api/generated';
 
 declare global {
 	namespace App {
@@ -14,7 +14,7 @@ declare global {
 			code?: string;
 		}
 		interface PageData {
-			user: CurrentUserDTO | null;
+			user: CurrentUserDto | null;
 			/** Page heading rendered in the navbar; set per page via `load`. */
 			title?: string;
 		}

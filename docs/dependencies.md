@@ -145,7 +145,7 @@ argument does not extend to everything in `frontend/package.json`
 `tw-animate-css`, `@lucide/svelte`) there, but their output ships in the bundle,
 and a CSS or component-substrate minor can move the layout with every gate green. Those
 are carved back out into review PRs; `eslint`, `prettier`, `typescript`,
-`svelte-check`, `vitest` and `openapi-typescript` keep automerging.
+`svelte-check`, `vitest` and `@hey-api/openapi-ts` keep automerging.
 
 ### Rule order matters
 

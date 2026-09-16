@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { NominationVotingDTO } from '$lib/types/nominations';
+	import type { NominationVotingDto } from '$lib/api/generated';
 
 	import { resolve } from '$app/paths';
 	import { Badge } from '$lib/components/ui/badge';
@@ -8,7 +8,7 @@
 	import { ArrowRight, CheckCircle2 } from '@lucide/svelte';
 
 	interface Props {
-		nomination: NominationVotingDTO;
+		nomination: NominationVotingDto;
 	}
 
 	let { nomination }: Props = $props();

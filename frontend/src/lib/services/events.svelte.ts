@@ -1,4 +1,4 @@
-import type { NotificationDTO } from '$lib/types/notifications';
+import type { NotificationDto } from '$lib/api/generated';
 
 import { PUBLIC_API_URL } from '$env/static/public';
 import {
@@ -93,7 +93,7 @@ interface SyncRunUpdatedPayload {
 interface SSEEventMap {
 	connection_established: EventsHandshakePayload;
 	schedule_updated: void;
-	notification_created: NotificationDTO;
+	notification_created: NotificationDto;
 	sync_run_updated: SyncRunUpdatedPayload;
 	config_updated: void;
 	ping: void;

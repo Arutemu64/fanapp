@@ -1,9 +1,10 @@
 <script lang="ts">
-	import type { components } from '$lib/api/schema';
+	import type { MailingDto, MailingStatus, UserRole } from '$lib/api/generated';
 
 	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
+	import { cancelMailing, listBroadcasts } from '$lib/api/generated';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
 	import { Badge, type BadgeVariant } from '$lib/components/ui/badge';
@@ -15,12 +16,8 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { formatFestivalDateTime } from '$lib/utils/formatters';
 
-	type Mailing = components['schemas']['MailingDTO'];
-	type MailingStatus = components['schemas']['MailingStatus'];
-	type UserRole = components['schemas']['UserRole'];
-
 	interface Props {
-		initialMailings: Array<Mailing>;
+		initialMailings: Array<MailingDto>;
 		initialHasMore: boolean;
 	}
 
@@ -31,14 +28,15 @@
 
 	let cancellingId = $state<string | null>(null);
 
-	const feed = new PaginatedFeed<Mailing>({
+	const feed = new PaginatedFeed<MailingDto>({
 		pageSize: BROADCAST_PAGE_SIZE,
 		requestLimit: BROADCAST_PAGE_REQUEST_LIMIT,
 		getInitialItems: () => initialMailings,
 		getInitialHasMore: () => initialHasMore,
 		fetchPage: async (limit, offset) => {
-			const { data, error } = await client.GET('/notifications/broadcast', {
-				params: { query: { limit, offset } }
+			const { data, error } = await listBroadcasts({
+				client,
+				query: { limit, offset }
 			});
 			return error || !data ? null : data.mailings;
 		},
@@ -77,14 +75,14 @@
 		return roles.map((role) => ROLE_LABELS[role]).join(', ');
 	}
 
-	async function cancel(mailing: Mailing): Promise<void> {
+	async function cancel(mailing: MailingDto): Promise<void> {
 		cancellingId = mailing.id;
 		try {
-			const { error, response } = await client.POST(
-				'/notifications/broadcast/{mailing_id}/cancel',
-				{ params: { path: { mailing_id: mailing.id } } }
-			);
-			if (error || !response.ok) {
+			const { error, response } = await cancelMailing({
+				client,
+				path: { mailing_id: mailing.id }
+			});
+			if (error || !response?.ok) {
 				toastService.error(getApiErrorDetail(error) ?? 'Не удалось отменить рассылку');
 			} else {
 				toastService.add('Рассылка отменена', 'success');

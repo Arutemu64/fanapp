@@ -2,6 +2,7 @@
 	import type { PinInputCell } from 'bits-ui';
 
 	import { createApiClient } from '$lib/api';
+	import { loginWithCode, requestLoginCode } from '$lib/api/generated';
 	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import CaptchaWidget, { captchaEnabled } from '$lib/components/CaptchaWidget.svelte';
@@ -91,12 +92,13 @@
 		formError = '';
 
 		try {
-			const { error, response } = await client.POST('/auth/login-with-code', {
+			const { error, response } = await loginWithCode({
+				client,
 				body: { email, code: loginCode }
 			});
 
 			if (error) {
-				if (response.status === 400) {
+				if (response?.status === 400) {
 					loginCodeError = getApiErrorDetail(error) ?? 'Неверный или устаревший код';
 					return;
 				}
@@ -131,11 +133,12 @@
 		formError = '';
 
 		try {
-			const { error, response } = await client.POST('/auth/request-login-code', {
+			const { error, response } = await requestLoginCode({
+				client,
 				body: { email, captcha_token: captchaToken }
 			});
 
-			if (error || !response.ok) {
+			if (error || !response?.ok) {
 				console.error('Login code request error:', error);
 				formError = getApiErrorDetail(error) ?? 'Не удалось отправить код повторно';
 				// The token is single-use, so fetch a fresh one before a retry.

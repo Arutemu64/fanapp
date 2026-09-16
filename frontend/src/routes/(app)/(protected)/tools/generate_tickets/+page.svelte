@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
+	import { generateTickets } from '$lib/api/generated';
 	const client = createApiClient();
 	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
@@ -81,16 +82,17 @@
 		isGenerating = true;
 
 		try {
-			const { data, error, response } = await client.POST('/tickets/generate', {
+			const { data, error, response } = await generateTickets({
+				client,
 				body: { role: selectedRole, amount }
 			});
 
-			if (error || !response.ok || !data) {
-				if (response.status === 401) {
+			if (error || !response?.ok || !data) {
+				if (response?.status === 401) {
 					submitError = 'Нужно войти в аккаунт заново';
-				} else if (response.status === 403) {
+				} else if (response?.status === 403) {
 					submitError = 'У тебя нет доступа к генерации билетов';
-				} else if (response.status === 422) {
+				} else if (response?.status === 422) {
 					submitError = 'Проверь правильность заполнения полей';
 				} else {
 					submitError = 'Не удалось сгенерировать билеты';

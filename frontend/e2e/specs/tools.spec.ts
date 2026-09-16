@@ -1,4 +1,4 @@
-import type { ApiSchemas } from '../fixtures';
+import type { OnlineUsersCountOutput } from '../../src/lib/api/generated';
 
 import { expect, json, organizer, test } from '../fixtures';
 
@@ -7,7 +7,7 @@ test.describe('organizer tools', { tag: '@critical' }, () => {
 		api.use({
 			...organizer(),
 			// The hub renders the live online-users card, which polls this endpoint.
-			'GET /users/online-count': json<ApiSchemas['OnlineUsersCountOutput']>({ count: 5 })
+			'GET /users/online-count': json<OnlineUsersCountOutput>({ count: 5 })
 		});
 		await page.goto('/tools');
 

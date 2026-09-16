@@ -1,5 +1,6 @@
 import { createApiClient } from '$lib/api';
-import { isReachable, markReachable } from '$lib/services/reachability';
+import { getVotingStatus } from '$lib/api/generated';
+import { isBackendUnreachableStatus, isReachable, markReachable } from '$lib/services/reachability';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 
 import type { LayoutLoad } from './$types';
@@ -21,21 +22,29 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 	const client = createApiClient();
 
 	try {
-		const { data, error } = await client.GET('/voting/status', {
+		const { data, error, response } = await getVotingStatus({
+			client,
 			fetch,
 			signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
 		});
 
 		if (error) {
+			// The client returns a network failure (offline / timeout / abort) as an
+			// error with no `response`, and a live proxy over a dead backend as a
+			// gateway 5xx. Both mean unreachable: mark us so the page loads skip their
+			// own doomed requests, and hide the banner without a noisy console error.
+			if (!response || isBackendUnreachableStatus(response.status)) {
+				markReachable(false);
+				return { votingStatus: undefined };
+			}
 			console.error('Error fetching voting status:', error);
 			return { votingStatus: undefined };
 		}
 
 		return { votingStatus: data };
 	} catch {
-		// A network failure (offline / timeout) is thrown by fetch, not returned as
-		// `error`. Mark us unreachable so the page loads skip their own doomed
-		// requests, and hide the banner instead of crashing the whole load.
+		// Defensive: nothing above is expected to throw (the client resolves failures
+		// into `error`), but an unexpected throw must not crash the voting shell.
 		markReachable(false);
 		return { votingStatus: undefined };
 	}

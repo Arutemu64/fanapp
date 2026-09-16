@@ -1,5 +1,8 @@
+import type { PublicConfigDto } from '$lib/api/generated';
+
 import { createApiClient } from '$lib/api';
-import { CONFIG_CACHE_KEY, FALLBACK_CONFIG, type PublicConfig } from '$lib/constants/festival';
+import { getPublicConfig } from '$lib/api/generated';
+import { CONFIG_CACHE_KEY, FALLBACK_CONFIG } from '$lib/constants/festival';
 import { fetchWithCache, universalScope } from '$lib/utils/offlineCache';
 
 import type { PageLoad } from './$types';
@@ -16,11 +19,11 @@ export const load: PageLoad = async ({ fetch, depends }) => {
 
 	const client = createApiClient();
 
-	const { data } = await fetchWithCache<PublicConfig>({
+	const { data } = await fetchWithCache<PublicConfigDto>({
 		key: CONFIG_CACHE_KEY,
 		scope: universalScope,
 		fetcher: async ({ signal }) => {
-			const { data, error } = await client.GET('/config', { fetch, signal });
+			const { data, error } = await getPublicConfig({ client, fetch, signal });
 			return error ? undefined : data;
 		}
 	});

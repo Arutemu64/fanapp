@@ -1,10 +1,8 @@
-import type {
-	ScheduleEventFullDTO,
-	ScheduleEventWithSubscription,
-	SubscriptionFullDTO
-} from '$lib/types/schedule';
+import type { ScheduleEventFullDto, SubscriptionFullDto } from '$lib/api/generated';
+import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
 
 import { createApiClient } from '$lib/api';
+import { getSchedule, getSubscriptions } from '$lib/api/generated';
 import { isReachable } from '$lib/services/reachability';
 import { fetchWithCache, universalScope, userScope } from '$lib/utils/offlineCache';
 import { error } from '@sveltejs/kit';
@@ -25,11 +23,11 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	// each caches on its own. Fetch them concurrently — total latency is the slower
 	// of the two, not the sum. Guests skip the subscriptions request entirely.
 	const [scheduleResult, subscriptions] = await Promise.all([
-		fetchWithCache<ScheduleEventFullDTO[]>({
+		fetchWithCache<ScheduleEventFullDto[]>({
 			key: SCHEDULE_CACHE_KEY,
 			scope: universalScope,
 			fetcher: async ({ signal }) => {
-				const { data, error: fetchError } = await client.GET('/schedule/', { fetch, signal });
+				const { data, error: fetchError } = await getSchedule({ client, fetch, signal });
 				// Reachable but errored → fall back to cache.
 				if (fetchError || !data) return undefined;
 				return data.schedule ?? [];
@@ -73,14 +71,15 @@ async function fetchSubscriptions(
 	client: ReturnType<typeof createApiClient>,
 	fetch: typeof globalThis.fetch,
 	userId: string | undefined
-): Promise<SubscriptionFullDTO[]> {
+): Promise<SubscriptionFullDto[]> {
 	if (!userId) return [];
 
-	const { data } = await fetchWithCache<SubscriptionFullDTO[]>({
+	const { data } = await fetchWithCache<SubscriptionFullDto[]>({
 		key: 'subscriptions',
 		scope: userScope,
 		fetcher: async ({ signal }) => {
-			const { data, error: fetchError } = await client.GET('/schedule/subscriptions/', {
+			const { data, error: fetchError } = await getSubscriptions({
+				client,
 				fetch,
 				signal
 			});
@@ -94,8 +93,8 @@ async function fetchSubscriptions(
 
 /** Attach each event's subscription (matched by event id) to reproduce the merged row shape. */
 function mergeSubscriptions(
-	schedule: ScheduleEventFullDTO[],
-	subscriptions: SubscriptionFullDTO[]
+	schedule: ScheduleEventFullDto[],
+	subscriptions: SubscriptionFullDto[]
 ): ScheduleEventWithSubscription[] {
 	const byEventId = new Map(
 		subscriptions.map((sub) => [sub.event.id, { id: sub.id, counter: sub.counter }])

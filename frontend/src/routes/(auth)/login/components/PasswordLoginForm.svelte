@@ -2,6 +2,7 @@
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
+	import { login } from '$lib/api/generated';
 	import PasswordInput from '$lib/components/PasswordInput.svelte';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
@@ -78,17 +79,15 @@
 		activeAction = 'password';
 
 		try {
-			const { error, response } = await client.POST('/auth/login', {
+			const { error, response } = await login({
+				client,
 				body: {
 					email: trimmedEmail,
 					password
-				},
-				headers: {
-					'Content-Type': 'application/x-www-form-urlencoded'
 				}
 			});
 
-			if (error || !response.ok) {
+			if (error || !response?.ok) {
 				console.error('Login error:', error);
 				formError = getApiErrorDetail(error) ?? 'Неверная почта или пароль';
 				return;

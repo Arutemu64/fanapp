@@ -1,7 +1,8 @@
 <script lang="ts">
-	import type { FeedbackDTO } from '$lib/types/feedback';
+	import type { FeedbackDto } from '$lib/api/generated';
 
 	import { createApiClient } from '$lib/api';
+	import { listFeedback } from '$lib/api/generated';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
 	import { FEEDBACK_PAGE_REQUEST_LIMIT, FEEDBACK_PAGE_SIZE } from '$lib/constants/feedback';
@@ -11,7 +12,7 @@
 	import FeedbackCard from './FeedbackCard.svelte';
 
 	interface Props {
-		initialFeedback: Array<FeedbackDTO>;
+		initialFeedback: Array<FeedbackDto>;
 		initialHasMore: boolean;
 	}
 
@@ -20,14 +21,15 @@
 	const client = createApiClient();
 	const toastService = getToastService();
 
-	const feed = new PaginatedFeed<FeedbackDTO>({
+	const feed = new PaginatedFeed<FeedbackDto>({
 		pageSize: FEEDBACK_PAGE_SIZE,
 		requestLimit: FEEDBACK_PAGE_REQUEST_LIMIT,
 		getInitialItems: () => initialFeedback,
 		getInitialHasMore: () => initialHasMore,
 		fetchPage: async (limit, offset) => {
-			const { data, error } = await client.GET('/feedback/', {
-				params: { query: { limit, offset } }
+			const { data, error } = await listFeedback({
+				client,
+				query: { limit, offset }
 			});
 			return error || !data ? null : data.feedback;
 		},

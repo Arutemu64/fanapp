@@ -1,5 +1,6 @@
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
+import { listScheduleChanges } from '$lib/api/generated';
 import {
 	SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT,
 	SCHEDULE_CHANGES_PAGE_SIZE
@@ -31,9 +32,10 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 		data,
 		error: fetchError,
 		response
-	} = await client.GET('/schedule/changes/', {
+	} = await listScheduleChanges({
+		client,
 		fetch,
-		params: { query: { limit: SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT, offset: 0 } }
+		query: { limit: SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT, offset: 0 }
 	});
 	if (fetchError || !data) {
 		throwApiError(fetchError, response, 'Не удалось загрузить изменения программы');

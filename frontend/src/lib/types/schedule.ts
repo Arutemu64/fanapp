@@ -1,10 +1,4 @@
-import type { components } from '$lib/api/schema';
-
-export type ScheduleEventFullDTO = components['schemas']['ScheduleEventFullDTO'];
-export type SubscriptionFullDTO = components['schemas']['SubscriptionFullDTO'];
-export type ScheduleChangeType = components['schemas']['ScheduleChangeType'];
-export type ScheduleChangeFullDTO = components['schemas']['ScheduleChangeFullDTO'];
-export type ScheduleChangeEventDTO = components['schemas']['ScheduleChangeEventDTO'];
+import type { ScheduleEventFullDto } from '$lib/api/generated';
 
 /** The viewer's subscription to a single event (id + reminder threshold). */
 type EventSubscription = { id: string; counter: number };
@@ -15,6 +9,6 @@ type EventSubscription = { id: string; counter: number };
  * endpoints (so each caches independently) and are merged client-side by event
  * id, reproducing the embedded `user_subscription` the components expect.
  */
-export type ScheduleEventWithSubscription = ScheduleEventFullDTO & {
+export type ScheduleEventWithSubscription = ScheduleEventFullDto & {
 	user_subscription: EventSubscription | null;
 };

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { CurrentUserDTO } from '$lib/types/user';
+	import type { CurrentUserDto } from '$lib/api/generated';
 
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { Badge } from '$lib/components/ui/badge';
@@ -12,7 +12,7 @@
 	import EditProfileModal from './EditProfileModal.svelte';
 
 	interface Props {
-		user: CurrentUserDTO;
+		user: CurrentUserDto;
 		onUpdate?: () => void;
 	}
 

@@ -1,10 +1,11 @@
 <script lang="ts">
-	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
+	import type { ScheduleEventFullDto } from '$lib/api/generated';
 
 	import { invalidate } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
+	import { newSubscription } from '$lib/api/generated';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -15,7 +16,7 @@
 
 	interface Props {
 		open: boolean;
-		event: ScheduleEventFullDTO;
+		event: ScheduleEventFullDto;
 	}
 	let { open = $bindable(), event }: Props = $props();
 	const toastService = getToastService();
@@ -39,14 +40,15 @@
 	async function handleSubmit() {
 		setCounter(counter);
 		formError = '';
-		const { error, response } = await client.POST('/schedule/subscriptions/', {
+		const { error, response } = await newSubscription({
+			client,
 			body: {
 				event_id: event.id,
 				counter
 			}
 		});
 
-		if (error || !response.ok) {
+		if (error || !response?.ok) {
 			formError = getApiErrorDetail(error) ?? 'Не удалось оформить подписку';
 			return;
 		}

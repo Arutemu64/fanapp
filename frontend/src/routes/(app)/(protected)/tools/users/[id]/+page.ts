@@ -1,5 +1,6 @@
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
+import { getUser } from '$lib/api/generated';
 import { canReadUsers } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
 
@@ -19,12 +20,13 @@ export const load: PageLoad = async ({ fetch, parent, params }) => {
 		data,
 		error: fetchError,
 		response
-	} = await client.GET('/users/{user_id}', {
+	} = await getUser({
+		client,
 		fetch,
-		params: { path: { user_id: params.id } }
+		path: { user_id: params.id }
 	});
 
-	if (response.status === 404) {
+	if (response?.status === 404) {
 		error(404, 'Пользователь не найден');
 	}
 	if (fetchError || !data) {

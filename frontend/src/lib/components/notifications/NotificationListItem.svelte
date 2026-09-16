@@ -1,13 +1,13 @@
 <script lang="ts">
 	import type { Pathname } from '$app/types';
-	import type { NotificationDTO } from '$lib/types/notifications';
+	import type { NotificationDto } from '$lib/api/generated';
 
 	import { resolve } from '$app/paths';
 	import { formatRelativeTime } from '$lib/utils/formatters';
 	import { Bell } from '@lucide/svelte';
 
 	interface Props {
-		notification: NotificationDTO;
+		notification: NotificationDto;
 		compact?: boolean;
 	}
 

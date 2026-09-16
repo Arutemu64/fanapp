@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
+	import { importSchedule } from '$lib/api/generated';
 	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import BackLink from '$lib/components/BackLink.svelte';
@@ -45,16 +46,12 @@
 		isUploading = true;
 
 		try {
-			const { error, response } = await client.POST('/schedule/import', {
-				body: { file: selectedFile },
-				bodySerializer(body) {
-					const formData = new FormData();
-					formData.set('file', body.file);
-					return formData;
-				}
+			const { error, response } = await importSchedule({
+				client,
+				body: { file: selectedFile }
 			});
 
-			if (error || !response.ok) {
+			if (error || !response?.ok) {
 				// Mapped by the error `code`, not the status: a rejected spreadsheet
 				// comes back as INVALID_SCHEDULE_FILE carrying the column and row at
 				// fault, which is the whole point of showing an error here.

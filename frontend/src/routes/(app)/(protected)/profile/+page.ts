@@ -1,6 +1,7 @@
-import type { components } from '$lib/api/schema';
+import type { SocialProvider } from '$lib/api/generated';
 
 import { createApiClient } from '$lib/api';
+import { listOauthProviders } from '$lib/api/generated';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 import {
 	OAUTH_ERROR_CODES,
@@ -9,8 +10,6 @@ import {
 } from '$lib/utils/oauthErrors';
 
 import type { PageLoad } from './$types';
-
-type SocialProvider = components['schemas']['SocialProvider'];
 
 // The shared OAuth outcomes (cancelled, failed) plus the conflicts only the
 // linking flow can hit.
@@ -31,17 +30,24 @@ export const load: PageLoad = async ({ url, fetch }) => {
 	try {
 		const client = createApiClient();
 		// Timeout-bounded so a stalled connection can't block the profile page.
-		const { data, error } = await client.GET('/auth/oauth/providers', {
+		const { data, error, response } = await listOauthProviders({
+			client,
 			fetch,
 			signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
 		});
 		if (error) {
-			console.error('Error fetching enabled OAuth providers:', error);
+			// A network failure (offline / timeout) comes back as an error with no
+			// `response`; stay silent and offer no linking. Only a real API error
+			// (response present) is worth logging.
+			if (response) {
+				console.error('Error fetching enabled OAuth providers:', error);
+			}
 		} else {
 			enabledProviders = data.providers;
 		}
 	} catch {
-		// Offline / timeout throws rather than returning `error`; offer no linking.
+		// Defensive: the client resolves failures into `error`, but an unexpected
+		// throw must still leave the linking section empty rather than break the page.
 	}
 
 	return {

@@ -1,7 +1,8 @@
 <script lang="ts">
-	import type { ScheduleChangeFullDTO } from '$lib/types/schedule';
+	import type { ScheduleChangeFullDto } from '$lib/api/generated';
 
 	import { createApiClient } from '$lib/api';
+	import { listScheduleChanges } from '$lib/api/generated';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
 	import {
@@ -14,7 +15,7 @@
 	import ScheduleChangeCard from './ScheduleChangeCard.svelte';
 
 	interface Props {
-		initialChanges: Array<ScheduleChangeFullDTO>;
+		initialChanges: Array<ScheduleChangeFullDto>;
 		initialHasMore: boolean;
 	}
 
@@ -23,14 +24,15 @@
 	const client = createApiClient();
 	const toastService = getToastService();
 
-	const feed = new PaginatedFeed<ScheduleChangeFullDTO>({
+	const feed = new PaginatedFeed<ScheduleChangeFullDto>({
 		pageSize: SCHEDULE_CHANGES_PAGE_SIZE,
 		requestLimit: SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT,
 		getInitialItems: () => initialChanges,
 		getInitialHasMore: () => initialHasMore,
 		fetchPage: async (limit, offset) => {
-			const { data, error } = await client.GET('/schedule/changes/', {
-				params: { query: { limit, offset } }
+			const { data, error } = await listScheduleChanges({
+				client,
+				query: { limit, offset }
 			});
 			return error || !data ? null : data.schedule_changes;
 		},

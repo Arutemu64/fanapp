@@ -1,9 +1,10 @@
 <script lang="ts">
-	import type { components } from '$lib/api/schema';
+	import type { ChangeEmailInput } from '$lib/api/generated';
 	import type { PinInputCell } from 'bits-ui';
 
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
+	import { changeCurrentUserEmail, confirmEmailCode } from '$lib/api/generated';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -19,8 +20,6 @@
 	import { onDestroy } from 'svelte';
 
 	const client = createApiClient();
-
-	type ChangeEmailInput = components['schemas']['ChangeEmailInput'];
 
 	interface Props {
 		open: boolean;
@@ -67,9 +66,9 @@
 
 		try {
 			const body: ChangeEmailInput = { new_email: normalizeEmail(newEmail) };
-			const { error, response } = await client.POST('/me/email', { body });
+			const { error, response } = await changeCurrentUserEmail({ client, body });
 
-			if (error || !response.ok) {
+			if (error || !response?.ok) {
 				formError = getApiErrorDetail(error) ?? 'Не удалось отправить код подтверждения';
 				return;
 			}
@@ -98,12 +97,12 @@
 		isLoading = true;
 
 		const body: ChangeEmailInput = { new_email: trimmedEmail };
-		const { error, response } = await client.POST('/me/email', { body });
+		const { error, response } = await changeCurrentUserEmail({ client, body });
 
 		isLoading = false;
 
 		if (error) {
-			if (response.status === 409) {
+			if (response?.status === 409) {
 				emailError = getApiErrorDetail(error) ?? 'Этот адрес уже используется';
 				return;
 			}
@@ -132,12 +131,13 @@
 		isVerifying = true;
 
 		try {
-			const { error, response } = await client.POST('/auth/confirm-email-code', {
+			const { error, response } = await confirmEmailCode({
+				client,
 				body: { code: verificationCode }
 			});
 
 			if (error) {
-				if (response.status === 400) {
+				if (response?.status === 400) {
 					verificationCodeError = getApiErrorDetail(error) ?? 'Неверный или устаревший код';
 					return;
 				}

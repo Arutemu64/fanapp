@@ -1,6 +1,4 @@
-import type { components } from '$lib/api/schema';
-
-export type NotificationDTO = components['schemas']['NotificationDTO'];
+import type { NotificationDto } from '$lib/api/generated';
 
 /**
  * Streamed seed for the app-shell bell: the capped dropdown preview plus the true
@@ -8,6 +6,6 @@ export type NotificationDTO = components['schemas']['NotificationDTO'];
  * when the bell can't be seeded (guest or offline), where the SSE stream fills it.
  */
 export interface NotificationSeed {
-	preview: NotificationDTO[];
+	preview: NotificationDto[];
 	unreadCount: number;
 }

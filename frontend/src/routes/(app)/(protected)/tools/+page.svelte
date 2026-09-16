@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Pathname } from '$app/types';
-	import type { CurrentUserDTO } from '$lib/types/user';
+	import type { CurrentUserDto } from '$lib/api/generated';
 	import type { Component } from 'svelte';
 
 	import { page } from '$app/state';
@@ -29,7 +29,7 @@
 	import OnlineNowCard from './components/OnlineNowCard.svelte';
 	import ToolCard from './components/ToolCard.svelte';
 
-	let user: CurrentUserDTO | null = $derived(page.data.user);
+	let user: CurrentUserDto | null = $derived(page.data.user);
 
 	interface Tool {
 		key: string;

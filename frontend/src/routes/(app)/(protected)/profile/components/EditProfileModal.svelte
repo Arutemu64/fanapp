@@ -1,9 +1,9 @@
 <script lang="ts">
-	import type { components } from '$lib/api/schema';
-	import type { CurrentUserDTO } from '$lib/types/user';
+	import type { CurrentUserDto, UpdateCurrentUserInput } from '$lib/api/generated';
 
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
+	import { updateCurrentUser } from '$lib/api/generated';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -16,10 +16,8 @@
 
 	const client = createApiClient();
 
-	type UpdateCurrentUserInput = components['schemas']['UpdateCurrentUserInput'];
-
 	interface Props {
-		user: CurrentUserDTO;
+		user: CurrentUserDto;
 		open: boolean;
 		onUpdate?: () => void;
 	}
@@ -103,13 +101,14 @@
 		const body: UpdateCurrentUserInput = {};
 		if (username && username !== user.username) body.username = username;
 
-		const { error, response } = await client.PATCH('/me/', {
+		const { error, response } = await updateCurrentUser({
+			client,
 			body
 		});
 
 		isLoading = false;
 
-		if (error || !response.ok) {
+		if (error || !response?.ok) {
 			formError = getApiErrorDetail(error) ?? 'Не удалось обновить профиль';
 			return;
 		}

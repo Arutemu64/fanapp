@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
+	import { sendBroadcast } from '$lib/api/generated';
 	const client = createApiClient();
 	import { invalidate } from '$app/navigation';
 	import BackLink from '$lib/components/BackLink.svelte';
@@ -91,19 +92,20 @@
 		isSending = true;
 
 		try {
-			const { error, response } = await client.POST('/notifications/broadcast', {
+			const { error, response } = await sendBroadcast({
+				client,
 				body: {
 					body: bodyText.trim(),
 					roles: selectedRoles as ('visitor' | 'participant' | 'helper' | 'org')[]
 				}
 			});
 
-			if (error || !response.ok) {
-				if (response.status === 401) {
+			if (error || !response?.ok) {
+				if (response?.status === 401) {
 					submitError = 'Нужно войти в аккаунт заново';
-				} else if (response.status === 403) {
+				} else if (response?.status === 403) {
 					submitError = 'У тебя нет доступа к отправке уведомлений';
-				} else if (response.status === 422) {
+				} else if (response?.status === 422) {
 					submitError = 'Проверь правильность заполнения полей';
 				} else {
 					submitError = 'Не удалось запустить рассылку';

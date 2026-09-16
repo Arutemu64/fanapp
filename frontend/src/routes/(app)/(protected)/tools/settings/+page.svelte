@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
+	import { updateSettings } from '$lib/api/generated';
 	const client = createApiClient();
 	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
@@ -133,7 +134,8 @@
 		isSaving = true;
 
 		try {
-			const { error, response } = await client.PATCH('/settings', {
+			const { error, response } = await updateSettings({
+				client,
 				body: {
 					festival_start: fromEventDateTimeLocal(festivalStart),
 					festival_end: fromEventDateTimeLocal(festivalEnd),
@@ -141,14 +143,14 @@
 				}
 			});
 
-			if (error || !response.ok) {
-				if (response.status === 401) {
+			if (error || !response?.ok) {
+				if (response?.status === 401) {
 					submitError = 'Нужно войти в аккаунт заново';
-				} else if (response.status === 403) {
+				} else if (response?.status === 403) {
 					submitError = 'У тебя нет доступа к настройкам фестиваля';
-				} else if (response.status === 404) {
+				} else if (response?.status === 404) {
 					submitError = 'Настройки фестиваля не найдены';
-				} else if (response.status === 422) {
+				} else if (response?.status === 422) {
 					submitError = 'Проверь введённые значения и попробуй снова';
 				} else {
 					submitError = 'Не удалось сохранить настройки фестиваля';

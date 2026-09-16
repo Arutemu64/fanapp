@@ -12,8 +12,9 @@ bun.lockb
 .svelte-kit/
 build/
 
-# Generated (just frontend-generate-api)
-src/lib/api/schema.d.ts
+# Generated API client (just frontend-generate-api) is emitted through
+# Prettier by @hey-api/openapi-ts, so it stays formatted — kept OUT of this
+# ignore list on purpose so the format gate and drift check see the same bytes.
 
 # Playwright artifacts
 /playwright-report/

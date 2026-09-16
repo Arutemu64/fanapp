@@ -1,5 +1,6 @@
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
+import { getVotingDashboard } from '$lib/api/generated';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 import { canManageVoting } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
@@ -20,12 +21,13 @@ export const load: PageLoad = async ({ fetch, parent }) => {
 		data,
 		error: requestError,
 		response
-	} = await client.GET('/voting/dashboard', {
+	} = await getVotingDashboard({
+		client,
 		fetch,
 		signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
 	});
 
-	if (requestError || !response.ok || !data) {
+	if (requestError || !response?.ok || !data) {
 		throwApiError(requestError, response, 'Не удалось загрузить панель голосования');
 	}
 
