@@ -1,12 +1,12 @@
 <script lang="ts">
-	import type { GetVotingStateResult, VotingStatus } from '$lib/types/voting';
+	import type { GetVotingStateOutput, VotingStatus } from '$lib/api/generated';
 
 	import { resolve } from '$app/paths';
 	import * as Alert from '$lib/components/ui/alert';
 	import { AlertCircle } from '@lucide/svelte';
 
 	interface Props {
-		votingState?: GetVotingStateResult;
+		votingState?: GetVotingStateOutput;
 		class?: string;
 	}
 

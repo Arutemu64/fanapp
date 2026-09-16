@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
+	import { submitFeedback } from '$lib/api/generated';
 	const client = createApiClient();
 	import OfflineUnavailableState from '$lib/components/OfflineUnavailableState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
@@ -53,16 +54,17 @@
 		isSending = true;
 
 		try {
-			const { error, response } = await client.POST('/feedback/', {
+			const { error, response } = await submitFeedback({
+				client,
 				body: {
 					text: feedbackText.trim()
 				}
 			});
 
-			if (error || !response.ok) {
-				if (response.status === 401) {
+			if (error || !response?.ok) {
+				if (response?.status === 401) {
 					submitError = 'Нужно войти в аккаунт заново';
-				} else if (response.status === 422) {
+				} else if (response?.status === 422) {
 					submitError = 'Проверьте правильность заполнения поля';
 				} else {
 					submitError = 'Не удалось отправить отзыв';

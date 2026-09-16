@@ -1,5 +1,6 @@
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
+import { listUsers } from '$lib/api/generated';
 import { USERS_PAGE_SIZE } from '$lib/constants/users';
 import { canReadUsers } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
@@ -32,14 +33,13 @@ export const load: PageLoad = async ({ fetch, parent, url }) => {
 		data,
 		error: fetchError,
 		response
-	} = await client.GET('/users/', {
+	} = await listUsers({
+		client,
 		fetch,
-		params: {
-			query: {
-				limit: USERS_PAGE_SIZE,
-				offset,
-				...(search ? { search } : {})
-			}
+		query: {
+			limit: USERS_PAGE_SIZE,
+			offset,
+			...(search ? { search } : {})
 		}
 	});
 	if (fetchError || !data) {

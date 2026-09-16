@@ -1,6 +1,7 @@
-import type { components } from '$lib/api/schema';
+import type { SocialProvider } from '$lib/api/generated';
 
 import { createApiClient } from '$lib/api';
+import { listOauthProviders } from '$lib/api/generated';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 import {
 	OAUTH_ERROR_CODES,
@@ -9,8 +10,6 @@ import {
 } from '$lib/utils/oauthErrors';
 
 import type { PageLoad } from './$types';
-
-type SocialProvider = components['schemas']['SocialProvider'];
 
 export const load: PageLoad = async ({ url, fetch }) => {
 	// The one-time login error code the backend callback leaves on the URL when the
@@ -32,7 +31,8 @@ export const load: PageLoad = async ({ url, fetch }) => {
 	let enabledProviders: SocialProvider[] | null = null;
 	try {
 		const client = createApiClient();
-		const { data, error } = await client.GET('/auth/oauth/providers', {
+		const { data, error } = await listOauthProviders({
+			client,
 			fetch,
 			signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
 		});

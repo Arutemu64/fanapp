@@ -1,4 +1,8 @@
-import type { ApiSchemas } from '../fixtures';
+import type {
+	AddVoteOutput,
+	GetVotingNominationOutput,
+	GetVotingStateOutput
+} from '../../src/lib/api/generated';
 
 import { expect, json, loggedInAs, test } from '../fixtures';
 
@@ -6,7 +10,7 @@ const NOMINATION_CODE = 'best-cosplay';
 const PARTICIPANT_ID = '01890000-0000-7000-8000-0000000000c1';
 const VOTE_ID = '01890000-0000-7000-8000-0000000000d1';
 
-const OPEN: ApiSchemas['GetVotingStateOutput'] = {
+const OPEN: GetVotingStateOutput = {
 	can_vote: true,
 	status: 'open',
 	voting_start: null,
@@ -17,7 +21,7 @@ const OPEN: ApiSchemas['GetVotingStateOutput'] = {
 // The page refetches after casting (invalidate 'app:voting:nomination'), so the
 // second read must carry the persisted ballot for the UI to settle into its
 // "your vote" state.
-function nomination(voted: boolean): ApiSchemas['GetVotingNominationOutput'] {
+function nomination(voted: boolean): GetVotingNominationOutput {
 	return {
 		id: '01890000-0000-7000-8000-0000000000b1',
 		code: NOMINATION_CODE,
@@ -46,7 +50,7 @@ test.describe('voting — casting a ballot', { tag: '@critical' }, () => {
 			// whether the vote has landed to hand back the updated ballot.
 			'GET /voting/nominations/best-cosplay': () =>
 				json(nomination(api.countCalls('POST /voting/votes') > 0)),
-			'POST /voting/votes': json<ApiSchemas['AddVoteOutput']>({ vote_id: VOTE_ID }, 201)
+			'POST /voting/votes': json<AddVoteOutput>({ vote_id: VOTE_ID }, 201)
 		});
 
 		await page.goto('/voting/best-cosplay');

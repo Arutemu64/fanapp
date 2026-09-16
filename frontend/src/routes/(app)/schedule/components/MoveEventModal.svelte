@@ -1,10 +1,11 @@
 <script lang="ts">
-	import type { ScheduleEventFullDTO } from '$lib/types/schedule';
+	import type { ScheduleEventFullDto } from '$lib/api/generated';
 
 	import { invalidate } from '$app/navigation';
 	import { page } from '$app/state';
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
+	import { moveScheduleEvent } from '$lib/api/generated';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -18,7 +19,7 @@
 
 	interface Props {
 		open: boolean;
-		event: ScheduleEventFullDTO;
+		event: ScheduleEventFullDto;
 	}
 
 	let { open = $bindable(), event }: Props = $props();
@@ -29,7 +30,7 @@
 	// every EventCard row just to reach this rarely-opened dialog. The cast is
 	// needed because merged page.data is untyped; this dialog only ever mounts
 	// under the schedule route, where the load supplies `schedule`.
-	let schedule = $derived(page.data.schedule as ScheduleEventFullDTO[]);
+	let schedule = $derived(page.data.schedule as ScheduleEventFullDto[]);
 
 	let query = $state('');
 	let selectedId: string | null = $state(null);
@@ -57,7 +58,7 @@
 
 	let filtered = $derived(searchIndex.filter(query));
 
-	function handleSelect(ev: ScheduleEventFullDTO) {
+	function handleSelect(ev: ScheduleEventFullDto) {
 		selectedId = selectedId === ev.id ? null : ev.id;
 	}
 
@@ -67,12 +68,13 @@
 		formError = '';
 		isSubmitting = true;
 		try {
-			const { error, response } = await client.PATCH('/schedule/{event_id}/move', {
-				params: { path: { event_id: event.id } },
+			const { error, response } = await moveScheduleEvent({
+				client,
+				path: { event_id: event.id },
 				body: { place_after_event_id: selectedId }
 			});
 
-			if (error || !response.ok) {
+			if (error || !response?.ok) {
 				console.error('Error moving event:', error);
 				formError = getApiErrorDetail(error) ?? 'Не удалось перенести выступление';
 				return;

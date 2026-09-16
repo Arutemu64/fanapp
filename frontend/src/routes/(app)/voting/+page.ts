@@ -1,5 +1,6 @@
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
+import { listVotingNominations } from '$lib/api/generated';
 import { isBackendUnreachableStatus, isReachable, markReachable } from '$lib/services/reachability';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 import { isHttpError } from '@sveltejs/kit';
@@ -23,7 +24,8 @@ export const load: PageLoad = async ({ fetch }) => {
 			data,
 			error: apiError,
 			response
-		} = await client.GET('/voting/nominations', {
+		} = await listVotingNominations({
+			client,
 			fetch,
 			signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
 		});
@@ -33,7 +35,7 @@ export const load: PageLoad = async ({ fetch }) => {
 			// live proxy, not a real load failure. Mirror the offline path above —
 			// mark unreachable, show the honest online-only state — instead of the
 			// generic error page.
-			if (response && isBackendUnreachableStatus(response.status)) {
+			if (response && isBackendUnreachableStatus(response?.status)) {
 				markReachable(false);
 				return { title: 'Голосование', nominations: [], offlineUnavailable: true };
 			}

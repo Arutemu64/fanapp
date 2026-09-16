@@ -1,4 +1,5 @@
 import { createApiClient } from '$lib/api';
+import { countUnreadNotifications } from '$lib/api/generated';
 import { createContext } from 'svelte';
 
 const [getUnread, setUnread] = createContext<UnreadCountService>();
@@ -73,8 +74,8 @@ export class UnreadCountService {
 		this.#inFlight = true;
 		const generationAtStart = this.#generation;
 		try {
-			const { data, error, response } = await this.#client.GET('/notifications/unread-count');
-			if (!error && response.ok && data && this.#generation === generationAtStart) {
+			const { data, error, response } = await countUnreadNotifications({ client: this.#client });
+			if (!error && response?.ok && data && this.#generation === generationAtStart) {
 				this.#hasAuthoritativeValue = true;
 				this.#count = data.count;
 			}

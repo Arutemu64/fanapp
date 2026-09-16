@@ -1,22 +1,26 @@
-import type { ApiSchemas } from '../fixtures';
+import type {
+	GetVotingStateOutput,
+	ListVotingNominationsOutput,
+	NominationVotingDto
+} from '../../src/lib/api/generated';
 
 import { expect, json, test } from '../fixtures';
 
-const CLOSED: ApiSchemas['GetVotingStateOutput'] = {
+const CLOSED: GetVotingStateOutput = {
 	can_vote: false,
 	status: 'disabled',
 	voting_start: null,
 	voting_end: null
 };
 
-const OPEN: ApiSchemas['GetVotingStateOutput'] = {
+const OPEN: GetVotingStateOutput = {
 	can_vote: true,
 	status: 'open',
 	voting_start: null,
 	voting_end: null
 };
 
-const NOMINATION: ApiSchemas['NominationVotingDTO'] = {
+const NOMINATION: NominationVotingDto = {
 	id: '01890000-0000-7000-8000-0000000000aa',
 	code: 'best-cosplay',
 	title: 'Лучший косплей',
@@ -29,7 +33,7 @@ test.describe('voting', { tag: '@critical' }, () => {
 	test('shows the closed banner when voting is disabled', async ({ page, api }) => {
 		api.use({
 			'GET /voting/status': json(CLOSED),
-			'GET /voting/nominations': json<ApiSchemas['ListVotingNominationsOutput']>({
+			'GET /voting/nominations': json<ListVotingNominationsOutput>({
 				nominations: []
 			})
 		});
@@ -42,7 +46,7 @@ test.describe('voting', { tag: '@critical' }, () => {
 	test('lists nominations when voting is open', async ({ page, api }) => {
 		api.use({
 			'GET /voting/status': json(OPEN),
-			'GET /voting/nominations': json<ApiSchemas['ListVotingNominationsOutput']>({
+			'GET /voting/nominations': json<ListVotingNominationsOutput>({
 				nominations: [NOMINATION]
 			})
 		});

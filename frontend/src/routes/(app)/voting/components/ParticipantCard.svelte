@@ -1,7 +1,8 @@
 <script lang="ts">
-	import type { ParticipantFullDTO } from '$lib/types/participant';
+	import type { ParticipantFullDto } from '$lib/api/generated';
 
 	import { createApiClient } from '$lib/api';
+	import { addVote, cancelVote } from '$lib/api/generated';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -13,7 +14,7 @@
 	const client = createApiClient();
 
 	interface Props {
-		participant: ParticipantFullDTO;
+		participant: ParticipantFullDto;
 		hasVoted: boolean;
 		canVote: boolean;
 		onVoted?: () => void;
@@ -34,13 +35,14 @@
 		isLoading = true;
 		optimisticDelta += 1;
 		try {
-			const { data, error, response } = await client.POST('/voting/votes', {
+			const { data, error, response } = await addVote({
+				client,
 				body: {
 					participant_id: participant.id
 				}
 			});
 
-			if (error || !response.ok) {
+			if (error || !response?.ok) {
 				optimisticDelta -= 1;
 				toastService.error(error);
 				return;
@@ -66,13 +68,12 @@
 		isLoading = true;
 		optimisticDelta -= 1;
 		try {
-			const { error, response } = await client.DELETE('/voting/votes/{vote_id}', {
-				params: {
-					path: { vote_id: vote.id }
-				}
+			const { error, response } = await cancelVote({
+				client,
+				path: { vote_id: vote.id }
 			});
 
-			if (error || !response.ok) {
+			if (error || !response?.ok) {
 				optimisticDelta += 1;
 				toastService.error(error);
 				return;

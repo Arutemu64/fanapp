@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { NominationVotingDTO } from '$lib/types/nominations';
+	import type { NominationVotingDto } from '$lib/api/generated';
 
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import OfflineUnavailableState from '$lib/components/OfflineUnavailableState.svelte';
@@ -11,7 +11,7 @@
 	import VotingStatusAlert from './components/VotingStatusAlert.svelte';
 
 	let { data }: PageProps = $props();
-	let nominations: NominationVotingDTO[] = $derived(data.nominations);
+	let nominations: NominationVotingDto[] = $derived(data.nominations);
 	let votingStatus = $derived(data.votingStatus);
 </script>
 

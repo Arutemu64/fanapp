@@ -1,6 +1,9 @@
 import type { Page } from '@playwright/test';
 
-import type { ApiSchemas } from '../fixtures';
+import type {
+	GetVotingStateOutput,
+	ListVotingNominationsOutput
+} from '../../src/lib/api/generated';
 
 import { expect, json, loggedInAs, test } from '../fixtures';
 
@@ -58,13 +61,13 @@ test.describe('accessibility (axe)', { tag: '@a11y' }, () => {
 		makeAxeBuilder
 	}) => {
 		api.use({
-			'GET /voting/status': json<ApiSchemas['GetVotingStateOutput']>({
+			'GET /voting/status': json<GetVotingStateOutput>({
 				can_vote: true,
 				status: 'open',
 				voting_start: null,
 				voting_end: null
 			}),
-			'GET /voting/nominations': json<ApiSchemas['ListVotingNominationsOutput']>({
+			'GET /voting/nominations': json<ListVotingNominationsOutput>({
 				nominations: [
 					{
 						id: '01890000-0000-7000-8000-0000000000aa',

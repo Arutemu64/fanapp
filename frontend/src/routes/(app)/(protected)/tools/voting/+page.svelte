@@ -1,7 +1,8 @@
 <script lang="ts">
-	import type { components } from '$lib/api/schema';
+	import type { NominationContenderDto, UserBaseDto } from '$lib/api/generated';
 
 	import { createApiClient } from '$lib/api';
+	import { drawVotingContestWinner, setVotingTimeRange } from '$lib/api/generated';
 	import BackLink from '$lib/components/BackLink.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
@@ -19,14 +20,11 @@
 
 	import type { PageProps } from './$types';
 
-	type NominationContender = components['schemas']['NominationContenderDTO'];
-	type Winner = components['schemas']['UserBaseDTO'];
-
 	let { data }: PageProps = $props();
 	const client = createApiClient();
 	const toastService = getToastService();
 
-	let nominations = $derived<NominationContender[]>(data.dashboard.nominations);
+	let nominations = $derived<NominationContenderDto[]>(data.dashboard.nominations);
 
 	let votingStart = $state(untrack(() => toLocalInput(data.dashboard.voting_start)));
 	let votingEnd = $state(untrack(() => toLocalInput(data.dashboard.voting_end)));
@@ -36,7 +34,7 @@
 	// displayed pool tracks who is currently eligible even as people finish voting.
 	let poolSize = $state(untrack(() => data.dashboard.contest_pool_size));
 	let isDrawing = $state(false);
-	let winner = $state<Winner | null>(null);
+	let winner = $state<UserBaseDto | null>(null);
 	let hasDrawn = $state(false);
 	let drawError = $state('');
 
@@ -58,15 +56,16 @@
 	async function handleSave() {
 		isSaving = true;
 		try {
-			const { error, response } = await client.PATCH('/voting/dashboard', {
+			const { error, response } = await setVotingTimeRange({
+				client,
 				body: {
 					voting_start: fromLocalInput(votingStart),
 					voting_end: fromLocalInput(votingEnd)
 				}
 			});
 
-			if (error || !response.ok) {
-				if (response.status === 403) {
+			if (error || !response?.ok) {
+				if (response?.status === 403) {
 					toastService.add('У тебя нет доступа к управлению голосованием', 'error');
 				} else {
 					toastService.add('Не удалось сохранить время голосования', 'error');
@@ -93,10 +92,10 @@
 		isDrawing = true;
 		drawError = '';
 		try {
-			const { data: result, error, response } = await client.POST('/voting/contest/draw', {});
+			const { data: result, error, response } = await drawVotingContestWinner({ client });
 
-			if (error || !response.ok || !result) {
-				if (response.status === 403) {
+			if (error || !response?.ok || !result) {
+				if (response?.status === 403) {
 					drawError = 'У тебя нет доступа к розыгрышу';
 				} else {
 					drawError = 'Не удалось провести розыгрыш';

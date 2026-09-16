@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
+	import { linkTicket } from '$lib/api/generated';
 	const client = createApiClient();
-	import type { CurrentUserDTO } from '$lib/types/user';
+	import type { CurrentUserDto } from '$lib/api/generated';
 
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import * as Alert from '$lib/components/ui/alert';
@@ -16,7 +17,7 @@
 	import ProfileCardShell from './ProfileCardShell.svelte';
 
 	interface Props {
-		user: CurrentUserDTO;
+		user: CurrentUserDto;
 		onTicketLinked?: () => void;
 	}
 
@@ -41,13 +42,14 @@
 		isSubmitting = true;
 
 		try {
-			const { error, response } = await client.POST('/me/ticket', {
+			const { error, response } = await linkTicket({
+				client,
 				body: { barcode: barcode.trim() }
 			});
 
 			isSubmitting = false;
 
-			if (error || !response.ok) {
+			if (error || !response?.ok) {
 				submitError = getApiErrorDetail(error) ?? 'Не удалось привязать билет';
 				return;
 			}

@@ -1,14 +1,13 @@
-import type { paths } from '$lib/api/schema';
-import type { Middleware } from 'openapi-fetch';
+import type { Client, ResolvedRequestOptions } from '$lib/api/generated/client';
 
 import { invalidate } from '$app/navigation';
 import { PUBLIC_API_URL } from '$env/static/public';
+import { createClient } from '$lib/api/generated/client';
 import {
 	isBackendUnreachableStatus,
 	markReachable,
 	probeReachability
 } from '$lib/services/reachability';
-import createClient from 'openapi-fetch';
 
 // True while a 401-triggered identity refresh is in flight, so a burst of
 // rejected calls collapses into a single `invalidate`. A transient concurrency
@@ -29,42 +28,43 @@ let reconcilingSession = false;
 //     is exactly what we want.)
 const CREDENTIAL_CHECK_PATHS = new Set(['/me/', '/auth/login', '/auth/login-with-code']);
 
-// A non-gateway response proves the backend answered; 502/503/504 means the
-// proxy is up but the backend behind it is not — same as a network failure.
-const reachabilityWatch: Middleware = {
-	onResponse({ response }) {
-		markReachable(!isBackendUnreachableStatus(response.status));
-	},
-	// A thrown fetch (network failure / timeout / abort) yields no Response, so
-	// `onResponse` never runs. A single rejection is ambiguous, though — a
-	// deliberate abort, one flaky request, a CORS hiccup — so it must not flip the
-	// whole app offline on its own. Kick the authoritative health probe instead and
-	// let it render the verdict; leave the error untouched so the caller still sees it.
-	onError() {
-		void probeReachability();
-	}
-};
+// The response interceptor runs for every response the client receives, before
+// it decides ok vs error — so both watches below see 4xx/5xx too, not just 2xx.
+// `options.url` is the operation's path template (e.g. `/me/`), not the resolved
+// URL, which is what the credential-path exclusion matches against.
+function watchResponse(response: Response, _request: Request, options: ResolvedRequestOptions) {
+	// A non-gateway response proves the backend answered; 502/503/504 means the
+	// proxy is up but the backend behind it is not — same as a network failure.
+	markReachable(!isBackendUnreachableStatus(response.status));
 
-const sessionExpiryWatch: Middleware = {
-	onResponse({ response, schemaPath }) {
-		if (response.status !== 401) return;
-		if (CREDENTIAL_CHECK_PATHS.has(schemaPath)) return;
-		if (reconcilingSession) return;
-		reconcilingSession = true;
-		// Fire-and-forget so the failing response still settles immediately for
-		// its caller — forms keep their own inline 401 error handling.
-		void invalidate('app:current-user').finally(() => {
-			reconcilingSession = false;
-		});
-	}
-};
+	if (response.status !== 401) return response;
+	if (CREDENTIAL_CHECK_PATHS.has(options.url)) return response;
+	if (reconcilingSession) return response;
+	reconcilingSession = true;
+	// Fire-and-forget so the failing response still settles immediately for its
+	// caller — forms keep their own inline 401 error handling.
+	void invalidate('app:current-user').finally(() => {
+		reconcilingSession = false;
+	});
+	return response;
+}
 
-export function createApiClient() {
-	const client = createClient<paths>({
+// A thrown fetch (network failure / timeout / abort) yields no Response, so the
+// response interceptor never runs. A single rejection is ambiguous, though — a
+// deliberate abort, one flaky request, a CORS hiccup — so it must not flip the
+// whole app offline on its own. Kick the authoritative health probe instead and
+// let it render the verdict; leave the error untouched so the caller still sees it.
+function watchError(error: unknown): unknown {
+	void probeReachability();
+	return error;
+}
+
+export function createApiClient(): Client {
+	const client = createClient({
 		baseUrl: PUBLIC_API_URL,
 		credentials: 'include'
 	});
-	client.use(reachabilityWatch);
-	client.use(sessionExpiryWatch);
+	client.interceptors.response.use(watchResponse);
+	client.interceptors.error.use(watchError);
 	return client;
 }

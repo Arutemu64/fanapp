@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { GetVotingNominationResult } from '$lib/types/voting';
+	import type { GetVotingNominationOutput } from '$lib/api/generated';
 
 	import { invalidate } from '$app/navigation';
 	import BackLink from '$lib/components/BackLink.svelte';
@@ -22,11 +22,11 @@
 	import ParticipantCard from '../components/ParticipantCard.svelte';
 	import VotingStatusAlert from '../components/VotingStatusAlert.svelte';
 
-	type VotingParticipant = GetVotingNominationResult['participants'][number];
+	type VotingParticipant = GetVotingNominationOutput['participants'][number];
 
 	let { data }: PageProps = $props();
 	// Absent offline: voting is uncached and online-only (see +page.ts).
-	let nomination: GetVotingNominationResult | undefined = $derived(data.nomination);
+	let nomination: GetVotingNominationOutput | undefined = $derived(data.nomination);
 	let participants = $derived(nomination?.participants ?? []);
 	let votingStatus = $derived(data.votingStatus);
 	let canVote = $derived(votingStatus?.can_vote ?? false);

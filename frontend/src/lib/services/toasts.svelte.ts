@@ -1,5 +1,5 @@
 import type { Pathname } from '$app/types';
-import type { NotificationDTO } from '$lib/types/notifications';
+import type { NotificationDto } from '$lib/api/generated';
 
 import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
@@ -50,7 +50,7 @@ export class ToastService {
 		this.add(message, 'error');
 	}
 
-	push(notification: NotificationDTO) {
+	push(notification: NotificationDto) {
 		if (this.#seenPushIds.has(notification.id)) return;
 		this.#seenPushIds.add(notification.id);
 

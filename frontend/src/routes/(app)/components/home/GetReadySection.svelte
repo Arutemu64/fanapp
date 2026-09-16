@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Pathname } from '$app/types';
-	import type { CurrentUserDTO } from '$lib/types/user';
+	import type { CurrentUserDto } from '$lib/api/generated';
 	import type { Component } from 'svelte';
 
 	import { getPwaService } from '$lib/services/pwa.svelte';
@@ -9,7 +9,7 @@
 	import GetReadyCard from './GetReadyCard.svelte';
 
 	interface Props {
-		user: CurrentUserDTO | null;
+		user: CurrentUserDto | null;
 	}
 
 	let { user }: Props = $props();

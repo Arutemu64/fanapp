@@ -1,7 +1,7 @@
-import type { ScheduleEventFullDTO, SubscriptionFullDTO } from '$lib/types/schedule';
-import type { CurrentUserDTO } from '$lib/types/user';
+import type { CurrentUserDto, ScheduleEventFullDto, SubscriptionFullDto } from '$lib/api/generated';
 
 import { createApiClient } from '$lib/api';
+import { getCurrentUser, getSchedule, getSubscriptions } from '$lib/api/generated';
 import {
 	clearUserCache,
 	fetchWithCache,
@@ -35,17 +35,17 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 
 	// `null` is a real cached value (logged out); `undefined` means "reachable but
 	// no verdict, keep the cached user" (see fetcher below), so the type spans both.
-	const { data } = await fetchWithCache<CurrentUserDTO | null>({
+	const { data } = await fetchWithCache<CurrentUserDto | null>({
 		key: USER_CACHE_KEY,
 		scope: userScope,
 		fetcher: async ({ signal }) => {
-			const { data, response, error } = await client.GET('/me/', { fetch, signal });
+			const { data, response, error } = await getCurrentUser({ client, fetch, signal });
 
 			// Authoritative "session ended": cache logged-out AND drop per-user caches
 			// so no orphaned entries linger for the next account on a shared device.
 			// Universal caches (e.g. schedule) are kept warm. Mirrors explicit logout
 			// (AppNavbar.handleLogout).
-			if (response.status === 401 || response.status === 403) {
+			if (response?.status === 401 || response?.status === 403) {
 				void clearUserCache();
 				return null;
 			}
@@ -73,12 +73,12 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 	// this load's tracked `fetch`.
 
 	// Schedule is universal — one shared key for guests and every account.
-	void warmCache<ScheduleEventFullDTO[]>({
+	void warmCache<ScheduleEventFullDto[]>({
 		key: 'schedule',
 		scope: universalScope,
 		fetcher: async ({ signal }) => {
 			const warmClient = createApiClient();
-			const { data: schedule, error } = await warmClient.GET('/schedule/', { signal });
+			const { data: schedule, error } = await getSchedule({ client: warmClient, signal });
 			if (error || !schedule) return undefined;
 			return schedule.schedule ?? [];
 		}
@@ -86,12 +86,12 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 
 	// Subscriptions are per-user; only logged-in users have them.
 	if (user) {
-		void warmCache<SubscriptionFullDTO[]>({
+		void warmCache<SubscriptionFullDto[]>({
 			key: 'subscriptions',
 			scope: userScope,
 			fetcher: async ({ signal }) => {
 				const warmClient = createApiClient();
-				const { data, error } = await warmClient.GET('/schedule/subscriptions/', { signal });
+				const { data, error } = await getSubscriptions({ client: warmClient, signal });
 				if (error || !data) return undefined;
 				return data.subscriptions ?? [];
 			}

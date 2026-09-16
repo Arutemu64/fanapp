@@ -1,12 +1,13 @@
 <script lang="ts">
 	import type {
-		ScheduleChangeEventDTO,
-		ScheduleChangeFullDTO,
+		ScheduleChangeEventDto,
+		ScheduleChangeFullDto,
 		ScheduleChangeType
-	} from '$lib/types/schedule';
+	} from '$lib/api/generated';
 
 	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
+	import { undoScheduleChange } from '$lib/api/generated';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
@@ -17,7 +18,7 @@
 	const client = createApiClient();
 
 	interface Props {
-		change: ScheduleChangeFullDTO;
+		change: ScheduleChangeFullDto;
 	}
 
 	let { change }: Props = $props();
@@ -28,11 +29,12 @@
 	async function undoChange() {
 		isUndoing = true;
 		try {
-			const { error, response } = await client.DELETE('/schedule/changes/{schedule_change_id}', {
-				params: { path: { schedule_change_id: change.id } }
+			const { error, response } = await undoScheduleChange({
+				client,
+				path: { schedule_change_id: change.id }
 			});
 
-			if (error || !response.ok) {
+			if (error || !response?.ok) {
 				console.error('Error undoing change:', error);
 				toastService.error(error);
 				return;
@@ -63,7 +65,7 @@
 		unskipped: 'border-border bg-muted text-muted-foreground'
 	};
 
-	function formatEvent(event: ScheduleChangeEventDTO | null | undefined): string {
+	function formatEvent(event: ScheduleChangeEventDto | null | undefined): string {
 		if (!event) return '';
 		// Breaks carry no public number — the title is all there is to show.
 		if (event.number === null) return event.title;

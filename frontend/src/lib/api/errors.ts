@@ -1,11 +1,11 @@
-import type { components } from '$lib/api/schema';
+import type { ErrorMessage } from '$lib/api/generated';
 
 import { error as kitError } from '@sveltejs/kit';
 
 // The closed set of error codes the API can return, generated from the backend
 // OpenAPI spec (ErrorMessage.code enum). Drives both typo safety on the message
 // dictionary and the compile-time drift guard at the bottom of this file.
-type ApiErrorCode = components['schemas']['ErrorMessage']['code'];
+type ApiErrorCode = ErrorMessage['code'];
 
 type ApiErrorDetails = Record<string, unknown>;
 
@@ -274,7 +274,7 @@ function getApiErrorCode(error: unknown): string | null {
 }
 
 /**
- * Throw a SvelteKit error from a failed openapi-fetch call, so a `load` failure
+ * Throw a SvelteKit error from a failed API call, so a `load` failure
  * speaks the same language as a form/toast failure. Maps the API error `code` to
  * the shared Russian copy and reuses the real HTTP status; `code` rides along on
  * `App.Error` for the error page and Sentry. Usage:

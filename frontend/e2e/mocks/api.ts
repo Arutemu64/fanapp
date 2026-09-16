@@ -1,12 +1,5 @@
 import type { BrowserContext, Route } from '@playwright/test';
 
-import type { components } from '../../src/lib/api/schema';
-
-// Every request/response schema generated from the backend OpenAPI spec. Typing
-// mock bodies against these means a mock that drifts from the real contract fails
-// to compile — the same drift guard the repo already applies to schema.d.ts.
-export type ApiSchemas = components['schemas'];
-
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 // A route key is `"<METHOD> <path>"`, where <path> is the API path WITHOUT the

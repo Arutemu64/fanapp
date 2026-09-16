@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
+	import { countOnlineUsers } from '$lib/api/generated';
 	import { pluralize } from '$lib/utils/formatters';
 	import { Activity } from '@lucide/svelte';
 
@@ -19,8 +20,8 @@
 		// unhandled rejection every interval. The stale count just stands until
 		// the next successful poll — this is a glanceable stat, not critical data.
 		try {
-			const { data, error, response } = await client.GET('/users/online-count');
-			if (!error && response.ok && data) {
+			const { data, error, response } = await countOnlineUsers({ client });
+			if (!error && response?.ok && data) {
 				count = data.count;
 			}
 		} catch (error) {

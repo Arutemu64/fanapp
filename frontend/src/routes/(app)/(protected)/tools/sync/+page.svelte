@@ -1,8 +1,11 @@
 <script lang="ts">
-	import type { components } from '$lib/api/schema';
+	import type { SyncRunStatus, SyncSource, SyncSourceStatusDto } from '$lib/api/generated';
 
 	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
+	// The generated operation shares the name of this component's own trigger
+	// handler below, so import it under a distinct name.
+	import { requestSync as requestSyncSource } from '$lib/api/generated';
 	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { Badge } from '$lib/components/ui/badge';
@@ -14,10 +17,6 @@
 	import { onMount } from 'svelte';
 
 	import type { PageProps } from './$types';
-
-	type SyncSourceStatus = components['schemas']['SyncSourceStatusDTO'];
-	type SyncSource = components['schemas']['SyncSource'];
-	type SyncRunStatus = components['schemas']['SyncRunStatus'];
 
 	const { data }: PageProps = $props();
 
@@ -46,12 +45,12 @@
 	// the first SSE update lands. Cleared once the server reports a state.
 	let requesting = $state<SyncSource[]>([]);
 
-	function isActive(source: SyncSourceStatus): boolean {
+	function isActive(source: SyncSourceStatusDto): boolean {
 		const status = source.last_run?.status;
 		return status === 'pending' || status === 'running';
 	}
 
-	function isBusy(source: SyncSourceStatus): boolean {
+	function isBusy(source: SyncSourceStatusDto): boolean {
 		return requesting.includes(source.source) || isActive(source);
 	}
 
@@ -70,10 +69,11 @@
 	async function requestSync(source: SyncSource) {
 		requesting = [...requesting, source];
 		try {
-			const { error: apiError, response } = await client.POST('/sync/{source}', {
-				params: { path: { source } }
+			const { error: apiError, response } = await requestSyncSource({
+				client,
+				path: { source }
 			});
-			if (apiError || !response.ok) {
+			if (apiError || !response?.ok) {
 				toastService.error(apiError);
 				return;
 			}

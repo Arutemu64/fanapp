@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
+	import { requestLoginCode } from '$lib/api/generated';
 	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import CaptchaWidget, { captchaEnabled } from '$lib/components/CaptchaWidget.svelte';
@@ -113,11 +114,12 @@
 		codeSentTo = '';
 
 		try {
-			const { error, response } = await client.POST('/auth/request-login-code', {
+			const { error, response } = await requestLoginCode({
+				client,
 				body: { email: trimmedEmail, captcha_token: captchaToken }
 			});
 
-			if (error || !response.ok) {
+			if (error || !response?.ok) {
 				console.error('Login code request error:', error);
 				formError = getApiErrorDetail(error) ?? 'Не удалось отправить код';
 				// The token is single-use, so fetch a fresh one before a retry.

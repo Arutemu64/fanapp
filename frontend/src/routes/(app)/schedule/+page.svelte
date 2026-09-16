@@ -1,6 +1,6 @@
 <script lang="ts">
+	import type { CurrentUserDto } from '$lib/api/generated';
 	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
-	import type { CurrentUserDTO } from '$lib/types/user';
 
 	import { invalidate } from '$app/navigation';
 	import { page } from '$app/state';
@@ -36,7 +36,7 @@
 
 	// We use the full schedule current event for countdown labels inside every row.
 	let currentEvent = $derived(schedule.find((event) => event.is_current) ?? null);
-	let user: CurrentUserDTO | null = $derived(page.data.user);
+	let user: CurrentUserDto | null = $derived(page.data.user);
 
 	const offline = getOfflineService();
 	const eventsClient = getEventsClient();

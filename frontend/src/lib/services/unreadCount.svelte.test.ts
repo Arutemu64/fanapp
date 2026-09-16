@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// The service reads /notifications/unread-count through createApiClient(); a
-// hoisted fake lets each test control the count that refresh() sees.
+// The service reads the unread count through the generated `countUnreadNotifications`
+// SDK call; a hoisted fake lets each test control the count that refresh() sees.
 const server = vi.hoisted((): { count: number; ok: boolean; error: unknown } => ({
 	count: 0,
 	ok: true,
@@ -9,14 +9,16 @@ const server = vi.hoisted((): { count: number; ok: boolean; error: unknown } => 
 }));
 
 vi.mock('$lib/api', () => ({
-	createApiClient: () => ({
-		GET: () =>
-			Promise.resolve({
-				data: { count: server.count },
-				error: server.error,
-				response: { ok: server.ok }
-			})
-	})
+	createApiClient: () => ({})
+}));
+
+vi.mock('$lib/api/generated', () => ({
+	countUnreadNotifications: () =>
+		Promise.resolve({
+			data: { count: server.count },
+			error: server.error,
+			response: { ok: server.ok }
+		})
 }));
 
 import { UnreadCountService } from './unreadCount.svelte';

@@ -1,12 +1,12 @@
 <script lang="ts">
-	import type { FeedbackDTO } from '$lib/types/feedback';
+	import type { FeedbackDto } from '$lib/api/generated';
 
 	import * as Card from '$lib/components/ui/card';
 	import { formatRelativeTime } from '$lib/utils/formatters';
 	import { User } from '@lucide/svelte';
 
 	interface Props {
-		feedback: FeedbackDTO;
+		feedback: FeedbackDto;
 	}
 
 	let { feedback }: Props = $props();

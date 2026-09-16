@@ -1,10 +1,11 @@
 <script lang="ts">
-	import type { CurrentUserDTO } from '$lib/types/user';
+	import type { CurrentUserDto } from '$lib/api/generated';
 
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { createApiClient } from '$lib/api';
+	import { logoutUser } from '$lib/api/generated';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
@@ -24,7 +25,7 @@
 	let pageTitle = $derived(page.data.title);
 
 	interface Props {
-		user: CurrentUserDTO | null;
+		user: CurrentUserDto | null;
 		toggleSidebar: () => void;
 	}
 
@@ -47,9 +48,9 @@
 			return;
 		}
 
-		const { error, response } = await client.POST('/auth/logout');
+		const { error, response } = await logoutUser({ client });
 
-		if (error || !response.ok) {
+		if (error || !response?.ok) {
 			toastService.error(error);
 			return;
 		}

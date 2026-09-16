@@ -1,10 +1,10 @@
-import type { ApiSchemas } from '../fixtures';
+import type { ListBroadcastsOutput, MailingDto } from '../../src/lib/api/generated';
 
 import { expect, json, organizer, test } from '../fixtures';
 
 const BODY = 'Скоро начнётся церемония открытия на главной сцене';
 
-const SENDING: ApiSchemas['MailingDTO'] = {
+const SENDING: MailingDto = {
 	id: '01890000-0000-7000-8000-0000000000b1',
 	status: 'sending',
 	by_user_id: '01890000-0000-7000-8000-000000000001',
@@ -19,7 +19,7 @@ test.describe('broadcast history', { tag: '@critical' }, () => {
 	test('organizer sees a sent broadcast and can cancel it', async ({ page, api }) => {
 		api.use(organizer());
 		api.use({
-			'GET /notifications/broadcast': json<ApiSchemas['ListBroadcastsOutput']>({
+			'GET /notifications/broadcast': json<ListBroadcastsOutput>({
 				mailings: [SENDING]
 			}),
 			[`POST /notifications/broadcast/${SENDING.id}/cancel`]: json({}, 204)
@@ -34,7 +34,7 @@ test.describe('broadcast history', { tag: '@critical' }, () => {
 
 		// After cancel, the feed reloads (invalidate) — return the mailing cancelled.
 		api.use({
-			'GET /notifications/broadcast': json<ApiSchemas['ListBroadcastsOutput']>({
+			'GET /notifications/broadcast': json<ListBroadcastsOutput>({
 				mailings: [{ ...SENDING, status: 'cancelled' }]
 			})
 		});
@@ -53,7 +53,7 @@ test.describe('broadcast history', { tag: '@critical' }, () => {
 		api.use(organizer());
 		// Baseline has no broadcast handler; mock an empty history explicitly.
 		api.use({
-			'GET /notifications/broadcast': json<ApiSchemas['ListBroadcastsOutput']>({ mailings: [] })
+			'GET /notifications/broadcast': json<ListBroadcastsOutput>({ mailings: [] })
 		});
 
 		await page.goto('/tools/broadcast');

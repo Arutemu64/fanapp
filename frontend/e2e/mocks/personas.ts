@@ -1,10 +1,11 @@
-import type { ApiSchemas, Handlers } from './api';
+import type { CurrentUserDto, UserSettingsDto } from '../../src/lib/api/generated';
+import type { Handlers } from './api';
 
 import { json } from './api';
 
-type User = ApiSchemas['CurrentUserDTO'];
+type User = CurrentUserDto;
 
-const DEFAULT_SETTINGS: ApiSchemas['UserSettingsDTO'] = {
+const DEFAULT_SETTINGS: UserSettingsDto = {
 	receive_all_announcements: true,
 	receive_telegram_notifications: true,
 	receive_vk_notifications: true

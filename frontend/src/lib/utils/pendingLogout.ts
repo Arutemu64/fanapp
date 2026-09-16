@@ -1,4 +1,5 @@
 import { createApiClient } from '$lib/api';
+import { logoutUser } from '$lib/api/generated';
 
 import { readStorage, removeStorage, writeStorage } from './safeStorage';
 
@@ -48,8 +49,8 @@ export async function flushPendingLogout(): Promise<void> {
 
 	const client = createApiClient();
 	try {
-		const { response } = await client.POST('/auth/logout');
-		if (response.ok || response.status === 401 || response.status === 403) {
+		const { response } = await logoutUser({ client });
+		if (response?.ok || response?.status === 401 || response?.status === 403) {
 			clearLogoutPending();
 		}
 		// Any other status (e.g. 5xx): keep the intent and retry on the next edge.

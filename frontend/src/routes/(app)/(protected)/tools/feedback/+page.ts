@@ -1,5 +1,6 @@
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
+import { listFeedback } from '$lib/api/generated';
 import { FEEDBACK_PAGE_REQUEST_LIMIT, FEEDBACK_PAGE_SIZE } from '$lib/constants/feedback';
 import { canReadFeedback } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
@@ -25,9 +26,10 @@ export const load: PageLoad = async ({ fetch, parent }) => {
 		data,
 		error: fetchError,
 		response
-	} = await client.GET('/feedback/', {
+	} = await listFeedback({
+		client,
 		fetch,
-		params: { query: { limit: FEEDBACK_PAGE_REQUEST_LIMIT, offset: 0 } }
+		query: { limit: FEEDBACK_PAGE_REQUEST_LIMIT, offset: 0 }
 	});
 	if (fetchError || !data) {
 		throwApiError(fetchError, response, 'Не удалось загрузить отзывы');

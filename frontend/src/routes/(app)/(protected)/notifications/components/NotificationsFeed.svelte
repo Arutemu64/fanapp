@@ -1,7 +1,8 @@
 <script lang="ts">
-	import type { NotificationDTO } from '$lib/types/notifications';
+	import type { NotificationDto } from '$lib/api/generated';
 
 	import { createApiClient } from '$lib/api';
+	import { listUserNotifications, markNotificationsRead } from '$lib/api/generated';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
 	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
@@ -21,7 +22,7 @@
 	const client = createApiClient();
 
 	interface Props {
-		initialNotifications: Array<NotificationDTO>;
+		initialNotifications: Array<NotificationDto>;
 		initialHasMore: boolean;
 	}
 
@@ -31,14 +32,15 @@
 	const eventsClient = getEventsClient();
 	const unread = getUnreadCountService();
 
-	const feed = new PaginatedFeed<NotificationDTO>({
+	const feed = new PaginatedFeed<NotificationDto>({
 		pageSize: NOTIFICATION_PAGE_SIZE,
 		requestLimit: NOTIFICATION_PAGE_REQUEST_LIMIT,
 		getInitialItems: () => initialNotifications,
 		getInitialHasMore: () => initialHasMore,
 		fetchPage: async (limit, offset) => {
-			const { data, error } = await client.GET('/notifications/', {
-				params: { query: { limit, offset } }
+			const { data, error } = await listUserNotifications({
+				client,
+				query: { limit, offset }
 			});
 			return error || !data ? null : data.notifications;
 		},
@@ -46,7 +48,7 @@
 	});
 
 	// Notifications pushed over SSE — kept on top, newest first.
-	let liveNotifications = $state.raw<Array<NotificationDTO>>([]);
+	let liveNotifications = $state.raw<Array<NotificationDto>>([]);
 
 	// Fresh SSE items on top, then the server page and anything loaded after it.
 	let notifications = $derived(dedupeById(liveNotifications, feed.items));
@@ -55,7 +57,7 @@
 	// don't mutate the fetched DTOs — they still carry seen_at: null — so overlay
 	// the read state locally: their "new" dots clear and the header settles without
 	// waiting for a refetch. On the next visit the server returns them seen.
-	let locallyReadIds = new SvelteSet<NotificationDTO['id']>();
+	let locallyReadIds = new SvelteSet<NotificationDto['id']>();
 	const readAt = new Date().toISOString();
 	let displayNotifications = $derived(
 		notifications.map((notification) =>
@@ -68,7 +70,7 @@
 		displayNotifications.filter((notification) => !notification.seen_at).length
 	);
 
-	function addLiveNotification(notification: NotificationDTO) {
+	function addLiveNotification(notification: NotificationDto) {
 		liveNotifications = dedupeById([notification], liveNotifications);
 		toastService.push(notification);
 	}
@@ -83,10 +85,11 @@
 		if (unseenIds.length === 0) return;
 
 		try {
-			const { error, response } = await client.POST('/notifications/mark-read', {
+			const { error, response } = await markNotificationsRead({
+				client,
 				body: { notification_ids: unseenIds }
 			});
-			if (!error && response.ok) {
+			if (!error && response?.ok) {
 				for (const id of unseenIds) {
 					locallyReadIds.add(id);
 				}
@@ -101,8 +104,9 @@
 	// don't lose notifications that arrived while the SSE channel was disconnected.
 	async function syncLatestNotifications() {
 		try {
-			const { data: result, error } = await client.GET('/notifications/', {
-				params: { query: { limit: NOTIFICATION_PAGE_SIZE } }
+			const { data: result, error } = await listUserNotifications({
+				client,
+				query: { limit: NOTIFICATION_PAGE_SIZE }
 			});
 
 			if (error || !result) {

@@ -1,11 +1,11 @@
-import type { CurrentUserDTO } from '$lib/types/user';
+import type { CurrentUserDto } from '$lib/api/generated';
 
 import { describe, expect, it } from 'vitest';
 
 import { hasPermission } from './permissions';
 
-function userWith(permissions: CurrentUserDTO['permissions']): CurrentUserDTO {
-	return { permissions } as CurrentUserDTO;
+function userWith(permissions: CurrentUserDto['permissions']): CurrentUserDto {
+	return { permissions } as CurrentUserDto;
 }
 
 describe('hasPermission', () => {

@@ -38,19 +38,19 @@ Import from `../fixtures` (not `@playwright/test`) — it injects the mocked
 backend as `api` and re-exports the persona/SSE helpers.
 
 ```ts
-import type { ApiSchemas } from '../fixtures';
+import type { GetVotingStateOutput, ListVotingNominationsOutput } from '../fixtures';
 
 import { expect, json, test } from '../fixtures';
 
 test('closed voting shows the closed banner', async ({ page, api }) => {
 	api.use({
-		'GET /voting/status': json<ApiSchemas['GetVotingStateOutput']>({
+		'GET /voting/status': json<GetVotingStateOutput>({
 			can_vote: false,
 			status: 'disabled',
 			voting_start: null,
 			voting_end: null
 		}),
-		'GET /voting/nominations': json<ApiSchemas['ListVotingNominationsOutput']>({ nominations: [] })
+		'GET /voting/nominations': json<ListVotingNominationsOutput>({ nominations: [] })
 	});
 	await page.goto('/voting');
 	await expect(page.getByText('Голосование сейчас закрыто.')).toBeVisible();
@@ -70,8 +70,8 @@ for the closed/open, offline and SSE patterns respectively.
   `/config`, `/debug/health`, `/schedule/`, …) as a logged-out guest. Every test
   starts from this baseline.
 - `api.use({ … })` overrides or adds routes for one test; last write wins.
-- **Type your bodies** with `json<ApiSchemas['SomeDTO']>({ … })` so a mock that
-  drifts from the real contract fails to compile.
+- **Type your bodies** with `json<SomeDto>({ … })`, importing the generated type
+  from `../fixtures`, so a mock that drifts from the real contract fails to compile.
 - An endpoint nobody mocked returns a **loud 404** and lands in `api.unmatched`.
   Assert `api.unmatched` is empty, or add the missing route.
 - **Never inline a large payload in a spec** — put reusable fixtures in `mocks/`.
@@ -199,7 +199,7 @@ await page.screenshot({ path: 'test-results/voting.png', fullPage: true });
 e2e/
   fixtures.ts        # test/expect + api / consoleErrors / makeAxeBuilder fixtures — import from here
   mocks/
-    api.ts           # ApiMock: catch-all route registry + json() helper + ApiSchemas
+    api.ts           # ApiMock: catch-all route registry + json() helper
     defaults.ts      # baseline (guest) boot handlers
     personas.ts      # loggedInAs() / organizer() / user()
     sse.ts           # EventSource double + emitSse()

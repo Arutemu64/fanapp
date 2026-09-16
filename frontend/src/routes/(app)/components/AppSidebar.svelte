@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Pathname } from '$app/types';
-	import type { CurrentUserDTO } from '$lib/types/user';
+	import type { CurrentUserDto } from '$lib/api/generated';
 	import type { Component } from 'svelte';
 
 	import { resolve } from '$app/paths';
@@ -15,7 +15,7 @@
 	import ThemeToggle from './ThemeToggle.svelte';
 
 	interface Props {
-		user: CurrentUserDTO | null;
+		user: CurrentUserDto | null;
 		activeUrl: string;
 		isSidebarOpen: boolean;
 		closeSidebar: () => void;
