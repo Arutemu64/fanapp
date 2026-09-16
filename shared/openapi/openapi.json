@@ -341,7 +341,7 @@
           "Authentication"
         ],
         "summary": "Logout user",
-        "description": "Clears session cookie and removes Redis session state.",
+        "description": "Clears session cookie and removes Redis session state; also emits Clear-Site-Data so the browser drops cookies itself.",
         "operationId": "logout_user",
         "responses": {
           "204": {

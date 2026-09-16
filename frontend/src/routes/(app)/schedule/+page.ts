@@ -77,7 +77,7 @@ async function fetchSubscriptions(
 	if (!userId) return [];
 
 	const { data } = await fetchWithCache<SubscriptionFullDTO[]>({
-		key: `subscriptions:${userId}`,
+		key: 'subscriptions',
 		scope: userScope,
 		fetcher: async ({ signal }) => {
 			const { data, error: fetchError } = await client.GET('/schedule/subscriptions/', {

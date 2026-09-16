@@ -28,6 +28,13 @@ import { createStore, delMany, get, keys, set, type UseStore } from 'idb-keyval'
 
 const cacheStore: UseStore = createStore('fanfan-cache', 'keyval');
 
+// Monotonic epoch bumped by clearUserCache(). A user-scoped write captures it when
+// its fetch begins and is dropped if the epoch has moved before the write lands, so
+// an in-flight request that resolves after logout cannot repopulate a cleared entry
+// for the next account. Not user/session data — a transient concurrency guard, safe
+// as module state in this client-only SPA (cf. the latch in lib/api/index.ts).
+let userCacheEpoch = 0;
+
 /** Scope a cache entry: per-user data is wiped on logout; universal data survives. */
 export type CacheScope = 'user' | 'universal';
 
@@ -51,7 +58,17 @@ async function readCache<T>(key: string, scope: CacheScope): Promise<T | undefin
 	}
 }
 
-async function writeCache<T>(key: string, value: T, scope: CacheScope): Promise<void> {
+async function writeCache<T>(
+	key: string,
+	value: T,
+	scope: CacheScope,
+	epoch: number
+): Promise<void> {
+	// Drop a user-scoped write whose originating fetch began before a clearUserCache()
+	// (the epoch has since moved): otherwise an in-flight request resolving after logout
+	// would repopulate a cleared entry and leak it to the next account. Universal writes
+	// carry no identity, so they are never gated.
+	if (scope === 'user' && epoch !== userCacheEpoch) return;
 	try {
 		await set(scopedKey(scope, key), value, cacheStore);
 	} catch {
@@ -67,6 +84,10 @@ async function writeCache<T>(key: string, value: T, scope: CacheScope): Promise<
  * the user prefix. Swallows storage errors like the other helpers.
  */
 export async function clearUserCache(): Promise<void> {
+	// Bump first (synchronously): any user-scoped write already in flight captured the
+	// previous epoch and will now be dropped by writeCache, so a response landing after
+	// this clear cannot re-create an entry we are about to delete.
+	userCacheEpoch += 1;
 	try {
 		const allKeys = await keys(cacheStore);
 		const userKeys = allKeys.filter(
@@ -166,6 +187,10 @@ export async function fetchWithCache<T>({
 	fetcher,
 	timeoutMs = FIRST_PAINT_TIMEOUT_MS
 }: FetchWithCacheOptions<T>): Promise<FetchWithCacheResult<T>> {
+	// Snapshot the user-cache epoch at the start of the operation, so a clearUserCache()
+	// that runs while this request is in flight invalidates its eventual write.
+	const epoch = userCacheEpoch;
+
 	// Known unreachable: serve the cached copy without a dead network wait.
 	if (!isReachable()) {
 		const cached = await readEnvelope<T>(key, scope);
@@ -184,7 +209,7 @@ export async function fetchWithCache<T>({
 		}
 
 		const cachedAt = Date.now();
-		void writeCache<CachedEnvelope<T>>(key, { value, cachedAt }, scope);
+		void writeCache<CachedEnvelope<T>>(key, { value, cachedAt }, scope, epoch);
 		return { data: value, cachedAt, stale: false };
 	} catch {
 		// Network failure / timeout: serve the last synced copy.
@@ -221,6 +246,9 @@ export async function warmCache<T>({
 	fetcher,
 	timeoutMs = FIRST_PAINT_TIMEOUT_MS
 }: WarmCacheOptions<T>): Promise<void> {
+	// Snapshot the user-cache epoch before the fetch, so a clearUserCache() mid-flight
+	// invalidates the write below (see fetchWithCache).
+	const epoch = userCacheEpoch;
 	try {
 		if (!isReachable()) return;
 		// Already cached: leave refresh to the page's own load and SSE updates.
@@ -230,7 +258,7 @@ export async function warmCache<T>({
 		markReachable(true);
 		if (value === undefined) return;
 
-		void writeCache<CachedEnvelope<T>>(key, { value, cachedAt: Date.now() }, scope);
+		void writeCache<CachedEnvelope<T>>(key, { value, cachedAt: Date.now() }, scope, epoch);
 	} catch {
 		// Best-effort warm — ignore failures.
 	}
