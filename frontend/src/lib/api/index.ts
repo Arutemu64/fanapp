@@ -49,13 +49,18 @@ function watchResponse(response: Response, _request: Request, options: ResolvedR
 	return response;
 }
 
-// A thrown fetch (network failure / timeout / abort) yields no Response, so the
-// response interceptor never runs. A single rejection is ambiguous, though — a
-// deliberate abort, one flaky request, a CORS hiccup — so it must not flip the
-// whole app offline on its own. Kick the authoritative health probe instead and
-// let it render the verdict; leave the error untouched so the caller still sees it.
-function watchError(error: unknown): unknown {
-	void probeReachability();
+// The error interceptor fires for every non-ok response too, not only thrown
+// fetches — but a response (even a 4xx/5xx) already went through `watchResponse`,
+// which owns status-based reachability. Only a *thrown* fetch (network failure /
+// timeout / abort) carries no response, and that is the ambiguous case — a
+// deliberate abort, one flaky request, a CORS hiccup — that must not flip the app
+// offline on its own. So probe only when there is no response: kick the
+// authoritative health probe and let it render the verdict. Leave the error
+// untouched so the caller still sees it.
+function watchError(error: unknown, response?: Response): unknown {
+	if (!response) {
+		void probeReachability();
+	}
 	return error;
 }
 
