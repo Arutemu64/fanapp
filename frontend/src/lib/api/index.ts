@@ -3,6 +3,7 @@ import type { Client, ResolvedRequestOptions } from '$lib/api/generated/client';
 import { invalidate } from '$app/navigation';
 import { PUBLIC_API_URL } from '$env/static/public';
 import { createClient } from '$lib/api/generated/client';
+import { client as globalClient } from '$lib/api/generated/client.gen';
 import {
 	isBackendUnreachableStatus,
 	markReachable,
@@ -64,12 +65,33 @@ function watchError(error: unknown, response?: Response): unknown {
 	return error;
 }
 
+function attachInterceptors(client: Client): Client {
+	client.interceptors.response.use(watchResponse);
+	client.interceptors.error.use(watchError);
+	return client;
+}
+
 export function createApiClient(): Client {
 	const client = createClient({
 		baseUrl: PUBLIC_API_URL,
 		credentials: 'include'
 	});
-	client.interceptors.response.use(watchResponse);
-	client.interceptors.error.use(watchError);
-	return client;
+	return attachInterceptors(client);
+}
+
+// Configure the generated global `client` — the one the TanStack Query
+// `*Options()` helpers call against — with the same baseUrl, credentials and
+// interceptors as createApiClient(). Idempotent: interceptor registration is
+// guarded so HMR re-runs don't stack duplicates. Called once at app boot from the
+// root layout as the data layer migrates onto the generated query helpers.
+let globalConfigured = false;
+
+export function configureApiClient(): void {
+	globalClient.setConfig({
+		baseUrl: PUBLIC_API_URL,
+		credentials: 'include'
+	});
+	if (globalConfigured) return;
+	globalConfigured = true;
+	attachInterceptors(globalClient);
 }

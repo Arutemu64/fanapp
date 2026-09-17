@@ -11,5 +11,10 @@ export default defineConfig({
 		path: 'src/lib/api/generated',
 		postProcess: ['prettier']
 	},
-	plugins: ['@hey-api/client-fetch', '@hey-api/typescript', '@hey-api/sdk']
+	plugins: [
+		'@hey-api/client-fetch',
+		'@hey-api/typescript',
+		'@hey-api/sdk',
+		'@tanstack/svelte-query'
+	]
 });
