@@ -1,34 +1,52 @@
 <script lang="ts">
-	import type { CurrentUserDto } from '$lib/api/generated';
 	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
 
-	import { invalidate } from '$app/navigation';
-	import { page } from '$app/state';
+	import { getScheduleQueryKey } from '$lib/api/generated/@tanstack/svelte-query.gen';
+	import { scheduleQueryOptions, subscriptionsQueryOptions } from '$lib/api/queries';
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Switch } from '$lib/components/ui/switch';
+	import { getCurrentUserContext } from '$lib/services/currentUser.svelte';
 	import { documentVisibility } from '$lib/services/documentVisibility';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
 	import { canManageSchedule } from '$lib/utils/permissions';
 	import { createSearchIndex } from '$lib/utils/search';
 	import { ChevronUp, Info, Play, Search as SearchIcon, X } from '@lucide/svelte';
+	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 
-	import type { PageProps } from './$types';
-
 	import EventCard from './components/EventCard.svelte';
+	import { mergeSubscriptions } from './mergeSubscriptions';
 	import {
 		buildScheduleGroups,
 		filterScheduleGroups,
 		type ScheduleBlockGroup
 	} from './scheduleGrouping';
 
-	// Mirror the loaded page data so the component reads schedule from one local source.
-	let { data }: PageProps = $props();
-	let schedule: ScheduleEventWithSubscription[] = $derived(data.schedule);
+	const currentUser = getCurrentUserContext();
+	const queryClient = useQueryClient();
+
+	const scheduleQuery = createQuery(scheduleQueryOptions);
+	// Guests have no subscriptions; asking for them would 401 and mark the whole
+	// query errored for no gain.
+	const subscriptionsQuery = createQuery(() => ({
+		...subscriptionsQueryOptions(),
+		enabled: currentUser.current !== null
+	}));
+
+	let schedule: ScheduleEventWithSubscription[] = $derived(
+		mergeSubscriptions(scheduleQuery.data ?? [], subscriptionsQuery.data ?? [])
+	);
+
+	// The programme resolved from the persisted cache after the live fetch failed —
+	// i.e. what the user is reading may be out of date.
+	let servingCachedCopy = $derived(scheduleQuery.isError && scheduleQuery.data !== undefined);
+	// Nothing cached and nothing fetched. The load lets this through only when the
+	// backend is unreachable; online it has already failed the page.
+	let offlineMiss = $derived(scheduleQuery.isError && scheduleQuery.data === undefined);
 
 	// Store filter state locally because it only affects this page view.
 	let searchQuery: string = $state('');
@@ -36,14 +54,14 @@
 
 	// We use the full schedule current event for countdown labels inside every row.
 	let currentEvent = $derived(schedule.find((event) => event.is_current) ?? null);
-	let user: CurrentUserDto | null = $derived(page.data.user);
+	let user = $derived(currentUser.current);
 
 	const offline = getOfflineService();
 	const eventsClient = getEventsClient();
 	let showStaleNotice = $derived(
 		shouldShowStaleNotice({
-			offlineMiss: data.offlineMiss,
-			stale: data.stale,
+			offlineMiss,
+			stale: servingCachedCopy,
 			isOnline: offline.isOnline
 		})
 	);
@@ -143,7 +161,7 @@
 	// stream was down doesn't leave a stale page.
 	function reloadSchedule() {
 		lastRefetch = Date.now();
-		void invalidate('app:schedule');
+		void queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() });
 	}
 
 	// Shorter background trips (<60s) can lose an SSE event without triggering a
@@ -184,7 +202,7 @@
 	{#if showStaleNotice}
 		<StaleDataNotice
 			message="Нет связи. Показана сохранённая программа — обновится при подключении."
-			cachedAt={data.cachedAt}
+			cachedAt={scheduleQuery.dataUpdatedAt}
 		/>
 	{/if}
 
@@ -271,7 +289,7 @@
 				class="rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center sm:py-14"
 			>
 				<p class="text-base font-bold text-foreground">
-					{#if data.offlineMiss}
+					{#if offlineMiss}
 						Программа недоступна офлайн
 					{:else if hasActiveFilters}
 						Ничего не нашлось
@@ -280,7 +298,7 @@
 					{/if}
 				</p>
 				<p class="mt-1 text-sm text-muted-foreground">
-					{#if data.offlineMiss}
+					{#if offlineMiss}
 						Появится после подключения к интернету
 					{:else if hasActiveFilters}
 						Попробуй изменить поиск или фильтры

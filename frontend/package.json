@@ -77,6 +77,8 @@
 		"@khmyznikov/pwa-install": "0.6.4",
 		"@panzoom/panzoom": "4.6.2",
 		"@sentry/sveltekit": "10.74.0",
+		"@tanstack/query-persist-client-core": "5.102.8",
+		"@tanstack/svelte-query": "6.1.48",
 		"idb-keyval": "6.3.0",
 		"svelte-sonner": "^1.2.1"
 	}

@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
+	import { client } from '$lib/api';
 	import { generateTickets } from '$lib/api/generated';
-	const client = createApiClient();
 	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import * as Alert from '$lib/components/ui/alert';

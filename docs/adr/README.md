@@ -61,4 +61,5 @@ permanent — it is how other ADRs and commits reference the decision.
 | [0014](0014-cache-the-schedule-in-redis-with-etag.md) | Cache the schedule in Redis with an ETag; drop request-time schedule timing | Accepted |
 | [0015](0015-listen-notify-wakes-the-outbox-relay.md) | LISTEN/NOTIFY wakes the outbox relay, polling stays the backstop | Accepted |
 | [0016](0016-workbox-precaching-via-vite-pwa.md) | Workbox precaching via vite-pwa for the service worker | Accepted |
-| [0017](0017-hey-api-for-the-frontend-api-client.md) | `@hey-api/openapi-ts` for the frontend API client | Accepted |
+| [0017](0017-hey-api-for-the-frontend-api-client.md) | `@hey-api/openapi-ts` for the frontend API client | Accepted (client-isolation rule amended by [0018](0018-tanstack-query-for-frontend-data.md)) |
+| [0018](0018-tanstack-query-for-frontend-data.md) | TanStack Query owns all frontend data fetching and caching | Accepted |

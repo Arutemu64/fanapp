@@ -1,25 +1,14 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
+	import { listScheduleChangesQueryKey } from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import BackLink from '$lib/components/BackLink.svelte';
 	import { getEventsClient } from '$lib/services/events.svelte';
-	import { feedSnapshotKey } from '$lib/utils/feed';
+	import { useQueryClient } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
-
-	import type { PageProps } from './$types';
 
 	import ScheduleChangesFeed from './components/ScheduleChangesFeed.svelte';
 
-	let { data }: PageProps = $props();
-
 	const eventsClient = getEventsClient();
-
-	// Re-seed the feed with the fresh first page after undo triggers invalidate().
-	let changesKey = $derived(
-		feedSnapshotKey(
-			data.hasMore,
-			data.schedule_changes.map((change) => change.id)
-		)
-	);
+	const queryClient = useQueryClient();
 
 	onMount(() => {
 		// There is no dedicated SSE event for this feed: every change that adds a
@@ -30,7 +19,7 @@
 		// Also refetch on (re)connect, so an event missed while the stream was down
 		// doesn't leave another staffer's edit invisible here.
 		const reloadChanges = () => {
-			void invalidate('app:schedule:changes');
+			void queryClient.invalidateQueries({ queryKey: listScheduleChangesQueryKey() });
 		};
 
 		eventsClient.on('schedule_updated', reloadChanges);
@@ -49,6 +38,4 @@
 
 <BackLink href="/schedule" label="Назад к программе" />
 
-{#key changesKey}
-	<ScheduleChangesFeed initialChanges={data.schedule_changes} initialHasMore={data.hasMore} />
-{/key}
+<ScheduleChangesFeed />

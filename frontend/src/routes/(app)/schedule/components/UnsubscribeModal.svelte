@@ -1,17 +1,16 @@
 <script lang="ts">
 	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
 
-	import { invalidate } from '$app/navigation';
-	import { createApiClient } from '$lib/api';
+	import { client } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { deleteSubscription } from '$lib/api/generated';
+	import { getSubscriptionsQueryKey } from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import * as Alert from '$lib/components/ui/alert';
 	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { Button } from '$lib/components/ui/button';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Bell } from '@lucide/svelte';
-
-	const client = createApiClient();
+	import { useQueryClient } from '@tanstack/svelte-query';
 
 	interface Props {
 		open: boolean;
@@ -19,6 +18,7 @@
 	}
 	let { open = $bindable(), event }: Props = $props();
 	const toastService = getToastService();
+	const queryClient = useQueryClient();
 	let formError = $state('');
 
 	$effect(() => {
@@ -46,7 +46,9 @@
 		}
 
 		toastService.add('Подписка на уведомления отключена', 'success');
-		await invalidate('app:schedule');
+		// Only subscriptions changed — the programme itself is untouched, and the
+		// schedule page merges the two lists on the fly.
+		await queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() });
 		open = false;
 	}
 </script>

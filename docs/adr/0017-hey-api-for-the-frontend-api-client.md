@@ -1,6 +1,8 @@
 # ADR-0017: `@hey-api/openapi-ts` for the frontend API client
 
-- **Status:** Accepted
+- **Status:** Accepted — the per-request `createApiClient()` isolation rule is
+  amended by [ADR-0018](0018-tanstack-query-for-frontend-data.md); everything
+  else stands
 - **Date:** 2026-09-16
 - **Deciders:** @arutemu64 (PR #834)
 

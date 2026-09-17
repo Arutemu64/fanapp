@@ -2,7 +2,7 @@
 	import type { ChangeEmailInput } from '$lib/api/generated';
 	import type { PinInputCell } from 'bits-ui';
 
-	import { createApiClient } from '$lib/api';
+	import { client } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { changeCurrentUserEmail, confirmEmailCode } from '$lib/api/generated';
 	import * as Alert from '$lib/components/ui/alert';
@@ -18,8 +18,6 @@
 	import { isValidEmail, isValidOtp, normalizeEmail } from '$lib/utils/validation';
 	import { Mail } from '@lucide/svelte';
 	import { onDestroy } from 'svelte';
-
-	const client = createApiClient();
 
 	interface Props {
 		open: boolean;

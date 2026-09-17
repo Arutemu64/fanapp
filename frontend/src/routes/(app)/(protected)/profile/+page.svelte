@@ -1,11 +1,13 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
 	import { PUBLIC_APP_VERSION } from '$env/static/public';
+	import { getCurrentUserQueryKey } from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
+	import { getCurrentUserContext } from '$lib/services/currentUser.svelte';
 	import { getOfflineService } from '$lib/services/offline.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { clearOAuthErrorParam, OAUTH_LINK_ERROR_PARAM } from '$lib/utils/oauthErrors';
 	import { Heart } from '@lucide/svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 	import IconFastapi from '~icons/simple-icons/fastapi';
 	import IconSvelte from '~icons/simple-icons/svelte';
@@ -19,9 +21,14 @@
 	import TicketLinkCard from './components/TicketLinkCard.svelte';
 
 	let { data }: PageProps = $props();
-	let user = $derived(data.user!);
+
+	// The (protected) guard has already sent a guest to login, so a user is present.
+	const currentUser = getCurrentUserContext();
+	let user = $derived(currentUser.current!);
+
 	let enabledProviders = $derived(data.enabledProviders);
 	const toastService = getToastService();
+	const queryClient = useQueryClient();
 
 	// The whole profile (identity + connections) renders from the layout-cached
 	// user, so the only "out of date" state left is being offline.
@@ -55,7 +62,7 @@
 
 	// Refreshing the current user also refreshes connections — they ship together now.
 	async function refreshProfile() {
-		await invalidate('app:current-user');
+		await queryClient.invalidateQueries({ queryKey: getCurrentUserQueryKey() });
 	}
 
 	onMount(() => {

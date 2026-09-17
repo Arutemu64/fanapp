@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { GetVotingNominationOutput } from '$lib/api/generated';
 
-	import { invalidate } from '$app/navigation';
+	import { getVotingNominationQueryKey } from '$lib/api/generated/@tanstack/svelte-query.gen';
+	import { votingNominationQueryOptions, votingStatusQueryOptions } from '$lib/api/queries';
 	import BackLink from '$lib/components/BackLink.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
@@ -16,6 +17,7 @@
 		Users,
 		X
 	} from '@lucide/svelte';
+	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { PageProps } from './$types';
 
@@ -24,12 +26,20 @@
 
 	type VotingParticipant = GetVotingNominationOutput['participants'][number];
 
-	let { data }: PageProps = $props();
-	// Absent offline: voting is uncached and online-only (see +page.ts).
-	let nomination: GetVotingNominationOutput | undefined = $derived(data.nomination);
+	let { params }: PageProps = $props();
+
+	const queryClient = useQueryClient();
+	const nominationQuery = createQuery(() => votingNominationQueryOptions(params.nominationCode));
+	// Same key as the voting layout's own read, so the two share one request.
+	const statusQuery = createQuery(votingStatusQueryOptions);
+
+	// Absent offline: voting is uncached and online-only, so the query parks as
+	// `paused` rather than serving a saved ballot.
+	let nomination: GetVotingNominationOutput | undefined = $derived(nominationQuery.data);
 	let participants = $derived(nomination?.participants ?? []);
-	let votingStatus = $derived(data.votingStatus);
+	let votingStatus = $derived(statusQuery.data);
 	let canVote = $derived(votingStatus?.can_vote ?? false);
+	let offlineUnavailable = $derived(nominationQuery.isPaused || nominationQuery.isError);
 
 	let searchQuery = $state('');
 
@@ -50,7 +60,9 @@
 	let hasVoted = $derived(participants.some((p: VotingParticipant) => p.user_vote !== null));
 
 	async function handleVoted() {
-		await invalidate('app:voting:nomination');
+		await queryClient.invalidateQueries({
+			queryKey: getVotingNominationQueryKey({ path: { nomination_code: params.nominationCode } })
+		});
 	}
 </script>
 
@@ -60,7 +72,7 @@
 
 <BackLink href="/voting" label="Назад к номинациям" />
 
-{#if data.offlineUnavailable || !nomination}
+{#if offlineUnavailable || !nomination}
 	<!-- Voting is uncached and online-only, so there is no saved copy to show —
 	     say so plainly instead of crashing on a missing nomination. -->
 	<EmptyState

@@ -1,8 +1,10 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
-	import { createApiClient } from '$lib/api';
+	import { client } from '$lib/api';
 	import { updateSettings } from '$lib/api/generated';
-	const client = createApiClient();
+	import {
+		getSettingsOptions,
+		getSettingsQueryKey
+	} from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import * as Alert from '$lib/components/ui/alert';
@@ -14,27 +16,30 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { fromEventDateTimeLocal, toEventDateTimeLocal } from '$lib/utils/formatters';
 	import { AlertCircle } from '@lucide/svelte';
+	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 
-	import type { PageProps } from './$types';
-
-	let { data }: PageProps = $props();
 	const toastService = getToastService();
+	const queryClient = useQueryClient();
+
+	// The load resolved this into the cache (and failed the page otherwise) before
+	// this component rendered, so the form seeds below read a settled value —
+	// hence the assertion, which holds for as long as that load does.
+	const settingsQuery = createQuery(getSettingsOptions);
+	let settings = $derived(settingsQuery.data!);
 
 	let isSaving = $state(false);
 	// festival_start and festival_end are instants; edit them on the venue clock
 	// via zone-naive datetime-locals, converting back to ISO instants on save.
-	let savedFestivalStart = $state(
-		untrack(() => toEventDateTimeLocal(data.settings.festival_start))
-	);
-	let savedFestivalEnd = $state(untrack(() => toEventDateTimeLocal(data.settings.festival_end)));
-	let festivalStart = $state(untrack(() => toEventDateTimeLocal(data.settings.festival_start)));
-	let festivalEnd = $state(untrack(() => toEventDateTimeLocal(data.settings.festival_end)));
+	let savedFestivalStart = $state(untrack(() => toEventDateTimeLocal(settings.festival_start)));
+	let savedFestivalEnd = $state(untrack(() => toEventDateTimeLocal(settings.festival_end)));
+	let festivalStart = $state(untrack(() => toEventDateTimeLocal(settings.festival_start)));
+	let festivalEnd = $state(untrack(() => toEventDateTimeLocal(settings.festival_end)));
 	let festivalStartError = $state('');
 	let festivalEndError = $state('');
-	let savedAnnouncementTimeout = $state(untrack(() => data.settings.limits.announcement_timeout));
+	let savedAnnouncementTimeout = $state(untrack(() => settings.limits.announcement_timeout));
 	let announcementTimeout = $state<number | undefined>(
-		untrack(() => data.settings.limits.announcement_timeout)
+		untrack(() => settings.limits.announcement_timeout)
 	);
 	let announcementTimeoutError = $state('');
 	let submitError = $state('');
@@ -166,7 +171,7 @@
 			festivalEndError = '';
 			announcementTimeoutError = '';
 			toastService.add('Настройки фестиваля сохранены', 'success');
-			await invalidate('app:festival-settings');
+			await queryClient.invalidateQueries({ queryKey: getSettingsQueryKey() });
 		} catch (err) {
 			console.error('Festival settings update failed:', err);
 			submitError = 'Не удалось сохранить настройки фестиваля';

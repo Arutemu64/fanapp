@@ -1,12 +1,8 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
-	import { Button } from '$lib/components/ui/button';
-	import { Switch } from '$lib/components/ui/switch';
-	import { Bell } from '@lucide/svelte';
-	const client = createApiClient();
 	import type { CurrentUserDto, UpdateUserSettingsInput } from '$lib/api/generated';
 
 	import { PUBLIC_VAPID_KEY, PUBLIC_VK_GROUP_ID } from '$env/static/public';
+	import { client } from '$lib/api';
 	// `checkSubscription` and `sendTestNotification` are aliased so they don't
 	// clash with this component's own handlers of the same name below.
 	import {
@@ -16,9 +12,12 @@
 		unsubscribe,
 		updateCurrentUserSettings
 	} from '$lib/api/generated';
+	import { Button } from '$lib/components/ui/button';
+	import { Switch } from '$lib/components/ui/switch';
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { offlineWriteGate } from '$lib/utils/offlineAction';
+	import { Bell } from '@lucide/svelte';
 	import * as Sentry from '@sentry/sveltekit';
 	import { onMount, untrack } from 'svelte';
 

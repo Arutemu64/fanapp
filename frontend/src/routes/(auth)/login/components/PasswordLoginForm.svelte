@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
-	const client = createApiClient();
+	import { client } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { login } from '$lib/api/generated';
 	import PasswordInput from '$lib/components/PasswordInput.svelte';

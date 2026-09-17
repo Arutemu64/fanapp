@@ -301,9 +301,14 @@ though the runner is Node.
 The frontend's testable surface is the **logic in `src/lib/`** — the modules
 that encode a rule a reader cannot check by eye: text normalization and matching
 (`utils/search.ts`), formatters and pluralization (`utils/formatters.ts`),
-permission predicates (`utils/permissions.ts`), cache scoping and staleness
-(`utils/offlineCache.ts`). These are where a silent regression is expensive and
-a test is nearly free.
+permission predicates (`utils/permissions.ts`), persisted-storage fallbacks
+(`services/persisted.svelte.ts`). These are where a silent regression is
+expensive and a test is nearly free. Caching, request deduplication and
+pagination are **not** on that list any more — they belong to TanStack Query
+now ([ADR-0018](adr/0018-tanstack-query-for-frontend-data.md)), and testing a
+library's own behaviour is churn. What is still ours is the *policy* around it:
+which operations persist, which are user-scoped, and the `/me` query's
+value-vs-rejection contract (`api/queryClient.test.ts`).
 
 That includes the **rune modules** (`services/*.svelte.ts`,
 `utils/cooldown.svelte.ts` and friends): name the test `*.svelte.test.ts` and

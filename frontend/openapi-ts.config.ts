@@ -11,5 +11,25 @@ export default defineConfig({
 		path: 'src/lib/api/generated',
 		postProcess: ['prettier']
 	},
-	plugins: ['@hey-api/client-fetch', '@hey-api/typescript', '@hey-api/sdk']
+	plugins: [
+		{
+			name: '@hey-api/client-fetch',
+			// Base URL and cookie policy are applied at client creation, so the
+			// generated TanStack helpers (which capture the singleton at import time)
+			// never see an unconfigured client. See src/lib/api/heyApiConfig.ts.
+			runtimeConfigPath: './src/lib/api/heyApiConfig'
+		},
+		'@hey-api/typescript',
+		'@hey-api/sdk',
+		{
+			// Emits `<operation>Options()` / `<operation>Mutation()` helpers that feed
+			// straight into TanStack Query, so query keys and fetchers are derived from
+			// the spec instead of hand-written per call site.
+			name: '@tanstack/svelte-query',
+			// The paginated feeds (notifications, schedule changes, feedback,
+			// broadcasts, users) are limit/offset endpoints rendered as "load more",
+			// which is what `createInfiniteQuery` is for.
+			infiniteQueryOptions: true
+		}
+	]
 });

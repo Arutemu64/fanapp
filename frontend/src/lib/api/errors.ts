@@ -273,24 +273,42 @@ function getApiErrorCode(error: unknown): string | null {
 	return getApiErrorPayload(error)?.code ?? null;
 }
 
-/**
- * Throw a SvelteKit error from a failed API call, so a `load` failure
- * speaks the same language as a form/toast failure. Maps the API error `code` to
- * the shared Russian copy and reuses the real HTTP status; `code` rides along on
- * `App.Error` for the error page and Sentry. Usage:
- * `if (apiError) throwApiError(apiError, response, 'Не удалось загрузить …');`
- */
-export function throwApiError(
-	apiError: unknown,
-	response: { status: number } | undefined,
-	fallback: string
-): never {
-	// Clamp to an error status: a non-error response here means data was missing
-	// without an HTTP error, which we treat as a server-side problem.
-	const status = response && response.status >= 400 ? response.status : 500;
+// Codes that describe a missing resource, so a `load` can render the 404 page
+// rather than a generic failure. The generated TanStack helpers fetch with
+// `throwOnError`, which throws the parsed error body and no `Response`, so the
+// status has to come from the code itself.
+const NOT_FOUND_CODES: ReadonlySet<string> = new Set([
+	'EVENT_NOT_FOUND',
+	'MAILING_NOT_FOUND',
+	'NOMINATION_NOT_FOUND',
+	'PARTICIPANT_NOT_FOUND',
+	'SCHEDULE_CHANGE_NOT_FOUND',
+	'SUBSCRIPTION_NOT_FOUND',
+	'TICKET_NOT_FOUND',
+	'USER_NOT_FOUND'
+]);
 
-	const message = getApiErrorDetail(apiError) ?? fallback;
-	const code = getApiErrorCode(apiError);
+/**
+ * Throw a SvelteKit error from a rejected TanStack query, so a `load` failure
+ * speaks the same language as a form/toast failure. Maps the API error `code` to
+ * the shared Russian copy, and `code` rides along on `App.Error` for the error
+ * page and Sentry.
+ *
+ * `load` is the only caller: a component renders a query's error inline instead.
+ */
+export function throwQueryError(queryError: unknown, fallback: string): never {
+	const code = getApiErrorCode(queryError);
+
+	let status = 500;
+	if (code && NOT_FOUND_CODES.has(code)) {
+		status = 404;
+	} else if (code === 'ACCESS_DENIED') {
+		status = 403;
+	} else if (code === 'USER_NOT_AUTHENTICATED') {
+		status = 401;
+	}
+
+	const message = getApiErrorDetail(queryError) ?? fallback;
 	return kitError(status, code ? { message, code } : { message });
 }
 

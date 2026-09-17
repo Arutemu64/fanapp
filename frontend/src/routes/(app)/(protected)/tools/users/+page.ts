@@ -1,14 +1,34 @@
-import { createApiClient } from '$lib/api';
-import { throwApiError } from '$lib/api/errors';
-import { listUsers } from '$lib/api/generated';
+import { throwQueryError } from '$lib/api/errors';
+import { listUsersOptions } from '$lib/api/generated/@tanstack/svelte-query.gen';
 import { USERS_PAGE_SIZE } from '$lib/constants/users';
 import { canReadUsers } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ fetch, parent, url }) => {
-	const { user } = await parent();
+/** The list query for a given page and search term; shared with the page component. */
+export function usersQueryOptions(page: number, search: string) {
+	return listUsersOptions({
+		query: {
+			limit: USERS_PAGE_SIZE,
+			offset: (page - 1) * USERS_PAGE_SIZE,
+			...(search ? { search } : {})
+		}
+	});
+}
+
+/** Page and search as the URL carries them, normalized. */
+export function readUsersParams(url: URL): { page: number; search: string } {
+	const search = url.searchParams.get('q')?.trim() ?? '';
+	const rawPage = Number(url.searchParams.get('page'));
+	return {
+		page: Number.isInteger(rawPage) && rawPage > 0 ? rawPage : 1,
+		search
+	};
+}
+
+export const load: PageLoad = async ({ parent, url }) => {
+	const { queryClient, user } = await parent();
 
 	// The tools layout gates the section to organisers; mirror the backend
 	// users:read check here so a user without the grant isn't shown a page the
@@ -20,37 +40,15 @@ export const load: PageLoad = async ({ fetch, parent, url }) => {
 	// Page and search live in the URL so results are shareable and survive the
 	// back button; the server owns pagination and search, so every change is a
 	// fresh request rather than client-side filtering of a partial list.
-	const search = url.searchParams.get('q')?.trim() ?? '';
-	const rawPage = Number(url.searchParams.get('page'));
-	const page = Number.isInteger(rawPage) && rawPage > 0 ? rawPage : 1;
-	const offset = (page - 1) * USERS_PAGE_SIZE;
-
-	const client = createApiClient();
+	const { page, search } = readUsersParams(url);
 
 	// Staff-only operational directory: stale data would misrepresent live state,
 	// so no offline cache — fail hard when unreachable instead.
-	const {
-		data,
-		error: fetchError,
-		response
-	} = await listUsers({
-		client,
-		fetch,
-		query: {
-			limit: USERS_PAGE_SIZE,
-			offset,
-			...(search ? { search } : {})
-		}
-	});
-	if (fetchError || !data) {
-		throwApiError(fetchError, response, 'Не удалось загрузить пользователей');
+	try {
+		await queryClient.ensureQueryData(usersQueryOptions(page, search));
+	} catch (fetchError) {
+		throwQueryError(fetchError, 'Не удалось загрузить пользователей');
 	}
 
-	return {
-		title: 'Пользователи',
-		users: data.users,
-		total: data.total,
-		page,
-		search
-	};
+	return { title: 'Пользователи', page, search };
 };

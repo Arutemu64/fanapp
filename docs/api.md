@@ -7,7 +7,7 @@ The generator (config in `frontend/openapi-ts.config.ts`) emits, into `frontend/
 ---
 
 ## Core Concept: Single Source of Truth
-* **Generated client**: `frontend/src/lib/api/generated/` is the single source of truth for all API contracts — import operation functions and types from `$lib/api/generated`, and `createApiClient` (the per-request client factory) from `$lib/api`.
+* **Generated client**: `frontend/src/lib/api/generated/` is the single source of truth for all API contracts — import operation functions and types from `$lib/api/generated`, the TanStack Query helpers from `$lib/api/generated/@tanstack/svelte-query.gen`, and the configured `client` from `$lib/api`.
 * **Auto-generation**: Run `just frontend-generate-api` from the workspace root whenever the backend endpoints, routers, or Pydantic schemas change.
 * **Binary / file uploads**: hey-api types binary fields as `Blob | File` and serializes `multipart/form-data` (and `application/x-www-form-urlencoded`) bodies for you — pass `body: { file }` and it builds the `FormData`. No custom transform is needed (the earlier `openapi-typescript` setup hand-wrote one).
 
@@ -28,70 +28,62 @@ The general rule when adding to the spec: **a value that is not derived from com
 
 ---
 
-## Client Isolation
-A shared global/module singleton API client can accumulate mutable state that bleeds across navigations and login/logout, so **never use one**.
+## Reads go through TanStack Query; the client holds no state
 
-Instead, always instantiate a local client per context using `createApiClient()`, and pass it to each SDK call as `{ client }`. Operation functions fall back to a shared module-global client when none is given — **never rely on that**, since it is exactly the cross-navigation singleton this rule forbids.
+Every network read in the app flows through a single TanStack Query cache, so invalidation, background refetches and offline reads share one source of truth. See [docs/frontend.md](frontend.md) §2 for the offline half and [ADR-0018](adr/0018-tanstack-query-for-frontend-data.md) for why.
 
-### 1. Universal load functions (`+page.ts` / `+layout.ts`)
-Inside universal load functions, initialize the client locally and **always inject the SvelteKit-provided `fetch`**:
+There is **one** hey-api client, the generated singleton, configured at creation in `src/lib/api/heyApiConfig.ts` (base URL, `credentials: 'include'`) via the client plugin's `runtimeConfigPath`, with the interceptors registered in `src/lib/api/index.ts`. That is safe precisely because it carries no request- or user-scoped state — only a base URL, a cookie policy and two interceptors. **User-scoped state lives in the QueryClient**, which is built once per boot in the root `+layout.ts` (never a `$lib` module singleton, per AGENTS.md) and has its user-scoped half dropped on logout by `clearUserQueries`.
 
-```typescript
-import { createApiClient } from '$lib/api';
-import { getSettings } from '$lib/api/generated';
-import type { PageLoad } from './$types';
+Because the client is configured, SDK calls no longer pass `{ client }` — though mutations still do, for clarity at the call site.
 
-export const load: PageLoad = async ({ fetch, depends }) => {
-	depends('app:settings');
+### Reads: `createQuery` with a generated `*Options()` helper
 
-	// 1. Initialize client locally (request-isolated)
-	const client = createApiClient();
-
-	// 2. Call the operation, passing the client and SvelteKit's fetch
-	const { data, error, response } = await getSettings({ client, fetch });
-
-	if (error || !response?.ok) {
-		// Handle/log error...
-	}
-
-	return { settings: data };
-};
-```
-
-> [!IMPORTANT]
-> **Why inject the SvelteKit-provided `fetch` in load functions?**
-> * **Request deduplication**: SvelteKit dedupes identical requests and lets `invalidate()` re-run the load when its data changes.
-> * **Relative URL Resolution**: SvelteKit resolves relative routes correctly.
-> * **Cookies**: The `session_id` cookie is carried automatically by the browser; the client uses `credentials: 'include'` and the frontend is served same-origin with the API (behind Caddy), so it stays first-party.
-
----
-
-### 2. Browser & Svelte Component Context
-For local component scripts (`.svelte`), page layouts, or event handlers that only run in the browser, initialize a local client at the top of the `<script>` tag:
+The `@tanstack/svelte-query` plugin emits `<operation>Options()`, `<operation>QueryKey()`, `<operation>InfiniteOptions()` and `<operation>Mutation()` per operation, so keys and fetchers are derived from the spec rather than hand-written. Pass them straight into the standard hooks:
 
 ```svelte
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
-	import { listUserNotifications } from '$lib/api/generated';
-	import { onMount } from 'svelte';
+	import { getSettingsOptions } from '$lib/api/generated/@tanstack/svelte-query.gen';
+	import { createQuery } from '@tanstack/svelte-query';
 
-	// Create local client for this component instance
-	const client = createApiClient();
-	let notifications = $state([]);
-
-	async function loadNotifications() {
-		const { data } = await listUserNotifications({
-			client,
-			query: { limit: 10 }
-		});
-		if (data) notifications = data.notifications;
-	}
-
-	onMount(() => {
-		void loadNotifications();
-	});
+	const settingsQuery = createQuery(getSettingsOptions);
+	let settings = $derived(settingsQuery.data);
 </script>
 ```
+
+App policy on top of a generated helper (nullable identity, offline options, a `select`) belongs in `$lib/api/queries.ts`, which spreads the generated options first so the key still comes from the spec. Everything else passes a generated helper directly.
+
+### Paginated "load more" feeds: `createInfiniteQuery`
+
+The limit/offset feeds (notifications, schedule changes, feedback, broadcasts) use `<operation>InfiniteOptions()` plus `offsetPagination(pageSize, itemsKey)` from `$lib/api/queries.ts`, which supplies the `initialPageParam` / `getNextPageParam` the generator cannot infer. Render `query.data.pages.flatMap(...)` and drive the button from `hasNextPage` / `isFetchingNextPage` / `fetchNextPage()`.
+
+### What still belongs in a `load`
+
+A `load` fetches only when the **route** has to decide something a component cannot: a permission guard, a redirect, a `404`/`503` error page, or a page title. It does that with `queryClient.ensureQueryData(...)` — warming the very cache entry the component then reads with `createQuery`, so there is still one request and one cache, not two flows:
+
+```typescript
+import { throwQueryError } from '$lib/api/errors';
+import { getSettingsOptions } from '$lib/api/generated/@tanstack/svelte-query.gen';
+import type { PageLoad } from './$types';
+
+export const load: PageLoad = async ({ parent }) => {
+	const { queryClient, user } = await parent();
+
+	if (!canManageSettings(user)) error(403, 'У тебя нет доступа к настройкам фестиваля');
+
+	try {
+		await queryClient.ensureQueryData(getSettingsOptions());
+	} catch (requestError) {
+		throwQueryError(requestError, 'Не удалось загрузить настройки фестиваля');
+	}
+
+	return { title: 'Настройки фестиваля' };
+};
+```
+
+The root `+layout.ts` puts `queryClient` on layout data, so every child load reaches it through `await parent()` and every component through `useQueryClient()`.
+
+> [!NOTE]
+> Loads no longer inject SvelteKit's `fetch`. It exists to let SSR inline responses and to make `invalidate()` re-run a load — and this app is `ssr = false` with cache invalidation owned by TanStack Query, so it buys nothing here. The `session_id` cookie is carried by the browser regardless: the client sets `credentials: 'include'` and the frontend is served same-origin with the API (behind Caddy), so it stays first-party.
 
 > Query params go under `query`, path params under `path`, and the request body under `body` — flat on the options object, not nested under `params`.
 
@@ -112,8 +104,8 @@ Backend `StrEnum`s that appear on a DTO field (`UserRole`, `Permission` in `core
 ---
 
 ## Mutations & Data Recovery
-* **UI Consistency**: Define how the UI becomes consistent after mutations (e.g. invalidate layout cache, optimistic update, or full state refetch).
-* **Dependency Invalidation**: When a route uses dependency invalidation, call `depends(...)` in the page load and trigger it with `invalidate('app:something')` after a successful mutation.
+* **UI Consistency**: After a successful mutation, invalidate the queries it affected — `queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() })`. Key off the generated `*QueryKey()` helper: TanStack matches keys partially, so the bare key matches every variant of that operation (every page size, every infinite page) in one call. Invalidate exactly what changed — subscribing to an event touches `getSubscriptions`, not `getSchedule`.
+* **No `depends()` / `invalidate()`**: SvelteKit's dependency invalidation is gone. It re-runs a `load`, which would be a second data flow alongside the cache; a route that needs fresher data invalidates the query instead, and the component re-renders from the cache.
 * **Return Checking**: Success payload, error payload, and response metadata are checked through the SDK return (`data`, `error`, `response`). `response` is optional (`response?.ok`, `response?.status`) — a network failure yields `error` with no `response`.
 
 ### Long-running actions (202 Accepted)
@@ -121,7 +113,7 @@ Backend `StrEnum`s that appear on a DTO field (`UserRole`, `Permission` in `core
 An action that cannot finish inside the request returns **202** with the created record and a `Location` header pointing at a **status resource** the client re-reads, instead of blocking. `POST /sync/{source}` is the first of these: it queues the work, returns the `SyncRunDTO`, and sets `Location: /sync/sources`.
 
 * **The status resource is an existing list endpoint, not a per-run one.** `GET /sync/sources` already reports each source's latest run, including the active one, so a dedicated `GET /sync/runs/{id}` would exist only to satisfy the convention. Add a per-run endpoint if something genuinely needs to poll one run by id — not before.
-* **Prefer SSE over polling for progress.** The page subscribes to the relevant `SSEEventName` (here `sync_run_updated`) and calls `invalidate(...)`; it also re-invalidates on `connection_established`, so an update missed while the stream was down (or the tab was backgrounded past the pause grace) self-heals on reconnect rather than leaving a stale "in progress" on screen. Treat the SSE payload as a nudge to refetch, never as the source of truth.
+* **Prefer SSE over polling for progress.** The page subscribes to the relevant `SSEEventName` (here `sync_run_updated`) and calls `queryClient.invalidateQueries(...)`; it also re-invalidates on `connection_established`, so an update missed while the stream was down (or the tab was backgrounded past the pause grace) self-heals on reconnect rather than leaving a stale "in progress" on screen. Treat the SSE payload as a nudge to refetch, never as the source of truth — never splice it into the cache by hand.
 * **A second request while one is running is a 409**, mapped to Russian copy by `code` like any other error — not a silent no-op.
 
 ---
@@ -130,6 +122,7 @@ An action that cannot finish inside the request returns **202** with the created
 Russian copy is mandatory (AGENTS.md, "Never"). API-specific rule: normalize failures before presenting them — never expose raw backend stack traces or internal identifiers, and show a friendly Russian message explaining how to recover or retry.
 
 * **Error shape**: every error response is `ErrorMessage { code, details }` (see backend `presentation/web/exceptions.py`). Map failures by the machine-readable `code`, not by HTTP status or message text.
-* **Single funnel**: `getApiErrorDetail(error)` (`lib/api/errors.ts`) turns a payload into Russian copy. For **mutations/toasts** use `toastService.error(err)`; for **`load` failures** use `throwApiError(apiError, response, fallback)` from the same module — it throws a SvelteKit `error()` with the mapped copy and the real HTTP status (and carries `code` on `App.Error`), so a load failure looks like every other error instead of a bespoke per-page string. Add new copy to the `ERROR_MESSAGES` dictionary there. (Permission guards and offline-cache-miss states still throw `error()` directly — they have no API `code` to map.)
+* **Single funnel**: `getApiErrorDetail(error)` (`lib/api/errors.ts`) turns a payload into Russian copy. For **mutations/toasts** use `toastService.error(err)`; for **`load` failures** use `throwQueryError(queryError, fallback)` from the same module — it throws a SvelteKit `error()` with the mapped copy (and carries `code` on `App.Error`), so a load failure looks like every other error instead of a bespoke per-page string. Add new copy to the `ERROR_MESSAGES` dictionary there. (Permission guards and offline-miss states still throw `error()` directly — they have no API `code` to map.)
+* **Status comes from the `code`, not the response.** The generated query helpers fetch with `throwOnError`, so a rejected query carries the parsed error body and no `Response`. `throwQueryError` therefore derives the status from the code — the not-found family maps to 404, `ACCESS_DENIED` to 403, `USER_NOT_AUTHENTICATED` to 401, everything else to 500. A new not-found code belongs in its `NOT_FOUND_CODES` set.
 * **`code` is a typed union**: the backend stamps the closed set of client-facing codes onto `ErrorMessage.code` as an OpenAPI enum (`presentation/web/error_codes.py`), so `frontend-generate-api` regenerates it as a string-literal union. Dictionary keys are checked against it — a typo is a compile error.
 * **Drift guard**: a compile-time exhaustiveness check in `errors.ts` fails `pnpm check` if the backend adds a client-facing code that is neither given copy nor listed in `GENERIC_FALLBACK_CODES`. After changing backend error codes, run `just frontend-generate-api` and resolve any new code the guard reports.

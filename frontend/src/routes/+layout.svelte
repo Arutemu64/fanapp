@@ -5,6 +5,7 @@
 
 	import Toaster from '$lib/components/ui/sonner/sonner.svelte';
 	import UpdatePrompt from '$lib/components/UpdatePrompt.svelte';
+	import { setCurrentUserContext } from '$lib/services/currentUser.svelte';
 	import { setEventsClient } from '$lib/services/events.svelte';
 	import { setOfflineService } from '$lib/services/offline.svelte';
 	import { setPwaService } from '$lib/services/pwa.svelte';
@@ -12,11 +13,20 @@
 	import { setToastService } from '$lib/services/toasts.svelte';
 	import { registerServiceWorker } from '$lib/utils/serviceWorker';
 	import * as Sentry from '@sentry/sveltekit';
-	import { onDestroy, onMount } from 'svelte';
+	import { QueryClientProvider } from '@tanstack/svelte-query';
+	import { onDestroy, onMount, untrack } from 'svelte';
 
 	import type { LayoutProps } from './$types';
 
 	let { children, data }: LayoutProps = $props();
+
+	// Identity read straight from the query cache, so a 401 elsewhere in the app —
+	// or an explicit logout — updates every consumer without a route re-run. The
+	// load already resolved it, so this never causes a second request.
+	// Passed explicitly rather than read from context: QueryClientProvider sets that
+	// context in its own component, which is below this script. `untrack` because
+	// the cache is built once per boot — a load re-run hands back the same instance.
+	const currentUser = setCurrentUserContext(untrack(() => data.queryClient));
 
 	const eventsClient = setEventsClient();
 	setToastService();
@@ -34,10 +44,11 @@
 	});
 
 	$effect(() => {
-		if (data?.user) {
+		const user = currentUser.current;
+		if (user) {
 			Sentry.setUser({
-				id: String(data.user.id),
-				username: data.user.username ?? undefined
+				id: String(user.id),
+				username: user.username ?? undefined
 			});
 		} else {
 			Sentry.setUser(null);
@@ -60,7 +71,9 @@
 	<title>ФАН ФАН</title>
 </svelte:head>
 
-{@render children()}
+<QueryClientProvider client={data.queryClient}>
+	{@render children()}
+</QueryClientProvider>
 
 <Toaster />
 

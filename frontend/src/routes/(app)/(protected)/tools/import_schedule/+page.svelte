@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
-	import { createApiClient } from '$lib/api';
-	import { importSchedule } from '$lib/api/generated';
-	const client = createApiClient();
+	import { client } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
+	import { importSchedule } from '$lib/api/generated';
+	import { getScheduleQueryKey } from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import * as Alert from '$lib/components/ui/alert';
@@ -13,8 +12,11 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { AlertCircle, CheckCircle2 } from '@lucide/svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
 
 	import FileFormatGuide from './components/FileFormatGuide.svelte';
+
+	const queryClient = useQueryClient();
 
 	let selectedFiles = $state<FileList | undefined>(undefined);
 	let isUploading = $state(false);
@@ -63,7 +65,7 @@
 			selectedFiles = undefined;
 			form.reset();
 
-			await invalidate('app:schedule');
+			await queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() });
 		} catch (submitError) {
 			console.error('Schedule import failed:', submitError);
 			inlineError = 'Не удалось импортировать программу';

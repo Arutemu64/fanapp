@@ -3,8 +3,7 @@
 	import { navigating, page } from '$app/state';
 	import SkipLink from '$lib/components/SkipLink.svelte';
 	import { TAB_ROOTS } from '$lib/data/nav';
-	import { setUnreadCountService } from '$lib/services/unreadCount.svelte';
-	import { untrack } from 'svelte';
+	import { getCurrentUserContext } from '$lib/services/currentUser.svelte';
 	import { MediaQuery } from 'svelte/reactivity';
 
 	import type { LayoutProps, Snapshot } from './$types';
@@ -18,27 +17,13 @@
 	import ScheduleSkeleton from './schedule/components/ScheduleSkeleton.svelte';
 	import VotingSkeleton from './voting/components/VotingSkeleton.svelte';
 
-	let { data, children }: LayoutProps = $props();
+	let { children }: LayoutProps = $props();
 
 	let activeUrl = $derived(page.url.pathname);
-	let user = $derived(data.user);
-
-	// Shared unread count for the bell badge and the notifications page. Seeded from
-	// the streamed notification load once it resolves (first paint no longer waits on
-	// it), and owned by the bell and page from there (SSE, mark-read, reconnect).
-	// `seed()` applies only while the count is still provisional, so a fresher value
-	// an SSE refresh may already have written — an authoritative zero included — wins.
-	// Read this layout's own `data`, not `page.data`: the notifications page's load
-	// returns a `notifications` array that clobbers the streamed promise in the merged
-	// `page.data`, and `.then` on that array throws. `untrack` captures the seed promise
-	// once at mount — the count is owned by SSE thereafter, so we don't re-seed on reload.
-	const unread = setUnreadCountService();
-	const notificationSeed = untrack(() => data.notifications);
-	void notificationSeed
-		.then((seed) => {
-			if (seed) unread.seed(seed.unreadCount);
-		})
-		.catch(() => {});
+	// Read from the query cache rather than route data: a 401 anywhere in the app
+	// flips the shell to the guest state without a route re-run.
+	const currentUser = getCurrentUserContext();
+	let user = $derived(currentUser.current);
 
 	let isSidebarOpen = $state(false);
 	const closeSidebar = () => {
@@ -182,8 +167,8 @@
 	// switch the previous page stays painted until the new one commits; we replace
 	// the content region with a skeleton (or a spinner) so feedback is local to
 	// where the content will appear, the way a persistent app shell should behave.
-	// Only real route changes populate `navigating` — an `invalidate()` data refresh
-	// (e.g. the schedule's SSE reload) never does, so those never flash the loader.
+	// Only real route changes populate `navigating` — a query refetch (e.g. the
+	// schedule's SSE reload) never does, so those never flash the loader.
 	const LOADER_DELAY_MS = 250;
 
 	// Gate on a short delay so fast navigations swap straight to the new page with

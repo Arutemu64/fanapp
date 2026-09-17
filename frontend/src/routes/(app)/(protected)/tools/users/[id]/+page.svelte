@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { getUserOptions } from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import BackLink from '$lib/components/BackLink.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { Badge } from '$lib/components/ui/badge';
@@ -10,11 +11,16 @@
 		getSocialProviderLabel
 	} from '$lib/utils/users';
 	import { ExternalLink, Link2 } from '@lucide/svelte';
+	import { createQuery } from '@tanstack/svelte-query';
 
 	import type { PageProps } from './$types';
 
-	let { data }: PageProps = $props();
-	let profile = $derived(data.profile);
+	let { params }: PageProps = $props();
+
+	// The load resolved this into the cache (and failed the page otherwise) before
+	// this component rendered, hence the assertion.
+	const profileQuery = createQuery(() => getUserOptions({ path: { user_id: params.id } }));
+	let profile = $derived(profileQuery.data!);
 </script>
 
 <svelte:head>

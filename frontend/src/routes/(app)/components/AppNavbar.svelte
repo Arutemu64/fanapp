@@ -4,22 +4,21 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { createApiClient } from '$lib/api';
+	import { client } from '$lib/api';
 	import { logoutUser } from '$lib/api/generated';
+	import { clearUserQueries } from '$lib/api/queryClient';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService } from '$lib/services/offline.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { clearUserCache } from '$lib/utils/offlineCache';
 	import { markLogoutPending } from '$lib/utils/pendingLogout';
 	import { getAvatarInitials } from '$lib/utils/users';
 	import { LogOut, Menu, User } from '@lucide/svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
 
 	import NotificationBell from './NotificationBell.svelte';
-
-	const client = createApiClient();
 
 	// Pages expose their heading through `load` -> `page.data.title`.
 	let pageTitle = $derived(page.data.title);
@@ -36,6 +35,7 @@
 	const toastService = getToastService();
 	const eventsClient = getEventsClient();
 	const offline = getOfflineService();
+	const queryClient = useQueryClient();
 
 	async function handleLogout() {
 		// Offline: we can't reach the server to end the session, and the session
@@ -60,9 +60,9 @@
 
 	async function finishLogout() {
 		// Drop the previous user's cached data so it can't surface for the next
-		// account (or offline) on a shared device. Universal caches (e.g. schedule)
-		// stay warm by design.
-		await clearUserCache();
+		// account (or offline) on a shared device. Universal entries (e.g. the
+		// programme) stay warm by design.
+		clearUserQueries(queryClient);
 
 		await goto(resolve('/'), { invalidateAll: true });
 		eventsClient.restart();

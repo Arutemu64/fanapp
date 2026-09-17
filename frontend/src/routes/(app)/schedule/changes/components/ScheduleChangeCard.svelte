@@ -5,17 +5,19 @@
 		ScheduleChangeType
 	} from '$lib/api/generated';
 
-	import { invalidate } from '$app/navigation';
-	import { createApiClient } from '$lib/api';
+	import { client } from '$lib/api';
 	import { undoScheduleChange } from '$lib/api/generated';
+	import {
+		getScheduleQueryKey,
+		listScheduleChangesQueryKey
+	} from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Undo2 } from '@lucide/svelte';
-
-	const client = createApiClient();
+	import { useQueryClient } from '@tanstack/svelte-query';
 
 	interface Props {
 		change: ScheduleChangeFullDto;
@@ -24,6 +26,7 @@
 	let { change }: Props = $props();
 
 	const toastService = getToastService();
+	const queryClient = useQueryClient();
 	let isUndoing = $state(false);
 
 	async function undoChange() {
@@ -41,7 +44,11 @@
 			}
 
 			toastService.add('Изменение отменено', 'success');
-			await invalidate('app:schedule:changes');
+			// An undo rewrites the programme as well as this log, so refresh both.
+			await Promise.all([
+				queryClient.invalidateQueries({ queryKey: listScheduleChangesQueryKey() }),
+				queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() })
+			]);
 		} catch (err) {
 			toastService.error('Не удалось отменить изменение');
 			console.error('Undo error:', err);

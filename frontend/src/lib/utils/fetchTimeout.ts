@@ -16,6 +16,3 @@ export function timeoutSignal(ms: number): AbortSignal {
 	setTimeout(() => controller.abort(), ms);
 	return controller.signal;
 }
-
-/** Default budget for a first-paint API call before we fall back to cache. */
-export const FIRST_PAINT_TIMEOUT_MS = 3500;

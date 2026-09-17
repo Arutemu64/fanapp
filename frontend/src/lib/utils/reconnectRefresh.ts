@@ -1,5 +1,3 @@
-import { invalidateAll } from '$app/navigation';
-
 /**
  * Coalesced catch-up refetch after connectivity recovers.
  *
@@ -9,8 +7,8 @@ import { invalidateAll } from '$app/navigation';
  * were disconnected. A single recovery routinely trips more than one of those
  * paths at once (network returns → the `online` edge fires *and* the stream
  * re-dials and completes its handshake), so the debounce is module-global rather
- * than per-service: it collapses that burst into one `invalidateAll`, and it also
- * stops a flapping connection from triggering a reload storm.
+ * than per-service: it collapses that burst into one refresh, and it also stops a
+ * flapping connection from triggering a reload storm.
  *
  * Leading *and* trailing: the first request in an idle period refreshes at once
  * (fast feedback for the common single-recovery case), and any request that
@@ -30,9 +28,23 @@ const REFRESH_DEBOUNCE_MS = 3000;
 let lastRefresh = 0;
 let trailingTimer: ReturnType<typeof setTimeout> | null = null;
 
+// Set by the root layout, which owns the QueryClient. This module must not hold
+// the client itself — it caches the viewer's data, and a module singleton would
+// outlive login/logout. Only the wiring lives here, alongside the debounce clock.
+let refresh: (() => void) | null = null;
+
+/**
+ * Register what a recovery should refetch. The root layout passes a closure over
+ * the QueryClient it created, invalidating every query so active ones refetch and
+ * the rest are marked stale for their next read.
+ */
+export function onReconnectRefresh(handler: () => void): void {
+	refresh = handler;
+}
+
 function refreshNow(): void {
 	lastRefresh = Date.now();
-	void invalidateAll();
+	refresh?.();
 }
 
 export function requestReconnectRefresh(): void {

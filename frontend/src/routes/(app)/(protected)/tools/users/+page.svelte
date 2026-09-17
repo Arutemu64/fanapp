@@ -10,20 +10,29 @@
 	import { USERS_PAGE_SIZE } from '$lib/constants/users';
 	import { getRoleLabel } from '$lib/utils/users';
 	import { ArrowLeft, ArrowRight, Search as SearchIcon, Users, X } from '@lucide/svelte';
+	import { createQuery } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 
 	import type { PageProps } from './$types';
 
+	import { usersQueryOptions } from './+page';
+
 	let { data }: PageProps = $props();
+
+	// Page and search still come from the load, which owns the URL; the rows come
+	// from the cache entry that load warmed, keyed by the same two values.
+	const usersQuery = createQuery(() => usersQueryOptions(data.page, data.search));
+	let users = $derived(usersQuery.data?.users ?? []);
+	let total = $derived(usersQuery.data?.total ?? 0);
 
 	// Local, editable mirror of the URL search term so the input stays responsive
 	// while the real query runs server-side after a short debounce (below).
 	// Seeded once (untrack) from the initial term; typing then drives navigation.
 	let searchValue = $state(untrack(() => data.search));
 
-	let totalPages = $derived(Math.max(1, Math.ceil(data.total / USERS_PAGE_SIZE)));
-	let rangeStart = $derived(data.total === 0 ? 0 : (data.page - 1) * USERS_PAGE_SIZE + 1);
-	let rangeEnd = $derived(Math.min(data.page * USERS_PAGE_SIZE, data.total));
+	let totalPages = $derived(Math.max(1, Math.ceil(total / USERS_PAGE_SIZE)));
+	let rangeStart = $derived(total === 0 ? 0 : (data.page - 1) * USERS_PAGE_SIZE + 1);
+	let rangeEnd = $derived(Math.min(data.page * USERS_PAGE_SIZE, total));
 
 	function buildQuery(page: number, search: string): string {
 		const parts: string[] = [];
@@ -93,7 +102,7 @@
 		{/if}
 	</div>
 
-	{#if data.users.length > 0}
+	{#if users.length > 0}
 		<div class="relative w-full overflow-x-auto rounded-lg border border-border">
 			<table class="w-full text-left text-sm">
 				<thead
@@ -107,7 +116,7 @@
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-border">
-					{#each data.users as listedUser (listedUser.id)}
+					{#each users as listedUser (listedUser.id)}
 						<tr class="transition-colors hover:bg-muted/50">
 							<td class="px-4 py-3 font-medium">
 								<!-- The username is the link to the detail page: a real anchor
@@ -138,7 +147,7 @@
 
 		<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 			<p class="text-xs text-muted-foreground">
-				Показаны {rangeStart}–{rangeEnd} из {data.total}
+				Показаны {rangeStart}–{rangeEnd} из {total}
 			</p>
 			<div class="flex items-center justify-center gap-2">
 				<Button

@@ -1,11 +1,11 @@
 <script lang="ts">
 	import type { ScheduleEventFullDto } from '$lib/api/generated';
 
-	import { invalidate } from '$app/navigation';
 	import { page } from '$app/state';
-	import { createApiClient } from '$lib/api';
+	import { client } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { moveScheduleEvent } from '$lib/api/generated';
+	import { getScheduleQueryKey } from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -14,8 +14,7 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { createSearchIndex } from '$lib/utils/search';
 	import { ArrowUpDown, BellRing, Search as SearchIcon, X } from '@lucide/svelte';
-
-	const client = createApiClient();
+	import { useQueryClient } from '@tanstack/svelte-query';
 
 	interface Props {
 		open: boolean;
@@ -24,6 +23,7 @@
 
 	let { open = $bindable(), event }: Props = $props();
 	const toastService = getToastService();
+	const queryClient = useQueryClient();
 
 	// The move picker searches the whole programme. It reads that off the route's
 	// loaded schedule rather than a prop, so the full array isn't drilled through
@@ -84,7 +84,7 @@
 			// rather than waiting for the schedule_updated SSE echo, which can arrive
 			// late or be dropped on a flaky operator connection. See EventCard's
 			// reloadSchedule for the full rationale.
-			void invalidate('app:schedule');
+			void queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() });
 			toastService.add('Выступление перенесено', 'success');
 
 			open = false;

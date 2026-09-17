@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ChangePasswordInput } from '$lib/api/generated';
 
-	import { createApiClient } from '$lib/api';
+	import { client } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { changeCurrentUserPassword } from '$lib/api/generated';
 	import PasswordInput from '$lib/components/PasswordInput.svelte';
@@ -12,8 +12,6 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { CheckCircle2, Lock, XCircle } from '@lucide/svelte';
-
-	const client = createApiClient();
 
 	interface Props {
 		open: boolean;
