@@ -31,7 +31,7 @@
 		"@eslint/compat": "2.1.1",
 		"@eslint/js": "10.0.1",
 		"@hey-api/openapi-ts": "0.99.0",
-		"@iconify-json/simple-icons": "1.2.95",
+		"@iconify-json/simple-icons": "1.2.96",
 		"@internationalized/date": "^3.12.3",
 		"@lucide/svelte": "^1.35.0",
 		"@playwright/test": "1.63.0",
