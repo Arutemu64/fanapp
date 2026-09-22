@@ -112,11 +112,6 @@ markers = [
     "unit: fast, pure tests with no infrastructure (no DB, Redis, or DI container)",
 ]
 testpaths = ["tests"]
-filterwarnings = [
-    # Our ORM models map branded NewType columns; SQLAlchemy warns about
-    # resolving them implicitly. Tracked separately from the test suite.
-    "ignore:Matching the provided NewType",
-]
 
 # Type checking (run via `just backend-typecheck`). The paths live here rather
 # than on the command line so the justfile, .pre-commit-config.yaml and CI cannot
