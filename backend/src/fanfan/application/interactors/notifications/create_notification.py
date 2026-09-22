@@ -20,7 +20,7 @@ class CreateNotification:
         notification_gateway: NotificationGateway,
         html_sanitizer: HtmlSanitizer,
         uow: UnitOfWork,
-    ):
+    ) -> None:
         self.mailing_gateway = mailing_gateway
         self.notification_gateway = notification_gateway
         self.html_sanitizer = html_sanitizer

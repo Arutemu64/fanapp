@@ -46,7 +46,7 @@ class SendScheduleChangeNotifications:
         mailing_gateway: MailingGateway,
         uow: UnitOfWork,
         events_broker: EventBroker,
-    ):
+    ) -> None:
         self.template_renderer = template_renderer
         self.changes_gateway = changes_gateway
         self.schedule_gateway = schedule_gateway

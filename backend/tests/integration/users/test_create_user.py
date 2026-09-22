@@ -20,7 +20,7 @@ _PASSWORD = "supersecret123"
 
 async def test_creates_a_user_with_a_hashed_password(
     dishka_request: AsyncContainer,
-):
+) -> None:
     create_user = await dishka_request.get(CreateUser)
     user_gateway = await dishka_request.get(UserGateway)
     password_hasher = await dishka_request.get(PasswordHasher)
@@ -41,7 +41,7 @@ async def test_creates_a_user_with_a_hashed_password(
 
 async def test_duplicate_username_is_rejected(
     dishka_request: AsyncContainer,
-):
+) -> None:
     create_user = await dishka_request.get(CreateUser)
 
     await create_user(
@@ -55,7 +55,7 @@ async def test_duplicate_username_is_rejected(
 
 async def test_profane_username_is_rejected(
     dishka_request: AsyncContainer,
-):
+) -> None:
     create_user = await dishka_request.get(CreateUser)
 
     with pytest.raises(UsernameProfanity):

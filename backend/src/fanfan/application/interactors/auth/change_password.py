@@ -22,7 +22,7 @@ class ChangePassword:
         current_user_provider: CurrentUserProvider,
         session_store: SessionStore,
         uow: UnitOfWork,
-    ):
+    ) -> None:
         self.password_hasher = password_hasher
         self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider

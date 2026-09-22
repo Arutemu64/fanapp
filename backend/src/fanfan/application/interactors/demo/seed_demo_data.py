@@ -197,7 +197,7 @@ class SeedDemoData:
         uow: UnitOfWork,
         current_user_provider: CurrentUserProvider,
         perm_service: PermissionService,
-    ):
+    ) -> None:
         self.schedule_gateway = schedule_gateway
         self.nomination_gateway = nomination_gateway
         self.participant_gateway = participant_gateway

@@ -22,7 +22,7 @@ class _FakeAppSettingsGateway:
         self._settings = settings
 
 
-async def test_projects_public_fields_from_settings():
+async def test_projects_public_fields_from_settings() -> None:
     start = datetime(2026, 8, 22, 11, 30, tzinfo=UTC)
     end = datetime(2026, 8, 23, 20, 0, tzinfo=UTC)
     voting_start = datetime(2026, 8, 22, 12, 0, tzinfo=UTC)

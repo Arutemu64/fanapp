@@ -32,13 +32,13 @@ class ProcessBroadcast:
         events_broker: EventBroker,
         mailing_gateway: MailingGateway,
         uow: UnitOfWork,
-    ):
+    ) -> None:
         self.user_gateway = user_gateway
         self.events_broker = events_broker
         self.mailing_gateway = mailing_gateway
         self.uow = uow
 
-    async def __call__(self, data: ProcessBroadcastInput):
+    async def __call__(self, data: ProcessBroadcastInput) -> None:
         users = await self.user_gateway.read_all_by_roles(*data.roles)
         mailing = await self.mailing_gateway.get(data.mailing_id)
         if mailing is None:

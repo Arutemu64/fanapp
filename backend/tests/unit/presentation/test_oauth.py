@@ -15,6 +15,7 @@ from fanfan.presentation.web.oauth import (
     OAuthFailed,
     OAuthFlowState,
     OAuthIntent,
+    TelegramClaims,
     classify_oauth_error,
     fetch_telegram_claims,
     read_flow_state,
@@ -87,18 +88,18 @@ def _login_state(**overrides: Any) -> dict[str, Any]:
     return {"intent": "login", "issuer": ISSUER} | overrides
 
 
-def test_declining_on_telegram_is_reported_as_cancelled():
+def test_declining_on_telegram_is_reported_as_cancelled() -> None:
     error = OAuthError(error="access_denied", description="User denied the request")
 
     assert classify_oauth_error(error) == OAUTH_ERROR_CANCELLED
 
 
 @pytest.mark.parametrize("error_code", ["mismatching_state", "invalid_grant", None])
-def test_every_other_failure_collapses_to_failed(error_code: str | None):
+def test_every_other_failure_collapses_to_failed(error_code: str | None) -> None:
     assert classify_oauth_error(OAuthError(error=error_code)) == OAUTH_ERROR_FAILED
 
 
-def test_claims_are_read_from_the_parsed_id_token():
+def test_claims_are_read_from_the_parsed_id_token() -> None:
     claims = read_telegram_claims(VALID_TOKEN)
 
     # The subject is the identity; the Bot API id is only a delivery address.
@@ -107,12 +108,12 @@ def test_claims_are_read_from_the_parsed_id_token():
     assert claims.name == "John Doe"
 
 
-def test_token_without_an_id_token_is_rejected():
+def test_token_without_an_id_token_is_rejected() -> None:
     with pytest.raises(InvalidTelegramAuthPayload):
         read_telegram_claims({"access_token": "..."})
 
 
-def test_token_without_a_subject_is_rejected():
+def test_token_without_a_subject_is_rejected() -> None:
     with pytest.raises(InvalidTelegramAuthPayload):
         read_telegram_claims({"userinfo": {"id": TELEGRAM_USER_ID}})
 
@@ -121,25 +122,25 @@ def test_token_without_a_subject_is_rejected():
 # Telegram, so the ID token verifies but carries no `id`. The app requires the
 # notification address on every identity, so such a token is refused rather than
 # producing an unreachable account.
-def test_token_without_an_id_is_rejected():
+def test_token_without_an_id_is_rejected() -> None:
     with pytest.raises(InvalidTelegramAuthPayload):
         read_telegram_claims({"userinfo": {"sub": SUBJECT}})
 
 
-async def _fetch_claims(app: FakeTelegramApp):
+async def _fetch_claims(app: FakeTelegramApp) -> TelegramClaims:
     # fetch_telegram_claims only forwards the request to Authlib, so a sentinel
     # stands in for the real one.
     return await fetch_telegram_claims(cast("Any", app), cast("Any", object()))
 
 
-async def test_a_completed_exchange_returns_the_claims():
+async def test_a_completed_exchange_returns_the_claims() -> None:
     claims = await _fetch_claims(FakeTelegramApp())
 
     assert claims.sub == SUBJECT
     assert claims.id == TELEGRAM_USER_ID
 
 
-async def test_declining_on_telegram_survives_as_cancelled():
+async def test_declining_on_telegram_survives_as_cancelled() -> None:
     app = FakeTelegramApp(raises=OAuthError(error="access_denied"))
 
     with pytest.raises(OAuthFailed) as failure:
@@ -177,14 +178,14 @@ async def test_declining_on_telegram_survives_as_cancelled():
         ),
     ],
 )
-async def test_non_oauth_failures_still_get_an_error_code(error: Exception):
+async def test_non_oauth_failures_still_get_an_error_code(error: Exception) -> None:
     with pytest.raises(OAuthFailed) as failure:
         await _fetch_claims(FakeTelegramApp(raises=error))
 
     assert failure.value.error_code == OAUTH_ERROR_FAILED
 
 
-async def test_a_token_without_a_subject_gets_an_error_code():
+async def test_a_token_without_a_subject_gets_an_error_code() -> None:
     app = FakeTelegramApp(token={"userinfo": {"id": TELEGRAM_USER_ID}})
 
     with pytest.raises(OAuthFailed) as failure:
@@ -199,7 +200,7 @@ async def _read_state(app: FakeTelegramApp, state: str | None) -> OAuthFlowState
     )
 
 
-async def test_flow_state_round_trips_the_intent():
+async def test_flow_state_round_trips_the_intent() -> None:
     app = FakeTelegramApp(state_data=_login_state())
 
     flow_state = await _read_state(app, "abc")
@@ -207,7 +208,7 @@ async def test_flow_state_round_trips_the_intent():
     assert flow_state.intent is OAuthIntent.LOGIN
 
 
-async def test_link_state_carries_the_initiator():
+async def test_link_state_carries_the_initiator() -> None:
     initiator = "0199a1f0-0000-7000-8000-000000000000"
     app = FakeTelegramApp(
         state_data=_login_state(intent="link", initiator_user_id=initiator)
@@ -235,7 +236,7 @@ async def test_link_state_carries_the_initiator():
 )
 async def test_untrustworthy_state_is_refused(
     state: str | None, state_data: Mapping[str, Any] | None
-):
+) -> None:
     app = FakeTelegramApp(state_data=state_data)
 
     with pytest.raises(OAuthFailed) as failure:
@@ -248,7 +249,7 @@ async def test_untrustworthy_state_is_refused(
 # must abort the interaction. Telegram does not support the RFC 9207 `iss`
 # response parameter, so this comparison against the stored issuer, plus the
 # per-provider callback URI, is the whole mix-up defence.
-async def test_an_issuer_that_moved_mid_flow_is_refused():
+async def test_an_issuer_that_moved_mid_flow_is_refused() -> None:
     app = FakeTelegramApp(
         state_data=_login_state(issuer="https://evil.example"), issuer=ISSUER
     )

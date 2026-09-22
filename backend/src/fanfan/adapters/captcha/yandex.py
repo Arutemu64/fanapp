@@ -20,7 +20,7 @@ VALIDATE_TIMEOUT = httpx2.Timeout(3.0, connect=2.0)
 class SmartCaptchaVerifier(CaptchaVerifier):
     """Validates SmartCaptcha tokens against Yandex's validate endpoint."""
 
-    def __init__(self, config: SmartCaptchaConfig, client: httpx2.AsyncClient):
+    def __init__(self, config: SmartCaptchaConfig, client: httpx2.AsyncClient) -> None:
         self.config = config
         self.client = client
 

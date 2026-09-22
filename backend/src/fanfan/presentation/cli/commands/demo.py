@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 @click.command(name="seed")
 @click.pass_context
 @async_command
-async def seed_demo_command(context: click.Context):
+async def seed_demo_command(context: click.Context) -> None:
     container: AsyncContainer = context.meta[CONTAINER_NAME]
     async with container() as r_container:
         seed_demo_data = await r_container.get(SeedDemoData)

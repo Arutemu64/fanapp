@@ -25,7 +25,7 @@ def create_app() -> FastStream:
     return app
 
 
-def main():
+def main() -> None:
     app = create_app()
     asyncio.run(app.run())
 

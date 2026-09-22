@@ -43,7 +43,7 @@ def _parse_dto(orm: NotificationORM) -> NotificationDTO:
 
 
 class SqlNotificationGateway(NotificationGateway):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
     async def add(self, notification: Notification) -> bool:

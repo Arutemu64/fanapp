@@ -20,7 +20,7 @@ class TCloudSource(TicketsSource):
     mapped to a domain role here so the boundary speaks the domain's language.
     """
 
-    def __init__(self, client: TCloudClient, config: TCloudConfig):
+    def __init__(self, client: TCloudClient, config: TCloudConfig) -> None:
         self.client = client
         self.config = config
 

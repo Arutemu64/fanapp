@@ -33,7 +33,7 @@ class GenerateTickets:
         ticket_gateway: TicketGateway,
         perm_service: PermissionService,
         uow: UnitOfWork,
-    ):
+    ) -> None:
         self.current_user_provider = current_user_provider
         self.ticket_gateway = ticket_gateway
         self.perm_service = perm_service

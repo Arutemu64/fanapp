@@ -32,7 +32,7 @@ class PostgresOutboxSignal(OutboxSignal):
     was down are picked up immediately rather than waiting for the poll backstop.
     """
 
-    def __init__(self, config: DatabaseConfig, channel: str = OUTBOX_CHANNEL):
+    def __init__(self, config: DatabaseConfig, channel: str = OUTBOX_CHANNEL) -> None:
         self._config = config
         self._channel = channel
         # Set by the NOTIFY callback (and on each reconnect); the relay clears it

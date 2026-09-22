@@ -40,7 +40,7 @@ _ROLE_CHOICE = click.Choice([r.value for r in UserRole])
 @async_command
 async def create_user_command(
     context: click.Context, username: str, password: str, role: str
-):
+) -> None:
     try:
         data = CreateUserInput(
             username=username, password=password, role=UserRole(role)

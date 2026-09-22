@@ -73,7 +73,7 @@ def _select_nomination_voting_dto(
 
 
 class SqlNominationGateway(NominationGateway):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
     async def add(self, nomination: Nomination) -> None:

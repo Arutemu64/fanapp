@@ -46,7 +46,7 @@ async def test_create_notification_redelivery_is_a_single_row_single_increment(
     login: Callable[[User], None],
     visitor: User,
     uow: UnitOfWork,
-):
+) -> None:
     """Plan 007: a redelivered NotificationQueued must not double-count or duplicate.
 
     Calling CreateNotification twice with the same (mailing-derived) id — as a
@@ -86,7 +86,7 @@ async def test_create_notification_flips_mailing_to_finished_on_last_delivery(
     login: Callable[[User], None],
     visitor: User,
     uow: UnitOfWork,
-):
+) -> None:
     """The completion rule lives on the aggregate: a SENDING mailing becomes
     FINISHED only once sent_count reaches total_count, and not before."""
     interactor = await dishka_request.get(CreateNotification)
@@ -154,7 +154,7 @@ async def test_create_notification_gateway_add_reports_whether_it_inserted(
     login: Callable[[User], None],
     visitor: User,
     uow: UnitOfWork,
-):
+) -> None:
     """The gateway upsert is the primitive CreateNotification relies on."""
     notification_gateway = await dishka_request.get(NotificationGateway)
     login(visitor)

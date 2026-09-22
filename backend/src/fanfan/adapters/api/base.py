@@ -37,7 +37,7 @@ class BaseApiClient:
     # and auth headers (configured in the DI provider), so subclasses only
     # declare endpoint methods. httpx2 raises httpx2.HTTPStatusError on non-2xx
     # responses (status available via error.response.status_code).
-    def __init__(self, client: httpx2.AsyncClient, retort: Retort):
+    def __init__(self, client: httpx2.AsyncClient, retort: Retort) -> None:
         self._client = client
         self._retort = retort
 

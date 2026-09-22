@@ -24,7 +24,7 @@ class SyncTickets:
         source: TicketsSource,
         ticket_import_service: TicketImportService,
         uow: UnitOfWork,
-    ):
+    ) -> None:
         self.source = source
         self.ticket_import_service = ticket_import_service
         self.uow = uow

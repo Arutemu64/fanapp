@@ -53,7 +53,7 @@ async def make_relay(
 async def test_relay_publishes_pending_events_in_creation_order(
     dishka_request: AsyncContainer,
     outbox: OutboxGateway,
-):
+) -> None:
     session = await dishka_request.get(AsyncSession)
     first = OutboxEventORM(id=uuid7(), subject="test.event", payload={"n": 1})
     second = OutboxEventORM(id=uuid7(), subject="test.event", payload={"n": 2})
@@ -78,7 +78,7 @@ async def test_relay_publishes_pending_events_in_creation_order(
 async def test_relay_drains_a_backlog_larger_than_one_batch(
     dishka_request: AsyncContainer,
     outbox: OutboxGateway,
-):
+) -> None:
     session = await dishka_request.get(AsyncSession)
     # Three rows against a batch size of two: a single wake must drain all of
     # them, not stop after the first batch and leave the rest for the next tick.
@@ -106,7 +106,7 @@ async def test_relay_drains_a_backlog_larger_than_one_batch(
 async def test_relay_marks_delivered_prefix_when_a_publish_fails(
     dishka_request: AsyncContainer,
     outbox: OutboxGateway,
-):
+) -> None:
     session = await dishka_request.get(AsyncSession)
     delivered = OutboxEventORM(id=uuid7(), subject="test.ok", payload={"n": 1})
     poisoned = OutboxEventORM(id=uuid7(), subject="test.bad", payload={"n": 2})

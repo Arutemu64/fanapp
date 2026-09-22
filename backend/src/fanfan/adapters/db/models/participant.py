@@ -4,6 +4,7 @@ from uuid import UUID
 from sqlalchemy import ForeignKey, UniqueConstraint, func, select
 from sqlalchemy.orm import (
     Mapped,
+    MappedSQLExpression,
     column_property,
     declared_attr,
     mapped_column,
@@ -36,7 +37,7 @@ class ParticipantORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
 
     @declared_attr
     @classmethod
-    def votes_count(cls):
+    def votes_count(cls) -> MappedSQLExpression[int]:
         return column_property(
             select(func.count(VoteORM.id))
             .where(VoteORM.participant_id == cls.id)

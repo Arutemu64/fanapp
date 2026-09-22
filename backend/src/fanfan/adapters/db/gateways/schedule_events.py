@@ -68,7 +68,7 @@ def _select_schedule_event_full_dto() -> Select[ScheduleEventORM]:
 
 
 class SqlScheduleEventGateway(ScheduleEventGateway):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
     async def add(self, event: ScheduleEvent) -> None:

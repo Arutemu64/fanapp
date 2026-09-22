@@ -45,7 +45,7 @@ async def test_change_email_sends_confirmation_code(
     dishka_request: AsyncContainer,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     # Changing an email does not update the account directly — it sends a
     # confirmation code to the new address, synchronously, so a delivery failure
     # would surface to the caller.
@@ -72,7 +72,7 @@ async def test_change_email_to_same_address_is_noop(
     dishka_request: AsyncContainer,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(ChangeEmail)
     user_gateway = await dishka_request.get(UserGateway)
     email_sender = await dishka_request.get(FakeEmailSender)
@@ -90,7 +90,7 @@ async def test_change_email_to_address_taken_by_another_user_raises(
     dishka_request: AsyncContainer,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(ChangeEmail)
     user_gateway = await dishka_request.get(UserGateway)
     email_sender = await dishka_request.get(FakeEmailSender)
@@ -109,7 +109,7 @@ async def test_change_email_twice_in_a_row_hits_cooldown(
     dishka_request: AsyncContainer,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     # The per-address cooldown lock stops a second confirmation code being sent
     # to the same target immediately after the first.
     interactor = await dishka_request.get(ChangeEmail)

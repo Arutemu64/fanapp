@@ -31,7 +31,7 @@ def _encode_display_name(name: str) -> str:
 
 
 class FastEmailSender(EmailSender):
-    def __init__(self, mail: FastMail):
+    def __init__(self, mail: FastMail) -> None:
         self.mail = mail
 
     async def send(self, message: EmailMessage) -> None:

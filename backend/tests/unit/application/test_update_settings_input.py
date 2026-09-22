@@ -10,7 +10,7 @@ from fanfan.application.interactors.settings.update_settings import (
 pytestmark = pytest.mark.unit
 
 
-def test_festival_boundaries_require_an_offset():
+def test_festival_boundaries_require_an_offset() -> None:
     # A naive festival boundary is rejected at the schema, before the range check
     # can compare it against the tz-aware persisted counterpart — that comparison
     # would otherwise raise TypeError (a 500) instead of this clean 422.
@@ -19,7 +19,7 @@ def test_festival_boundaries_require_an_offset():
         UpdateAppSettingsInput(festival_end=datetime(2026, 8, 23, 20, 0))  # noqa: DTZ001
 
 
-def test_festival_boundaries_accept_an_aware_instant():
+def test_festival_boundaries_accept_an_aware_instant() -> None:
     aware = datetime(2026, 8, 23, 20, 0, tzinfo=UTC)
 
     parsed = UpdateAppSettingsInput(festival_end=aware)

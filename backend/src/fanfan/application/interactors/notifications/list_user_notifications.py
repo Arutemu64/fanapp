@@ -19,7 +19,7 @@ class ListUserNotifications:
         self,
         notification_gateway: NotificationGateway,
         current_user_provider: CurrentUserProvider,
-    ):
+    ) -> None:
         self.notification_gateway = notification_gateway
         self.current_user_provider = current_user_provider
 

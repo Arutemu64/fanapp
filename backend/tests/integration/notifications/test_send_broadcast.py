@@ -54,7 +54,7 @@ async def test_send_broadcast_creates_mailing_and_enqueues_event(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(SendBroadcast)
     mailing_gateway = await dishka_request.get(MailingGateway)
     broadcaster = await _make_broadcaster(dishka_request, uow)
@@ -84,7 +84,7 @@ async def test_send_broadcast_without_permission_raises_access_denied(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(SendBroadcast)
     login(visitor)
 

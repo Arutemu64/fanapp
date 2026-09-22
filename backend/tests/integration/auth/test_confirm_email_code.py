@@ -48,7 +48,7 @@ async def test_confirm_email_code_sets_the_confirmed_email(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(ConfirmEmailCode)
     user_gateway = await dishka_request.get(UserGateway)
     token_registry = await dishka_request.get(TokenRegistry)
@@ -73,7 +73,7 @@ async def test_confirm_email_code_wrong_code_raises_and_keeps_email(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(ConfirmEmailCode)
     user_gateway = await dishka_request.get(UserGateway)
     token_registry = await dishka_request.get(TokenRegistry)
@@ -99,7 +99,7 @@ async def test_confirm_email_code_rejects_email_taken_by_another_user(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
     login: Callable[[User], None],
-):
+) -> None:
     # The code is valid, but its target email already belongs to someone else,
     # so confirming it would collide — the interactor refuses it as invalid.
     interactor = await dishka_request.get(ConfirmEmailCode)

@@ -50,7 +50,7 @@ async def test_process_broadcast_sets_total_and_fans_out_one_per_user(
     login: Callable[[User], None],
     visitor: User,
     uow: UnitOfWork,
-):
+) -> None:
     """Characterization baseline for the broadcast fan-out (Plan 007 builds here).
 
     ProcessBroadcast reads every user matching the roles, records that count as
@@ -104,7 +104,7 @@ async def test_process_broadcast_with_no_recipients_finishes_immediately(
     login: Callable[[User], None],
     visitor: User,
     uow: UnitOfWork,
-):
+) -> None:
     """A broadcast that reaches nobody is done at once, not stuck SENDING forever.
 
     With no matching users there is no CreateNotification to later flip the
@@ -140,7 +140,7 @@ async def test_process_broadcast_missing_mailing_raises_not_found(
     login: Callable[[User], None],
     visitor: User,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(ProcessBroadcast)
     broker = await dishka_request.get(FakeEventBroker)
     login(visitor)
@@ -166,7 +166,7 @@ async def test_process_broadcast_rerun_yields_identical_notification_ids(
     login: Callable[[User], None],
     visitor: User,
     uow: UnitOfWork,
-):
+) -> None:
     """Plan 007: a redelivered NotificationQueued must reuse the same id.
 
     ProcessBroadcast derives each notification's id from (mailing_id, user_id),

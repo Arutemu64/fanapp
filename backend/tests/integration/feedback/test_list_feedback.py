@@ -41,7 +41,7 @@ async def test_list_feedback_returns_newest_first_with_author(
     feedback_reader: User,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     await _add_feedback(dishka_request, visitor, "Первый отзыв")
     await _add_feedback(dishka_request, visitor, "Второй отзыв")
 
@@ -63,7 +63,7 @@ async def test_list_feedback_paginates(
     feedback_reader: User,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     await _add_feedback(dishka_request, visitor, "Первый отзыв")
     await _add_feedback(dishka_request, visitor, "Второй отзыв")
 
@@ -85,7 +85,7 @@ async def test_list_feedback_denied_without_permission(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(ListFeedback)
     login(visitor)
 

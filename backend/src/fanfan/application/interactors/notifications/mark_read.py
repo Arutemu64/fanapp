@@ -18,7 +18,7 @@ class MarkNotificationsRead:
         notifications_gateway: NotificationGateway,
         current_user_provider: CurrentUserProvider,
         uow: UnitOfWork,
-    ):
+    ) -> None:
         self.notifications_gateway = notifications_gateway
         self.current_user_provider = current_user_provider
         self.uow = uow

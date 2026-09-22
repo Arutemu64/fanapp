@@ -65,7 +65,7 @@ def _select_participant_dto(
 
 
 class SqlParticipantGateway(ParticipantGateway):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
     async def add(self, participant: Participant) -> None:

@@ -5,7 +5,7 @@ from fanfan.application.ports.template_renderer import TemplateRenderer
 
 
 class JinjaTemplateRenderer(TemplateRenderer):
-    def __init__(self, env: JinjaEnvironment):
+    def __init__(self, env: JinjaEnvironment) -> None:
         self._env = env
 
     async def render(self, template_name: str, context: dict[str, Any]) -> str:

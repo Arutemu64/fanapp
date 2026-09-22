@@ -41,7 +41,7 @@ async def test_lists_matching_users_with_total(
     users_reader: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     user_gateway = await dishka_request.get(UserGateway)
     interactor = await dishka_request.get(ListUsers)
     login(users_reader)
@@ -66,7 +66,7 @@ async def test_search_matches_username_and_email(
     users_reader: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     user_gateway = await dishka_request.get(UserGateway)
     interactor = await dishka_request.get(ListUsers)
     login(users_reader)
@@ -95,7 +95,7 @@ async def test_pagination_limits_and_offsets(
     users_reader: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     user_gateway = await dishka_request.get(UserGateway)
     interactor = await dishka_request.get(ListUsers)
     login(users_reader)
@@ -123,7 +123,7 @@ async def test_requires_users_read(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(ListUsers)
     login(visitor)
 

@@ -5,6 +5,7 @@ from sqlalchemy.orm import (
     declared_attr,
     mapped_column,
 )
+from sqlalchemy.sql import Subquery
 
 from fanfan.adapters.db.models.base import BaseORM
 from fanfan.adapters.db.models.mixins.order import OrderMixin
@@ -43,7 +44,7 @@ class ScheduleEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, OrderMixin, BaseORM)
     )
 
     @classmethod
-    def ranking_subquery(cls):
+    def ranking_subquery(cls) -> Subquery:
         # Single window pass over the non-skipped events, producing each row's
         # dense 1..N ``queue`` position. This is the one source of truth for the
         # ranking: the ``queue`` column_property correlates it per row (cheap for

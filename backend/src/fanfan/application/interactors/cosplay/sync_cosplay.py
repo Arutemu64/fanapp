@@ -31,7 +31,7 @@ class SyncCosplay:
         uow: UnitOfWork,
         nomination_gateway: NominationGateway,
         participant_gateway: ParticipantGateway,
-    ):
+    ) -> None:
         self.source = source
         self.uow = uow
         self.nomination_gateway = nomination_gateway

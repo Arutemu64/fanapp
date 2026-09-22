@@ -29,7 +29,7 @@ def _external(
 
 async def test_sync_tickets_imports_new_tickets(
     dishka_request: AsyncContainer,
-):
+) -> None:
     interactor = await dishka_request.get(SyncTickets)
     source = await dishka_request.get(FakeTicketsSource)
     ticket_gateway = await dishka_request.get(TicketGateway)
@@ -58,7 +58,7 @@ async def test_sync_tickets_imports_new_tickets(
 async def test_sync_tickets_is_idempotent_and_does_not_overwrite_existing(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(SyncTickets)
     source = await dishka_request.get(FakeTicketsSource)
     ticket_gateway = await dishka_request.get(TicketGateway)
@@ -101,7 +101,7 @@ async def test_sync_tickets_is_idempotent_and_does_not_overwrite_existing(
 
 async def test_sync_tickets_with_empty_source_imports_nothing(
     dishka_request: AsyncContainer,
-):
+) -> None:
     interactor = await dishka_request.get(SyncTickets)
     source = await dishka_request.get(FakeTicketsSource)
 
@@ -115,7 +115,7 @@ async def test_sync_tickets_with_empty_source_imports_nothing(
 
 async def test_sync_tickets_commits_in_batches_persisting_all_tickets(
     dishka_request: AsyncContainer,
-):
+) -> None:
     # Cross the batch-commit boundary so the mid-loop commit path runs and we
     # verify no ticket is dropped when the run spans multiple transactions.
     total = COMMIT_BATCH_SIZE + 5

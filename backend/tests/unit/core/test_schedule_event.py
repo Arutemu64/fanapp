@@ -31,7 +31,7 @@ def _event(
     )
 
 
-def test_set_current_on_normal_event():
+def test_set_current_on_normal_event() -> None:
     event = _event(1, 1)
 
     event.set_current()
@@ -39,21 +39,21 @@ def test_set_current_on_normal_event():
     assert event.is_current is True
 
 
-def test_set_current_on_skipped_event_raises():
+def test_set_current_on_skipped_event_raises() -> None:
     event = _event(1, 1, is_skipped=True)
 
     with pytest.raises(SkippedEventNotAllowed):
         event.set_current()
 
 
-def test_skip_on_current_event_raises():
+def test_skip_on_current_event_raises() -> None:
     event = _event(1, 1, is_current=True)
 
     with pytest.raises(CurrentEventNotAllowed):
         event.skip()
 
 
-def test_skip_then_unskip():
+def test_skip_then_unskip() -> None:
     event = _event(1, 1)
 
     event.skip()
@@ -63,7 +63,7 @@ def test_skip_then_unskip():
     assert event.is_skipped is False
 
 
-def test_place_after_uses_midpoint_when_next_exists():
+def test_place_after_uses_midpoint_when_next_exists() -> None:
     event = _event(3, 99)
     previous_event = _event(1, 2)
     next_event = _event(2, 4)
@@ -73,7 +73,7 @@ def test_place_after_uses_midpoint_when_next_exists():
     assert event.order == 3  # (2 + 4) / 2
 
 
-def test_place_after_appends_when_no_next():
+def test_place_after_appends_when_no_next() -> None:
     event = _event(3, 99)
     previous_event = _event(1, 2)
 
@@ -82,14 +82,14 @@ def test_place_after_appends_when_no_next():
     assert event.order == 3  # 2 + 1
 
 
-def test_place_after_self_raises():
+def test_place_after_self_raises() -> None:
     event = _event(1, 1)
 
     with pytest.raises(SameEventsAreNotAllowed):
         event.place_after(event, None)
 
 
-def test_place_before_first_with_existing_first():
+def test_place_before_first_with_existing_first() -> None:
     event = _event(2, 99)
     first_event = _event(1, 5)
 
@@ -98,7 +98,7 @@ def test_place_before_first_with_existing_first():
     assert event.order == 4  # 5 - 1
 
 
-def test_place_before_first_when_no_events():
+def test_place_before_first_when_no_events() -> None:
     event = _event(1, 99)
 
     event.place_before_first(None)

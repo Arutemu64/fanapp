@@ -10,7 +10,9 @@ from fanfan.core.vo.user import UserId
 class SessionManager(SessionStore):
     """Stores short opaque session identifiers in Redis."""
 
-    def __init__(self, redis: Redis, ttl_seconds: int, touch_threshold_seconds: int):
+    def __init__(
+        self, redis: Redis, ttl_seconds: int, touch_threshold_seconds: int
+    ) -> None:
         self.redis = redis
         self.ttl_seconds = max(1, ttl_seconds)
         self.touch_threshold_seconds = max(1, touch_threshold_seconds)

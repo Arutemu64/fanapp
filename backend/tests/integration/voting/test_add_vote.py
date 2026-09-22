@@ -39,7 +39,7 @@ async def test_add_vote_creates_vote_and_publishes_event(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(AddVote)
     settings_gateway = await dishka_request.get(AppSettingsGateway)
     nomination_gateway = await dishka_request.get(NominationGateway)
@@ -100,7 +100,7 @@ async def test_add_vote_without_linked_ticket_raises_access_denied(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(AddVote)
     settings_gateway = await dishka_request.get(AppSettingsGateway)
     nomination_gateway = await dishka_request.get(NominationGateway)
@@ -152,7 +152,7 @@ async def test_add_vote_when_voting_disabled_raises_access_denied(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(AddVote)
     settings_gateway = await dishka_request.get(AppSettingsGateway)
     nomination_gateway = await dishka_request.get(NominationGateway)
@@ -201,7 +201,7 @@ async def test_add_vote_for_missing_participant_raises_not_found(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(AddVote)
     settings_gateway = await dishka_request.get(AppSettingsGateway)
     login(visitor_with_ticket)
@@ -226,7 +226,7 @@ async def test_add_vote_twice_in_same_nomination_raises_already_voted(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(AddVote)
     settings_gateway = await dishka_request.get(AppSettingsGateway)
     nomination_gateway = await dishka_request.get(NominationGateway)
@@ -294,7 +294,7 @@ async def test_gateway_add_second_vote_in_same_nomination_raises_already_voted(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     """The DB unique constraint is the backstop, not just the app-level check.
 
     Calling the gateway directly (bypassing AddVote's get_user_vote_by_nomination
@@ -350,7 +350,7 @@ async def test_reassigning_participant_nomination_updates_existing_vote(
     visitor_with_ticket: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     """Cosplay sync can move a participant to a different nomination.
 
     votes.nomination_id is a denormalised copy backing uq_votes_user_nomination,
@@ -424,7 +424,7 @@ async def test_add_vote_allows_votes_in_different_nominations(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(AddVote)
     settings_gateway = await dishka_request.get(AppSettingsGateway)
     nomination_gateway = await dishka_request.get(NominationGateway)

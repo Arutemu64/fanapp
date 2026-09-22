@@ -50,7 +50,7 @@ async def _user_with_email(
 async def test_login_with_code_creates_session_for_matching_email(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(LoginWithCode)
     user_gateway = await dishka_request.get(UserGateway)
     token_registry = await dishka_request.get(TokenRegistry)
@@ -75,7 +75,7 @@ async def test_login_with_code_creates_session_for_matching_email(
 async def test_login_with_code_wrong_code_raises_invalid_otp(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(LoginWithCode)
     user_gateway = await dishka_request.get(UserGateway)
     token_registry = await dishka_request.get(TokenRegistry)
@@ -95,7 +95,7 @@ async def test_login_with_code_wrong_code_raises_invalid_otp(
 async def test_login_with_code_email_mismatch_raises_invalid_otp(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
-):
+) -> None:
     # The code is keyed by the target email but stores the user id. If that user's
     # own email no longer matches the target, the code must not authenticate them
     # (defends against a stale/hijacked code proving ownership of a mailbox).
@@ -118,7 +118,7 @@ async def test_login_with_code_email_mismatch_raises_invalid_otp(
 
 async def test_login_with_code_unknown_user_raises_user_not_found(
     dishka_request: AsyncContainer,
-):
+) -> None:
     # A code that resolves to a user id with no matching account.
     interactor = await dishka_request.get(LoginWithCode)
     token_registry = await dishka_request.get(TokenRegistry)
@@ -138,7 +138,7 @@ async def test_login_with_code_unknown_user_raises_user_not_found(
 async def test_login_with_code_locks_out_after_too_many_wrong_codes(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(LoginWithCode)
     user_gateway = await dishka_request.get(UserGateway)
     token_registry = await dishka_request.get(TokenRegistry)

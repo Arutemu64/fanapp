@@ -64,7 +64,7 @@ async def test_skip_marks_event_and_records_change(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(UpdateScheduleEventSkip)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
@@ -115,7 +115,7 @@ async def test_unskip_marks_event_and_records_change(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(UpdateScheduleEventSkip)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
@@ -155,7 +155,7 @@ async def test_skip_current_event_raises_and_records_nothing(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(UpdateScheduleEventSkip)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
@@ -191,7 +191,7 @@ async def test_skip_raises_when_event_not_found(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(UpdateScheduleEventSkip)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
     login(schedule_editor)
@@ -218,7 +218,7 @@ async def test_skip_without_permission_raises_access_denied(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(UpdateScheduleEventSkip)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
@@ -252,7 +252,7 @@ async def test_skip_twice_in_a_row_raises_too_fast(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(UpdateScheduleEventSkip)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)

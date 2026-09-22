@@ -51,7 +51,7 @@ async def test_schedule_change_notifies_only_subscribers_in_window(
     visitor: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     """Subscription fan-out honours the window and carries the queue difference.
 
     Layout by (order, queue): current=(1,1), B=(2,2), C=(3,3). A MOVED change
@@ -135,7 +135,7 @@ async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
     visitor: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     """A redelivered schedule-change trigger mints the same notification ids.
 
     The trigger is delivered at-least-once, so the interactor can run twice for

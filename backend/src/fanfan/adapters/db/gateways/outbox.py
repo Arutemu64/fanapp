@@ -11,7 +11,7 @@ from fanfan.application.ports.gateways.outbox import OutboxGateway
 
 
 class SqlOutboxGateway(OutboxGateway):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
     async def fetch_unpublished(self, limit: int) -> list[OutboxMessage]:

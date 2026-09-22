@@ -22,7 +22,7 @@ def _user(
     )
 
 
-def test_create_sets_given_fields():
+def test_create_sets_given_fields() -> None:
     user_id = generate_user_id()
 
     user = User.create(
@@ -40,7 +40,7 @@ def test_create_sets_given_fields():
     assert user.email == Email("alice@example.com")
 
 
-def test_set_email_updates_email():
+def test_set_email_updates_email() -> None:
     user = _user()
 
     user.set_email(Email("new@example.com"))
@@ -48,7 +48,7 @@ def test_set_email_updates_email():
     assert user.email == Email("new@example.com")
 
 
-def test_users_are_equal_by_id():
+def test_users_are_equal_by_id() -> None:
     user_id = generate_user_id()
     one = _user(user_id=user_id, username=Username("one"))
     two = _user(user_id=user_id, username=Username("two"))

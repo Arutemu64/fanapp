@@ -175,7 +175,7 @@ async def login(dishka_request: AsyncContainer) -> Callable[[User], None]:
 
 
 @pytest_asyncio.fixture(autouse=True)
-async def reset_redis(dishka_request: AsyncContainer):
+async def reset_redis(dishka_request: AsyncContainer) -> AsyncGenerator[None]:
     # Redis is not transactional, so (unlike the database, which rolls back
     # via TestSessionProvider) it has to be wiped between tests by hand.
     redis = await dishka_request.get(Redis)
@@ -196,5 +196,5 @@ async def alembic_config(dishka: AsyncContainer) -> AlembicConfig:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def upgrade_schema_db(alembic_config: AlembicConfig):
+def upgrade_schema_db(alembic_config: AlembicConfig) -> None:
     upgrade(alembic_config, "head")

@@ -1,5 +1,5 @@
 from adaptix import Retort
-from sqlalchemy import select
+from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.models import AppSettingsORM
@@ -17,7 +17,7 @@ def _to_model(orm: AppSettingsORM, retort: Retort) -> AppSettings:
 
 
 class SqlAppSettingsGateway(AppSettingsGateway):
-    def __init__(self, session: AsyncSession, retort: Retort):
+    def __init__(self, session: AsyncSession, retort: Retort) -> None:
         self.session = session
         self.retort = retort
 
@@ -29,7 +29,7 @@ class SqlAppSettingsGateway(AppSettingsGateway):
         stmt = select(AppSettingsORM).where(AppSettingsORM.id == 1).with_for_update()
         return await self._get_by_stmt(stmt)
 
-    async def _get_by_stmt(self, stmt) -> AppSettings:
+    async def _get_by_stmt(self, stmt: Select[AppSettingsORM]) -> AppSettings:
         settings_orm = await self.session.scalar(stmt)
         if settings_orm is None:
             raise AppSettingsNotFound

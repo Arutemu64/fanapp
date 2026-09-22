@@ -15,7 +15,7 @@ class PurgeNotifications:
         notification_gateway: NotificationGateway,
         uow: UnitOfWork,
         config: NotificationConfig,
-    ):
+    ) -> None:
         self.notification_gateway = notification_gateway
         self.uow = uow
         self.config = config

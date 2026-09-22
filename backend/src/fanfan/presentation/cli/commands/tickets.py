@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 @click.command(name="tcloud")
 @click.pass_context
 @async_command
-async def sync_tcloud_command(context: click.Context):
+async def sync_tcloud_command(context: click.Context) -> None:
     container: AsyncContainer = context.meta[CONTAINER_NAME]
     async with container() as r_container:
         # Execute*Sync, not the bare interactor, so a CLI run is recorded in

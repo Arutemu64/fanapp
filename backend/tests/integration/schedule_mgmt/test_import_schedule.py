@@ -54,7 +54,7 @@ async def test_import_creates_events_on_empty_schedule(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(ImportSchedule)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     realtime = await dishka_request.get(FakeRealtimeGateway)
@@ -97,7 +97,7 @@ async def test_import_updates_existing_and_deletes_orphans(
     schedule_editor: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(ImportSchedule)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     login(schedule_editor)
@@ -137,7 +137,7 @@ async def test_import_replaces_numberless_events(
     schedule_editor: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(ImportSchedule)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     login(schedule_editor)
@@ -173,7 +173,7 @@ async def test_import_persists_null_nomination_and_block(
     schedule_editor: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(ImportSchedule)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     login(schedule_editor)
@@ -203,7 +203,7 @@ async def test_import_without_permission_raises_access_denied(
     visitor: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(ImportSchedule)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     realtime = await dishka_request.get(FakeRealtimeGateway)

@@ -47,7 +47,7 @@ async def test_change_password_with_correct_old_password_updates_hash(
     dishka_request: AsyncContainer,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(ChangePassword)
     user_gateway = await dishka_request.get(UserGateway)
     password_hasher = await dishka_request.get(PasswordHasher)
@@ -75,7 +75,7 @@ async def test_change_password_with_wrong_old_password_raises(
     dishka_request: AsyncContainer,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(ChangePassword)
     user_gateway = await dishka_request.get(UserGateway)
     password_hasher = await dishka_request.get(PasswordHasher)
@@ -102,7 +102,7 @@ async def test_change_password_without_old_password_when_one_is_set_raises(
     dishka_request: AsyncContainer,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     # Omitting the current password is only allowed for accounts that have none;
     # when a password exists it must be provided.
     interactor = await dishka_request.get(ChangePassword)
@@ -122,7 +122,7 @@ async def test_change_password_for_account_without_password_sets_one(
     dishka_request: AsyncContainer,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     # A social-only account (no password) can set an initial password without
     # supplying an old one.
     interactor = await dishka_request.get(ChangePassword)
@@ -144,7 +144,7 @@ async def test_change_password_revokes_existing_sessions(
     dishka_request: AsyncContainer,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(ChangePassword)
     user_gateway = await dishka_request.get(UserGateway)
     password_hasher = await dishka_request.get(PasswordHasher)

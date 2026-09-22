@@ -24,7 +24,7 @@ class ListScheduleChanges:
         schedule_change_gateway: ScheduleChangeGateway,
         current_user_provider: CurrentUserProvider,
         perm_service: PermissionService,
-    ):
+    ) -> None:
         self.schedule_change_gateway = schedule_change_gateway
         self.current_user_provider = current_user_provider
         self.perm_service = perm_service

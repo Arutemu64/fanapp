@@ -29,7 +29,7 @@ class LoginWithCode:
         token_registry: TokenRegistry,
         uow: UnitOfWork,
         session_store: SessionStore,
-    ):
+    ) -> None:
         self.user_gateway = user_gateway
         self.token_registry = token_registry
         self.uow = uow

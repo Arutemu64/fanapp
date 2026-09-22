@@ -33,7 +33,7 @@ def _to_model(orm: PushSubscriptionORM) -> PushSubscription:
 
 
 class SqlPushSubscriptionGateway(PushSubscriptionGateway):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
     async def add(self, model: PushSubscription) -> None:

@@ -1,4 +1,5 @@
 import contextlib
+from types import TracebackType
 
 from redis.asyncio import Redis
 from redis.asyncio.lock import Lock
@@ -11,7 +12,7 @@ from fanfan.core.exceptions.rate_limit import RateLimitCooldown, RateLimitInUse
 class RedisRateLock(RateLock):
     def __init__(
         self, redis: Redis, lock: Lock, timestamp_key: str, cooldown_period: float
-    ):
+    ) -> None:
         self.redis = redis
         self.lock = lock
         self.timestamp_key = timestamp_key
@@ -45,7 +46,12 @@ class RedisRateLock(RateLock):
             retry_after = max(0, int(last + self.cooldown_period - now))
             raise RateLimitCooldown(retry_after=retry_after)
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         if exc_type is None:
             # Expire the timestamp once the cooldown is over so per-key
             # entries (e.g. per-email) do not accumulate in Redis forever.
@@ -58,7 +64,7 @@ class RedisRateLock(RateLock):
 
 
 class RedisRateLockFactory(RateLockFactory):
-    def __init__(self, redis: Redis):
+    def __init__(self, redis: Redis) -> None:
         self.redis = redis
 
     def __call__(

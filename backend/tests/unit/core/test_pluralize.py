@@ -41,11 +41,11 @@ _FORM = Plurals(one="one", three="three", five="five")
         (112, "five"),
     ],
 )
-def test_pluralize_selects_russian_form(value: int, expected: str):
+def test_pluralize_selects_russian_form(value: int, expected: str) -> None:
     assert pluralize(value, _FORM) == expected
 
 
-def test_pluralize_uses_the_given_strings():
+def test_pluralize_uses_the_given_strings() -> None:
     assert pluralize(1, SECONDS_PLURALS) == "секунду"
     assert pluralize(3, POINTS_PLURALS) == "очка"
     assert pluralize(5, NOTIFICATIONS_PLURALS) == "уведомлений"

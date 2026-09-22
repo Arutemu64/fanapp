@@ -16,32 +16,32 @@ from fanfan.presentation.cli.commands.users import create_user_command
 
 @click.group()
 @click.pass_context
-def cli(context: click.Context):
+def cli(context: click.Context) -> None:
     # No setup_dishka in there because it doesn't support async containers
     context.meta[CONTAINER_NAME] = create_system_container()
 
 
 @click.group(name="sync")
-def sync_group():
+def sync_group() -> None:
     """Run external syncs."""
 
 
 @click.group(name="demo")
-def demo_group():
+def demo_group() -> None:
     """Populate the environment with demo data."""
 
 
 @click.group(name="permissions")
-def permissions_group():
+def permissions_group() -> None:
     """Grant, revoke and list per-user permissions."""
 
 
 @click.group(name="users")
-def users_group():
+def users_group() -> None:
     """Manage user accounts."""
 
 
-def main():
+def main() -> None:
     init(service_name="cli")
 
     sync_group.add_command(sync_cosplay2_command)

@@ -61,7 +61,7 @@ async def test_cancel_mailing_marks_cancelled_and_enqueues_event(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(CancelMailing)
     mailing_gateway = await dishka_request.get(MailingGateway)
     broadcaster = await _make_broadcaster(dishka_request, uow)
@@ -87,7 +87,7 @@ async def test_cancel_mailing_twice_raises_already_cancelled(
     dishka_request: AsyncContainer,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(CancelMailing)
     mailing_gateway = await dishka_request.get(MailingGateway)
     broadcaster = await _make_broadcaster(dishka_request, uow)
@@ -107,7 +107,7 @@ async def test_cancel_finished_mailing_raises_not_cancellable(
     dishka_request: AsyncContainer,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(CancelMailing)
     mailing_gateway = await dishka_request.get(MailingGateway)
     broadcaster = await _make_broadcaster(dishka_request, uow)
@@ -129,7 +129,7 @@ async def test_cancel_missing_mailing_raises_not_found(
     dishka_request: AsyncContainer,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(CancelMailing)
     broadcaster = await _make_broadcaster(dishka_request, uow)
     login(broadcaster)
@@ -144,7 +144,7 @@ async def test_cancel_mailing_without_permission_raises_access_denied(
     visitor: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(CancelMailing)
     mailing_gateway = await dishka_request.get(MailingGateway)
     mailing = Mailing.create(by_user_id=visitor.id)

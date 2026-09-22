@@ -19,7 +19,7 @@ _PUBLISH_TIMEOUT_SECONDS = 10.0
 
 
 class NatsEventBroker(EventBroker):
-    def __init__(self, broker: NatsBroker):
+    def __init__(self, broker: NatsBroker) -> None:
         self.broker = broker
 
     async def publish(self, event: AppEvent) -> None:

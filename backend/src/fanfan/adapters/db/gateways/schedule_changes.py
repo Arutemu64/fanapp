@@ -87,7 +87,7 @@ def _parse_full_dto(
 
 
 class SqlScheduleChangeGateway(ScheduleChangeGateway):
-    def __init__(self, session: AsyncSession, uow: UnitOfWork):
+    def __init__(self, session: AsyncSession, uow: UnitOfWork) -> None:
         self.session = session
         self.uow = uow
 

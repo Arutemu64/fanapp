@@ -24,7 +24,7 @@ async def test_setting_time_range_persists_and_broadcasts(
     dishka_request: AsyncContainer,
     voting_manager: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(SetVotingTimeRange)
     settings_gateway = await dishka_request.get(AppSettingsGateway)
     realtime = await dishka_request.get(FakeRealtimeGateway)
@@ -47,7 +47,7 @@ async def test_no_op_when_range_unchanged_does_not_broadcast(
     dishka_request: AsyncContainer,
     voting_manager: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(SetVotingTimeRange)
     realtime = await dishka_request.get(FakeRealtimeGateway)
     login(voting_manager)
@@ -63,7 +63,7 @@ async def test_requires_voting_manage(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(SetVotingTimeRange)
     login(visitor)
 

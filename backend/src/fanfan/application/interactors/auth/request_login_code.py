@@ -33,7 +33,7 @@ class RequestLoginCode:
         user_service: UserService,
         rate_lock_factory: RateLockFactory,
         captcha_verifier: CaptchaVerifier,
-    ):
+    ) -> None:
         self.user_gateway = user_gateway
         self.send_login_code_email = send_login_code_email
         self.uow = uow

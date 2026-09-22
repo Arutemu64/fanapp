@@ -19,7 +19,7 @@ class VotingState:
 
 
 class VotingService:
-    def __init__(self, settings_gateway: AppSettingsGateway):
+    def __init__(self, settings_gateway: AppSettingsGateway) -> None:
         self.settings_gateway = settings_gateway
 
     async def get_voting_window(self) -> tuple[datetime | None, datetime | None]:

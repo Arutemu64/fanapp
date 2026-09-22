@@ -24,7 +24,7 @@ pytestmark = [
 async def test_grant_adds_the_permission(
     dishka_request: AsyncContainer,
     visitor: User,
-):
+) -> None:
     grant = await dishka_request.get(GrantPermission)
     perm_gateway = await dishka_request.get(UserPermissionGateway)
 
@@ -42,7 +42,7 @@ async def test_grant_adds_the_permission(
 async def test_grant_is_idempotent(
     dishka_request: AsyncContainer,
     visitor: User,
-):
+) -> None:
     grant = await dishka_request.get(GrantPermission)
 
     assert (
@@ -59,7 +59,7 @@ async def test_grant_is_idempotent(
 async def test_revoke_removes_the_permission(
     dishka_request: AsyncContainer,
     sync_operator: User,
-):
+) -> None:
     revoke = await dishka_request.get(RevokePermission)
     perm_gateway = await dishka_request.get(UserPermissionGateway)
 
@@ -77,7 +77,7 @@ async def test_revoke_removes_the_permission(
 async def test_revoke_without_the_grant_is_a_no_op(
     dishka_request: AsyncContainer,
     visitor: User,
-):
+) -> None:
     revoke = await dishka_request.get(RevokePermission)
 
     assert (
@@ -88,7 +88,7 @@ async def test_revoke_without_the_grant_is_a_no_op(
 async def test_list_returns_granted_permissions(
     dishka_request: AsyncContainer,
     sync_operator: User,
-):
+) -> None:
     list_permissions = await dishka_request.get(ListUserPermissions)
 
     permissions = await list_permissions(username=sync_operator.username)
@@ -96,7 +96,7 @@ async def test_list_returns_granted_permissions(
     assert permissions == [Permission.SYNC_RUN]
 
 
-async def test_grant_rejects_unknown_user(dishka_request: AsyncContainer):
+async def test_grant_rejects_unknown_user(dishka_request: AsyncContainer) -> None:
     grant = await dishka_request.get(GrantPermission)
 
     with pytest.raises(UserNotFound):

@@ -24,7 +24,7 @@ class CancelMailing:
         mailing_gateway: MailingGateway,
         perm_service: PermissionService,
         uow: UnitOfWork,
-    ):
+    ) -> None:
         self.current_user_provider = current_user_provider
         self.mailing_gateway = mailing_gateway
         self.perm_service = perm_service

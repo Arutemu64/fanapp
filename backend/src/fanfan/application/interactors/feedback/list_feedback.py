@@ -22,7 +22,7 @@ class ListFeedback:
         feedback_gateway: FeedbackGateway,
         current_user_provider: CurrentUserProvider,
         perm_service: PermissionService,
-    ):
+    ) -> None:
         self.feedback_gateway = feedback_gateway
         self.current_user_provider = current_user_provider
         self.perm_service = perm_service

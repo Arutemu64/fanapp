@@ -134,7 +134,7 @@ def _parse_current_user_dto(orm: UserORM) -> CurrentUserDTO:
 
 
 class SqlUserGateway(UserGateway):
-    def __init__(self, session: AsyncSession, uow: UnitOfWork):
+    def __init__(self, session: AsyncSession, uow: UnitOfWork) -> None:
         self.session = session
         self.uow = uow
 

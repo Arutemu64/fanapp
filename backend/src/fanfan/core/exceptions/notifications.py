@@ -40,6 +40,6 @@ class NotificationChannelUnavailable(NotificationException):
 class NotificationRetryAfter(NotificationException):
     code = "NOTIFICATION_RETRY_AFTER"
 
-    def __init__(self, retry_after: int):
+    def __init__(self, retry_after: int) -> None:
         self.retry_after = retry_after
         super().__init__(details={"retry_after": retry_after})

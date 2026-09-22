@@ -30,14 +30,14 @@ class SendPersonalNotification:
         current_user_provider: CurrentUserProvider,
         perm_service: PermissionService,
         events_broker: EventBroker,
-    ):
+    ) -> None:
         self.user_gateway = user_gateway
         self.mailing_gateway = mailing_gateway
         self.current_user_provider = current_user_provider
         self.perm_service = perm_service
         self.events_broker = events_broker
 
-    async def __call__(self, data: SendPersonalNotificationInput):
+    async def __call__(self, data: SendPersonalNotificationInput) -> None:
         current_user = await self.current_user_provider.require_user()
         await self.perm_service.ensure(
             user=current_user, permission=Permission.NOTIFICATIONS_SEND

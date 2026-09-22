@@ -41,7 +41,7 @@ async def test_create_push_subscription_persists_endpoint(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(CreatePushSubscription)
     push_gateway = await dishka_request.get(PushSubscriptionGateway)
     login(visitor)
@@ -63,7 +63,7 @@ async def test_create_push_subscription_same_endpoint_twice_raises(
     visitor: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     """Document current behavior: registration is NOT idempotent.
 
     The endpoint column carries a unique constraint and CreatePushSubscription
@@ -95,7 +95,7 @@ async def test_check_push_subscription_reports_presence(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     create = await dishka_request.get(CreatePushSubscription)
     check = await dishka_request.get(CheckPushSubscription)
     login(visitor)
@@ -117,7 +117,7 @@ async def test_delete_push_subscription_removes_own_endpoint(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     create = await dishka_request.get(CreatePushSubscription)
     delete = await dishka_request.get(DeletePushSubscription)
     push_gateway = await dishka_request.get(PushSubscriptionGateway)
@@ -136,7 +136,7 @@ async def test_delete_push_subscription_missing_raises_not_found(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     delete = await dishka_request.get(DeletePushSubscription)
     login(visitor)
 
@@ -149,7 +149,7 @@ async def test_delete_push_subscription_of_another_user_raises_access_denied(
     visitor: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     """Ownership guard: a user cannot delete another user's push endpoint."""
     create = await dishka_request.get(CreatePushSubscription)
     delete = await dishka_request.get(DeletePushSubscription)

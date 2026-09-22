@@ -63,7 +63,7 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
@@ -126,7 +126,7 @@ async def test_set_current_event_sets_current_when_none_was_current(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
@@ -167,7 +167,7 @@ async def test_set_current_event_can_unset_current_event(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
@@ -208,7 +208,7 @@ async def test_set_current_event_raises_when_event_not_found(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
@@ -245,7 +245,7 @@ async def test_set_current_event_without_permission_raises_access_denied(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
@@ -277,7 +277,7 @@ async def test_set_current_event_twice_in_a_row_raises_too_fast(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)

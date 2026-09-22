@@ -40,7 +40,7 @@ def _to_model(orm: TicketORM) -> Ticket:
 
 
 class SqlTicketGateway(TicketGateway):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
     async def add(self, ticket: Ticket) -> None:

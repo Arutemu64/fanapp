@@ -41,7 +41,7 @@ async def test_create_subscription_persists_for_current_user(
     visitor: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(CreateSubscription)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
@@ -66,7 +66,7 @@ async def test_create_subscription_for_missing_event_raises_event_not_found(
     visitor: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     """Document current behavior: the interactor does not validate the event.
 
     CreateSubscription injects a ScheduleEventGateway but never uses it, so it

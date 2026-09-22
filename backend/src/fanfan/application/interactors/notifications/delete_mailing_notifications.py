@@ -20,7 +20,7 @@ class DeleteMailingNotifications:
         mailing_gateway: MailingGateway,
         notification_gateway: NotificationGateway,
         uow: UnitOfWork,
-    ):
+    ) -> None:
         self.mailing_gateway = mailing_gateway
         self.notification_gateway = notification_gateway
         self.uow = uow

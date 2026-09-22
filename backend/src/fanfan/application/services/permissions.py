@@ -9,7 +9,7 @@ from fanfan.core.vo.permission import (
 
 
 class PermissionService:
-    def __init__(self, perm_gateway: UserPermissionGateway):
+    def __init__(self, perm_gateway: UserPermissionGateway) -> None:
         self.perm_gateway = perm_gateway
 
     async def ensure(

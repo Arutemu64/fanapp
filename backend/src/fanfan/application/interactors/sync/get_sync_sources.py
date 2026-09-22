@@ -21,7 +21,7 @@ class GetSyncSources:
         perm_service: PermissionService,
         sync_run_gateway: SyncRunGateway,
         available_sources: AvailableSyncSources,
-    ):
+    ) -> None:
         self.current_user_provider = current_user_provider
         self.perm_service = perm_service
         self.sync_run_gateway = sync_run_gateway

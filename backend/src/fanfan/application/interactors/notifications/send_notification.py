@@ -36,7 +36,7 @@ class SendNotification:
         tg_notifier: TelegramNotifierPort,
         push_notifier: PushNotifierPort,
         vk_notifier: VkNotifierPort,
-    ):
+    ) -> None:
         self.mailing_gateway = mailing_gateway
         self.notification_gateway = notification_gateway
         self.user_gateway = user_gateway

@@ -40,7 +40,7 @@ class Ticket(AggregateRoot):
     def is_used_by(self, user_id: UserId) -> bool:
         return self.used_by_user_id == user_id
 
-    def set_as_used(self, user_id: UserId):
+    def set_as_used(self, user_id: UserId) -> None:
         if self.is_used:
             raise TicketAlreadyUsed
         self.used_by_user_id = user_id

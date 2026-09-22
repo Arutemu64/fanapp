@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 @click.command(name="cosplay2")
 @click.pass_context
 @async_command
-async def sync_cosplay2_command(context: click.Context):
+async def sync_cosplay2_command(context: click.Context) -> None:
     container: AsyncContainer = context.meta[CONTAINER_NAME]
     async with container() as r_container:
         # Execute*Sync, not the bare interactor, so a CLI run is recorded in

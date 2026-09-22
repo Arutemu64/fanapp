@@ -1,6 +1,7 @@
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import (
     Mapped,
+    MappedSQLExpression,
     column_property,
     declared_attr,
     mapped_column,
@@ -23,7 +24,7 @@ class NominationORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
 
     @declared_attr
     @classmethod
-    def participants_count(cls):
+    def participants_count(cls) -> MappedSQLExpression[int]:
         return column_property(
             select(func.count(ParticipantORM.id))
             .where(ParticipantORM.nomination_id == cls.id)

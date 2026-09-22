@@ -37,7 +37,7 @@ def _schedule_event(number: int, order: float) -> ScheduleEvent:
 async def test_get_schedule_serves_cached_payload_between_reads(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(GetSchedule)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
 
@@ -63,7 +63,7 @@ async def test_schedule_edit_invalidates_cache(
     schedule_editor: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     get_schedule = await dishka_request.get(GetSchedule)
     set_current = await dishka_request.get(SetCurrentScheduleEvent)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
