@@ -46,7 +46,9 @@ async def test_hit_self_heals_a_counter_that_lost_its_ttl(
     key = "test-self-heal-orphaned-counter"
     counter_key = RedisRateLimiter._counter_key(key)
 
-    await redis.incr(counter_key)
+    # redis-py declares one signature for the sync and async clients, so the
+    # async return type is only inferable at the call site, not from the stub.
+    await redis.incr(counter_key)  # ty: ignore[invalid-await]
     assert await redis.ttl(counter_key) == -1  # no expiry set
 
     await limiter.hit(key, limit=5, window_seconds=60)

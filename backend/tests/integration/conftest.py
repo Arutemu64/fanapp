@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterable, Callable
+from collections.abc import AsyncGenerator, Callable
 from pathlib import Path
 
 import pytest
@@ -55,7 +55,7 @@ BACKEND_DIR = Path(__file__).resolve().parents[2]
 
 
 @pytest_asyncio.fixture(scope="session")
-async def dishka() -> AsyncIterable[AsyncContainer]:
+async def dishka() -> AsyncGenerator[AsyncContainer]:
     # Fakes for ports that would otherwise reach external systems
     # (NATS, SMTP, Telegram, WebPush, TicketsCloud). REQUEST scope so each test
     # gets a fresh instance and the interactor under test shares it with the test.
@@ -126,7 +126,7 @@ async def dishka() -> AsyncIterable[AsyncContainer]:
 
 
 @pytest_asyncio.fixture
-async def dishka_request(dishka: AsyncContainer) -> AsyncIterable[AsyncContainer]:
+async def dishka_request(dishka: AsyncContainer) -> AsyncGenerator[AsyncContainer]:
     async with dishka() as request_container:
         yield request_container
 

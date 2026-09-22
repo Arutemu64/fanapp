@@ -17,7 +17,6 @@ from fanfan.core.models.schedule_event import ScheduleEvent
 from fanfan.core.models.user import User
 from fanfan.core.vo.schedule_event import generate_schedule_event_id
 from tests.fakes.realtime_gateway import FakeRealtimeGateway
-from tests.integration.conftest import as_outbox
 
 pytestmark = [
     pytest.mark.asyncio,

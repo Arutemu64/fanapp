@@ -7,13 +7,28 @@ from fanfan.presentation.web.config import WebConfig
 pytestmark = pytest.mark.unit
 
 
-def _config(**overrides: object) -> WebConfig:
+def _config(
+    enabled_oauth_providers: list[SocialProvider] | None = None,
+) -> WebConfig:
+    """Builds a config, optionally overriding the OAuth provider list.
+
+    Two explicit constructions rather than one call with a `**overrides` splat:
+    a splatted dict cannot be type-checked, and passing the field through
+    unconditionally would leave the default-value test asserting its own input.
+    """
+    if enabled_oauth_providers is None:
+        return WebConfig(
+            host="localhost",
+            port=8000,
+            public_url=HttpUrl("http://localhost:3000/"),
+            secret_key=SecretStr("test-secret-key"),
+        )
     return WebConfig(
         host="localhost",
         port=8000,
         public_url=HttpUrl("http://localhost:3000/"),
         secret_key=SecretStr("test-secret-key"),
-        **overrides,
+        enabled_oauth_providers=enabled_oauth_providers,
     )
 
 

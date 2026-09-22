@@ -88,7 +88,6 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "f
     #            check written as an assert would be silently dropped in prod.
     "S105",    # hardcoded passwords in tests are fine
     "S106",    # hardcoded passwords in tests are fine
-    "F401",    # unused imports are common in fixtures / conftest files
     "PLR2004", # magic numbers (e.g. status code == 200) are totally fine in tests
     "PLR0913", # a test's arguments are pytest fixtures, not a call signature anyone types
     "PLR0917", # ditto, counted positionally

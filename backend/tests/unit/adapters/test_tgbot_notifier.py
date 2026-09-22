@@ -11,6 +11,7 @@ from aiogram.exceptions import (
 from aiogram.methods import SendMessage
 
 from fanfan.adapters.tgbot.notifier import TelegramNotifier
+from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
 from fanfan.core.exceptions.notifications import (
     NotificationChannelUnavailable,
     NotificationRetryAfter,
@@ -45,12 +46,16 @@ def _notification(
 
 
 def _identity(*, provider_user_id: int | None = TG_USER_ID) -> SocialIdentity:
+    # `provider_user_id` is `int` on the model and NOT NULL in the database, but
+    # TelegramNotifier still branches on it being None, so the test for that
+    # branch has to build a state the type says cannot exist. The suppression is
+    # the marker: it goes away with whichever side gets corrected.
     return SocialIdentity(
         id=generate_social_identity_id(),
         user_id=USER_ID,
         provider=SocialProvider.TELEGRAM,
         subject=str(TG_USER_ID),
-        provider_user_id=provider_user_id,
+        provider_user_id=provider_user_id,  # ty: ignore[invalid-argument-type]
     )
 
 
@@ -58,13 +63,18 @@ def _web_config() -> WebConfig:
     return WebConfig(
         host="localhost",
         port=8000,
-        public_url="https://app.example",  # type: ignore[arg-type]
-        secret_key="secret",  # type: ignore[arg-type]
+        public_url="https://app.example",
+        secret_key="secret",
     )
 
 
 class _RecordingBot:
-    """Stands in for aiogram's Bot, recording each send and optionally raising."""
+    """Stands in for aiogram's Bot, recording each send and optionally raising.
+
+    Structural rather than a `Bot` subclass: `Bot.__init__` demands a real token
+    and its `send_message` carries the full Bot API signature, which an override
+    narrowing to `**kwargs` cannot satisfy. Hence the suppression at the call site.
+    """
 
     def __init__(self, *, error: Exception | None = None) -> None:
         self._error = error
@@ -76,7 +86,7 @@ class _RecordingBot:
             raise self._error
 
 
-class _StubSocialIdentityGateway:
+class _StubSocialIdentityGateway(SocialIdentityGateway):
     def __init__(self, identity: SocialIdentity | None) -> None:
         self._identity = identity
 
@@ -92,8 +102,8 @@ def _notifier(
     *, identity: SocialIdentity | None, bot: _RecordingBot
 ) -> TelegramNotifier:
     return TelegramNotifier(
-        bot=bot,  # type: ignore[arg-type]
-        social_identity_gateway=_StubSocialIdentityGateway(identity),  # type: ignore[arg-type]
+        bot=bot,  # ty: ignore[invalid-argument-type]  # see _RecordingBot
+        social_identity_gateway=_StubSocialIdentityGateway(identity),
         web_config=_web_config(),
     )
 

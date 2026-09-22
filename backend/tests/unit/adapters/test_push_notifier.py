@@ -11,6 +11,10 @@ from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from fanfan.adapters.push.client import MessageData, WebPushClient
 from fanfan.adapters.push.config import PushConfig
 from fanfan.adapters.push.push import PushNotifier
+from fanfan.application.ports.gateways.push_subscriptions import (
+    PushSubscriptionGateway,
+)
+from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.notifications import (
     NotificationChannelUnavailable,
     NotificationRetryAfter,
@@ -120,8 +124,14 @@ async def test_send_returns_response_with_status(tmp_path: Path) -> None:
 # --- PushNotifier: message shaping and pruning of dead subscriptions -----------
 
 
-class _RecordingClient:
-    """Stands in for WebPushClient, recording each send and replaying a response."""
+class _RecordingClient(WebPushClient):
+    """Stands in for WebPushClient, recording each send and replaying a response.
+
+    Subclasses the real client (rather than duck-typing it) so `ty` verifies the
+    overrides against the signatures the notifier actually calls. `__init__` does
+    not call super(): there is no VAPID keypair or httpx pool here, and both
+    overridden methods replace every use of them.
+    """
 
     def __init__(
         self, *, status: int = 201, headers: dict[str, str] | None = None
@@ -140,7 +150,7 @@ class _RecordingClient:
         return httpx2.Response(self._status, headers=self._headers)
 
 
-class _StubGateway:
+class _StubGateway(PushSubscriptionGateway):
     def __init__(self, subs: list[PushSubscription]) -> None:
         self._subs = subs
         self.deleted: list[PushSubscription] = []
@@ -155,7 +165,7 @@ class _StubGateway:
         self.deleted.append(model)
 
 
-class _StubUow:
+class _StubUow(UnitOfWork):
     def __init__(self) -> None:
         self.commits = 0
 
@@ -183,9 +193,9 @@ async def test_notifier_passes_domain_subscription_and_flattens_html() -> None:
     gateway = _StubGateway([sub])
     client = _RecordingClient()
     notifier = PushNotifier(
-        push_sub_gateway=gateway,  # type: ignore[arg-type]
-        uow=_StubUow(),  # type: ignore[arg-type]
-        client=client,  # type: ignore[arg-type]
+        push_sub_gateway=gateway,
+        uow=_StubUow(),
+        client=client,
     )
 
     await notifier.send_notification(_notification())
@@ -220,9 +230,9 @@ async def test_notifier_groups_topic_notifications_by_tag(
     so a burst collapses to the latest instead of stacking on the OS shade."""
     sub = _browser_subscription(endpoint="https://push.example/one")
     notifier = PushNotifier(
-        push_sub_gateway=_StubGateway([sub]),  # type: ignore[arg-type]
-        uow=_StubUow(),  # type: ignore[arg-type]
-        client=(client := _RecordingClient()),  # type: ignore[arg-type]
+        push_sub_gateway=_StubGateway([sub]),
+        uow=_StubUow(),
+        client=(client := _RecordingClient()),
     )
 
     await notifier.send_notification(_notification(notification_type))
@@ -240,9 +250,9 @@ async def test_notifier_prunes_gone_subscription() -> None:
 
     # 410 Gone for every send: both endpoints report themselves retired.
     notifier = PushNotifier(
-        push_sub_gateway=gateway,  # type: ignore[arg-type]
-        uow=uow,  # type: ignore[arg-type]
-        client=_RecordingClient(status=410),  # type: ignore[arg-type]
+        push_sub_gateway=gateway,
+        uow=uow,
+        client=_RecordingClient(status=410),
     )
 
     await notifier.send_notification(_notification())
@@ -255,9 +265,9 @@ async def test_notifier_decodes_html_entities_to_plain_text() -> None:
     sub = _browser_subscription(endpoint="https://push.example/one")
     client = _RecordingClient()
     notifier = PushNotifier(
-        push_sub_gateway=_StubGateway([sub]),  # type: ignore[arg-type]
-        uow=_StubUow(),  # type: ignore[arg-type]
-        client=client,  # type: ignore[arg-type]
+        push_sub_gateway=_StubGateway([sub]),
+        uow=_StubUow(),
+        client=client,
     )
     notification = Notification(
         id=generate_notification_id(),
@@ -284,9 +294,9 @@ async def test_notifier_raises_channel_unavailable_on_auth_failure() -> None:
     sub = _browser_subscription(endpoint="https://push.example/one")
     gateway = _StubGateway([sub])
     notifier = PushNotifier(
-        push_sub_gateway=gateway,  # type: ignore[arg-type]
-        uow=_StubUow(),  # type: ignore[arg-type]
-        client=_RecordingClient(status=401),  # type: ignore[arg-type]
+        push_sub_gateway=gateway,
+        uow=_StubUow(),
+        client=_RecordingClient(status=401),
     )
 
     # 401 is a VAPID/auth failure: a channel-wide misconfiguration the consumer
@@ -300,9 +310,9 @@ async def test_notifier_retries_on_throttle_with_default_backoff() -> None:
     notifier = PushNotifier(
         push_sub_gateway=_StubGateway(
             [_browser_subscription(endpoint="https://push.example/one")]
-        ),  # type: ignore[arg-type]
-        uow=_StubUow(),  # type: ignore[arg-type]
-        client=_RecordingClient(status=429),  # type: ignore[arg-type]
+        ),
+        uow=_StubUow(),
+        client=_RecordingClient(status=429),
     )
 
     with pytest.raises(NotificationRetryAfter) as exc:
@@ -315,9 +325,9 @@ async def test_notifier_honors_retry_after_header() -> None:
     notifier = PushNotifier(
         push_sub_gateway=_StubGateway(
             [_browser_subscription(endpoint="https://push.example/one")]
-        ),  # type: ignore[arg-type]
-        uow=_StubUow(),  # type: ignore[arg-type]
-        client=_RecordingClient(status=429, headers={"Retry-After": "30"}),  # type: ignore[arg-type]
+        ),
+        uow=_StubUow(),
+        client=_RecordingClient(status=429, headers={"Retry-After": "30"}),
     )
 
     with pytest.raises(NotificationRetryAfter) as exc:
@@ -329,9 +339,9 @@ async def test_notifier_retries_on_server_error() -> None:
     notifier = PushNotifier(
         push_sub_gateway=_StubGateway(
             [_browser_subscription(endpoint="https://push.example/one")]
-        ),  # type: ignore[arg-type]
-        uow=_StubUow(),  # type: ignore[arg-type]
-        client=_RecordingClient(status=503),  # type: ignore[arg-type]
+        ),
+        uow=_StubUow(),
+        client=_RecordingClient(status=503),
     )
 
     with pytest.raises(NotificationRetryAfter):
@@ -342,9 +352,9 @@ async def test_notifier_test_type_sets_foreground_flag() -> None:
     sub = _browser_subscription(endpoint="https://push.example/one")
     client = _RecordingClient()
     notifier = PushNotifier(
-        push_sub_gateway=_StubGateway([sub]),  # type: ignore[arg-type]
-        uow=_StubUow(),  # type: ignore[arg-type]
-        client=client,  # type: ignore[arg-type]
+        push_sub_gateway=_StubGateway([sub]),
+        uow=_StubUow(),
+        client=client,
     )
 
     await notifier.send_notification(_notification(NotificationType.TEST))

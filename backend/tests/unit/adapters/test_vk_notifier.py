@@ -7,6 +7,7 @@ import pytest
 from fanfan.adapters.vk.client import VkApiClient, VkApiError
 from fanfan.adapters.vk.config import VkConfig
 from fanfan.adapters.vk.notifier import VkNotifier
+from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
 from fanfan.core.exceptions.notifications import (
     NotificationChannelUnavailable,
     NotificationRetryAfter,
@@ -56,8 +57,8 @@ def _make_notification(user_id: UserId) -> Notification:
 def _vk_config() -> VkConfig:
     return VkConfig(
         client_id="app",
-        client_secret="app-secret",  # type: ignore[arg-type]
-        group_token="group-token",  # type: ignore[arg-type]
+        client_secret="app-secret",
+        group_token="group-token",
     )
 
 
@@ -65,8 +66,8 @@ def _web_config() -> WebConfig:
     return WebConfig(
         host="localhost",
         port=8000,
-        public_url="https://app.example",  # type: ignore[arg-type]
-        secret_key="secret",  # type: ignore[arg-type]
+        public_url="https://app.example",
+        secret_key="secret",
     )
 
 
@@ -162,7 +163,7 @@ async def test_client_raises_vk_api_error_on_error_object() -> None:
 # --- VkNotifier: gateway guards and error-code translation --------------------
 
 
-class _StubSocialIdentityGateway:
+class _StubSocialIdentityGateway(SocialIdentityGateway):
     def __init__(self, identity: SocialIdentity | None) -> None:
         self._identity = identity
 
@@ -177,8 +178,13 @@ class _StubSocialIdentityGateway:
 _SENT_MESSAGE_ID = 42
 
 
-class _StubVkClient:
-    """Stands in for VkApiClient, recording sends/deletes and optionally raising."""
+class _StubVkClient(VkApiClient):
+    """Stands in for VkApiClient, recording sends/deletes and optionally raising.
+
+    Subclasses the real client so `ty` verifies the overrides against the
+    signatures the notifier calls. `__init__` does not call super(): there is no
+    httpx pool or VK token here, and both overridden methods replace every use.
+    """
 
     def __init__(
         self,
@@ -209,8 +215,8 @@ def _notifier(
     client: _StubVkClient,
 ) -> VkNotifier:
     return VkNotifier(
-        client=client,  # type: ignore[arg-type]
-        social_identity_gateway=_StubSocialIdentityGateway(identity),  # type: ignore[arg-type]
+        client=client,
+        social_identity_gateway=_StubSocialIdentityGateway(identity),
         web_config=_web_config(),
     )
 

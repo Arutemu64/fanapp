@@ -28,7 +28,6 @@ from fanfan.core.models.schedule_event import ScheduleEvent
 from fanfan.core.models.user import User
 from fanfan.core.vo.schedule_change import (
     ScheduleChangeId,
-    generate_schedule_change_id,
 )
 from fanfan.core.vo.schedule_event import generate_schedule_event_id
 from tests.integration.conftest import as_outbox

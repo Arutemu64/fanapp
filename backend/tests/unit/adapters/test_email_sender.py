@@ -48,6 +48,13 @@ def test_plain_ascii_name_is_left_readable():
 
 
 class _FailingFastMail:
+    """Stands in for FastMail, raising the relay error the test is exercising.
+
+    Structural rather than a `FastMail` subclass: its `send_message` takes a
+    `MessageSchema` plus a template name, and an override narrowing to `object`
+    cannot satisfy that. Hence the suppression at the call site.
+    """
+
     def __init__(self, error: Exception):
         self._error = error
 
@@ -76,6 +83,8 @@ def _message() -> EmailMessage:
 async def test_smtp_failure_becomes_domain_error(error: Exception):
     # A relay outage must surface as a domain error (mapped to 502) instead of an
     # unhandled exception, so the caller reports it and it stays out of Sentry.
-    sender = FastEmailSender(_FailingFastMail(error))  # type: ignore[arg-type]
+    sender = FastEmailSender(
+        _FailingFastMail(error)  # ty: ignore[invalid-argument-type]  # see _FailingFastMail
+    )
     with pytest.raises(EmailDeliveryFailed):
         await sender.send(_message())

@@ -155,7 +155,7 @@ jobs:
 
       - name: Type check (ty)
         if: ${{ !cancelled() }}
-        run: uv run ty check src/fanfan
+        run: uv run ty check
 
       # AGENTS.md's first "Never" — core/ and application/ must not import
       # outward — is a machine-checkable contract ([tool.importlinter] in

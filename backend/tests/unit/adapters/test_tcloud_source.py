@@ -1,6 +1,7 @@
 import pytest
 from pydantic import SecretStr
 
+from fanfan.adapters.api.ticketscloud.client import TCloudClient
 from fanfan.adapters.api.ticketscloud.config import TCloudConfig
 from fanfan.adapters.api.ticketscloud.dto.order import (
     Order,
@@ -52,8 +53,13 @@ def _config() -> TCloudConfig:
     )
 
 
-class FakeTCloudClient:
-    """Stands in for TCloudClient, returning canned orders (no HTTP)."""
+class FakeTCloudClient(TCloudClient):
+    """Stands in for TCloudClient, returning canned orders (no HTTP).
+
+    Subclasses the real client so `ty` verifies these signatures against the
+    ones the source calls. `__init__` does not call super(): there is no httpx
+    pool or retort here, and the overrides replace every use of them.
+    """
 
     def __init__(
         self, pages: list[list[Order]], orders_by_id: dict[str, Order] | None = None

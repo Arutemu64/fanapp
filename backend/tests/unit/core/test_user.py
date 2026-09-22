@@ -2,20 +2,24 @@ import pytest
 
 from fanfan.core.models.user import User
 from fanfan.core.vo.email import Email
-from fanfan.core.vo.user import Username, UserRole, generate_user_id
+from fanfan.core.vo.user import UserId, Username, UserRole, generate_user_id
 
 pytestmark = pytest.mark.unit
 
+_DEFAULT_USERNAME = Username("tester")
 
-def _user(**overrides) -> User:
-    defaults = {
-        "id": generate_user_id(),
-        "username": Username("tester"),
-        "hashed_password": None,
-        "role": UserRole.VISITOR,
-    }
-    defaults.update(overrides)
-    return User.create(**defaults)
+
+def _user(
+    *,
+    user_id: UserId | None = None,
+    username: Username = _DEFAULT_USERNAME,
+) -> User:
+    return User.create(
+        id=user_id if user_id is not None else generate_user_id(),
+        username=username,
+        hashed_password=None,
+        role=UserRole.VISITOR,
+    )
 
 
 def test_create_sets_given_fields():
@@ -46,8 +50,8 @@ def test_set_email_updates_email():
 
 def test_users_are_equal_by_id():
     user_id = generate_user_id()
-    one = _user(id=user_id, username=Username("one"))
-    two = _user(id=user_id, username=Username("two"))
+    one = _user(user_id=user_id, username=Username("one"))
+    two = _user(user_id=user_id, username=Username("two"))
     other = _user()
 
     assert one == two

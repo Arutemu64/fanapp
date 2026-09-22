@@ -6,6 +6,9 @@ from fanfan.application.interactors.notifications.send_notification import (
     SendNotification,
     SendNotificationInput,
 )
+from fanfan.application.ports.gateways.mailings import MailingGateway
+from fanfan.application.ports.gateways.notifications import NotificationGateway
+from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.core.exceptions.notifications import UserNotReachable
 from fanfan.core.models.notification import Notification
 from fanfan.core.models.user import User, UserSettings
@@ -50,7 +53,7 @@ def _make_notification() -> Notification:
     )
 
 
-class _FakeNotificationGateway:
+class _FakeNotificationGateway(NotificationGateway):
     def __init__(self, notification: Notification | None) -> None:
         self._notification = notification
 
@@ -61,7 +64,7 @@ class _FakeNotificationGateway:
         return self._notification
 
 
-class _FakeUserGateway:
+class _FakeUserGateway(UserGateway):
     def __init__(self, user: User | None) -> None:
         self._user = user
 
@@ -72,7 +75,7 @@ class _FakeUserGateway:
         return self._user
 
 
-class _StubMailingGateway:
+class _StubMailingGateway(MailingGateway):
     async def get(
         self,
         mailing_id: MailingId,  # noqa: ARG002  # part of the port contract
@@ -90,9 +93,9 @@ def _interactor(
     vk: FakeVkNotifier,
 ) -> SendNotification:
     return SendNotification(
-        mailing_gateway=_StubMailingGateway(),  # type: ignore[arg-type]
-        notification_gateway=_FakeNotificationGateway(_make_notification()),  # type: ignore[arg-type]
-        user_gateway=_FakeUserGateway(user),  # type: ignore[arg-type]
+        mailing_gateway=_StubMailingGateway(),
+        notification_gateway=_FakeNotificationGateway(_make_notification()),
+        user_gateway=_FakeUserGateway(user),
         tg_notifier=tg,
         push_notifier=push,
         vk_notifier=vk,

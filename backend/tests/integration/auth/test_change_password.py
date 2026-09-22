@@ -94,6 +94,7 @@ async def test_change_password_with_wrong_old_password_raises(
     await uow.rollback()
     saved_user = await user_gateway.get_by_id(user.id)
     assert saved_user is not None
+    assert saved_user.hashed_password is not None
     assert password_hasher.verify(OLD_PASSWORD, saved_user.hashed_password)
 
 

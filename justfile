@@ -123,7 +123,7 @@ backend-seed-demo:
     cd backend && uv run python -m fanfan.main.cli demo seed
 
 backend-typecheck:
-    cd backend && uv run ty check src/fanfan
+    cd backend && uv run ty check
 
 # Dead-code sweep (vulture): globally-unused code that ruff's local F401/F841
 # can't see. A manual aid, NOT a gate — deliberately out of `backend-lint` and

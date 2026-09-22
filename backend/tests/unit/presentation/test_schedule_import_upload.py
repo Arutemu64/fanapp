@@ -1,7 +1,8 @@
 import io
 
 import pytest
-from starlette.datastructures import Headers, UploadFile
+from fastapi import UploadFile
+from starlette.datastructures import Headers
 
 from fanfan.core.exceptions.schedule import (
     InvalidScheduleFile,
