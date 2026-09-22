@@ -12,19 +12,22 @@ def get_constraint_name(error: IntegrityError) -> str | None:
     """
 
     original_error = error.orig
+    # Every read here is a `getattr` against a driver object with no stubs, so
+    # the isinstance guards are what keep the declared `str | None` honest
+    # rather than an `Any` waved through it.
     constraint_name = getattr(original_error, "constraint_name", None)
-    if constraint_name:
+    if isinstance(constraint_name, str) and constraint_name:
         return constraint_name
 
     diagnostic = getattr(original_error, "diag", None)
-    if diagnostic:
+    if diagnostic is not None:
         constraint_name = getattr(diagnostic, "constraint_name", None)
-        if constraint_name:
+        if isinstance(constraint_name, str) and constraint_name:
             return constraint_name
 
     match = re.search(r'constraint\s+"([^"]+)"', str(original_error), re.IGNORECASE)
     if match:
-        return match.group(1)
+        return str(match.group(1))
 
     return None
 

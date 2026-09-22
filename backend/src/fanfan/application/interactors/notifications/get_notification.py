@@ -11,7 +11,7 @@ class GetNotificationInput(BaseModel):
 
 
 class GetNotification:
-    def __init__(self, notification_gateway: NotificationGateway):
+    def __init__(self, notification_gateway: NotificationGateway) -> None:
         self.notification_gateway = notification_gateway
 
     async def __call__(self, data: GetNotificationInput) -> NotificationDTO:

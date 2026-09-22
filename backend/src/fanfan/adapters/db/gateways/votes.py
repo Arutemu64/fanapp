@@ -34,7 +34,7 @@ def _to_model(orm: VoteORM) -> Vote:
 
 
 class SqlVoteGateway(VoteGateway):
-    def __init__(self, session: AsyncSession, uow: UnitOfWork):
+    def __init__(self, session: AsyncSession, uow: UnitOfWork) -> None:
         self.session = session
         self.uow = uow
 

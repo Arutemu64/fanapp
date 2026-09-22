@@ -12,7 +12,7 @@ class _DummyEvent(AppEvent):
     value: int
 
 
-def test_record_event_accumulates_events_in_order():
+def test_record_event_accumulates_events_in_order() -> None:
     aggregate = AggregateRoot()
 
     first = _DummyEvent(value=1)
@@ -23,7 +23,7 @@ def test_record_event_accumulates_events_in_order():
     assert aggregate.pull_events() == [first, second]
 
 
-def test_pull_events_clears_the_buffer():
+def test_pull_events_clears_the_buffer() -> None:
     aggregate = AggregateRoot()
     aggregate.record_event(_DummyEvent(value=1))
 

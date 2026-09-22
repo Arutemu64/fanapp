@@ -33,7 +33,7 @@ def _rendered_to_header(name: str) -> str:
         "",  # empty username
     ],
 )
-def test_display_name_keeps_to_header_ascii(display_name: str):
+def test_display_name_keeps_to_header_ascii(display_name: str) -> None:
     # Yandex Postbox rejects a non-ASCII To header with "email address parse
     # failed (To)"; the display name must be RFC 2047-encoded to pure ASCII.
     header = _rendered_to_header(display_name)
@@ -42,13 +42,20 @@ def test_display_name_keeps_to_header_ascii(display_name: str):
     assert header.endswith("<user@example.com>")
 
 
-def test_plain_ascii_name_is_left_readable():
+def test_plain_ascii_name_is_left_readable() -> None:
     # A simple ASCII name needs no encoding and stays human-readable.
     assert _encode_display_name("Ivan") == "Ivan"
 
 
 class _FailingFastMail:
-    def __init__(self, error: Exception):
+    """Stands in for FastMail, raising the relay error the test is exercising.
+
+    Structural rather than a `FastMail` subclass: its `send_message` takes a
+    `MessageSchema` plus a template name, and an override narrowing to `object`
+    cannot satisfy that. Hence the suppression at the call site.
+    """
+
+    def __init__(self, error: Exception) -> None:
         self._error = error
 
     async def send_message(self, message: object) -> None:
@@ -73,9 +80,11 @@ def _message() -> EmailMessage:
         SMTPServerDisconnected("Unexpected EOF received"),
     ],
 )
-async def test_smtp_failure_becomes_domain_error(error: Exception):
+async def test_smtp_failure_becomes_domain_error(error: Exception) -> None:
     # A relay outage must surface as a domain error (mapped to 502) instead of an
     # unhandled exception, so the caller reports it and it stays out of Sentry.
-    sender = FastEmailSender(_FailingFastMail(error))  # type: ignore[arg-type]
+    sender = FastEmailSender(
+        _FailingFastMail(error)  # ty: ignore[invalid-argument-type]  # see _FailingFastMail
+    )
     with pytest.raises(EmailDeliveryFailed):
         await sender.send(_message())

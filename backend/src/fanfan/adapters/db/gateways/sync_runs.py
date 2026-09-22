@@ -53,7 +53,7 @@ def _parse_dto(orm: SyncRunORM) -> SyncRunDTO:
 
 
 class SqlSyncRunGateway(SyncRunGateway):
-    def __init__(self, session: AsyncSession, uow: UnitOfWork):
+    def __init__(self, session: AsyncSession, uow: UnitOfWork) -> None:
         self.session = session
         self.uow = uow
 

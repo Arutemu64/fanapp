@@ -2,6 +2,7 @@ import uuid
 from collections.abc import Awaitable, Callable
 
 import structlog
+from starlette.middleware.base import RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
@@ -33,7 +34,9 @@ def refresh_session_cookie(web_config: WebConfig) -> HttpMiddleware:
     `WebConfig` (cookie flags / TTL); everything else here is config-free.
     """
 
-    async def middleware(request: Request, call_next) -> Response:
+    async def middleware(
+        request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         response = await call_next(request)
         session_id: str | None = getattr(request.state, "renew_session_id", None)
         if session_id:
@@ -43,7 +46,9 @@ def refresh_session_cookie(web_config: WebConfig) -> HttpMiddleware:
     return middleware
 
 
-async def security_headers(request: Request, call_next) -> Response:
+async def security_headers(
+    request: Request, call_next: RequestResponseEndpoint
+) -> Response:
     """Stamp hardening headers on every response.
 
     Defence-in-depth that travels with the app: even deployed behind a proxy
@@ -71,7 +76,9 @@ async def security_headers(request: Request, call_next) -> Response:
     return response
 
 
-async def no_store_cache_control(request: Request, call_next) -> Response:
+async def no_store_cache_control(
+    request: Request, call_next: RequestResponseEndpoint
+) -> Response:
     """Default-deny HTTP caching for the whole API.
 
     Responses are per-user and dynamic, and the browser must never persist
@@ -86,7 +93,9 @@ async def no_store_cache_control(request: Request, call_next) -> Response:
     return response
 
 
-async def limit_request_body_size(request: Request, call_next) -> Response:
+async def limit_request_body_size(
+    request: Request, call_next: RequestResponseEndpoint
+) -> Response:
     """Reject a body that declares itself oversized, before anything reads it.
 
     Defence-in-depth that travels with the app (see `security_headers`): the
@@ -116,7 +125,9 @@ async def limit_request_body_size(request: Request, call_next) -> Response:
     return await call_next(request)
 
 
-async def bind_request_context(request: Request, call_next) -> Response:
+async def bind_request_context(
+    request: Request, call_next: RequestResponseEndpoint
+) -> Response:
     """Bind a per-request id into structlog contextvars.
 
     The logging setup includes ``merge_contextvars`` in its processor chain,

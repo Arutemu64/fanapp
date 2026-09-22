@@ -83,7 +83,7 @@ async def test_draws_a_winner_from_the_pool(
     voting_manager: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     user_gateway = await dishka_request.get(UserGateway)
     nomination_gateway = await dishka_request.get(NominationGateway)
     participant_gateway = await dishka_request.get(ParticipantGateway)
@@ -116,7 +116,7 @@ async def test_empty_pool_returns_no_winner(
     dishka_request: AsyncContainer,
     voting_manager: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(DrawVotingContestWinner)
     login(voting_manager)
 
@@ -130,7 +130,7 @@ async def test_requires_voting_manage(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(DrawVotingContestWinner)
     login(visitor)
 

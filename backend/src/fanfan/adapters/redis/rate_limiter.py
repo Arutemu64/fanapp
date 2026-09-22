@@ -7,7 +7,7 @@ from fanfan.core.exceptions.rate_limit import TooManyAttempts
 class RedisRateLimiter(RateLimiter):
     """Fixed-window attempt counter backed by Redis INCR/EXPIRE."""
 
-    def __init__(self, redis: Redis):
+    def __init__(self, redis: Redis) -> None:
         self.redis = redis
 
     @staticmethod

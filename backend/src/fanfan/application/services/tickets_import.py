@@ -15,7 +15,7 @@ class TicketImportService:
     no knowledge of how the tickets were fetched or translated.
     """
 
-    def __init__(self, ticket_gateway: TicketGateway):
+    def __init__(self, ticket_gateway: TicketGateway) -> None:
         self.ticket_gateway = ticket_gateway
 
     async def import_ticket(self, external: ExternalTicket) -> bool:

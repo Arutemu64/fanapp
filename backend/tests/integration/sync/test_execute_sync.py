@@ -38,7 +38,7 @@ async def test_unattended_run_is_recorded_and_attributed(
     dishka_request: AsyncContainer,
     sync_operator: User,
     login: Callable[[User], None],
-):
+) -> None:
     # The cron/CLI path: no run_id, so the interactor creates its own row. This
     # is the whole point of the Execute*Sync layer — without it, scheduled syncs
     # would leave no trace and "last synced" would only show manual runs.
@@ -67,7 +67,7 @@ async def test_run_id_adopts_the_existing_pending_row(
     sync_operator: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     # The manual path: RequestSync already created the row, so the consumer must
     # move that one along rather than inserting a second.
     login(sync_operator)
@@ -91,7 +91,7 @@ async def test_unattended_run_skips_quietly_when_one_is_active(
     sync_operator: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     # A scheduled tick colliding with a manual run must not raise: the scheduler
     # would report it to Sentry on every overlap.
     login(sync_operator)
@@ -113,7 +113,7 @@ async def test_unattended_run_reaps_a_wedged_run_and_proceeds(
     sync_operator: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     login(sync_operator)
     gateway = await dishka_request.get(SyncRunGateway)
     wedged = SyncRun.create(source=SyncSource.COSPLAY2, by_user_id=sync_operator.id)
@@ -140,7 +140,7 @@ async def test_vendor_failure_is_recorded_not_raised(
     dishka_request: AsyncContainer,
     sync_operator: User,
     login: Callable[[User], None],
-):
+) -> None:
     # Re-raising would make the NATS consumer redeliver and retry forever
     # against a vendor that is simply down.
     login(sync_operator)
@@ -161,7 +161,7 @@ async def test_failure_mid_flush_is_recorded_not_left_running(
     dishka_request: AsyncContainer,
     sync_operator: User,
     login: Callable[[User], None],
-):
+) -> None:
     # A vendor error that raises *before* the DB is touched (the test above) is
     # the easy case. This one fails during a flush: two nominations sharing a
     # code violate uq_nominations_code, which poisons the session. fail() must
@@ -189,7 +189,7 @@ async def test_recreated_nomination_may_reuse_a_retired_code(
     sync_operator: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     # Cosplay2 retires a nomination and issues a new one (a new cosplay2_id) that
     # reuses the old code. Because stale nominations are pruned before the upsert
     # loop, the old row is deleted first and frees its code for the newcomer —
@@ -226,7 +226,7 @@ async def test_execute_sync_requires_the_permission(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     # The check on the unattended path is real, not decorative.
     login(visitor)
     interactor = await dishka_request.get(ExecuteCosplaySync)
@@ -235,7 +235,7 @@ async def test_execute_sync_requires_the_permission(
         await interactor()
 
 
-async def test_system_user_is_granted_sync_run(dishka_request: AsyncContainer):
+async def test_system_user_is_granted_sync_run(dishka_request: AsyncContainer) -> None:
     # Guards the grant in the sync:run migration. Cron and CLI syncs
     # authenticate as this seeded user and go through the same permission check,
     # so losing that user_permissions row silently stops all unattended syncing

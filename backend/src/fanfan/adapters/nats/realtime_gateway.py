@@ -19,7 +19,7 @@ SSE_QUEUE_MAXSIZE = 100
 
 
 class NatsRealtimeGateway(RealtimeGateway):
-    def __init__(self, nc: NATSClient, retort: Retort):
+    def __init__(self, nc: NATSClient, retort: Retort) -> None:
         self.nc = nc
         self.retort = retort
 

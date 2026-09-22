@@ -2,23 +2,27 @@ import pytest
 
 from fanfan.core.models.user import User
 from fanfan.core.vo.email import Email
-from fanfan.core.vo.user import Username, UserRole, generate_user_id
+from fanfan.core.vo.user import UserId, Username, UserRole, generate_user_id
 
 pytestmark = pytest.mark.unit
 
-
-def _user(**overrides) -> User:
-    defaults = {
-        "id": generate_user_id(),
-        "username": Username("tester"),
-        "hashed_password": None,
-        "role": UserRole.VISITOR,
-    }
-    defaults.update(overrides)
-    return User.create(**defaults)
+_DEFAULT_USERNAME = Username("tester")
 
 
-def test_create_sets_given_fields():
+def _user(
+    *,
+    user_id: UserId | None = None,
+    username: Username = _DEFAULT_USERNAME,
+) -> User:
+    return User.create(
+        id=user_id if user_id is not None else generate_user_id(),
+        username=username,
+        hashed_password=None,
+        role=UserRole.VISITOR,
+    )
+
+
+def test_create_sets_given_fields() -> None:
     user_id = generate_user_id()
 
     user = User.create(
@@ -36,7 +40,7 @@ def test_create_sets_given_fields():
     assert user.email == Email("alice@example.com")
 
 
-def test_set_email_updates_email():
+def test_set_email_updates_email() -> None:
     user = _user()
 
     user.set_email(Email("new@example.com"))
@@ -44,10 +48,10 @@ def test_set_email_updates_email():
     assert user.email == Email("new@example.com")
 
 
-def test_users_are_equal_by_id():
+def test_users_are_equal_by_id() -> None:
     user_id = generate_user_id()
-    one = _user(id=user_id, username=Username("one"))
-    two = _user(id=user_id, username=Username("two"))
+    one = _user(user_id=user_id, username=Username("one"))
+    two = _user(user_id=user_id, username=Username("two"))
     other = _user()
 
     assert one == two

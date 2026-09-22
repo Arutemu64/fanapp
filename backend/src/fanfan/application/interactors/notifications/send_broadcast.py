@@ -32,7 +32,7 @@ class SendBroadcast:
         mailing_gateway: MailingGateway,
         perm_service: PermissionService,
         uow: UnitOfWork,
-    ):
+    ) -> None:
         self.current_user_provider = current_user_provider
         self.user_gateway = user_gateway
         self.mailing_gateway = mailing_gateway

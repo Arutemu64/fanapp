@@ -32,7 +32,7 @@ def _parse_dto(orm: FeedbackORM) -> FeedbackDTO:
 
 
 class SqlFeedbackGateway(FeedbackGateway):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
     async def add(self, feedback: Feedback) -> None:

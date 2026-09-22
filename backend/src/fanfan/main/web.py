@@ -5,7 +5,7 @@ import uvicorn
 from fanfan.adapters.config.parsers import get_config
 
 
-def main():
+def main() -> None:
     config = get_config()
     with suppress(KeyboardInterrupt):
         uvicorn.run(

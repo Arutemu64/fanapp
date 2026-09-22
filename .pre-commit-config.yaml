@@ -86,12 +86,12 @@ repos:
         files: ^backend/pyproject\.toml$
         pass_filenames: false
 
-      # Whole-project type check: too slow for every commit (it re-checks all of
-      # src/fanfan regardless of what changed), so it runs at pre-push. CI runs
-      # the same check on every PR.
+      # Whole-project type check: too slow for every commit (it re-checks every
+      # path in [tool.ty.src] — src/fanfan, tests and scripts — regardless of
+      # what changed), so it runs at pre-push. CI runs the same check on every PR.
       - id: ty
         name: ty
-        entry: uv run --directory backend ty check src/fanfan
+        entry: uv run --directory backend ty check
         language: system
         types: [ python ]
         pass_filenames: false

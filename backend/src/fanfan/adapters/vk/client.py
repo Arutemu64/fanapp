@@ -40,7 +40,7 @@ class VkApiClient:
         self._client = client
         self._config = config
 
-    async def _call_method(self, method: str, params: dict[str, Any]) -> Any:
+    async def _call_method(self, method: str, params: dict[str, Any]) -> Any:  # noqa: ANN401  # raw VK JSON; the public methods narrow it
         # Token and version travel in the POST body, not the query string, so the
         # group token never lands in access logs or the URL. VK still returns
         # HTTP 200 on a logical failure, carrying it in the body's `error` object.
@@ -66,17 +66,22 @@ class VkApiClient:
         # Returns the id of the sent message so the caller can delete the group's
         # own copy afterwards. For a single peer_id VK answers with the bare
         # integer message id. https://dev.vk.ru/ru/method/messages.send
-        return await self._call_method(
-            "messages.send",
-            {
-                "peer_id": peer_id,
-                "message": message,
-                # random_id 0 disables VK's uniqueness check, so every send goes
-                # through even when two notifications carry identical text; a
-                # fixed non-zero value would instead let VK drop the second as a
-                # duplicate. The outbox is the deduplication authority upstream.
-                "random_id": 0,
-            },
+        # int() rather than a bare return: _call_method hands back the decoded
+        # JSON as Any, and the declared `int` is only honest if something checks.
+        return int(
+            await self._call_method(
+                "messages.send",
+                {
+                    "peer_id": peer_id,
+                    "message": message,
+                    # random_id 0 disables VK's uniqueness check, so every send
+                    # goes through even when two notifications carry identical
+                    # text; a fixed non-zero value would instead let VK drop the
+                    # second as a duplicate. The outbox is the deduplication
+                    # authority upstream.
+                    "random_id": 0,
+                },
+            )
         )
 
     async def delete_message(self, *, message_id: int) -> None:

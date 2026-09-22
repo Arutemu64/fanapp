@@ -37,5 +37,5 @@ class TicketORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
         back_populates="ticket",
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.id)

@@ -24,7 +24,7 @@ class ConfirmEmailCode:
         current_user_provider: CurrentUserProvider,
         token_registry: TokenRegistry,
         uow: UnitOfWork,
-    ):
+    ) -> None:
         self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
         self.token_registry = token_registry

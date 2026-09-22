@@ -15,18 +15,18 @@ pytestmark = pytest.mark.unit
         ("MiXeD.CaSe@Domain.RU", "mixed.case@domain.ru"),
     ],
 )
-def test_normalize_email(raw: str, expected: str):
+def test_normalize_email(raw: str, expected: str) -> None:
     assert normalize_email(raw) == expected
 
 
-def test_generate_numeric_code_is_zero_padded_digits():
+def test_generate_numeric_code_is_zero_padded_digits() -> None:
     for _ in range(50):
         code = generate_numeric_code()
         assert len(code) == EMAIL_OTP_LENGTH
         assert code.isdigit()
 
 
-def test_generate_numeric_code_varies():
+def test_generate_numeric_code_varies() -> None:
     codes = {generate_numeric_code() for _ in range(50)}
 
     # Practically impossible to draw 50 identical 6-digit codes.

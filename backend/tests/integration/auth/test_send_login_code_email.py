@@ -20,7 +20,7 @@ pytestmark = [
 
 async def test_send_login_code_email_unknown_user_raises(
     dishka_request: AsyncContainer,
-):
+) -> None:
     interactor = await dishka_request.get(SendLoginCodeEmail)
     email_sender = await dishka_request.get(FakeEmailSender)
 
@@ -33,7 +33,7 @@ async def test_send_login_code_email_unknown_user_raises(
 async def test_send_login_code_email_user_without_email_raises(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(SendLoginCodeEmail)
     user_gateway = await dishka_request.get(UserGateway)
     email_sender = await dishka_request.get(FakeEmailSender)

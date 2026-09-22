@@ -38,7 +38,7 @@ class SyncRunTracker:
         sync_run_gateway: SyncRunGateway,
         uow: UnitOfWork,
         realtime: RealtimeGateway,
-    ):
+    ) -> None:
         self.sync_run_gateway = sync_run_gateway
         self.uow = uow
         self.realtime = realtime

@@ -29,7 +29,7 @@ INTERNAL_ONLY: set[str] = {
 }
 
 
-def test_every_concrete_exception_resolves_or_is_internal():
+def test_every_concrete_exception_resolves_or_is_internal() -> None:
     unmapped = {
         cls.code for cls in all_concrete_exceptions() if not resolves_to_status(cls)
     }

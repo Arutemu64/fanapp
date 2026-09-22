@@ -28,7 +28,7 @@ class GrantPermission:
         user_gateway: UserGateway,
         perm_gateway: UserPermissionGateway,
         uow: UnitOfWork,
-    ):
+    ) -> None:
         self.user_gateway = user_gateway
         self.perm_gateway = perm_gateway
         self.uow = uow

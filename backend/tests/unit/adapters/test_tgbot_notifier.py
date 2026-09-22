@@ -1,3 +1,4 @@
+from typing import Any
 from uuid import uuid7
 
 import pytest
@@ -11,6 +12,7 @@ from aiogram.exceptions import (
 from aiogram.methods import SendMessage
 
 from fanfan.adapters.tgbot.notifier import TelegramNotifier
+from fanfan.application.ports.gateways.social_identity import SocialIdentityGateway
 from fanfan.core.exceptions.notifications import (
     NotificationChannelUnavailable,
     NotificationRetryAfter,
@@ -44,13 +46,13 @@ def _notification(
     )
 
 
-def _identity(*, provider_user_id: int | None = TG_USER_ID) -> SocialIdentity:
+def _identity() -> SocialIdentity:
     return SocialIdentity(
         id=generate_social_identity_id(),
         user_id=USER_ID,
         provider=SocialProvider.TELEGRAM,
         subject=str(TG_USER_ID),
-        provider_user_id=provider_user_id,
+        provider_user_id=TG_USER_ID,
     )
 
 
@@ -58,17 +60,22 @@ def _web_config() -> WebConfig:
     return WebConfig(
         host="localhost",
         port=8000,
-        public_url="https://app.example",  # type: ignore[arg-type]
-        secret_key="secret",  # type: ignore[arg-type]
+        public_url="https://app.example",
+        secret_key="secret",
     )
 
 
 class _RecordingBot:
-    """Stands in for aiogram's Bot, recording each send and optionally raising."""
+    """Stands in for aiogram's Bot, recording each send and optionally raising.
+
+    Structural rather than a `Bot` subclass: `Bot.__init__` demands a real token
+    and its `send_message` carries the full Bot API signature, which an override
+    narrowing to `**kwargs` cannot satisfy. Hence the suppression at the call site.
+    """
 
     def __init__(self, *, error: Exception | None = None) -> None:
         self._error = error
-        self.calls: list[dict] = []
+        self.calls: list[dict[str, Any]] = []
 
     async def send_message(self, **kwargs: object) -> None:
         self.calls.append(kwargs)
@@ -76,7 +83,7 @@ class _RecordingBot:
             raise self._error
 
 
-class _StubSocialIdentityGateway:
+class _StubSocialIdentityGateway(SocialIdentityGateway):
     def __init__(self, identity: SocialIdentity | None) -> None:
         self._identity = identity
 
@@ -92,8 +99,8 @@ def _notifier(
     *, identity: SocialIdentity | None, bot: _RecordingBot
 ) -> TelegramNotifier:
     return TelegramNotifier(
-        bot=bot,  # type: ignore[arg-type]
-        social_identity_gateway=_StubSocialIdentityGateway(identity),  # type: ignore[arg-type]
+        bot=bot,  # ty: ignore[invalid-argument-type]  # see _RecordingBot
+        social_identity_gateway=_StubSocialIdentityGateway(identity),
         web_config=_web_config(),
     )
 
@@ -120,16 +127,6 @@ async def test_sends_html_with_escaped_title_and_deep_link_button() -> None:
 async def test_unlinked_user_is_unreachable() -> None:
     bot = _RecordingBot()
     notifier = _notifier(identity=None, bot=bot)
-
-    with pytest.raises(UserNotReachable):
-        await notifier.send_notification(_notification())
-    assert bot.calls == []
-
-
-async def test_identity_without_bot_id_is_unreachable() -> None:
-    # An identity created from an `openid`-only token carries no Bot API id.
-    bot = _RecordingBot()
-    notifier = _notifier(identity=_identity(provider_user_id=None), bot=bot)
 
     with pytest.raises(UserNotReachable):
         await notifier.send_notification(_notification())

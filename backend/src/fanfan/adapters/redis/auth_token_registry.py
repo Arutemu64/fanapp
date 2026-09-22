@@ -14,7 +14,9 @@ from fanfan.presentation.web.config import WebConfig
 
 
 class RedisTokenRegistry(TokenRegistry):
-    def __init__(self, redis: Redis, config: WebConfig, rate_limiter: RateLimiter):
+    def __init__(
+        self, redis: Redis, config: WebConfig, rate_limiter: RateLimiter
+    ) -> None:
         self.redis = redis
         self._secret = config.secret_key.get_secret_value().encode()
         self.rate_limiter = rate_limiter

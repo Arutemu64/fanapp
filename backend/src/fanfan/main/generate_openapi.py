@@ -1,4 +1,5 @@
 import json
+from typing import Any
 
 from fastapi import FastAPI
 
@@ -11,7 +12,7 @@ from fanfan.presentation.web.routes import setup_api_router
 OPENAPI_PATH = SHARED_OPENAPI_PATH
 
 
-def build_openapi_schema(version: str = APP_VERSION) -> dict:
+def build_openapi_schema(version: str = APP_VERSION) -> dict[str, Any]:
     # Mirror the runtime app's title, version and operationId scheme so the
     # committed spec matches what create_app() serves.
     app = FastAPI(
@@ -23,7 +24,7 @@ def build_openapi_schema(version: str = APP_VERSION) -> dict:
     return app.openapi()
 
 
-def _stamp_error_code_enum(schema: dict) -> None:
+def _stamp_error_code_enum(schema: dict[str, Any]) -> None:
     """Expose the closed set of error codes on ErrorMessage.code as an enum.
 
     The model keeps `code: str` at runtime (so an unexpected code never breaks

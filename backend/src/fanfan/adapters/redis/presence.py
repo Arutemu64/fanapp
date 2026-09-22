@@ -24,7 +24,7 @@ _KEY = "presence:online"
 class RedisPresenceGateway(PresenceGateway):
     """Presence as a Redis sorted set of user id -> last-seen timestamp."""
 
-    def __init__(self, redis: Redis):
+    def __init__(self, redis: Redis) -> None:
         self.redis = redis
 
     async def mark_online(self, user_id: UserId) -> None:

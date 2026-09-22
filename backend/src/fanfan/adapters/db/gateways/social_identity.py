@@ -34,7 +34,7 @@ def _to_model(orm: SocialIdentityORM) -> SocialIdentity:
 
 
 class SqlSocialIdentityGateway(SocialIdentityGateway):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
     async def add(self, social_identity: SocialIdentity) -> None:

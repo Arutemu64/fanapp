@@ -5,6 +5,7 @@ from sqlalchemy.orm import (
     declared_attr,
     mapped_column,
 )
+from sqlalchemy.sql import Subquery
 
 from fanfan.adapters.db.models.base import BaseORM
 from fanfan.adapters.db.models.mixins.order import OrderMixin
@@ -43,7 +44,7 @@ class ScheduleEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, OrderMixin, BaseORM)
     )
 
     @classmethod
-    def ranking_subquery(cls):
+    def ranking_subquery(cls) -> Subquery:
         # Single window pass over the non-skipped events, producing each row's
         # dense 1..N ``queue`` position. This is the one source of truth for the
         # ranking: the ``queue`` column_property correlates it per row (cheap for
@@ -64,7 +65,9 @@ class ScheduleEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, OrderMixin, BaseORM)
     def queue(cls) -> Mapped[int | None]:
         ranked = cls.ranking_subquery()
         stmt = select(ranked.c.queue).where(cls.id == ranked.c.id)
-        return column_property(
+        # column_property() is typed as MappedSQLExpression[Any]; the declared
+        # Mapped[int | None] is the contract SQLAlchemy honours at mapping time.
+        return column_property(  # ty: ignore[unsound-return-statement]
             stmt.scalar_subquery(),
             expire_on_flush=True,
             deferred=True,

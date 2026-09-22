@@ -26,7 +26,7 @@ def _to_model(orm: UserFlagORM) -> UserFlag:
 
 
 class SqlUserFlagGateway(UserFlagGateway):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
     async def add(self, flag: UserFlag) -> None:

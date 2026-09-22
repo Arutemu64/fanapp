@@ -16,7 +16,7 @@ from fanfan.core.vo.permission import (
     Permission,
     generate_user_permission_id,
 )
-from fanfan.core.vo.ticket import TicketId, generate_ticket_id
+from fanfan.core.vo.ticket import generate_ticket_id
 from fanfan.core.vo.user import UserId, Username, UserRole
 
 

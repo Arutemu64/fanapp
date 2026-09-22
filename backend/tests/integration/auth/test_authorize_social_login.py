@@ -22,19 +22,22 @@ SUBJECT = "1234123412341234123"
 PROVIDER_USER_ID = 987654321
 
 
-def _input(**overrides: object) -> AuthorizeSocialLoginInput:
-    data: dict[str, object] = {
-        "provider": SocialProvider.TELEGRAM,
-        "subject": SUBJECT,
-        "provider_user_id": PROVIDER_USER_ID,
-    }
-    data.update(overrides)
-    return AuthorizeSocialLoginInput(**data)  # type: ignore[arg-type]
+def _input(
+    *,
+    provider: SocialProvider = SocialProvider.TELEGRAM,
+    subject: str = SUBJECT,
+    provider_user_id: int = PROVIDER_USER_ID,
+) -> AuthorizeSocialLoginInput:
+    return AuthorizeSocialLoginInput(
+        provider=provider,
+        subject=subject,
+        provider_user_id=provider_user_id,
+    )
 
 
 async def test_first_login_creates_a_visitor_account(
     dishka_request: AsyncContainer,
-):
+) -> None:
     interactor = await dishka_request.get(AuthorizeSocialLogin)
     user_gateway = await dishka_request.get(UserGateway)
     session_store = await dishka_request.get(SessionStore)
@@ -42,6 +45,7 @@ async def test_first_login_creates_a_visitor_account(
     session_id = await interactor(_input())
 
     resolution = await session_store.resolve_session(session_id)
+    assert resolution.user_id is not None
     user = await user_gateway.get_by_id(resolution.user_id)
     assert user is not None
     assert user.role is UserRole.VISITOR
@@ -52,7 +56,7 @@ async def test_first_login_creates_a_visitor_account(
 
 async def test_first_login_stores_subject_and_notification_address(
     dishka_request: AsyncContainer,
-):
+) -> None:
     interactor = await dishka_request.get(AuthorizeSocialLogin)
     social_identity_gateway = await dishka_request.get(SocialIdentityGateway)
     session_store = await dishka_request.get(SessionStore)
@@ -60,6 +64,7 @@ async def test_first_login_stores_subject_and_notification_address(
     session_id = await interactor(_input())
 
     resolution = await session_store.resolve_session(session_id)
+    assert resolution.user_id is not None
     identity = await social_identity_gateway.get_by_provider(
         resolution.user_id, SocialProvider.TELEGRAM
     )
@@ -78,7 +83,7 @@ async def test_first_login_stores_subject_and_notification_address(
 
 async def test_returning_login_reuses_the_same_account(
     dishka_request: AsyncContainer,
-):
+) -> None:
     # The callback is unauthenticated and runs on every login, so a second visit
     # must resolve to the existing account rather than quietly creating a new one.
     interactor = await dishka_request.get(AuthorizeSocialLogin)
@@ -95,7 +100,7 @@ async def test_returning_login_reuses_the_same_account(
 
 async def test_different_subjects_get_different_users(
     dishka_request: AsyncContainer,
-):
+) -> None:
     interactor = await dishka_request.get(AuthorizeSocialLogin)
     session_store = await dishka_request.get(SessionStore)
 
@@ -111,7 +116,7 @@ async def test_different_subjects_get_different_users(
 
 async def test_same_subject_on_different_providers_is_two_identities(
     dishka_request: AsyncContainer,
-):
+) -> None:
     # `(provider, subject)` is the identity key: the same subject string arriving
     # from a different provider is a different account, never a collision.
     interactor = await dishka_request.get(AuthorizeSocialLogin)

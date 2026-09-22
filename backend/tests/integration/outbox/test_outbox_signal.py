@@ -17,7 +17,8 @@ pytestmark = [
 
 async def _raw_connect(config: DatabaseConfig) -> asyncpg.Connection:
     url = make_url(config.build_connection_str())
-    return await asyncpg.connect(
+    # asyncpg ships no type information, so connect() is Unknown here.
+    return await asyncpg.connect(  # ty: ignore[unsound-return-statement]
         host=url.host,
         port=url.port,
         user=url.username,
@@ -26,7 +27,7 @@ async def _raw_connect(config: DatabaseConfig) -> asyncpg.Connection:
     )
 
 
-async def test_insert_trigger_wakes_the_listener(dishka: AsyncContainer):
+async def test_insert_trigger_wakes_the_listener(dishka: AsyncContainer) -> None:
     # End-to-end over a real database: the migration's AFTER INSERT trigger must
     # pg_notify on the exact channel the adapter LISTENs on, or notifications
     # would silently fall back to poll-only latency. The per-test session rolls

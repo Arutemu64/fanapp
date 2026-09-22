@@ -21,7 +21,7 @@ class GetOnlineUsersCount:
         self,
         presence_gateway: PresenceGateway,
         current_user_provider: CurrentUserProvider,
-    ):
+    ) -> None:
         self.presence_gateway = presence_gateway
         self.current_user_provider = current_user_provider
 

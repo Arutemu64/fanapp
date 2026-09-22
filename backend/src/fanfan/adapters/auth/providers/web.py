@@ -12,7 +12,7 @@ class WebIdProvider(IdProvider):
         self,
         request: Request,
         session_store: SessionStore,
-    ):
+    ) -> None:
         self.request = request
         self.session_store = session_store
 

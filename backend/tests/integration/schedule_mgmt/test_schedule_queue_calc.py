@@ -35,7 +35,7 @@ def _schedule_event(
 async def test_queue_with_fractional_orders(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
-):
+) -> None:
     # place_after averages neighbour orders, so orders are floats with gaps
     # smaller than 1. queue must stay a dense 1..N rank regardless of those gaps
     # (a RANGE window frame would frame by the order value and drop events).

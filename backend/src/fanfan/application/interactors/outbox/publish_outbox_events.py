@@ -24,7 +24,7 @@ class PublishOutboxEvents:
         events_broker: EventBroker,
         uow: UnitOfWork,
         config: OutboxConfig,
-    ):
+    ) -> None:
         self.outbox_gateway = outbox_gateway
         self.events_broker = events_broker
         self.uow = uow

@@ -33,7 +33,7 @@ _PERMISSION_CHOICE = click.Choice([p.value for p in Permission])
 @async_command
 async def grant_permission_command(
     context: click.Context, username: str, permission: str
-):
+) -> None:
     container: AsyncContainer = context.meta[CONTAINER_NAME]
     async with container() as r_container:
         grant = await r_container.get(GrantPermission)
@@ -51,7 +51,7 @@ async def grant_permission_command(
 @async_command
 async def revoke_permission_command(
     context: click.Context, username: str, permission: str
-):
+) -> None:
     container: AsyncContainer = context.meta[CONTAINER_NAME]
     async with container() as r_container:
         revoke = await r_container.get(RevokePermission)
@@ -66,7 +66,7 @@ async def revoke_permission_command(
 @click.argument("username")
 @click.pass_context
 @async_command
-async def list_permissions_command(context: click.Context, username: str):
+async def list_permissions_command(context: click.Context, username: str) -> None:
     container: AsyncContainer = context.meta[CONTAINER_NAME]
     async with container() as r_container:
         list_permissions = await r_container.get(ListUserPermissions)

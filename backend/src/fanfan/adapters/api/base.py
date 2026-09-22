@@ -37,14 +37,14 @@ class BaseApiClient:
     # and auth headers (configured in the DI provider), so subclasses only
     # declare endpoint methods. httpx2 raises httpx2.HTTPStatusError on non-2xx
     # responses (status available via error.response.status_code).
-    def __init__(self, client: httpx2.AsyncClient, retort: Retort):
+    def __init__(self, client: httpx2.AsyncClient, retort: Retort) -> None:
         self._client = client
         self._retort = retort
 
-    async def _get(self, path: str, model: Any, **params: Any) -> Any:
-        # `model` is a type hint (e.g. Order or list[Request]); the caller's
-        # public method annotates the concrete return type, so adaptix-loaded
-        # results stay correctly typed at the call site.
+    async def _get[T](self, path: str, model: type[T], **params: Any) -> T:
+        # `model` is the type adaptix loads into. Generic rather than `Any`, so
+        # an endpoint method's declared return type is checked against what it
+        # asks for here, instead of both ends agreeing to be unchecked.
         response = await self._request_with_retry(path, params)
         return self._retort.load(response.json(), model)
 
@@ -79,4 +79,4 @@ def _is_retryable(error: httpx2.TransportError | httpx2.HTTPStatusError) -> bool
 
 def _backoff_delay(attempt: int) -> float:
     capped = min(RETRY_MAX_DELAY, RETRY_BASE_DELAY * 2 ** (attempt - 1))
-    return capped * random.uniform(0.5, 1.5)  # noqa: S311 — jitter, not a security draw
+    return float(capped * random.uniform(0.5, 1.5))  # noqa: S311 — jitter, not a draw

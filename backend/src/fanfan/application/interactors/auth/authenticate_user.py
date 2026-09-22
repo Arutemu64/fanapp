@@ -42,7 +42,7 @@ class AuthenticateUser:
         password_hasher: PasswordHasher,
         session_store: SessionStore,
         rate_limiter: RateLimiter,
-    ):
+    ) -> None:
         self.user_gateway = user_gateway
         self.password_hasher = password_hasher
         self.session_store = session_store

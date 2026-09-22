@@ -40,7 +40,7 @@ class UndoScheduleChange:
         current_user_provider: CurrentUserProvider,
         perm_service: PermissionService,
         schedule_cache: ScheduleCacheGateway,
-    ):
+    ) -> None:
         self.uow = uow
         self.changes_gateway = changes_gateway
         self.schedule_gateway = schedule_gateway

@@ -47,7 +47,7 @@ async def _user_with_password(
 async def test_authenticate_user_with_correct_password_creates_session(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(AuthenticateUser)
     user_gateway = await dishka_request.get(UserGateway)
     password_hasher = await dishka_request.get(PasswordHasher)
@@ -70,7 +70,7 @@ async def test_authenticate_user_with_correct_password_creates_session(
 async def test_authenticate_user_with_wrong_password_raises_invalid_credentials(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(AuthenticateUser)
     user_gateway = await dishka_request.get(UserGateway)
     password_hasher = await dishka_request.get(PasswordHasher)
@@ -89,7 +89,7 @@ async def test_authenticate_user_with_wrong_password_raises_invalid_credentials(
 
 async def test_authenticate_user_unknown_email_raises_invalid_credentials(
     dishka_request: AsyncContainer,
-):
+) -> None:
     interactor = await dishka_request.get(AuthenticateUser)
 
     with pytest.raises(InvalidCredentials):
@@ -101,7 +101,7 @@ async def test_authenticate_user_unknown_email_raises_invalid_credentials(
 async def test_authenticate_user_without_password_raises_invalid_credentials(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
-):
+) -> None:
     # A social-only account has no password hash; a password login must fail
     # cleanly rather than crash on verification.
     interactor = await dishka_request.get(AuthenticateUser)
@@ -121,7 +121,7 @@ async def test_authenticate_user_without_password_raises_invalid_credentials(
 async def test_authenticate_user_locks_out_after_too_many_attempts(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(AuthenticateUser)
     user_gateway = await dishka_request.get(UserGateway)
     password_hasher = await dishka_request.get(PasswordHasher)
@@ -151,7 +151,7 @@ async def test_authenticate_user_locks_out_after_too_many_attempts(
 async def test_authenticate_user_success_resets_attempt_counter(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
-):
+) -> None:
     # A few typos followed by a correct password must not leave the account near
     # lockout: a successful login clears the counters.
     interactor = await dishka_request.get(AuthenticateUser)

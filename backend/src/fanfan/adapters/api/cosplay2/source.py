@@ -19,7 +19,7 @@ class Cosplay2Source(CosplaySource):
     recognizes as participants.
     """
 
-    def __init__(self, client: Cosplay2Client):
+    def __init__(self, client: Cosplay2Client) -> None:
         self.client = client
 
     async def fetch_nominations(self) -> list[ExternalNomination]:

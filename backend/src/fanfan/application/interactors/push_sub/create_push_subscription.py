@@ -23,7 +23,7 @@ class CreatePushSubscription:
         user_gateway: UserGateway,
         current_user_provider: CurrentUserProvider,
         uow: UnitOfWork,
-    ):
+    ) -> None:
         self.user_gateway = user_gateway
         self.push_sub_gateway = push_sub_gateway
         self.current_user_provider = current_user_provider

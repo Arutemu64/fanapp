@@ -45,7 +45,7 @@ def _parse_dto(orm: MailingORM) -> MailingDTO:
 
 
 class SqlMailingGateway(MailingGateway):
-    def __init__(self, session: AsyncSession, uow: UnitOfWork):
+    def __init__(self, session: AsyncSession, uow: UnitOfWork) -> None:
         self.session = session
         self.uow = uow
 
@@ -97,7 +97,7 @@ class SqlMailingGateway(MailingGateway):
             .returning(MailingORM.sent_count, MailingORM.total_count)
         )
         row = (await self.session.execute(stmt)).one()
-        return row.sent_count, row.total_count
+        return int(row.sent_count), int(row.total_count)
 
     async def read_mailing(self, mailing_id: MailingId) -> MailingDTO | None:
         stmt = select(MailingORM).where(MailingORM.id == mailing_id)

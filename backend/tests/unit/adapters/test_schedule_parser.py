@@ -16,13 +16,17 @@ pytestmark = pytest.mark.unit
 
 TEMPLATE_PATH = REPO_ROOT / "frontend" / "static" / "schedule-template.xlsx"
 
-VALID_ROW = {
-    "number": 1,
-    "title": "Открытие фестиваля",
-    "duration": 900,
-    "nomination_title": "Вне конкурса",
-    "block_title": "Открытие",
-}
+VALID_ENTRY = ScheduleEntry(
+    number=1,
+    title="Открытие фестиваля",
+    duration=900,
+    nomination_title="Вне конкурса",
+    block_title="Открытие",
+)
+# The same entry as spreadsheet cells, keyed by column name. Derived from the
+# entry rather than written twice, so the row and the expected parse result
+# cannot drift apart.
+VALID_ROW: dict[str, object] = VALID_ENTRY.model_dump()
 
 
 def valid_row(**overrides: object) -> tuple[object, ...]:
@@ -107,7 +111,7 @@ def test_column_order_does_not_matter() -> None:
         [("Открытие", 900, 1, "Вне конкурса", "Открытие фестиваля")],
     )
 
-    assert parse_schedule_from_excel(sheet) == [ScheduleEntry(**VALID_ROW)]
+    assert parse_schedule_from_excel(sheet) == [VALID_ENTRY]
 
 
 def test_accepts_whole_numbers_stored_as_floats() -> None:

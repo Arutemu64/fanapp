@@ -22,7 +22,7 @@ def str_enum_column(
     name: str,
     length: int = 32,
     **kwargs: Any,
-) -> MappedColumn:
+) -> MappedColumn[Any]:
     """Map a StrEnum to a VARCHAR column guarded by a CHECK constraint.
 
     We deliberately avoid a native PostgreSQL ENUM type (``native_enum=False``):

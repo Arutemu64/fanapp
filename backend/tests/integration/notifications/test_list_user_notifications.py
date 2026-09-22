@@ -55,7 +55,7 @@ async def test_list_user_notifications_newest_first_stable_under_created_at_tie(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     first = await _add_notification(dishka_request, visitor, "Первое")
     second = await _add_notification(dishka_request, visitor, "Второе")
 
@@ -73,7 +73,7 @@ async def test_list_user_notifications_paginates_without_skips(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     first = await _add_notification(dishka_request, visitor, "Первое")
     second = await _add_notification(dishka_request, visitor, "Второе")
 

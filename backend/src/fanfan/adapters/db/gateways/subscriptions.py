@@ -1,4 +1,4 @@
-from sqlalchemy import delete, select
+from sqlalchemy import Select, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, undefer
 
@@ -52,7 +52,7 @@ def _parse_full_dto(subscription_orm: SubscriptionORM) -> SubscriptionFullDTO:
     )
 
 
-def _select_subscription_full_dto():
+def _select_subscription_full_dto() -> Select[SubscriptionORM]:
     return (
         select(SubscriptionORM)
         .join(ScheduleEventORM)
@@ -65,7 +65,7 @@ def _select_subscription_full_dto():
 
 
 class SqlSubscriptionGateway(SubscriptionGateway):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
     async def add(self, subscription: Subscription) -> None:

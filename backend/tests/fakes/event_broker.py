@@ -5,7 +5,7 @@ from fanfan.core.events.base import AppEvent
 
 
 class FakeEventBroker(EventBroker):
-    def __init__(self):
+    def __init__(self) -> None:
         # Service events still publish directly (fire-and-forget).
         self.published_events: list[AppEvent] = []
         # Raw publishes, as the outbox relay would emit them.

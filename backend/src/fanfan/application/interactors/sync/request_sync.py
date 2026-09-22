@@ -34,7 +34,7 @@ class RequestSync:
         tracker: SyncRunTracker,
         sync_run_gateway: SyncRunGateway,
         uow: UnitOfWork,
-    ):
+    ) -> None:
         self.current_user_provider = current_user_provider
         self.perm_service = perm_service
         self.tracker = tracker

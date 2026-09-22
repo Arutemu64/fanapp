@@ -10,7 +10,7 @@ from fanfan.application.interactors.voting.set_voting_time_range import (
 pytestmark = pytest.mark.unit
 
 
-def test_voting_boundaries_require_an_offset():
+def test_voting_boundaries_require_an_offset() -> None:
     # A naive bound must be rejected here: once persisted it is compared against an
     # aware clock in AppSettings.is_voting_open(now), which would raise TypeError
     # on every voting-status check.
@@ -21,7 +21,7 @@ def test_voting_boundaries_require_an_offset():
         )
 
 
-def test_voting_boundaries_accept_aware_instants():
+def test_voting_boundaries_accept_aware_instants() -> None:
     start = datetime(2026, 8, 22, 12, 0, tzinfo=UTC)
     end = datetime(2026, 8, 22, 18, 0, tzinfo=UTC)
 
@@ -31,7 +31,7 @@ def test_voting_boundaries_accept_aware_instants():
     assert parsed.voting_end == end
 
 
-def test_voting_range_can_be_cleared_with_nulls():
+def test_voting_range_can_be_cleared_with_nulls() -> None:
     # Closing the vote sends both bounds null; that must stay valid.
     parsed = SetVotingTimeRangeInput(voting_start=None, voting_end=None)
 

@@ -11,7 +11,7 @@ class RateLimitException(AppException):
 class RateLimitCooldown(RateLimitException):
     code = "RATE_LOCK_COOLDOWN"
 
-    def __init__(self, retry_after: int):
+    def __init__(self, retry_after: int) -> None:
         super().__init__(details={"retry_after": retry_after})
 
 
@@ -22,7 +22,7 @@ class RateLimitInUse(RateLimitException):
 class EmailCodeRequestTooFast(RateLimited, RateLimitException):
     code = "EMAIL_CODE_REQUEST_TOO_FAST"
 
-    def __init__(self, retry_after: int):
+    def __init__(self, retry_after: int) -> None:
         super().__init__(details={"retry_after": retry_after})
 
 
@@ -35,7 +35,7 @@ class TooManyAttempts(RateLimited, RateLimitException):
 
     code = "TOO_MANY_ATTEMPTS"
 
-    def __init__(self, retry_after: int):
+    def __init__(self, retry_after: int) -> None:
         super().__init__(details={"retry_after": retry_after})
 
 

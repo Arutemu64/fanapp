@@ -13,7 +13,7 @@ class ListUserPermissions:
         self,
         user_gateway: UserGateway,
         perm_gateway: UserPermissionGateway,
-    ):
+    ) -> None:
         self.user_gateway = user_gateway
         self.perm_gateway = perm_gateway
 

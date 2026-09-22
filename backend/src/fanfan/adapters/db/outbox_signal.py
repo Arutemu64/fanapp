@@ -32,7 +32,7 @@ class PostgresOutboxSignal(OutboxSignal):
     was down are picked up immediately rather than waiting for the poll backstop.
     """
 
-    def __init__(self, config: DatabaseConfig, channel: str = OUTBOX_CHANNEL):
+    def __init__(self, config: DatabaseConfig, channel: str = OUTBOX_CHANNEL) -> None:
         self._config = config
         self._channel = channel
         # Set by the NOTIFY callback (and on each reconnect); the relay clears it
@@ -125,7 +125,8 @@ class PostgresOutboxSignal(OutboxSignal):
             server_settings["application_name"] = (
                 f"{self._config.application_name}-outbox-listener"
             )
-        return await asyncpg.connect(
+        # asyncpg ships no type information, so connect() is Unknown here.
+        return await asyncpg.connect(  # ty: ignore[unsound-return-statement]
             host=url.host,
             port=url.port,
             user=url.username,

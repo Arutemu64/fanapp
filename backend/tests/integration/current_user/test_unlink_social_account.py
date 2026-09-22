@@ -72,7 +72,7 @@ async def test_unlinking_with_an_email_present_succeeds(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
     login: Callable[[User], None],
-):
+) -> None:
     # Email drives password and email-code login, so removing the only social
     # identity still leaves a way in.
     interactor = await dishka_request.get(UnlinkSocialAccount)
@@ -100,7 +100,7 @@ async def test_unlinking_the_last_sign_in_method_is_refused(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
     login: Callable[[User], None],
-):
+) -> None:
     # No email and only one identity: removing it would lock the user out.
     interactor = await dishka_request.get(UnlinkSocialAccount)
     user_gateway = await dishka_request.get(UserGateway)
@@ -127,7 +127,7 @@ async def test_unlinking_one_of_two_providers_is_allowed_without_email(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
     login: Callable[[User], None],
-):
+) -> None:
     # No email, but the other provider remains as a way in — this is exactly the
     # case the old per-provider "email required" rule got wrong.
     interactor = await dishka_request.get(UnlinkSocialAccount)
@@ -163,7 +163,7 @@ async def test_unlinking_a_provider_that_is_not_linked_is_a_no_op(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
     login: Callable[[User], None],
-):
+) -> None:
     # Delete stays idempotent so the profile can recover from stale UI safely,
     # and the guard never fires on an absent identity.
     interactor = await dishka_request.get(UnlinkSocialAccount)

@@ -30,7 +30,7 @@ async def test_returns_basics_and_social_links(
     users_reader: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     user_gateway = await dishka_request.get(UserGateway)
     social_gateway = await dishka_request.get(SocialIdentityGateway)
     interactor = await dishka_request.get(GetUser)
@@ -71,7 +71,7 @@ async def test_missing_user_raises_not_found(
     dishka_request: AsyncContainer,
     users_reader: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(GetUser)
     login(users_reader)
 
@@ -83,7 +83,7 @@ async def test_requires_users_read(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(GetUser)
     login(visitor)
 

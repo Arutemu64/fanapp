@@ -21,13 +21,13 @@ def _ticket(used_by: UserId | None = None) -> Ticket:
     )
 
 
-def test_fresh_ticket_is_not_used():
+def test_fresh_ticket_is_not_used() -> None:
     ticket = _ticket()
 
     assert ticket.is_used is False
 
 
-def test_set_as_used_marks_ticket_for_user():
+def test_set_as_used_marks_ticket_for_user() -> None:
     ticket = _ticket()
     user_id = UserId(uuid7())
 
@@ -38,7 +38,7 @@ def test_set_as_used_marks_ticket_for_user():
     assert ticket.is_used_by(UserId(uuid7())) is False
 
 
-def test_set_as_used_twice_raises():
+def test_set_as_used_twice_raises() -> None:
     ticket = _ticket(used_by=UserId(uuid7()))
 
     with pytest.raises(TicketAlreadyUsed):

@@ -24,7 +24,7 @@ class ChangeEmail:
         current_user_provider: CurrentUserProvider,
         send_email_confirmation_code: SendEmailConfirmationCode,
         rate_lock_factory: RateLockFactory,
-    ):
+    ) -> None:
         self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
         self.send_email_confirmation_code = send_email_confirmation_code

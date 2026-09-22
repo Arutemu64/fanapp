@@ -27,7 +27,7 @@ class ExecuteCosplaySync:
         perm_service: PermissionService,
         tracker: SyncRunTracker,
         sync_cosplay: SyncCosplay,
-    ):
+    ) -> None:
         self.current_user_provider = current_user_provider
         self.perm_service = perm_service
         self.tracker = tracker

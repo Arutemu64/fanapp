@@ -10,11 +10,11 @@ class TicketService:
         self,
         ticket_gateway: TicketGateway,
         user_gateway: UserGateway,
-    ):
+    ) -> None:
         self.ticket_gateway = ticket_gateway
         self.user_gateway = user_gateway
 
-    async def link_ticket(self, ticket: Ticket, user: User):
+    async def link_ticket(self, ticket: Ticket, user: User) -> None:
         existing_ticket = await self.ticket_gateway.get_by_user_id(user.id)
         if existing_ticket:
             raise UserAlreadyHasTicketLinked

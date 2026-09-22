@@ -1,3 +1,10 @@
+# Ruff's config lives here rather than in pyproject.toml because it is half
+# explanatory prose — a document, not a settings block. Every other Python tool
+# (pytest, coverage, vulture, import-linter, uv and ty) is configured in
+# backend/pyproject.toml, which is the default; see AGENTS.md "Staying in sync".
+# `ty` in particular is small enough not to want a file of its own: look for
+# `[tool.ty.*]` there.
+
 # No `exclude`: setting it *replaces* ruff's built-in list instead of extending it,
 # so new defaults would stop applying. Use `extend-exclude` if a path needs skipping.
 
@@ -12,7 +19,6 @@ line-length = 88
 select = ["ALL"]
 ignore = [
     "D",       # pydocstyle (noisy in app development where public docs aren't strictly mandated)
-    "ANN",     # flake8-annotations (type-checking is handled statically by `ty`)
     # Exceptions are named for the domain condition they represent (UserNotFound,
     # MailingAlreadyCancelled), which is the convention docs/backend.md documents.
     # PEP 8 asks for the suffix only "if the exception actually is an error", and the
@@ -23,15 +29,18 @@ ignore = [
     "N818",    # error-suffix-on-exception-name
     # PLR0904 (too-many-public-methods) stays globally off: it has no natural scope
     # and false-positives on data-access gateways that legitimately grow many query
-    # methods. The three function-complexity metrics — return statements, branches,
-    # statements — are left ENABLED on purpose: the codebase satisfies all three
-    # everywhere today, so an oversized function is a real smell worth catching, and a
-    # genuinely branchy interactor documents the exception with an inline `noqa` at the
-    # site — the same pattern PLR0913/PLR0917 already use on the framework-injected
-    # routers (telemetry.py, the OAuth callback, the notifications consumer). PLR1711
-    # (useless-return) and PLR2004 (magic-value-comparison) stay enabled too; PLR2004
-    # is scoped off only in pluralize.py (per-file-ignores below), whose constants are
-    # intrinsic Russian plural-rule numbers, not stray magic values.
+    # methods. It is also a preview rule, so `ALL` does not select it and the entry
+    # below is inert today — it stays so that turning `preview` on cannot surface the
+    # rule unannounced. The three function-complexity metrics — return statements,
+    # branches, statements — are left ENABLED on purpose: the codebase satisfies all
+    # three everywhere today, so an oversized function is a real smell worth catching,
+    # and a genuinely branchy interactor documents the exception with an inline `noqa`
+    # at the site — the same pattern PLR0913/PLR0917 already use on the
+    # framework-injected routers (telemetry.py, the OAuth callback, the notifications
+    # consumer). PLR1711 (useless-return) and PLR2004 (magic-value-comparison) stay
+    # enabled too; PLR2004 is scoped off only in pluralize.py (per-file-ignores
+    # below), whose constants are intrinsic Russian plural-rule numbers, not stray
+    # magic values.
     "PLR0904",  # too-many-public-methods
     "COM812",  # missing-trailing-comma (formatter compatibility)
     "ISC001",  # single-line-implicit-string-concatenation (formatter compatibility)
@@ -66,6 +75,19 @@ ignore = [
     "CPY001", # missing-copyright-notice — the MIT LICENSE is at the repo root, not per file
 ]
 
+[lint.flake8-annotations]
+# ANN is fully enabled, and the whole group is load-bearing rather than a style
+# preference: `ty` does not check an unannotated function at all. It skips the
+# body, and it infers nothing for the return, so every caller gets Unknown. A
+# missing annotation is therefore how type checking gets switched off for a
+# function without touching any config — verified, not assumed.
+#
+# `*args`/`**kwargs` that exist only to forward to another call are genuinely
+# untyped at this layer — ANN401 on them would buy a `object` annotation that
+# every caller then has to cast back. Everything else keeps ANN401: an explicit
+# `Any` is a checking hole, and it should cost a visible `noqa` with a reason.
+allow-star-arg-any = true
+
 [lint.flake8-bugbear]
 # Safe list of immutables to prevent false positives when using FastAPI/FastStream DI
 extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Body", "fastapi.Header", "faststream.Depends", "pydantic.Field"]
@@ -80,7 +102,6 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "f
 # Repo-level setup scripts (bootstrap.py etc.); not part of the fanfan package.
 "scripts/*.py" = [
     "T201",    # setup CLIs print progress/next-steps to stdout — that's the point
-    "INP001",  # standalone scripts, not an importable package
 ]
 "tests/**/*.py" = [
     "S101",    # asserts are the assertion mechanism in tests. Production code keeps S101
@@ -88,10 +109,8 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "f
     #            check written as an assert would be silently dropped in prod.
     "S105",    # hardcoded passwords in tests are fine
     "S106",    # hardcoded passwords in tests are fine
-    "F401",    # unused imports are common in fixtures / conftest files
     "PLR2004", # magic numbers (e.g. status code == 200) are totally fine in tests
     "PLR0913", # a test's arguments are pytest fixtures, not a call signature anyone types
-    "PLR0917", # ditto, counted positionally
     "SLF001",  # accessing private members during testing is sometimes necessary
 ]
 # Interactors take their collaborators through Dishka constructor injection: one
@@ -101,12 +120,7 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "f
     "PLR0913", # too-many-arguments
     "PLR0917", # too-many-positional-arguments — same constructors, counted positionally
 ]
-"src/fanfan/adapters/db/migrations/env.py" = [
-    "ERA001",  # Alembic auto-generates commented out code
-    "INP001",  # Not a package
-]
 "src/fanfan/adapters/db/migrations/versions/*.py" = [
     "E501",    # Alembic sometimes generates long lines
-    "INP001",  # Not a package
     "N999",    # filenames are Alembic's `<date>-<revision>_<slug>` template, not module names
 ]

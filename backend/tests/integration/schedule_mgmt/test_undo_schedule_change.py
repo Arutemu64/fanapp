@@ -28,7 +28,6 @@ from fanfan.core.models.schedule_event import ScheduleEvent
 from fanfan.core.models.user import User
 from fanfan.core.vo.schedule_change import (
     ScheduleChangeId,
-    generate_schedule_change_id,
 )
 from fanfan.core.vo.schedule_event import generate_schedule_event_id
 from tests.integration.conftest import as_outbox
@@ -65,7 +64,7 @@ async def test_undo_skipped_change_unskips_event(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(UndoScheduleChange)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
@@ -115,7 +114,7 @@ async def test_undo_unskipped_change_skips_event(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(UndoScheduleChange)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
@@ -156,7 +155,7 @@ async def test_undo_moved_change_places_event_back_on_top(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(UndoScheduleChange)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
@@ -205,7 +204,7 @@ async def test_undo_set_as_current_restores_previous_event(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(UndoScheduleChange)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
@@ -253,7 +252,7 @@ async def test_undo_set_as_current_raises_when_current_moved_on(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(UndoScheduleChange)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)
@@ -294,7 +293,7 @@ async def test_undo_raises_when_change_not_found(
     schedule_editor: User,
     login: Callable[[User], None],
     outbox: OutboxGateway,
-):
+) -> None:
     interactor = await dishka_request.get(UndoScheduleChange)
     login(schedule_editor)
 
@@ -311,7 +310,7 @@ async def test_undo_without_permission_raises_access_denied(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(UndoScheduleChange)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     changes_gateway = await dishka_request.get(ScheduleChangeGateway)

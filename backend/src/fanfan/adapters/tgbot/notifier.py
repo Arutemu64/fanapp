@@ -60,9 +60,10 @@ class TelegramNotifier(TelegramNotifierPort):
         social_identity = await self.social_identity_gateway.get_by_provider(
             user_id=notification.user_id, provider=SocialProvider.TELEGRAM
         )
-        # provider_user_id is the Bot API id, and it is optional — an identity
-        # created from an `openid`-only token has no address to send to.
-        if social_identity is None or social_identity.provider_user_id is None:
+        # provider_user_id is the Bot API id we message. An unlinked user has no
+        # identity at all, which is the only unreachable case here: the column is
+        # NOT NULL and both providers always supply the id (see SocialIdentity).
+        if social_identity is None:
             raise UserNotReachable
         try:
             await self.bot.send_message(

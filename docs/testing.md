@@ -228,6 +228,23 @@ on it. When you make a new side-effecting port testable, add a fake there and
 register it in the test container (`tests/integration/conftest.py`) via
 `AnyOf[ThePort, TheFake]` so a test can resolve either the port or the fake.
 
+### Test doubles subclass what they stand in for
+
+A fake or stub **names its port in the base list**, exactly as a production
+adapter does ([ADR-0005](adr/0005-ports-as-protocol-with-explicit-adapter-subclassing.md)):
+`class FakeCosplaySource(CosplaySource):`, not a bare `class FakeCosplaySource:`
+silenced at the call site. `ty` checks `tests/` too, so the inheritance is what
+makes a port signature change fail the type check instead of the test run — and
+a partial double is fine, since only the methods it does define are checked.
+
+A double for a *concrete* collaborator (`WebPushClient`, `TCloudClient`) does
+the same and skips `super().__init__()`, since the overrides replace every use
+of what the real constructor builds. Where even that is impossible — aiogram's
+`Bot`, `FastMail` — the double stays structural and the call site carries a
+`# ty: ignore[<rule>]` naming the reason. Mypy-syntax `# type: ignore[code]`
+does **not** work: ty ignores a bracketed code without a `ty:` prefix, so such a
+comment suppresses nothing ([ty suppression](https://docs.astral.sh/ty/suppression/)).
+
 ## Test isolation: rollback per test
 
 Each integration test runs inside its own database transaction that is **always

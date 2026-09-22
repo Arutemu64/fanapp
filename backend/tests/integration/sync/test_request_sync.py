@@ -37,7 +37,7 @@ async def test_request_sync_creates_pending_run_and_enqueues_event(
     sync_operator: User,
     login: Callable[[User], None],
     outbox: OutboxGateway,
-):
+) -> None:
     login(sync_operator)
     interactor = await dishka_request.get(RequestSync)
 
@@ -55,7 +55,7 @@ async def test_request_sync_records_the_requesting_organizer(
     dishka_request: AsyncContainer,
     sync_operator: User,
     login: Callable[[User], None],
-):
+) -> None:
     login(sync_operator)
     interactor = await dishka_request.get(RequestSync)
     gateway = await dishka_request.get(SyncRunGateway)
@@ -71,7 +71,7 @@ async def test_request_sync_requires_the_permission(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     login(visitor)
     interactor = await dishka_request.get(RequestSync)
 
@@ -83,7 +83,7 @@ async def test_request_sync_rejects_a_second_run_for_the_same_source(
     dishka_request: AsyncContainer,
     sync_operator: User,
     login: Callable[[User], None],
-):
+) -> None:
     login(sync_operator)
     interactor = await dishka_request.get(RequestSync)
 
@@ -98,7 +98,7 @@ async def test_request_sync_reaps_a_wedged_run_instead_of_blocking_forever(
     sync_operator: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     # A worker killed mid-run leaves an active row behind. Without reaping, the
     # partial unique index would reject every future run for that source.
     login(sync_operator)

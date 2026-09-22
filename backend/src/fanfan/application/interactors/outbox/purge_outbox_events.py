@@ -15,7 +15,7 @@ class PurgeOutboxEvents:
         outbox_gateway: OutboxGateway,
         uow: UnitOfWork,
         config: OutboxConfig,
-    ):
+    ) -> None:
         self.outbox_gateway = outbox_gateway
         self.uow = uow
         self.config = config

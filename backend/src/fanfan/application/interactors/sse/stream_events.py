@@ -15,7 +15,7 @@ class StreamEvents:
         self,
         realtime_gateway: RealtimeGateway,
         current_user_provider: CurrentUserProvider,
-    ):
+    ) -> None:
         self.realtime_gateway = realtime_gateway
         self.current_user_provider = current_user_provider
 

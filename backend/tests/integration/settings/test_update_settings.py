@@ -24,7 +24,7 @@ async def test_public_field_change_broadcasts_config_updated(
     dishka_request: AsyncContainer,
     settings_editor: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(UpdateSettings)
     settings_gateway = await dishka_request.get(AppSettingsGateway)
     realtime = await dishka_request.get(FakeRealtimeGateway)
@@ -44,7 +44,7 @@ async def test_festival_end_before_start_is_rejected(
     dishka_request: AsyncContainer,
     settings_editor: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(UpdateSettings)
     settings_gateway = await dishka_request.get(AppSettingsGateway)
     login(settings_editor)
@@ -65,7 +65,7 @@ async def test_limits_only_change_does_not_broadcast(
     dishka_request: AsyncContainer,
     settings_editor: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(UpdateSettings)
     settings_gateway = await dishka_request.get(AppSettingsGateway)
     realtime = await dishka_request.get(FakeRealtimeGateway)

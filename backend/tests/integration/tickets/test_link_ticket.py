@@ -31,7 +31,7 @@ async def test_link_ticket_successfully(
     visitor: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(LinkTicket)
     user_gateway = await dishka_request.get(UserGateway)
     ticket_gateway = await dishka_request.get(TicketGateway)
@@ -66,7 +66,7 @@ async def test_link_ticket_raises_ticket_not_found(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(LinkTicket)
 
     login(visitor)
@@ -81,7 +81,7 @@ async def test_link_ticket_raises_already_used(
     schedule_editor: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(LinkTicket)
     ticket_gateway = await dishka_request.get(TicketGateway)
 
@@ -107,7 +107,7 @@ async def test_link_ticket_raises_when_user_already_has_ticket(
     visitor_with_ticket: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(LinkTicket)
     ticket_gateway = await dishka_request.get(TicketGateway)
 

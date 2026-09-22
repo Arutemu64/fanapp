@@ -95,7 +95,7 @@ async def test_reports_leader_and_totals_per_nomination(
     voting_manager: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     user_gateway = await dishka_request.get(UserGateway)
     nomination_gateway = await dishka_request.get(NominationGateway)
     participant_gateway = await dishka_request.get(ParticipantGateway)
@@ -128,7 +128,7 @@ async def test_nomination_without_votes_has_no_leader(
     voting_manager: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     nomination_gateway = await dishka_request.get(NominationGateway)
     participant_gateway = await dishka_request.get(ParticipantGateway)
     interactor = await dishka_request.get(GetVotingDashboard)
@@ -153,7 +153,7 @@ async def test_excludes_non_votable_nominations(
     voting_manager: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     nomination_gateway = await dishka_request.get(NominationGateway)
     interactor = await dishka_request.get(GetVotingDashboard)
     login(voting_manager)
@@ -173,7 +173,7 @@ async def test_reports_contest_pool_size(
     voting_manager: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     user_gateway = await dishka_request.get(UserGateway)
     nomination_gateway = await dishka_request.get(NominationGateway)
     participant_gateway = await dishka_request.get(ParticipantGateway)
@@ -218,7 +218,7 @@ async def test_requires_voting_manage(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(GetVotingDashboard)
     login(visitor)
 

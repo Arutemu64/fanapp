@@ -10,7 +10,7 @@ from fanfan.core.vo.user import UserId
 pytestmark = pytest.mark.unit
 
 
-def test_create_records_vote_created_event():
+def test_create_records_vote_created_event() -> None:
     user_id = UserId(uuid7())
     participant_id = ParticipantId(uuid7())
 
@@ -27,7 +27,7 @@ def test_create_records_vote_created_event():
     ]
 
 
-def test_create_generates_unique_ids():
+def test_create_generates_unique_ids() -> None:
     user_id = UserId(uuid7())
     participant_id = ParticipantId(uuid7())
 
@@ -37,7 +37,7 @@ def test_create_generates_unique_ids():
     assert first.id != second.id
 
 
-def test_delete_records_vote_deleted_event():
+def test_delete_records_vote_deleted_event() -> None:
     vote = Vote.create(user_id=UserId(uuid7()), participant_id=ParticipantId(uuid7()))
     vote.pull_events()  # drop the VoteCreated event
 

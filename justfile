@@ -97,8 +97,13 @@ backend-generate-vapid:
 backend-format:
     cd backend && uv run ruff format src/fanfan tests scripts --respect-gitignore
 
+# Safe fixes only. `--unsafe-fixes` is deliberately NOT here: ruff marks a fix
+# unsafe when it can change behaviour or discard a comment, and a gate that
+# applies those rewrites the code of whoever ran it to *check* their work. Add
+# the flag by hand for a deliberate bulk pass, and read the diff. CI stays
+# check-only either way (ci.yml).
 backend-check:
-    cd backend && uv run ruff check src/fanfan tests scripts --respect-gitignore --fix --unsafe-fixes
+    cd backend && uv run ruff check src/fanfan tests scripts --respect-gitignore --fix
 
 backend-test:
     cd backend && uv run pytest tests
@@ -123,7 +128,7 @@ backend-seed-demo:
     cd backend && uv run python -m fanfan.main.cli demo seed
 
 backend-typecheck:
-    cd backend && uv run ty check src/fanfan
+    cd backend && uv run ty check
 
 # Dead-code sweep (vulture): globally-unused code that ruff's local F401/F841
 # can't see. A manual aid, NOT a gate — deliberately out of `backend-lint` and

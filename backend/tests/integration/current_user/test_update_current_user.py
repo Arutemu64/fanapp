@@ -23,7 +23,7 @@ async def test_update_current_user_changes_username(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(UpdateCurrentUser)
     user_gateway = await dishka_request.get(UserGateway)
     login(visitor)
@@ -39,7 +39,7 @@ async def test_update_current_user_unchanged_username_is_noop(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(UpdateCurrentUser)
     user_gateway = await dishka_request.get(UserGateway)
     login(visitor)
@@ -56,7 +56,7 @@ async def test_update_current_user_rejects_profane_username(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(UpdateCurrentUser)
     user_gateway = await dishka_request.get(UserGateway)
     login(visitor)
@@ -75,7 +75,7 @@ async def test_update_current_user_rejects_username_taken_by_another(
     uow: UnitOfWork,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(UpdateCurrentUser)
     user_gateway = await dishka_request.get(UserGateway)
 

@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -15,7 +15,7 @@ from fanfan.core.models.app_settings import (
 pytestmark = pytest.mark.unit
 
 
-def test_voting_is_closed_by_default():
+def test_voting_is_closed_by_default() -> None:
     settings = AppSettings()
 
     assert settings.voting_start is None
@@ -23,14 +23,14 @@ def test_voting_is_closed_by_default():
     assert settings.is_voting_open(now=datetime.now(UTC)) is False
 
 
-def test_festival_defaults():
+def test_festival_defaults() -> None:
     settings = AppSettings()
 
     assert settings.festival_start == DEFAULT_FESTIVAL_START
     assert settings.festival_end == DEFAULT_FESTIVAL_END
 
 
-def test_set_festival_schedule_updates_values():
+def test_set_festival_schedule_updates_values() -> None:
     settings = AppSettings()
     new_start = datetime(2027, 8, 21, 10, 0, tzinfo=UTC)
     new_end = datetime(2027, 8, 22, 20, 0, tzinfo=UTC)
@@ -41,7 +41,7 @@ def test_set_festival_schedule_updates_values():
     assert settings.festival_end == new_end
 
 
-def test_set_festival_schedule_rejects_reversed_range():
+def test_set_festival_schedule_rejects_reversed_range() -> None:
     settings = AppSettings()
     start = datetime(2027, 8, 22, 20, 0, tzinfo=UTC)
     end = datetime(2027, 8, 21, 10, 0, tzinfo=UTC)
@@ -50,7 +50,7 @@ def test_set_festival_schedule_rejects_reversed_range():
         settings.set_festival_schedule(start=start, end=end)
 
 
-def test_set_festival_schedule_rejects_zero_length():
+def test_set_festival_schedule_rejects_zero_length() -> None:
     settings = AppSettings()
     point = datetime(2027, 8, 22, 20, 0, tzinfo=UTC)
 
@@ -58,7 +58,7 @@ def test_set_festival_schedule_rejects_zero_length():
         settings.set_festival_schedule(start=point, end=point)
 
 
-def test_set_voting_time_range_updates_values():
+def test_set_voting_time_range_updates_values() -> None:
     settings = AppSettings()
     start = datetime(2026, 8, 22, 12, 0, tzinfo=UTC)
     end = datetime(2026, 8, 22, 18, 0, tzinfo=UTC)
@@ -69,7 +69,7 @@ def test_set_voting_time_range_updates_values():
     assert settings.voting_end == end
 
 
-def test_is_voting_open_inside_range():
+def test_is_voting_open_inside_range() -> None:
     settings = AppSettings()
     start = datetime(2026, 8, 22, 12, 0, tzinfo=UTC)
     end = datetime(2026, 8, 22, 18, 0, tzinfo=UTC)
@@ -78,7 +78,7 @@ def test_is_voting_open_inside_range():
     assert settings.is_voting_open(now=datetime(2026, 8, 22, 15, 0, tzinfo=UTC)) is True
 
 
-def test_is_voting_open_at_start_boundary():
+def test_is_voting_open_at_start_boundary() -> None:
     settings = AppSettings()
     start = datetime(2026, 8, 22, 12, 0, tzinfo=UTC)
     end = datetime(2026, 8, 22, 18, 0, tzinfo=UTC)
@@ -87,7 +87,7 @@ def test_is_voting_open_at_start_boundary():
     assert settings.is_voting_open(now=start) is True
 
 
-def test_is_voting_closed_at_end_boundary():
+def test_is_voting_closed_at_end_boundary() -> None:
     settings = AppSettings()
     start = datetime(2026, 8, 22, 12, 0, tzinfo=UTC)
     end = datetime(2026, 8, 22, 18, 0, tzinfo=UTC)
@@ -96,7 +96,7 @@ def test_is_voting_closed_at_end_boundary():
     assert settings.is_voting_open(now=end) is False
 
 
-def test_is_voting_closed_before_range():
+def test_is_voting_closed_before_range() -> None:
     settings = AppSettings()
     start = datetime(2026, 8, 22, 12, 0, tzinfo=UTC)
     end = datetime(2026, 8, 22, 18, 0, tzinfo=UTC)
@@ -107,14 +107,14 @@ def test_is_voting_closed_before_range():
     )
 
 
-def test_is_voting_closed_when_range_cleared():
+def test_is_voting_closed_when_range_cleared() -> None:
     settings = AppSettings()
     settings.set_voting_time_range(start=None, end=None)
 
     assert settings.is_voting_open(now=datetime.now(UTC)) is False
 
 
-def test_set_voting_time_range_rejects_reversed_range():
+def test_set_voting_time_range_rejects_reversed_range() -> None:
     settings = AppSettings()
     start = datetime(2026, 8, 22, 18, 0, tzinfo=UTC)
     end = datetime(2026, 8, 22, 12, 0, tzinfo=UTC)
@@ -123,7 +123,7 @@ def test_set_voting_time_range_rejects_reversed_range():
         settings.set_voting_time_range(start=start, end=end)
 
 
-def test_set_voting_time_range_rejects_zero_length():
+def test_set_voting_time_range_rejects_zero_length() -> None:
     settings = AppSettings()
     point = datetime(2026, 8, 22, 12, 0, tzinfo=UTC)
 
@@ -131,7 +131,7 @@ def test_set_voting_time_range_rejects_zero_length():
         settings.set_voting_time_range(start=point, end=point)
 
 
-def test_set_voting_time_range_rejects_partial_start_only():
+def test_set_voting_time_range_rejects_partial_start_only() -> None:
     settings = AppSettings()
 
     with pytest.raises(InvalidVotingTimeRange):
@@ -140,7 +140,7 @@ def test_set_voting_time_range_rejects_partial_start_only():
         )
 
 
-def test_set_voting_time_range_rejects_partial_end_only():
+def test_set_voting_time_range_rejects_partial_end_only() -> None:
     settings = AppSettings()
 
     with pytest.raises(InvalidVotingTimeRange):
@@ -149,13 +149,13 @@ def test_set_voting_time_range_rejects_partial_end_only():
         )
 
 
-def test_announcement_timeout_has_default():
+def test_announcement_timeout_has_default() -> None:
     settings = AppSettings()
 
     assert settings.limits.announcement_timeout == 10
 
 
-def test_update_limits_updates_announcement_timeout():
+def test_update_limits_updates_announcement_timeout() -> None:
     settings = AppSettings()
 
     settings.update_limits(announcement_timeout=30)

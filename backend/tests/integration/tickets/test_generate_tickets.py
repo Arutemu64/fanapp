@@ -54,7 +54,7 @@ async def test_generate_tickets_creates_unique_persisted_tickets(
     dishka_request: AsyncContainer,
     ticket_issuer: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(GenerateTickets)
     ticket_gateway = await dishka_request.get(TicketGateway)
 
@@ -80,7 +80,7 @@ async def test_generate_tickets_requires_permission(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(GenerateTickets)
 
     login(visitor)

@@ -46,7 +46,7 @@ async def test_list_schedule_changes_newest_first_stable_under_created_at_tie(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-):
+) -> None:
     first = await _add_change(dishka_request, schedule_editor)
     second = await _add_change(dishka_request, schedule_editor)
 
@@ -64,7 +64,7 @@ async def test_list_schedule_changes_paginates_without_skips(
     dishka_request: AsyncContainer,
     schedule_editor: User,
     login: Callable[[User], None],
-):
+) -> None:
     first = await _add_change(dishka_request, schedule_editor)
     second = await _add_change(dishka_request, schedule_editor)
 
@@ -86,7 +86,7 @@ async def test_list_schedule_changes_denied_without_permission(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(ListScheduleChanges)
     login(visitor)
 

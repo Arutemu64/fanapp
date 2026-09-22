@@ -54,7 +54,9 @@ def _parse_voting_dto(
     )
 
 
-def _select_nomination_voting_dto(user_id: UserId | None) -> Select:
+def _select_nomination_voting_dto(
+    user_id: UserId | None,
+) -> Select[NominationORM, VoteORM]:
     return (
         select(NominationORM, VoteORM)
         .outerjoin(
@@ -71,7 +73,7 @@ def _select_nomination_voting_dto(user_id: UserId | None) -> Select:
 
 
 class SqlNominationGateway(NominationGateway):
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
     async def add(self, nomination: Nomination) -> None:

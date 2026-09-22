@@ -23,7 +23,7 @@ _PAYLOAD_FIELD = "payload"
 class RedisScheduleCache(ScheduleCacheGateway):
     """Stores the rendered schedule payload and its ETag in a single Redis hash."""
 
-    def __init__(self, redis: Redis):
+    def __init__(self, redis: Redis) -> None:
         self.redis = redis
 
     async def get(self) -> CachedSchedule | None:

@@ -4,13 +4,22 @@ from fanfan.application.interactors.presence.get_online_users_count import (
     GetOnlineUsersCount,
 )
 from fanfan.application.interactors.presence.record_presence import RecordPresence
+from fanfan.application.ports.presence import PresenceGateway
+from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.core.exceptions.auth import UserNotAuthenticated
 from fanfan.core.vo.user import UserId, generate_user_id
 
 pytestmark = pytest.mark.unit
 
 
-class _FakeCurrentUser:
+class _FakeCurrentUser(CurrentUserProvider):
+    """Resolves to a fixed user id without an IdProvider or a UserGateway.
+
+    Subclasses the real provider so `ty` verifies these overrides. `__init__`
+    does not call super(): both collaborators exist only to answer
+    `get_user_id`, which is overridden here.
+    """
+
     def __init__(self, user_id: UserId | None = None) -> None:
         self._user_id = user_id
 
@@ -23,7 +32,7 @@ class _FakeCurrentUser:
         return self._user_id
 
 
-class _RecordingPresence:
+class _RecordingPresence(PresenceGateway):
     def __init__(self, count: int = 0) -> None:
         self.count = count
         self.marked: list[UserId] = []

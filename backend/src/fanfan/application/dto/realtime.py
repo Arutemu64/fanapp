@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from enum import StrEnum
+from typing import Any
 
 
 class SSEEventName(StrEnum):
@@ -44,4 +45,4 @@ class SSEMessage:
     # even when `event:` is set, so the named listener never fires; sending `{}` keeps
     # the data line non-empty. The router JSON-encodes the dict to `{}` on the wire.
     # https://html.spec.whatwg.org/multipage/server-sent-events.html#event-stream-interpretation
-    data: dict = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)

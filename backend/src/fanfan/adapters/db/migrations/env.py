@@ -39,11 +39,11 @@ _TYPE_BOUND_CK_NAMES: frozenset[str] = frozenset(
 
 
 def _include_object(
-    obj: Any,
+    obj: Any,  # noqa: ANN401  # Alembic's include_object hook signature
     name: str | None,
     type_: str,
     reflected: bool,  # noqa: FBT001
-    compare_to: Any,
+    compare_to: Any,  # noqa: ANN401  # Alembic's include_object hook signature
 ) -> bool:
     if type_ == "check_constraint" and reflected:
         return name not in _TYPE_BOUND_CK_NAMES

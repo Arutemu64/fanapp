@@ -19,7 +19,7 @@ def _notify(signal: PostgresOutboxSignal) -> None:
     signal._on_notify(object(), 0, "outbox_new", "")
 
 
-async def test_wait_returns_immediately_after_a_signal():
+async def test_wait_returns_immediately_after_a_signal() -> None:
     signal = _signal()
     signal.arm()
     _notify(signal)
@@ -29,7 +29,7 @@ async def test_wait_returns_immediately_after_a_signal():
     await asyncio.wait_for(signal.wait(60), timeout=1)
 
 
-async def test_wait_times_out_when_no_signal_arrives():
+async def test_wait_times_out_when_no_signal_arrives() -> None:
     signal = _signal()
     signal.arm()
 
@@ -40,7 +40,7 @@ async def test_wait_times_out_when_no_signal_arrives():
     assert loop.time() - start >= 0.05
 
 
-async def test_arm_clears_a_prior_signal():
+async def test_arm_clears_a_prior_signal() -> None:
     signal = _signal()
     _notify(signal)  # a signal lands...
     signal.arm()  # ...but arm() before the next drain clears it
@@ -52,7 +52,7 @@ async def test_arm_clears_a_prior_signal():
     assert loop.time() - start >= 0.05
 
 
-async def test_signal_arriving_during_a_drain_is_not_lost():
+async def test_signal_arriving_during_a_drain_is_not_lost() -> None:
     signal = _signal()
     # The relay arms, then drains; a NOTIFY that lands between the arm and the
     # following wait must still wake that wait rather than being swallowed.

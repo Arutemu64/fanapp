@@ -50,7 +50,7 @@ class ImportSchedule:
         perm_service: PermissionService,
         realtime: RealtimeGateway,
         schedule_cache: ScheduleCacheGateway,
-    ):
+    ) -> None:
         self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
         self.uow = uow

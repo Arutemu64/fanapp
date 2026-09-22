@@ -23,7 +23,7 @@ pytestmark = [
 
 async def test_request_login_code_provisions_new_user_and_sends_code(
     dishka_request: AsyncContainer,
-):
+) -> None:
     interactor = await dishka_request.get(RequestLoginCode)
     user_gateway = await dishka_request.get(UserGateway)
     email_sender = await dishka_request.get(FakeEmailSender)
@@ -42,7 +42,7 @@ async def test_request_login_code_provisions_new_user_and_sends_code(
 async def test_request_login_code_reuses_existing_user(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(RequestLoginCode)
     user_gateway = await dishka_request.get(UserGateway)
     email_sender = await dishka_request.get(FakeEmailSender)
@@ -72,7 +72,7 @@ async def test_request_login_code_reuses_existing_user(
 
 async def test_request_login_code_rejected_by_captcha_does_nothing(
     dishka_request: AsyncContainer,
-):
+) -> None:
     interactor = await dishka_request.get(RequestLoginCode)
     user_gateway = await dishka_request.get(UserGateway)
     email_sender = await dishka_request.get(FakeEmailSender)
@@ -91,7 +91,7 @@ async def test_request_login_code_rejected_by_captcha_does_nothing(
 
 async def test_request_login_code_second_request_hits_cooldown(
     dishka_request: AsyncContainer,
-):
+) -> None:
     interactor = await dishka_request.get(RequestLoginCode)
     email_sender = await dishka_request.get(FakeEmailSender)
 

@@ -1,5 +1,6 @@
 import pytest
 
+from fanfan.adapters.api.cosplay2.client import Cosplay2Client
 from fanfan.adapters.api.cosplay2.dto.requests import Request, RequestStatus
 from fanfan.adapters.api.cosplay2.dto.topics import Topic
 from fanfan.adapters.api.cosplay2.source import Cosplay2Source
@@ -7,8 +8,13 @@ from fanfan.adapters.api.cosplay2.source import Cosplay2Source
 pytestmark = pytest.mark.unit
 
 
-class FakeCosplay2Client:
-    """Stands in for Cosplay2Client, returning canned vendor DTOs (no HTTP)."""
+class FakeCosplay2Client(Cosplay2Client):
+    """Stands in for Cosplay2Client, returning canned vendor DTOs (no HTTP).
+
+    Subclasses the real client so `ty` verifies these signatures against the
+    ones the source calls. `__init__` does not call super(): there is no httpx
+    pool or retort here, and the overrides replace every use of them.
+    """
 
     def __init__(
         self,

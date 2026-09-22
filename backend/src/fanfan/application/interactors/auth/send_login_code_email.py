@@ -27,7 +27,7 @@ class SendLoginCodeEmail:
         email_sender: EmailSender,
         template_renderer: TemplateRenderer,
         token_registry: TokenRegistry,
-    ):
+    ) -> None:
         self.email_sender = email_sender
         self.template_renderer = template_renderer
         self.user_gateway = user_gateway

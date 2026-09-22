@@ -20,6 +20,7 @@ pytestmark = [
     pytest.mark.integration,
 ]
 
+TAKEN_EMAIL = "taken@example.com"
 VALID_CODE = "123456"
 WRONG_CODE = "000000"
 CODE_TTL_SECONDS = 300
@@ -47,7 +48,7 @@ async def test_confirm_email_code_sets_the_confirmed_email(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(ConfirmEmailCode)
     user_gateway = await dishka_request.get(UserGateway)
     token_registry = await dishka_request.get(TokenRegistry)
@@ -72,7 +73,7 @@ async def test_confirm_email_code_wrong_code_raises_and_keeps_email(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(ConfirmEmailCode)
     user_gateway = await dishka_request.get(UserGateway)
     token_registry = await dishka_request.get(TokenRegistry)
@@ -98,19 +99,20 @@ async def test_confirm_email_code_rejects_email_taken_by_another_user(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
     login: Callable[[User], None],
-):
+) -> None:
     # The code is valid, but its target email already belongs to someone else,
     # so confirming it would collide — the interactor refuses it as invalid.
     interactor = await dishka_request.get(ConfirmEmailCode)
     user_gateway = await dishka_request.get(UserGateway)
     token_registry = await dishka_request.get(TokenRegistry)
 
-    other = await _make_user(user_gateway, uow, "owner", email="taken@example.com")
+    # Creates the collision this test needs: the address is already taken.
+    await _make_user(user_gateway, uow, "owner", email=TAKEN_EMAIL)
     user = await _make_user(user_gateway, uow, "confirmer", email=None)
     login(user)
     await token_registry.issue_email_confirmation_code(
         user_id=user.id,
-        email=other.email.value,
+        email=TAKEN_EMAIL,
         code=VALID_CODE,
         ttl_seconds=CODE_TTL_SECONDS,
     )

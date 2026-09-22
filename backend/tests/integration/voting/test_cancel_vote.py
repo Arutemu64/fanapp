@@ -38,7 +38,7 @@ async def test_cancel_vote_deletes_vote_and_publishes_event(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(CancelVote)
     nomination_gateway = await dishka_request.get(NominationGateway)
     participant_gateway = await dishka_request.get(ParticipantGateway)
@@ -97,7 +97,7 @@ async def test_cancel_vote_for_missing_vote_raises_not_found(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(CancelVote)
     login(visitor_with_ticket)
 
@@ -113,7 +113,7 @@ async def test_cancel_vote_owned_by_another_user_raises_not_found(
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(CancelVote)
     nomination_gateway = await dishka_request.get(NominationGateway)
     participant_gateway = await dishka_request.get(ParticipantGateway)

@@ -21,7 +21,7 @@ class UpdateUserSettings:
         user_gateway: UserGateway,
         current_user_provider: CurrentUserProvider,
         uow: UnitOfWork,
-    ):
+    ) -> None:
         self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
         self.uow = uow

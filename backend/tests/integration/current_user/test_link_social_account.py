@@ -50,7 +50,7 @@ async def test_linking_stores_subject_and_notification_address(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(LinkSocialAccount)
     user_gateway = await dishka_request.get(UserGateway)
     social_identity_gateway = await dishka_request.get(SocialIdentityGateway)
@@ -81,7 +81,7 @@ async def test_a_session_change_mid_flow_refuses_the_link(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(LinkSocialAccount)
     user_gateway = await dishka_request.get(UserGateway)
     social_identity_gateway = await dishka_request.get(SocialIdentityGateway)
@@ -119,7 +119,7 @@ async def test_relinking_the_same_account_is_a_no_op(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
     login: Callable[[User], None],
-):
+) -> None:
     # Double-tapping "connect" must not raise at the user — they already have
     # exactly what they asked for.
     interactor = await dishka_request.get(LinkSocialAccount)
@@ -141,7 +141,7 @@ async def test_linking_a_second_account_of_the_same_provider_is_rejected(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(LinkSocialAccount)
     user_gateway = await dishka_request.get(UserGateway)
     user = await _user(user_gateway, uow, username="two_telegrams")
@@ -171,7 +171,7 @@ async def test_an_account_owned_by_another_user_is_rejected(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(LinkSocialAccount)
     user_gateway = await dishka_request.get(UserGateway)
     owner = await _user(user_gateway, uow, username="owner")
@@ -203,7 +203,7 @@ async def test_two_providers_coexist_on_one_user(
     dishka_request: AsyncContainer,
     uow: UnitOfWork,
     login: Callable[[User], None],
-):
+) -> None:
     # `(user_id, provider)` is unique, so one account may hold both a Telegram and
     # a VK identity at once — the two links must not collide.
     interactor = await dishka_request.get(LinkSocialAccount)

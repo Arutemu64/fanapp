@@ -49,7 +49,7 @@ async def test_delete_subscription_removes_own_subscription(
     visitor: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     interactor = await dishka_request.get(DeleteSubscription)
     schedule_gateway = await dishka_request.get(ScheduleEventGateway)
     subscription_gateway = await dishka_request.get(SubscriptionGateway)
@@ -78,7 +78,7 @@ async def test_delete_subscription_missing_raises_not_found(
     dishka_request: AsyncContainer,
     visitor: User,
     login: Callable[[User], None],
-):
+) -> None:
     interactor = await dishka_request.get(DeleteSubscription)
     login(visitor)
 
@@ -93,7 +93,7 @@ async def test_delete_subscription_of_another_user_raises_access_denied(
     visitor: User,
     login: Callable[[User], None],
     uow: UnitOfWork,
-):
+) -> None:
     """IDOR guard: a user must not delete a subscription they do not own.
 
     User A owns the subscription; user B tries to delete it by id and is

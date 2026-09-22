@@ -161,7 +161,7 @@ async def start_oauth_flow(
         **flow_state.model_dump(mode="json"),
         **rv,
     )
-    return rv["url"]
+    return str(rv["url"])
 
 
 async def read_flow_state(
