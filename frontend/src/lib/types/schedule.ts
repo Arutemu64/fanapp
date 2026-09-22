@@ -12,3 +12,15 @@ type EventSubscription = { id: string; counter: number };
 export type ScheduleEventWithSubscription = ScheduleEventFullDto & {
 	user_subscription: EventSubscription | null;
 };
+
+/**
+ * What the schedule page renders. Its `load` returns one (possibly the saved
+ * copy) and, while revalidating, a promise of the fresh one.
+ */
+export interface ScheduleView {
+	schedule: ScheduleEventWithSubscription[];
+	/** Showing a saved copy that nothing is refreshing — drives `StaleDataNotice`. */
+	stale: boolean;
+	cachedAt: number | undefined;
+	offlineMiss: boolean;
+}

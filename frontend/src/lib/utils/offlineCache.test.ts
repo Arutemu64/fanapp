@@ -13,13 +13,19 @@ vi.mock('idb-keyval', () => ({
 	delMany: (ks: string[]) => Promise.resolve(void ks.forEach((k) => store.delete(k)))
 }));
 
-// The server is always reachable, so fetchWithCache/warmCache take the live-fetch path.
+// The server is always reachable, so every helper takes the live-fetch path.
 vi.mock('$lib/services/reachability', () => ({
 	isReachable: () => true,
 	markReachable: () => {}
 }));
 
-import { clearUserCache, fetchWithCache, universalScope, userScope } from './offlineCache';
+import {
+	clearUserCache,
+	fetchWithCache,
+	fetchWithCacheSwr,
+	universalScope,
+	userScope
+} from './offlineCache';
 
 beforeEach(() => {
 	store.clear();
@@ -80,5 +86,48 @@ describe('offlineCache epoch guard', () => {
 
 		// Universal data carries no identity, so a clear never invalidates its write.
 		await vi.waitFor(() => expect(store.get('g:schedule')).toBeDefined());
+	});
+});
+
+describe('fetchWithCacheSwr', () => {
+	it('goes to the network first when nothing is cached', async () => {
+		const result = await fetchWithCacheSwr<string>({
+			key: 'schedule',
+			scope: universalScope,
+			fetcher: () => Promise.resolve('fresh')
+		});
+
+		expect(result).toMatchObject({ data: 'fresh', stale: false, revalidated: null });
+	});
+
+	it('serves the cached copy before the fetch settles, then revalidates', async () => {
+		store.set('g:schedule', { value: 'saved', cachedAt: 1 });
+		const gate = deferred<string>();
+
+		const result = await fetchWithCacheSwr<string>({
+			key: 'schedule',
+			scope: universalScope,
+			fetcher: () => gate.promise
+		});
+
+		expect(result).toMatchObject({ data: 'saved', cachedAt: 1, stale: true });
+
+		gate.resolve('fresh');
+		expect(await result.revalidated).toMatchObject({ data: 'fresh', stale: false });
+		// Persisted by the time the revalidation resolves, so a load re-run that
+		// follows it reads the fresh copy instead of the one it replaced.
+		expect(store.get('g:schedule')).toMatchObject({ value: 'fresh' });
+	});
+
+	it('resolves a failed revalidation to the cached copy instead of rejecting', async () => {
+		store.set('g:schedule', { value: 'saved', cachedAt: 1 });
+
+		const result = await fetchWithCacheSwr<string>({
+			key: 'schedule',
+			scope: universalScope,
+			fetcher: () => Promise.reject(new Error('network down'))
+		});
+
+		expect(await result.revalidated).toMatchObject({ data: 'saved', cachedAt: 1, stale: true });
 	});
 });

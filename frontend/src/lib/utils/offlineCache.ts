@@ -1,5 +1,9 @@
 import { isReachable, markReachable } from '$lib/services/reachability';
-import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
+import {
+	FIRST_PAINT_TIMEOUT_MS,
+	REVALIDATE_TIMEOUT_MS,
+	timeoutSignal
+} from '$lib/utils/fetchTimeout';
 import { createStore, delMany, get, keys, set, type UseStore } from 'idb-keyval';
 
 /**
@@ -197,6 +201,28 @@ export async function fetchWithCache<T>({
 		return { data: cached?.value, cachedAt: cached?.cachedAt, stale: true };
 	}
 
+	return fetchThenPersist({ key, scope, fetcher, timeoutMs, epoch, awaitWrite: false });
+}
+
+interface FetchThenPersistOptions<T> extends Required<FetchWithCacheOptions<T>> {
+	epoch: number;
+	/**
+	 * Hold the result until the fresh copy is in IndexedDB. A first-paint load must
+	 * not wait on storage; a background revalidation should, so a `load` re-run that
+	 * lands right after it reads the fresh copy rather than the one it replaced.
+	 */
+	awaitWrite: boolean;
+}
+
+/** Steps 2–3 of {@link fetchWithCache}: the live fetch with its cache fallback. */
+async function fetchThenPersist<T>({
+	key,
+	scope,
+	fetcher,
+	timeoutMs,
+	epoch,
+	awaitWrite
+}: FetchThenPersistOptions<T>): Promise<FetchWithCacheResult<T>> {
 	try {
 		const value = await fetcher({ signal: timeoutSignal(timeoutMs) });
 		// Resolved → the server responded, even if the payload was unusable.
@@ -209,7 +235,8 @@ export async function fetchWithCache<T>({
 		}
 
 		const cachedAt = Date.now();
-		void writeCache<CachedEnvelope<T>>(key, { value, cachedAt }, scope, epoch);
+		const write = writeCache<CachedEnvelope<T>>(key, { value, cachedAt }, scope, epoch);
+		if (awaitWrite) await write;
 		return { data: value, cachedAt, stale: false };
 	} catch {
 		// Network failure / timeout: serve the last synced copy.
@@ -217,6 +244,54 @@ export async function fetchWithCache<T>({
 		const cached = await readEnvelope<T>(key, scope);
 		return { data: cached?.value, cachedAt: cached?.cachedAt, stale: true };
 	}
+}
+
+/** Result of a {@link fetchWithCacheSwr} call. */
+export interface FetchWithCacheSwrResult<T> extends FetchWithCacheResult<T> {
+	/**
+	 * The background revalidation, when a cached copy was served while the server
+	 * looked reachable; `null` when the result above already came from the network
+	 * (or the server is known unreachable). Never rejects: a failed revalidation
+	 * resolves to the cached copy with `stale: true`, like {@link fetchWithCache}.
+	 */
+	revalidated: Promise<FetchWithCacheResult<T>> | null;
+}
+
+/**
+ * Stale-while-revalidate variant of {@link fetchWithCache}: when a cached copy
+ * exists, return it at once and refresh it in the background, so a slow network
+ * never holds first paint. Without a cached copy it is exactly
+ * {@link fetchWithCache} (network first, bounded by the first-paint timeout).
+ *
+ * The revalidation runs under the longer {@link REVALIDATE_TIMEOUT_MS}: nothing
+ * waits on it, so on a slow link it should get time to finish rather than give
+ * up at the first-paint budget and leave the cached copy on screen.
+ *
+ * The caller swaps in `revalidated` when it resolves. Only read-only data suits
+ * this: a surface whose staleness is a dead end (voting) stays network-only.
+ */
+export async function fetchWithCacheSwr<T>(
+	options: FetchWithCacheOptions<T>
+): Promise<FetchWithCacheSwrResult<T>> {
+	const epoch = userCacheEpoch;
+
+	if (isReachable()) {
+		const cached = await readEnvelope<T>(options.key, options.scope);
+		if (cached !== undefined) {
+			const revalidated = fetchThenPersist({
+				key: options.key,
+				scope: options.scope,
+				fetcher: options.fetcher,
+				timeoutMs: REVALIDATE_TIMEOUT_MS,
+				epoch,
+				awaitWrite: true
+			});
+			return { data: cached.value, cachedAt: cached.cachedAt, stale: true, revalidated };
+		}
+	}
+
+	const result = await fetchWithCache(options);
+	return { ...result, revalidated: null };
 }
 
 /** Options for {@link warmCache}. */

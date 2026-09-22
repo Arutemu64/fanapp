@@ -19,3 +19,10 @@ export function timeoutSignal(ms: number): AbortSignal {
 
 /** Default budget for a first-paint API call before we fall back to cache. */
 export const FIRST_PAINT_TIMEOUT_MS = 3500;
+
+/**
+ * Budget for a background revalidation, which runs behind an already-painted
+ * cached copy. It only has to bound a hung connection; a slow link should get
+ * the time to deliver the fresh copy.
+ */
+export const REVALIDATE_TIMEOUT_MS = 15000;

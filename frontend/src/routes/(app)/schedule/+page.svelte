@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { CurrentUserDto } from '$lib/api/generated';
-	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
+	import type { ScheduleEventWithSubscription, ScheduleView } from '$lib/types/schedule';
 
 	import { invalidate } from '$app/navigation';
 	import { page } from '$app/state';
@@ -26,9 +26,28 @@
 		type ScheduleBlockGroup
 	} from './scheduleGrouping';
 
-	// Mirror the loaded page data so the component reads schedule from one local source.
 	let { data }: PageProps = $props();
-	let schedule: ScheduleEventWithSubscription[] = $derived(data.schedule);
+
+	// Starts as whatever `load` returned — often the saved copy — and is overwritten
+	// by the background revalidation below; a re-run of `load` resets it.
+	let view: ScheduleView = $derived(data);
+	let schedule: ScheduleEventWithSubscription[] = $derived(view.schedule);
+
+	// An effect because the fresh copy arrives from a promise, outside Svelte's
+	// reactivity. The cleanup drops a revalidation that a newer `load` superseded,
+	// so a slow response can't overwrite a newer view.
+	$effect(() => {
+		const pending = data.revalidated;
+		if (!pending) return;
+
+		let superseded = false;
+		void pending.then((fresh) => {
+			if (!superseded && fresh) view = fresh;
+		});
+		return () => {
+			superseded = true;
+		};
+	});
 
 	// Store filter state locally because it only affects this page view.
 	let searchQuery: string = $state('');
@@ -42,8 +61,8 @@
 	const eventsClient = getEventsClient();
 	let showStaleNotice = $derived(
 		shouldShowStaleNotice({
-			offlineMiss: data.offlineMiss,
-			stale: data.stale,
+			offlineMiss: view.offlineMiss,
+			stale: view.stale,
 			isOnline: offline.isOnline
 		})
 	);
@@ -135,8 +154,8 @@
 	}
 
 	const VISIBILITY_REFETCH_THROTTLE_MS = 30000;
-	// Seeded to now: the page has just loaded fresh data, so the initial visible
-	// state must not trip the foreground refetch below.
+	// Seeded to now: the page has just fetched (or is revalidating) its data, so the
+	// initial visible state must not trip the foreground refetch below.
 	let lastRefetch = Date.now();
 
 	// Also refetch on every (re)connect, so a schedule_updated missed while the SSE
@@ -184,7 +203,7 @@
 	{#if showStaleNotice}
 		<StaleDataNotice
 			message="Нет связи. Показана сохранённая программа — обновится при подключении."
-			cachedAt={data.cachedAt}
+			cachedAt={view.cachedAt}
 		/>
 	{/if}
 
@@ -271,7 +290,7 @@
 				class="rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center sm:py-14"
 			>
 				<p class="text-base font-bold text-foreground">
-					{#if data.offlineMiss}
+					{#if view.offlineMiss}
 						Программа недоступна офлайн
 					{:else if hasActiveFilters}
 						Ничего не нашлось
@@ -280,7 +299,7 @@
 					{/if}
 				</p>
 				<p class="mt-1 text-sm text-muted-foreground">
-					{#if data.offlineMiss}
+					{#if view.offlineMiss}
 						Появится после подключения к интернету
 					{:else if hasActiveFilters}
 						Попробуй изменить поиск или фильтры
