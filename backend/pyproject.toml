@@ -118,17 +118,15 @@ testpaths = ["tests"]
 # exception, in backend/ruff.toml, because its config is mostly prose. The
 # convention is in AGENTS.md "Staying in sync".
 #
-# The paths live here rather
-# than on the command line so the justfile, .pre-commit-config.yaml and CI cannot
-# drift apart — `ty check` with no arguments now means the same thing everywhere.
+# The paths live here rather than on the command line so the justfile,
+# .pre-commit-config.yaml and CI cannot drift apart: `ty check` with no
+# arguments means the same thing everywhere.
 #
-# `tests` is in scope deliberately. While it was out, the suite accumulated 42
-# `# type: ignore[arg-type]` comments in mypy's syntax, which ty does not honour
-# (a bracketed code without a `ty:` prefix suppresses nothing, so several
-# checkers can share one comment — https://docs.astral.sh/ty/suppression/), and
-# mypy is not a dependency here. They silenced nothing and hid real mismatches:
-# test doubles that no longer matched the ports they stand in for. Suppressions
-# that remain are written `# ty: ignore[<rule>]` and each says why.
+# `tests` is in scope so type checking catches doubles that drift from the ports
+# they stand in for. Suppressions there use `# ty: ignore[<rule>]` and state why:
+# mypy's bracketed `# type: ignore[code]` suppresses nothing in ty, which skips a
+# code without a `ty:` prefix by design so several checkers can share one comment
+# (https://docs.astral.sh/ty/suppression/).
 [tool.ty.src]
 include = ["src/fanfan", "tests", "scripts"]
 
