@@ -113,7 +113,12 @@ markers = [
 ]
 testpaths = ["tests"]
 
-# Type checking (run via `just backend-typecheck`). The paths live here rather
+# Type checking (run via `just backend-typecheck`). Configured here rather than
+# in a ty.toml because it is short enough not to earn its own file — ruff is the
+# exception, in backend/ruff.toml, because its config is mostly prose. The
+# convention is in AGENTS.md "Staying in sync".
+#
+# The paths live here rather
 # than on the command line so the justfile, .pre-commit-config.yaml and CI cannot
 # drift apart — `ty check` with no arguments now means the same thing everywhere.
 #

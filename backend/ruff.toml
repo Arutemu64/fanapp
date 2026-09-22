@@ -1,3 +1,10 @@
+# Ruff's config lives here rather than in pyproject.toml because it is half
+# explanatory prose — a document, not a settings block. Every other Python tool
+# (pytest, coverage, vulture, import-linter, uv and ty) is configured in
+# backend/pyproject.toml, which is the default; see AGENTS.md "Staying in sync".
+# `ty` in particular is small enough not to want a file of its own: look for
+# `[tool.ty.*]` there.
+
 # No `exclude`: setting it *replaces* ruff's built-in list instead of extending it,
 # so new defaults would stop applying. Use `extend-exclude` if a path needs skipping.
 
