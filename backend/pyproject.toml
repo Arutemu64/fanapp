@@ -132,6 +132,34 @@ filterwarnings = [
 [tool.ty.src]
 include = ["src/fanfan", "tests", "scripts"]
 
+# Opt-in rules, from ty's own "stricter than mypy/pyright --strict" recipe
+# (https://docs.astral.sh/ty/coming-from-mypy-or-pyright/). Everything listed
+# here costs nothing today — the codebase satisfies all of it — so each entry is
+# a ratchet against future drift rather than a debt to pay down.
+#
+# `blanket-ignore-comment` is the load-bearing one: it rejects a bare
+# `# ty: ignore` with no rule code, the escape hatch that silences a whole line
+# instead of one diagnostic. Ruff already refuses the other three (PGH003 for a
+# bare `# type: ignore`, PGH004 for a bare `# noqa`, RUF100 for one that no
+# longer suppresses anything); this closes the one ruff cannot see.
+#
+# Note `terminal.error-on-warning` defaults to true, so "warn" would fail CI
+# exactly as "error" does — these say "error" so the config means what it reads.
+[tool.ty.rules]
+blanket-ignore-comment = "error"
+division-by-zero = "error"
+possibly-missing-attribute = "error"
+possibly-missing-import = "error"
+possibly-unresolved-reference = "error"
+unsound-yield = "error"
+unsupported-dynamic-base = "error"
+
+[tool.ty.analysis]
+# Narrow conservatively: `==` between disjoint types is a bug, not a False, and a
+# generic's type argument is checked rather than assumed compatible.
+strict-equality-semantics = true
+strict-generic-narrowing = true
+
 [tool.coverage.run]
 source = ["fanfan"]
 branch = true
