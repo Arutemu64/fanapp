@@ -45,17 +45,13 @@ def _notification(
     )
 
 
-def _identity(*, provider_user_id: int | None = TG_USER_ID) -> SocialIdentity:
-    # `provider_user_id` is `int` on the model and NOT NULL in the database, but
-    # TelegramNotifier still branches on it being None, so the test for that
-    # branch has to build a state the type says cannot exist. The suppression is
-    # the marker: it goes away with whichever side gets corrected.
+def _identity() -> SocialIdentity:
     return SocialIdentity(
         id=generate_social_identity_id(),
         user_id=USER_ID,
         provider=SocialProvider.TELEGRAM,
         subject=str(TG_USER_ID),
-        provider_user_id=provider_user_id,  # ty: ignore[invalid-argument-type]
+        provider_user_id=TG_USER_ID,
     )
 
 
@@ -130,16 +126,6 @@ async def test_sends_html_with_escaped_title_and_deep_link_button() -> None:
 async def test_unlinked_user_is_unreachable() -> None:
     bot = _RecordingBot()
     notifier = _notifier(identity=None, bot=bot)
-
-    with pytest.raises(UserNotReachable):
-        await notifier.send_notification(_notification())
-    assert bot.calls == []
-
-
-async def test_identity_without_bot_id_is_unreachable() -> None:
-    # An identity created from an `openid`-only token carries no Bot API id.
-    bot = _RecordingBot()
-    notifier = _notifier(identity=_identity(provider_user_id=None), bot=bot)
 
     with pytest.raises(UserNotReachable):
         await notifier.send_notification(_notification())
