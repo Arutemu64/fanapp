@@ -67,7 +67,7 @@ for the closed/open, offline and SSE patterns respectively.
   `"<METHOD> <path>"` (path **without** `/api`, **with** the trailing slash the
   OpenAPI spec uses — `"GET /me/"`) to a response.
 - `mocks/defaults.ts` pre-mocks the **boot-critical** endpoints (`/me/`,
-  `/config`, `/debug/health`, `/schedule/`, …) as a logged-out guest. Every test
+  `/config`, `/schedule/`, …) as a logged-out guest. Every test
   starts from this baseline.
 - `api.use({ … })` overrides or adds routes for one test; last write wins.
 - **Type your bodies** with `json<SomeDto>({ … })`, importing the generated type

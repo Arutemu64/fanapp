@@ -112,16 +112,16 @@ Backend `StrEnum`s that appear on a DTO field (`UserRole`, `Permission` in `core
 ---
 
 ## Mutations & Data Recovery
-* **UI Consistency**: Define how the UI becomes consistent after mutations (e.g. invalidate layout cache, optimistic update, or full state refetch).
-* **Dependency Invalidation**: When a route uses dependency invalidation, call `depends(...)` in the page load and trigger it with `invalidate('app:something')` after a successful mutation.
-* **Return Checking**: Success payload, error payload, and response metadata are checked through the SDK return (`data`, `error`, `response`). `response` is optional (`response?.ok`, `response?.status`) — a network failure yields `error` with no `response`.
+* **UI Consistency**: after a successful mutation, reconcile by invalidating the queries it affected — `queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() })` — using the generated key, never a hand-written one. SvelteKit's `depends()`/`invalidate('app:…')` pair is **gone**; a route that reintroduces it creates a second, unsynchronised refresh path. Invalidate every key the mutation moved: marking notifications read changes both the list and the unread count, which are separate endpoints and separate keys.
+* **Mutations**: prefer the generated `*Mutation()` options with `createMutation`. The exception is a form whose error copy is chosen from the **HTTP status** — the generated mutation sets `throwOnError`, which throws the parsed error body and discards the response, so those call the SDK function directly instead. Either way it is the same configured client, and the cache is reconciled by the invalidation above.
+* **Return Checking**: on a direct SDK call, success payload, error payload and response metadata are checked through the return (`data`, `error`, `response`). `response` is optional (`response?.ok`, `response?.status`) — a network failure yields `error` with no `response`. Inside a query or mutation, the same failure arrives as a thrown error payload; `getApiErrorDetail` reads either shape.
 
 ### Long-running actions (202 Accepted)
 
 An action that cannot finish inside the request returns **202** with the created record and a `Location` header pointing at a **status resource** the client re-reads, instead of blocking. `POST /sync/{source}` is the first of these: it queues the work, returns the `SyncRunDTO`, and sets `Location: /sync/sources`.
 
 * **The status resource is an existing list endpoint, not a per-run one.** `GET /sync/sources` already reports each source's latest run, including the active one, so a dedicated `GET /sync/runs/{id}` would exist only to satisfy the convention. Add a per-run endpoint if something genuinely needs to poll one run by id — not before.
-* **Prefer SSE over polling for progress.** The page subscribes to the relevant `SSEEventName` (here `sync_run_updated`) and calls `invalidate(...)`; it also re-invalidates on `connection_established`, so an update missed while the stream was down (or the tab was backgrounded past the pause grace) self-heals on reconnect rather than leaving a stale "in progress" on screen. Treat the SSE payload as a nudge to refetch, never as the source of truth.
+* **Prefer SSE over polling for progress.** The page subscribes to the relevant `SSEEventName` (here `sync_run_updated`) and calls `queryClient.invalidateQueries({ queryKey: getSyncSourcesQueryKey() })`; it subscribes to `connection_established` with the same handler, so an update missed while the stream was down (or the tab was backgrounded past the pause grace) self-heals on reconnect rather than leaving a stale "in progress" on screen. Treat the SSE payload as a nudge to refetch, never as the source of truth.
 * **A second request while one is running is a 409**, mapped to Russian copy by `code` like any other error — not a silent no-op.
 
 ---

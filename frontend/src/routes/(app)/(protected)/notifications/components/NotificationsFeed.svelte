@@ -1,21 +1,18 @@
 <script lang="ts">
 	import type { NotificationDto } from '$lib/api/generated';
 
+	import { notificationsFeedOptions } from '$lib/api/feeds';
 	import {
 		countUnreadNotificationsQueryKey,
-		listUserNotificationsInfiniteOptions,
 		listUserNotificationsQueryKey,
 		markNotificationsReadMutation
 	} from '$lib/api/generated/@tanstack/svelte-query.gen';
-	import { flattenPages, offsetPageParams } from '$lib/api/pagination';
+	import { flattenPages } from '$lib/api/pagination';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
 	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
-	import {
-		NOTIFICATION_PAGE_REQUEST_LIMIT,
-		NOTIFICATION_PAGE_SIZE
-	} from '$lib/constants/notifications';
+	import { NOTIFICATION_PAGE_SIZE } from '$lib/constants/notifications';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { createInfiniteQuery, createMutation, useQueryClient } from '@tanstack/svelte-query';
@@ -26,15 +23,7 @@
 	const eventsClient = getEventsClient();
 	const queryClient = useQueryClient();
 
-	const feed = createInfiniteQuery(() => ({
-		...listUserNotificationsInfiniteOptions({
-			query: { limit: NOTIFICATION_PAGE_REQUEST_LIMIT }
-		}),
-		...offsetPageParams(
-			(page: { notifications: Array<NotificationDto> }) => page.notifications,
-			NOTIFICATION_PAGE_SIZE
-		)
-	}));
+	const feed = createInfiniteQuery(() => notificationsFeedOptions());
 
 	let notifications = $derived(
 		flattenPages(feed.data?.pages, (page) => page.notifications, NOTIFICATION_PAGE_SIZE)
@@ -86,11 +75,7 @@
 	// ordering is the only one that stays correct across pagination. On reconnect
 	// this also picks up anything published while the stream was down.
 	function refetchFeed() {
-		void queryClient.invalidateQueries({
-			queryKey: listUserNotificationsInfiniteOptions({
-				query: { limit: NOTIFICATION_PAGE_REQUEST_LIMIT }
-			}).queryKey
-		});
+		void queryClient.invalidateQueries({ queryKey: notificationsFeedOptions().queryKey });
 	}
 
 	function handleNewNotification(notification: NotificationDto) {

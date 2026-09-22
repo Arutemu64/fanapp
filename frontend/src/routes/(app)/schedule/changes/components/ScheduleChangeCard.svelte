@@ -5,13 +5,12 @@
 		ScheduleChangeType
 	} from '$lib/api/generated';
 
+	import { scheduleChangesFeedOptions } from '$lib/api/feeds';
 	import { undoScheduleChange } from '$lib/api/generated';
-	import { listScheduleChangesInfiniteQueryKey } from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT } from '$lib/constants/schedule_changes';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Undo2 } from '@lucide/svelte';
 	import { useQueryClient } from '@tanstack/svelte-query';
@@ -41,11 +40,7 @@
 			}
 
 			toastService.add('Изменение отменено', 'success');
-			await queryClient.invalidateQueries({
-				queryKey: listScheduleChangesInfiniteQueryKey({
-					query: { limit: SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT }
-				})
-			});
+			await queryClient.invalidateQueries({ queryKey: scheduleChangesFeedOptions().queryKey });
 		} catch (err) {
 			toastService.error('Не удалось отменить изменение');
 			console.error('Undo error:', err);

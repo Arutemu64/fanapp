@@ -62,3 +62,4 @@ permanent — it is how other ADRs and commits reference the decision.
 | [0015](0015-listen-notify-wakes-the-outbox-relay.md) | LISTEN/NOTIFY wakes the outbox relay, polling stays the backstop | Accepted |
 | [0016](0016-workbox-precaching-via-vite-pwa.md) | Workbox precaching via vite-pwa for the service worker | Accepted |
 | [0017](0017-hey-api-for-the-frontend-api-client.md) | `@hey-api/openapi-ts` for the frontend API client | Accepted |
+| [0018](0018-tanstack-query-for-frontend-data.md) | TanStack Query owns all frontend data fetching and caching | Accepted |

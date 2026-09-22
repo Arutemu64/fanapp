@@ -1,27 +1,14 @@
 <script lang="ts">
-	import type { ScheduleChangeFullDto } from '$lib/api/generated';
-
-	import { listScheduleChangesInfiniteOptions } from '$lib/api/generated/@tanstack/svelte-query.gen';
-	import { flattenPages, offsetPageParams } from '$lib/api/pagination';
+	import { scheduleChangesFeedOptions } from '$lib/api/feeds';
+	import { flattenPages } from '$lib/api/pagination';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
-	import {
-		SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT,
-		SCHEDULE_CHANGES_PAGE_SIZE
-	} from '$lib/constants/schedule_changes';
+	import { SCHEDULE_CHANGES_PAGE_SIZE } from '$lib/constants/schedule_changes';
 	import { createInfiniteQuery } from '@tanstack/svelte-query';
 
 	import ScheduleChangeCard from './ScheduleChangeCard.svelte';
 
-	const feed = createInfiniteQuery(() => ({
-		...listScheduleChangesInfiniteOptions({
-			query: { limit: SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT }
-		}),
-		...offsetPageParams(
-			(page: { schedule_changes: Array<ScheduleChangeFullDto> }) => page.schedule_changes,
-			SCHEDULE_CHANGES_PAGE_SIZE
-		)
-	}));
+	const feed = createInfiniteQuery(() => scheduleChangesFeedOptions());
 
 	let changes = $derived(
 		flattenPages(feed.data?.pages, (page) => page.schedule_changes, SCHEDULE_CHANGES_PAGE_SIZE)

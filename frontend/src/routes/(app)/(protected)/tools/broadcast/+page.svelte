@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { broadcastsFeedOptions } from '$lib/api/feeds';
 	import { sendBroadcast } from '$lib/api/generated';
-	import { listBroadcastsInfiniteQueryKey } from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import * as Alert from '$lib/components/ui/alert';
@@ -10,7 +10,6 @@
 	import * as Field from '$lib/components/ui/field';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Textarea } from '$lib/components/ui/textarea';
-	import { BROADCAST_PAGE_REQUEST_LIMIT } from '$lib/constants/notifications';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { useQueryClient } from '@tanstack/svelte-query';
 
@@ -105,7 +104,7 @@
 			bodyError = '';
 			rolesError = '';
 			await queryClient.invalidateQueries({
-				queryKey: listBroadcastsInfiniteQueryKey({ query: { limit: BROADCAST_PAGE_REQUEST_LIMIT } })
+				queryKey: broadcastsFeedOptions().queryKey
 			});
 		} catch (err) {
 			console.error('Failed to send broadcast:', err);

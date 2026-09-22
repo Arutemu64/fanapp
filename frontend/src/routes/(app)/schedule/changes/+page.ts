@@ -1,5 +1,4 @@
-import { listScheduleChangesInfiniteOptions } from '$lib/api/generated/@tanstack/svelte-query.gen';
-import { SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT } from '$lib/constants/schedule_changes';
+import { scheduleChangesFeedOptions } from '$lib/api/feeds';
 import { canManageSchedule } from '$lib/utils/permissions';
 import { error, redirect } from '@sveltejs/kit';
 
@@ -16,11 +15,7 @@ export const load: PageLoad = async ({ parent }) => {
 		error(403, 'У вас нет доступа к этой странице');
 	}
 
-	await queryClient.prefetchInfiniteQuery(
-		listScheduleChangesInfiniteOptions({
-			query: { limit: SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT }
-		})
-	);
+	await queryClient.prefetchInfiniteQuery(scheduleChangesFeedOptions());
 
 	return { title: 'Изменения программы' };
 };

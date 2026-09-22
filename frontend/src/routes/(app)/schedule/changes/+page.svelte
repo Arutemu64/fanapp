@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { listScheduleChangesInfiniteOptions } from '$lib/api/generated/@tanstack/svelte-query.gen';
+	import { scheduleChangesFeedOptions } from '$lib/api/feeds';
 	import BackLink from '$lib/components/BackLink.svelte';
-	import { SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT } from '$lib/constants/schedule_changes';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { useQueryClient } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
@@ -20,11 +19,7 @@
 		// Also refetch on (re)connect, so an event missed while the stream was down
 		// doesn't leave another staffer's edit invisible here.
 		const reloadChanges = () => {
-			void queryClient.invalidateQueries({
-				queryKey: listScheduleChangesInfiniteOptions({
-					query: { limit: SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT }
-				}).queryKey
-			});
+			void queryClient.invalidateQueries({ queryKey: scheduleChangesFeedOptions().queryKey });
 		};
 
 		eventsClient.on('schedule_updated', reloadChanges);

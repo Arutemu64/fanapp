@@ -1,5 +1,4 @@
-import { listFeedbackInfiniteOptions } from '$lib/api/generated/@tanstack/svelte-query.gen';
-import { FEEDBACK_PAGE_REQUEST_LIMIT } from '$lib/constants/feedback';
+import { feedbackFeedOptions } from '$lib/api/feeds';
 import { canReadFeedback } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
 
@@ -15,9 +14,7 @@ export const load: PageLoad = async ({ parent }) => {
 		error(403, 'У тебя нет доступа к отзывам');
 	}
 
-	void queryClient.prefetchInfiniteQuery(
-		listFeedbackInfiniteOptions({ query: { limit: FEEDBACK_PAGE_REQUEST_LIMIT } })
-	);
+	void queryClient.prefetchInfiniteQuery(feedbackFeedOptions());
 
 	return { title: 'Отзывы' };
 };

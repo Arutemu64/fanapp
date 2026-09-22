@@ -1,5 +1,4 @@
-import { listBroadcastsInfiniteOptions } from '$lib/api/generated/@tanstack/svelte-query.gen';
-import { BROADCAST_PAGE_REQUEST_LIMIT } from '$lib/constants/notifications';
+import { broadcastsFeedOptions } from '$lib/api/feeds';
 import { canSendNotifications } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
 
@@ -16,9 +15,7 @@ export const load: PageLoad = async ({ parent }) => {
 
 	// Sent history, fire-and-forget: a failure must not block the composer, so the
 	// history section renders its own error state while the form stays usable.
-	void queryClient.prefetchInfiniteQuery(
-		listBroadcastsInfiniteOptions({ query: { limit: BROADCAST_PAGE_REQUEST_LIMIT } })
-	);
+	void queryClient.prefetchInfiniteQuery(broadcastsFeedOptions());
 
 	return { title: 'Рассылка уведомлений' };
 };

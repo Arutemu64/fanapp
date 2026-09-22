@@ -2,18 +2,16 @@
 	import type { MailingDto, MailingStatus, UserRole } from '$lib/api/generated';
 
 	import { getApiErrorDetail } from '$lib/api/errors';
-	import {
-		cancelMailingMutation,
-		listBroadcastsInfiniteOptions
-	} from '$lib/api/generated/@tanstack/svelte-query.gen';
-	import { flattenPages, offsetPageParams } from '$lib/api/pagination';
+	import { broadcastsFeedOptions } from '$lib/api/feeds';
+	import { cancelMailingMutation } from '$lib/api/generated/@tanstack/svelte-query.gen';
+	import { flattenPages } from '$lib/api/pagination';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
 	import { Badge, type BadgeVariant } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { BROADCAST_PAGE_REQUEST_LIMIT, BROADCAST_PAGE_SIZE } from '$lib/constants/notifications';
+	import { BROADCAST_PAGE_SIZE } from '$lib/constants/notifications';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { formatFestivalDateTime } from '$lib/utils/formatters';
 	import { createInfiniteQuery, createMutation, useQueryClient } from '@tanstack/svelte-query';
@@ -23,16 +21,7 @@
 
 	let cancellingId = $state<string | null>(null);
 
-	const broadcastsOptions = () =>
-		listBroadcastsInfiniteOptions({ query: { limit: BROADCAST_PAGE_REQUEST_LIMIT } });
-
-	const feed = createInfiniteQuery(() => ({
-		...broadcastsOptions(),
-		...offsetPageParams(
-			(page: { mailings: Array<MailingDto> }) => page.mailings,
-			BROADCAST_PAGE_SIZE
-		)
-	}));
+	const feed = createInfiniteQuery(() => broadcastsFeedOptions());
 
 	let mailings = $derived(
 		flattenPages(feed.data?.pages, (page) => page.mailings, BROADCAST_PAGE_SIZE)
@@ -82,7 +71,7 @@
 		} finally {
 			// Refetch whether it succeeded or raced with another change, so the row
 			// reflects the real server state either way.
-			void queryClient.invalidateQueries({ queryKey: broadcastsOptions().queryKey });
+			void queryClient.invalidateQueries({ queryKey: broadcastsFeedOptions().queryKey });
 			cancellingId = null;
 		}
 	}

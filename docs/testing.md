@@ -301,9 +301,12 @@ though the runner is Node.
 The frontend's testable surface is the **logic in `src/lib/`** — the modules
 that encode a rule a reader cannot check by eye: text normalization and matching
 (`utils/search.ts`), formatters and pluralization (`utils/formatters.ts`),
-permission predicates (`utils/permissions.ts`), cache scoping and staleness
-(`utils/offlineCache.ts`). These are where a silent regression is expensive and
-a test is nearly free.
+permission predicates (`utils/permissions.ts`), storage fallbacks
+(`utils/safeStorage.ts`). These are where a silent regression is expensive and
+a test is nearly free. Query wiring is deliberately *not* unit-tested here —
+caching, invalidation and persistence are TanStack Query's behaviour, and what
+matters is that a real page still renders from them, which the Playwright
+offline and realtime specs cover.
 
 That includes the **rune modules** (`services/*.svelte.ts`,
 `utils/cooldown.svelte.ts` and friends): name the test `*.svelte.test.ts` and

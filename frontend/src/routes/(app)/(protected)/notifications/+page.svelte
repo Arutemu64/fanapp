@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { listUserNotificationsInfiniteOptions } from '$lib/api/generated/@tanstack/svelte-query.gen';
+	import { notificationsFeedOptions } from '$lib/api/feeds';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
-	import { NOTIFICATION_PAGE_REQUEST_LIMIT } from '$lib/constants/notifications';
 	import { getOfflineService } from '$lib/services/offline.svelte';
 	import { createInfiniteQuery } from '@tanstack/svelte-query';
 
@@ -13,9 +12,7 @@
 	// Same key as the feed's own query, so this is a read of that cache entry and
 	// never a second request — it only supplies the "synced at" timestamp and tells
 	// an offline cold miss (nothing saved) from offline-with-saved-data.
-	const feed = createInfiniteQuery(() =>
-		listUserNotificationsInfiniteOptions({ query: { limit: NOTIFICATION_PAGE_REQUEST_LIMIT } })
-	);
+	const feed = createInfiniteQuery(() => notificationsFeedOptions());
 
 	let hasCachedData = $derived((feed.data?.pages.length ?? 0) > 0);
 	let offlineMiss = $derived(!offline.isOnline && !hasCachedData);

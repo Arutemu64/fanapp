@@ -1,6 +1,5 @@
 import type {
 	GetScheduleOutput,
-	HealthCheckOutput,
 	ListUserNotificationOutput,
 	OAuthProvidersOutput,
 	PublicConfigDto,
@@ -16,14 +15,11 @@ const DAY_MS = 86_400_000;
 const now = Date.now();
 
 // The boot-critical endpoints every page load hits, mocked for a logged-out
-// visitor. Observed from a real build: on boot the app requests /me/, /config,
-// /debug/health and /schedule/ (the SSE /events stream is handled by the
-// EventSource double, so it never reaches the network). Log a user in by layering
-// a persona from personas.ts over `GET /me/`.
+// visitor. Observed from a real build: on boot the app requests /me/, /config
+// and /schedule/ (the SSE /events stream is handled by the EventSource double,
+// so it never reaches the network). Log a user in by layering a persona from
+// personas.ts over `GET /me/`.
 export const baselineHandlers: Handlers = {
-	// Reachability probe (reachability.ts). Must succeed or the app paints the
-	// offline banner and every test fights it.
-	'GET /debug/health': json<HealthCheckOutput>({ status: 'healthy' }),
 	'GET /config': json<PublicConfigDto>({
 		festival_start: new Date(now + DAY_MS).toISOString(),
 		festival_end: new Date(now + 3 * DAY_MS).toISOString()
