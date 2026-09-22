@@ -12,7 +12,11 @@ line-length = 88
 select = ["ALL"]
 ignore = [
     "D",       # pydocstyle (noisy in app development where public docs aren't strictly mandated)
-    "ANN",     # flake8-annotations (type-checking is handled statically by `ty`)
+    # ANN401 (explicit `Any`) stays ENABLED — see the [lint.flake8-annotations]
+    # section below. Only the "missing annotation" half is off here, and only
+    # until the codebase is fully annotated.
+    "ANN001", "ANN002", "ANN003",  # missing annotations on arguments
+    "ANN201", "ANN202", "ANN204", "ANN205", "ANN206",  # missing return types
     # Exceptions are named for the domain condition they represent (UserNotFound,
     # MailingAlreadyCancelled), which is the convention docs/backend.md documents.
     # PEP 8 asks for the suffix only "if the exception actually is an error", and the
@@ -65,6 +69,13 @@ ignore = [
 
     "CPY001", # missing-copyright-notice — the MIT LICENSE is at the repo root, not per file
 ]
+
+[lint.flake8-annotations]
+# `*args`/`**kwargs` that exist only to forward to another call are genuinely
+# untyped at this layer — ANN401 on them would buy a `object` annotation that
+# every caller then has to cast back. Everything else keeps ANN401: an explicit
+# `Any` is a checking hole, and it should cost a visible `noqa` with a reason.
+allow-star-arg-any = true
 
 [lint.flake8-bugbear]
 # Safe list of immutables to prevent false positives when using FastAPI/FastStream DI

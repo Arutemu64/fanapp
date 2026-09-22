@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import cast
+from typing import Any, cast
 from uuid import UUID
 
 from sqlalchemy import CursorResult, delete, func, select, update
@@ -46,4 +46,4 @@ class SqlOutboxGateway(OutboxGateway):
             )
         )
         # execute() is typed as Result, but a DELETE yields a CursorResult.
-        return cast("CursorResult", result).rowcount
+        return cast("CursorResult[Any]", result).rowcount

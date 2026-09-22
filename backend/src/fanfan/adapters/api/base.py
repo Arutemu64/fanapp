@@ -41,10 +41,10 @@ class BaseApiClient:
         self._client = client
         self._retort = retort
 
-    async def _get(self, path: str, model: Any, **params: Any) -> Any:
-        # `model` is a type hint (e.g. Order or list[Request]); the caller's
-        # public method annotates the concrete return type, so adaptix-loaded
-        # results stay correctly typed at the call site.
+    async def _get[T](self, path: str, model: type[T], **params: Any) -> T:
+        # `model` is the type adaptix loads into. Generic rather than `Any`, so
+        # an endpoint method's declared return type is checked against what it
+        # asks for here, instead of both ends agreeing to be unchecked.
         response = await self._request_with_retry(path, params)
         return self._retort.load(response.json(), model)
 

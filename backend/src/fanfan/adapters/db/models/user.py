@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Index, func, text
 from sqlalchemy.dialects.postgresql import JSONB
@@ -41,7 +41,7 @@ class UserORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     receive_vk_notifications: Mapped[bool] = mapped_column(server_default=text("true"))
     # Bag for non-queryable user preferences. Currently empty; kept as an
     # extension point so new prefs need no schema migration.
-    settings: Mapped[dict] = mapped_column(JSONB)
+    settings: Mapped[dict[str, Any]] = mapped_column(JSONB)
 
     # Indexed for the broadcast fan-out (read_all_by_roles): the org/helper roles
     # are a tiny slice of a table dominated by visitors, so targeting them was a

@@ -40,7 +40,7 @@ class VkApiClient:
         self._client = client
         self._config = config
 
-    async def _call_method(self, method: str, params: dict[str, Any]) -> Any:
+    async def _call_method(self, method: str, params: dict[str, Any]) -> Any:  # noqa: ANN401  # raw VK JSON; the public methods narrow it
         # Token and version travel in the POST body, not the query string, so the
         # group token never lands in access logs or the URL. VK still returns
         # HTTP 200 on a logical failure, carrying it in the body's `error` object.

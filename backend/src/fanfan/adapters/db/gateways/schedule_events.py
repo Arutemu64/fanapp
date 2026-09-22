@@ -61,7 +61,7 @@ def _parse_full_dto(
     )
 
 
-def _select_schedule_event_full_dto() -> Select:
+def _select_schedule_event_full_dto() -> Select[ScheduleEventORM]:
     return select(ScheduleEventORM).options(
         undefer(ScheduleEventORM.queue),
     )

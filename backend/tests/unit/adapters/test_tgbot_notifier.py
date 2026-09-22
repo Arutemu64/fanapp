@@ -1,3 +1,4 @@
+from typing import Any
 from uuid import uuid7
 
 import pytest
@@ -74,7 +75,7 @@ class _RecordingBot:
 
     def __init__(self, *, error: Exception | None = None) -> None:
         self._error = error
-        self.calls: list[dict] = []
+        self.calls: list[dict[str, Any]] = []
 
     async def send_message(self, **kwargs: object) -> None:
         self.calls.append(kwargs)

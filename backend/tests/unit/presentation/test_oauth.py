@@ -55,7 +55,7 @@ class FakeTelegramApp:
         self.framework = FakeFramework(state_data)
         self._issuer = issuer
 
-    async def authorize_access_token(self, request: Any) -> Mapping[str, Any]:  # noqa: ARG002
+    async def authorize_access_token(self, request: object) -> Mapping[str, Any]:  # noqa: ARG002
         if self._raises is not None:
             raise self._raises
 
@@ -71,7 +71,7 @@ class FakeFramework:
 
     async def get_state_data(
         self,
-        session: Any,  # noqa: ARG002
+        session: object,  # noqa: ARG002
         state: str,  # noqa: ARG002
     ) -> Mapping[str, Any] | None:
         return self._state_data

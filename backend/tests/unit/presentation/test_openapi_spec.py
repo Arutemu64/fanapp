@@ -1,6 +1,7 @@
 import difflib
 import json
 import tomllib
+from typing import Any
 
 import pytest
 
@@ -25,7 +26,7 @@ First {shown} diff lines (committed -> generated):
 {diff}"""
 
 
-def committed_spec() -> dict:
+def committed_spec() -> dict[str, Any]:
     return json.loads(SHARED_OPENAPI_PATH.read_text(encoding="utf-8"))
 
 

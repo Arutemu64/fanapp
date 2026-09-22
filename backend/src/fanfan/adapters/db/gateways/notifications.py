@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import cast
+from typing import Any, cast
 
 from sqlalchemy import CursorResult, and_, delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -131,7 +131,7 @@ class SqlNotificationGateway(NotificationGateway):
             delete(NotificationORM).where(NotificationORM.created_at < cutoff)
         )
         # execute() is typed as Result, but a DELETE yields a CursorResult.
-        return cast("CursorResult", result).rowcount
+        return cast("CursorResult[Any]", result).rowcount
 
     async def read_realtime_notification(
         self, notification_id: NotificationId

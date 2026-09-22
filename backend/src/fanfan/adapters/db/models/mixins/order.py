@@ -1,3 +1,5 @@
+from typing import Any
+
 from sqlalchemy import Sequence, UniqueConstraint
 from sqlalchemy.orm import Mapped, declared_attr, mapped_column
 
@@ -39,11 +41,11 @@ class OrderMixin:
     # Auto-applied to orderable models that declare NO other table args.
     @declared_attr.directive
     @classmethod
-    def __table_args__(cls) -> tuple:
+    def __table_args__(cls) -> tuple[Any, ...]:
         return cls.order_table_args()
 
     @staticmethod
-    def order_table_args() -> tuple:
+    def order_table_args() -> tuple[Any, ...]:
         # Deferred so a transaction can swap two rows' order values without
         # tripping the unique constraint on an intermediate flush.
         return (UniqueConstraint("order", deferrable=True, initially="DEFERRED"),)

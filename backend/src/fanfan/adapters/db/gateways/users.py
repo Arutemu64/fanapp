@@ -1,3 +1,5 @@
+from typing import Any
+
 from sqlalchemy import Select, Subquery, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
@@ -312,7 +314,9 @@ class SqlUserGateway(UserGateway):
         return _parse_details_dto(user_orm) if user_orm else None
 
     @staticmethod
-    def _apply_user_search(stmt: Select, search: str | None) -> Select:
+    def _apply_user_search[SelectT: Select[Any]](
+        stmt: SelectT, search: str | None
+    ) -> SelectT:
         # Blank query means "no filter". ILIKE gives a case-insensitive substring
         # match on username or email; %/_ in the term are escaped so a literal
         # '100%' searches for that text rather than acting as a wildcard.

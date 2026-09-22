@@ -1,3 +1,4 @@
+from typing import Any
 from urllib.parse import parse_qs
 from uuid import uuid7
 
@@ -99,7 +100,7 @@ class _VkTransport:
     def __call__(self, request: httpx2.Request) -> httpx2.Response:
         self.requests.append(request)
         if self._error_code is not None:
-            body: dict = {
+            body: dict[str, Any] = {
                 "error": {"error_code": self._error_code, "error_msg": "boom"}
             }
         else:
@@ -194,7 +195,7 @@ class _StubVkClient(VkApiClient):
     ) -> None:
         self._error = error
         self._delete_error = delete_error
-        self.calls: list[dict] = []
+        self.calls: list[dict[str, Any]] = []
         self.deleted: list[int] = []
 
     async def send_message(self, *, peer_id: int, message: str) -> int:

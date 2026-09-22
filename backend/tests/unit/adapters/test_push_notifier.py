@@ -1,6 +1,7 @@
 import json
 from base64 import urlsafe_b64encode
 from pathlib import Path
+from typing import Any
 from uuid import uuid7
 
 import httpx2
@@ -138,7 +139,7 @@ class _RecordingClient(WebPushClient):
     ) -> None:
         self._status = status
         self._headers = headers or {}
-        self.calls: list[dict] = []
+        self.calls: list[dict[str, Any]] = []
 
     def ensure_available(self) -> None:
         pass

@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Any
 
 from fanfan.core.exceptions.schedule import (
     CurrentEventNotAllowed,
@@ -76,7 +75,7 @@ class ScheduleEvent(AggregateRoot):
         self.nomination_title = nomination_title
         self.order = order
 
-    def __eq__(self, other: ScheduleEvent | Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, ScheduleEvent) and self.id == other.id
 
     def __hash__(self) -> int:

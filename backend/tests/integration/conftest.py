@@ -1,5 +1,6 @@
 from collections.abc import AsyncGenerator, Callable
 from pathlib import Path
+from typing import Any
 
 import pytest
 import pytest_asyncio
@@ -145,7 +146,7 @@ async def uow(dishka_request: AsyncContainer) -> UnitOfWork:
     return await dishka_request.get(UnitOfWork)
 
 
-def as_outbox(*events: AppEvent) -> list[tuple[str, dict]]:
+def as_outbox(*events: AppEvent) -> list[tuple[str, dict[str, Any]]]:
     """Render typed domain events the way they land in the outbox table.
 
     Aggregate events are no longer published on commit — the UnitOfWork writes

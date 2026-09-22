@@ -48,7 +48,9 @@ def _parse_full_dto(
     )
 
 
-def _select_participant_dto(user_id: UserId | None) -> Select:
+def _select_participant_dto(
+    user_id: UserId | None,
+) -> Select[ParticipantORM, VoteORM]:
     return (
         select(ParticipantORM, VoteORM)
         .outerjoin(

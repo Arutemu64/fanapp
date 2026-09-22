@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Any, cast
 
 import sentry_sdk
 from fastapi.exceptions import RequestValidationError
@@ -13,7 +13,7 @@ from sentry_sdk.types import Event
 from fanfan.core.exceptions.base import AppException
 
 
-def _scrub_sensitive_data(event: Event, hint: dict) -> Event | None:
+def _scrub_sensitive_data(event: Event, hint: dict[str, Any]) -> Event | None:
     """Scrub potential PII from Sentry events before sending."""
     # Filter out domain business exceptions and request validation exceptions
     if "exc_info" in hint:

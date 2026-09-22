@@ -1,3 +1,5 @@
+from typing import Any
+
 from sqlalchemy import CheckConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
@@ -13,4 +15,4 @@ class AppSettingsORM(UpdatedAtMixin, BaseORM):
     __table_args__ = (CheckConstraint("id = 1", name="single_row"),)
 
     id: Mapped[int] = mapped_column(primary_key=True, server_default="1")
-    config: Mapped[dict] = mapped_column(JSONB)
+    config: Mapped[dict[str, Any]] = mapped_column(JSONB)
