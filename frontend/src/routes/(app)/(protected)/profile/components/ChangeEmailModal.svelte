@@ -2,7 +2,6 @@
 	import type { ChangeEmailInput } from '$lib/api/generated';
 	import type { PinInputCell } from 'bits-ui';
 
-	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { changeCurrentUserEmail, confirmEmailCode } from '$lib/api/generated';
 	import * as Alert from '$lib/components/ui/alert';
@@ -18,8 +17,6 @@
 	import { isValidEmail, isValidOtp, normalizeEmail } from '$lib/utils/validation';
 	import { Mail } from '@lucide/svelte';
 	import { onDestroy } from 'svelte';
-
-	const client = createApiClient();
 
 	interface Props {
 		open: boolean;
@@ -66,7 +63,7 @@
 
 		try {
 			const body: ChangeEmailInput = { new_email: normalizeEmail(newEmail) };
-			const { error, response } = await changeCurrentUserEmail({ client, body });
+			const { error, response } = await changeCurrentUserEmail({ body });
 
 			if (error || !response?.ok) {
 				formError = getApiErrorDetail(error) ?? 'Не удалось отправить код подтверждения';
@@ -97,7 +94,7 @@
 		isLoading = true;
 
 		const body: ChangeEmailInput = { new_email: trimmedEmail };
-		const { error, response } = await changeCurrentUserEmail({ client, body });
+		const { error, response } = await changeCurrentUserEmail({ body });
 
 		isLoading = false;
 
@@ -132,7 +129,6 @@
 
 		try {
 			const { error, response } = await confirmEmailCode({
-				client,
 				body: { code: verificationCode }
 			});
 

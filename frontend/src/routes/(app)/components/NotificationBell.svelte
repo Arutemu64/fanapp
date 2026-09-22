@@ -1,87 +1,68 @@
 <script lang="ts">
 	import type { NotificationDto } from '$lib/api/generated';
-	import type { NotificationSeed } from '$lib/types/notifications';
 
 	import { resolve } from '$app/paths';
-	import { page } from '$app/state';
-	import { createApiClient } from '$lib/api';
 	import {
-		listUserNotifications,
-		markAllNotificationsRead,
-		markNotificationsRead
-	} from '$lib/api/generated';
+		countUnreadNotificationsOptions,
+		countUnreadNotificationsQueryKey,
+		listUserNotificationsOptions,
+		listUserNotificationsQueryKey,
+		markAllNotificationsReadMutation,
+		markNotificationsReadMutation
+	} from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { NOTIFICATION_BADGE_MAX, NOTIFICATION_PREVIEW_LIMIT } from '$lib/constants/notifications';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { getUnreadCountService } from '$lib/services/unreadCount.svelte';
 	import { setAppBadgeCount } from '$lib/utils/appBadge';
 	import { Bell, Eye } from '@lucide/svelte';
+	import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 
-	const client = createApiClient();
+	const queryClient = useQueryClient();
+	const previewQuery = createQuery(() =>
+		listUserNotificationsOptions({ query: { limit: NOTIFICATION_PREVIEW_LIMIT } })
+	);
+	// The badge is the true unread total, NOT the number of unread items in the
+	// capped preview, which would pin the badge at 5 while dozens sit unread. It is
+	// its own query so the notifications page, which clears it on open, invalidates
+	// the same key and the two surfaces can never disagree.
+	const unreadQuery = createQuery(() => countUnreadNotificationsOptions());
 
-	let notifications = $state<NotificationDto[]>([]);
-	// True once an authoritative load (SSE connect or a user action) has populated
-	// the preview, so the streamed seed below can never overwrite a fresher list.
-	let hasLoadedPreview = false;
+	let notifications = $derived(previewQuery.data?.notifications ?? []);
+	let unreadCount = $derived(unreadQuery.data?.count ?? 0);
 
-	// Seed the preview from the streamed layout load once it resolves; until then the
-	// dropdown shows empty. The dropdown is a desktop-only affordance that is rarely
-	// open before the SSE 'connection_established' handler refreshes it, so streaming
-	// the seed (rather than blocking the shell's first paint on it) is invisible here.
-	// `page.data` is the route-tree-merged data: the notifications page's load exposes
-	// its own `notifications` array on this key, shadowing the layout's streamed promise.
-	// Consume it only when it really is that promise; on that page SSE seeds the bell
-	// instead. Without the guard, `array.then` throws and takes down the app shell.
-	const notificationSeed: unknown = page.data.notifications;
-	if (notificationSeed instanceof Promise) {
-		void (notificationSeed as Promise<NotificationSeed | null>)
-			.then((seed) => {
-				if (seed && !hasLoadedPreview) notifications = seed.preview;
-			})
-			.catch(() => {});
-	}
-
-	// The badge is the true unread total, shared with the notifications page (which
-	// clears it on open) — NOT the number of unread items in the capped preview,
-	// which would pin the badge at 5 while dozens sit unread.
-	const unread = getUnreadCountService();
 	let badgeLabel = $derived(
-		unread.count > NOTIFICATION_BADGE_MAX ? `${NOTIFICATION_BADGE_MAX}+` : unread.count
+		unreadCount > NOTIFICATION_BADGE_MAX ? `${NOTIFICATION_BADGE_MAX}+` : unreadCount
 	);
 	// Announce the count to screen readers so the unread state isn't conveyed by
 	// the badge color alone.
 	let bellLabel = $derived(
-		unread.count > 0 ? `Открыть уведомления, непрочитанных: ${unread.count}` : 'Открыть уведомления'
+		unreadCount > 0 ? `Открыть уведомления, непрочитанных: ${unreadCount}` : 'Открыть уведомления'
 	);
+
 	const eventsClient = getEventsClient();
 	const toastService = getToastService();
+
+	const markRead = createMutation(() => markNotificationsReadMutation());
+	const markAllRead = createMutation(() => markAllNotificationsReadMutation());
 
 	// Mirror the unread count onto the installed app's icon (Badging API). This
 	// also replaces the count-less "flag" badge the service worker sets on push
 	// with the exact number once the app opens. The bell unmounts on every session
 	// end — explicit logout AND a passive 401 expiry — so the icon badge is cleared
-	// in the onMount teardown below, the one surface clearUserCache can't reach.
+	// in the onMount teardown below, the one surface a cache reset can't reach.
 	$effect(() => {
-		setAppBadgeCount(unread.count);
+		setAppBadgeCount(unreadCount);
 	});
 
-	async function loadNotifications() {
-		try {
-			const { data, error, response } = await listUserNotifications({
-				client,
-				query: { limit: NOTIFICATION_PREVIEW_LIMIT }
-			});
-
-			if (!error && response?.ok && data) {
-				notifications = data.notifications;
-				hasLoadedPreview = true;
-			}
-		} catch (error) {
-			console.error('Failed to load notifications', error);
-		}
+	// Both surfaces change together on every read action, so they are always
+	// invalidated as a pair: marking the visible five read may still leave older
+	// unread items behind the badge, which only the count endpoint knows about.
+	function refreshNotifications() {
+		void queryClient.invalidateQueries({ queryKey: listUserNotificationsQueryKey() });
+		void queryClient.invalidateQueries({ queryKey: countUnreadNotificationsQueryKey() });
 	}
 
 	// Clicking the bell to open the dropdown counts as seeing the previewed items
@@ -95,77 +76,46 @@
 		if (unseenIds.length === 0) return;
 
 		try {
-			const { error, response } = await markNotificationsRead({
-				client,
-				body: { notification_ids: unseenIds }
-			});
-			if (!error && response?.ok) {
-				// Reload the preview (items now read) and the true total — marking the
-				// visible five read may still leave older unread items behind the badge.
-				await Promise.all([loadNotifications(), unread.refresh()]);
-			}
+			await markRead.mutateAsync({ body: { notification_ids: unseenIds } });
+			refreshNotifications();
 		} catch (error) {
 			console.error('Failed to mark notifications as read', error);
 		}
 	}
 
-	function addNotificationToPreview(notification: NotificationDto) {
-		const alreadyExists = notifications.some(
-			(existingNotification) => existingNotification.id === notification.id
-		);
+	async function handleMarkAllRead() {
+		if (unreadCount === 0) return;
 
-		notifications = [
-			notification,
-			...notifications.filter((existingNotification) => existingNotification.id !== notification.id)
-		].slice(0, NOTIFICATION_PREVIEW_LIMIT);
-
-		return !alreadyExists;
+		try {
+			await markAllRead.mutateAsync({});
+			// Zero the badge for instant feedback, then let the invalidation reconcile:
+			// a notification committed between the server-side mark-all-read and this
+			// line is still unread, and only the refetch surfaces it on the badge.
+			queryClient.setQueryData(countUnreadNotificationsQueryKey(), { count: 0 });
+			refreshNotifications();
+		} catch (error) {
+			console.error('Failed to mark notifications as read', error);
+		}
 	}
 
 	function handleNewNotification(notification: NotificationDto) {
-		const isNewNotification = addNotificationToPreview(notification);
-		if (isNewNotification) {
-			// Reconcile the badge with the server rather than optimistically bumping it,
-			// so the count can't drift out of sync with the true total (coalesced, so a
-			// broadcast burst costs at most two round-trips).
-			void unread.refresh();
-			toastService.push(notification);
-		}
-	}
-
-	async function markAllRead() {
-		if (unread.count === 0) return;
-
-		try {
-			const { error, response } = await markAllNotificationsRead({ client });
-			if (!error && response?.ok) {
-				// Clear for instant feedback, then reconcile with the server: a
-				// notification committed in the window between mark-all-read committing
-				// and this handler running is still unread, and only a follow-up refresh
-				// surfaces it on the badge (the clear's own guard drops a truly stale
-				// pre-mark refresh, so this can't restore the old total).
-				unread.clear();
-				await Promise.all([unread.refresh(), loadNotifications()]);
-			}
-		} catch (error) {
-			console.error('Failed to mark notifications as read', error);
-		}
-	}
-
-	function reloadAfterReconnect() {
-		// Reload so notifications published while the stream was down aren't missed.
-		void loadNotifications();
-		void unread.refresh();
+		const alreadyKnown = notifications.some((existing) => existing.id === notification.id);
+		// Refetch rather than splicing the payload into the cache: the badge must be
+		// the server's total, and a delta and an authoritative total can't be ordered
+		// against each other without an "as-of" token the endpoint doesn't return.
+		refreshNotifications();
+		if (!alreadyKnown) toastService.push(notification);
 	}
 
 	onMount(() => {
 		eventsClient.on('notification_created', handleNewNotification);
-		// 'connection_established' fires on the first connect and on every reconnect.
-		eventsClient.on('connection_established', reloadAfterReconnect);
+		// 'connection_established' fires on the first connect and on every reconnect;
+		// refetch so notifications published while the stream was down aren't missed.
+		eventsClient.on('connection_established', refreshNotifications);
 
 		return () => {
 			eventsClient.off('notification_created', handleNewNotification);
-			eventsClient.off('connection_established', reloadAfterReconnect);
+			eventsClient.off('connection_established', refreshNotifications);
 			// Session ended (the bell only renders while logged in): drop the OS icon
 			// badge so the previous user's count can't linger on a shared or installed
 			// device. Covers passive 401 expiry too, which never runs AppNavbar's logout.
@@ -183,7 +133,7 @@
 
 {#snippet bellContent()}
 	<Bell class="h-5 w-5" aria-hidden="true" />
-	{#if unread.count > 0}
+	{#if unreadCount > 0}
 		<!-- Watermelon-primary badge per the design system (unseen dots are primary,
 			not red — red reads as an error). The label is announced via aria-label. -->
 		<span
@@ -232,8 +182,8 @@
 			<button
 				type="button"
 				class="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
-				onclick={markAllRead}
-				disabled={unread.count === 0}
+				onclick={handleMarkAllRead}
+				disabled={unreadCount === 0}
 			>
 				Прочитать все
 			</button>

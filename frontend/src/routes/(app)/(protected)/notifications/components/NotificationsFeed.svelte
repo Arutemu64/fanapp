@@ -1,8 +1,13 @@
 <script lang="ts">
 	import type { NotificationDto } from '$lib/api/generated';
 
-	import { createApiClient } from '$lib/api';
-	import { listUserNotifications, markNotificationsRead } from '$lib/api/generated';
+	import {
+		countUnreadNotificationsQueryKey,
+		listUserNotificationsInfiniteOptions,
+		listUserNotificationsQueryKey,
+		markNotificationsReadMutation
+	} from '$lib/api/generated/@tanstack/svelte-query.gen';
+	import { flattenPages, offsetPageParams } from '$lib/api/pagination';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
 	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
@@ -12,46 +17,30 @@
 		NOTIFICATION_PAGE_SIZE
 	} from '$lib/constants/notifications';
 	import { getEventsClient } from '$lib/services/events.svelte';
-	import { PaginatedFeed } from '$lib/services/feed.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { getUnreadCountService } from '$lib/services/unreadCount.svelte';
-	import { dedupeById } from '$lib/utils/feed';
+	import { createInfiniteQuery, createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 
-	const client = createApiClient();
-
-	interface Props {
-		initialNotifications: Array<NotificationDto>;
-		initialHasMore: boolean;
-	}
-
-	let { initialNotifications, initialHasMore }: Props = $props();
-
 	const toastService = getToastService();
 	const eventsClient = getEventsClient();
-	const unread = getUnreadCountService();
+	const queryClient = useQueryClient();
 
-	const feed = new PaginatedFeed<NotificationDto>({
-		pageSize: NOTIFICATION_PAGE_SIZE,
-		requestLimit: NOTIFICATION_PAGE_REQUEST_LIMIT,
-		getInitialItems: () => initialNotifications,
-		getInitialHasMore: () => initialHasMore,
-		fetchPage: async (limit, offset) => {
-			const { data, error } = await listUserNotifications({
-				client,
-				query: { limit, offset }
-			});
-			return error || !data ? null : data.notifications;
-		},
-		onError: () => toastService.error('Не удалось загрузить уведомления')
-	});
+	const feed = createInfiniteQuery(() => ({
+		...listUserNotificationsInfiniteOptions({
+			query: { limit: NOTIFICATION_PAGE_REQUEST_LIMIT }
+		}),
+		...offsetPageParams(
+			(page: { notifications: Array<NotificationDto> }) => page.notifications,
+			NOTIFICATION_PAGE_SIZE
+		)
+	}));
 
-	// Notifications pushed over SSE — kept on top, newest first.
-	let liveNotifications = $state.raw<Array<NotificationDto>>([]);
+	let notifications = $derived(
+		flattenPages(feed.data?.pages, (page) => page.notifications, NOTIFICATION_PAGE_SIZE)
+	);
 
-	// Fresh SSE items on top, then the server page and anything loaded after it.
-	let notifications = $derived(dedupeById(liveNotifications, feed.items));
+	const markRead = createMutation(() => markNotificationsReadMutation());
 
 	// Opening the page marks the items already loaded as read (mark-on-open). We
 	// don't mutate the fetched DTOs — they still carry seen_at: null — so overlay
@@ -70,11 +59,6 @@
 		displayNotifications.filter((notification) => !notification.seen_at).length
 	);
 
-	function addLiveNotification(notification: NotificationDto) {
-		liveNotifications = dedupeById([notification], liveNotifications);
-		toastService.push(notification);
-	}
-
 	// Mark the currently-loaded unread items read on the server so the bell badge
 	// clears when the user opens their notifications, then reconcile the shared
 	// count. Scoped to what's loaded now: later pages and live arrivals stay unread.
@@ -85,57 +69,46 @@
 		if (unseenIds.length === 0) return;
 
 		try {
-			const { error, response } = await markNotificationsRead({
-				client,
-				body: { notification_ids: unseenIds }
-			});
-			if (!error && response?.ok) {
-				for (const id of unseenIds) {
-					locallyReadIds.add(id);
-				}
-				await unread.refresh();
+			await markRead.mutateAsync({ body: { notification_ids: unseenIds } });
+			for (const id of unseenIds) {
+				locallyReadIds.add(id);
 			}
+			// The bell's preview and badge read the same data from their own keys.
+			void queryClient.invalidateQueries({ queryKey: listUserNotificationsQueryKey() });
+			void queryClient.invalidateQueries({ queryKey: countUnreadNotificationsQueryKey() });
 		} catch (error) {
 			console.error('Failed to mark notifications as read', error);
 		}
 	}
 
-	// Refetch the first page and lift anything not yet in the list to the top, so we
-	// don't lose notifications that arrived while the SSE channel was disconnected.
-	async function syncLatestNotifications() {
-		try {
-			const { data: result, error } = await listUserNotifications({
-				client,
-				query: { limit: NOTIFICATION_PAGE_SIZE }
-			});
-
-			if (error || !result) {
-				return;
-			}
-
-			const knownIds = new Set(feed.items.map((notification) => notification.id));
-			const fresh = result.notifications.filter((notification) => !knownIds.has(notification.id));
-			liveNotifications = dedupeById(fresh, liveNotifications);
-		} catch (error) {
-			console.error('Failed to sync notifications', error);
-		}
+	// Refetch every loaded page rather than splicing the SSE payload in at the top:
+	// a notification can arrive while pages are still loading, and the server's
+	// ordering is the only one that stays correct across pagination. On reconnect
+	// this also picks up anything published while the stream was down.
+	function refetchFeed() {
+		void queryClient.invalidateQueries({
+			queryKey: listUserNotificationsInfiniteOptions({
+				query: { limit: NOTIFICATION_PAGE_REQUEST_LIMIT }
+			}).queryKey
+		});
 	}
 
-	function syncAfterReconnect() {
-		void syncLatestNotifications();
+	function handleNewNotification(notification: NotificationDto) {
+		refetchFeed();
+		toastService.push(notification);
 	}
 
 	onMount(() => {
 		// Opening the page is the "mark-on-open" moment for the items on screen.
 		void markLoadedRead();
 
-		eventsClient.on('notification_created', addLiveNotification);
+		eventsClient.on('notification_created', handleNewNotification);
 		// 'connection_established' fires on the first connect and on every reconnect.
-		eventsClient.on('connection_established', syncAfterReconnect);
+		eventsClient.on('connection_established', refetchFeed);
 
 		return () => {
-			eventsClient.off('notification_created', addLiveNotification);
-			eventsClient.off('connection_established', syncAfterReconnect);
+			eventsClient.off('notification_created', handleNewNotification);
+			eventsClient.off('connection_established', refetchFeed);
 		};
 	});
 </script>
@@ -161,7 +134,7 @@
 		{/each}
 	</div>
 
-	{#if feed.hasMore}
-		<LoadMoreButton loading={feed.isLoadingMore} onclick={feed.loadMore} />
+	{#if feed.hasNextPage}
+		<LoadMoreButton loading={feed.isFetchingNextPage} onclick={() => feed.fetchNextPage()} />
 	{/if}
 {/if}

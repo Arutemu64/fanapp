@@ -3,6 +3,8 @@
 
 	import '../app.css';
 
+	import { idbPersister } from '$lib/api/persister';
+	import { PERSISTED_GC_TIME_MS } from '$lib/api/queryClient';
 	import Toaster from '$lib/components/ui/sonner/sonner.svelte';
 	import UpdatePrompt from '$lib/components/UpdatePrompt.svelte';
 	import { setEventsClient } from '$lib/services/events.svelte';
@@ -12,17 +14,23 @@
 	import { setToastService } from '$lib/services/toasts.svelte';
 	import { registerServiceWorker } from '$lib/utils/serviceWorker';
 	import * as Sentry from '@sentry/sveltekit';
-	import { onDestroy, onMount } from 'svelte';
+	import { PersistQueryClientProvider } from '@tanstack/svelte-query-persist-client';
+	import { onDestroy, onMount, untrack } from 'svelte';
 
 	import type { LayoutProps } from './$types';
 
 	let { children, data }: LayoutProps = $props();
 
-	const eventsClient = setEventsClient();
+	// One QueryClient per app boot, created in this layout's `load` and never
+	// replaced — untrack says so, since reading it here would otherwise look like a
+	// missed reactive dependency.
+	const queryClient = untrack(() => data.queryClient);
+
+	const eventsClient = setEventsClient(queryClient);
 	setToastService();
 	const pwa = setPwaService();
 	setThemeService();
-	const offlineService = setOfflineService();
+	const offlineService = setOfflineService(queryClient);
 
 	onMount(() => {
 		// Remove the static boot splash (in app.html) now that the app has mounted.
@@ -60,7 +68,18 @@
 	<title>ФАН ФАН</title>
 </svelte:head>
 
-{@render children()}
+<!--
+	Restores the dehydrated cache from IndexedDB before rendering, so an offline
+	boot paints from the last synced data instead of empty states. `maxAge` must
+	not outlive the client's `gcTime`, or a restored query would be evicted before
+	anything could read it.
+-->
+<PersistQueryClientProvider
+	client={queryClient}
+	persistOptions={{ maxAge: PERSISTED_GC_TIME_MS, persister: idbPersister }}
+>
+	{@render children()}
+</PersistQueryClientProvider>
 
 <Toaster />
 

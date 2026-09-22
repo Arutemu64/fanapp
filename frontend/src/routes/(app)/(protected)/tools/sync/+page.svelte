@@ -1,11 +1,13 @@
 <script lang="ts">
 	import type { SyncRunStatus, SyncSource, SyncSourceStatusDto } from '$lib/api/generated';
 
-	import { invalidate } from '$app/navigation';
-	import { createApiClient } from '$lib/api';
 	// The generated operation shares the name of this component's own trigger
 	// handler below, so import it under a distinct name.
 	import { requestSync as requestSyncSource } from '$lib/api/generated';
+	import {
+		getSyncSourcesOptions,
+		getSyncSourcesQueryKey
+	} from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { Badge } from '$lib/components/ui/badge';
@@ -14,15 +16,16 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 
-	import type { PageProps } from './$types';
-
-	const { data }: PageProps = $props();
-
-	const client = createApiClient();
+	const queryClient = useQueryClient();
 	const toastService = getToastService();
 	const eventsClient = getEventsClient();
+
+	// Resolves from the cache the load already filled.
+	const sourcesQuery = createQuery(() => getSyncSourcesOptions());
+	let sources: SyncSourceStatusDto[] = $derived(sourcesQuery.data ?? []);
 
 	const SOURCE_LABELS: Record<SyncSource, string> = {
 		cosplay2: 'Cosplay2',
@@ -70,7 +73,6 @@
 		requesting = [...requesting, source];
 		try {
 			const { error: apiError, response } = await requestSyncSource({
-				client,
 				path: { source }
 			});
 			if (apiError || !response?.ok) {
@@ -82,7 +84,7 @@
 			toastService.error(err);
 		} finally {
 			requesting = requesting.filter((item) => item !== source);
-			await invalidate('app:sync-sources');
+			await queryClient.invalidateQueries({ queryKey: getSyncSourcesQueryKey() });
 		}
 	}
 
@@ -91,7 +93,7 @@
 		// missed while the stream was down (or while the tab was backgrounded
 		// past the pause grace) doesn't leave a stale "Выполняется" on screen.
 		const reloadSources = () => {
-			void invalidate('app:sync-sources');
+			void queryClient.invalidateQueries({ queryKey: getSyncSourcesQueryKey() });
 		};
 
 		eventsClient.on('sync_run_updated', reloadSources);
@@ -115,7 +117,7 @@
 />
 
 <div class="mx-auto flex w-full max-w-2xl flex-col gap-4">
-	{#each data.sources as source (source.source)}
+	{#each sources as source (source.source)}
 		<Card.Root class="w-full max-w-none rounded-2xl p-4 sm:p-6">
 			<div class="flex flex-wrap items-start justify-between gap-3">
 				<div class="min-w-0">

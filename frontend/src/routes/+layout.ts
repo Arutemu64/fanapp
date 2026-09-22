@@ -1,14 +1,10 @@
-import type { CurrentUserDto, ScheduleEventFullDto, SubscriptionFullDto } from '$lib/api/generated';
-
-import { createApiClient } from '$lib/api';
-import { getCurrentUser, getSchedule, getSubscriptions } from '$lib/api/generated';
+import { attachSessionReconciler } from '$lib/api';
 import {
-	clearUserCache,
-	fetchWithCache,
-	universalScope,
-	userScope,
-	warmCache
-} from '$lib/utils/offlineCache';
+	getScheduleOptions,
+	getSubscriptionsOptions
+} from '$lib/api/generated/@tanstack/svelte-query.gen';
+import { createQueryClient } from '$lib/api/queryClient';
+import { currentUserQueryOptions } from '$lib/api/session';
 import { isLogoutPending } from '$lib/utils/pendingLogout';
 
 import type { LayoutLoad } from './$types';
@@ -16,11 +12,12 @@ import type { LayoutLoad } from './$types';
 // SPA-only: render entirely on the client. There is no server render.
 export const ssr = false;
 
-// Single current-session user; cached so the app can still boot offline.
-const USER_CACHE_KEY = 'me:user';
-
-export const load: LayoutLoad = async ({ fetch, depends }) => {
-	depends('app:current-user');
+export const load: LayoutLoad = async () => {
+	// One QueryClient per app boot, created here rather than at module scope: it
+	// holds the signed-in user's cached data, and modules outlive login/logout in
+	// this SPA. Child loads reach it through `await parent()`.
+	const queryClient = createQueryClient();
+	attachSessionReconciler(queryClient);
 
 	// A logout requested offline is still pending server-side (the HttpOnly cookie
 	// can't be cleared by JS). Present as logged-out until the queued POST
@@ -28,75 +25,25 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 	// /me resurrect the account we just left. The flush (OfflineService) clears the
 	// intent once it succeeds; a fresh login clears it too (completeLogin).
 	if (isLogoutPending()) {
-		return { user: null };
+		return { queryClient, user: null };
 	}
 
-	const client = createApiClient();
+	// `ensureQueryData` reads the (persisted) cache when it is fresh and fetches
+	// otherwise, so an offline boot still resolves an identity. A thrown error is
+	// the "reachable but no verdict" case — do NOT downgrade to guest, since that
+	// would send a signed-in user to /login on one flaky request.
+	const user = await queryClient
+		.ensureQueryData(currentUserQueryOptions())
+		.catch(() => queryClient.getQueryData(currentUserQueryOptions().queryKey) ?? null);
 
-	// `null` is a real cached value (logged out); `undefined` means "reachable but
-	// no verdict, keep the cached user" (see fetcher below), so the type spans both.
-	const { data } = await fetchWithCache<CurrentUserDto | null>({
-		key: USER_CACHE_KEY,
-		scope: userScope,
-		fetcher: async ({ signal }) => {
-			const { data, response, error } = await getCurrentUser({ client, fetch, signal });
-
-			// Authoritative "session ended": cache logged-out AND drop per-user caches
-			// so no orphaned entries linger for the next account on a shared device.
-			// Universal caches (e.g. schedule) are kept warm. Mirrors explicit logout
-			// (AppNavbar.handleLogout).
-			if (response?.status === 401 || response?.status === 403) {
-				void clearUserCache();
-				return null;
-			}
-
-			// Reachable but not an auth verdict (5xx / parse error / empty body): do NOT
-			// downgrade identity. Returning `undefined` keeps the last-good cached user
-			// instead of overwriting it with `null` — a transient error must not flip a
-			// logged-in user to guest (which would orphan their per-user caches).
-			if (error || !data) {
-				return undefined;
-			}
-
-			return data;
-		}
-	});
-
-	// A complete cache miss (offline first boot) is also "not logged in".
-	const user = data ?? null;
-
-	// Warm the offline caches on the first online boot so they're viewable even if
-	// the user never opens the schedule page. Fire-and-forget: each is a no-op when
-	// offline or already cached, so it never blocks first paint or refetches once
-	// warmed (the schedule page's own load + SSE keep them fresh after that). Uses
-	// the same keys the schedule page reads, and its own client so it isn't tied to
-	// this load's tracked `fetch`.
-
-	// Schedule is universal — one shared key for guests and every account.
-	void warmCache<ScheduleEventFullDto[]>({
-		key: 'schedule',
-		scope: universalScope,
-		fetcher: async ({ signal }) => {
-			const warmClient = createApiClient();
-			const { data: schedule, error } = await getSchedule({ client: warmClient, signal });
-			if (error || !schedule) return undefined;
-			return schedule.schedule ?? [];
-		}
-	});
-
-	// Subscriptions are per-user; only logged-in users have them.
+	// Warm the caches the offline routes read, so they are viewable even if the
+	// user never opens those pages. Fire-and-forget so first paint is never
+	// blocked; `staleTime` makes this a no-op once warm, and the page's own
+	// prefetch deduplicates against it rather than issuing a second request.
+	void queryClient.prefetchQuery(getScheduleOptions());
 	if (user) {
-		void warmCache<SubscriptionFullDto[]>({
-			key: 'subscriptions',
-			scope: userScope,
-			fetcher: async ({ signal }) => {
-				const warmClient = createApiClient();
-				const { data, error } = await getSubscriptions({ client: warmClient, signal });
-				if (error || !data) return undefined;
-				return data.subscriptions ?? [];
-			}
-		});
+		void queryClient.prefetchQuery(getSubscriptionsOptions());
 	}
 
-	return { user };
+	return { queryClient, user };
 };

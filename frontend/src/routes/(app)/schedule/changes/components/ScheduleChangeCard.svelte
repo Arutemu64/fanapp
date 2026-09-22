@@ -5,17 +5,18 @@
 		ScheduleChangeType
 	} from '$lib/api/generated';
 
-	import { invalidate } from '$app/navigation';
-	import { createApiClient } from '$lib/api';
 	import { undoScheduleChange } from '$lib/api/generated';
+	import { listScheduleChangesInfiniteQueryKey } from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Spinner } from '$lib/components/ui/spinner';
+	import { SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT } from '$lib/constants/schedule_changes';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Undo2 } from '@lucide/svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
 
-	const client = createApiClient();
+	const queryClient = useQueryClient();
 
 	interface Props {
 		change: ScheduleChangeFullDto;
@@ -30,7 +31,6 @@
 		isUndoing = true;
 		try {
 			const { error, response } = await undoScheduleChange({
-				client,
 				path: { schedule_change_id: change.id }
 			});
 
@@ -41,7 +41,11 @@
 			}
 
 			toastService.add('Изменение отменено', 'success');
-			await invalidate('app:schedule:changes');
+			await queryClient.invalidateQueries({
+				queryKey: listScheduleChangesInfiniteQueryKey({
+					query: { limit: SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT }
+				})
+			});
 		} catch (err) {
 			toastService.error('Не удалось отменить изменение');
 			console.error('Undo error:', err);

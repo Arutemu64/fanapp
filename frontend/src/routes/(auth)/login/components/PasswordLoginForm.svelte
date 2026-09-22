@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
-	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { login } from '$lib/api/generated';
 	import PasswordInput from '$lib/components/PasswordInput.svelte';
@@ -80,7 +78,6 @@
 
 		try {
 			const { error, response } = await login({
-				client,
 				body: {
 					email: trimmedEmail,
 					password

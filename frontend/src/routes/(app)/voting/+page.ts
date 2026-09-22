@@ -1,58 +1,16 @@
-import { createApiClient } from '$lib/api';
-import { throwApiError } from '$lib/api/errors';
-import { listVotingNominations } from '$lib/api/generated';
-import { isBackendUnreachableStatus, isReachable, markReachable } from '$lib/services/reachability';
-import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
-import { isHttpError } from '@sveltejs/kit';
+import { listVotingNominationsOptions } from '$lib/api/generated/@tanstack/svelte-query.gen';
 
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ fetch }) => {
-	// Voting is a live, online-only surface: casting a vote is a mutation, and the
-	// open/closed and already-voted state must never be shown stale (a cached ballot
-	// you can't submit is a dead end). So it is deliberately not cached. When the
-	// backend is known unreachable, skip the doomed request and show an honest
-	// "online only" state instead of a generic error that implies offline data.
-	if (!isReachable()) {
-		return { title: 'Голосование', nominations: [], offlineUnavailable: true };
-	}
+// Voting is a live, online-only surface: casting a vote is a mutation, and the
+// open/closed and already-voted state must never be shown stale (a cached ballot
+// you can't submit is a dead end). `gcTime: 0` keeps it out of the persisted
+// cache, so an offline visit finds nothing and the page shows an honest
+// "online only" state rather than a stale ballot.
+export const load: PageLoad = async ({ parent }) => {
+	const { queryClient } = await parent();
 
-	const client = createApiClient();
+	void queryClient.prefetchQuery({ ...listVotingNominationsOptions(), gcTime: 0 });
 
-	try {
-		const {
-			data,
-			error: apiError,
-			response
-		} = await listVotingNominations({
-			client,
-			fetch,
-			signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
-		});
-
-		if (apiError) {
-			// A network failure (offline / timeout / abort) surfaces as an error with
-			// no `response`; a gateway 5xx (502/503/504) is a live proxy over a dead
-			// backend. Both mean unreachable — mirror the offline path above (honest
-			// online-only state) instead of the generic error page.
-			if (!response || isBackendUnreachableStatus(response.status)) {
-				markReachable(false);
-				return { title: 'Голосование', nominations: [], offlineUnavailable: true };
-			}
-			throwApiError(apiError, response, 'Не удалось загрузить номинации');
-		}
-
-		return {
-			title: 'Голосование',
-			nominations: data?.nominations ?? [],
-			offlineUnavailable: false
-		};
-	} catch (err) {
-		// A reachable failure surfaced by throwApiError: re-throw so the error page
-		// shows the mapped status. Anything else is a network failure (offline /
-		// timeout) — mark us unreachable and fall to the honest online-only state.
-		if (isHttpError(err)) throw err;
-		markReachable(false);
-		return { title: 'Голосование', nominations: [], offlineUnavailable: true };
-	}
+	return { title: 'Голосование' };
 };

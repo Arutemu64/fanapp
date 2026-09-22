@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { ParticipantFullDto } from '$lib/api/generated';
 
-	import { createApiClient } from '$lib/api';
 	import { addVote, cancelVote } from '$lib/api/generated';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -10,8 +9,6 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { pluralize } from '$lib/utils/formatters';
 	import { Check, CheckCircle2, Heart, X } from '@lucide/svelte';
-
-	const client = createApiClient();
 
 	interface Props {
 		participant: ParticipantFullDto;
@@ -36,7 +33,6 @@
 		optimisticDelta += 1;
 		try {
 			const { data, error, response } = await addVote({
-				client,
 				body: {
 					participant_id: participant.id
 				}
@@ -69,7 +65,6 @@
 		optimisticDelta -= 1;
 		try {
 			const { error, response } = await cancelVote({
-				client,
 				path: { vote_id: vote.id }
 			});
 

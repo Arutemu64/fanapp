@@ -1,8 +1,6 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
 	import { sendBroadcast } from '$lib/api/generated';
-	const client = createApiClient();
-	import { invalidate } from '$app/navigation';
+	import { listBroadcastsInfiniteQueryKey } from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import * as Alert from '$lib/components/ui/alert';
@@ -12,25 +10,14 @@
 	import * as Field from '$lib/components/ui/field';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Textarea } from '$lib/components/ui/textarea';
+	import { BROADCAST_PAGE_REQUEST_LIMIT } from '$lib/constants/notifications';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { feedSnapshotKey } from '$lib/utils/feed';
-
-	import type { PageProps } from './$types';
+	import { useQueryClient } from '@tanstack/svelte-query';
 
 	import BroadcastHistory from './components/BroadcastHistory.svelte';
 
-	let { data }: PageProps = $props();
-
+	const queryClient = useQueryClient();
 	const toastService = getToastService();
-
-	// Remount the history with the fresh server snapshot whenever route data changes
-	// (a new send or a cancel triggers invalidate('app:broadcasts')).
-	let broadcastsKey = $derived(
-		feedSnapshotKey(
-			data.hasMore,
-			data.mailings.map((mailing) => mailing.id)
-		)
-	);
 
 	let bodyText = $state('');
 	let selectedRoles = $state<string[]>([]);
@@ -93,7 +80,6 @@
 
 		try {
 			const { error, response } = await sendBroadcast({
-				client,
 				body: {
 					body: bodyText.trim(),
 					roles: selectedRoles as ('visitor' | 'participant' | 'helper' | 'org')[]
@@ -118,7 +104,9 @@
 			selectedRoles = [];
 			bodyError = '';
 			rolesError = '';
-			await invalidate('app:broadcasts');
+			await queryClient.invalidateQueries({
+				queryKey: listBroadcastsInfiniteQueryKey({ query: { limit: BROADCAST_PAGE_REQUEST_LIMIT } })
+			});
 		} catch (err) {
 			console.error('Failed to send broadcast:', err);
 			submitError = 'Произошла непредвиденная ошибка';
@@ -236,7 +224,5 @@
 </Card.Root>
 
 <div class="mt-8">
-	{#key broadcastsKey}
-		<BroadcastHistory initialMailings={data.mailings} initialHasMore={data.hasMore} />
-	{/key}
+	<BroadcastHistory />
 </div>

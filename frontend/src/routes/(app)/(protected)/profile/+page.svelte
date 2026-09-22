@@ -1,11 +1,15 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
 	import { PUBLIC_APP_VERSION } from '$env/static/public';
+	import {
+		getCurrentUserQueryKey,
+		listOauthProvidersOptions
+	} from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { getOfflineService } from '$lib/services/offline.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { clearOAuthErrorParam, OAUTH_LINK_ERROR_PARAM } from '$lib/utils/oauthErrors';
 	import { Heart } from '@lucide/svelte';
+	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 	import IconFastapi from '~icons/simple-icons/fastapi';
 	import IconSvelte from '~icons/simple-icons/svelte';
@@ -18,10 +22,18 @@
 	import SecurityCard from './components/SecurityCard.svelte';
 	import TicketLinkCard from './components/TicketLinkCard.svelte';
 
+	const queryClient = useQueryClient();
+
 	let { data }: PageProps = $props();
 	let user = $derived(data.user!);
-	let enabledProviders = $derived(data.enabledProviders);
 	const toastService = getToastService();
+
+	// A provider unreachable from this host offers no "connect" button. Unlike the
+	// login screen this fails *closed*: an already-linked provider stays unlinkable
+	// regardless (that row comes from the user, and unlink is never gated), so a
+	// failure here only drops the connect affordances.
+	const providersQuery = createQuery(() => listOauthProvidersOptions());
+	let enabledProviders = $derived(providersQuery.data?.providers ?? []);
 
 	// The whole profile (identity + connections) renders from the layout-cached
 	// user, so the only "out of date" state left is being offline.
@@ -55,7 +67,7 @@
 
 	// Refreshing the current user also refreshes connections — they ship together now.
 	async function refreshProfile() {
-		await invalidate('app:current-user');
+		await queryClient.invalidateQueries({ queryKey: getCurrentUserQueryKey() });
 	}
 
 	onMount(() => {

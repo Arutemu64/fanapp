@@ -1,6 +1,11 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
+	import {
+		getPublicConfigOptions,
+		getPublicConfigQueryKey
+	} from '$lib/api/generated/@tanstack/svelte-query.gen';
+	import { FALLBACK_CONFIG } from '$lib/constants/festival';
 	import { getEventsClient } from '$lib/services/events.svelte';
+	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 
 	import type { PageProps } from './$types';
@@ -10,9 +15,15 @@
 
 	let { data }: PageProps = $props();
 	let user = $derived(data.user);
-	let config = $derived(data.config);
 
 	const eventsClient = getEventsClient();
+	const queryClient = useQueryClient();
+
+	// The hero's phase (before/during/after) and countdown must render for guests
+	// and offline. A complete miss — a first-ever visit made offline — falls back to
+	// the shipped defaults; any response, live or persisted, wins over them.
+	const configQuery = createQuery(() => getPublicConfigOptions());
+	let config = $derived(configQuery.data ?? FALLBACK_CONFIG);
 
 	onMount(() => {
 		// Refetch config on a change and on every (re)connect, so the hero flips
@@ -21,7 +32,7 @@
 		// Firing on first connect just re-runs the freshly loaded config once —
 		// harmless and idempotent.
 		const reloadConfig = () => {
-			void invalidate('app:config');
+			void queryClient.invalidateQueries({ queryKey: getPublicConfigQueryKey() });
 		};
 
 		eventsClient.on('config_updated', reloadConfig);

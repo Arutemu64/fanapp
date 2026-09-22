@@ -2,6 +2,7 @@
 	import type { SocialProvider } from '$lib/api/generated';
 
 	import { PUBLIC_API_URL } from '$env/static/public';
+	import { listOauthProvidersOptions } from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Spinner } from '$lib/components/ui/spinner';
@@ -9,6 +10,7 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { clearOAuthErrorParam, OAUTH_LOGIN_ERROR_PARAM } from '$lib/utils/oauthErrors';
 	import { Mail } from '@lucide/svelte';
+	import { createQuery } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 
 	import type { PageProps } from './$types';
@@ -19,9 +21,19 @@
 	let { data }: PageProps = $props();
 	const toastService = getToastService();
 
-	// `null` means the providers probe couldn't be reached (see +page.ts); fail open
-	// to every known provider so a social-only account is never hidden by a hiccup.
-	const providers = $derived(data.enabledProviders ?? ALL_SOCIAL_PROVIDERS);
+	// Which social login buttons to show is a per-deployment backend decision — a
+	// provider can be built in yet unreachable from this host (Telegram is blocked
+	// on Russian hosting) — so it is read at runtime, not baked into the bundle.
+	//
+	// An unresolved or failed probe is NOT the same as "none enabled": hiding every
+	// social button would lock out a social-only account (no password, and its OAuth
+	// email was never stored). So fail open to every known provider until the answer
+	// arrives; a disabled one is still rejected by its start endpoint, so the worst
+	// case is a handled error, never a lockout. An authoritative empty list stays empty.
+	const providersQuery = createQuery(() => listOauthProvidersOptions());
+	const providers: SocialProvider[] = $derived(
+		providersQuery.data?.providers ?? ALL_SOCIAL_PROVIDERS
+	);
 
 	// The first screen offers the login options only; the email form (and its
 	// third-party captcha script) lives on its own step, so someone using an

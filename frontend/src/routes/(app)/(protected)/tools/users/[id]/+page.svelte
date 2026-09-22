@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { getUserOptions } from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import BackLink from '$lib/components/BackLink.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { Badge } from '$lib/components/ui/badge';
@@ -10,11 +11,16 @@
 		getSocialProviderLabel
 	} from '$lib/utils/users';
 	import { ExternalLink, Link2 } from '@lucide/svelte';
+	import { createQuery } from '@tanstack/svelte-query';
 
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
-	let profile = $derived(data.profile);
+
+	// Resolves from the cache the load already filled (it awaits this same query to
+	// build the navbar heading), so `profile` is present on the first render.
+	const profileQuery = createQuery(() => getUserOptions({ path: { user_id: data.userId } }));
+	const profile = profileQuery.data!;
 </script>
 
 <svelte:head>

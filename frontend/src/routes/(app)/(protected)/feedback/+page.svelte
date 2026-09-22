@@ -1,7 +1,5 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
 	import { submitFeedback } from '$lib/api/generated';
-	const client = createApiClient();
 	import OfflineUnavailableState from '$lib/components/OfflineUnavailableState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import * as Alert from '$lib/components/ui/alert';
@@ -55,7 +53,6 @@
 
 		try {
 			const { error, response } = await submitFeedback({
-				client,
 				body: {
 					text: feedbackText.trim()
 				}

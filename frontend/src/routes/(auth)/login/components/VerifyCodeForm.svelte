@@ -1,10 +1,8 @@
 <script lang="ts">
 	import type { PinInputCell } from 'bits-ui';
 
-	import { createApiClient } from '$lib/api';
-	import { loginWithCode, requestLoginCode } from '$lib/api/generated';
-	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
+	import { loginWithCode, requestLoginCode } from '$lib/api/generated';
 	import CaptchaWidget, { captchaEnabled } from '$lib/components/CaptchaWidget.svelte';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
@@ -93,7 +91,6 @@
 
 		try {
 			const { error, response } = await loginWithCode({
-				client,
 				body: { email, code: loginCode }
 			});
 
@@ -134,7 +131,6 @@
 
 		try {
 			const { error, response } = await requestLoginCode({
-				client,
 				body: { email, captcha_token: captchaToken }
 			});
 

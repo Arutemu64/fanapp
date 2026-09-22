@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { CurrentUserDto, UpdateCurrentUserInput } from '$lib/api/generated';
 
-	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { updateCurrentUser } from '$lib/api/generated';
 	import * as Alert from '$lib/components/ui/alert';
@@ -13,8 +12,6 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { User } from '@lucide/svelte';
 	import { untrack } from 'svelte';
-
-	const client = createApiClient();
 
 	interface Props {
 		user: CurrentUserDto;
@@ -102,7 +99,6 @@
 		if (username && username !== user.username) body.username = username;
 
 		const { error, response } = await updateCurrentUser({
-			client,
 			body
 		});
 

@@ -2,7 +2,7 @@
 	import { page } from '$app/state';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
-	import { reachability } from '$lib/services/reachability';
+	import { online } from '$lib/services/online.svelte';
 	import { statusTitle } from '$lib/utils/errorTitle';
 	import { AlertCircle, ArrowLeft, Home, Lock, RotateCw } from '@lucide/svelte';
 
@@ -17,24 +17,13 @@
 	let errorMessage = $derived(page.error?.message);
 
 	// Most load failures while offline surface here as a 500/503. Detect the real
-	// cause (backend unreachable) and show a calm connectivity page instead of a
-	// scary server-error screen. Read straight from the reachability module so
-	// this works without the OfflineService context too.
-	let online = $derived(reachability.current);
+	// cause and show a calm connectivity page instead of a scary server-error
+	// screen. Read the shared online state directly so this works without the
+	// OfflineService context too.
 	// A genuine 403/404 is a real server answer — never reframe it as offline.
-	let offline = $derived(!online && status !== 403 && status !== 404);
+	let offline = $derived(!online.current && status !== 403 && status !== 404);
 
-	// Within an offline state, tell the two causes apart so we never blame the
-	// user's internet for a server outage. `navigator.onLine === false` is a
-	// trustworthy negative — the device really has no connection; otherwise the
-	// device is online but the server can't be reached (API down, captive portal,
-	// dead VPN), for which "нет связи с сервером" is the honest, non-blaming framing.
-	let deviceOffline = $derived(!reachability.deviceOnline);
-
-	let title = $derived.by(() => {
-		if (!offline) return statusTitle(status);
-		return deviceOffline ? 'Нет интернета' : 'Нет связи с сервером';
-	});
+	let title = $derived(offline ? 'Нет интернета' : statusTitle(status));
 
 	// A genuine 403 gets the lock icon; everything else (including offline, which
 	// is never a 403) gets the generic alert icon. Offline is the only yellow
@@ -45,9 +34,7 @@
 	);
 
 	let description = $derived.by(() => {
-		if (offline && deviceOffline)
-			return 'Проверь подключение к сети. Часть данных доступна офлайн.';
-		if (offline) return 'Не удаётся связаться с сервером. Часть данных доступна офлайн.';
+		if (offline) return 'Проверь подключение к сети. Часть данных доступна офлайн.';
 		if (errorMessage) return errorMessage;
 		if (status === 403) return 'У тебя нет прав для просмотра этой страницы.';
 		if (status === 404) return 'Похоже, эта страница не существует, была удалена или перенесена.';

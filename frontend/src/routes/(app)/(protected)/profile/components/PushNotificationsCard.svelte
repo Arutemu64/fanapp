@@ -1,9 +1,4 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
-	import { Button } from '$lib/components/ui/button';
-	import { Switch } from '$lib/components/ui/switch';
-	import { Bell } from '@lucide/svelte';
-	const client = createApiClient();
 	import type { CurrentUserDto, UpdateUserSettingsInput } from '$lib/api/generated';
 
 	import { PUBLIC_VAPID_KEY, PUBLIC_VK_GROUP_ID } from '$env/static/public';
@@ -16,9 +11,12 @@
 		unsubscribe,
 		updateCurrentUserSettings
 	} from '$lib/api/generated';
+	import { Button } from '$lib/components/ui/button';
+	import { Switch } from '$lib/components/ui/switch';
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { offlineWriteGate } from '$lib/utils/offlineAction';
+	import { Bell } from '@lucide/svelte';
 	import * as Sentry from '@sentry/sveltekit';
 	import { onMount, untrack } from 'svelte';
 
@@ -89,7 +87,6 @@
 			// about this exact endpoint, otherwise treat it as not subscribed so the
 			// user can re-register (e.g. after the server lost the subscription).
 			const { data } = await checkPushSubscription({
-				client,
 				query: { endpoint: subscription.endpoint }
 			});
 			isSubscribed = data?.subscribed ?? false;
@@ -124,7 +121,6 @@
 				if (subscription) {
 					// Remove the matching subscription on the backend before unsubscribing locally.
 					const { error, response } = await unsubscribe({
-						client,
 						body: {
 							endpoint: subscription.endpoint
 						}
@@ -226,7 +222,6 @@
 			}
 
 			const { error, response } = await subscribe({
-				client,
 				body: {
 					endpoint,
 					p256dh,
@@ -271,7 +266,6 @@
 	) {
 		isSavingSettings = true;
 		const { error, response } = await updateCurrentUserSettings({
-			client,
 			body: nextSettings
 		});
 
@@ -320,7 +314,7 @@
 		try {
 			isSendingTest = true;
 
-			const { error, response } = await sendTestPushNotification({ client });
+			const { error, response } = await sendTestPushNotification({});
 
 			if (error || !response?.ok) {
 				console.error('API Error:', error);

@@ -2,7 +2,6 @@
 	import type { CurrentUserDto, SocialProvider } from '$lib/api/generated';
 
 	import { PUBLIC_API_URL } from '$env/static/public';
-	import { createApiClient } from '$lib/api';
 	import { unlinkTelegramAccount, unlinkVkAccount } from '$lib/api/generated';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Badge } from '$lib/components/ui/badge';
@@ -16,8 +15,6 @@
 	import ChangePasswordModal from './ChangePasswordModal.svelte';
 	import ProfileCardShell from './ProfileCardShell.svelte';
 	import SocialConnectionRow from './SocialConnectionRow.svelte';
-
-	const client = createApiClient();
 
 	interface Props {
 		user: CurrentUserDto;
@@ -58,9 +55,7 @@
 		const { name } = SOCIAL_PROVIDER_PRESENTATION[provider];
 		try {
 			const { error, response } =
-				provider === 'vk'
-					? await unlinkVkAccount({ client })
-					: await unlinkTelegramAccount({ client });
+				provider === 'vk' ? await unlinkVkAccount({}) : await unlinkTelegramAccount({});
 
 			if (error || !response?.ok) {
 				toastService.error(error);

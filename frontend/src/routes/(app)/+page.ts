@@ -1,32 +1,14 @@
-import type { PublicConfigDto } from '$lib/api/generated';
-
-import { createApiClient } from '$lib/api';
-import { getPublicConfig } from '$lib/api/generated';
-import { CONFIG_CACHE_KEY, FALLBACK_CONFIG } from '$lib/constants/festival';
-import { fetchWithCache, universalScope } from '$lib/utils/offlineCache';
+import { getPublicConfigOptions } from '$lib/api/generated/@tanstack/svelte-query.gen';
 
 import type { PageLoad } from './$types';
 
 // Public config drives the hero's phase (before/during/after) and countdown, so it
-// must render for guests and offline. Network-first with a fallback to the last
-// synced copy (fetchWithCache, universal store — no per-user data), matching the
-// schedule. Network-first over stale-while-revalidate on purpose: the phase is a
-// decision, so a client opening the app after the festival ends must not first
-// paint a stale countdown. A complete cache miss (first-ever visit made offline)
-// falls back to the shipped defaults; any live response wins over both.
-export const load: PageLoad = async ({ fetch, depends }) => {
-	depends('app:config');
+// must render for guests and offline. Prefetched here so first paint has it, then
+// read from the cache by the page. `prefetchQuery` never throws: a complete miss
+// (first-ever visit made offline) leaves the query empty and the page falls back
+// to the shipped defaults, while any live response wins over both.
+export const load: PageLoad = async ({ parent }) => {
+	const { queryClient } = await parent();
 
-	const client = createApiClient();
-
-	const { data } = await fetchWithCache<PublicConfigDto>({
-		key: CONFIG_CACHE_KEY,
-		scope: universalScope,
-		fetcher: async ({ signal }) => {
-			const { data, error } = await getPublicConfig({ client, fetch, signal });
-			return error ? undefined : data;
-		}
-	});
-
-	return { config: data ?? FALLBACK_CONFIG };
+	await queryClient.prefetchQuery(getPublicConfigOptions());
 };

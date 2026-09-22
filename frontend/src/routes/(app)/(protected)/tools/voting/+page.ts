@@ -1,14 +1,12 @@
-import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
-import { getVotingDashboard } from '$lib/api/generated';
-import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
+import { getVotingDashboardOptions } from '$lib/api/generated/@tanstack/svelte-query.gen';
 import { canManageVoting } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ fetch, parent }) => {
-	const { user } = await parent();
+export const load: PageLoad = async ({ parent }) => {
+	const { queryClient, user } = await parent();
 
 	// Mirror the backend voting:manage check before hitting the API, so the page
 	// is not shown to users the endpoint would reject with a 403.
@@ -16,23 +14,13 @@ export const load: PageLoad = async ({ fetch, parent }) => {
 		error(403, 'У тебя нет доступа к управлению голосованием');
 	}
 
-	const client = createApiClient();
-	const {
-		data,
-		error: requestError,
-		response
-	} = await getVotingDashboard({
-		client,
-		fetch,
-		signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
+	// Awaited: this page seeds its form/table state from the response at mount, so
+	// it must be in the cache before the component runs. A failure here is a real
+	// server error — the tools layout already redirects offline visitors to the hub
+	// — so it becomes the error page rather than an inline state.
+	await queryClient.ensureQueryData(getVotingDashboardOptions()).catch((requestError: unknown) => {
+		throwApiError(requestError, undefined, 'Не удалось загрузить панель голосования');
 	});
 
-	if (requestError || !response?.ok || !data) {
-		throwApiError(requestError, response, 'Не удалось загрузить панель голосования');
-	}
-
-	return {
-		title: 'Голосование',
-		dashboard: data
-	};
+	return { title: 'Голосование' };
 };

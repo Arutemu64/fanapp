@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
 	import { countOnlineUsers } from '$lib/api/generated';
 	import { pluralize } from '$lib/utils/formatters';
 	import { Activity } from '@lucide/svelte';
@@ -8,8 +7,6 @@
 	// user's presence marker ages out server-side within ~45s, so a tighter poll
 	// would add load without adding meaning.
 	const REFRESH_MS = 20_000;
-
-	const client = createApiClient();
 
 	// null until the first response lands, so the card shows a placeholder
 	// instead of a misleading "0" while loading.
@@ -20,7 +17,7 @@
 		// unhandled rejection every interval. The stale count just stands until
 		// the next successful poll — this is a glanceable stat, not critical data.
 		try {
-			const { data, error, response } = await countOnlineUsers({ client });
+			const { data, error, response } = await countOnlineUsers({});
 			if (!error && response?.ok && data) {
 				count = data.count;
 			}

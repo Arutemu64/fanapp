@@ -1,18 +1,18 @@
 <script lang="ts">
 	import type { ScheduleEventFullDto } from '$lib/api/generated';
 
-	import { invalidate } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { newSubscription } from '$lib/api/generated';
+	import { getScheduleQueryKey } from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { BellRing, Minus, Plus } from '@lucide/svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
 
-	const client = createApiClient();
+	const queryClient = useQueryClient();
 
 	interface Props {
 		open: boolean;
@@ -41,7 +41,6 @@
 		setCounter(counter);
 		formError = '';
 		const { error, response } = await newSubscription({
-			client,
 			body: {
 				event_id: event.id,
 				counter
@@ -54,7 +53,7 @@
 		}
 
 		toastService.add('Подписка оформлена', 'success');
-		await invalidate('app:schedule');
+		await queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() });
 		open = false;
 	}
 </script>

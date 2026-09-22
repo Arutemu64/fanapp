@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { NominationContenderDto, UserBaseDto } from '$lib/api/generated';
 
-	import { createApiClient } from '$lib/api';
 	import { drawVotingContestWinner, setVotingTimeRange } from '$lib/api/generated';
+	import { getVotingDashboardOptions } from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import BackLink from '$lib/components/BackLink.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
@@ -16,23 +16,25 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { pluralize } from '$lib/utils/formatters';
 	import { AlertCircle, Award, Gift, Users } from '@lucide/svelte';
+	import { createQuery } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 
-	import type { PageProps } from './$types';
-
-	let { data }: PageProps = $props();
-	const client = createApiClient();
 	const toastService = getToastService();
 
-	let nominations = $derived<NominationContenderDto[]>(data.dashboard.nominations);
+	// Resolves from the cache the load already filled, so the seeds below are never
+	// read from a pending query.
+	const dashboardQuery = createQuery(() => getVotingDashboardOptions());
+	const dashboard = dashboardQuery.data!;
 
-	let votingStart = $state(untrack(() => toLocalInput(data.dashboard.voting_start)));
-	let votingEnd = $state(untrack(() => toLocalInput(data.dashboard.voting_end)));
+	let nominations = $derived<NominationContenderDto[]>(dashboard.nominations);
+
+	let votingStart = $state(untrack(() => toLocalInput(dashboard.voting_start)));
+	let votingEnd = $state(untrack(() => toLocalInput(dashboard.voting_end)));
 	let isSaving = $state(false);
 
 	// Seeded from the dashboard, then refreshed from each draw's response, so the
 	// displayed pool tracks who is currently eligible even as people finish voting.
-	let poolSize = $state(untrack(() => data.dashboard.contest_pool_size));
+	let poolSize = $state(untrack(() => dashboard.contest_pool_size));
 	let isDrawing = $state(false);
 	let winner = $state<UserBaseDto | null>(null);
 	let hasDrawn = $state(false);
@@ -57,7 +59,6 @@
 		isSaving = true;
 		try {
 			const { error, response } = await setVotingTimeRange({
-				client,
 				body: {
 					voting_start: fromLocalInput(votingStart),
 					voting_end: fromLocalInput(votingEnd)
@@ -92,7 +93,7 @@
 		isDrawing = true;
 		drawError = '';
 		try {
-			const { data: result, error, response } = await drawVotingContestWinner({ client });
+			const { data: result, error, response } = await drawVotingContestWinner({});
 
 			if (error || !response?.ok || !result) {
 				if (response?.status === 403) {

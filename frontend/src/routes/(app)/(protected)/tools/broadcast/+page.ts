@@ -1,17 +1,12 @@
-import type { MailingDto } from '$lib/api/generated';
-
-import { createApiClient } from '$lib/api';
-import { listBroadcasts } from '$lib/api/generated';
-import { BROADCAST_PAGE_REQUEST_LIMIT, BROADCAST_PAGE_SIZE } from '$lib/constants/notifications';
+import { listBroadcastsInfiniteOptions } from '$lib/api/generated/@tanstack/svelte-query.gen';
+import { BROADCAST_PAGE_REQUEST_LIMIT } from '$lib/constants/notifications';
 import { canSendNotifications } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ fetch, depends, parent }) => {
-	depends('app:broadcasts');
-
-	const { user } = await parent();
+export const load: PageLoad = async ({ parent }) => {
+	const { queryClient, user } = await parent();
 
 	// Mirror the backend NOTIFICATIONS_SEND check so the page is not shown to
 	// users who would be rejected on submit.
@@ -19,25 +14,11 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 		error(403, 'У тебя нет доступа к рассылке уведомлений');
 	}
 
-	const client = createApiClient();
+	// Sent history, fire-and-forget: a failure must not block the composer, so the
+	// history section renders its own error state while the form stays usable.
+	void queryClient.prefetchInfiniteQuery(
+		listBroadcastsInfiniteOptions({ query: { limit: BROADCAST_PAGE_REQUEST_LIMIT } })
+	);
 
-	// First page of the sent history. Best-effort: a failure must not block the
-	// composer, so fall back to an empty list rather than erroring the page.
-	let mailings: MailingDto[] = [];
-	let hasMore = false;
-	const { data } = await listBroadcasts({
-		client,
-		fetch,
-		query: { limit: BROADCAST_PAGE_REQUEST_LIMIT, offset: 0 }
-	});
-	if (data) {
-		mailings = data.mailings.slice(0, BROADCAST_PAGE_SIZE);
-		hasMore = data.mailings.length > BROADCAST_PAGE_SIZE;
-	}
-
-	return {
-		title: 'Рассылка уведомлений',
-		mailings,
-		hasMore
-	};
+	return { title: 'Рассылка уведомлений' };
 };

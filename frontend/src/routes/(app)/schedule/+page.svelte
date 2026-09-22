@@ -2,8 +2,12 @@
 	import type { CurrentUserDto } from '$lib/api/generated';
 	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
 
-	import { invalidate } from '$app/navigation';
 	import { page } from '$app/state';
+	import {
+		getScheduleOptions,
+		getScheduleQueryKey,
+		getSubscriptionsOptions
+	} from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -11,13 +15,12 @@
 	import { Switch } from '$lib/components/ui/switch';
 	import { documentVisibility } from '$lib/services/documentVisibility';
 	import { getEventsClient } from '$lib/services/events.svelte';
-	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
+	import { getOfflineService } from '$lib/services/offline.svelte';
 	import { canManageSchedule } from '$lib/utils/permissions';
 	import { createSearchIndex } from '$lib/utils/search';
 	import { ChevronUp, Info, Play, Search as SearchIcon, X } from '@lucide/svelte';
+	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
-
-	import type { PageProps } from './$types';
 
 	import EventCard from './components/EventCard.svelte';
 	import {
@@ -26,27 +29,48 @@
 		type ScheduleBlockGroup
 	} from './scheduleGrouping';
 
-	// Mirror the loaded page data so the component reads schedule from one local source.
-	let { data }: PageProps = $props();
-	let schedule: ScheduleEventWithSubscription[] = $derived(data.schedule);
-
 	// Store filter state locally because it only affects this page view.
 	let searchQuery: string = $state('');
 	let showOnlySubscribed: boolean = $state(false);
 
-	// We use the full schedule current event for countdown labels inside every row.
-	let currentEvent = $derived(schedule.find((event) => event.is_current) ?? null);
 	let user: CurrentUserDto | null = $derived(page.data.user);
 
 	const offline = getOfflineService();
 	const eventsClient = getEventsClient();
-	let showStaleNotice = $derived(
-		shouldShowStaleNotice({
-			offlineMiss: data.offlineMiss,
-			stale: data.stale,
-			isOnline: offline.isOnline
-		})
-	);
+	const queryClient = useQueryClient();
+
+	// Two queries, not one merged payload: the schedule is identical for every
+	// viewer while subscriptions belong to the signed-in user, so they cache,
+	// persist and invalidate independently — subscribing to an event refetches the
+	// badges without re-fetching the whole programme. Guests skip theirs entirely.
+	const scheduleQuery = createQuery(() => getScheduleOptions());
+	const subscriptionsQuery = createQuery(() => ({
+		...getSubscriptionsOptions(),
+		enabled: Boolean(user)
+	}));
+
+	// Attach each event's subscription (matched by event id) to produce the row shape.
+	let schedule: ScheduleEventWithSubscription[] = $derived.by(() => {
+		const events = scheduleQuery.data?.schedule ?? [];
+		const byEventId = new Map(
+			(subscriptionsQuery.data?.subscriptions ?? []).map((sub) => [
+				sub.event.id,
+				{ id: sub.id, counter: sub.counter }
+			])
+		);
+		return events.map((event) => ({
+			...event,
+			user_subscription: byEventId.get(event.id) ?? null
+		}));
+	});
+
+	// We use the full schedule current event for countdown labels inside every row.
+	let currentEvent = $derived(schedule.find((event) => event.is_current) ?? null);
+
+	// Offline with nothing cached: there is no saved copy to caveat, so the empty
+	// state below explains the situation instead of the "showing saved data" notice.
+	let offlineMiss = $derived(!offline.isOnline && schedule.length === 0);
+	let showStaleNotice = $derived(!offline.isOnline && !offlineMiss);
 
 	// Rebuilt only when the schedule reloads, so a keystroke re-runs token
 	// comparisons instead of re-normalizing every field of every row.
@@ -143,7 +167,7 @@
 	// stream was down doesn't leave a stale page.
 	function reloadSchedule() {
 		lastRefetch = Date.now();
-		void invalidate('app:schedule');
+		void queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() });
 	}
 
 	// Shorter background trips (<60s) can lose an SSE event without triggering a
@@ -184,7 +208,7 @@
 	{#if showStaleNotice}
 		<StaleDataNotice
 			message="Нет связи. Показана сохранённая программа — обновится при подключении."
-			cachedAt={data.cachedAt}
+			cachedAt={scheduleQuery.dataUpdatedAt}
 		/>
 	{/if}
 
@@ -271,7 +295,7 @@
 				class="rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center sm:py-14"
 			>
 				<p class="text-base font-bold text-foreground">
-					{#if data.offlineMiss}
+					{#if offlineMiss}
 						Программа недоступна офлайн
 					{:else if hasActiveFilters}
 						Ничего не нашлось
@@ -280,7 +304,7 @@
 					{/if}
 				</p>
 				<p class="mt-1 text-sm text-muted-foreground">
-					{#if data.offlineMiss}
+					{#if offlineMiss}
 						Появится после подключения к интернету
 					{:else if hasActiveFilters}
 						Попробуй изменить поиск или фильтры

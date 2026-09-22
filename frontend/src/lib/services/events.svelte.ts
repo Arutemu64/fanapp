@@ -1,14 +1,10 @@
 import type { NotificationDto } from '$lib/api/generated';
+import type { QueryClient } from '@tanstack/svelte-query';
 
 import { PUBLIC_API_URL } from '$env/static/public';
-import {
-	isReachable,
-	markReachable,
-	onReachableChange,
-	probeReachability
-} from '$lib/services/reachability';
 import { requestReconnectRefresh } from '$lib/utils/reconnectRefresh';
 import * as Sentry from '@sentry/sveltekit';
+import { onlineManager } from '@tanstack/svelte-query';
 import { createContext } from 'svelte';
 
 const [getEvents, setEvents] = createContext<EventsClient>();
@@ -19,9 +15,9 @@ const MAX_RECONNECT_ATTEMPTS = 10;
  * Once the fast retries are exhausted, keep dialing at this cadence rather than
  * stopping for good. A stream that stays broken while the backend is otherwise
  * healthy — a carrier proxy that kills long-lived connections, say — never
- * produces a reachability *transition*, so `markReachable(true)` notifies nobody
- * and none of the other recovery paths (`online`, reachability change, visibility
- * resume) ever fire. Without this the down banner would stick for the rest of the
+ * produces a connectivity *transition*, so none of the other recovery paths
+ * (`online`, the online-state subscription, visibility resume) ever fire.
+ * Without this the down banner would stick for the rest of the
  * session on an app whose pages all load fine. One dial a minute is cheap, and it
  * is paused with the rest of the stream while the app is backgrounded.
  */
@@ -156,11 +152,14 @@ export class EventsClient {
 	#visibilityTimeoutId: ReturnType<typeof setTimeout> | null = null;
 	#heartbeatTimeoutId: ReturnType<typeof setTimeout> | null = null;
 	#manualDisconnect = false;
+	// Used only to hand the reconnect catch-up refetch a client to invalidate; the
+	// stream itself reads no cache.
+	readonly #queryClient: QueryClient;
 	// True while the stream is intentionally paused because the app is backgrounded.
 	#pausedForVisibility = false;
 	// Terminal flag set by destroy(); a destroyed client never reconnects.
 	#destroyed = false;
-	#unsubscribeReachable: (() => void) | null = null;
+	#unsubscribeOnline: (() => void) | null = null;
 	// Guards the one-issue-per-outage rule below: the slow retry re-enters
 	// #failAndReconnect once a minute while `failed`, and each of those must not
 	// file a fresh GlitchTip issue. Reset on the next successful handshake.
@@ -182,7 +181,8 @@ export class EventsClient {
 		return this.#handshake;
 	}
 
-	constructor() {
+	constructor(queryClient: QueryClient) {
+		this.#queryClient = queryClient;
 		// React to OS network changes: pause the stream when the browser goes
 		// offline (stops the reconnect churn and the "reconnecting" banner) and
 		// re-dial when it comes back.
@@ -191,7 +191,7 @@ export class EventsClient {
 		// Recover when connectivity returns after the stream gave up retrying.
 		// While the reconnect loop is still running it handles recovery itself,
 		// so we only step in once it has reached the terminal 'failed' state.
-		this.#unsubscribeReachable = onReachableChange(this.#handleReachableChange);
+		this.#unsubscribeOnline = onlineManager.subscribe(this.#handleOnlineChange);
 		// Pause the stream while the app is backgrounded and resume on return;
 		// Web Push keeps notifications flowing while it is down.
 		document.addEventListener('visibilitychange', this.#handleVisibilityChange);
@@ -343,8 +343,8 @@ export class EventsClient {
 		window.removeEventListener('offline', this.#handleOffline);
 		window.removeEventListener('online', this.#handleOnline);
 		document.removeEventListener('visibilitychange', this.#handleVisibilityChange);
-		this.#unsubscribeReachable?.();
-		this.#unsubscribeReachable = null;
+		this.#unsubscribeOnline?.();
+		this.#unsubscribeOnline = null;
 	}
 
 	// Browser lost the network: stop reconnect attempts and go quiet. The offline
@@ -400,17 +400,16 @@ export class EventsClient {
 			// Catch whatever changed while the stream was paused. Shares the reconnect
 			// debounce so foregrounding onto a just-recovered network (which also fires
 			// the online edge and the fresh handshake below) refreshes once, not thrice.
-			requestReconnectRefresh();
+			requestReconnectRefresh(this.#queryClient);
 		}
 	};
 
-	// Reachability recovered (e.g. the offline recovery poll or a load succeeded).
-	// A given-up stream is only retrying once a FAILED_RETRY_INTERVAL_MS by then;
-	// a confirmed-reachable backend is good enough evidence to dial straight away
-	// rather than sit out the rest of that minute. Note this fires on a reachability
-	// *transition* only, which is exactly why the slow retry has to exist.
-	#handleReachableChange = () => {
-		if (this.#connectionStatus === 'failed' && isReachable()) {
+	// Connectivity came back. A given-up stream is only retrying once a
+	// FAILED_RETRY_INTERVAL_MS by then; being online again is good enough evidence
+	// to dial straight away rather than sit out the rest of that minute. Note this
+	// fires on a *transition* only, which is exactly why the slow retry has to exist.
+	#handleOnlineChange = () => {
+		if (this.#connectionStatus === 'failed' && onlineManager.isOnline()) {
 			this.restart();
 		}
 	};
@@ -436,8 +435,6 @@ export class EventsClient {
 
 		this.#clearStallTimer();
 		this.#connectionStatus = 'connected';
-		// A live stream proves the backend is reachable — feed that to the probe.
-		markReachable(true);
 		// Leave a trail for whatever error fires next; on a recovery it also closes
 		// out the outage that #failAndReconnect may have filed as an issue.
 		Sentry.addBreadcrumb({
@@ -449,7 +446,7 @@ export class EventsClient {
 		// Connection is fully online; reset backoff so the next blip starts fresh.
 		this.#reconnectAttempts = 0;
 
-		if (wasReconnect) requestReconnectRefresh();
+		if (wasReconnect) requestReconnectRefresh(this.#queryClient);
 	};
 
 	// Guards both stages of coming online — the dial, then the handshake. Either
@@ -490,11 +487,6 @@ export class EventsClient {
 			message: `SSE dropped (${reason})`,
 			data: { reason, attempts: this.#reconnectAttempts }
 		});
-
-		// A stream failure may mean the network died, not just an SSE hiccup. Probe
-		// the health endpoint so reachability (and the offline banner) reflect reality
-		// even when no `load` is running to report an outcome.
-		void probeReachability();
 
 		if (this.#reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
 			this.#connectionStatus = 'failed';
@@ -574,8 +566,8 @@ export class EventsClient {
 }
 
 /** Create and set the EventsClient in Svelte context (call in root layout). */
-export function setEventsClient(): EventsClient {
-	const client = new EventsClient();
+export function setEventsClient(queryClient: QueryClient): EventsClient {
+	const client = new EventsClient(queryClient);
 	setEvents(client);
 	return client;
 }

@@ -1,10 +1,8 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
-	import { linkTicket } from '$lib/api/generated';
-	const client = createApiClient();
 	import type { CurrentUserDto } from '$lib/api/generated';
 
 	import { getApiErrorDetail } from '$lib/api/errors';
+	import { linkTicket } from '$lib/api/generated';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import * as Field from '$lib/components/ui/field';
@@ -43,7 +41,6 @@
 
 		try {
 			const { error, response } = await linkTicket({
-				client,
 				body: { barcode: barcode.trim() }
 			});
 

@@ -2,9 +2,8 @@
 	import type { CurrentUserDto } from '$lib/api/generated';
 	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
 
-	import { invalidate } from '$app/navigation';
-	import { createApiClient } from '$lib/api';
 	import { setEventAsCurrent, uncheckCurrentEvent, updateScheduleEvent } from '$lib/api/generated';
+	import { getScheduleQueryKey } from '$lib/api/generated/@tanstack/svelte-query.gen';
 	import { Badge } from '$lib/components/ui/badge';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { formatDuration, formatUntil, pluralize } from '$lib/utils/formatters';
@@ -22,13 +21,14 @@
 		Shuffle,
 		XCircle
 	} from '@lucide/svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
 
 	import ConfirmActionModal from './ConfirmActionModal.svelte';
 	import MoveEventModal from './MoveEventModal.svelte';
 	import SubscribeModal from './SubscribeModal.svelte';
 	import UnsubscribeModal from './UnsubscribeModal.svelte';
 
-	const client = createApiClient();
+	const queryClient = useQueryClient();
 
 	interface Props {
 		event: ScheduleEventWithSubscription;
@@ -119,12 +119,11 @@
 	// the 200), so it is correct even before the relay has ticked; the SSE echo
 	// still drives every other client.
 	function reloadSchedule() {
-		void invalidate('app:schedule');
+		void queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() });
 	}
 
 	async function handleMarkCurrent() {
 		const { error, response } = await setEventAsCurrent({
-			client,
 			path: { event_id: event.id }
 		});
 
@@ -138,7 +137,7 @@
 	}
 
 	async function handleUnmarkCurrent() {
-		const { error, response } = await uncheckCurrentEvent({ client });
+		const { error, response } = await uncheckCurrentEvent({});
 
 		if (error || !response?.ok) {
 			toastService.error(error);
@@ -158,7 +157,6 @@
 		optimisticSkipped = skip;
 
 		const { error, response } = await updateScheduleEvent({
-			client,
 			path: { event_id: event.id },
 			body: { is_skipped: skip }
 		});
