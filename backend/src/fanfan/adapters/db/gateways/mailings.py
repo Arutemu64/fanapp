@@ -97,7 +97,7 @@ class SqlMailingGateway(MailingGateway):
             .returning(MailingORM.sent_count, MailingORM.total_count)
         )
         row = (await self.session.execute(stmt)).one()
-        return row.sent_count, row.total_count
+        return int(row.sent_count), int(row.total_count)
 
     async def read_mailing(self, mailing_id: MailingId) -> MailingDTO | None:
         stmt = select(MailingORM).where(MailingORM.id == mailing_id)

@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Mapping
-from typing import cast
+from typing import Any, cast
 
 from fastapi import HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -54,18 +54,23 @@ def _resolve_status_code(exc: AppException) -> int:
     return status.HTTP_500_INTERNAL_SERVER_ERROR
 
 
+# A bare `{}` literal in a return position infers `dict[str, Unknown]`, which is
+# assignable to the declared type but not a subtype of it.
+_NO_HEADERS: Mapping[str, str] = {}
+
+
 def _build_app_exception_headers(exc: AppException) -> Mapping[str, str]:
     retry_after = exc.details.get("retry_after")
     if isinstance(retry_after, int):
         return {"Retry-After": str(retry_after)}
 
-    return {}
+    return _NO_HEADERS
 
 
 def _build_error_content(
     code: str,
     details: Mapping[str, object] | None = None,
-) -> dict[str, object]:
+) -> dict[str, Any]:
     return ErrorMessage(code=code, details=dict(details or {})).model_dump()
 
 

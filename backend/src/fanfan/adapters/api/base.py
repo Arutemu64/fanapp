@@ -79,4 +79,4 @@ def _is_retryable(error: httpx2.TransportError | httpx2.HTTPStatusError) -> bool
 
 def _backoff_delay(attempt: int) -> float:
     capped = min(RETRY_MAX_DELAY, RETRY_BASE_DELAY * 2 ** (attempt - 1))
-    return capped * random.uniform(0.5, 1.5)  # noqa: S311 — jitter, not a security draw
+    return float(capped * random.uniform(0.5, 1.5))  # noqa: S311 — jitter, not a draw

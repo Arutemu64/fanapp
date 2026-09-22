@@ -17,7 +17,8 @@ pytestmark = [
 
 async def _raw_connect(config: DatabaseConfig) -> asyncpg.Connection:
     url = make_url(config.build_connection_str())
-    return await asyncpg.connect(
+    # asyncpg ships no type information, so connect() is Unknown here.
+    return await asyncpg.connect(  # ty: ignore[unsound-return-statement]
         host=url.host,
         port=url.port,
         user=url.username,

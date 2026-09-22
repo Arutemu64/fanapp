@@ -33,7 +33,9 @@ class OrderMixin:
     @classmethod
     def order(cls) -> Mapped[float]:
         order_sequence = Sequence(f"{cls.__tablename__}_order_seq", start=1)
-        return mapped_column(
+        # mapped_column() is typed as MappedColumn[Any]; Mapped[float] is the
+        # contract SQLAlchemy actually honours at mapping time.
+        return mapped_column(  # ty: ignore[unsound-return-statement]
             nullable=False,
             server_default=order_sequence.next_value(),
         )
