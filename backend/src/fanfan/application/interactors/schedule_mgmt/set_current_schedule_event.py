@@ -73,6 +73,9 @@ class SetCurrentScheduleEvent:
 
         try:
             async with lock:
+                # The rate lock paces announcements and is not taken by undo or
+                # import; this is what keeps the edit itself consistent.
+                await self.schedule_gateway.lock_for_edit()
                 previous_current_event = await self.schedule_gateway.get_current()
                 if previous_current_event:
                     previous_current_event.unset_current()

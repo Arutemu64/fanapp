@@ -1,6 +1,5 @@
 import asyncio
 from collections.abc import AsyncIterator
-from uuid import uuid7
 
 import pytest
 from dishka import AsyncContainer
@@ -34,13 +33,13 @@ async def test_lease_outlives_the_idle_in_transaction_timeout(
     # A sync holds its lease far longer than the idle-in-transaction timeout. If
     # the lease connection sat inside an open transaction, Postgres would kill
     # it and silently hand the run to a second worker mid-sync.
-    run_id = uuid7()
+    key = "test:lease"
     holder = PostgresRunLease(short_idle_engine)
     rival = PostgresRunLease(short_idle_engine)
     try:
-        assert await holder.try_acquire(run_id)
+        assert await holder.try_acquire(key)
         await asyncio.sleep(1)
-        assert not await rival.try_acquire(run_id)
+        assert not await rival.try_acquire(key)
     finally:
         await rival.release()
         await holder.release()
@@ -51,11 +50,11 @@ async def test_lease_frees_when_the_holder_connection_dies(
 ) -> None:
     # No expiry to tune: a crashed worker's connection closes and Postgres
     # drops its lock at once, so the run can be resumed immediately.
-    run_id = uuid7()
+    key = "test:lease"
     holder = PostgresRunLease(short_idle_engine)
     rival = PostgresRunLease(short_idle_engine)
     try:
-        assert await holder.try_acquire(run_id)
+        assert await holder.try_acquire(key)
         # Kill only the holder's own backend, standing in for its crash; other
         # sessions on the shared test database must not be touched.
         assert holder._connection is not None
@@ -64,7 +63,7 @@ async def test_lease_frees_when_the_holder_connection_dies(
             await admin.execute(
                 text("SELECT pg_terminate_backend(:pid)"), {"pid": holder_pid}
             )
-        assert await rival.try_acquire(run_id)
+        assert await rival.try_acquire(key)
     finally:
         await rival.release()
         # Releasing a lease whose connection already died is a quiet no-op.

@@ -15,7 +15,10 @@ from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.application.ports.gateways.sync_runs import SyncRunGateway
 from fanfan.application.ports.sources.cosplay import ExternalNomination
 from fanfan.application.ports.uow import UnitOfWork
-from fanfan.application.services.sync_run_tracker import STALE_RUN_TIMEOUT
+from fanfan.application.services.sync_run_tracker import (
+    STALE_RUN_TIMEOUT,
+    sync_lease_key,
+)
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.sync import SyncAlreadyRunning
 from fanfan.core.models.nomination import Nomination
@@ -171,7 +174,7 @@ async def test_redelivered_trigger_backs_off_while_a_live_worker_holds_the_run(
     await gateway.add(running)
     await uow.commit()
     live_worker = PostgresRunLease(await dishka_request.get(AsyncEngine))
-    assert await live_worker.try_acquire(running.id)
+    assert await live_worker.try_acquire(sync_lease_key(SyncSource.COSPLAY2))
 
     interactor = await dishka_request.get(ExecuteCosplaySync)
     try:
@@ -231,6 +234,41 @@ async def test_unattended_run_reaps_a_wedged_run_and_proceeds(
     assert reaped.status is SyncRunStatus.FAILED
     latest = await gateway.read_latest_by_source()
     assert latest[SyncSource.COSPLAY2].status is SyncRunStatus.FINISHED
+
+
+async def test_unattended_run_spares_a_long_run_whose_worker_is_alive(
+    dishka_request: AsyncContainer,
+    sync_operator: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    # A full sweep can outlast STALE_RUN_TIMEOUT. Age alone must not get it
+    # reaped while its worker still holds the lease, or the next tick would
+    # start a second sweep of the same source alongside it.
+    login(sync_operator)
+    gateway = await dishka_request.get(SyncRunGateway)
+    running = SyncRun.create(source=SyncSource.COSPLAY2, by_user_id=sync_operator.id)
+    running.mark_running(datetime.now(UTC))
+    await gateway.add(running)
+    await uow.commit()
+    session = await dishka_request.get(AsyncSession)
+    await session.execute(
+        update(SyncRunORM)
+        .where(SyncRunORM.id == running.id)
+        .values(created_at=datetime.now(UTC) - STALE_RUN_TIMEOUT * 2)
+    )
+    live_worker = PostgresRunLease(await dishka_request.get(AsyncEngine))
+    assert await live_worker.try_acquire(sync_lease_key(SyncSource.COSPLAY2))
+
+    interactor = await dishka_request.get(ExecuteCosplaySync)
+    try:
+        await interactor()
+    finally:
+        await live_worker.release()
+
+    untouched = await gateway.get(running.id)
+    assert untouched is not None
+    assert untouched.status is SyncRunStatus.RUNNING
 
 
 async def test_vendor_failure_is_recorded_not_raised(

@@ -1,9 +1,8 @@
 from typing import Protocol
-from uuid import UUID
 
 
 class RunLease(Protocol):
-    """Proof that this worker, and no other, is executing a given run.
+    """Proof that this worker, and no other, is doing the work named by a key.
 
     A redelivered trigger cannot tell a dead worker from a live one that merely
     missed its NATS heartbeats. The lease can: it is held for as long as the
@@ -11,7 +10,7 @@ class RunLease(Protocol):
     proves the previous holder stopped.
     """
 
-    async def try_acquire(self, key: UUID) -> bool:
+    async def try_acquire(self, key: str) -> bool:
         """Take the lease for ``key``; False if a live worker already holds it."""
         ...
 

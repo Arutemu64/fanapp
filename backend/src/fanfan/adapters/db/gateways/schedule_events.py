@@ -1,4 +1,4 @@
-from sqlalchemy import Select, and_, delete, select
+from sqlalchemy import Select, and_, delete, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import undefer
 
@@ -9,6 +9,8 @@ from fanfan.core.models.schedule_event import (
     ScheduleEvent,
 )
 from fanfan.core.vo.schedule_event import ScheduleEventId
+
+SCHEDULE_EDIT_LOCK_KEY = "schedule:edit"
 
 
 def _from_model(model: ScheduleEvent) -> ScheduleEventORM:
@@ -70,6 +72,15 @@ def _select_schedule_event_full_dto() -> Select[ScheduleEventORM]:
 class SqlScheduleEventGateway(ScheduleEventGateway):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
+
+    async def lock_for_edit(self) -> None:
+        # Transaction-level, so commit or rollback releases it and a pooled
+        # connection never carries it into another request
+        # (https://www.postgresql.org/docs/current/explicit-locking.html#ADVISORY-LOCKS).
+        await self.session.execute(
+            text("SELECT pg_advisory_xact_lock(hashtextextended(:key, 0))"),
+            {"key": SCHEDULE_EDIT_LOCK_KEY},
+        )
 
     async def add(self, event: ScheduleEvent) -> None:
         event_orm = _from_model(event)

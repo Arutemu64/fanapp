@@ -74,6 +74,9 @@ class UpdateScheduleEventSkip:
 
         try:
             async with lock:
+                # The rate lock paces announcements and is not taken by undo or
+                # import; this is what keeps the edit itself consistent.
+                await self.schedule_gateway.lock_for_edit()
                 event = await self.schedule_gateway.get_by_id(data.event_id)
                 if event is None:
                     raise EventNotFound

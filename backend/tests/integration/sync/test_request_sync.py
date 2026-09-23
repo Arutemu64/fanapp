@@ -4,9 +4,10 @@ from datetime import UTC, datetime
 import pytest
 from dishka import AsyncContainer
 from sqlalchemy import update
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from fanfan.adapters.db.models import SyncRunORM
+from fanfan.adapters.db.run_lease import PostgresRunLease
 from fanfan.application.interactors.sync.request_sync import (
     RequestSync,
     RequestSyncInput,
@@ -17,6 +18,7 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.sync_run_tracker import (
     STALE_RUN_ERROR,
     STALE_RUN_TIMEOUT,
+    sync_lease_key,
 )
 from fanfan.core.events.sync import SyncRequested
 from fanfan.core.exceptions.base import AccessDenied
@@ -116,6 +118,38 @@ async def test_request_sync_reaps_a_wedged_run_instead_of_blocking_forever(
     assert reaped is not None
     assert reaped.status is SyncRunStatus.FAILED
     assert reaped.error == STALE_RUN_ERROR
+
+
+async def test_request_sync_spares_an_old_run_whose_worker_is_alive(
+    dishka_request: AsyncContainer,
+    sync_operator: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    # A slow sweep past the stale timeout is still running: reaping it would
+    # let this request start a second sweep of the same source alongside it.
+    login(sync_operator)
+    gateway = await dishka_request.get(SyncRunGateway)
+    running = SyncRun.create(source=SyncSource.COSPLAY2, by_user_id=sync_operator.id)
+    running.mark_running(datetime.now(UTC))
+    await gateway.add(running)
+    await uow.commit()
+    await _age_run(dishka_request, running)
+    live_worker = PostgresRunLease(await dishka_request.get(AsyncEngine))
+    assert await live_worker.try_acquire(sync_lease_key(SyncSource.COSPLAY2))
+
+    interactor = await dishka_request.get(RequestSync)
+    try:
+        with pytest.raises(SyncAlreadyRunning):
+            await interactor(RequestSyncInput(source=SyncSource.COSPLAY2))
+    finally:
+        await live_worker.release()
+
+    # The rejected INSERT left the session needing a rollback before any read.
+    await uow.rollback()
+    untouched = await gateway.get(running.id)
+    assert untouched is not None
+    assert untouched.status is SyncRunStatus.RUNNING
 
 
 async def _age_run(dishka_request: AsyncContainer, run: SyncRun) -> None:

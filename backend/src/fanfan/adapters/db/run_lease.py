@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
@@ -21,14 +19,14 @@ class PostgresRunLease(RunLease):
     def __init__(self, engine: AsyncEngine) -> None:
         self._engine = engine
         self._connection: AsyncConnection | None = None
-        self._key: UUID | None = None
+        self._key: str | None = None
 
-    async def try_acquire(self, key: UUID) -> bool:
+    async def try_acquire(self, key: str) -> bool:
         if self._connection is None:
             self._connection = await self._engine.connect()
         acquired = await self._connection.scalar(
             text("SELECT pg_try_advisory_lock(hashtextextended(:key, 0))"),
-            {"key": str(key)},
+            {"key": key},
         )
         # End the autobegun transaction at once. The session lock outlives it,
         # and an open transaction would leave this connection idle-in-
@@ -49,7 +47,7 @@ class PostgresRunLease(RunLease):
                 # connection outlives this lease and would otherwise keep it.
                 await self._connection.execute(
                     text("SELECT pg_advisory_unlock(hashtextextended(:key, 0))"),
-                    {"key": str(self._key)},
+                    {"key": self._key},
                 )
                 await self._connection.commit()
         except DBAPIError:
