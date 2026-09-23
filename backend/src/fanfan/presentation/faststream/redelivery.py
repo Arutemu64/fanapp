@@ -50,10 +50,10 @@ async def in_progress_heartbeat(
     """Keep a long handler's message from being redelivered while it runs.
 
     An in-progress ack resets the AckWait timer
-    (https://docs.nats.io/learn/jetstream/acknowledgment). With it, a
-    redelivery means the worker actually died, not that it was slow — which is
-    what lets the handler treat a redelivered, already-started job as
-    interrupted and resume it.
+    (https://docs.nats.io/learn/jetstream/acknowledgment), so a slow but live
+    handler is not redelivered to another worker mid-run. It only saves wasted
+    redeliveries; it cannot prove the worker is alive (a beat can be lost), so a
+    handler that must not run twice also takes a lease (RunLease).
     """
 
     async def beat() -> None:

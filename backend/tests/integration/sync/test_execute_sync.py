@@ -5,9 +5,10 @@ from uuid import UUID
 import pytest
 from dishka import AsyncContainer
 from sqlalchemy import update
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from fanfan.adapters.db.models import SyncRunORM
+from fanfan.adapters.db.run_lease import PostgresRunLease
 from fanfan.application.interactors.sync.execute_cosplay_sync import ExecuteCosplaySync
 from fanfan.application.ports.gateways import UserPermissionGateway
 from fanfan.application.ports.gateways.nominations import NominationGateway
@@ -16,6 +17,7 @@ from fanfan.application.ports.sources.cosplay import ExternalNomination
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.sync_run_tracker import STALE_RUN_TIMEOUT
 from fanfan.core.exceptions.base import AccessDenied
+from fanfan.core.exceptions.sync import SyncAlreadyRunning
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.models.sync_run import SyncRun
 from fanfan.core.models.user import User
@@ -148,6 +150,37 @@ async def test_redelivered_trigger_resumes_an_interrupted_run(
     assert resumed.status is SyncRunStatus.FINISHED
     nominations = await dishka_request.get(NominationGateway)
     assert await nominations.get_by_cosplay2_id(1) is not None
+
+
+async def test_redelivered_trigger_backs_off_while_a_live_worker_holds_the_run(
+    dishka_request: AsyncContainer,
+    sync_operator: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    # A worker that missed its NATS heartbeats is still running, and its trigger
+    # got redelivered. Redelivery alone cannot tell it from a dead worker; the
+    # lease it holds can. The redelivered trigger must back off (raise, so the
+    # consumer retries later) instead of running the same sync alongside it.
+    login(sync_operator)
+    source = await dishka_request.get(FakeCosplaySource)
+    source.nominations = [ExternalNomination(external_id=1, code="c1", title="Косплей")]
+    gateway = await dishka_request.get(SyncRunGateway)
+    running = SyncRun.create(source=SyncSource.COSPLAY2, by_user_id=sync_operator.id)
+    running.mark_running(datetime.now(UTC))
+    await gateway.add(running)
+    await uow.commit()
+    live_worker = PostgresRunLease(await dishka_request.get(AsyncEngine))
+    assert await live_worker.try_acquire(running.id)
+
+    interactor = await dishka_request.get(ExecuteCosplaySync)
+    try:
+        with pytest.raises(SyncAlreadyRunning):
+            await interactor(run_id=running.id)
+        nominations = await dishka_request.get(NominationGateway)
+        assert await nominations.get_by_cosplay2_id(1) is None
+    finally:
+        await live_worker.release()
 
 
 async def test_unattended_run_skips_quietly_when_one_is_active(
