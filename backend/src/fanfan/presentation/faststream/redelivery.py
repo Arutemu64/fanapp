@@ -1,10 +1,13 @@
+import asyncio
+import contextlib
 import dataclasses
 import logging
+from collections.abc import AsyncIterator
 from types import TracebackType
 
 from faststream import BaseMiddleware
 from faststream.exceptions import HandlerException
-from faststream.nats import NatsBroker
+from faststream.nats import NatsBroker, NatsMessage
 from faststream.nats.subscriber import LogicSubscriber
 from nats.aio.msg import Msg
 from nats.errors import Error as NatsError
@@ -29,9 +32,45 @@ MAX_DELIVER = 20
 _REDELIVERY_DELAYS_SECONDS = (1, 5, 30, 120, 300)
 
 
+# How often a long handler tells JetStream it is still working. Well inside the
+# default 30 s AckWait, so a missed beat or two does not trigger redelivery.
+_IN_PROGRESS_INTERVAL_SECONDS = 10.0
+
+
 def consumer_config(*, ack_wait: float | None = None) -> ConsumerConfig:
     """The ConsumerConfig every durable subscriber is declared with."""
     return ConsumerConfig(max_deliver=MAX_DELIVER, ack_wait=ack_wait)
+
+
+@contextlib.asynccontextmanager
+async def in_progress_heartbeat(
+    msg: NatsMessage, interval: float = _IN_PROGRESS_INTERVAL_SECONDS
+) -> AsyncIterator[None]:
+    """Keep a long handler's message from being redelivered while it runs.
+
+    An in-progress ack resets the AckWait timer
+    (https://docs.nats.io/learn/jetstream/acknowledgment). With it, a
+    redelivery means the worker actually died, not that it was slow — which is
+    what lets the handler treat a redelivered, already-started job as
+    interrupted and resume it.
+    """
+
+    async def beat() -> None:
+        while True:
+            await asyncio.sleep(interval)
+            try:
+                await msg.in_progress()
+            except NatsError:
+                # A missed beat only risks an early redelivery; keep beating.
+                logger.warning("Could not extend a message's AckWait", exc_info=True)
+
+    task = asyncio.create_task(beat())
+    try:
+        yield
+    finally:
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
 
 
 def _redelivery_delay(deliveries: int) -> int:

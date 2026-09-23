@@ -91,16 +91,22 @@ class SyncRunTracker:
                     extra={"sync_run_id": str(run_id)},
                 )
                 return None
-            # The trigger is redelivered — after an error, or when a long sync
-            # outlasts the consumer's AckWait — so only a still-PENDING run may
-            # start. A RUNNING one is already being worked on (or was interrupted,
-            # which reap_stale settles); a finished or failed one is done.
-            if run.status is not SyncRunStatus.PENDING:
+            # The trigger is redelivered after an error or a dead worker. A
+            # finished or failed run is done, so its trigger is a duplicate. A
+            # RUNNING one was interrupted: the consumer heartbeats while a sync
+            # runs, so a live run is never redelivered, and resuming it here is
+            # the only recovery short of reap_stale failing it 30 min later.
+            if run.status in (SyncRunStatus.FINISHED, SyncRunStatus.FAILED):
                 logger.info(
-                    "Sync run already started, skipping redelivered trigger",
+                    "Sync run already settled, skipping redelivered trigger",
                     extra={"sync_run_id": str(run_id), "status": run.status.value},
                 )
                 return None
+            if run.status is SyncRunStatus.RUNNING:
+                logger.warning(
+                    "Resuming interrupted sync run",
+                    extra={"sync_run_id": str(run_id)},
+                )
 
         run.mark_running(datetime.now(UTC))
         await self.sync_run_gateway.save(run)

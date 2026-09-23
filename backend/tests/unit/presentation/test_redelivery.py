@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, cast
 
 import pytest
@@ -9,6 +10,7 @@ from nats.aio.msg import Msg
 from fanfan.presentation.faststream.redelivery import (
     MAX_DELIVER,
     RedeliveryMiddleware,
+    in_progress_heartbeat,
 )
 from fanfan.presentation.faststream.routes import setup_router
 
@@ -94,3 +96,25 @@ def test_every_durable_consumer_is_bounded_and_redelivers() -> None:
         # losing the event; every consumer must redeliver or ack by hand.
         ack_policy = getattr(subscriber, "ack_policy", None)
         assert ack_policy is not AckPolicy.REJECT_ON_ERROR, name
+
+
+class _ProgressRecorder:
+    def __init__(self) -> None:
+        self.beats = 0
+
+    async def in_progress(self) -> None:
+        self.beats += 1
+
+
+@pytest.mark.asyncio
+async def test_heartbeat_extends_ack_wait_until_the_handler_returns() -> None:
+    msg = _ProgressRecorder()
+
+    async with in_progress_heartbeat(cast("Any", msg), interval=0.01):
+        await asyncio.sleep(0.05)
+    beats_while_running = msg.beats
+    await asyncio.sleep(0.03)
+
+    assert beats_while_running >= 2
+    # Stops with the handler: a finished message must not keep being extended.
+    assert msg.beats == beats_while_running

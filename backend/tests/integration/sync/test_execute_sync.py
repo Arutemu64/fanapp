@@ -119,6 +119,37 @@ async def test_redelivered_trigger_does_not_rerun_a_finished_run(
     assert await nominations.get_by_cosplay2_id(1) is None
 
 
+async def test_redelivered_trigger_resumes_an_interrupted_run(
+    dishka_request: AsyncContainer,
+    sync_operator: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    # A worker that died after committing RUNNING never acked its trigger, so
+    # NATS redelivers it. The consumer heartbeats while a sync is alive, so that
+    # redelivery means the run was interrupted, and it must be picked up again
+    # rather than acked away and left for reap_stale.
+    login(sync_operator)
+    source = await dishka_request.get(FakeCosplaySource)
+    source.nominations = [ExternalNomination(external_id=1, code="c1", title="Косплей")]
+    gateway = await dishka_request.get(SyncRunGateway)
+    interrupted = SyncRun.create(
+        source=SyncSource.COSPLAY2, by_user_id=sync_operator.id
+    )
+    interrupted.mark_running(datetime.now(UTC))
+    await gateway.add(interrupted)
+    await uow.commit()
+
+    interactor = await dishka_request.get(ExecuteCosplaySync)
+    await interactor(run_id=interrupted.id)
+
+    resumed = await gateway.get(interrupted.id)
+    assert resumed is not None
+    assert resumed.status is SyncRunStatus.FINISHED
+    nominations = await dishka_request.get(NominationGateway)
+    assert await nominations.get_by_cosplay2_id(1) is not None
+
+
 async def test_unattended_run_skips_quietly_when_one_is_active(
     dishka_request: AsyncContainer,
     sync_operator: User,
