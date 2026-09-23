@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from sqlalchemy import text
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine
 
 from fanfan.application.ports.run_lease import RunLease
@@ -29,6 +30,12 @@ class PostgresRunLease(RunLease):
             text("SELECT pg_try_advisory_lock(hashtextextended(:key, 0))"),
             {"key": str(key)},
         )
+        # End the autobegun transaction at once. The session lock outlives it,
+        # and an open transaction would leave this connection idle-in-
+        # transaction for the whole run — which idle_in_transaction_session_
+        # timeout (DatabaseConfig, 60 s) kills, silently dropping the lease
+        # mid-sync. Any future idle_session_timeout must stay off (0) here too.
+        await self._connection.commit()
         if acquired:
             self._key = key
         return bool(acquired)
@@ -45,6 +52,10 @@ class PostgresRunLease(RunLease):
                     {"key": str(self._key)},
                 )
                 await self._connection.commit()
+        except DBAPIError:
+            # The connection already died, and the lock died with it: there is
+            # nothing left to release.
+            pass
         finally:
             await self._connection.close()
             self._connection = None
