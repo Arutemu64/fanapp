@@ -1,5 +1,6 @@
 from dishka import AsyncContainer, FromDishka
 from dishka_faststream import inject
+from faststream import AckPolicy
 from faststream.nats import NatsRouter, PullSub
 
 from fanfan.application.interactors.sync.execute_cosplay_sync import ExecuteCosplaySync
@@ -7,6 +8,7 @@ from fanfan.application.interactors.sync.execute_tickets_sync import ExecuteTick
 from fanfan.core.events.sync import SyncRequested
 from fanfan.core.vo.sync import SyncSource
 from fanfan.presentation.faststream.jstream import stream
+from fanfan.presentation.faststream.redelivery import consumer_config
 
 sync_router = NatsRouter()
 
@@ -25,6 +27,11 @@ EXECUTORS = {
     stream=stream,
     pull_sub=PullSub(),
     durable="run_requested_sync",
+    # Redeliver on failure: FastStream's default for NATS, REJECT_ON_ERROR,
+    # terminates the message, so one transient error would lose the event the
+    # outbox delivered. Redelivery is bounded and delayed (redelivery.py).
+    ack_policy=AckPolicy.NACK_ON_ERROR,
+    config=consumer_config(),
 )
 @inject
 async def run_requested_sync(

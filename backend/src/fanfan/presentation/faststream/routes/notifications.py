@@ -4,7 +4,6 @@ from dishka import FromDishka
 from dishka_faststream import inject
 from faststream import AckPolicy, Logger
 from faststream.nats import NatsMessage, NatsRouter, PullSub
-from nats.js.api import ConsumerConfig
 
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.interactors.notifications.create_notification import (
@@ -43,6 +42,7 @@ from fanfan.core.exceptions.notifications import (
 )
 from fanfan.core.vo.notification import NotificationId
 from fanfan.presentation.faststream.jstream import stream
+from fanfan.presentation.faststream.redelivery import consumer_config
 
 notifications_router = NatsRouter()
 
@@ -108,6 +108,7 @@ async def _deliver_to_channel(
     pull_sub=PullSub(),
     durable="create_new_notification",
     ack_policy=AckPolicy.MANUAL,
+    config=consumer_config(),
 )
 @notifications_router.publisher(
     subject=NotificationCreated.subject,
@@ -164,7 +165,7 @@ async def create_new_notification(  # noqa: PLR0913, PLR0917 — all params fram
     pull_sub=PullSub(),
     durable="send_notification_to_telegram",
     ack_policy=AckPolicy.MANUAL,
-    config=ConsumerConfig(ack_wait=_SEND_ACK_WAIT_SECONDS),
+    config=consumer_config(ack_wait=_SEND_ACK_WAIT_SECONDS),
 )
 @inject
 async def send_notification_to_telegram(
@@ -188,7 +189,7 @@ async def send_notification_to_telegram(
     pull_sub=PullSub(),
     durable="send_notification_to_vk",
     ack_policy=AckPolicy.MANUAL,
-    config=ConsumerConfig(ack_wait=_SEND_ACK_WAIT_SECONDS),
+    config=consumer_config(ack_wait=_SEND_ACK_WAIT_SECONDS),
 )
 @inject
 async def send_notification_to_vk(
@@ -212,7 +213,7 @@ async def send_notification_to_vk(
     pull_sub=PullSub(),
     durable="send_push_notification",
     ack_policy=AckPolicy.MANUAL,
-    config=ConsumerConfig(ack_wait=_SEND_ACK_WAIT_SECONDS),
+    config=consumer_config(ack_wait=_SEND_ACK_WAIT_SECONDS),
 )
 @inject
 async def send_push_notification(
@@ -240,6 +241,7 @@ async def send_push_notification(
     # mid-broadcast must not silently drop a whole mailing. The default
     # REJECT_ON_ERROR would discard it permanently.
     ack_policy=AckPolicy.NACK_ON_ERROR,
+    config=consumer_config(),
 )
 @inject
 async def create_new_broadcast(
@@ -263,6 +265,7 @@ async def create_new_broadcast(
     # Same as create_new_broadcast: redeliver on a transient failure instead of
     # TERMing, so a cancellation is not lost while notifications keep going out.
     ack_policy=AckPolicy.NACK_ON_ERROR,
+    config=consumer_config(),
 )
 @inject
 async def cancel_mailing(

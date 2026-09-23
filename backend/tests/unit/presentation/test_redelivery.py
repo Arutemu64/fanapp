@@ -1,0 +1,96 @@
+from typing import Any, cast
+
+import pytest
+from faststream import AckPolicy
+from faststream.exceptions import NackMessage
+from faststream.nats import NatsBroker
+from nats.aio.msg import Msg
+
+from fanfan.presentation.faststream.redelivery import (
+    MAX_DELIVER,
+    RedeliveryMiddleware,
+)
+from fanfan.presentation.faststream.routes import setup_router
+
+pytestmark = pytest.mark.unit
+
+
+class _FakeClient:
+    """Records the ack frames a Msg sends back to the server."""
+
+    def __init__(self) -> None:
+        self.sent: list[bytes] = []
+
+    async def publish(self, _subject: str, payload: bytes = b"") -> None:
+        self.sent.append(payload)
+
+
+def _delivery(deliveries: int) -> tuple[Msg, _FakeClient]:
+    client = _FakeClient()
+    # JetStream v1 ack subject: stream, consumer, delivered, stream seq,
+    # consumer seq, timestamp, pending.
+    reply = f"$JS.ACK.stream.durable.{deliveries}.7.7.1695456000000000000.0"
+    msg = Msg(_client=cast("Any", client), subject="probe", reply=reply)
+    return msg, client
+
+
+async def _fail(msg: Msg, error: BaseException) -> None:
+    # The middleware never reads its FastStream context.
+    middleware = RedeliveryMiddleware(msg, context=cast("Any", None))
+    await middleware.after_processed(type(error), error, None)
+
+
+@pytest.mark.asyncio
+async def test_failure_is_redelivered_after_a_delay() -> None:
+    msg, client = _delivery(deliveries=1)
+
+    await _fail(msg, RuntimeError("boom"))
+
+    # A delayed nak ("-NAK" plus a delay body), never the immediate plain nak
+    # that would retry a transient failure in a hot loop.
+    [frame] = client.sent
+    assert frame.startswith(b"-NAK {")
+
+
+@pytest.mark.asyncio
+async def test_failure_on_the_last_delivery_is_terminated() -> None:
+    msg, client = _delivery(deliveries=MAX_DELIVER)
+
+    await _fail(msg, RuntimeError("boom"))
+
+    assert client.sent == [b"+TERM"]
+
+
+@pytest.mark.asyncio
+async def test_message_the_handler_already_settled_is_left_alone() -> None:
+    msg, client = _delivery(deliveries=1)
+    await msg.ack()
+    client.sent.clear()
+
+    await _fail(msg, RuntimeError("boom"))
+
+    assert client.sent == []
+
+
+@pytest.mark.asyncio
+async def test_faststream_ack_exceptions_are_left_to_the_ack_policy() -> None:
+    msg, client = _delivery(deliveries=1)
+
+    await _fail(msg, NackMessage())
+
+    assert client.sent == []
+
+
+def test_every_durable_consumer_is_bounded_and_redelivers() -> None:
+    broker = NatsBroker()
+    broker.include_router(setup_router())
+    for subscriber in broker.subscribers:
+        config = getattr(subscriber, "config", None)
+        name = config.durable_name if config else subscriber
+        # Unbounded MaxDeliver lets a poison message loop forever.
+        assert config is not None
+        assert config.max_deliver == MAX_DELIVER, name
+        # FastStream's NATS default terminates a message on the first error,
+        # losing the event; every consumer must redeliver or ack by hand.
+        ack_policy = getattr(subscriber, "ack_policy", None)
+        assert ack_policy is not AckPolicy.REJECT_ON_ERROR, name

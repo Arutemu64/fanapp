@@ -86,6 +86,39 @@ async def test_run_id_adopts_the_existing_pending_row(
     assert latest[SyncSource.COSPLAY2].id == queued.id
 
 
+async def test_redelivered_trigger_does_not_rerun_a_finished_run(
+    dishka_request: AsyncContainer,
+    sync_operator: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    # The SyncRequested consumer redelivers its trigger after an error, or when a
+    # long sync outlasts AckWait. A run that already moved past PENDING must not
+    # start again, or one request would hit the vendor twice.
+    login(sync_operator)
+    source = await dishka_request.get(FakeCosplaySource)
+    gateway = await dishka_request.get(SyncRunGateway)
+    queued = SyncRun.create(source=SyncSource.COSPLAY2, by_user_id=sync_operator.id)
+    await gateway.add(queued)
+    await uow.commit()
+    interactor = await dishka_request.get(ExecuteCosplaySync)
+    await interactor(run_id=queued.id)
+    finished = await gateway.get(queued.id)
+    assert finished is not None
+    first_finished_at = finished.finished_at
+    await uow.commit()
+
+    source.nominations = [ExternalNomination(external_id=1, code="c1", title="Косплей")]
+    await interactor(run_id=queued.id)
+
+    rerun = await gateway.get(queued.id)
+    assert rerun is not None
+    assert rerun.status is SyncRunStatus.FINISHED
+    assert rerun.finished_at == first_finished_at
+    nominations = await dishka_request.get(NominationGateway)
+    assert await nominations.get_by_cosplay2_id(1) is None
+
+
 async def test_unattended_run_skips_quietly_when_one_is_active(
     dishka_request: AsyncContainer,
     sync_operator: User,

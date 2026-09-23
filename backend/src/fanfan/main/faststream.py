@@ -8,6 +8,7 @@ from fanfan.main.common import init
 from fanfan.main.di import create_system_container
 from fanfan.presentation.faststream.broker import create_broker
 from fanfan.presentation.faststream.logger import get_stream_logger
+from fanfan.presentation.faststream.redelivery import sync_consumer_configs
 from fanfan.presentation.faststream.routes import setup_router
 
 
@@ -19,6 +20,11 @@ def create_app() -> FastStream:
     broker.include_router(setup_router())
 
     app = FastStream(broker, logger=get_stream_logger())
+
+    @app.after_startup
+    async def _apply_consumer_configs() -> None:
+        await sync_consumer_configs(broker)
+
     container = create_system_container()
     setup_dishka(container, app)
 

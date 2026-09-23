@@ -43,7 +43,7 @@ Everything below this section is detail; these rules alone prevent most mistakes
 ### Add a domain event
 1. Class in `core/events/<context>.py`, subclassing `AppEvent`; PascalCase past tense (`ScheduleChangeCreated`); `subject` ClassVar `<context>[.<entity>].<past-verb>` (`schedule.change.created`).
 2. Records an aggregate state change → `record_event()` inside the aggregate method; the outbox delivers it on `uow.commit()`. Application-level trigger with no state change → publish directly via `EventBroker` in the interactor.
-3. Add a FastStream subscriber on the JetStream `stream` in `presentation/faststream/routes/` — never add a published event without a subscriber. This is load-bearing, not tidiness: the stream only carries subjects its subscribers register, so an event nobody subscribes to fails every publish and its outbox rows retry forever. `tests/unit/presentation/test_event_subscribers.py` fails the build on an orphaned event.
+3. Add a FastStream subscriber on the JetStream `stream` in `presentation/faststream/routes/` — never add a published event without a subscriber. This is load-bearing, not tidiness: the stream only carries subjects its subscribers register, so an event nobody subscribes to fails every publish and its outbox rows retry forever. `tests/unit/presentation/test_event_subscribers.py` fails the build on an orphaned event. Declare it with `config=consumer_config()` and `ack_policy=AckPolicy.NACK_ON_ERROR` (or `MANUAL`), never the default — see [Consumers: acks and redelivery](#consumers-acks-and-redelivery).
 4. `subject` is a published contract: renaming one is a migration, not a rename.
 
 ### Add a client-facing domain exception / error code
@@ -220,6 +220,18 @@ await self.events_broker.publish(
 > Keep domain events honest: a domain event must record an actual state change (past tense). Do **not** call `record_event()` for an action that mutates nothing — model it as a service event published by the interactor instead.
 
 Rule of thumb: inject `EventBroker` into an interactor **only** for service events; aggregate state-change events flow through `uow.commit()`.
+
+`EventBroker.publish` goes through JetStream and waits for the PubAck, like the relay: a core NATS publish gets no reply, so an event the stream failed to store would vanish silently ([NATS: Publishing](https://docs.nats.io/learn/jetstream/publishing)). A failed publish raises inside the consumer that triggered it, which then redelivers. An event with a stable identity overrides `AppEvent.dedup_id()` (`NotificationQueued` returns its notification id) so a rerun fan-out is deduplicated via `Nats-Msg-Id`.
+
+### Consumers: acks and redelivery
+
+The outbox gets an event into JetStream at least once; the consumer must not throw that away. Three rules, enforced by `tests/unit/presentation/test_redelivery.py`:
+
+* **Never the default ack policy.** FastStream's default for NATS is `REJECT_ON_ERROR`, which terminates the message on the first unhandled error — the event is gone. Use `NACK_ON_ERROR`, or `MANUAL` where the handler maps outcomes to ack decisions itself (`_deliver_to_channel`).
+* **Bounded, delayed redelivery.** `RedeliveryMiddleware` (`presentation/faststream/redelivery.py`, a broker middleware) turns an unhandled error into a nak with a growing delay (1 s → 5 min) and terminates the message at `MAX_DELIVER` deliveries, logging `Message dropped after max deliveries` at ERROR. A plain nak redelivers immediately and JetStream's MaxDeliver defaults to unlimited, so without it a poison message loops hot forever ([NATS: Ack responses and redelivery](https://docs.nats.io/learn/jetstream/acknowledgment)). The delay rides on the nak rather than the consumer's `BackOff`, which NATS applies only to AckWait expiry and which replaces AckWait with its first step.
+* **Declared config reaches the server.** Every durable is declared with `consumer_config()` (carrying `max_deliver`). nats-py sends a ConsumerConfig only when it *creates* a durable, and the NATS volume outlives deploys, so `sync_consumer_configs` re-applies each declaration on startup (a same-name `add_consumer` updates editable fields in place). A change to a non-editable field logs a warning instead; recreate that durable by hand.
+
+Redelivery makes every consumer run more than once for some messages, so handlers stay idempotent — deterministic ids, `ON CONFLICT DO NOTHING`, and state guards like `Mailing.start_sending()` and `SyncRunTracker.start()` (which only starts a PENDING run).
 
 ## Realtime (SSE)
 

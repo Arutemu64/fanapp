@@ -28,7 +28,22 @@ class NatsEventBroker(EventBroker):
         self.broker = broker
 
     async def publish(self, event: AppEvent) -> None:
-        await self.broker.publish(event, subject=event.subject)
+        # Through JetStream, like publish_raw: a core publish gets no reply, so
+        # an event the stream did not store (subject not captured, connection
+        # lost mid-send) would vanish without an error. The PubAck turns that
+        # into an exception the caller's consumer redelivers on.
+        # https://docs.nats.io/learn/jetstream/publishing
+        headers: dict[str, str] = {}
+        dedup_id = event.dedup_id()
+        if dedup_id is not None:
+            headers["Nats-Msg-Id"] = dedup_id
+        await self.broker.publish(
+            event,
+            subject=event.subject,
+            stream=_STREAM_NAME,
+            headers=headers,
+            timeout=_PUBLISH_TIMEOUT_SECONDS,
+        )
 
     async def publish_raw(
         self,

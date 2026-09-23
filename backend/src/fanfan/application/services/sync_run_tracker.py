@@ -7,7 +7,7 @@ from fanfan.application.ports.realtime_gateway import RealtimeGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.sync import SyncAlreadyRunning
 from fanfan.core.models.sync_run import SyncRun
-from fanfan.core.vo.sync import SyncRunId, SyncSource
+from fanfan.core.vo.sync import SyncRunId, SyncRunStatus, SyncSource
 from fanfan.core.vo.user import UserId
 
 logger = logging.getLogger(__name__)
@@ -89,6 +89,16 @@ class SyncRunTracker:
                 logger.warning(
                     "Sync run vanished before it could start",
                     extra={"sync_run_id": str(run_id)},
+                )
+                return None
+            # The trigger is redelivered — after an error, or when a long sync
+            # outlasts the consumer's AckWait — so only a still-PENDING run may
+            # start. A RUNNING one is already being worked on (or was interrupted,
+            # which reap_stale settles); a finished or failed one is done.
+            if run.status is not SyncRunStatus.PENDING:
+                logger.info(
+                    "Sync run already started, skipping redelivered trigger",
+                    extra={"sync_run_id": str(run_id), "status": run.status.value},
                 )
                 return None
 

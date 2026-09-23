@@ -1,5 +1,6 @@
 from dishka import FromDishka
 from dishka_faststream import inject
+from faststream import AckPolicy
 from faststream.nats import NatsMessage, NatsRouter, PullSub
 
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
@@ -16,6 +17,7 @@ from fanfan.core.events.schedule import (
 )
 from fanfan.presentation.faststream.headers import read_occurred_at
 from fanfan.presentation.faststream.jstream import stream
+from fanfan.presentation.faststream.redelivery import consumer_config
 
 schedule_router = NatsRouter()
 
@@ -25,6 +27,11 @@ schedule_router = NatsRouter()
     stream=stream,
     pull_sub=PullSub(),
     durable="process_schedule_change",
+    # Redeliver on failure: FastStream's default for NATS, REJECT_ON_ERROR,
+    # terminates the message, so one transient error would lose the event the
+    # outbox delivered. Redelivery is bounded and delayed (redelivery.py).
+    ack_policy=AckPolicy.NACK_ON_ERROR,
+    config=consumer_config(),
 )
 @inject
 async def process_schedule_change(
@@ -47,6 +54,11 @@ async def process_schedule_change(
     stream=stream,
     pull_sub=PullSub(),
     durable="undo_schedule_change",
+    # Redeliver on failure: FastStream's default for NATS, REJECT_ON_ERROR,
+    # terminates the message, so one transient error would lose the event the
+    # outbox delivered. Redelivery is bounded and delayed (redelivery.py).
+    ack_policy=AckPolicy.NACK_ON_ERROR,
+    config=consumer_config(),
 )
 @inject
 async def undo_schedule_change(

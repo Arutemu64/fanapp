@@ -12,6 +12,11 @@ class NotificationQueued(AppEvent):
 
     notification: NewNotification
 
+    def dedup_id(self) -> str | None:
+        # Unique per notification, and deterministic per recipient in the
+        # fan-outs, so a rerun fan-out republishes the same id.
+        return str(self.notification.id)
+
 
 class NotificationCreated(AppEvent):
     subject: ClassVar[str] = "notifications.created"
