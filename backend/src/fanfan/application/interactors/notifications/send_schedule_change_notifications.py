@@ -1,4 +1,6 @@
 import asyncio
+import logging
+from datetime import UTC, datetime, timedelta
 from typing import cast
 
 from pydantic import BaseModel
@@ -30,9 +32,27 @@ from fanfan.core.vo.notification import (
 )
 from fanfan.core.vo.schedule_change import ScheduleChangeId, ScheduleChangeType
 
+logger = logging.getLogger(__name__)
+
+# The notifications describe the schedule as it is when they are built (current
+# and next event are read now, not at change time), so a change processed long
+# after it was made announces the wrong event. Past this age it is dropped:
+# delivery is only this late after an outage (relay retries, NATS or consumer
+# down), and a stale "event started" push is worse than none.
+_STALE_AFTER = timedelta(minutes=10)
+
+
+def _is_stale(occurred_at: datetime | None) -> bool:
+    if occurred_at is None:
+        return False
+    return datetime.now(UTC) - occurred_at > _STALE_AFTER
+
 
 class SendScheduleChangeNotificationsInput(BaseModel):
     schedule_change_id: ScheduleChangeId
+    # When the change was committed. None when unknown (a message relayed before
+    # the timestamp was sent), which is treated as fresh.
+    occurred_at: datetime | None = None
 
 
 class SendScheduleChangeNotifications:
@@ -208,12 +228,34 @@ class SendScheduleChangeNotifications:
                 )
         return events
 
+    async def _drop_stale(self, schedule_change: ScheduleChangeFullDTO) -> None:
+        logger.warning(
+            "Stale schedule change dropped without notifications",
+            extra={"schedule_change_id": str(schedule_change.id)},
+        )
+        if schedule_change.mailing_id is None:
+            return
+        mailing = await self.mailing_gateway.get(schedule_change.mailing_id)
+        if mailing is None:
+            return
+        # Settle the mailing so it does not sit "in the queue" forever in the
+        # broadcast history; a redelivery that finds it already started is left
+        # to its fan-out (mark_failed only fails a mailing still PENDING).
+        mailing.mark_failed()
+        await self.mailing_gateway.set_status(
+            mailing_id=mailing.id, status=mailing.status
+        )
+        await self.uow.commit()
+
     async def __call__(self, data: SendScheduleChangeNotificationsInput) -> None:
         schedule_change = await self.changes_gateway.read_schedule_change(
             data.schedule_change_id
         )
         if schedule_change is None:
             raise ScheduleChangeNotFound
+        if _is_stale(data.occurred_at):
+            await self._drop_stale(schedule_change)
+            return
         current_event = await self.schedule_gateway.read_current_event()
         next_event = await self.schedule_gateway.read_next_event()
         changed_event = schedule_change.changed_event

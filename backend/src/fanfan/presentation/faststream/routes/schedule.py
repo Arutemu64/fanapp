@@ -1,6 +1,6 @@
 from dishka import FromDishka
 from dishka_faststream import inject
-from faststream.nats import NatsRouter, PullSub
+from faststream.nats import NatsMessage, NatsRouter, PullSub
 
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.interactors.notifications.send_schedule_change_notifications import (  # noqa: E501
@@ -14,6 +14,7 @@ from fanfan.core.events.schedule import (
     ScheduleChangeCreated,
     ScheduleChangeUndone,
 )
+from fanfan.presentation.faststream.headers import read_occurred_at
 from fanfan.presentation.faststream.jstream import stream
 
 schedule_router = NatsRouter()
@@ -30,9 +31,13 @@ async def process_schedule_change(
     data: ScheduleChangeCreated,
     interactor: FromDishka[SendScheduleChangeNotifications],
     realtime_gateway: FromDishka[RealtimeGateway],
+    msg: NatsMessage,
 ) -> None:
     await interactor(
-        SendScheduleChangeNotificationsInput(schedule_change_id=data.schedule_change_id)
+        SendScheduleChangeNotificationsInput(
+            schedule_change_id=data.schedule_change_id,
+            occurred_at=read_occurred_at(msg),
+        )
     )
     await realtime_gateway.publish(SSEMessage(SSEEventName.SCHEDULE_UPDATED))
 

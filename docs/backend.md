@@ -41,9 +41,9 @@ Everything below this section is detail; these rules alone prevent most mistakes
 4. Wire providers in `main/ioc/`; generate a migration (`just backend-generate-auto <name>`) and review it.
 
 ### Add a domain event
-1. Class in `core/events/<context>.py`, subclassing `AppEvent`; PascalCase past tense (`VoteCreated`); `subject` ClassVar `<context>[.<entity>].<past-verb>` (`votes.created`).
+1. Class in `core/events/<context>.py`, subclassing `AppEvent`; PascalCase past tense (`ScheduleChangeCreated`); `subject` ClassVar `<context>[.<entity>].<past-verb>` (`schedule.change.created`).
 2. Records an aggregate state change → `record_event()` inside the aggregate method; the outbox delivers it on `uow.commit()`. Application-level trigger with no state change → publish directly via `EventBroker` in the interactor.
-3. Add a FastStream subscriber in `presentation/faststream/routes/` — never add a published event without a subscriber.
+3. Add a FastStream subscriber on the JetStream `stream` in `presentation/faststream/routes/` — never add a published event without a subscriber. This is load-bearing, not tidiness: the stream only carries subjects its subscribers register, so an event nobody subscribes to fails every publish and its outbox rows retry forever. `tests/unit/presentation/test_event_subscribers.py` fails the build on an orphaned event.
 4. `subject` is a published contract: renaming one is a migration, not a rename.
 
 ### Add a client-facing domain exception / error code
@@ -153,8 +153,8 @@ Events are published via `EventBroker` (port: `application/ports/events_broker.p
 
 Event classes live in `core/events/<context>.py` and subclass `AppEvent` (`core/events/base.py`).
 
-* **Class name** — PascalCase, **past tense**, `<Entity><PastVerb>` (e.g. `VoteCreated`, `VoteDeleted`, `ScheduleChangeUndone`, `MailingCancelled`). An event records something that *already happened*, so the verb is always past tense; if you can't name it in the past tense it probably isn't an event (see the "keep domain events honest" note under [service events](#events-raised-directly-by-interactors-service-events)).
-* **`subject` ClassVar** — the NATS/JetStream subject the event is published and subscribed on, and the wire contract. Lowercase, **dot-separated** hierarchy, snake_case within a segment, with the **past-tense verb as the final segment**: `<context>[.<entity>].<verb>` — e.g. `votes.created`, `notifications.broadcast.queued`, `schedule.change.undone`, `users.email_login_code_requested`. The leading segment names the bounded context (`votes`, `notifications`, `schedule`, `users`). Unlike SSE event names (single token, no dots — see [Realtime (SSE)](#realtime-sse)), dots here are intentional: JetStream consumers bind with hierarchical wildcards (`notifications.>`).
+* **Class name** — PascalCase, **past tense**, `<Entity><PastVerb>` (e.g. `ScheduleChangeCreated`, `ScheduleChangeUndone`, `MailingCancelled`). An event records something that *already happened*, so the verb is always past tense; if you can't name it in the past tense it probably isn't an event (see the "keep domain events honest" note under [service events](#events-raised-directly-by-interactors-service-events)).
+* **`subject` ClassVar** — the NATS/JetStream subject the event is published and subscribed on, and the wire contract. Lowercase, **dot-separated** hierarchy, snake_case within a segment, with the **past-tense verb as the final segment**: `<context>[.<entity>].<verb>` — e.g. `schedule.change.created`, `notifications.broadcast.queued`, `schedule.change.undone`, `users.email_login_code_requested`. The leading segment names the bounded context (`votes`, `notifications`, `schedule`, `users`). Unlike SSE event names (single token, no dots — see [Realtime (SSE)](#realtime-sse)), dots here are intentional: JetStream consumers bind with hierarchical wildcards (`notifications.>`).
 * **Stability** — a `subject` is a published contract. Renaming one orphans existing durable consumers and any outbox rows already written with the old subject, so treat changes as a migration, not a rename.
 
 ### Events raised by aggregates (preferred)
@@ -162,36 +162,36 @@ Event classes live in `core/events/<context>.py` and subclass `AppEvent` (`core/
 When an event directly records a state change on an aggregate, raise it inside the aggregate method using `record_event()`. The interactor does **not** publish these — the `UnitOfWork` handles them automatically. The gateway registers the aggregate when it is added or loaded, and `uow.commit()` writes the recorded events to the **transactional outbox** in the same transaction as the state change (see [Transactional outbox](#transactional-outbox)):
 
 ```python
-# core/models/vote.py
-class Vote(AggregateRoot):
+# core/models/schedule_change.py
+class ScheduleChange(AggregateRoot):
     @classmethod
-    def create(cls, *, user_id, participant_id) -> Self:
-        vote = cls(...)
-        vote.record_event(VoteCreated(vote_id=vote.id, ...))
-        return vote
+    def moved(cls, *, event_id, ...) -> Self:
+        instance = cls(...)
+        instance.record_event(ScheduleChangeCreated(schedule_change_id=instance.id))
+        return instance
 
-    def delete(self) -> None:
-        self.record_event(VoteDeleted(vote_id=self.id, ...))
+    def mark_undone(self) -> None:
+        self.record_event(ScheduleChangeUndone(mailing_id=self.mailing_id))
 
-# adapters/db/gateways/votes.py — register on add/get
-async def add(self, vote: Vote) -> None:
-    self.session.add(_from_model(vote))
+# adapters/db/gateways/schedule_changes.py — register on add/get
+async def add(self, change: ScheduleChange) -> None:
+    self.session.add(_from_model(change))
     await self.session.flush(...)
-    self.uow.register(vote)
+    self.uow.register(change)
 
-# application/interactors/voting/add_vote.py — no manual publish
-vote = Vote.create(user_id=..., participant_id=...)
-await self.vote_repo.add(vote)
-await self.uow.commit()  # writes the vote + a VoteCreated outbox row atomically
+# application/interactors/schedule_mgmt/… — no manual publish
+change = ScheduleChange.moved(event_id=..., ...)
+await self.changes_gateway.add(change)
+await self.uow.commit()  # writes the change + a ScheduleChangeCreated outbox row atomically
 ```
 
-`Vote`, `ScheduleChange`, and `Mailing` follow this pattern; their gateways register the aggregate in every `add`/`get` method. `Mailing.queue_broadcast()` records `BroadcastQueued`, so a broadcast lands in the outbox and is delivered atomically with its mailing row. The `UnitOfWork` pulls events from each registered aggregate exactly once (the internal event list is cleared on store) and writes them as outbox rows in the same transaction, so a rolled-back transaction never emits events. When you add a new aggregate that records events, register it in its gateway's `add`/`get` methods — that is the only wiring required.
+`ScheduleChange` and `Mailing` follow this pattern; their gateways register the aggregate in every `add`/`get` method. `Mailing.queue_broadcast()` records `BroadcastQueued`, so a broadcast lands in the outbox and is delivered atomically with its mailing row. The `UnitOfWork` pulls events from each registered aggregate exactly once (the internal event list is cleared on store) and writes them as outbox rows in the same transaction, so a rolled-back transaction never emits events. When you add a new aggregate that records events, register it in its gateway's `add`/`get` methods — that is the only wiring required.
 
 ### Transactional outbox
 
 Aggregate events are **not** published to NATS on commit — that would be a dual write: if the process dies between the DB commit and the publish, state is persisted but the event is lost ([ADR-0004](adr/0004-transactional-outbox-for-domain-events.md)). Instead, `uow.commit()` serializes each recorded event into an `OutboxEventORM` row (`adapters/db/models/outbox.py`) committed in the **same transaction** as the aggregate change, and a relay delivers it asynchronously:
 
-* **Relay** — `PublishOutboxEvents` (`application/interactors/outbox/`), driven by a dedicated loop in the scheduler (`main/scheduler.py`). It reads unpublished rows `FOR UPDATE SKIP LOCKED` in creation order (`created_at` with the uuid7 `id` as tiebreaker — rows from one commit share the transaction timestamp), calls `EventBroker.publish_raw(subject, payload, message_id)`, marks them published, and commits.
+* **Relay** — `PublishOutboxEvents` (`application/interactors/outbox/`), driven by a dedicated loop in the scheduler (`main/scheduler.py`). It reads unpublished rows `FOR UPDATE SKIP LOCKED` in creation order (`created_at` with the uuid7 `id` as tiebreaker — rows from one commit share the transaction timestamp), calls `EventBroker.publish_raw(subject, payload, message_id, occurred_at)`, marks them published, and commits. `occurred_at` is the row's commit time, sent as the `Occurred-At` header (read back with `presentation/faststream/headers.py:read_occurred_at`) so a consumer can tell how late an event arrives. `process_schedule_change` uses it: its notifications describe the schedule as it is *now*, so a change older than 10 minutes is dropped and its mailing marked failed rather than announcing the wrong event.
 * **Failed publishes** — a row whose publish fails is held back, not retried at the head of the queue: the relay marks the already-acked prefix, bumps the row's `attempts`, stores a truncated `last_error`, sets `next_attempt_at` (doubling from 1 s, capped at 5 min, on the database clock), commits, and ends the drain. The fetch skips rows whose retry is not yet due, so the next wake delivers the rows behind it — one row NATS keeps rejecting can no longer stall every event queued after it. Stopping at the first failure (rather than trying the rest of the batch) keeps a NATS outage to one timed-out publish per wake. Rows are **never** given up on: parking them after N attempts would strand every event queued during a long NATS outage. Instead each failure logs a WARNING, and the 10th logs once at ERROR (`relay_event=publish_stuck`), which Sentry captures. To inspect a stuck row, query `outbox_events WHERE published_at IS NULL AND attempts > 0`; to retry one immediately, set its `next_attempt_at` to `NULL`.
 * **Wake-up** — the loop is *pushed*, not clock-driven: an `AFTER INSERT` trigger on `outbox_events` fires `pg_notify('outbox_new', …)`, and `PostgresOutboxSignal` (`adapters/db/outbox_signal.py`, port `application/ports/outbox_signal.py`) holds a dedicated asyncpg `LISTEN` connection (probed with `SELECT 1` every 30 s so a silently dropped socket is noticed, and reconnected with capped exponential backoff) that wakes the relay the instant an event is enqueued (near-instant delivery, not one poll-interval). `OutboxConfig.poll_interval_seconds` is now only the **backstop**: the relay still drains at least that often so a missed notification (listener reconnecting, transport blip) costs latency, never a lost event — which is what keeps LISTEN/NOTIFY a pure speed layer over the durable poll rather than the delivery mechanism ([ADR-0015](adr/0015-listen-notify-wakes-the-outbox-relay.md)). The trigger is created in a hand-written migration (autogenerate neither emits nor diffs triggers), and its channel name is a contract with `OUTBOX_CHANNEL` in the adapter.
 * **Delivery guarantee** — at-least-once: a row is marked published only after NATS acks it. Consumers stay idempotent; the row id is sent as `Nats-Msg-Id` so JetStream dedups redeliveries within its window. Delivery to *consumers* is bounded by the JetStream stream retention (`presentation/faststream/jstream.py`, `max_age` 24h): once a row is marked published the outbox never resends it, so a consumer outage longer than the stream retention loses events.

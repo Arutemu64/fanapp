@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any
 
 from faststream.nats import NatsBroker
@@ -9,6 +10,10 @@ from fanfan.core.events.base import AppEvent
 # Mirrors fanfan.presentation.faststream.jstream.stream — kept as a local
 # constant so this adapter never imports the presentation layer.
 _STREAM_NAME = "stream"
+
+# When the event's transaction committed, as ISO 8601. Read back by consumers
+# (presentation/faststream/headers.py) that must not act on a stale event.
+OCCURRED_AT_HEADER = "Occurred-At"
 
 # Bound the wait for the JetStream store-ack. publish() otherwise inherits
 # nats-py's context timeout, which can be unbounded — and the relay drains
@@ -26,7 +31,11 @@ class NatsEventBroker(EventBroker):
         await self.broker.publish(event, subject=event.subject)
 
     async def publish_raw(
-        self, subject: str, payload: dict[str, Any], message_id: str
+        self,
+        subject: str,
+        payload: dict[str, Any],
+        message_id: str,
+        occurred_at: datetime,
     ) -> None:
         # Publish through JetStream (stream=...) so the call awaits the store
         # ack — the relay only marks a row delivered once NATS confirms it.
@@ -35,6 +44,9 @@ class NatsEventBroker(EventBroker):
             payload,
             subject=subject,
             stream=_STREAM_NAME,
-            headers={"Nats-Msg-Id": message_id},
+            headers={
+                "Nats-Msg-Id": message_id,
+                OCCURRED_AT_HEADER: occurred_at.isoformat(),
+            },
             timeout=_PUBLISH_TIMEOUT_SECONDS,
         )

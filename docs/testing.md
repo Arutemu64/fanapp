@@ -171,20 +171,19 @@ surface at a glance:
 ```python
 pytestmark = [pytest.mark.asyncio, pytest.mark.integration]
 
-async def test_add_vote_creates_vote_and_publishes_event(
+async def test_set_current_event_replaces_previous_current_and_records_change(
     dishka_request: AsyncContainer,
-    visitor_with_ticket: User,
+    schedule_editor: User,
     login: Callable[[User], None],
     outbox: OutboxGateway,
     uow: UnitOfWork,
 ):
-    login(visitor_with_ticket)              # set the acting user
-    interactor = await dishka_request.get(AddVote)
-    vote_gateway = await dishka_request.get(VoteGateway)
+    login(schedule_editor)                  # set the acting user
+    interactor = await dishka_request.get(SetCurrentScheduleEvent)
     ...
     assert [
         (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
-    ] == as_outbox(VoteCreated(...))
+    ] == as_outbox(ScheduleChangeCreated(...))
 ```
 
 `tests/integration/schedule_mgmt/test_set_current_event.py` is the reference

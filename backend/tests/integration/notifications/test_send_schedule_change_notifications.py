@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from uuid import uuid7
 
 import pytest
@@ -9,15 +10,18 @@ from fanfan.application.interactors.notifications.send_schedule_change_notificat
     SendScheduleChangeNotificationsInput,
 )
 from fanfan.application.ports.gateways import ScheduleChangeGateway
+from fanfan.application.ports.gateways.mailings import MailingGateway
 from fanfan.application.ports.gateways.schedule_events import ScheduleEventGateway
 from fanfan.application.ports.gateways.subscriptions import SubscriptionGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.events.notifications import NotificationQueued
+from fanfan.core.models.mailing import Mailing
 from fanfan.core.models.schedule_change import ScheduleChange
 from fanfan.core.models.schedule_event import ScheduleEvent
 from fanfan.core.models.subscription import Subscription
 from fanfan.core.models.user import User
+from fanfan.core.vo.mailing import MailingStatus
 from fanfan.core.vo.notification import NotificationType
 from fanfan.core.vo.schedule_event import generate_schedule_event_id
 from fanfan.core.vo.subscription import generate_subscription_id
@@ -186,3 +190,63 @@ async def test_schedule_change_fan_out_reuses_ids_across_redelivery(
     # gateway upsert would no-op the second insert instead of duplicating it.
     assert len(published) == 2
     assert published[0].notification.id == published[1].notification.id
+
+
+async def test_stale_schedule_change_is_dropped_and_its_mailing_failed(
+    dishka_request: AsyncContainer,
+    visitor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    """A change processed long after it was made sends nothing.
+
+    The notifications are built from the schedule as it is now, so a change
+    delivered late (after an outage) would announce the wrong event. Its mailing
+    is settled as failed so it does not sit in the queue forever.
+    """
+    interactor = await dishka_request.get(SendScheduleChangeNotifications)
+    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    subscription_gateway = await dishka_request.get(SubscriptionGateway)
+    changes_gateway = await dishka_request.get(ScheduleChangeGateway)
+    mailing_gateway = await dishka_request.get(MailingGateway)
+    broker = await dishka_request.get(FakeEventBroker)
+    login(visitor)
+
+    current_event = _schedule_event(1, "Текущее", 1, is_current=True)
+    event_c = _schedule_event(3, "Событие C", 3)
+    await schedule_gateway.add(current_event)
+    await schedule_gateway.add(event_c)
+    await uow.commit()
+
+    # An in-window subscriber who would be notified if the change were fresh.
+    await subscription_gateway.add(
+        Subscription(
+            id=generate_subscription_id(),
+            user_id=visitor.id,
+            event_id=event_c.id,
+            counter=5,
+        )
+    )
+    mailing = Mailing.create(by_user_id=visitor.id)
+    await mailing_gateway.add(mailing)
+    change = ScheduleChange.moved(
+        event_id=event_c.id,
+        previous_event_id=None,
+        mailing_id=mailing.id,
+        user_id=None,
+        next_event_changed=False,
+    )
+    await changes_gateway.add(change)
+    await uow.commit()
+
+    await interactor(
+        SendScheduleChangeNotificationsInput(
+            schedule_change_id=change.id,
+            occurred_at=datetime.now(UTC) - timedelta(hours=1),
+        )
+    )
+
+    assert broker.published_events == []
+    saved_mailing = await mailing_gateway.get(mailing.id)
+    assert saved_mailing is not None
+    assert saved_mailing.status is MailingStatus.FAILED

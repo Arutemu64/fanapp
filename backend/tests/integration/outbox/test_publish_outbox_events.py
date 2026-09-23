@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from typing import Any
 from uuid import uuid7
 
@@ -34,12 +35,16 @@ class FailingEventBroker(FakeEventBroker):
         self.fail_subject = fail_subject
 
     async def publish_raw(
-        self, subject: str, payload: dict[str, Any], message_id: str
+        self,
+        subject: str,
+        payload: dict[str, Any],
+        message_id: str,
+        occurred_at: datetime,
     ) -> None:
         if subject == self.fail_subject:
             msg = "NATS rejected the publish"
             raise ConnectionError(msg)
-        await super().publish_raw(subject, payload, message_id)
+        await super().publish_raw(subject, payload, message_id, occurred_at)
 
 
 async def make_relay(
@@ -77,6 +82,10 @@ async def test_relay_publishes_pending_events_in_creation_order(
         ("test.event", {"n": 1}, str(first.id)),
         ("test.event", {"n": 2}, str(second.id)),
     ]
+    # Each publish carries its row's commit time, so consumers can spot a late
+    # delivery; both rows share one transaction, hence one timestamp.
+    await session.refresh(first)
+    assert events_broker.published_occurred_at == [first.created_at] * 2
     assert await outbox.fetch_unpublished(10) == []
 
 
