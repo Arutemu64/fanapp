@@ -22,7 +22,6 @@ INTERNAL_ONLY: set[str] = {
     "NOTIFICATION_RETRY_AFTER",
     # Rate-limit guards — caught and re-raised as a flow-specific RateLimited.
     "COOLDOWN_ACTIVE",
-    "COOLDOWN_LOCK_BUSY",
     # Missing vendor integration config — a server misconfiguration (500).
     "COSPLAY2_CONFIG_NOT_PROVIDED",
     "TCLOUD_CONFIG_NOT_PROVIDED",

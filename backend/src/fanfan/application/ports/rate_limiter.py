@@ -4,8 +4,8 @@ from typing import Protocol
 class RateLimiter(Protocol):
     """Counts attempts against a key inside a fixed time window.
 
-    Unlike CooldownLockFactory (which serializes callers and burns a cooldown only
-    on a *successful* run), this limiter counts *every* call and locks the key
+    Unlike Cooldown (which admits one caller per window and spends the window
+    only on a *successful* run), this limiter counts *every* call and locks the key
     once the count goes over the limit. That makes it the right tool for things
     like login brute-force, where wrong guesses are exactly what we want to
     penalize.

@@ -5,7 +5,7 @@ from fanfan.application.interactors.auth.send_login_code_email import (
     SendLoginCodeEmailInput,
 )
 from fanfan.application.ports.captcha import CaptchaVerifier
-from fanfan.application.ports.cooldown_lock import CooldownLockFactory
+from fanfan.application.ports.cooldown import Cooldown
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.user import UserService
@@ -31,14 +31,14 @@ class RequestLoginCode:
         send_login_code_email: SendLoginCodeEmail,
         uow: UnitOfWork,
         user_service: UserService,
-        cooldown_lock_factory: CooldownLockFactory,
+        cooldown: Cooldown,
         captcha_verifier: CaptchaVerifier,
     ) -> None:
         self.user_gateway = user_gateway
         self.send_login_code_email = send_login_code_email
         self.uow = uow
         self.user_service = user_service
-        self.cooldown_lock_factory = cooldown_lock_factory
+        self.cooldown = cooldown
         self.captcha_verifier = captcha_verifier
 
     async def __call__(self, data: RequestLoginCodeInput) -> None:
@@ -47,12 +47,11 @@ class RequestLoginCode:
 
         email = Email(data.email)
 
-        lock = self.cooldown_lock_factory(
-            f"email_code_request:{email.value}",
-            cooldown_period=EMAIL_CODE_REQUEST_COOLDOWN_SECONDS,
+        claim = self.cooldown.claim(
+            f"email_code_request:{email.value}", EMAIL_CODE_REQUEST_COOLDOWN_SECONDS
         )
         try:
-            async with lock:
+            async with claim:
                 user = await self.user_gateway.get_by_email(email.value)
 
                 # New emails are provisioned immediately so the same flow can both
@@ -81,11 +80,11 @@ class RequestLoginCode:
                         msg = "Could not provision user for login code"
                         raise RuntimeError(msg)
 
-                # Send the code synchronously inside the lock so a delivery
+                # Send the code synchronously inside the claim so a delivery
                 # failure surfaces to the caller as an error instead of leaving
-                # the user staring at a code that never arrives. The lock only
-                # records its cooldown on a clean exit, so a failed send does not
-                # burn the cooldown — the user can retry immediately.
+                # the user staring at a code that never arrives. A failed send
+                # gives the claim back, so it does not burn the cooldown — the
+                # user can retry immediately.
                 await self.send_login_code_email(
                     SendLoginCodeEmailInput(user_id=user.id)
                 )

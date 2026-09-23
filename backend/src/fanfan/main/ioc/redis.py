@@ -6,12 +6,12 @@ from redis.asyncio import Redis
 from fanfan.adapters.auth.session import SessionManager
 from fanfan.adapters.redis.auth_token_registry import RedisTokenRegistry
 from fanfan.adapters.redis.config import RedisConfig
-from fanfan.adapters.redis.cooldown_lock import RedisCooldownLockFactory
+from fanfan.adapters.redis.cooldown import RedisCooldown
 from fanfan.adapters.redis.factory import create_redis
 from fanfan.adapters.redis.presence import RedisPresenceGateway
 from fanfan.adapters.redis.rate_limiter import RedisRateLimiter
 from fanfan.adapters.redis.schedule_cache import RedisScheduleCache
-from fanfan.application.ports.cooldown_lock import CooldownLockFactory
+from fanfan.application.ports.cooldown import Cooldown
 from fanfan.application.ports.presence import PresenceGateway
 from fanfan.application.ports.rate_limiter import RateLimiter
 from fanfan.application.ports.schedule_cache import ScheduleCacheGateway
@@ -41,9 +41,9 @@ class RedisProvider(Provider):
         provides=TokenRegistry,
         scope=Scope.APP,
     )
-    rate_limit_factory = provide(
-        RedisCooldownLockFactory,
-        provides=CooldownLockFactory,
+    cooldown = provide(
+        RedisCooldown,
+        provides=Cooldown,
         scope=Scope.APP,
     )
     rate_limiter = provide(
