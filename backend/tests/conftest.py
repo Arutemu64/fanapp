@@ -1,1 +1,1 @@
-pytest_plugins = ["tests.fixtures.users"]
+pytest_plugins = ["tests.fixtures.tracing", "tests.fixtures.users"]

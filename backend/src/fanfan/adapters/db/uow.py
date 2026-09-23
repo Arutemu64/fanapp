@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.models import OutboxEventORM
+from fanfan.adapters.debug.tracing import current_trace_headers
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.base import AggregateRoot
 
@@ -32,11 +33,13 @@ class SqlUnitOfWork(UnitOfWork):
     def _store_events(self) -> None:
         tracked = list(self._tracked.values())
         self._tracked.clear()
+        trace_headers = current_trace_headers() or None
         for entity in tracked:
             for event in entity.pull_events():
                 self.session.add(
                     OutboxEventORM(
                         subject=event.subject,
                         payload=event.model_dump(mode="json"),
+                        trace_headers=trace_headers,
                     )
                 )

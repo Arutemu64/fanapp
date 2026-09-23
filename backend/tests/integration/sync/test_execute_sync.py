@@ -5,9 +5,10 @@ from uuid import UUID
 import pytest
 from dishka import AsyncContainer
 from sqlalchemy import update
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from fanfan.adapters.db.models import SyncRunORM
+from fanfan.adapters.db.run_lease import PostgresRunLease
 from fanfan.application.interactors.sync.execute_cosplay_sync import ExecuteCosplaySync
 from fanfan.application.ports.gateways import UserPermissionGateway
 from fanfan.application.ports.gateways.nominations import NominationGateway
@@ -16,6 +17,7 @@ from fanfan.application.ports.sources.cosplay import ExternalNomination
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.sync_run_tracker import STALE_RUN_TIMEOUT
 from fanfan.core.exceptions.base import AccessDenied
+from fanfan.core.exceptions.sync import SyncAlreadyRunning
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.models.sync_run import SyncRun
 from fanfan.core.models.user import User
@@ -84,6 +86,101 @@ async def test_run_id_adopts_the_existing_pending_row(
     assert adopted.status is SyncRunStatus.FINISHED
     latest = await gateway.read_latest_by_source()
     assert latest[SyncSource.COSPLAY2].id == queued.id
+
+
+async def test_redelivered_trigger_does_not_rerun_a_finished_run(
+    dishka_request: AsyncContainer,
+    sync_operator: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    # The SyncRequested consumer redelivers its trigger after an error, or when a
+    # long sync outlasts AckWait. A run that already moved past PENDING must not
+    # start again, or one request would hit the vendor twice.
+    login(sync_operator)
+    source = await dishka_request.get(FakeCosplaySource)
+    gateway = await dishka_request.get(SyncRunGateway)
+    queued = SyncRun.create(source=SyncSource.COSPLAY2, by_user_id=sync_operator.id)
+    await gateway.add(queued)
+    await uow.commit()
+    interactor = await dishka_request.get(ExecuteCosplaySync)
+    await interactor(run_id=queued.id)
+    finished = await gateway.get(queued.id)
+    assert finished is not None
+    first_finished_at = finished.finished_at
+    await uow.commit()
+
+    source.nominations = [ExternalNomination(external_id=1, code="c1", title="Косплей")]
+    await interactor(run_id=queued.id)
+
+    rerun = await gateway.get(queued.id)
+    assert rerun is not None
+    assert rerun.status is SyncRunStatus.FINISHED
+    assert rerun.finished_at == first_finished_at
+    nominations = await dishka_request.get(NominationGateway)
+    assert await nominations.get_by_cosplay2_id(1) is None
+
+
+async def test_redelivered_trigger_resumes_an_interrupted_run(
+    dishka_request: AsyncContainer,
+    sync_operator: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    # A worker that died after committing RUNNING never acked its trigger, so
+    # NATS redelivers it. The consumer heartbeats while a sync is alive, so that
+    # redelivery means the run was interrupted, and it must be picked up again
+    # rather than acked away and left for reap_stale.
+    login(sync_operator)
+    source = await dishka_request.get(FakeCosplaySource)
+    source.nominations = [ExternalNomination(external_id=1, code="c1", title="Косплей")]
+    gateway = await dishka_request.get(SyncRunGateway)
+    interrupted = SyncRun.create(
+        source=SyncSource.COSPLAY2, by_user_id=sync_operator.id
+    )
+    interrupted.mark_running(datetime.now(UTC))
+    await gateway.add(interrupted)
+    await uow.commit()
+
+    interactor = await dishka_request.get(ExecuteCosplaySync)
+    await interactor(run_id=interrupted.id)
+
+    resumed = await gateway.get(interrupted.id)
+    assert resumed is not None
+    assert resumed.status is SyncRunStatus.FINISHED
+    nominations = await dishka_request.get(NominationGateway)
+    assert await nominations.get_by_cosplay2_id(1) is not None
+
+
+async def test_redelivered_trigger_backs_off_while_a_live_worker_holds_the_run(
+    dishka_request: AsyncContainer,
+    sync_operator: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    # A worker that missed its NATS heartbeats is still running, and its trigger
+    # got redelivered. Redelivery alone cannot tell it from a dead worker; the
+    # lease it holds can. The redelivered trigger must back off (raise, so the
+    # consumer retries later) instead of running the same sync alongside it.
+    login(sync_operator)
+    source = await dishka_request.get(FakeCosplaySource)
+    source.nominations = [ExternalNomination(external_id=1, code="c1", title="Косплей")]
+    gateway = await dishka_request.get(SyncRunGateway)
+    running = SyncRun.create(source=SyncSource.COSPLAY2, by_user_id=sync_operator.id)
+    running.mark_running(datetime.now(UTC))
+    await gateway.add(running)
+    await uow.commit()
+    live_worker = PostgresRunLease(await dishka_request.get(AsyncEngine))
+    assert await live_worker.try_acquire(running.id)
+
+    interactor = await dishka_request.get(ExecuteCosplaySync)
+    try:
+        with pytest.raises(SyncAlreadyRunning):
+            await interactor(run_id=running.id)
+        nominations = await dishka_request.get(NominationGateway)
+        assert await nominations.get_by_cosplay2_id(1) is None
+    finally:
+        await live_worker.release()
 
 
 async def test_unattended_run_skips_quietly_when_one_is_active(

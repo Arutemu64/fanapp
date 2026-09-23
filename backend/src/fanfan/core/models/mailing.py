@@ -60,6 +60,14 @@ class Mailing(AggregateRoot):
     def mark_finished(self) -> None:
         self.status = MailingStatus.FINISHED
 
+    def mark_failed(self) -> None:
+        # Only a mailing whose fan-out never started can fail as a whole. Once
+        # SENDING, some notifications may already be out and the fan-out owns
+        # finishing it; a cancelled or terminal mailing is already settled.
+        if self.status is not MailingStatus.PENDING:
+            return
+        self.status = MailingStatus.FAILED
+
     def register_delivery(self, *, sent_count: int, total_count: int) -> bool:
         """Apply one unit of fan-out progress; return True iff it just finished.
 

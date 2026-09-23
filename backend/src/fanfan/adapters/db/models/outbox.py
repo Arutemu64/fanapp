@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import DateTime, Index, Text
+from sqlalchemy import DateTime, Index, Text, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -37,3 +37,15 @@ class OutboxEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     subject: Mapped[str] = mapped_column(Text())
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB())
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Retry state for rows whose publish failed. A failing row is pushed back to
+    # next_attempt_at (NULL = due now) instead of being retried at the head of
+    # the queue, so one row NATS keeps rejecting cannot stall every event behind
+    # it. The relay filters on it within the partial index's tiny undelivered
+    # set, so it needs no index of its own.
+    attempts: Mapped[int] = mapped_column(server_default=text("0"))
+    next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_error: Mapped[str | None] = mapped_column(Text())
+    # Sentry propagation headers of the request or task that wrote the event,
+    # forwarded by the relay so the consumer's work joins the producer's trace
+    # even though the relay itself runs outside it. NULL when nothing was traced.
+    trace_headers: Mapped[dict[str, str] | None] = mapped_column(JSONB())

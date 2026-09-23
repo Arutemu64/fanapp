@@ -4,10 +4,11 @@ from datetime import UTC, datetime, timedelta
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.ports.gateways.sync_runs import SyncRunGateway
 from fanfan.application.ports.realtime_gateway import RealtimeGateway
+from fanfan.application.ports.run_lease import RunLease
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.exceptions.sync import SyncAlreadyRunning
 from fanfan.core.models.sync_run import SyncRun
-from fanfan.core.vo.sync import SyncRunId, SyncSource
+from fanfan.core.vo.sync import SyncRunId, SyncRunStatus, SyncSource
 from fanfan.core.vo.user import UserId
 
 logger = logging.getLogger(__name__)
@@ -38,10 +39,12 @@ class SyncRunTracker:
         sync_run_gateway: SyncRunGateway,
         uow: UnitOfWork,
         realtime: RealtimeGateway,
+        lease: RunLease,
     ) -> None:
         self.sync_run_gateway = sync_run_gateway
         self.uow = uow
         self.realtime = realtime
+        self.lease = lease
 
     async def reap_stale(self, source: SyncSource) -> None:
         cutoff = datetime.now(UTC) - STALE_RUN_TIMEOUT
@@ -91,6 +94,25 @@ class SyncRunTracker:
                     extra={"sync_run_id": str(run_id)},
                 )
                 return None
+            # The trigger is redelivered after an error or a dead worker. A
+            # finished or failed run is done, so its trigger is a duplicate.
+            if run.status in (SyncRunStatus.FINISHED, SyncRunStatus.FAILED):
+                logger.info(
+                    "Sync run already settled, skipping redelivered trigger",
+                    extra={"sync_run_id": str(run_id), "status": run.status.value},
+                )
+                return None
+            # Redelivery alone does not prove the previous worker stopped: one
+            # that missed its NATS heartbeats may still be running. The lease
+            # does — a live worker holds it — so without it, back off and let
+            # the trigger come again (the consumer redelivers on this error).
+            if not await self.lease.try_acquire(run.id):
+                raise SyncAlreadyRunning
+            if run.status is SyncRunStatus.RUNNING:
+                logger.warning(
+                    "Resuming interrupted sync run",
+                    extra={"sync_run_id": str(run_id)},
+                )
 
         run.mark_running(datetime.now(UTC))
         await self.sync_run_gateway.save(run)
@@ -101,6 +123,7 @@ class SyncRunTracker:
     async def finish(self, run: SyncRun, result: str) -> None:
         run.mark_finished(result, datetime.now(UTC))
         await self._persist(run)
+        await self.lease.release()
         logger.info(
             "Sync finished",
             extra={"sync_run_id": str(run.id), "source": run.source.value},
@@ -115,6 +138,7 @@ class SyncRunTracker:
         await self.uow.rollback()
         run.mark_failed(error, datetime.now(UTC))
         await self._persist(run)
+        await self.lease.release()
         logger.warning(
             "Sync failed",
             extra={"sync_run_id": str(run.id), "source": run.source.value},
