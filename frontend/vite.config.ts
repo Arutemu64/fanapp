@@ -86,7 +86,22 @@ export default defineConfig(({ mode }) => {
 					// instead — precaching every width/format at install is wasteful and
 					// discouraged: https://developer.chrome.com/docs/workbox/precaching-dos-and-donts).
 					globPatterns: ['**/*.{js,css,html,svg,ico,webmanifest,woff2,json}', 'icons/*.png'],
-					globIgnores: ['**/_app/immutable/assets/**/*.{avif,webp,png,jpeg,jpg,gif}']
+					globIgnores: [
+						'**/_app/immutable/assets/**/*.{avif,webp,png,jpeg,jpg,gif}',
+						// Globs resolve against .svelte-kit/output, so root files sit under
+						// `client/`. The plugin also appends its own `client/**/*.png` pattern,
+						// which is why og-image.png needs an explicit ignore.
+						//
+						// SvelteKit's `updated.check()` fetches this to detect a redeploy after a
+						// failed navigation; a precached copy would always report the old version.
+						'client/_app/version.json',
+						// Only link-preview crawlers read it; no client ever displays it.
+						'client/og-image.png',
+						// Font subsets a Russian UI never renders. Left out of the precache,
+						// they still load on demand via unicode-range (and fall back to a
+						// system font offline). latin-ext stays: romaji macrons (ō, ū) live there.
+						'**/_app/immutable/assets/*-{greek,greek-ext,vietnamese}-*.woff2'
+					]
 				},
 				devOptions: {
 					// No SW in dev: cache-first assumes the immutable versioned shell only a
