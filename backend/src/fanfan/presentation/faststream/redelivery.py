@@ -53,7 +53,7 @@ async def in_progress_heartbeat(
     (https://docs.nats.io/learn/jetstream/acknowledgment), so a slow but live
     handler is not redelivered to another worker mid-run. It only saves wasted
     redeliveries; it cannot prove the worker is alive (a beat can be lost), so a
-    handler that must not run twice also takes a lease (RunLease).
+    handler that must not run twice also takes a WorkerLock.
     """
 
     async def beat() -> None:

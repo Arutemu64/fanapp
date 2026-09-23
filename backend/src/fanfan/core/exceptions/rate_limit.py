@@ -6,17 +6,13 @@ class RateLimitException(AppException):
 
 
 # Internal: a caller catches this and re-raises a flow-specific RateLimited
-# exception (below), so the cooldown/in-use guards never reach the HTTP boundary
-# and intentionally carry no status marker.
-class RateLimitCooldown(RateLimitException):
-    code = "RATE_LOCK_COOLDOWN"
+# exception (below), so the cooldown guard never reaches the HTTP boundary and
+# intentionally carries no status marker.
+class CooldownActive(RateLimitException):
+    code = "COOLDOWN_ACTIVE"
 
     def __init__(self, retry_after: int) -> None:
         super().__init__(details={"retry_after": retry_after})
-
-
-class RateLimitInUse(RateLimitException):
-    code = "RATE_LOCK_IN_USE"
 
 
 class EmailCodeRequestTooFast(RateLimited, RateLimitException):

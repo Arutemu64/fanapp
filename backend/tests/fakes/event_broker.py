@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import datetime
 from typing import Any
 
@@ -17,6 +18,9 @@ class FakeEventBroker(EventBroker):
 
     async def publish(self, event: AppEvent) -> None:
         self.published_events.append(event)
+
+    async def publish_many(self, events: Sequence[AppEvent]) -> None:
+        self.published_events.extend(events)
 
     async def publish_raw(
         self,

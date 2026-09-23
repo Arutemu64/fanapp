@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import datetime
 from typing import Any, Protocol
 
@@ -6,6 +7,16 @@ from fanfan.core.events.base import AppEvent
 
 class EventBroker(Protocol):
     async def publish(self, event: AppEvent) -> None: ...
+
+    async def publish_many(self, events: Sequence[AppEvent]) -> None:
+        """Publish a fan-out, trying every event even when some fail.
+
+        One failed publish says nothing about the others, so none is cancelled
+        or skipped; once all have been tried, the failures are raised together
+        as an ExceptionGroup, so the calling consumer is redelivered and reruns
+        the fan-out. Events that did land are dropped by their ``dedup_id``.
+        """
+        ...
 
     async def publish_raw(
         self,

@@ -42,7 +42,10 @@ from fanfan.core.exceptions.notifications import (
 )
 from fanfan.core.vo.notification import NotificationId
 from fanfan.presentation.faststream.jstream import stream
-from fanfan.presentation.faststream.redelivery import consumer_config
+from fanfan.presentation.faststream.redelivery import (
+    consumer_config,
+    in_progress_heartbeat,
+)
 
 notifications_router = NatsRouter()
 
@@ -247,14 +250,18 @@ async def send_push_notification(
 async def create_new_broadcast(
     data: BroadcastQueued,
     interactor: FromDishka[ProcessBroadcast],
+    msg: NatsMessage,
 ) -> None:
-    await interactor(
-        ProcessBroadcastInput(
-            body=data.body,
-            roles=data.roles,
-            mailing_id=data.mailing_id,
+    # A large fan-out can outlast AckWait while NATS is slow to ack; the
+    # heartbeat keeps a live run from being redelivered on top of itself.
+    async with in_progress_heartbeat(msg):
+        await interactor(
+            ProcessBroadcastInput(
+                body=data.body,
+                roles=data.roles,
+                mailing_id=data.mailing_id,
+            )
         )
-    )
 
 
 @notifications_router.subscriber(

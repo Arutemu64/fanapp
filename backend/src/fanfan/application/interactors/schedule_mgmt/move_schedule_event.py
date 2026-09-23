@@ -3,7 +3,7 @@ import logging
 from pydantic import BaseModel
 
 from fanfan.application.interactors.schedule_mgmt.common import (
-    ANNOUNCE_LIMIT_NAME,
+    ensure_announcement_cooldown,
 )
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.mailings import MailingGateway
@@ -14,16 +14,11 @@ from fanfan.application.ports.gateways.schedule_events import (
     ScheduleEventGateway,
 )
 from fanfan.application.ports.gateways.users import UserGateway
-from fanfan.application.ports.rate_lock import RateLockFactory
 from fanfan.application.ports.schedule_cache import ScheduleCacheGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
-from fanfan.core.exceptions.rate_limit import RateLimitCooldown
-from fanfan.core.exceptions.schedule import (
-    EventNotFound,
-    ScheduleEditTooFast,
-)
+from fanfan.core.exceptions.schedule import EventNotFound
 from fanfan.core.models.mailing import Mailing
 from fanfan.core.models.schedule_change import (
     ScheduleChange,
@@ -50,7 +45,6 @@ class MoveScheduleEvent:
         perm_service: PermissionService,
         uow: UnitOfWork,
         current_user_provider: CurrentUserProvider,
-        rate_lock_factory: RateLockFactory,
         schedule_cache: ScheduleCacheGateway,
     ) -> None:
         self.schedule_gateway = schedule_gateway
@@ -61,7 +55,6 @@ class MoveScheduleEvent:
         self.perm_service = perm_service
         self.uow = uow
         self.current_user_provider = current_user_provider
-        self.rate_lock_factory = rate_lock_factory
         self.schedule_cache = schedule_cache
 
     async def __call__(self, data: MoveScheduleEventInput) -> None:
@@ -71,66 +64,55 @@ class MoveScheduleEvent:
         )
 
         settings = await self.settings_gateway.get()
-        lock = self.rate_lock_factory(
-            ANNOUNCE_LIMIT_NAME,
-            cooldown_period=settings.limits.announcement_timeout,
+        await self.schedule_gateway.lock_for_edit()
+        await ensure_announcement_cooldown(
+            self.changes_gateway, settings.limits.announcement_timeout
         )
 
-        try:
-            async with lock:
-                event = await self.schedule_gateway.get_by_id(data.event_id)
-                if event is None:
-                    raise EventNotFound
+        event = await self.schedule_gateway.get_by_id(data.event_id)
+        if event is None:
+            raise EventNotFound
 
-                place_after_event = await self.schedule_gateway.get_by_id(
-                    data.place_after_event_id
-                )
-                if place_after_event is None:
-                    raise EventNotFound
-                place_before_event = await self.schedule_gateway.get_next_by_order(
-                    place_after_event.order
-                )
-                previous_event = await self.schedule_gateway.get_previous_by_order(
-                    event.order
-                )
+        place_after_event = await self.schedule_gateway.get_by_id(
+            data.place_after_event_id
+        )
+        if place_after_event is None:
+            raise EventNotFound
+        place_before_event = await self.schedule_gateway.get_next_by_order(
+            place_after_event.order
+        )
+        previous_event = await self.schedule_gateway.get_previous_by_order(event.order)
 
-                next_event_before_change = await self.schedule_gateway.get_next()
+        next_event_before_change = await self.schedule_gateway.get_next()
 
-                event.place_after(place_after_event, place_before_event)
-                await self.schedule_gateway.save(event)
+        event.place_after(place_after_event, place_before_event)
+        await self.schedule_gateway.save(event)
 
-                next_event_after_change = await self.schedule_gateway.get_next()
+        next_event_after_change = await self.schedule_gateway.get_next()
 
-                mailing = Mailing.create(by_user_id=current_user.id)
-                await self.mailing_gateway.add(mailing)
-                schedule_change = ScheduleChange.moved(
-                    event_id=event.id,
-                    previous_event_id=previous_event.id if previous_event else None,
-                    mailing_id=mailing.id,
-                    user_id=current_user.id,
-                    next_event_changed=(
-                        next_event_before_change != next_event_after_change
-                    ),
-                )
-                await self.changes_gateway.add(schedule_change)
+        mailing = Mailing.create(by_user_id=current_user.id)
+        await self.mailing_gateway.add(mailing)
+        schedule_change = ScheduleChange.moved(
+            event_id=event.id,
+            previous_event_id=previous_event.id if previous_event else None,
+            mailing_id=mailing.id,
+            user_id=current_user.id,
+            next_event_changed=(next_event_before_change != next_event_after_change),
+        )
+        await self.changes_gateway.add(schedule_change)
 
-                await self.uow.commit()
+        await self.uow.commit()
 
-                # Invalidate after commit so the operator's read-your-writes
-                # refetch (and every SSE-driven refetch) recomputes from the
-                # committed state instead of serving the pre-edit cache (ADR-0014).
-                await self.schedule_cache.invalidate()
+        # Invalidate after commit so the operator's read-your-writes
+        # refetch (and every SSE-driven refetch) recomputes from the
+        # committed state instead of serving the pre-edit cache (ADR-0014).
+        await self.schedule_cache.invalidate()
 
-                logger.info(
-                    "Schedule event moved",
-                    extra={
-                        "event_id": str(data.event_id),
-                        "place_after_event_id": str(data.place_after_event_id),
-                        "actor_id": str(current_user.id),
-                    },
-                )
-                return
-        except RateLimitCooldown as e:
-            raise ScheduleEditTooFast(
-                retry_after=e.details["retry_after"],
-            ) from e
+        logger.info(
+            "Schedule event moved",
+            extra={
+                "event_id": str(data.event_id),
+                "place_after_event_id": str(data.place_after_event_id),
+                "actor_id": str(current_user.id),
+            },
+        )

@@ -264,8 +264,8 @@ async def test_skip_twice_in_a_row_raises_too_fast(
     await schedule_gateway.add(second)
     await uow.commit()
 
-    # The same real-Redis rate lock as set_current guards announcements, so a
-    # second skip within the window is rejected.
+    # The same announcement cooldown as set_current applies, so a second skip
+    # within the window is rejected.
     await interactor(UpdateScheduleEventSkipInput(event_id=first.id, is_skipped=True))
     with pytest.raises(ScheduleEditTooFast):
         await interactor(

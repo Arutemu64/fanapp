@@ -31,8 +31,8 @@ from fanfan.adapters.db.gateways.tickets import SqlTicketGateway
 from fanfan.adapters.db.gateways.user_flags import SqlUserFlagGateway
 from fanfan.adapters.db.gateways.users import SqlUserGateway
 from fanfan.adapters.db.gateways.votes import SqlVoteGateway
-from fanfan.adapters.db.run_lease import PostgresRunLease
 from fanfan.adapters.db.uow import SqlUnitOfWork
+from fanfan.adapters.db.worker_lock import PostgresWorkerLock
 from fanfan.application.ports.gateways import (
     AppSettingsGateway,
     ScheduleChangeGateway,
@@ -55,8 +55,8 @@ from fanfan.application.ports.gateways.tickets import TicketGateway
 from fanfan.application.ports.gateways.user_flags import UserFlagGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.gateways.votes import VoteGateway
-from fanfan.application.ports.run_lease import RunLease
 from fanfan.application.ports.uow import UnitOfWork
+from fanfan.application.ports.worker_lock import WorkerLock
 
 
 class DbProvider(Provider):
@@ -81,12 +81,12 @@ class DbProvider(Provider):
     uow = provide(SqlUnitOfWork, provides=UnitOfWork, scope=Scope.REQUEST)
 
     @provide(scope=Scope.REQUEST)
-    async def get_run_lease(self, engine: AsyncEngine) -> AsyncIterable[RunLease]:
-        lease = PostgresRunLease(engine)
-        yield lease
-        # A lease still held when the request ends (an error skipped the
+    async def get_worker_lock(self, engine: AsyncEngine) -> AsyncIterable[WorkerLock]:
+        lock = PostgresWorkerLock(engine)
+        yield lock
+        # A lock still held when the request ends (an error skipped the
         # tracker's own release) must not linger on a pooled connection.
-        await lease.release()
+        await lock.release()
 
 
 class SqlGatewaysProvider(Provider):

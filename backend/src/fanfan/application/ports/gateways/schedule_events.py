@@ -6,6 +6,16 @@ from fanfan.core.vo.schedule_event import ScheduleEventId
 
 
 class ScheduleEventGateway(Protocol):
+    async def lock_for_edit(self) -> None:
+        """Serialize schedule edits until the current transaction ends.
+
+        Row locks alone cannot: two edits that read the same pair of neighbours
+        both compute the same ``order`` between them, since a locking read only
+        re-checks the rows it already found, never the row that just moved into
+        the gap. Call it first, before any read the edit depends on.
+        """
+        ...
+
     async def add(self, event: ScheduleEvent) -> None: ...
     async def get_by_id(self, event_id: ScheduleEventId) -> ScheduleEvent | None: ...
     async def get_by_queue(self, queue: int) -> ScheduleEvent | None: ...

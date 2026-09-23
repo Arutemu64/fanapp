@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from datetime import UTC, datetime, timedelta
 from typing import cast
@@ -321,6 +320,4 @@ class SendScheduleChangeNotifications:
             )
             await self.uow.commit()
 
-        await asyncio.gather(
-            *(self.events_broker.publish(e) for e in notification_events)
-        )
+        await self.events_broker.publish_many(notification_events)

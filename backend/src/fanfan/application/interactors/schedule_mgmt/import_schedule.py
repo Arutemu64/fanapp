@@ -81,6 +81,7 @@ class ImportSchedule:
         await self.perm_service.ensure(
             user=current_user, permission=Permission.SCHEDULE_IMPORT
         )
+        await self.schedule_gateway.lock_for_edit()
         orphaned_events = await self.schedule_gateway.list_all()
         order = ORDER_INIT
         for entry in data.schedule:

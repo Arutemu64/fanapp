@@ -105,6 +105,7 @@ class UndoScheduleChange:
         await self.perm_service.ensure(
             user=current_user, permission=Permission.SCHEDULE_MANAGE
         )
+        await self.schedule_gateway.lock_for_edit()
         schedule_change = await self.changes_gateway.get_by_id(data.schedule_change_id)
         if schedule_change is None:
             raise ScheduleChangeNotFound

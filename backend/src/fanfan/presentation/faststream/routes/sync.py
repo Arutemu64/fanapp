@@ -44,7 +44,7 @@ async def run_requested_sync(
 ) -> None:
     interactor = await container.get(EXECUTORS[data.source])
     # A sync can outlast AckWait; the heartbeat keeps a live run from being
-    # redelivered needlessly. Correctness does not rest on it: the run lease in
+    # redelivered needlessly. Correctness does not rest on it: the worker lock in
     # SyncRunTracker.start() is what stops a second worker running it.
     async with in_progress_heartbeat(msg):
         await interactor(run_id=data.sync_run_id)

@@ -4,8 +4,8 @@ from datetime import UTC, datetime, timedelta
 from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.ports.gateways.sync_runs import SyncRunGateway
 from fanfan.application.ports.realtime_gateway import RealtimeGateway
-from fanfan.application.ports.run_lease import RunLease
 from fanfan.application.ports.uow import UnitOfWork
+from fanfan.application.ports.worker_lock import WorkerLock
 from fanfan.core.exceptions.sync import SyncAlreadyRunning
 from fanfan.core.models.sync_run import SyncRun
 from fanfan.core.vo.sync import SyncRunId, SyncRunStatus, SyncSource
@@ -16,14 +16,22 @@ logger = logging.getLogger(__name__)
 # How long an active run may go without finishing before it is treated as dead.
 # A worker killed mid-run leaves its row with finished_at NULL, which the
 # uq_sync_runs_active index then holds against every future run for that source
-# — syncing would stop permanently. Generous enough that a slow-but-alive full
-# TicketsCloud sweep is never reaped out from under itself.
+# — syncing would stop permanently. A live worker is never reaped however long
+# it runs: reaping needs the source's lock, which that worker holds. So this
+# only bounds how long a dead run, or a requested one whose trigger never
+# arrived, blocks the source.
 STALE_RUN_TIMEOUT = timedelta(minutes=30)
 STALE_RUN_ERROR = "Синхронизация прервалась — процесс не ответил вовремя"
 
 # Shown to the organizer when a sync raises. Deliberately generic: the real
 # cause is in the logs and Sentry, and vendor errors are not actionable copy.
 SYNC_FAILED_ERROR = "Не удалось синхронизировать — попробуй ещё раз позже"
+
+
+def sync_lock_key(source: SyncSource) -> str:
+    # One lock per source, not per run: the reaper has to know whether any
+    # worker is still sweeping the source, whichever run it is on.
+    return f"sync:{source.value}"
 
 
 class SyncRunTracker:
@@ -39,14 +47,27 @@ class SyncRunTracker:
         sync_run_gateway: SyncRunGateway,
         uow: UnitOfWork,
         realtime: RealtimeGateway,
-        lease: RunLease,
+        worker_lock: WorkerLock,
     ) -> None:
         self.sync_run_gateway = sync_run_gateway
         self.uow = uow
         self.realtime = realtime
-        self.lease = lease
+        self.worker_lock = worker_lock
 
     async def reap_stale(self, source: SyncSource) -> None:
+        """Fail runs whose worker is gone, for a caller that will not run the sync."""
+        if not await self.worker_lock.try_acquire(sync_lock_key(source)):
+            # A live worker holds the lock, so its run is not stale however
+            # old it is.
+            return
+        try:
+            await self._reap_stale(source)
+        finally:
+            await self.worker_lock.release()
+
+    async def _reap_stale(self, source: SyncSource) -> None:
+        # Caller holds the source's lock: only then is an old active row
+        # proof of a dead worker rather than a slow one.
         cutoff = datetime.now(UTC) - STALE_RUN_TIMEOUT
         reaped = await self.sync_run_gateway.fail_stale(
             source, older_than=cutoff, error=STALE_RUN_ERROR
@@ -69,8 +90,41 @@ class SyncRunTracker:
         ``run_id`` is set on the manual path, where RequestSync already created a
         PENDING row; it is None for cron and CLI, which create their own row here
         so that unattended runs are recorded too.
+
+        The source's lock is held from here until ``finish``/``fail``; a
+        trigger that is skipped, or raises before the run starts, gives it back
+        at once.
         """
-        await self.reap_stale(source)
+        if not await self.worker_lock.try_acquire(sync_lock_key(source)):
+            if run_id is None:
+                # Another worker is mid-sweep: skip quietly, for the same reason
+                # as the unique-index collision below.
+                logger.info(
+                    "Sync already running, skipping this trigger",
+                    extra={"source": source.value},
+                )
+                return None
+            # Redelivery alone does not prove the previous worker stopped: one
+            # that missed its NATS heartbeats may still be running. The lock
+            # does — a live worker holds it — so without it, back off and let
+            # the trigger come again (the consumer redelivers on this error).
+            raise SyncAlreadyRunning
+
+        run: SyncRun | None = None
+        try:
+            run = await self._start_holding_lock(source, run_id, by_user_id)
+        finally:
+            if run is None:
+                await self.worker_lock.release()
+        return run
+
+    async def _start_holding_lock(
+        self,
+        source: SyncSource,
+        run_id: SyncRunId | None,
+        by_user_id: UserId,
+    ) -> SyncRun | None:
+        await self._reap_stale(source)
 
         if run_id is None:
             run = SyncRun.create(source=source, by_user_id=by_user_id)
@@ -102,12 +156,6 @@ class SyncRunTracker:
                     extra={"sync_run_id": str(run_id), "status": run.status.value},
                 )
                 return None
-            # Redelivery alone does not prove the previous worker stopped: one
-            # that missed its NATS heartbeats may still be running. The lease
-            # does — a live worker holds it — so without it, back off and let
-            # the trigger come again (the consumer redelivers on this error).
-            if not await self.lease.try_acquire(run.id):
-                raise SyncAlreadyRunning
             if run.status is SyncRunStatus.RUNNING:
                 logger.warning(
                     "Resuming interrupted sync run",
@@ -123,7 +171,7 @@ class SyncRunTracker:
     async def finish(self, run: SyncRun, result: str) -> None:
         run.mark_finished(result, datetime.now(UTC))
         await self._persist(run)
-        await self.lease.release()
+        await self.worker_lock.release()
         logger.info(
             "Sync finished",
             extra={"sync_run_id": str(run.id), "source": run.source.value},
@@ -138,7 +186,7 @@ class SyncRunTracker:
         await self.uow.rollback()
         run.mark_failed(error, datetime.now(UTC))
         await self._persist(run)
-        await self.lease.release()
+        await self.worker_lock.release()
         logger.warning(
             "Sync failed",
             extra={"sync_run_id": str(run.id), "source": run.source.value},
