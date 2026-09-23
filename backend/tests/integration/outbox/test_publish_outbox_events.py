@@ -1,9 +1,10 @@
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Any, ClassVar
 from uuid import uuid7
 
 import pytest
+import sentry_sdk
 from dishka import AsyncContainer
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,6 +20,8 @@ from fanfan.application.interactors.outbox.publish_outbox_events import (
 from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.uow import UnitOfWork
+from fanfan.core.events.base import AppEvent
+from fanfan.core.models.base import AggregateRoot
 from tests.fakes.event_broker import FakeEventBroker
 
 pytestmark = [
@@ -40,11 +43,14 @@ class FailingEventBroker(FakeEventBroker):
         payload: dict[str, Any],
         message_id: str,
         occurred_at: datetime,
+        trace_headers: dict[str, str] | None,
     ) -> None:
         if subject == self.fail_subject:
             msg = "NATS rejected the publish"
             raise ConnectionError(msg)
-        await super().publish_raw(subject, payload, message_id, occurred_at)
+        await super().publish_raw(
+            subject, payload, message_id, occurred_at, trace_headers
+        )
 
 
 async def make_relay(
@@ -194,3 +200,30 @@ async def test_relay_reports_a_row_stuck_after_repeated_failures(
     assert record.levelno == logging.ERROR
     assert record.__dict__["relay_event"] == "publish_stuck"
     assert record.__dict__["attempt"] == _STUCK_AFTER_ATTEMPTS
+
+
+class _TracedEvent(AppEvent):
+    subject: ClassVar[str] = "test.traced"
+
+
+@pytest.mark.usefixtures("tracing")
+async def test_relay_forwards_the_trace_of_the_request_that_wrote_the_event(
+    dishka_request: AsyncContainer,
+) -> None:
+    # The relay publishes long after the request that wrote the row has ended,
+    # from a process with no trace of its own; the consumer can only join the
+    # request's trace if the row carried it.
+    uow = await dishka_request.get(UnitOfWork)
+    aggregate = AggregateRoot()
+    aggregate.record_event(_TracedEvent())
+    with sentry_sdk.start_transaction(name="POST /request") as transaction:
+        uow.register(aggregate)
+        await uow.commit()
+
+    events_broker = FakeEventBroker()
+    relay = await make_relay(dishka_request, events_broker)
+    await relay()
+
+    [trace_headers] = events_broker.published_trace_headers
+    assert trace_headers is not None
+    assert trace_headers["sentry-trace"].startswith(transaction.trace_id)

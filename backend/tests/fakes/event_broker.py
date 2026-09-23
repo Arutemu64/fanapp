@@ -13,6 +13,7 @@ class FakeEventBroker(EventBroker):
         self.published_raw: list[tuple[str, dict[str, Any], str]] = []
         # occurred_at of each raw publish, in the same order.
         self.published_occurred_at: list[datetime] = []
+        self.published_trace_headers: list[dict[str, str] | None] = []
 
     async def publish(self, event: AppEvent) -> None:
         self.published_events.append(event)
@@ -23,6 +24,8 @@ class FakeEventBroker(EventBroker):
         payload: dict[str, Any],
         message_id: str,
         occurred_at: datetime,
+        trace_headers: dict[str, str] | None,
     ) -> None:
         self.published_raw.append((subject, payload, message_id))
         self.published_occurred_at.append(occurred_at)
+        self.published_trace_headers.append(trace_headers)

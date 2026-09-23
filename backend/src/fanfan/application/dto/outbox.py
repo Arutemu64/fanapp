@@ -15,5 +15,7 @@ class OutboxMessage(BaseModel):
     payload: dict[str, Any]
     # The commit timestamp of the transaction that wrote the event.
     created_at: datetime
+    # Trace propagation headers of the producer, forwarded to the consumer.
+    trace_headers: dict[str, str] | None
     # Failed publish attempts so far.
     attempts: int

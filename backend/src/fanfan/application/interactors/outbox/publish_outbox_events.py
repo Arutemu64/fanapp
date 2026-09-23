@@ -79,6 +79,7 @@ class PublishOutboxEvents:
                             payload=message.payload,
                             message_id=str(message.id),
                             occurred_at=message.created_at,
+                            trace_headers=message.trace_headers,
                         )
                     # Blind on purpose: whatever the broker raises, the row must
                     # be held back rather than left to stall the queue.

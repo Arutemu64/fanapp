@@ -45,3 +45,7 @@ class OutboxEventORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     attempts: Mapped[int] = mapped_column(server_default=text("0"))
     next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_error: Mapped[str | None] = mapped_column(Text())
+    # Sentry propagation headers of the request or task that wrote the event,
+    # forwarded by the relay so the consumer's work joins the producer's trace
+    # even though the relay itself runs outside it. NULL when nothing was traced.
+    trace_headers: Mapped[dict[str, str] | None] = mapped_column(JSONB())

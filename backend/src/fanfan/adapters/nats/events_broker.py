@@ -51,6 +51,7 @@ class NatsEventBroker(EventBroker):
         payload: dict[str, Any],
         message_id: str,
         occurred_at: datetime,
+        trace_headers: dict[str, str] | None,
     ) -> None:
         # Publish through JetStream (stream=...) so the call awaits the store
         # ack — the relay only marks a row delivered once NATS confirms it.
@@ -60,6 +61,9 @@ class NatsEventBroker(EventBroker):
             subject=subject,
             stream=_STREAM_NAME,
             headers={
+                # Set here, so the broker's tracing middleware keeps them rather
+                # than stamping the relay's own (trace-less) context.
+                **(trace_headers or {}),
                 "Nats-Msg-Id": message_id,
                 OCCURRED_AT_HEADER: occurred_at.isoformat(),
             },
