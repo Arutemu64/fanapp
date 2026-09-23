@@ -56,12 +56,13 @@ async def test_lease_frees_when_the_holder_connection_dies(
     rival = PostgresRunLease(short_idle_engine)
     try:
         assert await holder.try_acquire(run_id)
+        # Kill only the holder's own backend, standing in for its crash; other
+        # sessions on the shared test database must not be touched.
+        assert holder._connection is not None
+        holder_pid = await holder._connection.scalar(text("SELECT pg_backend_pid()"))
         async with short_idle_engine.connect() as admin:
             await admin.execute(
-                text(
-                    "SELECT pg_terminate_backend(pid) FROM pg_locks "
-                    "WHERE locktype = 'advisory' AND granted"
-                )
+                text("SELECT pg_terminate_backend(:pid)"), {"pid": holder_pid}
             )
         assert await rival.try_acquire(run_id)
     finally:
