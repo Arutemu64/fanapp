@@ -43,7 +43,9 @@ async def _run_outbox_relay(
         except Exception:
             # One bad tick must not kill the loop; report it and let the next
             # tick (poll backstop) retry the still-unpublished rows.
-            logger.exception("Outbox relay tick failed")
+            logger.exception(
+                "Outbox relay tick failed", extra={"relay_event": "tick_failed"}
+            )
             sentry_sdk.capture_exception()
         await outbox_signal.wait(poll_interval)
 

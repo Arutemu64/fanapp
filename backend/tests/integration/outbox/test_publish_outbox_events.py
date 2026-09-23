@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 from uuid import uuid7
 
@@ -8,7 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fanfan.adapters.db.models import OutboxEventORM
 from fanfan.application.interactors.outbox.config import OutboxConfig
 from fanfan.application.interactors.outbox.publish_outbox_events import (
+    _STUCK_AFTER_ATTEMPTS,
     PublishOutboxEvents,
+)
+from fanfan.application.interactors.outbox.publish_outbox_events import (
+    logger as relay_logger,
 )
 from fanfan.application.ports.events_broker import EventBroker
 from fanfan.application.ports.gateways.outbox import OutboxGateway
@@ -116,11 +121,67 @@ async def test_relay_marks_delivered_prefix_when_a_publish_fails(
 
     events_broker = FailingEventBroker(fail_subject="test.bad")
     relay = await make_relay(dishka_request, events_broker)
-    with pytest.raises(ConnectionError):
+    await relay()
+
+    # The row NATS acked before the failure must be marked published, so it is
+    # not republished alongside the failed row's retries.
+    assert events_broker.published_raw == [("test.ok", {"n": 1}, str(delivered.id))]
+    await session.refresh(poisoned)
+    assert poisoned.published_at is None
+    assert poisoned.attempts == 1
+    assert poisoned.last_error == "ConnectionError: NATS rejected the publish"
+    # Held back until its retry is due, so the next fetch does not return it.
+    assert poisoned.next_attempt_at is not None
+    assert await outbox.fetch_unpublished(10) == []
+
+
+async def test_failed_row_does_not_block_the_rows_behind_it(
+    dishka_request: AsyncContainer,
+    outbox: OutboxGateway,
+) -> None:
+    session = await dishka_request.get(AsyncSession)
+    poisoned = OutboxEventORM(id=uuid7(), subject="test.bad", payload={"n": 1})
+    behind = OutboxEventORM(id=uuid7(), subject="test.ok", payload={"n": 2})
+    session.add(poisoned)
+    session.add(behind)
+    await session.flush()
+
+    events_broker = FailingEventBroker(fail_subject="test.bad")
+    relay = await make_relay(dishka_request, events_broker)
+    # The first drain stops at the failing head row; the next one must skip it
+    # (its retry is not due) and deliver the row queued behind it.
+    await relay()
+    assert events_broker.published_raw == []
+    await relay()
+
+    assert events_broker.published_raw == [("test.ok", {"n": 2}, str(behind.id))]
+    assert await outbox.fetch_unpublished(10) == []
+
+
+async def test_relay_reports_a_row_stuck_after_repeated_failures(
+    dishka_request: AsyncContainer,
+    caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    session = await dishka_request.get(AsyncSession)
+    # One failure short of the alert threshold, so this drain's failure is the
+    # one that must escalate to ERROR (which Sentry captures).
+    poisoned = OutboxEventORM(
+        id=uuid7(), subject="test.bad", payload={}, attempts=_STUCK_AFTER_ATTEMPTS - 1
+    )
+    session.add(poisoned)
+    await session.flush()
+
+    relay = await make_relay(
+        dishka_request, FailingEventBroker(fail_subject="test.bad")
+    )
+    # The test DB is migrated in-process, and Alembic's env.py fileConfig()
+    # disables every logger imported before it (disable_existing_loggers=True).
+    monkeypatch.setattr(relay_logger, "disabled", False)
+    with caplog.at_level(logging.WARNING):
         await relay()
 
-    # The row NATS acked before the failure must be marked published, so the
-    # next tick retries only the failed row instead of republishing both.
-    assert events_broker.published_raw == [("test.ok", {"n": 1}, str(delivered.id))]
-    remaining = await outbox.fetch_unpublished(10)
-    assert [m.id for m in remaining] == [poisoned.id]
+    [record] = [r for r in caplog.records if r.name == relay_logger.name]
+    assert record.levelno == logging.ERROR
+    assert record.__dict__["relay_event"] == "publish_stuck"
+    assert record.__dict__["attempt"] == _STUCK_AFTER_ATTEMPTS

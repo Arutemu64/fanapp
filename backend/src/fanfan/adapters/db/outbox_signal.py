@@ -1,6 +1,8 @@
 import asyncio
 import contextlib
 import logging
+import random
+import time
 
 import asyncpg
 from sqlalchemy.engine import make_url
@@ -16,10 +18,39 @@ logger = logging.getLogger(__name__)
 # match, so changing one is a migration, not a rename.
 OUTBOX_CHANNEL = "outbox_new"
 
-# How long to wait before re-opening the LISTEN connection after it drops. The
-# poll backstop keeps delivering during the gap, so this only bounds how long
-# we run in poll-only (slower) mode, not correctness.
-_RECONNECT_DELAY_SECONDS = 1.0
+# Reconnect delay after the LISTEN connection drops: exponential with jitter, so
+# a Postgres outage is retried at a falling rate instead of logging a warning
+# every second. The poll backstop keeps delivering during the gap, so the cap
+# only bounds how long we run in poll-only (slower) mode, not correctness.
+_RECONNECT_BASE_DELAY_SECONDS = 1.0
+_RECONNECT_MAX_DELAY_SECONDS = 30.0
+_RECONNECT_MAX_EXPONENT = 16
+# A connection that stayed up this long counts as recovered: its eventual drop
+# starts a fresh backoff instead of inheriting the earlier failure count.
+_RECONNECT_RESET_AFTER_SECONDS = 60.0
+
+# A LISTEN socket can die silently (NAT idle timeout, firewall drop, a dead
+# asyncpg reader task) without firing the termination listener, which would
+# leave the relay on the poll backstop until the next restart. A periodic probe
+# turns that into an error the supervisor reconnects on. The probe timeout is
+# load-bearing: an unbounded query on a half-dead socket waits out the kernel
+# TCP keepalive (~2 h on Linux) before failing. Pattern from faststream-outbox:
+# https://github.com/modern-python/faststream-outbox/blob/main/faststream_outbox/subscriber/usecase.py
+_HEALTH_CHECK_INTERVAL_SECONDS = 30.0
+_HEALTH_CHECK_TIMEOUT_SECONDS = 5.0
+# A graceful close on that same half-dead socket can hang too; asyncpg aborts
+# the connection when this runs out.
+_CLOSE_TIMEOUT_SECONDS = 5.0
+
+
+def _reconnect_delay(failures: int) -> float:
+    # Clamp the exponent: the cap is hit after a handful of failures, and an
+    # unclamped power overflows float once a long outage piles up ~1000 of them.
+    exponent = min(failures - 1, _RECONNECT_MAX_EXPONENT)
+    multiplier: int = 2**exponent
+    delay = _RECONNECT_BASE_DELAY_SECONDS * multiplier
+    jitter = random.uniform(0.5, 1.5)  # noqa: S311 - not security-sensitive
+    return min(delay * jitter, _RECONNECT_MAX_DELAY_SECONDS)
 
 
 class PostgresOutboxSignal(OutboxSignal):
@@ -27,9 +58,10 @@ class PostgresOutboxSignal(OutboxSignal):
 
     Holds one long-lived connection outside the SQLAlchemy pool (a LISTEN
     connection is pinned for the lifetime of the subscription, so it must not
-    occupy a pooled slot). A supervisor task keeps it open, reconnecting when it
-    drops; every (re)connect nudges a drain so events enqueued while the listener
-    was down are picked up immediately rather than waiting for the poll backstop.
+    occupy a pooled slot). A supervisor task keeps it open, probing it for silent
+    drops and reconnecting with backoff when it drops; every (re)connect nudges a
+    drain so events enqueued while the listener was down are picked up
+    immediately rather than waiting for the poll backstop.
     """
 
     def __init__(self, config: DatabaseConfig, channel: str = OUTBOX_CHANNEL) -> None:
@@ -80,41 +112,62 @@ class PostgresOutboxSignal(OutboxSignal):
         self._event.set()
 
     async def _supervise(self) -> None:
+        failures = 0
         while not self._closing:
             connection: asyncpg.Connection | None = None
+            connected_at: float | None = None
             try:
                 connection = await self._connect()
                 await connection.add_listener(self._channel, self._on_notify)
+                connected_at = time.monotonic()
                 # A fresh connection may have missed inserts committed while it
                 # was down; wake the relay so it drains now instead of waiting
                 # out the poll interval.
                 self._event.set()
-
-                terminated = asyncio.Event()
-                # Bind `terminated` as a default arg: the supervisor reassigns it
-                # each reconnect, and this callback must fire the current one.
-                connection.add_termination_listener(
-                    lambda _conn, ev=terminated: ev.set()
-                )
                 # Block until the connection drops (or we are cancelled on stop).
                 # Notifications arrive via the callback in the meantime.
-                await terminated.wait()
-                if not self._closing:
-                    logger.warning("Outbox LISTEN connection lost; reconnecting")
+                await self._hold(connection)
+                if self._closing:
+                    return
+                logger.warning(
+                    "Outbox LISTEN connection lost; reconnecting",
+                    extra={"relay_event": "listener_lost"},
+                )
             except asyncio.CancelledError:
                 raise
             except Exception:
                 logger.warning(
-                    "Outbox LISTEN connection failed; retrying", exc_info=True
+                    "Outbox LISTEN connection failed; reconnecting",
+                    exc_info=True,
+                    extra={"relay_event": "listener_failed"},
                 )
             finally:
                 if connection is not None:
                     # The socket may already be gone; a close failure is nothing
                     # the supervisor can act on, so swallow it.
                     with contextlib.suppress(Exception):
-                        await connection.close()
-            if not self._closing:
-                await asyncio.sleep(_RECONNECT_DELAY_SECONDS)
+                        await connection.close(timeout=_CLOSE_TIMEOUT_SECONDS)
+            if connected_at is not None:
+                uptime = time.monotonic() - connected_at
+                if uptime >= _RECONNECT_RESET_AFTER_SECONDS:
+                    failures = 0
+            failures += 1
+            await asyncio.sleep(_reconnect_delay(failures))
+
+    async def _hold(self, connection: asyncpg.Connection) -> None:
+        """Return once the connection drops; raise if a health probe fails."""
+        terminated = asyncio.Event()
+        connection.add_termination_listener(lambda _conn: terminated.set())
+        while True:
+            with contextlib.suppress(TimeoutError):
+                await asyncio.wait_for(
+                    terminated.wait(), _HEALTH_CHECK_INTERVAL_SECONDS
+                )
+                return
+            # No termination within the interval: prove the socket still answers.
+            await asyncio.wait_for(
+                connection.fetchval("SELECT 1"), _HEALTH_CHECK_TIMEOUT_SECONDS
+            )
 
     async def _connect(self) -> asyncpg.Connection:
         url = make_url(self._config.build_connection_str())

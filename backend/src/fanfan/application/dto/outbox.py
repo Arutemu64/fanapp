@@ -12,3 +12,5 @@ class OutboxMessage(BaseModel):
     id: UUID
     subject: str
     payload: dict[str, Any]
+    # Failed publish attempts so far.
+    attempts: int

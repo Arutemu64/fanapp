@@ -11,10 +11,10 @@ from fanfan.core.events.base import AppEvent
 _STREAM_NAME = "stream"
 
 # Bound the wait for the JetStream store-ack. publish() otherwise inherits
-# nats-py's context timeout, which can be unbounded — and the relay runs under
-# APScheduler max_instances=1, so a single publish that never returns silently
-# freezes every later tick with no log. A bounded wait raises instead, so the
-# tick fails loudly and retries next interval.
+# nats-py's context timeout, which can be unbounded — and the relay drains
+# serially in one loop, so a single publish that never returns silently freezes
+# every later drain with no log. A bounded wait raises instead, so the relay logs
+# the row as a failed attempt and retries it with backoff.
 _PUBLISH_TIMEOUT_SECONDS = 10.0
 
 
