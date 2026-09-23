@@ -25,8 +25,8 @@ from fanfan.presentation.web.schemas.schedule import (
 )
 from fanfan.presentation.web.security import session_security
 
-# Every interactor here takes the shared announcement rate lock, so 429 is a
-# possible response for all of them — declare it once at the router level.
+# Every interactor here is paced by the shared announcement cooldown, so 429 is
+# a possible response for all of them — declare it once at the router level.
 management_router = APIRouter(
     dependencies=[session_security],
     responses={**AUTH_RESPONSES, **RATE_LIMIT_RESPONSES},

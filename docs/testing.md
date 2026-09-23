@@ -214,7 +214,7 @@ adapters for real; fake the ports that reach other external systems.**
 | Dependency | In tests | Why |
 |------------|----------|-----|
 | Gateways, `UnitOfWork` | **real** (PostgreSQL) | behavior is in the SQL |
-| `TokenRegistry`, `SessionStore`, `RateLimiter`, `RateLockFactory` | **real** (Redis) | behavior is in Redis semantics |
+| `TokenRegistry`, `SessionStore`, `RateLimiter`, `CooldownLockFactory` | **real** (Redis) | behavior is in Redis semantics |
 | `PasswordHasher`, Jinja `TemplateRenderer` | **real** | deterministic, no external I/O |
 | `EventBroker` | **fake** (`FakeEventBroker`) | assert *what* was published, not NATS delivery |
 | `IdProvider` | **fake** (`FakeIdProvider`) | the test sets the acting user |

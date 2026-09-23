@@ -2,7 +2,7 @@ from types import TracebackType
 from typing import Protocol
 
 
-class RateLock(Protocol):
+class CooldownLock(Protocol):
     """Distributed lock that also enforces a cooldown between successful runs.
 
     The lock does two jobs at once:
@@ -24,13 +24,13 @@ class RateLock(Protocol):
     ) -> None: ...
 
 
-class RateLockFactory(Protocol):
+class CooldownLockFactory(Protocol):
     def __call__(
         self,
-        limit_name: str,
+        key: str,
         *,
         cooldown_period: float = 60,
         blocking: bool = True,
         lock_timeout: float = 60,
         blocking_timeout: float | None = None,
-    ) -> RateLock: ...
+    ) -> CooldownLock: ...

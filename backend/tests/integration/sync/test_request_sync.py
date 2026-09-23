@@ -7,7 +7,7 @@ from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from fanfan.adapters.db.models import SyncRunORM
-from fanfan.adapters.db.run_lease import PostgresRunLease
+from fanfan.adapters.db.worker_lock import PostgresWorkerLock
 from fanfan.application.interactors.sync.request_sync import (
     RequestSync,
     RequestSyncInput,
@@ -18,7 +18,7 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.sync_run_tracker import (
     STALE_RUN_ERROR,
     STALE_RUN_TIMEOUT,
-    sync_lease_key,
+    sync_lock_key,
 )
 from fanfan.core.events.sync import SyncRequested
 from fanfan.core.exceptions.base import AccessDenied
@@ -135,8 +135,8 @@ async def test_request_sync_spares_an_old_run_whose_worker_is_alive(
     await gateway.add(running)
     await uow.commit()
     await _age_run(dishka_request, running)
-    live_worker = PostgresRunLease(await dishka_request.get(AsyncEngine))
-    assert await live_worker.try_acquire(sync_lease_key(SyncSource.COSPLAY2))
+    live_worker = PostgresWorkerLock(await dishka_request.get(AsyncEngine))
+    assert await live_worker.try_acquire(sync_lock_key(SyncSource.COSPLAY2))
 
     interactor = await dishka_request.get(RequestSync)
     try:

@@ -1,9 +1,13 @@
 from collections.abc import Callable
+from datetime import timedelta
 from uuid import UUID
 
 import pytest
 from dishka import AsyncContainer
+from sqlalchemy import update
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from fanfan.adapters.db.models import ScheduleChangeORM
 from fanfan.application.dto.page import Pagination
 from fanfan.application.interactors.schedule_mgmt.move_schedule_event import (
     MoveScheduleEvent,
@@ -340,7 +344,7 @@ async def test_move_twice_in_a_row_raises_too_fast(
         await schedule_gateway.add(event)
     await uow.commit()
 
-    # The same real-Redis rate lock as set_current guards announcements
+    # The same announcement cooldown as set_current applies
     # (announcement_timeout from seeds), so a second move within the window
     # is rejected.
     await interactor(
@@ -372,3 +376,42 @@ async def test_move_twice_in_a_row_raises_too_fast(
     assert [
         (m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)
     ] == as_outbox(ScheduleChangeCreated(schedule_change_id=changes[0].id))
+
+
+async def test_move_is_allowed_again_once_the_cooldown_has_passed(
+    dishka_request: AsyncContainer,
+    schedule_editor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    # The cooldown is measured from the newest recorded change, so backdating
+    # it past announcement_timeout stands in for waiting the window out.
+    interactor = await dishka_request.get(MoveScheduleEvent)
+    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    login(schedule_editor)
+
+    first = _schedule_event(1, 1)
+    second = _schedule_event(2, 2)
+    third = _schedule_event(3, 3)
+    fourth = _schedule_event(4, 4)
+    for event in (first, second, third, fourth):
+        await schedule_gateway.add(event)
+    await uow.commit()
+
+    await interactor(
+        MoveScheduleEventInput(event_id=first.id, place_after_event_id=second.id)
+    )
+    session = await dishka_request.get(AsyncSession)
+    await session.execute(
+        update(ScheduleChangeORM).values(
+            created_at=ScheduleChangeORM.created_at - timedelta(hours=1)
+        )
+    )
+
+    await interactor(
+        MoveScheduleEventInput(event_id=third.id, place_after_event_id=fourth.id)
+    )
+
+    moved_third = await schedule_gateway.get_by_id(third.id)
+    assert moved_third is not None
+    assert moved_third.order > 4

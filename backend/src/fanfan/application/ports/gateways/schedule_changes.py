@@ -18,3 +18,7 @@ class ScheduleChangeGateway(Protocol):
     async def read_list_schedule_changes(
         self, pagination: Pagination
     ) -> list[ScheduleChangeFullDTO]: ...
+
+    async def read_seconds_since_last_change(self) -> float | None:
+        """Seconds since the newest change was recorded, by the database clock."""
+        ...

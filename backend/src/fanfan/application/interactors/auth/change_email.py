@@ -4,10 +4,10 @@ from fanfan.application.interactors.auth.send_email_confirmation_code import (
     SendEmailConfirmationCode,
     SendEmailConfirmationCodeInput,
 )
+from fanfan.application.ports.cooldown_lock import CooldownLockFactory
 from fanfan.application.ports.gateways.users import UserGateway
-from fanfan.application.ports.rate_lock import RateLockFactory
 from fanfan.application.services.current_user import CurrentUserProvider
-from fanfan.core.exceptions.rate_limit import EmailCodeRequestTooFast, RateLimitCooldown
+from fanfan.core.exceptions.rate_limit import CooldownActive, EmailCodeRequestTooFast
 from fanfan.core.exceptions.users import EmailAlreadyExists
 from fanfan.core.services.email_login import EMAIL_CODE_REQUEST_COOLDOWN_SECONDS
 from fanfan.core.vo.email import Email
@@ -23,12 +23,12 @@ class ChangeEmail:
         user_gateway: UserGateway,
         current_user_provider: CurrentUserProvider,
         send_email_confirmation_code: SendEmailConfirmationCode,
-        rate_lock_factory: RateLockFactory,
+        cooldown_lock_factory: CooldownLockFactory,
     ) -> None:
         self.user_gateway = user_gateway
         self.current_user_provider = current_user_provider
         self.send_email_confirmation_code = send_email_confirmation_code
-        self.rate_lock_factory = rate_lock_factory
+        self.cooldown_lock_factory = cooldown_lock_factory
 
     async def __call__(self, data: ChangeEmailInput) -> None:
         new_email = Email(data.new_email)
@@ -41,7 +41,7 @@ class ChangeEmail:
         if existing_user is not None and existing_user.id != current_user.id:
             raise EmailAlreadyExists
 
-        lock = self.rate_lock_factory(
+        lock = self.cooldown_lock_factory(
             f"email_code_request:{new_email.value}",
             cooldown_period=EMAIL_CODE_REQUEST_COOLDOWN_SECONDS,
         )
@@ -58,5 +58,5 @@ class ChangeEmail:
                         target_email=new_email.value,
                     )
                 )
-        except RateLimitCooldown as e:
+        except CooldownActive as e:
             raise EmailCodeRequestTooFast(retry_after=e.details["retry_after"]) from e

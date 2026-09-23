@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from fanfan.adapters.db.config import DatabaseConfig
 from fanfan.adapters.db.factory import create_engine
-from fanfan.adapters.db.run_lease import PostgresRunLease
+from fanfan.adapters.db.worker_lock import PostgresWorkerLock
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -27,15 +27,15 @@ async def short_idle_engine(dishka: AsyncContainer) -> AsyncIterator[AsyncEngine
     await engine.dispose()
 
 
-async def test_lease_outlives_the_idle_in_transaction_timeout(
+async def test_lock_outlives_the_idle_in_transaction_timeout(
     short_idle_engine: AsyncEngine,
 ) -> None:
-    # A sync holds its lease far longer than the idle-in-transaction timeout. If
-    # the lease connection sat inside an open transaction, Postgres would kill
+    # A sync holds its lock far longer than the idle-in-transaction timeout. If
+    # the lock connection sat inside an open transaction, Postgres would kill
     # it and silently hand the run to a second worker mid-sync.
-    key = "test:lease"
-    holder = PostgresRunLease(short_idle_engine)
-    rival = PostgresRunLease(short_idle_engine)
+    key = "test:worker-lock"
+    holder = PostgresWorkerLock(short_idle_engine)
+    rival = PostgresWorkerLock(short_idle_engine)
     try:
         assert await holder.try_acquire(key)
         await asyncio.sleep(1)
@@ -45,14 +45,14 @@ async def test_lease_outlives_the_idle_in_transaction_timeout(
         await holder.release()
 
 
-async def test_lease_frees_when_the_holder_connection_dies(
+async def test_lock_frees_when_the_holder_connection_dies(
     short_idle_engine: AsyncEngine,
 ) -> None:
     # No expiry to tune: a crashed worker's connection closes and Postgres
     # drops its lock at once, so the run can be resumed immediately.
-    key = "test:lease"
-    holder = PostgresRunLease(short_idle_engine)
-    rival = PostgresRunLease(short_idle_engine)
+    key = "test:worker-lock"
+    holder = PostgresWorkerLock(short_idle_engine)
+    rival = PostgresWorkerLock(short_idle_engine)
     try:
         assert await holder.try_acquire(key)
         # Kill only the holder's own backend, standing in for its crash; other
@@ -66,5 +66,5 @@ async def test_lease_frees_when_the_holder_connection_dies(
         assert await rival.try_acquire(key)
     finally:
         await rival.release()
-        # Releasing a lease whose connection already died is a quiet no-op.
+        # Releasing a lock whose connection already died is a quiet no-op.
         await holder.release()

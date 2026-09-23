@@ -8,7 +8,7 @@ from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 from fanfan.adapters.db.models import SyncRunORM
-from fanfan.adapters.db.run_lease import PostgresRunLease
+from fanfan.adapters.db.worker_lock import PostgresWorkerLock
 from fanfan.application.interactors.sync.execute_cosplay_sync import ExecuteCosplaySync
 from fanfan.application.ports.gateways import UserPermissionGateway
 from fanfan.application.ports.gateways.nominations import NominationGateway
@@ -17,7 +17,7 @@ from fanfan.application.ports.sources.cosplay import ExternalNomination
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.sync_run_tracker import (
     STALE_RUN_TIMEOUT,
-    sync_lease_key,
+    sync_lock_key,
 )
 from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.sync import SyncAlreadyRunning
@@ -163,7 +163,7 @@ async def test_redelivered_trigger_backs_off_while_a_live_worker_holds_the_run(
 ) -> None:
     # A worker that missed its NATS heartbeats is still running, and its trigger
     # got redelivered. Redelivery alone cannot tell it from a dead worker; the
-    # lease it holds can. The redelivered trigger must back off (raise, so the
+    # lock it holds can. The redelivered trigger must back off (raise, so the
     # consumer retries later) instead of running the same sync alongside it.
     login(sync_operator)
     source = await dishka_request.get(FakeCosplaySource)
@@ -173,8 +173,8 @@ async def test_redelivered_trigger_backs_off_while_a_live_worker_holds_the_run(
     running.mark_running(datetime.now(UTC))
     await gateway.add(running)
     await uow.commit()
-    live_worker = PostgresRunLease(await dishka_request.get(AsyncEngine))
-    assert await live_worker.try_acquire(sync_lease_key(SyncSource.COSPLAY2))
+    live_worker = PostgresWorkerLock(await dishka_request.get(AsyncEngine))
+    assert await live_worker.try_acquire(sync_lock_key(SyncSource.COSPLAY2))
 
     interactor = await dishka_request.get(ExecuteCosplaySync)
     try:
@@ -243,7 +243,7 @@ async def test_unattended_run_spares_a_long_run_whose_worker_is_alive(
     uow: UnitOfWork,
 ) -> None:
     # A full sweep can outlast STALE_RUN_TIMEOUT. Age alone must not get it
-    # reaped while its worker still holds the lease, or the next tick would
+    # reaped while its worker still holds the lock, or the next tick would
     # start a second sweep of the same source alongside it.
     login(sync_operator)
     gateway = await dishka_request.get(SyncRunGateway)
@@ -257,8 +257,8 @@ async def test_unattended_run_spares_a_long_run_whose_worker_is_alive(
         .where(SyncRunORM.id == running.id)
         .values(created_at=datetime.now(UTC) - STALE_RUN_TIMEOUT * 2)
     )
-    live_worker = PostgresRunLease(await dishka_request.get(AsyncEngine))
-    assert await live_worker.try_acquire(sync_lease_key(SyncSource.COSPLAY2))
+    live_worker = PostgresWorkerLock(await dishka_request.get(AsyncEngine))
+    assert await live_worker.try_acquire(sync_lock_key(SyncSource.COSPLAY2))
 
     interactor = await dishka_request.get(ExecuteCosplaySync)
     try:

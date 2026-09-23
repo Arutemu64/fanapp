@@ -289,9 +289,9 @@ async def test_set_current_event_twice_in_a_row_raises_too_fast(
     await schedule_gateway.add(second_event)
     await uow.commit()
 
-    # The rate-limit guard for announcements uses a real Redis lock
-    # (announcement_timeout from seeds — 10 seconds), which is cleared
-    # between tests by the reset_redis fixture.
+    # Announcements are paced by the newest schedule change's age
+    # (announcement_timeout from seeds — 10 seconds); each test's rows roll
+    # back with it, so no cooldown leaks between tests.
     await interactor(SetCurrentScheduleEventInput(event_id=first_event.id))
     with pytest.raises(ScheduleEditTooFast):
         await interactor(SetCurrentScheduleEventInput(event_id=second_event.id))

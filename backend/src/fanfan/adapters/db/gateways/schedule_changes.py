@@ -1,4 +1,4 @@
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -149,3 +149,13 @@ class SqlScheduleChangeGateway(ScheduleChangeGateway):
         )
         result = (await self.session.scalars(stmt)).unique()
         return [_parse_full_dto(s) for s in result]
+
+    async def read_seconds_since_last_change(self) -> float | None:
+        # clock_timestamp(), not now(): now() is frozen at the start of this
+        # transaction, which may predate the lock wait behind the edit whose
+        # row we are measuring from.
+        elapsed = func.extract(
+            "epoch", func.clock_timestamp() - func.max(ScheduleChangeORM.created_at)
+        )
+        seconds = await self.session.scalar(select(elapsed))
+        return float(seconds) if seconds is not None else None
