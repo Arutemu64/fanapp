@@ -19,8 +19,13 @@ class PublishRejected(Exception):
 class StubNatsBroker:
     """Records publishes, fails chosen events and tracks peak concurrency."""
 
-    def __init__(self, failing: set[NotificationId] | None = None) -> None:
+    def __init__(
+        self,
+        failing: set[NotificationId] | None = None,
+        cancelled: set[NotificationId] | None = None,
+    ) -> None:
         self.failing = failing or set()
+        self.cancelled = cancelled or set()
         self.published: list[NotificationId] = []
         self.in_flight = 0
         self.peak_in_flight = 0
@@ -33,6 +38,8 @@ class StubNatsBroker:
             await asyncio.sleep(0)
             if message.notification_id in self.failing:
                 raise PublishRejected
+            if message.notification_id in self.cancelled:
+                raise asyncio.CancelledError
             self.published.append(message.notification_id)
         finally:
             self.in_flight -= 1
@@ -70,3 +77,17 @@ async def test_in_flight_publishes_stay_under_the_cap(
 
     assert len(stub.published) == 20
     assert stub.peak_in_flight == 3
+
+
+async def test_a_publish_cancelled_on_its_own_counts_as_failed() -> None:
+    # The fan-out task itself is not cancelled, so gather hands the child's
+    # CancelledError back as a result; dropping it would ack a lost event.
+    events = _events(3)
+    stub = StubNatsBroker(cancelled={events[0].notification_id})
+
+    with pytest.raises(ExceptionGroup) as error:
+        await NatsEventBroker(cast("NatsBroker", stub)).publish_many(events)
+
+    assert len(error.value.exceptions) == 1
+    assert isinstance(error.value.exceptions[0].__cause__, asyncio.CancelledError)
+    assert len(stub.published) == 2

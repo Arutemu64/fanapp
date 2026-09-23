@@ -69,7 +69,17 @@ class NatsEventBroker(EventBroker):
         results = await asyncio.gather(
             *(publish_bounded(event) for event in events), return_exceptions=True
         )
-        failures = [result for result in results if isinstance(result, Exception)]
+        failures: list[Exception] = []
+        for result in results:
+            if isinstance(result, Exception):
+                failures.append(result)
+            elif isinstance(result, BaseException):
+                # A publish cancelled on its own, while this task was not,
+                # comes back as a CancelledError result. It did not land
+                # either, and ExceptionGroup only holds Exception instances.
+                cancelled = RuntimeError("Publish was cancelled")
+                cancelled.__cause__ = result
+                failures.append(cancelled)
         if failures:
             msg = f"{len(failures)} of {len(events)} events were not published"
             raise ExceptionGroup(msg, failures)

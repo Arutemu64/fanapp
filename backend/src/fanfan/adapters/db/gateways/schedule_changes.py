@@ -93,6 +93,10 @@ class SqlScheduleChangeGateway(ScheduleChangeGateway):
 
     async def add(self, change: ScheduleChange) -> None:
         change_orm = _from_model(change)
+        # Insert time, not the column's now() default: now() is the transaction
+        # start, which precedes the lock_for_edit wait, so it would backdate the
+        # change and shorten the announcement cooldown measured from it.
+        change_orm.created_at = func.clock_timestamp()
         self.session.add(change_orm)
         self.uow.register(change)
 
