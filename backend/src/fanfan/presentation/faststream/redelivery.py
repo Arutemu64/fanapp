@@ -12,6 +12,7 @@ from faststream.nats.subscriber import LogicSubscriber
 from nats.aio.msg import Msg
 from nats.errors import Error as NatsError
 from nats.js.api import ConsumerConfig
+from nats.js.client import JetStreamContext
 
 logger = logging.getLogger(__name__)
 
@@ -147,14 +148,50 @@ async def sync_consumer_configs(broker: NatsBroker) -> None:
             name=declared.durable_name,
             filter_subject=subscriber.subject.template,
         )
-        try:
-            await js.add_consumer(stream.name, config=config)
-        except NatsError:
-            # A non-editable field changed, or NATS did not answer; the durable
-            # keeps working with its old config, so report it rather than block
-            # startup.
-            logger.warning(
-                "Could not update consumer config",
-                extra={"durable": declared.durable_name},
-                exc_info=True,
-            )
+        await _apply_consumer_config(js, stream.name, declared.durable_name, config)
+
+
+async def _apply_consumer_config(
+    js: JetStreamContext, stream_name: str, durable: str, config: ConsumerConfig
+) -> None:
+    try:
+        current = await js.consumer_info(stream_name, durable)
+    except NatsError:
+        current = None
+    try:
+        # Always applied, even when the diff below finds nothing: the diff only
+        # compares fields the declaration sets, so gating on it would miss an
+        # update such as a removed ack_wait falling back to the server default.
+        await js.add_consumer(stream_name, config=config)
+    except NatsError:
+        # A non-editable field changed, or NATS did not answer; the durable
+        # keeps working with its old config, so report it rather than block
+        # startup.
+        logger.warning(
+            "Could not update consumer config",
+            extra={"durable": durable},
+            exc_info=True,
+        )
+        return
+    if current is None:
+        return
+    changed = changed_consumer_fields(current.config, config)
+    if changed:
+        logger.info(
+            "Consumer config updated",
+            extra={"durable": durable, "changed_fields": ",".join(changed)},
+        )
+
+
+def changed_consumer_fields(
+    current: ConsumerConfig, declared: ConsumerConfig
+) -> list[str]:
+    """The fields the declaration sets that differ from the server's config."""
+    changed: list[str] = []
+    for field in dataclasses.fields(declared):
+        wanted = getattr(declared, field.name)
+        if wanted is None:
+            continue
+        if getattr(current, field.name) != wanted:
+            changed.append(field.name)
+    return changed

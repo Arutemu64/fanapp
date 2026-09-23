@@ -6,10 +6,13 @@ from faststream import AckPolicy
 from faststream.exceptions import NackMessage
 from faststream.nats import NatsBroker
 from nats.aio.msg import Msg
+from nats.js.api import ConsumerConfig
 
 from fanfan.presentation.faststream.redelivery import (
     MAX_DELIVER,
     RedeliveryMiddleware,
+    changed_consumer_fields,
+    consumer_config,
     in_progress_heartbeat,
 )
 from fanfan.presentation.faststream.routes import setup_router
@@ -118,3 +121,24 @@ async def test_heartbeat_extends_ack_wait_until_the_handler_returns() -> None:
     assert beats_while_running >= 2
     # Stops with the handler: a finished message must not keep being extended.
     assert msg.beats == beats_while_running
+
+
+def test_config_diff_names_only_the_declared_fields_that_differ() -> None:
+    # The server fills in defaults the declaration leaves unset (None); those
+    # must not read as changes, or every startup would log a spurious update.
+    server = ConsumerConfig(
+        durable_name="d", ack_wait=30.0, max_deliver=-1, max_ack_pending=1000
+    )
+    declared = consumer_config(ack_wait=90)
+    declared.durable_name = "d"
+
+    assert changed_consumer_fields(server, declared) == ["ack_wait", "max_deliver"]
+
+
+def test_config_diff_is_empty_once_applied() -> None:
+    declared = consumer_config(ack_wait=90)
+    server = ConsumerConfig(
+        ack_wait=90.0, max_deliver=MAX_DELIVER, max_ack_pending=1000
+    )
+
+    assert changed_consumer_fields(server, declared) == []
