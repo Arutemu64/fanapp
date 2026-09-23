@@ -1,3 +1,5 @@
+import asyncio
+from collections.abc import Sequence
 from datetime import datetime
 from typing import Any
 
@@ -23,6 +25,15 @@ OCCURRED_AT_HEADER = "Occurred-At"
 _PUBLISH_TIMEOUT_SECONDS = 10.0
 
 
+# Cap on fan-out publishes awaiting their store-ack at once. nats-py has no
+# async-publish API with a pending limit, so without one a large fan-out puts
+# every publish in flight together: "the client does not bound how many are in
+# flight — check every ack, and add your own limit for large bursts"
+# (https://docs.nats.io/learn/jetstream/advanced-publishing). NATS gives no
+# figure for Python; 100 keeps a fan-out fast without flooding the connection.
+_MAX_IN_FLIGHT_PUBLISHES = 100
+
+
 class NatsEventBroker(EventBroker):
     def __init__(self, broker: NatsBroker) -> None:
         self.broker = broker
@@ -44,6 +55,24 @@ class NatsEventBroker(EventBroker):
             headers=headers,
             timeout=_PUBLISH_TIMEOUT_SECONDS,
         )
+
+    async def publish_many(self, events: Sequence[AppEvent]) -> None:
+        in_flight = asyncio.Semaphore(_MAX_IN_FLIGHT_PUBLISHES)
+
+        async def publish_bounded(event: AppEvent) -> None:
+            async with in_flight:
+                await self.publish(event)
+
+        # return_exceptions, not a TaskGroup: a TaskGroup would cancel every
+        # other publish on the first failure, and a plain gather would return on
+        # it while the rest ran on unawaited, their errors lost.
+        results = await asyncio.gather(
+            *(publish_bounded(event) for event in events), return_exceptions=True
+        )
+        failures = [result for result in results if isinstance(result, Exception)]
+        if failures:
+            msg = f"{len(failures)} of {len(events)} events were not published"
+            raise ExceptionGroup(msg, failures)
 
     async def publish_raw(
         self,

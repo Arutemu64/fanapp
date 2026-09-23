@@ -17,7 +17,10 @@ from fanfan.core.events.schedule import (
 )
 from fanfan.presentation.faststream.headers import read_occurred_at
 from fanfan.presentation.faststream.jstream import stream
-from fanfan.presentation.faststream.redelivery import consumer_config
+from fanfan.presentation.faststream.redelivery import (
+    consumer_config,
+    in_progress_heartbeat,
+)
 
 schedule_router = NatsRouter()
 
@@ -40,12 +43,15 @@ async def process_schedule_change(
     realtime_gateway: FromDishka[RealtimeGateway],
     msg: NatsMessage,
 ) -> None:
-    await interactor(
-        SendScheduleChangeNotificationsInput(
-            schedule_change_id=data.schedule_change_id,
-            occurred_at=read_occurred_at(msg),
+    # A large fan-out can outlast AckWait while NATS is slow to ack; the
+    # heartbeat keeps a live run from being redelivered on top of itself.
+    async with in_progress_heartbeat(msg):
+        await interactor(
+            SendScheduleChangeNotificationsInput(
+                schedule_change_id=data.schedule_change_id,
+                occurred_at=read_occurred_at(msg),
+            )
         )
-    )
     await realtime_gateway.publish(SSEMessage(SSEEventName.SCHEDULE_UPDATED))
 
 

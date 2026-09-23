@@ -83,5 +83,4 @@ class ProcessBroadcast:
             )
             for u in users
         ]
-        for e in events:
-            await self.events_broker.publish(e)
+        await self.events_broker.publish_many(events)
