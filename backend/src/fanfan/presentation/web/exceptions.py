@@ -2,8 +2,9 @@ import logging
 from collections.abc import Mapping
 from typing import Any, cast
 
-from fastapi import HTTPException, Request, status
+from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException
 from starlette.responses import JSONResponse
 
 from fanfan.core.exceptions.auth import AuthenticationError
@@ -54,6 +55,21 @@ def _resolve_status_code(exc: AppException) -> int:
     return status.HTTP_500_INTERNAL_SERVER_ERROR
 
 
+def is_expected_error(exc: BaseException) -> bool:
+    """True for an error the handlers answer with a status the client can act on.
+
+    Request validation and every domain exception with a semantic marker are
+    outcomes, not bugs, so error reporting skips them. A domain exception with no
+    marker is the opposite: it was never meant to reach a client, so reaching one
+    is a bug worth reporting.
+    """
+    if isinstance(exc, RequestValidationError):
+        return True
+    if isinstance(exc, AppException):
+        return _resolve_status_code(exc) != status.HTTP_500_INTERNAL_SERVER_ERROR
+    return False
+
+
 # A bare `{}` literal in a return position infers `dict[str, Unknown]`, which is
 # assignable to the declared type but not a subtype of it.
 _NO_HEADERS: Mapping[str, str] = {}
@@ -74,11 +90,34 @@ def _build_error_content(
     return ErrorMessage(code=code, details=dict(details or {})).model_dump()
 
 
+def internal_error_response(exc: Exception) -> JSONResponse:
+    """Log an unanticipated error and answer with a generic 500.
+
+    The code and details stay out of the body: they describe our bug, not
+    anything the client can act on. The ERROR log is what reaches Sentry (its
+    logging integration), with the request id bound by `bind_request_context`.
+    """
+    # Not `.exception()`: a handler runs outside the `except` block, so it would
+    # attach `sys.exc_info()` — None here — instead of `exc` (ruff LOG004).
+    logger.error("Unhandled exception while handling request", exc_info=exc)
+
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content=_build_error_content(code=INTERNAL_ERROR_CODE),
+    )
+
+
 async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
     _ = request
 
+    status_code = _resolve_status_code(exc)
+    # A domain exception with no marker is internal-only (see the status-map
+    # test): reaching a client means a bug, so it is handled like any other.
+    if status_code == status.HTTP_500_INTERNAL_SERVER_ERROR:
+        return internal_error_response(exc)
+
     return JSONResponse(
-        status_code=_resolve_status_code(exc),
+        status_code=status_code,
         content=_build_error_content(exc.code, exc.details),
         headers=dict(_build_app_exception_headers(exc)),
     )
@@ -136,16 +175,26 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Last-resort handler so unexpected errors still match the ErrorMessage shape.
 
-    Domain (AppException), HTTP, and validation errors are handled above; anything
-    that reaches here is an unanticipated bug. We log it (the request id is bound
-    by middleware) and return a generic 500 instead of leaking a traceback.
+    Starlette runs an `Exception` handler in `ServerErrorMiddleware`, outside
+    every other middleware, so its response carries no CORS, request-id or
+    security headers. Route errors are therefore caught earlier, by the
+    `catch_unexpected_errors` middleware; only an error raised by a middleware
+    outside that one still lands here.
     """
     _ = request
-    # Not `.exception()`: a handler runs outside the `except` block, so it would
-    # attach `sys.exc_info()` — None here — instead of `exc` (ruff LOG004).
-    logger.error("Unhandled exception while handling request", exc_info=exc)
+    return internal_error_response(exc)
 
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content=_build_error_content(code=INTERNAL_ERROR_CODE),
-    )
+
+def add_exception_handlers(app: FastAPI) -> None:
+    # Handlers narrow `exc` to a concrete exception subtype, which Starlette's
+    # broad `ExceptionHandler` signature doesn't model — a known false positive.
+    app.add_exception_handler(AppException, app_exception_handler)  # ty: ignore[invalid-argument-type]
+    # Starlette's HTTPException, not FastAPI's subclass: the router raises the
+    # Starlette one for an unknown path (404) or method (405), and only a handler
+    # on the base class gives those the ErrorMessage shape too.
+    # https://fastapi.tiangolo.com/tutorial/handling-errors/
+    app.add_exception_handler(HTTPException, http_exception_handler)  # ty: ignore[invalid-argument-type]
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)  # ty: ignore[invalid-argument-type]
+    # Last resort for an error raised outside `catch_unexpected_errors` (in an
+    # outer middleware), so even that response keeps the ErrorMessage shape.
+    app.add_exception_handler(Exception, unhandled_exception_handler)

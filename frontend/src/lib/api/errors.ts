@@ -213,7 +213,7 @@ const ERROR_MESSAGES = {
 	EMAIL_ALREADY_EXISTS: 'Этот адрес уже используется',
 	EMAIL_DELIVERY_FAILED: 'Не удалось отправить код. Попробуй позже',
 	EVENT_NOT_FOUND: 'Выступление не найдено',
-	INCORRECT_PASSWORD: 'Неверная почта или пароль',
+	INCORRECT_PASSWORD: 'Неверный текущий пароль',
 	INVALID_CREDENTIALS: 'Неверная почта или пароль',
 	INVALID_EMAIL: 'Неверный адрес эл. почты',
 	INVALID_FESTIVAL_TIME_RANGE: 'Конец фестиваля должен быть позже начала',

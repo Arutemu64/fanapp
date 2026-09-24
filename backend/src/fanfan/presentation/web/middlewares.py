@@ -7,7 +7,10 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from fanfan.presentation.web.config import WebConfig
-from fanfan.presentation.web.exceptions import HTTP_ERROR_CODE
+from fanfan.presentation.web.exceptions import (
+    HTTP_ERROR_CODE,
+    internal_error_response,
+)
 from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
 from fanfan.presentation.web.schemas.error import ErrorMessage
 
@@ -44,6 +47,26 @@ def refresh_session_cookie(web_config: WebConfig) -> HttpMiddleware:
         return response
 
     return middleware
+
+
+async def catch_unexpected_errors(
+    request: Request, call_next: RequestResponseEndpoint
+) -> Response:
+    """Turn an unanticipated route error into the generic 500 inside the stack.
+
+    An `Exception` handler would do the same, but Starlette runs it in
+    `ServerErrorMiddleware` — outermost, after every other middleware has
+    unwound — so that 500 lacks CORS (a cross-origin browser sees a network
+    error instead), `X-Request-ID`, `Cache-Control` and the security headers.
+    Catching here, inside all of them, lets the error response pass back through
+    them like any other. Starlette also re-raises from there ("We always
+    continue to raise the exception", starlette/middleware/errors.py), so the
+    server logged the traceback a second time.
+    """
+    try:
+        return await call_next(request)
+    except Exception as exc:  # noqa: BLE001 — the last line before a client-facing 500
+        return internal_error_response(exc)
 
 
 async def security_headers(

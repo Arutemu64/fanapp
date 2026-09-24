@@ -1850,6 +1850,10 @@ export type ChangeCurrentUserPasswordData = {
 
 export type ChangeCurrentUserPasswordErrors = {
 	/**
+	 * Current password is incorrect.
+	 */
+	400: ErrorMessage;
+	/**
 	 * Not authenticated.
 	 */
 	401: ErrorMessage;
@@ -1861,10 +1865,6 @@ export type ChangeCurrentUserPasswordErrors = {
 	 * User not found.
 	 */
 	404: ErrorMessage;
-	/**
-	 * Current password is incorrect.
-	 */
-	409: ErrorMessage;
 	/**
 	 * Request validation error.
 	 */

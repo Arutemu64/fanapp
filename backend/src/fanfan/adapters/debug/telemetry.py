@@ -1,7 +1,7 @@
+from collections.abc import Callable
 from typing import Any, cast
 
 import sentry_sdk
-from fastapi.exceptions import RequestValidationError
 from sentry_sdk.integrations.asyncio import AsyncioIntegration
 from sentry_sdk.integrations.asyncpg import AsyncPGIntegration
 from sentry_sdk.integrations.fastapi import FastApiIntegration
@@ -10,17 +10,26 @@ from sentry_sdk.integrations.redis import RedisIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from sentry_sdk.types import Event
 
-from fanfan.core.exceptions.base import AppException
+# Decides which exceptions are expected outcomes rather than bugs. Injected by
+# the composition root, since that call belongs to the presentation layer's
+# status mapping: a domain exception is expected when it maps to a status the
+# client can act on, and a bug when it has no such marker.
+ExpectedErrorPredicate = Callable[[BaseException], bool]
 
 
-def _scrub_sensitive_data(event: Event, hint: dict[str, Any]) -> Event | None:
-    """Scrub potential PII from Sentry events before sending."""
-    # Filter out domain business exceptions and request validation exceptions
+def _drop_expected_errors(
+    event: Event, hint: dict[str, Any], is_expected_error: ExpectedErrorPredicate
+) -> Event | None:
     if "exc_info" in hint:
         _, exc_value, _ = hint["exc_info"]
-        if isinstance(exc_value, (AppException, RequestValidationError)):
+        if exc_value is not None and is_expected_error(exc_value):
             return None
 
+    return _scrub_sensitive_data(event)
+
+
+def _scrub_sensitive_data(event: Event) -> Event:
+    """Scrub potential PII from Sentry events before sending."""
     if event.get("request", {}).get("headers"):
         headers = cast("dict[str, str]", event["request"]["headers"])
         sensitive = ["cookie", "authorization", "x-api-key", "x-auth-token"]
@@ -42,6 +51,7 @@ def setup_telemetry(  # noqa: PLR0913, PLR0917 — one parameter per Sentry knob
     service_name: str,
     environment: str,
     sentry_dsn: str | None,
+    is_expected_error: ExpectedErrorPredicate,
     release: str | None = None,
     traces_sample_rate: float = 0.1,
     profiles_sample_rate: float = 0.0,
@@ -59,7 +69,9 @@ def setup_telemetry(  # noqa: PLR0913, PLR0917 — one parameter per Sentry knob
             profiles_sample_rate=profiles_sample_rate,
             enable_logs=False,
             send_default_pii=False,
-            before_send=_scrub_sensitive_data,
+            before_send=lambda event, hint: _drop_expected_errors(
+                event, hint, is_expected_error
+            ),
             # Every integration is listed explicitly (even the ones that would
             # auto-enable from the installed package) so the observability
             # surface is auditable in one place instead of split between this
