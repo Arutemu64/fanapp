@@ -43,6 +43,11 @@ describe('getApiFieldError', () => {
 		expect(getApiFieldError(error, 'roles')).toBe('Неверный формат');
 	});
 
+	it('keeps a field that is itself named like the location', () => {
+		const error = validationError([{ loc: ['body', 'body'], type: 'string_too_short' }]);
+		expect(getApiFieldError(error, 'body')).toBe('Слишком короткое значение');
+	});
+
 	it('ignores errors about other fields', () => {
 		const error = validationError([{ loc: ['body', 'email'], type: 'missing' }]);
 		expect(getApiFieldError(error, 'password')).toBeNull();

@@ -187,13 +187,19 @@ function createErrorId(): string {
 // never carry the id we show. Same filter as the wrapper — a 4xx reaching this
 // hook is a route SvelteKit could not match, not an app bug. The id is only
 // shown when an event was actually sent: no DSN, or an error `beforeSend` drops
-// (a stale chunk), would leave the user quoting an id nobody can look up.
+// (a stale chunk, an error carrying a 5xx `status`), would leave the user
+// quoting an id nobody can look up.
 export const handleError: HandleClientError = ({ error, status }) => {
 	const err = error as { code?: string } | undefined;
 	const code = err?.code ?? 'UNKNOWN';
 	const message = 'В приложении что-то сломалось. Попробуй обновить страницу.';
 
-	if (status < 500 || !PUBLIC_SENTRY_DSN || isStaleChunkError(error)) {
+	if (
+		status < 500 ||
+		!PUBLIC_SENTRY_DSN ||
+		isStaleChunkError(error) ||
+		isServerSideHttpError(error)
+	) {
 		return { message, code };
 	}
 

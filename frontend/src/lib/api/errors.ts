@@ -47,11 +47,16 @@ function getValidationErrors(details: ApiErrorDetails): ApiValidationErrorDetail
 }
 
 // The request field a Pydantic `loc` points at: its last named segment, past
-// the `body` / `query` / `path` prefix.
+// the leading `body` / `query` / `path` location. Only that first segment is a
+// location — a field can itself be called `body` (the broadcast's
+// `['body', 'body']`).
 function getFieldName(path: Array<string | number>): string | null {
-	const lastSegment = path
+	const [location, ...rest] = path;
+	const isLocation = typeof location === 'string' && ['body', 'query', 'path'].includes(location);
+	const fieldPath = isLocation ? rest : path;
+
+	const lastSegment = fieldPath
 		.filter((segment): segment is string => typeof segment === 'string')
-		.filter((segment) => !['body', 'query', 'path'].includes(segment))
 		.at(-1);
 
 	return lastSegment ?? null;
