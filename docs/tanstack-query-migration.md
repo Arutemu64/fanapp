@@ -234,26 +234,72 @@ observer is mounted):
 Read-your-writes stays: each `createMutation` invalidates its keys in
 `onSuccess`, so the operator who made the change never waits for the SSE echo.
 
-### UI state mapping
+### UI state mapping and UX rules
 
 TanStack's result shape ([useQuery reference](https://tanstack.com/query/latest/docs/framework/react/reference/useQuery))
 maps onto the states the pages already render; `shouldShowStaleNotice`,
 `offlineMiss`, `offlineUnavailable`, `stale` and `cachedAt` all disappear:
 
-| Result                                                                 | Render                                                                                  |
-| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `data === undefined && isFetching`                                     | Skeleton, after the 250 ms delay the app layout already applies                         |
-| `data !== undefined && isFetching`                                     | Content, plus a subtle «Обновляем…» line; never a blocking loader                       |
-| `data !== undefined && (isRefetchError \|\| fetchStatus === 'paused')` | Content + `StaleDataNotice` with `dataUpdatedAt` as the synced-at time                  |
-| `data === undefined && fetchStatus === 'paused'`                       | The offline empty state («недоступно офлайн»)                                           |
-| `data === undefined && isError`                                        | `ErrorState`, which reframes to the connectivity page when `onlineManager` says offline |
+| Result                                                                 | Render                                                                                                                                      |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `data === undefined && isFetching`                                     | Skeleton, after the 250 ms delay the app layout already applies                                                                             |
+| `data !== undefined && isFetching`                                     | Content unchanged. A discreet «Обновляем…» line appears only once the fetch has run for 1 s; never a skeleton or blocking loader over data  |
+| `data !== undefined && (isRefetchError \|\| fetchStatus === 'paused')` | Content + `StaleDataNotice` in its neutral form: «Обновлено в 14:32» from `dataUpdatedAt`, with an «Обновить» action that calls `refetch()` |
+| `data === undefined && fetchStatus === 'paused'`                       | The offline empty state («недоступно офлайн»)                                                                                               |
+| `data === undefined && isError`                                        | `ErrorState` with a `refetch()` retry; reframes to the connectivity page when `onlineManager` says offline                                  |
 
-Structural sharing keeps unchanged rows referentially stable, so a background
-refresh does not re-render the list or move the scroll position. The
-notifications feed prepends new items behind a «новые» pill rather than shifting
-the list under the reader's thumb. `StaleDataNotice`'s copy currently opens with
-«Нет связи»; it stays correct because it now shows only on a failed or paused
-revalidation.
+The migration only pays off for a user on a congested cell if the UI stops
+waiting and stops apologising. Crowded-venue measurements show that state is
+"slow", not "offline": latency and uplink collapse, packet loss peaks at 2–7×
+normal, connection failures run up to 400× the routine rate
+([crowded events](https://web.cs.ucdavis.edu/~zubair/files/crowded_sigmetrics.pdf),
+[stadium characterization](https://arxiv.org/abs/2607.16008)). Today that state
+produces the worst path: a 3.5 s wait, then the cached copy under a yellow
+«Нет связи» alert while the user is online. The rules below are part of the
+migration, not a follow-up; each phase lists which of them it lands.
+
+1. **Never block on a request when data exists.** Boot and every page render
+   from cache first and refresh behind; the guideline is to avoid requests that
+   block content and let the user keep browsing
+   ([web.dev offline UX](https://web.dev/articles/offline-ux-design-guidelines)).
+2. **No spinner for background refreshes.** Under about one second no feedback
+   is needed, and a skeleton over existing data is the worst option
+   ([Nielsen's response-time limits](https://www.nngroup.com/articles/response-times-3-important-limits/)).
+   The «Обновляем…» line is gated on `isFetching` for ≥ 1 s; the 250 ms skeleton
+   delay stays for cold loads only.
+3. **One freshness signal.** Today `ConnectionBanner` and `StaleDataNotice` can
+   both say offline at once. The banner becomes the device-offline signal
+   («Нет интернета»); the per-page notice becomes neutral, time-stamped text
+   shown only when a refresh failed or paused. Last-updated time is the
+   recommended way to convey staleness (web.dev, above). The notice drops the
+   `warning` variant; the SSE strip keeps the backend-down case.
+4. **Retry never reloads.** `ErrorState` recovers with
+   `window.location.reload()` today, the most expensive action possible on a
+   congested network. Its retry becomes the query's `refetch()`.
+5. **Optimistic subscribe / unsubscribe.** The card and the badge both show the
+   state, so use the cache approach: `onMutate` snapshots and writes, `onError`
+   rolls back with a toast, `onSettled` invalidates
+   ([optimistic updates](https://tanstack.com/query/latest/docs/framework/react/guides/optimistic-updates)).
+6. **Stable lists during refresh.** Structural sharing keeps unchanged rows
+   referentially stable; feeds use `placeholderData: keepPreviousData` so the
+   next page never blanks the list; the notifications feed prepends new items
+   behind a «новые» pill instead of shifting the list under the reader's thumb.
+7. **No accidental full reloads.** In the installed PWA, Chrome's pull-to-refresh
+   reloads the whole app. `overscroll-behavior-y: contain` on the scrolling
+   `<main>` disables it; the property is not Baseline, so it is progressive
+   hardening ([MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior)).
+   Freshness comes from SSE and focus refetch, so no pull-to-refresh replacement
+   is built; «Обновить» inside the stale notice is the manual escape hatch.
+8. **Keep the default retries.** Three with exponential backoff matches
+   transient loss on a congested cell now that they run behind visible data.
+9. **Queue subscriptions offline (candidate, decided in phase 1).** Subscribing
+   is idempotent and low-stakes, so a paused mutation with «Подпишем, когда
+   появится связь» is a real win in the hall; votes and feedback stay
+   online-only. Requires the `setMutationDefaults` plumbing from the logout
+   mutation, so it is either landed with phase 1 or dropped, not deferred.
+
+Copy above is provisional and goes through the `ru-copy` agent before it ships
+(`AGENTS.md`, «Russian user-facing copy»).
 
 ### Route guards
 
@@ -363,30 +409,39 @@ The largest visible win: universal data, SSE-invalidated, read by everyone.
 
 1. `schedule/+page.ts` returns `{ title }`; the page owns the two queries above.
 2. `SubscribeModal`, `UnsubscribeModal`, `MoveEventModal`, `EventCard` mutations
-   become `createMutation` with `onSuccess` invalidation; the subscribe toggle
-   gets an optimistic `setQueryData`.
+   become `createMutation`; subscribe / unsubscribe are optimistic via the cache
+   with rollback (UX rule 5); decide rule 9 (offline-queued subscriptions) here.
 3. `schedule_updated` and `connection_established` rows of the SSE table go live;
    the page's visibility `$effect` and `eventsClient.on` handlers are removed.
 4. `warmCache` for the schedule becomes `void queryClient.query(getScheduleOptions(...))`
    in the root layout's `onMount`.
 5. Delete `reconnectRefresh.ts` and `OfflineService.#commit`'s refresh.
-6. E2E: extend `realtime.spec.ts` (still passes: SSE → refetch) and add a
+6. UX rules 2, 3, 4 and 7 land here because the schedule is where they are
+   visible: the 1 s-gated «Обновляем…» line, `StaleDataNotice` in its neutral
+   time-stamped form with «Обновить», `ErrorState` retrying via `refetch()`,
+   `overscroll-behavior-y: contain` on `<main>`. `shouldShowStaleNotice` goes.
+7. E2E: extend `realtime.spec.ts` (still passes: SSE → refetch) and add a
    «cache-first» spec: load the schedule online, `context.setOffline(true)`
    (fires the browser `offline` event, so `onlineManager` pauses), reload, assert
-   the list renders and `StaleDataNotice` shows.
+   the list renders and the time-stamped notice shows while the banner says
+   «Нет интернета» — one signal each, not two saying the same thing.
 
 Exit: schedule tab switch paints instantly from memory; offline reload paints
-from IndexedDB; the diff removes more lines than it adds.
+from IndexedDB; a slow (throttled) network shows content first and no skeleton;
+the diff removes more lines than it adds.
 
 ### Phase 2 — notifications, bell, unread count
 
 1. `notifications/+page.ts` → title only; the page uses `createInfiniteQuery`
-   with the existing offset/limit and `dedupeById` in `select`.
+   with the existing offset/limit, `dedupeById` in `select` and
+   `placeholderData: keepPreviousData` (UX rule 6).
 2. `(app)/+layout.ts` stops streaming a seed; `NotificationBell` reads the
    notifications and unread-count queries directly.
 3. `UnreadCountService` is deleted. «Mark all read» = `setQueryData(count, 0)` +
    invalidate.
-4. `notification_created` row goes live; the bell's handlers go.
+4. `notification_created` row goes live; the bell's handlers go. New items that
+   arrive while the feed is open sit behind a «новые» pill until tapped, instead
+   of shifting the list (UX rule 6).
 5. `schedule/changes` follows the same infinite-query shape; `PaginatedFeed` and
    `feedSnapshotKey` are deleted.
 6. `notifications.spec.ts` re-verified; the `{#key}` remount assertion, if any,
@@ -401,6 +456,8 @@ The riskiest phase; everything above still works if it slips.
    «never downgrade identity on a transient error» rule for free).
 2. Root `+layout.ts` awaits the persister restore and no longer fetches `/me`;
    the `(protected)` and `(auth)` guards use `queryClient.query({ staleTime: 'static' })`.
+   This is UX rule 1 at boot: the splash ends when the cache is read, not when
+   `/me` answers — today's up-to-3.5 s wait on a congested cell.
 3. 401 interceptor rewired to the query cache + `invalidate('app:current-user')`.
 4. Offline logout as the paused mutation above; `pendingLogout.ts` deleted;
    `AppNavbar.handleLogout` becomes one `mutate()` call.
@@ -423,7 +480,8 @@ The voting boundary timer in `voting/+layout.svelte` becomes a
 1. Delete `offlineCache.ts` (+ tests), `fetchTimeout.ts`, `reachability.ts`,
    `offline.svelte.ts`, `reachabilityTransition.ts` (+ tests). `ConnectionBanner`,
    `ErrorState` and `offlineWriteGate` read the `onlineManager` bridge instead;
-   the banner keeps «Нет интернета» and drops the server-unreachable variant.
+   the banner keeps «Нет интернета» and drops the server-unreachable variant,
+   completing UX rule 3 app-wide.
    One `delMany` removes the legacy `g:`/`u:` keys from `fanfan-cache`.
 2. Docs in the same PR: frontend.md §2 rewritten around queries (the
    «Read-only offline data», «Complete-miss», «Online-only», «Warming»,
@@ -446,15 +504,17 @@ The voting boundary timer in `voting/+layout.svelte` becomes a
 
 ## Risks
 
-| Risk                                                                         | Mitigation                                                                                                                                                           |
-| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@tanstack/svelte-query` v6 is a young runes rewrite                         | Pin exact versions; Renovate bumps ride the E2E suite                                                                                                                |
-| Root load re-runs and recreates the client                                   | No `depends` there; `invalidateAll` lint ban; persisted cache restores anyway                                                                                        |
-| Restore blocks first paint                                                   | One IndexedDB read of a small dehydrated cache; measure in phase 3 with a cold-start trace                                                                           |
-| Optimistic `setQueryData` is not persisted until the next invalidation       | Every mutation invalidates in `onSuccess`; a refresh mid-mutation shows the pre-mutation state, which is honest                                                      |
-| Logout / `me` refetch race after reconnect                                   | See «Offline logout»; decided in phase 3 with an E2E                                                                                                                 |
-| Captive portal without a cache shows a skeleton for ~7 s of retries          | Accepted; first-ever open on hall Wi-Fi only. If field reports say otherwise, `retry: (n, err) => n < 3 && !isHttpError(err)` shortens it without reviving the probe |
-| Thrown errors leak into code still written for the returned-error convention | The hey-api plugin only throws inside generated options; direct SDK calls keep the old contract until they are migrated                                              |
+| Risk                                                                         | Mitigation                                                                                                                                                                                                                                                                                                               |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `@tanstack/svelte-query` v6 is a young runes rewrite                         | Pin exact versions; Renovate bumps ride the E2E suite                                                                                                                                                                                                                                                                    |
+| Root load re-runs and recreates the client                                   | No `depends` there; `invalidateAll` lint ban; persisted cache restores anyway                                                                                                                                                                                                                                            |
+| Restore blocks first paint                                                   | One IndexedDB read of a small dehydrated cache; measure in phase 3 with a cold-start trace                                                                                                                                                                                                                               |
+| Optimistic `setQueryData` is not persisted until the next invalidation       | Every mutation invalidates in `onSuccess`; a refresh mid-mutation shows the pre-mutation state, which is honest                                                                                                                                                                                                          |
+| Logout / `me` refetch race after reconnect                                   | See «Offline logout»; decided in phase 3 with an E2E                                                                                                                                                                                                                                                                     |
+| Captive portal without a cache shows a skeleton for ~7 s of retries          | Accepted; first-ever open on hall Wi-Fi only. If field reports say otherwise, `retry: (n, err) => n < 3 && !isHttpError(err)` shortens it without reviving the probe                                                                                                                                                     |
+| Thrown errors leak into code still written for the returned-error convention | The hey-api plugin only throws inside generated options; direct SDK calls keep the old contract until they are migrated                                                                                                                                                                                                  |
+| A stale schedule is shown confidently at a convention where changes matter   | SSE invalidation + focus refetch keep it fresh while online; when a refresh fails the time-stamped notice says exactly how old the copy is (UX rule 3)                                                                                                                                                                   |
+| Silent background refreshes hide that content changed under the user         | Structural sharing means unchanged rows do not move; the notifications feed uses the «новые» pill; a new notification already toasts via `notification_created` (`NotificationBell`), and a `schedule_updated` refresh stays silent by design — announcing a change is the organizer's notification, not the cache's job |
 
 ## Sources
 
@@ -472,4 +532,9 @@ The voting boundary timer in `voting/+layout.svelte` becomes a
 - useQuery result fields — <https://tanstack.com/query/latest/docs/framework/react/reference/useQuery>
 - hey-api TanStack Query plugin — <https://heyapi.dev/openapi-ts/plugins/tanstack-query>; generated example — <https://github.com/hey-api/openapi-ts/blob/main/examples/openapi-ts-tanstack-svelte-query/src/client/%40tanstack/svelte-query.gen.ts>
 - SvelteKit auth guidance — <https://svelte.dev/docs/kit/auth>
+- Offline UX design guidelines (web.dev) — <https://web.dev/articles/offline-ux-design-guidelines>
+- Response-time limits (Nielsen Norman Group) — <https://www.nngroup.com/articles/response-times-3-important-limits/>
+- Optimistic updates — <https://tanstack.com/query/latest/docs/framework/react/guides/optimistic-updates>
+- `overscroll-behavior` (MDN) — <https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior>
+- Cellular performance at crowded events — <https://web.cs.ucdavis.edu/~zubair/files/crowded_sigmetrics.pdf>; dense stadium deployments — <https://arxiv.org/abs/2607.16008>
 - Maintainer guidance on keeping cached data through failed refetches — <https://github.com/TanStack/query/discussions/8696>; offline PWA pitfalls — <https://github.com/TanStack/query/discussions/9585>
