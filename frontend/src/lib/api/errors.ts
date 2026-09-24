@@ -46,13 +46,20 @@ function getValidationErrors(details: ApiErrorDetails): ApiValidationErrorDetail
 	});
 }
 
-function getFieldLabel(path: Array<string | number>): string | null {
+// The request field a Pydantic `loc` points at: its last named segment, past
+// the `body` / `query` / `path` prefix.
+function getFieldName(path: Array<string | number>): string | null {
 	const lastSegment = path
 		.filter((segment): segment is string => typeof segment === 'string')
 		.filter((segment) => !['body', 'query', 'path'].includes(segment))
 		.at(-1);
 
-	if (!lastSegment) {
+	return lastSegment ?? null;
+}
+
+function getFieldLabel(path: Array<string | number>): string | null {
+	const fieldName = getFieldName(path);
+	if (!fieldName) {
 		return null;
 	}
 
@@ -64,10 +71,12 @@ function getFieldLabel(path: Array<string | number>): string | null {
 		new_password: 'новый пароль',
 		code: 'код',
 		barcode: 'номер билета',
-		username: 'имя пользователя'
+		username: 'имя пользователя',
+		text: 'текст',
+		amount: 'количество'
 	};
 
-	return labels[lastSegment] ?? null;
+	return labels[fieldName] ?? null;
 }
 
 // Pydantic error "type" -> short Russian reason. Kept lowercase so it reads
@@ -111,6 +120,29 @@ function getValidationMessage(details: ApiErrorDetails): string {
 		return capitalize(reason);
 	}
 	return 'Проверь заполнение формы';
+}
+
+/**
+ * What a VALIDATION_ERROR says about one request field, for showing under that
+ * input instead of as a form-level message. `null` when the error is anything
+ * else or names a different field — the caller then falls back to
+ * getApiErrorDetail for the form as a whole.
+ */
+export function getApiFieldError(error: unknown, field: string): string | null {
+	const payload = getApiErrorPayload(error);
+	if (payload?.code !== 'VALIDATION_ERROR') {
+		return null;
+	}
+
+	const fieldError = getValidationErrors(payload.details ?? {}).find(
+		(item) => getFieldName(item.loc) === field
+	);
+	if (!fieldError) {
+		return null;
+	}
+
+	const reason = VALIDATION_TYPE_MESSAGES[fieldError.type] ?? 'неверный формат';
+	return capitalize(reason);
 }
 
 function formatRetryAfter(value: unknown): string {
@@ -240,7 +272,30 @@ const _GENERIC_FALLBACK_CODES = [
 	'SUBSCRIPTION_NOT_FOUND'
 ] as const satisfies readonly ApiErrorCode[];
 
+const CONNECTION_FAILED_MESSAGE = 'Не удалось связаться с сервером. Попробуй ещё раз.';
+
+// The generated client never throws: a request that got no response comes back
+// as `{ error }` holding what `fetch` rejected with — a TypeError for a network
+// failure (each engine words it differently, so the type is the only stable
+// signal) or a TimeoutError DOMException from `timeoutSignal`. A deliberate
+// AbortError is left out: nobody is waiting for that request's answer.
+function isConnectionFailure(error: unknown): boolean {
+	if (error instanceof TypeError) {
+		return true;
+	}
+	return error instanceof DOMException && error.name === 'TimeoutError';
+}
+
+/**
+ * Russian copy for a failed API call: the mapped `code` of an error response,
+ * or the connection message when the request never got an answer. `null` means
+ * there is nothing specific to say, so the caller shows its own fallback.
+ */
 export function getApiErrorDetail(error: unknown): string | null {
+	if (isConnectionFailure(error)) {
+		return CONNECTION_FAILED_MESSAGE;
+	}
+
 	const payload = getApiErrorPayload(error);
 	if (!payload) {
 		return null;

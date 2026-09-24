@@ -12,6 +12,8 @@ declare global {
 		interface Error {
 			message: string;
 			code?: string;
+			/** Reference for a reported unexpected error; set by handleError in hooks.client.ts. */
+			errorId?: string;
 		}
 		interface PageData {
 			user: CurrentUserDto | null;

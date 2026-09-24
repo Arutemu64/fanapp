@@ -27,6 +27,14 @@ const config = {
 		// embeds, private modes) surfaces an uncaught "Error: Rejected" to Sentry.
 		serviceWorker: {
 			register: false
+		},
+		experimental: {
+			// Wraps each level that has a +error.svelte in a <svelte:boundary>, so a
+			// component that throws while rendering shows the nearest error page
+			// (inside the app shell for (app) routes) and goes through handleError
+			// to Sentry, instead of leaving a half-rendered page. Needs SvelteKit
+			// 2.54+ / Svelte 5.53+. https://svelte.dev/docs/kit/errors
+			handleRenderingErrors: true
 		}
 	}
 };

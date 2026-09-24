@@ -79,8 +79,6 @@ export class UnreadCountService {
 				this.#hasAuthoritativeValue = true;
 				this.#count = data.count;
 			}
-		} catch (error) {
-			console.error('Failed to load unread count', error);
 		} finally {
 			this.#inFlight = false;
 			if (this.#pending) {

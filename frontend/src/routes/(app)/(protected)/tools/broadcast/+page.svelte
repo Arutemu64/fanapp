@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
+	import { getApiErrorDetail, getApiFieldError } from '$lib/api/errors';
 	import { sendBroadcast } from '$lib/api/generated';
 	const client = createApiClient();
 	import { invalidate } from '$app/navigation';
@@ -101,15 +102,12 @@
 			});
 
 			if (error || !response?.ok) {
-				if (response?.status === 401) {
-					submitError = 'Нужно войти в аккаунт заново';
-				} else if (response?.status === 403) {
-					submitError = 'У тебя нет доступа к отправке уведомлений';
-				} else if (response?.status === 422) {
-					submitError = 'Проверь правильность заполнения полей';
-				} else {
-					submitError = 'Не удалось запустить рассылку';
+				bodyError = getApiFieldError(error, 'body') ?? '';
+				rolesError = getApiFieldError(error, 'roles') ?? '';
+				if (bodyError || rolesError) {
+					return;
 				}
+				submitError = getApiErrorDetail(error) ?? 'Не удалось запустить рассылку';
 				return;
 			}
 
@@ -119,9 +117,6 @@
 			bodyError = '';
 			rolesError = '';
 			await invalidate('app:broadcasts');
-		} catch (err) {
-			console.error('Failed to send broadcast:', err);
-			submitError = 'Произошла непредвиденная ошибка';
 		} finally {
 			isSending = false;
 		}

@@ -33,7 +33,7 @@
 			});
 			return error || !data ? null : data.feedback;
 		},
-		onError: () => toastService.error('Не удалось загрузить отзывы')
+		onError: () => toastService.add('Не удалось загрузить отзывы', 'error')
 	});
 </script>
 

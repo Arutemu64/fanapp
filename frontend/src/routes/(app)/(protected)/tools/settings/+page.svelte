@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
+	import { getApiErrorDetail, getApiFieldError } from '$lib/api/errors';
 	import { updateSettings } from '$lib/api/generated';
 	const client = createApiClient();
 	import BackLink from '$lib/components/BackLink.svelte';
@@ -144,18 +145,13 @@
 			});
 
 			if (error || !response?.ok) {
-				if (response?.status === 401) {
-					submitError = 'Нужно войти в аккаунт заново';
-				} else if (response?.status === 403) {
-					submitError = 'У тебя нет доступа к настройкам фестиваля';
-				} else if (response?.status === 404) {
-					submitError = 'Настройки фестиваля не найдены';
-				} else if (response?.status === 422) {
-					submitError = 'Проверь введённые значения и попробуй снова';
-				} else {
-					submitError = 'Не удалось сохранить настройки фестиваля';
+				festivalStartError = getApiFieldError(error, 'festival_start') ?? '';
+				festivalEndError = getApiFieldError(error, 'festival_end') ?? '';
+				announcementTimeoutError = getApiFieldError(error, 'announcement_timeout') ?? '';
+				if (festivalStartError || festivalEndError || announcementTimeoutError) {
+					return;
 				}
-
+				submitError = getApiErrorDetail(error) ?? 'Не удалось сохранить настройки фестиваля';
 				return;
 			}
 
@@ -167,9 +163,6 @@
 			announcementTimeoutError = '';
 			toastService.add('Настройки фестиваля сохранены', 'success');
 			await invalidate('app:festival-settings');
-		} catch (err) {
-			console.error('Festival settings update failed:', err);
-			submitError = 'Не удалось сохранить настройки фестиваля';
 		} finally {
 			isSaving = false;
 		}

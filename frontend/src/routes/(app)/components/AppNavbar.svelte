@@ -16,6 +16,7 @@
 	import { markLogoutPending } from '$lib/utils/pendingLogout';
 	import { getAvatarInitials } from '$lib/utils/users';
 	import { LogOut, Menu, User } from '@lucide/svelte';
+	import * as Sentry from '@sentry/sveltekit';
 
 	import NotificationBell from './NotificationBell.svelte';
 
@@ -36,6 +37,13 @@
 	const toastService = getToastService();
 	const eventsClient = getEventsClient();
 	const offline = getOfflineService();
+
+	// The bell lives in the (app) layout, above the route's error boundary, so a
+	// render error in it would otherwise take the whole shell down to the root
+	// error page. Report it and let the navbar render without the bell.
+	function reportBellError(error: unknown) {
+		Sentry.captureException(error, { tags: { boundary: 'notification-bell' } });
+	}
 
 	async function handleLogout() {
 		// Offline: we can't reach the server to end the session, and the session
@@ -96,7 +104,9 @@
 
 	<div class="flex items-center gap-2">
 		{#if user}
-			<NotificationBell />
+			<svelte:boundary onerror={reportBellError}>
+				<NotificationBell />
+			</svelte:boundary>
 		{/if}
 		{#if user}
 			<DropdownMenu.Root>

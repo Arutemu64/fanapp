@@ -53,9 +53,6 @@
 				optimisticDelta = 0;
 				onVoted?.();
 			}
-		} catch (err) {
-			optimisticDelta -= 1;
-			toastService.error(err);
 		} finally {
 			isLoading = false;
 		}
@@ -82,9 +79,6 @@
 			toastService.add('Голос отменён', 'success');
 			optimisticDelta = 0;
 			onVoted?.();
-		} catch (err) {
-			optimisticDelta += 1;
-			toastService.error(err);
 		} finally {
 			isLoading = false;
 		}

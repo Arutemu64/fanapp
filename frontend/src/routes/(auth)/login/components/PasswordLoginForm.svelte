@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
 	const client = createApiClient();
-	import { getApiErrorDetail } from '$lib/api/errors';
+	import { getApiErrorDetail, getApiFieldError } from '$lib/api/errors';
 	import { login } from '$lib/api/generated';
 	import PasswordInput from '$lib/components/PasswordInput.svelte';
 	import * as Alert from '$lib/components/ui/alert';
@@ -89,14 +89,16 @@
 
 			if (error || !response?.ok) {
 				console.error('Login error:', error);
+				emailError = getApiFieldError(error, 'email') ?? '';
+				passwordError = getApiFieldError(error, 'password') ?? '';
+				if (emailError || passwordError) {
+					return;
+				}
 				formError = getApiErrorDetail(error) ?? 'Неверная почта или пароль';
 				return;
 			}
 
 			await completeLogin(toastService, eventsClient, 'Вход выполнен');
-		} catch (err) {
-			console.error('Password login exception:', err);
-			formError = 'Произошла непредвиденная ошибка';
 		} finally {
 			activeAction = null;
 		}

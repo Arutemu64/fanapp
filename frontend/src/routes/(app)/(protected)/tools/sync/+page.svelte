@@ -78,8 +78,6 @@
 				return;
 			}
 			toastService.add('Синхронизация запущена', 'success');
-		} catch (err) {
-			toastService.error(err);
 		} finally {
 			requesting = requesting.filter((item) => item !== source);
 			await invalidate('app:sync-sources');

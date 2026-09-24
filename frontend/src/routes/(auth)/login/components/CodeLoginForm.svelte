@@ -2,7 +2,7 @@
 	import { createApiClient } from '$lib/api';
 	import { requestLoginCode } from '$lib/api/generated';
 	const client = createApiClient();
-	import { getApiErrorDetail } from '$lib/api/errors';
+	import { getApiErrorDetail, getApiFieldError } from '$lib/api/errors';
 	import CaptchaWidget, { captchaEnabled } from '$lib/components/CaptchaWidget.svelte';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
@@ -121,7 +121,12 @@
 
 			if (error || !response?.ok) {
 				console.error('Login code request error:', error);
-				formError = getApiErrorDetail(error) ?? 'Не удалось отправить код';
+				const emailFieldError = getApiFieldError(error, 'email');
+				if (emailFieldError) {
+					emailError = emailFieldError;
+				} else {
+					formError = getApiErrorDetail(error) ?? 'Не удалось отправить код';
+				}
 				// The token is single-use, so fetch a fresh one before a retry.
 				resetCaptcha?.();
 				captchaToken = null;
@@ -130,11 +135,6 @@
 
 			// OTP input auto-focuses its first box on mount, so no manual focus here.
 			codeSentTo = trimmedEmail;
-		} catch (err) {
-			console.error('Login code request exception:', err);
-			formError = 'Произошла непредвиденная ошибка. Попробуй ещё раз';
-			resetCaptcha?.();
-			captchaToken = null;
 		} finally {
 			activeAction = null;
 		}

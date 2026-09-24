@@ -44,7 +44,7 @@
 			});
 			return error || !data ? null : data.notifications;
 		},
-		onError: () => toastService.error('Не удалось загрузить уведомления')
+		onError: () => toastService.add('Не удалось загрузить уведомления', 'error')
 	});
 
 	// Notifications pushed over SSE — kept on top, newest first.
@@ -84,41 +84,33 @@
 			.map((notification) => notification.id);
 		if (unseenIds.length === 0) return;
 
-		try {
-			const { error, response } = await markNotificationsRead({
-				client,
-				body: { notification_ids: unseenIds }
-			});
-			if (!error && response?.ok) {
-				for (const id of unseenIds) {
-					locallyReadIds.add(id);
-				}
-				await unread.refresh();
+		const { error, response } = await markNotificationsRead({
+			client,
+			body: { notification_ids: unseenIds }
+		});
+		if (!error && response?.ok) {
+			for (const id of unseenIds) {
+				locallyReadIds.add(id);
 			}
-		} catch (error) {
-			console.error('Failed to mark notifications as read', error);
+			await unread.refresh();
 		}
 	}
 
 	// Refetch the first page and lift anything not yet in the list to the top, so we
 	// don't lose notifications that arrived while the SSE channel was disconnected.
 	async function syncLatestNotifications() {
-		try {
-			const { data: result, error } = await listUserNotifications({
-				client,
-				query: { limit: NOTIFICATION_PAGE_SIZE }
-			});
+		const { data: result, error } = await listUserNotifications({
+			client,
+			query: { limit: NOTIFICATION_PAGE_SIZE }
+		});
 
-			if (error || !result) {
-				return;
-			}
-
-			const knownIds = new Set(feed.items.map((notification) => notification.id));
-			const fresh = result.notifications.filter((notification) => !knownIds.has(notification.id));
-			liveNotifications = dedupeById(fresh, liveNotifications);
-		} catch (error) {
-			console.error('Failed to sync notifications', error);
+		if (error || !result) {
+			return;
 		}
+
+		const knownIds = new Set(feed.items.map((notification) => notification.id));
+		const fresh = result.notifications.filter((notification) => !knownIds.has(notification.id));
+		liveNotifications = dedupeById(fresh, liveNotifications);
 	}
 
 	function syncAfterReconnect() {

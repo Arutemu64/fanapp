@@ -69,18 +69,14 @@
 	});
 
 	async function loadNotifications() {
-		try {
-			const { data, error, response } = await listUserNotifications({
-				client,
-				query: { limit: NOTIFICATION_PREVIEW_LIMIT }
-			});
+		const { data, error, response } = await listUserNotifications({
+			client,
+			query: { limit: NOTIFICATION_PREVIEW_LIMIT }
+		});
 
-			if (!error && response?.ok && data) {
-				notifications = data.notifications;
-				hasLoadedPreview = true;
-			}
-		} catch (error) {
-			console.error('Failed to load notifications', error);
+		if (!error && response?.ok && data) {
+			notifications = data.notifications;
+			hasLoadedPreview = true;
 		}
 	}
 
@@ -94,18 +90,14 @@
 			.map((notification) => notification.id);
 		if (unseenIds.length === 0) return;
 
-		try {
-			const { error, response } = await markNotificationsRead({
-				client,
-				body: { notification_ids: unseenIds }
-			});
-			if (!error && response?.ok) {
-				// Reload the preview (items now read) and the true total — marking the
-				// visible five read may still leave older unread items behind the badge.
-				await Promise.all([loadNotifications(), unread.refresh()]);
-			}
-		} catch (error) {
-			console.error('Failed to mark notifications as read', error);
+		const { error, response } = await markNotificationsRead({
+			client,
+			body: { notification_ids: unseenIds }
+		});
+		if (!error && response?.ok) {
+			// Reload the preview (items now read) and the true total — marking the
+			// visible five read may still leave older unread items behind the badge.
+			await Promise.all([loadNotifications(), unread.refresh()]);
 		}
 	}
 
@@ -136,19 +128,15 @@
 	async function markAllRead() {
 		if (unread.count === 0) return;
 
-		try {
-			const { error, response } = await markAllNotificationsRead({ client });
-			if (!error && response?.ok) {
-				// Clear for instant feedback, then reconcile with the server: a
-				// notification committed in the window between mark-all-read committing
-				// and this handler running is still unread, and only a follow-up refresh
-				// surfaces it on the badge (the clear's own guard drops a truly stale
-				// pre-mark refresh, so this can't restore the old total).
-				unread.clear();
-				await Promise.all([unread.refresh(), loadNotifications()]);
-			}
-		} catch (error) {
-			console.error('Failed to mark notifications as read', error);
+		const { error, response } = await markAllNotificationsRead({ client });
+		if (!error && response?.ok) {
+			// Clear for instant feedback, then reconcile with the server: a
+			// notification committed in the window between mark-all-read committing
+			// and this handler running is still unread, and only a follow-up refresh
+			// surfaces it on the badge (the clear's own guard drops a truly stale
+			// pre-mark refresh, so this can't restore the old total).
+			unread.clear();
+			await Promise.all([unread.refresh(), loadNotifications()]);
 		}
 	}
 

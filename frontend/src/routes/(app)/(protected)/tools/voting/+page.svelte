@@ -2,6 +2,7 @@
 	import type { NominationContenderDto, UserBaseDto } from '$lib/api/generated';
 
 	import { createApiClient } from '$lib/api';
+	import { getApiErrorDetail } from '$lib/api/errors';
 	import { drawVotingContestWinner, setVotingTimeRange } from '$lib/api/generated';
 	import BackLink from '$lib/components/BackLink.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
@@ -65,18 +66,11 @@
 			});
 
 			if (error || !response?.ok) {
-				if (response?.status === 403) {
-					toastService.add('У тебя нет доступа к управлению голосованием', 'error');
-				} else {
-					toastService.add('Не удалось сохранить время голосования', 'error');
-				}
+				toastService.error(error, 'Не удалось сохранить время голосования');
 				return;
 			}
 
 			toastService.add('Время голосования обновлено', 'success');
-		} catch (err) {
-			console.error('Voting time range save failed:', err);
-			toastService.add('Не удалось сохранить время голосования', 'error');
 		} finally {
 			isSaving = false;
 		}
@@ -95,11 +89,7 @@
 			const { data: result, error, response } = await drawVotingContestWinner({ client });
 
 			if (error || !response?.ok || !result) {
-				if (response?.status === 403) {
-					drawError = 'У тебя нет доступа к розыгрышу';
-				} else {
-					drawError = 'Не удалось провести розыгрыш';
-				}
+				drawError = getApiErrorDetail(error) ?? 'Не удалось провести розыгрыш';
 				return;
 			}
 
@@ -109,9 +99,6 @@
 			poolSize = result.pool_size;
 			winner = result.winner;
 			hasDrawn = true;
-		} catch (err) {
-			console.error('Contest draw failed:', err);
-			drawError = 'Не удалось провести розыгрыш';
 		} finally {
 			isDrawing = false;
 		}

@@ -2,7 +2,7 @@
 	import type { CurrentUserDto, UpdateCurrentUserInput } from '$lib/api/generated';
 
 	import { createApiClient } from '$lib/api';
-	import { getApiErrorDetail } from '$lib/api/errors';
+	import { getApiErrorDetail, getApiFieldError } from '$lib/api/errors';
 	import { updateCurrentUser } from '$lib/api/generated';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
@@ -109,6 +109,11 @@
 		isLoading = false;
 
 		if (error || !response?.ok) {
+			const usernameFieldError = getApiFieldError(error, 'username');
+			if (usernameFieldError) {
+				usernameError = usernameFieldError;
+				return;
+			}
 			formError = getApiErrorDetail(error) ?? 'Не удалось обновить профиль';
 			return;
 		}

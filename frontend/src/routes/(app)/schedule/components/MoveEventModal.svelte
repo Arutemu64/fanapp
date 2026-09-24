@@ -90,9 +90,6 @@
 			open = false;
 			selectedId = null;
 			query = '';
-		} catch (error) {
-			console.error('Error moving event:', error);
-			formError = 'Произошла непредвиденная ошибка при переносе';
 		} finally {
 			isSubmitting = false;
 		}

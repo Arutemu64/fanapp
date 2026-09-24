@@ -15,6 +15,7 @@
 
 	let status = $derived(page.status);
 	let errorMessage = $derived(page.error?.message);
+	let errorId = $derived(page.error?.errorId);
 
 	// Most load failures while offline surface here as a 500/503. Detect the real
 	// cause (backend unreachable) and show a calm connectivity page instead of a
@@ -88,6 +89,14 @@
 			<p class="mb-6 text-sm text-muted-foreground">
 				{description}
 			</p>
+
+			{#if errorId}
+				<!-- Something a user can quote in feedback; matches the error_id tag on the
+				     GlitchTip event (see handleError in hooks.client.ts). -->
+				<p class="-mt-4 mb-6 text-xs text-muted-foreground">
+					Код ошибки: <span class="font-mono select-all">{errorId}</span>
+				</p>
+			{/if}
 
 			<div class="flex w-full flex-col gap-2">
 				{#if offline || status >= 500}

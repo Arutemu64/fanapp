@@ -12,8 +12,10 @@ export function timeoutSignal(ms: number): AbortSignal {
 		return AbortSignal.timeout(ms);
 	}
 
+	// Abort with the same TimeoutError the native signal uses, so callers (and
+	// getApiErrorDetail) can tell a timeout from a deliberate abort.
 	const controller = new AbortController();
-	setTimeout(() => controller.abort(), ms);
+	setTimeout(() => controller.abort(new DOMException('signal timed out', 'TimeoutError')), ms);
 	return controller.signal;
 }
 
