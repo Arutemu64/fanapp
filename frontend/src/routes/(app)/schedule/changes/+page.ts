@@ -18,7 +18,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	}
 
 	if (!canManageSchedule(user)) {
-		error(403, 'У вас нет доступа к этой странице');
+		error(403, 'У тебя нет доступа к этой странице');
 	}
 
 	depends('app:schedule:changes');

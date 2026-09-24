@@ -760,7 +760,7 @@
               }
             }
           },
-          "409": {
+          "400": {
             "description": "Current password is incorrect.",
             "content": {
               "application/json": {

@@ -47,8 +47,6 @@
 				body: { barcode: barcode.trim() }
 			});
 
-			isSubmitting = false;
-
 			if (error || !response?.ok) {
 				submitError = getApiErrorDetail(error) ?? 'Не удалось привязать билет';
 				return;
@@ -57,9 +55,7 @@
 			toastService.add('Билет привязан', 'success');
 			barcode = '';
 			onTicketLinked?.();
-		} catch (err) {
-			console.error('Ticket link exception:', err);
-			submitError = 'Произошла непредвиденная ошибка';
+		} finally {
 			isSubmitting = false;
 		}
 	}

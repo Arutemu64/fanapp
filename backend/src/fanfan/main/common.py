@@ -1,6 +1,7 @@
 from fanfan.adapters.config.parsers import get_config
 from fanfan.adapters.debug.logging import setup_logging
 from fanfan.adapters.debug.telemetry import setup_telemetry
+from fanfan.presentation.web.exceptions import is_expected_error
 
 
 def init(service_name: str) -> None:
@@ -15,6 +16,7 @@ def init(service_name: str) -> None:
         service_name=service_name,
         environment=config.env,
         sentry_dsn=config.debug.sentry_dsn,
+        is_expected_error=is_expected_error,
         release=config.build,
         traces_sample_rate=config.debug.sentry_traces_sample_rate,
         profiles_sample_rate=config.debug.sentry_profiles_sample_rate,

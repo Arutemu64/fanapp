@@ -56,22 +56,18 @@
 	// linked provider removable.
 	async function unlinkProvider(provider: SocialProvider) {
 		const { name } = SOCIAL_PROVIDER_PRESENTATION[provider];
-		try {
-			const { error, response } =
-				provider === 'vk'
-					? await unlinkVkAccount({ client })
-					: await unlinkTelegramAccount({ client });
+		const { error, response } =
+			provider === 'vk'
+				? await unlinkVkAccount({ client })
+				: await unlinkTelegramAccount({ client });
 
-			if (error || !response?.ok) {
-				toastService.error(error);
-				return;
-			}
-
-			toastService.add(`${name} отвязан`, 'success');
-			await onUpdate?.();
-		} catch (err) {
-			toastService.error(err);
+		if (error || !response?.ok) {
+			toastService.error(error);
+			return;
 		}
+
+		toastService.add(`${name} отвязан`, 'success');
+		await onUpdate?.();
 	}
 </script>
 

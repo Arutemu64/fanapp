@@ -14,7 +14,10 @@ class UserNotAuthenticated(AuthenticationError):
     code = "USER_NOT_AUTHENTICATED"
 
 
-class IncorrectPassword(AuthenticationError):
+# Raised when changing the password with a wrong *current* one. The session
+# itself is valid, so this is bad input (400), not an auth failure: a 401 would
+# tell the client its session ended.
+class IncorrectPassword(ConstraintViolation):
     code = "INCORRECT_PASSWORD"
 
 

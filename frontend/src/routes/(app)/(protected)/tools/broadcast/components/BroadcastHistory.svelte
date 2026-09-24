@@ -3,7 +3,6 @@
 
 	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
-	import { getApiErrorDetail } from '$lib/api/errors';
 	import { cancelMailing, listBroadcasts } from '$lib/api/generated';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
@@ -40,7 +39,7 @@
 			});
 			return error || !data ? null : data.mailings;
 		},
-		onError: () => toastService.error('Не удалось загрузить рассылки')
+		onError: () => toastService.add('Не удалось загрузить рассылки', 'error')
 	});
 
 	const STATUS_LABELS: Record<MailingStatus, string> = {
@@ -83,7 +82,7 @@
 				path: { mailing_id: mailing.id }
 			});
 			if (error || !response?.ok) {
-				toastService.error(getApiErrorDetail(error) ?? 'Не удалось отменить рассылку');
+				toastService.error(error, 'Не удалось отменить рассылку');
 			} else {
 				toastService.add('Рассылка отменена', 'success');
 			}

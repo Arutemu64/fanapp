@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
+	import { getApiErrorDetail, getApiFieldError } from '$lib/api/errors';
 	import { submitFeedback } from '$lib/api/generated';
 	const client = createApiClient();
 	import OfflineUnavailableState from '$lib/components/OfflineUnavailableState.svelte';
@@ -62,22 +63,18 @@
 			});
 
 			if (error || !response?.ok) {
-				if (response?.status === 401) {
-					submitError = 'Нужно войти в аккаунт заново';
-				} else if (response?.status === 422) {
-					submitError = 'Проверьте правильность заполнения поля';
-				} else {
-					submitError = 'Не удалось отправить отзыв';
+				const textError = getApiFieldError(error, 'text');
+				if (textError) {
+					feedbackError = textError;
+					return;
 				}
+				submitError = getApiErrorDetail(error) ?? 'Не удалось отправить отзыв';
 				return;
 			}
 
 			toastService.add('Спасибо, отзыв отправлен', 'success');
 			feedbackText = '';
 			feedbackError = '';
-		} catch (err) {
-			console.error('Failed to submit feedback:', err);
-			submitError = 'Произошла непредвиденная ошибка';
 		} finally {
 			isSending = false;
 		}

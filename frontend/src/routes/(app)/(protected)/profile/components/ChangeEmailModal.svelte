@@ -3,7 +3,7 @@
 	import type { PinInputCell } from 'bits-ui';
 
 	import { createApiClient } from '$lib/api';
-	import { getApiErrorDetail } from '$lib/api/errors';
+	import { getApiErrorDetail, getApiFieldError } from '$lib/api/errors';
 	import { changeCurrentUserEmail, confirmEmailCode } from '$lib/api/generated';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
@@ -76,8 +76,6 @@
 			verificationCode = '';
 			toastService.add('Код для подтверждения отправлен на почту', 'success');
 			cooldown.start();
-		} catch {
-			formError = 'Произошла непредвиденная ошибка';
 		} finally {
 			isRequestingVerification = false;
 		}
@@ -102,6 +100,11 @@
 		isLoading = false;
 
 		if (error) {
+			const emailFieldError = getApiFieldError(error, 'new_email');
+			if (emailFieldError) {
+				emailError = emailFieldError;
+				return;
+			}
 			if (response?.status === 409) {
 				emailError = getApiErrorDetail(error) ?? 'Этот адрес уже используется';
 				return;
@@ -137,6 +140,11 @@
 			});
 
 			if (error) {
+				const codeFieldError = getApiFieldError(error, 'code');
+				if (codeFieldError) {
+					verificationCodeError = codeFieldError;
+					return;
+				}
 				if (response?.status === 400) {
 					verificationCodeError = getApiErrorDetail(error) ?? 'Неверный или устаревший код';
 					return;
@@ -150,8 +158,6 @@
 			verificationCodeError = '';
 			open = false;
 			if (onSuccess) onSuccess();
-		} catch {
-			formError = 'Произошла непредвиденная ошибка';
 		} finally {
 			isVerifying = false;
 		}

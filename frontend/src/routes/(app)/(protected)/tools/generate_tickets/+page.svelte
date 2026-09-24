@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { createApiClient } from '$lib/api';
+	import { getApiErrorDetail, getApiFieldError } from '$lib/api/errors';
 	import { generateTickets } from '$lib/api/generated';
 	const client = createApiClient();
 	import BackLink from '$lib/components/BackLink.svelte';
@@ -88,23 +89,17 @@
 			});
 
 			if (error || !response?.ok || !data) {
-				if (response?.status === 401) {
-					submitError = 'Нужно войти в аккаунт заново';
-				} else if (response?.status === 403) {
-					submitError = 'У тебя нет доступа к генерации билетов';
-				} else if (response?.status === 422) {
-					submitError = 'Проверь правильность заполнения полей';
-				} else {
-					submitError = 'Не удалось сгенерировать билеты';
+				const amountFieldError = getApiFieldError(error, 'amount');
+				if (amountFieldError) {
+					amountError = amountFieldError;
+					return;
 				}
+				submitError = getApiErrorDetail(error) ?? 'Не удалось сгенерировать билеты';
 				return;
 			}
 
 			generatedBarcodes = data.barcodes;
 			toastService.add(`Готово! Создано билетов: ${data.barcodes.length}`, 'success');
-		} catch (err) {
-			console.error('Failed to generate tickets:', err);
-			submitError = 'Произошла непредвиденная ошибка';
 		} finally {
 			isGenerating = false;
 		}

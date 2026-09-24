@@ -38,16 +38,11 @@ export class ToastService {
 		}
 	}
 
-	error(err: unknown) {
-		let message = getApiErrorDetail(err) ?? 'Не удалось выполнить действие. Попробуй ещё раз.';
-
-		if (typeof err === 'string') {
-			message = err;
-		} else if (err instanceof TypeError) {
-			message = 'Не удалось связаться с сервером. Попробуй ещё раз.';
-		}
-
-		this.add(message, 'error');
+	// Takes the SDK's `error` as-is. A non-JSON error body (a proxy's HTML 502
+	// page) arrives as a plain string, so a string is never shown verbatim — use
+	// add(message, 'error') for copy you wrote yourself.
+	error(err: unknown, fallback = 'Не удалось выполнить действие. Попробуй ещё раз.') {
+		this.add(getApiErrorDetail(err) ?? fallback, 'error');
 	}
 
 	push(notification: NotificationDto) {

@@ -171,11 +171,42 @@ addEventListener('unhandledrejection', (event) => {
 	recoverFromStaleChunk(() => event.preventDefault());
 });
 
-export const handleError: HandleClientError = Sentry.handleErrorWithSentry(({ error }) => {
+// A short reference the error page shows, so a user's "код ошибки" in a
+// feedback message finds the matching GlitchTip event (tagged `error_id`).
+// Follows the errorId pattern in https://svelte.dev/docs/kit/hooks#Shared-hooks-handleError.
+// `crypto.randomUUID` needs Safari 15.4+, so older browsers fall back to Math.random.
+function createErrorId(): string {
+	if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+		return crypto.randomUUID().slice(0, 8);
+	}
+	return Math.random().toString(16).slice(2, 10);
+}
+
+// Captures here rather than through Sentry.handleErrorWithSentry: the wrapper
+// reports before calling us and keeps the event id to itself, so its event could
+// never carry the id we show. Same filter as the wrapper — a 4xx reaching this
+// hook is a route SvelteKit could not match, not an app bug. The id is only
+// shown when an event was actually sent: no DSN, or an error `beforeSend` drops
+// (a stale chunk, an error carrying a 5xx `status`), would leave the user
+// quoting an id nobody can look up.
+export const handleError: HandleClientError = ({ error, status }) => {
 	const err = error as { code?: string } | undefined;
-	// Localized Russian error response to fulfill the Russian Copy policy
-	return {
-		message: 'Произошла непредвиденная ошибка в приложении. Мы уже работаем над её устранением.',
-		code: err?.code ?? 'UNKNOWN'
-	};
-});
+	const code = err?.code ?? 'UNKNOWN';
+	const message = 'В приложении что-то сломалось. Попробуй обновить страницу.';
+
+	if (
+		status < 500 ||
+		!PUBLIC_SENTRY_DSN ||
+		isStaleChunkError(error) ||
+		isServerSideHttpError(error)
+	) {
+		return { message, code };
+	}
+
+	const errorId = createErrorId();
+	Sentry.captureException(error, {
+		mechanism: { type: 'auto.function.sveltekit.handle_error', handled: true },
+		captureContext: { tags: { error_id: errorId } }
+	});
+	return { message, code, errorId };
+};

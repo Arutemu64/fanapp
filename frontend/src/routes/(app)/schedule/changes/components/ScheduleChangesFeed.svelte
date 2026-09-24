@@ -36,7 +36,7 @@
 			});
 			return error || !data ? null : data.schedule_changes;
 		},
-		onError: () => toastService.error('Не удалось загрузить изменения программы')
+		onError: () => toastService.add('Не удалось загрузить изменения программы', 'error')
 	});
 </script>
 

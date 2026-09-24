@@ -1,22 +1,16 @@
 from dishka.integrations.fastapi import setup_dishka
-from fastapi import FastAPI, HTTPException
-from fastapi.exceptions import RequestValidationError
+from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from fanfan.adapters.config.parsers import get_config
 from fanfan.common.version import APP_VERSION
-from fanfan.core.exceptions.base import AppException
 from fanfan.main.common import init
 from fanfan.main.di import create_web_container
-from fanfan.presentation.web.exceptions import (
-    app_exception_handler,
-    http_exception_handler,
-    unhandled_exception_handler,
-    validation_exception_handler,
-)
+from fanfan.presentation.web.exceptions import add_exception_handlers
 from fanfan.presentation.web.middlewares import (
     bind_request_context,
+    catch_unexpected_errors,
     limit_request_body_size,
     no_store_cache_control,
     refresh_session_cookie,
@@ -42,16 +36,14 @@ def create_app() -> FastAPI:
 
     app.middleware("http")(refresh_session_cookie(config.web))
 
+    # Registered early so it sits inside every middleware below (the last one
+    # registered runs outermost): an unanticipated route error becomes a 500 that
+    # still passes through CORS, caching, security and request-id middleware.
+    app.middleware("http")(catch_unexpected_errors)
+
     app.include_router(setup_api_router())
 
-    # Handlers narrow `exc` to a concrete exception subtype, which Starlette's
-    # broad `ExceptionHandler` signature doesn't model — a known false positive.
-    app.add_exception_handler(AppException, app_exception_handler)  # ty: ignore[invalid-argument-type]
-    app.add_exception_handler(HTTPException, http_exception_handler)  # ty: ignore[invalid-argument-type]
-    app.add_exception_handler(RequestValidationError, validation_exception_handler)  # ty: ignore[invalid-argument-type]
-    # Catch-all for unanticipated errors so every response keeps the ErrorMessage
-    # shape; more specific handlers above take precedence by exception type.
-    app.add_exception_handler(Exception, unhandled_exception_handler)
+    add_exception_handlers(app)
 
     # This session cookie holds the Telegram OAuth state/nonce (authlib). Secure
     # tracks cookie_secure so a plain-HTTP deploy can still complete the OAuth

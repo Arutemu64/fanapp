@@ -36,15 +36,12 @@
 
 			if (error || !response?.ok) {
 				console.error('Error undoing change:', error);
-				toastService.error(error);
+				toastService.error(error, 'Не удалось отменить изменение');
 				return;
 			}
 
 			toastService.add('Изменение отменено', 'success');
 			await invalidate('app:schedule:changes');
-		} catch (err) {
-			toastService.error('Не удалось отменить изменение');
-			console.error('Undo error:', err);
 		} finally {
 			isUndoing = false;
 		}

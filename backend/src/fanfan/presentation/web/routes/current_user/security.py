@@ -27,7 +27,7 @@ security_router = APIRouter()
     responses={
         204: {"description": "Password changed successfully."},
         404: {"model": ErrorMessage, "description": "User not found."},
-        409: {"model": ErrorMessage, "description": "Current password is incorrect."},
+        400: {"model": ErrorMessage, "description": "Current password is incorrect."},
     },
 )
 @inject

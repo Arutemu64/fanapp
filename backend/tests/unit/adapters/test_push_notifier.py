@@ -105,8 +105,10 @@ async def test_send_posts_encrypted_push_to_endpoint(tmp_path: Path) -> None:
     assert str(sent.url) == endpoint
     assert sent.headers["content-encoding"] == "aes128gcm"
     assert sent.headers["authorization"].startswith("vapid ")
-    # The payload is encrypted, so it must not carry the plaintext body.
-    assert b"\xd0\xa2" not in sent.content  # "Т" in UTF-8 — the title's first byte
+    # The payload is encrypted, so it must not carry the plaintext body. Match
+    # the whole encoded body: a short byte sequence also turns up in random
+    # ciphertext by chance (a 2-byte one failed ~0.5% of runs).
+    assert _message_data()["body"].encode() not in sent.content
 
 
 async def test_send_returns_response_with_status(tmp_path: Path) -> None:

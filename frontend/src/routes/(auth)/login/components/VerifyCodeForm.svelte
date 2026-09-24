@@ -4,7 +4,7 @@
 	import { createApiClient } from '$lib/api';
 	import { loginWithCode, requestLoginCode } from '$lib/api/generated';
 	const client = createApiClient();
-	import { getApiErrorDetail } from '$lib/api/errors';
+	import { getApiErrorDetail, getApiFieldError } from '$lib/api/errors';
 	import CaptchaWidget, { captchaEnabled } from '$lib/components/CaptchaWidget.svelte';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
@@ -98,6 +98,11 @@
 			});
 
 			if (error) {
+				const codeFieldError = getApiFieldError(error, 'code');
+				if (codeFieldError) {
+					loginCodeError = codeFieldError;
+					return;
+				}
 				if (response?.status === 400) {
 					loginCodeError = getApiErrorDetail(error) ?? 'Неверный или устаревший код';
 					return;
@@ -107,9 +112,6 @@
 			}
 
 			await completeLogin(toastService, eventsClient, 'Вход выполнен');
-		} catch (err) {
-			console.error('Login code submit exception:', err);
-			formError = 'Произошла непредвиденная ошибка. Попробуй ещё раз';
 		} finally {
 			activeAction = null;
 		}
@@ -153,11 +155,6 @@
 			resetCaptcha?.();
 			captchaToken = null;
 			cooldown.start();
-		} catch (err) {
-			console.error('Login code request exception:', err);
-			formError = 'Произошла ошибка при повторной отправке кода';
-			resetCaptcha?.();
-			captchaToken = null;
 		} finally {
 			activeAction = null;
 		}

@@ -64,9 +64,6 @@
 			form.reset();
 
 			await invalidate('app:schedule');
-		} catch (submitError) {
-			console.error('Schedule import failed:', submitError);
-			inlineError = 'Не удалось импортировать программу';
 		} finally {
 			isUploading = false;
 		}

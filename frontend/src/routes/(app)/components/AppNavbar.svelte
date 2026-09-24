@@ -96,7 +96,15 @@
 
 	<div class="flex items-center gap-2">
 		{#if user}
-			<NotificationBell />
+			<!-- The bell lives in the (app) layout, above the route's error boundary, so
+			     a render error in it would otherwise take the whole shell down to the
+			     root error page. Render nothing in its place instead. No onerror: every
+			     boundary already runs SvelteKit's transformError, so handleError has
+			     reported it. -->
+			<svelte:boundary>
+				<NotificationBell />
+				{#snippet failed()}{/snippet}
+			</svelte:boundary>
 		{/if}
 		{#if user}
 			<DropdownMenu.Root>
