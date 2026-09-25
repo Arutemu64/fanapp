@@ -1,6 +1,8 @@
 import asyncio
+import email.utils
 import logging
 import random
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx2
@@ -29,6 +31,12 @@ RETRY_MAX_DELAY = 10.0
 # 4xx are the request's own fault and never improve on retry — 404 included,
 # which TCloudClient.get_order relies on to surface as a normal "not found".
 RETRYABLE_STATUS = frozenset({429, 500, 502, 503, 504})
+# A 429 or 503 may say how long to wait in Retry-After (RFC 9110 §10.2.3,
+# https://www.rfc-editor.org/rfc/rfc9110.html#name-retry-after), and that hint
+# beats our own guess. A hint longer than this means the vendor wants us gone
+# for a while: give up and let the next scheduled sync try, rather than hold a
+# sweep open for minutes.
+RETRY_AFTER_MAX_DELAY = 60.0
 
 
 class BaseApiClient:
@@ -60,12 +68,15 @@ class BaseApiClient:
             except (httpx2.TransportError, httpx2.HTTPStatusError) as error:
                 if attempt >= MAX_ATTEMPTS or not _is_retryable(error):
                     raise
+                delay = _retry_delay(error, attempt)
+                if delay > RETRY_AFTER_MAX_DELAY:
+                    raise
                 logger.warning(
                     "Retrying vendor request after transient error",
-                    extra={"path": path, "attempt": attempt},
+                    extra={"path": path, "attempt": attempt, "delay": delay},
                     exc_info=error,
                 )
-                await asyncio.sleep(_backoff_delay(attempt))
+                await asyncio.sleep(delay)
             else:
                 return response
 
@@ -75,6 +86,38 @@ def _is_retryable(error: httpx2.TransportError | httpx2.HTTPStatusError) -> bool
         return error.response.status_code in RETRYABLE_STATUS
     # Any TransportError: a connect/read/write/pool timeout or a network error.
     return True
+
+
+def _retry_delay(
+    error: httpx2.TransportError | httpx2.HTTPStatusError, attempt: int
+) -> float:
+    if isinstance(error, httpx2.HTTPStatusError):
+        retry_after = _parse_retry_after(error.response.headers.get("Retry-After"))
+        if retry_after is not None:
+            return retry_after
+    return _backoff_delay(attempt)
+
+
+def _parse_retry_after(value: str | None) -> float | None:
+    """Seconds to wait from a Retry-After header, or None if absent or unusable.
+
+    Handles both RFC 9110 forms: delay-seconds ("120") and an HTTP-date.
+    """
+    if value is None:
+        return None
+    value = value.strip()
+    if value.isdigit():
+        return float(value)
+
+    try:
+        retry_at = email.utils.parsedate_to_datetime(value)
+    except TypeError, ValueError:
+        return None
+    # An HTTP-date is always GMT, but a "-0000" zone parses as naive.
+    if retry_at.tzinfo is None:
+        retry_at = retry_at.replace(tzinfo=UTC)
+    seconds = (retry_at - datetime.now(UTC)).total_seconds()
+    return max(0.0, seconds)
 
 
 def _backoff_delay(attempt: int) -> float:
