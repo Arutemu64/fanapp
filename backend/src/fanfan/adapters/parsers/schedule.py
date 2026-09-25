@@ -1,7 +1,7 @@
 import logging
 import typing
 
-import polars as pl
+from python_calamine import CalamineWorkbook
 
 from fanfan.application.interactors.schedule_mgmt.import_schedule import ScheduleEntry
 from fanfan.core.exceptions.schedule import (
@@ -20,10 +20,6 @@ logger = logging.getLogger(__name__)
 # start times with `timedelta(seconds=duration)`). Minutes here would both
 # misreport every projection by 60x and make a sub-minute act unrepresentable.
 REQUIRED_COLUMNS = ("number", "title", "duration", "nomination_title", "block_title")
-
-# Row 1 holds the headers, so the first data row is row 2. Reported row numbers
-# have to match what the organizer sees in Excel, not the dataframe index.
-FIRST_DATA_ROW = 2
 
 
 def _read_int(value: object, *, column: str, row: int) -> int:
@@ -53,11 +49,9 @@ def _read_int(value: object, *, column: str, row: int) -> int:
 def _read_optional_int(value: object, *, column: str, row: int) -> int | None:
     """Read a whole number from a cell that is allowed to be empty.
 
-    Empty means an actually blank cell. A cell holding whitespace is not treated
-    as empty here on purpose: polars types the whole column as text once one
-    cell holds a string, so every other row's number would be rejected anyway —
-    silently accepting the blank one would only move the error somewhere less
-    obvious.
+    Empty means an actually blank cell. A cell holding whitespace is text, not a
+    blank, so it is rejected like any other text instead of silently read as
+    "no number".
     """
     if value is None:
         return None
@@ -88,25 +82,53 @@ def _read_optional_text(value: object, *, column: str, row: int) -> str | None:
     return _read_text(value, column=column, row=row)
 
 
-def _read_dataframe(file: typing.BinaryIO) -> pl.DataFrame:
-    # fastexcel (the calamine engine) only accepts a path or raw bytes, not a
-    # file object, so read the upload into memory before handing it to polars.
-    # Cells are left at their native types and coerced per row below, which is
-    # what lets a bad value be reported with its column and row — a polars-level
-    # cast would fail somewhere inside read_excel with neither.
+def _read_rows(file: typing.BinaryIO) -> list[tuple[int, list[object]]]:
+    """Read the first sheet as ``(Excel row number, cells)`` pairs.
+
+    Cells keep their native types and are coerced per row by the readers above,
+    which is what lets a bad value be reported with its column and row.
+
+    calamine reports an empty cell as ``""``; it becomes ``None`` here so the
+    readers have a single notion of "blank". Wholly blank rows are skipped, so a
+    gap left between acts is not reported as a row with an empty title.
+    """
     try:
-        return pl.read_excel(file.read())
+        sheet = CalamineWorkbook.from_filelike(file).get_sheet_by_index(0)
+        # Keep the leading empty area so a list index maps straight onto the
+        # row number the organizer sees in Excel.
+        cells = sheet.to_python(skip_empty_area=False)
     except Exception as e:
         logger.info("Rejected an unreadable schedule file", exc_info=e)
         raise InvalidScheduleFile(InvalidScheduleFileReason.UNREADABLE_FILE) from e
 
+    rows: list[tuple[int, list[object]]] = []
+    for row_number, row in enumerate(cells, start=1):
+        values: list[object] = [None if cell == "" else cell for cell in row]
+        if any(value is not None for value in values):
+            rows.append((row_number, values))
+    return rows
+
+
+def _index_columns(header: list[object]) -> dict[str, int]:
+    """Map each header name to its column index; the first of a repeat wins."""
+    columns: dict[str, int] = {}
+    for index, name in enumerate(header):
+        if isinstance(name, str) and name not in columns:
+            columns[name] = index
+    return columns
+
 
 def parse_schedule_from_excel(file: typing.BinaryIO) -> list[ScheduleEntry]:
-    schedule_df = _read_dataframe(file)
+    rows = _read_rows(file)
+    if not rows:
+        raise InvalidScheduleFile(InvalidScheduleFileReason.EMPTY_FILE)
 
-    missing_columns = [
-        column for column in REQUIRED_COLUMNS if column not in schedule_df.columns
-    ]
+    # The first non-blank row holds the headers.
+    _, header = rows[0]
+    data_rows = rows[1:]
+    columns = _index_columns(header)
+
+    missing_columns = [column for column in REQUIRED_COLUMNS if column not in columns]
     if missing_columns:
         raise InvalidScheduleFile(
             InvalidScheduleFileReason.MISSING_COLUMNS, columns=missing_columns
@@ -114,9 +136,8 @@ def parse_schedule_from_excel(file: typing.BinaryIO) -> list[ScheduleEntry]:
 
     schedule: list[ScheduleEntry] = []
     seen_numbers: set[int] = set()
-    for row_index, row in enumerate(
-        schedule_df.iter_rows(named=True), start=FIRST_DATA_ROW
-    ):
+    for row_index, values in data_rows:
+        row = {column: values[index] for column, index in columns.items()}
         # An empty number is allowed — breaks and other filler rows have none.
         number = _read_optional_int(row["number"], column="number", row=row_index)
         # The import matches existing events by number and deletes the rest, so a

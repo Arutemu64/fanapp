@@ -23,7 +23,7 @@ from fanfan.presentation.web.security import session_security
 
 # A real convention schedule is a few hundred rows — well under a megabyte. Cap
 # generously so a legitimate import never trips it, while a hostile multi-hundred-
-# MB body is rejected before the in-memory polars parse.
+# MB body is rejected before the in-memory spreadsheet parse.
 _MAX_IMPORT_BYTES = 5 * 1024 * 1024
 _ALLOWED_CONTENT_TYPES = frozenset(
     {
@@ -83,7 +83,7 @@ async def import_schedule(
     current_user = await current_user_provider.require_user()
     await perm_service.ensure(user=current_user, permission=Permission.SCHEDULE_IMPORT)
     _ensure_valid_upload(file)
-    # Parse in a worker thread because polars/fastexcel are synchronous libraries.
+    # Parse in a worker thread because python-calamine is a synchronous library.
     # This keeps the async FastAPI event loop responsive during file imports.
     schedule = await run_in_threadpool(parse_schedule_from_excel, file.file)
     await interactor(ImportScheduleInput(schedule=schedule))

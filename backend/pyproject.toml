@@ -33,18 +33,17 @@ dependencies = [
     "dishka>=1.10.1",
     "fastapi-mail>=1.6.8",
     "fastapi>=0.141.1",
-    "fastexcel>=0.21.0",
     "faststream[cli,nats]>=0.7.5",
     "greenlet>=3.5.5",
     "httpx2>=2.12.0",
     "itsdangerous>=2.2.0",
     "jinja2>=3.1.6",
     "nh3>=0.3.7",
-    "polars>=1.44.2",
     "pwdlib[argon2]>=0.3.1",
     "pydantic-extra-types>=2.11.1",
     "pydantic-settings>=2.15.0",
     "pydantic[email,timezone]>=2.13.5",
+    "python-calamine>=0.8.2",
     "python-dotenv>=1.2.3",
     "python-multipart>=0.0.32",
     "redis>=8.1.0",
@@ -78,8 +77,8 @@ dev = [
     # [tool.vulture] below and docs/backend.md "Dead-code sweep".
     "vulture>=2.16",
     # Writing .xlsx, needed only by the schedule-template generator script and
-    # the parser tests. The app itself only ever reads spreadsheets (polars +
-    # fastexcel), so this stays out of the runtime dependencies.
+    # the parser tests. The app itself only ever reads spreadsheets
+    # (python-calamine), so this stays out of the runtime dependencies.
     "xlsxwriter>=3.2.9",
 ]
 

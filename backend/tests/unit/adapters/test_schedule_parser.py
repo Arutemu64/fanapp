@@ -251,3 +251,27 @@ def test_accepts_several_numberless_rows() -> None:
     schedule = parse_schedule_from_excel(sheet)
 
     assert [entry.number for entry in schedule] == [None, None]
+
+
+def test_skips_a_blank_row_and_keeps_excel_row_numbers() -> None:
+    # A gap left between acts is not an act with an empty title, and a bad cell
+    # after the gap is reported at the row the organizer sees in Excel.
+    sheet = build_sheet(
+        REQUIRED_COLUMNS,
+        [valid_row(), (None,) * len(REQUIRED_COLUMNS), valid_row(number=2, title="")],
+    )
+
+    with pytest.raises(InvalidScheduleFile) as exc_info:
+        parse_schedule_from_excel(sheet)
+
+    assert exc_info.value.details["column"] == "title"
+    assert exc_info.value.details["row"] == 4
+
+
+def test_rejects_a_workbook_with_no_cells() -> None:
+    sheet = build_sheet([], [])
+
+    with pytest.raises(InvalidScheduleFile) as exc_info:
+        parse_schedule_from_excel(sheet)
+
+    assert exc_info.value.details["reason"] == InvalidScheduleFileReason.EMPTY_FILE
