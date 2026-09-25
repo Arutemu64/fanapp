@@ -1,10 +1,17 @@
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
+from email.utils import format_datetime
 
 import httpx2
 import pytest
 from adaptix import Retort
 
-from fanfan.adapters.api.base import MAX_ATTEMPTS, BaseApiClient
+from fanfan.adapters.api.base import (
+    MAX_ATTEMPTS,
+    RETRY_AFTER_MAX_DELAY,
+    RETRY_BASE_DELAY,
+    BaseApiClient,
+)
 from fanfan.adapters.api.ticketscloud.client import TCloudClient
 from fanfan.adapters.api.ticketscloud.dto.order import OrderStatus
 
@@ -45,8 +52,8 @@ def _ok(value: int) -> httpx2.Response:
     return httpx2.Response(200, json={"value": value})
 
 
-def _status(code: int) -> httpx2.Response:
-    return httpx2.Response(code, json={})
+def _status(code: int, headers: dict[str, str] | None = None) -> httpx2.Response:
+    return httpx2.Response(code, json={}, headers=headers)
 
 
 def _timeout() -> httpx2.ReadTimeout:
@@ -62,13 +69,16 @@ def _client(handler: _ScriptedHandler) -> BaseApiClient:
 
 
 @pytest.fixture(autouse=True)
-def _instant_backoff(monkeypatch: pytest.MonkeyPatch) -> None:
-    # The backoff *delay* isn't under test here; skip the real sleep so the
-    # retry tests stay instant.
-    async def _no_sleep(_delay: float) -> None:
-        return None
+def sleeps(monkeypatch: pytest.MonkeyPatch) -> list[float]:
+    # Skip the real sleep so the retry tests stay instant, but record each
+    # delay so the Retry-After tests can check what was waited.
+    delays: list[float] = []
 
-    monkeypatch.setattr("asyncio.sleep", _no_sleep)
+    async def _record_sleep(delay: float) -> None:
+        delays.append(delay)
+
+    monkeypatch.setattr("asyncio.sleep", _record_sleep)
+    return delays
 
 
 async def test_retries_transient_read_timeout_then_succeeds() -> None:
@@ -110,6 +120,54 @@ async def test_gives_up_after_max_attempts() -> None:
     with pytest.raises(httpx2.ReadTimeout):
         await client._get("orders", _Payload)
     assert handler.calls == MAX_ATTEMPTS
+
+
+async def test_waits_the_retry_after_seconds(sleeps: list[float]) -> None:
+    handler = _ScriptedHandler([_status(429, {"Retry-After": "7"}), _ok(1)])
+    client = _client(handler)
+
+    await client._get("orders", _Payload)
+
+    assert sleeps == [7.0]
+    assert handler.calls == 2
+
+
+async def test_waits_until_a_retry_after_date(sleeps: list[float]) -> None:
+    retry_at = datetime.now(UTC) + timedelta(seconds=30)
+    header = format_datetime(retry_at, usegmt=True)
+    handler = _ScriptedHandler([_status(503, {"Retry-After": header}), _ok(1)])
+    client = _client(handler)
+
+    await client._get("orders", _Payload)
+
+    # The date has one-second resolution and the clock moves between the two
+    # reads, so only the ballpark is stable.
+    assert len(sleeps) == 1
+    assert 25 <= sleeps[0] <= 30
+
+
+async def test_gives_up_when_retry_after_is_too_long(sleeps: list[float]) -> None:
+    too_long = str(int(RETRY_AFTER_MAX_DELAY) + 1)
+    handler = _ScriptedHandler([_status(429, {"Retry-After": too_long})])
+    client = _client(handler)
+
+    with pytest.raises(httpx2.HTTPStatusError):
+        await client._get("orders", _Payload)
+    assert handler.calls == 1
+    assert sleeps == []
+
+
+async def test_falls_back_to_backoff_on_an_unusable_retry_after(
+    sleeps: list[float],
+) -> None:
+    handler = _ScriptedHandler([_status(429, {"Retry-After": "soon"}), _ok(1)])
+    client = _client(handler)
+
+    await client._get("orders", _Payload)
+
+    # The first backoff step, jittered by at most ±50%.
+    assert len(sleeps) == 1
+    assert sleeps[0] <= RETRY_BASE_DELAY * 1.5
 
 
 def _tcloud_client(handler: _ScriptedHandler) -> TCloudClient:

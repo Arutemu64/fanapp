@@ -215,17 +215,26 @@ export function formatUntil(queueUntil: number): string {
 	return `Осталось ${queueUntil} ${pluralize(queueUntil, 'выступление', 'выступления', 'выступлений')}`;
 }
 
+const RUSSIAN_PLURAL_RULES = new Intl.PluralRules('ru-RU');
+
 /**
- * Pluralize a Russian word based on count
+ * Pluralize a Russian word based on count, using the CLDR rules behind
+ * `Intl.PluralRules` rather than hand-rolled mod-10/mod-100 arithmetic.
  * @param count - The number
- * @param one - Form for 1 (e.g., "событие")
- * @param few - Form for 2-4 (e.g., "события")
- * @param many - Form for 5+ (e.g., "событий")
+ * @param one - Form for 1, 21, 31… (e.g., "событие")
+ * @param few - Form for 2-4, 22-24… (e.g., "события")
+ * @param many - Form for 0, 5-20, 25… (e.g., "событий")
  */
 export function pluralize(count: number, one: string, few: string, many: string): string {
-	const mod10 = count % 10;
-	const mod100 = count % 100;
-	if (mod10 === 1 && mod100 !== 11) return one;
-	if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
-	return many;
+	switch (RUSSIAN_PLURAL_RULES.select(count)) {
+		case 'one':
+			return one;
+		case 'few':
+			return few;
+		case 'many':
+			return many;
+		default:
+			// CLDR's `other` is fractions only ("1,5 часа"), which take the `few` form.
+			return few;
+	}
 }
