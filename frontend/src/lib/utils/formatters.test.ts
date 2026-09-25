@@ -5,6 +5,7 @@ import {
 	formatFestivalDateTime,
 	formatUntil,
 	fromEventDateTimeLocal,
+	pluralize,
 	toEventDateTimeLocal
 } from './formatters';
 
@@ -78,5 +79,25 @@ describe('festival start helpers', () => {
 	it('round-trips a datetime-local value back to the same instant', () => {
 		const local = toEventDateTimeLocal(START_ISO);
 		expect(new Date(fromEventDateTimeLocal(local)).getTime()).toBe(new Date(START_ISO).getTime());
+	});
+});
+
+describe('pluralize', () => {
+	const forms = ['событие', 'события', 'событий'] as const;
+
+	it.each([
+		[0, 'событий'],
+		[1, 'событие'],
+		[2, 'события'],
+		[5, 'событий'],
+		[11, 'событий'],
+		[12, 'событий'],
+		[21, 'событие'],
+		[22, 'события'],
+		[25, 'событий'],
+		[111, 'событий'],
+		[1.5, 'события']
+	])('%d → %s', (count, expected) => {
+		expect(pluralize(count, ...forms)).toBe(expected);
 	});
 });
