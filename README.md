@@ -2,6 +2,7 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/Arutemu64/fanapp/ci.yml?branch=main&label=CI)](https://github.com/Arutemu64/fanapp/actions/workflows/ci.yml?query=branch%3Amain)
 [![License: MIT](https://img.shields.io/github/license/Arutemu64/fanapp)](#license)
+[![Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2FArutemu64%2Ffanapp%2Fmain%2Fbackend%2Fpyproject.toml&query=%24.project.version&label=version&prefix=v)](backend/pyproject.toml)
 
 ![The FAN FAN app: the home page on a laptop and the event schedule on a phone](docs/assets/readme-header.webp)
 
