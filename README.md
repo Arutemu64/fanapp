@@ -24,8 +24,11 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 - **Notifications**: in-app feed plus Web Push (VAPID) for broadcasts and per-user alerts.
 - **Auth**: sign in via VK ID or Telegram (social providers are enabled per deployment), email code, one-time login code, or credentials; cookie-based sessions.
 - **Profiles & tickets**: user profile, linked tickets (synced from TicketsCloud), account connections, and security settings.
+- **Map**: festival venue maps.
+- **Organizer tools**: schedule import, manual TicketsCloud / Cosplay2 syncs, and other admin screens, gated by permissions.
 - **Feedback**: user feedback submission.
 - **Live updates**: Server-Sent Events (SSE) push real-time changes to the client.
+- **Installable PWA**: installs to the home screen; the schedule, notifications and profile stay readable offline from their last synced copy.
 
 ## Stack
 
@@ -41,8 +44,8 @@ The backend follows clean / hexagonal architecture: pure `core` and `application
 
 ## Requirements
 
-- Python ≥ 3.14.6 and [`uv`](https://docs.astral.sh/uv/)
-- Node.js + [`pnpm`](https://pnpm.io/)
+- Python 3.14 and [`uv`](https://docs.astral.sh/uv/)
+- Node.js 24 (LTS) and [`pnpm`](https://pnpm.io/)
 - [`just`](https://github.com/casey/just)
 - Docker + Docker Compose (for the full environment)
 - On **Windows**, run `just` from **Git Bash** (ships with
@@ -154,7 +157,7 @@ Optional, enabled via `.env`:
 - **Cosplay2** (`COSPLAY2__*`): cosplay / voting data sync.
 - **Yandex SmartCaptcha** (`SMARTCAPTCHA__SERVER_KEY` + `PUBLIC_SMARTCAPTCHA_CLIENT_KEY`): bot protection on login-code requests. Unset = a no-op verifier that accepts everything. Yandex rather than Cloudflare Turnstile because Cloudflare is frequently throttled in Russia (see [ADR-0009](docs/adr/0009-yandex-smartcaptcha-over-cloudflare-turnstile.md)).
 - **Sentry / GlitchTip** (`DEBUG__SENTRY_DSN` backend, `PUBLIC_SENTRY_DSN` frontend): error reporting. Empty DSN = disabled.
-- **Scheduler** (`SCHEDULER__SYNC_*_CRON`): cron strings (in `TIMEZONE`) that run the syncs periodically. Unset = disabled. After editing, `docker compose restart scheduler`. Trigger a sync manually any time with `docker compose run --rm api cli sync tcloud`.
+- **Scheduler** (`SCHEDULER__SYNC_*_CRON`): cron strings (in `TIMEZONE`) that run the syncs periodically. Unset = disabled. After editing, `docker compose restart scheduler`. Trigger a sync manually any time from **Инструменты → Синхронизация** in the app (needs the `sync:run` permission), or on the server with `docker compose run --rm api cli sync tcloud`.
 
 ## Common commands
 
@@ -166,13 +169,20 @@ All commands run from the repo root via `just`.
 | `just backend-dev` / `just frontend-dev` | Start backend / frontend on the host |
 | `just backend-stream` / `just backend-scheduler` | Start the FastStream consumer / scheduler (outbox relay + syncs) on the host |
 | `just backend-migrate` | Apply Alembic migrations |
-| `just backend-generate <name>` | Autogenerate a migration |
-| `just backend-lint` | Format + lint + type-check backend |
+| `just backend-seed-demo` | Fill an empty environment with a demo programme and voting (idempotent) |
+| `just backend-generate <name>` | Autogenerate a migration against the running app DB |
+| `just backend-generate-auto <name>` | Autogenerate a migration against a throwaway Postgres (needs Docker) |
+| `just backend-lint` | Sort deps + format + lint + type-check + import rules, backend |
 | `just backend-typecheck` | Run `ty` type checker |
+| `just backend-test` | Backend pytest suite (integration tests need Docker) |
 | `just frontend-lint` / `just frontend-check` | Lint / type-check frontend |
-| `just frontend-generate-api` | Regenerate frontend API types from the OpenAPI spec |
+| `just frontend-test` / `just frontend-e2e` | Vitest unit tests / Playwright E2E against a production build |
+| `just frontend-generate-api` | Regenerate the OpenAPI spec and the frontend API client |
 | `just backend-sync tcloud` | Sync tickets from TicketsCloud |
 | `just backend-sync cosplay2` | Sync cosplay data from Cosplay2 |
+| `just deploy` | Server deploy: pull prebuilt images and restart |
+
+The full list is `just --list`.
 
 > The frontend talks to the backend through a generated, type-safe client in `frontend/src/lib/api/generated/` (produced by [`@hey-api/openapi-ts`](https://heyapi.dev/)). Whenever backend endpoints or schemas change, run `just frontend-generate-api` to keep the contract in sync. CI fails if you forget: the spec is checked against the routers by a backend test, and the generated client against the spec by `just frontend-check-api`.
 
@@ -232,38 +242,19 @@ relative `/api`, so the bundle itself stays domain-agnostic.
 backend/    FastAPI app (core / application / adapters / presentation / main)
 frontend/   SvelteKit app (routes + lib: components, api, services, utils)
 shared/     Shared OpenAPI spec
-config/     Committed, non-secret infra config (Redis)
+config/     Committed, non-secret infra config (Redis, NATS)
 secrets/    Gitignored runtime secrets (VAPID PEM keys); ships empty
 docs/       Architecture guides and ADRs
 ```
 
 ## Contributing
 
-Read [`AGENTS.md`](AGENTS.md) first. It holds the project constraints (Russian
-user-facing copy, the import rules for `core`/`application`, which guide to read
-for the area you're touching). The guides in [`docs/`](docs/) go deeper per area,
-and [`docs/adr/`](docs/adr/README.md) records why the significant choices were
-made.
-
-Before pushing, run the gates locally for the area you touched:
-
-```sh
-# backend
-just backend-lint
-just backend-typecheck
-cd backend && uv run pytest -m unit   # fast, no Docker
-
-# frontend
-just frontend-lint
-just frontend-check
-
-# dockerfiles
-just dockerfile-lint
-```
-
-The integration suite (`just backend-test-integration`) is slow and CI runs it
-anyway, so you don't need it before pushing — run it locally only when you're
-debugging a failure.
+Start with [`CONTRIBUTING.md`](CONTRIBUTING.md): setup, the gates to run before
+pushing, and the commit and PR conventions. The canonical rules live in
+[`AGENTS.md`](AGENTS.md) (Russian user-facing copy, the import rules for
+`core`/`application`, which guide to read for the area you're touching), the
+guides in [`docs/`](docs/) go deeper per area, and
+[`docs/adr/`](docs/adr/README.md) records why the significant choices were made.
 
 Questions and bug reports go in [GitHub issues](https://github.com/Arutemu64/fanapp/issues),
 except security reports, which are private ([see below](#security)).
@@ -271,23 +262,12 @@ except security reports, which are private ([see below](#security)).
 ### Continuous integration
 
 Every pull request and every push to `main` runs
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml) on GitHub Actions. It
-mirrors the local quality gates:
-
-- **Backend**: Ruff lint + format check, `ty` type check, and the full `pytest` suite. Integration tests spin up Postgres and Redis automatically via testcontainers (Docker is preinstalled on the runner).
-- **Frontend**: Prettier + ESLint, `svelte-check`, and a production build.
-- **Dockerfiles**: [hadolint](https://github.com/hadolint/hadolint) best-practice linting (config in [`.hadolint.yaml`](.hadolint.yaml)). Run locally with `just dockerfile-lint` (hadolint comes from `mise`) or via the pre-commit hook.
-- **Images**: builds both Docker images without pushing, so a broken build fails on the PR instead of after merge. There's no local `just` gate for this one; `just run-prod` builds the same two images locally.
-
-CI is check-only: unlike `just backend-lint`, it never auto-fixes, so a violation
-fails the run. Each area is its own job so branch protection can require them
-individually and a run reports a separate red/green check per area; each gate
-runs only when its area changed (`dorny/paths-filter`), so a docs-only change
-finishes in seconds. The `frontend` job further fans out into a
-`lint`/`check`/`test`/`build` matrix, and within a job one failing gate doesn't
-skip the rest, so a run reports every problem in that area instead of only the
-first. The reasoning behind the job split is in the header comment of
-[`ci.yml`](.github/workflows/ci.yml).
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml): the same lint, type-check
+and test gates as local work, plus the Playwright E2E suite, a build of both
+Docker images, a gitleaks secret scan and actionlint/zizmor on the workflows.
+CI is check-only (it never auto-fixes), and every gate except the secret scan
+runs only when its area changed. The job layout and the reasoning behind it are
+in the header comment of `ci.yml`.
 
 [`renovate.jsonc`](renovate.jsonc) opens one PR per dependency every Monday
 morning, automerging the ones that break loudly in CI (see
