@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import func, select, update
+from sqlalchemy.dialects.postgresql import distinct_on
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.constraints import translate_integrity_error
@@ -126,7 +127,7 @@ class SqlSyncRunGateway(SyncRunGateway):
     async def read_latest_by_source(self) -> dict[SyncSource, SyncRunDTO]:
         stmt = (
             select(SyncRunORM)
-            .distinct(SyncRunORM.source)
+            .ext(distinct_on(SyncRunORM.source))
             .order_by(SyncRunORM.source, SyncRunORM.created_at.desc())
         )
         rows = await self.session.scalars(stmt)

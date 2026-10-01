@@ -32,6 +32,9 @@ def get_constraint_name(error: IntegrityError) -> str | None:
     return None
 
 
+# TODO: drop the `objects` argument from the gateways' flush([orm]) calls —
+# SQLAlchemy 2.1 deprecates it. Deferred out of the 2.1 bump because a bare
+# flush() widens which pending rows a translated violation can come from.
 @contextmanager
 def translate_integrity_error(
     mapping: Mapping[str, type[Exception]],

@@ -34,7 +34,6 @@ dependencies = [
     "fastapi-mail>=1.6.8",
     "fastapi>=0.141.1",
     "faststream[cli,nats]>=0.7.5",
-    "greenlet>=3.5.5",
     "httpx2>=2.12.0",
     "itsdangerous>=2.2.0",
     "jinja2>=3.1.6",
@@ -55,7 +54,7 @@ dependencies = [
     # `sentry_sdk.init()` against opentelemetry-api 1.44.0 on Python 3.14. The
     # 3.x migration is a deliberate, separate change.
     "sentry-sdk[fastapi,sqlalchemy]>=2.69.0,<3",
-    "sqlalchemy>=2.0.52",
+    "sqlalchemy[asyncio]>=2.1.0",
     "structlog>=26.1.0",
     "uvicorn>=0.52.4",
     "webpush>=1.0.6",
