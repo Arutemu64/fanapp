@@ -7,7 +7,7 @@ paths:
 
 Loaded only when working with `frontend/**` files.
 
-- Load the `svelte-code-writer` and `svelte-core-bestpractices` skills for any `.svelte`/`.svelte.ts`/`.svelte.js` change; add `ui-ux-pro-max` for styling/layout work, and `kill-ai-slop`, `accessibility` and `core-web-vitals` before shipping UI.
+- Load the `svelte-code-writer` and `svelte-core-bestpractices` skills for any `.svelte`/`.svelte.ts`/`.svelte.js` change; add `ui-ux-pro-max` for styling/layout work, and `kill-ai-slop`, `accessibility` and `core-web-vitals` before shipping UI. Load `vitest` when writing unit tests for `src/lib/`.
 - Writing or changing Russian copy? Voice, register («ты») and the glossary (Программа / Выступление / Голосование) live in [.agents/redpolitika.md](../../.agents/redpolitika.md), read automatically by the `ux-copy` / `redaktura` skills — load `ux-copy` for interface strings. Load `fanfan-russian-copy` for the repo mechanics (plural three-forms, two-file emails, the copy-tells scanner).
 - Touching `service-worker.ts`, `manifest.json`, the IndexedDB offline cache or Web Push? Read [docs/frontend.md](../../docs/frontend.md) §2 "PWA & Offline Support" — and note the SW's fetch handler is inert in dev, so verify with `just run-prod`, not `just frontend-dev`.
 - Read [docs/frontend.md](../../docs/frontend.md) for project bindings (typography/radius/z-index scales, modal conventions, offline cache, component placement).

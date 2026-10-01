@@ -20,7 +20,7 @@ Load the listed skills and read the guide **before** implementing, not after.
 | Working on | Load | Read |
 | --- | --- | --- |
 | Backend / FastAPI | `fastapi`, `clean-ddd-hexagonal` | [docs/backend.md](docs/backend.md) (start at "Rules at a glance") |
-| ORM models / migrations | `fanfan-migrations`, `sqlalchemy-alembic-expert-best-practices-code-review` | [docs/backend.md](docs/backend.md) "Persistence & Transaction Management" |
+| ORM models / migrations / SQL queries | `fanfan-migrations`, `sqlalchemy-alembic-expert-best-practices-code-review`, `supabase-postgres-best-practices` | [docs/backend.md](docs/backend.md) "Persistence & Transaction Management" |
 | `.svelte`, `.svelte.ts`, `.svelte.js` | `svelte-code-writer`, `svelte-core-bestpractices` | [docs/frontend.md](docs/frontend.md) |
 | UI components (shadcn-svelte) | `shadcn-svelte` | [docs/frontend.md](docs/frontend.md) §3, §7–8 |
 | Styling / layout | `ui-ux-pro-max` | [docs/frontend.md](docs/frontend.md) §3–4, [.agents/context/DESIGN.md](.agents/context/DESIGN.md) (design intent & named rules) |
@@ -28,7 +28,8 @@ Load the listed skills and read the guide **before** implementing, not after.
 | Russian user-facing copy | `ux-copy`, `fanfan-russian-copy` | [.agents/redpolitika.md](.agents/redpolitika.md), [.agents/context/PRODUCT.md](.agents/context/PRODUCT.md) |
 | Service worker / manifest / offline / push | — | [docs/frontend.md](docs/frontend.md) §2 "PWA & Offline Support" |
 | Frontend ↔ API contracts | — | [docs/api.md](docs/api.md) |
-| Tests | — | [docs/testing.md](docs/testing.md) |
+| Tests | `python-testing-patterns` (pytest), `vitest` (frontend unit), `playwright-best-practices` (E2E) | [docs/testing.md](docs/testing.md) |
+| Auth, user input, webhooks, external integrations | `security-and-hardening` | [docs/backend.md](docs/backend.md) |
 | Docker / infra | `docker-expert` | [docs/dependencies.md](docs/dependencies.md) |
 | Deployment / reverse proxy | `docker-expert` | [docs/deployment.md](docs/deployment.md) |
 | Docker / infra in a **web** session | `docker-expert` | [docs/claude-cloud.md](docs/claude-cloud.md) |
