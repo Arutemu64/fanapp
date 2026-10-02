@@ -105,6 +105,10 @@ asyncio_mode = "auto"
 asyncio_default_test_loop_scope = "session"
 asyncio_default_fixture_loop_scope = "session"
 addopts = ["--strict-markers"]
+# Any warning fails the run, so a new deprecation surfaces when it is introduced
+# instead of hiding in a summary. A third-party warning that cannot be fixed here
+# gets a narrow `ignore::` entry below, with a comment saying why.
+filterwarnings = ["error"]
 markers = [
     "integration: tests that use real infrastructure such as PostgreSQL or Redis containers",
     "unit: fast, pure tests with no infrastructure (no DB, Redis, or DI container)",

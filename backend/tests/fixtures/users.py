@@ -61,31 +61,39 @@ async def visitor_with_ticket(dishka_request: AsyncContainer, visitor: User) -> 
     return visitor
 
 
+async def _org_user_with(
+    dishka_request: AsyncContainer, username: str, *permissions: Permission
+) -> User:
+    """Create and commit an ORG user holding exactly the given permissions."""
+    user_gateway = await dishka_request.get(UserGateway)
+    user_permission_gateway = await dishka_request.get(UserPermissionGateway)
+    uow = await dishka_request.get(UnitOfWork)
+
+    user = User(
+        id=UserId(uuid7()),
+        username=Username(username),
+        hashed_password=None,
+        role=UserRole.ORG,
+    )
+    await user_gateway.add(user)
+    for permission in permissions:
+        await user_permission_gateway.add(
+            UserPermission(
+                id=generate_user_permission_id(),
+                permission=permission,
+                user_id=user.id,
+            )
+        )
+    await uow.commit()
+    return user
+
+
 @pytest_asyncio.fixture
 async def sync_operator(dishka_request: AsyncContainer) -> User:
     """
     Create a user granted sync:run.
     """
-    user_gateway = await dishka_request.get(UserGateway)
-    user_permission_gateway = await dishka_request.get(UserPermissionGateway)
-    uow = await dishka_request.get(UnitOfWork)
-
-    sync_operator = User(
-        id=UserId(uuid7()),
-        username=Username("sync_operator"),
-        hashed_password=None,
-        role=UserRole.ORG,
-    )
-    await user_gateway.add(sync_operator)
-    await user_permission_gateway.add(
-        UserPermission(
-            id=generate_user_permission_id(),
-            permission=Permission.SYNC_RUN,
-            user_id=sync_operator.id,
-        )
-    )
-    await uow.commit()
-    return sync_operator
+    return await _org_user_with(dishka_request, "sync_operator", Permission.SYNC_RUN)
 
 
 @pytest_asyncio.fixture
@@ -93,26 +101,7 @@ async def superuser(dishka_request: AsyncContainer) -> User:
     """
     Create a user granted the wildcard "*" (passes every permission check).
     """
-    user_gateway = await dishka_request.get(UserGateway)
-    user_permission_gateway = await dishka_request.get(UserPermissionGateway)
-    uow = await dishka_request.get(UnitOfWork)
-
-    superuser = User(
-        id=UserId(uuid7()),
-        username=Username("superuser"),
-        hashed_password=None,
-        role=UserRole.ORG,
-    )
-    await user_gateway.add(superuser)
-    await user_permission_gateway.add(
-        UserPermission(
-            id=generate_user_permission_id(),
-            permission=Permission.WILDCARD,
-            user_id=superuser.id,
-        )
-    )
-    await uow.commit()
-    return superuser
+    return await _org_user_with(dishka_request, "superuser", Permission.WILDCARD)
 
 
 @pytest_asyncio.fixture
@@ -120,26 +109,7 @@ async def demo_seeder(dishka_request: AsyncContainer) -> User:
     """
     Create a user granted demo:seed.
     """
-    user_gateway = await dishka_request.get(UserGateway)
-    user_permission_gateway = await dishka_request.get(UserPermissionGateway)
-    uow = await dishka_request.get(UnitOfWork)
-
-    demo_seeder = User(
-        id=UserId(uuid7()),
-        username=Username("demo_seeder"),
-        hashed_password=None,
-        role=UserRole.ORG,
-    )
-    await user_gateway.add(demo_seeder)
-    await user_permission_gateway.add(
-        UserPermission(
-            id=generate_user_permission_id(),
-            permission=Permission.DEMO_SEED,
-            user_id=demo_seeder.id,
-        )
-    )
-    await uow.commit()
-    return demo_seeder
+    return await _org_user_with(dishka_request, "demo_seeder", Permission.DEMO_SEED)
 
 
 @pytest_asyncio.fixture
@@ -147,26 +117,9 @@ async def settings_editor(dishka_request: AsyncContainer) -> User:
     """
     Create a user granted settings:manage.
     """
-    user_gateway = await dishka_request.get(UserGateway)
-    user_permission_gateway = await dishka_request.get(UserPermissionGateway)
-    uow = await dishka_request.get(UnitOfWork)
-
-    settings_editor = User(
-        id=UserId(uuid7()),
-        username=Username("settings_editor"),
-        hashed_password=None,
-        role=UserRole.ORG,
+    return await _org_user_with(
+        dishka_request, "settings_editor", Permission.SETTINGS_MANAGE
     )
-    await user_gateway.add(settings_editor)
-    await user_permission_gateway.add(
-        UserPermission(
-            id=generate_user_permission_id(),
-            permission=Permission.SETTINGS_MANAGE,
-            user_id=settings_editor.id,
-        )
-    )
-    await uow.commit()
-    return settings_editor
 
 
 @pytest_asyncio.fixture
@@ -174,26 +127,9 @@ async def voting_manager(dishka_request: AsyncContainer) -> User:
     """
     Create a user granted voting:manage.
     """
-    user_gateway = await dishka_request.get(UserGateway)
-    user_permission_gateway = await dishka_request.get(UserPermissionGateway)
-    uow = await dishka_request.get(UnitOfWork)
-
-    voting_manager = User(
-        id=UserId(uuid7()),
-        username=Username("voting_manager"),
-        hashed_password=None,
-        role=UserRole.ORG,
+    return await _org_user_with(
+        dishka_request, "voting_manager", Permission.VOTING_MANAGE
     )
-    await user_gateway.add(voting_manager)
-    await user_permission_gateway.add(
-        UserPermission(
-            id=generate_user_permission_id(),
-            permission=Permission.VOTING_MANAGE,
-            user_id=voting_manager.id,
-        )
-    )
-    await uow.commit()
-    return voting_manager
 
 
 @pytest_asyncio.fixture
@@ -201,27 +137,12 @@ async def schedule_editor(dishka_request: AsyncContainer) -> User:
     """
     Create a user granted schedule:manage and schedule:import.
     """
-    user_gateway = await dishka_request.get(UserGateway)
-    user_permission_gateway = await dishka_request.get(UserPermissionGateway)
-    uow = await dishka_request.get(UnitOfWork)
-
-    schedule_editor = User(
-        id=UserId(uuid7()),
-        username=Username("schedule_editor"),
-        hashed_password=None,
-        role=UserRole.ORG,
+    return await _org_user_with(
+        dishka_request,
+        "schedule_editor",
+        Permission.SCHEDULE_MANAGE,
+        Permission.SCHEDULE_IMPORT,
     )
-    await user_gateway.add(schedule_editor)
-    for permission in (Permission.SCHEDULE_MANAGE, Permission.SCHEDULE_IMPORT):
-        await user_permission_gateway.add(
-            UserPermission(
-                id=generate_user_permission_id(),
-                permission=permission,
-                user_id=schedule_editor.id,
-            )
-        )
-    await uow.commit()
-    return schedule_editor
 
 
 @pytest_asyncio.fixture
@@ -229,26 +150,9 @@ async def feedback_reader(dishka_request: AsyncContainer) -> User:
     """
     Create a user granted feedback:read.
     """
-    user_gateway = await dishka_request.get(UserGateway)
-    user_permission_gateway = await dishka_request.get(UserPermissionGateway)
-    uow = await dishka_request.get(UnitOfWork)
-
-    feedback_reader = User(
-        id=UserId(uuid7()),
-        username=Username("feedback_reader"),
-        hashed_password=None,
-        role=UserRole.ORG,
+    return await _org_user_with(
+        dishka_request, "feedback_reader", Permission.FEEDBACK_READ
     )
-    await user_gateway.add(feedback_reader)
-    await user_permission_gateway.add(
-        UserPermission(
-            id=generate_user_permission_id(),
-            permission=Permission.FEEDBACK_READ,
-            user_id=feedback_reader.id,
-        )
-    )
-    await uow.commit()
-    return feedback_reader
 
 
 @pytest_asyncio.fixture
@@ -256,23 +160,4 @@ async def users_reader(dishka_request: AsyncContainer) -> User:
     """
     Create a user granted users:read.
     """
-    user_gateway = await dishka_request.get(UserGateway)
-    user_permission_gateway = await dishka_request.get(UserPermissionGateway)
-    uow = await dishka_request.get(UnitOfWork)
-
-    users_reader = User(
-        id=UserId(uuid7()),
-        username=Username("users_reader"),
-        hashed_password=None,
-        role=UserRole.ORG,
-    )
-    await user_gateway.add(users_reader)
-    await user_permission_gateway.add(
-        UserPermission(
-            id=generate_user_permission_id(),
-            permission=Permission.USERS_READ,
-            user_id=users_reader.id,
-        )
-    )
-    await uow.commit()
-    return users_reader
+    return await _org_user_with(dishka_request, "users_reader", Permission.USERS_READ)

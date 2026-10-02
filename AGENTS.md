@@ -62,7 +62,7 @@ named `fanfan-*` are project-local and live only here.
 | `just backend-lint` / `just backend-typecheck` | Sort deps + format + ruff + `ty` + import-linter / `ty` alone |
 | `just frontend-lint` / `just frontend-check` | Prettier + ESLint / `svelte-check` |
 | `just dockerfile-lint` | hadolint (config `.hadolint.yaml`) |
-| `just backend-test` / `just backend-test-integration` | pytest (integration needs a Docker daemon) |
+| `just backend-test` / `just backend-test-integration` | pytest unit tier / integration tier (integration needs a Docker daemon) |
 | `just backend-deadcode` / `just frontend-deadcode` | Dead-code sweep (vulture / knip). Manual aid, not a gate — see docs/backend.md, docs/frontend.md |
 | `just frontend-test` | Vitest unit tests for pure `src/lib/` logic |
 | `just frontend-e2e` | Playwright E2E against a production build, backend mocked ([frontend/e2e/README.md](frontend/e2e/README.md)) |

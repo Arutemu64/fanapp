@@ -56,6 +56,13 @@ correct test.
 | Unit | `tests/unit/` | `@pytest.mark.unit` | none | instant |
 | Integration | `tests/integration/` | `@pytest.mark.integration` | real PostgreSQL + Redis (testcontainers) | seconds |
 
+Every test is marked by the directory it lives in: a `pytest_collection_modifyitems`
+hook in `tests/conftest.py` adds `unit` under `tests/unit/` and `integration`
+under `tests/integration/`, so `-m unit` + `-m integration` always add up to the
+whole suite. A test outside both directories, or carrying the other tier's
+marker, fails collection. The per-file `pytestmark` lines are therefore
+optional; keeping them is harmless. `just backend-test` runs the unit tier.
+
 Run a subset by marker:
 
 ```sh
@@ -65,6 +72,10 @@ uv run pytest -m integration    # requires a running Docker daemon
 uv run pytest                    # everything
 uv run pytest --cov             # with coverage (config in pyproject.toml)
 ```
+
+`filterwarnings = ["error"]` is set in `pyproject.toml`: any warning fails the
+run, so fix the call site. Ignore a third-party warning only with a narrow
+`ignore::` entry there, commented with why it cannot be fixed here.
 
 Integration tests need Docker available (testcontainers spins up real
 PostgreSQL and Redis). They cannot run in environments without a Docker daemon.
@@ -93,7 +104,7 @@ run there is the gate that counts. The daemon's routine in-session job is
 migration autogenerate (`just backend-generate-auto`); reach for
 `just backend-test-integration` locally only when it helps, e.g. debugging a
 failure. The setup script prepulls the testcontainers images
-(`postgres:18.4-alpine` — pinned, and shared with Alembic autogenerate and
+(`postgres:18.6-alpine` — pinned, and shared with Alembic autogenerate and
 production — and `valkey/valkey:9.1-alpine`) and the hook sets
 `TESTCONTAINERS_RYUK_DISABLED=true` (matching CI — the fixtures already stop
 their own containers in `finally:` blocks, so the Ryuk reaper isn't needed), so
@@ -290,8 +301,9 @@ providers plus test overrides:
 
 ## Fixtures
 
-Reusable user fixtures (`visitor`, `visitor_with_ticket`, `schedule_editor`,
-`sync_operator`) live in `tests/fixtures/users.py` and are registered as a plugin in
+Reusable user fixtures (`visitor`, `visitor_with_ticket`, `superuser`, and one
+per permission: `sync_operator`, `demo_seeder`, `settings_editor`,
+`voting_manager`, `schedule_editor`, `feedback_reader`, `users_reader`) live in `tests/fixtures/users.py` and are registered as a plugin in
 `tests/conftest.py`. The shared plumbing fixtures (`login`, `outbox`,
 `uow`) live in `tests/integration/conftest.py` — see *Shared plumbing
 fixtures* above. Add shared setup in these places rather than copying it

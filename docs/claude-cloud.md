@@ -68,7 +68,7 @@ rather than failing the build.
   too old for stable 3.14 and can't self-update here (GitHub installer 403s).
 * Node 24 via `nvm` (already on the image) — the base image's system Node is
   22; the official Node/nvm installers both 403 here.
-* Docker image prepulls (`postgres:18.4-alpine`, `valkey/valkey:9.1-alpine`, `hadolint/hadolint`, see below). Anonymous — the `docker login` lives in the hook, see [Docker Hub authentication](#docker-hub-authentication).
+* Docker image prepulls (`postgres:18.6-alpine`, `valkey/valkey:9.1-alpine`, `hadolint/hadolint`, see below). Anonymous — the `docker login` lives in the hook, see [Docker Hub authentication](#docker-hub-authentication).
 * a `hadolint` shim in `/usr/local/bin` — hadolint ships only as a GitHub
   release binary (403 here) and is not in apt, so the shim runs the prepulled
   image instead. It bind-mounts the caller's working directory read-only at the
@@ -140,7 +140,7 @@ green run in CI is the gate that matters. The setup script prepulls the images
 either use, so both are a warm pull away; each is baked into the snapshot and on
 disk at session start:
 
-* `postgres:18.4-alpine` — pinned (not a floating minor tag) to match
+* `postgres:18.6-alpine` — pinned (not a floating minor tag) to match
   production (`docker-compose.yml`) exactly; used by
   `just backend-generate-auto`, and shared with the testcontainers integration
   suite (`backend/tests/fixtures/db_provider.py`). One image everywhere avoids

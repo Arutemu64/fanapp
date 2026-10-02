@@ -105,8 +105,10 @@ backend-format:
 backend-check:
     cd backend && uv run ruff check src/fanfan tests scripts --respect-gitignore --fix
 
+# Unit tier only: no Docker, seconds. The integration tier is
+# `backend-test-integration`; `backend-test-cov` runs both.
 backend-test:
-    cd backend && uv run pytest tests
+    cd backend && uv run pytest tests -m unit
 
 # Whole suite (unit + integration) under coverage, printing a term-missing
 # report. Coverage is only honest measured over the full run: interactor
