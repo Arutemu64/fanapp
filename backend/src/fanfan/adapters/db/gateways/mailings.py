@@ -52,7 +52,7 @@ class SqlMailingGateway(MailingGateway):
     async def add(self, mailing: Mailing) -> None:
         mailing_orm = _from_model(mailing)
         self.session.add(mailing_orm)
-        await self.session.flush([mailing_orm])
+        await self.session.flush()
         # Register so any event recorded on the mailing (e.g. BroadcastQueued)
         # is written to the outbox when the unit of work commits.
         self.uow.register(mailing)

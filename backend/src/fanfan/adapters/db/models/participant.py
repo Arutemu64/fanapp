@@ -33,7 +33,7 @@ class ParticipantORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
         ForeignKey("nominations.id", ondelete="CASCADE"),
     )
 
-    nomination: Mapped[NominationORM] = relationship()
+    nomination: Mapped[NominationORM] = relationship(lazy="raise")
 
     @declared_attr
     @classmethod

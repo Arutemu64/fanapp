@@ -35,6 +35,7 @@ class TicketORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     used_by_user: Mapped[UserORM | None] = relationship(
         foreign_keys=used_by_user_id,
         back_populates="ticket",
+        lazy="raise",
     )
 
     def __str__(self) -> str:

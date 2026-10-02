@@ -81,8 +81,7 @@ async def test_schedule_change_notifies_only_subscribers_in_window(
     await schedule_gateway.add(current_event)
     await schedule_gateway.add(event_b)
     await schedule_gateway.add(event_c)
-    # Commit the events first so the subscriptions' FK sees persisted rows; the
-    # gateway's flush([...]) only flushes the subscription being added.
+    # Commit the events first so the subscriptions' FK sees persisted rows.
     await uow.commit()
 
     # visitor subscribes to C (inside the window); a second user to B (outside).

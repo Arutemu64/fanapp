@@ -71,7 +71,7 @@ class SqlParticipantGateway(ParticipantGateway):
     async def add(self, participant: Participant) -> None:
         participant_orm = _from_model(participant)
         self.session.add(participant_orm)
-        await self.session.flush([participant_orm])
+        await self.session.flush()
 
     async def get(self, participant_id: ParticipantId) -> Participant | None:
         stmt = (
@@ -92,8 +92,8 @@ class SqlParticipantGateway(ParticipantGateway):
         return _to_model(participant_orm) if participant_orm else None
 
     async def save(self, participant: Participant) -> None:
-        participant_orm = await self.session.merge(_from_model(participant))
-        await self.session.flush([participant_orm])
+        await self.session.merge(_from_model(participant))
+        await self.session.flush()
         # Cosplay sync can reassign a participant to a different nomination
         # after votes for it exist. votes.nomination_id is a denormalised
         # copy backing uq_votes_user_nomination (a unique constraint can't

@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import func, select, update
+from sqlalchemy.dialects.postgresql import distinct_on
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fanfan.adapters.db.constraints import translate_integrity_error
@@ -64,7 +65,7 @@ class SqlSyncRunGateway(SyncRunGateway):
         # the check and start duplicate sweeps.
         with translate_integrity_error({"uq_sync_runs_active": SyncAlreadyRunning}):
             self.session.add(run_orm)
-            await self.session.flush([run_orm])
+            await self.session.flush()
         # Register so a recorded SyncRequested lands in the outbox on commit.
         self.uow.register(run)
 
@@ -126,7 +127,7 @@ class SqlSyncRunGateway(SyncRunGateway):
     async def read_latest_by_source(self) -> dict[SyncSource, SyncRunDTO]:
         stmt = (
             select(SyncRunORM)
-            .distinct(SyncRunORM.source)
+            .ext(distinct_on(SyncRunORM.source))
             .order_by(SyncRunORM.source, SyncRunORM.created_at.desc())
         )
         rows = await self.session.scalars(stmt)

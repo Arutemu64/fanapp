@@ -79,7 +79,7 @@ class SqlNominationGateway(NominationGateway):
     async def add(self, nomination: Nomination) -> None:
         nomination_orm = _from_model(nomination)
         self.session.add(nomination_orm)
-        await self.session.flush([nomination_orm])
+        await self.session.flush()
 
     async def get_by_cosplay2_id(self, cosplay2_id: int) -> Nomination | None:
         stmt = (
@@ -175,8 +175,8 @@ class SqlNominationGateway(NominationGateway):
         return contenders
 
     async def save(self, nomination: Nomination) -> None:
-        nomination_orm = await self.session.merge(_from_model(nomination))
-        await self.session.flush([nomination_orm])
+        await self.session.merge(_from_model(nomination))
+        await self.session.flush()
 
     async def list_cosplay2_ids(self) -> list[int]:
         stmt = select(NominationORM.cosplay2_id)

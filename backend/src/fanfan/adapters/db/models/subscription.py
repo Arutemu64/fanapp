@@ -21,4 +21,4 @@ class SubscriptionORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     )
     counter: Mapped[int] = mapped_column()
 
-    event: Mapped[ScheduleEventORM] = relationship()
+    event: Mapped[ScheduleEventORM] = relationship(lazy="raise")

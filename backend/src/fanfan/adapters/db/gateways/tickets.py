@@ -53,7 +53,7 @@ class SqlTicketGateway(TicketGateway):
         # Flush here so a duplicate barcode surfaces as a domain exception at the
         # gateway (not later at uow.commit()); the caller regenerates and retries.
         with translate_integrity_error({"uq_tickets_barcode": TicketBarcodeCollision}):
-            await self.session.flush(ticket_orms)
+            await self.session.flush()
 
     async def get_by_barcode(self, barcode: str) -> Ticket | None:
         stmt = select(TicketORM).where(TicketORM.barcode == barcode).with_for_update()
@@ -86,8 +86,8 @@ class SqlTicketGateway(TicketGateway):
                 "uq_tickets_used_by_user_id": UserAlreadyHasTicketLinked,
             }
         ):
-            ticket_orm = await self.session.merge(_from_model(ticket))
-            await self.session.flush([ticket_orm])
+            await self.session.merge(_from_model(ticket))
+            await self.session.flush()
 
     async def delete(self, ticket: Ticket) -> None:
         await self.session.execute(delete(TicketORM).where(TicketORM.id == ticket.id))

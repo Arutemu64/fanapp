@@ -162,8 +162,8 @@ class SqlScheduleEventGateway(ScheduleEventGateway):
         return _to_model(event_orm) if event_orm else None
 
     async def save(self, event: ScheduleEvent) -> None:
-        event_orm = await self.session.merge(_from_model(event))
-        await self.session.flush([event_orm])
+        await self.session.merge(_from_model(event))
+        await self.session.flush()
 
     async def delete(self, event: ScheduleEvent) -> None:
         await self.session.execute(

@@ -156,7 +156,7 @@ class SqlUserGateway(UserGateway):
             }
         ):
             self.session.add(user_orm)
-            await self.session.flush([user_orm])
+            await self.session.flush()
         self.uow.register(user)
 
     async def get_by_id(self, user_id: UserId) -> User | None:
@@ -189,8 +189,8 @@ class SqlUserGateway(UserGateway):
                 "ix_users_email": EmailAlreadyExists,
             }
         ):
-            user_orm = await self.session.merge(user_orm)
-            await self.session.flush([user_orm])
+            await self.session.merge(user_orm)
+            await self.session.flush()
         self.uow.register(user)
 
     async def read_current_user(self, user_id: UserId) -> CurrentUserDTO | None:

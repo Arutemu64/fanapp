@@ -77,7 +77,7 @@ class SqlSubscriptionGateway(SubscriptionGateway):
                 "uq_subscriptions_event_id": SubscriptionAlreadyExists,
             }
         ):
-            await self.session.flush([subscription_orm])
+            await self.session.flush()
 
     async def get_by_id(self, subscription_id: SubscriptionId) -> Subscription | None:
         stmt = (

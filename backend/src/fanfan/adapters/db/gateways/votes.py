@@ -59,7 +59,7 @@ class SqlVoteGateway(VoteGateway):
             }
         ):
             self.session.add(vote_orm)
-            await self.session.flush([vote_orm])
+            await self.session.flush()
 
     async def get(self, vote_id: VoteId) -> Vote | None:
         vote_orm = await self.session.scalar(

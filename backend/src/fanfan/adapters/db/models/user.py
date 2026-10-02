@@ -56,12 +56,14 @@ class UserORM(UUIDPrimaryKeyMixin, UpdatedAtMixin, BaseORM):
     )
 
     ticket: Mapped[TicketORM | None] = relationship(
-        foreign_keys="TicketORM.used_by_user_id"
+        foreign_keys="TicketORM.used_by_user_id",
+        lazy="raise",
     )
     permissions: Mapped[list[UserPermissionORM]] = relationship(
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        lazy="raise",
     )
-    social_identities: Mapped[list[SocialIdentityORM]] = relationship()
+    social_identities: Mapped[list[SocialIdentityORM]] = relationship(lazy="raise")
 
     __table_args__ = (
         # Case-insensitive uniqueness; get_by_username compares lower(username),

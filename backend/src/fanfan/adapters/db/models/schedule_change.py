@@ -32,9 +32,11 @@ class ScheduleChangeORM(UUIDPrimaryKeyMixin, BaseORM):
     )
 
     changed_event: Mapped[ScheduleEventORM | None] = relationship(
-        foreign_keys=[changed_event_id]
+        foreign_keys=[changed_event_id],
+        lazy="raise",
     )
     argument_event: Mapped[ScheduleEventORM | None] = relationship(
-        foreign_keys=[argument_event_id]
+        foreign_keys=[argument_event_id],
+        lazy="raise",
     )
-    user: Mapped[UserORM | None] = relationship(foreign_keys=user_id)
+    user: Mapped[UserORM | None] = relationship(foreign_keys=user_id, lazy="raise")

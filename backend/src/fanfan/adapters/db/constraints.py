@@ -47,7 +47,7 @@ def translate_integrity_error(
 
         with translate_integrity_error({"uq_votes_user_id": VoteAlreadyExists}):
             self.session.add(vote_orm)
-            await self.session.flush([vote_orm])
+            await self.session.flush()
     """
     try:
         yield
