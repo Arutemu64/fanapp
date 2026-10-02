@@ -174,7 +174,7 @@ All commands run from the repo root via `just`.
 | `just backend-generate-auto <name>` | Autogenerate a migration against a throwaway Postgres (needs Docker) |
 | `just backend-lint` | Sort deps + format + lint + type-check + import rules, backend |
 | `just backend-typecheck` | Run `ty` type checker |
-| `just backend-test` | Backend pytest suite (integration tests need Docker) |
+| `just backend-test` | Backend unit tests (no Docker); `just backend-test-integration` for the integration tier |
 | `just frontend-lint` / `just frontend-check` | Lint / type-check frontend |
 | `just frontend-test` / `just frontend-e2e` | Vitest unit tests / Playwright E2E against a production build |
 | `just frontend-generate-api` | Regenerate the OpenAPI spec and the frontend API client |

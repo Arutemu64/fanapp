@@ -168,7 +168,20 @@ async def test_unlinking_a_provider_that_is_not_linked_is_a_no_op(
     # and the guard never fires on an absent identity.
     interactor = await dishka_request.get(UnlinkSocialAccount)
     user_gateway = await dishka_request.get(UserGateway)
+    gateway = await dishka_request.get(SocialIdentityGateway)
     user = await _user(user_gateway, uow, username="no_vk")
+    await _link(
+        gateway,
+        uow,
+        user=user,
+        provider=SocialProvider.TELEGRAM,
+        subject=TELEGRAM_SUBJECT,
+        provider_user_id=TELEGRAM_USER_ID,
+    )
     login(user)
 
     await interactor(UnlinkSocialAccountInput(provider=SocialProvider.VK))
+
+    # The identity that does exist must not be touched by the no-op.
+    assert await gateway.get_by_provider(user.id, SocialProvider.VK) is None
+    assert await gateway.get_by_provider(user.id, SocialProvider.TELEGRAM) is not None

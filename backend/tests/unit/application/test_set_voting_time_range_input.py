@@ -14,11 +14,16 @@ def test_voting_boundaries_require_an_offset() -> None:
     # A naive bound must be rejected here: once persisted it is compared against an
     # aware clock in AppSettings.is_voting_open(now), which would raise TypeError
     # on every voting-status check.
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as exc_info:
         SetVotingTimeRangeInput(
             voting_start=datetime(2026, 8, 22, 12, 0),  # noqa: DTZ001
             voting_end=datetime(2026, 8, 22, 18, 0),  # noqa: DTZ001
         )
+
+    assert {error["loc"] for error in exc_info.value.errors()} == {
+        ("voting_start",),
+        ("voting_end",),
+    }
 
 
 def test_voting_boundaries_accept_aware_instants() -> None:

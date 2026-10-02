@@ -124,6 +124,7 @@ async def test_relinking_the_same_account_is_a_no_op(
     # exactly what they asked for.
     interactor = await dishka_request.get(LinkSocialAccount)
     user_gateway = await dishka_request.get(UserGateway)
+    social_identity_gateway = await dishka_request.get(SocialIdentityGateway)
     user = await _user(user_gateway, uow, username="repeater")
     login(user)
     data = LinkSocialAccountInput(
@@ -135,6 +136,12 @@ async def test_relinking_the_same_account_is_a_no_op(
 
     await interactor(data)
     await interactor(data)
+
+    identity = await social_identity_gateway.get_by_provider(
+        user.id, SocialProvider.TELEGRAM
+    )
+    assert identity is not None
+    assert identity.provider_user_id == PROVIDER_USER_ID
 
 
 async def test_linking_a_second_account_of_the_same_provider_is_rejected(

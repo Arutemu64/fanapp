@@ -15,7 +15,7 @@ mismatch unexplained.
 
 | Dependency | Pinned in |
 | --- | --- |
-| `postgres:18.4-alpine` | `docker-compose.yml`, `backend/scripts/generate_migration.py`, `backend/tests/fixtures/db_provider.py` |
+| `postgres:18.6-alpine` | `docker-compose.yml`, `backend/scripts/generate_migration.py`, `backend/tests/fixtures/db_provider.py` |
 | `uv` | `mise.toml`, `backend/pyproject.toml` (`[tool.uv]` and the `uv_build` floor in `[build-system]`), `backend/Dockerfile`, `.claude/setup.sh`, CI (`setup-uv` input) |
 | `hadolint` | `mise.toml`, `.pre-commit-config.yaml` (`rev`), the image behind the `.claude/setup.sh` shim |
 | `gitleaks` | `.pre-commit-config.yaml` (`rev`), CI (`GITLEAKS_VERSION` in the `secrets` job) |

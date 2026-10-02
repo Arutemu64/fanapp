@@ -178,7 +178,7 @@ fi
 # SessionStart hook. We start dockerd here purely to pull - it is not expected
 # to survive the snapshot.
 #
-#   * postgres:18.4-alpine     - pinned to match production (docker-compose.yml)
+#   * postgres:18.6-alpine     - pinned to match production (docker-compose.yml)
 #                                 exactly; used both to autogenerate Alembic
 #                                 migrations (`just backend-generate-auto`) and
 #                                 by the testcontainers integration suite (see
@@ -215,7 +215,7 @@ if command -v dockerd >/dev/null 2>&1; then
     # lives in .claude/hooks/session-start.sh instead, which covers every pull a
     # session makes; only these three prepulls stay subject to the anonymous cap
     # (~100 / 6h per egress IP), and they degrade to a lazy pull at first use.
-    for image in postgres:18.4-alpine valkey/valkey:9.1-alpine hadolint/hadolint:v2.15.1; do
+    for image in postgres:18.6-alpine valkey/valkey:9.1-alpine hadolint/hadolint:v2.15.1; do
       if docker pull "$image" >/dev/null 2>&1; then
         echo "[setup]   pulled $image"
       else

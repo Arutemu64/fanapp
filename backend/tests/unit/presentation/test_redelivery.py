@@ -104,9 +104,12 @@ def test_every_durable_consumer_is_bounded_and_redelivers() -> None:
 class _ProgressRecorder:
     def __init__(self) -> None:
         self.beats = 0
+        self.two_beats = asyncio.Event()
 
     async def in_progress(self) -> None:
         self.beats += 1
+        if self.beats >= 2:
+            self.two_beats.set()
 
 
 @pytest.mark.asyncio
@@ -114,7 +117,9 @@ async def test_heartbeat_extends_ack_wait_until_the_handler_returns() -> None:
     msg = _ProgressRecorder()
 
     async with in_progress_heartbeat(cast("Any", msg), interval=0.01):
-        await asyncio.sleep(0.05)
+        # Wait for the beats instead of a fixed sleep: the timeout is only a
+        # backstop, so a slow runner delays the test rather than failing it.
+        await asyncio.wait_for(msg.two_beats.wait(), timeout=5)
     beats_while_running = msg.beats
     await asyncio.sleep(0.03)
 

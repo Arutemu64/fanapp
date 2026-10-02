@@ -336,7 +336,7 @@ docker compose exec pgbackup sh -c 'gzip -t /backups/last/*.sql.gz && ls -l /bac
 BACKUP=$(docker compose exec -T pgbackup sh -c 'ls -t /backups/last/*.sql.gz | head -1')
 docker compose exec -T pgbackup sh -c "zcat $BACKUP" \
   | docker run --rm -i --network fanapp_backend-network \
-      -e PGPASSWORD="$DB__PASSWORD" postgres:18.4-alpine \
+      -e PGPASSWORD="$DB__PASSWORD" postgres:18.6-alpine \
       psql -h db -U "$DB__USER" -d restore_check
 ```
 
