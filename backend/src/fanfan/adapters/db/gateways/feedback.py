@@ -38,7 +38,7 @@ class SqlFeedbackGateway(FeedbackGateway):
     async def add(self, feedback: Feedback) -> None:
         feedback_orm = _from_model(feedback)
         self.session.add(feedback_orm)
-        await self.session.flush([feedback_orm])
+        await self.session.flush()
 
     async def read_list_feedback(self, pagination: Pagination) -> list[FeedbackDTO]:
         # id (uuid7, time-ordered) is the tiebreaker so rows sharing a created_at

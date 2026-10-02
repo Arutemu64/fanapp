@@ -48,7 +48,7 @@ class SqlSocialIdentityGateway(SocialIdentityGateway):
             }
         ):
             self.session.add(social_identity_orm)
-            await self.session.flush([social_identity_orm])
+            await self.session.flush()
 
     async def get_by_provider(
         self, user_id: UserId, provider: SocialProvider

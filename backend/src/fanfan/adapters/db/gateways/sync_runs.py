@@ -65,7 +65,7 @@ class SqlSyncRunGateway(SyncRunGateway):
         # the check and start duplicate sweeps.
         with translate_integrity_error({"uq_sync_runs_active": SyncAlreadyRunning}):
             self.session.add(run_orm)
-            await self.session.flush([run_orm])
+            await self.session.flush()
         # Register so a recorded SyncRequested lands in the outbox on commit.
         self.uow.register(run)
 

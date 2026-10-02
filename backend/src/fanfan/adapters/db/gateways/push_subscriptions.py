@@ -44,7 +44,7 @@ class SqlPushSubscriptionGateway(PushSubscriptionGateway):
             }
         ):
             self.session.add(push_sub_orm)
-            await self.session.flush([push_sub_orm])
+            await self.session.flush()
 
     async def get_by_endpoint(self, endpoint: str) -> PushSubscription | None:
         stmt = (

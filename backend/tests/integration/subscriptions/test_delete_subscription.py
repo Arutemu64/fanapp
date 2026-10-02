@@ -58,7 +58,7 @@ async def test_delete_subscription_removes_own_subscription(
     event = _schedule_event(1, "Событие", 1)
     await schedule_gateway.add(event)
     # Commit the event first: the subscription's FK to schedule_events must see a
-    # persisted row, and the gateway's flush([...]) only flushes the subscription.
+    # persisted row.
     await uow.commit()
     subscription = Subscription(
         id=generate_subscription_id(),
