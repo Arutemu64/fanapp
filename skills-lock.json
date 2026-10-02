@@ -17,7 +17,7 @@
       "source": "ccheney/robust-skills",
       "sourceType": "github",
       "skillPath": "skills/clean-ddd-hexagonal/SKILL.md",
-      "computedHash": "4a48fdb1461f8f62d3f477bd7958582bc47ac98044f9ac8f0940324f20027663"
+      "computedHash": "7f14c93b5aedb7fa2b63998aa572c1dea97e495dc3c77dae251ff33e408ceb7f"
     },
     "core-web-vitals": {
       "source": "addyosmani/web-quality-skills",
@@ -41,13 +41,13 @@
       "source": "mattpocock/skills",
       "sourceType": "github",
       "skillPath": "skills/engineering/domain-modeling/SKILL.md",
-      "computedHash": "a11713c0ff7870efa3c331b2e273f09116158485246edc89ae5088eefd1b0b48"
+      "computedHash": "b3eb40152b81f0c98fd2095a023c019452dbdce56f7540cc67fece2972db8369"
     },
     "fastapi": {
       "source": "fastapi/fastapi",
       "sourceType": "github",
       "skillPath": "fastapi/.agents/skills/fastapi/SKILL.md",
-      "computedHash": "e85d9e223fbc3183b1a599bbe8b02d2edf275d046ff5bcfd14352c92cdff52b3"
+      "computedHash": "1285499b71a2796fc0f0cd0a8ab1ff3886ebb47cd05a51062c5b84d34519f031"
     },
     "find-docs": {
       "source": "upstash/context7",
@@ -71,7 +71,7 @@
       "source": "blader/humanizer",
       "sourceType": "github",
       "skillPath": "SKILL.md",
-      "computedHash": "0a4518725b506f6c83e65f2d6d87cb56fbc042ba92de5eecb1ef8b995ec69d70"
+      "computedHash": "fa4ffac562a8e7349282f606391ede22d23118e998dc8b5ac931662fa734c1b7"
     },
     "improve": {
       "source": "shadcn/improve",
@@ -119,7 +119,7 @@
       "source": "huntabyte/shadcn-svelte",
       "sourceType": "github",
       "skillPath": "skills/shadcn-svelte/SKILL.md",
-      "computedHash": "d4f3f983a71466a86649985a8a7fbce47da29f44de3a9d02540bbcf3167134e0"
+      "computedHash": "5f1ba8c333ac739aa6046c963c282fea41cd130d875f10724a25d36db6b20c21"
     },
     "sqlalchemy-alembic-expert-best-practices-code-review": {
       "source": "wispbit-ai/skills",
@@ -149,7 +149,7 @@
       "source": "nextlevelbuilder/ui-ux-pro-max-skill",
       "sourceType": "github",
       "skillPath": ".claude/skills/ui-ux-pro-max/SKILL.md",
-      "computedHash": "4080ff883b26b670a5a224fb332e89ecc15319535f4d14279947ad7812fec558"
+      "computedHash": "daa1a7be30edc9cda6b31da821c5285a9f421ee3136dd6335ff47e917215d1a5"
     },
     "ux-copy": {
       "source": "N1arko/redaktura-skills",
