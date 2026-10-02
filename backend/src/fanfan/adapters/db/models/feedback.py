@@ -16,4 +16,4 @@ class FeedbackORM(UUIDPrimaryKeyMixin, BaseORM):
     )
     text: Mapped[str] = mapped_column(Text())
 
-    user: Mapped[UserORM] = relationship(foreign_keys=user_id)
+    user: Mapped[UserORM] = relationship(foreign_keys=user_id, lazy="raise")

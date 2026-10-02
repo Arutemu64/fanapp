@@ -33,5 +33,5 @@ class VoteORM(UUIDPrimaryKeyMixin, BaseORM):
         ForeignKey("nominations.id", ondelete="CASCADE"), index=True
     )
 
-    participant: Mapped[ParticipantORM] = relationship()
-    nomination: Mapped[NominationORM] = relationship()
+    participant: Mapped[ParticipantORM] = relationship(lazy="raise")
+    nomination: Mapped[NominationORM] = relationship(lazy="raise")
