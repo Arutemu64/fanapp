@@ -208,8 +208,12 @@ class SqlNominationGateway(NominationGateway):
         user_id: UserId | None = None,
         pagination: Pagination | None = None,
     ) -> list[NominationVotingDTO]:
-        stmt = _select_nomination_voting_dto(user_id).where(
-            NominationORM.is_votable.is_(True)
+        # Title is unique (uq_nominations_title), so it is a total order: without
+        # one, OFFSET pages may repeat or skip rows. Matches the voting dashboard.
+        stmt = (
+            _select_nomination_voting_dto(user_id)
+            .where(NominationORM.is_votable.is_(True))
+            .order_by(NominationORM.title)
         )
 
         if pagination:

@@ -265,8 +265,8 @@ class SqlUserGateway(UserGateway):
         return _parse_base_dto(user_orm), pool_size
 
     async def read_all_by_receive_all_announcements(self) -> list[UserBaseDTO]:
-        # Bare boolean predicate (not .is_(True)) so it matches the partial
-        # index ix_users_receive_all_announcements WHERE clause and can use it.
+        # No index: the column is low-cardinality and only read by broadcasts,
+        # see models/user.py.
         stmt = select(UserORM).where(UserORM.receive_all_announcements)
         users_orm = await self.session.scalars(stmt)
         return [_parse_base_dto(u) for u in users_orm]
