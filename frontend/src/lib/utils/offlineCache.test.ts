@@ -13,16 +13,24 @@ vi.mock('idb-keyval', () => ({
 	delMany: (ks: string[]) => Promise.resolve(void ks.forEach((k) => store.delete(k)))
 }));
 
-// The server is always reachable, so fetchWithCache/warmCache take the live-fetch path.
+// Reachability is switchable per test; it defaults to reachable so fetchWithCache and
+// warmCache take the live-fetch path.
+const reachability = vi.hoisted(() => ({
+	reachable: true,
+	markReachable: vi.fn<(value: boolean) => void>()
+}));
+
 vi.mock('$lib/services/reachability', () => ({
-	isReachable: () => true,
-	markReachable: () => {}
+	isReachable: () => reachability.reachable,
+	markReachable: reachability.markReachable
 }));
 
 import { clearUserCache, fetchWithCache, universalScope, userScope } from './offlineCache';
 
 beforeEach(() => {
 	store.clear();
+	reachability.reachable = true;
+	reachability.markReachable.mockClear();
 });
 
 // A deferred promise lets a test hold a fetch open across a clearUserCache() call,
@@ -80,5 +88,132 @@ describe('offlineCache epoch guard', () => {
 
 		// Universal data carries no identity, so a clear never invalidates its write.
 		await vi.waitFor(() => expect(store.get('g:schedule')).toBeDefined());
+	});
+});
+
+describe('offlineCache fallback', () => {
+	const failing = () => Promise.reject(new Error('network down'));
+
+	it('serves the cached copy without calling the fetcher when unreachable', async () => {
+		store.set('u:subscriptions', { value: 'cached', cachedAt: 1000 });
+		reachability.reachable = false;
+		const fetcher = vi.fn(() => Promise.resolve('fresh'));
+
+		const result = await fetchWithCache<string>({
+			key: 'subscriptions',
+			scope: userScope,
+			fetcher
+		});
+
+		expect(fetcher).not.toHaveBeenCalled();
+		expect(result).toEqual({ data: 'cached', cachedAt: 1000, stale: true });
+	});
+
+	it('falls back to the cache and marks the server unreachable when the fetch throws', async () => {
+		store.set('g:schedule', { value: 'cached', cachedAt: 2000 });
+
+		const result = await fetchWithCache<string>({
+			key: 'schedule',
+			scope: universalScope,
+			fetcher: failing
+		});
+
+		expect(result).toEqual({ data: 'cached', cachedAt: 2000, stale: true });
+		expect(reachability.markReachable).toHaveBeenCalledWith(false);
+	});
+
+	it('falls back to the cache when the fetcher reports no usable data', async () => {
+		store.set('g:schedule', { value: 'cached', cachedAt: 3000 });
+
+		const result = await fetchWithCache<string>({
+			key: 'schedule',
+			scope: universalScope,
+			fetcher: () => Promise.resolve(undefined)
+		});
+
+		expect(result).toEqual({ data: 'cached', cachedAt: 3000, stale: true });
+		expect(reachability.markReachable).toHaveBeenCalledWith(true);
+	});
+
+	it('returns a stale miss when nothing is cached', async () => {
+		const result = await fetchWithCache<string>({
+			key: 'schedule',
+			scope: universalScope,
+			fetcher: failing
+		});
+
+		expect(result).toEqual({ data: undefined, cachedAt: undefined, stale: true });
+	});
+
+	it('serves a legacy bare value without a timestamp', async () => {
+		store.set('g:schedule', 'legacy');
+		reachability.reachable = false;
+
+		const result = await fetchWithCache<string>({
+			key: 'schedule',
+			scope: universalScope,
+			fetcher: failing
+		});
+
+		expect(result).toEqual({ data: 'legacy', cachedAt: undefined, stale: true });
+	});
+
+	it('stamps fresh data with cachedAt and persists the same stamp', async () => {
+		vi.useFakeTimers({ toFake: ['Date'] });
+		vi.setSystemTime(5000);
+		try {
+			const result = await fetchWithCache<string>({
+				key: 'schedule',
+				scope: universalScope,
+				fetcher: () => Promise.resolve('fresh')
+			});
+
+			expect(result).toEqual({ data: 'fresh', cachedAt: 5000, stale: false });
+			await vi.waitFor(() =>
+				expect(store.get('g:schedule')).toEqual({ value: 'fresh', cachedAt: 5000 })
+			);
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('scopes entries: a user entry is not served for the universal scope and vice versa', async () => {
+		store.set('u:profile', { value: 'user-data', cachedAt: 1 });
+		reachability.reachable = false;
+
+		const asUniversal = await fetchWithCache<string>({
+			key: 'profile',
+			scope: universalScope,
+			fetcher: failing
+		});
+		const asUser = await fetchWithCache<string>({
+			key: 'profile',
+			scope: userScope,
+			fetcher: failing
+		});
+
+		expect(asUniversal.data).toBeUndefined();
+		expect(asUser.data).toBe('user-data');
+	});
+
+	it('clearUserCache drops user entries and keeps universal ones', async () => {
+		store.set('u:profile', { value: 'user-data', cachedAt: 1 });
+		store.set('g:schedule', { value: 'public', cachedAt: 1 });
+		reachability.reachable = false;
+
+		await clearUserCache();
+
+		const user = await fetchWithCache<string>({
+			key: 'profile',
+			scope: userScope,
+			fetcher: failing
+		});
+		const universal = await fetchWithCache<string>({
+			key: 'schedule',
+			scope: universalScope,
+			fetcher: failing
+		});
+		expect(user.data).toBeUndefined();
+		expect(universal.data).toBe('public');
 	});
 });
