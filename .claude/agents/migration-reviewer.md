@@ -6,6 +6,7 @@ model: opus
 skills:
   - fanfan-migrations
   - sqlalchemy-alembic-expert-best-practices-code-review
+  - supabase-postgres-best-practices
 ---
 
 You review migrations for a **deployed app with real user data**. A migration
