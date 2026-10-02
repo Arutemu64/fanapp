@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 from collections.abc import AsyncIterator
 from typing import Any, cast
 
@@ -20,7 +21,6 @@ def _signal() -> PostgresOutboxSignal:
 
 
 def _notify(signal: PostgresOutboxSignal) -> None:
-    # What the listener does for each notification it receives.
     signal._event.set()
 
 
@@ -112,6 +112,8 @@ async def test_hold_wakes_the_relay_on_a_notification() -> None:
         await asyncio.wait_for(signal.wait(60), timeout=1)
     finally:
         hold.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await hold
 
 
 @pytest.mark.usefixtures("fast_probe")
