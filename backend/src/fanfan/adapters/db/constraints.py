@@ -2,27 +2,21 @@ import re
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 
+import psycopg
 from sqlalchemy.exc import IntegrityError
 
 
 def get_constraint_name(error: IntegrityError) -> str | None:
     """Extract DB constraint name from SQLAlchemy integrity errors.
 
-    Works with asyncpg errors and keeps a string fallback for other drivers.
+    Reads psycopg's error diagnostics and keeps a string fallback for other
+    drivers.
     """
 
     original_error = error.orig
-    # Every read here is a `getattr` against a driver object with no stubs, so
-    # the isinstance guards are what keep the declared `str | None` honest
-    # rather than an `Any` waved through it.
-    constraint_name = getattr(original_error, "constraint_name", None)
-    if isinstance(constraint_name, str) and constraint_name:
-        return constraint_name
-
-    diagnostic = getattr(original_error, "diag", None)
-    if diagnostic is not None:
-        constraint_name = getattr(diagnostic, "constraint_name", None)
-        if isinstance(constraint_name, str) and constraint_name:
+    if isinstance(original_error, psycopg.Error):
+        constraint_name = original_error.diag.constraint_name
+        if constraint_name:
             return constraint_name
 
     match = re.search(r'constraint\s+"([^"]+)"', str(original_error), re.IGNORECASE)

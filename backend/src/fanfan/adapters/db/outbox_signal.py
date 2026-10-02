@@ -4,7 +4,8 @@ import logging
 import random
 import time
 
-import asyncpg
+import psycopg
+from psycopg import sql
 from sqlalchemy.engine import make_url
 
 from fanfan.adapters.db.config import DatabaseConfig
@@ -29,18 +30,17 @@ _RECONNECT_MAX_EXPONENT = 16
 # starts a fresh backoff instead of inheriting the earlier failure count.
 _RECONNECT_RESET_AFTER_SECONDS = 60.0
 
-# A LISTEN socket can die silently (NAT idle timeout, firewall drop, a dead
-# asyncpg reader task) without firing the termination listener, which would
-# leave the relay on the poll backstop until the next restart. A periodic probe
-# turns that into an error the supervisor reconnects on. The probe timeout is
-# load-bearing: an unbounded query on a half-dead socket waits out the kernel
-# TCP keepalive (~2 h on Linux) before failing. Pattern from faststream-outbox:
+# A LISTEN socket can die silently (NAT idle timeout, firewall drop) without
+# the socket ever reporting an error, which would leave the relay on the poll
+# backstop until the next restart. A periodic probe turns that into an error the
+# supervisor reconnects on. The probe timeout is load-bearing: an unbounded
+# query on a half-dead socket waits out the kernel TCP keepalive (~2 h on Linux)
+# before failing. Pattern from faststream-outbox:
 # https://github.com/modern-python/faststream-outbox/blob/main/faststream_outbox/subscriber/usecase.py
+# A timed-out probe is not instant: psycopg first spends up to ~10 s asking the
+# server to cancel it, then closes the connection.
 _HEALTH_CHECK_INTERVAL_SECONDS = 30.0
 _HEALTH_CHECK_TIMEOUT_SECONDS = 5.0
-# A graceful close on that same half-dead socket can hang too; asyncpg aborts
-# the connection when this runs out.
-_CLOSE_TIMEOUT_SECONDS = 5.0
 
 
 def _reconnect_delay(failures: int) -> float:
@@ -54,7 +54,7 @@ def _reconnect_delay(failures: int) -> float:
 
 
 class PostgresOutboxSignal(OutboxSignal):
-    """LISTEN/NOTIFY wake-up backed by a dedicated asyncpg connection.
+    """LISTEN/NOTIFY wake-up backed by a dedicated psycopg connection.
 
     Holds one long-lived connection outside the SQLAlchemy pool (a LISTEN
     connection is pinned for the lifetime of the subscription, so it must not
@@ -103,29 +103,23 @@ class PostgresOutboxSignal(OutboxSignal):
                 await self._task
             self._task = None
 
-    def _on_notify(
-        self, _connection: object, _pid: int, _channel: str, _payload: str
-    ) -> None:
-        # asyncpg calls this positionally with (connection, pid, channel,
-        # payload); we need none of them — a bare notification is the whole
-        # signal. It runs on the event loop, so setting the Event is safe.
-        self._event.set()
-
     async def _supervise(self) -> None:
         failures = 0
         while not self._closing:
-            connection: asyncpg.Connection | None = None
+            connection: psycopg.AsyncConnection | None = None
             connected_at: float | None = None
             try:
                 connection = await self._connect()
-                await connection.add_listener(self._channel, self._on_notify)
+                await connection.execute(
+                    sql.SQL("LISTEN {}").format(sql.Identifier(self._channel))
+                )
                 connected_at = time.monotonic()
                 # A fresh connection may have missed inserts committed while it
                 # was down; wake the relay so it drains now instead of waiting
                 # out the poll interval.
                 self._event.set()
-                # Block until the connection drops (or we are cancelled on stop).
-                # Notifications arrive via the callback in the meantime.
+                # Block until the connection drops (or we are cancelled on stop),
+                # setting the Event for each notification in the meantime.
                 await self._hold(connection)
                 if self._closing:
                     return
@@ -144,9 +138,11 @@ class PostgresOutboxSignal(OutboxSignal):
             finally:
                 if connection is not None:
                     # The socket may already be gone; a close failure is nothing
-                    # the supervisor can act on, so swallow it.
+                    # the supervisor can act on, so swallow it. psycopg's close()
+                    # never waits on the server, so a half-dead socket cannot
+                    # hang it.
                     with contextlib.suppress(Exception):
-                        await connection.close(timeout=_CLOSE_TIMEOUT_SECONDS)
+                        await connection.close()
             if connected_at is not None:
                 uptime = time.monotonic() - connected_at
                 if uptime >= _RECONNECT_RESET_AFTER_SECONDS:
@@ -154,36 +150,43 @@ class PostgresOutboxSignal(OutboxSignal):
             failures += 1
             await asyncio.sleep(_reconnect_delay(failures))
 
-    async def _hold(self, connection: asyncpg.Connection) -> None:
+    async def _hold(self, connection: psycopg.AsyncConnection) -> None:
         """Return once the connection drops; raise if a health probe fails."""
-        terminated = asyncio.Event()
-        connection.add_termination_listener(lambda _conn: terminated.set())
         while True:
-            with contextlib.suppress(TimeoutError):
-                await asyncio.wait_for(
-                    terminated.wait(), _HEALTH_CHECK_INTERVAL_SECONDS
-                )
-                return
-            # No termination within the interval: prove the socket still answers.
+            try:
+                # A bare notification is the whole signal; its channel and
+                # payload carry nothing the relay needs.
+                async for _notify in connection.notifies(
+                    timeout=_HEALTH_CHECK_INTERVAL_SECONDS
+                ):
+                    self._event.set()
+            except psycopg.OperationalError:
+                # A server-side drop surfaces here as an error on the socket;
+                # anything else is a real failure for the supervisor to log.
+                if connection.broken:
+                    return
+                raise
+            # The interval passed: prove the socket still answers.
             await asyncio.wait_for(
-                connection.fetchval("SELECT 1"), _HEALTH_CHECK_TIMEOUT_SECONDS
+                connection.execute("SELECT 1"), _HEALTH_CHECK_TIMEOUT_SECONDS
             )
 
-    async def _connect(self) -> asyncpg.Connection:
+    async def _connect(self) -> psycopg.AsyncConnection:
         url = make_url(self._config.build_connection_str())
-        server_settings: dict[str, str] = {}
+        application_name: str | None = None
         if self._config.application_name is not None:
             # Label this connection in pg_stat_activity distinctly from the
             # pooled query connections, so an idle LISTEN is easy to spot.
-            server_settings["application_name"] = (
-                f"{self._config.application_name}-outbox-listener"
-            )
-        # asyncpg ships no type information, so connect() is Unknown here.
-        return await asyncpg.connect(  # ty: ignore[unsound-return-statement]
+            application_name = f"{self._config.application_name}-outbox-listener"
+        # Autocommit: LISTEN takes effect only once its transaction commits, and
+        # Postgres delivers notifications only between transactions.
+        return await psycopg.AsyncConnection.connect(
             host=url.host,
             port=url.port,
             user=url.username,
             password=url.password,
-            database=url.database,
-            server_settings=server_settings or None,
+            dbname=url.database,
+            # psycopg drops None parameters, leaving the label unset.
+            application_name=application_name,
+            autocommit=True,
         )

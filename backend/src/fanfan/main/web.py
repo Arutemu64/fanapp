@@ -1,3 +1,4 @@
+import sys
 from contextlib import suppress
 
 import uvicorn
@@ -20,6 +21,9 @@ def main() -> None:
             forwarded_allow_ips=["*"],
             log_level=config.debug.logging_level,
             log_config=None,
+            # psycopg's async mode cannot run on Windows' default
+            # ProactorEventLoop; same constraint as adapters/db/event_loop.py.
+            loop="asyncio:SelectorEventLoop" if sys.platform == "win32" else "auto",
         )
 
 

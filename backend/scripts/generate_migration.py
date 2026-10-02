@@ -52,8 +52,8 @@ def main() -> None:
         sys.exit("usage: generate_migration.py <migration_name>")
     migration_name = sys.argv[1]
 
-    # asyncpg driver: env.py builds an async engine, matching runtime and tests.
-    postgres = PostgresContainer(POSTGRES_IMAGE, driver="asyncpg")
+    # psycopg driver: env.py builds an async engine, matching runtime and tests.
+    postgres = PostgresContainer(POSTGRES_IMAGE, driver="psycopg")
     # Workaround from testcontainers/testcontainers-python#108 (same as the
     # db_provider test fixture); without it the host is misresolved on Windows.
     if os.name == "nt":

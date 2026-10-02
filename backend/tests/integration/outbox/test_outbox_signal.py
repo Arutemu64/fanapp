@@ -1,7 +1,7 @@
 import asyncio
 from uuid import uuid7
 
-import asyncpg
+import psycopg
 import pytest
 from dishka import AsyncContainer
 from sqlalchemy.engine import make_url
@@ -15,15 +15,15 @@ pytestmark = [
 ]
 
 
-async def _raw_connect(config: DatabaseConfig) -> asyncpg.Connection:
+async def _raw_connect(config: DatabaseConfig) -> psycopg.AsyncConnection:
     url = make_url(config.build_connection_str())
-    # asyncpg ships no type information, so connect() is Unknown here.
-    return await asyncpg.connect(  # ty: ignore[unsound-return-statement]
+    return await psycopg.AsyncConnection.connect(
         host=url.host,
         port=url.port,
         user=url.username,
         password=url.password,
-        database=url.database,
+        dbname=url.database,
+        autocommit=True,
     )
 
 
@@ -47,10 +47,8 @@ async def test_insert_trigger_wakes_the_listener(dishka: AsyncContainer) -> None
 
         await writer.execute(
             "INSERT INTO outbox_events (id, subject, payload) "
-            "VALUES ($1, $2, $3::jsonb)",
-            row_id,
-            "test.signal",
-            "{}",
+            "VALUES (%s, %s, %s::jsonb)",
+            (row_id, "test.signal", "{}"),
         )
 
         # Wakes well within the timeout if the trigger fired; the outer wait_for
@@ -59,6 +57,6 @@ async def test_insert_trigger_wakes_the_listener(dishka: AsyncContainer) -> None
     finally:
         # The insert really committed, so remove it — other outbox tests assert
         # on the set of unpublished rows and must not see this one.
-        await writer.execute("DELETE FROM outbox_events WHERE id = $1", row_id)
+        await writer.execute("DELETE FROM outbox_events WHERE id = %s", (row_id,))
         await writer.close()
         await signal.stop()

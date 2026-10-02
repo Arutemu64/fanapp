@@ -1,4 +1,5 @@
 from pydantic import BaseModel, PostgresDsn, SecretStr, model_validator
+from sqlalchemy.engine import make_url
 
 
 class DatabaseConfig(BaseModel):
@@ -11,7 +12,7 @@ class DatabaseConfig(BaseModel):
     name: str | None = None
 
     database_system: str = "postgresql"
-    driver: str = "asyncpg"
+    driver: str = "psycopg"
     # Defaults off: echo logs every statement *and* its bound parameters, so a
     # deployment whose .env loses DB__ECHO would quietly start writing emails and
     # password hashes to the logs. `extra="ignore"` means that drift never fails
@@ -28,27 +29,29 @@ class DatabaseConfig(BaseModel):
     # firewall or Postgres silently dropping connections that sit idle too long.
     pool_recycle: int = 1800
 
-    # Server-side safety timeouts (milliseconds), applied as asyncpg
-    # server_settings on every connection. They bound the blast radius of a
-    # runaway query or a transaction left open across an await: a tripped timeout
-    # raises instead of pinning a pooled connection (and any locks it holds)
-    # forever. Defaults are generous enough for the batch deletes the outbox and
-    # notification relays run. Set to 0 to disable an individual timeout.
+    # Server-side safety timeouts (milliseconds), sent as libpq `options` on
+    # every connection. They bound the blast radius of a runaway query or a
+    # transaction left open across an await: a tripped timeout raises instead of
+    # pinning a pooled connection (and any locks it holds) forever. Defaults are
+    # generous enough for the batch deletes the outbox and notification relays
+    # run. Set to 0 to disable an individual timeout.
     statement_timeout: int = 30000
     lock_timeout: int = 10000
     idle_in_transaction_session_timeout: int = 60000
 
     # Labels connections in pg_stat_activity so you can tell which service holds a
-    # lock. Overridden per service in Docker Compose; None keeps asyncpg's default.
+    # lock. Overridden per service in Docker Compose; None leaves it blank.
     application_name: str | None = None
 
-    def build_server_settings(self) -> dict[str, str]:
-        """asyncpg server_settings (all values must be strings).
+    def build_connect_args(self) -> dict[str, str]:
+        """libpq connection parameters for every pooled connection.
 
         Timeouts set to 0 are omitted so Postgres keeps its own default
         (unlimited) rather than being handed a redundant "0".
         """
-        settings: dict[str, str] = {}
+        # Pinned so timestamptz values decode as UTC whatever the server's own
+        # TimeZone is; psycopg decodes them in the session time zone.
+        settings = ["-c TimeZone=UTC"]
         timeouts = {
             "statement_timeout": self.statement_timeout,
             "lock_timeout": self.lock_timeout,
@@ -58,10 +61,11 @@ class DatabaseConfig(BaseModel):
         }
         for name, value in timeouts.items():
             if value > 0:
-                settings[name] = str(value)
+                settings.append(f"-c {name}={value}")
+        connect_args = {"options": " ".join(settings)}
         if self.application_name is not None:
-            settings["application_name"] = self.application_name
-        return settings
+            connect_args["application_name"] = self.application_name
+        return connect_args
 
     @model_validator(mode="after")
     def validate_url_or_parts(self) -> DatabaseConfig:
@@ -84,7 +88,13 @@ class DatabaseConfig(BaseModel):
 
     def build_connection_str(self) -> str:
         if self.url is not None:
-            return self.url.unicode_string()
+            # The driver is forced rather than read from the DSN: the engine's
+            # connect args are psycopg-specific, so a DSN naming another driver
+            # (a deployed postgresql+asyncpg://, a bare postgres://) still
+            # connects through psycopg instead of failing at boot.
+            url = make_url(self.url.unicode_string())
+            url = url.set(drivername=f"{self.database_system}+{self.driver}")
+            return url.render_as_string(hide_password=False)
 
         if (
             self.host is None

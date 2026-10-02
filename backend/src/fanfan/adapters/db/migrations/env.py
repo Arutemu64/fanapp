@@ -9,6 +9,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from fanfan.adapters.config.parsers import get_database_config
+from fanfan.adapters.db.event_loop import loop_factory
 from fanfan.adapters.db.models import BaseORM
 
 config = context.config
@@ -127,7 +128,7 @@ async def run_async_migrations() -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
-    asyncio.run(run_async_migrations())
+    asyncio.run(run_async_migrations(), loop_factory=loop_factory())
 
 
 if context.is_offline_mode():
