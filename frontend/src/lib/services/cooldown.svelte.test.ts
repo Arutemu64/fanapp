@@ -3,14 +3,18 @@ import type * as Svelte from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // useInterval registers onDestroy, which throws outside component initialization.
+// Capture the callbacks so a test can simulate the component being destroyed.
+const destroyCallbacks = vi.hoisted(() => [] as Array<() => void>);
+
 vi.mock('svelte', async (importOriginal) => ({
 	...(await importOriginal<typeof Svelte>()),
-	onDestroy: () => {}
+	onDestroy: (fn: () => void) => void destroyCallbacks.push(fn)
 }));
 
 import { ResendCooldown } from './cooldown.svelte';
 
 beforeEach(() => {
+	destroyCallbacks.length = 0;
 	vi.useFakeTimers();
 });
 
@@ -63,6 +67,15 @@ describe('ResendCooldown', () => {
 		cooldown.start();
 		vi.advanceTimersByTime(3000);
 		cooldown.start();
+		expect(cooldown.remaining).toBe(5);
+	});
+
+	it('stops ticking when the owning component is destroyed', () => {
+		const cooldown = new ResendCooldown(5);
+		cooldown.start();
+		destroyCallbacks.forEach((fn) => fn());
+		expect(vi.getTimerCount()).toBe(0);
+		vi.advanceTimersByTime(5000);
 		expect(cooldown.remaining).toBe(5);
 	});
 });

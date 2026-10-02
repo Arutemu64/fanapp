@@ -30,6 +30,7 @@ import { clearUserCache, fetchWithCache, universalScope, userScope } from './off
 beforeEach(() => {
 	store.clear();
 	reachability.reachable = true;
+	reachability.markReachable.mockClear();
 });
 
 // A deferred promise lets a test hold a fetch open across a clearUserCache() call,
