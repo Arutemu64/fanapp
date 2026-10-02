@@ -135,7 +135,13 @@ export default defineConfig(({ mode }) => {
 			// Also matches `*.svelte.test.ts`, where runes are available.
 			include: ['src/**/*.test.ts'],
 			// No DOM: component tests are deliberately out of scope (ADR-0011).
-			environment: 'node'
+			environment: 'node',
+			// Undo vi.spyOn / vi.fn implementations after each test so a mock can't leak into the next.
+			restoreMocks: true,
+			// Same for vi.stubGlobal (the fake Web Storage in the storage tests).
+			unstubGlobals: true,
+			// Same for vi.stubEnv.
+			unstubEnvs: true
 		},
 		// Tests exercise browser code, so resolve packages' browser entry points
 		// even though the runner is Node. Scoped to test runs so the app build
