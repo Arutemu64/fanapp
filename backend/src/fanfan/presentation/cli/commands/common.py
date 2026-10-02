@@ -3,6 +3,8 @@ from collections.abc import Callable, Coroutine
 from functools import wraps
 from typing import Any
 
+from fanfan.adapters.db.event_loop import loop_factory
+
 
 def async_command[**P, R](
     f: Callable[P, Coroutine[Any, Any, R]],
@@ -17,6 +19,6 @@ def async_command[**P, R](
 
     @wraps(f)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-        return asyncio.run(f(*args, **kwargs))
+        return asyncio.run(f(*args, **kwargs), loop_factory=loop_factory())
 
     return wrapper

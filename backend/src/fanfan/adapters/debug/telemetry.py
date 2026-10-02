@@ -3,7 +3,6 @@ from typing import Any, cast
 
 import sentry_sdk
 from sentry_sdk.integrations.asyncio import AsyncioIntegration
-from sentry_sdk.integrations.asyncpg import AsyncPGIntegration
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.httpx2 import Httpx2Integration
 from sentry_sdk.integrations.redis import RedisIntegration
@@ -83,9 +82,10 @@ def setup_telemetry(  # noqa: PLR0913, PLR0917 — one parameter per Sentry knob
                 # others here, this one is not auto-enabled, so it must be listed.
                 AsyncioIntegration(),
                 FastApiIntegration(failed_request_status_codes={*range(500, 600)}),
+                # Spans every pooled query. Sentry has no psycopg 3 integration
+                # (getsentry/sentry-python#2427), so the raw outbox LISTEN
+                # connection goes untraced.
                 SqlalchemyIntegration(),
-                # Driver-level DB spans beneath what SQLAlchemy already reports.
-                AsyncPGIntegration(),
                 # Outbound-request spans for the httpx2 clients (OAuth, mail).
                 Httpx2Integration(),
                 RedisIntegration(),

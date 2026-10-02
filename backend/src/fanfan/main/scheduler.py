@@ -9,6 +9,7 @@ from apscheduler.triggers.cron import CronTrigger
 from dishka import AsyncContainer
 
 from fanfan.adapters.config.parsers import get_config
+from fanfan.adapters.db.event_loop import loop_factory
 from fanfan.adapters.db.outbox_signal import OUTBOX_CHANNEL, PostgresOutboxSignal
 from fanfan.application.interactors.outbox.publish_outbox_events import (
     PublishOutboxEvents,
@@ -111,7 +112,7 @@ async def run() -> None:
 
 def main() -> None:
     init(service_name="scheduler")
-    asyncio.run(run())
+    asyncio.run(run(), loop_factory=loop_factory())
 
 
 if __name__ == "__main__":

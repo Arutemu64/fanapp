@@ -1,7 +1,9 @@
 import asyncio
-from collections.abc import Callable
+import contextlib
+from collections.abc import AsyncIterator
 from typing import Any, cast
 
+import psycopg
 import pytest
 
 from fanfan.adapters.db import outbox_signal
@@ -14,12 +16,12 @@ pytestmark = pytest.mark.asyncio
 def _signal() -> PostgresOutboxSignal:
     # No connection is opened (start() is never called); these tests drive the
     # in-process latch directly to pin its edge-triggered semantics.
-    config = DatabaseConfig(url="postgresql+asyncpg://u:p@localhost:5432/db")
+    config = DatabaseConfig(url="postgresql+psycopg://u:p@localhost:5432/db")
     return PostgresOutboxSignal(config)
 
 
 def _notify(signal: PostgresOutboxSignal) -> None:
-    signal._on_notify(object(), 0, "outbox_new", "")
+    signal._event.set()
 
 
 async def test_wait_returns_immediately_after_a_signal() -> None:
@@ -66,26 +68,33 @@ async def test_signal_arriving_during_a_drain_is_not_lost() -> None:
 
 
 class _FakeListenConnection:
-    """Stands in for the LISTEN connection in _hold: termination and probe
-    behaviour are driven by the test instead of a real socket."""
+    """Stands in for the LISTEN connection in _hold: notifications, drops and
+    probe behaviour are driven by the test instead of a real socket."""
 
-    def __init__(self, *, probe_hangs: bool) -> None:
+    def __init__(self, *, probe_hangs: bool = False, notifications: int = 0) -> None:
         self.probe_hangs = probe_hangs
+        self.pending_notifications = notifications
+        self.broken = False
         self.probes = 0
         self.probed_twice = asyncio.Event()
-        self.on_terminate: Callable[[object], None] | None = None
 
-    def add_termination_listener(self, callback: Callable[[object], None]) -> None:
-        self.on_terminate = callback
+    # Mirrors psycopg's notifies() signature, timeout included.
+    async def notifies(self, *, timeout: float) -> AsyncIterator[object]:  # noqa: ASYNC109
+        while self.pending_notifications:
+            self.pending_notifications -= 1
+            yield object()
+        if self.broken:
+            msg = "server closed the connection unexpectedly"
+            raise psycopg.OperationalError(msg)
+        await asyncio.sleep(timeout)
 
-    async def fetchval(self, _query: str) -> int:
+    async def execute(self, _query: str) -> None:
         self.probes += 1
         if self.probes >= 2:
             self.probed_twice.set()
         if self.probe_hangs:
             # A half-dead socket: the query never gets an answer.
             await asyncio.Event().wait()
-        return 1
 
 
 @pytest.fixture
@@ -94,9 +103,22 @@ def fast_probe(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(outbox_signal, "_HEALTH_CHECK_TIMEOUT_SECONDS", 0.05)
 
 
+async def test_hold_wakes_the_relay_on_a_notification() -> None:
+    signal = _signal()
+    signal.arm()
+    connection = _FakeListenConnection(notifications=1)
+    hold = asyncio.create_task(signal._hold(cast("Any", connection)))
+    try:
+        await asyncio.wait_for(signal.wait(60), timeout=1)
+    finally:
+        hold.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await hold
+
+
 @pytest.mark.usefixtures("fast_probe")
 async def test_hold_raises_when_the_connection_silently_stops_answering() -> None:
-    # No termination callback ever fires, as with a NAT/firewall drop; the probe
+    # The socket never reports an error, as with a NAT/firewall drop; the probe
     # timing out is the only way the supervisor learns it must reconnect.
     connection = _FakeListenConnection(probe_hangs=True)
 
@@ -106,14 +128,13 @@ async def test_hold_raises_when_the_connection_silently_stops_answering() -> Non
 
 @pytest.mark.usefixtures("fast_probe")
 async def test_hold_keeps_probing_a_healthy_connection_until_it_drops() -> None:
-    connection = _FakeListenConnection(probe_hangs=False)
+    connection = _FakeListenConnection()
     hold = asyncio.create_task(_signal()._hold(cast("Any", connection)))
 
     await asyncio.wait_for(connection.probed_twice.wait(), timeout=1)
     assert not hold.done()
 
-    assert connection.on_terminate is not None
-    connection.on_terminate(connection)
+    connection.broken = True
     await asyncio.wait_for(hold, timeout=1)
 
 

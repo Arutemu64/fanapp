@@ -4,6 +4,7 @@ from dishka_faststream import setup_dishka
 from faststream import FastStream
 
 from fanfan.adapters.config.parsers import get_config
+from fanfan.adapters.db.event_loop import loop_factory
 from fanfan.main.common import init
 from fanfan.main.di import create_system_container
 from fanfan.presentation.faststream.broker import create_broker
@@ -33,7 +34,7 @@ def create_app() -> FastStream:
 
 def main() -> None:
     app = create_app()
-    asyncio.run(app.run())
+    asyncio.run(app.run(), loop_factory=loop_factory())
 
 
 if __name__ == "__main__":

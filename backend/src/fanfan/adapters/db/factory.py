@@ -16,9 +16,10 @@ def create_engine(config: DatabaseConfig) -> AsyncEngine:
         pool_size=config.pool_size,
         max_overflow=config.max_overflow,
         pool_recycle=config.pool_recycle,
-        # server_settings is asyncpg-specific; it applies the safety timeouts and
-        # application_name label to every connection this engine opens.
-        connect_args={"server_settings": config.build_server_settings()},
+        # Passed through to psycopg as libpq parameters; they apply the safety
+        # timeouts and application_name label to every connection this engine
+        # opens.
+        connect_args=config.build_connect_args(),
     )
 
 
