@@ -130,18 +130,24 @@ just deploy                   # docker compose ... -f docker-compose.prod.yml pu
 This pulls the images and restarts, building nothing on the host. Migrations run
 automatically via the `migration` service before the API starts.
 
-### Changing a JetStream consumer's config (e.g. AckWait)
+### Changing a JetStream consumer's config
 
-Server-side JetStream **consumer** config — `ack_wait`, `max_deliver`, and the
-like, set via `ConsumerConfig` on a FastStream subscriber — is written **only
-when the durable is first created**. On boot FastStream (through nats-py's
-`pull_subscribe`) calls `consumer_info` for the durable and, if it already
-exists, binds to it and **ignores the new config**; `add_consumer` runs only for
-a durable that isn't there yet. So editing `ack_wait` in code takes effect on a
-fresh environment but is silently a no-op against an already-deployed consumer —
-no error, it just keeps the old value.
+nats-py sends a `ConsumerConfig` only when it creates a durable; an existing
+durable keeps its first config, and the NATS data volume outlives deploys. The
+stream worker closes that gap on startup: `sync_consumer_configs`
+(`presentation/faststream/redelivery.py`) re-sends every durable subscriber's
+declared config, and NATS updates the
+[editable fields](https://docs.nats.io/nats-concepts/jetstream/consumers) —
+`ack_wait`, `max_deliver`, `max_ack_pending`, the filter subject — in place. So a
+change to one of those takes effect on the next deploy with no manual step; the
+worker logs `Consumer config updated` with the changed fields.
 
-To apply such a change in production, delete the affected durables once so
+A change to a **non-editable** field (`ack_policy`, `deliver_policy`, the durable
+name) is rejected by the server. The worker logs `Could not update consumer
+config` and keeps running on the old config, so the deploy succeeds but the
+change does not apply until the durable is recreated.
+
+To apply a non-editable change in production, delete the affected durables once so
 FastStream recreates them with the new config on the next boot. Deleting a
 *consumer* is safe: it is routing/cursor state, not the stream or its messages,
 and any un-acked in-flight message is redelivered after recreation (the
@@ -160,7 +166,7 @@ shell doesn't strip the unset `$NATS__*` first. Run it from the deploy directory
 # deploy directory (usually fanapp) but can differ (a renamed dir, or -p /
 # COMPOSE_PROJECT_NAME). Look it up rather than auto-derive: a host running more
 # than one stack has several *_backend-network networks, and picking the wrong
-# one — or matching several — silently leaves the durables on their old AckWait.
+# one — or matching several — silently leaves the durables on their old config.
 docker network ls | grep backend-network
 
 docker run --rm -it --network <project>_backend-network --env-file .env natsio/nats-box \
@@ -368,7 +374,9 @@ The shape of it:
 
 - **Resource limits** (`deploy.resources.limits` in
   [`docker-compose.yml`](../docker-compose.yml)) are sized so the steady-state
-  memory total stays near 1.8 GB, leaving ~10% for the kernel, Docker and sshd.
+  memory total of the long-running services (`core` + `ops` profiles) is 1792 MiB,
+  leaving ~12% of the 2 GB for the kernel, Docker and sshd. The one-shot
+  `migration` limit applies only while it runs at deploy.
   A `cpus` limit may never exceed the host's core count or the container fails to
   create. Plain `docker compose up` (non-swarm) enforces `limits` only —
   `reservations` are ignored ([docker/compose#10046](https://github.com/docker/compose/issues/10046)) —

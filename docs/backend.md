@@ -200,7 +200,7 @@ Aggregate events are **not** published to NATS on commit — that would be a dua
 * **Retention** — `PurgeOutboxEvents` drops delivered rows older than `OutboxConfig.retention_days`, on the `SCHEDULER__OUTBOX_RETENTION_CRON` cron.
 * **Scope** — outbox covers aggregate events only. Service events (below) stay direct, since they guard no committed state.
 
-This makes domain-event delivery atomic with the write, at the cost of one poll-interval of latency. SSE/realtime is unaffected — it uses `RealtimeGateway`, not `EventBroker`.
+This makes domain-event delivery atomic with the write; latency is near-instant through the wake-up above, and at worst one backstop poll interval when a notification is missed. SSE/realtime is unaffected — it uses `RealtimeGateway`, not `EventBroker`.
 
 ### Events raised directly by interactors (service events)
 

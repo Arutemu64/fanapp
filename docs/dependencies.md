@@ -230,21 +230,20 @@ free-form tag publishes none of them.
 
 The bump is a deliberate human step, not automation keyed off commit messages.
 Every automated bumper (semantic-release, release-please, Changesets) infers the
-number from Conventional-Commits `type:` prefixes — which is why we do **not**
-enforce those prefixes (no commitlint, no PR-title lint check): enforcement only
-earns its keep once a tool consumes the tags, and nothing here does. The bump
-that matters most, MAJOR, is exactly the one no tool can infer — it marks *"`just
-deploy` alone is not enough"*, a judgment about deploy steps, not a diff. So the
-prefixes stay optional (see AGENTS.md "Commit & PR titles") and the number stays
-a human call.
+number from Conventional-Commits `type:` prefixes. We lint the PR title's shape
+(`.github/workflows/pr-title.yml` — the PR title is what squash-merge lands, so
+that, not individual commits, is what gets linted; see AGENTS.md "Commit & PR
+titles"), but nothing consumes the prefixes. The bump that matters most, MAJOR,
+is exactly the one no tool can infer — it marks *"`just deploy` alone is not
+enough"*, a judgment about deploy steps, not a diff. So the number stays a human
+call.
 
-If the release chore ever grates enough to automate, adopt the two together, not
-the enforcement alone: a PR-title lint check (the PR title is what squash-merge
-lands, so lint *that*, not individual commits) plus **release-please**, which
-opens a release PR carrying the bump and changelog and keeps the human gate we
-rely on — you still choose when to merge and tag. semantic-release (fully
-hands-off, wrong for images that sometimes need manual MAJOR steps) and
-Changesets (monorepo/library-shaped) do not fit a single deployed app.
+If the release chore ever grates enough to automate, the title lint is already
+in place; add **release-please**, which opens a release PR carrying the bump and
+changelog and keeps the human gate we rely on — you still choose when to merge
+and tag. semantic-release (fully hands-off, wrong for images that sometimes need
+manual MAJOR steps) and Changesets (monorepo/library-shaped) do not fit a single
+deployed app.
 
 ### Build id — *which build is running?*
 
