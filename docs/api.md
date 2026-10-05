@@ -1,19 +1,17 @@
 # API Integration Guide
 
-This guide details best practices for using [`@hey-api/openapi-ts`](https://heyapi.dev/) in the SvelteKit frontend to achieve type-safe communication with the FastAPI backend and clean per-request state isolation. The frontend is a client-rendered SPA, so the browser talks to the backend directly.
+How the SvelteKit frontend uses [`@hey-api/openapi-ts`](https://heyapi.dev/) to call the FastAPI backend with typed requests and a client scoped to each request. The frontend is a client-rendered SPA, so the browser talks to the backend directly.
 
-The generator (config in `frontend/openapi-ts.config.ts`) emits, into `frontend/src/lib/api/generated/`, a typed **SDK** (one function per operation, in `sdk.gen.ts`), the **types** (`types.gen.ts`), and a bundled **fetch client** (`client/`). Each operation function returns `{ data, error, request?, response? }` — the same discriminated shape as before. `data`/`error` are narrowed by the `error` discriminant; `request`/`response` are optional because a network failure produces no response. Output is run through Prettier by the generator (`output.postProcess`), so it stays formatted and is checked by the format gate like any other source.
-
----
+The generator (config in `frontend/openapi-ts.config.ts`) emits, into `frontend/src/lib/api/generated/`, a typed **SDK** (one function per operation, in `sdk.gen.ts`), the **types** (`types.gen.ts`), and a bundled **fetch client** (`client/`). Each operation function returns `{ data, error, request?, response? }`. `data`/`error` are narrowed by the `error` discriminant; `request`/`response` are optional because a network failure produces no response. Output is run through Prettier by the generator (`output.postProcess`), so it stays formatted and is checked by the format gate like any other source.
 
 ## Core Concept: Single Source of Truth
 * **Generated client**: `frontend/src/lib/api/generated/` is the single source of truth for all API contracts — import operation functions and types from `$lib/api/generated`, and `createApiClient` (the per-request client factory) from `$lib/api`.
 * **Auto-generation**: Run `just frontend-generate-api` from the workspace root whenever the backend endpoints, routers, or Pydantic schemas change.
-* **Binary / file uploads**: hey-api types binary fields as `Blob | File` and serializes `multipart/form-data` (and `application/x-www-form-urlencoded`) bodies for you — pass `body: { file }` and it builds the `FormData`. No custom transform is needed (the earlier `openapi-typescript` setup hand-wrote one).
+* **Binary / file uploads**: hey-api types binary fields as `Blob | File` and serializes `multipart/form-data` (and `application/x-www-form-urlencoded`) bodies for you — pass `body: { file }` and it builds the `FormData`. No custom transform is needed.
 
 ### Both generated artifacts are enforced in CI
 
-Forgetting to regenerate is not a silent failure — two committed artifacts each have a check, because a stale one still compiles and would quietly disarm every guard below.
+CI checks both committed artifacts, because a stale one still compiles and would quietly disarm every guard below.
 
 | Artifact | Generated from | Checked by |
 | --- | --- | --- |
@@ -24,9 +22,7 @@ Forgetting to regenerate is not a silent failure — two committed artifacts eac
 
 **`info.version` is compared separately, against `pyproject.toml`.** It is the one field in the spec whose value comes from outside the repo: `APP_VERSION` reads the *installed* distribution metadata, so a stale editable install (common right after a release bump, before `uv sync`) makes it disagree with `pyproject.toml` and would fail a whole-document comparison over a field that has not drifted. The spec test therefore renders with the version the committed file already carries — leaving every other byte compared — and a second test checks `info.version` against `pyproject.toml`. Both of that test's inputs are committed files, so it gives the same answer on a laptop, in CI, and in a cloud session.
 
-The general rule when adding to the spec: **a value that is not derived from committed source does not belong in a committed artifact.** `APP_BUILD` (the commit SHA) is the reason this matters — putting it in `info` would churn the spec, and the generated client with it, on every single commit. Keep build- and environment-derived values on a runtime endpoint (`/debug/`) instead, and if one has to be in the spec, give it its own test against its own source of truth rather than the byte comparison.
-
----
+The general rule when adding to the spec: **a value that is not derived from committed source does not belong in a committed artifact.** `APP_BUILD` (the commit SHA) is the case in point: putting it in `info` would churn the spec, and the generated client with it, on every commit. Keep build- and environment-derived values on a runtime endpoint (`/debug/`) instead, and if one has to be in the spec, give it its own test against its own source of truth rather than the byte comparison.
 
 ## Client Isolation
 A shared global/module singleton API client can accumulate mutable state that bleeds across navigations and login/logout, so **never use one**.
@@ -64,8 +60,6 @@ export const load: PageLoad = async ({ fetch, depends }) => {
 > * **Relative URL Resolution**: SvelteKit resolves relative routes correctly.
 > * **Cookies**: The `session_id` cookie is carried automatically by the browser; the client uses `credentials: 'include'` and the frontend is served same-origin with the API (behind Caddy), so it stays first-party.
 
----
-
 ### 2. Browser & Svelte Component Context
 For local component scripts (`.svelte`), page layouts, or event handlers that only run in the browser, initialize a local client at the top of the `<script>` tag:
 
@@ -95,8 +89,6 @@ For local component scripts (`.svelte`), page layouts, or event handlers that on
 
 > Query params go under `query`, path params under `path`, and the request body under `body` — flat on the options object, not nested under `params`.
 
----
-
 ## TypeScript Types
 hey-api generates a **named export per schema** into `types.gen.ts` (re-exported from `$lib/api/generated`). Import the type you need directly — do not re-alias it locally. Schema names are normalized to PascalCase, so a backend `…DTO` becomes `…Dto` (e.g. `NotificationDTO` → `NotificationDto`).
 
@@ -108,8 +100,6 @@ Request bodies, query params, and responses are named too — `UpdateSettingsDat
 
 ### Enum schemas are the single source of truth
 Backend `StrEnum`s that appear on a DTO field (`UserRole`, `Permission` in `core/vo/`) are emitted as OpenAPI enum schemas, so `frontend-generate-api` regenerates them as string-literal unions. Never hand-copy enum values on the frontend — import the generated union. Permission literals in `lib/utils/permissions.ts` type their constants as the generated `Permission`, so a backend rename/removal makes the stale literal fail `pnpm check` instead of silently breaking permission checks (same drift-guard idea as the error `code` union below). To expose a new enum on the wire, type a DTO field with the enum (not a plain `NewType` str) and run `just frontend-generate-api`.
-
----
 
 ## Mutations & Data Recovery
 * **UI Consistency**: Define how the UI becomes consistent after mutations (e.g. invalidate layout cache, optimistic update, or full state refetch).
@@ -124,8 +114,6 @@ An action that cannot finish inside the request returns **202** with the created
 * **The status resource is an existing list endpoint, not a per-run one.** `GET /sync/sources` already reports each source's latest run, including the active one, so a dedicated `GET /sync/runs/{id}` would exist only to satisfy the convention. Add a per-run endpoint if something genuinely needs to poll one run by id — not before.
 * **Prefer SSE over polling for progress.** The page subscribes to the relevant `SSEEventName` (here `sync_run_updated`) and calls `invalidate(...)`; it also re-invalidates on `connection_established`, so an update missed while the stream was down (or the tab was backgrounded past the pause grace) self-heals on reconnect rather than leaving a stale "in progress" on screen. Treat the SSE payload as a nudge to refetch, never as the source of truth.
 * **A second request while one is running is a 409**, mapped to Russian copy by `code` like any other error — not a silent no-op.
-
----
 
 ## Russian Localization & Error Handling
 Russian copy is mandatory (AGENTS.md, "Never"). API-specific rule: normalize failures before presenting them — never expose raw backend stack traces or internal identifiers, and show a friendly Russian message explaining how to recover or retry.

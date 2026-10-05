@@ -159,8 +159,8 @@ jobs:
 
       # AGENTS.md's first "Never" — core/ and application/ must not import
       # outward — is a machine-checkable contract ([tool.importlinter] in
-      # pyproject.toml), but nothing ran it on a PR: it lived only in
-      # `just backend-lint`, so the boundary held only when someone remembered.
+      # pyproject.toml). Run here as well as in `just backend-lint`, so the
+      # boundary holds on every PR, not only when someone remembers locally.
       - name: Import boundaries (import-linter)
         if: ${{ !cancelled() }}
         run: uv run lint-imports
@@ -229,9 +229,9 @@ jobs:
           - { name: lint, command: pnpm lint }
           - { name: check, command: pnpm check }
           - { name: test, command: pnpm test }
-          # Regenerates the API types in memory and fails if the committed
-          # schema.d.ts differs — a stale one still typechecks, so `check`
-          # above cannot see it.
+          # Regenerates the hey-api client and fails if the committed
+          # src/lib/api/generated/ differs — a stale one still typechecks, so
+          # `check` above cannot see it.
           - { name: api, command: pnpm generate-api:check }
           - { name: build, command: pnpm build }
     defaults:
@@ -395,10 +395,10 @@ jobs:
           recursive: true
 
   # Prove both images still build. hadolint above only parses the Dockerfiles,
-  # and until this job existed the only real build ran in docker-publish.yml
-  # *after* merge — so anything that breaks a build turned main's publish red
-  # instead of the PR that caused it, leaving main unable to ship. That is how
-  # PR #360 landed: it bumped four of the five uv pin sites, and the fifth (the
+  # and the only other real build runs in docker-publish.yml *after* merge — so
+  # without this job a broken build turns main's publish red instead of the PR
+  # that caused it, leaving main unable to ship. PR #360 is the example: it
+  # bumped four of the five uv pin sites, and the fifth (the
   # builder image tag in backend/Dockerfile) only failed once `uv sync --locked`
   # ran against a uv that no longer matched pyproject's `required-version`.
   #

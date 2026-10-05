@@ -322,7 +322,7 @@ unhealthy once the last dump is older than the schedule (see its `healthcheck` i
 Compose), so a silently failing backup shows up in `docker ps` and any prober
 watching container health.
 
-### Verify a backup (do this periodically — an untested backup is a hope)
+### Verify a backup periodically
 
 `docker ps` health only says a dump *ran*, not that it can be *loaded*. Confirm
 the archive is intact and restorable into a throwaway database — never against

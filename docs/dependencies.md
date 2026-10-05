@@ -77,10 +77,10 @@ site needs no group, just its own review PR.
   in `backend/pyproject.toml`.
 * **A pin inside a Dockerfile that isn't a `FROM` line gets an inline
   annotation, not a regex manager.** The `dockerfile` manager reads `FROM` lines
-  only, so `ENV PNPM_VERSION` in `frontend/Dockerfile` was invisible to it and
-  drifted a patch behind the other pnpm sites. It now carries a
-  `# renovate: datasource=npm depName=pnpm versioning=npm` comment, read by the
-  first-party `customManagers:dockerfileVersions` preset. Renovate's own
+  only, so a pin like `ENV PNPM_VERSION` in `frontend/Dockerfile` is invisible
+  to it and drifts behind the other sites. It carries a
+  `# renovate: datasource=npm depName=pnpm versioning=npm` comment instead, read
+  by the first-party `customManagers:dockerfileVersions` preset. Renovate's own
   [regex-manager docs](https://docs.renovatebot.com/modules/manager/regex/)
   prefer this to a bespoke rule — one manager covers every annotated line
   instead of one rule per pin, and the annotation documents the constraint in

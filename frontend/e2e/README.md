@@ -204,7 +204,7 @@ e2e/
     personas.ts      # loggedInAs() / organizer() / user()
     sse.ts           # EventSource double + emitSse()
   support/
-    axe.ts           # WCAG-scoped AxeBuilder factory (color-contrast token debt parked here)
+    axe.ts           # WCAG-scoped AxeBuilder factory
     console.ts       # console-error / pageerror guard (auto fixture)
   specs/             # *.spec.ts live here
   tsconfig.json
