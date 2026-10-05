@@ -5,12 +5,15 @@
 FROM ghcr.io/astral-sh/uv:0.12.3-trixie-slim AS builder
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 
+# Omit development dependencies
 ENV UV_NO_DEV=1
 
 # A uv-managed interpreter at a fixed path: the final stage has no Python of its
 # own and copies /python to the same path, which the venv's interpreter links
 # point at.
 ENV UV_PYTHON_INSTALL_DIR=/python
+
+# Only use the managed Python version
 ENV UV_PYTHON_PREFERENCE=only-managed
 
 WORKDIR /app
@@ -43,13 +46,18 @@ RUN apt-get update \
     && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# uid/gid 999 is relied on by docs/deployment.md, which chowns secrets/*.pem to it.
+# Setup a non-root user. uid/gid 999 is relied on by docs/deployment.md, which
+# chowns secrets/*.pem to it.
 RUN groupadd --system --gid 999 nonroot \
     && useradd --system --gid 999 --uid 999 --create-home nonroot
 
+# Copy the Python version
 COPY --from=builder /python /python
+
+# Copy the application from the builder
 COPY --from=builder --chown=nonroot:nonroot /app /app
 
+# Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Without a TTY, Python block-buffers stdout, so print() diagnostics can lag or
@@ -63,7 +71,10 @@ ENV PYTHONUNBUFFERED=1
 ARG APP_BUILD
 ENV APP_BUILD=$APP_BUILD
 
+# Use the non-root user to run our application
 USER nonroot
+
+# Use `/app` as the working directory
 WORKDIR /app
 
 EXPOSE 8000
@@ -71,4 +82,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
     CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/debug/health', timeout=3)"]
 
+# Run the FastAPI application by default
 CMD ["uvicorn", "--factory", "fanfan.presentation.web.factory:create_app"]

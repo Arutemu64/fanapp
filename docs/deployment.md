@@ -142,10 +142,16 @@ declared config, and NATS updates the
 change to one of those takes effect on the next deploy with no manual step; the
 worker logs `Consumer config updated` with the changed fields.
 
-A change to a **non-editable** field (`ack_policy`, `deliver_policy`, the durable
-name) is rejected by the server. The worker logs `Could not update consumer
-config` and keeps running on the old config, so the deploy succeeds but the
-change does not apply until the durable is recreated.
+A change to a **non-editable** field (`ack_policy`, `deliver_policy`) is rejected
+by the server. The worker logs `Could not update consumer config` and keeps
+running on the old config, so the deploy succeeds but the change does not apply
+until the durable is recreated.
+
+Renaming a durable is not an update and logs nothing: startup finds no consumer
+under the new name and creates one, which starts from the default `DeliverAll`
+and so replays every message the stream still holds (up to its 24 h `max_age`,
+`presentation/faststream/jstream.py`). The old durable stays on the server,
+orphaned. Delete it with the command below.
 
 To apply a non-editable change in production, delete the affected durables once so
 FastStream recreates them with the new config on the next boot. Deleting a
