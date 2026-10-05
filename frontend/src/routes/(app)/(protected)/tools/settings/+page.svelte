@@ -185,7 +185,7 @@
 		</Alert.Root>
 	{/if}
 
-	<Card.Root class="flex w-full max-w-none flex-col gap-4 rounded-2xl p-4 sm:p-6">
+	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
 		<h2 class="text-lg font-semibold text-foreground">Фестиваль</h2>
 
 		<Field.FieldGroup class="gap-4">
@@ -236,7 +236,7 @@
 		</Field.FieldGroup>
 	</Card.Root>
 
-	<Card.Root class="flex w-full max-w-none flex-col gap-4 rounded-2xl p-4 sm:p-6">
+	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
 		<h2 class="text-lg font-semibold text-foreground">Программа</h2>
 
 		<Field.Field data-invalid={announcementTimeoutError ? true : undefined}>
@@ -265,11 +265,7 @@
 		</Field.Field>
 	</Card.Root>
 
-	<Button
-		type="submit"
-		class="min-h-11 w-full justify-center sm:w-auto"
-		disabled={isSaving || !hasChanges}
-	>
+	<Button type="submit" class="w-full sm:w-auto" disabled={isSaving || !hasChanges}>
 		{#if isSaving}
 			<Spinner data-icon="inline-start" />
 			Сохраняем…

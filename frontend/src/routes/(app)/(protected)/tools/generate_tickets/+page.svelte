@@ -178,7 +178,7 @@
 			</Alert.Root>
 		{/if}
 
-		<Button type="submit" class="min-h-11 w-full justify-center sm:w-auto" disabled={isGenerating}>
+		<Button type="submit" class="w-full sm:w-auto" disabled={isGenerating}>
 			{#if isGenerating}
 				<Spinner data-icon="inline-start" />
 				Генерируем…
@@ -203,7 +203,7 @@
 				readonly
 				rows={Math.min(generatedBarcodes.length, 10)}
 				value={barcodesText}
-				class="w-full resize-none rounded-xl font-mono text-sm"
+				class="resize-none font-mono text-sm"
 			/>
 			<p class="text-xs text-muted-foreground">
 				Каждый билет — на отдельной строке. Скопируй и вставь в таблицу Excel: номера встанут в один

@@ -24,7 +24,7 @@
 	let user = $derived(data.user);
 
 	// Shared unread count for the bell badge and the notifications page. Seeded from
-	// the streamed notification load once it resolves (first paint no longer waits on
+	// the streamed notification load once it resolves (first paint doesn't wait on
 	// it), and owned by the bell and page from there (SSE, mark-read, reconnect).
 	// `seed()` applies only while the count is still provisional, so a fresher value
 	// an SSE refresh may already have written — an authoritative zero included — wins.

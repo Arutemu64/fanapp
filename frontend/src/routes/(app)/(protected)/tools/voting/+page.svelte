@@ -116,7 +116,7 @@
 />
 
 <div class="mx-auto flex w-full max-w-2xl flex-col gap-5">
-	<Card.Root class="flex w-full max-w-none flex-col gap-4 rounded-2xl p-4 sm:p-6">
+	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
 		<h2 class="text-lg font-semibold text-foreground">Период голосования</h2>
 
 		<p class="text-xs leading-5 text-muted-foreground">
@@ -140,12 +140,7 @@
 		</Field.FieldGroup>
 
 		<div class="flex flex-wrap gap-2">
-			<Button
-				type="button"
-				class="min-h-11 justify-center"
-				disabled={isSaving}
-				onclick={handleSave}
-			>
+			<Button type="button" disabled={isSaving} onclick={handleSave}>
 				{#if isSaving}
 					<Spinner data-icon="inline-start" />
 				{/if}
@@ -154,7 +149,6 @@
 			<Button
 				type="button"
 				variant="outline"
-				class="min-h-11 justify-center"
 				disabled={isSaving || (!votingStart && !votingEnd)}
 				onclick={handleClear}
 			>
@@ -163,7 +157,7 @@
 		</div>
 	</Card.Root>
 
-	<Card.Root class="flex w-full max-w-none flex-col gap-4 rounded-2xl p-4 sm:p-6">
+	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
 		<div class="flex items-center gap-2">
 			<Gift class="size-5 text-primary" aria-hidden="true" />
 			<h2 class="text-lg font-semibold text-foreground">Розыгрыш приза</h2>
@@ -211,7 +205,7 @@
 
 		<Button
 			type="button"
-			class="min-h-11 w-full justify-center sm:w-auto"
+			class="w-full sm:w-auto"
 			disabled={isDrawing || !canDraw}
 			onclick={handleDraw}
 		>
@@ -229,7 +223,7 @@
 		{/if}
 	</Card.Root>
 
-	<Card.Root class="flex w-full max-w-none flex-col gap-4 rounded-2xl p-4 sm:p-6">
+	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
 		<div class="flex items-center gap-2">
 			<Award class="size-5 text-primary" aria-hidden="true" />
 			<h2 class="text-lg font-semibold text-foreground">Лидеры номинаций</h2>

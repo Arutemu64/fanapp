@@ -27,7 +27,7 @@
 	let { email = $bindable(''), onBack, onPasswordLogin }: Props = $props();
 
 	// The address the code went to, empty until it's sent — the switch to the
-	// verify step. Local now: the options screen no longer needs to know.
+	// verify step. Local: the options screen doesn't need to know.
 	let codeSentTo = $state('');
 
 	type ActiveAction = 'code-request' | null;
@@ -192,7 +192,7 @@
 			onSolve={handleCaptchaSolved}
 		/>
 
-		<Button type="submit" class="min-h-11 w-full font-medium" disabled={isRequesting}>
+		<Button type="submit" class="w-full" disabled={isRequesting}>
 			{#if isRequesting}
 				<Spinner data-icon="inline-start" />
 				Отправляем…
@@ -216,7 +216,7 @@
 		<Button
 			type="button"
 			variant="outline"
-			class="min-h-11 w-full font-medium"
+			class="w-full"
 			disabled={isRequesting}
 			onclick={() => onBack?.()}
 		>

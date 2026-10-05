@@ -158,7 +158,7 @@
 				{#if source.available}
 					<Button
 						type="button"
-						class="min-h-11 w-full justify-center sm:w-auto"
+						class="w-full sm:w-auto"
 						disabled={isBusy(source)}
 						onclick={() => requestSync(source.source)}
 					>

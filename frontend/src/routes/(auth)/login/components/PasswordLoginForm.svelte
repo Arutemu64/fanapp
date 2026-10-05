@@ -169,7 +169,7 @@
 		</Field.Field>
 	</Field.FieldGroup>
 
-	<Button type="submit" class="min-h-11 w-full font-medium" disabled={busy}>
+	<Button type="submit" class="w-full" disabled={busy}>
 		{#if activeAction === 'password'}
 			<Spinner data-icon="inline-start" />
 			Входим…
@@ -178,13 +178,7 @@
 		{/if}
 	</Button>
 
-	<Button
-		type="button"
-		variant="outline"
-		class="min-h-11 w-full font-medium"
-		disabled={busy}
-		onclick={() => onBack?.()}
-	>
+	<Button type="button" variant="outline" class="w-full" disabled={busy} onclick={() => onBack?.()}>
 		<ArrowLeft data-icon="inline-start" />
 		Назад
 	</Button>
