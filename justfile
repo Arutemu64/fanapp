@@ -54,7 +54,7 @@ frontend-generate-api: backend-generate-openapi
 # and DTOs — is a backend test (tests/unit/presentation/test_openapi_spec.py),
 # so it runs with `just backend-test`.
 
-# Fail if schema.d.ts has drifted from the committed OpenAPI spec
+# Fail if the generated API client has drifted from the committed OpenAPI spec
 frontend-check-api:
     cd frontend && pnpm generate-api:check
 

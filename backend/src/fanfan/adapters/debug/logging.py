@@ -33,7 +33,8 @@ def setup_logging(level: int, *, json_logs: bool) -> None:
         structlog.processors.StackInfoRenderer(),
         structlog.stdlib.PositionalArgumentsFormatter(),
         structlog.processors.UnicodeDecoder(),
-        # for integration with default logging
+        # Must stay last: it hands the event dict to the stdlib handler's
+        # ProcessorFormatter (https://www.structlog.org/en/stable/standard-library.html).
         structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
     ]
 

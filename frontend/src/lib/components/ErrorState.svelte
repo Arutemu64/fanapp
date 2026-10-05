@@ -122,27 +122,18 @@
 
 			<div class="flex w-full flex-col gap-2">
 				{#if offline || status >= 500}
-					<Button class="min-h-11 w-full font-medium" onclick={handleRetry}>
+					<Button class="w-full" onclick={handleRetry}>
 						<RotateCw data-icon="inline-start" />
 						Попробовать снова
 					</Button>
 				{/if}
 
-				<Button
-					href="/"
-					variant={offline || status >= 500 ? 'outline' : 'default'}
-					class="min-h-11 w-full font-medium"
-				>
+				<Button href="/" variant={offline || status >= 500 ? 'outline' : 'default'} class="w-full">
 					<Home data-icon="inline-start" />
 					На главную
 				</Button>
 
-				<Button
-					type="button"
-					variant="ghost"
-					class="min-h-11 w-full font-medium"
-					onclick={handleGoBack}
-				>
+				<Button type="button" variant="ghost" class="w-full" onclick={handleGoBack}>
 					<ArrowLeft data-icon="inline-start" />
 					Вернуться назад
 				</Button>

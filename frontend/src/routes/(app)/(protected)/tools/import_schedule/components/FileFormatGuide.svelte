@@ -85,7 +85,7 @@
 		href="{base}/schedule-template.xlsx"
 		download="schedule-template.xlsx"
 		variant="outline"
-		class="mt-4 min-h-11 w-full justify-center sm:w-auto sm:self-start"
+		class="mt-4 w-full sm:w-auto sm:self-start"
 	>
 		<Download data-icon="inline-start" />
 		Скачать шаблон

@@ -68,7 +68,7 @@ const subscribeReachable = createSubscriber((update) => onReachableChange(update
  * never miscast as the user's connection dropping. A `false` here is a
  * trustworthy negative (the device really is offline); a `true` is not.
  */
-function deviceOnlineNow(): boolean {
+export function deviceOnlineNow(): boolean {
 	// SSR / non-browser: assume online so the first paint still attempts the network.
 	return typeof navigator === 'undefined' ? true : navigator.onLine;
 }

@@ -1,9 +1,9 @@
 import { LOGIN_NEXT_PARAM, sanitizeNextPath } from '$lib/utils/auth';
 import { redirect } from '@sveltejs/kit';
 
-import type { LayoutLoad, LayoutLoadEvent } from './$types';
+import type { LayoutLoad } from './$types';
 
-export const load: LayoutLoad = async ({ parent, url }: LayoutLoadEvent) => {
+export const load: LayoutLoad = async ({ parent, url }) => {
 	// Reuse the user from the root layout data so this guard works
 	// on first load and on later client-side navigations.
 	const { user } = await parent();

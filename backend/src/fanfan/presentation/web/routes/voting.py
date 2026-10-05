@@ -53,10 +53,7 @@ voting_router = APIRouter(tags=["Voting"], prefix="/voting")
     description="Retrieves the current phase of the voting process "
     "(e.g., active, closed) and reasoning.",
     responses={
-        200: {
-            "model": GetVotingStateOutput,
-            "description": "Voting status retrieved successfully.",
-        },
+        200: {"description": "Voting status retrieved successfully."},
     },
 )
 @inject
@@ -72,10 +69,7 @@ async def get_voting_status(
     description="Retrieves a list of all candidates or items "
     "eligible for voting in the current session.",
     responses={
-        200: {
-            "model": ListVotingNominationsOutput,
-            "description": "Nominations retrieved successfully.",
-        },
+        200: {"description": "Nominations retrieved successfully."},
     },
 )
 @inject
@@ -90,10 +84,7 @@ async def list_voting_nominations(
     summary="Get voting nomination details",
     description="Retrieves detailed information about a specific nomination.",
     responses={
-        200: {
-            "model": GetVotingNominationOutput,
-            "description": "Nomination details retrieved successfully.",
-        },
+        200: {"description": "Nomination details retrieved successfully."},
         404: {"model": ErrorMessage, "description": "Nomination not found."},
     },
 )
@@ -116,7 +107,7 @@ async def get_voting_nomination(
     dependencies=[session_security],
     responses={
         **AUTH_RESPONSES,
-        201: {"model": AddVoteOutput, "description": "Vote successfully cast."},
+        201: {"description": "Vote successfully cast."},
         404: {"model": ErrorMessage, "description": "Participant not found."},
         409: {
             "model": ErrorMessage,
@@ -160,10 +151,7 @@ async def cancel_vote(
     dependencies=[session_security],
     responses={
         **AUTH_RESPONSES,
-        200: {
-            "model": GetVotingDashboardOutput,
-            "description": "Dashboard retrieved successfully.",
-        },
+        200: {"description": "Dashboard retrieved successfully."},
         403: {"model": ErrorMessage, "description": "Missing voting:manage."},
     },
 )
@@ -204,10 +192,7 @@ async def set_voting_time_range(
     dependencies=[session_security],
     responses={
         **AUTH_RESPONSES,
-        200: {
-            "model": DrawVotingContestWinnerOutput,
-            "description": "Winner drawn (or an empty pool reported).",
-        },
+        200: {"description": "Winner drawn (or an empty pool reported)."},
         403: {"model": ErrorMessage, "description": "Missing voting:manage."},
     },
 )

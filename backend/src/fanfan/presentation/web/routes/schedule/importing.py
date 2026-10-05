@@ -83,7 +83,7 @@ async def import_schedule(
     current_user = await current_user_provider.require_user()
     await perm_service.ensure(user=current_user, permission=Permission.SCHEDULE_IMPORT)
     _ensure_valid_upload(file)
-    # Parse in a worker thread because python-calamine is a synchronous library.
-    # This keeps the async FastAPI event loop responsive during file imports.
+    # python-calamine is synchronous; parsing on the event loop would stall every
+    # other request for the duration of the import.
     schedule = await run_in_threadpool(parse_schedule_from_excel, file.file)
     await interactor(ImportScheduleInput(schedule=schedule))

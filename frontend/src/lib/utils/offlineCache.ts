@@ -1,6 +1,6 @@
 import { isReachable, markReachable } from '$lib/services/reachability';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
-import { createStore, delMany, get, keys, set, type UseStore } from 'idb-keyval';
+import { createStore, delMany, get, keys, set } from 'idb-keyval';
 
 /**
  * Thin wrappers over IndexedDB (via idb-keyval) for persisting the last good
@@ -26,7 +26,7 @@ import { createStore, delMany, get, keys, set, type UseStore } from 'idb-keyval'
  * break a normal online load.
  */
 
-const cacheStore: UseStore = createStore('fanfan-cache', 'keyval');
+const cacheStore = createStore('fanfan-cache', 'keyval');
 
 // Monotonic epoch bumped by clearUserCache(). A user-scoped write captures it when
 // its fetch begins and is dropped if the epoch has moved before the write lands, so
@@ -116,7 +116,8 @@ function isEnvelope<T>(raw: unknown): raw is CachedEnvelope<T> {
 		typeof raw === 'object' &&
 		raw !== null &&
 		'value' in raw &&
-		typeof (raw as { cachedAt?: unknown }).cachedAt === 'number'
+		'cachedAt' in raw &&
+		typeof raw.cachedAt === 'number'
 	);
 }
 
@@ -136,7 +137,6 @@ async function readEnvelope<T>(
 	return { value: raw as T };
 }
 
-/** Result of a {@link fetchWithCache} call. */
 export interface FetchWithCacheResult<T> {
 	/** Fresh value, last cached copy, or `undefined` on a complete miss. */
 	data: T | undefined;
@@ -150,7 +150,6 @@ export interface FetchWithCacheResult<T> {
 	cachedAt?: number;
 }
 
-/** Options for {@link fetchWithCache}. */
 export interface FetchWithCacheOptions<T> {
 	/** Cache key within {@link scope}. */
 	key: string;
@@ -219,7 +218,6 @@ export async function fetchWithCache<T>({
 	}
 }
 
-/** Options for {@link warmCache}. */
 export interface WarmCacheOptions<T> {
 	/** Cache key; must match the key (and scope) the page's `load` reads. */
 	key: string;

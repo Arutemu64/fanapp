@@ -1,12 +1,8 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
-	import { Button } from '$lib/components/ui/button';
-	import { Switch } from '$lib/components/ui/switch';
-	import { Bell } from '@lucide/svelte';
-	const client = createApiClient();
 	import type { CurrentUserDto, UpdateUserSettingsInput } from '$lib/api/generated';
 
 	import { PUBLIC_VAPID_KEY, PUBLIC_VK_GROUP_ID } from '$env/static/public';
+	import { createApiClient } from '$lib/api';
 	// `checkSubscription` and `sendTestNotification` are aliased so they don't
 	// clash with this component's own handlers of the same name below.
 	import {
@@ -16,11 +12,14 @@
 		unsubscribe,
 		updateCurrentUserSettings
 	} from '$lib/api/generated';
+	import { Button } from '$lib/components/ui/button';
+	import { Switch } from '$lib/components/ui/switch';
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { offlineWriteGate } from '$lib/utils/offlineAction';
+	import { Bell } from '@lucide/svelte';
 	import * as Sentry from '@sentry/sveltekit';
-	import { onMount, untrack } from 'svelte';
+	import { onMount } from 'svelte';
 
 	import ProfileCardShell from './ProfileCardShell.svelte';
 	import { urlBase64ToUint8Array } from './push';
@@ -32,6 +31,8 @@
 	}
 
 	let { user, onSettingsUpdate }: Props = $props();
+
+	const client = createApiClient();
 
 	// Every control here writes to the server (push subscribe/unsubscribe, settings
 	// PATCH, test send) — online only. The current toggle states still render.
@@ -52,13 +53,10 @@
 	let hasVkAccount = $derived(
 		user.social_identities.some((socialIdentity) => socialIdentity.provider === 'vk')
 	);
-	let receiveAll = $state(untrack(() => user.settings.receive_all_announcements));
-	let receiveVk = $state(untrack(() => hasVkAccount && user.settings.receive_vk_notifications));
-
-	$effect(() => {
-		receiveAll = user.settings.receive_all_announcements;
-		receiveVk = hasVkAccount && user.settings.receive_vk_notifications;
-	});
+	// Writable deriveds: a toggle overrides them optimistically, and they snap back
+	// to the server copy whenever `user` refreshes (Svelte "Overriding derived values").
+	let receiveAll = $derived(user.settings.receive_all_announcements);
+	let receiveVk = $derived(hasVkAccount && user.settings.receive_vk_notifications);
 	let isSavingSettings = $state(false);
 	let isSendingTest = $state(false);
 	const pwa = getPwaService();
@@ -443,7 +441,7 @@
 		</p>
 		<Button
 			variant="outline"
-			class="min-h-11 w-full sm:w-auto"
+			class="w-full sm:w-auto"
 			disabled={isSendingTest || offlineGate.disabled}
 			title={offlineGate.title}
 			onclick={sendTestNotification}

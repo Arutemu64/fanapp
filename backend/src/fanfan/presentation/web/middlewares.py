@@ -154,10 +154,9 @@ async def bind_request_context(
     """Bind a per-request id into structlog contextvars.
 
     The logging setup includes ``merge_contextvars`` in its processor chain,
-    so every log line emitted while handling this request automatically
-    carries the same ``request_id``. This makes it possible to follow a single
-    request across all the log lines it produces. The id is echoed back in the
-    response header so clients and proxies can reference it too.
+    so every log line emitted while handling this request carries the same
+    ``request_id``. The id is echoed back in the response header so clients and
+    proxies can reference it too.
     """
     structlog.contextvars.clear_contextvars()
     request_id = request.headers.get(_REQUEST_ID_HEADER) or uuid.uuid4().hex

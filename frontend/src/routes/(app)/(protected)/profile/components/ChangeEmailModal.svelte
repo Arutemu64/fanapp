@@ -315,7 +315,7 @@
 
 				<div class="flex flex-col gap-2 pt-2">
 					<Button
-						class="min-h-11 w-full font-medium"
+						class="w-full"
 						disabled={isVerifying || isRequestingVerification || verificationCode.length < 6}
 						onclick={submitVerificationCode}
 					>
@@ -330,7 +330,7 @@
 					<Button
 						type="button"
 						variant="outline"
-						class="min-h-11 w-full font-medium"
+						class="w-full"
 						disabled={isVerifying || isRequestingVerification || cooldown.remaining > 0}
 						onclick={sendOtp}
 					>

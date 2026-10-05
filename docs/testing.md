@@ -93,7 +93,6 @@ CI renders coverage into each backend run's **job summary** (Actions → the
 run → *Summary*) — a headline total plus a collapsible per-file table. It's
 reporting only: there is no third-party upload, no token, and **no
 `--cov-fail-under` gate**, so a dip in coverage never fails a PR on its own.
-Read the number, don't let it block you.
 
 ### Running them on Claude Code on the web
 
@@ -290,7 +289,7 @@ providers plus test overrides:
   and the fakes above.
 * `skip_validation=True` is intentional: external integrations (NATS broker,
   Telegram Bot API, SMTP, OAuth) are not wired, so interactors needing them are not
-  yet resolvable. Everything else resolves. Both vendor syncs now sit behind
+  yet resolvable. Everything else resolves. Both vendor syncs sit behind
   ports with fakes (`FakeTicketsSource`, `FakeCosplaySource`), so the sync
   interactors are testable. When the remaining integrations gain a port + fake,
   register them and the flag can eventually be dropped.
@@ -394,8 +393,8 @@ contrast included — the suite drove the muted-text and active-nav token fixes
 that got it there.
 
 **Mocked, not full-stack — on purpose.** Each test mocks the backend over
-`**/api/**` (typed off the generated hey-api types, so a drifted mock fails to compile). This
-is deliberate for *this* repo, not a shortcut: backend behaviour already has the
+`**/api/**` (typed off the generated hey-api types, so a drifted mock fails to compile).
+Backend behaviour already has the
 `@pytest.mark.integration` suite, and the frontend↔backend contract already has
 the OpenAPI drift guards (`test_openapi_spec.py` + `frontend-check-api`). So the
 E2E tier stays about the UI and mocks the rest: re-proving backend behaviour

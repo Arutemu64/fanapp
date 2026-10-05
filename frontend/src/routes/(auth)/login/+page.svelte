@@ -119,7 +119,7 @@
 				<Button
 					href={`${PUBLIC_API_URL}/auth/oauth/${provider}/start`}
 					variant="outline"
-					class="min-h-11 w-full font-medium"
+					class="w-full"
 					aria-disabled={openingProvider === provider}
 					onclick={(event: MouseEvent) => handleProviderClick(event, provider)}
 				>
@@ -133,12 +133,7 @@
 				</Button>
 			{/each}
 
-			<Button
-				type="button"
-				variant="outline"
-				class="min-h-11 w-full font-medium"
-				onclick={showEmailLogin}
-			>
+			<Button type="button" variant="outline" class="w-full" onclick={showEmailLogin}>
 				<Mail data-icon="inline-start" />
 				Войти по почте
 			</Button>

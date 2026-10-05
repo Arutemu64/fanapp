@@ -39,5 +39,5 @@ class TicketImportService:
             ticketscloud_ticket_id=external.external_id,
         )
         await self.ticket_gateway.add(ticket)
-        logger.info("New ticket %s was added", ticket.id, extra={"ticket": ticket})
+        logger.info("New ticket added", extra={"ticket_id": str(ticket.id)})
         return True

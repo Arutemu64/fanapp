@@ -50,10 +50,7 @@ async def get_subscriptions(
     description="Subscribes the current user to a specific schedule event. "
     "Prevents duplicate subscriptions.",
     responses={
-        201: {
-            "model": CreateSubscriptionOutput,
-            "description": "Subscription created successfully.",
-        },
+        201: {"description": "Subscription created successfully."},
         404: {"model": ErrorMessage, "description": "Event ID does not exist."},
         409: {
             "model": ErrorMessage,

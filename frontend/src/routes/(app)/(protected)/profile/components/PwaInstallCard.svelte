@@ -21,7 +21,7 @@
 			<Download class="size-5" />
 		{/snippet}
 
-		<Button class="min-h-11 w-full sm:w-auto" onclick={() => pwa.showInstallDialog()}>
+		<Button class="w-full sm:w-auto" onclick={() => pwa.showInstallDialog()}>
 			<Download data-icon="inline-start" />
 			Установить
 		</Button>

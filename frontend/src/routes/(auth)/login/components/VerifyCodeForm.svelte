@@ -212,7 +212,7 @@
 		{/if}
 	</div>
 
-	<Button type="submit" class="min-h-11 w-full font-medium" disabled={busy || loginCode.length < 6}>
+	<Button type="submit" class="w-full" disabled={busy || loginCode.length < 6}>
 		{#if activeAction === 'code-login'}
 			<Spinner data-icon="inline-start" />
 			Проверяем…
@@ -232,7 +232,7 @@
 		<Button
 			type="button"
 			variant="outline"
-			class="min-h-11 w-full font-medium"
+			class="w-full"
 			disabled={busy || cooldown.remaining > 0}
 			onclick={() => void handleLoginCodeRequest()}
 		>
@@ -250,7 +250,7 @@
 		<Button
 			type="button"
 			variant="outline"
-			class="min-h-11 w-full font-medium"
+			class="w-full"
 			disabled={busy}
 			onclick={() => onBack?.()}
 		>

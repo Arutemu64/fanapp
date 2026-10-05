@@ -35,10 +35,7 @@ users_router = APIRouter(
     description="Paginated, searchable directory of all users. Search matches a "
     "case-insensitive substring of the username or email. Requires users:read.",
     responses={
-        200: {
-            "model": ListUsersOutput,
-            "description": "Users retrieved successfully.",
-        },
+        200: {"description": "Users retrieved successfully."},
         403: {"model": ErrorMessage, "description": "Missing users:read."},
     },
 )
@@ -55,24 +52,21 @@ async def list_users(
     return await interactor(data)
 
 
+# Declared before /{user_id} so the literal path wins over the UUID path param,
+# which would otherwise try to parse "online-count" as a user id.
 @users_router.get(
     "/online-count",
     summary="Count online users",
     description="How many users hold a live connection right now, for the "
     "organiser dashboard. Approximate and ephemeral. Any authenticated user.",
     responses={
-        200: {
-            "model": OnlineUsersCountOutput,
-            "description": "Online user count retrieved successfully.",
-        },
+        200: {"description": "Online user count retrieved successfully."},
     },
 )
 @inject
 async def count_online_users(
     interactor: FromDishka[GetOnlineUsersCount],
 ) -> OnlineUsersCountOutput:
-    # Declared before /{user_id} so the literal path wins over the UUID path
-    # param, which would otherwise try to parse "online-count" as a user id.
     return await interactor()
 
 
@@ -82,10 +76,7 @@ async def count_online_users(
     description="Profile basics and linked external accounts for one user. "
     "Requires users:read.",
     responses={
-        200: {
-            "model": UserDetailsDTO,
-            "description": "User details retrieved successfully.",
-        },
+        200: {"description": "User details retrieved successfully."},
         403: {"model": ErrorMessage, "description": "Missing users:read."},
         404: {"model": ErrorMessage, "description": "User not found."},
     },

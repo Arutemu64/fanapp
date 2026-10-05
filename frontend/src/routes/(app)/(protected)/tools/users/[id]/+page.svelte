@@ -24,7 +24,7 @@
 <BackLink href="/tools/users" label="Назад к пользователям" />
 
 <div class="mx-auto flex w-full max-w-2xl flex-col gap-5">
-	<Card.Root class="flex w-full max-w-none flex-col gap-4 rounded-2xl p-4 sm:p-6">
+	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
 		<div class="flex items-center gap-4">
 			<span
 				class="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold text-primary"
@@ -64,7 +64,7 @@
 		</dl>
 	</Card.Root>
 
-	<Card.Root class="flex w-full max-w-none flex-col gap-4 rounded-2xl p-4 sm:p-6">
+	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
 		<div class="flex items-center gap-2">
 			<Link2 class="size-5 text-primary" aria-hidden="true" />
 			<h2 class="text-lg font-semibold text-foreground">Привязанные аккаунты</h2>

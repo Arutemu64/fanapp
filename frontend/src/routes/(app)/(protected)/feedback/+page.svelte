@@ -111,7 +111,7 @@
 					disabled={isSending}
 					oninput={handleInput}
 					aria-invalid={feedbackError ? true : undefined}
-					class="w-full resize-none rounded-xl"
+					class="resize-none"
 				/>
 				{#if feedbackError}
 					<Field.FieldError>{feedbackError}</Field.FieldError>
@@ -128,7 +128,7 @@
 				</Alert.Root>
 			{/if}
 
-			<Button type="submit" class="min-h-11 w-full justify-center sm:w-auto" disabled={isSending}>
+			<Button type="submit" class="w-full sm:w-auto" disabled={isSending}>
 				{#if isSending}
 					<Spinner data-icon="inline-start" />
 					Отправка…

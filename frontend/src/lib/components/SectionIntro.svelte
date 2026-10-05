@@ -11,7 +11,7 @@
 	let { description, children }: Props = $props();
 </script>
 
-<!-- The page title now lives in the navbar; this only renders the optional
+<!-- The page title lives in the navbar; this only renders the optional
 	intro text/extra content for screens that need extra context. -->
 {#if description || children}
 	<div class="mb-4 sm:mb-6">

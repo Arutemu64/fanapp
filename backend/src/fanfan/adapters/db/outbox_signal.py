@@ -127,8 +127,6 @@ class PostgresOutboxSignal(OutboxSignal):
                     "Outbox LISTEN connection lost; reconnecting",
                     extra={"relay_event": "listener_lost"},
                 )
-            except asyncio.CancelledError:
-                raise
             except Exception:
                 logger.warning(
                     "Outbox LISTEN connection failed; reconnecting",

@@ -104,7 +104,7 @@
 	{:else}
 		<div class="flex flex-col gap-3">
 			{#each feed.items as mailing (mailing.id)}
-				<Card.Root class="rounded-xl p-4">
+				<Card.Root class="p-4">
 					<div class="flex flex-col gap-2">
 						<div class="flex items-center justify-between gap-2">
 							<Badge variant={STATUS_VARIANTS[mailing.status]}>

@@ -55,8 +55,10 @@ services:
     # set limits only. A `cpus` limit may not exceed the host core count, or the
     # container fails to create. Memory limits are hard caps — breach one and the
     # container is OOM-killed — so each is sized above the service's real peak,
-    # not at it; the sum across services stays near 1.6 GB, leaving ~20% of the
-    # 2 GB for the kernel, Docker and sshd. Raise everything to match a bigger host.
+    # not at it; the long-running services (core + ops profiles) sum to 1792 MiB,
+    # leaving ~12% of the 2 GB for the kernel, Docker and sshd (the one-shot
+    # migration's limit applies only while it runs at deploy). Keep docs/deployment.md
+    # "Sizing and tuning" in step. Raise everything to match a bigger host.
     # A hit limit shows up as CPU throttling or an OOM kill.
     deploy:
       resources:
@@ -180,7 +182,7 @@ services:
       DB__HOST: "db"
       DB__APPLICATION_NAME: "fanfan-scheduler"
       # Smallest pool: cron jobs run a few sequential queries, never a burst.
-      # A running sync pins two connections (its session plus its lease), so the
+      # A running sync pins two connections (its session plus its WorkerLock), so the
       # ceiling covers both syncs, the outbox relay and both retention jobs at once.
       DB__POOL_SIZE: "2"
       DB__MAX_OVERFLOW: "5"

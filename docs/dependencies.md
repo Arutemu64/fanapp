@@ -77,10 +77,10 @@ site needs no group, just its own review PR.
   in `backend/pyproject.toml`.
 * **A pin inside a Dockerfile that isn't a `FROM` line gets an inline
   annotation, not a regex manager.** The `dockerfile` manager reads `FROM` lines
-  only, so `ENV PNPM_VERSION` in `frontend/Dockerfile` was invisible to it and
-  drifted a patch behind the other pnpm sites. It now carries a
-  `# renovate: datasource=npm depName=pnpm versioning=npm` comment, read by the
-  first-party `customManagers:dockerfileVersions` preset. Renovate's own
+  only, so a pin like `ENV PNPM_VERSION` in `frontend/Dockerfile` is invisible
+  to it and drifts behind the other sites. It carries a
+  `# renovate: datasource=npm depName=pnpm versioning=npm` comment instead, read
+  by the first-party `customManagers:dockerfileVersions` preset. Renovate's own
   [regex-manager docs](https://docs.renovatebot.com/modules/manager/regex/)
   prefer this to a bespoke rule — one manager covers every annotated line
   instead of one rule per pin, and the annotation documents the constraint in
@@ -230,21 +230,20 @@ free-form tag publishes none of them.
 
 The bump is a deliberate human step, not automation keyed off commit messages.
 Every automated bumper (semantic-release, release-please, Changesets) infers the
-number from Conventional-Commits `type:` prefixes — which is why we do **not**
-enforce those prefixes (no commitlint, no PR-title lint check): enforcement only
-earns its keep once a tool consumes the tags, and nothing here does. The bump
-that matters most, MAJOR, is exactly the one no tool can infer — it marks *"`just
-deploy` alone is not enough"*, a judgment about deploy steps, not a diff. So the
-prefixes stay optional (see AGENTS.md "Commit & PR titles") and the number stays
-a human call.
+number from Conventional-Commits `type:` prefixes. We lint the PR title's shape
+(`.github/workflows/pr-title.yml` — the PR title is what squash-merge lands, so
+that, not individual commits, is what gets linted; see AGENTS.md "Commit & PR
+titles"), but nothing consumes the prefixes. The bump that matters most, MAJOR,
+is exactly the one no tool can infer — it marks *"`just deploy` alone is not
+enough"*, a judgment about deploy steps, not a diff. So the number stays a human
+call.
 
-If the release chore ever grates enough to automate, adopt the two together, not
-the enforcement alone: a PR-title lint check (the PR title is what squash-merge
-lands, so lint *that*, not individual commits) plus **release-please**, which
-opens a release PR carrying the bump and changelog and keeps the human gate we
-rely on — you still choose when to merge and tag. semantic-release (fully
-hands-off, wrong for images that sometimes need manual MAJOR steps) and
-Changesets (monorepo/library-shaped) do not fit a single deployed app.
+If the release chore ever grates enough to automate, the title lint is already
+in place; add **release-please**, which opens a release PR carrying the bump and
+changelog and keeps the human gate we rely on — you still choose when to merge
+and tag. semantic-release (fully hands-off, wrong for images that sometimes need
+manual MAJOR steps) and Changesets (monorepo/library-shaped) do not fit a single
+deployed app.
 
 ### Build id — *which build is running?*
 

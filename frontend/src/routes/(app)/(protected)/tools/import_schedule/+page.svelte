@@ -117,7 +117,7 @@
 			</Alert.Root>
 		{/if}
 
-		<Button type="submit" class="min-h-11 w-full justify-center sm:w-auto" disabled={isUploading}>
+		<Button type="submit" class="w-full sm:w-auto" disabled={isUploading}>
 			{#if isUploading}
 				<Spinner data-icon="inline-start" />
 				Импортируем…

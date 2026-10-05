@@ -42,10 +42,9 @@ function isStaleChunkError(exception: unknown): boolean {
 
 // `navigator.onLine === false` is a trustworthy negative — the device really has
 // no connection (a `true` can still lie behind a captive portal, so we never infer
-// "online" from it, only "offline" from `false`). `navigator` is always present in
-// the client hooks, but the guard keeps this safe if it is ever called elsewhere.
+// "online" from it, only "offline" from `false`).
 function isDeviceOffline(): boolean {
-	return typeof navigator !== 'undefined' && navigator.onLine === false;
+	return navigator.onLine === false;
 }
 
 // `Number('')` is 0 and `Number('half')` is NaN — neither is a sane sample rate

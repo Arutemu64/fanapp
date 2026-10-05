@@ -22,10 +22,7 @@ profile_router = APIRouter()
     summary="Get current user",
     description="Retrieves the currently authenticated user's profile information.",
     responses={
-        200: {
-            "model": CurrentUserDTO,
-            "description": "User profile retrieved successfully.",
-        },
+        200: {"description": "User profile retrieved successfully."},
     },
 )
 @inject

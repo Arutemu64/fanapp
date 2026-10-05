@@ -72,7 +72,7 @@ def test_numbered_event_is_named_by_its_padded_number(
 def test_numberless_event_is_named_by_its_title(
     change_type: ScheduleChangeType, expected: str
 ) -> None:
-    # A break has no number to print; formatting one anyway used to crash the
+    # A break has no number to print; formatting one anyway would crash the
     # whole notification fan-out on `f"{None:03d}"`.
     change = _change(change_type, changed_event=_event(None, "Перерыв"))
 

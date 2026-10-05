@@ -161,7 +161,7 @@ def test_rejects_an_empty_sheet() -> None:
 
 def test_rejects_a_blank_title() -> None:
     # `title` is a row's only human identity, so it stays required even though
-    # nomination and block no longer are.
+    # nomination and block are optional.
     sheet = build_sheet(
         REQUIRED_COLUMNS,
         [valid_row(), valid_row(number=2, title="   ")],

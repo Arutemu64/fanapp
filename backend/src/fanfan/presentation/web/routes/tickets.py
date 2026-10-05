@@ -27,10 +27,7 @@ tickets_router = APIRouter(
         "'tickets:generate' permission. Returns the created barcodes."
     ),
     responses={
-        200: {
-            "model": GenerateTicketsOutput,
-            "description": "Tickets generated successfully.",
-        },
+        200: {"description": "Tickets generated successfully."},
         409: {
             "model": ErrorMessage,
             "description": "A generated barcode collided; retry the request.",

@@ -10,8 +10,8 @@ import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = ({ fetch, depends, parent }) => {
 	// The notification bell lives in the persistent app shell. Stream its preview
-	// and unread count rather than awaiting them: awaiting gated the shell's first
-	// paint behind `await parent()`'s /me and then two more round-trips — a pure
+	// and unread count rather than awaiting them: awaiting would gate the shell's
+	// first paint behind `await parent()`'s /me and then two more round-trips — a pure
 	// waterfall, and `parent()` only earns its round-trip under SSR, which this
 	// client-only app (ssr = false) never does. The bell seeds from this promise
 	// when it resolves and the live SSE stream owns the count thereafter, so a
@@ -46,8 +46,7 @@ async function loadNotificationSeed(
 	// (a preview of 5 can hide dozens of unread items).
 	//
 	// The two requests fire in parallel but their failures stay independent: the
-	// preview alone decides reachability (as it did before the count was added), and
-	// a timed-out count must not discard a good preview or mark the API unreachable.
+	// preview alone decides reachability, and a timed-out count must not discard a good preview or mark the API unreachable.
 	const [previewResult, unreadResult] = await Promise.allSettled([
 		listUserNotifications({
 			client,

@@ -1,7 +1,4 @@
-/**
- * Shared validation helpers for forms.
- * Keep functions pure and free of side effects.
- */
+// Shared validation helpers for forms. Keep them pure.
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const OTP_REGEX = /^\d{6}$/;

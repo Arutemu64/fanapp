@@ -129,7 +129,7 @@
 				<Button
 					href={offlineGate.disabled ? undefined : connectHref}
 					variant="outline"
-					class="min-h-11 w-full sm:w-auto"
+					class="w-full sm:w-auto"
 					disabled={offlineGate.disabled}
 					title={offlineGate.title}
 				>

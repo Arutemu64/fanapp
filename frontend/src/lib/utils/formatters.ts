@@ -220,7 +220,6 @@ const RUSSIAN_PLURAL_RULES = new Intl.PluralRules('ru-RU');
 /**
  * Pluralize a Russian word based on count, using the CLDR rules behind
  * `Intl.PluralRules` rather than hand-rolled mod-10/mod-100 arithmetic.
- * @param count - The number
  * @param one - Form for 1, 21, 31… (e.g., "событие")
  * @param few - Form for 2-4, 22-24… (e.g., "события")
  * @param many - Form for 0, 5-20, 25… (e.g., "событий")

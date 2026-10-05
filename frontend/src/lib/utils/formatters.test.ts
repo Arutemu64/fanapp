@@ -32,8 +32,8 @@ describe('formatDuration', () => {
 	});
 
 	it('renders an hour or more', () => {
-		// The previous implementation took `seconds % 3600` first, so exactly an
-		// hour rendered as "0 минут" and 90 minutes as "30 минут".
+		// Pins the hour carry: taking `seconds % 3600` first renders exactly an
+		// hour as "0 минут" and 90 minutes as "30 минут".
 		expect(formatDuration(3600)).toBe('1 час');
 		expect(formatDuration(5400)).toBe('1 час 30 минут');
 		expect(formatDuration(7325)).toBe('2 часа 2 минуты 5 секунд');

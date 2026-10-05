@@ -32,10 +32,7 @@ changes_router = APIRouter(
     description="Returns a history of all modifications made to the schedule, "
     "including skips, moves, and status changes.",
     responses={
-        200: {
-            "model": ListScheduleChangesOutput,
-            "description": "Schedule changes retrieved successfully.",
-        },
+        200: {"description": "Schedule changes retrieved successfully."},
     },
 )
 @inject

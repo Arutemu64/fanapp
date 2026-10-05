@@ -104,7 +104,7 @@
 			</Field.Field>
 			<Button
 				onclick={handleLinkTicket}
-				class="min-h-11 w-full"
+				class="w-full"
 				disabled={isSubmitting || offlineGate.disabled}
 				title={offlineGate.title}
 			>

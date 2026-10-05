@@ -31,10 +31,7 @@ feedback_router = APIRouter(
     summary="Submit app feedback",
     description="Submits free-text feedback about the app from the current user.",
     responses={
-        201: {
-            "model": SubmitFeedbackOutput,
-            "description": "Feedback submitted successfully.",
-        },
+        201: {"description": "Feedback submitted successfully."},
     },
 )
 @inject
@@ -51,10 +48,7 @@ async def submit_feedback(
     description="Returns a paginated list of feedback submitted by users, newest "
     "first. Requires the feedback:read permission.",
     responses={
-        200: {
-            "model": ListFeedbackOutput,
-            "description": "Feedback retrieved successfully.",
-        },
+        200: {"description": "Feedback retrieved successfully."},
     },
 )
 @inject

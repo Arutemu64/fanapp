@@ -25,10 +25,7 @@ settings_router = APIRouter(
     summary="Get festival settings",
     description="Returns the current festival settings that organizers can manage.",
     responses={
-        200: {
-            "model": AppSettingsDTO,
-            "description": "Festival settings retrieved successfully.",
-        },
+        200: {"description": "Festival settings retrieved successfully."},
         404: {
             "model": ErrorMessage,
             "description": "Festival settings were not found.",
@@ -40,9 +37,6 @@ async def get_settings(
     interactor: FromDishka[GetSettings],
 ) -> AppSettingsDTO:
     return await interactor()
-
-
-__all__ = ["settings_router"]
 
 
 @settings_router.patch(
@@ -64,3 +58,6 @@ async def update_settings(
     interactor: FromDishka[UpdateSettings],
 ) -> None:
     await interactor(data)
+
+
+__all__ = ["settings_router"]

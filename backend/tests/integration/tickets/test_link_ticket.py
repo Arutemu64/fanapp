@@ -51,12 +51,10 @@ async def test_link_ticket_successfully(
 
     await interactor(LinkTicketInput(barcode="123456"))
 
-    # Assert user role updated
     saved_user = await user_gateway.get_by_id(visitor.id)
     assert saved_user is not None
     assert saved_user.role == UserRole.PARTICIPANT
 
-    # Assert ticket is used by user
     saved_ticket = await ticket_gateway.get_by_barcode("123456")
     assert saved_ticket is not None
     assert saved_ticket.is_used_by(visitor.id)

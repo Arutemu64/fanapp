@@ -16,8 +16,8 @@ export const LOGIN_NEXT_PARAM = 'next';
 /**
  * Validate a candidate post-login destination. Only same-app absolute paths
  * (`/...`) are accepted; absolute URLs, protocol-relative `//host` forms and
- * backslash and control-character variants return `null`, so a crafted login link can never redirect
- * the user off-site (open redirect).
+ * backslash and control-character variants return `null`, so a crafted login
+ * link can never redirect the user off-site (open redirect).
  */
 export function sanitizeNextPath(raw: string | null): string | null {
 	if (!raw) return null;

@@ -1,5 +1,3 @@
-// Web Push helpers.
-
 /**
  * Convert a base64url-encoded VAPID application server key into the
  * `Uint8Array` the Push API's `pushManager.subscribe` expects. VAPID keys are

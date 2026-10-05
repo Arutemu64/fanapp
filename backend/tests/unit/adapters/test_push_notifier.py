@@ -96,7 +96,7 @@ async def test_send_posts_encrypted_push_to_endpoint(tmp_path: Path) -> None:
         message_data=_message_data(),
     )
 
-    # A malformed subscription (the flat dict the notifier used to pass) would
+    # A malformed subscription (a flat dict instead of the nested shape) would
     # raise inside the library before any request went out; reaching the
     # endpoint at all is the regression guard.
     assert response.status_code == 201

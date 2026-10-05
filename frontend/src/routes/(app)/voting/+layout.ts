@@ -6,7 +6,7 @@ import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = async ({ fetch, depends }) => {
-	// Voting availability now derives from the configured [start, end) range, so the
+	// Voting availability derives from the configured [start, end) range, so the
 	// status banner must refresh when organizers change it. Tie this read to the
 	// same 'app:config' key the home hero uses; +layout.svelte re-invalidates it on
 	// a config_updated SSE event (and on reconnect, to self-heal a missed one).

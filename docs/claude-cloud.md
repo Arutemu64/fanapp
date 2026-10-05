@@ -2,9 +2,8 @@
 
 How this repo is provisioned for [Claude Code on the web](https://code.claude.com/docs/en/claude-code-on-the-web).
 Cloud sessions run in a fresh Anthropic-managed VM with the repo cloned; the
-filesystem is snapshotted and cached between sessions. This page documents the
-two provisioning mechanisms and the project-specific choices in each. It is only
-relevant to web/remote sessions — local development uses your own toolchain.
+filesystem is snapshotted and cached between sessions. None of this applies to
+local development, which uses your own toolchain.
 
 ## Setup script vs. SessionStart hook
 
