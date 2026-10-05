@@ -16,7 +16,6 @@ export const load: LayoutLoad = async ({ parent, url }) => {
 		// Show the offline state instead (ErrorState reframes this into a
 		// "нет интернета" or "нет связи с сервером" page from live reachability).
 		if (!isReachable()) {
-			// A 503 renders the offline ErrorState (reframed from live reachability).
 			// hooks.client.ts drops every 5xx HttpError from Sentry, so this expected
 			// offline blip never becomes a GlitchTip issue.
 			error(503, { message: 'Нет связи с сервером' });

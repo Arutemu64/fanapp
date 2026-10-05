@@ -79,7 +79,7 @@ export async function emitSse(page: Page, type: string, data: unknown = {}): Pro
 	await page.evaluate(
 		([type, data]) => {
 			const sse = (window as unknown as { __sse: SseHandle }).__sse;
-			sse.emit(type as string, data);
+			sse.emit(type, data);
 		},
 		[type, data] as const
 	);

@@ -204,7 +204,6 @@ self.addEventListener('push', (event: PushEvent) => {
 self.addEventListener('notificationclick', (event: NotificationEvent) => {
 	event.notification.close();
 
-	// Redirect to the URL provided in the push notification data
 	const notificationData = (event.notification.data ?? {}) as NotificationClickData;
 	const urlToOpen = new URL(notificationData.url ?? '/', self.location.origin).href;
 
