@@ -33,11 +33,12 @@ def committed_spec() -> dict[str, Any]:
 def test_committed_spec_matches_the_code() -> None:
     """Fail if the committed OpenAPI spec drifts from the code that generates it.
 
-    The spec feeds frontend/src/lib/api/schema.d.ts, which in turn feeds the
-    compile-time guards in lib/api/errors.ts and lib/utils/permissions.ts
-    (docs/api.md). A stale spec is internally consistent, so `pnpm check` stays
-    green while those guards compare the frontend against a contract the backend
-    no longer serves. This test is what keeps them anchored to the backend.
+    The spec feeds the generated client in frontend/src/lib/api/generated/,
+    which in turn feeds the compile-time guards in lib/api/errors.ts and
+    lib/utils/permissions.ts (docs/api.md). A stale spec is internally
+    consistent, so `pnpm check` stays green while those guards compare the
+    frontend against a contract the backend no longer serves. This test is what
+    keeps them anchored to the backend.
 
     Everything except `info.version` is compared byte for byte, formatting
     included, so the committed file is exactly what the generator writes. The

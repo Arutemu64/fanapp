@@ -14,7 +14,7 @@ VALIDATION_RESPONSES: dict[int | str, dict[str, Any]] = {
 }
 
 # Only attached to routes that require an authenticated user (alongside the
-# SessionCookie security marker), so public routes no longer advertise 401/403.
+# SessionCookie security marker), so public routes don't advertise 401/403.
 AUTH_RESPONSES: dict[int | str, dict[str, Any]] = {
     status.HTTP_401_UNAUTHORIZED: {
         "model": ErrorMessage,

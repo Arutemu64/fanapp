@@ -672,7 +672,7 @@ export const streamEvents = <ThrowOnError extends boolean = false>(
 /**
  * Get current schedule
  *
- * Retrieves the full schedule using the GetSchedule interactor.
+ * Returns the full public schedule with an ETag for conditional revalidation.
  */
 export const getSchedule = <ThrowOnError extends boolean = false>(
 	options?: Options<GetScheduleData, ThrowOnError>

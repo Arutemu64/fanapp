@@ -245,9 +245,6 @@ async def build_authorization_url(
     )
 
 
-# ── Shared finish helpers ────────────────────────────────────────────────
-
-
 async def _finish_login(
     authorize: AuthorizeSocialLogin,
     config: WebConfig,

@@ -27,7 +27,8 @@ def _if_none_match_hits(header: str | None, etag: str) -> bool:
 @public_router.get(
     path="/",
     summary="Get current schedule",
-    description="Retrieves the full schedule using the GetSchedule interactor.",
+    description="Returns the full public schedule with an ETag for conditional "
+    "revalidation.",
     # The interactor returns the cached payload + its ETag, which we place on the
     # response by hand, so FastAPI must not coerce the return value into a model.
     # The 200 schema is still documented via `responses` below so the generated

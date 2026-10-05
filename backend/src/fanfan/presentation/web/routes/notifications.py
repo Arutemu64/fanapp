@@ -54,10 +54,7 @@ notifications_router = APIRouter(
     summary="List user notifications",
     description="Returns a paginated list of notifications for the authenticated user.",
     responses={
-        200: {
-            "model": ListUserNotificationOutput,
-            "description": "Notifications retrieved successfully.",
-        },
+        200: {"description": "Notifications retrieved successfully."},
     },
 )
 @inject
@@ -78,10 +75,7 @@ async def list_user_notifications(
         "user, independent of any page size — the bell badge is driven by this."
     ),
     responses={
-        200: {
-            "model": UnreadNotificationsCountOutput,
-            "description": "Unread count retrieved successfully.",
-        },
+        200: {"description": "Unread count retrieved successfully."},
     },
 )
 @inject
@@ -151,10 +145,7 @@ async def send_test_notification(
     summary="Send broadcast notification",
     description="Creates a new mailing broadcast for specified user roles.",
     responses={
-        200: {
-            "model": SendBroadcastOutput,
-            "description": "Broadcast initiated successfully.",
-        },
+        200: {"description": "Broadcast initiated successfully."},
     },
 )
 @inject
@@ -173,10 +164,7 @@ async def send_broadcast(
         "fan-outs are excluded — only role-targeted broadcasts appear."
     ),
     responses={
-        200: {
-            "model": ListBroadcastsOutput,
-            "description": "Broadcasts retrieved successfully.",
-        },
+        200: {"description": "Broadcasts retrieved successfully."},
     },
 )
 @inject

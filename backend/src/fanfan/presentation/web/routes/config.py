@@ -15,10 +15,7 @@ config_router = APIRouter(tags=["Config"], prefix="/config")
     summary="Get public config",
     description="Returns the public festival config the SPA needs before login.",
     responses={
-        200: {
-            "model": PublicConfigDTO,
-            "description": "Public config retrieved successfully.",
-        },
+        200: {"description": "Public config retrieved successfully."},
     },
 )
 @inject

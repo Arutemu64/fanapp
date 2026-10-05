@@ -1355,7 +1355,7 @@
           "Schedule"
         ],
         "summary": "Get current schedule",
-        "description": "Retrieves the full schedule using the GetSchedule interactor.",
+        "description": "Returns the full public schedule with an ETag for conditional revalidation.",
         "operationId": "get_schedule",
         "responses": {
           "200": {

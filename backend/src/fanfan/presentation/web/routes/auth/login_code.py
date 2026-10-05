@@ -21,7 +21,6 @@ login_code_router = APIRouter()
 
 @login_code_router.post(
     "/request-login-code",
-    status_code=status.HTTP_200_OK,
     summary="Request email login code",
     description=(
         "Sends a one-time six-digit sign-in code to the requested email "
