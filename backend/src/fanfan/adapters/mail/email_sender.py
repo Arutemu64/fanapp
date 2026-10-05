@@ -39,7 +39,7 @@ class FastEmailSender(EmailSender):
             NameEmail(name=_encode_display_name(recipient.name), email=recipient.email)
             for recipient in message.recipients
         ]
-        logger.info("Sending email to %s", recipients)
+        logger.info("Sending email", extra={"recipient_count": len(recipients)})
         if message.text_body is not None:
             # Multipart/alternative. Order matters: RFC 2046 says clients render the
             # LAST part they understand, so the plain-text part must come first and

@@ -11,7 +11,7 @@ class OutboxConfig(BaseModel):
     # Backstop poll interval, in seconds. Delivery is normally driven by a
     # Postgres NOTIFY on insert (near-instant), so this only bounds worst-case
     # latency when a notification is missed (listener reconnecting, transport
-    # blip) — it no longer sets the everyday latency, so it can be relaxed to
+    # blip) — it does not set the everyday latency, so it can be relaxed to
     # keep idle DB load low. Sub-minute OK.
     poll_interval_seconds: float = 10.0
     # Max events drained per relay tick.

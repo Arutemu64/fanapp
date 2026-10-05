@@ -33,7 +33,7 @@ VK_USER_ID = 555
 
 def _make_user() -> User:
     # Only supplies an id for the notification and social identity — the VK
-    # notifier no longer loads the user (channel opt-out is the interactor's job).
+    # notifier does not load the user (channel opt-out is the interactor's job).
     return User(
         id=UserId(uuid7()),
         username=Username("tester"),
