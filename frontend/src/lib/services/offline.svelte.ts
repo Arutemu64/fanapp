@@ -4,7 +4,13 @@ import { classifyReachabilityChange } from '$lib/utils/reachabilityTransition';
 import { requestReconnectRefresh } from '$lib/utils/reconnectRefresh';
 import { createContext } from 'svelte';
 
-import { isReachable, markReachable, onReachableChange, probeReachability } from './reachability';
+import {
+	deviceOnlineNow,
+	isReachable,
+	markReachable,
+	onReachableChange,
+	probeReachability
+} from './reachability';
 
 // While offline, poll for recovery so the banner clears on its own. We don't
 // poll while online — load outcomes, the SSE stream, and the `online` event
@@ -26,11 +32,6 @@ const OFFLINE_CONFIRM_WINDOW_MS = 5000;
 // Gap between confirm re-probes. Kept short so a genuine recovery is noticed
 // almost as soon as the network returns; each probe carries its own 3s timeout.
 const OFFLINE_CONFIRM_PROBE_GAP_MS = 500;
-
-function deviceOnlineNow(): boolean {
-	// SSR / non-browser: assume online, matching reachability.ts.
-	return typeof navigator === 'undefined' ? true : navigator.onLine;
-}
 
 function delay(ms: number): Promise<void> {
 	return new Promise((resolve) => setTimeout(resolve, ms));
