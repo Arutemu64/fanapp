@@ -186,7 +186,11 @@ each other on desktop. items-start keeps each frame at its own height. -->
 			</div>
 		</div>
 
-		<div class="absolute end-4 top-4 z-10 flex items-center gap-2">
+		<!-- Inset by the safe area: the overlay covers the whole screen, notch and rounded
+			corners included. -->
+		<div
+			class="absolute end-[calc(1rem+env(safe-area-inset-right))] top-[calc(1rem+env(safe-area-inset-top))] z-10 flex items-center gap-2"
+		>
 			<!-- Keyboard-accessible counterpart to double-tap: pinch/wheel have no key
 			equivalent, so this is the only way to undo a zoom without a pointer. -->
 			<button

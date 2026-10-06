@@ -302,8 +302,12 @@
 	</div>
 
 	{#if visibleCurrentEvent || showScrollTopButton}
-		<!-- Lift FAB actions above the bottom mobile navigation so they stay tappable. -->
-		<div class="pointer-events-none fixed right-4 bottom-24 z-30 md:bottom-6">
+		<!-- Lift FAB actions above the bottom mobile navigation so they stay tappable. The
+			safe-area insets keep them clear of the home indicator (the nav grows by the bottom
+			inset) and of a landscape phone's notch and rounded corners. -->
+		<div
+			class="pointer-events-none fixed right-[calc(1rem+env(safe-area-inset-right))] bottom-[calc(6rem+env(safe-area-inset-bottom))] z-30 md:bottom-[calc(1.5rem+env(safe-area-inset-bottom))]"
+		>
 			<div class="flex flex-col items-end gap-2">
 				{#if showScrollTopButton}
 					<Button

@@ -2,8 +2,7 @@ import type { Page } from '@playwright/test';
 
 import { expect, loggedInAs, test } from '../fixtures';
 
-// The phone-only "native feel" layer: page transitions, the bottom-sheet dialog,
-// the bottom nav stepping aside for the keyboard. Each check
+// The phone-only "native feel" layer: page transitions and the bottom-sheet dialog. Each check
 // also pins that the desktop project keeps the plain behaviour.
 
 const isDesktop = (projectName: string) => projectName === 'desktop-chromium';
@@ -83,17 +82,5 @@ test.describe('native feel', () => {
 			expect(box.width).toBe(viewport.width);
 			expect(Math.round(box.y + box.height)).toBe(viewport.height);
 		}
-	});
-
-	test('hides the bottom nav while a text field has focus', async ({ page, api }, testInfo) => {
-		test.skip(isDesktop(testInfo.project.name), 'the bottom nav is phone-only');
-		api.use(loggedInAs());
-		const dialog = await openEditProfile(page);
-		const nav = page.getByRole('navigation', { name: 'Разделы' });
-
-		await dialog.getByRole('textbox').first().focus();
-		await expect(nav).toBeHidden();
-		await dialog.getByRole('textbox').first().blur();
-		await expect(nav).toBeVisible();
 	});
 });

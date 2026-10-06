@@ -62,38 +62,3 @@
 		</a>
 	{/each}
 </nav>
-
-<style>
-	/*
-	 * Hide the bar while the on-screen keyboard is up. app.html's
-	 * interactive-widget=resizes-content shrinks the viewport to the space above the
-	 * keyboard, and a bottom-anchored bar would ride up with it and cover the field
-	 * being typed into — native tab bars sit behind the keyboard instead. A focused
-	 * text control is the closest CSS has to "keyboard open"; (pointer: coarse) keeps a
-	 * tablet with a mouse on its normal layout. Choice controls (checkbox, radio, …)
-	 * raise no keyboard, so they are excluded.
-	 */
-	@media (pointer: coarse) {
-		:global(
-				body:has(
-					:is(
-						input:not(
-							[type='checkbox'],
-							[type='radio'],
-							[type='range'],
-							[type='button'],
-							[type='submit'],
-							[type='reset'],
-							[type='file'],
-							[type='color']
-						),
-						textarea,
-						[contenteditable='true']
-					):focus
-				)
-			)
-			nav {
-			display: none;
-		}
-	}
-</style>
