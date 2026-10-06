@@ -1,52 +1,52 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
-	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
+	import * as Item from '$lib/components/ui/item';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { offlineWriteGate } from '$lib/utils/offlineAction';
-	import { Trash2 } from '@lucide/svelte';
 
 	interface Props {
-		/** Provider mark, rendered next to the label. */
+		/** Provider mark, rendered in the row's icon tile. */
 		icon: Snippet;
 		label: string;
 		connected: boolean;
-		/** Description shown when the provider is linked / not linked. */
-		connectedDescription: string;
-		notConnectedDescription: string;
 		/** Backend link URL, opened when the user connects the provider. */
 		connectHref: string;
 		/** Confirm-strip question, e.g. «Отвязать Telegram?». */
 		unlinkPrompt: string;
 		/**
 		 * Unlink is blocked without an email so the user never loses their last
-		 * recovery path — the backend enforces it too; this just hides the affordance.
+		 * recovery path — the backend enforces it too; this just disables the
+		 * affordance and says why in the status line.
 		 */
 		hasEmail: boolean;
 		/** Performs the actual unlink (API call + toast + refresh). */
 		onUnlink: () => Promise<void>;
 	}
 
-	let {
-		icon,
-		label,
-		connected,
-		connectedDescription,
-		notConnectedDescription,
-		connectHref,
-		unlinkPrompt,
-		hasEmail,
-		onUnlink
-	}: Props = $props();
+	let { icon, label, connected, connectHref, unlinkPrompt, hasEmail, onUnlink }: Props = $props();
 
 	// Connecting (a backend OAuth redirect) and unlinking (a DELETE) both need the
-	// network — gate them offline. The linked/not-linked badge still renders.
+	// network — gate them offline. The linked/not-linked status still renders.
 	const offlineGate = offlineWriteGate();
 
 	let isUnlinking = $state(false);
 	// Gate the destructive unlink behind a deliberate second tap (inline, no modal).
 	let isConfirming = $state(false);
+
+	// The status line says why "Отвязать" is disabled, next to the button, rather
+	// than in a notice under the whole group (Android settings: explain why a
+	// dependent setting is unavailable, where it is).
+	let status = $derived.by(() => {
+		if (!connected) {
+			return 'Не подключён';
+		}
+		if (!hasEmail) {
+			return 'Подключён. Чтобы отвязать, сначала добавь почту';
+		}
+		return 'Подключён';
+	});
 
 	async function confirmUnlink() {
 		if (isUnlinking) return;
@@ -63,79 +63,73 @@
 
 <!-- No border/radius of its own: the parent SignInMethods groups this row with the
 	others in a single bordered container and supplies the divider between them. -->
-<div class="p-3 sm:p-4">
-	<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-		<div class="min-w-0">
-			<div class="flex flex-wrap items-center gap-2">
-				{@render icon()}
-				<p class="font-medium text-foreground">{label}</p>
-				<Badge variant={connected ? 'default' : 'secondary'}>
-					{connected ? 'Подключён' : 'Не подключён'}
-				</Badge>
-			</div>
+<Item.Root class="rounded-none">
+	<Item.Media class="size-9 rounded-lg bg-muted text-muted-foreground">
+		{@render icon()}
+	</Item.Media>
+	<Item.Content class="min-w-0">
+		<Item.Title class="text-base">{label}</Item.Title>
+		<Item.Description class="line-clamp-none">{status}</Item.Description>
+	</Item.Content>
 
-			<p class="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-				{connected ? connectedDescription : notConnectedDescription}
-			</p>
-		</div>
-
-		<div class="flex w-full flex-col gap-2 sm:w-auto">
-			{#if connected}
-				{#if isConfirming}
-					<p class="text-sm font-medium text-foreground sm:text-right">
-						{unlinkPrompt}
-					</p>
-					<div class="flex gap-2">
-						<Button
-							variant="destructive"
-							size="sm"
-							class="min-h-11 flex-1 sm:flex-initial"
-							disabled={isUnlinking || !hasEmail || offlineGate.disabled}
-							title={offlineGate.title}
-							onclick={confirmUnlink}
-						>
-							{#if isUnlinking}
-								<Spinner data-icon="inline-start" />
-								Отвязка…
-							{:else}
-								<Trash2 data-icon="inline-start" />
-								Отвязать
-							{/if}
-						</Button>
-						<Button
-							variant="outline"
-							size="sm"
-							class="min-h-11 flex-1 sm:flex-initial"
-							disabled={isUnlinking}
-							onclick={() => (isConfirming = false)}
-						>
-							Отмена
-						</Button>
-					</div>
-				{:else}
-					<Button
-						variant="destructive"
-						size="sm"
-						class="min-h-11 w-full sm:w-auto"
-						disabled={!hasEmail || offlineGate.disabled}
-						title={offlineGate.title}
-						onclick={() => (isConfirming = true)}
-					>
-						<Trash2 data-icon="inline-start" />
-						Отвязать
-					</Button>
-				{/if}
-			{:else}
+	{#if !connected}
+		<Item.Actions>
+			<Button
+				href={offlineGate.disabled ? undefined : connectHref}
+				variant="outline"
+				size="sm"
+				class="min-h-11"
+				disabled={offlineGate.disabled}
+				title={offlineGate.title}
+			>
+				Подключить
+			</Button>
+		</Item.Actions>
+	{:else if !isConfirming}
+		<!-- Neutral at rest: the red is saved for the confirm step, where the
+		     destructive choice is actually made. -->
+		<Item.Actions>
+			<Button
+				variant="outline"
+				size="sm"
+				class="min-h-11"
+				disabled={!hasEmail || offlineGate.disabled}
+				title={offlineGate.title}
+				onclick={() => (isConfirming = true)}
+			>
+				Отвязать
+			</Button>
+		</Item.Actions>
+	{:else}
+		<!-- basis-full wraps the confirm strip onto its own line under the row. -->
+		<div class="flex basis-full flex-col gap-2">
+			<p class="text-sm font-medium text-foreground">{unlinkPrompt}</p>
+			<div class="flex gap-2">
 				<Button
-					href={offlineGate.disabled ? undefined : connectHref}
-					variant="outline"
-					class="w-full sm:w-auto"
-					disabled={offlineGate.disabled}
+					variant="destructive"
+					size="sm"
+					class="min-h-11 flex-1"
+					disabled={isUnlinking || !hasEmail || offlineGate.disabled}
 					title={offlineGate.title}
+					onclick={confirmUnlink}
 				>
-					Подключить
+					{#if isUnlinking}
+						<Spinner data-icon="inline-start" />
+						Отвязка…
+					{:else}
+						Отвязать
+					{/if}
 				</Button>
-			{/if}
+				<Button
+					variant="outline"
+					size="sm"
+					class="min-h-11 flex-1"
+					disabled={isUnlinking}
+					onclick={() => (isConfirming = false)}
+				>
+					Отмена
+				</Button>
+			</div>
 		</div>
-	</div>
-</div>
+	{/if}
+</Item.Root>
