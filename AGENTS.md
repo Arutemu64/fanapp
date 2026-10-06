@@ -65,7 +65,7 @@ named `fanfan-*` are project-local and live only here.
 | `just backend-test` / `just backend-test-integration` | pytest unit tier / integration tier (integration needs a Docker daemon) |
 | `just backend-deadcode` / `just frontend-deadcode` | Dead-code sweep (vulture / knip). Manual aid, not a gate — see docs/backend.md, docs/frontend.md |
 | `just frontend-test` | Vitest unit tests for pure `src/lib/` logic |
-| `just frontend-e2e` | Playwright E2E against a production build, backend mocked ([frontend/e2e/README.md](frontend/e2e/README.md)) |
+| `just frontend-e2e` | Playwright E2E against a production build, backend mocked ([frontend/e2e/README.md](frontend/e2e/README.md)); iOS-Safari project joins once `just frontend-e2e-install-webkit` has run |
 | `just backend-migrate` | Apply migrations |
 | `just backend-check-migrations` | Fail if the ORM models have drifted from the migrations |
 | `just backend-generate <name>` | Autogenerate a migration against the running app DB |

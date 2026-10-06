@@ -333,27 +333,14 @@ jobs:
       - name: Type check the e2e suite
         run: pnpm e2e:typecheck
 
-      # Cache the browser keyed on the resolved Playwright version — it only changes
-      # when @playwright/test is bumped, so this is the tightest key that still busts
-      # on a bump. PLAYWRIGHT_BROWSERS_PATH is unset on the runner (unlike the Claude
-      # web env), so Playwright installs to ~/.cache/ms-playwright.
-      - name: Resolve Playwright version
-        id: pw
-        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
-
-      - name: Cache Playwright browsers
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
-
-      # --with-deps installs the OS libraries the browsers need on a clean runner.
-      # WebKit gives iOS-Safari coverage for this mobile-first app (the config gates
-      # its `mobile-webkit` project on CI, since the pre-baked env ships only
-      # Chromium). On a cache hit the browsers are already present; the (fast) apt
-      # step still runs so a cached browser never lacks its system deps.
+      # No browser cache, per https://playwright.dev/docs/ci: restoring one takes
+      # about as long as the download itself. --with-deps installs those OS libraries on the clean runner. WebKit gives
+      # iOS-Safari coverage for this mobile-first app (the config always runs its
+      # `mobile-webkit` project on CI; elsewhere only when WebKit is installed).
+      # --only-shell skips full Chromium: the suite runs headless, which uses the
+      # headless shell.
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium webkit
+        run: pnpm exec playwright install --with-deps --only-shell chromium webkit
 
       # `pnpm e2e` builds the app and serves it with `vite preview` via the config's
       # webServer, then runs the suite (retries: 2 on CI).

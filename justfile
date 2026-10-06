@@ -38,10 +38,21 @@ frontend-deadcode:
     cd frontend && pnpm deadcode
 
 # Playwright E2E against a production build with the backend mocked (docs/testing.md,
-# frontend/e2e/README.md). In a Claude Code web session the pre-baked Chromium is used
-# with no install; on CI/local first run `pnpm --dir frontend exec playwright install chromium`.
+# frontend/e2e/README.md). A web session's start hook installs the matching Chromium;
+# locally, first run `pnpm --dir frontend exec playwright install chromium`.
+# The iOS-Safari `mobile-webkit` project joins automatically once WebKit is installed.
 frontend-e2e:
     cd frontend && pnpm e2e
+
+# Install Playwright's WebKit (plus its OS libraries on Linux — may prompt for sudo) so
+# `frontend-e2e` also runs the iOS-Safari project locally. Re-run after a Playwright bump:
+# each version expects its own WebKit build.
+frontend-e2e-install-webkit:
+    cd frontend && pnpm exec playwright install --with-deps webkit
+
+# Only the iOS-Safari project, while iterating on a WebKit-specific issue.
+frontend-e2e-webkit:
+    cd frontend && pnpm e2e --project=mobile-webkit
 
 # Same, with the Playwright UI for debugging a spec (local, headed).
 frontend-e2e-ui:

@@ -19,23 +19,21 @@ The config builds the app and serves it with `vite preview` automatically — a
 production build is required because the service worker and offline caching are
 inert in `vite dev` (docs/frontend.md §2).
 
-**Browser:** in a Claude Code web session the pre-baked Chromium is used with no
-install — `@playwright/test` is pinned to the version whose Chromium build matches
-it. On CI / a fresh laptop, install it once:
+**Browser:** the suite runs on the Chromium build the pinned `@playwright/test`
+expects. A Claude Code web session's session-start hook installs it; CI installs
+it per run. On a fresh laptop, install it once (and again after a Playwright bump,
+since each version needs its own build):
 
 ```sh
 pnpm --dir frontend exec playwright install chromium
 ```
 
-> Bumping `@playwright/test` is deliberate: keep it on the line whose Chromium
-> build the web environment pre-bakes, or a session falls back to the
-> `$PLAYWRIGHT_BROWSERS_PATH/chromium` symlink instead of a matched build. See the
-> note in `playwright.config.ts`.
-
 ## Writing a spec
 
 Import from `../fixtures` (not `@playwright/test`) — it injects the mocked
-backend as `api` and re-exports the persona/SSE helpers.
+backend as `api` and re-exports the persona/SSE helpers. The mock (and the SSE
+double) is an auto fixture, installed on every test even if it never names `api`,
+so no spec can reach a real backend by accident.
 
 ```ts
 import type { GetVotingStateOutput, ListVotingNominationsOutput } from '../fixtures';
@@ -169,17 +167,17 @@ pnpm e2e --grep-invert @a11y           # everything but the a11y scans
 
 ### Devices
 
-Locally (and in web sessions) every spec runs on two Chromium projects —
-`mobile-chromium` (Pixel 7, the mobile-first primary) and `desktop-chromium`
-(Desktop Chrome, catches the wide sidebar-shell layout). Run one while iterating
-with `pnpm e2e --project=mobile-chromium`. The pre-baked Chromium is the only
-zero-install browser, so those are all that run outside CI.
+Every spec runs on two Chromium projects — `mobile-chromium` (Pixel 7, the
+mobile-first primary) and `desktop-chromium` (Desktop Chrome, catches the wide
+sidebar-shell layout). Run one while iterating with
+`pnpm e2e --project=mobile-chromium`.
 
-**On CI, a third project `mobile-webkit` (iPhone 14, iOS Safari) also runs** — the
-engine that matters most for this mobile-first audience and the one Chromium can't
-stand in for. It's gated on `process.env.CI` because it needs
-`playwright install webkit`; to run it locally, install WebKit once and force the
-gate: `CI=1 pnpm e2e --project=mobile-webkit`.
+A third project, `mobile-webkit` (iPhone 14, iOS Safari), runs **wherever WebKit is
+installed** — the engine that matters most for this mobile-first audience and the
+one Chromium can't stand in for. WebKit is opt-in (no hook installs it), so install it once with
+`just frontend-e2e-install-webkit` (re-run after a Playwright bump); from then on
+`pnpm e2e` picks it up, and `just frontend-e2e-webkit` runs it alone. Without it the
+project is skipped locally. CI installs it and always runs it.
 
 ### Screenshots (seeing a change, not just asserting it)
 

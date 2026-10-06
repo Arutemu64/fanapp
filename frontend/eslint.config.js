@@ -114,17 +114,20 @@ export default defineConfig(
 	},
 	{
 		// These files live outside the SvelteKit TS project: root config files,
-		// build scripts, the service worker (which SvelteKit deliberately excludes
-		// from the app tsconfig), and the Playwright E2E suite (its own tsconfig,
-		// not part of src/). The project service can't resolve them, so turn off
-		// type-aware linting here to avoid parser errors.
+		// build scripts and the service worker (which SvelteKit deliberately
+		// excludes from the app tsconfig). The project service can't resolve them,
+		// so turn off type-aware linting here to avoid parser errors. The
+		// Playwright suite is NOT listed: e2e/tsconfig.json is the nearest tsconfig
+		// for its files, so it keeps type-aware rules — notably no-floating-promises,
+		// which catches a missing `await` on a Playwright call
+		// (https://playwright.dev/docs/best-practices). playwright.config.ts stays
+		// here because its nearest tsconfig is the app one, which excludes it.
 		files: [
 			'eslint.config.js',
 			'svelte.config.js',
 			'openapi-ts.config.ts',
 			'src/service-worker.ts',
-			'playwright.config.ts',
-			'e2e/**'
+			'playwright.config.ts'
 		],
 		extends: [ts.configs.disableTypeChecked]
 	}

@@ -69,9 +69,11 @@ test.describe('native feel', () => {
 	}, testInfo) => {
 		api.use(loggedInAs());
 		const dialog = await openEditProfile(page);
-		// Let the enter animation settle before measuring.
-		await expect.poll(async () => (await dialog.boundingBox())?.y).toBeGreaterThan(0);
-		await page.waitForTimeout(300);
+		// Let the enter animation (a CSS keyframe slide/zoom) settle before measuring.
+		// allSettled, not all: a cancelled animation rejects `finished`.
+		await dialog.evaluate((element) =>
+			Promise.allSettled(element.getAnimations().map((animation) => animation.finished))
+		);
 		const box = (await dialog.boundingBox())!;
 		const viewport = page.viewportSize()!;
 
