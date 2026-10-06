@@ -11,6 +11,7 @@
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { LOGIN_NEXT_PARAM } from '$lib/utils/auth';
 	import { isOrg } from '$lib/utils/permissions';
+	import { type DevicePushState, getDevicePushState } from '$lib/utils/pushSubscription';
 	import { getAvatarInitials, getRoleLabel } from '$lib/utils/users';
 	import {
 		Bell,
@@ -22,6 +23,7 @@
 		Ticket,
 		Wrench
 	} from '@lucide/svelte';
+	import { onMount } from 'svelte';
 	import IconFastapi from '~icons/simple-icons/fastapi';
 	import IconSvelte from '~icons/simple-icons/svelte';
 
@@ -35,6 +37,22 @@
 	let user = $derived(data.user);
 	let avatarInitials = $derived(getAvatarInitials(user?.username));
 	let ticketStatus = $derived(user?.ticket ? 'Привязан' : 'Не привязан');
+
+	// Push on this device, the channel a phone most needs and the first switch on
+	// the notifications page, so the hub row reads like a settings screen's
+	// "current value" line. Unknown (no Push API, an error) shows nothing.
+	let devicePush = $state<DevicePushState>('unknown');
+	let notificationsStatus = $derived.by(() => {
+		if (devicePush === 'on') return 'Включены';
+		if (devicePush === 'off') return 'Выключены';
+		return undefined;
+	});
+
+	onMount(() => {
+		void getDevicePushState().then((state) => {
+			devicePush = state;
+		});
+	});
 
 	// "Инструменты" is the organiser toolbox: a single link to the /tools dashboard
 	// rather than a row per tool, so the hub stays short as the tool list grows. It
@@ -102,7 +120,12 @@
 
 		<MenuGroup>
 			<MenuLink href="/profile/ticket" label="Билет" icon={Ticket} value={ticketStatus} />
-			<MenuLink href="/profile/notifications" label="Уведомления" icon={Bell} />
+			<MenuLink
+				href="/profile/notifications"
+				label="Уведомления"
+				icon={Bell}
+				value={notificationsStatus}
+			/>
 		</MenuGroup>
 
 		<MenuGroup>

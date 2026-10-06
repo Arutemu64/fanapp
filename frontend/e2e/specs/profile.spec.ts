@@ -34,6 +34,8 @@ test.describe('profile hub', () => {
 		const main = page.getByRole('main');
 		await expect(main.getByRole('link', { name: /@test_visitor/ })).toBeVisible();
 		await expect(main.getByRole('link', { name: /Билет/ })).toContainText('Не привязан');
+		// No push subscription in a fresh browser: the row says so at a glance.
+		await expect(main.getByRole('link', { name: /Уведомления/ })).toContainText('Выключены');
 		await expect(main.getByRole('link', { name: 'Обратная связь' })).toBeVisible();
 		await expect(main.getByRole('link', { name: 'Инструменты' })).toHaveCount(0);
 		await expect(main.getByRole('button', { name: 'Выйти' })).toBeVisible();

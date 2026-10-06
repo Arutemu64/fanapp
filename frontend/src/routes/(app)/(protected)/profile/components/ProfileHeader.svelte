@@ -37,7 +37,9 @@
 -->
 <div class="flex flex-col items-center gap-3 text-center sm:flex-row sm:gap-5 sm:text-left">
 	<Avatar.Root class="size-16 shrink-0 text-xl font-bold">
-		<Avatar.Fallback class="bg-primary/10 text-primary">
+		<!-- primary-700 in light, as on the hub's account row: on the primary/10 tint it
+		     measures 5.8:1, where primary-600 is 4.4:1, under AA's 4.5:1 for body text. -->
+		<Avatar.Fallback class="bg-primary/10 text-primary-700 dark:text-primary">
 			{avatarInitials}
 		</Avatar.Fallback>
 	</Avatar.Root>

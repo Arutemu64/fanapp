@@ -15,6 +15,7 @@
 	} from '$lib/api/generated';
 	import MenuGroup from '$lib/components/MenuGroup.svelte';
 	import { Button } from '$lib/components/ui/button';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { offlineWriteGate } from '$lib/utils/offlineAction';
@@ -447,6 +448,7 @@
 			onclick={sendTestNotification}
 		>
 			{#if isSendingTest}
+				<Spinner data-icon="inline-start" />
 				Отправка…
 			{:else}
 				Проверить уведомления
