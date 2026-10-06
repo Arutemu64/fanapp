@@ -1,10 +1,11 @@
 import logging
+from typing import Annotated
 from urllib.parse import urlencode
 
 from authlib.integrations.starlette_client import OAuth, StarletteOAuth2App
 from dishka import FromDishka
 from dishka.integrations.fastapi import inject
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
 from starlette import status
 from starlette.responses import RedirectResponse, Response
@@ -34,6 +35,7 @@ from fanfan.presentation.web.oauth import (
     fetch_telegram_claims,
     fetch_vk_claims,
     read_flow_state,
+    sanitize_return_path,
     start_oauth_flow,
 )
 from fanfan.presentation.web.routes.auth.cookies import set_auth_cookie
@@ -45,6 +47,9 @@ oauth_router = APIRouter()
 # Frontend reads these one-time codes off the URL and shows a safe toast.
 OAUTH_LOGIN_ERROR_QUERY_PARAM = "oauthLoginError"
 OAUTH_LINK_ERROR_QUERY_PARAM = "oauthLinkError"
+# The post-login destination, under the same name the frontend's login page and
+# `(protected)` guard use (`LOGIN_NEXT_PARAM` in frontend/src/lib/utils/auth.ts).
+LOGIN_NEXT_QUERY_PARAM = "next"
 
 # Link-only outcomes the user can act on, on top of the shared cancelled/failed.
 LINK_ERROR_LINKED_TO_ANOTHER_ACCOUNT = "linked_to_another_account"
@@ -78,21 +83,36 @@ async def list_oauth_providers(
     return OAuthProvidersOutput(providers=config.enabled_oauth_providers)
 
 
-def build_login_redirect(error_code: str | None = None) -> RedirectResponse:
-    return _build_redirect("/login", OAUTH_LOGIN_ERROR_QUERY_PARAM, error_code)
+def build_login_redirect(
+    error_code: str | None = None, return_path: str | None = None
+) -> RedirectResponse:
+    """Send the browser back to the login page.
+
+    Keeps `return_path` as `?next=` so a retry after a cancelled or failed
+    provider round-trip still lands where the user was headed.
+    """
+    params: dict[str, str] = {}
+    if error_code is not None:
+        params[OAUTH_LOGIN_ERROR_QUERY_PARAM] = error_code
+    if return_path is not None:
+        params[LOGIN_NEXT_QUERY_PARAM] = return_path
+
+    return _build_redirect("/login", params)
 
 
 def build_profile_redirect(error_code: str | None = None) -> RedirectResponse:
-    return _build_redirect("/profile/account", OAUTH_LINK_ERROR_QUERY_PARAM, error_code)
+    params: dict[str, str] = {}
+    if error_code is not None:
+        params[OAUTH_LINK_ERROR_QUERY_PARAM] = error_code
+
+    return _build_redirect("/profile/account", params)
 
 
-def _build_redirect(
-    path: str, query_param: str, error_code: str | None
-) -> RedirectResponse:
+def _build_redirect(path: str, params: dict[str, str]) -> RedirectResponse:
     redirect_url = path
 
-    if error_code is not None:
-        redirect_url = f"{redirect_url}?{urlencode({query_param: error_code})}"
+    if params:
+        redirect_url = f"{redirect_url}?{urlencode(params)}"
 
     return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
 
@@ -101,7 +121,9 @@ def _build_redirect(
     "/oauth/{provider}/start",
     summary="Start social login",
     description="Redirects the browser to the provider's OAuth page to begin signing "
-    "in. The provider then calls back to the callback endpoint to finish. If the "
+    "in. The provider then calls back to the callback endpoint to finish. An "
+    "optional `next` in-app path is kept server-side and becomes the post-login "
+    "destination; anything that is not a same-site path is ignored. If the "
     "redirect cannot be built the browser goes back to the login page with an "
     "`oauthLoginError` query param instead.",
     responses={
@@ -118,7 +140,13 @@ async def start_social_login(
     request: Request,
     oauth: FromDishka[OAuth],
     config: FromDishka[WebConfig],
+    # No max_length or pattern here: a rejected Query answers 422 with a JSON body,
+    # which this browser-navigation route must never do. An invalid value is
+    # dropped by the sanitizer instead, and the login lands on the app root.
+    next_path: Annotated[str | None, Query(alias=LOGIN_NEXT_QUERY_PARAM)] = None,
 ) -> Response:
+    return_path = sanitize_return_path(next_path)
+
     if provider not in config.enabled_oauth_providers:
         # Defence in depth: the login screen hides a disabled provider's button,
         # but its start URL is still guessable. Entered by a top-level navigation,
@@ -127,19 +155,24 @@ async def start_social_login(
             "Rejected social login start for a disabled provider",
             extra={"provider": provider.value},
         )
-        return build_login_redirect(OAUTH_ERROR_FAILED)
+        return build_login_redirect(OAUTH_ERROR_FAILED, return_path)
 
     try:
         client: StarletteOAuth2App = oauth.create_client(provider.value)
         url = await build_authorization_url(
-            client, request, provider, OAuthIntent.LOGIN, initiator_user_id=None
+            client,
+            request,
+            provider,
+            OAuthIntent.LOGIN,
+            initiator_user_id=None,
+            return_path=return_path,
         )
     except Exception:
         # Building the redirect needs the provider's discovery document. The
         # registry is APP-scoped so it is fetched once per process — this is the
         # first login after a restart running into an unreachable provider.
         logger.exception("Could not reach the provider to start the login")
-        return build_login_redirect(OAUTH_ERROR_FAILED)
+        return build_login_redirect(OAUTH_ERROR_FAILED, return_path)
 
     return RedirectResponse(url, status_code=status.HTTP_302_FOUND)
 
@@ -152,7 +185,8 @@ async def start_social_login(
     summary="Finish a social login or account link",
     description="OAuth callback shared by both flows; which one it is comes from the "
     "intent stored in the OAuth state, never from the request. On a login it sets the "
-    "session cookie and redirects to the app root; on a link it attaches the account "
+    "session cookie and redirects to the `next` path given at the start, or the app "
+    "root; on a link it attaches the account "
     "and redirects to the profile page. Every failure also redirects, carrying an "
     "`oauthLoginError` or `oauthLinkError` query param the frontend turns into a "
     "toast; this route never answers with an error body, because the browser would "
@@ -160,8 +194,9 @@ async def start_social_login(
     "frontend.",
     responses={
         303: {
-            "description": "Flow finished. Redirects to the app root or the profile "
-            "page; on any failure an error query param is included."
+            "description": "Flow finished. Redirects to the post-login path, the app "
+            "root or the profile page; on any failure an error query param is "
+            "included."
         },
     },
 )
@@ -190,12 +225,14 @@ async def oauth_callback(  # noqa: PLR0913, PLR0917 — all params framework-inj
     except OAuthFailed as e:
         if flow_state.intent is OAuthIntent.LINK:
             return build_profile_redirect(e.error_code)
-        return build_login_redirect(e.error_code)
+        return build_login_redirect(e.error_code, flow_state.return_path)
 
     if flow_state.intent is OAuthIntent.LINK:
         return await _finish_link(link, provider, subject, provider_user_id, flow_state)
 
-    return await _finish_login(authorize, config, provider, subject, provider_user_id)
+    return await _finish_login(
+        authorize, config, provider, subject, provider_user_id, flow_state
+    )
 
 
 async def _fetch_identity(
@@ -219,12 +256,13 @@ async def _fetch_identity(
             return str(vk.user_id), vk.user_id
 
 
-async def build_authorization_url(
+async def build_authorization_url(  # noqa: PLR0913, PLR0917 — one flow-state field each
     client: StarletteOAuth2App,
     request: Request,
     provider: SocialProvider,
     intent: OAuthIntent,
     initiator_user_id: UserId | None,
+    return_path: str | None = None,
 ) -> str:
     """Mint the provider redirect for either flow, recording why it was started.
 
@@ -241,16 +279,18 @@ async def build_authorization_url(
             intent=intent,
             issuer=PROVIDER_ISSUERS[provider],
             initiator_user_id=initiator_user_id,
+            return_path=return_path,
         ),
     )
 
 
-async def _finish_login(
+async def _finish_login(  # noqa: PLR0913, PLR0917 — the callback's resolved inputs
     authorize: AuthorizeSocialLogin,
     config: WebConfig,
     provider: SocialProvider,
     subject: str,
     provider_user_id: int,
+    flow_state: OAuthFlowState,
 ) -> RedirectResponse:
     try:
         session_id = await authorize(
@@ -265,9 +305,10 @@ async def _finish_login(
             "Could not create a session for a social login",
             extra={"provider": provider.value},
         )
-        return build_login_redirect(OAUTH_ERROR_FAILED)
+        return build_login_redirect(OAUTH_ERROR_FAILED, flow_state.return_path)
 
-    response = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
+    destination = flow_state.return_path or "/"
+    response = RedirectResponse(destination, status_code=status.HTTP_303_SEE_OTHER)
     set_auth_cookie(response, session_id, config)
     return response
 
