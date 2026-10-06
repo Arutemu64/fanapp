@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { MessageSquare } from '@lucide/svelte';
@@ -31,7 +32,12 @@
 		</Dialog.Description>
 		<p class="text-sm font-medium text-foreground">Что сделать:</p>
 		<ul class="flex flex-col gap-1 text-sm leading-relaxed text-muted-foreground">
-			<li>Подключи аккаунт ВКонтакте в блоке «Способы входа».</li>
+			<li>
+				Подключи ВКонтакте в
+				<a href={resolve('/profile/account')} class="font-medium text-primary hover:underline"
+					>настройках аккаунта</a
+				>.
+			</li>
 			<li>Открой сообщество и нажми «Разрешить сообщения».</li>
 		</ul>
 		<Dialog.Footer class="flex flex-col gap-2 sm:flex-col">

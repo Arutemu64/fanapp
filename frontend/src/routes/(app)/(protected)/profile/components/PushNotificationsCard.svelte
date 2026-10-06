@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { CurrentUserDto, UpdateUserSettingsInput } from '$lib/api/generated';
 
+	import { resolve } from '$app/paths';
 	import { PUBLIC_VAPID_KEY, PUBLIC_VK_GROUP_ID } from '$env/static/public';
 	import { createApiClient } from '$lib/api';
 	// `checkSubscription` and `sendTestNotification` are aliased so they don't
@@ -17,7 +18,6 @@
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { offlineWriteGate } from '$lib/utils/offlineAction';
-	import { Bell } from '@lucide/svelte';
 	import * as Sentry from '@sentry/sveltekit';
 	import { onMount } from 'svelte';
 
@@ -339,17 +339,10 @@
 	}
 </script>
 
-<ProfileCardShell
-	title="Уведомления"
-	description="Настрой уведомления, чтобы не пропустить анонсы и важные сообщения."
->
-	{#snippet icon()}
-		<Bell class="size-5" />
-	{/snippet}
-
+<ProfileCardShell description="Настрой уведомления, чтобы не пропустить анонсы и важные сообщения.">
 	<div class="rounded-lg border border-border">
 		<div class="border-b border-border px-3 py-2.5 sm:px-4">
-			<h4 class="text-sm font-semibold text-foreground">Каналы</h4>
+			<h2 class="text-sm font-semibold text-foreground">Каналы</h2>
 		</div>
 
 		<div class="flex items-start justify-between gap-3 p-3 sm:p-4">
@@ -389,7 +382,10 @@
 						{#if hasVkAccount}
 							Получать сообщения от сообщества во ВКонтакте.
 						{:else}
-							Сначала подключи ВКонтакте в блоке «Способы входа».
+							Сначала подключи ВКонтакте в
+							<a href={resolve('/profile/account')} class="font-medium text-primary hover:underline"
+								>настройках аккаунта</a
+							>.
 						{/if}
 					</p>
 					<button
@@ -413,7 +409,7 @@
 
 	<div class="rounded-lg border border-border">
 		<div class="border-b border-border px-3 py-2.5 sm:px-4">
-			<h4 class="text-sm font-semibold text-foreground">Типы уведомлений</h4>
+			<h2 class="text-sm font-semibold text-foreground">Типы уведомлений</h2>
 		</div>
 
 		<div class="p-3 sm:p-4">
