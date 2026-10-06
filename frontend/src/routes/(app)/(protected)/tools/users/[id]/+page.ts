@@ -1,3 +1,5 @@
+import type { BackTarget } from '$lib/types/navigation';
+
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
 import { getUser } from '$lib/api/generated';
@@ -35,7 +37,7 @@ export const load: PageLoad = async ({ fetch, parent, params }) => {
 
 	return {
 		title: data.username,
-		back: { href: '/tools/users', label: 'Назад к пользователям' },
+		back: { href: '/tools/users', label: 'Назад к пользователям' } satisfies BackTarget,
 		profile: data
 	};
 };
