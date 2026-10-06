@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { PUBLIC_APP_VERSION } from '$env/static/public';
+	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import * as Item from '$lib/components/ui/item';
+	import { getOfflineService } from '$lib/services/offline.svelte';
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { LOGIN_NEXT_PARAM } from '$lib/utils/auth';
 	import { isOrg } from '$lib/utils/permissions';
@@ -42,6 +44,11 @@
 
 	const pwa = getPwaService();
 
+	// The account row and ticket status render from the layout-cached user, so
+	// offline they may be out of date; say so, as the settings pages behind it do.
+	const offline = getOfflineService();
+	let showStaleNotice = $derived(Boolean(user) && !offline.isOnline);
+
 	// Return here after logging in: the guest opened the Profile tab, so that is
 	// where they expect to land.
 	const loginHref = `${resolve('/login')}?${LOGIN_NEXT_PARAM}=${encodeURIComponent('/profile')}`;
@@ -61,6 +68,12 @@
      because the shell centres its content column and a narrower block hugging that
      column's left edge reads as lopsided. -->
 <div class="mx-auto flex max-w-2xl flex-col gap-4 sm:gap-5">
+	{#if showStaleNotice}
+		<StaleDataNotice
+			message="Нет связи. Показан сохранённый профиль — обновится при подключении."
+		/>
+	{/if}
+
 	{#if user}
 		<MenuGroup>
 			<Item.Root class="rounded-none">
@@ -118,8 +131,9 @@
 	<MenuGroup>
 		{#if pwa.canInstall}
 			<!-- Opens the @khmyznikov/pwa-install dialog, which renders its own
-			     platform-specific instructions (Chromium prompt, iOS "На экран Домой"). -->
-			<Item.Root class="rounded-none">
+			     platform-specific instructions (Chromium prompt, iOS "На экран Домой").
+			     hover:bg-muted by hand: Item only highlights rows rendered as <a>. -->
+			<Item.Root class="rounded-none hover:bg-muted">
 				{#snippet child({ props })}
 					<button type="button" {...props} onclick={() => pwa.showInstallDialog()}>
 						<Item.Media class="size-9 rounded-lg bg-muted text-muted-foreground">
