@@ -118,3 +118,24 @@ test.describe('profile settings on a phone', () => {
 		await expect(page.getByText('Настройки сохранены')).toHaveCount(0);
 	});
 });
+
+test.describe('logging out', () => {
+	test('asks first, and cancelling keeps the session', async ({ page, api }) => {
+		api.use({ ...loggedInAs(), 'POST /auth/logout': json({}) });
+		await page.goto('/profile');
+
+		await page.getByRole('main').getByRole('button', { name: 'Выйти' }).click();
+		const confirm = page.getByRole('alertdialog', { name: 'Выйти из аккаунта?' });
+		await expect(confirm).toBeVisible();
+
+		await confirm.getByRole('button', { name: 'Отмена' }).click();
+		await expect(confirm).toBeHidden();
+		expect(api.countCalls('POST /auth/logout')).toBe(0);
+
+		await page.getByRole('main').getByRole('button', { name: 'Выйти' }).click();
+		await confirm.getByRole('button', { name: 'Выйти' }).click();
+
+		await expect(page).toHaveURL('/');
+		expect(api.countCalls('POST /auth/logout')).toBe(1);
+	});
+});
