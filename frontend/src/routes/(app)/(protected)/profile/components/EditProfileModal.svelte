@@ -66,11 +66,19 @@
 		return '';
 	}
 
-	function handleUsernameInput(e: Event) {
-		const target = e.target as HTMLInputElement;
-		username = target.value;
-		usernameError = validateUsername(username);
+	// Validate when the field is left, not on every keystroke: "Минимум 3 символа"
+	// after the first letter scolds someone who is still typing
+	// (https://www.nngroup.com/articles/errors-forms-design-guidelines/). Once an
+	// error is showing, re-check as they type so it clears the moment it's fixed.
+	function handleUsernameInput(event: Event & { currentTarget: HTMLInputElement }) {
 		formError = '';
+		if (usernameError) {
+			usernameError = validateUsername(event.currentTarget.value);
+		}
+	}
+
+	function handleUsernameBlur() {
+		usernameError = validateUsername(username);
 	}
 
 	function hasChanges(): boolean {
@@ -159,6 +167,7 @@
 						spellcheck={false}
 						bind:value={username}
 						oninput={handleUsernameInput}
+						onblur={handleUsernameBlur}
 						aria-invalid={usernameError ? true : undefined}
 						class="pl-9"
 					/>
@@ -173,7 +182,7 @@
 				</ul>
 			</Field.Field>
 
-			<Button type="submit" class="w-full" disabled={!isValid() || isLoading}>
+			<Button type="submit" class="w-full" disabled={isLoading}>
 				{#if isLoading}
 					<Spinner data-icon="inline-start" />
 					Сохранение…

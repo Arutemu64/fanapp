@@ -26,6 +26,78 @@ pytestmark = [
 ]
 
 
+async def test_link_ticket_accepts_org_code_typed_in_lowercase(
+    dishka_request: AsyncContainer,
+    visitor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    interactor = await dishka_request.get(LinkTicket)
+    ticket_gateway = await dishka_request.get(TicketGateway)
+
+    ticket = Ticket(
+        id=generate_ticket_id(),
+        barcode="FAN-7K4Q9M",
+        role=UserRole.VISITOR,
+        used_by_user_id=None,
+        issued_by_user_id=None,
+        ticketscloud_ticket_id=None,
+    )
+    await ticket_gateway.add(ticket)
+    await uow.commit()
+
+    login(visitor)
+
+    await interactor(LinkTicketInput(barcode=" fan-7k4q9m "))
+
+    saved_ticket = await ticket_gateway.get_by_barcode("FAN-7K4Q9M")
+    assert saved_ticket is not None
+    assert saved_ticket.is_used_by(visitor.id)
+
+
+async def test_link_ticket_prefers_exact_vendor_spelling(
+    dishka_request: AsyncContainer,
+    visitor: User,
+    login: Callable[[User], None],
+    uow: UnitOfWork,
+) -> None:
+    interactor = await dishka_request.get(LinkTicket)
+    ticket_gateway = await dishka_request.get(TicketGateway)
+
+    # A vendor barcode that happens to look like an org code, next to the org
+    # ticket its folded form would match: the exact spelling must win.
+    vendor = Ticket(
+        id=generate_ticket_id(),
+        barcode="FAN-o0",
+        role=UserRole.VISITOR,
+        used_by_user_id=None,
+        issued_by_user_id=None,
+        ticketscloud_ticket_id=None,
+    )
+    folded = Ticket(
+        id=generate_ticket_id(),
+        barcode="FAN-00",
+        role=UserRole.VISITOR,
+        used_by_user_id=None,
+        issued_by_user_id=None,
+        ticketscloud_ticket_id=None,
+    )
+    await ticket_gateway.add(vendor)
+    await ticket_gateway.add(folded)
+    await uow.commit()
+
+    login(visitor)
+
+    await interactor(LinkTicketInput(barcode="FAN-o0"))
+
+    saved_vendor = await ticket_gateway.get_by_barcode("FAN-o0")
+    saved_folded = await ticket_gateway.get_by_barcode("FAN-00")
+    assert saved_vendor is not None
+    assert saved_vendor.is_used_by(visitor.id)
+    assert saved_folded is not None
+    assert not saved_folded.is_used
+
+
 async def test_link_ticket_successfully(
     dishka_request: AsyncContainer,
     visitor: User,

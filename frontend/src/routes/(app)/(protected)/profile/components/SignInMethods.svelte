@@ -5,13 +5,12 @@
 	import { createApiClient } from '$lib/api';
 	import { unlinkTelegramAccount, unlinkVkAccount } from '$lib/api/generated';
 	import MenuGroup from '$lib/components/MenuGroup.svelte';
-	import * as Alert from '$lib/components/ui/alert';
-	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
+	import * as Item from '$lib/components/ui/item';
 	import { SOCIAL_PROVIDER_PRESENTATION } from '$lib/data/socialProviders';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { offlineWriteGate } from '$lib/utils/offlineAction';
-	import { AlertCircle, Mail, Shield } from '@lucide/svelte';
+	import { Mail, Shield } from '@lucide/svelte';
 
 	import ChangeEmailModal from './ChangeEmailModal.svelte';
 	import ChangePasswordModal from './ChangePasswordModal.svelte';
@@ -36,7 +35,14 @@
 	let changePasswordModalOpen = $state(false);
 	let changeEmailModalOpen = $state(false);
 	const toastService = getToastService();
-	let emailStatusLabel = $derived(user.email ? 'Привязана' : 'Не добавлена');
+	// Each row's second line is its current state, not a description of the setting
+	// (Android settings guidance: "Secondary text below the setting label reflects
+	// the current selection"), so a phone shows the whole group without scrolling.
+	let emailStatus = $derived(user.email ?? 'Не добавлена — нужна, чтобы восстановить доступ');
+	let passwordStatus = $derived(user.has_password ? 'Установлен' : 'Не установлен');
+	// Colour goes to the action the user is missing, not to a state that is fine
+	// (DESIGN.md "Color-Earns-Its-Place"): a missing email is the one to fix.
+	let emailButtonVariant = $derived<'outline' | 'default'>(user.email ? 'outline' : 'default');
 
 	let linkedProviders = $derived(user.social_identities.map((si) => si.provider));
 
@@ -79,71 +85,49 @@
 	<!-- One bordered group with hairline dividers between rows, so related account
 	     settings read as a set rather than as separate boxes. -->
 	<MenuGroup class="divide-y divide-border">
-		<div class="p-3 sm:p-4">
-			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-				<div class="min-w-0">
-					<div class="flex flex-wrap items-center gap-2">
-						<Mail class="size-4 text-muted-foreground" />
-						<p class="font-medium text-foreground">Эл. почта</p>
-						<Badge variant={user.email ? 'default' : 'secondary'}>{emailStatusLabel}</Badge>
-					</div>
+		<Item.Root class="rounded-none">
+			<Item.Media class="size-9 rounded-lg bg-muted text-muted-foreground">
+				<Mail class="size-5" aria-hidden="true" />
+			</Item.Media>
+			<Item.Content class="min-w-0">
+				<Item.Title class="text-base">Эл. почта</Item.Title>
+				<Item.Description class="line-clamp-none wrap-anywhere">{emailStatus}</Item.Description>
+			</Item.Content>
+			<Item.Actions>
+				<Button
+					variant={emailButtonVariant}
+					size="sm"
+					class="min-h-11"
+					disabled={offlineGate.disabled}
+					title={offlineGate.title}
+					onclick={() => (changeEmailModalOpen = true)}
+				>
+					{user.email ? 'Изменить' : 'Добавить'}
+				</Button>
+			</Item.Actions>
+		</Item.Root>
 
-					{#if user.email}
-						<p class="mt-1.5 text-sm break-all text-muted-foreground">{user.email}</p>
-					{:else}
-						<p class="mt-1.5 text-sm leading-5 text-muted-foreground">
-							Добавь email для восстановления доступа и важных уведомлений.
-						</p>
-					{/if}
-				</div>
-
-				<div class="flex w-full flex-col gap-2 sm:w-auto">
-					<Button
-						variant="outline"
-						size="sm"
-						class="min-h-11 w-full sm:w-auto"
-						disabled={offlineGate.disabled}
-						title={offlineGate.title}
-						onclick={() => (changeEmailModalOpen = true)}
-					>
-						{user.email ? 'Изменить' : 'Добавить'}
-					</Button>
-				</div>
-			</div>
-		</div>
-
-		<div class="p-3 sm:p-4">
-			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-				<div class="min-w-0">
-					<div class="flex flex-wrap items-center gap-2">
-						<Shield class="size-4 text-muted-foreground" />
-						<p class="font-medium text-foreground">Пароль</p>
-						<Badge variant={user.has_password ? 'default' : 'secondary'}>
-							{user.has_password ? 'Установлен' : 'Не установлен'}
-						</Badge>
-					</div>
-
-					<p class="mt-1.5 text-sm leading-5 text-muted-foreground">
-						{#if user.has_password}
-							Используй пароль как дополнительный способ входа.
-						{:else}
-							Установи пароль, чтобы входить без внешних сервисов.
-						{/if}
-					</p>
-				</div>
-
+		<Item.Root class="rounded-none">
+			<Item.Media class="size-9 rounded-lg bg-muted text-muted-foreground">
+				<Shield class="size-5" aria-hidden="true" />
+			</Item.Media>
+			<Item.Content class="min-w-0">
+				<Item.Title class="text-base">Пароль</Item.Title>
+				<Item.Description>{passwordStatus}</Item.Description>
+			</Item.Content>
+			<Item.Actions>
 				<Button
 					variant="outline"
 					size="sm"
-					class="min-h-11 w-full sm:w-auto"
+					class="min-h-11"
 					disabled={offlineGate.disabled}
 					title={offlineGate.title}
 					onclick={() => (changePasswordModalOpen = true)}
 				>
 					{user.has_password ? 'Изменить' : 'Установить'}
 				</Button>
-			</div>
-		</div>
+			</Item.Actions>
+		</Item.Root>
 
 		{#each connectionRows as provider (provider)}
 			{@const meta = SOCIAL_PROVIDER_PRESENTATION[provider]}
@@ -151,29 +135,17 @@
 			<SocialConnectionRow
 				label={meta.name}
 				connected={linkedProviders.includes(provider)}
-				connectedDescription={`Через ${meta.name} можно быстро входить без пароля.`}
-				notConnectedDescription={`Подключи ${meta.name} для быстрого входа без пароля.`}
 				connectHref={`${PUBLIC_API_URL}/me/connections/${provider}`}
 				unlinkPrompt={`Отвязать ${meta.name}?`}
 				hasEmail={Boolean(user.email)}
 				onUnlink={() => unlinkProvider(provider)}
 			>
 				{#snippet icon()}
-					<Icon class="size-4 text-muted-foreground" />
+					<Icon class="size-5" aria-hidden="true" />
 				{/snippet}
 			</SocialConnectionRow>
 		{/each}
 	</MenuGroup>
-
-	{#if !user.email}
-		<Alert.Root variant="warning">
-			<AlertCircle />
-			<Alert.Description>
-				Добавь почту. Так будет проще восстановить доступ, и только после этого можно безопасно
-				отвязать привязки.
-			</Alert.Description>
-		</Alert.Root>
-	{/if}
 </SettingsSection>
 
 <ChangePasswordModal

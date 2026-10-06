@@ -5,7 +5,6 @@
 	import type { CurrentUserDto } from '$lib/api/generated';
 
 	import { getApiErrorDetail } from '$lib/api/errors';
-	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
 	import * as Field from '$lib/components/ui/field';
 	import { Input } from '$lib/components/ui/input';
@@ -30,8 +29,12 @@
 	let barcode = $state('');
 	let isSubmitting = $state(false);
 	let submitError = $state('');
+	let barcodeDescribedBy = $derived(
+		submitError ? 'ticket-barcode-error ticket-barcode-hint' : 'ticket-barcode-hint'
+	);
 
-	async function handleLinkTicket() {
+	async function handleLinkTicket(event: SubmitEvent) {
+		event.preventDefault();
 		submitError = '';
 
 		if (!barcode.trim()) {
@@ -73,17 +76,11 @@
 			</p>
 		</div>
 	{:else}
-		<div class="flex flex-col gap-3">
-			{#if submitError}
-				<Alert.Root variant="destructive">
-					<Alert.Description>{submitError}</Alert.Description>
-				</Alert.Root>
-			{/if}
-
-			<Field.Field>
+		<form class="flex flex-col gap-3" onsubmit={handleLinkTicket}>
+			<Field.Field data-invalid={submitError ? true : undefined}>
 				<Field.FieldLabel for="ticket-barcode">Номер билета</Field.FieldLabel>
-				<Field.FieldDescription>
-					Введи цифры штрихкода с бумажного или электронного билета. Если билета нет — попроси
+				<Field.FieldDescription id="ticket-barcode-hint">
+					Введи номер под штрихкодом бумажного или электронного билета. Если билета нет — попроси
 					специальный код у оргкомитета или волонтёра.
 				</Field.FieldDescription>
 				<Input
@@ -93,13 +90,19 @@
 					placeholder="Например, 1234567890"
 					autocomplete="off"
 					autocapitalize="off"
+					enterkeyhint="go"
 					spellcheck={false}
+					aria-invalid={submitError ? true : undefined}
+					aria-describedby={barcodeDescribedBy}
 					disabled={isSubmitting || offlineGate.disabled}
 					oninput={() => (submitError = '')}
 				/>
+				{#if submitError}
+					<Field.FieldError id="ticket-barcode-error">{submitError}</Field.FieldError>
+				{/if}
 			</Field.Field>
 			<Button
-				onclick={handleLinkTicket}
+				type="submit"
 				class="w-full"
 				disabled={isSubmitting || offlineGate.disabled}
 				title={offlineGate.title}
@@ -111,6 +114,6 @@
 					Привязать билет
 				{/if}
 			</Button>
-		</div>
+		</form>
 	{/if}
 </SettingsSection>

@@ -10,6 +10,7 @@ from fanfan.application.services.tickets import TicketService
 from fanfan.core.exceptions.tickets import (
     TicketNotFound,
 )
+from fanfan.core.vo.ticket import normalize_ticket_barcode
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,13 @@ class LinkTicket:
 
     async def __call__(self, data: LinkTicketInput) -> None:
         current_user = await self.current_user_provider.require_user()
-        ticket = await self.ticket_gateway.get_by_barcode(barcode=data.barcode)
+        # Exact spelling first, so an imported vendor barcode is never rewritten
+        # into a different one; the folded form only rescues a mistyped FAN- code.
+        barcode = data.barcode.strip()
+        ticket = await self.ticket_gateway.get_by_barcode(barcode=barcode)
+        normalized = normalize_ticket_barcode(barcode)
+        if ticket is None and normalized != barcode:
+            ticket = await self.ticket_gateway.get_by_barcode(barcode=normalized)
         if ticket is None:
             raise TicketNotFound
         await self.tickets_service.link_ticket(ticket=ticket, user=current_user)

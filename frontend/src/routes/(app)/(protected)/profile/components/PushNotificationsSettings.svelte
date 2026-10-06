@@ -15,7 +15,7 @@
 	} from '$lib/api/generated';
 	import MenuGroup from '$lib/components/MenuGroup.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Switch } from '$lib/components/ui/switch';
+	import { Spinner } from '$lib/components/ui/spinner';
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { offlineWriteGate } from '$lib/utils/offlineAction';
@@ -24,6 +24,7 @@
 
 	import { urlBase64ToUint8Array } from './push';
 	import SettingsSection from './SettingsSection.svelte';
+	import SwitchRow from './SwitchRow.svelte';
 	import VkNotificationsModal from './VkNotificationsModal.svelte';
 
 	interface Props {
@@ -56,8 +57,13 @@
 	);
 	// Writable deriveds: a toggle overrides them optimistically, and they snap back
 	// to the server copy whenever `user` refreshes (Svelte "Overriding derived values").
-	let receiveAll = $derived(user.settings.receive_all_announcements);
-	let receiveVk = $derived(hasVkAccount && user.settings.receive_vk_notifications);
+	let receiveAll = $derived(user.settings.receive_all_announcements ?? false);
+	let receiveVk = $derived(hasVkAccount && (user.settings.receive_vk_notifications ?? false));
+	let vkDescription = $derived(
+		hasVkAccount
+			? 'Получать сообщения от сообщества во ВКонтакте.'
+			: 'Сначала подключи ВКонтакте в настройках аккаунта.'
+	);
 	let isSavingSettings = $state(false);
 	let isSendingTest = $state(false);
 	const pwa = getPwaService();
@@ -66,6 +72,22 @@
 	// the build-time group id, so it may be empty if VK notifications were not
 	// configured for this deployment — the modal hides the button then.
 	const vkGroupUrl = PUBLIC_VK_GROUP_ID ? `https://vk.ru/im?sel=-${PUBLIC_VK_GROUP_ID}` : null;
+
+	// Where a denied permission is lifted depends on how the app is open. An
+	// installed app has no address bar: iOS keeps a Home Screen app's permission
+	// in the system Notifications settings, "just like any other app"
+	// (https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/),
+	// and an Android WebAPK in its app settings. Only a browser tab has the site
+	// settings behind the address-bar icon.
+	let blockedHint = $derived.by(() => {
+		if (!pwa.isInstalled) {
+			return 'Уведомления заблокированы в браузере. Открой настройки сайта (значок замка рядом с адресом) и разреши уведомления.';
+		}
+		if (pwa.isApplePlatform) {
+			return 'Уведомления выключены в настройках устройства. Открой Настройки → Уведомления → ФАН ФАН и разреши уведомления.';
+		}
+		return 'Уведомления выключены в настройках телефона. Открой настройки приложения ФАН ФАН и разреши уведомления.';
+	});
 
 	async function checkSubscription() {
 		try {
@@ -136,7 +158,6 @@
 					await subscription.unsubscribe();
 					isSubscribed = false;
 					onSettingsUpdate?.();
-					toastService.add('Уведомления отключены для этого устройства', 'success');
 				}
 			} catch (e) {
 				console.error('Failed to unsubscribe', e);
@@ -193,7 +214,7 @@
 				}
 			} else if (Notification.permission === 'denied') {
 				notificationsBlocked = true;
-				toastService.add('Уведомления заблокированы в браузере', 'error');
+				toastService.add('Уведомления заблокированы', 'error');
 				return;
 			}
 
@@ -249,7 +270,6 @@
 
 			isSubscribed = true;
 			onSettingsUpdate?.();
-			toastService.add('Пуш-уведомления включены', 'success');
 		} catch (error: unknown) {
 			console.error('Failed to subscribe:', error);
 			// Classify by where it threw: before the browser subscription exists it's a
@@ -279,24 +299,28 @@
 			toastService.add('Не удалось обновить настройки', 'error');
 			rollback();
 		} else {
-			toastService.add('Настройки сохранены', 'success');
+			// No success toast: the switch already sits in its new position, and a
+			// switch is expected to take effect on its own
+			// (https://www.nngroup.com/articles/toggle-switch-guidelines/).
 			onSettingsUpdate?.();
 		}
 		isSavingSettings = false;
 	}
 
-	function toggleReceiveAll() {
+	function toggleReceiveAll(checked: boolean) {
+		receiveAll = checked;
 		void updateSettings(
 			{
 				receive_all_announcements: receiveAll
 			},
 			() => {
-				receiveAll = user.settings.receive_all_announcements;
+				receiveAll = user.settings.receive_all_announcements ?? false;
 			}
 		);
 	}
 
-	function toggleReceiveVk() {
+	function toggleReceiveVk(checked: boolean) {
+		receiveVk = checked;
 		void updateSettings(
 			{
 				receive_vk_notifications: receiveVk
@@ -306,7 +330,7 @@
 				// unlinked while the request was in flight, restoring the raw `true`
 				// would force the disabled toggle back ON — the misleading state this
 				// card avoids. Mirrors the receiveVk derived above.
-				receiveVk = hasVkAccount && user.settings.receive_vk_notifications;
+				receiveVk = hasVkAccount && (user.settings.receive_vk_notifications ?? false);
 			}
 		);
 	}
@@ -347,89 +371,68 @@
 
 	<SettingsSection title="Каналы">
 		<MenuGroup class="divide-y divide-border">
-			<div class="flex items-start justify-between gap-3 p-3 sm:p-4">
-				<div class="min-w-0">
-					<span class="text-sm font-medium text-foreground">На этом устройстве</span>
-					<p class="mt-1 text-sm leading-relaxed text-muted-foreground">
-						Приходят как обычные уведомления телефона, даже когда приложение закрыто.
+			<SwitchRow
+				id="push-this-device"
+				title="На этом устройстве"
+				description="Приходят как обычные уведомления телефона, даже когда приложение закрыто."
+				checked={isSubscribed}
+				disabled={isLoading || pushUnsupported || offlineGate.disabled}
+				disabledHint={offlineGate.title}
+				onCheckedChange={() => {
+					void toggleSubscription();
+				}}
+			>
+				{#if pushUnsupported}
+					<p class="mt-2 text-sm leading-relaxed text-muted-foreground">
+						Чтобы получать уведомления, открой приложение в браузере — Chrome или Safari. Во
+						встроенном браузере они не работают.
 					</p>
-					{#if pushUnsupported}
-						<p class="mt-2 text-sm leading-relaxed text-muted-foreground">
-							Чтобы получать уведомления, открой приложение в браузере — Chrome или Safari. Во
-							встроенном браузере они не работают.
-						</p>
-					{:else if notificationsBlocked}
-						<p class="mt-2 text-sm leading-relaxed text-destructive">
-							Уведомления заблокированы в браузере. Открой настройки сайта (значок замка рядом с
-							адресом) и разреши уведомления.
-						</p>
-					{/if}
-				</div>
-				<Switch
-					checked={isSubscribed}
-					aria-label="Включить уведомления на этом устройстве"
-					disabled={isLoading || pushUnsupported || offlineGate.disabled}
-					title={offlineGate.title}
-					onCheckedChange={() => {
-						void toggleSubscription();
-					}}
-				/>
-			</div>
+				{:else if notificationsBlocked}
+					<p class="mt-2 text-sm leading-relaxed text-destructive">{blockedHint}</p>
+				{/if}
+			</SwitchRow>
 
-			<div class="p-3 sm:p-4">
-				<div class="flex items-start justify-between gap-3">
-					<div class="min-w-0">
-						<span class="text-sm font-medium text-foreground">ВКонтакте</span>
-						<p class="mt-1 text-sm leading-relaxed text-muted-foreground">
-							{#if hasVkAccount}
-								Получать сообщения от сообщества во ВКонтакте.
-							{:else}
-								Сначала подключи ВКонтакте в
-								<a
-									href={resolve('/profile/account')}
-									class="font-medium text-primary hover:underline">настройках аккаунта</a
-								>.
-							{/if}
-						</p>
-						<button
-							type="button"
-							class="mt-1 text-sm font-medium text-primary hover:underline"
-							onclick={() => (showVkModal = true)}
+			<SwitchRow
+				id="vk-notifications"
+				title="ВКонтакте"
+				description={vkDescription}
+				checked={receiveVk}
+				disabled={isSavingSettings || !hasVkAccount || offlineGate.disabled}
+				disabledHint={offlineGate.title}
+				onCheckedChange={toggleReceiveVk}
+			>
+				<div class="flex flex-wrap gap-x-4">
+					{#if !hasVkAccount}
+						<a
+							href={resolve('/profile/account')}
+							class="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline"
 						>
-							Как это работает?
-						</button>
-					</div>
-					<Switch
-						bind:checked={receiveVk}
-						aria-label="Получать уведомления во ВКонтакте"
-						disabled={isSavingSettings || !hasVkAccount || offlineGate.disabled}
-						title={offlineGate.title}
-						onCheckedChange={toggleReceiveVk}
-					/>
+							Подключить ВКонтакте
+						</a>
+					{/if}
+					<button
+						type="button"
+						class="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline"
+						onclick={() => (showVkModal = true)}
+					>
+						Как это работает?
+					</button>
 				</div>
-			</div>
+			</SwitchRow>
 		</MenuGroup>
 	</SettingsSection>
 
 	<SettingsSection title="Типы уведомлений">
 		<MenuGroup>
-			<div class="p-3 sm:p-4">
-				<div class="flex items-start justify-between gap-3">
-					<div class="min-w-0">
-						<span class="text-sm font-medium text-foreground">Все анонсы</span>
-						<p class="mt-1 text-sm leading-relaxed text-muted-foreground">
-							Получать уведомления о начале каждого выступления.
-						</p>
-					</div>
-					<Switch
-						bind:checked={receiveAll}
-						aria-label="Получать уведомления обо всех анонсах"
-						disabled={isSavingSettings || offlineGate.disabled}
-						title={offlineGate.title}
-						onCheckedChange={toggleReceiveAll}
-					/>
-				</div>
-			</div>
+			<SwitchRow
+				id="all-announcements"
+				title="Все анонсы"
+				description="Получать уведомления о начале каждого выступления."
+				checked={receiveAll}
+				disabled={isSavingSettings || offlineGate.disabled}
+				disabledHint={offlineGate.title}
+				onCheckedChange={toggleReceiveAll}
+			/>
 		</MenuGroup>
 	</SettingsSection>
 
@@ -445,6 +448,7 @@
 			onclick={sendTestNotification}
 		>
 			{#if isSendingTest}
+				<Spinner data-icon="inline-start" />
 				Отправка…
 			{:else}
 				Проверить уведомления

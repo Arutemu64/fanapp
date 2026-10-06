@@ -34,10 +34,22 @@ test.describe('profile hub', () => {
 		const main = page.getByRole('main');
 		await expect(main.getByRole('link', { name: /@test_visitor/ })).toBeVisible();
 		await expect(main.getByRole('link', { name: /Билет/ })).toContainText('Не привязан');
+		// No push subscription in a fresh browser: the row says so at a glance.
+		await expect(main.getByRole('link', { name: /Уведомления/ })).toContainText('Выключены');
 		await expect(main.getByRole('link', { name: 'Обратная связь' })).toBeVisible();
 		await expect(main.getByRole('link', { name: 'Инструменты' })).toHaveCount(0);
 		await expect(main.getByRole('button', { name: 'Выйти' })).toBeVisible();
 		expect(api.unmatched).toEqual([]);
+	});
+
+	test('counts linked VK as a notification channel on the hub', async ({ page, api }) => {
+		// Push is off in a fresh browser, but VK still delivers, so the row says so.
+		api.use(loggedInAs({ social_identities: [{ provider: 'vk' }] }));
+		await page.goto('/profile');
+
+		await expect(page.getByRole('main').getByRole('link', { name: /Уведомления/ })).toContainText(
+			'Включены'
+		);
 	});
 
 	test('links an organiser to the toolbox and keeps the tab lit there', async ({ page, api }) => {
@@ -65,5 +77,75 @@ test.describe('profile hub', () => {
 
 		await page.getByRole('link', { name: 'Назад в профиль' }).click();
 		await expect(page).toHaveURL('/profile');
+	});
+});
+
+test.describe('profile settings on a phone', () => {
+	test('links a ticket from the keyboard and shows a miss under the field', async ({
+		page,
+		api
+	}) => {
+		let sentBarcode: unknown;
+		api.use({
+			...loggedInAs(),
+			'POST /me/ticket': (route) => {
+				sentBarcode = (route.request().postDataJSON() as { barcode: string }).barcode;
+				return json({ code: 'TICKET_NOT_FOUND', details: {} }, 404);
+			}
+		});
+		await page.goto('/profile/ticket');
+
+		// The phone keyboard's Enter/«Go» key submits — no reach for the button.
+		const field = page.getByLabel('Номер билета');
+		await field.fill('fan-7k4q9m');
+		await field.press('Enter');
+
+		await expect(field).toHaveAttribute('aria-invalid', 'true');
+		await expect(page.getByRole('alert')).toHaveText('Билет не найден');
+		expect(sentBarcode).toBe('fan-7k4q9m');
+		expect(api.unmatched).toEqual([]);
+	});
+
+	test('toggles a setting by tapping its title, without a success toast', async ({ page, api }) => {
+		let patched: unknown;
+		api.use({
+			...loggedInAs(),
+			'PATCH /me/settings': (route) => {
+				patched = route.request().postDataJSON() as unknown;
+				return json({});
+			}
+		});
+		await page.goto('/profile/notifications');
+
+		// The switch is named by its visible title alone (WCAG 2.5.3).
+		const allAnnouncements = page.getByRole('switch', { name: 'Все анонсы', exact: true });
+		await expect(allAnnouncements).toBeChecked();
+
+		await page.getByText('Все анонсы', { exact: true }).click();
+
+		await expect(allAnnouncements).not.toBeChecked();
+		await expect.poll(() => patched).toEqual({ receive_all_announcements: false });
+		await expect(page.getByText('Настройки сохранены')).toHaveCount(0);
+	});
+});
+
+test.describe('logging out', () => {
+	test('asks first, and cancelling keeps the session', async ({ page, api }) => {
+		api.use({ ...loggedInAs(), 'POST /auth/logout': json({}) });
+		await page.goto('/profile');
+
+		await page.getByRole('main').getByRole('button', { name: 'Выйти' }).click();
+		const confirm = page.getByRole('alertdialog', { name: 'Выйти из аккаунта?' });
+		await expect(confirm).toBeVisible();
+
+		await confirm.getByRole('button', { name: 'Отмена' }).click();
+		await expect(confirm).toBeHidden();
+		expect(api.countCalls('POST /auth/logout')).toBe(0);
+
+		await page.getByRole('main').getByRole('button', { name: 'Выйти' }).click();
+		await confirm.getByRole('button', { name: 'Выйти' }).click();
+
+		await expect(page).toHaveURL('/');
+		expect(api.countCalls('POST /auth/logout')).toBe(1);
 	});
 });

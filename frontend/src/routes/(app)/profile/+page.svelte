@@ -11,6 +11,7 @@
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { LOGIN_NEXT_PARAM } from '$lib/utils/auth';
 	import { isOrg } from '$lib/utils/permissions';
+	import { type DevicePushState, getDevicePushState } from '$lib/utils/pushSubscription';
 	import { getAvatarInitials, getRoleLabel } from '$lib/utils/users';
 	import {
 		Bell,
@@ -22,6 +23,7 @@
 		Ticket,
 		Wrench
 	} from '@lucide/svelte';
+	import { onMount } from 'svelte';
 	import IconFastapi from '~icons/simple-icons/fastapi';
 	import IconSvelte from '~icons/simple-icons/svelte';
 
@@ -30,11 +32,24 @@
 	import LogoutButton from './components/LogoutButton.svelte';
 	import MenuLink from './components/MenuLink.svelte';
 	import ThemeToggle from './components/ThemeToggle.svelte';
+	import { notificationsStatus } from './notificationsStatus';
 
 	let { data }: PageProps = $props();
 	let user = $derived(data.user);
 	let avatarInitials = $derived(getAvatarInitials(user?.username));
 	let ticketStatus = $derived(user?.ticket ? 'Привязан' : 'Не привязан');
+
+	// The row's "current value", like a settings screen's: whether any channel
+	// reaches this user (see notificationsStatus). Device push is read from the
+	// browser after mount; until then the social channels speak alone.
+	let devicePush = $state<DevicePushState>('unknown');
+	let notificationsValue = $derived(user ? notificationsStatus(devicePush, user) : undefined);
+
+	onMount(() => {
+		void getDevicePushState().then((state) => {
+			devicePush = state;
+		});
+	});
 
 	// "Инструменты" is the organiser toolbox: a single link to the /tools dashboard
 	// rather than a row per tool, so the hub stays short as the tool list grows. It
@@ -102,7 +117,12 @@
 
 		<MenuGroup>
 			<MenuLink href="/profile/ticket" label="Билет" icon={Ticket} value={ticketStatus} />
-			<MenuLink href="/profile/notifications" label="Уведомления" icon={Bell} />
+			<MenuLink
+				href="/profile/notifications"
+				label="Уведомления"
+				icon={Bell}
+				value={notificationsValue}
+			/>
 		</MenuGroup>
 
 		<MenuGroup>

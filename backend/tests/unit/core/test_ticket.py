@@ -4,7 +4,11 @@ import pytest
 
 from fanfan.core.exceptions.tickets import TicketAlreadyUsed
 from fanfan.core.models.ticket import Ticket
-from fanfan.core.vo.ticket import generate_ticket_id
+from fanfan.core.vo.ticket import (
+    generate_ticket_barcode,
+    generate_ticket_id,
+    normalize_ticket_barcode,
+)
 from fanfan.core.vo.user import UserId, UserRole
 
 pytestmark = pytest.mark.unit
@@ -43,3 +47,28 @@ def test_set_as_used_twice_raises() -> None:
 
     with pytest.raises(TicketAlreadyUsed):
         ticket.set_as_used(UserId(uuid7()))
+
+
+@pytest.mark.parametrize(
+    ("typed", "stored"),
+    [
+        ("FAN-7K4Q9M", "FAN-7K4Q9M"),
+        ("fan-7k4q9m", "FAN-7K4Q9M"),
+        ("  Fan-7k4Q9m ", "FAN-7K4Q9M"),
+        ("fan-o1il2m", "FAN-01112M"),
+    ],
+)
+def test_normalize_folds_org_barcode_case_and_confusables(
+    typed: str, stored: str
+) -> None:
+    assert normalize_ticket_barcode(typed) == stored
+
+
+def test_normalize_keeps_generated_barcode_intact() -> None:
+    barcode = generate_ticket_barcode()
+
+    assert normalize_ticket_barcode(barcode.lower()) == barcode
+
+
+def test_normalize_leaves_vendor_barcode_spelling_alone() -> None:
+    assert normalize_ticket_barcode(" 0042abC ") == "0042abC"

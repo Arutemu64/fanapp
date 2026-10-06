@@ -192,7 +192,9 @@
 		</Dialog.Header>
 
 		{#if step === 'email'}
-			<form onsubmit={handleSubmit} class="flex flex-col gap-4">
+			<!-- novalidate: the browser's own type="email" bubble would pre-empt the
+			     field error handleSubmit shows. -->
+			<form onsubmit={handleSubmit} novalidate class="flex flex-col gap-4">
 				{#if formError}
 					<Alert.Root variant="destructive">
 						<Alert.Description>{formError}</Alert.Description>
@@ -248,11 +250,7 @@
 					</Field.Field>
 				</Field.FieldGroup>
 
-				<Button
-					type="submit"
-					class="w-full"
-					disabled={isLoading || !isValidEmail(normalizeEmail(newEmail))}
-				>
+				<Button type="submit" class="w-full" disabled={isLoading}>
 					{#if isLoading}
 						<Spinner data-icon="inline-start" />
 						Отправка кода…
@@ -316,7 +314,7 @@
 				<div class="flex flex-col gap-2 pt-2">
 					<Button
 						class="w-full"
-						disabled={isVerifying || isRequestingVerification || verificationCode.length < 6}
+						disabled={isVerifying || isRequestingVerification}
 						onclick={submitVerificationCode}
 					>
 						{#if isVerifying}
