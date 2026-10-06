@@ -44,7 +44,7 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 			// Authoritative "session ended": cache logged-out AND drop per-user caches
 			// so no orphaned entries linger for the next account on a shared device.
 			// Universal caches (e.g. schedule) are kept warm. Mirrors explicit logout
-			// (AppNavbar.handleLogout).
+			// (the Profile page's LogoutButton).
 			if (response?.status === 401 || response?.status === 403) {
 				void clearUserCache();
 				return null;

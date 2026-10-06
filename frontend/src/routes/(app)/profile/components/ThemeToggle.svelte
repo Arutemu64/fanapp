@@ -13,21 +13,25 @@
 	];
 </script>
 
-<div class="flex rounded-lg border border-border p-1" role="group" aria-label="Тема оформления">
+<div
+	class="flex w-full rounded-lg border border-border p-1"
+	role="group"
+	aria-label="Тема оформления"
+>
 	{#each options as { mode, label, Icon } (mode)}
 		<button
 			type="button"
-			aria-label={label}
 			aria-pressed={theme.mode === mode}
 			onclick={() => theme.setMode(mode)}
 			class={[
-				'flex flex-1 items-center justify-center rounded-md p-1.5 transition-colors',
+				'flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-md px-1 text-sm transition-colors',
 				theme.mode === mode
 					? 'bg-muted font-medium text-foreground'
 					: 'text-muted-foreground hover:text-foreground'
 			]}
 		>
-			<Icon class="size-4" />
+			<Icon class="size-4 shrink-0" aria-hidden="true" />
+			<span class="truncate">{label}</span>
 		</button>
 	{/each}
 </div>

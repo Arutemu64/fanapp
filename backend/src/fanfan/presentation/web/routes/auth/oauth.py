@@ -83,7 +83,7 @@ def build_login_redirect(error_code: str | None = None) -> RedirectResponse:
 
 
 def build_profile_redirect(error_code: str | None = None) -> RedirectResponse:
-    return _build_redirect("/profile", OAUTH_LINK_ERROR_QUERY_PARAM, error_code)
+    return _build_redirect("/profile/account", OAUTH_LINK_ERROR_QUERY_PARAM, error_code)
 
 
 def _build_redirect(

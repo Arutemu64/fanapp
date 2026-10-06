@@ -25,7 +25,7 @@ class PwaService {
 
 		// Registers the <pwa-install> custom element. Imported dynamically so the
 		// library lands in its own chunk instead of the initial bundle — the install
-		// card is a small corner of the profile page.
+		// row is a small corner of the profile page.
 		import('@khmyznikov/pwa-install').catch(() => {
 			// Chunk failed to load; the install card just stays hidden.
 		});

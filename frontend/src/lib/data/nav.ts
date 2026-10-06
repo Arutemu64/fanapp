@@ -1,7 +1,7 @@
 import type { Pathname } from '$app/types';
 import type { Component } from 'svelte';
 
-import { Calendar, Home, MapPin, ThumbsUp } from '@lucide/svelte';
+import { Calendar, CircleUser, Home, MapPin, ThumbsUp } from '@lucide/svelte';
 
 export interface PrimaryNavItem {
 	/** Russian label shown under (bottom nav) or beside (sidebar) the icon. */
@@ -11,6 +11,12 @@ export interface PrimaryNavItem {
 	outlineIcon: Component;
 	/** Filled icon shown when the route is active. */
 	solidIcon: Component;
+	/**
+	 * Other route roots reached from this tab's page, which keep the tab lit so the
+	 * bar still says where you are. Profile is the hub for feedback and the org
+	 * toolbox, which have no tab of their own.
+	 */
+	nestedRoots?: Pathname[];
 }
 
 /**
@@ -30,7 +36,17 @@ export const PRIMARY_NAV_ITEMS: PrimaryNavItem[] = [
 	// Voting sits before the map so its long "Голосование" label lands in an inner
 	// column of the bottom nav, away from rounded screen corners that clip edges.
 	{ label: 'Голосование', href: '/voting', outlineIcon: ThumbsUp, solidIcon: ThumbsUp },
-	{ label: 'Карта', href: '/map', outlineIcon: MapPin, solidIcon: MapPin }
+	{ label: 'Карта', href: '/map', outlineIcon: MapPin, solidIcon: MapPin },
+	// Last, in the thumb's natural reach on the right, as the account tab sits in most
+	// tab bars. It is also the hub for everything without a tab of its own (feedback,
+	// the org toolbox, theme, logout), which is what lets the shell drop a hamburger.
+	{
+		label: 'Профиль',
+		href: '/profile',
+		outlineIcon: CircleUser,
+		solidIcon: CircleUser,
+		nestedRoots: ['/feedback', '/tools']
+	}
 ];
 
 /**

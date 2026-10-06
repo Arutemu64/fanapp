@@ -15,8 +15,12 @@
 					'bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground',
 				ghost:
 					'hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50',
+				// Light mode text is red-700, not the semantic destructive (red-600): on the
+				// destructive/10 tint red-600 measures 4.0:1, under WCAG AA's 4.5:1 for body-size
+				// labels; red-700 is 5.4:1. Dark keeps the token, which already clears AA there.
+				// Deviates from vega defaults — keep on a shadcn-svelte update.
 				destructive:
-					'bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40',
+					'bg-destructive/10 text-red-700 dark:text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40',
 				link: 'text-primary underline-offset-4 hover:underline'
 			},
 			size: {

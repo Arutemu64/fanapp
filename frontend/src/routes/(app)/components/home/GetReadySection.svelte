@@ -52,7 +52,7 @@
 				description: 'Открывает доступ к голосованию в конкурсных номинациях.',
 				icon: Ticket,
 				actionLabel: 'Привязать',
-				href: '/profile'
+				href: '/profile/ticket'
 			});
 		}
 
@@ -72,7 +72,7 @@
 				description: 'Получай напоминания о начале выступлений и изменениях в программе.',
 				icon: Bell,
 				actionLabel: 'Настроить',
-				href: '/profile'
+				href: '/profile/notifications'
 			});
 		}
 

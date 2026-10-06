@@ -29,7 +29,7 @@ export const load: PageLoad = async ({ url, fetch }) => {
 	let enabledProviders: SocialProvider[] = [];
 	try {
 		const client = createApiClient();
-		// Timeout-bounded so a stalled connection can't block the profile page.
+		// Timeout-bounded so a stalled connection can't block the account page.
 		const { data, error, response } = await listOauthProviders({
 			client,
 			fetch,
@@ -51,7 +51,7 @@ export const load: PageLoad = async ({ url, fetch }) => {
 	}
 
 	return {
-		title: 'Профиль',
+		title: 'Аккаунт',
 		oauthLinkError: readOAuthErrorCode(url, OAUTH_LINK_ERROR_PARAM, LINK_ERROR_CODES),
 		enabledProviders
 	};
