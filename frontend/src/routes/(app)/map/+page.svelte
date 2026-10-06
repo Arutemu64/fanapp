@@ -115,7 +115,7 @@ each other on desktop. items-start keeps each frame at its own height. -->
 		<button
 			type="button"
 			onclick={() => (active = map)}
-			class="mx-auto block w-fit max-w-full overflow-hidden rounded-2xl border bg-muted p-2 shadow-sm transition-colors hover:bg-muted/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+			class="mx-auto block w-fit max-w-full overflow-hidden rounded-2xl border bg-muted p-2 shadow-sm transition-colors hover:bg-muted/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 active:bg-muted/70"
 			aria-label={`Открыть карту на весь экран: ${map.alt}`}
 		>
 			<enhanced:img
@@ -192,7 +192,7 @@ each other on desktop. items-start keeps each frame at its own height. -->
 			<button
 				type="button"
 				onclick={() => panzoom?.reset()}
-				class="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+				class="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white active:bg-black/80"
 				aria-label="Сбросить масштаб"
 			>
 				<Minimize2 class="size-6" />
@@ -202,7 +202,7 @@ each other on desktop. items-start keeps each frame at its own height. -->
 				href={active.picture.img.src}
 				download={active.filename}
 				rel="external"
-				class="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+				class="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white active:bg-black/80"
 				aria-label="Скачать карту"
 			>
 				<Download class="size-6" />
@@ -210,7 +210,7 @@ each other on desktop. items-start keeps each frame at its own height. -->
 			<button
 				type="button"
 				onclick={close}
-				class="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+				class="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white active:bg-black/80"
 				aria-label="Закрыть"
 			>
 				<X class="size-6" />

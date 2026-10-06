@@ -275,7 +275,7 @@
 							href="https://yandex.ru/maps/-/CPXxrYIR"
 							target="_blank"
 							rel="noopener noreferrer"
-							class="font-medium text-foreground underline decoration-secondary-400 decoration-2 underline-offset-2 transition-colors hover:text-secondary-600 dark:hover:text-secondary-400"
+							class="font-medium text-foreground underline decoration-secondary-400 decoration-2 underline-offset-2 transition-colors hover:text-secondary-600 active:text-secondary-600 dark:hover:text-secondary-400 dark:active:text-secondary-400"
 						>
 							Нижний Новгород, ул. Героя Смирнова, 12, ДК «ГАЗ»
 						</a>
@@ -290,7 +290,7 @@
 						target="_blank"
 						rel="noopener noreferrer external"
 						aria-label={social.label}
-						class="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-muted text-muted-foreground transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 dark:hover:border-primary-500 dark:hover:bg-primary-900/20 dark:hover:text-primary-400"
+						class="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-muted text-muted-foreground transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 active:border-primary-300 active:bg-primary-50 active:text-primary-600 dark:hover:border-primary-500 dark:hover:bg-primary-900/20 dark:hover:text-primary-400 dark:active:border-primary-500 dark:active:bg-primary-900/20 dark:active:text-primary-400"
 					>
 						<social.icon class="h-5 w-5" aria-hidden="true" />
 					</a>

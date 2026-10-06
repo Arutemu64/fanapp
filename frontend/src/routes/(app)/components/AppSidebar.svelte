@@ -41,7 +41,7 @@
 						? // primary-700 (not the semantic primary-600) so the label clears WCAG AA
 							// on the primary/10 tint in light mode; dark keeps the lit brand hue.
 							'bg-primary/10 text-primary-700 dark:text-primary'
-						: 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+						: 'text-muted-foreground hover:bg-accent hover:text-accent-foreground active:bg-accent active:text-accent-foreground'
 				]}
 				onclick={(event: MouseEvent) => {
 					// Mirror the bottom nav: re-tapping the current root eases back to the top,
@@ -57,7 +57,7 @@
 						'size-5 shrink-0 transition-colors',
 						active
 							? 'text-primary-700 dark:text-primary'
-							: 'text-muted-foreground group-hover:text-foreground'
+							: 'text-muted-foreground group-hover:text-foreground group-active:text-foreground'
 					]}
 				/>
 				<span>{label}</span>

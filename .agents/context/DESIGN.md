@@ -86,7 +86,7 @@ shadcn-svelte (vendored as source in `$lib/components/ui/`) is the component sub
 - **Sizing:** The base already meets the thumb-first 44px tap target (default/icon 44px, sm 40px, lg 48px; `xs` 24px is a dense desktop-only opt-in), so a plain `<Button>` needs no `min-h-11`. Non-negotiable on a phone-first app — set in `button.svelte`'s `tv()` base, one rung above upstream shadcn.
 - **Primary:** the default `<Button>` (`variant="default"`) — watermelon fill via the semantic `--primary`, full-width in stacked action groups.
 - **Secondary / Ghost / Destructive:** `variant="outline"` (bordered) for the secondary action in a stack; `variant="ghost"` for tertiary ("back"); `variant="destructive"` reserved for destructive confirms.
-- **Hover / Focus:** Background shift on hover; visible `focus-visible` outline. Transitions 150–250ms.
+- **Hover / Press / Focus:** Background shift on hover, and the same shift on press so a finger gets the feedback a mouse does; visible `focus-visible` outline. Transitions 150–250ms.
 
 ### Inputs / Fields
 - **Style:** shadcn `Input`, `--radius`-derived corners, light border on surface. Lay fields out with `Field.FieldGroup` + `Field.Field` (`FieldLabel`, control, `FieldError`/`FieldDescription`), not raw `div` + `Label`.

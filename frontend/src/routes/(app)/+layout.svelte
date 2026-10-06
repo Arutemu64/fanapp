@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { afterNavigate, beforeNavigate } from '$app/navigation';
+	import { afterNavigate, beforeNavigate, onNavigate } from '$app/navigation';
 	import { navigating, page } from '$app/state';
 	import SkipLink from '$lib/components/SkipLink.svelte';
 	import { TAB_ROOTS } from '$lib/data/nav';
 	import { setUnreadCountService } from '$lib/services/unreadCount.svelte';
 	import { untrack } from 'svelte';
+	import { prefersReducedMotion } from 'svelte/motion';
 	import { MediaQuery } from 'svelte/reactivity';
 
 	import type { LayoutProps, Snapshot } from './$types';
@@ -15,6 +16,7 @@
 	import AppSidebar from './components/AppSidebar.svelte';
 	import ConnectionBanner from './components/ConnectionBanner.svelte';
 	import SectionSpinner from './components/SectionSpinner.svelte';
+	import { navTransitionKind } from './navTransition';
 	import ScheduleSkeleton from './schedule/components/ScheduleSkeleton.svelte';
 	import VotingSkeleton from './voting/components/VotingSkeleton.svelte';
 
@@ -198,9 +200,66 @@
 	// Sections with a regular, predictable layout get a bespoke skeleton keyed off
 	// the destination route; everything else falls back to a centred spinner.
 	let loaderRoute = $derived(navigating.to?.route?.id);
+
+	// Native-style page transitions via the View Transitions API: a shared-axis slide
+	// down or up the hierarchy, a fade-through between tabs (keyframes in app.css,
+	// keyed off html[data-nav-transition]). Phones only — on desktop a slide reads as
+	// lag rather than place, and a running transition swallows clicks for its duration,
+	// so the md+ shell keeps its instant swap. Browsers without the API also keep it.
+	// https://svelte.dev/blog/view-transitions
+	// onNavigate runs once the destination's load has resolved, and `complete` settles
+	// only after afterNavigate and the snapshot restore above have run, so the new
+	// state is captured at its restored scroll offset.
+	let transitionId = 0;
+
+	onNavigate((navigation) => {
+		if (!document.startViewTransition) return;
+		if (isDesktop.current || prefersReducedMotion.current) return;
+		if (navigation.willUnload || !navigation.from || !navigation.to) return;
+		if (!navigation.to.route.id?.startsWith('/(app)')) return;
+
+		let kind = navTransitionKind({
+			from: navigation.from.url.pathname,
+			to: navigation.to.url.pathname,
+			fromBackHref: page.data.back?.href,
+			tabRoots: TAB_ROOTS
+		});
+		if (!kind) return;
+		// A slow load has already swapped the section for its skeleton, so the content
+		// arrives in place: sliding it in would move it away from where it is shown.
+		if (showLoader) kind = 'fade';
+
+		const id = ++transitionId;
+		const root = document.documentElement;
+		root.dataset.navTransition = kind;
+
+		return new Promise<void>((resolve) => {
+			const transition = document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+			// A transition is skipped when a newer navigation starts one of its own, and
+			// its promises then reject. They are expected, so swallow them rather than let
+			// them surface as unhandled rejections in Sentry.
+			transition.ready.catch(() => {});
+			transition.updateCallbackDone.catch(() => {});
+			transition.finished
+				.catch(() => {})
+				.finally(() => {
+					// Only the latest transition owns the attribute; an older, skipped one
+					// settling late must not strip it from the one now running.
+					if (id === transitionId) delete root.dataset.navTransition;
+				});
+		});
+	});
 </script>
 
-<div class="flex h-dvh w-full overflow-hidden bg-background">
+<!-- Side safe-area padding keeps the shell out from under the notch and rounded
+	corners of a landscape phone now that app.html opts into viewport-fit=cover; it
+	resolves to 0 on a desktop or a portrait phone. -->
+<div
+	class="flex h-dvh w-full overflow-hidden bg-background pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]"
+>
 	<SkipLink />
 
 	<AppSidebar {activeUrl} scrollToTop={scrollMainToTop} />
@@ -217,7 +276,7 @@
 			in the native Popover top layer regardless of the wrapper. See handleMainScroll. -->
 		<div
 			bind:offsetHeight={chromeHeight}
-			class="absolute inset-x-0 top-0 z-(--z-chrome) transition-[top] ease-out motion-reduce:transition-none"
+			class="absolute inset-x-0 top-0 z-(--z-chrome) transition-[top] ease-out [view-transition-name:top-chrome] motion-reduce:transition-none"
 			style:top={chromeHidden ? `-${navbarHeight}px` : '0px'}
 			style:transition-duration={`${chromeTransitionMs}ms`}
 		>
@@ -246,7 +305,7 @@
 			style:padding-top={`${chromeHeight}px`}
 			style:--sticky-top={chromeHidden ? `-${navbarHeight}px` : '0px'}
 			style:--sticky-top-duration={`${chromeTransitionMs}ms`}
-			class="relative flex-1 overflow-y-auto scroll-smooth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+			class="relative flex-1 overflow-y-auto scroll-smooth [view-transition-name:page] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
 		>
 			<!-- Bottom padding clears the fixed mobile bottom nav (h-16 + safe-area inset);
 				md:p-6 resets it on desktop where the bottom nav is hidden. -->

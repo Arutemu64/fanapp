@@ -205,7 +205,7 @@
 		<div class="text-center">
 			<button
 				type="button"
-				class="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
+				class="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:underline disabled:opacity-50"
 				onclick={() => onPasswordLogin?.()}
 				disabled={isRequesting}
 			>

@@ -21,11 +21,13 @@
 	(so its accessible name is just the nomination) and its ::after overlay covers
 	the card to keep the whole surface tappable. `relative` here anchors that
 	overlay; `has-[a:focus-visible]` lifts the keyboard ring back onto the card.
+	A touch press tints the card instead of the hover lift, which never fires on
+	touch; scoped to coarse pointers so a mouse click keeps the lift alone.
 -->
 <Card.Root
 	as="article"
 	class={[
-		'relative flex w-full max-w-none flex-col p-4 shadow-sm transition-[box-shadow,border-color,background-color] hover:shadow-md has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-ring',
+		'relative flex w-full max-w-none flex-col p-4 shadow-sm transition-[box-shadow,border-color,background-color] hover:shadow-md has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-ring pointer-coarse:active:bg-accent/50',
 		nomination.user_vote ? 'ring-2 ring-success' : ''
 	]}
 >

@@ -2,7 +2,19 @@
 <html lang="ru">
 	<head>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!-- viewport-fit=cover opts into edge-to-edge: without it iOS letterboxes the page
+			inside the safe area and Chrome 135+ on Android draws a "chin" over the gesture
+			bar, so every env(safe-area-inset-*) in the shell resolves to 0.
+			https://developer.chrome.com/docs/css-ui/edge-to-edge
+			interactive-widget=resizes-content shrinks the layout viewport (and so h-dvh) when
+			the on-screen keyboard opens, so <main>, our scroll region, ends above the keyboard
+			instead of behind it (Chrome 108+, Firefox 133+ Android; Safari ignores it).
+			AppBottomNav hides itself during text entry, since it would otherwise ride up on
+			top of the keyboard. -->
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+		/>
 		<!-- Static shell title. Pages set their own via <svelte:head> once the client
 			router mounts; this is what a no-JS reader (a crawler, view-source) sees. -->
 		<title>ФАН ФАН</title>

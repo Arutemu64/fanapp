@@ -10,6 +10,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { confirmHaptic } from '$lib/utils/haptics';
 	import { BellRing, Minus, Plus } from '@lucide/svelte';
 
 	const client = createApiClient();
@@ -53,6 +54,7 @@
 			return;
 		}
 
+		confirmHaptic();
 		toastService.add('Подписка оформлена', 'success');
 		await invalidate('app:schedule');
 		open = false;
@@ -87,7 +89,7 @@
 						setCounter(counter - 1);
 						formError = '';
 					}}
-					class="flex h-11 w-12 items-center justify-center border-r border-border bg-muted/50 text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+					class="flex h-11 w-12 items-center justify-center border-r border-border bg-muted/50 text-muted-foreground transition-colors hover:bg-muted active:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
 					disabled={counter <= 1}
 					aria-label="Уменьшить"
 				>
@@ -120,7 +122,7 @@
 						setCounter(counter + 1);
 						formError = '';
 					}}
-					class="flex h-11 w-12 items-center justify-center border-l border-border bg-muted/50 text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+					class="flex h-11 w-12 items-center justify-center border-l border-border bg-muted/50 text-muted-foreground transition-colors hover:bg-muted active:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
 					disabled={counter >= 100}
 					aria-label="Увеличить"
 				>
@@ -132,7 +134,7 @@
 		<p class="text-sm leading-relaxed text-muted-foreground">
 			Напоминание придёт в уведомления — проверь, что они включены в <a
 				href={resolve('/profile/notifications')}
-				class="font-medium text-primary hover:underline">профиле</a
+				class="font-medium text-primary hover:underline active:underline">профиле</a
 			>.
 		</p>
 

@@ -27,7 +27,7 @@
 				'flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-md px-1 text-sm transition-colors',
 				theme.mode === mode
 					? 'bg-muted font-medium text-foreground'
-					: 'text-muted-foreground hover:text-foreground'
+					: 'text-muted-foreground hover:text-foreground active:text-foreground'
 			]}
 		>
 			<Icon class="size-4 shrink-0" aria-hidden="true" />

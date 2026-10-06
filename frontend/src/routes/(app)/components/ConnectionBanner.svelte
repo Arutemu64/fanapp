@@ -155,7 +155,7 @@
 			<button
 				type="button"
 				onclick={handleRetry}
-				class="inline-flex min-h-9 shrink-0 items-center rounded-lg bg-destructive px-2.5 text-xs font-medium text-white hover:bg-destructive/90 focus-visible:ring-2 focus-visible:ring-destructive/40 focus-visible:ring-offset-2 focus-visible:outline-none"
+				class="inline-flex min-h-9 shrink-0 items-center rounded-lg bg-destructive px-2.5 text-xs font-medium text-white hover:bg-destructive/90 focus-visible:ring-2 focus-visible:ring-destructive/40 focus-visible:ring-offset-2 focus-visible:outline-none active:bg-destructive/90"
 			>
 				Обновить
 			</button>

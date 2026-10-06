@@ -12,10 +12,16 @@
 </script>
 
 <!-- Frosted-glass surface (translucent bg + backdrop blur) matching AppNavbar: content
-     scrolls under it rather than stopping at an opaque band. -->
+     scrolls under it rather than stopping at an opaque band. The height adds the bottom
+     safe-area inset to the 4rem row, so the bar runs under the home indicator / gesture
+     bar while the tabs keep their full height above it.
+     preload-code="viewport" fetches every tab's code as soon as the bar renders, so a
+     first tap on a tab never waits on a chunk; data still waits for the tap
+     (preload-data="hover" on <body> fires on touchstart). -->
 <nav
 	aria-label="Разделы"
-	class="fixed inset-x-0 bottom-0 z-(--z-overlay) grid h-16 grid-cols-5 border-t border-border/50 bg-background/80 pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] backdrop-blur-md transition-colors duration-300 md:hidden"
+	data-sveltekit-preload-code="viewport"
+	class="fixed inset-x-0 bottom-0 z-(--z-overlay) grid h-[calc(4rem+env(safe-area-inset-bottom))] grid-cols-5 border-t border-border/50 bg-background/80 pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] backdrop-blur-md transition-colors duration-300 select-none [-webkit-touch-callout:none] [view-transition-name:bottom-nav] md:hidden"
 >
 	{#each PRIMARY_NAV_ITEMS as item (item.href)}
 		{@const { label, href, outlineIcon: Icon } = item}
@@ -40,15 +46,17 @@
 		>
 			<Icon
 				class={[
-					'mb-1 size-5 transition-colors',
-					active ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
+					'mb-1 size-5 transition-[color,scale] group-active:scale-90',
+					active
+						? 'text-primary'
+						: 'text-muted-foreground group-hover:text-foreground group-active:text-foreground'
 				]}
 			/>
 			<span
 				class={[
 					active
 						? 'font-semibold text-primary'
-						: 'text-muted-foreground group-hover:text-foreground'
+						: 'text-muted-foreground group-hover:text-foreground group-active:text-foreground'
 				]}
 			>
 				{label}
@@ -56,3 +64,38 @@
 		</a>
 	{/each}
 </nav>
+
+<style>
+	/*
+	 * Hide the bar while the on-screen keyboard is up. app.html's
+	 * interactive-widget=resizes-content shrinks the viewport to the space above the
+	 * keyboard, and a bottom-anchored bar would ride up with it and cover the field
+	 * being typed into — native tab bars sit behind the keyboard instead. A focused
+	 * text control is the closest CSS has to "keyboard open"; (pointer: coarse) keeps a
+	 * tablet with a mouse on its normal layout. Choice controls (checkbox, radio, …)
+	 * raise no keyboard, so they are excluded.
+	 */
+	@media (pointer: coarse) {
+		:global(
+				body:has(
+					:is(
+						input:not(
+							[type='checkbox'],
+							[type='radio'],
+							[type='range'],
+							[type='button'],
+							[type='submit'],
+							[type='reset'],
+							[type='file'],
+							[type='color']
+						),
+						textarea,
+						[contenteditable='true']
+					):focus
+				)
+			)
+			nav {
+			display: none;
+		}
+	}
+</style>

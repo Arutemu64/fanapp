@@ -214,7 +214,7 @@
 				{#if searchQuery}
 					<button
 						type="button"
-						class="absolute right-2 text-muted-foreground hover:text-foreground"
+						class="absolute right-2 text-muted-foreground hover:text-foreground active:text-foreground"
 						onclick={() => (searchQuery = '')}
 						aria-label="Очистить поиск"
 					>
@@ -321,7 +321,7 @@
 				{#if visibleCurrentEvent}
 					<Button
 						size="sm"
-						class="pointer-events-auto size-12 rounded-full bg-success px-0 text-success-foreground shadow-lg hover:bg-success/90 lg:w-32 lg:rounded-full lg:px-3"
+						class="pointer-events-auto size-12 rounded-full bg-success px-0 text-success-foreground shadow-lg hover:bg-success/90 active:bg-success/90 lg:w-32 lg:rounded-full lg:px-3"
 						onclick={scrollToCurrentEvent}
 						aria-label="Перейти к текущему выступлению"
 					>

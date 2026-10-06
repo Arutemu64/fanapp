@@ -33,9 +33,9 @@
 	const FEATURED_ICON = 'bg-primary/15 text-primary';
 
 	const COMPACT =
-		'group flex h-full flex-col rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-colors hover:border-primary-300 hover:bg-primary-50/40 dark:hover:border-primary-500 dark:hover:bg-primary-900/10';
+		'group flex h-full flex-col rounded-2xl border border-border bg-card p-4 text-left shadow-sm transition-colors hover:border-primary-300 active:border-primary-300 hover:bg-primary-50/40 active:bg-primary-50/40 dark:hover:border-primary-500 dark:active:border-primary-500 dark:hover:bg-primary-900/10 dark:active:bg-primary-900/10';
 	const FEATURED =
-		'group flex items-center gap-4 rounded-2xl border border-primary-200 bg-primary-50 p-4 text-left shadow-sm transition-colors hover:bg-primary-100/70 sm:p-5 dark:border-primary-800/50 dark:bg-primary-900/20 dark:hover:bg-primary-900/30';
+		'group flex items-center gap-4 rounded-2xl border border-primary-200 bg-primary-50 p-4 text-left shadow-sm transition-colors hover:bg-primary-100/70 active:bg-primary-100/70 sm:p-5 dark:border-primary-800/50 dark:bg-primary-900/20 dark:hover:bg-primary-900/30 dark:active:bg-primary-900/30';
 
 	let containerClass = $derived(featured ? FEATURED : COMPACT);
 </script>

@@ -78,7 +78,7 @@
 		{#if searchValue}
 			<button
 				type="button"
-				class="absolute right-2 text-muted-foreground hover:text-foreground"
+				class="absolute right-2 text-muted-foreground hover:text-foreground active:text-foreground"
 				onclick={() => {
 					searchValue = '';
 					onSearchInput('');
@@ -105,13 +105,13 @@
 				</thead>
 				<tbody class="divide-y divide-border">
 					{#each data.users as listedUser (listedUser.id)}
-						<tr class="transition-colors hover:bg-muted/50">
+						<tr class="transition-colors hover:bg-muted/50 active:bg-muted/50">
 							<td class="px-4 py-3 font-medium">
 								<!-- The username is the link to the detail page: a real anchor
 								     keeps the row reachable and openable by keyboard. -->
 								<a
 									href={resolve(`/tools/users/${listedUser.id}`)}
-									class="text-primary hover:underline"
+									class="text-primary hover:underline active:underline"
 								>
 									{listedUser.username}
 								</a>
