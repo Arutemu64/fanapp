@@ -57,8 +57,10 @@
 </svelte:head>
 
 <!-- Capped like a settings column: on a desktop the rows would otherwise stretch the
-     full content width and push each value and chevron far from its label. -->
-<div class="flex max-w-2xl flex-col gap-4 sm:gap-5">
+     full content width and push each value and chevron far from its label. Centred,
+     because the shell centres its content column and a narrower block hugging that
+     column's left edge reads as lopsided. -->
+<div class="mx-auto flex max-w-2xl flex-col gap-4 sm:gap-5">
 	{#if user}
 		<MenuGroup>
 			<Item.Root class="rounded-none">
@@ -143,7 +145,7 @@
 	{/if}
 </div>
 
-<footer class="mt-6 max-w-2xl pb-4 text-center text-xs text-muted-foreground">
+<footer class="mx-auto mt-6 max-w-2xl pb-4 text-center text-xs text-muted-foreground">
 	<p class="flex items-center justify-center gap-1">
 		Работает на
 		<IconSvelte class="inline size-3.5 text-[#FF3E00]" />

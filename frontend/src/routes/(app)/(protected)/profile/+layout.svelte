@@ -16,12 +16,16 @@
 
 <!-- The /profile hub itself lives outside (protected) so guests can open it; only
      these settings pages behind it need an account. -->
-<BackLink href="/profile" label="Назад в профиль" />
+<!-- Same centred column as the /profile hub, so the back link and the cards stay
+     where the hub's rows were. -->
+<div class="mx-auto max-w-2xl">
+	<BackLink href="/profile" label="Назад в профиль" />
 
-<div class="flex max-w-2xl flex-col gap-4 sm:gap-5">
-	{#if showStaleNotice}
-		<StaleDataNotice message={staleNoticeMessage} />
-	{/if}
+	<div class="flex flex-col gap-4 sm:gap-5">
+		{#if showStaleNotice}
+			<StaleDataNotice message={staleNoticeMessage} />
+		{/if}
 
-	{@render children()}
+		{@render children()}
+	</div>
 </div>
