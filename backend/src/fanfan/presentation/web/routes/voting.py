@@ -127,7 +127,8 @@ async def add_vote(
     "/votes/{vote_id}",
     status_code=204,
     summary="Cancel a vote",
-    description="Removes a previously cast vote by its ID.",
+    description="Removes a previously cast vote by its ID. "
+    "Allowed only while voting is open, like casting one.",
     dependencies=[session_security],
     responses={
         **AUTH_RESPONSES,

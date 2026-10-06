@@ -2452,7 +2452,7 @@
           "Voting"
         ],
         "summary": "Cancel a vote",
-        "description": "Removes a previously cast vote by its ID.",
+        "description": "Removes a previously cast vote by its ID. Allowed only while voting is open, like casting one.",
         "operationId": "cancel_vote",
         "security": [
           {

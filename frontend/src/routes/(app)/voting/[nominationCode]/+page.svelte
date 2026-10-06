@@ -3,22 +3,17 @@
 
 	import { invalidate } from '$app/navigation';
 	import EmptyState from '$lib/components/EmptyState.svelte';
+	import OfflineUnavailableState from '$lib/components/OfflineUnavailableState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { createSearchIndex } from '$lib/utils/search';
-	import {
-		AlertCircle,
-		CheckCircle2,
-		ExternalLink,
-		Search as SearchIcon,
-		Users,
-		X
-	} from '@lucide/svelte';
+	import { ExternalLink, Search as SearchIcon, Users, X } from '@lucide/svelte';
 
 	import type { PageProps } from './$types';
 
-	import ParticipantCard from '../components/ParticipantCard.svelte';
+	import ParticipantRow from '../components/ParticipantRow.svelte';
+	import UserVoteNotice from '../components/UserVoteNotice.svelte';
 	import VotingStatusAlert from '../components/VotingStatusAlert.svelte';
 
 	type VotingParticipant = GetVotingNominationOutput['participants'][number];
@@ -46,7 +41,10 @@
 			: `Показано ${filtered.length} из ${participants.length}`
 	);
 
-	let hasVoted = $derived(participants.some((p: VotingParticipant) => p.user_vote !== null));
+	let votedParticipant = $derived(
+		participants.find((p: VotingParticipant) => p.user_vote !== null)
+	);
+	let hasVoted = $derived(votedParticipant !== undefined);
 
 	async function handleVoted() {
 		await invalidate('app:voting:nomination');
@@ -60,8 +58,7 @@
 {#if data.offlineUnavailable || !nomination}
 	<!-- Voting is uncached and online-only, so there is no saved copy to show —
 	     say so plainly instead of crashing on a missing nomination. -->
-	<EmptyState
-		icon={AlertCircle}
+	<OfflineUnavailableState
 		title="Голосование доступно только онлайн"
 		message="Подключись к интернету, чтобы голосовать за участников."
 	/>
@@ -74,16 +71,11 @@
 				<!-- Navbar shows the generic "Голосование"; the nomination name is the page's
 				own heading (h2) so long names stay readable instead of clipping in the navbar. -->
 				<h2 class="text-xl font-bold text-foreground">{nomination?.title}</h2>
-				<p class="mt-1 text-sm text-muted-foreground sm:text-base">
-					{#if hasVoted}
-						<span class="flex items-center gap-1 text-success">
-							<CheckCircle2 class="size-4" />
-							Голос в этой номинации учтён
-						</span>
-					{:else if canVote}
+				{#if canVote && !hasVoted}
+					<p class="mt-1 text-sm text-muted-foreground sm:text-base">
 						Выбери участника, чтобы отдать голос
-					{/if}
-				</p>
+					</p>
+				{/if}
 			</div>
 			{#if nomination?.works_url}
 				<!-- External gallery of the nominated works; opens in a new tab. -->
@@ -103,64 +95,76 @@
 
 	<VotingStatusAlert votingState={votingStatus} class="mb-4" />
 
-	<div class="relative mb-2 flex items-center">
-		<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
-		<Input
-			bind:value={searchQuery}
-			name="participant_search"
-			aria-label="Поиск участников в номинации"
-			placeholder="Поиск по имени или номеру…"
-			autocomplete="off"
-			spellcheck={false}
-			class="pr-8 pl-9"
-		/>
-		{#if searchQuery}
-			<button
-				type="button"
-				class="absolute right-2 text-muted-foreground hover:text-foreground"
-				onclick={() => (searchQuery = '')}
-				aria-label="Очистить поиск"
-			>
-				<X class="size-4" />
-			</button>
+	<!-- Above the search on purpose: the voted participant can be filtered out of
+	     the list, and this is where the vote is taken back. -->
+	{#if votedParticipant?.user_vote}
+		<div class="mb-4">
+			<UserVoteNotice
+				participant={votedParticipant}
+				vote={votedParticipant.user_vote}
+				{canVote}
+				onCancelled={handleVoted}
+			/>
+		</div>
+	{/if}
+
+	<!-- Same compact filter panel as the schedule, so the two lists read alike. -->
+	<div class="mb-4 rounded-2xl border border-border bg-card p-3">
+		<div class="relative flex items-center">
+			<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+			<Input
+				bind:value={searchQuery}
+				name="participant_search"
+				aria-label="Поиск участников в номинации"
+				placeholder="Поиск по имени или номеру…"
+				autocomplete="off"
+				spellcheck={false}
+				class="pr-8 pl-9"
+			/>
+			{#if searchQuery}
+				<button
+					type="button"
+					class="absolute right-2 text-muted-foreground hover:text-foreground"
+					onclick={() => (searchQuery = '')}
+					aria-label="Очистить поиск"
+				>
+					<X class="size-4" />
+				</button>
+			{/if}
+		</div>
+
+		<!-- Announce filter result changes to screen readers, which otherwise get no
+		     feedback that the list shrank or grew. Matches the schedule page. Skipped
+		     for an empty nomination: there is nothing to filter, and the empty state
+		     below already says so. -->
+		{#if participants.length > 0}
+			<p class="mt-3 text-xs text-muted-foreground" aria-live="polite" role="status">
+				{resultsSummary}
+			</p>
 		{/if}
 	</div>
 
-	<!-- Announce filter result changes to screen readers, which otherwise get no
-     feedback that the grid shrank or grew. Matches the schedule page. Skipped
-     for an empty nomination: there is nothing to filter, and the empty state
-     below already says so. -->
-	{#if participants.length > 0}
-		<p class="mb-4 text-xs text-muted-foreground" aria-live="polite" role="status">
-			{resultsSummary}
-		</p>
+	{#if filtered.length > 0}
+		<div class="overflow-clip rounded-xl border border-border bg-card">
+			<ul class="divide-y divide-border">
+				{#each filtered as participant (participant.id)}
+					<ParticipantRow {participant} {hasVoted} {canVote} onVoted={handleVoted} />
+				{/each}
+			</ul>
+		</div>
+	{:else if hasSearchQuery}
+		<!-- Two distinct states: a search that matched nothing (recoverable —
+		     offer the reset), and a nomination with no participants at all,
+		     where clearing the search would do nothing. -->
+		<EmptyState icon={Users} title="Ничего не нашлось" message="Попробуй изменить запрос">
+			<button
+				onclick={() => (searchQuery = '')}
+				class="mt-3 text-sm font-medium text-primary hover:underline"
+			>
+				Очистить поиск
+			</button>
+		</EmptyState>
+	{:else}
+		<EmptyState icon={Users} title="Участников пока нет" message="Появятся ближе к фестивалю" />
 	{/if}
-
-	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
-		{#each filtered as participant (participant.id)}
-			<ParticipantCard {participant} {hasVoted} {canVote} onVoted={handleVoted} />
-		{:else}
-			<div class="col-span-full">
-				<!-- Two distinct states: a search that matched nothing (recoverable —
-			     offer the reset), and a nomination with no participants at all,
-			     where clearing the search would do nothing. -->
-				{#if hasSearchQuery}
-					<EmptyState icon={Users} title="Ничего не нашлось" message="Попробуй изменить запрос">
-						<button
-							onclick={() => (searchQuery = '')}
-							class="mt-3 text-sm font-medium text-primary hover:underline"
-						>
-							Очистить поиск
-						</button>
-					</EmptyState>
-				{:else}
-					<EmptyState
-						icon={Users}
-						title="Участников пока нет"
-						message="Появятся ближе к фестивалю"
-					/>
-				{/if}
-			</div>
-		{/each}
-	</div>
 {/if}

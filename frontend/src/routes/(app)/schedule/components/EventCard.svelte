@@ -5,6 +5,7 @@
 	import { invalidate } from '$app/navigation';
 	import { createApiClient } from '$lib/api';
 	import { setEventAsCurrent, uncheckCurrentEvent, updateScheduleEvent } from '$lib/api/generated';
+	import NumberBadge from '$lib/components/NumberBadge.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { formatDuration, formatUntil, pluralize } from '$lib/utils/formatters';
@@ -245,18 +246,7 @@
 	{#if variant === 'default'}
 		<!-- Keep the public number visible so the list stays easy to scan on mobile. -->
 		{#if eventNumber !== null}
-			<div
-				class={[
-					'flex w-12 shrink-0 flex-col items-center rounded-lg border px-1.5 py-1.5 text-center',
-					event.is_current ? 'border-success/40 bg-card' : 'border-border bg-muted'
-				]}
-			>
-				<!-- Signature element: scrolls past hundreds of times, so it carries the brand. -->
-				<span class="text-xs font-bold tracking-widest text-primary uppercase"> № </span>
-				<span class="font-display text-base leading-none font-bold text-foreground tabular-nums"
-					>{eventNumber}</span
-				>
-			</div>
+			<NumberBadge number={eventNumber} highlighted={event.is_current} />
 		{:else}
 			<!-- Numberless rows (breaks) keep the badge's width as empty space: dropping
 				it would pull their title out of the column every other row shares, and
