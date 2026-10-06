@@ -192,7 +192,9 @@
 		</Dialog.Header>
 
 		{#if step === 'email'}
-			<form onsubmit={handleSubmit} class="flex flex-col gap-4">
+			<!-- novalidate: the browser's own type="email" bubble would pre-empt the
+			     field error handleSubmit shows. -->
+			<form onsubmit={handleSubmit} novalidate class="flex flex-col gap-4">
 				{#if formError}
 					<Alert.Root variant="destructive">
 						<Alert.Description>{formError}</Alert.Description>

@@ -83,15 +83,13 @@
 					Введи номер под штрихкодом бумажного или электронного билета. Если билета нет — попроси
 					специальный код у оргкомитета или волонтёра.
 				</Field.FieldDescription>
-				<!-- Org-issued codes read like FAN-7K4Q9M, so the keyboard starts in capitals;
-				     the backend folds case anyway. -->
 				<Input
 					id="ticket-barcode"
 					name="ticket_barcode"
 					bind:value={barcode}
 					placeholder="Например, 1234567890"
 					autocomplete="off"
-					autocapitalize="characters"
+					autocapitalize="off"
 					enterkeyhint="go"
 					spellcheck={false}
 					aria-invalid={submitError ? true : undefined}

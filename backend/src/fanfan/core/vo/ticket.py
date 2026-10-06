@@ -39,8 +39,9 @@ def normalize_ticket_barcode(raw: str) -> str:
 
     Org-issued ``FAN-`` codes are Crockford Base32, which is case-insensitive
     and forgiving of I/L/O by design — a phone keyboard types them in lowercase,
-    and the lookup is an exact match. Imported vendor barcodes keep their exact
-    spelling: their format is the vendor's, not ours to fold.
+    and the lookup is an exact match. Other barcodes keep their exact spelling:
+    an imported vendor format is not ours to fold. A vendor code could still
+    start with ``FAN-``, so look up the exact spelling before this folded form.
     """
     barcode = raw.strip()
     if not barcode.upper().startswith(_BARCODE_PREFIX):

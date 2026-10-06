@@ -77,7 +77,7 @@ test.describe('profile settings on a phone', () => {
 		api.use({
 			...loggedInAs(),
 			'POST /me/ticket': (route) => {
-				sentBarcode = route.request().postDataJSON().barcode;
+				sentBarcode = (route.request().postDataJSON() as { barcode: string }).barcode;
 				return json({ code: 'TICKET_NOT_FOUND', details: {} }, 404);
 			}
 		});
@@ -94,15 +94,12 @@ test.describe('profile settings on a phone', () => {
 		expect(api.unmatched).toEqual([]);
 	});
 
-	test('toggles a setting by tapping its title, without a success toast', async ({
-		page,
-		api
-	}) => {
+	test('toggles a setting by tapping its title, without a success toast', async ({ page, api }) => {
 		let patched: unknown;
 		api.use({
 			...loggedInAs(),
 			'PATCH /me/settings': (route) => {
-				patched = route.request().postDataJSON();
+				patched = route.request().postDataJSON() as unknown;
 				return json({});
 			}
 		});
