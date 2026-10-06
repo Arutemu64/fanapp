@@ -40,7 +40,8 @@
 
 	// Push on this device, the channel a phone most needs and the first switch on
 	// the notifications page, so the hub row reads like a settings screen's
-	// "current value" line. Unknown (no Push API, an error) shows nothing.
+	// "current value" line. Unknown (a failed check, or before it answers) shows
+	// nothing.
 	let devicePush = $state<DevicePushState>('unknown');
 	let notificationsStatus = $derived.by(() => {
 		if (devicePush === 'on') return 'Включены';

@@ -12,11 +12,15 @@ export type DevicePushState = 'on' | 'off' | 'unknown';
  * registration there can be no subscription, so `undefined` already means "off".
  */
 export async function getDevicePushState(): Promise<DevicePushState> {
+	// No Push API means push is off here, not unknown: iOS Safari only exposes it
+	// to a Home Screen app (https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/),
+	// and in-app browsers lack it outright. Either way nothing reaches this device,
+	// and the notifications page explains how to change that.
 	if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-		return 'unknown';
+		return 'off';
 	}
 	if (typeof Notification === 'undefined') {
-		return 'unknown';
+		return 'off';
 	}
 	if (Notification.permission !== 'granted') {
 		return 'off';
