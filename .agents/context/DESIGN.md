@@ -86,6 +86,7 @@ shadcn-svelte (vendored as source in `$lib/components/ui/`) is the component sub
 - **Sizing:** The base already meets the thumb-first 44px tap target (default/icon 44px, sm 40px, lg 48px; `xs` 24px is a dense desktop-only opt-in), so a plain `<Button>` needs no `min-h-11`. Non-negotiable on a phone-first app — set in `button.svelte`'s `tv()` base, one rung above upstream shadcn.
 - **Primary:** the default `<Button>` (`variant="default"`) — watermelon fill via the semantic `--primary`, full-width in stacked action groups.
 - **Secondary / Ghost / Destructive:** `variant="outline"` (bordered) for the secondary action in a stack; `variant="ghost"` for tertiary ("back"); `variant="destructive"` reserved for destructive confirms.
+- **Tonal (repeated actions):** `variant="tonal"` — a brand-tinted fill for an action that repeats down a list (the per-participant «Голосовать»). A column of solid fills would bury the page's one primary action, and a labelled button beats an icon here: no icon reads as "vote" on its own ([NN/g, Icon Usability](https://www.nngroup.com/articles/icon-usability/)).
 - **Hover / Press / Focus:** Background shift on hover, and the same shift on press so a finger gets the feedback a mouse does; visible `focus-visible` outline. Transitions 150–250ms.
 
 ### Inputs / Fields

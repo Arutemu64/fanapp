@@ -3,7 +3,6 @@
 
 	import { invalidate } from '$app/navigation';
 	import EmptyState from '$lib/components/EmptyState.svelte';
-	import MenuGroup from '$lib/components/MenuGroup.svelte';
 	import OfflineUnavailableState from '$lib/components/OfflineUnavailableState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { Button } from '$lib/components/ui/button';
@@ -109,47 +108,50 @@
 		</div>
 	{/if}
 
-	<div class="relative mb-2 flex items-center">
-		<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
-		<Input
-			bind:value={searchQuery}
-			name="participant_search"
-			aria-label="Поиск участников в номинации"
-			placeholder="Поиск по имени или номеру…"
-			autocomplete="off"
-			spellcheck={false}
-			class="pr-8 pl-9"
-		/>
-		{#if searchQuery}
-			<button
-				type="button"
-				class="absolute right-2 text-muted-foreground hover:text-foreground"
-				onclick={() => (searchQuery = '')}
-				aria-label="Очистить поиск"
-			>
-				<X class="size-4" />
-			</button>
+	<!-- Same compact filter panel as the schedule, so the two lists read alike. -->
+	<div class="mb-4 rounded-2xl border border-border bg-card p-3">
+		<div class="relative flex items-center">
+			<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+			<Input
+				bind:value={searchQuery}
+				name="participant_search"
+				aria-label="Поиск участников в номинации"
+				placeholder="Поиск по имени или номеру…"
+				autocomplete="off"
+				spellcheck={false}
+				class="pr-8 pl-9"
+			/>
+			{#if searchQuery}
+				<button
+					type="button"
+					class="absolute right-2 text-muted-foreground hover:text-foreground"
+					onclick={() => (searchQuery = '')}
+					aria-label="Очистить поиск"
+				>
+					<X class="size-4" />
+				</button>
+			{/if}
+		</div>
+
+		<!-- Announce filter result changes to screen readers, which otherwise get no
+		     feedback that the list shrank or grew. Matches the schedule page. Skipped
+		     for an empty nomination: there is nothing to filter, and the empty state
+		     below already says so. -->
+		{#if participants.length > 0}
+			<p class="mt-3 text-xs text-muted-foreground" aria-live="polite" role="status">
+				{resultsSummary}
+			</p>
 		{/if}
 	</div>
 
-	<!-- Announce filter result changes to screen readers, which otherwise get no
-     feedback that the list shrank or grew. Matches the schedule page. Skipped
-     for an empty nomination: there is nothing to filter, and the empty state
-     below already says so. -->
-	{#if participants.length > 0}
-		<p class="mb-4 text-xs text-muted-foreground" aria-live="polite" role="status">
-			{resultsSummary}
-		</p>
-	{/if}
-
 	{#if filtered.length > 0}
-		<MenuGroup>
+		<div class="overflow-clip rounded-xl border border-border bg-card">
 			<ul class="divide-y divide-border">
 				{#each filtered as participant (participant.id)}
 					<ParticipantRow {participant} {hasVoted} {canVote} onVoted={handleVoted} />
 				{/each}
 			</ul>
-		</MenuGroup>
+		</div>
 	{:else if hasSearchQuery}
 		<!-- Two distinct states: a search that matched nothing (recoverable —
 		     offer the reset), and a nomination with no participants at all,

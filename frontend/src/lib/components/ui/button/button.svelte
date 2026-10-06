@@ -21,6 +21,13 @@
 				// Deviates from vega defaults — keep on a shadcn-svelte update.
 				destructive:
 					'bg-destructive/10 text-red-700 dark:text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40',
+				// Brand-tinted, for an action repeated down a list (a vote per row) where a
+				// column of solid fills would drown the page's one primary action. Light text
+				// is primary-700, not the token: primary-600 on the /10 tint measures 4.4:1,
+				// under AA's 4.5:1; primary-700 is 5.8:1 (4.9:1 on hover). Dark keeps the
+				// token on a /15 tint (5.1:1, 4.7:1 on hover). Project addition, not shadcn.
+				tonal:
+					'bg-primary/10 text-primary-700 hover:bg-primary/20 dark:bg-primary/15 dark:text-primary dark:hover:bg-primary/20',
 				link: 'text-primary underline-offset-4 hover:underline'
 			},
 			size: {
