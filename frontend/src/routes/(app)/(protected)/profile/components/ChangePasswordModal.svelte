@@ -28,6 +28,7 @@
 	let newPassword = $state('');
 	let isLoading = $state(false);
 	let formError = $state('');
+	let newPasswordError = $state('');
 
 	// Password rules mirror the backend PASSWORD_FIELD (10-128 chars, no complexity rule).
 	const MIN_PASSWORD_LENGTH = 10;
@@ -47,6 +48,7 @@
 			oldPassword = '';
 			newPassword = '';
 			formError = '';
+			newPasswordError = '';
 		}
 	});
 
@@ -54,7 +56,7 @@
 		e.preventDefault();
 
 		if (!isValid) {
-			formError = `Новый пароль должен быть от ${MIN_PASSWORD_LENGTH} до ${MAX_PASSWORD_LENGTH} символов`;
+			newPasswordError = `Новый пароль должен быть от ${MIN_PASSWORD_LENGTH} до ${MAX_PASSWORD_LENGTH} символов`;
 			return;
 		}
 
@@ -116,7 +118,7 @@
 						/>
 					</Field.Field>
 				{/if}
-				<Field.Field>
+				<Field.Field data-invalid={newPasswordError ? true : undefined}>
 					<Field.FieldLabel for="new_password">Новый пароль</Field.FieldLabel>
 					<PasswordInput
 						id="new_password"
@@ -124,9 +126,16 @@
 						autocomplete="new-password"
 						revealLabel="новый пароль"
 						maxlength={MAX_PASSWORD_LENGTH}
+						color={newPasswordError ? 'red' : undefined}
 						bind:value={newPassword}
-						oninput={() => (formError = '')}
+						oninput={() => {
+							formError = '';
+							newPasswordError = '';
+						}}
 					/>
+					{#if newPasswordError}
+						<Field.FieldError>{newPasswordError}</Field.FieldError>
+					{/if}
 
 					<!-- Live password requirements; reflects the backend PASSWORD_FIELD rules. -->
 					<ul class="mt-1 flex flex-col gap-1">
@@ -146,7 +155,7 @@
 				</Field.Field>
 			</Field.FieldGroup>
 
-			<Button type="submit" class="w-full" disabled={isLoading || !isValid}>
+			<Button type="submit" class="w-full" disabled={isLoading}>
 				{#if isLoading}
 					<Spinner data-icon="inline-start" />
 					Сохранение…

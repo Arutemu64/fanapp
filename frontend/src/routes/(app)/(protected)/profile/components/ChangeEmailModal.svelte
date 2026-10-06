@@ -248,11 +248,7 @@
 					</Field.Field>
 				</Field.FieldGroup>
 
-				<Button
-					type="submit"
-					class="w-full"
-					disabled={isLoading || !isValidEmail(normalizeEmail(newEmail))}
-				>
+				<Button type="submit" class="w-full" disabled={isLoading}>
 					{#if isLoading}
 						<Spinner data-icon="inline-start" />
 						Отправка кода…
@@ -316,7 +312,7 @@
 				<div class="flex flex-col gap-2 pt-2">
 					<Button
 						class="w-full"
-						disabled={isVerifying || isRequestingVerification || verificationCode.length < 6}
+						disabled={isVerifying || isRequestingVerification}
 						onclick={submitVerificationCode}
 					>
 						{#if isVerifying}

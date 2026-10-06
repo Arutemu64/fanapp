@@ -7,10 +7,13 @@
 	let { children }: LayoutProps = $props();
 
 	// Every profile sub-page renders from the layout-cached user, so the only "out of
-	// date" state is being offline.
+	// date" state is being offline. The notice also carries why every write control
+	// below is disabled: offlineWriteGate's `title` hint never shows on a touch
+	// screen (https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/title).
 	const offline = getOfflineService();
 	let showStaleNotice = $derived(!offline.isOnline);
-	const staleNoticeMessage = 'Нет связи. Показан сохранённый профиль — обновится при подключении.';
+	const staleNoticeMessage =
+		'Нет связи. Показан сохранённый профиль — изменения доступны только онлайн.';
 </script>
 
 <!-- The /profile hub itself lives outside (protected) so guests can open it; only
