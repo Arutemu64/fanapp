@@ -61,7 +61,7 @@
 	}
 </script>
 
-<!-- No border/radius of its own: the parent SecurityCard groups this row with the
+<!-- No border/radius of its own: the parent SignInMethods groups this row with the
 	others in a single bordered container and supplies the divider between them. -->
 <div class="p-3 sm:p-4">
 	<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

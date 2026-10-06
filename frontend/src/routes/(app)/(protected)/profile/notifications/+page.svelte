@@ -3,7 +3,7 @@
 
 	import type { PageProps } from './$types';
 
-	import PushNotificationsCard from '../components/PushNotificationsCard.svelte';
+	import PushNotificationsSettings from '../components/PushNotificationsSettings.svelte';
 
 	let { data }: PageProps = $props();
 	let user = $derived(data.user!);
@@ -13,4 +13,4 @@
 	<title>Настройки уведомлений · ФАН ФАН</title>
 </svelte:head>
 
-<PushNotificationsCard {user} onSettingsUpdate={() => invalidate('app:current-user')} />
+<PushNotificationsSettings {user} onSettingsUpdate={() => invalidate('app:current-user')} />

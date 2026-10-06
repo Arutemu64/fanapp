@@ -5,11 +5,12 @@
 	import { listFeedback } from '$lib/api/generated';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
+	import MenuGroup from '$lib/components/MenuGroup.svelte';
 	import { FEEDBACK_PAGE_REQUEST_LIMIT, FEEDBACK_PAGE_SIZE } from '$lib/constants/feedback';
 	import { PaginatedFeed } from '$lib/services/feed.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 
-	import FeedbackCard from './FeedbackCard.svelte';
+	import FeedbackItem from './FeedbackItem.svelte';
 
 	interface Props {
 		initialFeedback: Array<FeedbackDto>;
@@ -40,11 +41,13 @@
 {#if feed.items.length === 0}
 	<EmptyState message="Отзывов пока нет" />
 {:else}
-	<div class="flex flex-col gap-3">
+	<!-- One divided list, not a card per item: the entries are all the same shape,
+	     so a list scans faster and fits more on a phone screen. -->
+	<MenuGroup class="divide-y divide-border">
 		{#each feed.items as item (item.id)}
-			<FeedbackCard feedback={item} />
+			<FeedbackItem feedback={item} />
 		{/each}
-	</div>
+	</MenuGroup>
 
 	{#if feed.hasMore}
 		<LoadMoreButton loading={feed.isLoadingMore} onclick={feed.loadMore} />

@@ -24,8 +24,10 @@
 
 <BackLink href="/tools" label="Назад к инструментам" />
 
-<SectionIntro description="Отзывы участников о приложении. Свежие — сверху." />
+<div class="mx-auto w-full max-w-2xl">
+	<SectionIntro description="Отзывы участников о приложении. Свежие — сверху." />
 
-{#key feedbackKey}
-	<FeedbackFeed initialFeedback={data.feedback} initialHasMore={data.hasMore} />
-{/key}
+	{#key feedbackKey}
+		<FeedbackFeed initialFeedback={data.feedback} initialHasMore={data.hasMore} />
+	{/key}
+</div>

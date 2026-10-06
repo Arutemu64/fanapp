@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { PUBLIC_APP_VERSION } from '$env/static/public';
+	import MenuGroup from '$lib/components/MenuGroup.svelte';
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { Button } from '$lib/components/ui/button';
@@ -27,7 +28,6 @@
 	import type { PageProps } from './$types';
 
 	import LogoutButton from './components/LogoutButton.svelte';
-	import MenuGroup from './components/MenuGroup.svelte';
 	import MenuLink from './components/MenuLink.svelte';
 	import ThemeToggle from './components/ThemeToggle.svelte';
 

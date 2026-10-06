@@ -8,7 +8,6 @@
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Field from '$lib/components/ui/field';
 	import { Spinner } from '$lib/components/ui/spinner';
@@ -129,11 +128,11 @@
 
 <BackLink href="/tools" label="Назад к инструментам" />
 
-<SectionIntro
-	description="Создавай массовые рассылки уведомлений для выбранных категорий участников фестиваля."
-/>
+<div class="mx-auto w-full max-w-2xl">
+	<SectionIntro
+		description="Создавай массовые рассылки уведомлений для выбранных категорий участников фестиваля."
+	/>
 
-<Card.Root class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
 	<form class="flex flex-col gap-6" onsubmit={handleSubmit}>
 		<Field.Field data-invalid={bodyError ? true : undefined}>
 			<Field.FieldLabel for="broadcast-body">Текст уведомления</Field.FieldLabel>
@@ -157,10 +156,7 @@
 			{/if}
 		</Field.Field>
 
-		<Field.FieldSet
-			class="rounded-lg border border-border p-4"
-			data-invalid={rolesError ? true : undefined}
-		>
+		<Field.FieldSet data-invalid={rolesError ? true : undefined}>
 			<Field.FieldLegend variant="label">Кому отправить</Field.FieldLegend>
 			<Field.FieldGroup data-slot="checkbox-group" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
 				<Field.Field orientation="horizontal">
@@ -228,7 +224,7 @@
 			{/if}
 		</Button>
 	</form>
-</Card.Root>
+</div>
 
 <div class="mt-8">
 	{#key broadcastsKey}

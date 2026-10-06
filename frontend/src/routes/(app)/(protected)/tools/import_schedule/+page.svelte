@@ -8,7 +8,6 @@
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
 	import * as Field from '$lib/components/ui/field';
 	import { Input } from '$lib/components/ui/input';
 	import { Spinner } from '$lib/components/ui/spinner';
@@ -76,54 +75,56 @@
 
 <BackLink href="/tools" label="Назад к инструментам" />
 
-<SectionIntro description="Загрузи Excel-файл, чтобы обновить программу мероприятия." />
+<div class="mx-auto w-full max-w-2xl">
+	<SectionIntro description="Загрузи Excel-файл, чтобы обновить программу мероприятия." />
 
-<FileFormatGuide />
+	<FileFormatGuide />
 
-<Card.Root class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
-	<form class="flex flex-col gap-4" onsubmit={handleSubmit}>
-		<Field.Field>
-			<Field.FieldLabel for="schedule-file">Excel-файл</Field.FieldLabel>
-			<Input
-				id="schedule-file"
-				type="file"
-				name="schedule_file"
-				accept={ACCEPTED_FILE_TYPES}
-				bind:files={selectedFiles}
-				class="w-full cursor-pointer file:cursor-pointer"
-				disabled={isUploading}
-				onchange={handleFileChange}
-			/>
-			<Field.FieldDescription>
-				{#if selectedFileName}
-					Выбран файл: {selectedFileName}
-				{:else}
-					Поддерживаются файлы .xls и .xlsx.
-				{/if}
-			</Field.FieldDescription>
-		</Field.Field>
+	<div class="border-t border-border pt-6">
+		<form class="flex flex-col gap-4" onsubmit={handleSubmit}>
+			<Field.Field>
+				<Field.FieldLabel for="schedule-file">Excel-файл</Field.FieldLabel>
+				<Input
+					id="schedule-file"
+					type="file"
+					name="schedule_file"
+					accept={ACCEPTED_FILE_TYPES}
+					bind:files={selectedFiles}
+					class="w-full cursor-pointer file:cursor-pointer"
+					disabled={isUploading}
+					onchange={handleFileChange}
+				/>
+				<Field.FieldDescription>
+					{#if selectedFileName}
+						Выбран файл: {selectedFileName}
+					{:else}
+						Поддерживаются файлы .xls и .xlsx.
+					{/if}
+				</Field.FieldDescription>
+			</Field.Field>
 
-		{#if inlineError}
-			<Alert.Root variant="destructive">
-				<AlertCircle class="size-4" />
-				<Alert.Description>{inlineError}</Alert.Description>
-			</Alert.Root>
-		{/if}
-
-		{#if successMessage}
-			<Alert.Root variant="success">
-				<CheckCircle2 />
-				<Alert.Description>{successMessage}</Alert.Description>
-			</Alert.Root>
-		{/if}
-
-		<Button type="submit" class="w-full sm:w-auto" disabled={isUploading}>
-			{#if isUploading}
-				<Spinner data-icon="inline-start" />
-				Импортируем…
-			{:else}
-				Импортировать
+			{#if inlineError}
+				<Alert.Root variant="destructive">
+					<AlertCircle class="size-4" />
+					<Alert.Description>{inlineError}</Alert.Description>
+				</Alert.Root>
 			{/if}
-		</Button>
-	</form>
-</Card.Root>
+
+			{#if successMessage}
+				<Alert.Root variant="success">
+					<CheckCircle2 />
+					<Alert.Description>{successMessage}</Alert.Description>
+				</Alert.Root>
+			{/if}
+
+			<Button type="submit" class="w-full sm:w-auto" disabled={isUploading}>
+				{#if isUploading}
+					<Spinner data-icon="inline-start" />
+					Импортируем…
+				{:else}
+					Импортировать
+				{/if}
+			</Button>
+		</form>
+	</div>
+</div>

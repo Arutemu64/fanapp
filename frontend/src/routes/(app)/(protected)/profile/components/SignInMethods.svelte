@@ -4,17 +4,18 @@
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { createApiClient } from '$lib/api';
 	import { unlinkTelegramAccount, unlinkVkAccount } from '$lib/api/generated';
+	import MenuGroup from '$lib/components/MenuGroup.svelte';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { SOCIAL_PROVIDER_PRESENTATION } from '$lib/data/socialProviders';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { offlineWriteGate } from '$lib/utils/offlineAction';
-	import { AlertCircle, Link, Mail, Shield } from '@lucide/svelte';
+	import { AlertCircle, Mail, Shield } from '@lucide/svelte';
 
 	import ChangeEmailModal from './ChangeEmailModal.svelte';
 	import ChangePasswordModal from './ChangePasswordModal.svelte';
-	import ProfileCardShell from './ProfileCardShell.svelte';
+	import SettingsSection from './SettingsSection.svelte';
 	import SocialConnectionRow from './SocialConnectionRow.svelte';
 
 	const client = createApiClient();
@@ -71,17 +72,13 @@
 	}
 </script>
 
-<ProfileCardShell
+<SettingsSection
 	title="Способы входа"
 	description="Настрой почту, пароль и привязки для входа и восстановления доступа."
 >
-	{#snippet icon()}
-		<Link class="size-5" />
-	{/snippet}
-
 	<!-- One bordered group with hairline dividers between rows, so related account
-	     settings read as a set rather than as separate boxes-inside-a-box. -->
-	<div class="divide-y divide-border overflow-hidden rounded-lg border border-border">
+	     settings read as a set rather than as separate boxes. -->
+	<MenuGroup class="divide-y divide-border">
 		<div class="p-3 sm:p-4">
 			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 				<div class="min-w-0">
@@ -166,7 +163,7 @@
 				{/snippet}
 			</SocialConnectionRow>
 		{/each}
-	</div>
+	</MenuGroup>
 
 	{#if !user.email}
 		<Alert.Root variant="warning">
@@ -177,7 +174,7 @@
 			</Alert.Description>
 		</Alert.Root>
 	{/if}
-</ProfileCardShell>
+</SettingsSection>
 
 <ChangePasswordModal
 	bind:open={changePasswordModalOpen}
