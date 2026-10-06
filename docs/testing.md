@@ -412,10 +412,13 @@ runs the suite with no `playwright install` (see `playwright.config.ts` and
 the line the environment bakes. On CI / a fresh laptop, install the browser once:
 `pnpm --dir frontend exec playwright install chromium`.
 
-**iOS Safari on CI.** Chromium can't stand in for WebKit, and the app is
-mobile-first with an iPhone-heavy audience, so CI also runs a `mobile-webkit`
-(iPhone 14) project. It's gated on `process.env.CI` because WebKit isn't pre-baked;
-locally, `playwright install webkit` then `CI=1 pnpm --dir frontend e2e` runs it.
+**iOS Safari.** Chromium can't stand in for WebKit, and the app is mobile-first
+with an iPhone-heavy audience, so there is also a `mobile-webkit` (iPhone 14)
+project. WebKit isn't pre-baked, so the config runs it only where Playwright's
+WebKit build for the pinned version is installed — `just
+frontend-e2e-install-webkit` once (also in a web session), then `just frontend-e2e`
+includes it. CI installs it and always runs it, so a missing browser there fails
+the job instead of silently dropping the project.
 
 **Runs in CI, not yet a required check.** `ci.yml` has a `frontend-e2e` job (its
 own job — it needs a browser and builds the app, unlike the plain matrix tasks),

@@ -169,17 +169,17 @@ pnpm e2e --grep-invert @a11y           # everything but the a11y scans
 
 ### Devices
 
-Locally (and in web sessions) every spec runs on two Chromium projects —
-`mobile-chromium` (Pixel 7, the mobile-first primary) and `desktop-chromium`
-(Desktop Chrome, catches the wide sidebar-shell layout). Run one while iterating
-with `pnpm e2e --project=mobile-chromium`. The pre-baked Chromium is the only
-zero-install browser, so those are all that run outside CI.
+Every spec runs on two Chromium projects — `mobile-chromium` (Pixel 7, the
+mobile-first primary) and `desktop-chromium` (Desktop Chrome, catches the wide
+sidebar-shell layout). Run one while iterating with
+`pnpm e2e --project=mobile-chromium`.
 
-**On CI, a third project `mobile-webkit` (iPhone 14, iOS Safari) also runs** — the
-engine that matters most for this mobile-first audience and the one Chromium can't
-stand in for. It's gated on `process.env.CI` because it needs
-`playwright install webkit`; to run it locally, install WebKit once and force the
-gate: `CI=1 pnpm e2e --project=mobile-webkit`.
+A third project, `mobile-webkit` (iPhone 14, iOS Safari), runs **wherever WebKit is
+installed** — the engine that matters most for this mobile-first audience and the
+one Chromium can't stand in for. WebKit isn't pre-baked, so install it once with
+`just frontend-e2e-install-webkit` (re-run after a Playwright bump); from then on
+`pnpm e2e` picks it up, and `just frontend-e2e-webkit` runs it alone. Without it the
+project is skipped locally. CI installs it and always runs it.
 
 ### Screenshots (seeing a change, not just asserting it)
 

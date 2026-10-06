@@ -348,9 +348,9 @@ jobs:
           key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
 
       # --with-deps installs the OS libraries the browsers need on a clean runner.
-      # WebKit gives iOS-Safari coverage for this mobile-first app (the config gates
-      # its `mobile-webkit` project on CI, since the pre-baked env ships only
-      # Chromium). On a cache hit the browsers are already present; the (fast) apt
+      # WebKit gives iOS-Safari coverage for this mobile-first app (the config
+      # always runs its `mobile-webkit` project on CI; elsewhere only when WebKit
+      # is installed). On a cache hit the browsers are already present; the (fast) apt
       # step still runs so a cached browser never lacks its system deps.
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium webkit
