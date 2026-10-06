@@ -42,6 +42,16 @@ test.describe('profile hub', () => {
 		expect(api.unmatched).toEqual([]);
 	});
 
+	test('counts linked VK as a notification channel on the hub', async ({ page, api }) => {
+		// Push is off in a fresh browser, but VK still delivers, so the row says so.
+		api.use(loggedInAs({ social_identities: [{ provider: 'vk' }] }));
+		await page.goto('/profile');
+
+		await expect(page.getByRole('main').getByRole('link', { name: /Уведомления/ })).toContainText(
+			'Включены'
+		);
+	});
+
 	test('links an organiser to the toolbox and keeps the tab lit there', async ({ page, api }) => {
 		api.use(organizer());
 		await page.goto('/profile');

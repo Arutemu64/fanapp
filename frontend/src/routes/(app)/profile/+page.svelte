@@ -32,22 +32,18 @@
 	import LogoutButton from './components/LogoutButton.svelte';
 	import MenuLink from './components/MenuLink.svelte';
 	import ThemeToggle from './components/ThemeToggle.svelte';
+	import { notificationsStatus } from './notificationsStatus';
 
 	let { data }: PageProps = $props();
 	let user = $derived(data.user);
 	let avatarInitials = $derived(getAvatarInitials(user?.username));
 	let ticketStatus = $derived(user?.ticket ? 'Привязан' : 'Не привязан');
 
-	// Push on this device, the channel a phone most needs and the first switch on
-	// the notifications page, so the hub row reads like a settings screen's
-	// "current value" line. Unknown (a failed check, or before it answers) shows
-	// nothing.
+	// The row's "current value", like a settings screen's: whether any channel
+	// reaches this user (see notificationsStatus). Device push is read from the
+	// browser after mount; until then the social channels speak alone.
 	let devicePush = $state<DevicePushState>('unknown');
-	let notificationsStatus = $derived.by(() => {
-		if (devicePush === 'on') return 'Включены';
-		if (devicePush === 'off') return 'Выключены';
-		return undefined;
-	});
+	let notificationsValue = $derived(user ? notificationsStatus(devicePush, user) : undefined);
 
 	onMount(() => {
 		void getDevicePushState().then((state) => {
@@ -125,7 +121,7 @@
 				href="/profile/notifications"
 				label="Уведомления"
 				icon={Bell}
-				value={notificationsStatus}
+				value={notificationsValue}
 			/>
 		</MenuGroup>
 
