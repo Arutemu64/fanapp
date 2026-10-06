@@ -13,6 +13,7 @@ export const load: PageLoad = async ({ parent }) => {
 	}
 
 	return {
-		title: 'Генерация билетов'
+		title: 'Генерация билетов',
+		back: { href: '/tools', label: 'Назад к инструментам' }
 	};
 };

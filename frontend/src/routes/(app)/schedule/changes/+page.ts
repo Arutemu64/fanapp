@@ -44,6 +44,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	const changes = data.schedule_changes ?? [];
 	return {
 		title: 'Изменения программы',
+		back: { href: '/schedule', label: 'Назад к программе' },
 		schedule_changes: changes.slice(0, SCHEDULE_CHANGES_PAGE_SIZE),
 		hasMore: changes.length > SCHEDULE_CHANGES_PAGE_SIZE
 	};

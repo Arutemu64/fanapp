@@ -38,6 +38,7 @@ export const load: PageLoad = async ({ fetch, parent }) => {
 	const feedback = data.feedback ?? [];
 	return {
 		title: 'Отзывы',
+		back: { href: '/tools', label: 'Назад к инструментам' },
 		feedback: feedback.slice(0, FEEDBACK_PAGE_SIZE),
 		hasMore: feedback.length > FEEDBACK_PAGE_SIZE
 	};

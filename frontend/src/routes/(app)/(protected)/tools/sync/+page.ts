@@ -35,6 +35,7 @@ export const load: PageLoad = async ({ parent, fetch, depends }) => {
 
 	return {
 		title: 'Синхронизация',
+		back: { href: '/tools', label: 'Назад к инструментам' },
 		sources: data
 	};
 };

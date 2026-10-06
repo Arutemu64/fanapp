@@ -36,6 +36,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 
 	return {
 		title: 'Настройки фестиваля',
+		back: { href: '/tools', label: 'Назад к инструментам' },
 		settings: data
 	};
 };

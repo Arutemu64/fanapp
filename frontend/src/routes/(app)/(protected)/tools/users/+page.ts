@@ -48,6 +48,7 @@ export const load: PageLoad = async ({ fetch, parent, url }) => {
 
 	return {
 		title: 'Пользователи',
+		back: { href: '/tools', label: 'Назад к инструментам' },
 		users: data.users,
 		total: data.total,
 		page,

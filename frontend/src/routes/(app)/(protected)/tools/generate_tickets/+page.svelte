@@ -3,7 +3,6 @@
 	import { getApiErrorDetail, getApiFieldError } from '$lib/api/errors';
 	import { generateTickets } from '$lib/api/generated';
 	const client = createApiClient();
-	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
@@ -118,8 +117,6 @@
 <svelte:head>
 	<title>Генерация билетов · ФАН ФАН</title>
 </svelte:head>
-
-<BackLink href="/tools" label="Назад к инструментам" />
 
 <div class="mx-auto w-full max-w-2xl">
 	<SectionIntro

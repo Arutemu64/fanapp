@@ -35,6 +35,7 @@ export const load: PageLoad = async ({ fetch, parent, params }) => {
 
 	return {
 		title: data.username,
+		back: { href: '/tools/users', label: 'Назад к пользователям' },
 		profile: data
 	};
 };

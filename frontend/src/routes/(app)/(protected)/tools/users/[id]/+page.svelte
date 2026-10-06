@@ -1,5 +1,4 @@
 <script lang="ts">
-	import BackLink from '$lib/components/BackLink.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Card from '$lib/components/ui/card';
@@ -20,8 +19,6 @@
 <svelte:head>
 	<title>{profile.username} · ФАН ФАН</title>
 </svelte:head>
-
-<BackLink href="/tools/users" label="Назад к пользователям" />
 
 <div class="mx-auto flex w-full max-w-2xl flex-col gap-5">
 	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">

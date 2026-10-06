@@ -37,6 +37,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 
 	return {
 		title: 'Рассылка уведомлений',
+		back: { href: '/tools', label: 'Назад к инструментам' },
 		mailings,
 		hasMore
 	};

@@ -13,6 +13,7 @@ export const load: PageLoad = async ({ parent }) => {
 	}
 
 	return {
-		title: 'Импорт программы'
+		title: 'Импорт программы',
+		back: { href: '/tools', label: 'Назад к инструментам' }
 	};
 };

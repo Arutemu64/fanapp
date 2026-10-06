@@ -33,6 +33,7 @@ export const load: PageLoad = async ({ fetch, parent }) => {
 
 	return {
 		title: 'Голосование',
+		back: { href: '/tools', label: 'Назад к инструментам' },
 		dashboard: data
 	};
 };

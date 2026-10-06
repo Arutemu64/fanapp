@@ -4,7 +4,6 @@
 	import { importSchedule } from '$lib/api/generated';
 	const client = createApiClient();
 	import { getApiErrorDetail } from '$lib/api/errors';
-	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
@@ -72,8 +71,6 @@
 <svelte:head>
 	<title>Импорт программы · ФАН ФАН</title>
 </svelte:head>
-
-<BackLink href="/tools" label="Назад к инструментам" />
 
 <div class="mx-auto w-full max-w-2xl">
 	<SectionIntro description="Загрузи Excel-файл, чтобы обновить программу мероприятия." />

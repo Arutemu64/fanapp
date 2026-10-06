@@ -6,7 +6,6 @@
 	// The generated operation shares the name of this component's own trigger
 	// handler below, so import it under a distinct name.
 	import { requestSync as requestSyncSource } from '$lib/api/generated';
-	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -105,8 +104,6 @@
 <svelte:head>
 	<title>Синхронизация · ФАН ФАН</title>
 </svelte:head>
-
-<BackLink href="/tools" label="Назад к инструментам" />
 
 <SectionIntro
 	description="Данные подтягиваются автоматически по расписанию. Запусти вручную, если нужно увидеть свежие данные прямо сейчас."

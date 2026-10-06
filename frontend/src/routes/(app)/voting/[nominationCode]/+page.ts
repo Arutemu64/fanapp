@@ -1,3 +1,5 @@
+import type { BackTarget } from '$lib/types/navigation';
+
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
 import { getVotingNomination } from '$lib/api/generated';
@@ -7,6 +9,8 @@ import { isHttpError } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
 
+const back = { href: '/voting', label: 'Назад к номинациям' } satisfies BackTarget;
+
 export const load: PageLoad = async ({ params, fetch, depends }) => {
 	depends('app:voting:nomination');
 
@@ -14,7 +18,7 @@ export const load: PageLoad = async ({ params, fetch, depends }) => {
 	// mutation surface and is deliberately not cached, so a known-unreachable
 	// backend gets an honest "online only" state, not a stale ballot.
 	if (!isReachable()) {
-		return { title: 'Голосование', nomination: undefined, offlineUnavailable: true };
+		return { title: 'Голосование', back, nomination: undefined, offlineUnavailable: true };
 	}
 
 	const client = createApiClient();
@@ -40,19 +44,20 @@ export const load: PageLoad = async ({ params, fetch, depends }) => {
 			// online-only state) instead of the misleading "Номинация не найдена".
 			if (!response || isBackendUnreachableStatus(response.status)) {
 				markReachable(false);
-				return { title: 'Голосование', nomination: undefined, offlineUnavailable: true };
+				return { title: 'Голосование', back, nomination: undefined, offlineUnavailable: true };
 			}
 			throwApiError(apiError, response, 'Номинация не найдена');
 		}
 
 		return {
 			title: 'Голосование',
+			back,
 			nomination: data,
 			offlineUnavailable: false
 		};
 	} catch (err) {
 		if (isHttpError(err)) throw err;
 		markReachable(false);
-		return { title: 'Голосование', nomination: undefined, offlineUnavailable: true };
+		return { title: 'Голосование', back, nomination: undefined, offlineUnavailable: true };
 	}
 };

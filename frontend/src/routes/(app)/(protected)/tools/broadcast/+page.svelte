@@ -4,7 +4,6 @@
 	import { sendBroadcast } from '$lib/api/generated';
 	const client = createApiClient();
 	import { invalidate } from '$app/navigation';
-	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
@@ -125,8 +124,6 @@
 <svelte:head>
 	<title>Рассылка уведомлений · ФАН ФАН</title>
 </svelte:head>
-
-<BackLink href="/tools" label="Назад к инструментам" />
 
 <div class="mx-auto w-full max-w-2xl">
 	<SectionIntro

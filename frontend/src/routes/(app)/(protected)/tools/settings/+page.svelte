@@ -4,7 +4,6 @@
 	import { getApiErrorDetail, getApiFieldError } from '$lib/api/errors';
 	import { updateSettings } from '$lib/api/generated';
 	const client = createApiClient();
-	import BackLink from '$lib/components/BackLink.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
@@ -172,8 +171,6 @@
 <svelte:head>
 	<title>Настройки фестиваля · ФАН ФАН</title>
 </svelte:head>
-
-<BackLink href="/tools" label="Назад к инструментам" />
 
 <SectionIntro description="Управляй датами фестиваля и таймингами расписания." />
 
