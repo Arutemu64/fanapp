@@ -1,6 +1,5 @@
 import { defineConfig, devices, webkit } from '@playwright/test';
 import { existsSync } from 'node:fs';
-import { join } from 'node:path';
 
 // The app is a client-rendered SPA whose service worker and offline behaviour are
 // active ONLY in a production build — `vite dev` disables the SW (see
@@ -10,25 +9,12 @@ import { join } from 'node:path';
 const PORT = 4173;
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 
-// Zero browser install in a Claude Code web session: the environment pre-bakes a
-// Playwright-managed Chromium and exposes a stable `chromium` symlink under
-// $PLAYWRIGHT_BROWSERS_PATH. Pointing at it directly means a session runs the
-// suite with no `playwright install`, and keeps working even if the baked build
-// later drifts from the pinned @playwright/test (the symlink follows it). On CI
-// and local machines the variable is unset, so Playwright resolves the browser it
-// installed itself. See docs/claude-cloud.md and docs/testing.md.
-function prebakedChromium(): string | undefined {
-	const base = process.env.PLAYWRIGHT_BROWSERS_PATH;
-	if (!base) return undefined;
-	const symlink = join(base, 'chromium');
-	return existsSync(symlink) ? symlink : undefined;
-}
-
-// WebKit is not pre-baked, so the `mobile-webkit` project runs wherever it has been
-// installed (`just frontend-e2e-install-webkit`) and is skipped elsewhere, keeping
-// the zero-install Chromium story. CI always runs it: it installs WebKit itself,
-// and a missing browser there must fail the job rather than silently drop the
-// project. `executablePath()` is where Playwright expects its bundled build for
+// Chromium is always installed (CI, `playwright install chromium` locally, and the
+// web session-start hook). WebKit is opt-in, so the `mobile-webkit` project runs
+// wherever it has been installed (`just frontend-e2e-install-webkit`) and is
+// skipped elsewhere. CI always runs it: it installs WebKit itself, and a missing
+// browser there must fail the job rather than silently drop the project.
+// `executablePath()` is where Playwright expects its bundled build for
 // this exact version, so a stale WebKit from an older pin reads as not installed.
 function runWebkit(): boolean {
 	if (process.env.CI) return true;
@@ -41,6 +27,9 @@ export default defineConfig({
 	// Each spec file is isolated (fresh context) and safe to run in parallel: the
 	// backend is mocked per-test, so nothing is shared between them.
 	fullyParallel: true,
+	// One worker on CI, per https://playwright.dev/docs/ci: stability and
+	// reproducibility over speed on a shared runner. Locally, half the cores.
+	workers: process.env.CI ? 1 : undefined,
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,
 	reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : [['list']],
@@ -63,24 +52,17 @@ export default defineConfig({
 		{
 			// Mobile-first app → a phone viewport is the primary surface under test.
 			name: 'mobile-chromium',
-			use: {
-				...devices['Pixel 7'],
-				launchOptions: { executablePath: prebakedChromium() }
-			}
+			use: { ...devices['Pixel 7'] }
 		},
 		{
 			// Desktop viewport catches layout that only appears on the wide breakpoint
 			// (the sidebar shell instead of the bottom nav).
 			name: 'desktop-chromium',
-			use: {
-				...devices['Desktop Chrome'],
-				launchOptions: { executablePath: prebakedChromium() }
-			}
+			use: { ...devices['Desktop Chrome'] }
 		},
 		// iOS Safari (WebKit) is the app's real primary surface — it is mobile-first
 		// and its audience is largely on iPhones — and the one engine Chromium can't
-		// stand in for. No `executablePath` override: it uses Playwright's own WebKit
-		// build, which must match the pinned @playwright/test.
+		// stand in for.
 		...(runWebkit()
 			? [
 					{

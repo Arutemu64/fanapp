@@ -8,6 +8,8 @@
 #     re-runs on config change or cache expiry, so it would miss a dependency
 #     bump on the branch; running the syncs here keeps deps in step with the
 #     code. They are near-instant when the lockfile is unchanged.
+#   * Playwright's Chromium for the pinned @playwright/test version - it tracks
+#     the lockfile like the syncs above (see the playwright block below)
 #   * the CodeGraph index (.codegraph/, gitignored) - per-branch project state
 #     that must track the code actually checked out this session, which the
 #     setup script's snapshot cannot guarantee (see the codegraph block below).
@@ -103,6 +105,19 @@ echo "[session-start] Syncing backend dependencies (uv sync)..."
 
 echo "[session-start] Syncing frontend dependencies (pnpm install)..."
 (cd "$REPO_ROOT/frontend" && pnpm install)
+
+# Install the Chromium build the pinned @playwright/test expects, so web sessions
+# run the E2E suite on the same browser as CI. The base image's pre-baked
+# Chromium in $PLAYWRIGHT_BROWSERS_PATH follows the image's schedule, not our
+# pin, and each Playwright version needs its own browser build
+# (https://playwright.dev/docs/browsers). Lives here, not in setup.sh, because it
+# must resolve the version from node_modules and track a bump without an
+# environment rebuild. `--only-shell`: the suite runs headless, which uses the
+# headless shell; a few seconds fresh, a no-op once installed. Best-effort:
+# a failed download must not abort session setup.
+echo "[session-start] Installing Playwright's Chromium for the pinned version..."
+(cd "$REPO_ROOT/frontend" && pnpm exec playwright install --only-shell --no-progress chromium >/dev/null) \
+  || echo "[session-start] WARN: Playwright Chromium install failed; run 'pnpm --dir frontend exec playwright install --only-shell chromium' before E2E work."
 
 # Build/refresh the CodeGraph index so code-navigation queries (AGENTS.md "Code
 # Navigation") reflect the current branch. The binary is installed by setup.sh

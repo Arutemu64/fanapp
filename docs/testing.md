@@ -405,16 +405,18 @@ must prove the real login handshake or a persisted write belongs in a full-stack
 run (boot the stack with `just run-infra` + the backend processes + `just
 backend-seed-demo`), which is opt-in, not the default a session reaches for.
 
-**Zero browser install in web sessions.** `@playwright/test` is pinned to the
-version whose Chromium build the cloud environment pre-bakes, so a web session
-runs the suite with no `playwright install` (see `playwright.config.ts` and
-[claude-cloud.md](claude-cloud.md)). Bumping that pin is deliberate — hold it to
-the line the environment bakes. On CI / a fresh laptop, install the browser once:
-`pnpm --dir frontend exec playwright install chromium`.
+**Same Chromium everywhere.** Each Playwright version needs its own browser
+builds ([docs](https://playwright.dev/docs/browsers)), so every environment runs
+the build the pinned `@playwright/test` expects. A web session's session-start
+hook installs it (headless shell only, a no-op once present). It does not use the
+base image's pre-baked Chromium, which follows the image's schedule rather than
+our pin. CI installs it per run. On a fresh laptop, install it once:
+`pnpm --dir frontend exec playwright install chromium`, and again after a
+Playwright bump.
 
 **iOS Safari.** Chromium can't stand in for WebKit, and the app is mobile-first
 with an iPhone-heavy audience, so there is also a `mobile-webkit` (iPhone 14)
-project. WebKit isn't pre-baked, so the config runs it only where Playwright's
+project. WebKit is opt-in (no hook installs it), so the config runs it only where Playwright's
 WebKit build for the pinned version is installed — `just
 frontend-e2e-install-webkit` once (also in a web session), then `just frontend-e2e`
 includes it. CI installs it and always runs it, so a missing browser there fails
@@ -422,7 +424,9 @@ the job instead of silently dropping the project.
 
 **Runs in CI, not yet a required check.** `ci.yml` has a `frontend-e2e` job (its
 own job — it needs a browser and builds the app, unlike the plain matrix tasks),
-gated on the frontend paths filter, with the browser cached by Playwright version.
+gated on the frontend paths filter. It downloads browsers on every run rather than
+caching them, per [Playwright's CI guide](https://playwright.dev/docs/ci), and runs
+with one worker for stability.
 It isn't marked required in branch protection yet: let a browser tier prove stable
 under CI timing first, then gate it. Like the backend integration suite, treat it
 as a tool to *see* a UI change work, not a local gate you must run before pushing.
