@@ -4,6 +4,7 @@
 	import type { Component } from 'svelte';
 
 	import { page } from '$app/state';
+	import MenuGroup from '$lib/components/MenuGroup.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import {
 		canGenerateTickets,
@@ -27,7 +28,7 @@
 	} from '@lucide/svelte';
 
 	import OnlineNowCard from './components/OnlineNowCard.svelte';
-	import ToolCard from './components/ToolCard.svelte';
+	import ToolRow from './components/ToolRow.svelte';
 
 	let user: CurrentUserDto | null = $derived(page.data.user);
 
@@ -41,7 +42,7 @@
 		canAccess: boolean;
 	}
 
-	// Locked tools stay in the grid so an org sees the whole toolbox and knows what
+	// Locked tools stay in the list so an org sees the whole toolbox and knows what
 	// they'd need granted, rather than the section silently shrinking per account.
 	let tools = $derived<Tool[]>([
 		{
@@ -111,24 +112,27 @@
 	]);
 </script>
 
-<SectionIntro
-	description="Для работы организаторов фестиваля. Серые карточки — те, к которым у тебя пока нет доступа."
-/>
+<!-- Capped and centred like the /profile hub this menu continues. -->
+<div class="mx-auto max-w-2xl">
+	<SectionIntro
+		description="Для работы организаторов фестиваля. Инструменты с замком тебе пока недоступны."
+	/>
 
-<!-- Shown to every org: the tools layout already gates this whole section to the
-     org role, so no per-tool permission scopes the live count. -->
-<div class="mb-4">
-	<OnlineNowCard />
-</div>
+	<!-- Shown to every org: the tools layout already gates this whole section to the
+	     org role, so no per-tool permission scopes the live count. -->
+	<div class="mb-4">
+		<OnlineNowCard />
+	</div>
 
-<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-	{#each tools as tool (tool.key)}
-		<ToolCard
-			title={tool.title}
-			description={tool.description}
-			icon={tool.icon}
-			href={tool.href}
-			locked={!tool.canAccess}
-		/>
-	{/each}
+	<MenuGroup>
+		{#each tools as tool (tool.key)}
+			<ToolRow
+				title={tool.title}
+				description={tool.description}
+				icon={tool.icon}
+				href={tool.href}
+				locked={!tool.canAccess}
+			/>
+		{/each}
+	</MenuGroup>
 </div>

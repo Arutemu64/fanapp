@@ -6,9 +6,9 @@
 	import { cancelMailing, listBroadcasts } from '$lib/api/generated';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
+	import MenuGroup from '$lib/components/MenuGroup.svelte';
 	import { Badge, type BadgeVariant } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { BROADCAST_PAGE_REQUEST_LIMIT, BROADCAST_PAGE_SIZE } from '$lib/constants/notifications';
 	import { PaginatedFeed } from '$lib/services/feed.svelte';
@@ -102,9 +102,11 @@
 	{#if feed.items.length === 0}
 		<EmptyState message="Пока ничего не отправлено" />
 	{:else}
-		<div class="flex flex-col gap-3">
+		<!-- One divided list, not a card per mailing: the entries are all the same
+		     shape, so a list scans faster and fits more on a phone screen. -->
+		<MenuGroup class="divide-y divide-border">
 			{#each feed.items as mailing (mailing.id)}
-				<Card.Root class="p-4">
+				<div class="p-4">
 					<div class="flex flex-col gap-2">
 						<div class="flex items-center justify-between gap-2">
 							<Badge variant={STATUS_VARIANTS[mailing.status]}>
@@ -146,9 +148,9 @@
 							{/if}
 						</div>
 					</div>
-				</Card.Root>
+				</div>
 			{/each}
-		</div>
+		</MenuGroup>
 
 		{#if feed.hasMore}
 			<LoadMoreButton loading={feed.isLoadingMore} onclick={feed.loadMore} />
