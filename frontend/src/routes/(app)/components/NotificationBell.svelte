@@ -166,7 +166,7 @@
 	// specificity, and Tailwind emits `.inline-flex` after `.hidden`, so it would win
 	// and leak the button onto mobile beside the `<a>` — a duplicate bell.
 	const triggerClass =
-		'relative h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted active:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none';
+		'relative h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none';
 </script>
 
 {#snippet bellContent()}
@@ -219,7 +219,7 @@
 			<div class="text-sm font-bold text-foreground">Уведомления</div>
 			<button
 				type="button"
-				class="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none active:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
+				class="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
 				onclick={markAllRead}
 				disabled={unread.count === 0}
 			>
@@ -239,7 +239,7 @@
 
 		<a
 			href={resolve('/notifications')}
-			class="block border-t border-border bg-muted/50 py-2.5 text-center text-sm font-medium text-foreground hover:bg-muted active:bg-muted"
+			class="block border-t border-border bg-muted/50 py-2.5 text-center text-sm font-medium text-foreground hover:bg-muted"
 		>
 			<div class="inline-flex items-center">
 				<Eye class="me-2 size-4 text-muted-foreground" />

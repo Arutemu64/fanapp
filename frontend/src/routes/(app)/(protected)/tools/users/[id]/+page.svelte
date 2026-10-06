@@ -87,7 +87,7 @@
 								href={url}
 								target="_blank"
 								rel="external noopener noreferrer"
-								class="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-primary hover:underline active:underline"
+								class="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-primary hover:underline"
 							>
 								Открыть
 								<ExternalLink class="size-4" aria-hidden="true" />

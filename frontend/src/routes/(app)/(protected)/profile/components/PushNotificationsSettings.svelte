@@ -387,14 +387,13 @@
 								Сначала подключи ВКонтакте в
 								<a
 									href={resolve('/profile/account')}
-									class="font-medium text-primary hover:underline active:underline"
-									>настройках аккаунта</a
+									class="font-medium text-primary hover:underline">настройках аккаунта</a
 								>.
 							{/if}
 						</p>
 						<button
 							type="button"
-							class="mt-1 text-sm font-medium text-primary hover:underline active:underline"
+							class="mt-1 text-sm font-medium text-primary hover:underline"
 							onclick={() => (showVkModal = true)}
 						>
 							Как это работает?

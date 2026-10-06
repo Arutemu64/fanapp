@@ -117,7 +117,7 @@
 		{#if searchQuery}
 			<button
 				type="button"
-				class="absolute right-2 text-muted-foreground hover:text-foreground active:text-foreground"
+				class="absolute right-2 text-muted-foreground hover:text-foreground"
 				onclick={() => (searchQuery = '')}
 				aria-label="Очистить поиск"
 			>
@@ -148,7 +148,7 @@
 					<EmptyState icon={Users} title="Ничего не нашлось" message="Попробуй изменить запрос">
 						<button
 							onclick={() => (searchQuery = '')}
-							class="mt-3 text-sm font-medium text-primary hover:underline active:underline"
+							class="mt-3 text-sm font-medium text-primary hover:underline"
 						>
 							Очистить поиск
 						</button>

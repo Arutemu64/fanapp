@@ -132,8 +132,8 @@
 		{#if pwa.canInstall}
 			<!-- Opens the @khmyznikov/pwa-install dialog, which renders its own
 			     platform-specific instructions (Chromium prompt, iOS "На экран Домой").
-			     hover:/active:bg-muted by hand: Item only highlights rows rendered as <a>. -->
-			<Item.Root class="rounded-none hover:bg-muted active:bg-muted">
+			     hover:bg-muted by hand: Item only highlights rows rendered as <a>. -->
+			<Item.Root class="rounded-none hover:bg-muted">
 				{#snippet child({ props })}
 					<button type="button" {...props} onclick={() => pwa.showInstallDialog()}>
 						<Item.Media class="size-9 rounded-lg bg-muted text-muted-foreground">
@@ -173,7 +173,7 @@
 			href="https://arutemu64.com/"
 			target="_blank"
 			rel="noopener noreferrer"
-			class="underline hover:text-foreground active:text-foreground"
+			class="underline hover:text-foreground"
 		>
 			Arutemu64
 		</a>

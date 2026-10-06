@@ -9,7 +9,6 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { pluralize } from '$lib/utils/formatters';
-	import { confirmHaptic } from '$lib/utils/haptics';
 	import { Check, CheckCircle2, Heart, X } from '@lucide/svelte';
 
 	const client = createApiClient();
@@ -50,7 +49,6 @@
 			}
 
 			if (data) {
-				confirmHaptic();
 				toastService.add('Голос учтён', 'success');
 				optimisticDelta = 0;
 				onVoted?.();

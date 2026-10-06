@@ -7,6 +7,26 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * `hover:` also applies while pressed. Tailwind v4 gates hover behind
+ * (hover: hover), so on a phone a hover style never shows and a tap gives no
+ * feedback at all. Folding :active into the variant gives every `hover:` style
+ * (and `group-hover:`, `[a]:hover:`, …) a matching press state on touch, while a
+ * mouse sees no change: it is already hovering by the time it presses. Overriding
+ * the built-in variant is Tailwind's documented escape hatch for this:
+ * https://tailwindcss.com/docs/upgrade-guide
+ */
+@custom-variant hover {
+	@media (hover: hover) {
+		&:hover {
+			@slot;
+		}
+	}
+	&:active {
+		@slot;
+	}
+}
+
 @theme {
 	--font-sans: 'Inter Variable', sans-serif;
 	--font-display: 'Unbounded Variable', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
@@ -112,9 +132,8 @@
 		font-size: 16px;
 		-webkit-text-size-adjust: 100%;
 		/*
-		 * Drop the grey WebKit tap flash: every tappable surface carries its own
-		 * pressed state instead (an `active:` twin of its `hover:` style — see
-		 * docs/frontend.md "Touch feedback"), which the flash would only muddy.
+		 * Drop the grey WebKit tap flash: tappable surfaces show their own pressed
+		 * state through the `hover` variant above, which the flash would only muddy.
 		 */
 		-webkit-tap-highlight-color: transparent;
 		@apply font-sans;

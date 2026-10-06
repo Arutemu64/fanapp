@@ -34,7 +34,7 @@
 		<div class="text-center">
 			<button
 				type="button"
-				class="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 active:text-foreground"
+				class="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
 				onclick={() => goto(resolve('/'))}
 			>
 				Продолжить без входа

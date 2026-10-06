@@ -47,16 +47,14 @@
 			<Icon
 				class={[
 					'mb-1 size-5 transition-[color,scale] group-active:scale-90',
-					active
-						? 'text-primary'
-						: 'text-muted-foreground group-hover:text-foreground group-active:text-foreground'
+					active ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
 				]}
 			/>
 			<span
 				class={[
 					active
 						? 'font-semibold text-primary'
-						: 'text-muted-foreground group-hover:text-foreground group-active:text-foreground'
+						: 'text-muted-foreground group-hover:text-foreground'
 				]}
 			>
 				{label}

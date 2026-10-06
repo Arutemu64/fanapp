@@ -351,8 +351,8 @@
 					class={[
 						'flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40',
 						event.user_subscription
-							? 'text-primary hover:bg-primary/10 active:bg-primary/10'
-							: 'text-muted-foreground hover:bg-accent hover:text-foreground active:bg-accent active:text-foreground'
+							? 'text-primary hover:bg-primary/10'
+							: 'text-muted-foreground hover:bg-accent hover:text-foreground'
 					]}
 					aria-label={event.user_subscription ? 'Отписаться' : 'Подписаться'}
 					aria-pressed={event.user_subscription !== null}
@@ -381,7 +381,7 @@
 						disabled={offlineGate.disabled}
 						aria-label={currentActionLabel}
 						title={offlineGate.disabled ? offlineGate.title : currentActionLabel}
-						class="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none active:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-40"
+						class="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
 					>
 						{#if event.is_current}
 							<XCircle class="size-5" />
@@ -397,7 +397,7 @@
 					disabled={offlineGate.disabled}
 					aria-label="Перенести"
 					title={offlineGate.disabled ? offlineGate.title : 'Перенести'}
-					class="inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none active:bg-accent active:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+					class="inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
 				>
 					<Shuffle class="size-5" />
 				</button>
@@ -411,8 +411,8 @@
 					class={[
 						'inline-flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40',
 						isSkipped
-							? 'text-muted-foreground hover:bg-accent hover:text-foreground active:bg-accent active:text-foreground'
-							: 'text-destructive hover:bg-destructive/10 active:bg-destructive/10'
+							? 'text-muted-foreground hover:bg-accent hover:text-foreground'
+							: 'text-destructive hover:bg-destructive/10'
 					]}
 				>
 					{#if isSkipped}

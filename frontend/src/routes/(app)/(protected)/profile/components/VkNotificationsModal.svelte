@@ -34,9 +34,8 @@
 		<ul class="flex flex-col gap-1 text-sm leading-relaxed text-muted-foreground">
 			<li>
 				Подключи ВКонтакте в
-				<a
-					href={resolve('/profile/account')}
-					class="font-medium text-primary hover:underline active:underline">настройках аккаунта</a
+				<a href={resolve('/profile/account')} class="font-medium text-primary hover:underline"
+					>настройках аккаунта</a
 				>.
 			</li>
 			<li>Открой сообщество и нажми «Разрешить сообщения».</li>

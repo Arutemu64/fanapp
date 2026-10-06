@@ -140,7 +140,7 @@
 				{#if query}
 					<button
 						type="button"
-						class="absolute right-2 text-muted-foreground hover:text-foreground active:text-foreground"
+						class="absolute right-2 text-muted-foreground hover:text-foreground"
 						onclick={() => (query = '')}
 						aria-label="Очистить поиск"
 					>
@@ -154,7 +154,7 @@
 					<button
 						type="button"
 						class={[
-							'w-full cursor-pointer px-3 py-2.5 text-left text-sm transition-colors hover:bg-primary/10 focus:outline-none focus-visible:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary active:bg-primary/10 sm:py-3 sm:text-base',
+							'w-full cursor-pointer px-3 py-2.5 text-left text-sm transition-colors hover:bg-primary/10 focus:outline-none focus-visible:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary sm:py-3 sm:text-base',
 							selectedId === ev.id && 'bg-primary/20'
 						]}
 						onclick={() => handleSelect(ev)}

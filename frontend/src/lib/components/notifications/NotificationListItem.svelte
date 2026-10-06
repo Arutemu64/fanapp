@@ -20,7 +20,7 @@
 	let path = $derived(notification.path ? (notification.path as Pathname) : undefined);
 
 	let cardClass =
-		'flex max-w-none flex-row items-start gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-sm transition-colors hover:bg-accent/50 active:bg-accent/50';
+		'flex max-w-none flex-row items-start gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-sm transition-colors hover:bg-accent/50';
 </script>
 
 {#snippet content()}
@@ -54,7 +54,7 @@
 	{#if path}
 		<a
 			href={resolve(path)}
-			class="flex items-start gap-3 p-3 text-left transition-colors hover:bg-accent active:bg-accent"
+			class="flex items-start gap-3 p-3 text-left transition-colors hover:bg-accent"
 		>
 			{@render content()}
 		</a>

@@ -2,8 +2,8 @@ import type { Page } from '@playwright/test';
 
 import { expect, loggedInAs, test } from '../fixtures';
 
-// The phone-only "native feel" layer: page transitions, the bottom-sheet dialog and
-// its swipe-to-dismiss, the bottom nav stepping aside for the keyboard. Each check
+// The phone-only "native feel" layer: page transitions, the bottom-sheet dialog,
+// the bottom nav stepping aside for the keyboard. Each check
 // also pins that the desktop project keeps the plain behaviour.
 
 const isDesktop = (projectName: string) => projectName === 'desktop-chromium';
@@ -25,19 +25,6 @@ async function recordedTransitions(page: Page): Promise<string[]> {
 	return page.evaluate(
 		() => (window as unknown as { __navTransitions: string[] }).__navTransitions
 	);
-}
-
-// A touch drag via CDP — Playwright's touchscreen API only taps.
-async function touchDrag(page: Page, x: number, y: number, distance: number, steps: number) {
-	const cdp = await page.context().newCDPSession(page);
-	await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
-	for (let step = 1; step <= steps; step++) {
-		await cdp.send('Input.dispatchTouchEvent', {
-			type: 'touchMove',
-			touchPoints: [{ x, y: y + (distance * step) / steps }]
-		});
-	}
-	await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
 }
 
 async function openEditProfile(page: Page) {
@@ -108,28 +95,5 @@ test.describe('native feel', () => {
 		await expect(nav).toBeHidden();
 		await dialog.getByRole('textbox').first().blur();
 		await expect(nav).toBeVisible();
-	});
-
-	test('a swipe down dismisses the sheet; a short drag snaps back', async ({
-		page,
-		api,
-		browserName
-	}, testInfo) => {
-		test.skip(isDesktop(testInfo.project.name), 'the sheet is phone-only');
-		test.skip(browserName !== 'chromium', 'touch drags are dispatched over CDP');
-		api.use(loggedInAs());
-		const dialog = await openEditProfile(page);
-		await page.waitForTimeout(300);
-		const box = (await dialog.boundingBox())!;
-		const x = box.x + box.width / 2;
-		const y = box.y + 40;
-
-		await touchDrag(page, x, y, 30, 5);
-		await page.waitForTimeout(300);
-		await expect(dialog).toBeVisible();
-		expect(Math.round((await dialog.boundingBox())!.y)).toBe(Math.round(box.y));
-
-		await touchDrag(page, x, y, 300, 10);
-		await expect(dialog).toBeHidden();
 	});
 });
