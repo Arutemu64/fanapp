@@ -5,7 +5,7 @@ import type {
 	ListVotingNominationsOutput
 } from '../../src/lib/api/generated';
 
-import { expect, json, loggedInAs, test } from '../fixtures';
+import { expect, json, loggedInAs, organizer, test } from '../fixtures';
 
 // The home hero fades its countdown cells in with a staggered per-cell delay. axe
 // reads computed colour, so a cell caught mid-fade blends with its backdrop and
@@ -82,6 +82,30 @@ test.describe('accessibility (axe)', { tag: '@a11y' }, () => {
 		});
 		await page.goto('/voting');
 		await expect(page.getByText('Лучший косплей')).toBeVisible();
+
+		const { violations } = await makeAxeBuilder().analyze();
+		expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+	});
+
+	test('the profile hub has no WCAG A/AA violations for a guest', async ({
+		page,
+		makeAxeBuilder
+	}) => {
+		await page.goto('/profile');
+		await expect(page.getByRole('heading', { name: 'Войди в аккаунт' })).toBeVisible();
+
+		const { violations } = await makeAxeBuilder().analyze();
+		expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
+	});
+
+	test('the profile hub has no WCAG A/AA violations for an organiser', async ({
+		page,
+		api,
+		makeAxeBuilder
+	}) => {
+		api.use(organizer());
+		await page.goto('/profile');
+		await expect(page.getByRole('link', { name: 'Инструменты' })).toBeVisible();
 
 		const { violations } = await makeAxeBuilder().analyze();
 		expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);

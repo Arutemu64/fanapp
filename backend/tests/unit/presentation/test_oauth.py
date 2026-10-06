@@ -20,7 +20,9 @@ from fanfan.presentation.web.oauth import (
     fetch_telegram_claims,
     read_flow_state,
     read_telegram_claims,
+    sanitize_return_path,
 )
+from fanfan.presentation.web.routes.auth.oauth import build_login_redirect
 
 pytestmark = pytest.mark.unit
 
@@ -258,3 +260,63 @@ async def test_an_issuer_that_moved_mid_flow_is_refused() -> None:
         await _read_state(app, "abc")
 
     assert failure.value.error_code == OAUTH_ERROR_FAILED
+
+
+@pytest.mark.parametrize(
+    "path", ["/", "/profile", "/voting?nomination=cosplay", "/schedule#now", "/a:b"]
+)
+def test_an_in_app_path_is_kept_as_the_return_path(path: str) -> None:
+    assert sanitize_return_path(path) == path
+
+
+# Each of these would leave the site once a browser resolves it: the backslash
+# and control-character forms normalize to the protocol-relative `//evil.com`.
+@pytest.mark.parametrize(
+    "raw",
+    [
+        pytest.param(None, id="missing"),
+        pytest.param("", id="empty"),
+        pytest.param("profile", id="relative"),
+        pytest.param("https://evil.com", id="absolute_url"),
+        pytest.param("javascript:alert(1)", id="script_scheme"),
+        pytest.param("//evil.com", id="protocol_relative"),
+        pytest.param("/\\evil.com", id="backslash"),
+        pytest.param("/\t/evil.com", id="tab"),
+        pytest.param("/\r\n/evil.com", id="newline"),
+        pytest.param("/" + "a" * 2048, id="too_long"),
+    ],
+)
+def test_anything_but_an_in_app_path_is_dropped(raw: str | None) -> None:
+    assert sanitize_return_path(raw) is None
+
+
+async def test_login_state_carries_the_return_path() -> None:
+    app = FakeTelegramApp(state_data=_login_state(return_path="/profile"))
+
+    flow_state = await _read_state(app, "abc")
+
+    assert flow_state.return_path == "/profile"
+
+
+# Re-validated on the way out, so a state written before the start route
+# sanitized (or by anything else) still cannot redirect off-site.
+async def test_an_off_site_return_path_in_state_is_dropped() -> None:
+    app = FakeTelegramApp(state_data=_login_state(return_path="//evil.com"))
+
+    flow_state = await _read_state(app, "abc")
+
+    assert flow_state.return_path is None
+
+
+def test_a_failed_login_keeps_the_return_path_for_the_retry() -> None:
+    response = build_login_redirect(OAUTH_ERROR_CANCELLED, "/profile")
+
+    assert response.headers["location"] == (
+        "/login?oauthLoginError=cancelled&next=%2Fprofile"
+    )
+
+
+def test_a_login_redirect_without_a_return_path_carries_only_the_error() -> None:
+    response = build_login_redirect(OAUTH_ERROR_FAILED)
+
+    assert response.headers["location"] == "/login?oauthLoginError=failed"

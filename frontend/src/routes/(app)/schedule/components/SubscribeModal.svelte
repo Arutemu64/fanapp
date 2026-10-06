@@ -131,7 +131,7 @@
 
 		<p class="text-sm leading-relaxed text-muted-foreground">
 			Напоминание придёт в уведомления — проверь, что они включены в <a
-				href={resolve('/profile')}
+				href={resolve('/profile/notifications')}
 				class="font-medium text-primary hover:underline">профиле</a
 			>.
 		</p>

@@ -40,14 +40,6 @@
 		})
 		.catch(() => {});
 
-	let isSidebarOpen = $state(false);
-	const closeSidebar = () => {
-		isSidebarOpen = false;
-	};
-	const toggleSidebar = () => {
-		isSidebarOpen = !isSidebarOpen;
-	};
-
 	// <main> is the scroll region and lives in this layout, so it persists across
 	// navigation — SvelteKit's scroll handling only manages the window, never this
 	// element. Two mechanisms cover the two axes of return:
@@ -127,8 +119,8 @@
 	// Hide-on-scroll is a mobile pattern: it reclaims scarce vertical space where a thumb
 	// flick reads scroll intent cleanly. On desktop space is plentiful, the thin bar saves
 	// almost nothing, and wheel/trackpad scrolling flip-flops direction enough to make the
-	// slide flicker — so at md+ (matching the breakpoint that hides the hamburger and bottom
-	// nav) the bar stays put. We keep tracking scroll everywhere and mask the result here, so
+	// slide flicker — so at md+ (the breakpoint that swaps the bottom nav for the sidebar)
+	// the bar stays put. We keep tracking scroll everywhere and mask the result here, so
 	// resizing across the breakpoint reveals the bar at once without a stale hidden state.
 	const isDesktop = new MediaQuery('(min-width: 48rem)');
 	let chromeHidden = $derived(navbarHidden && !isDesktop.current);
@@ -211,7 +203,7 @@
 <div class="flex h-dvh w-full overflow-hidden bg-background">
 	<SkipLink />
 
-	<AppSidebar {user} {activeUrl} {isSidebarOpen} {closeSidebar} scrollToTop={scrollMainToTop} />
+	<AppSidebar {activeUrl} scrollToTop={scrollMainToTop} />
 
 	<!-- <main> is the scrolling region, not this column: the landmark for the page's primary
 		content must not also swallow the top bar and the connection banner. -->
@@ -230,7 +222,7 @@
 			style:transition-duration={`${chromeTransitionMs}ms`}
 		>
 			<div bind:offsetHeight={navbarHeight}>
-				<AppNavbar {user} {toggleSidebar} />
+				<AppNavbar {user} />
 			</div>
 			<ConnectionBanner />
 		</div>

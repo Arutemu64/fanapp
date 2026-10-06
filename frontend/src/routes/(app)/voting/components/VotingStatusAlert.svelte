@@ -41,7 +41,7 @@
 		<Alert.Description class="flex items-center gap-1">
 			<span>{getStatusMessage(votingState.status)}</span>
 			{#if votingState.status === 'no_ticket'}
-				<a href={resolve('/profile')} class="font-medium underline">Привязать билет</a>
+				<a href={resolve('/profile/ticket')} class="font-medium underline">Привязать билет</a>
 			{/if}
 		</Alert.Description>
 	</Alert.Root>

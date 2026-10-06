@@ -156,7 +156,7 @@
 			eventsClient.off('connection_established', reloadAfterReconnect);
 			// Session ended (the bell only renders while logged in): drop the OS icon
 			// badge so the previous user's count can't linger on a shared or installed
-			// device. Covers passive 401 expiry too, which never runs AppNavbar's logout.
+			// device. Covers passive 401 expiry too, which never runs LogoutButton.
 			setAppBadgeCount(0);
 		};
 	});

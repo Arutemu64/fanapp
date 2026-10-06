@@ -1665,7 +1665,12 @@ export type StartSocialLoginData = {
 	path: {
 		provider: SocialProvider;
 	};
-	query?: never;
+	query?: {
+		/**
+		 * Next
+		 */
+		next?: string | null;
+	};
 	url: '/auth/oauth/{provider}/start';
 };
 

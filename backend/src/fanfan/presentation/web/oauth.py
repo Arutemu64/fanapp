@@ -19,12 +19,12 @@ provider into the state to save a route.
 import logging
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import Any
-from urllib.parse import urlencode
+from typing import Annotated, Any
+from urllib.parse import urlencode, urlsplit
 
 import httpx2
 from authlib.integrations.starlette_client import OAuthError, StarletteOAuth2App
-from pydantic import BaseModel, ValidationError
+from pydantic import AfterValidator, BaseModel, ValidationError
 from starlette.requests import Request
 
 from fanfan.core.exceptions.auth import InvalidTelegramAuthPayload
@@ -57,6 +57,48 @@ PROVIDER_ISSUERS: dict[SocialProvider, str] = {
 }
 
 
+# Generous for any in-app path plus query, small enough that a crafted link can't
+# bloat the server-side state store.
+_RETURN_PATH_MAX_LENGTH = 2048
+# C0 controls (U+0000-U+001F) and DEL, the range URL parsers strip or choke on.
+_FIRST_PRINTABLE_CODE_POINT = 0x20
+_DELETE_CODE_POINT = 0x7F
+
+
+def sanitize_return_path(raw: str | None) -> str | None:
+    r"""Accept `raw` only as a path on this site; anything else becomes None.
+
+    The post-login destination arrives from the browser (`?next=`), so it is an
+    open-redirect vector. OWASP's Unvalidated Redirects cheat sheet asks for the
+    *parsed* URL to be checked rather than a raw prefix, so the path must parse
+    with no scheme and no host. Backslashes and control characters are refused
+    outright because browsers rewrite `\` to `/` and strip tab/CR/LF, which turns
+    `/\evil.com` or `/\t/evil.com` into the protocol-relative `//evil.com` after
+    this check has passed. Mirrors the frontend's `sanitizeNextPath`.
+    """
+    if not raw or len(raw) > _RETURN_PATH_MAX_LENGTH:
+        return None
+
+    if "\\" in raw:
+        return None
+
+    if any(_is_control_character(char) for char in raw):
+        return None
+
+    if not raw.startswith("/") or raw.startswith("//"):
+        return None
+
+    parts = urlsplit(raw)
+    if parts.scheme or parts.netloc:
+        return None
+
+    return raw
+
+
+def _is_control_character(char: str) -> bool:
+    return ord(char) < _FIRST_PRINTABLE_CODE_POINT or ord(char) == _DELETE_CODE_POINT
+
+
 class OAuthIntent(StrEnum):
     """Why a flow was started. Decided at the start route, never at the callback.
 
@@ -86,6 +128,10 @@ class OAuthFlowState(BaseModel):
     # Only set for LINK: who asked for it. Compared against the session at the
     # callback so a mid-flow login as somebody else cannot retarget the link.
     initiator_user_id: UserId | None = None
+    # Only set for LOGIN: the in-app path to land on afterwards. Validated on the
+    # way in and again on the way out, so even a state written by older code can
+    # never redirect off-site.
+    return_path: Annotated[str | None, AfterValidator(sanitize_return_path)] = None
 
 
 class TelegramClaims(BaseModel):

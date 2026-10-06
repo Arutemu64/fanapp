@@ -346,7 +346,7 @@ export const listOauthProviders = <ThrowOnError extends boolean = false>(
 /**
  * Start social login
  *
- * Redirects the browser to the provider's OAuth page to begin signing in. The provider then calls back to the callback endpoint to finish. If the redirect cannot be built the browser goes back to the login page with an `oauthLoginError` query param instead.
+ * Redirects the browser to the provider's OAuth page to begin signing in. The provider then calls back to the callback endpoint to finish. An optional `next` in-app path is kept server-side and becomes the post-login destination; anything that is not a same-site path is ignored. If the redirect cannot be built the browser goes back to the login page with an `oauthLoginError` query param instead.
  */
 export const startSocialLogin = <ThrowOnError extends boolean = false>(
 	options: Options<StartSocialLoginData, ThrowOnError>
@@ -359,7 +359,7 @@ export const startSocialLogin = <ThrowOnError extends boolean = false>(
 /**
  * Finish a social login or account link
  *
- * OAuth callback shared by both flows; which one it is comes from the intent stored in the OAuth state, never from the request. On a login it sets the session cookie and redirects to the app root; on a link it attaches the account and redirects to the profile page. Every failure also redirects, carrying an `oauthLoginError` or `oauthLinkError` query param the frontend turns into a toast; this route never answers with an error body, because the browser would render it as the page. Invoked by the provider, not called directly by the frontend.
+ * OAuth callback shared by both flows; which one it is comes from the intent stored in the OAuth state, never from the request. On a login it sets the session cookie and redirects to the `next` path given at the start, or the app root; on a link it attaches the account and redirects to the profile page. Every failure also redirects, carrying an `oauthLoginError` or `oauthLinkError` query param the frontend turns into a toast; this route never answers with an error body, because the browser would render it as the page. Invoked by the provider, not called directly by the frontend.
  */
 export const oauthCallback = <ThrowOnError extends boolean = false>(
 	options: Options<OauthCallbackData, ThrowOnError>

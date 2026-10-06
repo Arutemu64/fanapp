@@ -10,8 +10,10 @@ test.describe('app boot', { tag: ['@smoke', '@critical'] }, () => {
 		await expect(page).toHaveTitle('ФАН ФАН');
 		await expect(page.getByRole('heading', { name: 'ФАН ФАН 2026' })).toBeVisible();
 
-		// Guest affordance: the login entry point is offered.
-		await expect(page.getByRole('link', { name: 'Войти' }).first()).toBeVisible();
+		// Guest affordance: the Profile tab, which is where login lives, is offered.
+		await expect(
+			page.getByRole('navigation', { name: 'Разделы' }).getByRole('link', { name: 'Профиль' })
+		).toBeVisible();
 
 		// The baseline covered every boot request — nothing hit the loud 404.
 		expect(api.unmatched).toEqual([]);

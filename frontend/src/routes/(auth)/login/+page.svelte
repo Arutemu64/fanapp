@@ -1,12 +1,14 @@
 <script lang="ts">
 	import type { SocialProvider } from '$lib/api/generated';
 
+	import { page } from '$app/state';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { ALL_SOCIAL_PROVIDERS, SOCIAL_PROVIDER_PRESENTATION } from '$lib/data/socialProviders';
 	import { getToastService } from '$lib/services/toasts.svelte';
+	import { LOGIN_NEXT_PARAM, sanitizeNextPath } from '$lib/utils/auth';
 	import { clearOAuthErrorParam, OAUTH_LOGIN_ERROR_PARAM } from '$lib/utils/oauthErrors';
 	import { Mail } from '@lucide/svelte';
 	import { onMount } from 'svelte';
@@ -45,6 +47,19 @@
 	// was heard. Tracking which provider is opening lets each button show its own
 	// spinner while a pending navigation blocks starting a second one.
 	let openingProvider = $state<SocialProvider | null>(null);
+
+	// The email forms read `next` straight off the URL in completeLogin; a social
+	// login leaves for the provider, so the backend carries it through the OAuth
+	// state instead (and re-validates it there) and lands the user on it.
+	let nextPath = $derived(sanitizeNextPath(page.url.searchParams.get(LOGIN_NEXT_PARAM)));
+
+	function providerStartUrl(provider: SocialProvider): string {
+		const url = `${PUBLIC_API_URL}/auth/oauth/${provider}/start`;
+		if (!nextPath) return url;
+
+		const query = new URLSearchParams({ [LOGIN_NEXT_PARAM]: nextPath });
+		return `${url}?${query}`;
+	}
 
 	function handleProviderClick(event: MouseEvent, provider: SocialProvider) {
 		if (openingProvider !== null) {
@@ -117,7 +132,7 @@
 				{@const meta = SOCIAL_PROVIDER_PRESENTATION[provider]}
 				{@const Icon = meta.icon}
 				<Button
-					href={`${PUBLIC_API_URL}/auth/oauth/${provider}/start`}
+					href={providerStartUrl(provider)}
 					variant="outline"
 					class="w-full"
 					aria-disabled={openingProvider === provider}

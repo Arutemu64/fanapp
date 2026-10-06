@@ -12,7 +12,7 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { offlineWriteGate } from '$lib/utils/offlineAction';
-	import { CheckCircle2, Ticket } from '@lucide/svelte';
+	import { CheckCircle2 } from '@lucide/svelte';
 
 	import ProfileCardShell from './ProfileCardShell.svelte';
 
@@ -61,11 +61,7 @@
 	}
 </script>
 
-<ProfileCardShell title="Билет" description="Привяжи билет, чтобы получить доступ к голосованию.">
-	{#snippet icon()}
-		<Ticket class="size-5" />
-	{/snippet}
-
+<ProfileCardShell description="Привяжи билет, чтобы получить доступ к голосованию.">
 	{#if user.ticket}
 		<div class="rounded-lg bg-success/10 p-4">
 			<div class="flex items-center gap-2">

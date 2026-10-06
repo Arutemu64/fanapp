@@ -4,7 +4,11 @@
 	import * as Card from '$lib/components/ui/card';
 
 	interface Props {
-		title: string;
+		/**
+		 * Omit on a card that is the whole page: the top bar already shows the page
+		 * title, so a heading here would repeat it. The description then leads the card.
+		 */
+		title?: string;
 		description?: string;
 		icon?: Snippet;
 		children: Snippet;
@@ -20,23 +24,27 @@
 	<div class="px-5 sm:px-6">
 		<div class="flex flex-col gap-4">
 			<!-- Shared header keeps all profile cards visually aligned. -->
-			<div class="flex items-start gap-3">
-				{#if icon}
-					<div
-						class="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
-					>
-						{@render icon()}
-					</div>
-				{/if}
-
-				<div class="min-w-0">
-					<h3 class="text-lg font-bold text-foreground">{title}</h3>
-
-					{#if description}
-						<p class="mt-1 text-sm leading-5 text-muted-foreground">{description}</p>
+			{#if title}
+				<div class="flex items-start gap-3">
+					{#if icon}
+						<div
+							class="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+						>
+							{@render icon()}
+						</div>
 					{/if}
+
+					<div class="min-w-0">
+						<h3 class="text-lg font-bold text-foreground">{title}</h3>
+
+						{#if description}
+							<p class="mt-1 text-sm leading-5 text-muted-foreground">{description}</p>
+						{/if}
+					</div>
 				</div>
-			</div>
+			{:else if description}
+				<p class="text-sm leading-5 text-muted-foreground">{description}</p>
+			{/if}
 
 			<div class="flex flex-col gap-4">
 				{@render children()}
