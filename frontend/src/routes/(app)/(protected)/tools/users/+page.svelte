@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import BackLink from '$lib/components/BackLink.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { Badge } from '$lib/components/ui/badge';
@@ -62,8 +61,6 @@
 <svelte:head>
 	<title>Пользователи · ФАН ФАН</title>
 </svelte:head>
-
-<BackLink href="/tools" label="Назад к инструментам" />
 
 <SectionIntro
 	description="Список всех пользователей. Найди по имени или почте и открой карточку."

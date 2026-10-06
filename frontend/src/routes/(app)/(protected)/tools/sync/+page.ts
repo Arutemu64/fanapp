@@ -1,3 +1,5 @@
+import type { BackTarget } from '$lib/types/navigation';
+
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
 import { getSyncSources } from '$lib/api/generated';
@@ -35,6 +37,7 @@ export const load: PageLoad = async ({ parent, fetch, depends }) => {
 
 	return {
 		title: 'Синхронизация',
+		back: { href: '/tools', label: 'Назад к инструментам' } satisfies BackTarget,
 		sources: data
 	};
 };

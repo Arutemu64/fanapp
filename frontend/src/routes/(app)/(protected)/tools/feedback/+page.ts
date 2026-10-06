@@ -1,3 +1,5 @@
+import type { BackTarget } from '$lib/types/navigation';
+
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
 import { listFeedback } from '$lib/api/generated';
@@ -38,6 +40,7 @@ export const load: PageLoad = async ({ fetch, parent }) => {
 	const feedback = data.feedback ?? [];
 	return {
 		title: 'Отзывы',
+		back: { href: '/tools', label: 'Назад к инструментам' } satisfies BackTarget,
 		feedback: feedback.slice(0, FEEDBACK_PAGE_SIZE),
 		hasMore: feedback.length > FEEDBACK_PAGE_SIZE
 	};

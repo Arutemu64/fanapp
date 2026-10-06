@@ -112,7 +112,7 @@ shadcn-svelte (vendored as source in `$lib/components/ui/`) is the component sub
 
 ### Navigation
 - **Mobile — Bottom Nav:** Fixed, 4 columns, `border-t`, `white`/`gray-900` fill, respects `env(safe-area-inset-bottom)`, `md:hidden`. Active item = solid icon in `primary-600`/`primary-400`; idle = outline icon in `gray-500`/`gray-400` with primary on hover. Active state pairs icon *fill* change with color — never color alone.
-- **Desktop — Sidebar + Navbar:** Sidebar (`md:` and up) for primary nav; top navbar carries the current page title and account/notification entry points. Bottom nav is hidden on desktop.
+- **Desktop — Sidebar + Navbar:** Sidebar (`md:` and up) for primary nav; top navbar carries the current page title, a leading back arrow on nested pages (on phones too), and the notification bell. Bottom nav is hidden on desktop.
 
 ### Empty & Loading States
 - **Loading:** Skeletons that mimic the content's shape — never a centered spinner in the content area.

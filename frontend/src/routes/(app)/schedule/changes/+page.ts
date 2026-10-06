@@ -1,3 +1,5 @@
+import type { BackTarget } from '$lib/types/navigation';
+
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
 import { listScheduleChanges } from '$lib/api/generated';
@@ -44,6 +46,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	const changes = data.schedule_changes ?? [];
 	return {
 		title: 'Изменения программы',
+		back: { href: '/schedule', label: 'Назад к программе' } satisfies BackTarget,
 		schedule_changes: changes.slice(0, SCHEDULE_CHANGES_PAGE_SIZE),
 		hasMore: changes.length > SCHEDULE_CHANGES_PAGE_SIZE
 	};

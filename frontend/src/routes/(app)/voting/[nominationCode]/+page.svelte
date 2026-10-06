@@ -2,7 +2,6 @@
 	import type { GetVotingNominationOutput } from '$lib/api/generated';
 
 	import { invalidate } from '$app/navigation';
-	import BackLink from '$lib/components/BackLink.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { Button } from '$lib/components/ui/button';
@@ -57,8 +56,6 @@
 <svelte:head>
 	<title>{nomination ? `${nomination.title} · ` : ''}Голосование · ФАН ФАН</title>
 </svelte:head>
-
-<BackLink href="/voting" label="Назад к номинациям" />
 
 {#if data.offlineUnavailable || !nomination}
 	<!-- Voting is uncached and online-only, so there is no saved copy to show —

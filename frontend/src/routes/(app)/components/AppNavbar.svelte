@@ -1,12 +1,17 @@
 <script lang="ts">
 	import type { CurrentUserDto } from '$lib/api/generated';
 
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import { Button } from '$lib/components/ui/button';
+	import { ArrowLeft } from '@lucide/svelte';
 
 	import NotificationBell from './NotificationBell.svelte';
 
 	// Pages expose their heading through `load` -> `page.data.title`.
 	let pageTitle = $derived(page.data.title);
+	// Nested pages name their parent the same way; tab roots set none.
+	let back = $derived(page.data.back);
 
 	interface Props {
 		user: CurrentUserDto | null;
@@ -25,7 +30,21 @@
 	<!-- Page title comes from each page's `load` via `page.data.title`; render it
 		as the single page <h1>. The row is held at the bell's h-11 so the bar keeps
 		one height whether or not the bell renders (guests have none). -->
-	<div class="flex h-11 min-w-0 flex-1 items-center">
+	<div class="flex h-11 min-w-0 flex-1 items-center gap-1">
+		<!-- Leading back arrow, the top-app-bar convention: an installed iOS PWA has no
+			system back button, and unlike an in-content link this one returns with the
+			bar on any upward scroll. -ml-2 lines the arrow glyph up with the page edge. -->
+		{#if back}
+			<Button
+				href={resolve(back.href)}
+				variant="ghost"
+				size="icon"
+				class="-ml-2"
+				aria-label={back.label}
+			>
+				<ArrowLeft class="size-5" />
+			</Button>
+		{/if}
 		{#if pageTitle}
 			<h1 class="truncate text-lg font-semibold text-foreground sm:text-xl">
 				{pageTitle}

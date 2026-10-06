@@ -4,6 +4,7 @@
 // for information about these interfaces
 
 import type { CurrentUserDto } from '$lib/api/generated';
+import type { BackTarget } from '$lib/types/navigation';
 
 declare global {
 	namespace App {
@@ -19,6 +20,8 @@ declare global {
 			user: CurrentUserDto | null;
 			/** Page heading rendered in the navbar; set per page via `load`. */
 			title?: string;
+			/** Parent route for the navbar's back arrow; set by nested pages via `load`. */
+			back?: BackTarget;
 		}
 		// interface PageState {}
 		// interface Platform {}

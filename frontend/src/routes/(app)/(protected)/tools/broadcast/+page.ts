@@ -1,4 +1,5 @@
 import type { MailingDto } from '$lib/api/generated';
+import type { BackTarget } from '$lib/types/navigation';
 
 import { createApiClient } from '$lib/api';
 import { listBroadcasts } from '$lib/api/generated';
@@ -37,6 +38,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 
 	return {
 		title: 'Рассылка уведомлений',
+		back: { href: '/tools', label: 'Назад к инструментам' } satisfies BackTarget,
 		mailings,
 		hasMore
 	};

@@ -4,7 +4,6 @@
 	import { createApiClient } from '$lib/api';
 	import { getApiErrorDetail } from '$lib/api/errors';
 	import { drawVotingContestWinner, setVotingTimeRange } from '$lib/api/generated';
-	import BackLink from '$lib/components/BackLink.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import * as Alert from '$lib/components/ui/alert';
@@ -108,8 +107,6 @@
 <svelte:head>
 	<title>Голосование · ФАН ФАН</title>
 </svelte:head>
-
-<BackLink href="/tools" label="Назад к инструментам" />
 
 <SectionIntro
 	description="Задавай период голосования, следи за лидерами номинаций и разыгрывай приз среди тех, кто проголосовал во всех номинациях."
