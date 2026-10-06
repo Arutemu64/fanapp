@@ -55,6 +55,13 @@
 	});
 </script>
 
+<!-- iOS Safari applies :active only while a touch listener sits on the element or an
+	ancestor, so without this the press half of the `hover` variant (app.css) never
+	shows on an iPhone.
+	Empty and passive (Svelte's default for touchstart): it never delays scrolling.
+	https://web.dev/articles/add-touch-to-your-site -->
+<svelte:document ontouchstart={() => {}} />
+
 <!-- Fallback title; pages override via their own <svelte:head><title>. -->
 <svelte:head>
 	<title>ФАН ФАН</title>

@@ -25,7 +25,7 @@
 	Positioning (overlay, z-index, hide-on-scroll) is owned by the (app) layout, which
 	slides this bar with `top` to keep its backdrop blur intact. -->
 <header
-	class="flex items-center justify-between gap-2 border-b border-border/50 bg-background/80 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] backdrop-blur-md transition-colors duration-300 sm:px-6"
+	class="flex items-center justify-between gap-2 border-b border-border/50 bg-background/80 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] backdrop-blur-md transition-colors duration-300 select-none [-webkit-touch-callout:none] sm:px-6"
 >
 	<!-- Page title comes from each page's `load` via `page.data.title`; render it
 		as the single page <h1>. The row is held at the bell's h-11 so the bar keeps

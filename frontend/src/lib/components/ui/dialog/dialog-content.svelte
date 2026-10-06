@@ -30,12 +30,25 @@
 		bind:ref
 		data-slot="dialog-content"
 		class={cn(
-			'fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-6 rounded-2xl bg-popover p-6 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
+			'fixed z-50 grid w-full gap-6 bg-popover p-6 text-sm text-popover-foreground ring-1 ring-foreground/10 outline-none data-open:animate-in data-closed:animate-out',
+			// Phones: a bottom sheet — thumb-reachable, clear of the home indicator, and
+			// scrolling its body (below) when taller than the screen. The easing is iOS's
+			// sheet curve (the one Vaul uses).
+			'max-sm:inset-x-0 max-sm:bottom-0 max-sm:flex max-sm:max-h-[calc(100dvh-env(safe-area-inset-top)-2rem)] max-sm:flex-col max-sm:rounded-t-2xl max-sm:pb-[calc(1.5rem+env(safe-area-inset-bottom))] max-sm:duration-250 max-sm:ease-[cubic-bezier(0.32,0.72,0,1)] max-sm:data-open:slide-in-from-bottom max-sm:data-closed:slide-out-to-bottom',
+			// sm and up: a centred dialog.
+			'sm:top-1/2 sm:left-1/2 sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:duration-100 sm:data-open:fade-in-0 sm:data-open:zoom-in-95 sm:data-closed:fade-out-0 sm:data-closed:zoom-out-95',
 			className
 		)}
 		{...restProps}
 	>
-		{@render children?.()}
+		<!-- On phones the body scrolls, not the sheet, so the absolutely positioned close
+			button stays in view on a tall form. `contents` elsewhere keeps the children as
+			direct grid items. The 1-unit inset stops the scroller clipping focus rings. -->
+		<div
+			class="contents max-sm:-m-1 max-sm:grid max-sm:min-h-0 max-sm:gap-6 max-sm:overflow-y-auto max-sm:overscroll-contain max-sm:p-1"
+		>
+			{@render children?.()}
+		</div>
 		{#if showCloseButton}
 			<DialogPrimitive.Close data-slot="dialog-close">
 				{#snippet child({ props })}

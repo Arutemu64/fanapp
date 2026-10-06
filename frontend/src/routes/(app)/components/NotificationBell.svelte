@@ -227,7 +227,7 @@
 			</button>
 		</div>
 
-		<div class="max-h-96 divide-y divide-border overflow-y-auto">
+		<div class="max-h-96 divide-y divide-border overflow-y-auto overscroll-contain">
 			{#if notifications.length > 0}
 				{#each notifications as notification (notification.id)}
 					<NotificationListItem {notification} compact={true} />

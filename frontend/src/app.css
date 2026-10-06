@@ -7,6 +7,26 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * `hover:` also applies while pressed. Tailwind v4 gates hover behind
+ * (hover: hover), so on a phone a hover style never shows and a tap gives no
+ * feedback at all. Folding :active into the variant gives every `hover:` style
+ * (and `group-hover:`, `[a]:hover:`, …) a matching press state on touch, while a
+ * mouse sees no change: it is already hovering by the time it presses. Overriding
+ * the built-in variant is Tailwind's documented escape hatch for this:
+ * https://tailwindcss.com/docs/upgrade-guide
+ */
+@custom-variant hover {
+	@media (hover: hover) {
+		&:hover {
+			@slot;
+		}
+	}
+	&:active {
+		@slot;
+	}
+}
+
 @theme {
 	--font-sans: 'Inter Variable', sans-serif;
 	--font-display: 'Unbounded Variable', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
@@ -111,7 +131,26 @@
 	html {
 		font-size: 16px;
 		-webkit-text-size-adjust: 100%;
+		/*
+		 * Drop the grey WebKit tap flash: tappable surfaces show their own pressed
+		 * state through the `hover` variant above, which the flash would only muddy.
+		 */
+		-webkit-tap-highlight-color: transparent;
 		@apply font-sans;
+	}
+
+	/*
+	 * In the installed app there is no browser chrome to pull or bounce, so a root
+	 * rubber-band or Chrome's pull-to-refresh just drags the whole shell — bars
+	 * included — off the screen. <main> is the scroll region, and its own overscroll
+	 * stays native; this only stops it chaining into the root. A browser tab keeps
+	 * pull-to-refresh. https://firt.dev/pwa-design-tips/
+	 */
+	@media (display-mode: standalone) {
+		html,
+		body {
+			overscroll-behavior: none;
+		}
 	}
 
 	/* disable chrome cancel button */
@@ -266,4 +305,99 @@
 	--sidebar-accent-foreground: oklch(0.985 0 0);
 	--sidebar-border: oklch(1 0 0 / 10%);
 	--sidebar-ring: oklch(0.556 0 0);
+}
+
+/*
+ * Page transitions, started by onNavigate in (app)/+layout.svelte on phones only,
+ * which sets data-nav-transition for the run (direction: navTransition.ts). Material's
+ * shared-axis pattern, kept inside DESIGN.md's 250ms: the old page fades out fast,
+ * the new one fades in after it, while both shift 2rem along the axis. Only <main>
+ * (`page`) moves; the top chrome and bottom nav are named groups of their own, so they
+ * hold still and just cross-fade what changed (title, back arrow, active tab).
+ * https://m2.material.io/develop/android/theming/motion
+ */
+@keyframes nav-fade-out {
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes nav-fade-in {
+	from {
+		opacity: 0;
+	}
+}
+
+@keyframes nav-shift-from-end {
+	from {
+		transform: translateX(2rem);
+	}
+}
+
+@keyframes nav-shift-to-start {
+	to {
+		transform: translateX(-2rem);
+	}
+}
+
+@keyframes nav-shift-from-start {
+	from {
+		transform: translateX(-2rem);
+	}
+}
+
+@keyframes nav-shift-to-end {
+	to {
+		transform: translateX(2rem);
+	}
+}
+
+::view-transition-group(*) {
+	animation-duration: 250ms;
+	animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+html[data-nav-transition]::view-transition-old(page) {
+	animation: 80ms cubic-bezier(0.4, 0, 1, 1) both nav-fade-out;
+}
+
+html[data-nav-transition]::view-transition-new(page) {
+	animation: 170ms cubic-bezier(0, 0, 0.2, 1) 80ms both nav-fade-in;
+}
+
+html[data-nav-transition='forward']::view-transition-old(page) {
+	animation:
+		80ms cubic-bezier(0.4, 0, 1, 1) both nav-fade-out,
+		250ms cubic-bezier(0.2, 0, 0, 1) both nav-shift-to-start;
+}
+
+html[data-nav-transition='forward']::view-transition-new(page) {
+	animation:
+		170ms cubic-bezier(0, 0, 0.2, 1) 80ms both nav-fade-in,
+		250ms cubic-bezier(0.2, 0, 0, 1) both nav-shift-from-end;
+}
+
+html[data-nav-transition='back']::view-transition-old(page) {
+	animation:
+		80ms cubic-bezier(0.4, 0, 1, 1) both nav-fade-out,
+		250ms cubic-bezier(0.2, 0, 0, 1) both nav-shift-to-end;
+}
+
+html[data-nav-transition='back']::view-transition-new(page) {
+	animation:
+		170ms cubic-bezier(0, 0, 0.2, 1) 80ms both nav-fade-in,
+		250ms cubic-bezier(0.2, 0, 0, 1) both nav-shift-from-start;
+}
+
+/*
+ * The JS skips the transition under reduced motion; this covers a preference that
+ * flips mid-transition. The global reduced-motion rule above can't: `*` does not
+ * match the ::view-transition-* pseudo-elements.
+ */
+@media (prefers-reduced-motion: reduce) {
+	::view-transition-group(*),
+	::view-transition-old(*),
+	::view-transition-new(*) {
+		animation: none !important;
+	}
 }
