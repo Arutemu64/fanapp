@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from datetime import UTC, datetime
 from uuid import uuid7
 
 import pytest
@@ -8,12 +9,14 @@ from fanfan.application.interactors.voting.cancel_vote import (
     CancelVote,
     CancelVoteInput,
 )
+from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.application.ports.gateways.outbox import OutboxGateway
 from fanfan.application.ports.gateways.participants import ParticipantGateway
 from fanfan.application.ports.gateways.users import UserGateway
 from fanfan.application.ports.gateways.votes import VoteGateway
 from fanfan.application.ports.uow import UnitOfWork
+from fanfan.core.exceptions.base import AccessDenied
 from fanfan.core.exceptions.votes import VoteNotFound
 from fanfan.core.models.nomination import Nomination
 from fanfan.core.models.participant import Participant
@@ -30,6 +33,19 @@ pytestmark = [
 ]
 
 
+async def _set_voting_open(dishka_request: AsyncContainer, *, is_open: bool) -> None:
+    settings_gateway = await dishka_request.get(AppSettingsGateway)
+    settings = await settings_gateway.get_for_update()
+    if is_open:
+        settings.set_voting_time_range(
+            start=datetime(2020, 1, 1, tzinfo=UTC),
+            end=datetime(2099, 1, 1, tzinfo=UTC),
+        )
+    else:
+        settings.set_voting_time_range(start=None, end=None)
+    await settings_gateway.save(settings)
+
+
 async def test_cancel_vote_deletes_vote(
     dishka_request: AsyncContainer,
     visitor_with_ticket: User,
@@ -42,6 +58,7 @@ async def test_cancel_vote_deletes_vote(
     participant_gateway = await dishka_request.get(ParticipantGateway)
     vote_gateway = await dishka_request.get(VoteGateway)
     login(visitor_with_ticket)
+    await _set_voting_open(dishka_request, is_open=True)
 
     nomination = Nomination(
         id=generate_nomination_id(),
@@ -84,6 +101,7 @@ async def test_cancel_vote_for_missing_vote_raises_not_found(
 ) -> None:
     interactor = await dishka_request.get(CancelVote)
     login(visitor_with_ticket)
+    await _set_voting_open(dishka_request, is_open=True)
 
     with pytest.raises(VoteNotFound):
         await interactor(CancelVoteInput(vote_id=VoteId(uuid7())))
@@ -104,6 +122,7 @@ async def test_cancel_vote_owned_by_another_user_raises_not_found(
     user_gateway = await dishka_request.get(UserGateway)
     vote_gateway = await dishka_request.get(VoteGateway)
     login(visitor_with_ticket)
+    await _set_voting_open(dishka_request, is_open=True)
 
     nomination = Nomination(
         id=generate_nomination_id(),
@@ -142,4 +161,47 @@ async def test_cancel_vote_owned_by_another_user_raises_not_found(
         await interactor(CancelVoteInput(vote_id=other_vote.id))
 
     assert await vote_gateway.get(other_vote.id) is not None
+    assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []
+
+
+async def test_cancel_vote_when_voting_closed_raises_access_denied(
+    dishka_request: AsyncContainer,
+    visitor_with_ticket: User,
+    login: Callable[[User], None],
+    outbox: OutboxGateway,
+    uow: UnitOfWork,
+) -> None:
+    interactor = await dishka_request.get(CancelVote)
+    nomination_gateway = await dishka_request.get(NominationGateway)
+    participant_gateway = await dishka_request.get(ParticipantGateway)
+    vote_gateway = await dishka_request.get(VoteGateway)
+    login(visitor_with_ticket)
+    await _set_voting_open(dishka_request, is_open=False)
+
+    nomination = Nomination(
+        id=generate_nomination_id(),
+        cosplay2_id=1103,
+        code="cancel-vote-closed-test",
+        title="Тестовая номинация cancel-vote-closed-test",
+        is_votable=True,
+    )
+    participant = Participant(
+        id=generate_participant_id(),
+        cosplay2_id=2103,
+        title="Тестовый участник после закрытия",
+        nomination_id=nomination.id,
+        voting_number=1,
+    )
+    vote = Vote.create(user_id=visitor_with_ticket.id, participant_id=participant.id)
+    await nomination_gateway.add(nomination)
+    await participant_gateway.add(participant)
+    await vote_gateway.add(vote)
+    await uow.commit()
+
+    with pytest.raises(AccessDenied) as exc_info:
+        await interactor(CancelVoteInput(vote_id=vote.id))
+
+    # A closed ballot is final: the vote still counts.
+    assert exc_info.value.details == {"reason": "VOTING_DISABLED"}
+    assert await vote_gateway.get(vote.id) is not None
     assert [(m.subject, m.payload) for m in await outbox.fetch_unpublished(1000)] == []

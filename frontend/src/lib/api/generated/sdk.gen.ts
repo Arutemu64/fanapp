@@ -993,7 +993,7 @@ export const addVote = <ThrowOnError extends boolean = false>(
 /**
  * Cancel a vote
  *
- * Removes a previously cast vote by its ID.
+ * Removes a previously cast vote by its ID. Allowed only while voting is open, like casting one.
  */
 export const cancelVote = <ThrowOnError extends boolean = false>(
 	options: Options<CancelVoteData, ThrowOnError>
