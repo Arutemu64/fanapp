@@ -15,7 +15,7 @@
 		participant: ParticipantFullDto;
 		vote: ParticipantVoteDto;
 		canVote: boolean;
-		onCancelled?: () => void;
+		onCancelled?: () => Promise<void> | void;
 	}
 
 	let { participant, vote, canVote, onCancelled }: Props = $props();
@@ -44,8 +44,11 @@
 				return;
 			}
 
+			// Wait for the refetch before confirming: the participant's row keeps its
+			// old count and «Твой голос» badge until then, and a toast landing first
+			// would contradict it on slow con-venue wifi. The spinner covers the gap.
+			await onCancelled?.();
 			toastService.add('Голос отменён', 'success');
-			onCancelled?.();
 		} finally {
 			isLoading = false;
 		}
