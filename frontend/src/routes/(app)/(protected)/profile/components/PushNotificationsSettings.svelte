@@ -13,6 +13,7 @@
 		unsubscribe,
 		updateCurrentUserSettings
 	} from '$lib/api/generated';
+	import MenuGroup from '$lib/components/MenuGroup.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Switch } from '$lib/components/ui/switch';
 	import { getPwaService } from '$lib/services/pwa.svelte';
@@ -21,8 +22,8 @@
 	import * as Sentry from '@sentry/sveltekit';
 	import { onMount } from 'svelte';
 
-	import ProfileCardShell from './ProfileCardShell.svelte';
 	import { urlBase64ToUint8Array } from './push';
+	import SettingsSection from './SettingsSection.svelte';
 	import VkNotificationsModal from './VkNotificationsModal.svelte';
 
 	interface Props {
@@ -339,99 +340,100 @@
 	}
 </script>
 
-<ProfileCardShell description="Настрой уведомления, чтобы не пропустить анонсы и важные сообщения.">
-	<div class="rounded-lg border border-border">
-		<div class="border-b border-border px-3 py-2.5 sm:px-4">
-			<h2 class="text-sm font-semibold text-foreground">Каналы</h2>
-		</div>
+<div class="flex flex-col gap-6">
+	<p class="text-sm leading-5 text-muted-foreground">
+		Настрой уведомления, чтобы не пропустить анонсы и важные сообщения.
+	</p>
 
-		<div class="flex items-start justify-between gap-3 p-3 sm:p-4">
-			<div class="min-w-0">
-				<span class="text-sm font-medium text-foreground">На этом устройстве</span>
-				<p class="mt-1 text-sm leading-relaxed text-muted-foreground">
-					Приходят как обычные уведомления телефона, даже когда приложение закрыто.
-				</p>
-				{#if pushUnsupported}
-					<p class="mt-2 text-sm leading-relaxed text-muted-foreground">
-						Чтобы получать уведомления, открой приложение в браузере — Chrome или Safari. Во
-						встроенном браузере они не работают.
-					</p>
-				{:else if notificationsBlocked}
-					<p class="mt-2 text-sm leading-relaxed text-destructive">
-						Уведомления заблокированы в браузере. Открой настройки сайта (значок замка рядом с
-						адресом) и разреши уведомления.
-					</p>
-				{/if}
-			</div>
-			<Switch
-				checked={isSubscribed}
-				aria-label="Включить уведомления на этом устройстве"
-				disabled={isLoading || pushUnsupported || offlineGate.disabled}
-				title={offlineGate.title}
-				onCheckedChange={() => {
-					void toggleSubscription();
-				}}
-			/>
-		</div>
-
-		<div class="border-t border-border p-3 sm:p-4">
-			<div class="flex items-start justify-between gap-3">
+	<SettingsSection title="Каналы">
+		<MenuGroup class="divide-y divide-border">
+			<div class="flex items-start justify-between gap-3 p-3 sm:p-4">
 				<div class="min-w-0">
-					<span class="text-sm font-medium text-foreground">ВКонтакте</span>
+					<span class="text-sm font-medium text-foreground">На этом устройстве</span>
 					<p class="mt-1 text-sm leading-relaxed text-muted-foreground">
-						{#if hasVkAccount}
-							Получать сообщения от сообщества во ВКонтакте.
-						{:else}
-							Сначала подключи ВКонтакте в
-							<a href={resolve('/profile/account')} class="font-medium text-primary hover:underline"
-								>настройках аккаунта</a
-							>.
-						{/if}
+						Приходят как обычные уведомления телефона, даже когда приложение закрыто.
 					</p>
-					<button
-						type="button"
-						class="mt-1 text-sm font-medium text-primary hover:underline"
-						onclick={() => (showVkModal = true)}
-					>
-						Как это работает?
-					</button>
+					{#if pushUnsupported}
+						<p class="mt-2 text-sm leading-relaxed text-muted-foreground">
+							Чтобы получать уведомления, открой приложение в браузере — Chrome или Safari. Во
+							встроенном браузере они не работают.
+						</p>
+					{:else if notificationsBlocked}
+						<p class="mt-2 text-sm leading-relaxed text-destructive">
+							Уведомления заблокированы в браузере. Открой настройки сайта (значок замка рядом с
+							адресом) и разреши уведомления.
+						</p>
+					{/if}
 				</div>
 				<Switch
-					bind:checked={receiveVk}
-					aria-label="Получать уведомления во ВКонтакте"
-					disabled={isSavingSettings || !hasVkAccount || offlineGate.disabled}
+					checked={isSubscribed}
+					aria-label="Включить уведомления на этом устройстве"
+					disabled={isLoading || pushUnsupported || offlineGate.disabled}
 					title={offlineGate.title}
-					onCheckedChange={toggleReceiveVk}
+					onCheckedChange={() => {
+						void toggleSubscription();
+					}}
 				/>
 			</div>
-		</div>
-	</div>
 
-	<div class="rounded-lg border border-border">
-		<div class="border-b border-border px-3 py-2.5 sm:px-4">
-			<h2 class="text-sm font-semibold text-foreground">Типы уведомлений</h2>
-		</div>
-
-		<div class="p-3 sm:p-4">
-			<div class="flex items-start justify-between gap-3">
-				<div class="min-w-0">
-					<span class="text-sm font-medium text-foreground">Все анонсы</span>
-					<p class="mt-1 text-sm leading-relaxed text-muted-foreground">
-						Получать уведомления о начале каждого выступления.
-					</p>
+			<div class="p-3 sm:p-4">
+				<div class="flex items-start justify-between gap-3">
+					<div class="min-w-0">
+						<span class="text-sm font-medium text-foreground">ВКонтакте</span>
+						<p class="mt-1 text-sm leading-relaxed text-muted-foreground">
+							{#if hasVkAccount}
+								Получать сообщения от сообщества во ВКонтакте.
+							{:else}
+								Сначала подключи ВКонтакте в
+								<a
+									href={resolve('/profile/account')}
+									class="font-medium text-primary hover:underline">настройках аккаунта</a
+								>.
+							{/if}
+						</p>
+						<button
+							type="button"
+							class="mt-1 text-sm font-medium text-primary hover:underline"
+							onclick={() => (showVkModal = true)}
+						>
+							Как это работает?
+						</button>
+					</div>
+					<Switch
+						bind:checked={receiveVk}
+						aria-label="Получать уведомления во ВКонтакте"
+						disabled={isSavingSettings || !hasVkAccount || offlineGate.disabled}
+						title={offlineGate.title}
+						onCheckedChange={toggleReceiveVk}
+					/>
 				</div>
-				<Switch
-					bind:checked={receiveAll}
-					aria-label="Получать уведомления обо всех анонсах"
-					disabled={isSavingSettings || offlineGate.disabled}
-					title={offlineGate.title}
-					onCheckedChange={toggleReceiveAll}
-				/>
 			</div>
-		</div>
-	</div>
+		</MenuGroup>
+	</SettingsSection>
 
-	<div class="rounded-lg border border-border p-3 sm:p-4">
+	<SettingsSection title="Типы уведомлений">
+		<MenuGroup>
+			<div class="p-3 sm:p-4">
+				<div class="flex items-start justify-between gap-3">
+					<div class="min-w-0">
+						<span class="text-sm font-medium text-foreground">Все анонсы</span>
+						<p class="mt-1 text-sm leading-relaxed text-muted-foreground">
+							Получать уведомления о начале каждого выступления.
+						</p>
+					</div>
+					<Switch
+						bind:checked={receiveAll}
+						aria-label="Получать уведомления обо всех анонсах"
+						disabled={isSavingSettings || offlineGate.disabled}
+						title={offlineGate.title}
+						onCheckedChange={toggleReceiveAll}
+					/>
+				</div>
+			</div>
+		</MenuGroup>
+	</SettingsSection>
+
+	<div>
 		<p class="mb-3 text-sm leading-relaxed text-muted-foreground">
 			Попробуй отправить себе пробное уведомление, чтобы убедиться, что всё работает.
 		</p>
@@ -449,6 +451,6 @@
 			{/if}
 		</Button>
 	</div>
-</ProfileCardShell>
+</div>
 
 <VkNotificationsModal bind:open={showVkModal} {vkGroupUrl} />

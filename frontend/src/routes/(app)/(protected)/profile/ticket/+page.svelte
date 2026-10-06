@@ -3,7 +3,7 @@
 
 	import type { PageProps } from './$types';
 
-	import TicketLinkCard from '../components/TicketLinkCard.svelte';
+	import TicketLinkForm from '../components/TicketLinkForm.svelte';
 
 	let { data }: PageProps = $props();
 	let user = $derived(data.user!);
@@ -13,4 +13,4 @@
 	<title>Билет · ФАН ФАН</title>
 </svelte:head>
 
-<TicketLinkCard {user} onTicketLinked={() => invalidate('app:current-user')} />
+<TicketLinkForm {user} onTicketLinked={() => invalidate('app:current-user')} />

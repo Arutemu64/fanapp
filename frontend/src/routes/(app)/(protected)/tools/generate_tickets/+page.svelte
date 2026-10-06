@@ -7,7 +7,6 @@
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
 	import * as Field from '$lib/components/ui/field';
 	import { Input } from '$lib/components/ui/input';
 	import * as Select from '$lib/components/ui/select';
@@ -122,11 +121,11 @@
 
 <BackLink href="/tools" label="Назад к инструментам" />
 
-<SectionIntro
-	description="Создавай новые билеты для выбранной роли. Получатель привязывает билет по номеру и получает роль."
-/>
+<div class="mx-auto w-full max-w-2xl">
+	<SectionIntro
+		description="Создавай новые билеты для выбранной роли. Получатель привязывает билет по номеру и получает роль."
+	/>
 
-<Card.Root class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
 	<form class="flex flex-col gap-6" onsubmit={handleSubmit}>
 		<Field.FieldGroup class="gap-6">
 			<Field.Field>
@@ -211,4 +210,4 @@
 			</p>
 		</div>
 	{/if}
-</Card.Root>
+</div>

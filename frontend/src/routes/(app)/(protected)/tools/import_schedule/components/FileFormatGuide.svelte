@@ -2,7 +2,6 @@
 	import { base } from '$app/paths';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
 	import { AlertCircle, Download, Info } from '@lucide/svelte';
 
 	// The header names are literal file content, not UI copy — they must stay
@@ -36,7 +35,7 @@
 	];
 </script>
 
-<Card.Root class="mx-auto mb-4 w-full max-w-2xl rounded-2xl p-4 sm:mb-6 sm:p-6">
+<section class="mb-6 flex flex-col">
 	<div class="mb-3 flex items-center gap-2">
 		<Info class="size-5 shrink-0 text-muted-foreground" />
 		<h2 class="text-base leading-snug font-semibold text-foreground sm:text-lg">
@@ -50,9 +49,9 @@
 		колонок любой.
 	</p>
 
-	<dl class="mt-4 flex flex-col gap-2">
+	<dl class="mt-4 divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
 		{#each columns as column (column.name)}
-			<div class="rounded-lg bg-muted/50 p-3 sm:flex sm:items-baseline sm:gap-3">
+			<div class="p-3 sm:flex sm:items-baseline sm:gap-3">
 				<dt class="font-mono text-sm font-semibold text-foreground sm:w-44 sm:shrink-0">
 					{column.name}
 				</dt>
@@ -90,4 +89,4 @@
 		<Download data-icon="inline-start" />
 		Скачать шаблон
 	</Button>
-</Card.Root>
+</section>

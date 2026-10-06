@@ -14,7 +14,7 @@
 	import { offlineWriteGate } from '$lib/utils/offlineAction';
 	import { CheckCircle2 } from '@lucide/svelte';
 
-	import ProfileCardShell from './ProfileCardShell.svelte';
+	import SettingsSection from './SettingsSection.svelte';
 
 	interface Props {
 		user: CurrentUserDto;
@@ -61,7 +61,7 @@
 	}
 </script>
 
-<ProfileCardShell description="Привяжи билет, чтобы получить доступ к голосованию.">
+<SettingsSection description="Привяжи билет, чтобы получить доступ к голосованию.">
 	{#if user.ticket}
 		<div class="rounded-lg bg-success/10 p-4">
 			<div class="flex items-center gap-2">
@@ -73,7 +73,7 @@
 			</p>
 		</div>
 	{:else}
-		<div class="flex flex-col gap-3 rounded-lg border border-border p-3 sm:p-4">
+		<div class="flex flex-col gap-3">
 			{#if submitError}
 				<Alert.Root variant="destructive">
 					<Alert.Description>{submitError}</Alert.Description>
@@ -113,4 +113,4 @@
 			</Button>
 		</div>
 	{/if}
-</ProfileCardShell>
+</SettingsSection>

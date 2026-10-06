@@ -87,7 +87,7 @@ Three tiers — pick by element role:
 
 | Tier | Class | Use for |
 |---|---|---|
-| Outer | `rounded-2xl` | Large feature/settings/error cards, modals, sheet containers (`ProfileCardShell`, `HeroCard`, error card, etc.) |
+| Outer | `rounded-2xl` | Large feature/settings/error cards, modals, sheet containers (`MenuGroup`, `HeroCard`, error card, etc.) |
 | Inner | `rounded-xl` | Standard content & list cards (voting, notifications, schedule-changes feed — the centralized Card default), icon containers, social/chip buttons, dropdown popovers, pill-shaped elements |
 | Sub-group | `rounded-lg` | Sections/rows inside a card, toasts, small interactive elements (icon buttons) |
 | Circular | `rounded-full` | Avatars, dot indicators, step-number badges |
@@ -254,7 +254,7 @@ Never copy-paste class attribute values from rich-text sources. Unicode curly qu
 
 **Module placement (`.ts` / `.svelte.ts`)** — the same *who-uses-it* test, plus a *what-kind* test. SvelteKit itself prescribes only `$lib` and `$lib/server`; the `utils/` vs `services/` split is our convention, so its value is entirely in keeping it consistent:
 
-* **Pure, stateless helpers** (`.ts`) — formatting, parsing, grouping, a `fetch` wrapper. Shared across route subtrees → `$lib/utils/`. Used by exactly **one** route subtree → colocate next to its consumer (beside `+page.svelte`, or in that route's `components/` when a component is the only caller), so `$lib/utils/` stays the genuinely cross-cutting helpers. `push.ts` (only `PushNotificationsCard`) and `scheduleGrouping.ts` (only the schedule page) live in their routes for this reason.
+* **Pure, stateless helpers** (`.ts`) — formatting, parsing, grouping, a `fetch` wrapper. Shared across route subtrees → `$lib/utils/`. Used by exactly **one** route subtree → colocate next to its consumer (beside `+page.svelte`, or in that route's `components/` when a component is the only caller), so `$lib/utils/` stays the genuinely cross-cutting helpers. `push.ts` (only `PushNotificationsSettings`) and `scheduleGrouping.ts` (only the schedule page) live in their routes for this reason.
 * **Stateful modules** (`.svelte.ts`, holding `$state`/runes) → `$lib/services/`: either an app-wide singleton (`events`, `offline`, `theme`, `toasts`) or a reusable class instantiated per consumer (`CaptchaGate`, `ResendCooldown`, `PaginatedFeed`). The `.svelte.ts` extension *is* the signal that a module is stateful — never leave one in `utils/`, which reads as pure functions.
 * A module that a **shared `lib/` module** imports must stay in `lib/` — a route cannot own a dependency of `lib/components/` or `lib/services/` (e.g. `feed.ts`, `smartcaptcha.ts`, `safeStorage.ts`), even when only one route ultimately renders it.
 * Whatever the folder: only `export` what is consumed outside the file, and delete unused exports rather than letting them accumulate.

@@ -6,8 +6,8 @@
 
 	import type { PageProps } from './$types';
 
-	import BasicUserInfoCard from '../components/BasicUserInfoCard.svelte';
-	import SecurityCard from '../components/SecurityCard.svelte';
+	import ProfileHeader from '../components/ProfileHeader.svelte';
+	import SignInMethods from '../components/SignInMethods.svelte';
 
 	let { data }: PageProps = $props();
 	let user = $derived(data.user!);
@@ -55,5 +55,5 @@
 	<title>Аккаунт · ФАН ФАН</title>
 </svelte:head>
 
-<BasicUserInfoCard {user} onUpdate={refreshProfile} />
-<SecurityCard {user} {enabledProviders} onUpdate={refreshProfile} />
+<ProfileHeader {user} onUpdate={refreshProfile} />
+<SignInMethods {user} {enabledProviders} onUpdate={refreshProfile} />

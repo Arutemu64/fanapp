@@ -7,7 +7,6 @@
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import * as Alert from '$lib/components/ui/alert';
 	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
 	import * as Field from '$lib/components/ui/field';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { Textarea } from '$lib/components/ui/textarea';
@@ -93,11 +92,11 @@
 		message="Подключись к интернету, чтобы отправить отзыв."
 	/>
 {:else}
-	<SectionIntro
-		description="Расскажи о фестивале или о приложении — что понравилось, а что хотелось бы улучшить. Мы читаем каждое сообщение."
-	/>
+	<div class="mx-auto w-full max-w-2xl">
+		<SectionIntro
+			description="Расскажи о фестивале или о приложении — что понравилось, а что хотелось бы улучшить. Мы читаем каждое сообщение."
+		/>
 
-	<Card.Root class="mx-auto w-full max-w-2xl rounded-2xl p-4 sm:p-6">
 		<form class="flex flex-col gap-6" onsubmit={handleSubmit}>
 			<Field.Field data-invalid={feedbackError ? true : undefined}>
 				<Field.FieldLabel for="feedback-text">Твой отзыв</Field.FieldLabel>
@@ -137,5 +136,5 @@
 				{/if}
 			</Button>
 		</form>
-	</Card.Root>
+	</div>
 {/if}
