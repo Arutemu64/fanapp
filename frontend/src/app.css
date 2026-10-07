@@ -229,7 +229,9 @@
 	 * call sites need no `dark:` override. success = festival green, warning =
 	 * key-art amber, info = the cyan-teal brand secondary hue.
 	 */
-	--success: oklch(0.52 0.15 150);
+	/* 0.50, not the 0.52 of its siblings: green reads lighter at equal L, and at
+	 * 0.52 success text on its /10 tint measures ~4.45:1, just under AA. */
+	--success: oklch(0.5 0.15 150);
 	--success-foreground: oklch(0.985 0 0);
 	--warning: oklch(0.52 0.13 65);
 	--warning-foreground: oklch(0.985 0 0);

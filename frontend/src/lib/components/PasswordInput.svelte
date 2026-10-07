@@ -12,8 +12,11 @@
 		placeholder?: string;
 		required?: boolean;
 		disabled?: boolean;
+		readonly?: boolean;
 		maxlength?: number;
 		color?: 'red' | undefined;
+		// Id of the error or hint that describes the field (aria-describedby).
+		describedby?: string;
 		oninput?: () => void;
 	}
 
@@ -26,8 +29,10 @@
 		placeholder = '••••••••',
 		required = false,
 		disabled = false,
+		readonly = false,
 		maxlength,
 		color,
+		describedby,
 		oninput
 	}: Props = $props();
 
@@ -48,8 +53,10 @@
 		{autocomplete}
 		{required}
 		{disabled}
+		{readonly}
 		{maxlength}
 		aria-invalid={invalid ? true : undefined}
+		aria-describedby={describedby}
 		{oninput}
 	/>
 	<InputGroup.Addon align="inline-end">
