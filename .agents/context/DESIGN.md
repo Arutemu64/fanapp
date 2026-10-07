@@ -37,7 +37,7 @@ A watermelon duo over a cool gray neutral field: warm crimson-pink for action an
 - **Muted** (`#6b7280` light / `#9ca3af` dark, `gray-500`/`gray-400`): Body copy, descriptions, idle nav icons, secondary labels.
 - **Surface** (`#ffffff` light / `#1f2937` dark, `gray-800`; navbar/sidebar use `gray-900`): Cards, panels, sheets.
 - **App Background** (`#f9fafb` light / `#030712` dark, `gray-50`/`gray-950`): The recessed field behind surfaces; one tonal step below surface, never the same value.
-- **Border** (`#e5e7eb` light / `#374151` dark, `gray-200`/`gray-700`): Card outlines, dividers, nav top-border. The primary depth tool in place of shadow.
+- **Border** (`#e5e7eb` light / `#374151` dark, `gray-200`/`gray-700`): Card outlines, dividers, the sidebar edge and the navbar's scrolled hairline. The primary depth tool in place of shadow.
 
 ### Named Rules
 **The Color-Earns-Its-Place Rule.** Saturated color appears only on action, active state, or semantic state — primary button, current nav item, unseen badge, success/warning/error. Inactive and resting elements stay gray. If a color is decorative, remove it.
@@ -115,7 +115,7 @@ shadcn-svelte (vendored as source in `$lib/components/ui/`) is the component sub
 
 ### Navigation
 - **Mobile — Bottom Nav:** A floating glass pill, the iOS 26 tab-bar shape: five columns in a `rounded-full` capsule capped at `max-w-md`, inset from the screen edges, dipping into the bottom safe area over the home indicator, `md:hidden`. Translucent `background/85` + 16px backdrop blur — airy enough to show content moving under it, dense enough that a bold row title never reads through the tab labels; opaque under the OS "reduce transparency" setting. Active item = semibold label and icon on a `primary/12` capsule (`/20` in dark) that slides between tabs; in light mode the active label is `primary-700`, not the token, so it clears AA on the tint (the `tonal` button's trick), while dark keeps `primary`. Colour and weight cross-fade on the capsule's 300ms curve, so the highlight and the lit label move as one. Idle = `muted-foreground` with foreground on hover. Active state pairs the capsule and weight with color — never color alone. Anything floating above it offsets from `--bottom-nav-clearance` (`app.css`).
-- **Desktop — Sidebar + Navbar:** Sidebar (`md:` and up) for primary nav; top navbar carries the current page title, a leading back arrow on nested pages (on phones too), and the notification bell. Bottom nav is hidden on desktop.
+- **Desktop — Sidebar + Navbar:** Sidebar (`md:` and up) for primary nav; top navbar carries the current page title, a leading back arrow on nested pages (on phones too), and the notification bell. Bottom nav is hidden on desktop. The sidebar keeps a permanent 1px right border: in light mode it and the page share one surface colour, so the line is the only edge between them; in dark mode the sidebar's `card` is a step lighter than the page's `background`, and the line reinforces that step. The top navbar's bottom hairline shows only once content has scrolled under it, the iOS / Material 3 scroll-edge behaviour; at the top of a page it would separate nothing.
 
 ### Empty & Loading States
 - **Loading:** Skeletons that mimic the content's shape — never a centered spinner in the content area.

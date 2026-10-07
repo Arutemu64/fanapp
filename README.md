@@ -30,6 +30,23 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 - **Live updates**: Server-Sent Events (SSE) push real-time changes to the client.
 - **Installable PWA**: installs to the home screen; the schedule, notifications and profile stay readable offline from their last synced copy.
 
+### Screenshots
+
+<table>
+  <tr>
+    <th>Schedule</th>
+    <th>Voting</th>
+    <th>Notifications</th>
+    <th>Map</th>
+  </tr>
+  <tr>
+    <td><img src="docs/assets/readme-gallery/schedule.webp" width="195" alt="Schedule: performances grouped by block, the one on stage now highlighted, a bell to subscribe to each"></td>
+    <td><img src="docs/assets/readme-gallery/voting.webp" width="195" alt="Voting: a nomination's participants with vote counts and the user's own choice marked"></td>
+    <td><img src="docs/assets/readme-gallery/notifications.webp" width="195" alt="Notifications: a subscription reminder, an on-stage announcement and organizer broadcasts"></td>
+    <td><img src="docs/assets/readme-gallery/map.webp" width="195" alt="Map: the venue's first-floor plan with numbered points of interest"></td>
+  </tr>
+</table>
+
 ## Stack
 
 | Layer | Tech |
@@ -308,6 +325,7 @@ who consented to a festival photo, not to redistribution under MIT. Excluded:
 - `frontend/src/lib/assets/map/`
 - `frontend/src/routes/(app)/components/home/main.webp`
 - `docs/assets/readme-header.webp`
+- `docs/assets/readme-gallery/`
 
 Fork the code freely; swap in your own branding.
 
