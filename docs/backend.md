@@ -59,7 +59,7 @@ Everything below this section is detail; these rules alone prevent most mistakes
 The columns an organizer must supply are named in three coupled places — change one, change all three:
 1. `REQUIRED_COLUMNS` in `adapters/parsers/schedule.py`, the only authority. Reject a bad file with `InvalidScheduleFile` carrying a `reason` plus the column/row that located it, so the frontend can name the cell instead of saying "bad file".
 2. The downloadable template, regenerated with `just backend-generate-schedule-template` (script: `scripts/generate_schedule_template.py`, output: `frontend/static/schedule-template.xlsx`). `tests/unit/adapters/test_schedule_parser.py` parses the committed file, so a forgotten regeneration fails there rather than reaching an organizer.
-3. The on-screen column list in `frontend/src/routes/(app)/(protected)/tools/import_schedule/components/FileFormatGuide.svelte`.
+3. The on-screen column list in `frontend/src/routes/(app)/(protected)/tools/import-schedule/components/FileFormatGuide.svelte`.
 
 Every column must appear in the header, but `number` is the one cell that may be
 left empty: breaks and other filler rows carry no public number, so

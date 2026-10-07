@@ -62,11 +62,11 @@
 			canAccess: canManageVoting(user)
 		},
 		{
-			key: 'import_schedule',
+			key: 'import-schedule',
 			title: 'Импорт программы',
 			description: 'Загрузи программу из Excel-файла.',
 			icon: FileUp,
-			href: '/tools/import_schedule',
+			href: '/tools/import-schedule',
 			canAccess: canImportSchedule(user)
 		},
 		{
@@ -78,11 +78,11 @@
 			canAccess: canSendNotifications(user)
 		},
 		{
-			key: 'generate_tickets',
+			key: 'generate-tickets',
 			title: 'Генерация билетов',
 			description: 'Новые билеты для выбранной роли — получатель привязывает по номеру.',
 			icon: Ticket,
-			href: '/tools/generate_tickets',
+			href: '/tools/generate-tickets',
 			canAccess: canGenerateTickets(user)
 		},
 		{

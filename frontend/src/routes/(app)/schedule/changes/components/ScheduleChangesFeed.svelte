@@ -8,7 +8,7 @@
 	import {
 		SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT,
 		SCHEDULE_CHANGES_PAGE_SIZE
-	} from '$lib/constants/schedule_changes';
+	} from '$lib/constants/scheduleChanges';
 	import { PaginatedFeed } from '$lib/services/feed.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
 
