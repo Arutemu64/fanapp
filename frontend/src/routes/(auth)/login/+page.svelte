@@ -2,7 +2,8 @@
 	import type { SocialProvider } from '$lib/api/generated';
 	import type { Attachment } from 'svelte/attachments';
 
-	import { pushState } from '$app/navigation';
+	import { goto, pushState } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { Button } from '$lib/components/ui/button';
@@ -163,12 +164,19 @@
 		{/if}
 
 		<div class="flex flex-col gap-1 text-center">
-			<h1 class="text-2xl font-bold text-foreground">Вход в ФАН ФАН</h1>
+			<!-- Just «Вход»: the logo above already names ФАН ФАН. -->
+			<h1 class="text-2xl font-bold text-foreground">Вход</h1>
 			{#if step === 'options'}
 				<!-- Benefits belong on the entry screen only: once a method is chosen the
-					sub-steps are the task, not the pitch. -->
+					sub-steps are the task, not the pitch. Every method — email or social —
+					creates the account on first sign-in and there is no separate sign-up,
+					so the entry screen says so once rather than leave a newcomer hunting
+					for «Регистрация». -->
 				<p class="text-sm text-muted-foreground">
 					Получай персональные уведомления, голосуй за участников и оставляй обратную связь.
+				</p>
+				<p class="text-sm text-muted-foreground">
+					Аккаунта ещё нет? Он создастся при первом входе.
 				</p>
 			{/if}
 		</div>
@@ -217,3 +225,25 @@
 		{/key}
 	</div>
 </Card.Root>
+
+<!--
+	The app is usable by guests, and login is reached both voluntarily (navbar)
+	and via protected-route redirects, so always offer a way back into it.
+	Navigate to the app root explicitly instead of history.back(): going back
+	would re-enter a protected redirect straight to /login, and a direct
+	deep-link to /login has no history to return to.
+
+	Options screen only: a sub-step already has «Назад» at the top, and one exit
+	per screen keeps the stack short; leaving from there is one tap further.
+-->
+{#if step === 'options'}
+	<div class="text-center">
+		<button
+			type="button"
+			class="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+			onclick={() => goto(resolve('/'))}
+		>
+			Продолжить без входа
+		</button>
+	</div>
+{/if}

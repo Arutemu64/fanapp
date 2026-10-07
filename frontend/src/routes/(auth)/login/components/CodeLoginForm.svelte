@@ -177,7 +177,7 @@
 			<Field.FieldError id="code-email-error">{emailError}</Field.FieldError>
 		{:else}
 			<Field.FieldDescription id="code-email-description">
-				Пришлём код для входа. Если аккаунта ещё нет, создадим его.
+				Пришлём код для входа.
 			</Field.FieldDescription>
 		{/if}
 	</Field.Field>

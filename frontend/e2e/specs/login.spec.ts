@@ -1,5 +1,7 @@
 import type { Page } from '@playwright/test';
 
+import type { OAuthProvidersOutput } from '../../src/lib/api/generated';
+
 import { expect, json, test } from '../fixtures';
 
 async function openEmailStep(page: Page) {
@@ -52,6 +54,16 @@ test.describe('email login', () => {
 		await expect(page.getByRole('button', { name: 'Войти по почте' })).toBeFocused();
 	});
 
+	test('offers the guest exit on the options screen only', async ({ page }) => {
+		await page.goto('/login');
+		const leave = page.getByRole('button', { name: 'Продолжить без входа' });
+		await expect(leave).toBeVisible();
+
+		await page.getByRole('button', { name: 'Войти по почте' }).click();
+		await expect(page.getByLabel('Эл. почта')).toBeFocused();
+		await expect(leave).toHaveCount(0);
+	});
+
 	test('a rejected code is cleared and announced, with focus kept in the field', async ({
 		page,
 		api
@@ -90,11 +102,19 @@ test('password login offers the code as the way out', async ({ page }) => {
 });
 
 test(
-	'the email and code steps have no WCAG A/AA violations',
+	'the options, email and code steps have no WCAG A/AA violations',
 	{ tag: '@a11y' },
 	async ({ page, api, makeAxeBuilder }) => {
-		api.use({ 'POST /auth/request-login-code': json(null) });
-		const email = await openEmailStep(page);
+		api.use({
+			'GET /auth/oauth/providers': json<OAuthProvidersOutput>({ providers: ['vk', 'telegram'] }),
+			'POST /auth/request-login-code': json(null)
+		});
+		await page.goto('/login');
+		await expect(page.getByRole('link', { name: 'Войти через VK ID' })).toBeVisible();
+		expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
+
+		await page.getByRole('button', { name: 'Войти по почте' }).click();
+		const email = page.getByLabel('Эл. почта');
 		await email.press('Enter');
 		await expect(page.getByRole('alert')).toBeVisible();
 		expect((await makeAxeBuilder().analyze()).violations).toEqual([]);
