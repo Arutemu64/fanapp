@@ -17,7 +17,7 @@ export default defineConfig({
 			use: {
 				browserName: 'chromium',
 				// A 390×844 phone (iPhone 12–14) at 1.5× gives the 585×1266 images the
-				// README shows at 195px wide, sharp on a 3× display without the file
+				// README shows at 150px wide, sharp on a 3× display without the file
 				// weight of a native 3× capture.
 				viewport: { width: 390, height: 844 },
 				deviceScaleFactor: 1.5,
