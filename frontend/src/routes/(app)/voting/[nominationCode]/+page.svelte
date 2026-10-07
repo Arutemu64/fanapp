@@ -108,8 +108,9 @@
 		</div>
 	{/if}
 
-	<!-- Same compact filter panel as the schedule, so the two lists read alike. -->
-	<div class="mb-4 rounded-2xl border border-border bg-card p-3">
+	<!-- Search sits straight on the page, as on the schedule, so the two lists read
+	     alike (DESIGN "When not to" use a card). -->
+	<div class="mb-4 flex flex-col gap-2">
 		<div class="relative flex items-center">
 			<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
 			<Input
@@ -134,11 +135,16 @@
 		</div>
 
 		<!-- Announce filter result changes to screen readers, which otherwise get no
-		     feedback that the list shrank or grew. Matches the schedule page. Skipped
-		     for an empty nomination: there is nothing to filter, and the empty state
-		     below already says so. -->
+		     feedback that the list shrank or grew. Shown only while searching, as on the
+		     schedule: an unfiltered total tells a sighted user nothing. Skipped for an
+		     empty nomination: there is nothing to filter, and the empty state below
+		     already says so. -->
 		{#if participants.length > 0}
-			<p class="mt-3 text-xs text-muted-foreground" aria-live="polite" role="status">
+			<p
+				class={['px-1 text-xs text-muted-foreground', !hasSearchQuery && 'sr-only']}
+				aria-live="polite"
+				role="status"
+			>
 				{resultsSummary}
 			</p>
 		{/if}
