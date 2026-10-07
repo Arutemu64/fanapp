@@ -16,15 +16,10 @@
 <div class="flex flex-col gap-4" role="status" aria-live="polite">
 	<span class="sr-only">Загрузка программы…</span>
 
-	<!-- Filter bar: search field + toggle row -->
-	<div class="rounded-2xl border bg-card p-3">
-		<div class="flex flex-col gap-3">
-			<Skeleton class="h-9 w-full rounded-xl" />
-			<div class="flex items-center justify-between">
-				<Skeleton class="h-6 w-28 rounded-full" />
-				<Skeleton class="h-3 w-24 rounded-full" />
-			</div>
-		</div>
+	<!-- Filter bar: search field + scope toggle -->
+	<div class="flex flex-col gap-3">
+		<Skeleton class="h-9 w-full rounded-xl" />
+		<Skeleton class="h-8 w-44 rounded-md" />
 	</div>
 
 	<div class="flex flex-col gap-6">

@@ -7,14 +7,13 @@
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
-	import { Switch } from '$lib/components/ui/switch';
+	import * as ToggleGroup from '$lib/components/ui/toggle-group';
 	import { documentVisibility } from '$lib/services/documentVisibility';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
 	import { canManageSchedule } from '$lib/utils/permissions';
 	import { createSearchIndex } from '$lib/utils/search';
-	import { ChevronUp, Info, Play, Search as SearchIcon, X } from '@lucide/svelte';
+	import { ChevronUp, Play, Search as SearchIcon, X } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
 	import type { PageProps } from './$types';
@@ -33,6 +32,14 @@
 	// Store filter state locally because it only affects this page view.
 	let searchQuery: string = $state('');
 	let showOnlySubscribed: boolean = $state(false);
+	let scope = $derived(showOnlySubscribed ? 'subscribed' : 'all');
+
+	// A single-select toggle group lets a tap on the pressed item clear the value;
+	// ignore that so one of the two scopes is always selected, like a segmented control.
+	function setScope(value: string) {
+		if (value === '') return;
+		showOnlySubscribed = value === 'subscribed';
+	}
 
 	// We use the full schedule current event for countdown labels inside every row.
 	let currentEvent = $derived(schedule.find((event) => event.is_current) ?? null);
@@ -200,59 +207,58 @@
 		</div>
 	{/if}
 
-	<!-- Keep filters compact and static so the schedule itself can use sticky headers. -->
-	<div class="rounded-2xl border border-border bg-card p-3">
-		<div class="flex flex-col gap-3">
-			<div class="relative flex items-center">
-				<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
-				<Input
-					bind:value={searchQuery}
-					name="schedule_search"
-					aria-label="Поиск по программе"
-					placeholder="Поиск по номеру или названию…"
-					autocomplete="off"
-					spellcheck={false}
-					class="pr-8 pl-9"
-				/>
-				{#if searchQuery}
-					<button
-						type="button"
-						class="absolute right-2 text-muted-foreground hover:text-foreground"
-						onclick={() => (searchQuery = '')}
-						aria-label="Очистить поиск"
-					>
-						<X class="size-4" />
-					</button>
-				{/if}
-			</div>
+	<!-- Controls sit straight on the page, not in a card: DESIGN "When not to" use a
+	     card. Search plus a scope switch under it is the iOS search-field + scope-bar
+	     pattern (https://developer.apple.com/design/human-interface-guidelines/search-fields).
+	     Kept static so the schedule's block headers can be the sticky ones. -->
+	<div class="flex flex-col gap-3">
+		<div class="relative flex items-center">
+			<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+			<Input
+				bind:value={searchQuery}
+				name="schedule_search"
+				aria-label="Поиск по программе"
+				placeholder="Поиск по номеру или названию…"
+				autocomplete="off"
+				spellcheck={false}
+				class="pr-8 pl-9"
+			/>
+			{#if searchQuery}
+				<button
+					type="button"
+					class="absolute right-2 text-muted-foreground hover:text-foreground"
+					onclick={() => (searchQuery = '')}
+					aria-label="Очистить поиск"
+				>
+					<X class="size-4" />
+				</button>
+			{/if}
+		</div>
 
-			<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-				<div class="flex items-center gap-2">
-					<Switch id="only-subscribed" bind:checked={showOnlySubscribed} size="sm" />
-					<Label for="only-subscribed" class="cursor-pointer text-sm font-medium">
-						Только подписки
-					</Label>
-				</div>
+		<div class="flex items-center justify-between gap-3">
+			<ToggleGroup.Root
+				type="single"
+				variant="outline"
+				size="sm"
+				value={scope}
+				onValueChange={setScope}
+				aria-label="Какие выступления показать"
+			>
+				<ToggleGroup.Item value="all">Все</ToggleGroup.Item>
+				<ToggleGroup.Item value="subscribed">Мои подписки</ToggleGroup.Item>
+			</ToggleGroup.Root>
 
-				<!-- Announce filter result changes to screen readers, which otherwise get no
-				     feedback that the list shrank/grew. -->
-				<p class="text-xs text-muted-foreground" aria-live="polite" role="status">
-					{resultsSummary}
-				</p>
-			</div>
+			<!-- Always mounted so screen readers hear the list shrink and grow, but shown
+			     only while a filter is on: an unfiltered total tells a sighted user nothing. -->
+			<p
+				class={['text-xs text-muted-foreground', !hasActiveFilters && 'sr-only']}
+				aria-live="polite"
+				role="status"
+			>
+				{resultsSummary}
+			</p>
 		</div>
 	</div>
-
-	<!-- Estimate disclaimer: the per-event countdowns are drift-projected, not
-	     guaranteed. Kept as a quiet inline note (no border/panel) so it reads as
-	     guidance rather than a promo banner the eye skips. Shown only while an
-	     event is live, since that's the only time projected start times appear. -->
-	{#if currentEvent}
-		<p class="flex items-start gap-1.5 px-1 text-xs text-muted-foreground">
-			<Info class="mt-px size-3.5 shrink-0" />
-			<span>Время начала примерное — программа может сдвигаться.</span>
-		</p>
-	{/if}
 
 	<div class="flex flex-col gap-6">
 		{#each groupedSchedule as node (node.key)}
