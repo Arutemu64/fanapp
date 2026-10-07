@@ -3,7 +3,6 @@ import type { Page } from '@playwright/test';
 import { expect, test } from '../fixtures';
 
 async function openFirstMap(page: Page) {
-	await page.goto('/map');
 	await page
 		.getByRole('button', { name: /открыть карту на весь экран/ })
 		.first()
@@ -15,6 +14,7 @@ async function openFirstMap(page: Page) {
 
 test.describe('map viewer', () => {
 	test('the back gesture closes the viewer and stays on the map page', async ({ page }) => {
+		await page.goto('/map');
 		const viewer = await openFirstMap(page);
 
 		await page.goBack();
@@ -24,6 +24,7 @@ test.describe('map viewer', () => {
 	});
 
 	test('offers a single-pointer zoom and the original file to download', async ({ page }) => {
+		await page.goto('/map');
 		const viewer = await openFirstMap(page);
 
 		// Pinch is a multipoint gesture, so WCAG 2.5.1 needs a single-pointer way in.
@@ -42,7 +43,15 @@ test.describe('map viewer', () => {
 		test.use({ contextOptions: { reducedMotion: 'reduce' } });
 
 		test('closing from the viewer drops its history entry', async ({ page }) => {
+			// Reach the map through the app's own nav, not a second page.goto: a full
+			// reload mid-boot makes WebKit cancel the home page's API calls, and it
+			// reports each cancelled fetch as a console error.
 			await page.goto('/');
+			await page
+				.getByRole('navigation', { name: 'Разделы' })
+				.getByRole('link', { name: 'Карта' })
+				.click();
+			await expect(page).toHaveURL('/map');
 			const viewer = await openFirstMap(page);
 
 			await viewer.getByRole('button', { name: 'Закрыть' }).click();
