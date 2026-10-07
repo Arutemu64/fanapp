@@ -48,13 +48,14 @@
 	>
 		<!-- One capsule that slides between tabs rather than one per tab, so a switch
 		     reads as motion from the old tab to the new one. It spans exactly one of the
-		     five equal columns, so translating by its own width steps one tab. The light
-		     tint stops at /6: the active label (primary-600) must clear 4.5:1 on it, and
-		     /10 measured 4.38:1. -->
+		     five equal columns, so translating by its own width steps one tab. The tint is
+		     strong enough to track mid-slide, so the active label steps down to primary-700
+		     in light mode, the `tonal` button's trick: primary-600 measured 4.38:1 on a mere
+		     /10, primary-700 is 5.6:1 on this /12. Dark keeps the token (5.3:1 on /20). -->
 		<span
 			aria-hidden="true"
 			class={[
-				'absolute inset-y-1 left-1 w-[calc((100%-0.5rem)/5)] rounded-full bg-primary/6 transition-[translate,opacity] duration-300 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none dark:bg-primary/15',
+				'absolute inset-y-1 left-1 w-[calc((100%-0.5rem)/5)] rounded-full bg-primary/12 transition-[translate,opacity] duration-300 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none dark:bg-primary/20',
 				activeIndex === -1 && 'opacity-0'
 			]}
 			style:translate={indicatorShift}
@@ -83,17 +84,22 @@
 					}
 				}}
 			>
+				<!-- Colour and weight share the capsule's 300ms curve, so the old tab dims as
+				     the capsule leaves it and the new one lights up as it arrives; a snap
+				     would light the new label while the capsule still sits on the old tab. -->
 				<Icon
 					class={[
-						'size-5 transition-[color,scale] group-active:scale-90',
-						active ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
+						'size-5 transition-[color,scale] duration-300 ease-[cubic-bezier(0.2,0,0,1)] group-active:scale-90 motion-reduce:transition-none',
+						active
+							? 'text-primary-700 dark:text-primary'
+							: 'text-muted-foreground group-hover:text-foreground'
 					]}
 				/>
 				<span
 					class={[
-						'whitespace-nowrap',
+						'whitespace-nowrap transition-[color,font-weight] duration-300 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none',
 						active
-							? 'font-semibold text-primary'
+							? 'font-semibold text-primary-700 dark:text-primary'
 							: 'text-muted-foreground group-hover:text-foreground'
 					]}
 				>
