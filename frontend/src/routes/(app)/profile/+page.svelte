@@ -17,6 +17,7 @@
 		Download,
 		Heart,
 		MessageSquare,
+		Palette,
 		Ticket,
 		UserRound,
 		Wrench
@@ -183,10 +184,19 @@
 					{/snippet}
 				</Item.Root>
 			{/if}
-			<div class="flex flex-col gap-3 px-4 py-3.5">
-				<span class="text-base font-medium">Тема</span>
-				<ThemeToggle />
-			</div>
+			<!-- An icon like every other hub row: the install row above shares this card,
+			     and a list that gives icons to only some rows reads as two layouts. -->
+			<Item.Root class="rounded-none">
+				<Item.Media class="size-9 rounded-lg bg-muted text-muted-foreground">
+					<Palette class="size-5" aria-hidden="true" />
+				</Item.Media>
+				<Item.Content>
+					<Item.Title class="text-base">Тема</Item.Title>
+				</Item.Content>
+				<Item.Footer>
+					<ThemeToggle />
+				</Item.Footer>
+			</Item.Root>
 		</MenuGroup>
 
 		{#if user}
