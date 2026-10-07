@@ -29,8 +29,8 @@
 	}
 
 	let installDescription = $derived(
-		pwa.isApplePlatform
-			? 'На iPhone уведомления приходят только в установленное приложение.'
+		pwa.pushRequiresInstall
+			? 'На iPhone и iPad уведомления приходят только в установленное приложение.'
 			: 'Быстрый доступ с главного экрана и пуш-уведомления.'
 	);
 

@@ -91,7 +91,7 @@
 			hasSubscriptions,
 			notificationsOn: getNotificationsOn(user, devicePush),
 			install,
-			installBeforeNotifications: pwa.isApplePlatform
+			installBeforeNotifications: pwa.pushRequiresInstall
 		});
 	});
 

@@ -18,9 +18,10 @@ export interface ReadyStepsInput {
 	notificationsOn: boolean | null;
 	install: InstallState;
 	/**
-	 * iOS only delivers web push to a Home Screen app
+	 * iOS and iPadOS deliver web push only to a Home Screen app
 	 * (https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/), so
-	 * there installing has to come before notifications can be switched on.
+	 * there installing has to come before notifications can be switched on. Not on
+	 * a Mac: Safari there delivers push to an ordinary tab.
 	 */
 	installBeforeNotifications: boolean;
 }
