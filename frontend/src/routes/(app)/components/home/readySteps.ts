@@ -1,3 +1,6 @@
+import type { CurrentUserDto } from '$lib/api/generated';
+import type { DevicePushState } from '$lib/utils/pushSubscription';
+
 export type ReadyStepKey = 'account' | 'install' | 'notifications' | 'subscribe' | 'ticket';
 
 export type InstallState = 'available' | 'installed' | 'unavailable';
@@ -58,4 +61,27 @@ export function getReadySteps(input: ReadyStepsInput): ReadyStepKey[] {
 	}
 
 	return steps;
+}
+
+/**
+ * Whether reminders reach this viewer, or null while the device check is still
+ * pending. A messenger channel counts as much as push on this device: either
+ * way the reminders arrive.
+ */
+export function getNotificationsOn(
+	user: CurrentUserDto | null,
+	devicePush: DevicePushState
+): boolean | null {
+	if (user && hasMessengerNotifications(user)) return true;
+	if (devicePush === 'on') return true;
+	if (devicePush === 'off') return false;
+	return null;
+}
+
+function hasMessengerNotifications(user: CurrentUserDto): boolean {
+	const providers = user.social_identities.map((identity) => identity.provider);
+	const telegramOn =
+		providers.includes('telegram') && (user.settings.receive_telegram_notifications ?? false);
+	const vkOn = providers.includes('vk') && (user.settings.receive_vk_notifications ?? false);
+	return telegramOn || vkOn;
 }

@@ -1,6 +1,8 @@
+import type { CurrentUserDto } from '$lib/api/generated';
+
 import { describe, expect, it } from 'vitest';
 
-import { getReadySteps, type ReadyStepsInput } from './readySteps';
+import { getNotificationsOn, getReadySteps, type ReadyStepsInput } from './readySteps';
 
 // A signed-in viewer with every step done: each test opens exactly the steps it checks.
 const DONE: ReadyStepsInput = {
@@ -65,5 +67,53 @@ describe('getReadySteps', () => {
 
 	it('hides install where the browser cannot install', () => {
 		expect(getReadySteps({ ...DONE, install: 'unavailable' })).toEqual([]);
+	});
+});
+
+function member(overrides: Partial<CurrentUserDto> = {}): CurrentUserDto {
+	return {
+		id: 'u',
+		username: 'visitor',
+		role: 'visitor',
+		email: null,
+		has_password: true,
+		ticket: null,
+		permissions: [],
+		settings: {
+			receive_all_announcements: true,
+			receive_telegram_notifications: true,
+			receive_vk_notifications: true
+		},
+		social_identities: [],
+		...overrides
+	};
+}
+
+describe('getNotificationsOn', () => {
+	it('follows the device push state when no messenger is linked', () => {
+		expect(getNotificationsOn(member(), 'on')).toBe(true);
+		expect(getNotificationsOn(member(), 'off')).toBe(false);
+		expect(getNotificationsOn(member(), 'unknown')).toBeNull();
+	});
+
+	it('counts a linked messenger with notifications on, whatever the device says', () => {
+		const telegram = member({
+			social_identities: [{ provider: 'telegram' }]
+		});
+
+		expect(getNotificationsOn(telegram, 'off')).toBe(true);
+	});
+
+	it('ignores a linked messenger whose notifications are off', () => {
+		const vkMuted = member({
+			social_identities: [{ provider: 'vk' }],
+			settings: {
+				receive_all_announcements: true,
+				receive_telegram_notifications: true,
+				receive_vk_notifications: false
+			}
+		});
+
+		expect(getNotificationsOn(vkMuted, 'off')).toBe(false);
 	});
 });

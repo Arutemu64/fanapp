@@ -35,7 +35,7 @@ test.describe('accessibility (axe)', { tag: '@a11y' }, () => {
 
 	test('home has no WCAG A/AA violations for a guest', async ({ page, makeAxeBuilder }) => {
 		await page.goto('/');
-		await expect(page.getByRole('heading', { name: 'ФАН ФАН 2026' })).toBeVisible();
+		await expect(page.getByRole('heading', { level: 1, name: 'Главная' })).toBeVisible();
 		await settleHomeCountdown(page);
 
 		const { violations } = await makeAxeBuilder().analyze();

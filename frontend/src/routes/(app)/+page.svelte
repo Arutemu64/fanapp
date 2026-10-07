@@ -4,6 +4,8 @@
 	import { documentVisibility } from '$lib/services/documentVisibility';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
+	import { getPwaService } from '$lib/services/pwa.svelte';
+	import { type DevicePushState, getDevicePushState } from '$lib/utils/pushSubscription';
 	import { hasVotingEnded, isVotingWindowOpen } from '$lib/utils/votingStatus';
 	import { onMount } from 'svelte';
 
@@ -13,6 +15,11 @@
 	import GetReadySection from './components/home/GetReadySection.svelte';
 	import HeroCard from './components/home/HeroCard.svelte';
 	import NowOnStageCard from './components/home/NowOnStageCard.svelte';
+	import {
+		getNotificationsOn,
+		getReadySteps,
+		type InstallState
+	} from './components/home/readySteps';
 	import { getStageSnapshot } from './components/home/stage';
 	import VotingCard from './components/home/VotingCard.svelte';
 
@@ -23,6 +30,7 @@
 
 	const eventsClient = getEventsClient();
 	const offline = getOfflineService();
+	const pwa = getPwaService();
 
 	let festivalStartMs = $derived(new Date(config.festival_start).getTime());
 	let festivalEndMs = $derived(new Date(config.festival_end).getTime());
@@ -50,6 +58,43 @@
 		phase === 'before' ? 'Подготовься к фестивалю' : 'Настрой приложение'
 	);
 	let showStage = $derived(phase === 'during' && hasProgramme);
+	let ticketAskedElsewhere = $derived(votingOpen && votingStatus?.status === 'no_ticket');
+
+	// Read once per visit: coming back from the notifications page remounts home,
+	// which re-checks. 'unknown' until the browser answers keeps the step out
+	// rather than flashing a step that turns out to be done.
+	let devicePush = $state<DevicePushState>('unknown');
+
+	let install = $derived.by<InstallState>(() => {
+		if (pwa.isInstalled) return 'installed';
+		if (pwa.canInstall) return 'available';
+		return 'unavailable';
+	});
+
+	// Decided here rather than in the section, because the layout depends on it:
+	// the side column exists only when it has something to hold.
+	let readySteps = $derived.by(() => {
+		if (phase === 'after') return [];
+		return getReadySteps({
+			signedIn: user !== null,
+			hasTicket: user?.ticket != null,
+			votingEnded,
+			ticketAskedElsewhere,
+			hasProgramme,
+			hasSubscriptions,
+			notificationsOn: getNotificationsOn(user, devicePush),
+			install,
+			installBeforeNotifications: pwa.isApplePlatform
+		});
+	});
+
+	let hasSupportingContent = $derived(votingOpen || readySteps.length > 0);
+	// Material's supporting-pane layout: the live programme is the main pane (about
+	// two-thirds) and voting plus setup sit beside it on wide screens, stacked below
+	// on narrow ones (https://developer.android.com/guide/topics/ui/layout/canonical-layouts).
+	// From xl only: below that the sidebar leaves too little width for a usable side
+	// pane, and even at 2:1 rather than Material's 70/30 it is only ~310px wide.
+	let twoColumns = $derived(showStage && hasSupportingContent);
 	let showStaleNotice = $derived(
 		showStage &&
 			shouldShowStaleNotice({
@@ -90,6 +135,10 @@
 	});
 
 	onMount(() => {
+		void getDevicePushState().then((state) => {
+			devicePush = state;
+		});
+
 		// Refetch config (and the voting window it gates) on a change and on every
 		// (re)connect, so the phase flips (e.g. organizers ending the festival)
 		// without a reload, and a 'config_updated' missed while the stream was down
@@ -120,34 +169,41 @@
 	<title>ФАН ФАН</title>
 </svelte:head>
 
-<div class="flex flex-col gap-5 sm:gap-6">
-	{#if phase !== 'during'}
-		<HeroCard {phase} festivalStart={config.festival_start} />
-	{/if}
-
-	{#if showStaleNotice}
-		<StaleDataNotice
-			message="Нет связи. Показана сохранённая программа&nbsp;— обновится при подключении."
-			cachedAt={data.scheduleCachedAt}
-		/>
-	{/if}
-
-	{#if showStage}
-		<NowOnStageCard {snapshot} />
-	{/if}
-
+{#snippet supporting()}
 	{#if votingOpen && votingStatus}
 		<VotingCard status={votingStatus.status} />
 	{/if}
 
-	{#if phase !== 'after'}
-		<GetReadySection
-			heading={readyHeading}
-			{user}
-			{hasProgramme}
-			{hasSubscriptions}
-			{votingEnded}
-			ticketAskedElsewhere={votingOpen && votingStatus?.status === 'no_ticket'}
-		/>
+	<GetReadySection heading={readyHeading} steps={readySteps} />
+{/snippet}
+
+<div
+	class={[
+		'flex flex-col gap-5 sm:gap-6',
+		twoColumns && 'xl:grid xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] xl:items-start'
+	]}
+>
+	{#if phase !== 'during'}
+		<HeroCard {phase} festivalStart={config.festival_start} />
+	{/if}
+
+	{#if showStage}
+		<div class="flex flex-col gap-5 sm:gap-6">
+			{#if showStaleNotice}
+				<StaleDataNotice
+					message="Нет связи. Показана сохранённая программа&nbsp;— обновится при подключении."
+					cachedAt={data.scheduleCachedAt}
+				/>
+			{/if}
+			<NowOnStageCard {snapshot} />
+		</div>
+	{/if}
+
+	{#if twoColumns}
+		<div class="flex flex-col gap-5 sm:gap-6">
+			{@render supporting()}
+		</div>
+	{:else}
+		{@render supporting()}
 	{/if}
 </div>

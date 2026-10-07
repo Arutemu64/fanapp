@@ -1,78 +1,24 @@
 <script lang="ts">
 	import type { Pathname } from '$app/types';
-	import type { CurrentUserDto } from '$lib/api/generated';
 	import type { Component } from 'svelte';
 
 	import { resolve } from '$app/paths';
 	import MenuGroup from '$lib/components/MenuGroup.svelte';
 	import * as Item from '$lib/components/ui/item';
 	import { getPwaService } from '$lib/services/pwa.svelte';
-	import { type DevicePushState, getDevicePushState } from '$lib/utils/pushSubscription';
 	import { Bell, CalendarHeart, ChevronRight, Download, Ticket, UserPlus } from '@lucide/svelte';
-	import { onMount } from 'svelte';
 
-	import { getReadySteps, type InstallState, type ReadyStepKey } from './readySteps';
+	import type { ReadyStepKey } from './readySteps';
 
 	interface Props {
 		heading: string;
-		user: CurrentUserDto | null;
-		hasProgramme: boolean;
-		hasSubscriptions: boolean;
-		votingEnded: boolean;
-		ticketAskedElsewhere: boolean;
+		/** The open steps, already decided by the page (see getReadySteps). */
+		steps: ReadyStepKey[];
 	}
 
-	let { heading, user, hasProgramme, hasSubscriptions, votingEnded, ticketAskedElsewhere }: Props =
-		$props();
+	let { heading, steps }: Props = $props();
 
 	const pwa = getPwaService();
-
-	// Read once per visit: coming back from the notifications page remounts home,
-	// which re-checks. 'unknown' until the browser answers keeps the step out
-	// rather than flashing a step that turns out to be done.
-	let devicePush = $state<DevicePushState>('unknown');
-
-	onMount(() => {
-		void getDevicePushState().then((state) => {
-			devicePush = state;
-		});
-	});
-
-	// A messenger channel counts too: reminders reach the user without push.
-	let messengerNotificationsOn = $derived.by(() => {
-		if (!user) return false;
-		const providers = user.social_identities.map((identity) => identity.provider);
-		const telegramOn =
-			providers.includes('telegram') && user.settings.receive_telegram_notifications;
-		const vkOn = providers.includes('vk') && user.settings.receive_vk_notifications;
-		return telegramOn || vkOn;
-	});
-
-	let notificationsOn = $derived.by(() => {
-		if (messengerNotificationsOn || devicePush === 'on') return true;
-		if (devicePush === 'off') return false;
-		return null;
-	});
-
-	let install = $derived.by<InstallState>(() => {
-		if (pwa.isInstalled) return 'installed';
-		if (pwa.canInstall) return 'available';
-		return 'unavailable';
-	});
-
-	let steps = $derived(
-		getReadySteps({
-			signedIn: user !== null,
-			hasTicket: user?.ticket != null,
-			votingEnded,
-			ticketAskedElsewhere,
-			hasProgramme,
-			hasSubscriptions,
-			notificationsOn,
-			install,
-			installBeforeNotifications: pwa.isApplePlatform
-		})
-	);
 
 	interface ReadyStep {
 		title: string;
