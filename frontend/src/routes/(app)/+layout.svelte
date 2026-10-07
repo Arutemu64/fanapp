@@ -276,11 +276,14 @@
 			wrapper a Backdrop Root, so a descendant's backdrop-filter would see only the
 			wrapper's own (empty) backdrop and blur nothing
 			(https://drafts.csswg.org/css-view-transitions-1/, "Rendering Consolidation").
+			Under reduced transparency the wrapper turns opaque rather than just unblurred: the
+			connection banner's tint is only /10, so without a solid fill behind it the page
+			would show through the banner.
 			transition-duration is set per state (fast reveal, slower hide). Dropdowns render
 			in the native Popover top layer regardless of the wrapper. See handleMainScroll. -->
 		<div
 			bind:offsetHeight={chromeHeight}
-			class="absolute inset-x-0 top-0 z-(--z-chrome) backdrop-blur-md transition-[top] ease-out [view-transition-name:top-chrome] motion-reduce:transition-none reduced-transparency:backdrop-blur-none"
+			class="absolute inset-x-0 top-0 z-(--z-chrome) backdrop-blur-md transition-[top] ease-out [view-transition-name:top-chrome] motion-reduce:transition-none reduced-transparency:bg-background reduced-transparency:backdrop-blur-none"
 			style:top={chromeHidden ? `-${navbarHeight}px` : '0px'}
 			style:transition-duration={`${chromeTransitionMs}ms`}
 		>
