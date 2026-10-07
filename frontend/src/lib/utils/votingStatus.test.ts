@@ -1,6 +1,8 @@
+import type { GetVotingStateOutput } from '$lib/api/generated';
+
 import { describe, expect, it } from 'vitest';
 
-import { hasVotingEnded, isVotingWindowOpen } from './votingStatus';
+import { hasVotingEnded, isVotingOpenNow, isVotingWindowOpen } from './votingStatus';
 
 const START = '2026-10-10T10:00:00Z';
 const END = '2026-10-10T18:00:00Z';
@@ -29,5 +31,28 @@ describe('hasVotingEnded', () => {
 
 	it('is false while no end is configured', () => {
 		expect(hasVotingEnded(null, endMs)).toBe(false);
+	});
+});
+
+describe('isVotingOpenNow', () => {
+	function state(status: GetVotingStateOutput['status']): GetVotingStateOutput {
+		return { can_vote: status === 'open', status, voting_start: START, voting_end: END };
+	}
+
+	it('trusts the server over a client clock that runs ahead', () => {
+		expect(isVotingOpenNow(state('disabled'), startMs)).toBe(false);
+	});
+
+	it('uses the window for statuses that say nothing about it', () => {
+		expect(isVotingOpenNow(state('no_ticket'), startMs)).toBe(true);
+		expect(isVotingOpenNow(state('not_authenticated'), endMs)).toBe(false);
+	});
+
+	it('closes an open status once the window ends on the client', () => {
+		expect(isVotingOpenNow(state('open'), endMs)).toBe(false);
+	});
+
+	it('is closed without a status', () => {
+		expect(isVotingOpenNow(undefined, startMs)).toBe(false);
 	});
 });

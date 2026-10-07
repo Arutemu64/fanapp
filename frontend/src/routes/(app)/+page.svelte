@@ -6,7 +6,7 @@
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { type DevicePushState, getDevicePushState } from '$lib/utils/pushSubscription';
-	import { hasVotingEnded, isVotingWindowOpen } from '$lib/utils/votingStatus';
+	import { hasVotingEnded, isVotingOpenNow } from '$lib/utils/votingStatus';
 	import { onMount } from 'svelte';
 
 	import type { PageProps } from './$types';
@@ -44,10 +44,7 @@
 	let now = $state(Date.now());
 
 	let phase = $derived(getFestivalPhase(now, festivalStartMs, festivalEndMs));
-	let votingOpen = $derived(
-		votingStatus !== undefined &&
-			isVotingWindowOpen(votingStatus.voting_start, votingStatus.voting_end, now)
-	);
+	let votingOpen = $derived(isVotingOpenNow(votingStatus, now));
 	let votingEnded = $derived(hasVotingEnded(votingStatus?.voting_end, now));
 
 	let snapshot = $derived(getStageSnapshot(data.schedule));
@@ -122,21 +119,24 @@
 	// derives from that, then it re-arms for the following boundary. Re-runs (and
 	// resyncs `now`) when the tab returns to the front, since a hidden tab's timers
 	// can fire late. Reads Date.now(), never the `now` state, so the effect does not
-	// re-run on its own writes.
+	// re-run on its own writes. A boundary that fires also refetches the voting
+	// status, as the voting layout does: a `disabled` loaded just before the window
+	// opened would otherwise keep the voting card hidden until a reload.
 	$effect(() => {
 		if (!documentVisibility.current) return;
 
 		const boundaries = [festivalStartMs, festivalEndMs, votingStartMs, votingEndMs];
 		let timer: ReturnType<typeof setTimeout> | undefined;
 
-		const tick = () => {
+		const tick = (fired: boolean) => {
 			const current = Date.now();
 			now = current;
+			if (fired) void invalidate('app:config');
 			const next = nextBoundary(boundaries, current);
 			if (next === null) return;
-			timer = setTimeout(tick, Math.min(next - current, MAX_TIMEOUT_MS));
+			timer = setTimeout(() => tick(true), Math.min(next - current, MAX_TIMEOUT_MS));
 		};
-		tick();
+		tick(false);
 
 		return () => clearTimeout(timer);
 	});

@@ -43,7 +43,8 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	const [config, scheduleResult, votingStatus] = await Promise.all([
 		loadConfig(fetch),
 		loadScheduleWithSubscriptions(fetch, user?.id),
-		fetchVotingStatus(fetch)
+		// Optional here: a failure hides the voting card and nothing else.
+		fetchVotingStatus(fetch, { reportUnreachable: false })
 	]);
 
 	// A schedule miss is not an error here: home just leaves out what needs it.

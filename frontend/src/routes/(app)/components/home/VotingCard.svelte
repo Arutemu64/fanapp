@@ -17,9 +17,8 @@
 		href: string;
 	}
 
-	// The card shows only while the window is open, so 'disabled' here means the
-	// client clock ran ahead of the server's: send them to voting, whose own
-	// banner carries the server's verdict.
+	// The page never shows the card for 'disabled' (isVotingOpenNow), so the
+	// default is 'open'.
 	let action = $derived.by<VotingAction>(() => {
 		switch (status) {
 			case 'not_authenticated':
