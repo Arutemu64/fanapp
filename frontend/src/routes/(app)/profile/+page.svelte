@@ -4,8 +4,6 @@
 	import MenuGroup from '$lib/components/MenuGroup.svelte';
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import * as Avatar from '$lib/components/ui/avatar';
-	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
 	import * as Item from '$lib/components/ui/item';
 	import { getOfflineService } from '$lib/services/offline.svelte';
 	import { getPwaService } from '$lib/services/pwa.svelte';
@@ -18,9 +16,9 @@
 		ChevronRight,
 		Download,
 		Heart,
-		LogIn,
 		MessageSquare,
 		Ticket,
+		UserRound,
 		Wrench
 	} from '@lucide/svelte';
 	import { onMount } from 'svelte';
@@ -135,20 +133,33 @@
 				{/if}
 			</MenuGroup>
 		{:else}
-			<Card.Root class="w-full max-w-none rounded-2xl">
-				<div class="flex flex-col gap-4 px-5 sm:px-6">
-					<div class="flex flex-col gap-1">
-						<h2 class="text-lg font-bold text-foreground">Войди в аккаунт</h2>
-						<p class="text-sm leading-5 text-muted-foreground">
-							С аккаунтом можно голосовать, подписываться на выступления и получать уведомления.
-						</p>
-					</div>
-					<Button href={loginHref} size="lg" class="w-full sm:w-auto">
-						<LogIn data-icon="inline-start" />
-						Войти
-					</Button>
-				</div>
-			</Card.Root>
+			<!-- Takes the account row's slot and shape, so logging in fills the row in
+			     rather than swapping the screen's layout. -->
+			<MenuGroup>
+				<Item.Root class="rounded-none">
+					{#snippet child({ props })}
+						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- loginHref is resolve('/login') plus a query string, which the rule can't follow through a variable. -->
+						<a href={loginHref} {...props}>
+							<Item.Media>
+								<Avatar.Root class="size-12">
+									<Avatar.Fallback class="bg-muted text-muted-foreground">
+										<UserRound class="size-6" aria-hidden="true" />
+									</Avatar.Fallback>
+								</Avatar.Root>
+							</Item.Media>
+							<Item.Content class="min-w-0">
+								<Item.Title class="text-base">Войти</Item.Title>
+								<Item.Description>
+									Голосование, подписки на выступления и уведомления
+								</Item.Description>
+							</Item.Content>
+							<Item.Actions>
+								<ChevronRight class="size-4 text-muted-foreground" aria-hidden="true" />
+							</Item.Actions>
+						</a>
+					{/snippet}
+				</Item.Root>
+			</MenuGroup>
 		{/if}
 
 		<MenuGroup>

@@ -142,7 +142,7 @@ test.describe('accessibility (axe)', { tag: '@a11y' }, () => {
 		makeAxeBuilder
 	}) => {
 		await page.goto('/profile');
-		await expect(page.getByRole('heading', { name: 'Войди в аккаунт' })).toBeVisible();
+		await expect(page.getByRole('main').getByRole('link', { name: 'Войти' })).toBeVisible();
 
 		const { violations } = await makeAxeBuilder().analyze();
 		expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
