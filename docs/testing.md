@@ -328,8 +328,7 @@ though the runner is Node.
 The frontend's testable surface is the **logic in `src/lib/`** — the modules
 that encode a rule a reader cannot check by eye: text normalization and matching
 (`utils/search.ts`), formatters and pluralization (`utils/formatters.ts`),
-permission predicates (`utils/permissions.ts`), cache scoping and staleness
-(`utils/offlineCache.ts`). These are where a silent regression is expensive and
+permission predicates (`utils/permissions.ts`). These are where a silent regression is expensive and
 a test is nearly free.
 
 That includes the **rune modules** (`services/*.svelte.ts`,
@@ -376,13 +375,11 @@ Specs live in `frontend/e2e/`; the how-to for **writing** one is
 and the boundaries.
 
 **What it's for.** The surface Vitest can't reach (node-only, ADR-0011): SPA
-routing and guards, the service worker, offline / PWA behaviour, and real DOM
-interaction. It drives a **production `vite preview` build**, not `vite dev` —
-the SW and offline caching are inert in dev (docs/frontend.md §2), so only a real
-build exercises them. Aborting the relevant reads simulates a dead network and
-exercises the offline surface (stale notices, `offlineUnavailable`, queued logout)
-against that build — a mocked route still fulfils under `context.setOffline`, so
-failing the read is what reaches the offline path.
+routing and guards, network-failure states, and real DOM interaction. It drives
+a **production `vite preview` build**, not `vite dev`, so it tests the bundle
+that ships. Aborting the relevant reads simulates a dead network — a mocked
+route still fulfils under `context.setOffline`, so failing the read is what
+reaches the failure path.
 
 Two guards ride along on every spec: an **accessibility** scan
 (`@axe-core/playwright`, WCAG 2.0/2.1 A/AA) on key screens, and a **console-error /

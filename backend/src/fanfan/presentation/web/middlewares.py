@@ -106,10 +106,9 @@ async def no_store_cache_control(
 
     Responses are per-user and dynamic, and the browser must never persist
     them: with no ``Cache-Control`` the browser applies heuristic caching and
-    replays stale "online-only" data offline (e.g. a network-only staff feed)
-    from its disk cache. ``setdefault`` leaves any explicit ``Cache-Control`` a
-    route sets for itself, so a future public, identity-independent GET can opt
-    into caching.
+    replays stale data (e.g. a live staff feed) from its disk cache.
+    ``setdefault`` leaves any explicit ``Cache-Control`` a route sets for
+    itself, so a future public, identity-independent GET can opt into caching.
     """
     response = await call_next(request)
     response.headers.setdefault("Cache-Control", "no-store")

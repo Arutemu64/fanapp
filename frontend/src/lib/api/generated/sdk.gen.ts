@@ -837,7 +837,7 @@ export const undoScheduleChange = <ThrowOnError extends boolean = false>(
 /**
  * List the current user's subscriptions
  *
- * Returns every schedule event the current user is subscribed to. Served separately from the schedule so the schedule itself stays universal and cacheable offline.
+ * Returns every schedule event the current user is subscribed to. Served separately from the schedule so the schedule itself stays universal and cacheable.
  */
 export const getSubscriptions = <ThrowOnError extends boolean = false>(
 	options?: Options<GetSubscriptionsData, ThrowOnError>

@@ -9,6 +9,6 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 	// a config_updated SSE event (and on reconnect, to self-heal a missed one).
 	depends('app:config');
 
-	// The status banner simply hides on an undefined status (offline or failed).
+	// The status banner simply hides on an undefined status (failed or timed out).
 	return { votingStatus: await fetchVotingStatus(fetch) };
 };

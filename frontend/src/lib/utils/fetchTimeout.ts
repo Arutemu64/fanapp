@@ -1,8 +1,8 @@
 /**
- * An AbortSignal that fires after `ms`, used to bound API calls that have an
- * offline fallback. Without it, a request on a flaky/captive network (or an
- * installed PWA whose `navigator.onLine` wrongly reports online) can hang on
- * the TCP timeout for ~a minute before rejecting — blocking first paint.
+ * An AbortSignal that fires after `ms`, used to bound API calls a page can do
+ * without (or must not wait a minute for). Without it, a request on a
+ * flaky/captive network can hang on the TCP timeout for ~a minute before
+ * rejecting — blocking first paint.
  *
  * Prefers the native `AbortSignal.timeout`, with a manual fallback for older
  * mobile browsers that lack it.
@@ -19,5 +19,5 @@ export function timeoutSignal(ms: number): AbortSignal {
 	return controller.signal;
 }
 
-/** Default budget for a first-paint API call before we fall back to cache. */
+/** Default budget for a first-paint API call. */
 export const FIRST_PAINT_TIMEOUT_MS = 3500;

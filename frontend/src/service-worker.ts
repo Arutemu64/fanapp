@@ -4,105 +4,30 @@
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
 
-// Ensures that virtual imports (`$env/static/public`) have type definitions
-/// <reference types="@sveltejs/kit" />
-/// <reference types="../.svelte-kit/ambient.d.ts" />
+declare let self: ServiceWorkerGlobalScope;
 
-import { PUBLIC_API_URL } from '$env/static/public';
-import { clientsClaim } from 'workbox-core';
-import { ExpirationPlugin } from 'workbox-expiration';
-import {
-	cleanupOutdatedCaches,
-	createHandlerBoundToURL,
-	precacheAndRoute,
-	type PrecacheEntry
-} from 'workbox-precaching';
-import { NavigationRoute, registerRoute } from 'workbox-routing';
-import { CacheFirst } from 'workbox-strategies';
+// The worker exists for Web Push (and the Badging API it drives); it has no
+// fetch handler, so every request goes straight to the network. With nothing to
+// keep consistent across a page's requests, a new worker can take over at once —
+// the waiting phase only guards a worker that serves assets
+// (https://web.dev/articles/service-worker-lifecycle#skip_the_waiting_phase).
+self.addEventListener('install', () => {
+	void self.skipWaiting();
+});
 
-// `self` with SW types, plus the manifest vite-pwa injects at build. It is
-// absent in `vite dev` (injectManifest only runs on a production build); the
-// guard below treats that absence as the signal to stay inert.
-declare let self: ServiceWorkerGlobalScope & {
-	__WB_MANIFEST: (string | PrecacheEntry)[] | undefined;
-};
-
-// The backend is deployed under a path on the *same* origin as the app
-// (e.g. https://host/api), so an origin check can't tell API calls apart from
-// the app shell. Derive the API's origin + base path from PUBLIC_API_URL and
-// keep it network-only: the SW must never cache or replay user-specific,
-// dynamic API data — the app's own IndexedDB layer owns offline caching, and a
-// cached health/probe response would make us look online while the device is
-// offline. Workbox never intercepts these (no route below matches the API path,
-// and the navigation fallback denylists it), so they hit the network directly.
-// PUBLIC_API_URL is relative by default (e.g. `/api`), so resolve it against
-// this worker's own origin — `new URL` throws on a bare path without a base.
-const API_URL = new URL(PUBLIC_API_URL, self.location.origin);
-// Drop any trailing slash so the prefix match below is exact.
-const API_BASE_PATH = API_URL.pathname.replace(/\/+$/, '');
-
-// Matches the API base path and anything under it, anchored at the start.
-const API_PATH_PATTERN = new RegExp(`^${API_BASE_PATH}(/|$)`);
-
-// Caching only runs in a production build, where the manifest is injected. Its
-// absence in dev means cache-first would be wrong anyway — that strategy assumes
-// the immutable, versioned shell only a real build emits — so the worker stays
-// inert. The push/notificationclick handlers below register either way, so push
-// still works in dev.
-const precacheManifest = self.__WB_MANIFEST;
-if (precacheManifest) {
-	// --- Precaching -----------------------------------------------------------
-	// Precache the shell and serve it cache-first. Revisions are content hashes,
-	// so a cache hit is never stale, and cleanupOutdatedCaches prunes entries left
-	// by superseded revisions. The responsive image variants are kept out of the
-	// manifest (vite.config globIgnores) and runtime-cached below instead.
-	precacheAndRoute(precacheManifest);
-	cleanupOutdatedCaches();
-
-	// --- SPA navigation fallback ----------------------------------------------
-	// Every route renders from the same client-built shell, precached above as
-	// the adapter-static fallback (200.html). Serving it for navigations means
-	// startup never depends on the origin being healthy — a reachable-but-broken
-	// upstream (502/503/504) can't block the app from booting. API paths are
-	// denylisted so a navigation-shaped API request still hits the network.
-	registerRoute(
-		new NavigationRoute(createHandlerBoundToURL('/200.html'), {
-			denylist: [API_PATH_PATTERN]
-		})
+// Builds that cached the app shell left Workbox precaches and an `image-variants`
+// runtime cache behind. Nothing on this origin uses Cache Storage now, so drop
+// every cache rather than chase their names.
+// TODO: delete once every installed client has activated this worker — kept
+// while the event's attendees may still open an install from the caching build.
+self.addEventListener('activate', (event: ExtendableEvent) => {
+	event.waitUntil(
+		(async () => {
+			const names = await caches.keys();
+			await Promise.all(names.map((name) => caches.delete(name)));
+		})()
 	);
-
-	// --- Responsive image variants: runtime cache-first -----------------------
-	// The AVIF/WebP/… variants <enhanced:img> emits are content-hashed and
-	// immutable, so cache-first is safe (a hit is never stale) and they become
-	// available offline after the first online view. Precached shell images
-	// (icons) are already served by the precache route, so this only catches the
-	// excluded hashed variants. API paths never have an `image` destination.
-	//
-	// Content-hashing means each deploy mints fresh URLs, and this cache isn't
-	// versioned (cleanupOutdatedCaches only prunes the precache), so without a
-	// bound the superseded variants would accumulate across deploys. Cap it by
-	// count and age and let it yield under storage pressure — evicted images just
-	// re-fetch when next online.
-	registerRoute(
-		({ url, request }) => url.origin === self.location.origin && request.destination === 'image',
-		new CacheFirst({
-			cacheName: 'image-variants',
-			plugins: [
-				new ExpirationPlugin({
-					maxEntries: 60,
-					maxAgeSeconds: 30 * 24 * 60 * 60,
-					purgeOnQuotaError: true
-				})
-			]
-		})
-	);
-
-	// Take control of open pages after a controlled update (the in-app prompt
-	// reloads them on `controllerchange`). We do NOT call skipWaiting here: a new
-	// worker waits until the user accepts the prompt, which posts the `skipWaiting`
-	// message handled below — never swapping assets mid-session.
-	clientsClaim();
-}
+});
 
 interface PushNotificationPayload {
 	title: string;
@@ -134,15 +59,6 @@ async function hasVisibleAppClient() {
 
 	return windowClients.some((client) => client.visibilityState === 'visible');
 }
-
-// The new worker waits by default so the user is never interrupted mid-session.
-// The in-app "new version" prompt posts this message when the user accepts,
-// which activates the waiting worker and triggers a reload.
-self.addEventListener('message', (event) => {
-	if (event.data === 'skipWaiting') {
-		self.skipWaiting();
-	}
-});
 
 self.addEventListener('push', (event: PushEvent) => {
 	let data: PushNotificationPayload = {

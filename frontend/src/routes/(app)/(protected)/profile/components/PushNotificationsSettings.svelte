@@ -18,7 +18,6 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { offlineWriteGate } from '$lib/utils/offlineAction';
 	import * as Sentry from '@sentry/sveltekit';
 	import { onMount } from 'svelte';
 
@@ -35,10 +34,6 @@
 	let { user, onSettingsUpdate }: Props = $props();
 
 	const client = createApiClient();
-
-	// Every control here writes to the server (push subscribe/unsubscribe, settings
-	// PATCH, test send) — online only. The current toggle states still render.
-	const offlineGate = offlineWriteGate();
 
 	let isSubscribed = $state(false);
 	// Once the browser permission is "denied" it never prompts again, so the
@@ -376,8 +371,7 @@
 				title="На этом устройстве"
 				description="Приходят как обычные уведомления телефона, даже когда приложение закрыто."
 				checked={isSubscribed}
-				disabled={isLoading || pushUnsupported || offlineGate.disabled}
-				disabledHint={offlineGate.title}
+				disabled={isLoading || pushUnsupported}
 				onCheckedChange={() => {
 					void toggleSubscription();
 				}}
@@ -397,8 +391,7 @@
 				title="ВКонтакте"
 				description={vkDescription}
 				checked={receiveVk}
-				disabled={isSavingSettings || !hasVkAccount || offlineGate.disabled}
-				disabledHint={offlineGate.title}
+				disabled={isSavingSettings || !hasVkAccount}
 				onCheckedChange={toggleReceiveVk}
 			>
 				<div class="flex flex-wrap gap-x-4">
@@ -429,8 +422,7 @@
 				title="Все анонсы"
 				description="Получать уведомления о начале каждого выступления."
 				checked={receiveAll}
-				disabled={isSavingSettings || offlineGate.disabled}
-				disabledHint={offlineGate.title}
+				disabled={isSavingSettings}
 				onCheckedChange={toggleReceiveAll}
 			/>
 		</MenuGroup>
@@ -443,8 +435,7 @@
 		<Button
 			variant="outline"
 			class="w-full sm:w-auto"
-			disabled={isSendingTest || offlineGate.disabled}
-			title={offlineGate.title}
+			disabled={isSendingTest}
 			onclick={sendTestNotification}
 		>
 			{#if isSendingTest}

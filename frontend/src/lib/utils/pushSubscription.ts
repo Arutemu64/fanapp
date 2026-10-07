@@ -2,8 +2,8 @@
 export type DevicePushState = 'on' | 'off' | 'unknown';
 
 /**
- * Read this device's push state from the browser alone — no network, so it works
- * offline and costs nothing on the profile hub. It can disagree with the server
+ * Read this device's push state from the browser alone — no network, so it costs
+ * nothing on the profile hub. It can disagree with the server
  * in one rare case (the server dropped a subscription the browser still holds);
  * the notifications page does the server round-trip and is the source of truth.
  *

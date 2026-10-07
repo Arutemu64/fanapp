@@ -9,7 +9,6 @@
 	import * as Item from '$lib/components/ui/item';
 	import { SOCIAL_PROVIDER_PRESENTATION } from '$lib/data/socialProviders';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { offlineWriteGate } from '$lib/utils/offlineAction';
 	import { Mail, Shield } from '@lucide/svelte';
 
 	import ChangeEmailModal from './ChangeEmailModal.svelte';
@@ -27,10 +26,6 @@
 	}
 
 	let { user, enabledProviders, onUpdate }: Props = $props();
-
-	// Email/password/unlink are all mutations — online only. The current state
-	// (which methods are set) still renders from the cached user.
-	const offlineGate = offlineWriteGate();
 
 	let changePasswordModalOpen = $state(false);
 	let changeEmailModalOpen = $state(false);
@@ -98,8 +93,6 @@
 					variant={emailButtonVariant}
 					size="sm"
 					class="min-h-11"
-					disabled={offlineGate.disabled}
-					title={offlineGate.title}
 					onclick={() => (changeEmailModalOpen = true)}
 				>
 					{user.email ? 'Изменить' : 'Добавить'}
@@ -120,8 +113,6 @@
 					variant="outline"
 					size="sm"
 					class="min-h-11"
-					disabled={offlineGate.disabled}
-					title={offlineGate.title}
 					onclick={() => (changePasswordModalOpen = true)}
 				>
 					{user.has_password ? 'Изменить' : 'Установить'}

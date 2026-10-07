@@ -1,103 +1,28 @@
-import type { CurrentUserDto, ScheduleEventFullDto, SubscriptionFullDto } from '$lib/api/generated';
-
 import { createApiClient } from '$lib/api';
-import { getCurrentUser, getSchedule, getSubscriptions } from '$lib/api/generated';
-import {
-	clearUserCache,
-	fetchWithCache,
-	universalScope,
-	userScope,
-	warmCache
-} from '$lib/utils/offlineCache';
-import { isLogoutPending } from '$lib/utils/pendingLogout';
-import { SCHEDULE_CACHE_KEY, SUBSCRIPTIONS_CACHE_KEY } from '$lib/utils/scheduleData';
+import { throwApiError } from '$lib/api/errors';
+import { getCurrentUser } from '$lib/api/generated';
 
 import type { LayoutLoad } from './$types';
 
 // SPA-only: render entirely on the client. There is no server render.
 export const ssr = false;
 
-// Single current-session user; cached so the app can still boot offline.
-const USER_CACHE_KEY = 'me:user';
-
 export const load: LayoutLoad = async ({ fetch, depends }) => {
 	depends('app:current-user');
 
-	// A logout requested offline is still pending server-side (the HttpOnly cookie
-	// can't be cleared by JS). Present as logged-out until the queued POST
-	// /auth/logout revokes the session — otherwise a still-valid cookie would let
-	// /me resurrect the account we just left. The flush (OfflineService) clears the
-	// intent once it succeeds; a fresh login clears it too (completeLogin).
-	if (isLogoutPending()) {
+	const client = createApiClient();
+	const { data, response, error } = await getCurrentUser({ client, fetch });
+
+	// Authoritative "no session": the visitor is a guest.
+	if (response?.status === 401 || response?.status === 403) {
 		return { user: null };
 	}
 
-	const client = createApiClient();
-
-	// `null` is a real cached value (logged out); `undefined` means "reachable but
-	// no verdict, keep the cached user" (see fetcher below), so the type spans both.
-	const { data } = await fetchWithCache<CurrentUserDto | null>({
-		key: USER_CACHE_KEY,
-		scope: userScope,
-		fetcher: async ({ signal }) => {
-			const { data, response, error } = await getCurrentUser({ client, fetch, signal });
-
-			// Authoritative "session ended": cache logged-out AND drop per-user caches
-			// so no orphaned entries linger for the next account on a shared device.
-			// Universal caches (e.g. schedule) are kept warm. Mirrors explicit logout
-			// (the Profile page's LogoutButton).
-			if (response?.status === 401 || response?.status === 403) {
-				void clearUserCache();
-				return null;
-			}
-
-			// Reachable but not an auth verdict (5xx / parse error / empty body): do NOT
-			// downgrade identity. Returning `undefined` keeps the last-good cached user
-			// instead of overwriting it with `null` — a transient error must not flip a
-			// logged-in user to guest (which would orphan their per-user caches).
-			if (error || !data) {
-				return undefined;
-			}
-
-			return data;
-		}
-	});
-
-	// A complete cache miss (offline first boot) is also "not logged in".
-	const user = data ?? null;
-
-	// Warm the offline caches on the first online boot so they're viewable even if
-	// the user never opens the schedule page. Fire-and-forget: each is a no-op when
-	// offline or already cached, so it never blocks first paint or refetches once
-	// warmed (the schedule page's own load + SSE keep them fresh after that). Uses
-	// the same keys the schedule page reads, and its own client so it isn't tied to
-	// this load's tracked `fetch`.
-
-	// Schedule is universal — one shared key for guests and every account.
-	void warmCache<ScheduleEventFullDto[]>({
-		key: SCHEDULE_CACHE_KEY,
-		scope: universalScope,
-		fetcher: async ({ signal }) => {
-			const warmClient = createApiClient();
-			const { data: schedule, error } = await getSchedule({ client: warmClient, signal });
-			if (error || !schedule) return undefined;
-			return schedule.schedule ?? [];
-		}
-	});
-
-	// Subscriptions are per-user; only logged-in users have them.
-	if (user) {
-		void warmCache<SubscriptionFullDto[]>({
-			key: SUBSCRIPTIONS_CACHE_KEY,
-			scope: userScope,
-			fetcher: async ({ signal }) => {
-				const warmClient = createApiClient();
-				const { data, error } = await getSubscriptions({ client: warmClient, signal });
-				if (error || !data) return undefined;
-				return data.subscriptions ?? [];
-			}
-		});
+	// Any other failure (network, 5xx, empty body) is not an auth verdict, so it
+	// must not silently flip a signed-in user to guest — fail the load instead.
+	if (error || !data) {
+		throwApiError(error, response, 'Не удалось связаться с сервером');
 	}
 
-	return { user };
+	return { user: data };
 };

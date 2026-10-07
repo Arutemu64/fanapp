@@ -1,68 +1,39 @@
-import type { NotificationDto } from '$lib/api/generated';
-
 import { createApiClient } from '$lib/api';
+import { throwApiError } from '$lib/api/errors';
 import { listUserNotifications } from '$lib/api/generated';
 import {
 	NOTIFICATION_PAGE_REQUEST_LIMIT,
 	NOTIFICATION_PAGE_SIZE
 } from '$lib/constants/notifications';
-import { isReachable } from '$lib/services/reachability';
-import { fetchWithCache, userScope } from '$lib/utils/offlineCache';
-import { error } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ fetch, depends }) => {
 	depends('app:notifications');
 
-	// Single per-user key (userScope): the viewer's own feed, dropped on logout so
-	// it can't surface for the next account.
-	const cacheKey = 'notifications';
-
 	const client = createApiClient();
 
-	// Cache the raw first page (request limit length) so hasMore stays computable offline.
-	const { data, stale, cachedAt } = await fetchWithCache<NotificationDto[]>({
-		key: cacheKey,
-		scope: userScope,
-		fetcher: async ({ signal }) => {
-			const { data, error: fetchError } = await listUserNotifications({
-				client,
-				fetch,
-				signal,
-				query: {
-					limit: NOTIFICATION_PAGE_REQUEST_LIMIT,
-					offset: 0
-				}
-			});
-			// Reachable but errored → fall back to cache.
-			if (fetchError || !data) return undefined;
-			return data.notifications ?? [];
+	const {
+		data,
+		error: fetchError,
+		response
+	} = await listUserNotifications({
+		client,
+		fetch,
+		query: {
+			limit: NOTIFICATION_PAGE_REQUEST_LIMIT,
+			offset: 0
 		}
 	});
-
-	if (data === undefined) {
-		// Offline with nothing cached: degrade to a calm inline state so the app shell
-		// and bottom nav stay usable. A real online failure is still a hard error.
-		if (!isReachable()) {
-			return {
-				title: 'Уведомления',
-				notifications: [],
-				hasMore: false,
-				stale: true,
-				cachedAt: undefined,
-				offlineMiss: true
-			};
-		}
-		error(503, 'Не удалось загрузить уведомления');
+	if (fetchError || !data) {
+		throwApiError(fetchError, response, 'Не удалось загрузить уведомления');
 	}
+
+	const notifications = data.notifications ?? [];
 
 	return {
 		title: 'Уведомления',
-		notifications: data.slice(0, NOTIFICATION_PAGE_SIZE),
-		hasMore: data.length > NOTIFICATION_PAGE_SIZE,
-		stale,
-		cachedAt,
-		offlineMiss: false
+		notifications: notifications.slice(0, NOTIFICATION_PAGE_SIZE),
+		hasMore: notifications.length > NOTIFICATION_PAGE_SIZE
 	};
 };

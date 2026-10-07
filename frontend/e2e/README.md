@@ -2,8 +2,8 @@
 
 End-to-end tests that drive the **real production build** in a browser with the
 backend **mocked per test**. This is the tier that covers what Vitest cannot
-(ADR-0011, node-only): SPA routing and guards, the service worker, offline / PWA
-behaviour, and DOM interactions. Backend behaviour itself is already covered by
+(ADR-0011, node-only): SPA routing and guards, network-failure states, and DOM
+interactions. Backend behaviour itself is already covered by
 the `@pytest.mark.integration` suite, and the frontend↔backend contract by the
 OpenAPI drift guards (`test_openapi_spec.py` + `frontend-check-api`) — so here we
 mock, and keep these tests about the UI. See [docs/testing.md](../../docs/testing.md).
@@ -15,9 +15,8 @@ just frontend-e2e        # headless
 just frontend-e2e-ui     # Playwright UI, for debugging a spec (local)
 ```
 
-The config builds the app and serves it with `vite preview` automatically — a
-production build is required because the service worker and offline caching are
-inert in `vite dev` (docs/frontend.md §2).
+The config builds the app and serves it with `vite preview` automatically, so
+the tests exercise the same bundle that ships.
 
 **Browser:** the suite runs on the Chromium build the pinned `@playwright/test`
 expects. A Claude Code web session's session-start hook installs it; CI installs
@@ -64,8 +63,9 @@ test('closed voting shows the closed banner', async ({ page, api }) => {
 });
 ```
 
-See `specs/voting.spec.ts`, `specs/offline.spec.ts` and `specs/realtime.spec.ts`
-for the closed/open, offline and SSE patterns respectively.
+See `specs/voting.spec.ts`, `specs/network-failure.spec.ts` and
+`specs/realtime.spec.ts` for the closed/open, dead-network and SSE patterns
+respectively.
 
 ### How mocking works
 
@@ -73,7 +73,7 @@ for the closed/open, offline and SSE patterns respectively.
   `"<METHOD> <path>"` (path **without** `/api`, **with** the trailing slash the
   OpenAPI spec uses — `"GET /me/"`) to a response.
 - `mocks/defaults.ts` pre-mocks the **boot-critical** endpoints (`/me/`,
-  `/config`, `/debug/health`, `/schedule/`, …) as a logged-out guest. Every test
+  `/config`, `/schedule/`, …) as a logged-out guest. Every test
   starts from this baseline.
 - `api.use({ … })` overrides or adds routes for one test; last write wins.
 - **Type your bodies** with `json<SomeDto>({ … })`, importing the generated type
@@ -90,23 +90,17 @@ The session is an HttpOnly cookie JS can't forge, so auth is faked by mocking
 must exercise the **real** cookie/login handshake belong in a full-stack run, not
 here.
 
-### Offline / network failure
+### Network failure
 
-The app's offline states are driven by failed requests and the reachability probe,
-not `navigator.onLine`. **Simulate a dead network by aborting the reads** — a
-mocked route still _fulfils_ under `context.setOffline(true)`, so aborting is what
-actually reaches the offline path:
+**Simulate a dead network by aborting the reads** — a mocked route still
+_fulfils_ under `context.setOffline(true)`, so aborting is what actually reaches
+the failure path:
 
 ```ts
 api.use({ 'GET /voting/nominations': (route) => route.abort() });
 await page.goto('/voting');
-await expect(page.getByText('Голосование доступно только онлайн')).toBeVisible();
+await expect(page.getByText('Не удалось связаться с сервером. Попробуй ещё раз.')).toBeVisible();
 ```
-
-The build ships a real service worker, so a cache-backed page can also be tested
-across a genuine online→offline edge (load online to populate the cache, then
-fail the reads and reload to assert the stale notice) — that's the tier only a
-real build reaches.
 
 ### Realtime (SSE)
 
@@ -126,7 +120,7 @@ is a real regression even when the visible assertions still pass. The guard is a
 auto fixture (`support/console.ts`), so there's nothing to opt into.
 
 Browser network noise (`Failed to load resource` from an aborted or 404'd request —
-how offline states and the loud-404 are driven) is ignored by default. When a test
+how network failures and the loud-404 are driven) is ignored by default. When a test
 _deliberately_ drives a path the app logs on, allow just that line — reference the
 `consoleErrors` fixture and pass a tight pattern:
 
@@ -164,7 +158,7 @@ Specs carry tags via the describe details object, filtered with `--grep`:
 
 - `@smoke` — the fastest boot/render checks (a PR-gate lane).
 - `@critical` — core user journeys that must never break (boot, voting, casting a
-  vote, notifications, realtime, offline, the auth gate).
+  vote, notifications, realtime, network failure, the auth gate).
 - `@a11y` — the axe scans.
 
 ```sh

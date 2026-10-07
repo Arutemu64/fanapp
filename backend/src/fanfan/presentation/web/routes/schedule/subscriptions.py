@@ -34,7 +34,7 @@ subscriptions_router = APIRouter(
     summary="List the current user's subscriptions",
     description="Returns every schedule event the current user is subscribed to. "
     "Served separately from the schedule so the schedule itself stays universal "
-    "and cacheable offline.",
+    "and cacheable.",
 )
 @inject
 async def get_subscriptions(

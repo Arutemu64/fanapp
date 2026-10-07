@@ -16,7 +16,7 @@ This system explicitly rejects three things. It is not **childish or cartoonish*
 - One-handed, one-glance: bottom nav on mobile, sidebar on desktop, single capped column.
 - Color carries the joy; structure carries the calm.
 - Near-flat surfaces — borders and tonal layering over shadows.
-- Resilient by default: skeletons, cached-shell offline boot, calm error and stale states.
+- Resilient by default: skeletons, calm retryable error and connection states.
 - Light and dark mode, WCAG AA, full `prefers-reduced-motion` support.
 
 ## 2. Colors
@@ -110,8 +110,8 @@ shadcn-svelte (vendored as source in `$lib/components/ui/`) is the component sub
 - **Internal Padding:** `p-4` (16px) mobile, `p-6`–`p-8` desktop.
 
 ### Notices (signature)
-- **Style:** Full-width `rounded-xl` tinted strip — icon + text, built from a status token (e.g. offline/stale: `bg-warning/10` + `border-warning/30` + `text-warning`; success/info follow the same shape).
-- **Use:** Stale-data, offline, connection banners. Calm and informative, never alarming.
+- **Style:** Full-width `rounded-xl` tinted strip — icon + text, built from a status token (e.g. reconnecting: `bg-warning/10` + `border-warning/30` + `text-warning`; success/info follow the same shape).
+- **Use:** Connection banners and status notices. Calm and informative, never alarming.
 
 ### Navigation
 - **Mobile — Bottom Nav:** A floating glass pill, the iOS 26 tab-bar shape: five columns in a `rounded-full` capsule capped at `max-w-md`, inset from the screen edges, dipping into the bottom safe area over the home indicator, `md:hidden`. Translucent `background/85` + 16px backdrop blur — airy enough to show content moving under it, dense enough that a bold row title never reads through the tab labels; opaque under the OS "reduce transparency" setting. Active item = semibold label and icon on a `primary/12` capsule (`/20` in dark) that slides between tabs; in light mode the active label is `primary-700`, not the token, so it clears AA on the tint (the `tonal` button's trick), while dark keeps `primary`. Colour and weight cross-fade on the capsule's 300ms curve, so the highlight and the lit label move as one. Idle = `muted-foreground` with foreground on hover. Active state pairs the capsule and weight with color — never color alone. Anything floating above it offsets from `--bottom-nav-clearance` (`app.css`).
@@ -120,7 +120,7 @@ shadcn-svelte (vendored as source in `$lib/components/ui/`) is the component sub
 ### Empty & Loading States
 - **Loading:** Skeletons that mimic the content's shape — never a centered spinner in the content area.
 - **Empty:** Teach the interface (what this screen will hold, one action), not "nothing here."
-- **Error:** Centered card, role-colored icon chip (red danger / yellow offline), status label, Russian title + plain-spoken description, stacked retry / home / back actions.
+- **Error:** Centered card, role-colored icon chip (red danger), status label, Russian title + plain-spoken description, stacked retry / home / back actions.
 
 ## 6. Do's and Don'ts
 
@@ -130,7 +130,7 @@ shadcn-svelte (vendored as source in `$lib/components/ui/`) is the component sub
 - **Do** separate surfaces with a border and a tonal step (`gray-50` field under `white` surface) before reaching for any shadow.
 - **Do** use Inter for all interface text; reserve Unbounded for the wordmark and rare identity moments.
 - **Do** pair every state with text/icon, not color alone (active nav = solid icon + primary; error = red border + message).
-- **Do** ship skeletons for loading, teaching empty states, and calm cached/offline notices — resilience is first-class.
+- **Do** ship skeletons for loading, teaching empty states, and calm connection notices — resilience is first-class.
 - **Do** write all user-facing copy in warm, plain-spoken Russian; keep code comments in English.
 - **Do** honor `prefers-reduced-motion` and keep transitions 150–250ms, conveying state only.
 

@@ -37,8 +37,8 @@ export const load: PageLoad = async ({ url, fetch }) => {
 			signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
 		});
 		if (error) {
-			// A network failure (offline / timeout) comes back as an error with no
-			// `response`; stay silent and leave `null` to fail open. Only a real API
+			// A network failure or timeout comes back as an error with no `response`;
+			// stay silent and leave `null` to fail open. Only a real API
 			// error (response present) is worth logging.
 			if (response) {
 				console.error('Error fetching enabled OAuth providers:', error);

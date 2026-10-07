@@ -6,10 +6,10 @@
 	import Toaster from '$lib/components/ui/sonner/sonner.svelte';
 	import UpdatePrompt from '$lib/components/UpdatePrompt.svelte';
 	import { setEventsClient } from '$lib/services/events.svelte';
-	import { setOfflineService } from '$lib/services/offline.svelte';
 	import { setPwaService } from '$lib/services/pwa.svelte';
 	import { setThemeService } from '$lib/services/theme.svelte';
 	import { setToastService } from '$lib/services/toasts.svelte';
+	import { purgeLegacyOfflineStorage } from '$lib/utils/legacyOfflineStorage';
 	import { registerServiceWorker } from '$lib/utils/serviceWorker';
 	import * as Sentry from '@sentry/sveltekit';
 	import { onDestroy, onMount } from 'svelte';
@@ -22,7 +22,6 @@
 	setToastService();
 	const pwa = setPwaService();
 	setThemeService();
-	const offlineService = setOfflineService();
 
 	onMount(() => {
 		// Remove the static boot splash (in app.html) now that the app has mounted.
@@ -31,6 +30,8 @@
 		// SvelteKit's auto-registration is disabled (svelte.config.js) so we can
 		// catch a rejected register() ourselves — see registerServiceWorker.
 		registerServiceWorker();
+
+		purgeLegacyOfflineStorage();
 	});
 
 	$effect(() => {
@@ -49,9 +50,6 @@
 		// window/document listeners, so no zombie stream can resurrect —
 		// matters mostly for dev HMR, which re-creates the layout.
 		eventsClient.destroy();
-		// Same reason: drop the offline service's global listeners and its
-		// recovery-poll timer so HMR doesn't stack duplicates.
-		offlineService.destroy();
 	});
 </script>
 
@@ -85,5 +83,5 @@
 	icon="/icons/icon-512.png"
 ></pwa-install>
 
-<!-- Prompts the user to reload when a new build has been cached by the SW. -->
+<!-- Prompts the user to reload when a new build has been deployed. -->
 <UpdatePrompt />

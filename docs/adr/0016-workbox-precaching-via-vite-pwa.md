@@ -1,6 +1,6 @@
 # ADR-0016: Workbox precaching via vite-pwa for the service worker
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0020](0020-drop-offline-support.md)
 - **Date:** 2026-08-27
 - **Deciders:** arutemu64
 

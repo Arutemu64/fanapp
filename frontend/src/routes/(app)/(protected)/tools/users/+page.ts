@@ -29,8 +29,6 @@ export const load: PageLoad = async ({ fetch, parent, url }) => {
 
 	const client = createApiClient();
 
-	// Staff-only operational directory: stale data would misrepresent live state,
-	// so no offline cache — fail hard when unreachable instead.
 	const {
 		data,
 		error: fetchError,

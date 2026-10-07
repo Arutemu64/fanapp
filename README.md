@@ -29,7 +29,7 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 - **Organizer tools**: schedule import, manual TicketsCloud / Cosplay2 syncs, and other admin screens, gated by permissions.
 - **Feedback**: user feedback submission.
 - **Live updates**: Server-Sent Events (SSE) push real-time changes to the client.
-- **Installable PWA**: installs to the home screen; the schedule, notifications and profile stay readable offline from their last synced copy.
+- **Installable PWA**: installs to the home screen, with app-icon shortcuts, an unread badge and Web Push.
 
 ### Screenshots
 

@@ -1,12 +1,6 @@
 import type { NotificationDto } from '$lib/api/generated';
 
 import { PUBLIC_API_URL } from '$env/static/public';
-import {
-	isReachable,
-	markReachable,
-	onReachableChange,
-	probeReachability
-} from '$lib/services/reachability';
 import { requestReconnectRefresh } from '$lib/utils/reconnectRefresh';
 import * as Sentry from '@sentry/sveltekit';
 import { createContext } from 'svelte';
@@ -18,12 +12,11 @@ const MAX_RECONNECT_ATTEMPTS = 10;
 /**
  * Once the fast retries are exhausted, keep dialing at this cadence rather than
  * stopping for good. A stream that stays broken while the backend is otherwise
- * healthy — a carrier proxy that kills long-lived connections, say — never
- * produces a reachability *transition*, so `markReachable(true)` notifies nobody
- * and none of the other recovery paths (`online`, reachability change, visibility
- * resume) ever fire. Without this the down banner would stick for the rest of the
- * session on an app whose pages all load fine. One dial a minute is cheap, and it
- * is paused with the rest of the stream while the app is backgrounded.
+ * healthy — a carrier proxy that kills long-lived connections, say — never fires
+ * the other recovery paths (`online`, visibility resume). Without this the down
+ * banner would stick for the rest of the session on an app whose pages all load
+ * fine. One dial a minute is cheap, and it is paused with the rest of the stream
+ * while the app is backgrounded.
  */
 const FAILED_RETRY_INTERVAL_MS = 60000;
 /** Wait briefly before reconnecting after auth changes to avoid flicker during navigation. */
@@ -160,7 +153,6 @@ export class EventsClient {
 	#pausedForVisibility = false;
 	// Terminal flag set by destroy(); a destroyed client never reconnects.
 	#destroyed = false;
-	#unsubscribeReachable: (() => void) | null = null;
 	// Guards the one-issue-per-outage rule below: the slow retry re-enters
 	// #failAndReconnect once a minute while `failed`, and each of those must not
 	// file a fresh GlitchTip issue. Reset on the next successful handshake.
@@ -188,10 +180,6 @@ export class EventsClient {
 		// re-dial when it comes back.
 		window.addEventListener('offline', this.#handleOffline);
 		window.addEventListener('online', this.#handleOnline);
-		// Recover when connectivity returns after the stream gave up retrying.
-		// While the reconnect loop is still running it handles recovery itself,
-		// so we only step in once it has reached the terminal 'failed' state.
-		this.#unsubscribeReachable = onReachableChange(this.#handleReachableChange);
 		// Pause the stream while the app is backgrounded and resume on return;
 		// Web Push keeps notifications flowing while it is down.
 		document.addEventListener('visibilitychange', this.#handleVisibilityChange);
@@ -343,12 +331,10 @@ export class EventsClient {
 		window.removeEventListener('offline', this.#handleOffline);
 		window.removeEventListener('online', this.#handleOnline);
 		document.removeEventListener('visibilitychange', this.#handleVisibilityChange);
-		this.#unsubscribeReachable?.();
-		this.#unsubscribeReachable = null;
 	}
 
-	// Browser lost the network: stop reconnect attempts and go quiet. The offline
-	// banner (OfflineService) covers the UI; SSE resumes on the `online` event.
+	// Browser lost the network: stop reconnect attempts and go quiet. SSE resumes
+	// on the `online` event.
 	#handleOffline = () => {
 		this.#suspend();
 	};
@@ -372,11 +358,13 @@ export class EventsClient {
 		this.#connectionStatus = 'disconnected';
 	}
 
-	// Network is back: re-dial from a clean slate — unless we're paused because the
-	// app is backgrounded, in which case the visibility resume handles the redial.
+	// Network is back: re-dial from a clean slate and refetch whatever changed while
+	// we were cut off — unless we're paused because the app is backgrounded, in
+	// which case the visibility resume handles both.
 	#handleOnline = () => {
 		if (this.#pausedForVisibility) return;
 		this.restart();
+		requestReconnectRefresh();
 	};
 
 	// App backgrounded: after a grace window, drop the stream to stop radio churn.
@@ -404,17 +392,6 @@ export class EventsClient {
 		}
 	};
 
-	// Reachability recovered (e.g. the offline recovery poll or a load succeeded).
-	// A given-up stream is only retrying once a FAILED_RETRY_INTERVAL_MS by then;
-	// a confirmed-reachable backend is good enough evidence to dial straight away
-	// rather than sit out the rest of that minute. Note this fires on a reachability
-	// *transition* only, which is exactly why the slow retry has to exist.
-	#handleReachableChange = () => {
-		if (this.#connectionStatus === 'failed' && isReachable()) {
-			this.restart();
-		}
-	};
-
 	#handleHandshake = (event: Event) => {
 		if (!(event instanceof MessageEvent)) return;
 
@@ -427,8 +404,8 @@ export class EventsClient {
 
 		// A re-established stream (not the first dial) may have missed change signals
 		// while it was down — a silent drop the watchdog caught, or a long outage the
-		// slow retry recovered from. Neither crosses a reachability edge, so nothing
-		// else refetches on those paths; catch up now. The first connect is skipped
+		// slow retry recovered from. Nothing else refetches on those paths; catch up
+		// now. The first connect is skipped
 		// because the page's own load already fetched fresh data. `restart()` (login,
 		// visibility, online) resets the counter to 0 before reconnecting, so those
 		// paths refetch through their own call, not here — no double refresh.
@@ -436,8 +413,6 @@ export class EventsClient {
 
 		this.#clearStallTimer();
 		this.#connectionStatus = 'connected';
-		// A live stream proves the backend is reachable — feed that to the probe.
-		markReachable(true);
 		// Leave a trail for whatever error fires next; on a recovery it also closes
 		// out the outage that #failAndReconnect may have filed as an issue.
 		Sentry.addBreadcrumb({
@@ -490,11 +465,6 @@ export class EventsClient {
 			message: `SSE dropped (${reason})`,
 			data: { reason, attempts: this.#reconnectAttempts }
 		});
-
-		// A stream failure may mean the network died, not just an SSE hiccup. Probe
-		// the health endpoint so reachability (and the offline banner) reflect reality
-		// even when no `load` is running to report an outcome.
-		void probeReachability();
 
 		if (this.#reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
 			this.#connectionStatus = 'failed';

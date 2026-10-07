@@ -10,7 +10,6 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { getToastService } from '$lib/services/toasts.svelte';
-	import { offlineWriteGate } from '$lib/utils/offlineAction';
 	import { CheckCircle2 } from '@lucide/svelte';
 
 	import SettingsSection from './SettingsSection.svelte';
@@ -22,9 +21,6 @@
 
 	let { user, onTicketLinked }: Props = $props();
 	const toastService = getToastService();
-
-	// Linking a ticket is a mutation — online only. A linked ticket still shows.
-	const offlineGate = offlineWriteGate();
 
 	let barcode = $state('');
 	let isSubmitting = $state(false);
@@ -94,19 +90,14 @@
 					spellcheck={false}
 					aria-invalid={submitError ? true : undefined}
 					aria-describedby={barcodeDescribedBy}
-					disabled={isSubmitting || offlineGate.disabled}
+					disabled={isSubmitting}
 					oninput={() => (submitError = '')}
 				/>
 				{#if submitError}
 					<Field.FieldError id="ticket-barcode-error">{submitError}</Field.FieldError>
 				{/if}
 			</Field.Field>
-			<Button
-				type="submit"
-				class="w-full"
-				disabled={isSubmitting || offlineGate.disabled}
-				title={offlineGate.title}
-			>
+			<Button type="submit" class="w-full" disabled={isSubmitting}>
 				{#if isSubmitting}
 					<Spinner data-icon="inline-start" />
 					Привязка…

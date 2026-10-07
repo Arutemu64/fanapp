@@ -9,10 +9,10 @@ import { createSubscriber } from 'svelte/reactivity';
  * during a short background trip. This shares one `visibilitychange`
  * subscription across every reader rather than each wiring its own listener.
  *
- * Module-global (not Svelte context), matching `reachability.ts`: this is a
- * device/document fact, not user- or session-scoped state, so it needn't reset
- * across login/logout and carries no SSR-leak risk — the getter reads live from
- * the DOM rather than mirroring into stored `$state`.
+ * Module-global (not Svelte context): this is a device/document fact, not user-
+ * or session-scoped state, so it needn't reset across login/logout and carries no
+ * SSR-leak risk — the getter reads live from the DOM rather than mirroring into
+ * stored `$state`.
  */
 
 // Bridges the DOM event into Svelte's reactivity, so a component can read

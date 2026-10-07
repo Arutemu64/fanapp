@@ -4,13 +4,11 @@
 
 	import { invalidate } from '$app/navigation';
 	import { page } from '$app/state';
-	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import * as ToggleGroup from '$lib/components/ui/toggle-group';
 	import { documentVisibility } from '$lib/services/documentVisibility';
 	import { getEventsClient } from '$lib/services/events.svelte';
-	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
 	import { createSearchIndex } from '$lib/utils/search';
 	import { ChevronUp, Play, Search as SearchIcon, X } from '@lucide/svelte';
 	import { onMount } from 'svelte';
@@ -51,15 +49,7 @@
 	let currentEvent = $derived(schedule.find((event) => event.is_current) ?? null);
 	let user: CurrentUserDto | null = $derived(page.data.user);
 
-	const offline = getOfflineService();
 	const eventsClient = getEventsClient();
-	let showStaleNotice = $derived(
-		shouldShowStaleNotice({
-			offlineMiss: data.offlineMiss,
-			stale: data.stale,
-			isOnline: offline.isOnline
-		})
-	);
 
 	// Rebuilt only when the schedule reloads, so a keystroke re-runs token
 	// comparisons instead of re-normalizing every field of every row.
@@ -197,13 +187,6 @@
 </svelte:head>
 
 <div {@attach capturePageRoot} class="flex flex-col gap-4">
-	{#if showStaleNotice}
-		<StaleDataNotice
-			message="Нет связи. Показана сохранённая программа — обновится при подключении."
-			cachedAt={data.cachedAt}
-		/>
-	{/if}
-
 	<!-- Controls sit straight on the page, not in a card: DESIGN "When not to" use a
 	     card. Search plus a scope switch under it is the iOS search-field + scope-bar
 	     pattern (https://developer.apple.com/design/human-interface-guidelines/search-fields).
@@ -276,18 +259,14 @@
 				class="rounded-2xl border border-dashed border-border bg-card px-4 py-10 text-center sm:py-14"
 			>
 				<p class="text-base font-bold text-foreground">
-					{#if data.offlineMiss}
-						Программа недоступна офлайн
-					{:else if hasActiveFilters}
+					{#if hasActiveFilters}
 						Ничего не нашлось
 					{:else}
 						Программа пока пуста
 					{/if}
 				</p>
 				<p class="mt-1 text-sm text-muted-foreground">
-					{#if data.offlineMiss}
-						Появится после подключения к интернету
-					{:else if hasActiveFilters}
+					{#if hasActiveFilters}
 						Попробуй изменить поиск или фильтры
 					{:else}
 						Программа появится ближе к фестивалю

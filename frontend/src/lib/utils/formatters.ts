@@ -161,50 +161,6 @@ export function formatRelativeTime(value: string | number | Date): string {
 	return formatEventDateTime(date);
 }
 
-const EVENT_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
-	hour: '2-digit',
-	minute: '2-digit',
-	timeZone: EVENT_TIME_ZONE
-});
-
-const EVENT_DAY_MONTH_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
-	day: '2-digit',
-	month: '2-digit',
-	timeZone: EVENT_TIME_ZONE
-});
-
-// Y-M-D in the event timezone, used only to compare calendar days regardless of
-// the device's own timezone (en-CA gives a stable "2026-06-19" shape).
-const EVENT_DAY_KEY_FORMATTER = new Intl.DateTimeFormat('en-CA', {
-	year: 'numeric',
-	month: '2-digit',
-	day: '2-digit',
-	timeZone: EVENT_TIME_ZONE
-});
-
-/**
- * Format when cached data was last synced, for the offline stale notice. Caching
- * may have happened days earlier (installed at home, opened at the venue), so the
- * day is always shown unless it is today/yesterday. Event timezone, like the rest
- * of the app.
- */
-export function formatSyncedAt(timestamp: number): string {
-	const target = new Date(timestamp);
-	const time = EVENT_TIME_FORMATTER.format(target);
-
-	const now = new Date();
-	const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-	const targetDay = EVENT_DAY_KEY_FORMATTER.format(target);
-
-	if (targetDay === EVENT_DAY_KEY_FORMATTER.format(now)) {
-		return `сегодня в ${time}`;
-	}
-	if (targetDay === EVENT_DAY_KEY_FORMATTER.format(yesterday)) {
-		return `вчера в ${time}`;
-	}
-	return `${EVENT_DAY_MONTH_FORMATTER.format(target)} в ${time}`;
-}
-
 /**
  * Countdown label for an upcoming event: the drift-proof queue distance ("how
  * many acts away"). The schedule carries no predicted clock time — every value

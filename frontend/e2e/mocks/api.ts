@@ -16,9 +16,8 @@ export interface MockResponse {
 
 // A handler is either a fixed response or a function of the intercepted request —
 // use the function form to branch on query params, assert on the request body, or
-// take the route over entirely (e.g. `route.abort()` to simulate a dead network,
-// which is how the mocked tier drives the app's offline states). A function that
-// fulfils/aborts the route itself returns nothing.
+// take the route over entirely (e.g. `route.abort()` to simulate a dead network).
+// A function that fulfils/aborts the route itself returns nothing.
 type MockHandler =
 	MockResponse | ((route: Route) => MockResponse | void | Promise<MockResponse | void>);
 

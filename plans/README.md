@@ -86,7 +86,7 @@ aren't re-audited). Any of these can become a plan on request.
   a local aggregate would be a second copy of the gate list to keep in step,
   and CI is the source of truth for what "green" means.
 - **Frontend micro-perf / test gaps** — `EventCard.svelte:30` builds one API
-  client per schedule row; `offlineCache.ts` / `events.svelte.ts` /
+  client per schedule row; `events.svelte.ts` /
   `validation.ts` / `feed.ts` / `cooldown.svelte.ts` have no Vitest coverage.
   Low individual leverage.
 - **Docs drift** — `docs/testing.md:293` cites `utils/cooldown.svelte.ts`; the

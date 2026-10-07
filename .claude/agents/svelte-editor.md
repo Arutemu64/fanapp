@@ -12,7 +12,7 @@ skills:
 You implement one scoped frontend change and leave the gates green.
 
 `.claude/rules/frontend.md` is your working brief — it loads with this repo and
-carries the project bindings (typography/radius/z-index scales, offline cache,
+carries the project bindings (typography/radius/z-index scales,
 component placement, the shadcn-svelte conventions). Follow it. This prompt only
 covers how you operate as an agent.
 

@@ -28,7 +28,7 @@ Clean and friendly. Approachable, trustworthy, easy. Three words: **clear, livel
 
 1. **One-handed, one-glance.** Every primary task readable and reachable on a phone, thumb-first, in seconds. Bottom-anchored navigation, generous tap targets, scannable hierarchy.
 2. **Color carries the joy, structure carries the calm.** Let the watermelon palette do the emotional work in accents, states, and key moments; keep layout quiet and uncluttered so it never overwhelms.
-3. **Resilient by default.** Con wifi is bad. Skeletons over spinners, cached-shell offline boot, optimistic-but-honest states, never a blank or broken screen. Loading and error states are first-class, not afterthoughts.
+3. **Resilient by default.** Con wifi is bad. Skeletons over spinners, optimistic-but-honest states, a calm retryable error when the network fails, never a blank or broken screen. Loading and error states are first-class, not afterthoughts.
 4. **Consistent affordances.** Same button, same form control, same icon style across schedule, voting, profile, settings. The tool disappears into the task; surprise is saved for moments, not pages.
 5. **Russian-native, plain-spoken.** Copy is warm, direct, and human in Russian — never jargon, never machine-translated stiffness.
 

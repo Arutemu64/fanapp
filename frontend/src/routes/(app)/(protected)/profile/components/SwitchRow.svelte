@@ -10,8 +10,6 @@
 		description: string;
 		checked: boolean;
 		disabled?: boolean;
-		/** Hover hint for a disabled switch (desktop only — touch never shows it). */
-		disabledHint?: string;
 		onCheckedChange: (checked: boolean) => void;
 		/** Extra content under the description, outside the label — links and buttons go here. */
 		children?: Snippet;
@@ -23,7 +21,6 @@
 		description,
 		checked,
 		disabled = false,
-		disabledHint,
 		onCheckedChange,
 		children
 	}: Props = $props();
@@ -58,6 +55,5 @@
 		aria-labelledby={titleId}
 		aria-describedby={descriptionId}
 		{disabled}
-		title={disabledHint}
 	/>
 </div>

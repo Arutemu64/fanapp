@@ -34,8 +34,8 @@ export function watchConsole(page: Page): { guard: ConsoleGuard; assertClean: ()
 		const text = message.text();
 		// A resource-load failure against the mocked backend is expected noise, not an
 		// app error: the API double answers 401 for a guest, a loud 404 for a route
-		// nobody mocked (asserted separately via `api.unmatched`), and offline specs
-		// abort `/api` reads outright. Ignore those by resource URL — but never a
+		// nobody mocked (asserted separately via `api.unmatched`), and network-failure
+		// specs abort `/api` reads outright. Ignore those by resource URL — but never a
 		// failed *app* asset (a missing script or stylesheet is a real regression the
 		// guard must still catch).
 		const url = message.location()?.url ?? '';

@@ -26,7 +26,7 @@ Load the listed skills and read the guide **before** implementing, not after.
 | Styling / layout | `ui-ux-pro-max` | [docs/frontend.md](docs/frontend.md) §3–4, [.agents/context/DESIGN.md](.agents/context/DESIGN.md) (design intent & named rules) |
 | Design review before shipping UI | `kill-ai-slop`, `accessibility`, `core-web-vitals` | [docs/frontend.md](docs/frontend.md), [.agents/context/DESIGN.md](.agents/context/DESIGN.md) |
 | Russian user-facing copy | `ux-copy`, `fanfan-russian-copy` | [.agents/redpolitika.md](.agents/redpolitika.md), [.agents/context/PRODUCT.md](.agents/context/PRODUCT.md) |
-| Service worker / manifest / offline / push | — | [docs/frontend.md](docs/frontend.md) §2 "PWA & Offline Support" |
+| Service worker / manifest / push | — | [docs/frontend.md](docs/frontend.md) §2 "PWA & Service Worker" |
 | Frontend ↔ API contracts | — | [docs/api.md](docs/api.md) |
 | Tests | `python-testing-patterns` (pytest), `vitest` (frontend unit), `playwright-best-practices` (E2E) | [docs/testing.md](docs/testing.md) |
 | Auth, user input, webhooks, external integrations | `security-and-hardening` | [docs/backend.md](docs/backend.md) |

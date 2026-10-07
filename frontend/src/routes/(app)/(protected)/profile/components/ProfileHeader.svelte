@@ -4,7 +4,6 @@
 	import * as Avatar from '$lib/components/ui/avatar';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
-	import { offlineWriteGate } from '$lib/utils/offlineAction';
 	import { getAvatarInitials, getRoleLabel } from '$lib/utils/users';
 	import { Pencil } from '@lucide/svelte';
 
@@ -17,9 +16,6 @@
 
 	let { user, onUpdate }: Props = $props();
 	let avatarInitials = $derived(getAvatarInitials(user.username));
-
-	// Editing the profile is a mutation — online only. Cached identity still renders.
-	const offlineGate = offlineWriteGate();
 
 	let editProfileModalOpen = $state(false);
 </script>
@@ -57,8 +53,6 @@
 		variant="outline"
 		size="sm"
 		class="min-h-11 shrink-0"
-		disabled={offlineGate.disabled}
-		title={offlineGate.title}
 		onclick={() => (editProfileModalOpen = true)}
 	>
 		<Pencil data-icon="inline-start" />

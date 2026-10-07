@@ -1,7 +1,5 @@
 <script lang="ts">
 	import { type ConnectionStatus, getEventsClient } from '$lib/services/events.svelte';
-	import { getOfflineService } from '$lib/services/offline.svelte';
-	import { reachability } from '$lib/services/reachability';
 	import { requestReconnectRefresh } from '$lib/utils/reconnectRefresh';
 	import { AlertCircle, RotateCw } from '@lucide/svelte';
 	import { slide } from 'svelte/transition';
@@ -27,10 +25,6 @@
 
 	const client = getEventsClient();
 	let health = $derived<Health>(HEALTH_BY_STATUS[client.connectionStatus]);
-
-	const offline = getOfflineService();
-	let isOnline = $derived(offline.isOnline);
-	let deviceOnline = $derived(reachability.deviceOnline);
 
 	let recoveringVisible = $state(false);
 
@@ -60,18 +54,8 @@
 		showRetry: boolean;
 	}
 
-	// Unreachable server outranks lost SSE stream outranks delayed "reconnecting".
+	// Lost SSE stream outranks delayed "reconnecting".
 	let desiredBanner = $derived.by<Banner | null>(() => {
-		if (!isOnline) {
-			return {
-				tone: 'yellow',
-				role: 'status',
-				icon: AlertCircle,
-				iconClass: 'h-4 w-4',
-				message: deviceOnline ? 'Нет связи с сервером' : 'Нет интернета',
-				showRetry: false
-			};
-		}
 		if (health === 'down') {
 			return {
 				tone: 'red',
@@ -96,10 +80,9 @@
 	});
 
 	// Manual retry from the down banner. `restart()` reconnects the stream but
-	// resets the attempt counter, so its handshake won't fire the catch-up refetch;
-	// and this banner only shows while the backend is reachable (a dead stream, not
-	// an outage), so no offline→online edge refetches either. Request the catch-up
-	// explicitly — the user tapped "refresh", so refreshing the data is the point.
+	// resets the attempt counter, so its handshake won't fire the catch-up refetch.
+	// Request the catch-up explicitly — the user tapped "refresh", so refreshing the
+	// data is the point.
 	function handleRetry() {
 		client.restart();
 		requestReconnectRefresh();

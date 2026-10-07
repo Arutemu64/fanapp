@@ -5,8 +5,8 @@ from fastapi import APIRouter
 from fanfan.application.dto.settings import PublicConfigDTO
 from fanfan.application.interactors.settings.get_public_config import GetPublicConfig
 
-# Public, unauthenticated: the home page reads this before login and on a cold
-# or offline PWA load. No session_security marker, mirroring schedule/public.
+# Public, unauthenticated: the home page reads this before login. No
+# session_security marker, mirroring schedule/public.
 config_router = APIRouter(tags=["Config"], prefix="/config")
 
 

@@ -28,6 +28,12 @@ const config = {
 		serviceWorker: {
 			register: false
 		},
+		version: {
+			// Lets UpdatePrompt offer a reload when a deploy lands mid-session — an
+			// installed PWA can stay open all event day, and a hot-fix should reach
+			// it. Each poll is a small no-cache GET of `_app/version.json`.
+			pollInterval: 15 * 60 * 1000
+		},
 		experimental: {
 			// Wraps each level that has a +error.svelte in a <svelte:boundary>, so a
 			// component that throws while rendering shows the nearest error page

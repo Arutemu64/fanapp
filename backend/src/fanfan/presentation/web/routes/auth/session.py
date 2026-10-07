@@ -33,7 +33,7 @@ async def logout_user(
     delete_auth_cookie(response)
     # Belt-and-suspenders on top of the Set-Cookie deletion above: ask the browser
     # to drop cookies itself so a session cookie can't survive a failed clear. Scoped
-    # to "cookies" only — "storage"/"cache" would wipe the offline IndexedDB caches
-    # (the public schedule we keep for guests) and unregister the service worker.
+    # to "cookies" only — "storage" would unregister the service worker, and with it
+    # this device's push subscription.
     # HTTPS-only; ignored on plain HTTP. https://developer.mozilla.org/docs/Web/HTTP/Reference/Headers/Clear-Site-Data
     response.headers["Clear-Site-Data"] = '"cookies"'

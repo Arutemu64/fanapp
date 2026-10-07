@@ -1956,7 +1956,7 @@
           "Schedule"
         ],
         "summary": "List the current user's subscriptions",
-        "description": "Returns every schedule event the current user is subscribed to. Served separately from the schedule so the schedule itself stays universal and cacheable offline.",
+        "description": "Returns every schedule event the current user is subscribed to. Served separately from the schedule so the schedule itself stays universal and cacheable.",
         "operationId": "get_subscriptions",
         "responses": {
           "200": {

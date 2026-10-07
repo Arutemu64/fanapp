@@ -9,7 +9,6 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { formatDuration, formatUntil, pluralize } from '$lib/utils/formatters';
-	import { offlineWriteGate } from '$lib/utils/offlineAction';
 	import { canManageSchedule } from '$lib/utils/permissions';
 	import {
 		Ban,
@@ -46,11 +45,6 @@
 	let { event, currentEvent, user, variant = 'default' }: Props = $props();
 	const toastService = getToastService();
 
-	// Subscribe/unsubscribe and the staff actions all POST to the server — online
-	// only. The cached schedule (and each row's subscription state) still renders.
-	const offlineGate = offlineWriteGate();
-	// Staff-action labels, hoisted so each button's title stays a single ternary
-	// (offline hint vs. action) rather than a nested one in the markup.
 	let currentActionLabel = $derived(event.is_current ? 'Снять отметку' : 'Отметить текущим');
 
 	let moveModal = $state(false);
@@ -336,10 +330,8 @@
 				<!-- Inline bell: subscribe/unsubscribe in one tap. -->
 				<button
 					onclick={event.user_subscription ? handleUnsubscribe : handleSubscribe}
-					disabled={offlineGate.disabled}
-					title={offlineGate.title}
 					class={[
-						'flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40',
+						'flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none',
 						event.user_subscription
 							? 'text-primary hover:bg-primary/10'
 							: 'text-muted-foreground hover:bg-accent hover:text-foreground'
@@ -368,10 +360,9 @@
 					<button
 						type="button"
 						onclick={askToggleCurrent}
-						disabled={offlineGate.disabled}
 						aria-label={currentActionLabel}
-						title={offlineGate.disabled ? offlineGate.title : currentActionLabel}
-						class="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+						title={currentActionLabel}
+						class="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
 					>
 						{#if event.is_current}
 							<XCircle class="size-5" />
@@ -384,10 +375,9 @@
 				<button
 					type="button"
 					onclick={() => (moveModal = true)}
-					disabled={offlineGate.disabled}
 					aria-label="Перенести"
-					title={offlineGate.disabled ? offlineGate.title : 'Перенести'}
-					class="inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
+					title="Перенести"
+					class="inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
 				>
 					<Shuffle class="size-5" />
 				</button>
@@ -395,11 +385,10 @@
 				<button
 					type="button"
 					onclick={askToggleSkip}
-					disabled={offlineGate.disabled}
 					aria-label={skipActionLabel}
-					title={offlineGate.disabled ? offlineGate.title : skipActionLabel}
+					title={skipActionLabel}
 					class={[
-						'inline-flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40',
+						'inline-flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none',
 						isSkipped
 							? 'text-muted-foreground hover:bg-accent hover:text-foreground'
 							: 'text-destructive hover:bg-destructive/10'

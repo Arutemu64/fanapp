@@ -4,7 +4,6 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Item from '$lib/components/ui/item';
 	import { Spinner } from '$lib/components/ui/spinner';
-	import { offlineWriteGate } from '$lib/utils/offlineAction';
 
 	interface Props {
 		/** Provider mark, rendered in the row's icon tile. */
@@ -26,10 +25,6 @@
 	}
 
 	let { icon, label, connected, connectHref, unlinkPrompt, hasEmail, onUnlink }: Props = $props();
-
-	// Connecting (a backend OAuth redirect) and unlinking (a DELETE) both need the
-	// network — gate them offline. The linked/not-linked status still renders.
-	const offlineGate = offlineWriteGate();
 
 	let isUnlinking = $state(false);
 	// Gate the destructive unlink behind a deliberate second tap (inline, no modal).
@@ -74,16 +69,7 @@
 
 	{#if !connected}
 		<Item.Actions>
-			<Button
-				href={offlineGate.disabled ? undefined : connectHref}
-				variant="outline"
-				size="sm"
-				class="min-h-11"
-				disabled={offlineGate.disabled}
-				title={offlineGate.title}
-			>
-				Подключить
-			</Button>
+			<Button href={connectHref} variant="outline" size="sm" class="min-h-11">Подключить</Button>
 		</Item.Actions>
 	{:else if !isConfirming}
 		<!-- Neutral at rest: the red is saved for the confirm step, where the
@@ -93,8 +79,7 @@
 				variant="outline"
 				size="sm"
 				class="min-h-11"
-				disabled={!hasEmail || offlineGate.disabled}
-				title={offlineGate.title}
+				disabled={!hasEmail}
 				onclick={() => (isConfirming = true)}
 			>
 				Отвязать
@@ -109,8 +94,7 @@
 					variant="destructive"
 					size="sm"
 					class="min-h-11 flex-1"
-					disabled={isUnlinking || !hasEmail || offlineGate.disabled}
-					title={offlineGate.title}
+					disabled={isUnlinking || !hasEmail}
 					onclick={confirmUnlink}
 				>
 					{#if isUnlinking}

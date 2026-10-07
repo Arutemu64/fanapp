@@ -1,9 +1,7 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
-	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { documentVisibility } from '$lib/services/documentVisibility';
 	import { getEventsClient } from '$lib/services/events.svelte';
-	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { type DevicePushState, getDevicePushState } from '$lib/utils/pushSubscription';
 	import { hasVotingEnded, isVotingOpenNow } from '$lib/utils/votingStatus';
@@ -29,7 +27,6 @@
 	let votingStatus = $derived(data.votingStatus);
 
 	const eventsClient = getEventsClient();
-	const offline = getOfflineService();
 	const pwa = getPwaService();
 
 	let festivalStartMs = $derived(new Date(config.festival_start).getTime());
@@ -99,14 +96,6 @@
 	// From xl only: below that the sidebar leaves too little width for a usable side
 	// pane, and even at 2:1 rather than Material's 70/30 it is only ~310px wide.
 	let twoColumns = $derived(showStage && hasSupportingContent);
-	let showStaleNotice = $derived(
-		showStage &&
-			shouldShowStaleNotice({
-				offlineMiss: false,
-				stale: data.scheduleStale,
-				isOnline: offline.isOnline
-			})
-	);
 
 	// setTimeout delays are stored in a signed 32-bit int of milliseconds; a delay
 	// past this (~24.8 days) overflows and fires immediately, so longer waits are
@@ -186,13 +175,6 @@
 
 {#snippet main()}
 	<HeroCard {phase} festivalStart={config.festival_start} featured={featuredAct} />
-
-	{#if showStaleNotice}
-		<StaleDataNotice
-			message="Нет связи. Показана сохранённая программа&nbsp;— обновится при подключении."
-			cachedAt={data.scheduleCachedAt}
-		/>
-	{/if}
 
 	{#if showUpNext}
 		<UpNextCard {snapshot} />

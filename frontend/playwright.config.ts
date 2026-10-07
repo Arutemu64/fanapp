@@ -1,11 +1,8 @@
 import { defineConfig, devices, webkit } from '@playwright/test';
 import { existsSync } from 'node:fs';
 
-// The app is a client-rendered SPA whose service worker and offline behaviour are
-// active ONLY in a production build — `vite dev` disables the SW (see
-// vite.config.ts `devOptions.enabled: false` and docs/frontend.md §2). So the E2E
-// suite drives `vite preview` of a real build, never the dev server, or the whole
-// PWA / offline surface would go untested.
+// The E2E suite drives `vite preview` of a real production build, never the dev
+// server, so it tests the bundle that ships — not dev-only transforms.
 const PORT = 4173;
 const BASE_URL = `http://127.0.0.1:${PORT}`;
 

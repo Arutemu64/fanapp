@@ -10,10 +10,10 @@ import * as Sentry from '@sentry/sveltekit';
 
 // Server errors belong to the backend, which reports them with a full stack
 // trace and request context; a frontend mirror is a duplicate with none of that,
-// and a transient gateway blip (502/503/504) or the 503 the `(protected)` layout
-// throws when the backend is unreachable is an expected network condition, not an
-// app bug. Sentry's SvelteKit load wrapper reports every HttpError with status
-// >= 500, which would file each of these as a GlitchTip issue — so drop them.
+// and a transient gateway blip (502/503/504) or a load that failed because the
+// backend is unreachable is an expected network condition, not an app bug.
+// Sentry's SvelteKit load wrapper reports every HttpError with status >= 500,
+// which would file each of these as a GlitchTip issue — so drop them.
 // A SvelteKit HttpError is the only thing here carrying a numeric `status`; a
 // genuine frontend JS bug is a real Error (no `status`) and still reports.
 // See https://swiftmade.co/blog/2026-01-05-sentry-error-reporting-best-practices/
@@ -103,9 +103,8 @@ if (PUBLIC_SENTRY_DSN) {
 }
 
 // A dynamically imported chunk can fail to load two ways: a boot node (root
-// layout / error page) dropping on a flaky mobile connection before the SW has it
-// cached, or version skew after a deploy removed the old hashed chunk a still-open
-// document points at. Recover the way Vite recommends — a full-page reload
+// layout / error page) dropping on a flaky mobile connection, or version skew
+// after a deploy removed the old hashed chunk a still-open document points at. Recover the way Vite recommends — a full-page reload
 // re-requests the shell (served `no-cache`, see frontend/nginx.conf) and its
 // fresh chunks. https://vite.dev/guide/build#load-error-handling
 //
@@ -144,10 +143,10 @@ function recoverFromStaleChunk(preventDefault: () => void): void {
 		// Re-file the guarded-out failure as a distinct, deduped signal that a deploy
 		// left a chunk unreachable — the raw TypeError is dropped in `beforeSend`.
 		// Skip it when the device is offline: there the reload simply couldn't reach
-		// the network again, an expected offline blip (the error page renders "Нет
-		// интернета") rather than a chunk a deploy actually removed. Same stance as
-		// the 5xx/offline drops above — `navigator.onLine === false` is a trustworthy
-		// negative, so we only report when the device is genuinely online.
+		// the network again, an expected connectivity blip rather than a chunk a
+		// deploy actually removed. Same stance as the 5xx drop above —
+		// `navigator.onLine === false` is a trustworthy negative, so we only report
+		// when the device is genuinely online.
 		Sentry.captureMessage('Stale chunk unreachable after recovery reload', 'warning');
 	}
 	// 'persistent' / 'blocked': let the failure fall through to the error page.

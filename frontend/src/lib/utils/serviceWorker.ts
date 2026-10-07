@@ -6,8 +6,8 @@ import { base } from '$app/paths';
 // registration leaves the register() promise's rejection unhandled, and some
 // browsers reject it for reasons the app can do nothing about — storage
 // partitioning in embedded/in-app browsers, private/incognito modes, or an
-// enterprise policy that blocks workers. There the app simply degrades to
-// online-only, which is expected; without a .catch() that rejection surfaces to
+// enterprise policy that blocks workers. There the app simply goes without
+// push, which is expected; without a .catch() that rejection surfaces to
 // Sentry as an uncaught "Error: Rejected". Mirrors SvelteKit's default: same
 // script path and module/classic type, registered on load so it doesn't compete
 // with first paint for bandwidth.

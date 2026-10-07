@@ -1,6 +1,5 @@
 import type { NavbarAction } from '$lib/types/navigation';
 
-import { isReachable } from '$lib/services/reachability';
 import { canManageSchedule } from '$lib/utils/permissions';
 import { loadScheduleWithSubscriptions } from '$lib/utils/scheduleData';
 import { History } from '@lucide/svelte';
@@ -12,7 +11,11 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	depends('app:schedule');
 
 	const { user } = await parent();
-	const { schedule, stale, cachedAt } = await loadScheduleWithSubscriptions(fetch, user?.id);
+	const schedule = await loadScheduleWithSubscriptions(fetch, user?.id);
+
+	if (schedule === undefined) {
+		error(503, 'Не удалось загрузить программу');
+	}
 
 	// The operator's change log lives with the schedule it tracks, not in the tools
 	// section, so it is one tap from here. Gated by the same permission the changes
@@ -22,28 +25,9 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 		actions.push({ href: '/schedule/changes', label: 'Изменения программы', icon: History });
 	}
 
-	if (schedule === undefined) {
-		// Offline with nothing cached: degrade to a calm inline state so the app shell
-		// and bottom nav stay usable. A real online failure is still a hard error.
-		if (!isReachable()) {
-			return {
-				title: 'Программа',
-				actions,
-				schedule: [],
-				stale: true,
-				cachedAt: undefined,
-				offlineMiss: true
-			};
-		}
-		error(503, 'Не удалось загрузить программу');
-	}
-
 	return {
 		title: 'Программа',
 		actions,
-		schedule,
-		stale,
-		cachedAt,
-		offlineMiss: false
+		schedule
 	};
 };

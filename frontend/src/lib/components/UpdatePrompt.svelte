@@ -1,129 +1,29 @@
 <script lang="ts">
+	import { updated } from '$app/state';
 	import { Button } from '$lib/components/ui/button';
 	import { RotateCw } from '@lucide/svelte';
-	import { onMount } from 'svelte';
 
-	// A waiting service worker means a newer build is cached and ready. We never
-	// activate it mid-session (that could swap assets under the user); instead we
-	// surface this prompt and let the user choose when to reload.
-	let waitingWorker = $state<ServiceWorker | null>(null);
-	let reloading = false;
+	// SvelteKit polls `_app/version.json` (`kit.version.pollInterval` in
+	// svelte.config.js) and flips `updated.current` once a deploy lands. We never
+	// reload mid-session on our own — that could drop a half-filled form — so the
+	// user chooses when.
+	// https://svelte.dev/docs/kit/$app-state#updated
 
-	// Held so we can poll for new builds ourselves (see checkForUpdate). SvelteKit's
-	// auto-registration registers the worker once on load and never re-checks, so
-	// without this an installed PWA kept open all event day would not notice a
-	// hot-fix deploy until a manual reload.
-	let registration: ServiceWorkerRegistration | null = null;
-
-	// How often to ask the browser to re-check the worker script while the app is
-	// open. Tuned for a live event where a fix may ship mid-session; the request is
-	// a cheap conditional GET that 304s when nothing changed.
-	const UPDATE_POLL_MS = 15 * 60 * 1000;
-
-	function promptFor(registration: ServiceWorkerRegistration) {
-		const worker = registration.waiting;
-		if (worker) {
-			waitingWorker = worker;
-		}
-	}
-
-	// Ask the browser to re-fetch the worker script; if it changed, the normal
-	// updatefound/statechange flow below surfaces the prompt. Errors (offline) are
-	// ignored — the next check retries.
+	// The poll alone can leave an installed PWA, reopened after hours in the
+	// background, on the old build until the next tick; re-check on foreground.
 	function checkForUpdate() {
 		if (document.visibilityState !== 'visible') return;
-		// Skip while offline (nothing to fetch) or while an install is already in
-		// flight — re-checking then just races our own update flow. navigator.onLine
-		// is trusted only as a negative here, matching the reachability layer.
-		if (!navigator.onLine) return;
-		if (registration?.installing) return;
-		registration?.update().catch(() => undefined);
-	}
-
-	// Watch an installing worker and prompt once it reaches `installed`. The
-	// controller check distinguishes an update (prompt) from the first-ever
-	// install (no prompt — nothing to replace). Shared by the two entry points
-	// below: the `updatefound` event and a worker found already mid-install at
-	// mount, whose `updatefound` has already fired.
-	function watchInstalling(reg: ServiceWorkerRegistration, worker: ServiceWorker) {
-		worker.addEventListener('statechange', () => {
-			if (worker.state === 'installed' && navigator.serviceWorker.controller) {
-				promptFor(reg);
-			}
-		});
+		void updated.check();
 	}
 
 	function applyUpdate() {
-		// Tell the waiting worker to activate; the `controllerchange` listener
-		// reloads the page once it takes control.
-		waitingWorker?.postMessage('skipWaiting');
+		window.location.reload();
 	}
-
-	onMount(() => {
-		if (!('serviceWorker' in navigator)) return;
-
-		// Whether a worker already controls this page at startup. On a first-ever
-		// visit there is no controller: the SW installs, activates, and calls
-		// `clients.claim()`, which fires `controllerchange` even though nothing was
-		// updated. Without this guard that initial claim would trigger a needless
-		// full reload right after first paint. A genuine update always has a prior
-		// controller, so gating the reload on this keeps the update flow working.
-		const hadController = !!navigator.serviceWorker.controller;
-
-		// `ready` (unlike getRegistration()) waits until the registration has an
-		// active worker. On a first-ever visit SvelteKit's auto-registration may
-		// still be in flight when this mounts — getRegistration() would resolve
-		// `undefined` and silently disable update polling for the whole session.
-		void navigator.serviceWorker.ready.then((reg) => {
-			registration = reg;
-
-			// A build may already be waiting from a previous visit.
-			promptFor(reg);
-
-			// Or one may already be installing when this mounts — e.g. the browser's
-			// own on-navigation update check started it before we got here. Its
-			// `updatefound` has already fired, so the listener below would miss it and
-			// `reg.waiting` is still null; watch it directly or the prompt never shows
-			// (an intermittent miss depending on install timing).
-			if (reg.installing) {
-				watchInstalling(reg, reg.installing);
-			}
-
-			// Or one finishes installing while this tab is open.
-			reg.addEventListener('updatefound', () => {
-				if (reg.installing) {
-					watchInstalling(reg, reg.installing);
-				}
-			});
-
-			// Re-check immediately in case a deploy landed while the app was closed,
-			// then keep polling for the rest of the session.
-			checkForUpdate();
-		});
-
-		const onControllerChange = () => {
-			// Ignore the first-install claim (no prior controller) — only reload when
-			// an existing worker was swapped out by an accepted update.
-			if (reloading || !hadController) return;
-			reloading = true;
-			window.location.reload();
-		};
-		navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
-
-		const pollId = setInterval(checkForUpdate, UPDATE_POLL_MS);
-
-		return () => {
-			navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
-			clearInterval(pollId);
-		};
-	});
 </script>
 
-<!-- Re-check on foreground so reopening the installed PWA picks up a deploy that
-	landed while it was backgrounded, without waiting for the poll interval. -->
 <svelte:document onvisibilitychange={checkForUpdate} />
 
-{#if waitingWorker}
+{#if updated.current}
 	<!-- Persistent by design: a prompt carrying an action must never auto-dismiss
 		(WCAG 2.2.1), so this is a plain Toast with no close button and no timer.
 		Shares the bottom band and z-layer with the status toasts; on the rare tick

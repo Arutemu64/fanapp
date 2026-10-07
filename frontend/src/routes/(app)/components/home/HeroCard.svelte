@@ -25,7 +25,7 @@
 	});
 
 	// Program start, on the venue clock. Configurable via GET /config and passed in
-	// by the page so the hero renders for guests and on a cold/offline load.
+	// by the page so the hero renders for guests too.
 	let startMs = $derived(new Date(festivalStart).getTime());
 	let festivalDate = $derived(formatFestivalDateTime(festivalStart));
 

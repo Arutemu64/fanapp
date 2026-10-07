@@ -27,8 +27,6 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 
 	const client = createApiClient();
 
-	// Staff-only operational feed: stale data would misrepresent live state, so
-	// no offline cache here — fail hard when unreachable instead.
 	// Over-fetch one item so the client can tell whether a next page exists.
 	const {
 		data,
