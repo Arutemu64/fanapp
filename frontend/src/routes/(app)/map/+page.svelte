@@ -1,101 +1,146 @@
 <script lang="ts">
 	import type { MapEntry } from '$lib/data/maps';
+	import type { SlideData, UIElementData } from 'photoswipe';
 
+	import { pushState } from '$app/navigation';
+	import { page } from '$app/state';
 	import SectionIntro from '$lib/components/SectionIntro.svelte';
 	import { maps } from '$lib/data/maps';
-	import { Download, Minimize2, X } from '@lucide/svelte';
-	import Panzoom from '@panzoom/panzoom';
+	import PhotoSwipe from 'photoswipe';
+	import 'photoswipe/style.css';
 
-	// Currently opened map for the fullscreen viewer, or null when closed.
-	let active = $state<MapEntry | null>(null);
+	// Thumbnail buttons, indexed like `maps`. PhotoSwipe animates the open and
+	// close from each one's <img>, and returns focus to the one that opened it.
+	const thumbnails: HTMLButtonElement[] = [];
 
-	// The live Panzoom instance for the open viewer, so the reset button's click
-	// handler can reach it. Not $state: nothing renders from it, so it needs no
-	// reactivity. Null while closed; reassigned by the attachment below, which the
-	// {#if active} block recreates on every open — so each map starts un-zoomed.
-	let panzoom: ReturnType<typeof Panzoom> | null = null;
+	// The open viewer. Not $state: nothing renders from it.
+	let viewer: PhotoSwipe | null = null;
 
-	// Wire pinch/drag/wheel zoom onto the map image once the overlay mounts.
-	// Panzoom transforms this element via CSS, so the enhanced:img markup is
-	// untouched. No `contain`: it derives scale limits from the element-vs-parent
-	// box and clamps zoom to ~1x here, defeating the feature. overflow:'visible'
-	// (Panzoom defaults to 'hidden') lets the map grow past its frame as it scales
-	// instead of being clipped inside it — the clip read as "scrolling inside a
-	// card". Free panning is the trade; reset and double-tap recentre. The global
-	// step stays at its 0.3 default: pinch gain is proportional to it, so lowering
-	// it to soften the wheel would also slow pinch. The wheel gets its own step
-	// per-call below instead, keeping the two gestures independent.
-	function zoomable(element: HTMLElement) {
-		const instance = Panzoom(element, {
-			minScale: 1,
-			maxScale: 6,
-			overflow: 'visible'
+	// The viewer lives on its own history entry (shallow routing), so the phone's
+	// back gesture closes the map instead of leaving the page — the case
+	// https://svelte.dev/docs/kit/shallow-routing is written for. A thumbnail only
+	// pushes the entry; the effect below opens and closes the viewer from it, so
+	// back, forward and the viewer's own close controls all go through one path.
+	function openMap(index: number) {
+		pushState('', { mapViewerIndex: index });
+	}
+
+	$effect(() => {
+		const index = page.state.mapViewerIndex;
+		if (index === undefined || !maps[index]) {
+			closeViewer();
+			return;
+		}
+		if (!viewer) {
+			viewer = createViewer(index);
+		}
+	});
+
+	// Closes the viewer the page state no longer asks for (back gesture, or leaving
+	// the page). Letting go of `viewer` first tells the close handler below that
+	// the history entry is already gone. PhotoSwipe ignores close() — and destroy(),
+	// which goes through it — until its opening animation ends, so a back gesture
+	// made that quickly would strand the viewer open without the deferral.
+	function closeViewer() {
+		const closing = viewer;
+		if (!closing) return;
+		viewer = null;
+		if (closing.opener.isOpen) {
+			closing.close();
+		} else {
+			closing.on('openingAnimationEnd', () => closing.close());
+		}
+	}
+
+	// Leaving the page with the viewer open must not strand its overlay on <body>.
+	$effect(() => {
+		return () => closeViewer();
+	});
+
+	function createViewer(index: number) {
+		const pswp = new PhotoSwipe({
+			dataSource: maps.map((map, i) => toSlide(map, thumbnails[i])),
+			index,
+			// Solid, like a native photo viewer: at PhotoSwipe's default 0.8 the page
+			// title and bottom nav show through behind the edge-to-edge map. Dragging
+			// the map down to close still fades it and reveals the page.
+			bgOpacity: 1,
+			closeTitle: 'Закрыть',
+			zoomTitle: 'Масштаб',
+			arrowPrevTitle: 'Предыдущая карта',
+			arrowNextTitle: 'Следующая карта',
+			errorMsg: 'Не удалось загрузить карту',
+			indexIndicatorSep: ' из '
 		});
-		panzoom = instance;
-		// Wheel-to-zoom is opt-in in Panzoom; bind it to the scrolling container.
-		// step is halved for the wheel only: Panzoom zooms one step per wheel *event*
-		// regardless of delta, so trackpads (a burst per scroll) shoot to max at the
-		// 0.3 default; 0.15 keeps a notch gentle without touching pinch.
-		const parent = element.parentElement;
-		const onWheel = (event: WheelEvent) => instance.zoomWithWheel(event, { step: 0.15 });
-		parent?.addEventListener('wheel', onWheel);
-		// Double-tap/double-click to reset — a pointer gesture shortcut for the
-		// keyboard-accessible reset button in the controls. Bound here rather than
-		// as a template handler so the target stays a non-interactive image.
-		const reset = () => instance.reset();
-		element.addEventListener('dblclick', reset);
-		return () => {
-			parent?.removeEventListener('wheel', onWheel);
-			element.removeEventListener('dblclick', reset);
-			instance.destroy();
-			panzoom = null;
+		pswp.on('uiRegister', () => pswp.ui?.registerElement(downloadButton));
+		pswp.on('afterInit', () => localizeAria(pswp.element));
+		pswp.on('close', () => {
+			if (viewer !== pswp) return;
+			// Closed from inside the viewer (button, Escape, swipe or pinch to close):
+			// drop its history entry too, so back then leaves the page as expected.
+			viewer = null;
+			history.back();
+		});
+		pswp.init();
+		return pswp;
+	}
+
+	// PhotoSwipe renders a bare <img srcset> rather than a <picture>, so it takes a
+	// single format. WebP decodes on every browser the app supports; AVIF would
+	// leave out iOS before 16 (https://caniuse.com/avif). As the user zooms,
+	// PhotoSwipe raises the <img>'s `sizes`, so the browser fetches wider variants
+	// up to the original — the map's labels stay sharp at full zoom.
+	function toSlide(map: MapEntry, thumbnail: HTMLButtonElement | undefined): SlideData {
+		const thumbnailImage = thumbnail?.querySelector('img');
+		return {
+			src: map.picture.img.src,
+			srcset: map.picture.sources.webp,
+			width: map.picture.img.w,
+			height: map.picture.img.h,
+			alt: map.alt,
+			// Shown while the full image loads; the thumbnail's variant is already cached.
+			msrc: thumbnailImage?.currentSrc,
+			element: thumbnail
 		};
 	}
 
-	function close() {
-		active = null;
-	}
-
-	function onKeydown(event: KeyboardEvent) {
-		if (event.key === 'Escape') {
-			close();
+	// Downloads the original-format fallback (img.src, the largest variant).
+	// The icon path is PhotoSwipe's own download-button example, so it matches the
+	// built-in toolbar icons: https://photoswipe.com/adding-ui-elements/
+	const downloadButton: UIElementData = {
+		name: 'download-button',
+		title: 'Скачать карту',
+		order: 8,
+		isButton: true,
+		tagName: 'a',
+		html: {
+			isCustomSVG: true,
+			inner:
+				'<path d="M20.5 14.3 17.1 18V10h-2.2v7.9l-3.4-3.6L10 16l6 6.1 6-6.1ZM23 23H9v2h14Z" id="pswp__icn-download"/>',
+			outlineID: 'pswp__icn-download'
+		},
+		onInit: (element, pswp) => {
+			pswp.on('change', () => {
+				const map = maps[pswp.currIndex];
+				if (!map) return;
+				element.setAttribute('href', map.picture.img.src);
+				element.setAttribute('download', map.filename);
+			});
 		}
-	}
+	};
 
-	// Focus trap for the viewer (ARIA APG dialog pattern): aria-modal alone can
-	// strand a screen-reader/keyboard user behind the overlay, so move focus into
-	// the dialog on open, keep Tab inside it, and hand focus back to the trigger on
-	// close. The overlay is hand-rolled so it preserves the inline --z-modal rung this viewer needs.
-	function trapFocus(dialog: HTMLElement) {
-		const previouslyFocused = document.activeElement as HTMLElement | null;
-		dialog.focus();
-
-		function onKeydown(event: KeyboardEvent) {
-			if (event.key !== 'Tab') return;
-			// tabIndex >= 0 drops the dialog itself and the backdrop (both tabindex=-1);
-			// filtering the property, not the selector, catches every -1 element.
-			const items = Array.from(
-				dialog.querySelectorAll<HTMLElement>('a[href], button, [tabindex]')
-			).filter((el) => el.tabIndex >= 0 && !el.hasAttribute('disabled'));
-			const first = items[0];
-			const last = items[items.length - 1];
-			if (!first || !last) return;
-			const inside = dialog.contains(document.activeElement);
-			// Wrap at the ends, and pull focus back in if a click left it outside.
-			if (event.shiftKey && (!inside || document.activeElement === first)) {
-				event.preventDefault();
-				last.focus();
-			} else if (!event.shiftKey && (!inside || document.activeElement === last)) {
-				event.preventDefault();
-				first.focus();
-			}
+	// PhotoSwipe gives its root role="dialog" without a name or aria-modal, and
+	// hardcodes English role descriptions that screen readers read aloud.
+	function localizeAria(root: HTMLElement | undefined) {
+		if (!root) return;
+		root.setAttribute('aria-modal', 'true');
+		root.setAttribute('aria-label', 'Просмотр карты');
+		for (const element of root.querySelectorAll('[aria-roledescription="carousel"]')) {
+			element.setAttribute('aria-roledescription', 'карусель');
 		}
-
-		dialog.addEventListener('keydown', onKeydown);
-		return () => {
-			dialog.removeEventListener('keydown', onKeydown);
-			previouslyFocused?.focus?.();
-		};
+		for (const element of root.querySelectorAll('[aria-roledescription="slide"]')) {
+			element.setAttribute('aria-roledescription', 'слайд');
+		}
 	}
 </script>
 
@@ -108,13 +153,14 @@
 <!-- Stacked on mobile, side by side from lg so the now-portrait maps sit next to
 each other on desktop. items-start keeps each frame at its own height. -->
 <div class="grid items-start gap-4 lg:grid-cols-2">
-	{#each maps as map (map.id)}
+	{#each maps as map, index (map.id)}
 		<!-- w-fit makes the frame hug the image so a portrait map is centred without
 		side letterboxing; the image sizes to its intrinsic ratio, capped to the
 		container width and 70dvh so a tall map never overflows the viewport. -->
 		<button
+			bind:this={thumbnails[index]}
 			type="button"
-			onclick={() => (active = map)}
+			onclick={() => openMap(index)}
 			class="mx-auto block w-fit max-w-full overflow-hidden rounded-2xl border bg-muted p-2 shadow-sm transition-colors hover:bg-muted/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
 			aria-label={`Открыть карту на весь экран: ${map.alt}`}
 		>
@@ -135,92 +181,20 @@ each other on desktop. items-start keeps each frame at its own height. -->
 	{/each}
 </div>
 
-{#if active}
-	<!-- Fullscreen viewer overlay. Tap the backdrop or the close button to dismiss.
-	     An inline (non-portaled) modal, so it takes the --z-modal rung to cover the
-	     fixed bottom nav — see docs/frontend.md "Z-Index Scale". -->
-	<div
-		{@attach trapFocus}
-		class="fixed inset-0 z-(--z-modal) flex items-center justify-center bg-black/80 p-4"
-		role="dialog"
-		aria-modal="true"
-		aria-label="Просмотр карты"
-		tabindex="-1"
-	>
-		<!-- Full-size backdrop button sits behind the image so a tap outside it closes
-		the viewer. tabindex=-1 keeps it out of the keyboard tab order — it's a
-		pointer-only affordance, duplicating the close button and Escape. -->
-		<button
-			type="button"
-			onclick={close}
-			class="absolute inset-0 cursor-default"
-			tabindex="-1"
-			aria-label="Закрыть просмотр"
-		></button>
+<style>
+	/* PhotoSwipe appends its root to <body>, outside this component, hence :global. */
+	:global(.pswp) {
+		/* On the app's ladder rather than PhotoSwipe's 100000: above the bottom nav
+		and every other overlay, like any fullscreen viewer. */
+		--pswp-root-z-index: var(--z-modal);
+	}
 
-		<!-- Panzoom frame: the parent Panzoom measures for its wheel/pinch focal
-		point, so it must hug the image with no gap. Panzoom assumes the zoom target
-		sits at its parent's top-left; if the overlay's flex-centering were the only
-		parent, the focal point would be off by the letterbox gap and zoom would
-		drift sideways on a narrow portrait map. This frame is what the overlay
-		centers instead, so parent and target share one box — but it does not clip
-		(see overflow:'visible' in zoomable), so the map grows past it as it scales.
-		Caps are viewport units, not max-h-full: enhanced:img wraps the <img> in an
-		inline <picture> with no definite height, so a percentage max-height never
-		resolves and a tall map overflows. 2rem matches the overlay's p-4. w-auto
-		sizes to the intrinsic ratio and never upscales. touch-none must sit on the
-		actual touch target (the <img>) and the zoom element, not only the frame:
-		iOS Safari lets a gesture that starts on a touch-action:auto element fall
-		through to native page pinch/scroll, which starves Panzoom of pointer events
-		and kills zooming. double-tap resets the zoom. -->
-		<div
-			class="relative block h-fit max-h-[calc(100dvh-2rem)] w-fit max-w-[calc(100vw-2rem)] touch-none"
-		>
-			<div {@attach zoomable} class="block touch-none">
-				<enhanced:img
-					src={active.picture}
-					alt={active.alt}
-					sizes="(min-width: 1024px) 1024px, 100vw"
-					class="block max-h-[calc(100dvh-2rem)] w-auto max-w-[calc(100vw-2rem)] touch-none rounded-xl shadow-2xl select-none"
-				/>
-			</div>
-		</div>
-
-		<!-- Inset by the safe area: the overlay covers the whole screen, notch and rounded
-			corners included. -->
-		<div
-			class="absolute end-[calc(1rem+env(safe-area-inset-right))] top-[calc(1rem+env(safe-area-inset-top))] z-10 flex items-center gap-2"
-		>
-			<!-- Keyboard-accessible counterpart to double-tap: pinch/wheel have no key
-			equivalent, so this is the only way to undo a zoom without a pointer. -->
-			<button
-				type="button"
-				onclick={() => panzoom?.reset()}
-				class="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-				aria-label="Сбросить масштаб"
-			>
-				<Minimize2 class="size-6" />
-			</button>
-			<!-- Download the full-size fallback (img.src is the largest, original-format variant). -->
-			<a
-				href={active.picture.img.src}
-				download={active.filename}
-				rel="external"
-				class="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-				aria-label="Скачать карту"
-			>
-				<Download class="size-6" />
-			</a>
-			<button
-				type="button"
-				onclick={close}
-				class="flex h-11 w-11 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-				aria-label="Закрыть"
-			>
-				<X class="size-6" />
-			</button>
-		</div>
-	</div>
-{/if}
-
-<svelte:window onkeydown={onKeydown} />
+	/* app.html opts into viewport-fit=cover, so the overlay runs under the notch
+	and rounded corners; keep the toolbar out from under them. */
+	:global(.pswp__top-bar) {
+		top: env(safe-area-inset-top);
+		right: env(safe-area-inset-right);
+		left: env(safe-area-inset-left);
+		width: auto;
+	}
+</style>

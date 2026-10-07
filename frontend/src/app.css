@@ -86,9 +86,9 @@
 	 * Sheet) hardcode on their content and backdrop — keep the two equal, or those
 	 * portaled surfaces (which never read this token) drift off the ladder. Portaled
 	 * to <body>, they land after the bottom nav in the DOM, so at an equal rung paint
-	 * order already covers the nav. --z-modal sits one above for an inline
-	 * (non-portaled) modal that must cover the fixed bottom nav from its source
-	 * position — now only the fullscreen map viewer (the sidebar drawer is a Sheet).
+	 * order already covers the nav. --z-modal sits one above for the fullscreen
+	 * map viewer (PhotoSwipe, appended to <body>), which must cover every other
+	 * overlay; the map page maps PhotoSwipe's own root z-index onto it.
 	 */
 	--z-chrome: 40;
 	--z-overlay: 50;

@@ -133,13 +133,13 @@ number in a component.**
 | In-page sticky | `z-10` – `z-30` | Page-local sticky headers and FABs that must stay *below* chrome (schedule day-tab bar, sub-headers, floating "now" button; overlay-internal controls). Local stacking, **not** tokenized. |
 | Top chrome | `z-(--z-chrome)` = 40 | The hide-on-scroll top chrome overlay in `(app)/+layout.svelte` — the `AppNavbar` and connection banner. The layout owns its positioning (an absolute overlay it slides with `top`), not `AppNavbar`. |
 | Overlays | `z-(--z-overlay)` = 50 | Mobile bottom nav, toasts, update prompt, skip link, and the portaled shadcn overlays (`Dialog`, `Sheet`), portaled to `body` |
-| Inline modal | `z-(--z-modal)` = 60 | The one inline (non-portaled) modal that must cover the bottom nav from its source position: the fullscreen map viewer (`map/+page.svelte`) |
+| Fullscreen viewer | `z-(--z-modal)` = 60 | The map viewer (`map/+page.svelte`): PhotoSwipe appends its own root to `body`, and the page sets PhotoSwipe's `--pswp-root-z-index` to this rung so it covers the nav, toasts and every other overlay |
 
 **Rules:**
 * Top chrome stays *below* overlays (`--z-chrome` < `--z-overlay`) so drawers/modals cover it.
 * In-page sticky content stays *below* the navbar (`≤ z-30` < 40) — it scrolls under the chrome, never over it. This band is page-local and intentionally left on plain utilities, not tokens.
 * **`--z-overlay` is pinned to `50` to match the vendored shadcn overlays.** `Dialog` and `Sheet` (bits-ui) hardcode `z-50` on their content and backdrop and never read the token, so the two must stay numerically equal — change one, change the other, or the portaled surfaces drift off the ladder.
-* **Inline vs portaled overlays.** The shadcn `Dialog` and `Sheet` portal to `body` (via bits-ui, after the bottom nav in the DOM) and carry their own `z-50`, so `--z-overlay` already covers the nav via paint order — don't override it. An overlay rendered **inline** sits at its source position *before* the bottom nav and so needs `--z-modal` to win: the only one is the fullscreen map viewer (`map/+page.svelte`), a hand-rolled overlay that sets **both** its panel and its backdrop to `z-(--z-modal)` — raising only one would leave the nav tappable through it.
+* **Inline vs portaled overlays.** The shadcn `Dialog` and `Sheet` portal to `body` (via bits-ui, after the bottom nav in the DOM) and carry their own `z-50`, so `--z-overlay` already covers the nav via paint order — don't override it. An overlay rendered **inline** sits at its source position *before* the bottom nav, so it would need a rung above `--z-overlay` to win — prefer portaling instead. `--z-modal` is reserved for the fullscreen map viewer, which must also sit above toasts and the update prompt.
 
 The boot splash (`#app-splash`, `z-index: 9999` in `app.html`) sits off this ladder on purpose: it is plain pre-bundle CSS with no access to the token layer, and must cover everything until the root layout mounts and removes it.
 

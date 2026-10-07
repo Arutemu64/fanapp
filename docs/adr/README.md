@@ -63,3 +63,4 @@ permanent — it is how other ADRs and commits reference the decision.
 | [0016](0016-workbox-precaching-via-vite-pwa.md) | Workbox precaching via vite-pwa for the service worker | Accepted |
 | [0017](0017-hey-api-for-the-frontend-api-client.md) | `@hey-api/openapi-ts` for the frontend API client | Accepted |
 | [0018](0018-psycopg-3-as-the-postgres-driver.md) | psycopg 3 as the PostgreSQL driver | Accepted |
+| [0019](0019-photoswipe-for-the-map-viewer.md) | PhotoSwipe for the map viewer | Accepted |
