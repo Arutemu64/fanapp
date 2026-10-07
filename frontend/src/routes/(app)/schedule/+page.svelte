@@ -311,9 +311,9 @@
 			<div class="flex flex-col items-end gap-2">
 				{#if showScrollTopButton}
 					<Button
-						variant="outline"
+						variant="floating"
 						size="sm"
-						class="pointer-events-auto size-12 rounded-full px-0 shadow-lg lg:w-32 lg:rounded-full lg:px-3"
+						class="pointer-events-auto size-12 rounded-full px-0 lg:w-32 lg:rounded-full lg:px-3"
 						onclick={scrollToTop}
 						aria-label="Подняться наверх"
 					>
