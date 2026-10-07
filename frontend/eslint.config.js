@@ -120,14 +120,15 @@ export default defineConfig(
 		// Playwright suite is NOT listed: e2e/tsconfig.json is the nearest tsconfig
 		// for its files, so it keeps type-aware rules — notably no-floating-promises,
 		// which catches a missing `await` on a Playwright call
-		// (https://playwright.dev/docs/best-practices). playwright.config.ts stays
-		// here because its nearest tsconfig is the app one, which excludes it.
+		// (https://playwright.dev/docs/best-practices). The Playwright configs stay
+		// here because their nearest tsconfig is the app one, which excludes them.
 		files: [
 			'eslint.config.js',
 			'svelte.config.js',
 			'openapi-ts.config.ts',
 			'src/service-worker.ts',
-			'playwright.config.ts'
+			'playwright.config.ts',
+			'playwright.gallery.config.ts'
 		],
 		extends: [ts.configs.disableTypeChecked]
 	}

@@ -4,7 +4,7 @@
 // for information about these interfaces
 
 import type { CurrentUserDto } from '$lib/api/generated';
-import type { BackTarget } from '$lib/types/navigation';
+import type { BackTarget, NavbarAction } from '$lib/types/navigation';
 
 declare global {
 	namespace App {
@@ -22,6 +22,8 @@ declare global {
 			title?: string;
 			/** Parent route for the navbar's back arrow; set by nested pages via `load`. */
 			back?: BackTarget;
+			/** Icon buttons beside the bell; set per page via `load` (universal, so it can carry a component). */
+			actions?: NavbarAction[];
 		}
 		// interface PageState {}
 		// interface Platform {}

@@ -25,12 +25,10 @@
 	<div class="flex flex-col gap-6">
 		{#each blocks as rows, blockIndex (blockIndex)}
 			<section class="flex flex-col gap-2">
-				<!-- Block header chip -->
-				<div
-					class="flex min-h-11 items-center justify-between gap-3 rounded-xl border bg-card px-3 py-2 shadow-sm"
-				>
-					<Skeleton class="h-4 w-40 rounded-full" />
-					<Skeleton class="h-5 w-6 rounded-full" />
+				<!-- Block heading -->
+				<div class="flex min-h-11 items-center justify-between gap-3 px-1">
+					<Skeleton class="h-4 w-24 rounded-full" />
+					<Skeleton class="h-3 w-4 rounded-full" />
 				</div>
 
 				<!-- Card of event rows -->

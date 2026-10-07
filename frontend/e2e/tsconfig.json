@@ -9,5 +9,5 @@
 		"allowJs": false,
 		"checkJs": false
 	},
-	"include": ["**/*.ts", "../playwright.config.ts"]
+	"include": ["**/*.ts", "../playwright.config.ts", "../playwright.gallery.config.ts"]
 }
