@@ -5,7 +5,7 @@ import { writeFile } from 'node:fs/promises';
 import type { Handlers } from '../mocks/api';
 
 import { expect, json, loggedInAs, test } from '../fixtures';
-import { notifications, schedule, singleDefile, subscriptions } from './data';
+import { GALLERY_NOW, notifications, schedule, singleDefile, subscriptions } from './data';
 
 // One test per README gallery image. Run with `just readme-gallery`, then review
 // the diff of docs/assets/readme-gallery/ before committing.
@@ -14,7 +14,7 @@ const OUT_DIR = new URL('../../../docs/assets/readme-gallery/', import.meta.url)
 const WEBP_QUALITY = 0.85;
 
 const HOUR_MS = 3_600_000;
-const now = Date.now();
+const now = GALLERY_NOW.getTime();
 
 // A logged-in visitor during the festival, with voting open and two unread
 // notifications for the bell badge.
@@ -64,7 +64,8 @@ async function settle(page: Page): Promise<void> {
 	await page.waitForLoadState('networkidle');
 }
 
-test.beforeEach(({ api }) => {
+test.beforeEach(async ({ page, api }) => {
+	await page.clock.setFixedTime(GALLERY_NOW);
 	api.use(visitorAtFestival);
 });
 

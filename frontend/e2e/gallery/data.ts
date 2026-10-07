@@ -9,6 +9,11 @@ import type {
 // backend's demo seed (seed_demo_data.py), so the gallery and the README hero
 // show one programme. Blocks are numbered sections, as at the real festival.
 
+// The capture pins the browser clock here (page.clock.setFixedTime), so relative
+// times like «34 минуты назад» and the festival/voting windows render the same
+// on every run.
+export const GALLERY_NOW = new Date('2026-10-17T15:00:00+03:00');
+
 const MINUTE_MS = 60_000;
 
 type Act = [title: string, block: string | null, nomination: string | null, duration: number];
@@ -87,7 +92,7 @@ function notification(
 	title: string,
 	body: string
 ): NotificationDto {
-	const createdAt = new Date(Date.now() - minutesAgo * MINUTE_MS).toISOString();
+	const createdAt = new Date(GALLERY_NOW.getTime() - minutesAgo * MINUTE_MS).toISOString();
 	return {
 		id: `notification-${minutesAgo}`,
 		user_id: 'gallery-visitor',

@@ -31,10 +31,17 @@
 	// Store filter state locally because it only affects this page view.
 	let searchQuery: string = $state('');
 	let showOnlySubscribed: boolean = $state(false);
-	let scope = $derived(showOnlySubscribed ? 'subscribed' : 'all');
 
-	// A single-select toggle group lets a tap on the pressed item clear the value;
-	// ignore that so one of the two scopes is always selected, like a segmented control.
+	// A single-select toggle group clears its value when the pressed item is tapped
+	// again. The function binding below keeps the group fully controlled
+	// (https://bits-ui.com/docs/components/toggle-group): the setter ignores the
+	// clear, and the getter hands the real scope back, so one scope always stays
+	// selected, like a segmented control. A one-way `value` would let the group's
+	// own state drift from the filter.
+	function getScope() {
+		return showOnlySubscribed ? 'subscribed' : 'all';
+	}
+
 	function setScope(value: string) {
 		if (value === '') return;
 		showOnlySubscribed = value === 'subscribed';
@@ -230,8 +237,7 @@
 				type="single"
 				variant="outline"
 				size="sm"
-				value={scope}
-				onValueChange={setScope}
+				bind:value={getScope, setScope}
 				aria-label="Какие выступления показать"
 			>
 				<ToggleGroup.Item value="all">Все</ToggleGroup.Item>
