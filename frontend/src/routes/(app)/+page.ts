@@ -48,6 +48,8 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 
 	// A schedule miss is not an error here: home just leaves out what needs it.
 	return {
+		// AppNavbar renders this as the page <h1>, as on every other tab.
+		title: 'ФАН ФАН 2026',
 		config,
 		schedule: scheduleResult.schedule ?? [],
 		scheduleStale: scheduleResult.stale,

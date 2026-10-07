@@ -45,6 +45,10 @@
 	let snapshot = $derived(getStageSnapshot(data.schedule));
 	let hasProgramme = $derived(data.schedule.length > 0);
 	let hasSubscriptions = $derived(data.schedule.some((event) => event.user_subscription !== null));
+	// Before the festival the steps are preparation; once it runs they are app setup.
+	let readyHeading = $derived(
+		phase === 'before' ? 'Подготовься к фестивалю' : 'Настрой приложение'
+	);
 	let showStage = $derived(phase === 'during' && hasProgramme);
 	let showStaleNotice = $derived(
 		showStage &&
@@ -117,7 +121,9 @@
 </svelte:head>
 
 <div class="flex flex-col gap-5 sm:gap-6">
-	<HeroCard {phase} festivalStart={config.festival_start} />
+	{#if phase !== 'during'}
+		<HeroCard {phase} festivalStart={config.festival_start} />
+	{/if}
 
 	{#if showStaleNotice}
 		<StaleDataNotice
@@ -136,6 +142,7 @@
 
 	{#if phase !== 'after'}
 		<GetReadySection
+			heading={readyHeading}
 			{user}
 			{hasProgramme}
 			{hasSubscriptions}

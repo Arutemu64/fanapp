@@ -12,6 +12,7 @@
 	import { getReadySteps, type ReadyStepKey } from './readySteps';
 
 	interface Props {
+		heading: string;
 		user: CurrentUserDto | null;
 		hasProgramme: boolean;
 		hasSubscriptions: boolean;
@@ -19,7 +20,8 @@
 		ticketAskedElsewhere: boolean;
 	}
 
-	let { user, hasProgramme, hasSubscriptions, votingEnded, ticketAskedElsewhere }: Props = $props();
+	let { heading, user, hasProgramme, hasSubscriptions, votingEnded, ticketAskedElsewhere }: Props =
+		$props();
 
 	const pwa = getPwaService();
 
@@ -146,7 +148,7 @@
 
 {#if featuredKey}
 	<section aria-labelledby="get-ready-heading" class="flex flex-col gap-3">
-		<h2 id="get-ready-heading" class="text-lg font-semibold text-foreground">Настрой приложение</h2>
+		<h2 id="get-ready-heading" class="text-lg font-semibold text-foreground">{heading}</h2>
 
 		<div class="flex flex-col gap-3">
 			{@render card(featuredKey, true)}
