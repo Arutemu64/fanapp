@@ -15,20 +15,6 @@ self.addEventListener('install', () => {
 	void self.skipWaiting();
 });
 
-// Builds that cached the app shell left Workbox precaches and an `image-variants`
-// runtime cache behind. Nothing on this origin uses Cache Storage now, so drop
-// every cache rather than chase their names.
-// TODO: delete once every installed client has activated this worker — kept
-// while the event's attendees may still open an install from the caching build.
-self.addEventListener('activate', (event: ExtendableEvent) => {
-	event.waitUntil(
-		(async () => {
-			const names = await caches.keys();
-			await Promise.all(names.map((name) => caches.delete(name)));
-		})()
-	);
-});
-
 interface PushNotificationPayload {
 	title: string;
 	body: string;
