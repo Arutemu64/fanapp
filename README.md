@@ -3,7 +3,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/Arutemu64/fanapp/ci.yml?branch=main&label=CI)](https://github.com/Arutemu64/fanapp/actions/workflows/ci.yml?query=branch%3Amain)
 [![License: MIT](https://img.shields.io/github/license/Arutemu64/fanapp)](#license)
 
-![The FAN FAN app: the home page on a laptop and the event schedule on a phone](docs/assets/readme-header.webp)
+![The FAN FAN app on festival day: the home page on a laptop and a phone, with the act on stage over the key art, what's next, and open voting](docs/assets/readme-header.webp)
 
 Companion web app for the **FAN FAN** Russian anime convention. It gives attendees the event schedule, voting, notifications, and ticket-linked profiles from their phone, and gives organizers the tools to run all of it. Audience is teen to young-adult and non-technical, so the UI is mobile-first and all user-facing copy is in Russian.
 
@@ -19,6 +19,7 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 
 ## Features
 
+- **Home**: changes with the festival: a countdown before it, the act on stage and what's next during it, thanks and a feedback prompt after. An "open voting" card shows while voting runs, and a setup list (account, ticket, subscriptions, notifications, install) shows each person only the steps they still have.
 - **Schedule**: public event schedule with live changes, per-user subscriptions, and organizer management/import tools.
 - **Voting**: nominations and voting, with cosplay data synced from Cosplay2.
 - **Notifications**: in-app feed plus Web Push (VAPID) for broadcasts and per-user alerts.
