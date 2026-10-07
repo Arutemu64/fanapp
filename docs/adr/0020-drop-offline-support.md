@@ -41,10 +41,10 @@ for installation ([Chrome blog](https://developer.chrome.com/blog/update-install
   schedule at a venue with poor signal.
 - A transient `/me` failure fails the root load instead of serving a cached
   identity.
-- Devices that ran an offline build hold an IndexedDB database with per-user
-  data; `purgeLegacyOfflineStorage` deletes it (a TODO to remove once installs
-  have rolled over). Their Workbox caches hold only public build assets and are
-  left in place until site data is cleared or the browser evicts the origin.
+- Devices that ran an offline build keep its Workbox caches and IndexedDB
+  database (which holds per-user data) until site data is cleared or the
+  browser evicts them. No cleanup code is shipped: nothing reads them, and they
+  are expected to be gone by the next festival.
 - Reintroducing a fetch handler or a client-side data cache needs a superseding
   ADR.
 

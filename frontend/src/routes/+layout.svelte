@@ -9,7 +9,6 @@
 	import { setPwaService } from '$lib/services/pwa.svelte';
 	import { setThemeService } from '$lib/services/theme.svelte';
 	import { setToastService } from '$lib/services/toasts.svelte';
-	import { purgeLegacyOfflineStorage } from '$lib/utils/legacyOfflineStorage';
 	import { registerServiceWorker } from '$lib/utils/serviceWorker';
 	import * as Sentry from '@sentry/sveltekit';
 	import { onDestroy, onMount } from 'svelte';
@@ -30,8 +29,6 @@
 		// SvelteKit's auto-registration is disabled (svelte.config.js) so we can
 		// catch a rejected register() ourselves — see registerServiceWorker.
 		registerServiceWorker();
-
-		purgeLegacyOfflineStorage();
 	});
 
 	$effect(() => {
