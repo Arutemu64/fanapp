@@ -51,7 +51,15 @@
 		}
 	}
 
-	onDestroy(() => captchaGate.clear());
+	// Set when the user leaves this step (back gesture or «Назад») — neither can
+	// be held off while a request runs, so a code that lands afterwards must not
+	// pull them back into the flow they just left.
+	let hasLeftStep = false;
+
+	onDestroy(() => {
+		hasLeftStep = true;
+		captchaGate.clear();
+	});
 
 	let normalizedEmail = $derived(normalizeEmail(email));
 
@@ -124,7 +132,9 @@
 				return;
 			}
 
-			onCodeSent(trimmedEmail);
+			if (!hasLeftStep) {
+				onCodeSent(trimmedEmail);
+			}
 		} finally {
 			activeAction = null;
 		}

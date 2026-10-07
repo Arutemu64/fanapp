@@ -54,6 +54,36 @@ test.describe('email login', () => {
 		await expect(page.getByRole('button', { name: 'Войти по почте' })).toBeFocused();
 	});
 
+	test('a code that lands after leaving the step does not reopen the flow', async ({
+		page,
+		api
+	}) => {
+		let deliver = () => {};
+		const delivered = new Promise<void>((resolve) => (deliver = resolve));
+		let requested = () => {};
+		const requestSeen = new Promise<void>((resolve) => (requested = resolve));
+		api.use({
+			'POST /auth/request-login-code': async () => {
+				requested();
+				await delivered;
+				return json(null);
+			}
+		});
+		const email = await openEmailStep(page);
+		await email.fill('ann@example.com');
+		await email.press('Enter');
+		await requestSeen;
+
+		await page.getByRole('button', { name: 'Назад' }).click();
+		await expect(page.getByRole('button', { name: 'Войти по почте' })).toBeVisible();
+		// Listen before releasing it, so a fast response can't slip past the wait.
+		const lateResponse = page.waitForResponse('**/auth/request-login-code');
+		deliver();
+		await lateResponse;
+		await expect(page.getByLabel('Код подтверждения')).toHaveCount(0);
+		await expect(page.getByRole('button', { name: 'Войти по почте' })).toBeVisible();
+	});
+
 	test('offers the guest exit on the options screen only', async ({ page }) => {
 		await page.goto('/login');
 		const leave = page.getByRole('button', { name: 'Продолжить без входа' });
