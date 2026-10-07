@@ -3,7 +3,6 @@ import type { NavbarAction } from '$lib/types/navigation';
 import { canManageSchedule } from '$lib/utils/permissions';
 import { loadScheduleWithSubscriptions } from '$lib/utils/scheduleData';
 import { History } from '@lucide/svelte';
-import { error } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
 
@@ -12,10 +11,6 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 
 	const { user } = await parent();
 	const schedule = await loadScheduleWithSubscriptions(fetch, user?.id);
-
-	if (schedule === undefined) {
-		error(503, 'Не удалось загрузить программу');
-	}
 
 	// The operator's change log lives with the schedule it tracks, not in the tools
 	// section, so it is one tap from here. Gated by the same permission the changes

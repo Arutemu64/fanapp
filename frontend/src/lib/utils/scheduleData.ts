@@ -2,38 +2,49 @@ import type { ScheduleEventFullDto, SubscriptionFullDto } from '$lib/api/generat
 import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
 
 import { createApiClient } from '$lib/api';
+import { throwApiError } from '$lib/api/errors';
 import { getSchedule, getSubscriptions } from '$lib/api/generated';
+import { REQUIRED_READ_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 
 /**
  * Load the schedule merged with the viewer's subscriptions. Read by the schedule
- * page and the home "now on stage" card, so both share one row shape. Resolves to
- * `undefined` when the schedule itself can't be loaded.
+ * page and the home "now on stage" card, so both share one row shape. Throws a
+ * SvelteKit error when either read fails: without the subscriptions every event
+ * would show as unsubscribed, offering a subscribe the backend then rejects.
  */
 export async function loadScheduleWithSubscriptions(
 	fetch: typeof globalThis.fetch,
 	userId: string | undefined
-): Promise<ScheduleEventWithSubscription[] | undefined> {
+): Promise<ScheduleEventWithSubscription[]> {
 	const client = createApiClient();
 
 	// Schedule and subscriptions come from two endpoints. Fetch them concurrently —
 	// total latency is the slower of the two, not the sum. Guests skip the
 	// subscriptions request entirely.
-	const [scheduleResult, subscriptions] = await Promise.all([
-		getSchedule({ client, fetch }),
+	const [schedule, subscriptions] = await Promise.all([
+		fetchSchedule(client, fetch),
 		fetchSubscriptions(client, fetch, userId)
 	]);
 
-	const { data, error: fetchError } = scheduleResult;
-	if (fetchError || !data) return undefined;
-
-	return mergeSubscriptions(data.schedule ?? [], subscriptions);
+	return mergeSubscriptions(schedule, subscriptions);
 }
 
-/**
- * Load the current user's subscriptions. Guests have none, so we skip the request
- * and return an empty list. A failure degrades to "no badges" rather than failing
- * the page — the schedule itself decides whether the page can render.
- */
+async function fetchSchedule(
+	client: ReturnType<typeof createApiClient>,
+	fetch: typeof globalThis.fetch
+): Promise<ScheduleEventFullDto[]> {
+	const { data, error, response } = await getSchedule({
+		client,
+		fetch,
+		signal: timeoutSignal(REQUIRED_READ_TIMEOUT_MS)
+	});
+	if (error || !data) {
+		throwApiError(error, response, 'Не удалось загрузить программу');
+	}
+	return data.schedule ?? [];
+}
+
+/** Guests have no subscriptions, so their request is skipped. */
 async function fetchSubscriptions(
 	client: ReturnType<typeof createApiClient>,
 	fetch: typeof globalThis.fetch,
@@ -41,9 +52,14 @@ async function fetchSubscriptions(
 ): Promise<SubscriptionFullDto[]> {
 	if (!userId) return [];
 
-	const { data, error: fetchError } = await getSubscriptions({ client, fetch });
-	if (fetchError || !data) return [];
-
+	const { data, error, response } = await getSubscriptions({
+		client,
+		fetch,
+		signal: timeoutSignal(REQUIRED_READ_TIMEOUT_MS)
+	});
+	if (error || !data) {
+		throwApiError(error, response, 'Не удалось загрузить подписки');
+	}
 	return data.subscriptions ?? [];
 }
 

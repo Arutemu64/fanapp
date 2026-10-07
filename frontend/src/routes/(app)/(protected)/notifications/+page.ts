@@ -5,6 +5,7 @@ import {
 	NOTIFICATION_PAGE_REQUEST_LIMIT,
 	NOTIFICATION_PAGE_SIZE
 } from '$lib/constants/notifications';
+import { REQUIRED_READ_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 
 import type { PageLoad } from './$types';
 
@@ -20,6 +21,7 @@ export const load: PageLoad = async ({ fetch, depends }) => {
 	} = await listUserNotifications({
 		client,
 		fetch,
+		signal: timeoutSignal(REQUIRED_READ_TIMEOUT_MS),
 		query: {
 			limit: NOTIFICATION_PAGE_REQUEST_LIMIT,
 			offset: 0

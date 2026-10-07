@@ -19,5 +19,13 @@ export function timeoutSignal(ms: number): AbortSignal {
 	return controller.signal;
 }
 
-/** Default budget for a first-paint API call. */
+/** Budget for an optional first-paint API call the page falls back from. */
 export const FIRST_PAINT_TIMEOUT_MS = 3500;
+
+/**
+ * Budget for a read the page cannot render without. Generous, so a slow venue
+ * network still gets through; bounded, so a stalled one reaches the error page's
+ * retry instead of an endless spinner. Past ~10 s users stop waiting anyway
+ * (https://www.nngroup.com/articles/response-times-3-important-limits/).
+ */
+export const REQUIRED_READ_TIMEOUT_MS = 15000;

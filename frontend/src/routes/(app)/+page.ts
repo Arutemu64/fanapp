@@ -1,10 +1,13 @@
 import type { PublicConfigDto } from '$lib/api/generated';
+import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
 
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
 import { getPublicConfig } from '$lib/api/generated';
+import { REQUIRED_READ_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 import { loadScheduleWithSubscriptions } from '$lib/utils/scheduleData';
 import { fetchVotingStatus } from '$lib/utils/votingStatus';
+import { isHttpError } from '@sveltejs/kit';
 
 import type { PageLoad } from './$types';
 
@@ -12,11 +15,28 @@ import type { PageLoad } from './$types';
 // the page can't render without it.
 async function loadConfig(fetch: typeof globalThis.fetch): Promise<PublicConfigDto> {
 	const client = createApiClient();
-	const { data, error, response } = await getPublicConfig({ client, fetch });
+	const { data, error, response } = await getPublicConfig({
+		client,
+		fetch,
+		signal: timeoutSignal(REQUIRED_READ_TIMEOUT_MS)
+	});
 	if (error || !data) {
 		throwApiError(error, response, 'Не удалось загрузить данные фестиваля');
 	}
 	return data;
+}
+
+// A schedule failure is not an error here: home just leaves out what needs it.
+async function loadOptionalSchedule(
+	fetch: typeof globalThis.fetch,
+	userId: string | undefined
+): Promise<ScheduleEventWithSubscription[]> {
+	try {
+		return await loadScheduleWithSubscriptions(fetch, userId);
+	} catch (err) {
+		if (isHttpError(err)) return [];
+		throw err;
+	}
 }
 
 export const load: PageLoad = async ({ fetch, depends, parent }) => {
@@ -30,18 +50,17 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 
 	const [config, schedule, votingStatus] = await Promise.all([
 		loadConfig(fetch),
-		loadScheduleWithSubscriptions(fetch, user?.id),
+		loadOptionalSchedule(fetch, user?.id),
 		// Optional here: a failure hides the voting card and nothing else.
 		fetchVotingStatus(fetch)
 	]);
 
-	// A schedule miss is not an error here: home just leaves out what needs it.
 	return {
 		// AppNavbar renders this as the page <h1>; it matches the tab label, as on
 		// every other tab.
 		title: 'Главная',
 		config,
-		schedule: schedule ?? [],
+		schedule,
 		votingStatus
 	};
 };

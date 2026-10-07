@@ -9,8 +9,7 @@
 The app shipped an offline mode spread across every layer of the frontend: a
 Workbox-precached shell with a navigation fallback and an image runtime cache
 ([ADR-0016](0016-workbox-precaching-via-vite-pwa.md)), an IndexedDB cache of API
-reads (`fetchWithCache`, `warmCache`, per-user scoping and a write epoch), a
-reachability probe with a confirm window and recovery poll, stale-data notices,
+reads with per-user scoping and a write epoch, a reachability probe with a confirm window and recovery poll, stale-data notices,
 "доступно только онлайн" states on voting/feedback/tools, a write gate disabling
 mutations, and a persisted offline-logout queue gating identity. Each page load
 had to choose between cached, stale, missing and unreachable, and the e2e and

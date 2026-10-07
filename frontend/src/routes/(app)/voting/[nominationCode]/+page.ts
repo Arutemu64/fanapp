@@ -3,6 +3,7 @@ import type { BackTarget } from '$lib/types/navigation';
 import { createApiClient } from '$lib/api';
 import { throwApiError } from '$lib/api/errors';
 import { getVotingNomination } from '$lib/api/generated';
+import { REQUIRED_READ_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 
 import type { PageLoad } from './$types';
 
@@ -19,6 +20,7 @@ export const load: PageLoad = async ({ params, fetch, depends }) => {
 	} = await getVotingNomination({
 		client,
 		fetch,
+		signal: timeoutSignal(REQUIRED_READ_TIMEOUT_MS),
 		path: {
 			nomination_code: params.nominationCode
 		}
