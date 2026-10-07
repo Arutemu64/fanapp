@@ -142,7 +142,7 @@
 						<a href={loginHref} {...props}>
 							<Item.Media>
 								<Avatar.Root class="size-12">
-									<Avatar.Fallback class="bg-muted text-muted-foreground">
+									<Avatar.Fallback class="bg-primary/10 text-primary-700 dark:text-primary">
 										<UserRound class="size-6" aria-hidden="true" />
 									</Avatar.Fallback>
 								</Avatar.Root>
