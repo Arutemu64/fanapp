@@ -116,8 +116,8 @@ importers:
         specifier: 5.3.0
         version: 5.3.0
       '@khmyznikov/pwa-install':
-        specifier: 0.6.4
-        version: 0.6.4(@lit/react@1.0.8(@types/react@19.2.18))(@types/dom-chromium-installation-events@101.0.4)(@types/web-app-manifest@1.0.9)(lit@3.3.3)
+        specifier: 0.7.0
+        version: 0.7.0(@lit/react@1.0.8(@types/react@19.2.18))(@types/dom-chromium-installation-events@101.0.4)(@types/web-app-manifest@1.0.9)(lit@3.3.3)
       '@panzoom/panzoom':
         specifier: 4.6.2
         version: 4.6.2
@@ -1107,8 +1107,8 @@ packages:
   '@keyv/serialize@1.1.1':
     resolution: {integrity: sha512-dXn3FZhPv0US+7dtJsIi2R+c7qWYiReoEh5zUntWCf4oSpMNib8FDhSoed6m3QyZdx5hK7iLFkYk3rNxwt8vTA==}
 
-  '@khmyznikov/pwa-install@0.6.4':
-    resolution: {integrity: sha512-Ks80e6Ltzdq0qnz8csuTtIaxjJz0RxPvbi2CBt997g4mm21evq+kRp4ima9lqhFhRCxbwmzBwnu2B3to9lxdhw==}
+  '@khmyznikov/pwa-install@0.7.0':
+    resolution: {integrity: sha512-tNCySLozRdIAzRKAm2ylqPFf6jTq9KfZxsPmMlwDKD8JUwF8TWosFRTnz26nlRubaMstN6RLAREcL1OC+ZVGPA==}
     peerDependencies:
       '@lit/react': ^1.0.8
       '@types/dom-chromium-installation-events': ^101.0.4
@@ -2844,6 +2844,9 @@ packages:
   imurmurhash@0.1.4:
     resolution: {integrity: sha512-JmXMZ6wuvDmLiHEml9ykzqO6lwFbof0GG4IkcGaENdCRDDmMVnny7s5HsIgHCbaq0w2MyPhDqkhTUgS2LU2PHA==}
     engines: {node: '>=0.8.19'}
+
+  inapp-spy@5.0.10:
+    resolution: {integrity: sha512-TBvQdIo2F9zc6qeOPiqOZ9dpUaBX61ImF+gEvWVwVFXPXgey/AvGgN2l8gUZlGd4UE6rCahSfCV+51WtxeTY2w==}
 
   inline-style-parser@0.2.7:
     resolution: {integrity: sha512-Nb2ctOyNR8DqQoR0OwRG95uNWIC0C1lCgf5Naz5H6Ji72KZ8OcFZLz2P5sNgwlyoJ8Yif11oMuYs5pBQa86csA==}
@@ -5293,11 +5296,12 @@ snapshots:
 
   '@keyv/serialize@1.1.1': {}
 
-  '@khmyznikov/pwa-install@0.6.4(@lit/react@1.0.8(@types/react@19.2.18))(@types/dom-chromium-installation-events@101.0.4)(@types/web-app-manifest@1.0.9)(lit@3.3.3)':
+  '@khmyznikov/pwa-install@0.7.0(@lit/react@1.0.8(@types/react@19.2.18))(@types/dom-chromium-installation-events@101.0.4)(@types/web-app-manifest@1.0.9)(lit@3.3.3)':
     dependencies:
       '@lit/react': 1.0.8(@types/react@19.2.18)
       '@types/dom-chromium-installation-events': 101.0.4
       '@types/web-app-manifest': 1.0.9
+      inapp-spy: 5.0.10
       lit: 3.3.3
 
   '@lit-labs/ssr-dom-shim@1.6.0': {}
@@ -6917,6 +6921,8 @@ snapshots:
   import-meta-resolve@4.2.0: {}
 
   imurmurhash@0.1.4: {}
+
+  inapp-spy@5.0.10: {}
 
   inline-style-parser@0.2.7: {}
 
