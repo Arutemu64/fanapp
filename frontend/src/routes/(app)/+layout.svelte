@@ -77,6 +77,7 @@
 	function restoreScroll(top: number) {
 		mainElement?.scrollTo({ top, behavior: 'instant' });
 		navbarHidden = false;
+		contentScrolled = top > 0;
 		lastScrollTop = top;
 	}
 
@@ -113,6 +114,12 @@
 	const HIDE_NAVBAR_AFTER_PX = 64; // never hide while the bar's own content is still on screen
 	const SCROLL_DELTA_PX = 6; // ignore inertia/subpixel jitter that would flicker the bar
 	let navbarHidden = $state(false);
+	// Whether content sits under the bar, which draws its bottom hairline only then. At
+	// the top of a page the line would separate nothing; it is the scroll-edge behaviour
+	// of the iOS navigation bar (transparent, no shadow, until content scrolls under it:
+	// https://developer.apple.com/documentation/technotes/tn3106-customizing-uinavigationbar-appearance)
+	// and of the Material 3 top app bar (`scrolledContainerColor`).
+	let contentScrolled = $state(false);
 	let navbarHeight = $state(0);
 	let chromeHeight = $state(0);
 	let lastScrollTop = 0;
@@ -145,6 +152,8 @@
 		scrollFrame = requestAnimationFrame(() => {
 			scrollFrame = 0;
 			const top = mainElement?.scrollTop ?? 0;
+			// Before the jitter guard: a slow drift back to 0 must still clear the hairline.
+			contentScrolled = top > 0;
 			const delta = top - lastScrollTop;
 			if (Math.abs(delta) < SCROLL_DELTA_PX) return;
 			// Reveal on any upward move; hide only while moving down past the bar's height.
@@ -288,7 +297,7 @@
 			style:transition-duration={`${chromeTransitionMs}ms`}
 		>
 			<div bind:offsetHeight={navbarHeight}>
-				<AppNavbar {user} />
+				<AppNavbar {user} {contentScrolled} />
 			</div>
 			<ConnectionBanner />
 		</div>
