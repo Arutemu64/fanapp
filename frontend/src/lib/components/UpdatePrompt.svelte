@@ -135,7 +135,7 @@
 		role="status"
 		aria-live="polite"
 		aria-atomic="true"
-		class="pointer-events-none fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-(--z-overlay) flex justify-center px-4 md:bottom-4 md:px-6 lg:px-8"
+		class="pointer-events-none fixed inset-x-0 bottom-[calc(var(--bottom-nav-clearance)+0.5rem)] z-(--z-overlay) flex justify-center px-4 md:bottom-4 md:px-6 lg:px-8"
 	>
 		<div
 			class="pointer-events-auto flex w-full max-w-sm flex-col gap-3 rounded-xl border border-border bg-card p-4 text-card-foreground shadow-lg"

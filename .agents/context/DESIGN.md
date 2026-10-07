@@ -73,6 +73,7 @@ This system is **near-flat by default**. Depth is conveyed by tonal layering (a 
 - **Resting card surface** (`shadow-xs` + a `ring-1 ring-foreground/10` hairline, set once in `card.svelte`): the near-flat default for every `Card`. The hairline ring does the separating — it *is* the border in the two-layer scheme — and the `shadow-xs` is barely-there. This is the vendored default; don't add a heavier shadow to a resting card.
 - **Resting list shadow** (`shadow-sm`): a slightly stronger whisper reserved for standalone tappable list items (e.g. notification cards) to lift them off the field. Nothing heavier ships at rest.
 - **Floating overlays** (dropdowns, toasts, dialogs): Larger ambient shadow, owned by the shadcn component, reserved for genuinely floating layers above the page.
+- **Floating bottom nav** (`shadow-lg shadow-black/5`): the pill genuinely floats over scrolling content, so it earns a soft, low-opacity ambient shadow — large radius, near-zero alpha, never a dark drop.
 
 ### Named Rules
 **The Border-Before-Shadow Rule.** To separate a surface from its background, reach for a border (or the `Card`'s hairline `ring`) and a tonal step first. A shadow beyond the resting `shadow-xs`/`shadow-sm` is only justified on something that genuinely floats (overlay). No `shadow-md`/`lg`/`xl` on resting content.
@@ -87,6 +88,7 @@ shadcn-svelte (vendored as source in `$lib/components/ui/`) is the component sub
 - **Primary:** the default `<Button>` (`variant="default"`) — watermelon fill via the semantic `--primary`, full-width in stacked action groups.
 - **Secondary / Ghost / Destructive:** `variant="outline"` (bordered) for the secondary action in a stack; `variant="ghost"` for tertiary ("back"); `variant="destructive"` reserved for destructive confirms.
 - **Tonal (repeated actions):** `variant="tonal"` — a brand-tinted fill for an action that repeats down a list (the per-participant «Голосовать»). A column of solid fills would bury the page's one primary action, and a labelled button beats an icon here: no icon reads as "vote" on its own ([NN/g, Icon Usability](https://www.nngroup.com/articles/icon-usability/)).
+- **Floating (over scrolling content):** `variant="floating"` — the bottom-nav pill's glass (`background/85` + blur, opaque under reduce-transparency) for a button that hovers over the page, like the schedule's scroll-to-top FAB. `outline` is near-transparent in dark mode, so content would read through a floating outline button.
 - **Hover / Press / Focus:** Background shift on hover, and the same shift on press so a finger gets the feedback a mouse does; visible `focus-visible` outline. Transitions 150–250ms.
 
 ### Inputs / Fields
@@ -112,7 +114,7 @@ shadcn-svelte (vendored as source in `$lib/components/ui/`) is the component sub
 - **Use:** Stale-data, offline, connection banners. Calm and informative, never alarming.
 
 ### Navigation
-- **Mobile — Bottom Nav:** Fixed, 4 columns, `border-t`, `white`/`gray-900` fill, respects `env(safe-area-inset-bottom)`, `md:hidden`. Active item = solid icon in `primary-600`/`primary-400`; idle = outline icon in `gray-500`/`gray-400` with primary on hover. Active state pairs icon *fill* change with color — never color alone.
+- **Mobile — Bottom Nav:** A floating glass pill, the iOS 26 tab-bar shape: five columns in a `rounded-full` capsule capped at `max-w-md`, inset from the screen edges, dipping into the bottom safe area over the home indicator, `md:hidden`. Translucent `background/85` + 16px backdrop blur — airy enough to show content moving under it, dense enough that a bold row title never reads through the tab labels; opaque under the OS "reduce transparency" setting. Active item = semibold label and icon on a `primary/12` capsule (`/20` in dark) that slides between tabs; in light mode the active label is `primary-700`, not the token, so it clears AA on the tint (the `tonal` button's trick), while dark keeps `primary`. Colour and weight cross-fade on the capsule's 300ms curve, so the highlight and the lit label move as one. Idle = `muted-foreground` with foreground on hover. Active state pairs the capsule and weight with color — never color alone. Anything floating above it offsets from `--bottom-nav-clearance` (`app.css`).
 - **Desktop — Sidebar + Navbar:** Sidebar (`md:` and up) for primary nav; top navbar carries the current page title, a leading back arrow on nested pages (on phones too), and the notification bell. Bottom nav is hidden on desktop.
 
 ### Empty & Loading States

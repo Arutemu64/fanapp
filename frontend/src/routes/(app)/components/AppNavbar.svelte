@@ -22,10 +22,10 @@
 
 <!-- Full width so the bell pins to the right edge. Account actions (login, logout)
 	live on the Profile tab, not here, so the bar is identical on phones and desktop.
-	Positioning (overlay, z-index, hide-on-scroll) is owned by the (app) layout, which
-	slides this bar with `top` to keep its backdrop blur intact. -->
+	Positioning (overlay, z-index, hide-on-scroll) and the backdrop blur are owned by the
+	(app) layout's chrome wrapper; this bar supplies only the translucent tint. -->
 <header
-	class="flex items-center justify-between gap-2 border-b border-border/50 bg-background/80 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] backdrop-blur-md transition-colors duration-300 select-none [-webkit-touch-callout:none] sm:px-6"
+	class="flex items-center justify-between gap-2 border-b border-border/50 bg-background/80 px-4 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] transition-colors duration-300 select-none [-webkit-touch-callout:none] sm:px-6 reduced-transparency:bg-background"
 >
 	<!-- Page title comes from each page's `load` via `page.data.title`; render it
 		as the single page <h1>. The row is held at the bell's h-11 so the bar keeps

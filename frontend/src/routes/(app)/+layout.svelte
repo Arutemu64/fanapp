@@ -272,11 +272,18 @@
 			loop is what made the bar blink). The column's overflow-hidden clips it as it
 			slides to a negative `top`; sliding `top` rather than transforming keeps the bar's
 			backdrop blur intact, and the connection banner below it rides up with it.
+			The blur is on this wrapper, not the bar inside it: view-transition-name makes the
+			wrapper a Backdrop Root, so a descendant's backdrop-filter would see only the
+			wrapper's own (empty) backdrop and blur nothing
+			(https://drafts.csswg.org/css-view-transitions-1/, "Rendering Consolidation").
+			Under reduced transparency the wrapper turns opaque rather than just unblurred: the
+			connection banner's tint is only /10, so without a solid fill behind it the page
+			would show through the banner.
 			transition-duration is set per state (fast reveal, slower hide). Dropdowns render
 			in the native Popover top layer regardless of the wrapper. See handleMainScroll. -->
 		<div
 			bind:offsetHeight={chromeHeight}
-			class="absolute inset-x-0 top-0 z-(--z-chrome) transition-[top] ease-out [view-transition-name:top-chrome] motion-reduce:transition-none"
+			class="absolute inset-x-0 top-0 z-(--z-chrome) backdrop-blur-md transition-[top] ease-out [view-transition-name:top-chrome] motion-reduce:transition-none reduced-transparency:bg-background reduced-transparency:backdrop-blur-none"
 			style:top={chromeHidden ? `-${navbarHeight}px` : '0px'}
 			style:transition-duration={`${chromeTransitionMs}ms`}
 		>
@@ -305,12 +312,17 @@
 			style:padding-top={`${chromeHeight}px`}
 			style:--sticky-top={chromeHidden ? `-${navbarHeight}px` : '0px'}
 			style:--sticky-top-duration={`${chromeTransitionMs}ms`}
-			class="relative flex-1 overflow-y-auto scroll-smooth [view-transition-name:page] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+			class="relative flex flex-1 flex-col overflow-y-auto scroll-smooth [view-transition-name:page] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
 		>
-			<!-- Bottom padding clears the fixed mobile bottom nav (h-16 + safe-area inset);
-				md:p-6 resets it on desktop where the bottom nav is hidden. -->
+			<!-- Bottom padding lets the last row scroll 1rem clear of the floating mobile bottom nav;
+				md:p-6 resets it on desktop where the bottom nav is hidden.
+				grow (in <main>'s flex column) stretches this column to at least the visible height.
+				<main>'s height is definite, so the grown height is too, and a page can fill it with
+				min-h-full to pin trailing content (the profile footer) to the bottom on a short
+				page (https://drafts.csswg.org/css-flexbox-1/#definite-sizes). w-full because a
+				flex item with auto side margins would otherwise shrink to its content. -->
 			<div
-				class="mx-auto max-w-5xl p-4 pb-[calc(6rem+env(safe-area-inset-bottom))] md:p-6 md:pt-4 lg:p-8 lg:pt-4"
+				class="mx-auto w-full max-w-5xl grow p-4 pb-[calc(var(--bottom-nav-clearance)+1rem)] md:p-6 md:pt-4 lg:p-8 lg:pt-4"
 			>
 				{#if showLoader}
 					{#if loaderRoute === '/(app)/schedule'}

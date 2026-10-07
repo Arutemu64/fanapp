@@ -28,6 +28,12 @@
 				// token on a /15 tint (5.1:1, 4.7:1 on hover). Project addition, not shadcn.
 				tonal:
 					'bg-primary/10 text-primary-700 hover:bg-primary/20 dark:bg-primary/15 dark:text-primary dark:hover:bg-primary/20',
+				// For a button that floats over scrolling content (the schedule's FABs). It
+				// wears the bottom-nav pill's glass so the two read as one layer: `outline` is
+				// near-transparent in dark (input/30), and the content beneath read through it.
+				// Project addition, not shadcn.
+				floating:
+					'border-border/60 bg-background/85 shadow-lg shadow-black/5 backdrop-blur-lg backdrop-saturate-150 hover:bg-muted hover:text-foreground reduced-transparency:bg-background reduced-transparency:backdrop-blur-none',
 				link: 'text-primary underline-offset-4 hover:underline'
 			},
 			size: {

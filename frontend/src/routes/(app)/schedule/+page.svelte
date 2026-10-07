@@ -118,21 +118,22 @@
 			`[data-event-id="${visibleCurrentEvent.id}"]`
 		);
 
-		element?.scrollIntoView({
-			behavior: 'smooth',
-			block: 'center'
-		});
+		// No `behavior` in either scroll: the default ('auto') takes <main>'s CSS
+		// scroll-behavior, smooth normally and instant under reduced motion (app.css). An
+		// explicit 'smooth' would override that and animate for users who opted out
+		// (https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollTo).
+		element?.scrollIntoView({ block: 'center' });
 	}
 
 	function scrollToTop() {
-		const scrollContainer = getScrollContainer();
-		if (!scrollContainer) return;
-
-		scrollContainer.scrollTo({
-			top: 0,
-			behavior: 'smooth'
-		});
+		getScrollContainer()?.scrollTo({ top: 0 });
 	}
+
+	// The button appears only once the way back is long: NN/g advises holding a
+	// back-to-top control until the user has scrolled down several screens
+	// (https://www.nngroup.com/articles/back-to-top/). Measured in screens, not pixels,
+	// so it scales with the phone; re-tapping the active tab covers shorter trips.
+	const SCROLL_TOP_AFTER_SCREENS = 2;
 
 	const VISIBILITY_REFETCH_THROTTLE_MS = 30000;
 	// Seeded to now: the page has just loaded fresh data, so the initial visible
@@ -160,7 +161,9 @@
 		const scrollContainer = getScrollContainer();
 
 		const updateScrollState = () => {
-			showScrollTopButton = (scrollContainer?.scrollTop ?? 0) > 320;
+			if (!scrollContainer) return;
+			const threshold = scrollContainer.clientHeight * SCROLL_TOP_AFTER_SCREENS;
+			showScrollTopButton = scrollContainer.scrollTop > threshold;
 		};
 
 		updateScrollState();
@@ -302,18 +305,18 @@
 	</div>
 
 	{#if visibleCurrentEvent || showScrollTopButton}
-		<!-- Lift FAB actions above the bottom mobile navigation so they stay tappable. The
-			safe-area insets keep them clear of the home indicator (the nav grows by the bottom
-			inset) and of a landscape phone's notch and rounded corners. -->
+		<!-- Lift FAB actions above the floating bottom mobile navigation so they stay
+			tappable. The right inset keeps them clear of a landscape phone's notch and
+			rounded corners; on desktop the bottom inset clears the home indicator. -->
 		<div
-			class="pointer-events-none fixed right-[calc(1rem+env(safe-area-inset-right))] bottom-[calc(6rem+env(safe-area-inset-bottom))] z-30 md:bottom-[calc(1.5rem+env(safe-area-inset-bottom))]"
+			class="pointer-events-none fixed right-[calc(1rem+env(safe-area-inset-right))] bottom-[calc(var(--bottom-nav-clearance)+1rem)] z-30 md:bottom-[calc(1.5rem+env(safe-area-inset-bottom))]"
 		>
 			<div class="flex flex-col items-end gap-2">
 				{#if showScrollTopButton}
 					<Button
-						variant="outline"
+						variant="floating"
 						size="sm"
-						class="pointer-events-auto size-12 rounded-full px-0 shadow-lg lg:w-32 lg:rounded-full lg:px-3"
+						class="pointer-events-auto size-12 rounded-full px-0 lg:w-32 lg:rounded-full lg:px-3"
 						onclick={scrollToTop}
 						aria-label="Подняться наверх"
 					>
