@@ -30,7 +30,7 @@
      (https://www.buildmvpfast.com/blog/liquid-glass-css-backdrop-filter-recipes-2026).
      The view-transition-name sits on the pill, not the <nav>: a named element is a
      Backdrop Root, so naming the wrapper would leave the pill nothing to blur
-     (https://drafts.fxtf.org/filter-effects-2/#BackdropRoot).
+     (https://drafts.csswg.org/css-view-transitions-1/, "Rendering Consolidation").
      preload-code="viewport" fetches every tab's code as soon as the bar renders, so a
      first tap on a tab never waits on a chunk; data still waits for the tap
      (preload-data="hover" on <body> fires on touchstart). -->

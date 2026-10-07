@@ -275,7 +275,7 @@
 			The blur is on this wrapper, not the bar inside it: view-transition-name makes the
 			wrapper a Backdrop Root, so a descendant's backdrop-filter would see only the
 			wrapper's own (empty) backdrop and blur nothing
-			(https://drafts.fxtf.org/filter-effects-2/#BackdropRoot).
+			(https://drafts.csswg.org/css-view-transitions-1/, "Rendering Consolidation").
 			transition-duration is set per state (fast reveal, slower hide). Dropdowns render
 			in the native Popover top layer regardless of the wrapper. See handleMainScroll. -->
 		<div
