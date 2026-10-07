@@ -11,7 +11,7 @@
 	import { Bell, CalendarHeart, ChevronRight, Download, Ticket, UserPlus } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
-	import { getReadyProgress, type InstallState, type ReadyStepKey } from './readySteps';
+	import { getReadySteps, type InstallState, type ReadyStepKey } from './readySteps';
 
 	interface Props {
 		heading: string;
@@ -60,8 +60,8 @@
 		return 'unavailable';
 	});
 
-	let progress = $derived(
-		getReadyProgress({
+	let steps = $derived(
+		getReadySteps({
 			signedIn: user !== null,
 			hasTicket: user?.ticket != null,
 			votingEnded,
@@ -73,9 +73,6 @@
 			installBeforeNotifications: pwa.isApplePlatform
 		})
 	);
-
-	// A counter on a one-step list says nothing the step doesn't.
-	let showCounter = $derived(progress.total > 1);
 
 	interface ReadyStep {
 		title: string;
@@ -167,19 +164,12 @@
 	</Item.Root>
 {/snippet}
 
-{#if progress.open.length > 0}
+{#if steps.length > 0}
 	<section aria-labelledby="get-ready-heading" class="flex flex-col gap-3">
-		<div class="flex items-baseline justify-between gap-3">
-			<h2 id="get-ready-heading" class="text-lg font-semibold text-foreground">{heading}</h2>
-			{#if showCounter}
-				<p class="shrink-0 text-sm text-muted-foreground">
-					Готово {progress.done} из {progress.total}
-				</p>
-			{/if}
-		</div>
+		<h2 id="get-ready-heading" class="text-lg font-semibold text-foreground">{heading}</h2>
 
 		<MenuGroup>
-			{#each progress.open as key (key)}
+			{#each steps as key (key)}
 				{@render stepRow(stepFor(key))}
 			{/each}
 		</MenuGroup>

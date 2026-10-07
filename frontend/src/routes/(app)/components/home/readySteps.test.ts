@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getReadyProgress, type ReadyStepsInput } from './readySteps';
+import { getReadySteps, type ReadyStepsInput } from './readySteps';
 
 // A signed-in viewer with every step done: each test opens exactly the steps it checks.
 const DONE: ReadyStepsInput = {
@@ -15,28 +15,20 @@ const DONE: ReadyStepsInput = {
 	installBeforeNotifications: false
 };
 
-describe('getReadyProgress', () => {
-	it('offers a guest only sign-in, plus install where it applies', () => {
+describe('getReadySteps', () => {
+	it('offers a guest only sign-in, plus install where it is available', () => {
 		const guest = { ...DONE, signedIn: false, hasTicket: false };
 
-		expect(getReadyProgress({ ...guest, install: 'unavailable' })).toEqual({
-			open: ['account'],
-			done: 0,
-			total: 1
-		});
-		expect(getReadyProgress({ ...guest, install: 'available' })).toEqual({
-			open: ['account', 'install'],
-			done: 0,
-			total: 2
-		});
+		expect(getReadySteps({ ...guest, install: 'unavailable' })).toEqual(['account']);
+		expect(getReadySteps({ ...guest, install: 'available' })).toEqual(['account', 'install']);
 	});
 
-	it('has nothing open once everything is done, and counts the account', () => {
-		expect(getReadyProgress(DONE)).toEqual({ open: [], done: 5, total: 5 });
+	it('runs empty once everything is done', () => {
+		expect(getReadySteps(DONE)).toEqual([]);
 	});
 
 	it('lists open steps for a new account in priority order', () => {
-		const progress = getReadyProgress({
+		const steps = getReadySteps({
 			...DONE,
 			hasTicket: false,
 			hasSubscriptions: false,
@@ -44,51 +36,34 @@ describe('getReadyProgress', () => {
 			install: 'available'
 		});
 
-		expect(progress).toEqual({
-			open: ['ticket', 'subscribe', 'notifications', 'install'],
-			done: 1,
-			total: 5
-		});
+		expect(steps).toEqual(['ticket', 'subscribe', 'notifications', 'install']);
 	});
 
 	it('puts install before notifications where push needs an installed app', () => {
-		const progress = getReadyProgress({
+		const steps = getReadySteps({
 			...DONE,
 			notificationsOn: false,
 			install: 'available',
 			installBeforeNotifications: true
 		});
 
-		expect(progress.open).toEqual(['install', 'notifications']);
+		expect(steps).toEqual(['install', 'notifications']);
 	});
 
 	it('drops the ticket step once voting has ended or the voting card asks for it', () => {
-		const ended = getReadyProgress({ ...DONE, hasTicket: false, votingEnded: true });
-		const askedElsewhere = getReadyProgress({
-			...DONE,
-			hasTicket: false,
-			ticketAskedElsewhere: true
-		});
-
-		expect(ended).toEqual({ open: [], done: 4, total: 4 });
-		expect(askedElsewhere).toEqual({ open: [], done: 4, total: 4 });
+		expect(getReadySteps({ ...DONE, hasTicket: false, votingEnded: true })).toEqual([]);
+		expect(getReadySteps({ ...DONE, hasTicket: false, ticketAskedElsewhere: true })).toEqual([]);
 	});
 
 	it('skips subscribing until a programme is published', () => {
-		const progress = getReadyProgress({ ...DONE, hasProgramme: false, hasSubscriptions: false });
-
-		expect(progress).toEqual({ open: [], done: 4, total: 4 });
+		expect(getReadySteps({ ...DONE, hasProgramme: false, hasSubscriptions: false })).toEqual([]);
 	});
 
-	it('leaves notifications out while the device check is pending', () => {
-		expect(getReadyProgress({ ...DONE, notificationsOn: null })).toEqual({
-			open: [],
-			done: 4,
-			total: 4
-		});
+	it('hides the notifications step while the device check is pending', () => {
+		expect(getReadySteps({ ...DONE, notificationsOn: null })).toEqual([]);
 	});
 
-	it('leaves install out where the browser cannot install', () => {
-		expect(getReadyProgress({ ...DONE, install: 'unavailable' }).total).toBe(4);
+	it('hides install where the browser cannot install', () => {
+		expect(getReadySteps({ ...DONE, install: 'unavailable' })).toEqual([]);
 	});
 });
