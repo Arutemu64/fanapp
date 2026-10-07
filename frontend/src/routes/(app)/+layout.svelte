@@ -311,10 +311,10 @@
 			style:--sticky-top-duration={`${chromeTransitionMs}ms`}
 			class="relative flex-1 overflow-y-auto scroll-smooth [view-transition-name:page] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
 		>
-			<!-- Bottom padding lets the last row scroll clear of the floating mobile bottom nav;
+			<!-- Bottom padding lets the last row scroll 1rem clear of the floating mobile bottom nav;
 				md:p-6 resets it on desktop where the bottom nav is hidden. -->
 			<div
-				class="mx-auto max-w-5xl p-4 pb-[calc(var(--bottom-nav-clearance)+2rem)] md:p-6 md:pt-4 lg:p-8 lg:pt-4"
+				class="mx-auto max-w-5xl p-4 pb-[calc(var(--bottom-nav-clearance)+1rem)] md:p-6 md:pt-4 lg:p-8 lg:pt-4"
 			>
 				{#if showLoader}
 					{#if loaderRoute === '/(app)/schedule'}

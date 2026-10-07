@@ -28,6 +28,10 @@
      Blur is 16px: a persistent blurred layer re-composites its backdrop on every scroll
      frame, and 8–16px is the budget for one on mid-range phones
      (https://www.buildmvpfast.com/blog/liquid-glass-css-backdrop-filter-recipes-2026).
+     The tint is /85, not the airier /70: over the schedule's dense rows, /70 let a row's
+     bold title read through the tab labels. Refracting "liquid glass" (an SVG
+     displacement backdrop-filter, Chromium-only) was tried and rejected for the same
+     reason, worse: it keeps the centre of the glass sharp, right where the labels sit.
      The view-transition-name sits on the pill, not the <nav>: a named element is a
      Backdrop Root, so naming the wrapper would leave the pill nothing to blur
      (https://drafts.csswg.org/css-view-transitions-1/, "Rendering Consolidation").
@@ -40,7 +44,7 @@
 	class="pointer-events-none fixed inset-x-0 bottom-(--bottom-nav-gap) z-(--z-overlay) px-2 select-none [-webkit-touch-callout:none] min-[25rem]:px-3 md:hidden"
 >
 	<div
-		class="pointer-events-auto relative mx-auto grid h-16 max-w-md grid-cols-5 rounded-full border border-border/60 bg-background/70 p-1 shadow-lg shadow-black/5 backdrop-blur-lg backdrop-saturate-150 transition-colors duration-300 [view-transition-name:bottom-nav] reduced-transparency:bg-background reduced-transparency:backdrop-blur-none"
+		class="pointer-events-auto relative mx-auto grid h-16 max-w-md grid-cols-5 rounded-full border border-border/60 bg-background/85 p-1 shadow-lg shadow-black/5 backdrop-blur-lg backdrop-saturate-150 transition-colors duration-300 [view-transition-name:bottom-nav] reduced-transparency:bg-background reduced-transparency:backdrop-blur-none"
 	>
 		<!-- One capsule that slides between tabs rather than one per tab, so a switch
 		     reads as motion from the old tab to the new one. It spans exactly one of the

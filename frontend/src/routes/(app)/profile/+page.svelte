@@ -179,7 +179,7 @@
 	{/if}
 </div>
 
-<footer class="mx-auto mt-6 max-w-2xl pb-4 text-center text-xs text-muted-foreground">
+<footer class="mx-auto mt-6 max-w-2xl text-center text-xs text-muted-foreground">
 	<p class="flex items-center justify-center gap-1">
 		Работает на
 		<IconSvelte class="inline size-3.5 text-[#FF3E00]" />
