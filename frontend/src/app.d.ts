@@ -25,7 +25,10 @@ declare global {
 			/** Icon buttons beside the bell; set per page via `load` (universal, so it can carry a component). */
 			actions?: NavbarAction[];
 		}
-		// interface PageState {}
+		interface PageState {
+			/** Index into `maps` of the map open in the map page's fullscreen viewer. */
+			mapViewerIndex?: number;
+		}
 		// interface Platform {}
 	}
 }
