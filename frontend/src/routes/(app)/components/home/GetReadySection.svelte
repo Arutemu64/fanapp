@@ -5,7 +5,6 @@
 
 	import { resolve } from '$app/paths';
 	import MenuGroup from '$lib/components/MenuGroup.svelte';
-	import { Button } from '$lib/components/ui/button';
 	import * as Item from '$lib/components/ui/item';
 	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { type DevicePushState, getDevicePushState } from '$lib/utils/pushSubscription';
@@ -16,12 +15,6 @@
 
 	interface Props {
 		heading: string;
-		/**
-		 * Give the top step a filled button. Only when nothing else on the page is
-		 * the primary action: emphasis that competes with the live programme or the
-		 * voting card stops reading as emphasis (https://lawsofux.com/von-restorff-effect/).
-		 */
-		emphasizeFirst: boolean;
 		user: CurrentUserDto | null;
 		hasProgramme: boolean;
 		hasSubscriptions: boolean;
@@ -29,15 +22,8 @@
 		ticketAskedElsewhere: boolean;
 	}
 
-	let {
-		heading,
-		emphasizeFirst,
-		user,
-		hasProgramme,
-		hasSubscriptions,
-		votingEnded,
-		ticketAskedElsewhere
-	}: Props = $props();
+	let { heading, user, hasProgramme, hasSubscriptions, votingEnded, ticketAskedElsewhere }: Props =
+		$props();
 
 	const pwa = getPwaService();
 
@@ -95,7 +81,6 @@
 		title: string;
 		description: string;
 		icon: Component;
-		actionLabel: string;
 		href?: Pathname;
 		onclick?: () => void;
 	}
@@ -113,7 +98,6 @@
 					title: 'Создать аккаунт',
 					description: 'Нужен для голосования и подписки на выступления программы.',
 					icon: UserPlus,
-					actionLabel: 'Создать',
 					href: '/login'
 				};
 			case 'ticket':
@@ -121,7 +105,6 @@
 					title: 'Привязать билет',
 					description: 'Открывает доступ к голосованию в конкурсных номинациях.',
 					icon: Ticket,
-					actionLabel: 'Привязать',
 					href: '/profile/ticket'
 				};
 			case 'subscribe':
@@ -130,7 +113,6 @@
 					description:
 						'Отметь интересные номера в программе — напомним, когда до них дойдёт очередь.',
 					icon: CalendarHeart,
-					actionLabel: 'К программе',
 					href: '/schedule'
 				};
 			case 'notifications':
@@ -138,7 +120,6 @@
 					title: 'Включить уведомления',
 					description: 'Напоминания о выступлениях и новости фестиваля придут сразу на телефон.',
 					icon: Bell,
-					actionLabel: 'Включить',
 					href: '/profile/notifications'
 				};
 			case 'install':
@@ -146,7 +127,6 @@
 					title: 'Установить приложение',
 					description: installDescription,
 					icon: Download,
-					actionLabel: 'Установить',
 					// Open the install dialog directly; the library handles per-platform UX.
 					onclick: () => pwa.showInstallDialog()
 				};
@@ -163,19 +143,20 @@
 		<!-- Unclamped: the description is the reason to do the step, so it reads whole. -->
 		<Item.Description class="line-clamp-none">{step.description}</Item.Description>
 	</Item.Content>
+	<Item.Actions>
+		<ChevronRight class="size-4 text-muted-foreground" aria-hidden="true" />
+	</Item.Actions>
 {/snippet}
 
-<!-- The whole row is the target, as in the profile hub. -->
-{#snippet plainRow(step: ReadyStep)}
+<!-- Every row is the same whole-row target, as in the profile hub: order and the
+     counter carry priority, so no step gets a shape of its own. -->
+{#snippet stepRow(step: ReadyStep)}
 	<!-- hover:bg-muted by hand on the button: Item only highlights rows rendered as <a>. -->
 	<Item.Root class="rounded-none hover:bg-muted">
 		{#snippet child({ props })}
 			{#if step.href}
 				<a href={resolve(step.href)} {...props}>
 					{@render stepBody(step)}
-					<Item.Actions>
-						<ChevronRight class="size-4 text-muted-foreground" aria-hidden="true" />
-					</Item.Actions>
 				</a>
 			{:else}
 				<button type="button" {...props} onclick={step.onclick}>
@@ -183,21 +164,6 @@
 				</button>
 			{/if}
 		{/snippet}
-	</Item.Root>
-{/snippet}
-
-<!-- The row stays static and the button is the target: a button inside a
-     row-wide link would nest interactive elements. -->
-{#snippet emphasizedRow(step: ReadyStep)}
-	<Item.Root class="rounded-none">
-		{@render stepBody(step)}
-		<Item.Actions class="basis-full justify-end sm:basis-auto">
-			{#if step.href}
-				<Button href={resolve(step.href)} size="sm">{step.actionLabel}</Button>
-			{:else}
-				<Button size="sm" onclick={step.onclick}>{step.actionLabel}</Button>
-			{/if}
-		</Item.Actions>
 	</Item.Root>
 {/snippet}
 
@@ -213,13 +179,8 @@
 		</div>
 
 		<MenuGroup>
-			{#each progress.open as key, index (key)}
-				{@const step = stepFor(key)}
-				{#if emphasizeFirst && index === 0}
-					{@render emphasizedRow(step)}
-				{:else}
-					{@render plainRow(step)}
-				{/if}
+			{#each progress.open as key (key)}
+				{@render stepRow(stepFor(key))}
 			{/each}
 		</MenuGroup>
 	</section>

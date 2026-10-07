@@ -143,7 +143,6 @@
 	{#if phase !== 'after'}
 		<GetReadySection
 			heading={readyHeading}
-			emphasizeFirst={!showStage && !votingOpen}
 			{user}
 			{hasProgramme}
 			{hasSubscriptions}
