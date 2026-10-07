@@ -6,7 +6,7 @@ import { listScheduleChanges } from '$lib/api/generated';
 import {
 	SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT,
 	SCHEDULE_CHANGES_PAGE_SIZE
-} from '$lib/constants/schedule_changes';
+} from '$lib/constants/scheduleChanges';
 import { canManageSchedule } from '$lib/utils/permissions';
 import { error, redirect } from '@sveltejs/kit';
 

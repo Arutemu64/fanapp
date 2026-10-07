@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #
 # Regenerate the schedule-import template spreadsheet offered for download on
-# /tools/import_schedule. Driven by `just backend-generate-schedule-template`.
+# /tools/import-schedule. Driven by `just backend-generate-schedule-template`.
 #
 # The template is committed as a binary, so this script is what makes it
 # reviewable: the headers and the sample rows live here in plain text. Keep the
