@@ -17,6 +17,7 @@ class PwaService {
 	#canInstall = $state(false);
 	#isInstalled = $state(false);
 	#isApplePlatform = $state(false);
+	#isAppleMobilePlatform = $state(false);
 
 	constructor() {
 		// Detect standalone mode synchronously — reliable and race-free, unlike the
@@ -70,6 +71,7 @@ class PwaService {
 		// Combine our own detection with the element's signal (e.g. install-success).
 		this.#isInstalled = this.#detectStandalone() || el.isUnderStandaloneMode;
 		this.#isApplePlatform = el.isAppleMobilePlatform || el.isAppleDesktopPlatform;
+		this.#isAppleMobilePlatform = el.isAppleMobilePlatform;
 		// Offer installation when Chromium reports it is available, or on Apple
 		// platforms where the library shows its own how-to instructions instead.
 		this.#canInstall = !this.#isInstalled && (el.isInstallAvailable || this.#isApplePlatform);
@@ -83,9 +85,24 @@ class PwaService {
 		return this.#isInstalled;
 	}
 
-	/** True on iOS/iPadOS and Apple desktop, where web push requires an installed PWA. */
+	/**
+	 * True on iOS/iPadOS and Apple desktop, where the library shows its own install
+	 * instructions instead of a browser prompt, and where an installed app keeps its
+	 * notification permission in the system settings.
+	 */
 	get isApplePlatform() {
 		return this.#isApplePlatform;
+	}
+
+	/**
+	 * True on iPhone and iPad (the library counts a touch Mac UA as one, which is
+	 * how iPadOS Safari reports itself). Web push there reaches only a Home Screen
+	 * app (https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/);
+	 * Safari on a Mac delivers it to an ordinary tab (https://webkit.org/?p=12945),
+	 * so Apple desktop is deliberately not included.
+	 */
+	get pushRequiresInstall() {
+		return this.#isAppleMobilePlatform;
 	}
 
 	/** Open the library's install dialog (forced, since we run it in manual mode). */

@@ -168,7 +168,7 @@
 			return;
 		}
 
-		if (pwa.isApplePlatform && !pwa.isInstalled) {
+		if (pwa.pushRequiresInstall && !pwa.isInstalled) {
 			pwa.showInstallDialog();
 			return;
 		}

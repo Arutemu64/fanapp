@@ -8,7 +8,7 @@ test.describe('app boot', { tag: ['@smoke', '@critical'] }, () => {
 		// booted rather than erroring on its first data loads.
 		await expect(page.locator('#app-splash')).toHaveCount(0);
 		await expect(page).toHaveTitle('ФАН ФАН');
-		await expect(page.getByRole('heading', { name: 'ФАН ФАН 2026' })).toBeVisible();
+		await expect(page.getByRole('heading', { level: 1, name: 'Главная' })).toBeVisible();
 
 		// Guest affordance: the Profile tab, which is where login lives, is offered.
 		await expect(

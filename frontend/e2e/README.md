@@ -138,7 +138,7 @@ the WCAG tags):
 ```ts
 test('home is accessible', async ({ page, makeAxeBuilder }) => {
 	await page.goto('/');
-	await expect(page.getByRole('heading', { name: 'ФАН ФАН 2026' })).toBeVisible();
+	await expect(page.getByRole('heading', { level: 1, name: 'Главная' })).toBeVisible();
 	const { violations } = await makeAxeBuilder().analyze();
 	expect(violations, JSON.stringify(violations, null, 2)).toEqual([]);
 });
