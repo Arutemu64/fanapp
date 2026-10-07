@@ -77,7 +77,9 @@
 	function restoreScroll(top: number) {
 		mainElement?.scrollTo({ top, behavior: 'instant' });
 		navbarHidden = false;
-		contentScrolled = top > 0;
+		// The applied offset, not the requested one: a page now too short for `top` clamps
+		// it, and if that leaves scrollTop unchanged no `scroll` event would correct this.
+		contentScrolled = (mainElement?.scrollTop ?? 0) > 0;
 		lastScrollTop = top;
 	}
 
