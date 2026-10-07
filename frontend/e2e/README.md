@@ -28,6 +28,14 @@ since each version needs its own build):
 pnpm --dir frontend exec playwright install chromium
 ```
 
+## README gallery
+
+`just readme-gallery` reuses this mock layer to re-capture the README screenshots
+(`docs/assets/readme-gallery/*.webp`). It has its own config,
+`playwright.gallery.config.ts` (a 390×844 phone at 1.5×), and its specs live in
+`e2e/gallery/`, outside `e2e/specs/`, so the test suite never rewrites committed
+images. The demo programme in `e2e/gallery/data.ts` mirrors the backend's demo seed.
+
 ## Writing a spec
 
 Import from `../fixtures` (not `@playwright/test`) — it injects the mocked

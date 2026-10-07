@@ -7,14 +7,12 @@
 	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
-	import { Switch } from '$lib/components/ui/switch';
+	import * as ToggleGroup from '$lib/components/ui/toggle-group';
 	import { documentVisibility } from '$lib/services/documentVisibility';
 	import { getEventsClient } from '$lib/services/events.svelte';
 	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
-	import { canManageSchedule } from '$lib/utils/permissions';
 	import { createSearchIndex } from '$lib/utils/search';
-	import { ChevronUp, Info, Play, Search as SearchIcon, X } from '@lucide/svelte';
+	import { ChevronUp, Play, Search as SearchIcon, X } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
 	import type { PageProps } from './$types';
@@ -33,6 +31,21 @@
 	// Store filter state locally because it only affects this page view.
 	let searchQuery: string = $state('');
 	let showOnlySubscribed: boolean = $state(false);
+
+	// A single-select toggle group clears its value when the pressed item is tapped
+	// again. The function binding below keeps the group fully controlled
+	// (https://bits-ui.com/docs/components/toggle-group): the setter ignores the
+	// clear, and the getter hands the real scope back, so one scope always stays
+	// selected, like a segmented control. A one-way `value` would let the group's
+	// own state drift from the filter.
+	function getScope() {
+		return showOnlySubscribed ? 'subscribed' : 'all';
+	}
+
+	function setScope(value: string) {
+		if (value === '') return;
+		showOnlySubscribed = value === 'subscribed';
+	}
 
 	// We use the full schedule current event for countdown labels inside every row.
 	let currentEvent = $derived(schedule.find((event) => event.is_current) ?? null);
@@ -191,68 +204,57 @@
 		/>
 	{/if}
 
-	<!-- Operator shortcut: the schedule-changes log lives with the schedule it
-	     tracks, not in the tools section, so the operator reaches it in one tap
-	     from here. Gated by the same permission the changes page enforces. -->
-	{#if canManageSchedule(user)}
-		<div class="flex justify-end">
-			<Button href="/schedule/changes" variant="outline" size="sm">Изменения программы</Button>
+	<!-- Controls sit straight on the page, not in a card: DESIGN "When not to" use a
+	     card. Search plus a scope switch under it is the iOS search-field + scope-bar
+	     pattern (https://developer.apple.com/design/human-interface-guidelines/search-fields).
+	     Kept static so the schedule's block headers can be the sticky ones. -->
+	<div class="flex flex-col gap-3">
+		<div class="relative flex items-center">
+			<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+			<Input
+				bind:value={searchQuery}
+				name="schedule_search"
+				aria-label="Поиск по программе"
+				placeholder="Поиск по номеру или названию…"
+				autocomplete="off"
+				spellcheck={false}
+				class="pr-8 pl-9"
+			/>
+			{#if searchQuery}
+				<button
+					type="button"
+					class="absolute right-2 text-muted-foreground hover:text-foreground"
+					onclick={() => (searchQuery = '')}
+					aria-label="Очистить поиск"
+				>
+					<X class="size-4" />
+				</button>
+			{/if}
 		</div>
-	{/if}
 
-	<!-- Keep filters compact and static so the schedule itself can use sticky headers. -->
-	<div class="rounded-2xl border border-border bg-card p-3">
-		<div class="flex flex-col gap-3">
-			<div class="relative flex items-center">
-				<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
-				<Input
-					bind:value={searchQuery}
-					name="schedule_search"
-					aria-label="Поиск по программе"
-					placeholder="Поиск по номеру или названию…"
-					autocomplete="off"
-					spellcheck={false}
-					class="pr-8 pl-9"
-				/>
-				{#if searchQuery}
-					<button
-						type="button"
-						class="absolute right-2 text-muted-foreground hover:text-foreground"
-						onclick={() => (searchQuery = '')}
-						aria-label="Очистить поиск"
-					>
-						<X class="size-4" />
-					</button>
-				{/if}
-			</div>
+		<div class="flex items-center justify-between gap-3">
+			<ToggleGroup.Root
+				type="single"
+				variant="outline"
+				size="sm"
+				bind:value={getScope, setScope}
+				aria-label="Какие выступления показать"
+			>
+				<ToggleGroup.Item value="all">Все</ToggleGroup.Item>
+				<ToggleGroup.Item value="subscribed">Мои подписки</ToggleGroup.Item>
+			</ToggleGroup.Root>
 
-			<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-				<div class="flex items-center gap-2">
-					<Switch id="only-subscribed" bind:checked={showOnlySubscribed} size="sm" />
-					<Label for="only-subscribed" class="cursor-pointer text-sm font-medium">
-						Только подписки
-					</Label>
-				</div>
-
-				<!-- Announce filter result changes to screen readers, which otherwise get no
-				     feedback that the list shrank/grew. -->
-				<p class="text-xs text-muted-foreground" aria-live="polite" role="status">
-					{resultsSummary}
-				</p>
-			</div>
+			<!-- Always mounted so screen readers hear the list shrink and grow, but shown
+			     only while a filter is on: an unfiltered total tells a sighted user nothing. -->
+			<p
+				class={['text-xs text-muted-foreground', !hasActiveFilters && 'sr-only']}
+				aria-live="polite"
+				role="status"
+			>
+				{resultsSummary}
+			</p>
 		</div>
 	</div>
-
-	<!-- Estimate disclaimer: the per-event countdowns are drift-projected, not
-	     guaranteed. Kept as a quiet inline note (no border/panel) so it reads as
-	     guidance rather than a promo banner the eye skips. Shown only while an
-	     event is live, since that's the only time projected start times appear. -->
-	{#if currentEvent}
-		<p class="flex items-start gap-1.5 px-1 text-xs text-muted-foreground">
-			<Info class="mt-px size-3.5 shrink-0" />
-			<span>Время начала примерное — программа может сдвигаться.</span>
-		</p>
-	{/if}
 
 	<div class="flex flex-col gap-6">
 		{#each groupedSchedule as node (node.key)}
@@ -347,23 +349,24 @@
 {#snippet blockSection(block: ScheduleBlockGroup)}
 	<section class="flex flex-col gap-2">
 		<!-- Keep the active block visible while the user scrolls through dense rows. -->
-		<!-- Inter (not display): block headers are repeated structural data, and DESIGN reserves Unbounded for rare identity moments. Size/weight + filled count chip carry the hierarchy; no accent stripe. -->
+		<!-- Inter (not display): block headers are repeated structural data, and DESIGN reserves Unbounded for rare identity moments. -->
+		<!-- A plain heading on the page background, not a card: the nomination cards under it
+		     already group the rows, so a framed header would be a box stacked on boxes
+		     (DESIGN "No boxes in boxes"). Size/weight carry the hierarchy; the count stays
+		     gray because it is not a state (Color-Earns-Its-Place). -->
 		<!-- top / transition come from the (app) layout's <main> (--sticky-top): a bare top-0
 			would leave a gap under the hidden top bar. See the note there. -->
 		<div
-			class="sticky z-20 transition-[top] ease-out motion-reduce:transition-none"
+			class="sticky z-20 bg-background/95 backdrop-blur transition-[top] ease-out motion-reduce:transition-none reduced-transparency:bg-background"
 			style:top="var(--sticky-top, 0px)"
 			style:transition-duration="var(--sticky-top-duration, 0ms)"
 		>
-			<div
-				class="flex min-h-11 items-center justify-between gap-3 overflow-hidden rounded-xl border border-border bg-card/95 px-3 py-2 shadow-sm backdrop-blur"
-			>
-				<h2 class="truncate text-sm font-semibold tracking-tight text-foreground sm:text-base">
+			<!-- min-h-11 is load-bearing: the nomination header sticks 2.75rem below this one. -->
+			<div class="flex min-h-11 items-center justify-between gap-3 px-1">
+				<h2 class="truncate text-base font-semibold tracking-tight text-foreground">
 					{block.title}
 				</h2>
-				<span
-					class="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary tabular-nums"
-				>
+				<span class="shrink-0 text-xs text-muted-foreground tabular-nums">
 					{block.eventCount}
 				</span>
 			</div>

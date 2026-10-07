@@ -12,6 +12,7 @@
 	let pageTitle = $derived(page.data.title);
 	// Nested pages name their parent the same way; tab roots set none.
 	let back = $derived(page.data.back);
+	let actions = $derived(page.data.actions ?? []);
 
 	interface Props {
 		user: CurrentUserDto | null;
@@ -57,6 +58,12 @@
 			</h1>
 		{/if}
 	</div>
+
+	{#each actions as action (action.href)}
+		<Button href={resolve(action.href)} variant="ghost" size="icon" aria-label={action.label}>
+			<action.icon class="size-5" />
+		</Button>
+	{/each}
 
 	{#if user}
 		<!-- The bell lives in the (app) layout, above the route's error boundary, so

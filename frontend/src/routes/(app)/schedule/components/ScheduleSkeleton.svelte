@@ -16,26 +16,19 @@
 <div class="flex flex-col gap-4" role="status" aria-live="polite">
 	<span class="sr-only">Загрузка программы…</span>
 
-	<!-- Filter bar: search field + toggle row -->
-	<div class="rounded-2xl border bg-card p-3">
-		<div class="flex flex-col gap-3">
-			<Skeleton class="h-9 w-full rounded-xl" />
-			<div class="flex items-center justify-between">
-				<Skeleton class="h-6 w-28 rounded-full" />
-				<Skeleton class="h-3 w-24 rounded-full" />
-			</div>
-		</div>
+	<!-- Filter bar: search field + scope toggle -->
+	<div class="flex flex-col gap-3">
+		<Skeleton class="h-9 w-full rounded-xl" />
+		<Skeleton class="h-8 w-44 rounded-md" />
 	</div>
 
 	<div class="flex flex-col gap-6">
 		{#each blocks as rows, blockIndex (blockIndex)}
 			<section class="flex flex-col gap-2">
-				<!-- Block header chip -->
-				<div
-					class="flex min-h-11 items-center justify-between gap-3 rounded-xl border bg-card px-3 py-2 shadow-sm"
-				>
-					<Skeleton class="h-4 w-40 rounded-full" />
-					<Skeleton class="h-5 w-6 rounded-full" />
+				<!-- Block heading -->
+				<div class="flex min-h-11 items-center justify-between gap-3 px-1">
+					<Skeleton class="h-4 w-24 rounded-full" />
+					<Skeleton class="h-3 w-4 rounded-full" />
 				</div>
 
 				<!-- Card of event rows -->

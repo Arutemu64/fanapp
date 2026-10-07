@@ -45,6 +45,7 @@
 		participants.find((p: VotingParticipant) => p.user_vote !== null)
 	);
 	let hasVoted = $derived(votedParticipant !== undefined);
+	let showVoteHint = $derived(canVote && !hasVoted);
 
 	async function handleVoted() {
 		await invalidate('app:voting:nomination');
@@ -63,35 +64,32 @@
 		message="Подключись к интернету, чтобы голосовать за участников."
 	/>
 {:else}
-	<SectionIntro>
-		<!-- Title/description on the left, works-preview action on the right.
-		Stacks on narrow screens, sits side by side from sm up. -->
-		<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-			<div>
-				<!-- Navbar shows the generic "Голосование"; the nomination name is the page's
-				own heading (h2) so long names stay readable instead of clipping in the navbar. -->
-				<h2 class="text-xl font-bold text-foreground">{nomination?.title}</h2>
-				{#if canVote && !hasVoted}
-					<p class="mt-1 text-sm text-muted-foreground sm:text-base">
+	{#if showVoteHint || nomination?.works_url}
+		<SectionIntro>
+			<!-- Hint on the left, works-preview action on the right. Stacks on narrow
+			screens, sits side by side from sm up. -->
+			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+				{#if showVoteHint}
+					<p class="text-sm text-muted-foreground sm:text-base">
 						Выбери участника, чтобы отдать голос
 					</p>
 				{/if}
+				{#if nomination?.works_url}
+					<!-- External gallery of the nominated works; opens in a new tab. -->
+					<Button
+						href={nomination.works_url}
+						rel="external noopener"
+						target="_blank"
+						size="sm"
+						class="shrink-0 self-start"
+					>
+						<ExternalLink data-icon="inline-start" />
+						Смотреть работы
+					</Button>
+				{/if}
 			</div>
-			{#if nomination?.works_url}
-				<!-- External gallery of the nominated works; opens in a new tab. -->
-				<Button
-					href={nomination.works_url}
-					rel="external noopener"
-					target="_blank"
-					size="sm"
-					class="shrink-0"
-				>
-					<ExternalLink data-icon="inline-start" />
-					Смотреть работы
-				</Button>
-			{/if}
-		</div>
-	</SectionIntro>
+		</SectionIntro>
+	{/if}
 
 	<VotingStatusAlert votingState={votingStatus} class="mb-4" />
 
@@ -108,8 +106,9 @@
 		</div>
 	{/if}
 
-	<!-- Same compact filter panel as the schedule, so the two lists read alike. -->
-	<div class="mb-4 rounded-2xl border border-border bg-card p-3">
+	<!-- Search sits straight on the page, as on the schedule, so the two lists read
+	     alike (DESIGN "When not to" use a card). -->
+	<div class="mb-4 flex flex-col gap-2">
 		<div class="relative flex items-center">
 			<SearchIcon class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
 			<Input
@@ -134,11 +133,16 @@
 		</div>
 
 		<!-- Announce filter result changes to screen readers, which otherwise get no
-		     feedback that the list shrank or grew. Matches the schedule page. Skipped
-		     for an empty nomination: there is nothing to filter, and the empty state
-		     below already says so. -->
+		     feedback that the list shrank or grew. Shown only while searching, as on the
+		     schedule: an unfiltered total tells a sighted user nothing. Skipped for an
+		     empty nomination: there is nothing to filter, and the empty state below
+		     already says so. -->
 		{#if participants.length > 0}
-			<p class="mt-3 text-xs text-muted-foreground" aria-live="polite" role="status">
+			<p
+				class={['px-1 text-xs text-muted-foreground', !hasSearchQuery && 'sr-only']}
+				aria-live="polite"
+				role="status"
+			>
 				{resultsSummary}
 			</p>
 		{/if}

@@ -49,8 +49,10 @@ export const load: PageLoad = async ({ params, fetch, depends }) => {
 			throwApiError(apiError, response, 'Номинация не найдена');
 		}
 
+		// The nomination is the screen's name, so it titles the navbar; the generic
+		// 'Голосование' above covers the states with no nomination to name.
 		return {
-			title: 'Голосование',
+			title: data.title,
 			back,
 			nomination: data,
 			offlineUnavailable: false
