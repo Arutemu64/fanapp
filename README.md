@@ -3,7 +3,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/Arutemu64/fanapp/ci.yml?branch=main&label=CI)](https://github.com/Arutemu64/fanapp/actions/workflows/ci.yml?query=branch%3Amain)
 [![License: MIT](https://img.shields.io/github/license/Arutemu64/fanapp)](#license)
 
-![The FAN FAN app on festival day: the home page on a laptop and a phone, with the act on stage over the key art, what's next, and open voting](docs/assets/readme-header.webp)
+![The FAN FAN app on festival day: the home page on a laptop and a phone, with the act on stage over the key art, what's next, open voting and the remaining setup steps](docs/assets/readme-header.webp)
 
 Companion web app for the **FAN FAN** Russian anime convention. It gives attendees the event schedule, voting, notifications, and ticket-linked profiles from their phone, and gives organizers the tools to run all of it. Audience is teen to young-adult and non-technical, so the UI is mobile-first and all user-facing copy is in Russian.
 
