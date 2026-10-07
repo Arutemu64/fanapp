@@ -94,7 +94,10 @@ test('notifications', async ({ page, api }) => {
 
 test('map', async ({ page }) => {
 	await page.goto('/map');
-	await expect(page.getByRole('img').first()).toBeVisible();
+	// The thumbnails are decorative (alt=""): each card's button carries the name.
+	await expect(
+		page.getByRole('button', { name: /открыть карту на весь экран/ }).first()
+	).toBeVisible();
 	await settle(page);
 	await saveWebp(page, 'map');
 });

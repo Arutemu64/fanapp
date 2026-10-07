@@ -5,7 +5,7 @@ import { expect, test } from '../fixtures';
 async function openFirstMap(page: Page) {
 	await page.goto('/map');
 	await page
-		.getByRole('button', { name: /Открыть карту на весь экран/ })
+		.getByRole('button', { name: /открыть карту на весь экран/ })
 		.first()
 		.click();
 	const viewer = page.getByRole('dialog', { name: 'Просмотр карты' });
