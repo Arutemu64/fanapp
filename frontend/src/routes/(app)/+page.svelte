@@ -127,7 +127,7 @@
 
 	{#if showStaleNotice}
 		<StaleDataNotice
-			message="Нет связи. Показана сохранённая программа — обновится при подключении."
+			message="Нет связи. Показана сохранённая программа&nbsp;— обновится при подключении."
 			cachedAt={data.scheduleCachedAt}
 		/>
 	{/if}

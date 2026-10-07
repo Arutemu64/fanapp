@@ -140,8 +140,8 @@
 		{:else if phase === 'after'}
 			<h2 id="hero-heading" class="text-lg font-semibold">Фестиваль завершён</h2>
 			<p class="max-w-prose text-sm leading-relaxed text-white/85">
-				Спасибо, что были с нами. До встречи в следующем году. Поделись впечатлениями — расскажи,
-				как для тебя прошёл фестиваль.
+				Спасибо, что были с нами. До встречи в следующем году. Поделись впечатлениями&nbsp;—
+				расскажи, как для тебя прошёл фестиваль.
 			</p>
 			<!-- Guests land on the auth-gated feedback page, which bounces them to
 				 login and returns them here after (LOGIN_NEXT_PARAM). -->
