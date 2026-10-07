@@ -8,9 +8,11 @@ const ELEMENT_TAG = 'pwa-install';
  * Wraps the <pwa-install> web component (@khmyznikov/pwa-install).
  *
  * The library renders its own localized install dialog and handles every
- * platform (Chromium `beforeinstallprompt`, iOS Safari "Add to Home Screen",
- * Apple desktop, etc.), so this service only mirrors the element's state into
- * Svelte reactivity and exposes a single entry point to open the dialog.
+ * platform (Chromium Web Install / `beforeinstallprompt`, iOS Safari "Add to
+ * Home Screen", Apple desktop, menu instructions for Firefox and other Android
+ * browsers, "open in a real browser" for in-app WebViews like Telegram or VK),
+ * so this service only mirrors the element's state into Svelte reactivity and
+ * exposes a single entry point to open the dialog.
  */
 class PwaService {
 	#element: PWAInstallElement | null = null;
@@ -72,8 +74,11 @@ class PwaService {
 		this.#isInstalled = this.#detectStandalone() || el.isUnderStandaloneMode;
 		this.#isApplePlatform = el.isAppleMobilePlatform || el.isAppleDesktopPlatform;
 		this.#isAppleMobilePlatform = el.isAppleMobilePlatform;
-		// Offer installation when Chromium reports it is available, or on Apple
-		// platforms where the library shows its own how-to instructions instead.
+		// Offer installation wherever the library has something to show: Chromium's
+		// prompt, its Android fallback (Firefox, Opera, in-app WebViews), or Apple
+		// platforms, where it shows its own how-to instructions instead. Desktop
+		// browsers that cannot install at all (Firefox, old Safari) stay hidden: a
+		// forced dialog there would offer a button with nothing behind it.
 		this.#canInstall = !this.#isInstalled && (el.isInstallAvailable || this.#isApplePlatform);
 	};
 
