@@ -101,3 +101,18 @@ test('map', async ({ page }) => {
 	await settle(page);
 	await saveWebp(page, 'map');
 });
+
+test('profile', async ({ page, api }) => {
+	// A linked ticket and Telegram fill the hub's values: «Привязан», «Включены».
+	api.use(
+		loggedInAs({
+			username: 'sakura_cosplay',
+			ticket: { id: 'ticket-1', barcode: '4600000000017', role: 'visitor' },
+			social_identities: [{ provider: 'telegram' }]
+		})
+	);
+	await page.goto('/profile');
+	await expect(page.getByText('Включены')).toBeVisible();
+	await settle(page);
+	await saveWebp(page, 'profile');
+});
