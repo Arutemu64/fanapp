@@ -10,6 +10,7 @@ import {
 	warmCache
 } from '$lib/utils/offlineCache';
 import { isLogoutPending } from '$lib/utils/pendingLogout';
+import { SCHEDULE_CACHE_KEY, SUBSCRIPTIONS_CACHE_KEY } from '$lib/utils/scheduleData';
 
 import type { LayoutLoad } from './$types';
 
@@ -74,7 +75,7 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 
 	// Schedule is universal — one shared key for guests and every account.
 	void warmCache<ScheduleEventFullDto[]>({
-		key: 'schedule',
+		key: SCHEDULE_CACHE_KEY,
 		scope: universalScope,
 		fetcher: async ({ signal }) => {
 			const warmClient = createApiClient();
@@ -87,7 +88,7 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 	// Subscriptions are per-user; only logged-in users have them.
 	if (user) {
 		void warmCache<SubscriptionFullDto[]>({
-			key: 'subscriptions',
+			key: SUBSCRIPTIONS_CACHE_KEY,
 			scope: userScope,
 			fetcher: async ({ signal }) => {
 				const warmClient = createApiClient();

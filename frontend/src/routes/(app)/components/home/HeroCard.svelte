@@ -2,26 +2,27 @@
 	import { Button } from '$lib/components/ui/button';
 	import { documentVisibility } from '$lib/services/documentVisibility';
 	import { formatFestivalDateTime, pluralize } from '$lib/utils/formatters';
-	import { Calendar, Globe, MapPin } from '@lucide/svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
-	import TelegramIcon from '~icons/simple-icons/telegram';
-	import TiktokIcon from '~icons/simple-icons/tiktok';
-	import VkIcon from '~icons/simple-icons/vk';
 
-	let { festivalStart, festivalEnd }: { festivalStart: string; festivalEnd: string } = $props();
+	import type { FestivalPhase } from './festivalPhase';
 
-	const socials = [
-		{ label: 'Официальный сайт fancom.info', href: 'https://fancom.info', icon: Globe },
-		{ label: 'Telegram', href: 'https://t.me/fanfan_fest_news', icon: TelegramIcon },
-		{ label: 'ВКонтакте', href: 'https://vk.ru/fan_fest', icon: VkIcon },
-		{ label: 'TikTok', href: 'https://www.tiktok.com/@fan_fan_official', icon: TiktokIcon }
-	];
+	interface Props {
+		phase: FestivalPhase;
+		festivalStart: string;
+	}
 
-	// Program start/end, on the venue clock. Configurable via GET /config and passed
-	// in by the page so the hero renders for guests and on a cold/offline load.
+	let { phase, festivalStart }: Props = $props();
+
+	// Program start, on the venue clock. Configurable via GET /config and passed in
+	// by the page so the hero renders for guests and on a cold/offline load.
 	let startMs = $derived(new Date(festivalStart).getTime());
-	let endMs = $derived(new Date(festivalEnd).getTime());
 	let festivalDate = $derived(formatFestivalDateTime(festivalStart));
+
+	// During the festival the live programme below is what people open the app
+	// for, so the art shrinks to a banner and keeps it in the first screen.
+	let artAspect = $derived(
+		phase === 'during' ? 'aspect-[3/1] sm:aspect-[4/1]' : 'aspect-[16/9] sm:aspect-[4/3]'
+	);
 
 	let now = $state(Date.now());
 
@@ -30,16 +31,6 @@
 	let imageFailed = $state(false);
 
 	let remaining = $derived(Math.max(0, startMs - now));
-
-	// before → counting down to the start; during → the festival is running;
-	// after → it has wrapped up. Both boundaries are instants, so the phase flips
-	// on its own as `now` crosses them (see the ticker and boundary effects below);
-	// there is no operator switch to forget to press.
-	let phase = $derived.by(() => {
-		if (now >= endMs) return 'after';
-		if (now >= startMs) return 'during';
-		return 'before';
-	});
 
 	const SECOND = 1000;
 	const MINUTE = 60 * SECOND;
@@ -68,41 +59,13 @@
 	// keep the tab awake). Svelte's guidance is to own timers in an $effect and
 	// return their teardown; the interval is then cleared automatically when the
 	// phase leaves 'before', the tab hides, or the component unmounts. Resyncing on
-	// (re)entry keeps a return-from-hidden from painting a stale second, and lets
-	// `now` cross `startMs` so the phase advances to 'during' on its own.
+	// (re)entry keeps a return-from-hidden from painting a stale second. The phase
+	// itself is the page's: it flips 'before' → 'during' on its own boundary timer.
 	$effect(() => {
 		if (phase !== 'before' || !documentVisibility.current) return;
 		now = Date.now();
 		const id = setInterval(() => (now = Date.now()), SECOND);
 		return () => clearInterval(id);
-	});
-
-	// setTimeout delays are stored in a signed 32-bit int of milliseconds; a delay
-	// past this (~24.8 days) overflows and fires immediately. A festival configured
-	// to run that long would otherwise leave the hero stuck in 'during'.
-	const MAX_TIMEOUT_MS = 2_147_483_647;
-
-	// Flip 'during' → 'after' the moment festival_end passes. A boundary timeout
-	// beats a 1s interval ticking pointlessly through the whole festival: it bumps
-	// `now` once at the end, and the phase derives the rest. The delay comes off the
-	// live clock, not the `now` state, so this effect tracks only phase and endMs
-	// and never re-runs on a tick. A delay longer than one timeout can hold is
-	// re-armed in chunks rather than firing early and never rescheduling.
-	$effect(() => {
-		if (phase !== 'during') return;
-
-		let id: ReturnType<typeof setTimeout>;
-		const arm = () => {
-			const msUntilEnd = endMs - Date.now();
-			if (msUntilEnd <= 0) {
-				now = Date.now();
-				return;
-			}
-			id = setTimeout(arm, Math.min(msUntilEnd, MAX_TIMEOUT_MS));
-		};
-		arm();
-
-		return () => clearTimeout(id);
 	});
 </script>
 
@@ -116,7 +79,10 @@
 			 in on weak con-venue wifi, and replaces the broken-image icon if the art
 			 fails to load at all. -->
 		<div
-			class="relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-primary-100 via-primary-50 to-secondary-100 sm:aspect-[4/3] lg:order-2 lg:aspect-auto dark:from-primary-900/40 dark:via-background dark:to-secondary-900/40"
+			class={[
+				'relative w-full overflow-hidden bg-gradient-to-br from-primary-100 via-primary-50 to-secondary-100 lg:order-2 lg:aspect-auto dark:from-primary-900/40 dark:via-background dark:to-secondary-900/40',
+				artAspect
+			]}
 		>
 			{#if imageFailed}
 				<!-- Keep the alt available to screen readers even when the image is gone -->
@@ -160,18 +126,12 @@
 		</div>
 
 		<div class="flex flex-col gap-4 p-5 sm:p-7 lg:order-1 lg:p-9">
-			<div class="flex flex-col gap-2">
-				<h1
-					id="hero-title"
-					class="font-display text-2xl leading-tight font-bold text-foreground sm:text-3xl lg:text-4xl"
-				>
-					ФАН ФАН 2026
-				</h1>
-				<p class="max-w-prose text-sm leading-relaxed text-muted-foreground sm:text-base">
-					Добро пожаловать на главное событие года для всех поклонников косплея и популярной
-					культуры в Нижнем Новгороде — фестиваль анимации и фантастики ФАН ФАН.
-				</p>
-			</div>
+			<h1
+				id="hero-title"
+				class="font-display text-2xl leading-tight font-bold text-foreground sm:text-3xl lg:text-4xl"
+			>
+				ФАН ФАН 2026
+			</h1>
 
 			{#if phase === 'before'}
 				<div
@@ -183,7 +143,7 @@
 					>
 						До начала фестиваля
 					</p>
-					<!-- Hide the live-ticking grid from screen readers; the static date below conveys it -->
+					<!-- Hide the live-ticking grid from screen readers; the static start date conveys it -->
 					<div class="grid grid-cols-4 gap-2" aria-hidden="true">
 						{#each units as unit, index (unit.id)}
 							<div
@@ -215,20 +175,9 @@
 							</div>
 						{/each}
 					</div>
-					<p class="mt-2 text-xs text-muted-foreground">{festivalDate}</p>
+					<p class="sr-only">Начало: {festivalDate}</p>
 				</div>
-			{:else if phase === 'during'}
-				<div
-					class="rounded-xl border border-primary-100 bg-primary-50/60 p-3 dark:border-primary-800/40 dark:bg-primary-900/20"
-				>
-					<p class="text-sm font-semibold text-primary-700 dark:text-primary-300">
-						Фестиваль идёт прямо сейчас
-					</p>
-					<p class="mt-1 text-xs leading-5 text-muted-foreground">
-						Загляни в программу, чтобы не пропустить ближайшие выступления.
-					</p>
-				</div>
-			{:else}
+			{:else if phase === 'after'}
 				<div class="rounded-xl border border-border bg-muted p-3">
 					<p class="text-sm font-semibold text-foreground">Фестиваль завершён</p>
 					<p class="mt-1 text-xs leading-5 text-muted-foreground">
@@ -242,60 +191,6 @@
 					<Button href="/feedback" size="sm" class="mt-3">Оставить отзыв</Button>
 				</div>
 			{/if}
-
-			{#if phase !== 'before'}
-				<!-- The icon sits outside the <dl> so the list directly contains only its
-				     <dt>/<dd> pair — a <dl> whose grouping element also holds the icon is
-				     invalid markup (WCAG 1.3.1). -->
-				<div class="flex items-center gap-3">
-					<span
-						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
-					>
-						<Calendar class="size-5" aria-hidden="true" />
-					</span>
-					<dl>
-						<dt class="sr-only">Когда</dt>
-						<dd class="text-sm font-semibold text-foreground sm:text-base">
-							{festivalDate}
-						</dd>
-					</dl>
-				</div>
-			{/if}
-
-			<div class="flex items-center gap-3">
-				<span
-					class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-info/10 text-info"
-				>
-					<MapPin class="size-5" aria-hidden="true" />
-				</span>
-				<dl>
-					<dt class="sr-only">Где</dt>
-					<dd class="text-sm text-muted-foreground sm:text-base">
-						<a
-							href="https://yandex.ru/maps/-/CPXxrYIR"
-							target="_blank"
-							rel="noopener noreferrer"
-							class="font-medium text-foreground underline decoration-secondary-400 decoration-2 underline-offset-2 transition-colors hover:text-secondary-600 dark:hover:text-secondary-400"
-						>
-							Нижний Новгород, ул. Героя Смирнова, 12, ДК «ГАЗ»
-						</a>
-					</dd>
-				</dl>
-			</div>
-
-			<div class="flex flex-wrap items-center gap-2 pt-1">
-				{#each socials as social (social.href)}
-					<a
-						href={social.href}
-						target="_blank"
-						rel="noopener noreferrer external"
-						aria-label={social.label}
-						class="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-muted text-muted-foreground transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 dark:hover:border-primary-500 dark:hover:bg-primary-900/20 dark:hover:text-primary-400"
-					>
-						<social.icon class="h-5 w-5" aria-hidden="true" />
-					</a>
-				{/each}
-			</div>
 		</div>
 	</div>
 </section>
