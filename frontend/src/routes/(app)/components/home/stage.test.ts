@@ -39,17 +39,28 @@ describe('getStageSnapshot', () => {
 
 		const snapshot = getStageSnapshot(schedule);
 
+		expect(snapshot.featured).toEqual({ event: schedule[2], live: true });
 		expect(snapshot.current?.id).toBe('b');
 		expect(ids(snapshot.upNext)).toEqual(['c', 'd']);
 	});
 
-	it('treats the whole programme as upcoming before the first act is marked', () => {
-		const schedule = [event({ id: 'a', order: 1 }), event({ id: 'b', order: 2 })];
+	it('features the opening act, not live, before the first act is marked', () => {
+		const schedule = [
+			event({ id: 'skipped', order: 0, is_skipped: true }),
+			event({ id: 'a', order: 1 }),
+			event({ id: 'b', order: 2 })
+		];
 
 		const snapshot = getStageSnapshot(schedule);
 
 		expect(snapshot.current).toBeNull();
-		expect(ids(snapshot.upNext)).toEqual(['a', 'b']);
+		expect(snapshot.featured?.event.id).toBe('a');
+		expect(snapshot.featured?.live).toBe(false);
+		expect(ids(snapshot.upNext)).toEqual(['b']);
+	});
+
+	it('features nothing when the programme is empty', () => {
+		expect(getStageSnapshot([]).featured).toBeNull();
 	});
 
 	it('leaves skipped acts out and caps the list at three', () => {

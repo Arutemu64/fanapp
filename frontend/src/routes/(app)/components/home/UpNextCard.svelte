@@ -14,12 +14,11 @@
 
 	let { snapshot }: Props = $props();
 
-	let current = $derived(snapshot.current);
-	let heading = $derived(current ? 'Сейчас на сцене' : 'Скоро начало');
-	let isLastAct = $derived(current !== null && snapshot.upNext.length === 0);
+	// The hero shows the act on stage; this card is what follows it.
+	let isLastAct = $derived(snapshot.featured?.live === true && snapshot.upNext.length === 0);
 
 	function untilLabel(event: ScheduleEventWithSubscription): string | null {
-		const distance = actsUntil(event, current);
+		const distance = actsUntil(event, snapshot.current);
 		return distance === null ? null : formatUntil(distance);
 	}
 
@@ -29,12 +28,12 @@
 	}
 </script>
 
-{#snippet eventRow(event: ScheduleEventWithSubscription, highlighted: boolean)}
+{#snippet eventRow(event: ScheduleEventWithSubscription)}
 	{@const number = paddedNumber(event)}
 	{@const until = untilLabel(event)}
 	<div class="flex min-w-0 items-center gap-3">
 		{#if number !== null}
-			<NumberBadge {number} {highlighted} />
+			<NumberBadge {number} />
 		{:else}
 			<!-- Numberless rows (breaks) keep the badge's width so titles share one column. -->
 			<div class="w-12 shrink-0" aria-hidden="true"></div>
@@ -61,43 +60,33 @@
 {/snippet}
 
 <section
-	aria-labelledby="stage-heading"
+	aria-labelledby="up-next-heading"
 	class="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5"
 >
 	<div class="flex items-center justify-between gap-3">
-		<h2 id="stage-heading" class="text-lg font-semibold text-foreground">{heading}</h2>
+		<h2 id="up-next-heading" class="text-lg font-semibold text-foreground">Дальше</h2>
 		<Button href="/schedule" variant="ghost" size="sm" class="-mr-2 shrink-0">
 			Вся программа
 			<ArrowRight aria-hidden="true" />
 		</Button>
 	</div>
 
-	{#if current}
-		<div class="rounded-xl bg-success/10 p-3">
-			{@render eventRow(current, true)}
-		</div>
-		{#if isLastAct}
-			<p class="text-sm text-muted-foreground">Это последнее выступление программы.</p>
-		{/if}
+	{#if isLastAct}
+		<p class="text-sm text-muted-foreground">На сцене последнее выступление программы.</p>
 	{/if}
 
 	{#if snapshot.upNext.length > 0}
-		<div class="flex flex-col gap-2">
-			{#if current}
-				<h3 class="text-sm font-medium text-muted-foreground">Дальше</h3>
-			{/if}
-			<ol class="flex flex-col gap-3">
-				{#each snapshot.upNext as event (event.id)}
-					<li>{@render eventRow(event, false)}</li>
-				{/each}
-			</ol>
-		</div>
+		<ol class="flex flex-col gap-3">
+			{#each snapshot.upNext as event (event.id)}
+				<li>{@render eventRow(event)}</li>
+			{/each}
+		</ol>
 	{/if}
 
 	{#if snapshot.nextSubscribed}
 		<div class="flex flex-col gap-2 border-t border-border pt-4">
 			<h3 class="text-sm font-medium text-muted-foreground">Из твоих подписок</h3>
-			{@render eventRow(snapshot.nextSubscribed, false)}
+			{@render eventRow(snapshot.nextSubscribed)}
 		</div>
 	{/if}
 </section>

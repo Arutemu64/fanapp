@@ -14,13 +14,13 @@
 	import { getFestivalPhase, nextBoundary } from './components/home/festivalPhase';
 	import GetReadySection from './components/home/GetReadySection.svelte';
 	import HeroCard from './components/home/HeroCard.svelte';
-	import NowOnStageCard from './components/home/NowOnStageCard.svelte';
 	import {
 		getNotificationsOn,
 		getReadySteps,
 		type InstallState
 	} from './components/home/readySteps';
 	import { getStageSnapshot } from './components/home/stage';
+	import UpNextCard from './components/home/UpNextCard.svelte';
 	import VotingCard from './components/home/VotingCard.svelte';
 
 	let { data }: PageProps = $props();
@@ -58,6 +58,13 @@
 		phase === 'before' ? 'Подготовься к фестивалю' : 'Настрой приложение'
 	);
 	let showStage = $derived(phase === 'during' && hasProgramme);
+	let featuredAct = $derived(phase === 'during' ? snapshot.featured : null);
+	let showUpNext = $derived(
+		showStage &&
+			(snapshot.upNext.length > 0 ||
+				snapshot.nextSubscribed !== null ||
+				snapshot.featured?.live === true)
+	);
 	let ticketAskedElsewhere = $derived(votingOpen && votingStatus?.status === 'no_ticket');
 
 	// Read once per visit: coming back from the notifications page remounts home,
@@ -177,33 +184,35 @@
 	<GetReadySection heading={readyHeading} steps={readySteps} />
 {/snippet}
 
-<div
-	class={[
-		'flex flex-col gap-5 sm:gap-6',
-		twoColumns && 'xl:grid xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] xl:items-start'
-	]}
->
-	{#if phase !== 'during'}
-		<HeroCard {phase} festivalStart={config.festival_start} />
+{#snippet main()}
+	<HeroCard {phase} festivalStart={config.festival_start} featured={featuredAct} />
+
+	{#if showStaleNotice}
+		<StaleDataNotice
+			message="Нет связи. Показана сохранённая программа&nbsp;— обновится при подключении."
+			cachedAt={data.scheduleCachedAt}
+		/>
 	{/if}
 
-	{#if showStage}
+	{#if showUpNext}
+		<UpNextCard {snapshot} />
+	{/if}
+{/snippet}
+
+{#if twoColumns}
+	<div
+		class="flex flex-col gap-5 sm:gap-6 xl:grid xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] xl:items-start"
+	>
 		<div class="flex flex-col gap-5 sm:gap-6">
-			{#if showStaleNotice}
-				<StaleDataNotice
-					message="Нет связи. Показана сохранённая программа&nbsp;— обновится при подключении."
-					cachedAt={data.scheduleCachedAt}
-				/>
-			{/if}
-			<NowOnStageCard {snapshot} />
+			{@render main()}
 		</div>
-	{/if}
-
-	{#if twoColumns}
 		<div class="flex flex-col gap-5 sm:gap-6">
 			{@render supporting()}
 		</div>
-	{:else}
+	</div>
+{:else}
+	<div class="flex flex-col gap-5 sm:gap-6">
+		{@render main()}
 		{@render supporting()}
-	{/if}
-</div>
+	</div>
+{/if}

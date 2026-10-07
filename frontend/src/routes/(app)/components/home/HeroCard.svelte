@@ -5,13 +5,24 @@
 	import { prefersReducedMotion } from 'svelte/motion';
 
 	import type { FestivalPhase } from './festivalPhase';
+	import type { FeaturedAct } from './stage';
 
 	interface Props {
 		phase: FestivalPhase;
 		festivalStart: string;
+		/** During the festival: the act on stage, or the opening act before it starts. */
+		featured: FeaturedAct | null;
 	}
 
-	let { phase, festivalStart }: Props = $props();
+	let { phase, festivalStart, featured }: Props = $props();
+
+	let featuredLabel = $derived(featured?.live ? 'Сейчас на сцене' : 'Скоро начало');
+	// Same padding as the schedule rows: "7" reads as "007", the public number format.
+	let featuredNumber = $derived.by(() => {
+		const number = featured?.event.number;
+		if (number === null || number === undefined) return null;
+		return String(number).padStart(3, '0');
+	});
 
 	// Program start, on the venue clock. Configurable via GET /config and passed in
 	// by the page so the hero renders for guests and on a cold/offline load.
@@ -63,8 +74,9 @@
 	});
 </script>
 
-<!-- Shown before and after the festival only; during it the live programme leads
-	 the page instead. The festival name is the page title in the top bar. -->
+<!-- One card through all three phases: the countdown before, the act on stage
+	 during, thanks and feedback after. The key art carries the festival's look;
+	 what sits on it is always the most useful thing for that moment. -->
 <section
 	aria-labelledby="hero-heading"
 	class="relative isolate overflow-hidden rounded-2xl bg-gradient-to-br from-primary-900 via-gray-900 to-secondary-900 text-white shadow-sm"
@@ -137,7 +149,45 @@
 				{/each}
 			</div>
 			<p class="sr-only">Начало: {festivalDate}</p>
-		{:else if phase === 'after'}
+		{:else if phase === 'during' && featured}
+			<h2
+				id="hero-heading"
+				class="inline-flex items-center gap-2 text-xs font-semibold tracking-wide text-white/85 uppercase"
+			>
+				{#if featured.live}
+					<!-- Pulsing live dot, as on the schedule's current row. animate-ping is
+					     muted under reduced motion via global CSS. -->
+					<span class="relative flex size-2" aria-hidden="true">
+						<span
+							class="absolute inline-flex size-full animate-ping rounded-full bg-success opacity-75"
+						></span>
+						<span class="relative inline-flex size-2 rounded-full bg-success"></span>
+					</span>
+				{/if}
+				{featuredLabel}
+			</h2>
+			<div class="flex items-center gap-3">
+				{#if featuredNumber !== null}
+					<!-- The schedule's number badge, restyled for the dark art. -->
+					<div
+						class="flex w-12 shrink-0 flex-col items-center rounded-lg bg-white/15 px-1.5 py-1.5 text-center backdrop-blur-sm"
+					>
+						<span class="text-xs font-bold tracking-widest uppercase">№</span>
+						<span class="font-display text-base leading-none font-bold tabular-nums"
+							>{featuredNumber}</span
+						>
+					</div>
+				{/if}
+				<div class="min-w-0">
+					<p class="text-lg leading-snug font-semibold sm:text-xl">{featured.event.title}</p>
+					{#if featured.event.nomination_title}
+						<p class="mt-0.5 text-sm text-white/85">{featured.event.nomination_title}</p>
+					{/if}
+				</div>
+			</div>
+		{:else if phase === 'during'}
+			<h2 id="hero-heading" class="text-lg font-semibold">Фестиваль идёт</h2>
+		{:else}
 			<h2 id="hero-heading" class="text-lg font-semibold">Фестиваль завершён</h2>
 			<p class="max-w-prose text-sm leading-relaxed text-white/85">
 				Спасибо, что были с нами. До встречи в следующем году. Поделись впечатлениями&nbsp;—
