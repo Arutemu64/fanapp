@@ -45,6 +45,7 @@
 		participants.find((p: VotingParticipant) => p.user_vote !== null)
 	);
 	let hasVoted = $derived(votedParticipant !== undefined);
+	let showVoteHint = $derived(canVote && !hasVoted);
 
 	async function handleVoted() {
 		await invalidate('app:voting:nomination');
@@ -63,35 +64,32 @@
 		message="Подключись к интернету, чтобы голосовать за участников."
 	/>
 {:else}
-	<SectionIntro>
-		<!-- Title/description on the left, works-preview action on the right.
-		Stacks on narrow screens, sits side by side from sm up. -->
-		<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-			<div>
-				<!-- Navbar shows the generic "Голосование"; the nomination name is the page's
-				own heading (h2) so long names stay readable instead of clipping in the navbar. -->
-				<h2 class="text-xl font-bold text-foreground">{nomination?.title}</h2>
-				{#if canVote && !hasVoted}
-					<p class="mt-1 text-sm text-muted-foreground sm:text-base">
+	{#if showVoteHint || nomination?.works_url}
+		<SectionIntro>
+			<!-- Hint on the left, works-preview action on the right. Stacks on narrow
+			screens, sits side by side from sm up. -->
+			<div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+				{#if showVoteHint}
+					<p class="text-sm text-muted-foreground sm:text-base">
 						Выбери участника, чтобы отдать голос
 					</p>
 				{/if}
+				{#if nomination?.works_url}
+					<!-- External gallery of the nominated works; opens in a new tab. -->
+					<Button
+						href={nomination.works_url}
+						rel="external noopener"
+						target="_blank"
+						size="sm"
+						class="shrink-0 self-start"
+					>
+						<ExternalLink data-icon="inline-start" />
+						Смотреть работы
+					</Button>
+				{/if}
 			</div>
-			{#if nomination?.works_url}
-				<!-- External gallery of the nominated works; opens in a new tab. -->
-				<Button
-					href={nomination.works_url}
-					rel="external noopener"
-					target="_blank"
-					size="sm"
-					class="shrink-0"
-				>
-					<ExternalLink data-icon="inline-start" />
-					Смотреть работы
-				</Button>
-			{/if}
-		</div>
-	</SectionIntro>
+		</SectionIntro>
+	{/if}
 
 	<VotingStatusAlert votingState={votingStatus} class="mb-4" />
 
