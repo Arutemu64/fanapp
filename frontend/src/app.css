@@ -27,6 +27,18 @@
 	}
 }
 
+/*
+ * The OS "Reduce transparency" setting. Glass surfaces (the top bar, the bottom
+ * nav) swap to an opaque fill under it. Not Baseline yet (Chromium only), so the
+ * translucent default must stay legible on its own:
+ * https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-transparency
+ */
+@custom-variant reduced-transparency {
+	@media (prefers-reduced-transparency: reduce) {
+		@slot;
+	}
+}
+
 @theme {
 	--font-sans: 'Inter Variable', sans-serif;
 	--font-display: 'Unbounded Variable', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
@@ -242,13 +254,25 @@
 	--sidebar-ring: oklch(0.708 0 0);
 
 	/*
+	 * Floating bottom nav geometry (AppBottomNav, phones only). The pill floats
+	 * --bottom-nav-gap above the screen edge: on a phone with a home indicator it
+	 * dips into the bottom safe area, the way the iOS 26 tab bar sits over the
+	 * indicator, but never closer to the edge than 0.75rem. --bottom-nav-clearance
+	 * is the pill's top edge, measured from the viewport bottom — anything that
+	 * floats above the nav (FABs, the update prompt, toasts, main's bottom padding)
+	 * offsets from it rather than re-deriving the pill's height.
+	 */
+	--bottom-nav-gap: max(0.75rem, calc(env(safe-area-inset-bottom) - 0.75rem));
+	--bottom-nav-clearance: calc(var(--bottom-nav-gap) + 4rem);
+
+	/*
 	 * Toast insets — keep Sonner toasts clear of the app chrome. Values trace the
 	 * real chrome heights: the top bar (~3.5rem + safe-area-inset-top) is present on
-	 * every app route, so the top inset is constant; the bottom nav (h-16 = 4rem,
-	 * md:hidden) only exists below the md breakpoint, where the sidebar replaces it,
-	 * so the bottom inset collapses to a plain viewport gap on desktop. Consumed by
-	 * the Sonner offset in $lib/components/ui/sonner/sonner.svelte. The responsive
-	 * bottom override lives in the @media rule below.
+	 * every app route, so the top inset is constant; the bottom nav only exists below
+	 * the md breakpoint, where the sidebar replaces it, so the bottom inset collapses
+	 * to a plain viewport gap on desktop. Consumed by the Sonner offset in
+	 * $lib/components/ui/sonner/sonner.svelte. The responsive bottom override lives
+	 * in the @media rule below.
 	 */
 	--toast-top-offset: calc(env(safe-area-inset-top) + 4rem);
 	--toast-bottom-offset: 1.5rem;
@@ -256,7 +280,7 @@
 
 @media (width < 48rem) {
 	:root {
-		--toast-bottom-offset: calc(env(safe-area-inset-bottom) + 4.5rem);
+		--toast-bottom-offset: calc(var(--bottom-nav-clearance) + 0.5rem);
 	}
 }
 
@@ -387,6 +411,19 @@ html[data-nav-transition='back']::view-transition-new(page) {
 	animation:
 		170ms cubic-bezier(0, 0, 0.2, 1) 80ms both nav-fade-in,
 		250ms cubic-bezier(0.2, 0, 0, 1) both nav-shift-from-start;
+}
+
+/*
+ * The bottom nav is its own group so it holds still, but a cross-fade between its
+ * snapshots would ghost the active-tab capsule at the old tab while the live one
+ * slides. Show only the live new state, so the capsule's own slide is all you see.
+ */
+::view-transition-old(bottom-nav) {
+	display: none;
+}
+
+::view-transition-new(bottom-nav) {
+	animation: none;
 }
 
 /*

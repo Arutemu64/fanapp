@@ -73,6 +73,7 @@ This system is **near-flat by default**. Depth is conveyed by tonal layering (a 
 - **Resting card surface** (`shadow-xs` + a `ring-1 ring-foreground/10` hairline, set once in `card.svelte`): the near-flat default for every `Card`. The hairline ring does the separating — it *is* the border in the two-layer scheme — and the `shadow-xs` is barely-there. This is the vendored default; don't add a heavier shadow to a resting card.
 - **Resting list shadow** (`shadow-sm`): a slightly stronger whisper reserved for standalone tappable list items (e.g. notification cards) to lift them off the field. Nothing heavier ships at rest.
 - **Floating overlays** (dropdowns, toasts, dialogs): Larger ambient shadow, owned by the shadcn component, reserved for genuinely floating layers above the page.
+- **Floating bottom nav** (`shadow-lg shadow-black/5`): the pill genuinely floats over scrolling content, so it earns a soft, low-opacity ambient shadow — large radius, near-zero alpha, never a dark drop.
 
 ### Named Rules
 **The Border-Before-Shadow Rule.** To separate a surface from its background, reach for a border (or the `Card`'s hairline `ring`) and a tonal step first. A shadow beyond the resting `shadow-xs`/`shadow-sm` is only justified on something that genuinely floats (overlay). No `shadow-md`/`lg`/`xl` on resting content.
@@ -112,7 +113,7 @@ shadcn-svelte (vendored as source in `$lib/components/ui/`) is the component sub
 - **Use:** Stale-data, offline, connection banners. Calm and informative, never alarming.
 
 ### Navigation
-- **Mobile — Bottom Nav:** Fixed, 4 columns, `border-t`, `white`/`gray-900` fill, respects `env(safe-area-inset-bottom)`, `md:hidden`. Active item = solid icon in `primary-600`/`primary-400`; idle = outline icon in `gray-500`/`gray-400` with primary on hover. Active state pairs icon *fill* change with color — never color alone.
+- **Mobile — Bottom Nav:** A floating glass pill, the iOS 26 tab-bar shape: five columns in a `rounded-full` capsule capped at `max-w-md`, inset from the screen edges, dipping into the bottom safe area over the home indicator, `md:hidden`. Translucent `background/70` + 16px backdrop blur so content stays visible under it; opaque under the OS "reduce transparency" setting. Active item = `primary` icon and semibold label on a faint `primary` capsule that slides between tabs; idle = `muted-foreground` with foreground on hover. Active state pairs the capsule and weight with color — never color alone. Anything floating above it offsets from `--bottom-nav-clearance` (`app.css`).
 - **Desktop — Sidebar + Navbar:** Sidebar (`md:` and up) for primary nav; top navbar carries the current page title, a leading back arrow on nested pages (on phones too), and the notification bell. Bottom nav is hidden on desktop.
 
 ### Empty & Loading States
