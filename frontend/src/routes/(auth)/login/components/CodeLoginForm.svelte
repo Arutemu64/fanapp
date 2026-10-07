@@ -154,14 +154,17 @@
 		<div class="relative flex items-center">
 			<Mail class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
 			<!-- Read-only, not disabled, while sending: disabling a focused input
-				drops focus to <body> and closes the phone keyboard. -->
+				drops focus to <body> and closes the phone keyboard. `username`, not
+				`email`: password managers offer saved sign-ins on that token, so an
+				account with a password autofills its address here too.
+				https://web.dev/articles/sign-in-form-best-practices -->
 			<Input
 				id="code-email"
 				name="email"
 				type="email"
 				bind:value={email}
 				placeholder="name@example.com"
-				autocomplete="email"
+				autocomplete="username"
 				inputmode="email"
 				autocapitalize="off"
 				spellcheck={false}
