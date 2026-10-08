@@ -2,8 +2,8 @@ import { defineConfig, devices, webkit } from '@playwright/test';
 import { existsSync } from 'node:fs';
 
 // The app is a client-rendered SPA whose service worker and offline behaviour are
-// active ONLY in a production build — `vite dev` disables the SW (see
-// vite.config.ts `devOptions.enabled: false` and docs/frontend.md §2). So the E2E
+// active ONLY in a production build — the SW's caching is inert under `vite dev`
+// (src/service-worker/index.ts guards on `dev`, see docs/frontend.md §2). So the E2E
 // suite drives `vite preview` of a real build, never the dev server, or the whole
 // PWA / offline surface would go untested.
 const PORT = 4173;
@@ -46,7 +46,13 @@ export default defineConfig({
 		command: `pnpm build && pnpm preview --port ${PORT} --strictPort`,
 		url: BASE_URL,
 		reuseExistingServer: !process.env.CI,
-		timeout: 180_000
+		timeout: 180_000,
+		// Real environment variables beat the .env file, so these switch off two
+		// integrations whatever keys CI's repository variables or a local .env
+		// carry. The SmartCaptcha widget refuses 127.0.0.1 and blocks the email
+		// login step. Sentry posts sampled performance traces to the DSN's
+		// /api/<project>/envelope/ path, which the API mock catches as unmatched.
+		env: { PUBLIC_SMARTCAPTCHA_CLIENT_KEY: '', PUBLIC_SENTRY_DSN: '' }
 	},
 	projects: [
 		{

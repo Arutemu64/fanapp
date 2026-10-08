@@ -80,6 +80,10 @@ for the closed/open, offline and SSE patterns respectively.
   from `../fixtures`, so a mock that drifts from the real contract fails to compile.
 - An endpoint nobody mocked returns a **loud 404** and lands in `api.unmatched`.
   Assert `api.unmatched` is empty, or add the missing route.
+- The build runs with **SmartCaptcha and Sentry off** (`webServer.env` in
+  `playwright.config.ts`), whatever CI's repository variables or your `.env` set:
+  the captcha widget refuses `127.0.0.1`, and Sentry's sampled traces would post to
+  an `/api/…/envelope/` path the mock records as unmatched.
 - **Never inline a large payload in a spec** — put reusable fixtures in `mocks/`.
 
 ### Personas (auth)
