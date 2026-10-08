@@ -21,10 +21,9 @@
 
 	interface Props {
 		notification: NotificationDto;
-		compact?: boolean;
 	}
 
-	let { notification, compact = false }: Props = $props();
+	let { notification }: Props = $props();
 
 	const TYPE_ICONS: Record<NotificationType, Component<{ class?: string }>> = {
 		default: Bell,
@@ -58,11 +57,8 @@
 	since they come later in source order. -->
 <div
 	class={[
-		'relative flex items-start gap-3 text-left',
-		compact ? 'p-3' : 'rounded-xl border border-border bg-card p-4 shadow-sm',
-		href && 'transition-colors',
-		href && compact && 'hover:bg-accent',
-		href && !compact && 'hover:bg-accent/50'
+		'relative flex items-start gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-sm',
+		href && 'transition-colors hover:bg-accent/50'
 	]}
 >
 	<div class="relative shrink-0" aria-hidden="true">
@@ -81,10 +77,7 @@
 			{#if href}
 				<a
 					{href}
-					class={[
-						'outline-none after:absolute after:inset-0 focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset',
-						!compact && 'after:rounded-xl'
-					]}
+					class="outline-none after:absolute after:inset-0 after:rounded-xl focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
 				>
 					{@render title()}
 				</a>

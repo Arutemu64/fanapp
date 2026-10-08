@@ -97,6 +97,19 @@ test.describe('notifications', { tag: '@critical' }, () => {
 		expect(api.unmatched).toEqual([]);
 	});
 
+	test('the bell opens the feed on every screen size', async ({ page, api }) => {
+		api.use(loggedInAs());
+		api.use({
+			'GET /notifications/unread-count': json<UnreadNotificationsCountOutput>({ count: 3 })
+		});
+
+		await page.goto('/');
+		await page.getByRole('link', { name: 'Открыть уведомления, непрочитанных: 3' }).click();
+
+		await expect(page).toHaveURL(/\/notifications$/);
+		expect(api.unmatched).toEqual([]);
+	});
+
 	test('shows the empty state when there are no notifications', async ({ page, api }) => {
 		api.use(loggedInAs());
 		// Baseline already returns an empty feed; navigate a logged-in user to it.

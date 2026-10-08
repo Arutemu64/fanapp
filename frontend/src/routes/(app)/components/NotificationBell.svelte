@@ -1,56 +1,24 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { page } from '$app/state';
-	import { Bell, Eye } from '@lucide/svelte';
+	import { Bell } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
 	import type { NotificationDto } from '#lib/api/generated/index.js';
-	import type { NotificationSeed } from '#lib/types/notifications.js';
 
-	import {
-		listUserNotifications,
-		markAllNotificationsRead,
-		markNotificationsRead
-	} from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
-	import NotificationListItem from '#lib/components/notifications/NotificationListItem.svelte';
-	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
-	import {
-		NOTIFICATION_BADGE_MAX,
-		NOTIFICATION_PREVIEW_LIMIT
-	} from '#lib/constants/notifications.js';
+	import { NOTIFICATION_BADGE_MAX } from '#lib/constants/notifications.js';
 	import { getEventsClient } from '#lib/services/events.svelte.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { getUnreadCountService } from '#lib/services/unreadCount.svelte.js';
 	import { setAppBadgeCount } from '#lib/utils/appBadge.js';
 
-	const client = createApiClient();
-
-	let notifications = $state<NotificationDto[]>([]);
-	// True once an authoritative load (SSE connect or a user action) has populated
-	// the preview, so the streamed seed below can never overwrite a fresher list.
-	let hasLoadedPreview = false;
-
-	// Seed the preview from the streamed layout load once it resolves; until then the
-	// dropdown shows empty. The dropdown is a desktop-only affordance that is rarely
-	// open before the SSE 'connection_established' handler refreshes it, so streaming
-	// the seed (rather than blocking the shell's first paint on it) is invisible here.
-	// `page.data` is the route-tree-merged data: the notifications page's load exposes
-	// its own `notifications` array on this key, shadowing the layout's streamed promise.
-	// Consume it only when it really is that promise; on that page SSE seeds the bell
-	// instead. Without the guard, `array.then` throws and takes down the app shell.
-	const notificationSeed: unknown = page.data.notifications;
-	if (notificationSeed instanceof Promise) {
-		void (notificationSeed as Promise<NotificationSeed | null>)
-			.then((seed) => {
-				if (seed && !hasLoadedPreview) notifications = seed.preview;
-			})
-			.catch(() => {});
-	}
+	// The bell is a link to the notifications page on every screen size. A desktop
+	// dropdown preview was dropped: the audience is almost always on a phone, and a
+	// second list with its own read rules drifted from the page (its dots cleared
+	// on open, it had its own mark-all), which is the bell/page mismatch that makes
+	// users miss notifications.
 
 	// The badge is the true unread total, shared with the notifications page (which
-	// clears it on open) — NOT the number of unread items in the capped preview,
-	// which would pin the badge at 5 while dozens sit unread.
+	// clears it on open).
 	const unread = getUnreadCountService();
 	let badgeLabel = $derived(
 		unread.count > NOTIFICATION_BADGE_MAX ? `${NOTIFICATION_BADGE_MAX}+` : unread.count
@@ -72,109 +40,41 @@
 		setAppBadgeCount(unread.count);
 	});
 
-	async function loadNotifications() {
-		const { data, error, response } = await listUserNotifications({
-			client,
-			query: { limit: NOTIFICATION_PREVIEW_LIMIT }
-		});
-
-		if (!error && response?.ok && data) {
-			notifications = data.notifications;
-			hasLoadedPreview = true;
-		}
-	}
-
-	// Clicking the bell to open the dropdown counts as seeing the previewed items
-	// (mark-on-open), so clear their unread state server-side and reconcile the
-	// badge with the total. Idempotent: a click that closes the dropdown finds
-	// nothing unseen and no-ops.
-	async function markVisibleRead() {
-		const unseenIds = notifications
-			.filter((notification) => !notification.seen_at)
-			.map((notification) => notification.id);
-		if (unseenIds.length === 0) return;
-
-		const { error, response } = await markNotificationsRead({
-			client,
-			body: { notification_ids: unseenIds }
-		});
-		if (!error && response?.ok) {
-			// Reload the preview (items now read) and the true total — marking the
-			// visible five read may still leave older unread items behind the badge.
-			await Promise.all([loadNotifications(), unread.refresh()]);
-		}
-	}
-
-	function addNotificationToPreview(notification: NotificationDto) {
-		const alreadyExists = notifications.some(
-			(existingNotification) => existingNotification.id === notification.id
-		);
-
-		notifications = [
-			notification,
-			...notifications.filter((existingNotification) => existingNotification.id !== notification.id)
-		].slice(0, NOTIFICATION_PREVIEW_LIMIT);
-
-		return !alreadyExists;
-	}
-
 	function handleNewNotification(notification: NotificationDto) {
-		const isNewNotification = addNotificationToPreview(notification);
-		if (isNewNotification) {
-			// Reconcile the badge with the server rather than optimistically bumping it,
-			// so the count can't drift out of sync with the true total (coalesced, so a
-			// broadcast burst costs at most two round-trips).
-			void unread.refresh();
-			toastService.push(notification);
-		}
+		// Reconcile the badge with the server rather than optimistically bumping it,
+		// so the count can't drift out of sync with the true total (coalesced, so a
+		// broadcast burst costs at most two round-trips).
+		void unread.refresh();
+		toastService.push(notification);
 	}
 
-	async function markAllRead() {
-		if (unread.count === 0) return;
-
-		const { error, response } = await markAllNotificationsRead({ client });
-		if (!error && response?.ok) {
-			// Clear for instant feedback, then reconcile with the server: a
-			// notification committed in the window between mark-all-read committing
-			// and this handler running is still unread, and only a follow-up refresh
-			// surfaces it on the badge (the clear's own guard drops a truly stale
-			// pre-mark refresh, so this can't restore the old total).
-			unread.clear();
-			await Promise.all([unread.refresh(), loadNotifications()]);
-		}
-	}
-
-	function reloadAfterReconnect() {
-		// Reload so notifications published while the stream was down aren't missed.
-		void loadNotifications();
+	function refreshAfterReconnect() {
+		// Notifications published while the stream was down still count.
 		void unread.refresh();
 	}
 
 	onMount(() => {
 		eventsClient.on('notification_created', handleNewNotification);
 		// 'connection_established' fires on the first connect and on every reconnect.
-		eventsClient.on('connection_established', reloadAfterReconnect);
+		eventsClient.on('connection_established', refreshAfterReconnect);
 
 		return () => {
 			eventsClient.off('notification_created', handleNewNotification);
-			eventsClient.off('connection_established', reloadAfterReconnect);
+			eventsClient.off('connection_established', refreshAfterReconnect);
 			// Session ended (the bell only renders while logged in): drop the OS icon
 			// badge so the previous user's count can't linger on a shared or installed
 			// device. Covers passive 401 expiry too, which never runs LogoutButton.
 			setAppBadgeCount(0);
 		};
 	});
-
-	// No `display` utility here: each trigger sets its own responsively. Baking
-	// `inline-flex` in would collide with the desktop button's `hidden` at the same
-	// specificity, and Tailwind emits `.inline-flex` after `.hidden`, so it would win
-	// and leak the button onto mobile beside the `<a>` — a duplicate bell.
-	const triggerClass =
-		'relative h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none';
 </script>
 
-{#snippet bellContent()}
-	<Bell class="h-5 w-5" aria-hidden="true" />
+<a
+	href={resolve('notifications')}
+	aria-label={bellLabel}
+	class="relative inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
+>
+	<Bell class="size-5" aria-hidden="true" />
 	{#if unread.count > 0}
 		<!-- Watermelon-primary badge per the design system (unseen dots are primary,
 			not red — red reads as an error). The label is announced via aria-label. -->
@@ -185,70 +85,4 @@
 			{badgeLabel}
 		</span>
 	{/if}
-{/snippet}
-
-<!-- On phones a cramped popover anchored to the corner is worse than the real
-	screen, so the bell navigates straight to the full page. The dropdown preview
-	is a desktop affordance where the extra viewport width makes it worthwhile. -->
-<a
-	href={resolve('notifications')}
-	aria-label={bellLabel}
-	class="{triggerClass} inline-flex md:hidden"
->
-	{@render bellContent()}
 </a>
-
-<DropdownMenu.Root
-	onOpenChange={(open) => {
-		if (open) void markVisibleRead();
-	}}
->
-	<DropdownMenu.Trigger>
-		{#snippet child({ props })}
-			<button
-				{...props}
-				id="notification-bell"
-				aria-label={bellLabel}
-				class="{triggerClass} hidden md:inline-flex"
-			>
-				{@render bellContent()}
-			</button>
-		{/snippet}
-	</DropdownMenu.Trigger>
-	<!-- sideOffset above the usual ~4 because the trigger is recessed inside the taller
-		top bar: it must clear the bar's bottom padding, not just the bell button, or the
-		menu tucks under the bar (which paints below it at a lower z-index). -->
-	<DropdownMenu.Content align="end" sideOffset={16} class="w-80 max-w-sm p-0">
-		<div class="flex items-center justify-between border-b border-border px-4 py-2">
-			<div class="text-sm font-bold text-foreground">Уведомления</div>
-			<button
-				type="button"
-				class="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
-				onclick={markAllRead}
-				disabled={unread.count === 0}
-			>
-				Прочитать все
-			</button>
-		</div>
-
-		<div class="max-h-96 divide-y divide-border overflow-y-auto overscroll-contain">
-			{#if notifications.length > 0}
-				{#each notifications as notification (notification.id)}
-					<NotificationListItem {notification} compact={true} />
-				{/each}
-			{:else}
-				<div class="p-4 text-center text-sm text-muted-foreground">Уведомлений пока нет</div>
-			{/if}
-		</div>
-
-		<a
-			href={resolve('notifications')}
-			class="block border-t border-border bg-muted/50 py-2.5 text-center text-sm font-medium text-foreground hover:bg-muted"
-		>
-			<div class="inline-flex items-center">
-				<Eye class="me-2 size-4 text-muted-foreground" />
-				Все уведомления
-			</div>
-		</a>
-	</DropdownMenu.Content>
-</DropdownMenu.Root>

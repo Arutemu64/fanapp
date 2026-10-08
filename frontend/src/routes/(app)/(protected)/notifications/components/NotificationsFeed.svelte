@@ -13,7 +13,6 @@
 	import { createApiClient } from '#lib/api/index.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
-	import NotificationListItem from '#lib/components/notifications/NotificationListItem.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import {
@@ -29,6 +28,7 @@
 	import { dedupeById } from '#lib/utils/feed.js';
 
 	import { groupByDay } from '../groupByDay.js';
+	import NotificationListItem from './NotificationListItem.svelte';
 
 	const client = createApiClient();
 
@@ -141,8 +141,10 @@
 			return;
 		}
 
-		// Same reconcile as the bell's "Прочитать все": clear for instant feedback,
-		// then refresh to pick up anything committed after the mark-all.
+		// Clear for instant feedback, then reconcile with the server: a notification
+		// committed between the mark-all and this handler is still unread, and only a
+		// follow-up refresh surfaces it (the clear's own guard drops a stale pre-mark
+		// refresh, so this can't restore the old total).
 		unread.clear();
 		await unread.refresh();
 	}

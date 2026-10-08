@@ -28,19 +28,17 @@
 	let user = $derived(data.user);
 
 	// Shared unread count for the bell badge and the notifications page. Seeded from
-	// the streamed notification load once it resolves (first paint doesn't wait on
-	// it), and owned by the bell and page from there (SSE, mark-read, reconnect).
-	// `seed()` applies only while the count is still provisional, so a fresher value
-	// an SSE refresh may already have written — an authoritative zero included — wins.
-	// Read this layout's own `data`, not `page.data`: the notifications page's load
-	// returns a `notifications` array that clobbers the streamed promise in the merged
-	// `page.data`, and `.then` on that array throws. `untrack` captures the seed promise
-	// once at mount — the count is owned by SSE thereafter, so we don't re-seed on reload.
+	// the streamed count once it resolves (first paint doesn't wait on it), and owned
+	// by the bell and page from there (SSE, mark-read, reconnect). `seed()` applies
+	// only while the count is still provisional, so a fresher value an SSE refresh
+	// may already have written — an authoritative zero included — wins. `untrack`
+	// captures the seed promise once at mount — the count is owned by SSE
+	// thereafter, so we don't re-seed on reload.
 	const unread = setUnreadCountService();
-	const notificationSeed = untrack(() => data.notifications);
-	void notificationSeed
-		.then((seed) => {
-			if (seed) unread.seed(seed.unreadCount);
+	const unreadCountSeed = untrack(() => data.unreadCount);
+	void unreadCountSeed
+		.then((count) => {
+			if (count !== null) unread.seed(count);
 		})
 		.catch(() => {});
 
