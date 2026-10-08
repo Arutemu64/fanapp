@@ -29,6 +29,26 @@
 		left: '1rem',
 		right: '1rem'
 	};
+
+	// Sonner's default only swipes toward the toast's own edge, so a bottom toast
+	// could be flicked only downward, into the bottom nav. Any direction dismisses.
+	const swipeDirections: SonnerProps['swipeDirections'] = ['top', 'right', 'bottom', 'left'];
+
+	// Only Sonner's own options here, no overrides of its CSS (they break silently
+	// on upgrade). Inline styles and the variables below beat its stylesheet. The
+	// close-button variables mirror Sonner's macOS-style top-left badge to the
+	// top-right corner, where Carbon and most web toasts put it.
+	const toastOptions = {
+		actionButtonStyle: 'background: var(--color-primary); color: var(--color-primary-foreground);'
+	};
+	const toasterStyle = [
+		'--normal-bg: var(--color-popover);',
+		'--normal-text: var(--color-popover-foreground);',
+		'--normal-border: var(--color-border);',
+		'--toast-close-button-start: unset;',
+		'--toast-close-button-end: 0;',
+		'--toast-close-button-transform: translate(35%, -35%);'
+	].join(' ');
 </script>
 
 <Sonner
@@ -39,22 +59,24 @@
 	{mobileOffset}
 	containerAriaLabel="Всплывающие сообщения"
 	closeButtonAriaLabel="Закрыть"
-	style="--normal-bg: var(--color-popover); --normal-text: var(--color-popover-foreground); --normal-border: var(--color-border);"
+	{toastOptions}
+	{swipeDirections}
+	style={toasterStyle}
 	{...restProps}
 >
 	{#snippet loadingIcon()}
 		<Loader2Icon class="size-4 animate-spin" />
 	{/snippet}
 	{#snippet successIcon()}
-		<CircleCheckIcon class="size-4" />
+		<CircleCheckIcon class="size-4 text-success" />
 	{/snippet}
 	{#snippet errorIcon()}
-		<OctagonXIcon class="size-4" />
+		<OctagonXIcon class="size-4 text-destructive" />
 	{/snippet}
 	{#snippet infoIcon()}
-		<InfoIcon class="size-4" />
+		<InfoIcon class="size-4 text-info" />
 	{/snippet}
 	{#snippet warningIcon()}
-		<TriangleAlertIcon class="size-4" />
+		<TriangleAlertIcon class="size-4 text-warning" />
 	{/snippet}
 </Sonner>
