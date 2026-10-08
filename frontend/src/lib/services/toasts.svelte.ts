@@ -13,16 +13,6 @@ export type StatusToastType = 'success' | 'info' | 'warning' | 'error';
 
 const [getToast, setToast] = createContext<ToastService>();
 
-// A floor plus about a second per 120 characters, so longer copy stays up long
-// enough to read — the reading-time heuristic from
-// https://github.com/adobe/react-spectrum/pull/29 and
-// https://design.sis.gov.uk/components/toast
-function statusToastDuration(message: string, isProblem: boolean): number {
-	const floor = isProblem ? 5000 : 3000;
-	const readingTime = Math.ceil(message.length / 120) * 1000;
-	return floor + readingTime;
-}
-
 // A regex tag strip would leave entities escaped by the backend sanitizer
 // (`&amp;`, `&lt;`) on screen; the parser decodes them. DOMParser never runs
 // scripts or loads resources from the parsed document.
@@ -39,7 +29,7 @@ export class ToastService {
 			// Same type + text reuses the toast, so a repeated failure refreshes the
 			// one on screen instead of stacking duplicates.
 			id: `${type}:${message}`,
-			duration: statusToastDuration(message, isProblem),
+			duration: isProblem ? 5000 : 3000,
 			// An error exists only in this toast (nowhere else to re-read it), so it
 			// gets an explicit dismiss control on top of the longer timer:
 			// https://ux.redhat.com/patterns/alert/accessibility/
