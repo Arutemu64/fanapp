@@ -8,9 +8,6 @@ name: CI
 # reports its own red/green check and branch protection can require them
 # individually — a docs-only PR then shows backend/frontend as skipped instead
 # of buried inside one job's log.
-# Frontend further fans out into a lint/check/test/build matrix so those
-# independent tasks run in parallel: wall-clock time drops to the slowest
-# single task instead of their sum.
 #
 # This workflow is the single source of truth for what "green" means. There is
 # deliberately NO aggregate `just ci` recipe mirroring it: a second copy of the
@@ -24,14 +21,14 @@ name: CI
 #     under Renovate: its github-actions manager bumps a pinned `ubuntu-24.04`
 #     via the github-runners datasource (it ignores the `ubuntu-latest`
 #     variable), so the next stable image (e.g. 26.04) arrives as a review PR.
-#   - step-security/harden-runner runs first in egress-policy: audit — it only
-#     records outbound network calls (never blocks), so a compromised action or
-#     dependency surfaces in the run's network log.
 #   - checkout uses persist-credentials: false so the GITHUB_TOKEN is not left
 #     in .git/config for a later step to read — safe here because no job pushes
 #     with git (the images job builds only; publishing lives in its own workflow).
 #   - timeout-minutes caps each job so a hung test or build can't hold a runner
 #     for the 6-hour default.
+# No step-security/harden-runner: in egress-policy: audit it only reports to
+# a StepSecurity dashboard nobody here reads, and blocks nothing. Worth adding
+# back only with egress-policy: block and an allow-list.
 on:
   pull_request:
   push:
@@ -50,6 +47,25 @@ permissions:
   contents: read
   pull-requests: read
 
+# The frontend's `check`, `test` and build (inside `pnpm e2e`) read PUBLIC_* via
+# `$app/env/public`, which errors on any var src/env.ts declares that is unset
+# (`test` pulls PUBLIC_TIMEZONE in through the formatters it covers). Supply
+# them from the same public repository variables the publish workflow bakes in
+# (empty is fine — the vars just need to exist). Workflow-level so the two
+# frontend jobs share one list; the other jobs ignore them, and the backend's
+# settings skip PUBLIC_* by design.
+env:
+  PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
+  PUBLIC_APP_VERSION: ${{ vars.PUBLIC_APP_VERSION }}
+  PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL }}
+  PUBLIC_TIMEZONE: ${{ vars.PUBLIC_TIMEZONE }}
+  PUBLIC_VAPID_KEY: ${{ vars.PUBLIC_VAPID_KEY }}
+  PUBLIC_SENTRY_DSN: ${{ vars.PUBLIC_SENTRY_DSN }}
+  PUBLIC_SENTRY_ENVIRONMENT: ${{ vars.PUBLIC_SENTRY_ENVIRONMENT }}
+  PUBLIC_SENTRY_TRACES_SAMPLE_RATE: ${{ vars.PUBLIC_SENTRY_TRACES_SAMPLE_RATE }}
+  PUBLIC_SMARTCAPTCHA_CLIENT_KEY: ${{ vars.PUBLIC_SMARTCAPTCHA_CLIENT_KEY }}
+  PUBLIC_VK_GROUP_ID: ${{ vars.PUBLIC_VK_GROUP_ID }}
+
 jobs:
   # Detect which areas changed so we skip gates for unrelated edits (e.g.
   # docs, AGENTS.md) — a docs-only change then costs a single metered minute.
@@ -65,10 +81,6 @@ jobs:
       dockerfiles: ${{ steps.filter.outputs.dockerfiles }}
       workflows: ${{ steps.filter.outputs.workflows }}
     steps:
-      - name: Harden the runner
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
-        with:
-          egress-policy: audit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
@@ -113,11 +125,6 @@ jobs:
       # ephemeral VM is thrown away after the job, so cleanup isn't needed.
       TESTCONTAINERS_RYUK_DISABLED: "true"
     steps:
-      - name: Harden the runner
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
-        with:
-          egress-policy: audit
-
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
@@ -135,7 +142,7 @@ jobs:
 
       # Every gate below is guarded with `!cancelled()` so the rest keep running
       # after one fails: a single run then reports every problem instead of only
-      # the first, matching `fail-fast: false` on the frontend matrix below.
+      # the first. The frontend job below does the same.
       #
       # Lint and format are check-only here (no --fix / no rewrite): CI must
       # fail on violations, not silently "fix" them like the local justfile does.
@@ -196,53 +203,20 @@ jobs:
           fi
 
   frontend:
-    # Lint, check, test and build are independent, so we run them as a matrix
-    # of parallel jobs instead of sequential steps. Wall-clock time drops to
-    # the slowest single task (the build) instead of the sum of all four.
-    name: Frontend (${{ matrix.task.name }})
+    # One job with sequential steps, like the backend's, not a matrix: each
+    # parallel job would pay ~20 s of pnpm/Node setup for a task of a few
+    # seconds, and the sequence still finishes alongside `Images (frontend
+    # build)`, the real critical path. No `pnpm build` step: that image build
+    # runs it (frontend/Dockerfile), and so does the e2e job below.
+    name: Frontend (lint, types, tests)
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    # `check`, `build` and `test` read PUBLIC_* via `$app/env/public`, which
-    # errors on any var src/env.ts declares that is unset at build time (`test` pulls
-    # PUBLIC_TIMEZONE in through the formatters it covers). Supply them from the
-    # same repository variables the publish workflow bakes in (empty is fine — the
-    # vars just need to exist). `lint` ignores them.
-    env:
-      PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
-      PUBLIC_APP_VERSION: ${{ vars.PUBLIC_APP_VERSION }}
-      PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL }}
-      PUBLIC_TIMEZONE: ${{ vars.PUBLIC_TIMEZONE }}
-      PUBLIC_VAPID_KEY: ${{ vars.PUBLIC_VAPID_KEY }}
-      PUBLIC_SENTRY_DSN: ${{ vars.PUBLIC_SENTRY_DSN }}
-      PUBLIC_SENTRY_ENVIRONMENT: ${{ vars.PUBLIC_SENTRY_ENVIRONMENT }}
-      PUBLIC_SENTRY_TRACES_SAMPLE_RATE: ${{ vars.PUBLIC_SENTRY_TRACES_SAMPLE_RATE }}
-      PUBLIC_SMARTCAPTCHA_CLIENT_KEY: ${{ vars.PUBLIC_SMARTCAPTCHA_CLIENT_KEY }}
-      PUBLIC_VK_GROUP_ID: ${{ vars.PUBLIC_VK_GROUP_ID }}
-    strategy:
-      # Don't cancel the other tasks when one fails: we want to see every
-      # failure (lint, types, tests and build) in a single CI run, not just the first.
-      fail-fast: false
-      matrix:
-        task:
-          - { name: lint, command: pnpm lint }
-          - { name: check, command: pnpm check }
-          - { name: test, command: pnpm test }
-          # Regenerates the hey-api client and fails if the committed
-          # src/lib/api/generated/ differs — a stale one still typechecks, so
-          # `check` above cannot see it.
-          - { name: api, command: pnpm generate-api:check }
-          - { name: build, command: pnpm build }
     defaults:
       run:
         working-directory: frontend
     steps:
-      - name: Harden the runner
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
-        with:
-          egress-policy: audit
-
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
@@ -267,15 +241,33 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run ${{ matrix.task.name }}
-        run: ${{ matrix.task.command }}
+      # Each gate keeps running after an earlier one fails (`!cancelled()`), so
+      # one run reports every problem, same as the backend job.
+      - name: Lint (prettier, eslint)
+        if: ${{ !cancelled() }}
+        run: pnpm lint
+
+      - name: Type check (svelte-check)
+        if: ${{ !cancelled() }}
+        run: pnpm check
+
+      - name: Unit tests (vitest)
+        if: ${{ !cancelled() }}
+        run: pnpm test
+
+      # Regenerates the hey-api client and fails if the committed
+      # src/lib/api/generated/ differs — a stale one still typechecks, so the
+      # type check above cannot see it.
+      - name: API client drift
+        if: ${{ !cancelled() }}
+        run: pnpm generate-api:check
 
   # Playwright E2E: drives a production build in a real browser with the backend
-  # mocked per test (frontend/e2e/README.md). Its own job, not a frontend-matrix
-  # task, because unlike the plain `pnpm <task>` matrix it needs a browser binary
-  # + system libs and builds the app to preview it. Mocked-only, so it stays gated
-  # on the frontend filter (the frontend↔backend contract is guarded separately by
-  # the `api`/`check` matrix tasks). Not marked required in branch protection yet —
+  # mocked per test (frontend/e2e/README.md). Its own job, not more steps in the
+  # one above, because it needs a browser binary + system libs and builds the app
+  # to preview it. Mocked-only, so it stays gated on the frontend filter (the
+  # frontend↔backend contract is guarded separately by the type check and API
+  # client drift steps above). Not marked required in branch protection yet —
   # let a browser tier prove stable under CI timing first, then gate it.
   frontend-e2e:
     name: Frontend (e2e)
@@ -286,27 +278,7 @@ jobs:
     defaults:
       run:
         working-directory: frontend
-    # The build reads PUBLIC_* via `$app/env/public`, which errors on any
-    # declared-but-unset var — supply the same repository variables the
-    # frontend matrix and publish workflow use (empty is fine; the names just
-    # have to exist).
-    env:
-      PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
-      PUBLIC_APP_VERSION: ${{ vars.PUBLIC_APP_VERSION }}
-      PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL }}
-      PUBLIC_TIMEZONE: ${{ vars.PUBLIC_TIMEZONE }}
-      PUBLIC_VAPID_KEY: ${{ vars.PUBLIC_VAPID_KEY }}
-      PUBLIC_SENTRY_DSN: ${{ vars.PUBLIC_SENTRY_DSN }}
-      PUBLIC_SENTRY_ENVIRONMENT: ${{ vars.PUBLIC_SENTRY_ENVIRONMENT }}
-      PUBLIC_SENTRY_TRACES_SAMPLE_RATE: ${{ vars.PUBLIC_SENTRY_TRACES_SAMPLE_RATE }}
-      PUBLIC_SMARTCAPTCHA_CLIENT_KEY: ${{ vars.PUBLIC_SMARTCAPTCHA_CLIENT_KEY }}
-      PUBLIC_VK_GROUP_ID: ${{ vars.PUBLIC_VK_GROUP_ID }}
     steps:
-      - name: Harden the runner
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
-        with:
-          egress-policy: audit
-
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
@@ -364,11 +336,6 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - name: Harden the runner
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
-        with:
-          egress-policy: audit
-
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
@@ -422,11 +389,6 @@ jobs:
             context: ./frontend
             target: prod
     steps:
-      - name: Harden the runner
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
-        with:
-          egress-policy: audit
-
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
@@ -487,11 +449,6 @@ jobs:
       # bumps both together via the "gitleaks" group (docs/dependencies.md).
       GITLEAKS_VERSION: 8.30.1
     steps:
-      - name: Harden the runner
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
-        with:
-          egress-policy: audit
-
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
@@ -520,11 +477,6 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - name: Harden the runner
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
-        with:
-          egress-policy: audit
-
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
@@ -561,9 +513,8 @@ jobs:
   # conditional/matrix jobs above. Two reasons the individual jobs can't be
   # required directly:
   #   - A skipped matrix job (area not changed) reports one check under the
-  #     un-interpolated name `Frontend (${{ matrix.task.name }})` /
-  #     `Images (${{ matrix.name }} build)`, not the expanded `Frontend (lint)`
-  #     … contexts. Requiring the expanded names would leave a PR outside that
+  #     un-interpolated name `Images (${{ matrix.name }} build)`, not the
+  #     expanded `Images (backend build)` … contexts. Requiring the expanded names would leave a PR outside that
   #     area waiting forever on a context that never reports.
   #   - If `changes` itself fails, its dependents skip, and a skipped required
   #     check counts as satisfied — a PR could merge with no validation.
@@ -584,11 +535,6 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - name: Harden the runner
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
-        with:
-          egress-policy: audit
-
       - name: Fail if any required job failed or was cancelled
         if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
         run: exit 1

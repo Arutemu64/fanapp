@@ -423,7 +423,7 @@ includes it. CI installs it and always runs it, so a missing browser there fails
 the job instead of silently dropping the project.
 
 **Runs in CI, not yet a required check.** `ci.yml` has a `frontend-e2e` job (its
-own job — it needs a browser and builds the app, unlike the plain matrix tasks),
+own job — it needs a browser and builds the app, unlike the plain `pnpm` steps),
 gated on the frontend paths filter. It downloads browsers on every run rather than
 caching them, per [Playwright's CI guide](https://playwright.dev/docs/ci), and runs
 with one worker for stability.
