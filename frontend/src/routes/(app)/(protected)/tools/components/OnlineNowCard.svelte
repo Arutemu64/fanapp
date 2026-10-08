@@ -3,6 +3,8 @@
 
 	import { countOnlineUsers } from '#lib/api/generated/index.js';
 	import { createApiClient } from '#lib/api/index.js';
+	import MenuGroup from '#lib/components/MenuGroup.svelte';
+	import * as Item from '#lib/components/ui/item/index.js';
 	import { pluralize } from '#lib/utils/formatters.js';
 
 	// Coarse on purpose: the figure is a rough "how many are here now", and a
@@ -35,19 +37,25 @@
 	});
 </script>
 
-<div class="flex items-center gap-3 rounded-lg border border-border bg-card p-4">
-	<div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
-		<Activity class="size-5 text-muted-foreground" aria-hidden="true" />
-	</div>
-	<div>
-		<p class="text-xl font-semibold tabular-nums" aria-live="polite">
-			{#if count === null}
-				<span class="text-muted-foreground">…</span>
-			{:else}
-				{count}
-				{pluralize(count, 'человек', 'человека', 'человек')}
-			{/if}
-		</p>
-		<p class="text-xs text-muted-foreground">сейчас в приложении</p>
-	</div>
-</div>
+<!-- A row in the toolbox's own shape (icon tile, title, description) so the stat
+     reads as part of the menu below rather than a dashboard widget. No aria-live:
+     the count repaints every poll, and a live region would interrupt a screen
+     reader user every 20 seconds with a figure they didn't ask for. -->
+<MenuGroup>
+	<Item.Root class="rounded-none">
+		<Item.Media class="size-9 rounded-lg bg-muted text-muted-foreground">
+			<Activity class="size-5" aria-hidden="true" />
+		</Item.Media>
+		<Item.Content>
+			<Item.Title class="text-base tabular-nums">
+				{#if count === null}
+					<span class="text-muted-foreground">…</span>
+				{:else}
+					{count}
+					{pluralize(count, 'человек', 'человека', 'человек')}
+				{/if}
+			</Item.Title>
+			<Item.Description>сейчас в приложении</Item.Description>
+		</Item.Content>
+	</Item.Root>
+</MenuGroup>

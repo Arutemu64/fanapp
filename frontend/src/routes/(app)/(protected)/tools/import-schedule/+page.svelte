@@ -1,12 +1,10 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
-
-	import { importSchedule } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
-	const client = createApiClient();
 	import { AlertCircle, CheckCircle2 } from '@lucide/svelte';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
+	import { importSchedule } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -14,8 +12,13 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 
+	import ConfirmDialog from '../components/ConfirmDialog.svelte';
 	import FileFormatGuide from './components/FileFormatGuide.svelte';
 
+	const client = createApiClient();
+
+	let formElement = $state<HTMLFormElement>();
+	let confirmOpen = $state(false);
 	let selectedFiles = $state<FileList | undefined>(undefined);
 	let isUploading = $state(false);
 	let inlineError = $state('');
@@ -30,18 +33,24 @@
 		successMessage = '';
 	}
 
-	async function handleSubmit(event: Event) {
+	// The file replaces the whole programme and deletes acts missing from it, so
+	// the upload waits for an explicit confirm naming that consequence.
+	function handleSubmit(event: Event) {
 		event.preventDefault();
-		const form = event.currentTarget as HTMLFormElement;
-		const selectedFile = selectedFiles?.[0] ?? null;
-
 		inlineError = '';
 		successMessage = '';
 
-		if (!selectedFile) {
+		if (!selectedFiles?.[0]) {
 			inlineError = 'Выбери Excel-файл для импорта';
 			return;
 		}
+
+		confirmOpen = true;
+	}
+
+	async function upload() {
+		const selectedFile = selectedFiles?.[0];
+		if (!selectedFile || isUploading) return;
 
 		isUploading = true;
 
@@ -61,7 +70,7 @@
 
 			successMessage = 'Файл загружен. Программа обновлена.';
 			selectedFiles = undefined;
-			form.reset();
+			formElement?.reset();
 
 			await invalidate('app:schedule');
 		} finally {
@@ -74,56 +83,63 @@
 	<title>Импорт программы · ФАН ФАН</title>
 </svelte:head>
 
-<div class="mx-auto w-full max-w-2xl">
-	<SectionIntro description="Загрузи Excel-файл, чтобы обновить программу мероприятия." />
+<SectionIntro description="Загрузи Excel-файл, чтобы обновить программу выступлений." />
 
-	<FileFormatGuide />
+<FileFormatGuide />
 
-	<div class="border-t border-border pt-6">
-		<form class="flex flex-col gap-4" onsubmit={handleSubmit}>
-			<Field.Field>
-				<Field.FieldLabel for="schedule-file">Excel-файл</Field.FieldLabel>
-				<Input
-					id="schedule-file"
-					type="file"
-					name="schedule_file"
-					accept={ACCEPTED_FILE_TYPES}
-					bind:files={selectedFiles}
-					class="w-full cursor-pointer file:cursor-pointer"
-					disabled={isUploading}
-					onchange={handleFileChange}
-				/>
-				<Field.FieldDescription>
-					{#if selectedFileName}
-						Выбран файл: {selectedFileName}
-					{:else}
-						Поддерживаются файлы .xls и .xlsx.
-					{/if}
-				</Field.FieldDescription>
-			</Field.Field>
-
-			{#if inlineError}
-				<Alert.Root variant="destructive">
-					<AlertCircle class="size-4" />
-					<Alert.Description>{inlineError}</Alert.Description>
-				</Alert.Root>
-			{/if}
-
-			{#if successMessage}
-				<Alert.Root variant="success">
-					<CheckCircle2 />
-					<Alert.Description>{successMessage}</Alert.Description>
-				</Alert.Root>
-			{/if}
-
-			<Button type="submit" class="w-full sm:w-auto" disabled={isUploading}>
-				{#if isUploading}
-					<Spinner data-icon="inline-start" />
-					Импортируем…
+<div class="border-t border-border pt-6">
+	<form bind:this={formElement} class="flex flex-col gap-4" onsubmit={handleSubmit}>
+		<Field.Field>
+			<Field.FieldLabel for="schedule-file">Excel-файл</Field.FieldLabel>
+			<Input
+				id="schedule-file"
+				type="file"
+				name="schedule_file"
+				accept={ACCEPTED_FILE_TYPES}
+				bind:files={selectedFiles}
+				class="w-full cursor-pointer file:cursor-pointer"
+				disabled={isUploading}
+				onchange={handleFileChange}
+			/>
+			<Field.FieldDescription>
+				{#if selectedFileName}
+					Выбран файл: {selectedFileName}
 				{:else}
-					Импортировать
+					Поддерживаются файлы .xls и .xlsx.
 				{/if}
-			</Button>
-		</form>
-	</div>
+			</Field.FieldDescription>
+		</Field.Field>
+
+		{#if inlineError}
+			<Alert.Root variant="destructive">
+				<AlertCircle />
+				<Alert.Description>{inlineError}</Alert.Description>
+			</Alert.Root>
+		{/if}
+
+		{#if successMessage}
+			<Alert.Root variant="success">
+				<CheckCircle2 />
+				<Alert.Description>{successMessage}</Alert.Description>
+			</Alert.Root>
+		{/if}
+
+		<Button type="submit" class="w-full sm:w-auto sm:self-start" disabled={isUploading}>
+			{#if isUploading}
+				<Spinner data-icon="inline-start" />
+				Импортируем…
+			{:else}
+				Импортировать
+			{/if}
+		</Button>
+	</form>
 </div>
+
+<ConfirmDialog
+	bind:open={confirmOpen}
+	title="Заменить программу?"
+	description="Программа обновится из файла «{selectedFileName}». Выступления, которых в нём нет, будут удалены."
+	confirmLabel="Заменить программу"
+	destructive
+	onconfirm={upload}
+/>

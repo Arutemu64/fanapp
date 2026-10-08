@@ -7,6 +7,7 @@
 	import { unlinkTelegramAccount, unlinkVkAccount } from '#lib/api/generated/index.js';
 	import { createApiClient } from '#lib/api/index.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
+	import SettingsSection from '#lib/components/SettingsSection.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
 	import { SOCIAL_PROVIDER_PRESENTATION } from '#lib/data/socialProviders.js';
@@ -15,7 +16,6 @@
 
 	import ChangeEmailModal from './ChangeEmailModal.svelte';
 	import ChangePasswordModal from './ChangePasswordModal.svelte';
-	import SettingsSection from './SettingsSection.svelte';
 	import SocialConnectionRow from './SocialConnectionRow.svelte';
 
 	const client = createApiClient();

@@ -21,10 +21,8 @@
 	<title>Отзывы · ФАН ФАН</title>
 </svelte:head>
 
-<div class="mx-auto w-full max-w-2xl">
-	<SectionIntro description="Отзывы участников о приложении. Свежие — сверху." />
+<SectionIntro description="Отзывы участников о приложении. Свежие — сверху." />
 
-	{#key feedbackKey}
-		<FeedbackFeed initialFeedback={data.feedback} initialHasMore={data.hasMore} />
-	{/key}
-</div>
+{#key feedbackKey}
+	<FeedbackFeed initialFeedback={data.feedback} initialHasMore={data.hasMore} />
+{/key}

@@ -7,14 +7,13 @@
 	import type { CurrentUserDto } from '#lib/api/generated/index.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
+	import SettingsSection from '#lib/components/SettingsSection.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
-
-	import SettingsSection from './SettingsSection.svelte';
 
 	interface Props {
 		user: CurrentUserDto;

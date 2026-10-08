@@ -1,4 +1,8 @@
-import type { ListBroadcastsOutput, MailingDto } from '../../src/lib/api/generated';
+import type {
+	ListBroadcastsOutput,
+	MailingDto,
+	SendBroadcastOutput
+} from '../../src/lib/api/generated';
 
 import { expect, json, organizer, test } from '../fixtures';
 
@@ -58,7 +62,47 @@ test.describe('broadcast history', { tag: '@critical' }, () => {
 
 		await page.goto('/tools/broadcast');
 
-		await expect(page.getByText('Пока ничего не отправлено')).toBeVisible();
+		await expect(
+			page.getByText('Здесь появятся отправленные рассылки', { exact: false })
+		).toBeVisible();
+		expect(api.unmatched).toEqual([]);
+	});
+
+	test('sending asks for confirmation before it reaches anyone', async ({ page, api }) => {
+		let sent: unknown = null;
+		api.use(organizer());
+		api.use({
+			'GET /notifications/broadcast': json<ListBroadcastsOutput>({ mailings: [] }),
+			'POST /notifications/broadcast': (route) => {
+				sent = route.request().postDataJSON() as unknown;
+				return json<SendBroadcastOutput>({ mailing_id: SENDING.id });
+			}
+		});
+
+		await page.goto('/tools/broadcast');
+
+		// Validation runs on submit, in Russian, before any dialog.
+		await page.getByRole('button', { name: 'Отправить рассылку' }).click();
+		await expect(page.getByText('Введи текст уведомления')).toBeVisible();
+		await expect(page.getByText('Выбери хотя бы одну группу пользователей')).toBeVisible();
+
+		await page.getByLabel('Текст уведомления').fill(BODY);
+		await page.getByLabel('Волонтёры').check();
+		await page.getByLabel('Зрители').check();
+		await page.getByRole('button', { name: 'Отправить рассылку' }).click();
+
+		// The dialog names who gets it, in the form's order; cancelling sends nothing.
+		const dialog = page.getByRole('alertdialog');
+		await expect(dialog).toContainText('Получатели: Зрители, Волонтёры.');
+		await dialog.getByRole('button', { name: 'Отмена' }).click();
+		await expect(dialog).toBeHidden();
+		expect(sent).toBeNull();
+
+		await page.getByRole('button', { name: 'Отправить рассылку' }).click();
+		await page.getByRole('alertdialog').getByRole('button', { name: 'Отправить рассылку' }).click();
+
+		await expect(page.getByText('Рассылка запущена')).toBeVisible();
+		expect(sent).toEqual({ body: BODY, roles: ['helper', 'visitor'] });
 		expect(api.unmatched).toEqual([]);
 	});
 });

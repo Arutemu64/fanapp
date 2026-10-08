@@ -17,6 +17,7 @@
 	} from '#lib/api/generated/index.js';
 	import { createApiClient } from '#lib/api/index.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
+	import SettingsSection from '#lib/components/SettingsSection.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
@@ -24,7 +25,6 @@
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
 	import { urlBase64ToUint8Array } from './push';
-	import SettingsSection from './SettingsSection.svelte';
 	import SwitchRow from './SwitchRow.svelte';
 	import VkNotificationsModal from './VkNotificationsModal.svelte';
 

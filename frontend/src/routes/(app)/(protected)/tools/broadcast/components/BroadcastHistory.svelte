@@ -16,8 +16,10 @@
 		BROADCAST_PAGE_SIZE
 	} from '#lib/constants/notifications.js';
 	import { PaginatedFeed } from '#lib/services/feed.svelte.js';
+	import { minuteClock } from '#lib/services/minuteClock.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import { formatFestivalDateTime } from '#lib/utils/formatters.js';
+	import { formatRelativeTime } from '#lib/utils/formatters.js';
+	import { groupByDay } from '#lib/utils/groupByDay.js';
 
 	interface Props {
 		initialMailings: Array<MailingDto>;
@@ -45,6 +47,9 @@
 		},
 		onError: () => toastService.add('Не удалось загрузить рассылки', 'error')
 	});
+
+	// Day sections and ticking relative times, the shape of the notifications feed.
+	let dayGroups = $derived(groupByDay(feed.items, minuteClock.now));
 
 	const STATUS_LABELS: Record<MailingStatus, string> = {
 		pending: 'В очереди',
@@ -100,61 +105,74 @@
 	}
 </script>
 
-<section class="mx-auto w-full max-w-2xl">
-	<h2 class="mb-3 text-lg font-bold">История рассылок</h2>
+<section aria-labelledby="broadcast-history-heading">
+	<h2 id="broadcast-history-heading" class="mb-3 text-base font-semibold sm:text-lg">
+		История рассылок
+	</h2>
 
 	{#if feed.items.length === 0}
-		<EmptyState message="Пока ничего не отправлено" />
+		<EmptyState message="Здесь появятся отправленные рассылки и их статус." />
 	{:else}
-		<!-- One divided list, not a card per mailing: the entries are all the same
-		     shape, so a list scans faster and fits more on a phone screen. -->
-		<MenuGroup class="divide-y divide-border">
-			{#each feed.items as mailing (mailing.id)}
-				<div class="p-4">
-					<div class="flex flex-col gap-2">
-						<div class="flex items-center justify-between gap-2">
-							<Badge variant={STATUS_VARIANTS[mailing.status]}>
-								{STATUS_LABELS[mailing.status]}
-							</Badge>
-							<span class="text-xs text-muted-foreground">
-								{formatFestivalDateTime(mailing.created_at)}
-							</span>
-						</div>
+		<div class="flex flex-col gap-6">
+			{#each dayGroups as group (group.key)}
+				<section aria-labelledby="broadcast-day-{group.key}">
+					<h3
+						id="broadcast-day-{group.key}"
+						class="mb-2 text-sm font-semibold text-muted-foreground"
+					>
+						{group.heading}
+					</h3>
+					<!-- One divided list, not a card per mailing: the entries are all the
+					     same shape, so a list scans faster and fits more on a phone screen. -->
+					<MenuGroup>
+						<ul class="divide-y divide-border">
+							{#each group.items as mailing (mailing.id)}
+								<li class="flex flex-col gap-2 p-4">
+									<div class="flex items-center justify-between gap-2">
+										<Badge variant={STATUS_VARIANTS[mailing.status]}>
+											{STATUS_LABELS[mailing.status]}
+										</Badge>
+										<time datetime={mailing.created_at} class="text-xs text-muted-foreground">
+											{formatRelativeTime(mailing.created_at, minuteClock.now)}
+										</time>
+									</div>
 
-						{#if mailing.body}
-							<p class="line-clamp-2 text-sm break-words whitespace-pre-line">
-								{mailing.body}
-							</p>
-						{/if}
-
-						<div
-							class="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground"
-						>
-							<span>
-								{rolesLabel(mailing.roles)}
-								{#if mailing.total_count > 0}
-									· отправлено {mailing.sent_count} из {mailing.total_count}
-								{/if}
-							</span>
-							{#if isCancellable(mailing.status)}
-								<Button
-									variant="outline"
-									size="sm"
-									class="min-h-9"
-									disabled={cancellingId === mailing.id}
-									onclick={() => cancel(mailing)}
-								>
-									{#if cancellingId === mailing.id}
-										<Spinner data-icon="inline-start" />
+									{#if mailing.body}
+										<p class="line-clamp-2 text-sm break-words whitespace-pre-line">
+											{mailing.body}
+										</p>
 									{/if}
-									Отменить
-								</Button>
-							{/if}
-						</div>
-					</div>
-				</div>
+
+									<div
+										class="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground"
+									>
+										<span>
+											{rolesLabel(mailing.roles)}
+											{#if mailing.total_count > 0}
+												· отправлено {mailing.sent_count} из {mailing.total_count}
+											{/if}
+										</span>
+										{#if isCancellable(mailing.status)}
+											<Button
+												variant="outline"
+												size="sm"
+												disabled={cancellingId === mailing.id}
+												onclick={() => cancel(mailing)}
+											>
+												{#if cancellingId === mailing.id}
+													<Spinner data-icon="inline-start" />
+												{/if}
+												Отменить
+											</Button>
+										{/if}
+									</div>
+								</li>
+							{/each}
+						</ul>
+					</MenuGroup>
+				</section>
 			{/each}
-		</MenuGroup>
+		</div>
 
 		{#if feed.hasMore}
 			<LoadMoreButton loading={feed.isLoadingMore} onclick={feed.loadMore} />

@@ -26,8 +26,8 @@
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { getUnreadCountService } from '#lib/services/unreadCount.svelte.js';
 	import { dedupeById } from '#lib/utils/feed.js';
+	import { groupByDay } from '#lib/utils/groupByDay.js';
 
-	import { groupByDay } from '../groupByDay.js';
 	import NotificationListItem from './NotificationListItem.svelte';
 
 	const client = createApiClient();

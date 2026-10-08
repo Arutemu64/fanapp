@@ -1,17 +1,15 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
+	import { AlertCircle } from '@lucide/svelte';
+	import { untrack } from 'svelte';
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import { updateSettings } from '#lib/api/generated/index.js';
 	import { createApiClient } from '#lib/api/index.js';
-	const client = createApiClient();
-	import { AlertCircle } from '@lucide/svelte';
-	import { untrack } from 'svelte';
-
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
+	import SettingsSection from '#lib/components/SettingsSection.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
@@ -21,31 +19,21 @@
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
+	const client = createApiClient();
 	const toastService = getToastService();
 
 	let isSaving = $state(false);
 	// festival_start and festival_end are instants; edit them on the venue clock
 	// via zone-naive datetime-locals, converting back to ISO instants on save.
-	let savedFestivalStart = $state(
-		untrack(() => toEventDateTimeLocal(data.settings.festival_start))
-	);
-	let savedFestivalEnd = $state(untrack(() => toEventDateTimeLocal(data.settings.festival_end)));
 	let festivalStart = $state(untrack(() => toEventDateTimeLocal(data.settings.festival_start)));
 	let festivalEnd = $state(untrack(() => toEventDateTimeLocal(data.settings.festival_end)));
 	let festivalStartError = $state('');
 	let festivalEndError = $state('');
-	let savedAnnouncementTimeout = $state(untrack(() => data.settings.limits.announcement_timeout));
 	let announcementTimeout = $state<number | undefined>(
 		untrack(() => data.settings.limits.announcement_timeout)
 	);
 	let announcementTimeoutError = $state('');
 	let submitError = $state('');
-
-	let hasChanges = $derived(
-		festivalStart !== savedFestivalStart ||
-			festivalEnd !== savedFestivalEnd ||
-			announcementTimeout !== savedAnnouncementTimeout
-	);
 
 	function validateFestivalStart() {
 		if (!festivalStart) {
@@ -55,14 +43,6 @@
 
 		festivalStartError = '';
 		return true;
-	}
-
-	function handleFestivalStartInput() {
-		submitError = '';
-		// Re-validate live only after the field has already shown an error once.
-		if (festivalStartError) {
-			validateFestivalStart();
-		}
 	}
 
 	function validateFestivalEnd() {
@@ -83,14 +63,6 @@
 		return true;
 	}
 
-	function handleFestivalEndInput() {
-		submitError = '';
-		// Re-validate live only after the field has already shown an error once.
-		if (festivalEndError) {
-			validateFestivalEnd();
-		}
-	}
-
 	function validateAnnouncementTimeout() {
 		if (announcementTimeout === undefined || Number.isNaN(announcementTimeout)) {
 			announcementTimeoutError = 'Укажи таймаут анонсов';
@@ -106,9 +78,24 @@
 		return true;
 	}
 
+	// Errors appear on submit, not on blur, and clear once the field is corrected
+	// (GOV.UK validation pattern: https://design-system.service.gov.uk/patterns/validation/).
+	function handleFestivalStartInput() {
+		submitError = '';
+		if (festivalStartError) {
+			validateFestivalStart();
+		}
+	}
+
+	function handleFestivalEndInput() {
+		submitError = '';
+		if (festivalEndError) {
+			validateFestivalEnd();
+		}
+	}
+
 	function handleAnnouncementTimeoutInput() {
 		submitError = '';
-		// Re-validate live only after the field has already shown an error once.
 		if (announcementTimeoutError) {
 			validateAnnouncementTimeout();
 		}
@@ -116,6 +103,7 @@
 
 	async function handleSubmit(event: Event) {
 		event.preventDefault();
+		if (isSaving) return;
 		submitError = '';
 
 		// Validate every field so all errors surface at once, not one at a time.
@@ -156,12 +144,6 @@
 				return;
 			}
 
-			savedFestivalStart = festivalStart;
-			savedFestivalEnd = festivalEnd;
-			savedAnnouncementTimeout = nextAnnouncementTimeout;
-			festivalStartError = '';
-			festivalEndError = '';
-			announcementTimeoutError = '';
 			toastService.add('Настройки фестиваля сохранены', 'success');
 			await invalidate('app:festival-settings');
 		} finally {
@@ -174,19 +156,21 @@
 	<title>Настройки фестиваля · ФАН ФАН</title>
 </svelte:head>
 
-<SectionIntro description="Управляй датами фестиваля и таймингами расписания." />
+<SectionIntro description="Управляй датами фестиваля и таймингами программы." />
 
-<form class="mx-auto flex w-full max-w-2xl flex-col gap-5" onsubmit={handleSubmit}>
+<!-- novalidate: the browser's own bubble for the number field's min would block
+     submit in the browser's language and pre-empt the Russian message below. The
+     fields go read-only, not disabled, while saving, so focus and the phone
+     keyboard stay put. -->
+<form novalidate class="flex flex-col gap-6" onsubmit={handleSubmit}>
 	{#if submitError}
 		<Alert.Root variant="destructive">
-			<AlertCircle class="size-4" />
+			<AlertCircle />
 			<Alert.Description>{submitError}</Alert.Description>
 		</Alert.Root>
 	{/if}
 
-	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
-		<h2 class="text-lg font-semibold text-foreground">Фестиваль</h2>
-
+	<SettingsSection title="Фестиваль">
 		<Field.FieldGroup class="gap-4">
 			<Field.Field data-invalid={festivalStartError ? true : undefined}>
 				<Field.FieldLabel for="festival-start">Начало фестиваля (МСК)</Field.FieldLabel>
@@ -196,16 +180,15 @@
 					type="datetime-local"
 					autocomplete="off"
 					bind:value={festivalStart}
-					disabled={isSaving}
+					readonly={isSaving}
 					oninput={handleFestivalStartInput}
-					onblur={validateFestivalStart}
 					aria-invalid={festivalStartError ? true : undefined}
 				/>
 				{#if festivalStartError}
 					<Field.FieldError>{festivalStartError}</Field.FieldError>
 				{:else}
 					<Field.FieldDescription>
-						Дата и время по московскому времени. От неё считается обратный отсчёт на главной.
+						От этой даты считается обратный отсчёт на главной.
 					</Field.FieldDescription>
 				{/if}
 			</Field.Field>
@@ -218,9 +201,8 @@
 					type="datetime-local"
 					autocomplete="off"
 					bind:value={festivalEnd}
-					disabled={isSaving}
+					readonly={isSaving}
 					oninput={handleFestivalEndInput}
-					onblur={validateFestivalEnd}
 					aria-invalid={festivalEndError ? true : undefined}
 				/>
 				{#if festivalEndError}
@@ -233,11 +215,9 @@
 				{/if}
 			</Field.Field>
 		</Field.FieldGroup>
-	</Card.Root>
+	</SettingsSection>
 
-	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
-		<h2 class="text-lg font-semibold text-foreground">Программа</h2>
-
+	<SettingsSection title="Программа">
 		<Field.Field data-invalid={announcementTimeoutError ? true : undefined}>
 			<Field.FieldLabel for="announcement-timeout">Таймаут анонсов, сек</Field.FieldLabel>
 			<Input
@@ -249,9 +229,8 @@
 				inputmode="numeric"
 				autocomplete="off"
 				bind:value={announcementTimeout}
-				disabled={isSaving}
+				readonly={isSaving}
 				oninput={handleAnnouncementTimeoutInput}
-				onblur={validateAnnouncementTimeout}
 				aria-invalid={announcementTimeoutError ? true : undefined}
 			/>
 			{#if announcementTimeoutError}
@@ -262,9 +241,9 @@
 				</Field.FieldDescription>
 			{/if}
 		</Field.Field>
-	</Card.Root>
+	</SettingsSection>
 
-	<Button type="submit" class="w-full sm:w-auto" disabled={isSaving || !hasChanges}>
+	<Button type="submit" class="w-full sm:w-auto sm:self-start" disabled={isSaving}>
 		{#if isSaving}
 			<Spinner data-icon="inline-start" />
 			Сохраняем…

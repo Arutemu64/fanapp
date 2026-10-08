@@ -1,10 +1,12 @@
 <script lang="ts">
+	import { invalidate } from '$app/navigation';
+	import { AlertCircle } from '@lucide/svelte';
+
+	import type { UserRole } from '#lib/api/generated/index.js';
+
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import { sendBroadcast } from '#lib/api/generated/index.js';
 	import { createApiClient } from '#lib/api/index.js';
-	const client = createApiClient();
-	import { invalidate } from '$app/navigation';
-
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -17,11 +19,20 @@
 
 	import type { PageProps } from './$types';
 
+	import ConfirmDialog from '../components/ConfirmDialog.svelte';
 	import BroadcastHistory from './components/BroadcastHistory.svelte';
 
 	let { data }: PageProps = $props();
 
+	const client = createApiClient();
 	const toastService = getToastService();
+
+	const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
+		{ value: 'visitor', label: 'Зрители' },
+		{ value: 'participant', label: 'Участники' },
+		{ value: 'helper', label: 'Волонтёры' },
+		{ value: 'org', label: 'Организаторы' }
+	];
 
 	// Remount the history with the fresh server snapshot whenever route data changes
 	// (a new send or a cancel triggers invalidate('app:broadcasts')).
@@ -33,7 +44,8 @@
 	);
 
 	let bodyText = $state('');
-	let selectedRoles = $state<string[]>([]);
+	let selectedRoles = $state<UserRole[]>([]);
+	let confirmOpen = $state(false);
 	let isSending = $state(false);
 
 	let bodyError = $state('');
@@ -72,7 +84,7 @@
 		}
 	}
 
-	function toggleRole(role: string, checked: boolean) {
+	function toggleRole(role: UserRole, checked: boolean) {
 		if (checked) {
 			if (!selectedRoles.includes(role)) selectedRoles = [...selectedRoles, role];
 		} else {
@@ -81,7 +93,17 @@
 		handleRoleChange();
 	}
 
-	async function handleSubmit(event: Event) {
+	// In ROLE_OPTIONS order, whatever order the boxes were ticked in.
+	let recipientsLabel = $derived(
+		ROLE_OPTIONS.filter((option) => selectedRoles.includes(option.value))
+			.map((option) => option.label)
+			.join(', ')
+	);
+
+	// A mailing reaches every account in the chosen roles and a delivered push can't
+	// be recalled, so the form only validates here and the send waits for the
+	// confirm dialog (https://www.nngroup.com/articles/confirmation-dialog/).
+	function handleSubmit(event: Event) {
 		event.preventDefault();
 		submitError = '';
 
@@ -89,6 +111,11 @@
 			return;
 		}
 
+		confirmOpen = true;
+	}
+
+	async function send() {
+		if (isSending) return;
 		isSending = true;
 
 		try {
@@ -96,7 +123,7 @@
 				client,
 				body: {
 					body: bodyText.trim(),
-					roles: selectedRoles as ('visitor' | 'participant' | 'helper' | 'org')[]
+					roles: selectedRoles
 				}
 			});
 
@@ -126,106 +153,85 @@
 	<title>Рассылка уведомлений · ФАН ФАН</title>
 </svelte:head>
 
-<div class="mx-auto w-full max-w-2xl">
-	<SectionIntro
-		description="Создавай массовые рассылки уведомлений для выбранных категорий участников фестиваля."
-	/>
+<SectionIntro
+	description="Создавай массовые рассылки уведомлений для выбранных категорий участников фестиваля."
+/>
 
-	<form class="flex flex-col gap-6" onsubmit={handleSubmit}>
-		<Field.Field data-invalid={bodyError ? true : undefined}>
-			<Field.FieldLabel for="broadcast-body">Текст уведомления</Field.FieldLabel>
-			<Textarea
-				id="broadcast-body"
-				name="body"
-				rows={4}
-				placeholder="Напиши важное сообщение для участников фестиваля…"
-				bind:value={bodyText}
-				disabled={isSending}
-				oninput={handleBodyInput}
-				class="resize-none"
-				aria-invalid={bodyError ? true : undefined}
-			/>
-			{#if bodyError}
-				<Field.FieldError>{bodyError}</Field.FieldError>
-			{:else}
-				<Field.FieldDescription>
-					Это сообщение будет моментально отправлено всем пользователям с выбранными ролями.
-				</Field.FieldDescription>
-			{/if}
-		</Field.Field>
-
-		<Field.FieldSet data-invalid={rolesError ? true : undefined}>
-			<Field.FieldLegend variant="label">Кому отправить</Field.FieldLegend>
-			<Field.FieldGroup data-slot="checkbox-group" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-				<Field.Field orientation="horizontal">
-					<Checkbox
-						id="role-visitor"
-						checked={selectedRoles.includes('visitor')}
-						onCheckedChange={(v) => toggleRole('visitor', !!v)}
-						disabled={isSending}
-					/>
-					<Field.FieldLabel for="role-visitor" class="cursor-pointer font-normal">
-						Зрители
-					</Field.FieldLabel>
-				</Field.Field>
-				<Field.Field orientation="horizontal">
-					<Checkbox
-						id="role-participant"
-						checked={selectedRoles.includes('participant')}
-						onCheckedChange={(v) => toggleRole('participant', !!v)}
-						disabled={isSending}
-					/>
-					<Field.FieldLabel for="role-participant" class="cursor-pointer font-normal">
-						Участники
-					</Field.FieldLabel>
-				</Field.Field>
-				<Field.Field orientation="horizontal">
-					<Checkbox
-						id="role-helper"
-						checked={selectedRoles.includes('helper')}
-						onCheckedChange={(v) => toggleRole('helper', !!v)}
-						disabled={isSending}
-					/>
-					<Field.FieldLabel for="role-helper" class="cursor-pointer font-normal">
-						Волонтёры
-					</Field.FieldLabel>
-				</Field.Field>
-				<Field.Field orientation="horizontal">
-					<Checkbox
-						id="role-org"
-						checked={selectedRoles.includes('org')}
-						onCheckedChange={(v) => toggleRole('org', !!v)}
-						disabled={isSending}
-					/>
-					<Field.FieldLabel for="role-org" class="cursor-pointer font-normal">
-						Организаторы
-					</Field.FieldLabel>
-				</Field.Field>
-			</Field.FieldGroup>
-			{#if rolesError}
-				<Field.FieldError>{rolesError}</Field.FieldError>
-			{/if}
-		</Field.FieldSet>
-
-		{#if submitError}
-			<Alert.Root variant="destructive">
-				<Alert.Description>{submitError}</Alert.Description>
-			</Alert.Root>
+<!-- novalidate keeps the browser's own bubbles out, so every error is ours and in
+     Russian; the textarea goes read-only, not disabled, while sending so focus and
+     the keyboard stay put. -->
+<form novalidate class="flex flex-col gap-6" onsubmit={handleSubmit}>
+	<Field.Field data-invalid={bodyError ? true : undefined}>
+		<Field.FieldLabel for="broadcast-body">Текст уведомления</Field.FieldLabel>
+		<Textarea
+			id="broadcast-body"
+			name="body"
+			rows={4}
+			placeholder="Напиши важное сообщение для участников фестиваля…"
+			bind:value={bodyText}
+			readonly={isSending}
+			oninput={handleBodyInput}
+			class="resize-none"
+			aria-invalid={bodyError ? true : undefined}
+		/>
+		{#if bodyError}
+			<Field.FieldError>{bodyError}</Field.FieldError>
+		{:else}
+			<Field.FieldDescription>
+				Уведомление сразу уйдёт всем пользователям с выбранными ролями.
+			</Field.FieldDescription>
 		{/if}
+	</Field.Field>
 
-		<Button type="submit" class="w-full sm:w-auto" disabled={isSending}>
-			{#if isSending}
-				<Spinner data-icon="inline-start" />
-				Отправка…
-			{:else}
-				Отправить рассылку
-			{/if}
-		</Button>
-	</form>
-</div>
+	<Field.FieldSet data-invalid={rolesError ? true : undefined}>
+		<Field.FieldLegend variant="label">Кому отправить</Field.FieldLegend>
+		<Field.FieldGroup data-slot="checkbox-group" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+			{#each ROLE_OPTIONS as option (option.value)}
+				<Field.Field orientation="horizontal">
+					<Checkbox
+						id="role-{option.value}"
+						checked={selectedRoles.includes(option.value)}
+						onCheckedChange={(checked) => toggleRole(option.value, checked === true)}
+						disabled={isSending}
+					/>
+					<Field.FieldLabel for="role-{option.value}" class="cursor-pointer font-normal">
+						{option.label}
+					</Field.FieldLabel>
+				</Field.Field>
+			{/each}
+		</Field.FieldGroup>
+		{#if rolesError}
+			<Field.FieldError>{rolesError}</Field.FieldError>
+		{/if}
+	</Field.FieldSet>
 
-<div class="mt-8">
+	{#if submitError}
+		<Alert.Root variant="destructive">
+			<AlertCircle />
+			<Alert.Description>{submitError}</Alert.Description>
+		</Alert.Root>
+	{/if}
+
+	<Button type="submit" class="w-full sm:w-auto sm:self-start" disabled={isSending}>
+		{#if isSending}
+			<Spinner data-icon="inline-start" />
+			Отправляем…
+		{:else}
+			Отправить рассылку
+		{/if}
+	</Button>
+</form>
+
+<div class="mt-10">
 	{#key broadcastsKey}
 		<BroadcastHistory initialMailings={data.mailings} initialHasMore={data.hasMore} />
 	{/key}
 </div>
+
+<ConfirmDialog
+	bind:open={confirmOpen}
+	title="Отправить рассылку?"
+	description="Получатели: {recipientsLabel}. Пуш-уведомление нельзя будет отозвать, а отменить рассылку можно, только пока она не разослана до конца."
+	confirmLabel="Отправить рассылку"
+	onconfirm={send}
+/>

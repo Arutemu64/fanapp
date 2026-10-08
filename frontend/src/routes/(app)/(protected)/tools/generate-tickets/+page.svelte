@@ -1,25 +1,25 @@
 <script lang="ts">
+	import { AlertCircle, ClipboardCopy } from '@lucide/svelte';
+
+	import type { UserRole } from '#lib/api/generated/index.js';
+
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import { generateTickets } from '#lib/api/generated/index.js';
 	import { createApiClient } from '#lib/api/index.js';
-	const client = createApiClient();
-	import { ClipboardCopy } from '@lucide/svelte';
-
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
-	import * as Select from '#lib/components/ui/select/index.js';
+	import * as RadioGroup from '#lib/components/ui/radio-group/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 
+	const client = createApiClient();
 	const toastService = getToastService();
 
-	type Role = 'visitor' | 'participant' | 'helper' | 'org';
-
-	const ROLE_OPTIONS: { value: Role; name: string }[] = [
+	const ROLE_OPTIONS: { value: UserRole; name: string }[] = [
 		{ value: 'visitor', name: 'Зритель' },
 		{ value: 'participant', name: 'Участник' },
 		{ value: 'helper', name: 'Волонтёр' },
@@ -29,10 +29,7 @@
 	const MIN_AMOUNT = 1;
 	const MAX_AMOUNT = 100;
 
-	let selectedRole = $state<Role>('visitor');
-	let selectedRoleLabel = $derived(
-		ROLE_OPTIONS.find((option) => option.value === selectedRole)?.name ?? 'Выбери роль'
-	);
+	let selectedRole = $state<UserRole>('visitor');
 	// A `type="number"` binding yields a number, or an empty value when the field is
 	// cleared — never a string. Validated as an integer in range on submit.
 	let amountInput = $state<number | undefined>(10);
@@ -72,6 +69,7 @@
 
 	async function handleSubmit(event: Event) {
 		event.preventDefault();
+		if (isGenerating) return;
 		submitError = '';
 
 		const amount = parseAmount();
@@ -119,93 +117,99 @@
 	<title>Генерация билетов · ФАН ФАН</title>
 </svelte:head>
 
-<div class="mx-auto w-full max-w-2xl">
-	<SectionIntro
-		description="Создавай новые билеты для выбранной роли. Получатель привязывает билет по номеру и получает роль."
-	/>
+<SectionIntro
+	description="Создавай новые билеты для выбранной роли. Получатель привязывает билет по номеру и получает роль."
+/>
 
-	<form class="flex flex-col gap-6" onsubmit={handleSubmit}>
-		<Field.FieldGroup class="gap-6">
-			<Field.Field>
-				<Field.FieldLabel for="ticket-role">Роль</Field.FieldLabel>
-				<Select.Root type="single" name="role" bind:value={selectedRole} disabled={isGenerating}>
-					<Select.Trigger id="ticket-role" class="w-full">
-						{selectedRoleLabel}
-					</Select.Trigger>
-					<Select.Content>
-						<Select.Group>
-							{#each ROLE_OPTIONS as option (option.value)}
-								<Select.Item value={option.value} label={option.name}>
-									{option.name}
-								</Select.Item>
-							{/each}
-						</Select.Group>
-					</Select.Content>
-				</Select.Root>
-				<Field.FieldDescription>Эту роль получит тот, кто привяжет билет.</Field.FieldDescription>
-			</Field.Field>
+<!-- novalidate: the amount's min/max would otherwise raise the browser's own bubble
+     in the browser's language before our message. -->
+<form novalidate class="flex flex-col gap-6" onsubmit={handleSubmit}>
+	<Field.FieldGroup class="gap-6">
+		<!-- Radios, not a select: four options read at a glance and take one tap, and
+		     a select is the harder control for many people
+		     (https://design-system.service.gov.uk/components/select/). -->
+		<Field.FieldSet>
+			<Field.FieldLegend variant="label">Роль</Field.FieldLegend>
+			<Field.FieldDescription>Эту роль получит тот, кто привяжет билет.</Field.FieldDescription>
+			<RadioGroup.Root
+				bind:value={() => selectedRole, (value) => (selectedRole = value as UserRole)}
+				name="role"
+				disabled={isGenerating}
+				class="grid grid-cols-1 gap-3 sm:grid-cols-2"
+			>
+				{#each ROLE_OPTIONS as option (option.value)}
+					<Field.Field orientation="horizontal">
+						<RadioGroup.Item value={option.value} id="ticket-role-{option.value}" />
+						<Field.FieldLabel for="ticket-role-{option.value}" class="cursor-pointer font-normal">
+							{option.name}
+						</Field.FieldLabel>
+					</Field.Field>
+				{/each}
+			</RadioGroup.Root>
+		</Field.FieldSet>
 
-			<Field.Field data-invalid={amountError ? true : undefined}>
-				<Field.FieldLabel for="ticket-amount">Количество</Field.FieldLabel>
-				<Input
-					id="ticket-amount"
-					type="number"
-					min={MIN_AMOUNT}
-					max={MAX_AMOUNT}
-					step="1"
-					bind:value={amountInput}
-					disabled={isGenerating}
-					oninput={handleAmountInput}
-					aria-invalid={amountError ? true : undefined}
-					class="w-full rounded-xl"
-				/>
-				{#if amountError}
-					<Field.FieldError>{amountError}</Field.FieldError>
-				{:else}
-					<Field.FieldDescription>
-						От {MIN_AMOUNT} до {MAX_AMOUNT} билетов за один раз.
-					</Field.FieldDescription>
-				{/if}
-			</Field.Field>
-		</Field.FieldGroup>
-
-		{#if submitError}
-			<Alert.Root variant="destructive">
-				<Alert.Description>{submitError}</Alert.Description>
-			</Alert.Root>
-		{/if}
-
-		<Button type="submit" class="w-full sm:w-auto" disabled={isGenerating}>
-			{#if isGenerating}
-				<Spinner data-icon="inline-start" />
-				Генерируем…
-			{:else}
-				Сгенерировать
-			{/if}
-		</Button>
-	</form>
-
-	{#if generatedBarcodes.length > 0}
-		<div class="mt-6 flex flex-col gap-3 border-t border-border pt-6">
-			<div class="flex items-center justify-between gap-3">
-				<span class="text-sm font-medium text-foreground">
-					Готовые билеты: {generatedBarcodes.length}
-				</span>
-				<Button type="button" variant="outline" size="sm" onclick={copyBarcodes}>
-					<ClipboardCopy data-icon="inline-start" />
-					Копировать
-				</Button>
-			</div>
-			<Textarea
-				readonly
-				rows={Math.min(generatedBarcodes.length, 10)}
-				value={barcodesText}
-				class="resize-none font-mono text-sm"
+		<Field.Field data-invalid={amountError ? true : undefined}>
+			<Field.FieldLabel for="ticket-amount">Количество</Field.FieldLabel>
+			<Input
+				id="ticket-amount"
+				type="number"
+				min={MIN_AMOUNT}
+				max={MAX_AMOUNT}
+				step="1"
+				inputmode="numeric"
+				bind:value={amountInput}
+				readonly={isGenerating}
+				oninput={handleAmountInput}
+				aria-invalid={amountError ? true : undefined}
 			/>
-			<p class="text-xs text-muted-foreground">
-				Каждый билет — на отдельной строке. Скопируй и вставь в таблицу Excel: номера встанут в один
-				столбец.
-			</p>
-		</div>
+			{#if amountError}
+				<Field.FieldError>{amountError}</Field.FieldError>
+			{:else}
+				<Field.FieldDescription>
+					От {MIN_AMOUNT} до {MAX_AMOUNT} билетов за один раз.
+				</Field.FieldDescription>
+			{/if}
+		</Field.Field>
+	</Field.FieldGroup>
+
+	{#if submitError}
+		<Alert.Root variant="destructive">
+			<AlertCircle />
+			<Alert.Description>{submitError}</Alert.Description>
+		</Alert.Root>
 	{/if}
-</div>
+
+	<Button type="submit" class="w-full sm:w-auto sm:self-start" disabled={isGenerating}>
+		{#if isGenerating}
+			<Spinner data-icon="inline-start" />
+			Генерируем…
+		{:else}
+			Сгенерировать
+		{/if}
+	</Button>
+</form>
+
+{#if generatedBarcodes.length > 0}
+	<section class="mt-8 flex flex-col gap-3" aria-labelledby="generated-tickets-heading">
+		<div class="flex items-center justify-between gap-3">
+			<h2 id="generated-tickets-heading" class="text-base font-semibold sm:text-lg">
+				Готовые билеты: {generatedBarcodes.length}
+			</h2>
+			<Button type="button" variant="outline" size="sm" onclick={copyBarcodes}>
+				<ClipboardCopy data-icon="inline-start" />
+				Копировать
+			</Button>
+		</div>
+		<Textarea
+			readonly
+			aria-labelledby="generated-tickets-heading"
+			rows={Math.min(generatedBarcodes.length, 10)}
+			value={barcodesText}
+			class="resize-none font-mono text-sm"
+		/>
+		<p class="text-xs text-muted-foreground">
+			Каждый билет — на отдельной строке. Скопируй и вставь в таблицу Excel: номера встанут в один
+			столбец.
+		</p>
+	</section>
+{/if}

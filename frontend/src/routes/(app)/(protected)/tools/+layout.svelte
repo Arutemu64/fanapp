@@ -15,5 +15,9 @@
 		message="Подключись к интернету, чтобы пользоваться инструментами организатора."
 	/>
 {:else}
-	{@render children()}
+	<!-- One centred column for the hub and every tool, the same as the /profile
+	     layout, so a page's intro text lines up with the content under it. -->
+	<div class="mx-auto max-w-2xl">
+		{@render children()}
+	</div>
 {/if}

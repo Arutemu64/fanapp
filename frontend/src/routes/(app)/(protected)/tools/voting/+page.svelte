@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { AlertCircle, Award, Gift, Users } from '@lucide/svelte';
+	import { AlertCircle, Award, Users } from '@lucide/svelte';
 	import { untrack } from 'svelte';
 
 	import type { NominationContenderDto, UserBaseDto } from '#lib/api/generated/index.js';
@@ -8,18 +8,24 @@
 	import { drawVotingContestWinner, setVotingTimeRange } from '#lib/api/generated/index.js';
 	import { createApiClient } from '#lib/api/index.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
+	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
+	import SettingsSection from '#lib/components/SettingsSection.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
-	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import * as Card from '#lib/components/ui/card/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import { pluralize } from '#lib/utils/formatters.js';
+	import {
+		fromEventDateTimeLocal,
+		pluralize,
+		toEventDateTimeLocal
+	} from '#lib/utils/formatters.js';
 
 	import type { PageProps } from './$types';
+
+	import ConfirmDialog from '../components/ConfirmDialog.svelte';
 
 	let { data }: PageProps = $props();
 	const client = createApiClient();
@@ -27,9 +33,18 @@
 
 	let nominations = $derived<NominationContenderDto[]>(data.dashboard.nominations);
 
-	let votingStart = $state(untrack(() => toLocalInput(data.dashboard.voting_start)));
-	let votingEnd = $state(untrack(() => toLocalInput(data.dashboard.voting_end)));
+	// Edited on the venue clock like the festival dates in /tools/settings, so an
+	// organiser in another timezone sets the window the visitors actually see.
+	let votingStart = $state(untrack(() => toVenueInput(data.dashboard.voting_start)));
+	let votingEnd = $state(untrack(() => toVenueInput(data.dashboard.voting_end)));
+	let votingStartError = $state('');
+	let votingEndError = $state('');
+	let saveError = $state('');
 	let isSaving = $state(false);
+	// Whether a window is stored right now, so «Отключить» only offers itself when
+	// there is something to switch off.
+	let hasSavedRange = $state(untrack(() => data.dashboard.voting_start !== null));
+	let clearConfirmOpen = $state(false);
 
 	// Seeded from the dashboard, then refreshed from each draw's response, so the
 	// displayed pool tracks who is currently eligible even as people finish voting.
@@ -41,45 +56,98 @@
 
 	let canDraw = $derived(poolSize > 0);
 
-	function toLocalInput(iso: string | null): string {
+	function toVenueInput(iso: string | null): string {
 		if (!iso) return '';
-		const d = new Date(iso);
-		const offset = d.getTimezoneOffset();
-		const local = new Date(d.getTime() - offset * 60_000);
-		return local.toISOString().slice(0, 16);
+		return toEventDateTimeLocal(iso);
 	}
 
-	function fromLocalInput(value: string): string | null {
+	function fromVenueInput(value: string): string | null {
 		if (!value) return null;
-		return new Date(value).toISOString();
+		return fromEventDateTimeLocal(value);
 	}
 
-	async function handleSave() {
+	// Mirrors the domain rule (AppSettings.set_voting_time_range): both bounds or
+	// neither, and the end after the start. Checked here so the message lands
+	// under the field instead of in a toast.
+	function validateRange(): boolean {
+		votingStartError = '';
+		votingEndError = '';
+
+		if (!votingStart && votingEnd) {
+			votingStartError = 'Укажи начало голосования';
+		}
+		if (votingStart && !votingEnd) {
+			votingEndError = 'Укажи конец голосования';
+		}
+		if (votingStart && votingEnd && votingEnd <= votingStart) {
+			votingEndError = 'Конец должен быть позже начала';
+		}
+
+		return !votingStartError && !votingEndError;
+	}
+
+	function handleRangeInput() {
+		saveError = '';
+		// Re-check live only once an error is showing, so it clears as soon as the
+		// field is fixed without nagging while the first value is typed.
+		if (votingStartError || votingEndError) {
+			validateRange();
+		}
+	}
+
+	async function saveRange(): Promise<boolean> {
 		isSaving = true;
+		saveError = '';
 		try {
 			const { error, response } = await setVotingTimeRange({
 				client,
 				body: {
-					voting_start: fromLocalInput(votingStart),
-					voting_end: fromLocalInput(votingEnd)
+					voting_start: fromVenueInput(votingStart),
+					voting_end: fromVenueInput(votingEnd)
 				}
 			});
 
 			if (error || !response?.ok) {
-				toastService.error(error, 'Не удалось сохранить время голосования');
-				return;
+				saveError = getApiErrorDetail(error) ?? 'Не удалось сохранить период голосования';
+				return false;
 			}
 
-			toastService.add('Время голосования обновлено', 'success');
+			hasSavedRange = votingStart !== '';
+			return true;
 		} finally {
 			isSaving = false;
 		}
 	}
 
+	async function handleSubmit(event: Event) {
+		event.preventDefault();
+		if (isSaving) return;
+		if (!validateRange()) return;
+
+		const saved = await saveRange();
+		if (saved) {
+			toastService.add('Период голосования сохранён', 'success');
+		}
+	}
+
+	// Clearing closes voting for everyone at once, so it is confirmed first and
+	// saved from the dialog rather than left as an edit to submit later.
 	async function handleClear() {
+		const previousStart = votingStart;
+		const previousEnd = votingEnd;
 		votingStart = '';
 		votingEnd = '';
-		await handleSave();
+		votingStartError = '';
+		votingEndError = '';
+
+		const saved = await saveRange();
+		if (saved) {
+			toastService.add('Голосование отключено', 'success');
+			return;
+		}
+
+		votingStart = previousStart;
+		votingEnd = previousEnd;
 	}
 
 	async function handleDraw() {
@@ -113,68 +181,85 @@
 	description="Задавай период голосования, следи за лидерами номинаций и разыгрывай приз среди тех, кто проголосовал во всех номинациях."
 />
 
-<div class="mx-auto flex w-full max-w-2xl flex-col gap-5">
-	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
-		<h2 class="text-lg font-semibold text-foreground">Период голосования</h2>
+<div class="flex flex-col gap-8">
+	<SettingsSection title="Период голосования" description="Голосовать можно только в этот период.">
+		<!-- novalidate + read-only while saving: the same form rules as the festival
+		     settings, so errors are ours and in Russian, and the keyboard stays up. -->
+		<form novalidate class="flex flex-col gap-4" onsubmit={handleSubmit}>
+			<Field.FieldGroup class="grid gap-4 sm:grid-cols-2">
+				<Field.Field data-invalid={votingStartError ? true : undefined}>
+					<Field.FieldLabel for="voting-start">Начало (МСК)</Field.FieldLabel>
+					<Input
+						id="voting-start"
+						type="datetime-local"
+						bind:value={votingStart}
+						readonly={isSaving}
+						oninput={handleRangeInput}
+						aria-invalid={votingStartError ? true : undefined}
+					/>
+					{#if votingStartError}
+						<Field.FieldError>{votingStartError}</Field.FieldError>
+					{/if}
+				</Field.Field>
+				<Field.Field data-invalid={votingEndError ? true : undefined}>
+					<Field.FieldLabel for="voting-end">Конец (МСК)</Field.FieldLabel>
+					<Input
+						id="voting-end"
+						type="datetime-local"
+						bind:value={votingEnd}
+						readonly={isSaving}
+						oninput={handleRangeInput}
+						aria-invalid={votingEndError ? true : undefined}
+					/>
+					{#if votingEndError}
+						<Field.FieldError>{votingEndError}</Field.FieldError>
+					{/if}
+				</Field.Field>
+			</Field.FieldGroup>
 
-		<p class="text-xs leading-5 text-muted-foreground">
-			Посетители смогут голосовать только в указанный период.
-		</p>
+			{#if saveError}
+				<Alert.Root variant="destructive">
+					<AlertCircle />
+					<Alert.Description>{saveError}</Alert.Description>
+				</Alert.Root>
+			{/if}
 
-		<Field.FieldGroup class="grid gap-4 sm:grid-cols-2">
-			<Field.Field>
-				<Field.FieldLabel for="voting-start">Начало</Field.FieldLabel>
-				<Input
-					id="voting-start"
-					type="datetime-local"
-					bind:value={votingStart}
-					disabled={isSaving}
-				/>
-			</Field.Field>
-			<Field.Field>
-				<Field.FieldLabel for="voting-end">Конец</Field.FieldLabel>
-				<Input id="voting-end" type="datetime-local" bind:value={votingEnd} disabled={isSaving} />
-			</Field.Field>
-		</Field.FieldGroup>
-
-		<div class="flex flex-wrap gap-2">
-			<Button type="button" disabled={isSaving} onclick={handleSave}>
-				{#if isSaving}
-					<Spinner data-icon="inline-start" />
+			<div class="flex flex-col gap-2 sm:flex-row">
+				<Button type="submit" disabled={isSaving}>
+					{#if isSaving}
+						<Spinner data-icon="inline-start" />
+						Сохраняем…
+					{:else}
+						Сохранить
+					{/if}
+				</Button>
+				{#if hasSavedRange}
+					<Button
+						type="button"
+						variant="outline"
+						disabled={isSaving}
+						onclick={() => (clearConfirmOpen = true)}
+					>
+						Отключить голосование
+					</Button>
 				{/if}
-				Сохранить
-			</Button>
-			<Button
-				type="button"
-				variant="outline"
-				disabled={isSaving || (!votingStart && !votingEnd)}
-				onclick={handleClear}
-			>
-				Сбросить
-			</Button>
-		</div>
-	</Card.Root>
+			</div>
+		</form>
+	</SettingsSection>
 
-	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
-		<div class="flex items-center gap-2">
-			<Gift class="size-5 text-primary" aria-hidden="true" />
-			<h2 class="text-lg font-semibold text-foreground">Розыгрыш приза</h2>
-		</div>
-		<p class="text-xs leading-5 text-muted-foreground">
-			Случайный участник среди тех, кто проголосовал во всех номинациях.
+	<SettingsSection
+		title="Розыгрыш приза"
+		description="Случайный участник среди тех, кто проголосовал во всех номинациях."
+	>
+		<p class="flex items-center gap-2 text-sm text-muted-foreground">
+			<Users class="size-4 shrink-0" aria-hidden="true" />
+			В розыгрыше: {poolSize}
+			{pluralize(poolSize, 'участник', 'участника', 'участников')}
 		</p>
-
-		<div class="flex items-center gap-2 text-sm text-muted-foreground">
-			<Users class="size-4" aria-hidden="true" />
-			<span>
-				В розыгрыше: {poolSize}
-				{pluralize(poolSize, 'участник', 'участника', 'участников')}
-			</span>
-		</div>
 
 		{#if drawError}
 			<Alert.Root variant="destructive">
-				<AlertCircle class="size-4" />
+				<AlertCircle />
 				<Alert.Description>{drawError}</Alert.Description>
 			</Alert.Root>
 		{/if}
@@ -203,15 +288,17 @@
 
 		<Button
 			type="button"
-			class="w-full sm:w-auto"
+			class="w-full sm:w-auto sm:self-start"
 			disabled={isDrawing || !canDraw}
 			onclick={handleDraw}
 		>
 			{#if isDrawing}
 				<Spinner data-icon="inline-start" />
 				Разыгрываем…
+			{:else if hasDrawn}
+				Разыграть ещё раз
 			{:else}
-				{hasDrawn ? 'Разыграть ещё раз' : 'Разыграть'}
+				Разыграть
 			{/if}
 		</Button>
 		{#if !canDraw}
@@ -219,36 +306,31 @@
 				Кнопка станет активной, когда кто-нибудь проголосует во всех номинациях.
 			</p>
 		{/if}
-	</Card.Root>
+	</SettingsSection>
 
-	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
-		<div class="flex items-center gap-2">
-			<Award class="size-5 text-primary" aria-hidden="true" />
-			<h2 class="text-lg font-semibold text-foreground">Лидеры номинаций</h2>
-		</div>
-
+	<SettingsSection title="Лидеры номинаций">
 		{#if nominations.length > 0}
-			<ul class="flex flex-col gap-3">
-				{#each nominations as nomination (nomination.id)}
-					<li class="border-b border-border pb-3 last:border-0 last:pb-0">
-						<p class="text-sm font-medium text-foreground">{nomination.title}</p>
-						{#if nomination.leader}
-							<div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-								<span class="text-sm text-muted-foreground">
-									{nomination.leader.title}
-								</span>
-								<Badge>
-									{nomination.leader.votes_count}
-									{pluralize(nomination.leader.votes_count, 'голос', 'голоса', 'голосов')}
-									из {nomination.total_votes}
-								</Badge>
-							</div>
-						{:else}
-							<p class="mt-1 text-xs text-muted-foreground">Голосов пока нет</p>
-						{/if}
-					</li>
-				{/each}
-			</ul>
+			<MenuGroup>
+				<ul class="divide-y divide-border">
+					{#each nominations as nomination (nomination.id)}
+						<li class="flex flex-col gap-1 p-4">
+							<p class="text-sm text-muted-foreground">{nomination.title}</p>
+							{#if nomination.leader}
+								<div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+									<span class="font-medium text-foreground">{nomination.leader.title}</span>
+									<span class="text-sm text-muted-foreground tabular-nums">
+										{nomination.leader.votes_count}
+										{pluralize(nomination.leader.votes_count, 'голос', 'голоса', 'голосов')}
+										из {nomination.total_votes}
+									</span>
+								</div>
+							{:else}
+								<p class="text-sm text-muted-foreground">Голосов пока нет</p>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			</MenuGroup>
 		{:else}
 			<EmptyState
 				icon={Users}
@@ -256,5 +338,14 @@
 				message="Появятся после импорта косплей-конкурса"
 			/>
 		{/if}
-	</Card.Root>
+	</SettingsSection>
 </div>
+
+<ConfirmDialog
+	bind:open={clearConfirmOpen}
+	title="Отключить голосование?"
+	description="Период сотрётся, и голосовать станет нельзя, пока не задашь новый. Уже отданные голоса останутся."
+	confirmLabel="Отключить"
+	destructive
+	onconfirm={handleClear}
+/>
