@@ -52,7 +52,10 @@ test.describe('profile hub', () => {
 		);
 	});
 
-	test('links an organiser to the toolbox and keeps the tab lit there', async ({ page, api }) => {
+	test('links an organiser to the toolbox, keeps the tab lit and leads back', async ({
+		page,
+		api
+	}) => {
 		api.use(organizer());
 		await page.goto('/profile');
 
@@ -65,6 +68,10 @@ test.describe('profile hub', () => {
 			'aria-current',
 			'page'
 		);
+
+		// Like the profile settings pages, the toolbox leads back to the hub.
+		await page.getByRole('link', { name: 'Назад в профиль' }).click();
+		await expect(page).toHaveURL('/profile');
 	});
 
 	test('opens a settings page behind the hub with a way back', async ({ page, api }) => {
