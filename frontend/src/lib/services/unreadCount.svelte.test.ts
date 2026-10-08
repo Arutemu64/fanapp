@@ -29,39 +29,32 @@ beforeEach(() => {
 	server.error = undefined;
 });
 
-describe('UnreadCountService seed', () => {
-	it('applies while the count is still provisional', () => {
+describe('UnreadCountService', () => {
+	it('takes the server total on refresh', async () => {
 		const service = new UnreadCountService();
-		service.seed(5);
-		expect(service.count).toBe(5);
-	});
-
-	it('does not overwrite an authoritative zero from refresh with a stale seed', async () => {
-		const service = new UnreadCountService();
-		// The server has cleared everything before the slow streamed seed resolves.
-		server.count = 0;
-		await service.refresh();
-		expect(service.count).toBe(0);
-
-		// The seed carries an older, positive snapshot — it must not resurrect it.
-		service.seed(5);
-		expect(service.count).toBe(0);
-	});
-
-	it('does not overwrite a cleared count with a later seed', () => {
-		const service = new UnreadCountService();
-		service.clear();
-		service.seed(5);
-		expect(service.count).toBe(0);
-	});
-
-	it('is overridden by a later authoritative refresh', async () => {
-		const service = new UnreadCountService();
-		service.seed(3);
-		expect(service.count).toBe(3);
-
 		server.count = 7;
 		await service.refresh();
 		expect(service.count).toBe(7);
+	});
+
+	it('keeps the last known count when a refresh fails', async () => {
+		const service = new UnreadCountService();
+		server.count = 3;
+		await service.refresh();
+
+		server.ok = false;
+		server.count = 0;
+		await service.refresh();
+		expect(service.count).toBe(3);
+	});
+
+	it('does not let a refresh that started before a clear restore the old total', async () => {
+		const service = new UnreadCountService();
+		server.count = 5;
+		const inFlight = service.refresh();
+		// "Прочитать все" lands while the GET is still in flight.
+		service.clear();
+		await inFlight;
+		expect(service.count).toBe(0);
 	});
 });

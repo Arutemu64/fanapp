@@ -54,6 +54,12 @@
 	}
 
 	onMount(() => {
+		// Load the count here rather than in a layout load: the bell renders as soon
+		// as /me resolves, so it is just as early, and an explicit fetch doesn't hang
+		// on SSE — the stream's first 'connection_established' can fire before this
+		// listener is attached and would then never refresh the badge.
+		void unread.refresh();
+
 		eventsClient.on('notification_created', handleNewNotification);
 		// 'connection_established' fires on the first connect and on every reconnect.
 		eventsClient.on('connection_established', refreshAfterReconnect);
