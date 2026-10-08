@@ -1,31 +1,22 @@
-// Disables access to DOM typings like `HTMLElement` which are not available
-// inside a service worker and instantiates the correct globals
-/// <reference no-default-lib="true"/>
-/// <reference lib="esnext" />
-/// <reference lib="webworker" />
-
-// Ensures that virtual imports (`$env/static/public`) have type definitions
-/// <reference types="@sveltejs/kit" />
-/// <reference types="../.svelte-kit/ambient.d.ts" />
-
-import { PUBLIC_API_URL } from '$env/static/public';
+import { dev, version } from '$app/env';
+import { PUBLIC_API_URL } from '$app/env/public';
+import { assets, immutable } from '$app/manifest';
+import { self } from '$app/service-worker';
 import { clientsClaim } from 'workbox-core';
 import { ExpirationPlugin } from 'workbox-expiration';
 import {
 	cleanupOutdatedCaches,
 	createHandlerBoundToURL,
-	precacheAndRoute,
-	type PrecacheEntry
+	precacheAndRoute
 } from 'workbox-precaching';
 import { NavigationRoute, registerRoute } from 'workbox-routing';
 import { CacheFirst } from 'workbox-strategies';
 
-// `self` with SW types, plus the manifest vite-pwa injects at build. It is
-// absent in `vite dev` (injectManifest only runs on a production build); the
-// guard below treats that absence as the signal to stay inert.
-declare let self: ServiceWorkerGlobalScope & {
-	__WB_MANIFEST: (string | PrecacheEntry)[] | undefined;
-};
+import { buildPrecacheManifest } from '#lib/utils/precacheManifest.js';
+
+// The adapter-static fallback page (`fallback` in vite.config.ts) that every
+// SPA route renders from.
+const FALLBACK_PAGE = '200.html';
 
 // The backend is deployed under a path on the *same* origin as the app
 // (e.g. https://host/api), so an origin check can't tell API calls apart from
@@ -44,29 +35,31 @@ const API_BASE_PATH = API_URL.pathname.replace(/\/+$/, '');
 // Matches the API base path and anything under it, anchored at the start.
 const API_PATH_PATTERN = new RegExp(`^${API_BASE_PATH}(/|$)`);
 
-// Caching only runs in a production build, where the manifest is injected. Its
-// absence in dev means cache-first would be wrong anyway — that strategy assumes
-// the immutable, versioned shell only a real build emits — so the worker stays
+// Caching only runs in a production build. In dev `$app/manifest` lists no build
+// output, and cache-first would be wrong anyway — that strategy assumes the
+// immutable, versioned shell only a real build emits — so the worker stays
 // inert. The push/notificationclick handlers below register either way, so push
 // still works in dev.
-const precacheManifest = self.__WB_MANIFEST;
-if (precacheManifest) {
+if (!dev) {
 	// --- Precaching -----------------------------------------------------------
-	// Precache the shell and serve it cache-first. Revisions are content hashes,
-	// so a cache hit is never stale, and cleanupOutdatedCaches prunes entries left
-	// by superseded revisions. The responsive image variants are kept out of the
-	// manifest (vite.config globIgnores) and runtime-cached below instead.
-	precacheAndRoute(precacheManifest);
+	// Precache the shell and serve it cache-first. Hashed files are keyed by URL
+	// and everything else by build version, so a cache hit is never stale, and
+	// cleanupOutdatedCaches prunes entries left by superseded revisions. The
+	// responsive image variants are kept out of the list (precacheManifest.ts)
+	// and runtime-cached below instead.
+	precacheAndRoute(
+		buildPrecacheManifest({ immutable, assets, fallbackPage: FALLBACK_PAGE, version })
+	);
 	cleanupOutdatedCaches();
 
 	// --- SPA navigation fallback ----------------------------------------------
 	// Every route renders from the same client-built shell, precached above as
-	// the adapter-static fallback (200.html). Serving it for navigations means
+	// the adapter-static fallback. Serving it for navigations means
 	// startup never depends on the origin being healthy — a reachable-but-broken
 	// upstream (502/503/504) can't block the app from booting. API paths are
 	// denylisted so a navigation-shaped API request still hits the network.
 	registerRoute(
-		new NavigationRoute(createHandlerBoundToURL('/200.html'), {
+		new NavigationRoute(createHandlerBoundToURL(`/${FALLBACK_PAGE}`), {
 			denylist: [API_PATH_PATTERN]
 		})
 	);
@@ -140,7 +133,7 @@ async function hasVisibleAppClient() {
 // which activates the waiting worker and triggers a reload.
 self.addEventListener('message', (event) => {
 	if (event.data === 'skipWaiting') {
-		self.skipWaiting();
+		void self.skipWaiting();
 	}
 });
 

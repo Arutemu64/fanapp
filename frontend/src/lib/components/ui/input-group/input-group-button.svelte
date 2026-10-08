@@ -22,8 +22,8 @@
 <script lang="ts">
 	import type { ComponentProps } from 'svelte';
 
-	import { Button } from '$lib/components/ui/button/index.js';
-	import { cn } from '$lib/utils.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { cn } from '#lib/utils.js';
 
 	let {
 		ref = $bindable(null),

@@ -1,10 +1,11 @@
 <script lang="ts">
-	import type { CurrentUserDto } from '$lib/api/generated';
-
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { Button } from '$lib/components/ui/button';
 	import { ArrowLeft } from '@lucide/svelte';
+
+	import type { CurrentUserDto } from '#lib/api/generated/index.js';
+
+	import { Button } from '#lib/components/ui/button/index.js';
 
 	import NotificationBell from './NotificationBell.svelte';
 

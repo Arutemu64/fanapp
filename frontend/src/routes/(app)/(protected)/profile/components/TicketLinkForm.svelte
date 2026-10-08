@@ -1,17 +1,18 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
-	import { linkTicket } from '$lib/api/generated';
+	import { linkTicket } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
 	const client = createApiClient();
-	import type { CurrentUserDto } from '$lib/api/generated';
-
-	import { getApiErrorDetail } from '$lib/api/errors';
-	import { Button } from '$lib/components/ui/button';
-	import * as Field from '$lib/components/ui/field';
-	import { Input } from '$lib/components/ui/input';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { offlineWriteGate } from '$lib/utils/offlineAction';
 	import { CheckCircle2 } from '@lucide/svelte';
+
+	import type { CurrentUserDto } from '#lib/api/generated/index.js';
+
+	import { getApiErrorDetail } from '#lib/api/errors.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Field from '#lib/components/ui/field/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
 	import SettingsSection from './SettingsSection.svelte';
 

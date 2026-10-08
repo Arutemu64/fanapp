@@ -25,3 +25,10 @@ minimumReleaseAge: 10080
 # freshly-published *code*, which does not apply to this data-only scope.
 minimumReleaseAgeExclude:
   - '@iconify-json/*'
+  # TODO: drop these three once they pass the cooldown (all published
+  # 2026-10-01 ~17:22 UTC, so mature 2026-10-08 ~17:22 UTC) — the SvelteKit 3
+  # migration landed a few hours inside the window. Exact versions only, so
+  # any newer release of these packages still waits out the full 7 days.
+  - '@sveltejs/kit@3.0.0'
+  - '@sveltejs/adapter-static@4.0.0'
+  - '@sveltejs/enhanced-img@1.0.0'

@@ -1,12 +1,14 @@
-import type { Pathname } from '$app/types';
-import type { NotificationDto } from '$lib/api/generated';
+import type { Path } from '$app/types';
 
 import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
-import { getApiErrorDetail } from '$lib/api/errors';
 import { createContext } from 'svelte';
 import { toast } from 'svelte-sonner';
 import { SvelteSet } from 'svelte/reactivity';
+
+import type { NotificationDto } from '#lib/api/generated/index.js';
+
+import { getApiErrorDetail } from '#lib/api/errors.js';
 
 export type StatusToastType = 'success' | 'info' | 'warning' | 'error';
 
@@ -62,7 +64,7 @@ export class ToastService {
 				? {
 						label: 'Открыть',
 						onClick: () => {
-							void goto(resolve(notification.path as Pathname));
+							void goto(resolve(notification.path as Path));
 						}
 					}
 				: undefined

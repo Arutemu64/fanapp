@@ -1,4 +1,4 @@
-import type { PublicConfigDto } from '$lib/api/generated';
+import type { PublicConfigDto } from '#lib/api/generated/index.js';
 
 // Shared across every viewer: config carries no per-user data, so it lives in the
 // universal store — one entry serves guests and all accounts, surviving logout.

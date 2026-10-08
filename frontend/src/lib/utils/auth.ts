@@ -1,8 +1,8 @@
-import type { EventsClient } from '$lib/services/events.svelte';
-import type { ToastService } from '$lib/services/toasts.svelte';
-
 import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
+
+import type { EventsClient } from '#lib/services/events.svelte.js';
+import type { ToastService } from '#lib/services/toasts.svelte.js';
 
 import { clearLogoutPending } from './pendingLogout';
 
@@ -53,7 +53,14 @@ export async function completeLogin(
 	// `next` was captured by the (protected) guard from `url.pathname`, which is
 	// already base-qualified — wrapping it in resolve() would prepend the base
 	// path a second time. It is sanitized to an in-app path above.
-	// eslint-disable-next-line svelte/no-navigation-without-resolve
-	await goto(next ?? resolve('/'), { invalidateAll: true });
+	const home = resolve('');
+	// goto rejects a path that matches no route, and `next` comes from the URL, so
+	// a hand-edited one can name anything: land on home rather than strand the
+	// now-signed-in user on the login form.
+	try {
+		await goto(next ?? home, { refreshAll: true });
+	} catch {
+		await goto(home, { refreshAll: true });
+	}
 	eventsClient.restart();
 }

@@ -1,5 +1,6 @@
-import { fakeStorage, throwingStorage } from '$lib/testing/storage';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { fakeStorage, throwingStorage } from '#lib/testing/storage.js';
 
 import { Persisted } from './persisted.svelte';
 

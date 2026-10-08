@@ -4,7 +4,7 @@ services:
     build:
       context: ./frontend
       target: prod
-      # PUBLIC_* are baked into the SPA bundle at build time ($env/static/public);
+      # PUBLIC_* are baked into the SPA bundle at build time ($app/env/public);
       # the static NGINX container has no way to inject them at runtime. They are
       # public, non-secret constants.
       args:

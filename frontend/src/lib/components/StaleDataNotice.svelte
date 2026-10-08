@@ -1,7 +1,8 @@
 <script lang="ts">
-	import * as Alert from '$lib/components/ui/alert';
-	import { formatSyncedAt } from '$lib/utils/formatters';
 	import { Clock } from '@lucide/svelte';
+
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { formatSyncedAt } from '#lib/utils/formatters.js';
 
 	// Shown when a page is rendering a cached copy because the network was down.
 	let {

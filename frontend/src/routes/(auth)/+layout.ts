@@ -1,5 +1,6 @@
-import { LOGIN_NEXT_PARAM, sanitizeNextPath } from '$lib/utils/auth';
 import { redirect } from '@sveltejs/kit';
+
+import { LOGIN_NEXT_PARAM, sanitizeNextPath } from '#lib/utils/auth.js';
 
 import type { LayoutLoad } from './$types';
 

@@ -1,6 +1,7 @@
-import { createApiClient } from '$lib/api';
-import { countUnreadNotifications } from '$lib/api/generated';
 import { createContext } from 'svelte';
+
+import { countUnreadNotifications } from '#lib/api/generated/index.js';
+import { createApiClient } from '#lib/api/index.js';
 
 const [getUnread, setUnread] = createContext<UnreadCountService>();
 

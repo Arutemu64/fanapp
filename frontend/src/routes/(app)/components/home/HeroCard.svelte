@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
-	import { documentVisibility } from '$lib/services/documentVisibility';
-	import { formatFestivalDateTime, pluralize } from '$lib/utils/formatters';
 	import { prefersReducedMotion } from 'svelte/motion';
+
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { documentVisibility } from '#lib/services/documentVisibility.js';
+	import { formatFestivalDateTime, pluralize } from '#lib/utils/formatters.js';
 
 	import type { FestivalPhase } from './festivalPhase';
 	import type { FeaturedAct } from './stage';

@@ -1,7 +1,8 @@
-import type { BackTarget } from '$lib/types/navigation';
-
-import { canImportSchedule } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
+
+import type { BackTarget } from '#lib/types/navigation.js';
+
+import { canImportSchedule } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';
 
@@ -16,6 +17,6 @@ export const load: PageLoad = async ({ parent }) => {
 
 	return {
 		title: 'Импорт программы',
-		back: { href: '/tools', label: 'Назад к инструментам' } satisfies BackTarget
+		back: { href: 'tools', label: 'Назад к инструментам' } satisfies BackTarget
 	};
 };

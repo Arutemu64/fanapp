@@ -1,6 +1,6 @@
-import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
-
 import { describe, expect, it } from 'vitest';
+
+import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 
 import { buildScheduleGroups, filterScheduleGroups, type ScheduleNode } from './scheduleGrouping';
 

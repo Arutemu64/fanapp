@@ -1,8 +1,9 @@
 import { sentrySvelteKit } from '@sentry/sveltekit';
+import adapter from '@sveltejs/adapter-static';
 import { enhancedImages } from '@sveltejs/enhanced-img';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
-import { SvelteKitPWA } from '@vite-pwa/sveltekit';
 import { fileURLToPath } from 'node:url';
 import Icons from 'unplugin-icons/vite';
 import { loadEnv } from 'vite';
@@ -58,64 +59,34 @@ export default defineConfig(({ mode }) => {
 			// variants. Returns a Promise<Plugin[]>, which Vite resolves in place;
 			// must precede sveltekit().
 			enhancedImages(),
-			sveltekit(),
-			// injectManifest strategy: SvelteKit compiles our hand-written SW
-			// (src/service-worker.ts), then vite-pwa runs Workbox over the built output
-			// to generate the precache manifest and inject it at `self.__WB_MANIFEST`.
-			// We keep the SW — push, update handshake, API bypass, image runtime cache —
-			// and only offload precache assembly + cache versioning to Workbox.
-			// `filename` stays the SvelteKit default so the emitted worker remains
-			// /service-worker.js (registered by $lib/utils/serviceWorker.ts) and
-			// `manifest: false` keeps static/manifest.json as the web app manifest.
-			SvelteKitPWA({
-				strategies: 'injectManifest',
-				srcDir: 'src',
-				filename: 'service-worker.js',
-				manifest: false,
-				injectRegister: false,
-				// SPA (adapter-static fallback): include the fallback page in the
-				// precache manifest so navigations resolve offline. adapterFallback
-				// mirrors svelte.config.js's `fallback: '200.html'`.
-				kit: {
-					spa: true,
-					adapterFallback: '200.html'
-				},
-				injectManifest: {
-					// Precache the app shell. Exclude the content-hashed responsive image
-					// variants <enhanced:img> emits (served cache-first at runtime in sw.ts
-					// instead — precaching every width/format at install is wasteful and
-					// discouraged: https://developer.chrome.com/docs/workbox/precaching-dos-and-donts).
-					globPatterns: ['**/*.{js,css,html,svg,ico,webmanifest,woff2,json}', 'icons/*.png'],
-					globIgnores: [
-						'**/_app/immutable/assets/**/*.{avif,webp,png,jpeg,jpg,gif}',
-						// Globs resolve against .svelte-kit/output, so root files sit under
-						// `client/`. The plugin also appends its own `client/**/*.png` pattern,
-						// which is why og-image.png needs an explicit ignore.
-						//
-						// SvelteKit's `updated.check()` fetches this to detect a redeploy after a
-						// failed navigation; a precached copy would always report the old version.
-						'client/_app/version.json',
-						// Only link-preview crawlers read it; no client ever displays it.
-						'client/og-image.png',
-						// Font subsets a Russian UI never renders. Left out of the precache,
-						// they still load on demand via unicode-range (and fall back to a
-						// system font offline). latin-ext stays: romaji macrons (ō, ū) live there.
-						'**/_app/immutable/assets/*-{greek,greek-ext,vietnamese}-*.woff2'
-					]
-				},
-				devOptions: {
-					// No SW in dev: cache-first assumes the immutable versioned shell only a
-					// production build emits. The worker guards on the manifest's presence,
-					// so it stays inert in dev even if a stale registration lingers.
-					enabled: false
-				}
+			sveltekit({
+				// Consult https://svelte.dev/docs/kit/integrations
+				// for more information about preprocessors
+				preprocess: vitePreprocess(),
+				// The whole monorepo shares the single root `.env` (see .env.example) —
+				// the frontend has no env file of its own. `$app/env/public` loads
+				// from there; real environment variables (Docker build args, CI) still
+				// take precedence over the file. Path is relative to the frontend dir,
+				// where all commands run (justfile, Docker WORKDIR).
+				env: { dir: '..' },
+				// SPA build: the app is client-rendered, so there is no server.
+				// adapter-static emits a static bundle and a `fallback` page that an
+				// NGINX container serves for every unknown route, letting the client
+				// router take over. See https://svelte.dev/docs/kit/single-page-apps
+				// The service worker precaches this page by name (src/service-worker/).
+				adapter: adapter({ fallback: '200.html' }),
+				// We register the worker manually (src/lib/utils/serviceWorker.ts) so the
+				// register() promise gets a .catch(). SvelteKit's built-in registration
+				// doesn't, so a browser that refuses registration (storage-partitioned
+				// embeds, private modes) surfaces an uncaught "Error: Rejected" to Sentry.
+				serviceWorker: { register: false }
 			}),
 			Icons({
 				compiler: 'svelte'
 			})
 		],
 		optimizeDeps: {
-			// The service worker (src/service-worker.ts) is a separate SvelteKit entry
+			// The service worker (src/service-worker/) is a separate SvelteKit entry
 			// that Vite's initial dep scan doesn't crawl, so these workbox packages get
 			// discovered only when /service-worker.js is first requested — triggering a
 			// second optimize pass and a full page reload mid-session. Pre-declaring
@@ -129,7 +100,7 @@ export default defineConfig(({ mode }) => {
 			]
 		},
 		// Tests live here rather than in a vitest.config.ts of their own so they run
-		// through the SvelteKit plugin above: that is what resolves `$lib`/`$app`
+		// through the SvelteKit plugin above: that is what resolves `#lib`/`$app`
 		// and compiles runes in `*.svelte.test.ts` files. See docs/testing.md.
 		test: {
 			// Also matches `*.svelte.test.ts`, where runes are available.

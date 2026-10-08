@@ -1,6 +1,6 @@
 <script lang="ts">
-	import SectionIntro from '$lib/components/SectionIntro.svelte';
-	import { feedSnapshotKey } from '$lib/utils/feed';
+	import SectionIntro from '#lib/components/SectionIntro.svelte';
+	import { feedSnapshotKey } from '#lib/utils/feed.js';
 
 	import type { PageProps } from './$types';
 

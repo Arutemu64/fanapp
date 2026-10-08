@@ -1,10 +1,10 @@
-import type { NotificationSeed } from '$lib/types/notifications';
+import type { NotificationSeed } from '#lib/types/notifications.js';
 
-import { createApiClient } from '$lib/api';
-import { countUnreadNotifications, listUserNotifications } from '$lib/api/generated';
-import { NOTIFICATION_PREVIEW_LIMIT } from '$lib/constants/notifications';
-import { isReachable, markReachable } from '$lib/services/reachability';
-import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
+import { countUnreadNotifications, listUserNotifications } from '#lib/api/generated/index.js';
+import { createApiClient } from '#lib/api/index.js';
+import { NOTIFICATION_PREVIEW_LIMIT } from '#lib/constants/notifications.js';
+import { isReachable, markReachable } from '#lib/services/reachability.js';
+import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '#lib/utils/fetchTimeout.js';
 
 import type { LayoutLoad } from './$types';
 

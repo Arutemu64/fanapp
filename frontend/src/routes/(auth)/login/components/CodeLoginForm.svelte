@@ -1,18 +1,19 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
-	import { requestLoginCode } from '$lib/api/generated';
+	import { requestLoginCode } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
 	const client = createApiClient();
-	import { getApiErrorDetail, getApiFieldError } from '$lib/api/errors';
-	import CaptchaWidget, { captchaEnabled } from '$lib/components/CaptchaWidget.svelte';
-	import * as Alert from '$lib/components/ui/alert';
-	import { Button } from '$lib/components/ui/button';
-	import * as Field from '$lib/components/ui/field';
-	import { Input } from '$lib/components/ui/input';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { CaptchaGate } from '$lib/services/captcha.svelte';
-	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
 	import { Mail } from '@lucide/svelte';
 	import { onDestroy } from 'svelte';
+
+	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
+	import CaptchaWidget, { captchaEnabled } from '#lib/components/CaptchaWidget.svelte';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Field from '#lib/components/ui/field/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { CaptchaGate } from '#lib/services/captcha.svelte.js';
+	import { isValidEmail, normalizeEmail } from '#lib/utils/validation.js';
 
 	interface Props {
 		email: string;

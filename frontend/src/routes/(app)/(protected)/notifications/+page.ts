@@ -1,14 +1,15 @@
-import type { NotificationDto } from '$lib/api/generated';
+import { error } from '@sveltejs/kit';
 
-import { createApiClient } from '$lib/api';
-import { listUserNotifications } from '$lib/api/generated';
+import type { NotificationDto } from '#lib/api/generated/index.js';
+
+import { listUserNotifications } from '#lib/api/generated/index.js';
+import { createApiClient } from '#lib/api/index.js';
 import {
 	NOTIFICATION_PAGE_REQUEST_LIMIT,
 	NOTIFICATION_PAGE_SIZE
-} from '$lib/constants/notifications';
-import { isReachable } from '$lib/services/reachability';
-import { fetchWithCache, userScope } from '$lib/utils/offlineCache';
-import { error } from '@sveltejs/kit';
+} from '#lib/constants/notifications.js';
+import { isReachable } from '#lib/services/reachability.js';
+import { fetchWithCache, userScope } from '#lib/utils/offlineCache.js';
 
 import type { PageLoad } from './$types';
 

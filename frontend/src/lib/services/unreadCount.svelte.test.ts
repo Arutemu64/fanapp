@@ -8,11 +8,11 @@ const server = vi.hoisted((): { count: number; ok: boolean; error: unknown } => 
 	error: undefined
 }));
 
-vi.mock('$lib/api', () => ({
+vi.mock('#lib/api/index.js', () => ({
 	createApiClient: () => ({})
 }));
 
-vi.mock('$lib/api/generated', () => ({
+vi.mock('#lib/api/generated/index.js', () => ({
 	countUnreadNotifications: () =>
 		Promise.resolve({
 			data: { count: server.count },

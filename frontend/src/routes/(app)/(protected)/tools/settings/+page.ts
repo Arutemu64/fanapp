@@ -1,11 +1,12 @@
-import type { BackTarget } from '$lib/types/navigation';
-
-import { createApiClient } from '$lib/api';
-import { throwApiError } from '$lib/api/errors';
-import { getSettings } from '$lib/api/generated';
-import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
-import { canManageSettings } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
+
+import type { BackTarget } from '#lib/types/navigation.js';
+
+import { throwApiError } from '#lib/api/errors.js';
+import { getSettings } from '#lib/api/generated/index.js';
+import { createApiClient } from '#lib/api/index.js';
+import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '#lib/utils/fetchTimeout.js';
+import { canManageSettings } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';
 
@@ -38,7 +39,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 
 	return {
 		title: 'Настройки фестиваля',
-		back: { href: '/tools', label: 'Назад к инструментам' } satisfies BackTarget,
+		back: { href: 'tools', label: 'Назад к инструментам' } satisfies BackTarget,
 		settings: data
 	};
 };

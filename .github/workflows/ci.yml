@@ -204,8 +204,8 @@ jobs:
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    # `check`, `build` and `test` read PUBLIC_* via `$env/static/public`, which
-    # errors on any referenced var that is undefined at build time (`test` pulls
+    # `check`, `build` and `test` read PUBLIC_* via `$app/env/public`, which
+    # errors on any var src/env.ts declares that is unset at build time (`test` pulls
     # PUBLIC_TIMEZONE in through the formatters it covers). Supply them from the
     # same repository variables the publish workflow bakes in (empty is fine — the
     # vars just need to exist). `lint` ignores them.
@@ -286,8 +286,8 @@ jobs:
     defaults:
       run:
         working-directory: frontend
-    # The build reads PUBLIC_* via `$env/static/public`, which errors on any
-    # referenced-but-undefined var — supply the same repository variables the
+    # The build reads PUBLIC_* via `$app/env/public`, which errors on any
+    # declared-but-unset var — supply the same repository variables the
     # frontend matrix and publish workflow use (empty is fine; the names just
     # have to exist).
     env:

@@ -1,23 +1,25 @@
 <script lang="ts">
-	import type { ChangeEmailInput } from '$lib/api/generated';
 	import type { PinInputCell } from 'bits-ui';
 
-	import { createApiClient } from '$lib/api';
-	import { getApiErrorDetail, getApiFieldError } from '$lib/api/errors';
-	import { changeCurrentUserEmail, confirmEmailCode } from '$lib/api/generated';
-	import * as Alert from '$lib/components/ui/alert';
-	import { Button } from '$lib/components/ui/button';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import * as Field from '$lib/components/ui/field';
-	import { Input } from '$lib/components/ui/input';
-	import * as InputOTP from '$lib/components/ui/input-otp';
-	import { Label } from '$lib/components/ui/label';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { ResendCooldown } from '$lib/services/cooldown.svelte';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { isValidEmail, isValidOtp, normalizeEmail } from '$lib/utils/validation';
 	import { Mail } from '@lucide/svelte';
 	import { onDestroy } from 'svelte';
+
+	import type { ChangeEmailInput } from '#lib/api/generated/index.js';
+
+	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
+	import { changeCurrentUserEmail, confirmEmailCode } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Field from '#lib/components/ui/field/index.js';
+	import * as InputOTP from '#lib/components/ui/input-otp/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import { Label } from '#lib/components/ui/label/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { ResendCooldown } from '#lib/services/cooldown.svelte.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { isValidEmail, isValidOtp, normalizeEmail } from '#lib/utils/validation.js';
 
 	const client = createApiClient();
 

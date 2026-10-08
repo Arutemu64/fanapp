@@ -1,11 +1,12 @@
-import type { BackTarget } from '$lib/types/navigation';
-
-import { createApiClient } from '$lib/api';
-import { throwApiError } from '$lib/api/errors';
-import { listFeedback } from '$lib/api/generated';
-import { FEEDBACK_PAGE_REQUEST_LIMIT, FEEDBACK_PAGE_SIZE } from '$lib/constants/feedback';
-import { canReadFeedback } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
+
+import type { BackTarget } from '#lib/types/navigation.js';
+
+import { throwApiError } from '#lib/api/errors.js';
+import { listFeedback } from '#lib/api/generated/index.js';
+import { createApiClient } from '#lib/api/index.js';
+import { FEEDBACK_PAGE_REQUEST_LIMIT, FEEDBACK_PAGE_SIZE } from '#lib/constants/feedback.js';
+import { canReadFeedback } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';
 
@@ -40,7 +41,7 @@ export const load: PageLoad = async ({ fetch, parent }) => {
 	const feedback = data.feedback ?? [];
 	return {
 		title: 'Отзывы',
-		back: { href: '/tools', label: 'Назад к инструментам' } satisfies BackTarget,
+		back: { href: 'tools', label: 'Назад к инструментам' } satisfies BackTarget,
 		feedback: feedback.slice(0, FEEDBACK_PAGE_SIZE),
 		hasMore: feedback.length > FEEDBACK_PAGE_SIZE
 	};

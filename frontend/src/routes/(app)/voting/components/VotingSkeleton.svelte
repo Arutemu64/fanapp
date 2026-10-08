@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
 
 	// Placeholder that mirrors the voting grid — a status bar then a responsive
 	// grid of nomination cards (count line, title, footer action) — so the layout

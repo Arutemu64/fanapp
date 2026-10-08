@@ -1,9 +1,10 @@
 <script lang="ts">
-	import type { GetVotingStateOutput, VotingStatus } from '$lib/api/generated';
-
 	import { resolve } from '$app/paths';
-	import * as Alert from '$lib/components/ui/alert';
 	import { AlertCircle } from '@lucide/svelte';
+
+	import type { GetVotingStateOutput, VotingStatus } from '#lib/api/generated/index.js';
+
+	import * as Alert from '#lib/components/ui/alert/index.js';
 
 	interface Props {
 		votingState?: GetVotingStateOutput;
@@ -41,7 +42,7 @@
 		<Alert.Description class="flex items-center gap-1">
 			<span>{getStatusMessage(votingState.status)}</span>
 			{#if votingState.status === 'no_ticket'}
-				<a href={resolve('/profile/ticket')} class="font-medium underline">Привязать билет</a>
+				<a href={resolve('profile/ticket')} class="font-medium underline">Привязать билет</a>
 			{/if}
 		</Alert.Description>
 	</Alert.Root>

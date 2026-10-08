@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
-	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
-	import { reachability } from '$lib/services/reachability';
-	import { statusTitle } from '$lib/utils/errorTitle';
 	import { AlertCircle, ArrowLeft, Home, Lock, RotateCw } from '@lucide/svelte';
+
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Card from '#lib/components/ui/card/index.js';
+	import { reachability } from '#lib/services/reachability.js';
+	import { statusTitle } from '#lib/utils/errorTitle.js';
 
 	type Variant = 'fullscreen' | 'inline';
 
@@ -22,22 +22,6 @@
 	let status = $derived(page.status);
 	let errorMessage = $derived(shownError?.message);
 	let errorId = $derived(shownError?.errorId);
-
-	// A navigation normally replaces the error page. One that survives a
-	// navigation to another URL was rendered by a failed rendering-error
-	// boundary, which SvelteKit 2 never resets, so it would stay mounted over
-	// the destination (sveltejs/kit#15694). Reload onto the destination instead.
-	// Compared by URL, not by skipping the first call: afterNavigate also fires
-	// for the navigation that mounted this page, but a rendering error mounts
-	// after that navigation settles, so "first call" is timing-dependent.
-	// TODO: delete on SvelteKit 3 — fixed in @sveltejs/kit 3.0.0-next.8 (#16296),
-	// not backported to 2.x.
-	const renderedAt = page.url.href;
-	afterNavigate(({ to }) => {
-		if (to && to.url.href !== renderedAt) {
-			window.location.reload();
-		}
-	});
 
 	// Most load failures while offline surface here as a 500/503. Detect the real
 	// cause (backend unreachable) and show a calm connectivity page instead of a

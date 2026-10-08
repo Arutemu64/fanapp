@@ -1,9 +1,14 @@
-import { createApiClient } from '$lib/api';
-import { throwApiError } from '$lib/api/errors';
-import { listVotingNominations } from '$lib/api/generated';
-import { isBackendUnreachableStatus, isReachable, markReachable } from '$lib/services/reachability';
-import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 import { isHttpError } from '@sveltejs/kit';
+
+import { throwApiError } from '#lib/api/errors.js';
+import { listVotingNominations } from '#lib/api/generated/index.js';
+import { createApiClient } from '#lib/api/index.js';
+import {
+	isBackendUnreachableStatus,
+	isReachable,
+	markReachable
+} from '#lib/services/reachability.js';
+import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '#lib/utils/fetchTimeout.js';
 
 import type { PageLoad } from './$types';
 

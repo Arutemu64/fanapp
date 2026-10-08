@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
-	import { getEventsClient } from '$lib/services/events.svelte';
 	import { onMount } from 'svelte';
+
+	import { getEventsClient } from '#lib/services/events.svelte.js';
 
 	import type { LayoutProps } from './$types';
 

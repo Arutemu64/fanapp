@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { PRIMARY_NAV_ITEMS } from '$lib/data/nav';
-	import { isNavItemActive } from '$lib/utils/nav';
+
+	import { PRIMARY_NAV_ITEMS } from '#lib/data/nav.js';
+	import { isNavItemActive } from '#lib/utils/nav.js';
 
 	interface Props {
 		activeUrl: string;
@@ -78,7 +79,7 @@
 					// Re-tapping the tab whose root you're already on returns to the top, the
 					// native bottom-bar affordance. From a nested page (active by prefix, not
 					// exact) the tap should navigate to the root instead, so gate on an exact match.
-					if (activeUrl === href) {
+					if (activeUrl === resolve(href)) {
 						event.preventDefault();
 						scrollToTop();
 					}

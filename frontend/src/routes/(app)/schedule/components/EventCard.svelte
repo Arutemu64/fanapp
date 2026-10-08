@@ -1,16 +1,5 @@
 <script lang="ts">
-	import type { CurrentUserDto } from '$lib/api/generated';
-	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
-
 	import { invalidate } from '$app/navigation';
-	import { createApiClient } from '$lib/api';
-	import { setEventAsCurrent, uncheckCurrentEvent, updateScheduleEvent } from '$lib/api/generated';
-	import NumberBadge from '$lib/components/NumberBadge.svelte';
-	import { Badge } from '$lib/components/ui/badge';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { formatDuration, formatUntil, pluralize } from '$lib/utils/formatters';
-	import { offlineWriteGate } from '$lib/utils/offlineAction';
-	import { canManageSchedule } from '$lib/utils/permissions';
 	import {
 		Ban,
 		Bell,
@@ -23,6 +12,22 @@
 		Shuffle,
 		XCircle
 	} from '@lucide/svelte';
+
+	import type { CurrentUserDto } from '#lib/api/generated/index.js';
+	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
+
+	import {
+		setEventAsCurrent,
+		uncheckCurrentEvent,
+		updateScheduleEvent
+	} from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
+	import NumberBadge from '#lib/components/NumberBadge.svelte';
+	import { Badge } from '#lib/components/ui/badge/index.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { formatDuration, formatUntil, pluralize } from '#lib/utils/formatters.js';
+	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
+	import { canManageSchedule } from '#lib/utils/permissions.js';
 
 	import ConfirmActionModal from './ConfirmActionModal.svelte';
 	import MoveEventModal from './MoveEventModal.svelte';

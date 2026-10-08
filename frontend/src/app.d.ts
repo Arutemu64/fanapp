@@ -3,8 +3,8 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
 
-import type { CurrentUserDto } from '$lib/api/generated';
-import type { BackTarget, NavbarAction } from '$lib/types/navigation';
+import type { CurrentUserDto } from '#lib/api/generated/index.js';
+import type { BackTarget, NavbarAction } from '#lib/types/navigation.js';
 
 declare global {
 	namespace App {

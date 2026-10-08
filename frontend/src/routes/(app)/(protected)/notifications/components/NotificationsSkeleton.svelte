@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
 
 	// Placeholder that mirrors the notifications feed — an intro line then a stack
 	// of list-item cards (round bell avatar, title line, timestamp) — so the layout

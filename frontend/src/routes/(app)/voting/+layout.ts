@@ -1,4 +1,4 @@
-import { fetchVotingStatus } from '$lib/utils/votingStatus';
+import { fetchVotingStatus } from '#lib/utils/votingStatus.js';
 
 import type { LayoutLoad } from './$types';
 

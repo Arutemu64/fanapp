@@ -1,8 +1,9 @@
-import type { SocialProvider } from '$lib/api/generated';
 import type { Component } from 'svelte';
 
 import IconTelegram from '~icons/simple-icons/telegram';
 import IconVk from '~icons/simple-icons/vk';
+
+import type { SocialProvider } from '#lib/api/generated/index.js';
 
 export interface SocialProviderPresentation {
 	/** Brand name shown to users, e.g. "VK ID". All login/link copy derives from it. */

@@ -17,7 +17,7 @@ trustedRegistries:
 ignored:
   # DL3064 flags "potentially sensitive data" in ARG/ENV. The frontend build must
   # pass its PUBLIC_* config as build args — this is a static SPA with no server,
-  # so `$env/static/public` values are inlined into the bundle at build time. They
+  # so `$app/env/public` values are inlined into the bundle at build time. They
   # are public, non-secret deploy constants by design (see frontend/Dockerfile).
   # Real secrets are never build args in this project (runtime env / mounted files
   # only, per AGENTS.md), so the rule only ever fires false positives here.

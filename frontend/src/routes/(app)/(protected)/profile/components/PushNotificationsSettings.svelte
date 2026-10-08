@@ -1,9 +1,11 @@
 <script lang="ts">
-	import type { CurrentUserDto, UpdateUserSettingsInput } from '$lib/api/generated';
-
+	import { PUBLIC_VAPID_KEY, PUBLIC_VK_GROUP_ID } from '$app/env/public';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_VAPID_KEY, PUBLIC_VK_GROUP_ID } from '$env/static/public';
-	import { createApiClient } from '$lib/api';
+	import * as Sentry from '@sentry/sveltekit';
+	import { onMount } from 'svelte';
+
+	import type { CurrentUserDto, UpdateUserSettingsInput } from '#lib/api/generated/index.js';
+
 	// `checkSubscription` and `sendTestNotification` are aliased so they don't
 	// clash with this component's own handlers of the same name below.
 	import {
@@ -12,15 +14,14 @@
 		subscribe,
 		unsubscribe,
 		updateCurrentUserSettings
-	} from '$lib/api/generated';
-	import MenuGroup from '$lib/components/MenuGroup.svelte';
-	import { Button } from '$lib/components/ui/button';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { getPwaService } from '$lib/services/pwa.svelte';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { offlineWriteGate } from '$lib/utils/offlineAction';
-	import * as Sentry from '@sentry/sveltekit';
-	import { onMount } from 'svelte';
+	} from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
+	import MenuGroup from '#lib/components/MenuGroup.svelte';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { getPwaService } from '#lib/services/pwa.svelte.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
 	import { urlBase64ToUint8Array } from './push';
 	import SettingsSection from './SettingsSection.svelte';
@@ -404,7 +405,7 @@
 				<div class="flex flex-wrap gap-x-4">
 					{#if !hasVkAccount}
 						<a
-							href={resolve('/profile/account')}
+							href={resolve('profile/account')}
 							class="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline"
 						>
 							Подключить ВКонтакте

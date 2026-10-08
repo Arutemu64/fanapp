@@ -1,12 +1,13 @@
-import type { HandleClientError } from '@sveltejs/kit';
+import type { HandleClientError } from '@sveltejs/kit/hooks';
 
 import {
 	PUBLIC_SENTRY_DSN,
 	PUBLIC_SENTRY_ENVIRONMENT,
 	PUBLIC_SENTRY_TRACES_SAMPLE_RATE
-} from '$env/static/public';
-import { readStorage, writeStorage } from '$lib/utils/safeStorage';
+} from '$app/env/public';
 import * as Sentry from '@sentry/sveltekit';
+
+import { readStorage, writeStorage } from '#lib/utils/safeStorage.js';
 
 // Server errors belong to the backend, which reports them with a full stack
 // trace and request context; a frontend mirror is a duplicate with none of that,
@@ -183,18 +184,22 @@ function createErrorId(): string {
 
 // Captures here rather than through Sentry.handleErrorWithSentry: the wrapper
 // reports before calling us and keeps the event id to itself, so its event could
-// never carry the id we show. Same filter as the wrapper — a 4xx reaching this
-// hook is a route SvelteKit could not match, not an app bug. The id is only
-// shown when an event was actually sent: no DSN, or an error `beforeSend` drops
-// (a stale chunk, an error carrying a 5xx `status`), would leave the user
-// quoting an id nobody can look up.
-export const handleError: HandleClientError = ({ error, status }) => {
+// never carry the id we show. The id is only shown when an event was actually
+// sent: no DSN, or an error `beforeSend` drops (a stale chunk, an error carrying
+// a 5xx `status`), would leave the user quoting an id nobody can look up.
+export const handleError: HandleClientError = ({ kind, error }) => {
+	// An `error(...)` body (a 403, the `(protected)` layout's offline 503) is an
+	// expected outcome whose message is already the copy the page should show.
+	if (kind === 'app') return;
+
 	const err = error as { code?: string } | undefined;
 	const code = err?.code ?? 'UNKNOWN';
+	// Also replaces the English message SvelteKit gives its own framework errors.
 	const message = 'В приложении что-то сломалось. Попробуй обновить страницу.';
 
+	// A framework error is SvelteKit's own — a route it could not match — not an app bug.
 	if (
-		status < 500 ||
+		kind === 'framework' ||
 		!PUBLIC_SENTRY_DSN ||
 		isStaleChunkError(error) ||
 		isServerSideHttpError(error)

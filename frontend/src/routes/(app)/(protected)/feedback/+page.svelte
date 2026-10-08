@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
-	import { getApiErrorDetail, getApiFieldError } from '$lib/api/errors';
-	import { submitFeedback } from '$lib/api/generated';
+	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
+	import { submitFeedback } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
 	const client = createApiClient();
-	import OfflineUnavailableState from '$lib/components/OfflineUnavailableState.svelte';
-	import SectionIntro from '$lib/components/SectionIntro.svelte';
-	import * as Alert from '$lib/components/ui/alert';
-	import { Button } from '$lib/components/ui/button';
-	import * as Field from '$lib/components/ui/field';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { Textarea } from '$lib/components/ui/textarea';
-	import { getToastService } from '$lib/services/toasts.svelte';
+	import OfflineUnavailableState from '#lib/components/OfflineUnavailableState.svelte';
+	import SectionIntro from '#lib/components/SectionIntro.svelte';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Field from '#lib/components/ui/field/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { Textarea } from '#lib/components/ui/textarea/index.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
 
 	import type { PageProps } from './$types';
 

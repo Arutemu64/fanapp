@@ -1,15 +1,16 @@
 <script lang="ts">
-	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
-
 	import { invalidate } from '$app/navigation';
-	import { createApiClient } from '$lib/api';
-	import { getApiErrorDetail } from '$lib/api/errors';
-	import { deleteSubscription } from '$lib/api/generated';
-	import * as Alert from '$lib/components/ui/alert';
-	import * as AlertDialog from '$lib/components/ui/alert-dialog';
-	import { Button } from '$lib/components/ui/button';
-	import { getToastService } from '$lib/services/toasts.svelte';
 	import { Bell } from '@lucide/svelte';
+
+	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
+
+	import { getApiErrorDetail } from '#lib/api/errors.js';
+	import { deleteSubscription } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
+	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
 
 	const client = createApiClient();
 

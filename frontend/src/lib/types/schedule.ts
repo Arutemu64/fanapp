@@ -1,4 +1,4 @@
-import type { ScheduleEventFullDto } from '$lib/api/generated';
+import type { ScheduleEventFullDto } from '#lib/api/generated/index.js';
 
 /** The viewer's subscription to a single event (id + reminder threshold). */
 type EventSubscription = { id: string; counter: number };

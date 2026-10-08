@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Skeleton } from '$lib/components/ui/skeleton';
+	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
 
 	// Placeholder that mirrors the schedule's real structure — filter bar, then
 	// block sections of card rows (leading number box, two text lines, trailing

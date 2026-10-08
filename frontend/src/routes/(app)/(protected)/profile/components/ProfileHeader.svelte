@@ -1,12 +1,13 @@
 <script lang="ts">
-	import type { CurrentUserDto } from '$lib/api/generated';
-
-	import * as Avatar from '$lib/components/ui/avatar';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Button } from '$lib/components/ui/button';
-	import { offlineWriteGate } from '$lib/utils/offlineAction';
-	import { getAvatarInitials, getRoleLabel } from '$lib/utils/users';
 	import { Pencil } from '@lucide/svelte';
+
+	import type { CurrentUserDto } from '#lib/api/generated/index.js';
+
+	import * as Avatar from '#lib/components/ui/avatar/index.js';
+	import { Badge } from '#lib/components/ui/badge/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
+	import { getAvatarInitials, getRoleLabel } from '#lib/utils/users.js';
 
 	import EditProfileModal from './EditProfileModal.svelte';
 

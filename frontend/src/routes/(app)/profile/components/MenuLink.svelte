@@ -1,13 +1,14 @@
 <script lang="ts">
-	import type { Pathname } from '$app/types';
+	import type { Path } from '$app/types';
 	import type { Component } from 'svelte';
 
 	import { resolve } from '$app/paths';
-	import * as Item from '$lib/components/ui/item';
 	import { ChevronRight } from '@lucide/svelte';
 
+	import * as Item from '#lib/components/ui/item/index.js';
+
 	interface Props {
-		href: Pathname;
+		href: Path;
 		label: string;
 		icon: Component;
 		/** Current state shown before the chevron, so it reads without opening the page. */

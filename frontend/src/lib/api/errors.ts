@@ -1,6 +1,6 @@
-import type { ErrorMessage } from '$lib/api/generated';
-
 import { error as kitError } from '@sveltejs/kit';
+
+import type { ErrorMessage } from '#lib/api/generated/index.js';
 
 // The closed set of error codes the API can return, generated from the backend
 // OpenAPI spec (ErrorMessage.code enum). Drives both typo safety on the message

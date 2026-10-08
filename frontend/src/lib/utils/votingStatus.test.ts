@@ -1,6 +1,6 @@
-import type { GetVotingStateOutput } from '$lib/api/generated';
-
 import { describe, expect, it } from 'vitest';
+
+import type { GetVotingStateOutput } from '#lib/api/generated/index.js';
 
 import { hasVotingEnded, isVotingOpenNow, isVotingWindowOpen } from './votingStatus';
 

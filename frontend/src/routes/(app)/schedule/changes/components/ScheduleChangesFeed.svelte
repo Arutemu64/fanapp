@@ -1,16 +1,16 @@
 <script lang="ts">
-	import type { ScheduleChangeFullDto } from '$lib/api/generated';
+	import type { ScheduleChangeFullDto } from '#lib/api/generated/index.js';
 
-	import { createApiClient } from '$lib/api';
-	import { listScheduleChanges } from '$lib/api/generated';
-	import EmptyState from '$lib/components/EmptyState.svelte';
-	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
+	import { listScheduleChanges } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
+	import EmptyState from '#lib/components/EmptyState.svelte';
+	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
 	import {
 		SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT,
 		SCHEDULE_CHANGES_PAGE_SIZE
-	} from '$lib/constants/scheduleChanges';
-	import { PaginatedFeed } from '$lib/services/feed.svelte';
-	import { getToastService } from '$lib/services/toasts.svelte';
+	} from '#lib/constants/scheduleChanges.js';
+	import { PaginatedFeed } from '#lib/services/feed.svelte.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
 
 	import ScheduleChangeCard from './ScheduleChangeCard.svelte';
 

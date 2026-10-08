@@ -1,15 +1,16 @@
-import type { NotificationDto } from '$lib/api/generated';
+import { PUBLIC_API_URL } from '$app/env/public';
+import * as Sentry from '@sentry/sveltekit';
+import { createContext } from 'svelte';
 
-import { PUBLIC_API_URL } from '$env/static/public';
+import type { NotificationDto } from '#lib/api/generated/index.js';
+
 import {
 	isReachable,
 	markReachable,
 	onReachableChange,
 	probeReachability
-} from '$lib/services/reachability';
-import { requestReconnectRefresh } from '$lib/utils/reconnectRefresh';
-import * as Sentry from '@sentry/sveltekit';
-import { createContext } from 'svelte';
+} from '#lib/services/reachability.js';
+import { requestReconnectRefresh } from '#lib/utils/reconnectRefresh.js';
 
 const [getEvents, setEvents] = createContext<EventsClient>();
 

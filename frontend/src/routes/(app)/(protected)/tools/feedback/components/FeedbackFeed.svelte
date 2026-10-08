@@ -1,14 +1,14 @@
 <script lang="ts">
-	import type { FeedbackDto } from '$lib/api/generated';
+	import type { FeedbackDto } from '#lib/api/generated/index.js';
 
-	import { createApiClient } from '$lib/api';
-	import { listFeedback } from '$lib/api/generated';
-	import EmptyState from '$lib/components/EmptyState.svelte';
-	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
-	import MenuGroup from '$lib/components/MenuGroup.svelte';
-	import { FEEDBACK_PAGE_REQUEST_LIMIT, FEEDBACK_PAGE_SIZE } from '$lib/constants/feedback';
-	import { PaginatedFeed } from '$lib/services/feed.svelte';
-	import { getToastService } from '$lib/services/toasts.svelte';
+	import { listFeedback } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
+	import EmptyState from '#lib/components/EmptyState.svelte';
+	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
+	import MenuGroup from '#lib/components/MenuGroup.svelte';
+	import { FEEDBACK_PAGE_REQUEST_LIMIT, FEEDBACK_PAGE_SIZE } from '#lib/constants/feedback.js';
+	import { PaginatedFeed } from '#lib/services/feed.svelte.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
 
 	import FeedbackItem from './FeedbackItem.svelte';
 

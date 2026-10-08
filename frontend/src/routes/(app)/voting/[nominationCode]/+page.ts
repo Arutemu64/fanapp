@@ -1,15 +1,20 @@
-import type { BackTarget } from '$lib/types/navigation';
-
-import { createApiClient } from '$lib/api';
-import { throwApiError } from '$lib/api/errors';
-import { getVotingNomination } from '$lib/api/generated';
-import { isBackendUnreachableStatus, isReachable, markReachable } from '$lib/services/reachability';
-import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 import { isHttpError } from '@sveltejs/kit';
+
+import type { BackTarget } from '#lib/types/navigation.js';
+
+import { throwApiError } from '#lib/api/errors.js';
+import { getVotingNomination } from '#lib/api/generated/index.js';
+import { createApiClient } from '#lib/api/index.js';
+import {
+	isBackendUnreachableStatus,
+	isReachable,
+	markReachable
+} from '#lib/services/reachability.js';
+import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '#lib/utils/fetchTimeout.js';
 
 import type { PageLoad } from './$types';
 
-const back = { href: '/voting', label: 'Назад к номинациям' } satisfies BackTarget;
+const back = { href: 'voting', label: 'Назад к номинациям' } satisfies BackTarget;
 
 export const load: PageLoad = async ({ params, fetch, depends }) => {
 	depends('app:voting:nomination');

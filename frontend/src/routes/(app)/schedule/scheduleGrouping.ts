@@ -4,7 +4,7 @@
 // interlude contracts below are unit-testable and the page script stays about
 // wiring, not list surgery.
 
-import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
+import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 
 type ScheduleNominationGroup = {
 	// Identity for the keyed {#each}. Assigned from the unfiltered schedule so

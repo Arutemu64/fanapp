@@ -1,18 +1,19 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
-	import { getApiErrorDetail, getApiFieldError } from '$lib/api/errors';
-	import { sendBroadcast } from '$lib/api/generated';
+	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
+	import { sendBroadcast } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
 	const client = createApiClient();
 	import { invalidate } from '$app/navigation';
-	import SectionIntro from '$lib/components/SectionIntro.svelte';
-	import * as Alert from '$lib/components/ui/alert';
-	import { Button } from '$lib/components/ui/button';
-	import { Checkbox } from '$lib/components/ui/checkbox';
-	import * as Field from '$lib/components/ui/field';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { Textarea } from '$lib/components/ui/textarea';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { feedSnapshotKey } from '$lib/utils/feed';
+
+	import SectionIntro from '#lib/components/SectionIntro.svelte';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
+	import * as Field from '#lib/components/ui/field/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { Textarea } from '#lib/components/ui/textarea/index.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { feedSnapshotKey } from '#lib/utils/feed.js';
 
 	import type { PageProps } from './$types';
 

@@ -1,6 +1,7 @@
-import { isReachable } from '$lib/services/reachability';
-import { LOGIN_NEXT_PARAM } from '$lib/utils/auth';
 import { error, redirect } from '@sveltejs/kit';
+
+import { isReachable } from '#lib/services/reachability.js';
+import { LOGIN_NEXT_PARAM } from '#lib/utils/auth.js';
 
 import type { LayoutLoad } from './$types';
 
@@ -18,7 +19,7 @@ export const load: LayoutLoad = async ({ parent, url }) => {
 		if (!isReachable()) {
 			// hooks.client.ts drops every 5xx HttpError from Sentry, so this expected
 			// offline blip never becomes a GlitchTip issue.
-			error(503, { message: 'Нет связи с сервером' });
+			error(503, 'Нет связи с сервером');
 		}
 
 		// Reachable and still no user: a genuine guest — send them to login,

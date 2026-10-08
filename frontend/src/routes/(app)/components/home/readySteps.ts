@@ -1,5 +1,5 @@
-import type { CurrentUserDto } from '$lib/api/generated';
-import type { DevicePushState } from '$lib/utils/pushSubscription';
+import type { CurrentUserDto } from '#lib/api/generated/index.js';
+import type { DevicePushState } from '#lib/utils/pushSubscription.js';
 
 export type ReadyStepKey = 'account' | 'install' | 'notifications' | 'subscribe' | 'ticket';
 

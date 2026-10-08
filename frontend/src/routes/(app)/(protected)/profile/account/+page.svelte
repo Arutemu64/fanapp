@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { clearOAuthErrorParam, OAUTH_LINK_ERROR_PARAM } from '$lib/utils/oauthErrors';
 	import { onMount } from 'svelte';
+
+	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { clearOAuthErrorParam, OAUTH_LINK_ERROR_PARAM } from '#lib/utils/oauthErrors.js';
 
 	import type { PageProps } from './$types';
 

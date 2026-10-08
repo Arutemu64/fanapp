@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+
 	// Bundled (not static/) so Vite content-hashes it like the other brand assets.
-	import logo from '$lib/assets/logo.svg';
-	import { PRIMARY_NAV_ITEMS } from '$lib/data/nav';
-	import { isNavItemActive } from '$lib/utils/nav';
+	import logo from '#lib/assets/logo.svg';
+	import { PRIMARY_NAV_ITEMS } from '#lib/data/nav.js';
+	import { isNavItemActive } from '#lib/utils/nav.js';
 
 	interface Props {
 		activeUrl: string;
@@ -22,7 +23,7 @@
 	aria-label="Разделы"
 	class="hidden h-full w-64 shrink-0 flex-col border-r border-border bg-card p-4 md:flex"
 >
-	<a href={resolve('/')} class="mb-6 flex items-center justify-center ps-0">
+	<a href={resolve('')} class="mb-6 flex items-center justify-center ps-0">
 		<!-- The mark is pure black shapes on transparent (incl. a black "2026" pill with
 			white text); `dark:invert` flips it to white shapes / a white pill with black
 			text with no separate dark asset to maintain. -->
@@ -46,7 +47,7 @@
 				onclick={(event: MouseEvent) => {
 					// Mirror the bottom nav: re-tapping the current root eases back to the top,
 					// only on an exact match so a nested page still navigates to the root.
-					if (activeUrl === href) {
+					if (activeUrl === resolve(href)) {
 						event.preventDefault();
 						scrollToTop();
 					}

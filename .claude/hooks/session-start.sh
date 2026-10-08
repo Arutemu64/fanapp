@@ -53,11 +53,11 @@ fi
 # Run sudo correctly whether or not we are already root.
 if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo"; fi
 
-# Seed / reconcile the root .env so `$env/static/public` resolves during the
+# Seed / reconcile the root .env so `$app/env/public` resolves during the
 # svelte-kit sync that pnpm's `prepare` runs below (the frontend reads env from
-# the repo root — see frontend/svelte.config.js). SvelteKit inlines static
-# public env at build time and turns any referenced-but-undefined member into a
-# hard error, so every PUBLIC_* the code imports must exist as a key or
+# the repo root — see `env.dir` in frontend/vite.config.ts). SvelteKit inlines
+# static public env at build time and turns any variable frontend/src/env.ts
+# declares but the environment lacks into a hard error, so every one must exist as a key or
 # `pnpm check`/`lint`/`build` fail in the cloud container. Placeholder values
 # suffice: the gate only needs the keys to exist, not real secrets. .env is
 # gitignored, so nothing leaks.

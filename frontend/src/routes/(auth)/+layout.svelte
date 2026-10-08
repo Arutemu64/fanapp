@@ -1,7 +1,7 @@
 <script lang="ts">
 	// Bundled (not static/) so Vite content-hashes it like the other brand assets.
-	import logo from '$lib/assets/logo.svg';
-	import SkipLink from '$lib/components/SkipLink.svelte';
+	import logo from '#lib/assets/logo.svg';
+	import SkipLink from '#lib/components/SkipLink.svelte';
 
 	import type { LayoutProps } from './$types';
 

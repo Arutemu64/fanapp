@@ -1,8 +1,9 @@
 <script lang="ts">
 	import type { Component } from 'svelte';
 
-	import { getThemeService, type ThemeMode } from '$lib/services/theme.svelte';
 	import { Monitor, Moon, Sun } from '@lucide/svelte';
+
+	import { getThemeService, type ThemeMode } from '#lib/services/theme.svelte.js';
 
 	const theme = getThemeService();
 

@@ -1,12 +1,13 @@
 <script lang="ts">
-	import type { Pathname } from '$app/types';
+	import type { Path } from '$app/types';
 	import type { Component } from 'svelte';
 
 	import { resolve } from '$app/paths';
-	import MenuGroup from '$lib/components/MenuGroup.svelte';
-	import * as Item from '$lib/components/ui/item';
-	import { getPwaService } from '$lib/services/pwa.svelte';
 	import { Bell, CalendarHeart, ChevronRight, Download, Ticket, UserPlus } from '@lucide/svelte';
+
+	import MenuGroup from '#lib/components/MenuGroup.svelte';
+	import * as Item from '#lib/components/ui/item/index.js';
+	import { getPwaService } from '#lib/services/pwa.svelte.js';
 
 	import type { ReadyStepKey } from './readySteps';
 
@@ -24,7 +25,7 @@
 		title: string;
 		description: string;
 		icon: Component;
-		href?: Pathname;
+		href?: Path;
 		onclick?: () => void;
 	}
 
@@ -41,14 +42,14 @@
 					title: 'Создать аккаунт',
 					description: 'Нужен для голосования и подписки на выступления программы.',
 					icon: UserPlus,
-					href: '/login'
+					href: 'login'
 				};
 			case 'ticket':
 				return {
 					title: 'Привязать билет',
 					description: 'Открывает доступ к голосованию в конкурсных номинациях.',
 					icon: Ticket,
-					href: '/profile/ticket'
+					href: 'profile/ticket'
 				};
 			case 'subscribe':
 				return {
@@ -56,14 +57,14 @@
 					description:
 						'Отметь интересные номера в программе\u00A0— напомним, когда до них дойдёт очередь.',
 					icon: CalendarHeart,
-					href: '/schedule'
+					href: 'schedule'
 				};
 			case 'notifications':
 				return {
 					title: 'Включить уведомления',
 					description: 'Напоминания о выступлениях и новости фестиваля придут сразу на телефон.',
 					icon: Bell,
-					href: '/profile/notifications'
+					href: 'profile/notifications'
 				};
 			case 'install':
 				return {

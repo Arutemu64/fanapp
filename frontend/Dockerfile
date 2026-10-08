@@ -52,7 +52,7 @@ RUN --mount=type=cache,target=/pnpm/store \
 
 COPY . .
 
-# PUBLIC_* values are read by `$env/static/public` and inlined into the bundle at
+# PUBLIC_* values are read by `$app/env/public` and inlined into the bundle at
 # build time (this is a static SPA — there is no server to inject them at
 # runtime). They must therefore be supplied as build args. All are public,
 # non-secret deploy constants.

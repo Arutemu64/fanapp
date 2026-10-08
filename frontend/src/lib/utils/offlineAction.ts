@@ -1,4 +1,4 @@
-import { getOfflineService } from '$lib/services/offline.svelte';
+import { getOfflineService } from '#lib/services/offline.svelte.js';
 
 /**
  * Hint shown on a write control that is disabled because the backend is

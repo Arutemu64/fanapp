@@ -1,6 +1,7 @@
 <script lang="ts">
-	import * as InputGroup from '$lib/components/ui/input-group';
 	import { Eye, EyeOff, Lock } from '@lucide/svelte';
+
+	import * as InputGroup from '#lib/components/ui/input-group/index.js';
 
 	interface Props {
 		value: string;

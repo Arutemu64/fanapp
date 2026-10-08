@@ -3,16 +3,17 @@
 
 	import '../app.css';
 
-	import Toaster from '$lib/components/ui/sonner/sonner.svelte';
-	import UpdatePrompt from '$lib/components/UpdatePrompt.svelte';
-	import { setEventsClient } from '$lib/services/events.svelte';
-	import { setOfflineService } from '$lib/services/offline.svelte';
-	import { setPwaService } from '$lib/services/pwa.svelte';
-	import { setThemeService } from '$lib/services/theme.svelte';
-	import { setToastService } from '$lib/services/toasts.svelte';
-	import { registerServiceWorker } from '$lib/utils/serviceWorker';
 	import * as Sentry from '@sentry/sveltekit';
 	import { onDestroy, onMount } from 'svelte';
+
+	import Toaster from '#lib/components/ui/sonner/sonner.svelte';
+	import UpdatePrompt from '#lib/components/UpdatePrompt.svelte';
+	import { setEventsClient } from '#lib/services/events.svelte.js';
+	import { setOfflineService } from '#lib/services/offline.svelte.js';
+	import { setPwaService } from '#lib/services/pwa.svelte.js';
+	import { setThemeService } from '#lib/services/theme.svelte.js';
+	import { setToastService } from '#lib/services/toasts.svelte.js';
+	import { registerServiceWorker } from '#lib/utils/serviceWorker.js';
 
 	import type { LayoutProps } from './$types';
 

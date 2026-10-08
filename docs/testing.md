@@ -319,7 +319,7 @@ Config lives in the `test` block of `frontend/vite.config.ts`, not a
 `vitest.config.ts` of its own — that is what the
 [Svelte testing docs](https://svelte.dev/docs/svelte/testing) and `sv add
 vitest` do, and it is load-bearing: tests run through the SvelteKit plugin, so
-`$lib`/`$app` imports resolve and runes compile. `resolve.conditions` is set to
+`#lib`/`$app` imports resolve and runes compile. `resolve.conditions` is set to
 `['browser']` under `VITEST` so packages resolve their browser entry points even
 though the runner is Node.
 

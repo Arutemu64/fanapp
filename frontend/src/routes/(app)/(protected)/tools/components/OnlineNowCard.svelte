@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
-	import { countOnlineUsers } from '$lib/api/generated';
-	import { pluralize } from '$lib/utils/formatters';
 	import { Activity } from '@lucide/svelte';
+
+	import { countOnlineUsers } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
+	import { pluralize } from '#lib/utils/formatters.js';
 
 	// Coarse on purpose: the figure is a rough "how many are here now", and a
 	// user's presence marker ages out server-side within ~45s, so a tighter poll

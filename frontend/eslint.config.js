@@ -1,5 +1,6 @@
 import { includeIgnoreFile } from '@eslint/compat';
 import js from '@eslint/js';
+import { loadConfig } from '@sveltejs/load-config';
 import prettier from 'eslint-config-prettier';
 import perfectionist from 'eslint-plugin-perfectionist';
 import svelte from 'eslint-plugin-svelte';
@@ -8,7 +9,12 @@ import globals from 'globals';
 import path from 'node:path';
 import ts from 'typescript-eslint';
 
-import svelteConfig from './svelte.config.js';
+// SvelteKit 3 keeps the Svelte config in vite.config.ts; load-config reads it from
+// there (https://sveltejs.github.io/eslint-plugin-svelte/user-guide/). The resolved
+// config carries a function default under `typescript`, which `eslint --cache`
+// cannot serialize, so it is dropped — the parser doesn't read it.
+const { typescript: _typescript, ...svelteConfig } =
+	(await loadConfig('./', { traverse: false }))?.config ?? {};
 
 const gitignorePath = path.resolve(import.meta.dirname, '.gitignore');
 
@@ -113,20 +119,17 @@ export default defineConfig(
 		}
 	},
 	{
-		// These files live outside the SvelteKit TS project: root config files,
-		// build scripts and the service worker (which SvelteKit deliberately
-		// excludes from the app tsconfig). The project service can't resolve them,
-		// so turn off type-aware linting here to avoid parser errors. The
-		// Playwright suite is NOT listed: e2e/tsconfig.json is the nearest tsconfig
-		// for its files, so it keeps type-aware rules — notably no-floating-promises,
+		// These root config files live outside every TS project (the app's and the
+		// service worker's, src/service-worker/tsconfig.json). The project service
+		// can't resolve them, so turn off type-aware linting here to avoid parser
+		// errors. The Playwright suite is NOT listed: e2e/tsconfig.json is the
+		// nearest tsconfig for its files, so it keeps type-aware rules — notably no-floating-promises,
 		// which catches a missing `await` on a Playwright call
 		// (https://playwright.dev/docs/best-practices). The Playwright configs stay
 		// here because their nearest tsconfig is the app one, which excludes them.
 		files: [
 			'eslint.config.js',
-			'svelte.config.js',
 			'openapi-ts.config.ts',
-			'src/service-worker.ts',
 			'playwright.config.ts',
 			'playwright.gallery.config.ts'
 		],

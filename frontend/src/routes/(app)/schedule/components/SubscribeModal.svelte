@@ -1,16 +1,17 @@
 <script lang="ts">
-	import type { ScheduleEventFullDto } from '$lib/api/generated';
-
 	import { invalidate } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { createApiClient } from '$lib/api';
-	import { getApiErrorDetail } from '$lib/api/errors';
-	import { newSubscription } from '$lib/api/generated';
-	import * as Alert from '$lib/components/ui/alert';
-	import { Button } from '$lib/components/ui/button';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import { getToastService } from '$lib/services/toasts.svelte';
 	import { BellRing, Minus, Plus } from '@lucide/svelte';
+
+	import type { ScheduleEventFullDto } from '#lib/api/generated/index.js';
+
+	import { getApiErrorDetail } from '#lib/api/errors.js';
+	import { newSubscription } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
 
 	const client = createApiClient();
 
@@ -131,7 +132,7 @@
 
 		<p class="text-sm leading-relaxed text-muted-foreground">
 			Напоминание придёт в уведомления — проверь, что они включены в <a
-				href={resolve('/profile/notifications')}
+				href={resolve('profile/notifications')}
 				class="font-medium text-primary hover:underline">профиле</a
 			>.
 		</p>

@@ -1,10 +1,10 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
-	import { Button } from '$lib/components/ui/button';
-	import * as Item from '$lib/components/ui/item';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { offlineWriteGate } from '$lib/utils/offlineAction';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Item from '#lib/components/ui/item/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
 	interface Props {
 		/** Provider mark, rendered in the row's icon tile. */

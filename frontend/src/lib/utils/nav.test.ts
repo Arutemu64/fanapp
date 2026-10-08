@@ -17,7 +17,7 @@ describe('isActivePath', () => {
 });
 
 describe('isNavItemActive', () => {
-	const profile = { href: '/profile', nestedRoots: ['/feedback', '/tools'] };
+	const profile = { href: 'profile', nestedRoots: ['feedback', 'tools'] } as const;
 
 	it.each([
 		['/profile', true],
@@ -31,7 +31,7 @@ describe('isNavItemActive', () => {
 	});
 
 	it('falls back to the item href alone without nested roots', () => {
-		expect(isNavItemActive('/map', { href: '/map' })).toBe(true);
-		expect(isNavItemActive('/feedback', { href: '/map' })).toBe(false);
+		expect(isNavItemActive('/map', { href: 'map' })).toBe(true);
+		expect(isNavItemActive('/feedback', { href: 'map' })).toBe(false);
 	});
 });

@@ -1,4 +1,4 @@
-import { readStorage, writeStorage } from '$lib/utils/safeStorage';
+import { readStorage, writeStorage } from '#lib/utils/safeStorage.js';
 
 type StorageKind = 'local' | 'session';
 

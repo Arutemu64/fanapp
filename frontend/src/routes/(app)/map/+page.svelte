@@ -1,12 +1,14 @@
 <script lang="ts">
-	import type { MapEntry } from '$lib/data/maps';
 	import type { Bounds, SlideData, UIElementData } from 'photoswipe';
 
-	import { pushState } from '$app/navigation';
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { maps } from '$lib/data/maps';
 	import { Maximize2 } from '@lucide/svelte';
 	import PhotoSwipe from 'photoswipe';
+
+	import type { MapEntry } from '#lib/data/maps.js';
+
+	import { maps } from '#lib/data/maps.js';
 	import 'photoswipe/style.css';
 
 	// Thumbnail buttons, indexed like `maps`. PhotoSwipe animates the open and
@@ -22,7 +24,7 @@
 	// pushes the entry; the effect below opens and closes the viewer from it, so
 	// back, forward and the viewer's own close controls all go through one path.
 	function openMap(index: number) {
-		pushState('', { mapViewerIndex: index });
+		void goto('', { shallow: true, state: { mapViewerIndex: index } });
 	}
 
 	$effect(() => {

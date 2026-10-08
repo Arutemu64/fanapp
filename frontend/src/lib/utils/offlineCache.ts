@@ -1,6 +1,7 @@
-import { isReachable, markReachable } from '$lib/services/reachability';
-import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
 import { createStore, delMany, get, keys, set } from 'idb-keyval';
+
+import { isReachable, markReachable } from '#lib/services/reachability.js';
+import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '#lib/utils/fetchTimeout.js';
 
 /**
  * Thin wrappers over IndexedDB (via idb-keyval) for persisting the last good

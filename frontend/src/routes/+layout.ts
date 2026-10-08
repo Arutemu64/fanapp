@@ -1,16 +1,20 @@
-import type { CurrentUserDto, ScheduleEventFullDto, SubscriptionFullDto } from '$lib/api/generated';
+import type {
+	CurrentUserDto,
+	ScheduleEventFullDto,
+	SubscriptionFullDto
+} from '#lib/api/generated/index.js';
 
-import { createApiClient } from '$lib/api';
-import { getCurrentUser, getSchedule, getSubscriptions } from '$lib/api/generated';
+import { getCurrentUser, getSchedule, getSubscriptions } from '#lib/api/generated/index.js';
+import { createApiClient } from '#lib/api/index.js';
 import {
 	clearUserCache,
 	fetchWithCache,
 	universalScope,
 	userScope,
 	warmCache
-} from '$lib/utils/offlineCache';
-import { isLogoutPending } from '$lib/utils/pendingLogout';
-import { SCHEDULE_CACHE_KEY, SUBSCRIPTIONS_CACHE_KEY } from '$lib/utils/scheduleData';
+} from '#lib/utils/offlineCache.js';
+import { isLogoutPending } from '#lib/utils/pendingLogout.js';
+import { SCHEDULE_CACHE_KEY, SUBSCRIPTIONS_CACHE_KEY } from '#lib/utils/scheduleData.js';
 
 import type { LayoutLoad } from './$types';
 

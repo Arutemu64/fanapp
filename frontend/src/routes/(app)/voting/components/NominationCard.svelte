@@ -1,11 +1,12 @@
 <script lang="ts">
-	import type { NominationVotingDto } from '$lib/api/generated';
-
 	import { resolve } from '$app/paths';
-	import { Badge } from '$lib/components/ui/badge';
-	import * as Card from '$lib/components/ui/card';
-	import { pluralize } from '$lib/utils/formatters';
 	import { ArrowRight, CheckCircle2 } from '@lucide/svelte';
+
+	import type { NominationVotingDto } from '#lib/api/generated/index.js';
+
+	import { Badge } from '#lib/components/ui/badge/index.js';
+	import * as Card from '#lib/components/ui/card/index.js';
+	import { pluralize } from '#lib/utils/formatters.js';
 
 	interface Props {
 		nomination: NominationVotingDto;
@@ -48,7 +49,7 @@
 
 	<h3 class="flex-1 text-base leading-snug font-bold break-words text-foreground">
 		<a
-			href={resolve(`/voting/${nomination.code}`)}
+			href={resolve(`voting/${nomination.code}`)}
 			class="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
 		>
 			{nomination.title}

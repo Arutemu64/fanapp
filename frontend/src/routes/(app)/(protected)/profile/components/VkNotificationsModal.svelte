@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { Button } from '$lib/components/ui/button';
-	import * as Dialog from '$lib/components/ui/dialog';
 	import { MessageSquare } from '@lucide/svelte';
+
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Dialog from '#lib/components/ui/dialog/index.js';
 
 	interface Props {
 		open: boolean;
@@ -34,7 +35,7 @@
 		<ul class="flex flex-col gap-1 text-sm leading-relaxed text-muted-foreground">
 			<li>
 				Подключи ВКонтакте в
-				<a href={resolve('/profile/account')} class="font-medium text-primary hover:underline"
+				<a href={resolve('profile/account')} class="font-medium text-primary hover:underline"
 					>настройках аккаунта</a
 				>.
 			</li>
