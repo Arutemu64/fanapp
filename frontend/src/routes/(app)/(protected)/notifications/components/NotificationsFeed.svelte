@@ -60,6 +60,9 @@
 
 	// Notifications pushed over SSE — kept on top, newest first.
 	let liveNotifications = $state.raw<Array<NotificationDto>>([]);
+	// This page shows no push toast (the item lands in the list instead), so it
+	// announces arrivals to screen readers itself.
+	let liveAnnouncement = $state('');
 
 	// Fresh SSE items on top, then the server page and anything loaded after it.
 	let notifications = $derived(dedupeById(liveNotifications, feed.items));
@@ -178,6 +181,7 @@
 
 	function addLiveNotification(notification: NotificationDto) {
 		liveNotifications = dedupeById([notification], liveNotifications);
+		liveAnnouncement = `Новое уведомление: ${notification.title}`;
 	}
 
 	// Refetch the first page and lift anything not yet in the list to the top, so we
@@ -214,6 +218,10 @@
 		};
 	});
 </script>
+
+<!-- Rendered before any announcement: a live region injected together with its
+	text is not reliably announced. -->
+<p class="sr-only" aria-live="polite" aria-atomic="true">{liveAnnouncement}</p>
 
 {#if notifications.length === 0}
 	<EmptyState
