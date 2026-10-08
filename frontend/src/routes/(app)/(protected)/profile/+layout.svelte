@@ -1,6 +1,6 @@
 <script lang="ts">
-	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
-	import { getOfflineService } from '$lib/services/offline.svelte';
+	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
+	import { getOfflineService } from '#lib/services/offline.svelte.js';
 
 	import type { LayoutProps } from './$types';
 

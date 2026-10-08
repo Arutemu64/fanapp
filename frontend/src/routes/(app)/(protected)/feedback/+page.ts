@@ -1,4 +1,4 @@
-import { isReachable } from '$lib/services/reachability';
+import { isReachable } from '#lib/services/reachability.js';
 
 import type { PageLoad } from './$types';
 

@@ -1,6 +1,7 @@
 <script lang="ts">
-	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { AlertCircle } from '@lucide/svelte';
+
+	import EmptyState from '#lib/components/EmptyState.svelte';
 
 	interface Props {
 		/** Heading, e.g. «Голосование доступно только онлайн». Kept explicit rather

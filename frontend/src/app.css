@@ -273,7 +273,7 @@
 	 * every app route, so the top inset is constant; the bottom nav only exists below
 	 * the md breakpoint, where the sidebar replaces it, so the bottom inset collapses
 	 * to a plain viewport gap on desktop. Consumed by the Sonner offset in
-	 * $lib/components/ui/sonner/sonner.svelte. The responsive bottom override lives
+	 * src/lib/components/ui/sonner/sonner.svelte. The responsive bottom override lives
 	 * in the @media rule below.
 	 */
 	--toast-top-offset: calc(env(safe-area-inset-top) + 4rem);

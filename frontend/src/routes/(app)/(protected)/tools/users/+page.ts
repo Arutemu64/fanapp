@@ -1,11 +1,12 @@
-import type { BackTarget } from '$lib/types/navigation';
-
-import { createApiClient } from '$lib/api';
-import { throwApiError } from '$lib/api/errors';
-import { listUsers } from '$lib/api/generated';
-import { USERS_PAGE_SIZE } from '$lib/constants/users';
-import { canReadUsers } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
+
+import type { BackTarget } from '#lib/types/navigation.js';
+
+import { throwApiError } from '#lib/api/errors.js';
+import { listUsers } from '#lib/api/generated/index.js';
+import { createApiClient } from '#lib/api/index.js';
+import { USERS_PAGE_SIZE } from '#lib/constants/users.js';
+import { canReadUsers } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';
 
@@ -50,7 +51,7 @@ export const load: PageLoad = async ({ fetch, parent, url }) => {
 
 	return {
 		title: 'Пользователи',
-		back: { href: '/tools', label: 'Назад к инструментам' } satisfies BackTarget,
+		back: { href: 'tools', label: 'Назад к инструментам' } satisfies BackTarget,
 		users: data.users,
 		total: data.total,
 		page,

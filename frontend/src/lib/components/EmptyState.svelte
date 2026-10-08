@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Component, Snippet } from 'svelte';
 
-	import * as Empty from '$lib/components/ui/empty';
+	import * as Empty from '#lib/components/ui/empty/index.js';
 
 	interface Props {
 		// Optional leading icon (e.g. for richer empty states like voting lists).

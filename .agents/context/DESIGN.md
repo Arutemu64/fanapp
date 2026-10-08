@@ -80,7 +80,7 @@ This system is **near-flat by default**. Depth is conveyed by tonal layering (a 
 
 ## 5. Components
 
-shadcn-svelte (vendored as source in `$lib/components/ui/`) is the component substrate; these are the project's tuned defaults and the vocabulary every new screen must match. The semantic `--primary` is wired to the **watermelon brand** in `app.css` (`--color-primary-600` in light, the lighter `-400` in dark), so `bg-primary` / `text-primary` — the default `<Button>`, links, active nav, checked controls, `primary/10` accent tiles — all render on-brand. `--primary-foreground` is white in light / dark in dark so text clears AA on the fill either way.
+shadcn-svelte (vendored as source in `#lib/components/ui/`) is the component substrate; these are the project's tuned defaults and the vocabulary every new screen must match. The semantic `--primary` is wired to the **watermelon brand** in `app.css` (`--color-primary-600` in light, the lighter `-400` in dark), so `bg-primary` / `text-primary` — the default `<Button>`, links, active nav, checked controls, `primary/10` accent tiles — all render on-brand. `--primary-foreground` is white in light / dark in dark so text clears AA on the fill either way.
 
 ### Buttons
 - **Shape:** The vendored `<Button>` carries its own `--radius`-derived corner (`rounded-md`) and `font-medium` — leave it; don't force a radius tier onto it.

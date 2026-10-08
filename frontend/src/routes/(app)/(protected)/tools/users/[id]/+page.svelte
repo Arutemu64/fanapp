@@ -1,14 +1,15 @@
 <script lang="ts">
-	import EmptyState from '$lib/components/EmptyState.svelte';
-	import { Badge } from '$lib/components/ui/badge';
-	import * as Card from '$lib/components/ui/card';
+	import { ExternalLink, Link2 } from '@lucide/svelte';
+
+	import EmptyState from '#lib/components/EmptyState.svelte';
+	import { Badge } from '#lib/components/ui/badge/index.js';
+	import * as Card from '#lib/components/ui/card/index.js';
 	import {
 		buildSocialProfileUrl,
 		getAvatarInitials,
 		getRoleLabel,
 		getSocialProviderLabel
-	} from '$lib/utils/users';
-	import { ExternalLink, Link2 } from '@lucide/svelte';
+	} from '#lib/utils/users.js';
 
 	import type { PageProps } from './$types';
 

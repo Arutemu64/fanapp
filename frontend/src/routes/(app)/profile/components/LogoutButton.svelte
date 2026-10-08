@@ -1,17 +1,18 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { createApiClient } from '$lib/api';
-	import { logoutUser } from '$lib/api/generated';
-	import * as AlertDialog from '$lib/components/ui/alert-dialog';
-	import { Button } from '$lib/components/ui/button';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { getEventsClient } from '$lib/services/events.svelte';
-	import { getOfflineService } from '$lib/services/offline.svelte';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { clearUserCache } from '$lib/utils/offlineCache';
-	import { markLogoutPending } from '$lib/utils/pendingLogout';
 	import { LogOut } from '@lucide/svelte';
+
+	import { logoutUser } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
+	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { getEventsClient } from '#lib/services/events.svelte.js';
+	import { getOfflineService } from '#lib/services/offline.svelte.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { clearUserCache } from '#lib/utils/offlineCache.js';
+	import { markLogoutPending } from '#lib/utils/pendingLogout.js';
 
 	const client = createApiClient();
 	const toastService = getToastService();
@@ -64,7 +65,7 @@
 		// stay warm by design.
 		await clearUserCache();
 
-		await goto(resolve('/'), { invalidateAll: true });
+		await goto(resolve(''), { refreshAll: true });
 		eventsClient.restart();
 	}
 </script>

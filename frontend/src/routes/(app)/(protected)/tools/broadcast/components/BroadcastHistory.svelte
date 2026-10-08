@@ -1,19 +1,23 @@
 <script lang="ts">
-	import type { MailingDto, MailingStatus, UserRole } from '$lib/api/generated';
-
 	import { invalidate } from '$app/navigation';
-	import { createApiClient } from '$lib/api';
-	import { cancelMailing, listBroadcasts } from '$lib/api/generated';
-	import EmptyState from '$lib/components/EmptyState.svelte';
-	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
-	import MenuGroup from '$lib/components/MenuGroup.svelte';
-	import { Badge, type BadgeVariant } from '$lib/components/ui/badge';
-	import { Button } from '$lib/components/ui/button';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { BROADCAST_PAGE_REQUEST_LIMIT, BROADCAST_PAGE_SIZE } from '$lib/constants/notifications';
-	import { PaginatedFeed } from '$lib/services/feed.svelte';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { formatFestivalDateTime } from '$lib/utils/formatters';
+
+	import type { MailingDto, MailingStatus, UserRole } from '#lib/api/generated/index.js';
+
+	import { cancelMailing, listBroadcasts } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
+	import EmptyState from '#lib/components/EmptyState.svelte';
+	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
+	import MenuGroup from '#lib/components/MenuGroup.svelte';
+	import { Badge, type BadgeVariant } from '#lib/components/ui/badge/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import {
+		BROADCAST_PAGE_REQUEST_LIMIT,
+		BROADCAST_PAGE_SIZE
+	} from '#lib/constants/notifications.js';
+	import { PaginatedFeed } from '#lib/services/feed.svelte.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { formatFestivalDateTime } from '#lib/utils/formatters.js';
 
 	interface Props {
 		initialMailings: Array<MailingDto>;

@@ -1,6 +1,6 @@
 # ADR-0016: Workbox precaching via vite-pwa for the service worker
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0020](0020-workbox-precache-list-from-app-manifest.md) (the vite-pwa wiring; the Workbox decision stands)
 - **Date:** 2026-08-27
 - **Deciders:** arutemu64
 

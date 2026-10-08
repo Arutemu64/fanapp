@@ -1,16 +1,17 @@
 <script lang="ts">
-	import type { Pathname } from '$app/types';
+	import type { Path } from '$app/types';
 	import type { Component } from 'svelte';
 
 	import { resolve } from '$app/paths';
-	import * as Item from '$lib/components/ui/item';
 	import { ChevronRight, Lock } from '@lucide/svelte';
+
+	import * as Item from '#lib/components/ui/item/index.js';
 
 	interface Props {
 		title: string;
 		description: string;
 		icon: Component;
-		href: Pathname;
+		href: Path;
 		/** No permission for this tool: the row becomes a non-navigable, muted state. */
 		locked?: boolean;
 	}

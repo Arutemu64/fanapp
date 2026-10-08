@@ -1,4 +1,4 @@
-import { invalidateAll } from '$app/navigation';
+import { refreshAll } from '$app/navigation';
 
 /**
  * Coalesced catch-up refetch after connectivity recovers.
@@ -9,7 +9,7 @@ import { invalidateAll } from '$app/navigation';
  * were disconnected. A single recovery routinely trips more than one of those
  * paths at once (network returns → the `online` edge fires *and* the stream
  * re-dials and completes its handshake), so the debounce is module-global rather
- * than per-service: it collapses that burst into one `invalidateAll`, and it also
+ * than per-service: it collapses that burst into one `refreshAll`, and it also
  * stops a flapping connection from triggering a reload storm.
  *
  * Leading *and* trailing: the first request in an idle period refreshes at once
@@ -32,7 +32,7 @@ let trailingTimer: ReturnType<typeof setTimeout> | null = null;
 
 function refreshNow(): void {
 	lastRefresh = Date.now();
-	void invalidateAll();
+	void refreshAll();
 }
 
 export function requestReconnectRefresh(): void {

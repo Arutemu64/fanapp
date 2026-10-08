@@ -1,19 +1,20 @@
 <script lang="ts">
-	import type { ScheduleEventFullDto } from '$lib/api/generated';
-
 	import { invalidate } from '$app/navigation';
 	import { page } from '$app/state';
-	import { createApiClient } from '$lib/api';
-	import { getApiErrorDetail } from '$lib/api/errors';
-	import { moveScheduleEvent } from '$lib/api/generated';
-	import * as Alert from '$lib/components/ui/alert';
-	import { Button } from '$lib/components/ui/button';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import { Input } from '$lib/components/ui/input';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { createSearchIndex } from '$lib/utils/search';
 	import { ArrowUpDown, BellRing, Search as SearchIcon, X } from '@lucide/svelte';
+
+	import type { ScheduleEventFullDto } from '#lib/api/generated/index.js';
+
+	import { getApiErrorDetail } from '#lib/api/errors.js';
+	import { moveScheduleEvent } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { createSearchIndex } from '#lib/utils/search.js';
 
 	const client = createApiClient();
 

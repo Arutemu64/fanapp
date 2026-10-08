@@ -1,11 +1,11 @@
-import type { PublicConfigDto } from '$lib/api/generated';
+import type { PublicConfigDto } from '#lib/api/generated/index.js';
 
-import { createApiClient } from '$lib/api';
-import { getPublicConfig } from '$lib/api/generated';
-import { CONFIG_CACHE_KEY, FALLBACK_CONFIG } from '$lib/constants/festival';
-import { fetchWithCache, universalScope } from '$lib/utils/offlineCache';
-import { loadScheduleWithSubscriptions } from '$lib/utils/scheduleData';
-import { fetchVotingStatus } from '$lib/utils/votingStatus';
+import { getPublicConfig } from '#lib/api/generated/index.js';
+import { createApiClient } from '#lib/api/index.js';
+import { CONFIG_CACHE_KEY, FALLBACK_CONFIG } from '#lib/constants/festival.js';
+import { fetchWithCache, universalScope } from '#lib/utils/offlineCache.js';
+import { loadScheduleWithSubscriptions } from '#lib/utils/scheduleData.js';
+import { fetchVotingStatus } from '#lib/utils/votingStatus.js';
 
 import type { PageLoad } from './$types';
 

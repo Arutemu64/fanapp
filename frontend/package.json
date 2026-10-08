@@ -11,7 +11,7 @@
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && tsc -p src/service-worker",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
 		"test": "vitest run",
@@ -35,13 +35,13 @@
 		"@internationalized/date": "^3.12.3",
 		"@lucide/svelte": "^1.35.0",
 		"@playwright/test": "1.63.0",
-		"@sveltejs/adapter-static": "3.0.10",
-		"@sveltejs/enhanced-img": "0.11.0",
-		"@sveltejs/kit": "2.70.3",
+		"@sveltejs/adapter-static": "4.0.0",
+		"@sveltejs/enhanced-img": "1.0.0",
+		"@sveltejs/kit": "3.0.0",
+		"@sveltejs/load-config": "0.2.2",
 		"@sveltejs/vite-plugin-svelte": "7.3.1",
 		"@tailwindcss/vite": "4.3.3",
 		"@types/node": "26.5.1",
-		"@vite-pwa/sveltekit": "1.1.0",
 		"bits-ui": "^2.19.0",
 		"clsx": "^2.1.1",
 		"eslint": "10.10.0",
@@ -54,7 +54,7 @@
 		"prettier-plugin-svelte": "4.1.1",
 		"prettier-plugin-tailwindcss": "0.8.1",
 		"shadcn-svelte": "^1.5.0",
-		"svelte": "5.57.0",
+		"svelte": "5.57.1",
 		"svelte-check": "4.7.6",
 		"tailwind-merge": "^3.6.0",
 		"tailwind-variants": "^3.3.1",
@@ -79,5 +79,8 @@
 		"idb-keyval": "6.3.0",
 		"photoswipe": "5.4.4",
 		"svelte-sonner": "^1.2.1"
+	},
+	"imports": {
+		"#lib/*": "./src/lib/*"
 	}
 }

@@ -1,14 +1,15 @@
 <script lang="ts">
-	import type { GetVotingNominationOutput } from '$lib/api/generated';
-
 	import { invalidate } from '$app/navigation';
-	import EmptyState from '$lib/components/EmptyState.svelte';
-	import OfflineUnavailableState from '$lib/components/OfflineUnavailableState.svelte';
-	import SectionIntro from '$lib/components/SectionIntro.svelte';
-	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
-	import { createSearchIndex } from '$lib/utils/search';
 	import { ExternalLink, Search as SearchIcon, Users, X } from '@lucide/svelte';
+
+	import type { GetVotingNominationOutput } from '#lib/api/generated/index.js';
+
+	import EmptyState from '#lib/components/EmptyState.svelte';
+	import OfflineUnavailableState from '#lib/components/OfflineUnavailableState.svelte';
+	import SectionIntro from '#lib/components/SectionIntro.svelte';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import { createSearchIndex } from '#lib/utils/search.js';
 
 	import type { PageProps } from './$types';
 

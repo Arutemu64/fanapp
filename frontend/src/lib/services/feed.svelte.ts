@@ -1,4 +1,4 @@
-import { dedupeById } from '$lib/utils/feed';
+import { dedupeById } from '#lib/utils/feed.js';
 
 interface Identified {
 	id: number | string;

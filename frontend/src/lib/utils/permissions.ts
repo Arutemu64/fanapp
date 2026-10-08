@@ -1,4 +1,4 @@
-import type { CurrentUserDto, Permission } from '$lib/api/generated';
+import type { CurrentUserDto, Permission } from '#lib/api/generated/index.js';
 
 // Permission identifiers, from the backend `Permission` enum via the OpenAPI
 // spec (just frontend-generate-api). Typing each constant as Permission is the

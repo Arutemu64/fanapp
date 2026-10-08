@@ -1,22 +1,23 @@
 <script lang="ts">
-	import type { NominationContenderDto, UserBaseDto } from '$lib/api/generated';
-
-	import { createApiClient } from '$lib/api';
-	import { getApiErrorDetail } from '$lib/api/errors';
-	import { drawVotingContestWinner, setVotingTimeRange } from '$lib/api/generated';
-	import EmptyState from '$lib/components/EmptyState.svelte';
-	import SectionIntro from '$lib/components/SectionIntro.svelte';
-	import * as Alert from '$lib/components/ui/alert';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
-	import * as Field from '$lib/components/ui/field';
-	import { Input } from '$lib/components/ui/input';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { pluralize } from '$lib/utils/formatters';
 	import { AlertCircle, Award, Gift, Users } from '@lucide/svelte';
 	import { untrack } from 'svelte';
+
+	import type { NominationContenderDto, UserBaseDto } from '#lib/api/generated/index.js';
+
+	import { getApiErrorDetail } from '#lib/api/errors.js';
+	import { drawVotingContestWinner, setVotingTimeRange } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
+	import EmptyState from '#lib/components/EmptyState.svelte';
+	import SectionIntro from '#lib/components/SectionIntro.svelte';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Badge } from '#lib/components/ui/badge/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Card from '#lib/components/ui/card/index.js';
+	import * as Field from '#lib/components/ui/field/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { pluralize } from '#lib/utils/formatters.js';
 
 	import type { PageProps } from './$types';
 

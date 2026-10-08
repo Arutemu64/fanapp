@@ -1,5 +1,5 @@
 <script lang="ts">
-	import OfflineUnavailableState from '$lib/components/OfflineUnavailableState.svelte';
+	import OfflineUnavailableState from '#lib/components/OfflineUnavailableState.svelte';
 
 	import type { LayoutProps } from './$types';
 

@@ -10,7 +10,7 @@ export type NavTransition = 'forward' | 'back' | 'fade';
 interface NavTransitionInput {
 	from: string;
 	to: string;
-	/** The page being left's navbar back target (`page.data.back?.href`). */
+	/** The pathname of the page being left's navbar back target (`page.data.back`). */
 	fromBackHref: string | undefined;
 	tabRoots: ReadonlySet<string>;
 }

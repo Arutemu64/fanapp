@@ -1,10 +1,11 @@
 <script lang="ts">
-	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
-
-	import NumberBadge from '$lib/components/NumberBadge.svelte';
-	import { Button } from '$lib/components/ui/button';
-	import { formatUntil } from '$lib/utils/formatters';
 	import { ArrowRight, BellRing, Hourglass } from '@lucide/svelte';
+
+	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
+
+	import NumberBadge from '#lib/components/NumberBadge.svelte';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { formatUntil } from '#lib/utils/formatters.js';
 
 	import { actsUntil, type StageSnapshot } from './stage';
 

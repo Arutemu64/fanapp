@@ -1,9 +1,9 @@
-import type { ScheduleEventFullDto, SubscriptionFullDto } from '$lib/api/generated';
-import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
+import type { ScheduleEventFullDto, SubscriptionFullDto } from '#lib/api/generated/index.js';
+import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 
-import { createApiClient } from '$lib/api';
-import { getSchedule, getSubscriptions } from '$lib/api/generated';
-import { fetchWithCache, universalScope, userScope } from '$lib/utils/offlineCache';
+import { getSchedule, getSubscriptions } from '#lib/api/generated/index.js';
+import { createApiClient } from '#lib/api/index.js';
+import { fetchWithCache, universalScope, userScope } from '#lib/utils/offlineCache.js';
 
 // Shared across every viewer: the schedule carries no per-user data, so it lives in
 // the universal store — one entry serves guests and all accounts, surviving logout.

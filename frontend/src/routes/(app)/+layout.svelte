@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { afterNavigate, beforeNavigate, onNavigate } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { navigating, page } from '$app/state';
-	import SkipLink from '$lib/components/SkipLink.svelte';
-	import { TAB_ROOTS } from '$lib/data/nav';
-	import { setUnreadCountService } from '$lib/services/unreadCount.svelte';
 	import { untrack } from 'svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import { MediaQuery } from 'svelte/reactivity';
+
+	import SkipLink from '#lib/components/SkipLink.svelte';
+	import { TAB_ROOTS } from '#lib/data/nav.js';
+	import { setUnreadCountService } from '#lib/services/unreadCount.svelte.js';
 
 	import type { LayoutProps, Snapshot } from './$types';
 
@@ -165,6 +167,10 @@
 	}
 
 	beforeNavigate((navigation) => {
+		// SvelteKit runs navigation hooks for shallow routing too (the map viewer, the
+		// login steps), but those only change page.state: there is no page to
+		// restore scroll for or to animate into.
+		if (navigation.shallow) return;
 		const from = navigation.from?.url.pathname;
 		if (from && TAB_ROOTS.has(from)) {
 			scrollPositions[from] = mainElement?.scrollTop ?? 0;
@@ -172,6 +178,7 @@
 	});
 
 	afterNavigate((navigation) => {
+		if (navigation.shallow) return;
 		// Back/forward is handled by snapshot.restore above.
 		if (navigation.type === 'popstate') {
 			revealNavbar();
@@ -224,6 +231,7 @@
 	let transitionId = 0;
 
 	onNavigate((navigation) => {
+		if (navigation.shallow) return;
 		if (!document.startViewTransition) return;
 		if (isDesktop.current || prefersReducedMotion.current) return;
 		if (navigation.willUnload || !navigation.from || !navigation.to) return;
@@ -232,7 +240,7 @@
 		let kind = navTransitionKind({
 			from: navigation.from.url.pathname,
 			to: navigation.to.url.pathname,
-			fromBackHref: page.data.back?.href,
+			fromBackHref: page.data.back && resolve(page.data.back.href),
 			tabRoots: TAB_ROOTS
 		});
 		if (!kind) return;

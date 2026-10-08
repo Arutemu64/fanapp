@@ -1,19 +1,20 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
+	import { createApiClient } from '#lib/api/index.js';
 	const client = createApiClient();
-	import { getApiErrorDetail, getApiFieldError } from '$lib/api/errors';
-	import { login } from '$lib/api/generated';
-	import PasswordInput from '$lib/components/PasswordInput.svelte';
-	import * as Alert from '$lib/components/ui/alert';
-	import { Button } from '$lib/components/ui/button';
-	import * as Field from '$lib/components/ui/field';
-	import { Input } from '$lib/components/ui/input';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { getEventsClient } from '$lib/services/events.svelte';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { completeLogin } from '$lib/utils/auth';
-	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
 	import { Mail } from '@lucide/svelte';
+
+	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
+	import { login } from '#lib/api/generated/index.js';
+	import PasswordInput from '#lib/components/PasswordInput.svelte';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Field from '#lib/components/ui/field/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { getEventsClient } from '#lib/services/events.svelte.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { completeLogin } from '#lib/utils/auth.js';
+	import { isValidEmail, normalizeEmail } from '#lib/utils/validation.js';
 
 	interface Props {
 		email: string;

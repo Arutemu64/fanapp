@@ -34,7 +34,7 @@ Fix your own gate failures and re-run. Do not hand back a red tree.
 - **No user- or request-scoped state in module singletons.** Modules outlive
   navigation and login/logout in this SPA.
 - **Mobile-first**, with bottom padding clear of the floating nav bar.
-- Prefer the vendored components in `$lib/components/ui/` over hand-rolled
+- Prefer the vendored components in `#lib/components/ui/` over hand-rolled
   elements; change an app-wide default at its source, never per instance.
 - Verify library APIs against current docs. Never write a Svelte 5 or
   shadcn-svelte API from memory.

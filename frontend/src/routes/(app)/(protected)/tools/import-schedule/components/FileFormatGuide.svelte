@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { base } from '$app/paths';
-	import * as Alert from '$lib/components/ui/alert';
-	import { Button } from '$lib/components/ui/button';
+	import { asset } from '$app/paths';
 	import { AlertCircle, Download, Info } from '@lucide/svelte';
+
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
 
 	// The header names are literal file content, not UI copy — they must stay
 	// exactly as the parser expects them (REQUIRED_COLUMNS in
@@ -81,7 +82,7 @@
 	</Alert.Root>
 
 	<Button
-		href="{base}/schedule-template.xlsx"
+		href={asset('schedule-template.xlsx')}
 		download="schedule-template.xlsx"
 		variant="outline"
 		class="mt-4 w-full sm:w-auto sm:self-start"

@@ -1,7 +1,8 @@
-import type { BackTarget } from '$lib/types/navigation';
-
-import { canGenerateTickets } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
+
+import type { BackTarget } from '#lib/types/navigation.js';
+
+import { canGenerateTickets } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';
 
@@ -16,6 +17,6 @@ export const load: PageLoad = async ({ parent }) => {
 
 	return {
 		title: 'Генерация билетов',
-		back: { href: '/tools', label: 'Назад к инструментам' } satisfies BackTarget
+		back: { href: 'tools', label: 'Назад к инструментам' } satisfies BackTarget
 	};
 };

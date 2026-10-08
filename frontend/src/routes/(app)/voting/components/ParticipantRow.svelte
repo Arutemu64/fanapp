@@ -1,15 +1,16 @@
 <script lang="ts">
-	import type { ParticipantFullDto } from '$lib/api/generated';
-
-	import { createApiClient } from '$lib/api';
-	import { addVote } from '$lib/api/generated';
-	import NumberBadge from '$lib/components/NumberBadge.svelte';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Button } from '$lib/components/ui/button';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { pluralize } from '$lib/utils/formatters';
 	import { CheckCircle2, ThumbsUp } from '@lucide/svelte';
+
+	import type { ParticipantFullDto } from '#lib/api/generated/index.js';
+
+	import { addVote } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
+	import NumberBadge from '#lib/components/NumberBadge.svelte';
+	import { Badge } from '#lib/components/ui/badge/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { pluralize } from '#lib/utils/formatters.js';
 
 	const client = createApiClient();
 

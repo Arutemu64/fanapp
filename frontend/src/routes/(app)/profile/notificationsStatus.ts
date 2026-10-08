@@ -1,5 +1,5 @@
-import type { CurrentUserDto } from '$lib/api/generated';
-import type { DevicePushState } from '$lib/utils/pushSubscription';
+import type { CurrentUserDto } from '#lib/api/generated/index.js';
+import type { DevicePushState } from '#lib/utils/pushSubscription.js';
 
 type ChannelOwner = Pick<CurrentUserDto, 'settings' | 'social_identities'>;
 

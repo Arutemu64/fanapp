@@ -1,19 +1,20 @@
 <script lang="ts">
-	import type { CurrentUserDto } from '$lib/api/generated';
-	import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
-
 	import { invalidate } from '$app/navigation';
 	import { page } from '$app/state';
-	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
-	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
-	import * as ToggleGroup from '$lib/components/ui/toggle-group';
-	import { documentVisibility } from '$lib/services/documentVisibility';
-	import { getEventsClient } from '$lib/services/events.svelte';
-	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
-	import { createSearchIndex } from '$lib/utils/search';
 	import { ChevronUp, Play, Search as SearchIcon, X } from '@lucide/svelte';
 	import { onMount } from 'svelte';
+
+	import type { CurrentUserDto } from '#lib/api/generated/index.js';
+	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
+
+	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
+	import { documentVisibility } from '#lib/services/documentVisibility.js';
+	import { getEventsClient } from '#lib/services/events.svelte.js';
+	import { getOfflineService, shouldShowStaleNotice } from '#lib/services/offline.svelte.js';
+	import { createSearchIndex } from '#lib/utils/search.js';
 
 	import type { PageProps } from './$types';
 

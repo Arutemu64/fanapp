@@ -1,7 +1,8 @@
 <script lang="ts">
-	import * as Alert from '$lib/components/ui/alert';
-	import * as AlertDialog from '$lib/components/ui/alert-dialog';
 	import { AlertCircle, BellRing } from '@lucide/svelte';
+
+	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
+	import * as Alert from '#lib/components/ui/alert/index.js';
 
 	interface Props {
 		open: boolean;

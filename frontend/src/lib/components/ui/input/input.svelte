@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { HTMLInputAttributes, HTMLInputTypeAttribute } from 'svelte/elements';
 
-	import { cn, type WithElementRef } from '$lib/utils.js';
+	import { cn, type WithElementRef } from '#lib/utils.js';
 
 	type InputType = Exclude<HTMLInputTypeAttribute, 'file'>;
 
@@ -35,6 +35,10 @@
 		{...restProps}
 	/>
 {:else}
+	<!-- TODO: check that a half-typed number ("-", "1.") survives typing in the
+	     settings and ticket-generator fields once Svelte is at 5.57.2+, which stops
+	     this spread from overwriting an unchanged `value` (sveltejs/svelte#18864) —
+	     deferred because 5.57.2 clears the pnpm release cooldown only on 2026-10-13. -->
 	<input
 		bind:this={ref}
 		data-slot={dataSlot}

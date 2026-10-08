@@ -1,7 +1,8 @@
 import { resolve } from '$app/paths';
-import { isReachable } from '$lib/services/reachability';
-import { isOrg } from '$lib/utils/permissions';
 import { error, redirect } from '@sveltejs/kit';
+
+import { isReachable } from '#lib/services/reachability.js';
+import { isOrg } from '#lib/utils/permissions.js';
 
 import type { LayoutLoad } from './$types';
 
@@ -21,8 +22,8 @@ export const load: LayoutLoad = async ({ parent, url }) => {
 	// it before it fires a doomed API request. The hub itself has a static load, so
 	// it lands safely and +layout.svelte renders the shared online-only state there.
 	const offline = !isReachable();
-	if (offline && url.pathname !== resolve('/tools')) {
-		redirect(307, resolve('/tools'));
+	if (offline && url.pathname !== resolve('tools')) {
+		redirect(307, resolve('tools'));
 	}
 
 	return { offlineUnavailable: offline };

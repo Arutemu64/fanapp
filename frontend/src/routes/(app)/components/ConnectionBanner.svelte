@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { type ConnectionStatus, getEventsClient } from '$lib/services/events.svelte';
-	import { getOfflineService } from '$lib/services/offline.svelte';
-	import { reachability } from '$lib/services/reachability';
-	import { requestReconnectRefresh } from '$lib/utils/reconnectRefresh';
 	import { AlertCircle, RotateCw } from '@lucide/svelte';
 	import { slide } from 'svelte/transition';
+
+	import { type ConnectionStatus, getEventsClient } from '#lib/services/events.svelte.js';
+	import { getOfflineService } from '#lib/services/offline.svelte.js';
+	import { reachability } from '#lib/services/reachability.js';
+	import { requestReconnectRefresh } from '#lib/utils/reconnectRefresh.js';
 
 	// 8s absorbs the normal SSE reconnect after foregrounding without alarming
 	// the user; only a genuinely struggling connection exceeds this window.

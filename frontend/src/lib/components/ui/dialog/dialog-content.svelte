@@ -2,11 +2,12 @@
 	import type { Snippet } from 'svelte';
 	import type { ComponentProps } from 'svelte';
 
-	import { Button } from '$lib/components/ui/button/index.js';
-	import { cn, type WithoutChildrenOrChild } from '$lib/utils.js';
-	import { keyboardInset } from '$lib/utils/keyboardInset';
 	import XIcon from '@lucide/svelte/icons/x';
 	import { Dialog as DialogPrimitive } from 'bits-ui';
+
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { cn, type WithoutChildrenOrChild } from '#lib/utils.js';
+	import { keyboardInset } from '#lib/utils/keyboardInset.js';
 
 	import DialogPortal from './dialog-portal.svelte';
 	import * as Dialog from './index.js';

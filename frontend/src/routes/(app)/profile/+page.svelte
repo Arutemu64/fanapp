@@ -1,16 +1,6 @@
 <script lang="ts">
+	import { PUBLIC_APP_VERSION } from '$app/env/public';
 	import { resolve } from '$app/paths';
-	import { PUBLIC_APP_VERSION } from '$env/static/public';
-	import MenuGroup from '$lib/components/MenuGroup.svelte';
-	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
-	import * as Avatar from '$lib/components/ui/avatar';
-	import * as Item from '$lib/components/ui/item';
-	import { getOfflineService } from '$lib/services/offline.svelte';
-	import { getPwaService } from '$lib/services/pwa.svelte';
-	import { LOGIN_NEXT_PARAM } from '$lib/utils/auth';
-	import { isOrg } from '$lib/utils/permissions';
-	import { type DevicePushState, getDevicePushState } from '$lib/utils/pushSubscription';
-	import { getAvatarInitials, getRoleLabel } from '$lib/utils/users';
 	import {
 		Bell,
 		ChevronRight,
@@ -25,6 +15,17 @@
 	import { onMount } from 'svelte';
 	import IconFastapi from '~icons/simple-icons/fastapi';
 	import IconSvelte from '~icons/simple-icons/svelte';
+
+	import MenuGroup from '#lib/components/MenuGroup.svelte';
+	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
+	import * as Avatar from '#lib/components/ui/avatar/index.js';
+	import * as Item from '#lib/components/ui/item/index.js';
+	import { getOfflineService } from '#lib/services/offline.svelte.js';
+	import { getPwaService } from '#lib/services/pwa.svelte.js';
+	import { LOGIN_NEXT_PARAM } from '#lib/utils/auth.js';
+	import { isOrg } from '#lib/utils/permissions.js';
+	import { type DevicePushState, getDevicePushState } from '#lib/utils/pushSubscription.js';
+	import { getAvatarInitials, getRoleLabel } from '#lib/utils/users.js';
 
 	import type { PageProps } from './$types';
 
@@ -65,7 +66,7 @@
 
 	// Return here after logging in: the guest opened the Profile tab, so that is
 	// where they expect to land.
-	const loginHref = `${resolve('/login')}?${LOGIN_NEXT_PARAM}=${encodeURIComponent('/profile')}`;
+	const loginHref = `${resolve('login')}?${LOGIN_NEXT_PARAM}=${encodeURIComponent('/profile')}`;
 
 	// Commit SHA baked in at build time, shortened for display. Empty for a local
 	// build from source — then the line is hidden rather than showing a blank id.
@@ -95,7 +96,7 @@
 			<MenuGroup>
 				<Item.Root class="rounded-none">
 					{#snippet child({ props })}
-						<a href={resolve('/profile/account')} {...props}>
+						<a href={resolve('profile/account')} {...props}>
 							<Item.Media>
 								<Avatar.Root class="size-12 text-base font-bold">
 									<Avatar.Fallback class="bg-primary/10 text-primary-700 dark:text-primary">
@@ -118,9 +119,9 @@
 			</MenuGroup>
 
 			<MenuGroup>
-				<MenuLink href="/profile/ticket" label="Билет" icon={Ticket} value={ticketStatus} />
+				<MenuLink href="profile/ticket" label="Билет" icon={Ticket} value={ticketStatus} />
 				<MenuLink
-					href="/profile/notifications"
+					href="profile/notifications"
 					label="Уведомления"
 					icon={Bell}
 					value={notificationsValue}
@@ -128,9 +129,9 @@
 			</MenuGroup>
 
 			<MenuGroup>
-				<MenuLink href="/feedback" label="Обратная связь" icon={MessageSquare} />
+				<MenuLink href="feedback" label="Обратная связь" icon={MessageSquare} />
 				{#if showTools}
-					<MenuLink href="/tools" label="Инструменты" icon={Wrench} />
+					<MenuLink href="tools" label="Инструменты" icon={Wrench} />
 				{/if}
 			</MenuGroup>
 		{:else}

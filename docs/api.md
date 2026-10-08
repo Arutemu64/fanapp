@@ -5,7 +5,7 @@ How the SvelteKit frontend uses [`@hey-api/openapi-ts`](https://heyapi.dev/) to 
 The generator (config in `frontend/openapi-ts.config.ts`) emits, into `frontend/src/lib/api/generated/`, a typed **SDK** (one function per operation, in `sdk.gen.ts`), the **types** (`types.gen.ts`), and a bundled **fetch client** (`client/`). Each operation function returns `{ data, error, request?, response? }`. `data`/`error` are narrowed by the `error` discriminant; `request`/`response` are optional because a network failure produces no response. Output is run through Prettier by the generator (`output.postProcess`), so it stays formatted and is checked by the format gate like any other source.
 
 ## Core Concept: Single Source of Truth
-* **Generated client**: `frontend/src/lib/api/generated/` is the single source of truth for all API contracts — import operation functions and types from `$lib/api/generated`, and `createApiClient` (the per-request client factory) from `$lib/api`.
+* **Generated client**: `frontend/src/lib/api/generated/` is the single source of truth for all API contracts — import operation functions and types from `#lib/api/generated`, and `createApiClient` (the per-request client factory) from `#lib/api`.
 * **Auto-generation**: Run `just frontend-generate-api` from the workspace root whenever the backend endpoints, routers, or Pydantic schemas change.
 * **Binary / file uploads**: hey-api types binary fields as `Blob | File` and serializes `multipart/form-data` (and `application/x-www-form-urlencoded`) bodies for you — pass `body: { file }` and it builds the `FormData`. No custom transform is needed.
 
@@ -33,8 +33,8 @@ Instead, always instantiate a local client per context using `createApiClient()`
 Inside universal load functions, initialize the client locally and **always inject the SvelteKit-provided `fetch`**:
 
 ```typescript
-import { createApiClient } from '$lib/api';
-import { getSettings } from '$lib/api/generated';
+import { createApiClient } from '#lib/api/index.js';
+import { getSettings } from '#lib/api/generated/index.js';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = async ({ fetch, depends }) => {
@@ -65,8 +65,8 @@ For local component scripts (`.svelte`), page layouts, or event handlers that on
 
 ```svelte
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
-	import { listUserNotifications } from '$lib/api/generated';
+	import { createApiClient } from '#lib/api/index.js';
+	import { listUserNotifications } from '#lib/api/generated/index.js';
 	import { onMount } from 'svelte';
 
 	// Create local client for this component instance
@@ -90,13 +90,13 @@ For local component scripts (`.svelte`), page layouts, or event handlers that on
 > Query params go under `query`, path params under `path`, and the request body under `body` — flat on the options object, not nested under `params`.
 
 ## TypeScript Types
-hey-api generates a **named export per schema** into `types.gen.ts` (re-exported from `$lib/api/generated`). Import the type you need directly — do not re-alias it locally. Schema names are normalized to PascalCase, so a backend `…DTO` becomes `…Dto` (e.g. `NotificationDTO` → `NotificationDto`).
+hey-api generates a **named export per schema** into `types.gen.ts` (re-exported from `#lib/api/generated`). Import the type you need directly — do not re-alias it locally. Schema names are normalized to PascalCase, so a backend `…DTO` becomes `…Dto` (e.g. `NotificationDTO` → `NotificationDto`).
 
 ```typescript
-import type { NotificationDto } from '$lib/api/generated';
+import type { NotificationDto } from '#lib/api/generated/index.js';
 ```
 
-Request bodies, query params, and responses are named too — `UpdateSettingsData['body']`, `ListUserNotificationsData['query']`, `GetVotingNominationResponse` — so reach for those instead of hand-walking a `paths[...]` tree. **Do not** reintroduce the old pass-through aliases (`type X = components['schemas']['X']`): with named exports they are pure indirection, and the generated name is the single source of truth. A genuine app-composite type (e.g. `ScheduleEventWithSubscription` in `$lib/types/`) is fine — it *adds* structure over a generated type, it doesn't just rename one.
+Request bodies, query params, and responses are named too — `UpdateSettingsData['body']`, `ListUserNotificationsData['query']`, `GetVotingNominationResponse` — so reach for those instead of hand-walking a `paths[...]` tree. **Do not** reintroduce the old pass-through aliases (`type X = components['schemas']['X']`): with named exports they are pure indirection, and the generated name is the single source of truth. A genuine app-composite type (e.g. `ScheduleEventWithSubscription` in `#lib/types/`) is fine — it *adds* structure over a generated type, it doesn't just rename one.
 
 ### Enum schemas are the single source of truth
 Backend `StrEnum`s that appear on a DTO field (`UserRole`, `Permission` in `core/vo/`) are emitted as OpenAPI enum schemas, so `frontend-generate-api` regenerates them as string-literal unions. Never hand-copy enum values on the frontend — import the generated union. Permission literals in `lib/utils/permissions.ts` type their constants as the generated `Permission`, so a backend rename/removal makes the stale literal fail `pnpm check` instead of silently breaking permission checks (same drift-guard idea as the error `code` union below). To expose a new enum on the wire, type a DTO field with the enum (not a plain `NewType` str) and run `just frontend-generate-api`.

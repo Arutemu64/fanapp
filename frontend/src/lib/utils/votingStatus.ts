@@ -1,9 +1,13 @@
-import type { GetVotingStateOutput } from '$lib/api/generated';
+import type { GetVotingStateOutput } from '#lib/api/generated/index.js';
 
-import { createApiClient } from '$lib/api';
-import { getVotingStatus } from '$lib/api/generated';
-import { isBackendUnreachableStatus, isReachable, markReachable } from '$lib/services/reachability';
-import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
+import { getVotingStatus } from '#lib/api/generated/index.js';
+import { createApiClient } from '#lib/api/index.js';
+import {
+	isBackendUnreachableStatus,
+	isReachable,
+	markReachable
+} from '#lib/services/reachability.js';
+import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '#lib/utils/fetchTimeout.js';
 
 interface FetchVotingStatusOptions {
 	/**

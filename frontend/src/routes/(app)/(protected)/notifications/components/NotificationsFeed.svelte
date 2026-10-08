@@ -1,23 +1,24 @@
 <script lang="ts">
-	import type { NotificationDto } from '$lib/api/generated';
+	import { onMount } from 'svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 
-	import { createApiClient } from '$lib/api';
-	import { listUserNotifications, markNotificationsRead } from '$lib/api/generated';
-	import EmptyState from '$lib/components/EmptyState.svelte';
-	import LoadMoreButton from '$lib/components/LoadMoreButton.svelte';
-	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
-	import SectionIntro from '$lib/components/SectionIntro.svelte';
+	import type { NotificationDto } from '#lib/api/generated/index.js';
+
+	import { listUserNotifications, markNotificationsRead } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
+	import EmptyState from '#lib/components/EmptyState.svelte';
+	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
+	import NotificationListItem from '#lib/components/notifications/NotificationListItem.svelte';
+	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import {
 		NOTIFICATION_PAGE_REQUEST_LIMIT,
 		NOTIFICATION_PAGE_SIZE
-	} from '$lib/constants/notifications';
-	import { getEventsClient } from '$lib/services/events.svelte';
-	import { PaginatedFeed } from '$lib/services/feed.svelte';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { getUnreadCountService } from '$lib/services/unreadCount.svelte';
-	import { dedupeById } from '$lib/utils/feed';
-	import { onMount } from 'svelte';
-	import { SvelteSet } from 'svelte/reactivity';
+	} from '#lib/constants/notifications.js';
+	import { getEventsClient } from '#lib/services/events.svelte.js';
+	import { PaginatedFeed } from '#lib/services/feed.svelte.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { getUnreadCountService } from '#lib/services/unreadCount.svelte.js';
+	import { dedupeById } from '#lib/utils/feed.js';
 
 	const client = createApiClient();
 

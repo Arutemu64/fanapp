@@ -24,7 +24,7 @@ const TEXT: Record<string, { label: string; alt: string }> = {
 // variants, content-hashed so a swap busts every cache layer — browser, CDN,
 // service worker). eager inlines the objects; import:'default' unwraps each
 // module to its Picture.
-const modules = import.meta.glob<Picture>('$lib/assets/map/*.{jpg,jpeg,png}', {
+const modules = import.meta.glob<Picture>('#lib/assets/map/*.{jpg,jpeg,png}', {
 	eager: true,
 	query: { enhanced: true },
 	import: 'default'

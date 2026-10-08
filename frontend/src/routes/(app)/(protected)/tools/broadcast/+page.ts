@@ -1,11 +1,12 @@
-import type { MailingDto } from '$lib/api/generated';
-import type { BackTarget } from '$lib/types/navigation';
-
-import { createApiClient } from '$lib/api';
-import { listBroadcasts } from '$lib/api/generated';
-import { BROADCAST_PAGE_REQUEST_LIMIT, BROADCAST_PAGE_SIZE } from '$lib/constants/notifications';
-import { canSendNotifications } from '$lib/utils/permissions';
 import { error } from '@sveltejs/kit';
+
+import type { MailingDto } from '#lib/api/generated/index.js';
+import type { BackTarget } from '#lib/types/navigation.js';
+
+import { listBroadcasts } from '#lib/api/generated/index.js';
+import { createApiClient } from '#lib/api/index.js';
+import { BROADCAST_PAGE_REQUEST_LIMIT, BROADCAST_PAGE_SIZE } from '#lib/constants/notifications.js';
+import { canSendNotifications } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';
 
@@ -38,7 +39,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 
 	return {
 		title: 'Рассылка уведомлений',
-		back: { href: '/tools', label: 'Назад к инструментам' } satisfies BackTarget,
+		back: { href: 'tools', label: 'Назад к инструментам' } satisfies BackTarget,
 		mailings,
 		hasMore
 	};

@@ -1,6 +1,6 @@
-import type { SocialProvider } from '$lib/api/generated';
-
 import { describe, expect, it } from 'vitest';
+
+import type { SocialProvider } from '#lib/api/generated/index.js';
 
 import { notificationsStatus } from './notificationsStatus';
 

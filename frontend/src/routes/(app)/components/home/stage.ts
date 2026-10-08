@@ -1,4 +1,4 @@
-import type { ScheduleEventWithSubscription } from '$lib/types/schedule';
+import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 
 const UP_NEXT_COUNT = 3;
 

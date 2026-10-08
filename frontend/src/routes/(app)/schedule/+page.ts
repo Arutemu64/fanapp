@@ -1,10 +1,11 @@
-import type { NavbarAction } from '$lib/types/navigation';
-
-import { isReachable } from '$lib/services/reachability';
-import { canManageSchedule } from '$lib/utils/permissions';
-import { loadScheduleWithSubscriptions } from '$lib/utils/scheduleData';
 import { History } from '@lucide/svelte';
 import { error } from '@sveltejs/kit';
+
+import type { NavbarAction } from '#lib/types/navigation.js';
+
+import { isReachable } from '#lib/services/reachability.js';
+import { canManageSchedule } from '#lib/utils/permissions.js';
+import { loadScheduleWithSubscriptions } from '#lib/utils/scheduleData.js';
 
 import type { PageLoad } from './$types';
 
@@ -19,7 +20,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	// page enforces.
 	const actions: NavbarAction[] = [];
 	if (canManageSchedule(user)) {
-		actions.push({ href: '/schedule/changes', label: 'Изменения программы', icon: History });
+		actions.push({ href: 'schedule/changes', label: 'Изменения программы', icon: History });
 	}
 
 	if (schedule === undefined) {

@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
-	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
-	import { documentVisibility } from '$lib/services/documentVisibility';
-	import { getEventsClient } from '$lib/services/events.svelte';
-	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
-	import { getPwaService } from '$lib/services/pwa.svelte';
-	import { type DevicePushState, getDevicePushState } from '$lib/utils/pushSubscription';
-	import { hasVotingEnded, isVotingOpenNow } from '$lib/utils/votingStatus';
 	import { onMount } from 'svelte';
+
+	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
+	import { documentVisibility } from '#lib/services/documentVisibility.js';
+	import { getEventsClient } from '#lib/services/events.svelte.js';
+	import { getOfflineService, shouldShowStaleNotice } from '#lib/services/offline.svelte.js';
+	import { getPwaService } from '#lib/services/pwa.svelte.js';
+	import { type DevicePushState, getDevicePushState } from '#lib/utils/pushSubscription.js';
+	import { hasVotingEnded, isVotingOpenNow } from '#lib/utils/votingStatus.js';
 
 	import type { PageProps } from './$types';
 

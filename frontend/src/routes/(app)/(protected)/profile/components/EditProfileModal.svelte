@@ -1,18 +1,19 @@
 <script lang="ts">
-	import type { CurrentUserDto, UpdateCurrentUserInput } from '$lib/api/generated';
-
-	import { createApiClient } from '$lib/api';
-	import { getApiErrorDetail, getApiFieldError } from '$lib/api/errors';
-	import { updateCurrentUser } from '$lib/api/generated';
-	import * as Alert from '$lib/components/ui/alert';
-	import { Button } from '$lib/components/ui/button';
-	import * as Dialog from '$lib/components/ui/dialog';
-	import * as Field from '$lib/components/ui/field';
-	import { Input } from '$lib/components/ui/input';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { getToastService } from '$lib/services/toasts.svelte';
 	import { User } from '@lucide/svelte';
 	import { untrack } from 'svelte';
+
+	import type { CurrentUserDto, UpdateCurrentUserInput } from '#lib/api/generated/index.js';
+
+	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
+	import { updateCurrentUser } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Dialog from '#lib/components/ui/dialog/index.js';
+	import * as Field from '#lib/components/ui/field/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
 
 	const client = createApiClient();
 

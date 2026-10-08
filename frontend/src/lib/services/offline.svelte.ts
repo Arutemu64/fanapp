@@ -1,8 +1,9 @@
-import { listen } from '$lib/utils/listen';
-import { flushPendingLogout } from '$lib/utils/pendingLogout';
-import { classifyReachabilityChange } from '$lib/utils/reachabilityTransition';
-import { requestReconnectRefresh } from '$lib/utils/reconnectRefresh';
 import { createContext } from 'svelte';
+
+import { listen } from '#lib/utils/listen.js';
+import { flushPendingLogout } from '#lib/utils/pendingLogout.js';
+import { classifyReachabilityChange } from '#lib/utils/reachabilityTransition.js';
+import { requestReconnectRefresh } from '#lib/utils/reconnectRefresh.js';
 
 import {
 	deviceOnlineNow,

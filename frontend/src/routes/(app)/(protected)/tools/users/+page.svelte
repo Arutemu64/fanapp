@@ -1,15 +1,16 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import EmptyState from '$lib/components/EmptyState.svelte';
-	import SectionIntro from '$lib/components/SectionIntro.svelte';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
-	import { USERS_PAGE_SIZE } from '$lib/constants/users';
-	import { getRoleLabel } from '$lib/utils/users';
 	import { ArrowLeft, ArrowRight, Search as SearchIcon, Users, X } from '@lucide/svelte';
 	import { untrack } from 'svelte';
+
+	import EmptyState from '#lib/components/EmptyState.svelte';
+	import SectionIntro from '#lib/components/SectionIntro.svelte';
+	import { Badge } from '#lib/components/ui/badge/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { Input } from '#lib/components/ui/input/index.js';
+	import { USERS_PAGE_SIZE } from '#lib/constants/users.js';
+	import { getRoleLabel } from '#lib/utils/users.js';
 
 	import type { PageProps } from './$types';
 
@@ -41,20 +42,18 @@
 	function onSearchInput(value: string) {
 		clearTimeout(searchTimer);
 		// Debounce so a new request fires once the user pauses, not on every
-		// keystroke. A search always resets to the first page. replaceState keeps
+		// keystroke. A search always resets to the first page. `replace` keeps
 		// the history stack from filling with every intermediate query.
 		searchTimer = setTimeout(() => {
-			// eslint-disable-next-line svelte/no-navigation-without-resolve
-			void goto(`${resolve('/tools/users')}${buildQuery(1, value.trim())}`, {
-				replaceState: true,
-				keepFocus: true
+			void goto(`${resolve('tools/users')}${buildQuery(1, value.trim())}`, {
+				replace: true,
+				reset: false
 			});
 		}, 300);
 	}
 
 	function goToPage(page: number) {
-		// eslint-disable-next-line svelte/no-navigation-without-resolve
-		void goto(`${resolve('/tools/users')}${buildQuery(page, data.search)}`);
+		void goto(`${resolve('tools/users')}${buildQuery(page, data.search)}`);
 	}
 </script>
 
@@ -110,7 +109,7 @@
 								<!-- The username is the link to the detail page: a real anchor
 								     keeps the row reachable and openable by keyboard. -->
 								<a
-									href={resolve(`/tools/users/${listedUser.id}`)}
+									href={resolve(`tools/users/${listedUser.id}`)}
 									class="text-primary hover:underline"
 								>
 									{listedUser.username}

@@ -1,16 +1,17 @@
 <script lang="ts">
-	import type { CurrentUserDto, SocialProvider } from '$lib/api/generated';
-
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { createApiClient } from '$lib/api';
-	import { unlinkTelegramAccount, unlinkVkAccount } from '$lib/api/generated';
-	import MenuGroup from '$lib/components/MenuGroup.svelte';
-	import { Button } from '$lib/components/ui/button';
-	import * as Item from '$lib/components/ui/item';
-	import { SOCIAL_PROVIDER_PRESENTATION } from '$lib/data/socialProviders';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { offlineWriteGate } from '$lib/utils/offlineAction';
+	import { PUBLIC_API_URL } from '$app/env/public';
 	import { Mail, Shield } from '@lucide/svelte';
+
+	import type { CurrentUserDto, SocialProvider } from '#lib/api/generated/index.js';
+
+	import { unlinkTelegramAccount, unlinkVkAccount } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
+	import MenuGroup from '#lib/components/MenuGroup.svelte';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Item from '#lib/components/ui/item/index.js';
+	import { SOCIAL_PROVIDER_PRESENTATION } from '#lib/data/socialProviders.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 
 	import ChangeEmailModal from './ChangeEmailModal.svelte';
 	import ChangePasswordModal from './ChangePasswordModal.svelte';

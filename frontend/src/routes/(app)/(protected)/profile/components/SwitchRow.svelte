@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
-	import { Switch } from '$lib/components/ui/switch';
+	import { Switch } from '#lib/components/ui/switch/index.js';
 
 	interface Props {
 		id: string;

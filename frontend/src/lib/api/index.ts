@@ -1,13 +1,14 @@
-import type { Client, ResolvedRequestOptions } from '$lib/api/generated/client';
-
+import { PUBLIC_API_URL } from '$app/env/public';
 import { invalidate } from '$app/navigation';
-import { PUBLIC_API_URL } from '$env/static/public';
-import { createClient } from '$lib/api/generated/client';
+
+import type { Client, ResolvedRequestOptions } from '#lib/api/generated/client/index.js';
+
+import { createClient } from '#lib/api/generated/client/index.js';
 import {
 	isBackendUnreachableStatus,
 	markReachable,
 	probeReachability
-} from '$lib/services/reachability';
+} from '#lib/services/reachability.js';
 
 // True while a 401-triggered identity refresh is in flight, so a burst of
 // rejected calls collapses into a single `invalidate`. A transient concurrency

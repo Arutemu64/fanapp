@@ -1,14 +1,15 @@
-import type { BackTarget } from '$lib/types/navigation';
+import { error, redirect } from '@sveltejs/kit';
 
-import { createApiClient } from '$lib/api';
-import { throwApiError } from '$lib/api/errors';
-import { listScheduleChanges } from '$lib/api/generated';
+import type { BackTarget } from '#lib/types/navigation.js';
+
+import { throwApiError } from '#lib/api/errors.js';
+import { listScheduleChanges } from '#lib/api/generated/index.js';
+import { createApiClient } from '#lib/api/index.js';
 import {
 	SCHEDULE_CHANGES_PAGE_REQUEST_LIMIT,
 	SCHEDULE_CHANGES_PAGE_SIZE
-} from '$lib/constants/scheduleChanges';
-import { canManageSchedule } from '$lib/utils/permissions';
-import { error, redirect } from '@sveltejs/kit';
+} from '#lib/constants/scheduleChanges.js';
+import { canManageSchedule } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';
 
@@ -46,7 +47,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 	const changes = data.schedule_changes ?? [];
 	return {
 		title: 'Изменения программы',
-		back: { href: '/schedule', label: 'Назад к программе' } satisfies BackTarget,
+		back: { href: 'schedule', label: 'Назад к программе' } satisfies BackTarget,
 		schedule_changes: changes.slice(0, SCHEDULE_CHANGES_PAGE_SIZE),
 		hasMore: changes.length > SCHEDULE_CHANGES_PAGE_SIZE
 	};

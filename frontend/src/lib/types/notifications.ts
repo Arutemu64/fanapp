@@ -1,4 +1,4 @@
-import type { NotificationDto } from '$lib/api/generated';
+import type { NotificationDto } from '#lib/api/generated/index.js';
 
 /**
  * Streamed seed for the app-shell bell: the capped dropdown preview plus the true

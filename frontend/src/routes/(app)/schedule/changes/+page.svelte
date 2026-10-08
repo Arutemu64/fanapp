@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
-	import { getEventsClient } from '$lib/services/events.svelte';
-	import { feedSnapshotKey } from '$lib/utils/feed';
 	import { onMount } from 'svelte';
+
+	import { getEventsClient } from '#lib/services/events.svelte.js';
+	import { feedSnapshotKey } from '#lib/utils/feed.js';
 
 	import type { PageProps } from './$types';
 

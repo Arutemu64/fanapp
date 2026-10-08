@@ -1,13 +1,13 @@
-import type { SocialProvider } from '$lib/api/generated';
+import type { SocialProvider } from '#lib/api/generated/index.js';
 
-import { createApiClient } from '$lib/api';
-import { listOauthProviders } from '$lib/api/generated';
-import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '$lib/utils/fetchTimeout';
+import { listOauthProviders } from '#lib/api/generated/index.js';
+import { createApiClient } from '#lib/api/index.js';
+import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '#lib/utils/fetchTimeout.js';
 import {
 	OAUTH_ERROR_CODES,
 	OAUTH_LOGIN_ERROR_PARAM,
 	readOAuthErrorCode
-} from '$lib/utils/oauthErrors';
+} from '#lib/utils/oauthErrors.js';
 
 import type { PageLoad } from './$types';
 

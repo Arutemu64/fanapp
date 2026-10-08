@@ -1,4 +1,4 @@
-import { type Interval, useInterval } from '$lib/utils/useInterval';
+import { type Interval, useInterval } from '#lib/utils/useInterval.js';
 
 // Countdown timer for "resend code" buttons: blocks repeat sends for a fixed
 // number of seconds, ticking down once per second. Shared by the verify-code

@@ -1,9 +1,10 @@
 <script lang="ts">
-	import type { NominationVotingDto } from '$lib/api/generated';
-
-	import EmptyState from '$lib/components/EmptyState.svelte';
-	import OfflineUnavailableState from '$lib/components/OfflineUnavailableState.svelte';
 	import { ThumbsUp } from '@lucide/svelte';
+
+	import type { NominationVotingDto } from '#lib/api/generated/index.js';
+
+	import EmptyState from '#lib/components/EmptyState.svelte';
+	import OfflineUnavailableState from '#lib/components/OfflineUnavailableState.svelte';
 
 	import type { PageProps } from './$types';
 

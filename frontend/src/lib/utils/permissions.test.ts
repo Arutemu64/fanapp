@@ -1,6 +1,6 @@
-import type { CurrentUserDto } from '$lib/api/generated';
-
 import { describe, expect, it } from 'vitest';
+
+import type { CurrentUserDto } from '#lib/api/generated/index.js';
 
 import { hasPermission } from './permissions';
 

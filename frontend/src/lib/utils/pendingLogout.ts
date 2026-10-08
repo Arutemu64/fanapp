@@ -1,5 +1,5 @@
-import { createApiClient } from '$lib/api';
-import { logoutUser } from '$lib/api/generated';
+import { logoutUser } from '#lib/api/generated/index.js';
+import { createApiClient } from '#lib/api/index.js';
 
 import { readStorage, removeStorage, writeStorage } from './safeStorage';
 

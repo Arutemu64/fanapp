@@ -1,7 +1,7 @@
 <script lang="ts">
-	import ErrorState from '$lib/components/ErrorState.svelte';
+	import ErrorState from '#lib/components/ErrorState.svelte';
 
-	// Passed by SvelteKit's rendering-error boundary (handleRenderingErrors).
+	// Passed by SvelteKit's rendering-error boundary.
 	let { error }: { error?: App.Error } = $props();
 </script>
 

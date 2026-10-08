@@ -1,20 +1,22 @@
 <script lang="ts">
-	import type { SocialProvider } from '$lib/api/generated';
 	import type { Attachment } from 'svelte/attachments';
 
-	import { goto, pushState } from '$app/navigation';
+	import { PUBLIC_API_URL } from '$app/env/public';
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { PUBLIC_API_URL } from '$env/static/public';
-	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { ALL_SOCIAL_PROVIDERS, SOCIAL_PROVIDER_PRESENTATION } from '$lib/data/socialProviders';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { LOGIN_NEXT_PARAM, sanitizeNextPath } from '$lib/utils/auth';
-	import { clearOAuthErrorParam, OAUTH_LOGIN_ERROR_PARAM } from '$lib/utils/oauthErrors';
 	import { ArrowLeft, Mail } from '@lucide/svelte';
 	import { onMount } from 'svelte';
+
+	import type { SocialProvider } from '#lib/api/generated/index.js';
+
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Card from '#lib/components/ui/card/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { ALL_SOCIAL_PROVIDERS, SOCIAL_PROVIDER_PRESENTATION } from '#lib/data/socialProviders.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { LOGIN_NEXT_PARAM, sanitizeNextPath } from '#lib/utils/auth.js';
+	import { clearOAuthErrorParam, OAUTH_LOGIN_ERROR_PARAM } from '#lib/utils/oauthErrors.js';
 
 	import type { PageProps } from './$types';
 
@@ -87,15 +89,18 @@
 	}
 
 	function showEmailLogin() {
-		pushState('', { loginStep: 'email' });
+		void goto('', { shallow: true, state: { loginStep: 'email' } });
 	}
 
 	function showPasswordLogin() {
-		pushState('', { loginStep: 'password' });
+		void goto('', { shallow: true, state: { loginStep: 'password' } });
 	}
 
 	function showCodeStep(sentTo: string) {
-		pushState('', { loginStep: 'code', loginCodeEmail: sentTo });
+		void goto('', {
+			shallow: true,
+			state: { loginStep: 'code', loginCodeEmail: sentTo }
+		});
 	}
 
 	// The on-screen back control walks the same history as the back gesture, so
@@ -241,7 +246,7 @@
 		<button
 			type="button"
 			class="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-			onclick={() => goto(resolve('/'))}
+			onclick={() => goto(resolve(''))}
 		>
 			Продолжить без входа
 		</button>

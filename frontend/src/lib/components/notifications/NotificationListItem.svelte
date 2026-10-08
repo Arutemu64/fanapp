@@ -1,10 +1,11 @@
 <script lang="ts">
-	import type { Pathname } from '$app/types';
-	import type { NotificationDto } from '$lib/api/generated';
-
 	import { resolve } from '$app/paths';
-	import { formatRelativeTime } from '$lib/utils/formatters';
 	import { Bell } from '@lucide/svelte';
+
+	import type { NotificationDto } from '#lib/api/generated/index.js';
+
+	import { formatRelativeTime } from '#lib/utils/formatters.js';
+	import { toAppPath } from '#lib/utils/nav.js';
 
 	interface Props {
 		notification: NotificationDto;
@@ -16,8 +17,8 @@
 	let createdAt = $derived(formatRelativeTime(notification.created_at));
 
 	// Backend-provided in-app deep-link (e.g. "/schedule"). When absent the item
-	// is not clickable. The path is a trusted internal route, so cast to Pathname.
-	let path = $derived(notification.path ? (notification.path as Pathname) : undefined);
+	// is not clickable.
+	let path = $derived(notification.path ? toAppPath(notification.path) : undefined);
 
 	let cardClass =
 		'flex max-w-none flex-row items-start gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-sm transition-colors hover:bg-accent/50';

@@ -1,23 +1,25 @@
 <script lang="ts">
-	import { createApiClient } from '$lib/api';
-	import { loginWithCode, requestLoginCode } from '$lib/api/generated';
 	import { type PinInputCell, REGEXP_ONLY_DIGITS } from 'bits-ui';
+
+	import { loginWithCode, requestLoginCode } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
 	const client = createApiClient();
-	import { getApiErrorDetail, getApiFieldError } from '$lib/api/errors';
-	import CaptchaWidget, { captchaEnabled } from '$lib/components/CaptchaWidget.svelte';
-	import * as Alert from '$lib/components/ui/alert';
-	import { Button } from '$lib/components/ui/button';
-	import * as InputOTP from '$lib/components/ui/input-otp';
-	import { Label } from '$lib/components/ui/label';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { CaptchaGate } from '$lib/services/captcha.svelte';
-	import { ResendCooldown } from '$lib/services/cooldown.svelte';
-	import { getEventsClient } from '$lib/services/events.svelte';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { completeLogin } from '$lib/utils/auth';
-	import { isValidOtp } from '$lib/utils/validation';
 	import { RotateCw } from '@lucide/svelte';
 	import { onMount } from 'svelte';
+
+	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
+	import CaptchaWidget, { captchaEnabled } from '#lib/components/CaptchaWidget.svelte';
+	import * as Alert from '#lib/components/ui/alert/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as InputOTP from '#lib/components/ui/input-otp/index.js';
+	import { Label } from '#lib/components/ui/label/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { CaptchaGate } from '#lib/services/captcha.svelte.js';
+	import { ResendCooldown } from '#lib/services/cooldown.svelte.js';
+	import { getEventsClient } from '#lib/services/events.svelte.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { completeLogin } from '#lib/utils/auth.js';
+	import { isValidOtp } from '#lib/utils/validation.js';
 
 	interface Props {
 		email: string;

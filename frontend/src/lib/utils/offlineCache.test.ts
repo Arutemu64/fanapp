@@ -20,7 +20,7 @@ const reachability = vi.hoisted(() => ({
 	markReachable: vi.fn<(value: boolean) => void>()
 }));
 
-vi.mock('$lib/services/reachability', () => ({
+vi.mock('#lib/services/reachability.js', () => ({
 	isReachable: () => reachability.reachable,
 	markReachable: reachability.markReachable
 }));

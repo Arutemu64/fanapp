@@ -1,19 +1,20 @@
 <script lang="ts">
-	import type { SyncRunStatus, SyncSource, SyncSourceStatusDto } from '$lib/api/generated';
-
 	import { invalidate } from '$app/navigation';
-	import { createApiClient } from '$lib/api';
+	import { onMount } from 'svelte';
+
+	import type { SyncRunStatus, SyncSource, SyncSourceStatusDto } from '#lib/api/generated/index.js';
+
 	// The generated operation shares the name of this component's own trigger
 	// handler below, so import it under a distinct name.
-	import { requestSync as requestSyncSource } from '$lib/api/generated';
-	import SectionIntro from '$lib/components/SectionIntro.svelte';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { getEventsClient } from '$lib/services/events.svelte';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { onMount } from 'svelte';
+	import { requestSync as requestSyncSource } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
+	import SectionIntro from '#lib/components/SectionIntro.svelte';
+	import { Badge } from '#lib/components/ui/badge/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Card from '#lib/components/ui/card/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { getEventsClient } from '#lib/services/events.svelte.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
 
 	import type { PageProps } from './$types';
 

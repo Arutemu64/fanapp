@@ -1,5 +1,5 @@
 <script module lang="ts">
-	import { PUBLIC_SMARTCAPTCHA_CLIENT_KEY } from '$env/static/public';
+	import { PUBLIC_SMARTCAPTCHA_CLIENT_KEY } from '$app/env/public';
 
 	// Captcha is enabled only when a SmartCaptcha client key is configured.
 	// Without the key the widget renders nothing and the flow works captcha-free,
@@ -10,7 +10,7 @@
 <script lang="ts">
 	import type { Attachment } from 'svelte/attachments';
 
-	import { loadSmartCaptcha, type SmartCaptchaApi } from '$lib/utils/smartcaptcha';
+	import { loadSmartCaptcha, type SmartCaptchaApi } from '#lib/utils/smartcaptcha.js';
 
 	interface Props {
 		/** Solved token, or null until the user passes the challenge. */

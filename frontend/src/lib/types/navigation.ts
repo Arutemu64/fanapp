@@ -1,4 +1,4 @@
-import type { Pathname } from '$app/types';
+import type { Path } from '$app/types';
 import type { Component } from 'svelte';
 
 /**
@@ -7,7 +7,7 @@ import type { Component } from 'svelte';
  * no in-app history, so "back" would leave the app or do nothing.
  */
 export interface BackTarget {
-	href: Pathname;
+	href: Path;
 	/** Accessible name of the icon-only button, e.g. «Назад к инструментам». */
 	label: string;
 }
@@ -20,7 +20,7 @@ export interface BackTarget {
  * (https://www.sap.com/design-system/fiori-design-android/v26-4/components/navigation-and-search/top-app-bar/usage).
  */
 export interface NavbarAction {
-	href: Pathname;
+	href: Path;
 	/** Accessible name of the icon-only button, e.g. «Изменения программы». */
 	label: string;
 	icon: Component;

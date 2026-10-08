@@ -1,8 +1,8 @@
 <script lang="ts">
-	import EmptyState from '$lib/components/EmptyState.svelte';
-	import StaleDataNotice from '$lib/components/StaleDataNotice.svelte';
-	import { getOfflineService, shouldShowStaleNotice } from '$lib/services/offline.svelte';
-	import { feedSnapshotKey } from '$lib/utils/feed';
+	import EmptyState from '#lib/components/EmptyState.svelte';
+	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
+	import { getOfflineService, shouldShowStaleNotice } from '#lib/services/offline.svelte.js';
+	import { feedSnapshotKey } from '#lib/utils/feed.js';
 
 	import type { PageProps } from './$types';
 

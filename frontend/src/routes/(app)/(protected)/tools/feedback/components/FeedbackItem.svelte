@@ -1,8 +1,9 @@
 <script lang="ts">
-	import type { FeedbackDto } from '$lib/api/generated';
-
-	import { formatRelativeTime } from '$lib/utils/formatters';
 	import { User } from '@lucide/svelte';
+
+	import type { FeedbackDto } from '#lib/api/generated/index.js';
+
+	import { formatRelativeTime } from '#lib/utils/formatters.js';
 
 	interface Props {
 		feedback: FeedbackDto;

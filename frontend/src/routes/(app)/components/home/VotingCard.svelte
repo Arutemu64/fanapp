@@ -1,9 +1,10 @@
 <script lang="ts">
-	import type { VotingStatus } from '$lib/api/generated';
-
-	import { Button } from '$lib/components/ui/button';
-	import { LOGIN_NEXT_PARAM } from '$lib/utils/auth';
 	import { ThumbsUp } from '@lucide/svelte';
+
+	import type { VotingStatus } from '#lib/api/generated/index.js';
+
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { LOGIN_NEXT_PARAM } from '#lib/utils/auth.js';
 
 	interface Props {
 		status: VotingStatus;

@@ -1,19 +1,20 @@
 <script lang="ts">
+	import { invalidate } from '$app/navigation';
+	import { Undo2 } from '@lucide/svelte';
+
 	import type {
 		ScheduleChangeEventDto,
 		ScheduleChangeFullDto,
 		ScheduleChangeType
-	} from '$lib/api/generated';
+	} from '#lib/api/generated/index.js';
 
-	import { invalidate } from '$app/navigation';
-	import { createApiClient } from '$lib/api';
-	import { undoScheduleChange } from '$lib/api/generated';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
-	import { Spinner } from '$lib/components/ui/spinner';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { Undo2 } from '@lucide/svelte';
+	import { undoScheduleChange } from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
+	import { Badge } from '#lib/components/ui/badge/index.js';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import * as Card from '#lib/components/ui/card/index.js';
+	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
 
 	const client = createApiClient();
 

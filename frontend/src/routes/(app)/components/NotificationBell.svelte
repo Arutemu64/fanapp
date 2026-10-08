@@ -1,24 +1,28 @@
 <script lang="ts">
-	import type { NotificationDto } from '$lib/api/generated';
-	import type { NotificationSeed } from '$lib/types/notifications';
-
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { createApiClient } from '$lib/api';
+	import { Bell, Eye } from '@lucide/svelte';
+	import { onMount } from 'svelte';
+
+	import type { NotificationDto } from '#lib/api/generated/index.js';
+	import type { NotificationSeed } from '#lib/types/notifications.js';
+
 	import {
 		listUserNotifications,
 		markAllNotificationsRead,
 		markNotificationsRead
-	} from '$lib/api/generated';
-	import NotificationListItem from '$lib/components/notifications/NotificationListItem.svelte';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import { NOTIFICATION_BADGE_MAX, NOTIFICATION_PREVIEW_LIMIT } from '$lib/constants/notifications';
-	import { getEventsClient } from '$lib/services/events.svelte';
-	import { getToastService } from '$lib/services/toasts.svelte';
-	import { getUnreadCountService } from '$lib/services/unreadCount.svelte';
-	import { setAppBadgeCount } from '$lib/utils/appBadge';
-	import { Bell, Eye } from '@lucide/svelte';
-	import { onMount } from 'svelte';
+	} from '#lib/api/generated/index.js';
+	import { createApiClient } from '#lib/api/index.js';
+	import NotificationListItem from '#lib/components/notifications/NotificationListItem.svelte';
+	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
+	import {
+		NOTIFICATION_BADGE_MAX,
+		NOTIFICATION_PREVIEW_LIMIT
+	} from '#lib/constants/notifications.js';
+	import { getEventsClient } from '#lib/services/events.svelte.js';
+	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { getUnreadCountService } from '#lib/services/unreadCount.svelte.js';
+	import { setAppBadgeCount } from '#lib/utils/appBadge.js';
 
 	const client = createApiClient();
 
@@ -187,7 +191,7 @@
 	screen, so the bell navigates straight to the full page. The dropdown preview
 	is a desktop affordance where the extra viewport width makes it worthwhile. -->
 <a
-	href={resolve('/notifications')}
+	href={resolve('notifications')}
 	aria-label={bellLabel}
 	class="{triggerClass} inline-flex md:hidden"
 >
@@ -238,7 +242,7 @@
 		</div>
 
 		<a
-			href={resolve('/notifications')}
+			href={resolve('notifications')}
 			class="block border-t border-border bg-muted/50 py-2.5 text-center text-sm font-medium text-foreground hover:bg-muted"
 		>
 			<div class="inline-flex items-center">

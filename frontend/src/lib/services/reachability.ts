@@ -1,6 +1,7 @@
-import { PUBLIC_API_URL } from '$env/static/public';
-import { timeoutSignal } from '$lib/utils/fetchTimeout';
+import { PUBLIC_API_URL } from '$app/env/public';
 import { createSubscriber } from 'svelte/reactivity';
+
+import { timeoutSignal } from '#lib/utils/fetchTimeout.js';
 
 /**
  * Active server-reachability tracking.
