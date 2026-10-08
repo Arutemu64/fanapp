@@ -1,6 +1,9 @@
 <script lang="ts">
 	import type { SocialProvider } from '$lib/api/generated';
+	import type { Attachment } from 'svelte/attachments';
 
+	import { goto, pushState } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { PUBLIC_API_URL } from '$env/static/public';
 	import { Button } from '$lib/components/ui/button';
@@ -10,13 +13,14 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { LOGIN_NEXT_PARAM, sanitizeNextPath } from '$lib/utils/auth';
 	import { clearOAuthErrorParam, OAUTH_LOGIN_ERROR_PARAM } from '$lib/utils/oauthErrors';
-	import { Mail } from '@lucide/svelte';
+	import { ArrowLeft, Mail } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
 	import type { PageProps } from './$types';
 
 	import CodeLoginForm from './components/CodeLoginForm.svelte';
 	import PasswordLoginForm from './components/PasswordLoginForm.svelte';
+	import VerifyCodeForm from './components/VerifyCodeForm.svelte';
 
 	let { data }: PageProps = $props();
 	const toastService = getToastService();
@@ -29,10 +33,15 @@
 	// third-party captcha script) lives on its own step, so someone using an
 	// OAuth provider never loads it. 'password' is a factor under 'email', not a
 	// peer option, so it's reached from the email step rather than the options.
-	type LoginView = 'options' | 'email' | 'password';
-	let view = $state<LoginView>('options');
+	//
+	// Each step is its own history entry (shallow routing), so the phone's back
+	// gesture steps back through the flow instead of leaving the login page —
+	// https://svelte.dev/docs/kit/shallow-routing. page.state is empty after a
+	// reload, which lands on the options screen.
+	const step = $derived(page.state.loginStep ?? 'options');
+	const codeSentTo = $derived(page.state.loginCodeEmail);
 
-	// Kept on the parent so it survives the email ⇄ password switch.
+	// Kept on the parent so it survives every step switch.
 	let email = $state('');
 
 	// Cancelling is the user's own choice, so it gets an informational toast —
@@ -77,17 +86,44 @@
 		openingProvider = provider;
 	}
 
-	function showOptions() {
-		view = 'options';
-	}
-
 	function showEmailLogin() {
-		view = 'email';
+		pushState('', { loginStep: 'email' });
 	}
 
 	function showPasswordLogin() {
-		view = 'password';
+		pushState('', { loginStep: 'password' });
 	}
+
+	function showCodeStep(sentTo: string) {
+		pushState('', { loginStep: 'code', loginCodeEmail: sentTo });
+	}
+
+	// The on-screen back control walks the same history as the back gesture, so
+	// the two can never disagree about where "back" is.
+	function goBack() {
+		history.back();
+	}
+
+	// A step swap removes the control that opened it, dropping focus to <body>, so
+	// move focus into the new step: its first empty field, else its first field,
+	// else its marked default control. Skipped on the first render — that is always
+	// the options screen, where focus belongs at the top of the page.
+	let isFirstRender = true;
+	const focusStep: Attachment<HTMLElement> = (node) => {
+		if (isFirstRender) {
+			isFirstRender = false;
+			return;
+		}
+
+		const fields = Array.from(
+			node.querySelectorAll<HTMLInputElement>('input:not([type="hidden"])')
+		);
+		const target =
+			fields.find((field) => !field.value) ??
+			fields.at(0) ??
+			node.querySelector<HTMLElement>('[data-step-focus]');
+		target?.focus();
+	};
 
 	onMount(() => {
 		const loginError = data.oauthLoginError;
@@ -116,46 +152,98 @@
 
 <Card.Root class="w-full rounded-2xl p-4 sm:p-6">
 	<div class="flex flex-col gap-4">
+		{#if step !== 'options'}
+			<Button
+				variant="ghost"
+				class="-my-2 -ml-2.5 self-start text-muted-foreground"
+				onclick={goBack}
+			>
+				<ArrowLeft data-icon="inline-start" />
+				Назад
+			</Button>
+		{/if}
+
 		<div class="flex flex-col gap-1 text-center">
-			<h1 class="text-2xl font-bold text-foreground">Вход в ФАН ФАН</h1>
-			{#if view === 'options'}
+			<!-- Just «Вход»: the logo above already names ФАН ФАН. -->
+			<h1 class="text-2xl font-bold text-foreground">Вход</h1>
+			{#if step === 'options'}
 				<!-- Benefits belong on the entry screen only: once a method is chosen the
-					sub-steps are the task, not the pitch. -->
+					sub-steps are the task, not the pitch. Every method — email or social —
+					creates the account on first sign-in and there is no separate sign-up,
+					so the entry screen says so once rather than leave a newcomer hunting
+					for «Регистрация». -->
 				<p class="text-sm text-muted-foreground">
 					Получай персональные уведомления, голосуй за участников и оставляй обратную связь.
+				</p>
+				<p class="text-sm text-muted-foreground">
+					Аккаунта ещё нет? Он создастся при первом входе.
 				</p>
 			{/if}
 		</div>
 
-		{#if view === 'options'}
-			{#each providers as provider (provider)}
-				{@const meta = SOCIAL_PROVIDER_PRESENTATION[provider]}
-				{@const Icon = meta.icon}
-				<Button
-					href={providerStartUrl(provider)}
-					variant="outline"
-					class="w-full"
-					aria-disabled={openingProvider === provider}
-					onclick={(event: MouseEvent) => handleProviderClick(event, provider)}
-				>
-					{#if openingProvider === provider}
-						<Spinner data-icon="inline-start" />
-						Открываем {meta.name}…
-					{:else}
-						<Icon class={meta.iconClass} data-icon="inline-start" />
-						Войти через {meta.name}
-					{/if}
-				</Button>
-			{/each}
+		{#key step}
+			<div class="flex flex-col gap-4" {@attach focusStep}>
+				{#if step === 'options'}
+					{#each providers as provider (provider)}
+						{@const meta = SOCIAL_PROVIDER_PRESENTATION[provider]}
+						{@const Icon = meta.icon}
+						<Button
+							href={providerStartUrl(provider)}
+							variant="outline"
+							class="w-full"
+							aria-disabled={openingProvider === provider}
+							onclick={(event: MouseEvent) => handleProviderClick(event, provider)}
+						>
+							{#if openingProvider === provider}
+								<Spinner data-icon="inline-start" />
+								Открываем {meta.name}…
+							{:else}
+								<Icon class={meta.iconClass} data-icon="inline-start" />
+								Войти через {meta.name}
+							{/if}
+						</Button>
+					{/each}
 
-			<Button type="button" variant="outline" class="w-full" onclick={showEmailLogin}>
-				<Mail data-icon="inline-start" />
-				Войти по почте
-			</Button>
-		{:else if view === 'email'}
-			<CodeLoginForm bind:email onBack={showOptions} onPasswordLogin={showPasswordLogin} />
-		{:else}
-			<PasswordLoginForm bind:email onBack={showEmailLogin} />
-		{/if}
+					<Button
+						type="button"
+						variant="outline"
+						class="w-full"
+						data-step-focus
+						onclick={showEmailLogin}
+					>
+						<Mail data-icon="inline-start" />
+						Войти по почте
+					</Button>
+				{:else if step === 'code' && codeSentTo}
+					<VerifyCodeForm email={codeSentTo} />
+				{:else if step === 'password'}
+					<PasswordLoginForm bind:email onCodeLogin={goBack} />
+				{:else}
+					<CodeLoginForm bind:email onCodeSent={showCodeStep} onPasswordLogin={showPasswordLogin} />
+				{/if}
+			</div>
+		{/key}
 	</div>
 </Card.Root>
+
+<!--
+	The app is usable by guests, and login is reached both voluntarily (navbar)
+	and via protected-route redirects, so always offer a way back into it.
+	Navigate to the app root explicitly instead of history.back(): going back
+	would re-enter a protected redirect straight to /login, and a direct
+	deep-link to /login has no history to return to.
+
+	Options screen only: a sub-step already has «Назад» at the top, and one exit
+	per screen keeps the stack short; leaving from there is one tap further.
+-->
+{#if step === 'options'}
+	<div class="text-center">
+		<button
+			type="button"
+			class="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+			onclick={() => goto(resolve('/'))}
+		>
+			Продолжить без входа
+		</button>
+	</div>
+{/if}

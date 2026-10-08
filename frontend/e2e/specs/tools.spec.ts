@@ -29,7 +29,7 @@ test.describe('organizer tools', { tag: '@critical' }, () => {
 		await page.goto('/tools');
 
 		await expect(page).toHaveURL(/\/login\?/);
-		await expect(page.getByRole('heading', { name: 'Вход в ФАН ФАН' })).toBeVisible();
+		await expect(page.getByRole('heading', { level: 1, name: 'Вход' })).toBeVisible();
 		expect(api.unmatched).toEqual([]);
 	});
 });

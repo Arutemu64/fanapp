@@ -11,11 +11,13 @@
 				// Signature tinted status notices (DESIGN.md §5 "Notices"): a soft /10 fill,
 				// a /30 border and the status text colour, all mode-aware via the semantic
 				// tokens so no `dark:` is needed. Lives here, not repeated per instance.
+				// The description takes the full token, not the /90 the destructive variant
+				// uses: on the tint, /90 drops light-mode text under AA's 4.5:1 (~3.8:1).
 				success:
-					'border-success/30 bg-success/10 text-success *:data-[slot=alert-description]:text-success/90',
+					'border-success/30 bg-success/10 text-success *:data-[slot=alert-description]:text-success',
 				warning:
-					'border-warning/30 bg-warning/10 text-warning *:data-[slot=alert-description]:text-warning/90',
-				info: 'border-info/30 bg-info/10 text-info *:data-[slot=alert-description]:text-info/90'
+					'border-warning/30 bg-warning/10 text-warning *:data-[slot=alert-description]:text-warning',
+				info: 'border-info/30 bg-info/10 text-info *:data-[slot=alert-description]:text-info'
 			}
 		},
 		defaultVariants: {
@@ -40,12 +42,19 @@
 	}: WithElementRef<HTMLAttributes<HTMLDivElement>> & {
 		variant?: AlertVariant;
 	} = $props();
+
+	// Only an error interrupts the screen reader (assertive `alert`); a success,
+	// warning or info notice is advisory, so it waits its turn (polite `status`).
+	// https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles/status_role
+	// Deviates from vega defaults — keep on a shadcn-svelte update. A caller's own
+	// `role` in restProps still wins, being spread after this.
+	const role = $derived(variant === 'destructive' ? 'alert' : 'status');
 </script>
 
 <div
 	bind:this={ref}
 	data-slot="alert"
-	role="alert"
+	{role}
 	class={cn(alertVariants({ variant }), className)}
 	{...restProps}
 >

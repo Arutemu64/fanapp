@@ -1,8 +1,7 @@
 <script lang="ts">
-	import type { PinInputCell } from 'bits-ui';
-
 	import { createApiClient } from '$lib/api';
 	import { loginWithCode, requestLoginCode } from '$lib/api/generated';
+	import { type PinInputCell, REGEXP_ONLY_DIGITS } from 'bits-ui';
 	const client = createApiClient();
 	import { getApiErrorDetail, getApiFieldError } from '$lib/api/errors';
 	import CaptchaWidget, { captchaEnabled } from '$lib/components/CaptchaWidget.svelte';
@@ -17,15 +16,14 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { completeLogin } from '$lib/utils/auth';
 	import { isValidOtp } from '$lib/utils/validation';
-	import { ArrowLeft, RotateCw } from '@lucide/svelte';
+	import { RotateCw } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
 	interface Props {
 		email: string;
-		onBack?: () => void;
 	}
 
-	let { email, onBack }: Props = $props();
+	let { email }: Props = $props();
 
 	type ActiveAction = 'code-request' | 'code-login' | null;
 
@@ -98,12 +96,16 @@
 			});
 
 			if (error) {
+				// A rejected code is cleared so the next attempt starts from the first
+				// box; focus never left the input, so typing can resume at once.
 				const codeFieldError = getApiFieldError(error, 'code');
 				if (codeFieldError) {
+					loginCode = '';
 					loginCodeError = codeFieldError;
 					return;
 				}
 				if (response?.status === 400) {
+					loginCode = '';
 					loginCodeError = getApiErrorDetail(error) ?? 'Неверный или устаревший код';
 					return;
 				}
@@ -180,12 +182,17 @@
 	</Alert.Root>
 
 	<div class="flex flex-col items-center gap-2">
-		<Label>Код подтверждения</Label>
+		<Label for="login-code">Код подтверждения</Label>
+		<!-- Read-only, not disabled, while busy so focus and the phone keyboard stay
+			put; digits-only so a stray letter can't auto-submit a doomed code. -->
 		<InputOTP.Root
+			inputId="login-code"
 			maxlength={6}
+			pattern={REGEXP_ONLY_DIGITS}
 			bind:value={loginCode}
-			disabled={busy}
-			aria-invalid={Boolean(loginCodeError)}
+			readonly={busy}
+			aria-invalid={loginCodeError ? true : undefined}
+			aria-describedby="login-code-hint"
 			onValueChange={resetLoginCodeFeedback}
 			onComplete={submitLoginCode}
 		>
@@ -204,9 +211,11 @@
 			{/snippet}
 		</InputOTP.Root>
 		{#if loginCodeError}
-			<p class="text-center text-xs text-destructive">{loginCodeError}</p>
+			<p id="login-code-hint" role="alert" class="text-center text-xs text-destructive">
+				{loginCodeError}
+			</p>
 		{:else}
-			<p class="text-center text-xs text-muted-foreground">
+			<p id="login-code-hint" class="text-center text-xs text-muted-foreground">
 				Введи 6 цифр из письма. Не пришло — проверь папку «Спам».
 			</p>
 		{/if}
@@ -245,17 +254,6 @@
 				<RotateCw data-icon="inline-start" />
 				Отправить код ещё раз
 			{/if}
-		</Button>
-
-		<Button
-			type="button"
-			variant="outline"
-			class="w-full"
-			disabled={busy}
-			onclick={() => onBack?.()}
-		>
-			<ArrowLeft data-icon="inline-start" />
-			Назад
 		</Button>
 	</div>
 </form>

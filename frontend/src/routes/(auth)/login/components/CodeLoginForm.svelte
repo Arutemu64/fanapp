@@ -11,24 +11,18 @@
 	import { Spinner } from '$lib/components/ui/spinner';
 	import { CaptchaGate } from '$lib/services/captcha.svelte';
 	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
-	import { ArrowLeft, Mail } from '@lucide/svelte';
+	import { Mail } from '@lucide/svelte';
 	import { onDestroy } from 'svelte';
-
-	import VerifyCodeForm from './VerifyCodeForm.svelte';
 
 	interface Props {
 		email: string;
-		// Return to the login-options screen.
-		onBack?: () => void;
+		// Move on to the verify step for the address the code went to.
+		onCodeSent: (sentTo: string) => void;
 		// Switch to the password form (a factor under this same email identity).
 		onPasswordLogin?: () => void;
 	}
 
-	let { email = $bindable(''), onBack, onPasswordLogin }: Props = $props();
-
-	// The address the code went to, empty until it's sent — the switch to the
-	// verify step. Local: the options screen doesn't need to know.
-	let codeSentTo = $state('');
+	let { email = $bindable(''), onCodeSent, onPasswordLogin }: Props = $props();
 
 	type ActiveAction = 'code-request' | null;
 
@@ -57,15 +51,21 @@
 		}
 	}
 
-	onDestroy(() => captchaGate.clear());
+	// Set when the user leaves this step (back gesture or «Назад») — neither can
+	// be held off while a request runs, so a code that lands afterwards must not
+	// pull them back into the flow they just left.
+	let hasLeftStep = false;
+
+	onDestroy(() => {
+		hasLeftStep = true;
+		captchaGate.clear();
+	});
 
 	let normalizedEmail = $derived(normalizeEmail(email));
-	let isEmailValid = $derived(email ? isValidEmail(normalizedEmail) : null);
 
 	function resetEmailFeedback() {
 		emailError = '';
 		formError = '';
-		codeSentTo = '';
 		// Editing the email cancels any submit we were holding for the captcha.
 		captchaGate.release();
 	}
@@ -111,7 +111,6 @@
 		const trimmedEmail = normalizedEmail;
 
 		activeAction = 'code-request';
-		codeSentTo = '';
 
 		try {
 			const { error, response } = await requestLoginCode({
@@ -133,8 +132,9 @@
 				return;
 			}
 
-			// OTP input auto-focuses its first box on mount, so no manual focus here.
-			codeSentTo = trimmedEmail;
+			if (!hasLeftStep) {
+				onCodeSent(trimmedEmail);
+			}
 		} finally {
 			activeAction = null;
 		}
@@ -147,81 +147,79 @@
 	}
 </script>
 
-{#if codeSentTo}
-	<VerifyCodeForm email={codeSentTo} onBack={() => (codeSentTo = '')} />
-{:else}
-	<form onsubmit={handleSubmit} class="flex flex-col gap-4">
-		{#if formError}
-			<Alert.Root variant="destructive">
-				<Alert.Description>{formError}</Alert.Description>
-			</Alert.Root>
-		{/if}
+<form novalidate onsubmit={handleSubmit} class="flex flex-col gap-4">
+	{#if formError}
+		<Alert.Root variant="destructive">
+			<Alert.Description>{formError}</Alert.Description>
+		</Alert.Root>
+	{/if}
 
-		<Field.Field data-invalid={emailError || (email && isEmailValid === false) ? true : undefined}>
-			<Field.FieldLabel for="code-email">Эл. почта</Field.FieldLabel>
-			<div class="relative flex items-center">
-				<Mail class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
-				<Input
-					id="code-email"
-					name="email"
-					type="email"
-					bind:value={email}
-					placeholder="name@example.com"
-					autocomplete="email"
-					inputmode="email"
-					autocapitalize="off"
-					spellcheck={false}
-					required
-					disabled={isRequesting}
-					class="pl-9"
-					aria-invalid={emailError || (email && isEmailValid === false) ? true : undefined}
-					oninput={resetEmailFeedback}
-				/>
-			</div>
-			{#if emailError}
-				<Field.FieldError>{emailError}</Field.FieldError>
-			{:else if email && isEmailValid === false}
-				<Field.FieldError>Введи адрес в формате name@example.com</Field.FieldError>
-			{/if}
-		</Field.Field>
-
-		<CaptchaWidget
-			bind:token={captchaToken}
-			bind:reset={resetCaptcha}
-			bind:execute={executeCaptcha}
-			onSolve={handleCaptchaSolved}
-		/>
-
-		<Button type="submit" class="w-full" disabled={isRequesting}>
-			{#if isRequesting}
-				<Spinner data-icon="inline-start" />
-				Отправляем…
-			{:else}
-				Продолжить
-			{/if}
-		</Button>
-
-		<!-- Password login is the minority path, so it's a quiet link, not a third button. -->
-		<div class="text-center">
-			<button
-				type="button"
-				class="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
-				onclick={() => onPasswordLogin?.()}
-				disabled={isRequesting}
-			>
-				Войти с паролем
-			</button>
+	<!-- Errors appear on submit only, never while typing: a half-typed address is
+		not a mistake yet, and FieldError's role="alert" would announce it mid-word.
+		`novalidate` on the form hands that check to us — the browser's own bubble
+		would block the submit in the browser's language, not Russian.
+		https://design-system.service.gov.uk/patterns/validation/ -->
+	<Field.Field data-invalid={emailError ? true : undefined}>
+		<Field.FieldLabel for="code-email">Эл. почта</Field.FieldLabel>
+		<div class="relative flex items-center">
+			<Mail class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+			<!-- Read-only, not disabled, while sending: disabling a focused input
+				drops focus to <body> and closes the phone keyboard. `username`, not
+				`email`: password managers offer saved sign-ins on that token, so an
+				account with a password autofills its address here too.
+				https://web.dev/articles/sign-in-form-best-practices -->
+			<Input
+				id="code-email"
+				name="email"
+				type="email"
+				bind:value={email}
+				placeholder="name@example.com"
+				autocomplete="username"
+				inputmode="email"
+				autocapitalize="off"
+				spellcheck={false}
+				required
+				readonly={isRequesting}
+				class="pl-9"
+				aria-invalid={emailError ? true : undefined}
+				aria-describedby={emailError ? 'code-email-error' : 'code-email-description'}
+				oninput={resetEmailFeedback}
+			/>
 		</div>
+		{#if emailError}
+			<Field.FieldError id="code-email-error">{emailError}</Field.FieldError>
+		{:else}
+			<Field.FieldDescription id="code-email-description">
+				Пришлём код для входа.
+			</Field.FieldDescription>
+		{/if}
+	</Field.Field>
 
-		<Button
+	<CaptchaWidget
+		bind:token={captchaToken}
+		bind:reset={resetCaptcha}
+		bind:execute={executeCaptcha}
+		onSolve={handleCaptchaSolved}
+	/>
+
+	<Button type="submit" class="w-full" disabled={isRequesting}>
+		{#if isRequesting}
+			<Spinner data-icon="inline-start" />
+			Отправляем…
+		{:else}
+			Продолжить
+		{/if}
+	</Button>
+
+	<!-- Password login is the minority path, so it's a quiet link, not a second button. -->
+	<div class="text-center">
+		<button
 			type="button"
-			variant="outline"
-			class="w-full"
+			class="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
+			onclick={() => onPasswordLogin?.()}
 			disabled={isRequesting}
-			onclick={() => onBack?.()}
 		>
-			<ArrowLeft data-icon="inline-start" />
-			Назад
-		</Button>
-	</form>
-{/if}
+			Войти с паролем
+		</button>
+	</div>
+</form>

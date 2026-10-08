@@ -13,14 +13,15 @@
 	import { getToastService } from '$lib/services/toasts.svelte';
 	import { completeLogin } from '$lib/utils/auth';
 	import { isValidEmail, normalizeEmail } from '$lib/utils/validation';
-	import { ArrowLeft, Mail } from '@lucide/svelte';
+	import { Mail } from '@lucide/svelte';
 
 	interface Props {
 		email: string;
-		onBack?: () => void;
+		// Return to the email step, which signs in with a code instead.
+		onCodeLogin?: () => void;
 	}
 
-	let { email = $bindable(''), onBack }: Props = $props();
+	let { email = $bindable(''), onCodeLogin }: Props = $props();
 
 	type ActiveAction = 'password' | null;
 
@@ -36,7 +37,6 @@
 	let busy = $derived(activeAction !== null);
 
 	let normalizedEmail = $derived(normalizeEmail(email));
-	let isEmailValid = $derived(email ? isValidEmail(normalizedEmail) : null);
 
 	function resetEmailFeedback() {
 		emailError = '';
@@ -115,15 +115,17 @@
 	}
 </script>
 
-<form onsubmit={handlePasswordSubmit} class="flex flex-col gap-4">
+<form novalidate onsubmit={handlePasswordSubmit} class="flex flex-col gap-4">
 	{#if formError}
 		<Alert.Root variant="destructive">
 			<Alert.Description>{formError}</Alert.Description>
 		</Alert.Root>
 	{/if}
 
+	<!-- Errors appear on submit only, and the inputs go read-only rather than
+		disabled while signing in — see CodeLoginForm for why. -->
 	<Field.FieldGroup class="gap-4">
-		<Field.Field data-invalid={emailError || (email && isEmailValid === false) ? true : undefined}>
+		<Field.Field data-invalid={emailError ? true : undefined}>
 			<Field.FieldLabel for="password-email">Эл. почта</Field.FieldLabel>
 			<div class="relative flex items-center">
 				<Mail class="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
@@ -138,16 +140,15 @@
 					autocapitalize="off"
 					spellcheck={false}
 					required
-					disabled={busy}
+					readonly={busy}
 					class="pl-9"
-					aria-invalid={emailError || (email && isEmailValid === false) ? true : undefined}
+					aria-invalid={emailError ? true : undefined}
+					aria-describedby={emailError ? 'password-email-error' : undefined}
 					oninput={resetEmailFeedback}
 				/>
 			</div>
 			{#if emailError}
-				<Field.FieldError>{emailError}</Field.FieldError>
-			{:else if email && isEmailValid === false}
-				<Field.FieldError>Введи адрес в формате name@example.com</Field.FieldError>
+				<Field.FieldError id="password-email-error">{emailError}</Field.FieldError>
 			{/if}
 		</Field.Field>
 
@@ -159,12 +160,13 @@
 				bind:value={password}
 				autocomplete="current-password"
 				required
-				disabled={busy}
+				readonly={busy}
 				color={passwordError ? 'red' : undefined}
+				describedby={passwordError ? 'password-error' : undefined}
 				oninput={resetPasswordFeedback}
 			/>
 			{#if passwordError}
-				<Field.FieldError>{passwordError}</Field.FieldError>
+				<Field.FieldError id="password-error">{passwordError}</Field.FieldError>
 			{/if}
 		</Field.Field>
 	</Field.FieldGroup>
@@ -178,8 +180,15 @@
 		{/if}
 	</Button>
 
-	<Button type="button" variant="outline" class="w-full" disabled={busy} onclick={() => onBack?.()}>
-		<ArrowLeft data-icon="inline-start" />
-		Назад
-	</Button>
+	<!-- The way out for a forgotten password: a code needs only the inbox. -->
+	<div class="text-center">
+		<button
+			type="button"
+			class="inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
+			onclick={() => onCodeLogin?.()}
+			disabled={busy}
+		>
+			Войти по коду без пароля
+		</button>
+	</div>
 </form>
