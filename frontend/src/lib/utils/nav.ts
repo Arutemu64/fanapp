@@ -26,3 +26,12 @@ export function isNavItemActive(
 	const roots = [item.href, ...(item.nestedRoots ?? [])];
 	return roots.some((root) => isActivePath(activeUrl, resolve(root)));
 }
+
+/**
+ * A backend deep link ("/schedule", "/" for home) as an app `Path`. The API
+ * sends root-relative pathnames, but `resolve()` reads a leading "/" as a route
+ * ID, whose segments it would parse for [params] and (groups).
+ */
+export function toAppPath(backendPath: string): Path {
+	return backendPath.replace(/^\//, '') as Path;
+}

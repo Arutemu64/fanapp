@@ -1,5 +1,3 @@
-import type { Path } from '$app/types';
-
 import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
 import { createContext } from 'svelte';
@@ -9,6 +7,7 @@ import { SvelteSet } from 'svelte/reactivity';
 import type { NotificationDto } from '#lib/api/generated/index.js';
 
 import { getApiErrorDetail } from '#lib/api/errors.js';
+import { toAppPath } from '#lib/utils/nav.js';
 
 export type StatusToastType = 'success' | 'info' | 'warning' | 'error';
 
@@ -53,6 +52,7 @@ export class ToastService {
 
 		// Strip HTML tags if present so Sonner renders clean text
 		const plainBody = notification.body ? notification.body.replace(/<[^>]*>/g, '') : undefined;
+		const path = notification.path ? toAppPath(notification.path) : undefined;
 
 		toast(notification.title, {
 			description: plainBody,
@@ -60,11 +60,11 @@ export class ToastService {
 			// Notifications drop in top-right, like an OS notification stack, clear
 			// of the top bar — distinct from action feedback at bottom-center (add()).
 			position: 'top-right',
-			action: notification.path
+			action: path
 				? {
 						label: 'Открыть',
 						onClick: () => {
-							void goto(resolve(notification.path as Path));
+							void goto(resolve(path));
 						}
 					}
 				: undefined
