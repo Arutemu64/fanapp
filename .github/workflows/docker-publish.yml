@@ -49,13 +49,6 @@ jobs:
             image: ${{ github.repository }}-frontend
             target: prod
     steps:
-      # Records outbound network calls (audit only, never blocks) so a
-      # compromised action or dependency surfaces in the run's network log.
-      - name: Harden the runner
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
-        with:
-          egress-policy: audit
-
       # persist-credentials: false keeps the GITHUB_TOKEN out of .git/config;
       # this job authenticates to GHCR with docker login, not git, so nothing
       # here needs the checkout credential.

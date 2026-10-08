@@ -26,14 +26,8 @@ jobs:
       id-token: write
       actions: read # Required for Claude to read CI results on PRs
     steps:
-      # Records outbound network calls (audit only, never blocks). Deliberately
-      # no persist-credentials: false on the checkout below — the Claude action
+      # Deliberately no persist-credentials: false here — the Claude action
       # pushes commits and opens PRs, so it needs the git credential.
-      - name: Harden the runner
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
-        with:
-          egress-policy: audit
-
       - name: Checkout repository
         # zizmor: ignore[artipacked] persist-credentials is required here, see above
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
