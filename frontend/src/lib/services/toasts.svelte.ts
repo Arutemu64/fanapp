@@ -86,6 +86,9 @@ export class ToastService {
 			// The body keeps its line breaks as "\n" (see HtmlSanitizer).
 			descriptionClass: 'whitespace-pre-line',
 			duration: 5000,
+			// Swipe is the only other way to clear it early, and WCAG 2.5.7 wants a
+			// tap alternative to every drag gesture.
+			closeButton: true,
 			// Notifications drop in top-right, like an OS notification stack, clear
 			// of the top bar — distinct from action feedback at bottom-center (add()).
 			position: 'top-right',

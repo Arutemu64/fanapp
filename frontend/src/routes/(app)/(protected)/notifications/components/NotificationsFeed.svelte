@@ -178,7 +178,6 @@
 
 	function addLiveNotification(notification: NotificationDto) {
 		liveNotifications = dedupeById([notification], liveNotifications);
-		toastService.push(notification);
 	}
 
 	// Refetch the first page and lift anything not yet in the list to the top, so we
