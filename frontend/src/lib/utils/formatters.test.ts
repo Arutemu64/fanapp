@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+	formatDayHeading,
 	formatDuration,
 	formatFestivalDateTime,
+	formatRelativeTime,
 	formatUntil,
 	fromEventDateTimeLocal,
 	pluralize,
@@ -99,5 +101,36 @@ describe('pluralize', () => {
 		[1.5, 'события']
 	])('%d → %s', (count, expected) => {
 		expect(pluralize(count, ...forms)).toBe(expected);
+	});
+});
+
+// The venue clock is Europe/Moscow (UTC+3, no DST) when PUBLIC_TIMEZONE is unset,
+// so these instants are written in UTC with the venue-local time alongside.
+describe('formatRelativeTime', () => {
+	const now = Date.parse('2026-10-08T12:00:00Z');
+
+	it('reads against the clock it is given, so a ticking caller re-labels', () => {
+		const createdAt = '2026-10-08T11:59:30Z';
+		expect(formatRelativeTime(createdAt, now)).toBe('только что');
+		expect(formatRelativeTime(createdAt, now + 5 * 60_000)).toBe('5 минут назад');
+	});
+
+	it('falls back to the venue date and time after a day', () => {
+		expect(formatRelativeTime('2026-10-06T09:30:00Z', now)).toBe('06.10.2026, 12:30');
+	});
+});
+
+describe('formatDayHeading', () => {
+	// 00:30 at the venue on 8 October, while it is still 7 October in UTC.
+	const now = Date.parse('2026-10-07T21:30:00Z');
+
+	it('names today and yesterday on the venue clock, not the device one', () => {
+		expect(formatDayHeading('2026-10-07T21:10:00Z', now)).toBe('Сегодня');
+		expect(formatDayHeading('2026-10-07T20:50:00Z', now)).toBe('Вчера');
+	});
+
+	it('spells out older days, adding the year only when it differs', () => {
+		expect(formatDayHeading('2026-10-01T10:00:00Z', now)).toBe('1 октября');
+		expect(formatDayHeading('2025-12-31T10:00:00Z', now)).toBe('31 декабря 2025');
 	});
 });

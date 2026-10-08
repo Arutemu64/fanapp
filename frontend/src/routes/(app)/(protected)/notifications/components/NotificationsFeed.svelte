@@ -1,24 +1,34 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { SvelteSet } from 'svelte/reactivity';
+	import { resolve } from '$app/paths';
+	import { Bell, Settings } from '@lucide/svelte';
+	import { onMount, tick } from 'svelte';
 
 	import type { NotificationDto } from '#lib/api/generated/index.js';
 
-	import { listUserNotifications, markNotificationsRead } from '#lib/api/generated/index.js';
+	import {
+		listUserNotifications,
+		markAllNotificationsRead,
+		markNotificationsRead
+	} from '#lib/api/generated/index.js';
 	import { createApiClient } from '#lib/api/index.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
 	import NotificationListItem from '#lib/components/notifications/NotificationListItem.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
+	import { Button } from '#lib/components/ui/button/index.js';
 	import {
 		NOTIFICATION_PAGE_REQUEST_LIMIT,
 		NOTIFICATION_PAGE_SIZE
 	} from '#lib/constants/notifications.js';
+	import { documentVisibility } from '#lib/services/documentVisibility.js';
 	import { getEventsClient } from '#lib/services/events.svelte.js';
 	import { PaginatedFeed } from '#lib/services/feed.svelte.js';
+	import { minuteClock } from '#lib/services/minuteClock.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { getUnreadCountService } from '#lib/services/unreadCount.svelte.js';
 	import { dedupeById } from '#lib/utils/feed.js';
+
+	import { groupByDay } from '../groupByDay.js';
 
 	const client = createApiClient();
 
@@ -53,48 +63,114 @@
 
 	// Fresh SSE items on top, then the server page and anything loaded after it.
 	let notifications = $derived(dedupeById(liveNotifications, feed.items));
+	let dayGroups = $derived(groupByDay(notifications, minuteClock.now));
 
-	// Opening the page marks the items already loaded as read (mark-on-open). We
-	// don't mutate the fetched DTOs — they still carry seen_at: null — so overlay
-	// the read state locally: their "new" dots clear and the header settles without
-	// waiting for a refetch. On the next visit the server returns them seen.
-	let locallyReadIds = new SvelteSet<NotificationDto['id']>();
-	const readAt = new Date().toISOString();
-	let displayNotifications = $derived(
-		notifications.map((notification) =>
-			notification.seen_at || !locallyReadIds.has(notification.id)
-				? notification
-				: { ...notification, seen_at: readAt }
-		)
-	);
-	let unreadCount = $derived(
-		displayNotifications.filter((notification) => !notification.seen_at).length
-	);
+	// The DTOs keep the seen_at they were fetched with, so an item that was unseen
+	// when it reached this screen stays marked "new" for as long as the screen is
+	// open, even after the server has recorded it as read. Clearing the dot the
+	// moment the mark-read request lands would erase the one cue telling the user
+	// which items they haven't seen yet; the next visit fetches them as seen.
+	let newCount = $derived(notifications.filter((notification) => !notification.seen_at).length);
+
+	// Ids already sent (or in flight) to mark-read, so each one is posted once.
+	// Deliberately not reactive: the effect below reads it, and a failed request
+	// removing ids would re-run the effect and retry in a tight loop while offline.
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
+	const requestedReadIds = new Set<NotificationDto['id']>();
+
+	// Holds back "Прочитать все" until the opening mark-read round has settled:
+	// before that the shared count still includes the on-screen items about to be
+	// marked, and the button would flash for a round-trip on every visit.
+	let openingReadSettled = $state(false);
+	let isMarkingAll = $state(false);
+
+	// Unread items the screen can't mark on view: older than every loaded page, or
+	// arrived while the app was in the background.
+	let showMarkAll = $derived(openingReadSettled && unread.count > 0);
+
+	async function markRead(ids: Array<NotificationDto['id']>) {
+		for (const id of ids) {
+			requestedReadIds.add(id);
+		}
+
+		const { error, response } = await markNotificationsRead({
+			client,
+			body: { notification_ids: ids }
+		});
+		if (error || !response?.ok) {
+			// Retried with the next batch the effect below sends.
+			for (const id of ids) {
+				requestedReadIds.delete(id);
+			}
+			return;
+		}
+
+		await unread.refresh();
+	}
+
+	// Read-on-view: an item counts as read once it is on this screen while the app
+	// is in front — the opening page, each "Показать ещё" page, live arrivals. The
+	// feed is informational (programme changes, reminders, mailings), not a queue
+	// of tasks — the case where read-on-open is the recommended default (Courier,
+	// "In-app notification center design"). Items that land while the app is in
+	// the background wait until it comes back, so nothing is marked read unseen.
+	$effect(() => {
+		if (!documentVisibility.current) return;
+
+		const unseenIds = notifications
+			.filter((notification) => !notification.seen_at && !requestedReadIds.has(notification.id))
+			.map((notification) => notification.id);
+
+		if (unseenIds.length === 0) {
+			openingReadSettled = true;
+			return;
+		}
+
+		void markRead(unseenIds).finally(() => {
+			openingReadSettled = true;
+		});
+	});
+
+	async function markAllRead() {
+		isMarkingAll = true;
+		const { error, response } = await markAllNotificationsRead({ client });
+		isMarkingAll = false;
+
+		if (error || !response?.ok) {
+			toastService.error(error, 'Не удалось отметить уведомления прочитанными');
+			return;
+		}
+
+		// Same reconcile as the bell's "Прочитать все": clear for instant feedback,
+		// then refresh to pick up anything committed after the mark-all.
+		unread.clear();
+		await unread.refresh();
+	}
+
+	let listElement = $state<HTMLElement>();
+
+	// Move focus to the first item of the page just loaded, the usual advice for a
+	// load-more control: keyboard and screen-reader users continue where the new
+	// content starts, and focus isn't dropped to <body> when the button unmounts
+	// after the last page.
+	async function loadMore() {
+		const countBefore = notifications.length;
+		await feed.loadMore();
+
+		const firstNew = notifications[countBefore];
+		if (!firstNew) return;
+
+		await tick();
+		const item = listElement?.querySelector<HTMLElement>(
+			`[data-notification-id="${CSS.escape(firstNew.id)}"]`
+		);
+		const link = item?.querySelector<HTMLElement>('a');
+		(link ?? item)?.focus();
+	}
 
 	function addLiveNotification(notification: NotificationDto) {
 		liveNotifications = dedupeById([notification], liveNotifications);
 		toastService.push(notification);
-	}
-
-	// Mark the currently-loaded unread items read on the server so the bell badge
-	// clears when the user opens their notifications, then reconcile the shared
-	// count. Scoped to what's loaded now: later pages and live arrivals stay unread.
-	async function markLoadedRead() {
-		const unseenIds = notifications
-			.filter((notification) => !notification.seen_at)
-			.map((notification) => notification.id);
-		if (unseenIds.length === 0) return;
-
-		const { error, response } = await markNotificationsRead({
-			client,
-			body: { notification_ids: unseenIds }
-		});
-		if (!error && response?.ok) {
-			for (const id of unseenIds) {
-				locallyReadIds.add(id);
-			}
-			await unread.refresh();
-		}
 	}
 
 	// Refetch the first page and lift anything not yet in the list to the top, so we
@@ -119,9 +195,6 @@
 	}
 
 	onMount(() => {
-		// Opening the page is the "mark-on-open" moment for the items on screen.
-		void markLoadedRead();
-
 		eventsClient.on('notification_created', addLiveNotification);
 		// 'connection_established' fires on the first connect and on every reconnect.
 		eventsClient.on('connection_established', syncAfterReconnect);
@@ -133,28 +206,67 @@
 	});
 </script>
 
-<SectionIntro>
-	{#if notifications.length > 0}
-		<div class="text-sm text-muted-foreground">
-			{#if unreadCount > 0}
-				Непрочитанных: {unreadCount}
-			{:else}
-				Все уведомления прочитаны
-			{/if}
-		</div>
-	{/if}
-</SectionIntro>
-
-{#if displayNotifications.length === 0}
-	<EmptyState message="Уведомлений пока нет" />
+{#if notifications.length === 0}
+	<EmptyState
+		icon={Bell}
+		title="Уведомлений пока нет"
+		message="Здесь появятся напоминания о&nbsp;выступлениях из подписок, изменения в&nbsp;программе и&nbsp;рассылки организаторов."
+	>
+		<Button variant="outline" href={resolve('profile/notifications')}>
+			<Settings data-icon="inline-start" />
+			Настроить уведомления
+		</Button>
+	</EmptyState>
 {:else}
-	<div class="flex flex-col gap-3">
-		{#each displayNotifications as notification (notification.id)}
-			<NotificationListItem {notification} />
+	<SectionIntro>
+		<div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+			<p class="text-sm text-muted-foreground">
+				{#if newCount > 0}
+					Новых: {newCount}
+				{:else if unread.count === 0}
+					Все уведомления прочитаны
+				{/if}
+			</p>
+			<div class="-me-3 flex items-center">
+				{#if showMarkAll}
+					<Button variant="ghost" size="sm" onclick={markAllRead} disabled={isMarkingAll}>
+						Прочитать все
+					</Button>
+				{/if}
+				<Button variant="ghost" size="sm" href={resolve('profile/notifications')}>
+					<Settings data-icon="inline-start" />
+					Настройки
+				</Button>
+			</div>
+		</div>
+	</SectionIntro>
+
+	<div bind:this={listElement} class="flex flex-col gap-6">
+		{#each dayGroups as group (group.key)}
+			<section aria-labelledby="notifications-day-{group.key}">
+				<h2
+					id="notifications-day-{group.key}"
+					class="mb-2 text-sm font-semibold text-muted-foreground"
+				>
+					{group.heading}
+				</h2>
+				<ul class="flex flex-col gap-3">
+					{#each group.items as notification (notification.id)}
+						<!-- Focus target after "Показать ещё" for an item without a link. -->
+						<li
+							data-notification-id={notification.id}
+							tabindex="-1"
+							class="rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
+						>
+							<NotificationListItem {notification} />
+						</li>
+					{/each}
+				</ul>
+			</section>
 		{/each}
 	</div>
 
 	{#if feed.hasMore}
-		<LoadMoreButton loading={feed.isLoadingMore} onclick={feed.loadMore} />
+		<LoadMoreButton loading={feed.isLoadingMore} onclick={loadMore} />
 	{/if}
 {/if}

@@ -84,8 +84,12 @@ test('voting', async ({ page }) => {
 });
 
 test('notifications', async ({ page, api }) => {
-	// Opening the page reads everything, so its own bell shows no badge.
-	api.use({ 'GET /notifications/unread-count': json({ count: 0 }) });
+	// Opening the page reads everything, so its own bell shows no badge; the
+	// items it just read stay flagged new for this visit.
+	api.use({
+		'GET /notifications/unread-count': json({ count: 0 }),
+		'POST /notifications/mark-read': json({})
+	});
 	await page.goto('/notifications');
 	await expect(page.getByText('Гардероб работает до 21:00.', { exact: false })).toBeVisible();
 	await settle(page);

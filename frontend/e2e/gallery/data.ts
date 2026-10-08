@@ -90,7 +90,8 @@ function notification(
 	minutesAgo: number,
 	type: NotificationDto['type'],
 	title: string,
-	body: string
+	body: string,
+	overrides: Partial<NotificationDto> = {}
 ): NotificationDto {
 	const createdAt = new Date(GALLERY_NOW.getTime() - minutesAgo * MINUTE_MS).toISOString();
 	return {
@@ -102,7 +103,8 @@ function notification(
 		path: null,
 		mailing_id: null,
 		created_at: createdAt,
-		seen_at: createdAt
+		seen_at: createdAt,
+		...overrides
 	};
 }
 
@@ -111,13 +113,16 @@ export const notifications: NotificationDto[] = [
 		34,
 		'schedule_subscription',
 		'Уведомление о подписке',
-		'До начала выступления <b>№005 «Тандзиро Камадо — Клинок, рассекающий демонов»</b> осталось <b>2 выступления</b>'
+		'До начала выступления <b>№005 «Тандзиро Камадо — Клинок, рассекающий демонов»</b> осталось <b>2 выступления</b>',
+		// The two unread ones behind the bell badge: they stay flagged new on the feed.
+		{ path: '/schedule', seen_at: null }
 	),
 	notification(
 		35,
 		'schedule_change',
 		'На сцене',
-		'<b>Сейчас:</b> №003 <b>Эдвард Элрик — Стальной алхимик</b>\n<b>Затем:</b> №004 Сейлор Мун — Сейлор Мун'
+		'<b>Сейчас:</b> №003 <b>Эдвард Элрик — Стальной алхимик</b>\n<b>Затем:</b> №004 Сейлор Мун — Сейлор Мун',
+		{ path: '/schedule', seen_at: null }
 	),
 	notification(
 		60,
