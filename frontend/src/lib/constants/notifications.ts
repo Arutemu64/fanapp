@@ -1,6 +1,3 @@
-// Keep the dropdown short so the list is easy to read on mobile.
-export const NOTIFICATION_PREVIEW_LIMIT = 5;
-
 // Cap the bell badge so a large unread total stays legible (shown as "99+").
 export const NOTIFICATION_BADGE_MAX = 99;
 

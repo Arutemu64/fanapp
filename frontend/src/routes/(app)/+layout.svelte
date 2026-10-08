@@ -2,7 +2,6 @@
 	import { afterNavigate, beforeNavigate, onNavigate } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { navigating, page } from '$app/state';
-	import { untrack } from 'svelte';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import { MediaQuery } from 'svelte/reactivity';
 
@@ -27,22 +26,9 @@
 	let activeUrl = $derived(page.url.pathname);
 	let user = $derived(data.user);
 
-	// Shared unread count for the bell badge and the notifications page. Seeded from
-	// the streamed notification load once it resolves (first paint doesn't wait on
-	// it), and owned by the bell and page from there (SSE, mark-read, reconnect).
-	// `seed()` applies only while the count is still provisional, so a fresher value
-	// an SSE refresh may already have written — an authoritative zero included — wins.
-	// Read this layout's own `data`, not `page.data`: the notifications page's load
-	// returns a `notifications` array that clobbers the streamed promise in the merged
-	// `page.data`, and `.then` on that array throws. `untrack` captures the seed promise
-	// once at mount — the count is owned by SSE thereafter, so we don't re-seed on reload.
-	const unread = setUnreadCountService();
-	const notificationSeed = untrack(() => data.notifications);
-	void notificationSeed
-		.then((seed) => {
-			if (seed) unread.seed(seed.unreadCount);
-		})
-		.catch(() => {});
+	// Shared unread count for the bell badge and the notifications page; the bell
+	// loads it on mount and SSE, mark-read and reconnects keep it current.
+	setUnreadCountService();
 
 	// <main> is the scroll region and lives in this layout, so it persists across
 	// navigation — SvelteKit's scroll handling only manages the window, never this

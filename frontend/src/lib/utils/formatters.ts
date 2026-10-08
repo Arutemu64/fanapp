@@ -139,10 +139,17 @@ function formatEventDateTime(value: string | number | Date): string {
 	return EVENT_DATE_TIME_FORMATTER.format(new Date(value));
 }
 
-export function formatRelativeTime(value: string | number | Date): string {
+/**
+ * "5 минут назад" for the last day, the venue-clock date and time after that.
+ * `now` is injectable so a caller can re-render against a ticking clock (see
+ * `minuteClock`) instead of freezing the label at first render.
+ */
+export function formatRelativeTime(
+	value: string | number | Date,
+	now: number = Date.now()
+): string {
 	const date = new Date(value);
-	const now = new Date();
-	const diffSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+	const diffSeconds = Math.floor((now - date.getTime()) / 1000);
 
 	if (diffSeconds < 60) {
 		return 'только что';
@@ -203,6 +210,62 @@ export function formatSyncedAt(timestamp: number): string {
 		return `вчера в ${time}`;
 	}
 	return `${EVENT_DAY_MONTH_FORMATTER.format(target)} в ${time}`;
+}
+
+const EVENT_DAY_LONG_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+	day: 'numeric',
+	month: 'long',
+	timeZone: EVENT_TIME_ZONE
+});
+
+const EVENT_DAY_LONG_WITH_YEAR_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
+	day: 'numeric',
+	month: 'long',
+	year: 'numeric',
+	timeZone: EVENT_TIME_ZONE
+});
+
+/**
+ * The venue-clock calendar day of an instant, as "YYYY-MM-DD" — a grouping key
+ * that ignores the device's own timezone.
+ */
+export function eventDayKey(value: string | number | Date): string {
+	return EVENT_DAY_KEY_FORMATTER.format(new Date(value));
+}
+
+/**
+ * The "YYYY-MM-DD" key of the calendar day before `dayKey`. Plain date
+ * arithmetic, not "now minus 24 hours": across a DST switch in the venue zone a
+ * day is 23 or 25 hours long, and the subtraction would land on the wrong date.
+ */
+export function previousDayKey(dayKey: string): string {
+	const year = Number(dayKey.slice(0, 4));
+	const month = Number(dayKey.slice(5, 7));
+	const day = Number(dayKey.slice(8, 10));
+	return new Date(Date.UTC(year, month - 1, day - 1)).toISOString().slice(0, 10);
+}
+
+/**
+ * Day heading for a date-grouped feed: "Сегодня", "Вчера", else "8 октября"
+ * (with the year only when it isn't the current one). Venue clock.
+ */
+export function formatDayHeading(value: string | number | Date, now: number = Date.now()): string {
+	const target = new Date(value);
+	const targetDay = eventDayKey(target);
+
+	if (targetDay === eventDayKey(now)) {
+		return 'Сегодня';
+	}
+	if (targetDay === previousDayKey(eventDayKey(now))) {
+		return 'Вчера';
+	}
+
+	const sameYear = targetDay.slice(0, 4) === eventDayKey(now).slice(0, 4);
+	if (sameYear) {
+		return EVENT_DAY_LONG_FORMATTER.format(target);
+	}
+	// ru-RU appends " г." to a long date with a year; the app's date copy drops it.
+	return EVENT_DAY_LONG_WITH_YEAR_FORMATTER.format(target).replace(/\s*г\.$/, '');
 }
 
 /**
