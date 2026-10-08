@@ -234,6 +234,18 @@ export function eventDayKey(value: string | number | Date): string {
 }
 
 /**
+ * The "YYYY-MM-DD" key of the calendar day before `dayKey`. Plain date
+ * arithmetic, not "now minus 24 hours": across a DST switch in the venue zone a
+ * day is 23 or 25 hours long, and the subtraction would land on the wrong date.
+ */
+export function previousDayKey(dayKey: string): string {
+	const year = Number(dayKey.slice(0, 4));
+	const month = Number(dayKey.slice(5, 7));
+	const day = Number(dayKey.slice(8, 10));
+	return new Date(Date.UTC(year, month - 1, day - 1)).toISOString().slice(0, 10);
+}
+
+/**
  * Day heading for a date-grouped feed: "Сегодня", "Вчера", else "8 октября"
  * (with the year only when it isn't the current one). Venue clock.
  */
@@ -244,7 +256,7 @@ export function formatDayHeading(value: string | number | Date, now: number = Da
 	if (targetDay === eventDayKey(now)) {
 		return 'Сегодня';
 	}
-	if (targetDay === eventDayKey(now - 24 * 60 * 60 * 1000)) {
+	if (targetDay === previousDayKey(eventDayKey(now))) {
 		return 'Вчера';
 	}
 

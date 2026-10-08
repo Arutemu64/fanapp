@@ -154,17 +154,23 @@
 	// Move focus to the first item of the page just loaded, the usual advice for a
 	// load-more control: keyboard and screen-reader users continue where the new
 	// content starts, and focus isn't dropped to <body> when the button unmounts
-	// after the last page.
+	// after the last page. Matched by id against the fetched pages only, since live
+	// arrivals can be prepended while the request is in flight.
 	async function loadMore() {
-		const countBefore = notifications.length;
+		const idsBefore = new Set(feed.items.map((notification) => notification.id));
 		await feed.loadMore();
 
-		const firstNew = notifications[countBefore];
-		if (!firstNew) return;
+		let target = feed.items.find((notification) => !idsBefore.has(notification.id));
+		// An empty or all-duplicate last page adds nothing but still removes the
+		// button, so hand focus to the end of the list instead.
+		if (!target && !feed.hasMore) {
+			target = notifications.at(-1);
+		}
+		if (!target) return;
 
 		await tick();
 		const item = listElement?.querySelector<HTMLElement>(
-			`[data-notification-id="${CSS.escape(firstNew.id)}"]`
+			`[data-notification-id="${CSS.escape(target.id)}"]`
 		);
 		const link = item?.querySelector<HTMLElement>('a');
 		(link ?? item)?.focus();
@@ -187,7 +193,9 @@
 			return;
 		}
 
-		const knownIds = new Set(feed.items.map((notification) => notification.id));
+		// Live items count as known too: by now they may be marked read, and the
+		// server copy would replace them and drop their "new" flag mid-visit.
+		const knownIds = new Set(notifications.map((notification) => notification.id));
 		const fresh = result.notifications.filter((notification) => !knownIds.has(notification.id));
 		liveNotifications = dedupeById(fresh, liveNotifications);
 	}

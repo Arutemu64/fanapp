@@ -8,6 +8,7 @@ import {
 	formatUntil,
 	fromEventDateTimeLocal,
 	pluralize,
+	previousDayKey,
 	toEventDateTimeLocal
 } from './formatters';
 
@@ -132,5 +133,20 @@ describe('formatDayHeading', () => {
 	it('spells out older days, adding the year only when it differs', () => {
 		expect(formatDayHeading('2026-10-01T10:00:00Z', now)).toBe('1 октября');
 		expect(formatDayHeading('2025-12-31T10:00:00Z', now)).toBe('31 декабря 2025');
+	});
+});
+
+describe('previousDayKey', () => {
+	it('steps back one calendar day across month and year boundaries', () => {
+		expect(previousDayKey('2026-10-08')).toBe('2026-10-07');
+		expect(previousDayKey('2026-03-01')).toBe('2026-02-28');
+		expect(previousDayKey('2024-03-01')).toBe('2024-02-29');
+		expect(previousDayKey('2026-01-01')).toBe('2025-12-31');
+	});
+
+	it('is pure date arithmetic, so a DST switch cannot skip a day', () => {
+		// Europe/Berlin springs forward on 29 March 2026: "now minus 24h" at 00:30
+		// on the 30th would land on the 28th.
+		expect(previousDayKey('2026-03-30')).toBe('2026-03-29');
 	});
 });

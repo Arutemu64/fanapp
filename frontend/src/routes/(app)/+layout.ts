@@ -1,6 +1,6 @@
 import { countUnreadNotifications } from '#lib/api/generated/index.js';
 import { createApiClient } from '#lib/api/index.js';
-import { isReachable, markReachable } from '#lib/services/reachability.js';
+import { isReachable } from '#lib/services/reachability.js';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '#lib/utils/fetchTimeout.js';
 
 import type { LayoutLoad } from './$types';
@@ -36,22 +36,16 @@ async function loadUnreadCount(
 
 	// The badge is non-critical: on error or timeout fall back to no seed, and the
 	// live SSE stream refreshes it once the client reconnects.
-	const { data, error, response } = await countUnreadNotifications({
+	const { data, error } = await countUnreadNotifications({
 		client: createApiClient(),
 		fetch,
 		signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
 	});
 
-	// A network failure (offline / timeout) comes back with an error and no
-	// `response`. A response — even an error one — proves the backend answered (the
-	// response interceptor sets reachability from its status), so only the
-	// no-response case forces us offline here.
-	if (error && !response) {
-		markReachable(false);
-		return null;
-	}
-	markReachable(true);
-
+	// Reachability is left to the health probe and the API interceptor: a slow
+	// count on first paint is no evidence the backend is down, and flagging it
+	// offline would send other pages (voting, the cached feeds) to their offline
+	// states.
 	if (error || !data) {
 		return null;
 	}
