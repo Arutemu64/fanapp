@@ -26,6 +26,7 @@
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { getUnreadCountService } from '#lib/services/unreadCount.svelte.js';
 	import { dedupeById } from '#lib/utils/feed.js';
+	import { onCatchUp } from '#lib/utils/reconnectRefresh.js';
 
 	import { groupByDay } from '../groupByDay.js';
 	import NotificationListItem from './NotificationListItem.svelte';
@@ -209,12 +210,13 @@
 
 	onMount(() => {
 		eventsClient.on('notification_created', addLiveNotification);
-		// 'connection_established' fires on the first connect and on every reconnect.
-		eventsClient.on('connection_established', syncAfterReconnect);
+		// Live items live outside the page load, so the reconnect catch-up's
+		// refreshAll() can't reach them — sync them on the catch-up instead.
+		const stopCatchUp = onCatchUp(syncAfterReconnect);
 
 		return () => {
 			eventsClient.off('notification_created', addLiveNotification);
-			eventsClient.off('connection_established', syncAfterReconnect);
+			stopCatchUp();
 		};
 	});
 </script>

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
-	import { getOfflineService } from '#lib/services/offline.svelte.js';
+	import { reachability } from '#lib/services/reachability.js';
 
 	import type { LayoutProps } from './$types';
 
@@ -10,8 +10,7 @@
 	// date" state is being offline. The notice also carries why every write control
 	// below is disabled: offlineWriteGate's `title` hint never shows on a touch
 	// screen (https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/title).
-	const offline = getOfflineService();
-	let showStaleNotice = $derived(!offline.isOnline);
+	let showStaleNotice = $derived(!reachability.current);
 	const staleNoticeMessage =
 		'Нет связи. Показан сохранённый профиль — изменения доступны только онлайн.';
 </script>

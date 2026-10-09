@@ -1,13 +1,7 @@
-import { isHttpError } from '@sveltejs/kit';
-
 import { throwApiError } from '#lib/api/errors.js';
 import { listVotingNominations } from '#lib/api/generated/index.js';
 import { createApiClient } from '#lib/api/index.js';
-import {
-	isBackendUnreachableStatus,
-	isReachable,
-	markReachable
-} from '#lib/services/reachability.js';
+import { isReachable, isUnreachableResponse } from '#lib/services/reachability.js';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '#lib/utils/fetchTimeout.js';
 
 import type { PageLoad } from './$types';
@@ -18,46 +12,29 @@ export const load: PageLoad = async ({ fetch }) => {
 	// you can't submit is a dead end). So it is deliberately not cached. When the
 	// backend is known unreachable, skip the doomed request and show an honest
 	// "online only" state instead of a generic error that implies offline data.
-	if (!isReachable()) {
-		return { title: 'Голосование', nominations: [], offlineUnavailable: true };
+	const offlineState = { title: 'Голосование', nominations: [], offlineUnavailable: true };
+	if (!isReachable()) return offlineState;
+
+	const {
+		data,
+		error: apiError,
+		response
+	} = await listVotingNominations({
+		client: createApiClient(),
+		fetch,
+		signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
+	});
+
+	if (apiError) {
+		// Not reaching the backend is the same situation as the offline path above.
+		// A real answer (4xx/5xx) keeps its mapped status on the error page.
+		if (isUnreachableResponse(response)) return offlineState;
+		throwApiError(apiError, response, 'Не удалось загрузить номинации');
 	}
 
-	const client = createApiClient();
-
-	try {
-		const {
-			data,
-			error: apiError,
-			response
-		} = await listVotingNominations({
-			client,
-			fetch,
-			signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
-		});
-
-		if (apiError) {
-			// A network failure (offline / timeout / abort) surfaces as an error with
-			// no `response`; a gateway 5xx (502/503/504) is a live proxy over a dead
-			// backend. Both mean unreachable — mirror the offline path above (honest
-			// online-only state) instead of the generic error page.
-			if (!response || isBackendUnreachableStatus(response.status)) {
-				markReachable(false);
-				return { title: 'Голосование', nominations: [], offlineUnavailable: true };
-			}
-			throwApiError(apiError, response, 'Не удалось загрузить номинации');
-		}
-
-		return {
-			title: 'Голосование',
-			nominations: data?.nominations ?? [],
-			offlineUnavailable: false
-		};
-	} catch (err) {
-		// A reachable failure surfaced by throwApiError: re-throw so the error page
-		// shows the mapped status. Anything else is a network failure (offline /
-		// timeout) — mark us unreachable and fall to the honest online-only state.
-		if (isHttpError(err)) throw err;
-		markReachable(false);
-		return { title: 'Голосование', nominations: [], offlineUnavailable: true };
-	}
+	return {
+		title: 'Голосование',
+		nominations: data?.nominations ?? [],
+		offlineUnavailable: false
+	};
 };

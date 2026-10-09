@@ -44,7 +44,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
 		loadConfig(fetch),
 		loadScheduleWithSubscriptions(fetch, user?.id),
 		// Optional here: a failure hides the voting card and nothing else.
-		fetchVotingStatus(fetch, { reportUnreachable: false })
+		fetchVotingStatus(fetch)
 	]);
 
 	// A schedule miss is not an error here: home just leaves out what needs it.

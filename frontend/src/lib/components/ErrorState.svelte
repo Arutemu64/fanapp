@@ -25,8 +25,7 @@
 
 	// Most load failures while offline surface here as a 500/503. Detect the real
 	// cause (backend unreachable) and show a calm connectivity page instead of a
-	// scary server-error screen. Read straight from the reachability module so
-	// this works without the OfflineService context too.
+	// scary server-error screen.
 	let online = $derived(reachability.current);
 	// A genuine 403/404 is a real server answer — never reframe it as offline.
 	let offline = $derived(!online && status !== 403 && status !== 404);

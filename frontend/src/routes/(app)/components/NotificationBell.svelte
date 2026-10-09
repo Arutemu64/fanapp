@@ -11,6 +11,7 @@
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { getUnreadCountService } from '#lib/services/unreadCount.svelte.js';
 	import { setAppBadgeCount } from '#lib/utils/appBadge.js';
+	import { onCatchUp } from '#lib/utils/reconnectRefresh.js';
 
 	// The bell is a link to the notifications page on every screen size. A desktop
 	// dropdown preview was dropped: the audience is almost always on a phone, and a
@@ -62,17 +63,17 @@
 	onMount(() => {
 		// Load the count here rather than in a layout load: the bell renders as soon
 		// as /me resolves, so it is just as early, and an explicit fetch doesn't hang
-		// on SSE — the stream's first 'connection_established' can fire before this
-		// listener is attached and would then never refresh the badge.
+		// on SSE — the stream may already be connected before this mounts.
 		void unread.refresh();
 
 		eventsClient.on('notification_created', handleNewNotification);
-		// 'connection_established' fires on the first connect and on every reconnect.
-		eventsClient.on('connection_established', refreshAfterReconnect);
+		// The badge lives outside any page load, so the reconnect catch-up's
+		// refreshAll() can't reach it — it subscribes to the catch-up instead.
+		const stopCatchUp = onCatchUp(refreshAfterReconnect);
 
 		return () => {
 			eventsClient.off('notification_created', handleNewNotification);
-			eventsClient.off('connection_established', refreshAfterReconnect);
+			stopCatchUp();
 			// Session ended (the bell only renders while logged in): drop the OS icon
 			// badge so the previous user's count can't linger on a shared or installed
 			// device. Covers passive 401 expiry too, which never runs LogoutButton.

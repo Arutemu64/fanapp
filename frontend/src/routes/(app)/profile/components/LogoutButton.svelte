@@ -9,7 +9,7 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { getEventsClient } from '#lib/services/events.svelte.js';
-	import { getOfflineService } from '#lib/services/offline.svelte.js';
+	import { reachability } from '#lib/services/reachability.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { clearUserCache } from '#lib/utils/offlineCache.js';
 	import { markLogoutPending } from '#lib/utils/pendingLogout.js';
@@ -17,7 +17,6 @@
 	const client = createApiClient();
 	const toastService = getToastService();
 	const eventsClient = getEventsClient();
-	const offline = getOfflineService();
 
 	// Disables the button for the round-trip, so a second tap can't fire a second
 	// logout into a session the first one is already ending.
@@ -43,7 +42,7 @@
 		// cookie is HttpOnly so JS can't clear it either. Record the intent — the
 		// queued POST /auth/logout fires on reconnect (see pendingLogout) — and tear
 		// down local state now so a shared device stops showing this account at once.
-		if (!offline.isOnline) {
+		if (!reachability.current) {
 			markLogoutPending();
 			await finishLogout();
 			return;

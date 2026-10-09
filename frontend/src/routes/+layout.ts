@@ -30,7 +30,7 @@ export const load: LayoutLoad = async ({ fetch, depends }) => {
 	// A logout requested offline is still pending server-side (the HttpOnly cookie
 	// can't be cleared by JS). Present as logged-out until the queued POST
 	// /auth/logout revokes the session — otherwise a still-valid cookie would let
-	// /me resurrect the account we just left. The flush (OfflineService) clears the
+	// /me resurrect the account we just left. The flush (reachabilityMonitor) clears the
 	// intent once it succeeds; a fresh login clears it too (completeLogin).
 	if (isLogoutPending()) {
 		return { user: null };

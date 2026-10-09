@@ -13,7 +13,8 @@
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/index.js';
 	import { documentVisibility } from '#lib/services/documentVisibility.js';
 	import { getEventsClient } from '#lib/services/events.svelte.js';
-	import { getOfflineService, shouldShowStaleNotice } from '#lib/services/offline.svelte.js';
+	import { reachability } from '#lib/services/reachability.js';
+	import { shouldShowStaleNotice } from '#lib/utils/offlineCache.js';
 	import { createSearchIndex } from '#lib/utils/search.js';
 
 	import type { PageProps } from './$types';
@@ -52,13 +53,12 @@
 	let currentEvent = $derived(schedule.find((event) => event.is_current) ?? null);
 	let user: CurrentUserDto | null = $derived(page.data.user);
 
-	const offline = getOfflineService();
 	const eventsClient = getEventsClient();
 	let showStaleNotice = $derived(
 		shouldShowStaleNotice({
 			offlineMiss: data.offlineMiss,
 			stale: data.stale,
-			isOnline: offline.isOnline
+			isOnline: reachability.current
 		})
 	);
 
@@ -154,8 +154,8 @@
 	// state must not trip the foreground refetch below.
 	let lastRefetch = Date.now();
 
-	// Also refetch on every (re)connect, so a schedule_updated missed while the SSE
-	// stream was down doesn't leave a stale page.
+	// A schedule_updated missed while the SSE stream was down is caught by the
+	// reconnect catch-up (reconnectRefresh), which re-runs this page's load.
 	function reloadSchedule() {
 		lastRefetch = Date.now();
 		void invalidate('app:schedule');
@@ -183,12 +183,10 @@
 		updateScrollState();
 		scrollContainer?.addEventListener('scroll', updateScrollState, { passive: true });
 		eventsClient.on('schedule_updated', reloadSchedule);
-		eventsClient.on('connection_established', reloadSchedule);
 
 		return () => {
 			scrollContainer?.removeEventListener('scroll', updateScrollState);
 			eventsClient.off('schedule_updated', reloadSchedule);
-			eventsClient.off('connection_established', reloadSchedule);
 		};
 	});
 </script>

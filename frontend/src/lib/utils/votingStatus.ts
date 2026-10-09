@@ -2,22 +2,8 @@ import type { GetVotingStateOutput } from '#lib/api/generated/index.js';
 
 import { getVotingStatus } from '#lib/api/generated/index.js';
 import { createApiClient } from '#lib/api/index.js';
-import {
-	isBackendUnreachableStatus,
-	isReachable,
-	markReachable
-} from '#lib/services/reachability.js';
+import { isReachable, isUnreachableResponse } from '#lib/services/reachability.js';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '#lib/utils/fetchTimeout.js';
-
-interface FetchVotingStatusOptions {
-	/**
-	 * Whether a network failure marks the whole backend unreachable. Right where
-	 * voting is the page, so its other loads skip their doomed requests. Wrong
-	 * where the status is an optional extra (home): one slow endpoint would flip
-	 * the app offline and serve cached config and programme from healthy ones.
-	 */
-	reportUnreachable?: boolean;
-}
 
 /**
  * Fetch the viewer's voting status, or `undefined` when it can't be had. Voting
@@ -26,41 +12,26 @@ interface FetchVotingStatusOptions {
  * as "show nothing about voting".
  */
 export async function fetchVotingStatus(
-	fetch: typeof globalThis.fetch,
-	{ reportUnreachable = true }: FetchVotingStatusOptions = {}
+	fetch: typeof globalThis.fetch
 ): Promise<GetVotingStateOutput | undefined> {
 	// When the backend is known unreachable, skip the doomed request.
 	if (!isReachable()) return undefined;
 
-	const client = createApiClient();
+	const { data, error, response } = await getVotingStatus({
+		client: createApiClient(),
+		fetch,
+		signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
+	});
 
-	try {
-		const { data, error, response } = await getVotingStatus({
-			client,
-			fetch,
-			signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
-		});
-
-		if (error) {
-			// The client returns a network failure (offline / timeout / abort) as an
-			// error with no `response`, and a live proxy over a dead backend as a
-			// gateway 5xx. Both mean unreachable: mark us so the page loads skip their
-			// own doomed requests, and hide voting UI without a noisy console error.
-			if (!response || isBackendUnreachableStatus(response.status)) {
-				if (reportUnreachable) markReachable(false);
-				return undefined;
-			}
+	if (error) {
+		// Not reaching the backend is expected offline — hide voting UI quietly.
+		if (!isUnreachableResponse(response)) {
 			console.error('Error fetching voting status:', error);
-			return undefined;
 		}
-
-		return data;
-	} catch {
-		// Defensive: nothing above is expected to throw (the client resolves failures
-		// into `error`), but an unexpected throw must not crash the caller's page.
-		if (reportUnreachable) markReachable(false);
 		return undefined;
 	}
+
+	return data;
 }
 
 /**

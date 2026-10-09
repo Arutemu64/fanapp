@@ -85,19 +85,16 @@
 	}
 
 	onMount(() => {
-		// Refetch on every run update and on every (re)connect, so an update
-		// missed while the stream was down (or while the tab was backgrounded
-		// past the pause grace) doesn't leave a stale "Выполняется" on screen.
+		// An update missed while the stream was down is caught by the reconnect
+		// catch-up (reconnectRefresh), which re-runs this page's load.
 		const reloadSources = () => {
 			void invalidate('app:sync-sources');
 		};
 
 		eventsClient.on('sync_run_updated', reloadSources);
-		eventsClient.on('connection_established', reloadSources);
 
 		return () => {
 			eventsClient.off('sync_run_updated', reloadSources);
-			eventsClient.off('connection_established', reloadSources);
 		};
 	});
 </script>

@@ -27,18 +27,16 @@
 		// signal already fires on a superset of the moments this list goes stale.
 		// The extra refetch it costs — a bulk import, which touches the schedule
 		// but records no change row — is one request for the few staff on this page.
-		// Also refetch on (re)connect, so an event missed while the stream was down
-		// doesn't leave another staffer's edit invisible here.
+		// An event missed while the stream was down is caught by the reconnect
+		// catch-up (reconnectRefresh), which re-runs this page's load.
 		const reloadChanges = () => {
 			void invalidate('app:schedule:changes');
 		};
 
 		eventsClient.on('schedule_updated', reloadChanges);
-		eventsClient.on('connection_established', reloadChanges);
 
 		return () => {
 			eventsClient.off('schedule_updated', reloadChanges);
-			eventsClient.off('connection_established', reloadChanges);
 		};
 	});
 </script>
