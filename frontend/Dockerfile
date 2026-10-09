@@ -65,9 +65,6 @@ ARG PUBLIC_SENTRY_ENVIRONMENT
 ARG PUBLIC_SENTRY_TRACES_SAMPLE_RATE
 ARG PUBLIC_SMARTCAPTCHA_CLIENT_KEY
 ARG PUBLIC_VK_GROUP_ID
-# Commit SHA of this build, shown in the profile footer so a bug report can be
-# tied to an exact bundle. Same value as SENTRY_RELEASE below.
-ARG PUBLIC_APP_VERSION
 ENV PUBLIC_API_URL=$PUBLIC_API_URL \
 	PUBLIC_SITE_URL=$PUBLIC_SITE_URL \
 	PUBLIC_TIMEZONE=$PUBLIC_TIMEZONE \
@@ -76,23 +73,28 @@ ENV PUBLIC_API_URL=$PUBLIC_API_URL \
 	PUBLIC_SENTRY_ENVIRONMENT=$PUBLIC_SENTRY_ENVIRONMENT \
 	PUBLIC_SENTRY_TRACES_SAMPLE_RATE=$PUBLIC_SENTRY_TRACES_SAMPLE_RATE \
 	PUBLIC_SMARTCAPTCHA_CLIENT_KEY=$PUBLIC_SMARTCAPTCHA_CLIENT_KEY \
-	PUBLIC_VK_GROUP_ID=$PUBLIC_VK_GROUP_ID \
-	PUBLIC_APP_VERSION=$PUBLIC_APP_VERSION
+	PUBLIC_VK_GROUP_ID=$PUBLIC_VK_GROUP_ID
 
 # Where the source maps are uploaded (Sentry SaaS or self-hosted GlitchTip).
 # Build-time only — unlike the PUBLIC_* args above, these are read by
 # vite.config.ts and never inlined into the bundle. Non-secret, and all optional:
-# an empty URL/ORG/PROJECT means no upload. Pass SENTRY_RELEASE too when you do
-# upload: the build context is ./frontend with no .git in it, so the plugin
-# cannot fall back to detecting the commit SHA itself.
+# an empty URL/ORG/PROJECT means no upload. The release the maps upload under is
+# APP_BUILD below.
 ARG SENTRY_URL
 ARG SENTRY_ORG
 ARG SENTRY_PROJECT
-ARG SENTRY_RELEASE
 ENV SENTRY_URL=$SENTRY_URL \
 	SENTRY_ORG=$SENTRY_ORG \
-	SENTRY_PROJECT=$SENTRY_PROJECT \
-	SENTRY_RELEASE=$SENTRY_RELEASE
+	SENTRY_PROJECT=$SENTRY_PROJECT
+
+# The build's identity, inlined by vite.config.ts `define`: the release number
+# (backend/pyproject.toml) and the commit SHA, which also names the Sentry
+# release. Both are passed in because the ./frontend context holds neither
+# pyproject.toml nor .git. ARG, not ENV: `pnpm build` reads them as build-time
+# environment variables, and nothing after this stage needs them. A local build
+# gets APP_VERSION only; with no APP_BUILD it has no published identity to claim.
+ARG APP_VERSION
+ARG APP_BUILD
 
 # SENTRY_AUTH_TOKEN (uploads source maps) is a real secret, so it enters as a
 # BuildKit secret mount, not ARG/ENV — args persist in this stage's layer

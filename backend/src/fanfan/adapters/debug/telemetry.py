@@ -59,7 +59,7 @@ def setup_telemetry(  # noqa: PLR0913, PLR0917 — one parameter per Sentry knob
         sentry_sdk.init(
             dsn=sentry_dsn,
             environment=environment,
-            # Commit SHA, matching the frontend's SENTRY_RELEASE, so an error
+            # Commit SHA, matching the frontend's APP_BUILD, so an error
             # from either side of one deploy groups under the same release.
             # None leaves the SDK to its own detection, which finds nothing in
             # the image (no .git) — that is the local-build case.

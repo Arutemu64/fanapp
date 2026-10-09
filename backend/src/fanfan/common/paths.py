@@ -13,6 +13,12 @@ APP_DIR = SRC_DIR / "fanfan"
 BACKEND_DIR = SRC_DIR.parent  # backend
 REPO_ROOT = BACKEND_DIR.parent  # repo root
 
+# Written by the Dockerfile at image build; absent when running from source.
+# BACKEND_DIR is the image's /app only because `uv sync` installs the project
+# editable (this file stays under /app/src) — a --no-editable install would move
+# it into site-packages and the id would silently read as missing.
+BUILD_ID_PATH = BACKEND_DIR / "BUILD_ID"
+
 COMMON_STATIC_DIR = _THIS_FILE.parent / "static"
 
 # Repo-root-relative anchors shared by the CLI generators and bootstrap tooling.
