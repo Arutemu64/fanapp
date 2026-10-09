@@ -1,16 +1,21 @@
-import type { Page } from '@playwright/test';
+import type { Browser, BrowserContextOptions, Page } from '@playwright/test';
 
 import { writeFile } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
 
 import type { Handlers } from '../mocks/api';
 
 import { expect, json, loggedInAs, test } from '../fixtures';
+import { ApiMock } from '../mocks/api';
+import { baselineHandlers } from '../mocks/defaults';
+import { installSseDouble } from '../mocks/sse';
 import { GALLERY_NOW, notifications, schedule, singleDefile, subscriptions } from './data';
 
-// One test per README gallery image. Run with `just readme-gallery`, then review
-// the diff of docs/assets/readme-gallery/ before committing.
+// One test per README image: the gallery, then the hero. Run with
+// `just readme-gallery`, then review the image diff in docs/assets/ before committing.
 
 const OUT_DIR = new URL('../../../docs/assets/readme-gallery/', import.meta.url);
+const HEADER_OUT = new URL('../../../docs/assets/readme-header.webp', import.meta.url);
 const WEBP_QUALITY = 0.85;
 
 const HOUR_MS = 3_600_000;
@@ -38,9 +43,9 @@ const visitorAtFestival: Handlers = {
 };
 
 // Playwright only writes PNG or JPEG, so the browser that took the shot re-encodes
-// it: Chromium's canvas encodes WebP, which keeps this free of an image library.
-async function saveWebp(page: Page, name: string): Promise<void> {
-	const png = await page.screenshot({ animations: 'disabled', caret: 'hide' });
+// it: Chromium's canvas encodes WebP (alpha included), which keeps this free of an
+// image library.
+async function writeWebp(page: Page, png: Buffer, out: URL): Promise<void> {
 	const webpBase64 = await page.evaluate(
 		async ({ pngBase64, quality }) => {
 			const bitmap = await createImageBitmap(
@@ -56,7 +61,12 @@ async function saveWebp(page: Page, name: string): Promise<void> {
 		},
 		{ pngBase64: png.toString('base64'), quality: WEBP_QUALITY }
 	);
-	await writeFile(new URL(`${name}.webp`, OUT_DIR), Buffer.from(webpBase64, 'base64'));
+	await writeFile(out, Buffer.from(webpBase64, 'base64'));
+}
+
+async function saveWebp(page: Page, name: string): Promise<void> {
+	const png = await page.screenshot({ animations: 'disabled', caret: 'hide' });
+	await writeWebp(page, png, new URL(`${name}.webp`, OUT_DIR));
 }
 
 async function settle(page: Page): Promise<void> {
@@ -119,4 +129,83 @@ test('profile', async ({ page, api }) => {
 	await expect(page.getByText('Включены')).toBeVisible();
 	await settle(page);
 	await saveWebp(page, 'profile');
+});
+
+// The README hero (docs/assets/readme-header.webp): Home on a laptop and an iPhone,
+// framed by device-frames.html. Each device gets its own mocked context, since the
+// test's `page` is the gallery's 390px phone. Every option is spelled out because
+// browser.newContext() inside a test inherits the project's `use` (isMobile, 1.5×).
+const LAPTOP: BrowserContextOptions = {
+	viewport: { width: 1280, height: 720 },
+	deviceScaleFactor: 1,
+	isMobile: false,
+	hasTouch: false
+};
+// iPhone 16 (393×852 pt). 2× rather than its native 3×: the frame shows the phone at
+// under 400px wide, so 3× would only add weight.
+const IPHONE: BrowserContextOptions = {
+	viewport: { width: 393, height: 852 },
+	deviceScaleFactor: 2,
+	isMobile: true,
+	hasTouch: true
+};
+// Chromium leaves env(safe-area-inset-*) at 0, which would put the navbar under the
+// status bar and the nav pill on the home indicator; the CDP override gives the app
+// the iPhone 16's real insets. https://useyourloaf.com/blog/iphone-16-screen-sizes/
+const IPHONE_INSETS = { top: 59, bottom: 34 };
+
+// The page API device-frames.html defines.
+interface DeviceFramesWindow {
+	frameScreens(screens: { desktop?: string; phone?: string; title?: string }): Promise<void>;
+}
+
+async function captureHome(
+	browser: Browser,
+	options: BrowserContextOptions,
+	insets?: typeof IPHONE_INSETS
+): Promise<Buffer> {
+	const context = await browser.newContext(options);
+	await installSseDouble(context);
+	await new ApiMock(context, baselineHandlers).use(visitorAtFestival).install();
+	const page = await context.newPage();
+	if (insets) {
+		const cdp = await context.newCDPSession(page);
+		await cdp.send('Emulation.setSafeAreaInsetsOverride', { insets });
+	}
+	await page.clock.setFixedTime(GALLERY_NOW);
+	await page.goto('/');
+	await expect(page.getByText('Эдвард Элрик — Стальной алхимик').first()).toBeVisible();
+	await settle(page);
+	const png = await page.screenshot({ animations: 'disabled', caret: 'hide' });
+	await context.close();
+	return png;
+}
+
+test('header', async ({ browser }, testInfo) => {
+	const shots = {
+		desktop: await captureHome(browser, LAPTOP),
+		phone: await captureHome(browser, IPHONE, IPHONE_INSETS)
+	};
+
+	const screens: Record<string, string> = {};
+	for (const [screen, png] of Object.entries(shots)) {
+		const path = testInfo.outputPath(`${screen}.png`);
+		await writeFile(path, png);
+		screens[screen] = pathToFileURL(path).href;
+	}
+
+	const context = await browser.newContext({
+		viewport: { width: 1920, height: 1080 },
+		deviceScaleFactor: 1,
+		isMobile: false,
+		hasTouch: false
+	});
+	const page = await context.newPage();
+	await page.goto(new URL('device-frames.html', import.meta.url).href);
+	await page.evaluate(async (urls) => {
+		await (window as unknown as DeviceFramesWindow).frameScreens(urls);
+	}, screens);
+	const png = await page.locator('#stage').screenshot({ omitBackground: true });
+	await writeWebp(page, png, HEADER_OUT);
+	await context.close();
 });

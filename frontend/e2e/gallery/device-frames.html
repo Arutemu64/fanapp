@@ -1,0 +1,411 @@
+<!doctype html>
+<!--
+	Device frames for the README hero: a laptop with a browser window and an iPhone 16,
+	each showing a screenshot handed to the page's frameScreens():
+
+	  await frameScreens({ desktop: '<url>', phone: '<url>', title: '<tab title>' });
+
+	A function rather than query-string parameters: CodeQL flags assigning an `src`
+	read from `location` (js/xss, js/client-side-unvalidated-url-redirection), and
+	the caller here is a script anyway.
+
+	`desktop` is a 1280×720 capture (a 1280×800 screen minus the 80px browser chrome
+	drawn here); `phone` is a 393×852 capture taken with the iPhone 16's safe-area insets
+	(59 top, 34 bottom) emulated, so the app's own layout leaves room for the status bar
+	and home indicator drawn over it. Any device scale factor works: the images are
+	sized by CSS. The readme-gallery spec calls it and screenshots #stage with a
+	transparent background; to reuse it, open the file and call it from the devtools
+	console with your own captures.
+
+	Devices are drawn at native size (CSS px = device points) and composited with
+	`zoom`, so every bezel, radius and inset below reads as the real device value. `zoom`,
+	not `scale`, because it scales the layout box too: the phone then takes its zoomed
+	size in the stage's flex row instead of overlapping the laptop's screen.
+	iPhone 16 screen and insets: https://useyourloaf.com/blog/iphone-16-screen-sizes/
+-->
+<html lang="ru">
+	<head>
+		<meta charset="utf-8" />
+		<title>Device frames</title>
+		<style>
+			@font-face {
+				font-family: 'Inter Variable';
+				font-weight: 100 900;
+				src: url('../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2')
+					format('woff2');
+				unicode-range: U+0000-00FF, U+2000-206F;
+			}
+			@font-face {
+				font-family: 'Inter Variable';
+				font-weight: 100 900;
+				src: url('../../node_modules/@fontsource-variable/inter/files/inter-cyrillic-wght-normal.woff2')
+					format('woff2');
+				unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+			}
+
+			:root {
+				--laptop-zoom: 1;
+				--phone-zoom: 0.86;
+				--bezel: #0c0c0e;
+				--bezel-edge: #3b3b3f;
+				font-family: 'Inter Variable', system-ui, sans-serif;
+			}
+
+			body {
+				margin: 0;
+				background: transparent;
+			}
+
+			/* Laptop and phone side by side, bottoms level; the phone tucks over the laptop's
+			   right edge with a negative margin. */
+			#stage {
+				display: inline-flex;
+				align-items: flex-end;
+				padding: 24px 24px 32px;
+			}
+
+			.laptop {
+				width: 1480px;
+				flex: none;
+				zoom: var(--laptop-zoom);
+			}
+
+			.lid {
+				position: relative;
+				width: 1280px;
+				margin: 0 auto;
+				padding: 28px 30px 24px;
+				border: 2px solid var(--bezel-edge);
+				border-bottom: 0;
+				border-radius: 30px 30px 0 0;
+				background: var(--bezel);
+			}
+
+			.camera {
+				position: absolute;
+				top: 11px;
+				left: 50%;
+				width: 7px;
+				height: 7px;
+				border-radius: 50%;
+				background: #26262a;
+				translate: -50% 0;
+			}
+
+			.laptop-screen {
+				overflow: hidden;
+				width: 1280px;
+				height: 800px;
+				border-radius: 6px 6px 0 0;
+				background: #fff;
+			}
+
+			.laptop-screen img {
+				display: block;
+				width: 1280px;
+				height: 720px;
+			}
+
+			.base {
+				position: relative;
+				height: 26px;
+				border-radius: 0 0 22px 22px / 0 0 14px 14px;
+				background: linear-gradient(#e6e7e9, #c4c5c9);
+			}
+
+			/* The thumb scoop in the base's front edge. */
+			.base::before {
+				content: '';
+				position: absolute;
+				top: 0;
+				left: 50%;
+				width: 220px;
+				height: 9px;
+				border-radius: 0 0 10px 10px;
+				background: #b5b6ba;
+				translate: -50% 0;
+			}
+
+			/* Browser chrome: 40px tab strip + 40px toolbar = the 80px above the capture. */
+			.tabstrip {
+				display: flex;
+				align-items: flex-end;
+				gap: 6px;
+				height: 40px;
+				padding: 0 12px;
+				background: #dfe1e5;
+			}
+
+			.traffic-lights {
+				display: flex;
+				gap: 8px;
+				align-self: center;
+				margin-right: 14px;
+			}
+
+			.traffic-lights span {
+				width: 12px;
+				height: 12px;
+				border-radius: 50%;
+			}
+
+			.tab {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				width: 220px;
+				height: 32px;
+				padding: 0 10px 0 12px;
+				border-radius: 10px 10px 0 0;
+				background: #fff;
+				font-size: 12px;
+				color: #202124;
+			}
+
+			.tab img {
+				width: 16px;
+				height: 16px;
+			}
+
+			.tab-title {
+				flex: 1;
+				overflow: hidden;
+				white-space: nowrap;
+				text-overflow: ellipsis;
+			}
+
+			.new-tab {
+				align-self: center;
+				padding: 0 6px;
+				font-size: 18px;
+				line-height: 1;
+				color: #5f6368;
+			}
+
+			.toolbar {
+				display: flex;
+				align-items: center;
+				gap: 14px;
+				height: 40px;
+				padding: 0 14px;
+				border-bottom: 1px solid #dadce0;
+				box-sizing: border-box;
+				background: #fff;
+				color: #5f6368;
+			}
+
+			.address {
+				flex: 1;
+				display: flex;
+				align-items: center;
+				height: 28px;
+				padding: 0 12px;
+				border-radius: 14px;
+				background: #f1f3f4;
+			}
+
+			.phone {
+				/* Positioned like the lid and base, so DOM order paints it above them: an
+				   unpositioned phone would sit under the laptop wherever they overlap. */
+				position: relative;
+				flex: none;
+				/* Over the base's overhang and the lid's bezel, never the screen. */
+				margin-left: -96px;
+				width: 393px;
+				height: 852px;
+				padding: 13px;
+				border-radius: 68px;
+				background: var(--bezel);
+				box-shadow:
+					0 0 0 2px var(--bezel-edge),
+					0 24px 48px rgb(0 0 0 / 0.18);
+				zoom: var(--phone-zoom);
+			}
+
+			.phone-screen {
+				position: relative;
+				overflow: hidden;
+				width: 393px;
+				height: 852px;
+				border-radius: 55px;
+				background: #fff;
+			}
+
+			.phone-screen > img {
+				display: block;
+				width: 393px;
+				height: 852px;
+			}
+
+			/* Status bar items sit in the two "ears" beside the Dynamic Island, centred on
+			   its vertical midline. */
+			.status-bar {
+				position: absolute;
+				top: 11px;
+				inset-inline: 0;
+				display: grid;
+				grid-template-columns: 1fr 126px 1fr;
+				height: 37px;
+				color: #000;
+			}
+
+			.status-bar > * {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 6px;
+			}
+
+			.time {
+				font-size: 17px;
+				font-weight: 600;
+				letter-spacing: -0.01em;
+			}
+
+			.dynamic-island {
+				border-radius: 19px;
+				background: #000;
+			}
+
+			.home-indicator {
+				position: absolute;
+				bottom: 8px;
+				left: 50%;
+				width: 134px;
+				height: 5px;
+				border-radius: 3px;
+				background: #000;
+				translate: -50% 0;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="stage">
+			<div class="laptop">
+				<div class="lid">
+					<span class="camera"></span>
+					<div class="laptop-screen">
+						<div class="tabstrip">
+							<div class="traffic-lights" aria-hidden="true">
+								<span style="background: #ff5f57"></span>
+								<span style="background: #febc2e"></span>
+								<span style="background: #28c840"></span>
+							</div>
+							<div class="tab">
+								<img src="../../static/favicon.svg" alt="" />
+								<span class="tab-title" data-tab-title>ФАН ФАН</span>
+								<span aria-hidden="true">×</span>
+							</div>
+							<span class="new-tab" aria-hidden="true">+</span>
+						</div>
+						<div class="toolbar" aria-hidden="true">
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 16 16"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.6"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<path d="M13 8H3M7 4 3 8l4 4" />
+							</svg>
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 16 16"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.6"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<path d="M3 8h10M9 4l4 4-4 4" />
+							</svg>
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 16 16"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.6"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<path d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5V5h-2.5" />
+							</svg>
+							<div class="address">
+								<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+									<path
+										d="M3.5 5V3.75a2.5 2.5 0 0 1 5 0V5h.5a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1.25 0h2.5V3.75a1.25 1.25 0 0 0-2.5 0z"
+									/>
+								</svg>
+							</div>
+						</div>
+						<img data-screen="desktop" alt="" />
+					</div>
+				</div>
+				<div class="base"></div>
+			</div>
+
+			<div class="phone">
+				<div class="phone-screen">
+					<img data-screen="phone" alt="" />
+					<div class="status-bar" aria-hidden="true">
+						<span class="time">9:41</span>
+						<span class="dynamic-island"></span>
+						<span>
+							<svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor">
+								<rect x="0" y="8" width="3" height="4" rx="1" />
+								<rect x="5" y="5.5" width="3" height="6.5" rx="1" />
+								<rect x="10" y="3" width="3" height="9" rx="1" />
+								<rect x="15" y="0" width="3" height="12" rx="1" />
+							</svg>
+							<svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor">
+								<path
+									d="M8 2.2c2.4 0 4.6.9 6.2 2.5l1.3-1.3A10.6 10.6 0 0 0 8 .4 10.6 10.6 0 0 0 .5 3.4l1.3 1.3A8.8 8.8 0 0 1 8 2.2Z"
+								/>
+								<path
+									d="M8 5.6c1.5 0 2.8.6 3.8 1.5l1.3-1.3A7.2 7.2 0 0 0 8 3.8c-2 0-3.8.8-5.1 2l1.3 1.3c1-.9 2.3-1.5 3.8-1.5Z"
+								/>
+								<path d="M8 9a2 2 0 0 1 1.4.6L8 11 6.6 9.6A2 2 0 0 1 8 9Z" />
+							</svg>
+							<svg width="27" height="13" viewBox="0 0 27 13" fill="none">
+								<rect
+									x="0.5"
+									y="0.5"
+									width="23"
+									height="12"
+									rx="3.8"
+									stroke="currentColor"
+									opacity="0.4"
+								/>
+								<rect x="2" y="2" width="20" height="9" rx="2.5" fill="currentColor" />
+								<path
+									d="M25 4.5v4c.8-.3 1.3-1.1 1.3-2s-.5-1.7-1.3-2Z"
+									fill="currentColor"
+									opacity="0.4"
+								/>
+							</svg>
+						</span>
+					</div>
+					<span class="home-indicator"></span>
+				</div>
+			</div>
+		</div>
+
+		<script>
+			// Resolves once both screenshots are decoded, so a screenshot taken after it
+			// never catches an empty frame.
+			window.frameScreens = async ({ desktop, phone, title }) => {
+				const desktopImage = document.querySelector('[data-screen="desktop"]');
+				const phoneImage = document.querySelector('[data-screen="phone"]');
+				desktopImage.src = desktop;
+				phoneImage.src = phone;
+				if (title) document.querySelector('[data-tab-title]').textContent = title;
+				await Promise.all([desktopImage.decode(), phoneImage.decode(), document.fonts.ready]);
+			};
+		</script>
+	</body>
+</html>

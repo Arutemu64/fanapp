@@ -44,6 +44,17 @@
 	--font-display: 'Unbounded Variable', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
 
 	/*
+	 * Two steps below Tailwind's text-xs, for compact chrome only: bottom-nav labels
+	 * on phones too narrow for 12px «Голосование», and the bell's count badge. 11px is
+	 * Apple's iOS minimum text size; 10px is the sub-360px fallback. Never body copy.
+	 * https://developer.apple.com/design/human-interface-guidelines/typography
+	 */
+	--text-2xs: 0.6875rem;
+	--text-2xs--line-height: calc(1 / 0.6875);
+	--text-3xs: 0.625rem;
+	--text-3xs--line-height: calc(0.875 / 0.625);
+
+	/*
 	 * Brand palette derived from the "FAN FAN" watermelon key art:
 	 * primary = watermelon flesh pink/crimson, secondary = cyan/teal accent.
 	 * Lime-green (rind) and yellow accents come from Tailwind's default

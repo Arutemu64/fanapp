@@ -213,11 +213,11 @@
 			{/snippet}
 		</InputOTP.Root>
 		{#if loginCodeError}
-			<p id="login-code-hint" role="alert" class="text-center text-xs text-destructive">
+			<p id="login-code-hint" role="alert" class="text-center text-sm text-destructive">
 				{loginCodeError}
 			</p>
 		{:else}
-			<p id="login-code-hint" class="text-center text-xs text-muted-foreground">
+			<p id="login-code-hint" class="text-center text-sm text-muted-foreground">
 				Введи 6 цифр из письма. Не пришло — проверь папку «Спам».
 			</p>
 		{/if}

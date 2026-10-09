@@ -65,7 +65,7 @@
 	class="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5"
 >
 	<div class="flex items-center justify-between gap-3">
-		<h2 id="up-next-heading" class="text-lg font-semibold text-foreground">Дальше</h2>
+		<h2 id="up-next-heading" class="text-base font-semibold text-foreground sm:text-lg">Дальше</h2>
 		<Button href="/schedule" variant="ghost" size="sm" class="-mr-2 shrink-0">
 			Вся программа
 			<ArrowRight aria-hidden="true" />

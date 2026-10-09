@@ -65,16 +65,18 @@
 		{#each PRIMARY_NAV_ITEMS as item (item.href)}
 			{@const { label, href, outlineIcon: Icon } = item}
 			{@const active = isNavItemActive(activeUrl, item)}
-			<!-- "Голосование" (~62px at 10px) must fit one fifth of the pill. On a 360px
-			     phone a tab gets ~67px, so labels are 10px (the iOS tab-bar label size) with
-			     tight tracking, 11px from 400px up, and the pill's side margin shrinks to 8px
-			     below 400px. Below 360px tracking tightens once more, and the centred label
-			     may spill a pixel into its neighbour's margin: that reads fine where an
-			     ellipsis would not. -->
+			<!-- "Голосование" must fit one fifth of the pill: measured in-app it is ~62px at
+			     10px, ~67px at 11px, ~73px at 12px. A tab gets ~67px on a 360px phone and
+			     ~74px from 400px (where the pill's side margin grows from 8px to 12px). So
+			     labels are 12px from 400px up (Material 3's nav-bar Label Medium), 11px with
+			     tighter tracking from 360px (Apple's iOS minimum text size), and 10px below
+			     360px, where the centred label may spill a pixel into its neighbour's
+			     margin: that reads fine where an ellipsis would not. A shorter label was
+			     rejected: the tab would stop matching the page title and the glossary term. -->
 			<a
 				href={resolve(href)}
 				aria-current={active ? 'page' : undefined}
-				class="group relative inline-flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-full text-[0.625rem] font-medium tracking-tight transition-colors max-[22.5rem]:tracking-tighter min-[25rem]:text-[0.6875rem]"
+				class="group relative inline-flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-full text-3xs font-medium tracking-tighter transition-colors min-[22.5rem]:text-2xs min-[25rem]:text-xs min-[25rem]:tracking-tight"
 				onclick={(event: MouseEvent) => {
 					// Re-tapping the tab whose root you're already on returns to the top, the
 					// native bottom-bar affordance. From a nested page (active by prefix, not

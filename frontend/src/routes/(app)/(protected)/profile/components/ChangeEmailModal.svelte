@@ -307,9 +307,9 @@
 						{/snippet}
 					</InputOTP.Root>
 					{#if verificationCodeError}
-						<p class="text-center text-xs text-destructive">{verificationCodeError}</p>
+						<p class="text-center text-sm text-destructive">{verificationCodeError}</p>
 					{:else}
-						<p class="text-center text-xs text-muted-foreground">Введи 6 цифр из письма.</p>
+						<p class="text-center text-sm text-muted-foreground">Введи 6 цифр из письма.</p>
 					{/if}
 				</div>
 

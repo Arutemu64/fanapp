@@ -54,7 +54,7 @@
 			</Button>
 		{/if}
 		{#if pageTitle}
-			<h1 class="truncate text-lg font-semibold text-foreground sm:text-xl">
+			<h1 class="truncate text-xl font-bold text-foreground sm:text-2xl">
 				{pageTitle}
 			</h1>
 		{/if}

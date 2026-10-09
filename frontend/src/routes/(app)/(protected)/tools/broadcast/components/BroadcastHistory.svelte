@@ -101,7 +101,7 @@
 </script>
 
 <section class="mx-auto w-full max-w-2xl">
-	<h2 class="mb-3 text-lg font-bold">История рассылок</h2>
+	<h2 class="mb-3 text-base font-semibold text-foreground sm:text-lg">История рассылок</h2>
 
 	{#if feed.items.length === 0}
 		<EmptyState message="Пока ничего не отправлено" />

@@ -185,7 +185,7 @@
 	{/if}
 
 	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
-		<h2 class="text-lg font-semibold text-foreground">Фестиваль</h2>
+		<h2 class="text-base font-semibold text-foreground sm:text-lg">Фестиваль</h2>
 
 		<Field.FieldGroup class="gap-4">
 			<Field.Field data-invalid={festivalStartError ? true : undefined}>
@@ -236,7 +236,7 @@
 	</Card.Root>
 
 	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
-		<h2 class="text-lg font-semibold text-foreground">Программа</h2>
+		<h2 class="text-base font-semibold text-foreground sm:text-lg">Программа</h2>
 
 		<Field.Field data-invalid={announcementTimeoutError ? true : undefined}>
 			<Field.FieldLabel for="announcement-timeout">Таймаут анонсов, сек</Field.FieldLabel>

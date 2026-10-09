@@ -31,9 +31,9 @@
 				{getAvatarInitials(profile.username)}
 			</span>
 			<div class="min-w-0">
-				<h1 class="truncate text-xl font-semibold text-foreground">
+				<h2 class="text-xl font-bold break-words text-foreground sm:text-2xl">
 					{profile.username}
-				</h1>
+				</h2>
 				<Badge variant="secondary" class="mt-1">
 					{getRoleLabel(profile.role)}
 				</Badge>
@@ -65,14 +65,14 @@
 	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
 		<div class="flex items-center gap-2">
 			<Link2 class="size-5 text-primary" aria-hidden="true" />
-			<h2 class="text-lg font-semibold text-foreground">Привязанные аккаунты</h2>
+			<h2 class="text-base font-semibold text-foreground sm:text-lg">Привязанные аккаунты</h2>
 		</div>
 
 		{#if profile.social_links.length > 0}
-			<ul class="flex flex-col gap-2">
+			<ul class="divide-y divide-border">
 				{#each profile.social_links as link (link.provider)}
 					{@const url = buildSocialProfileUrl(link.provider, link.id)}
-					<li class="flex items-center justify-between gap-3 rounded-xl border border-border p-3">
+					<li class="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
 						<div class="min-w-0">
 							<p class="text-sm font-medium text-foreground">
 								{getSocialProviderLabel(link.provider)}
