@@ -117,7 +117,7 @@
 	<Card.Root class="w-full max-w-none gap-4 rounded-2xl p-4 sm:p-6">
 		<h2 class="text-lg font-semibold text-foreground">Период голосования</h2>
 
-		<p class="text-xs leading-5 text-muted-foreground">
+		<p class="text-sm leading-5 text-muted-foreground">
 			Посетители смогут голосовать только в указанный период.
 		</p>
 
@@ -160,7 +160,7 @@
 			<Gift class="size-5 text-primary" aria-hidden="true" />
 			<h2 class="text-lg font-semibold text-foreground">Розыгрыш приза</h2>
 		</div>
-		<p class="text-xs leading-5 text-muted-foreground">
+		<p class="text-sm leading-5 text-muted-foreground">
 			Случайный участник среди тех, кто проголосовал во всех номинациях.
 		</p>
 

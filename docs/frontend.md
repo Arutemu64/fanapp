@@ -68,10 +68,10 @@ Two fonts are defined in `app.css`: `font-sans` (Inter, body text) and `font-dis
 | Role | Classes | Notes |
 |---|---|---|
 | Hero heading | `font-display text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight` | `font-display` here only |
-| Page heading | `text-lg sm:text-xl font-semibold leading-tight` | The page title rendered in `AppNavbar` (see "Page titles" below) |
+| Page heading | `text-xl sm:text-2xl font-bold` | The page title rendered in `AppNavbar` (see "Page titles" below). A step above the section heading so the `<h1>` never reads as one of its `<h2>`s; near Material 3's small top-app-bar title (Title Large, [22sp](https://github.com/androidx/androidx/blob/androidx-main/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/TypeScaleTokens.kt)). 22px would truncate «Настройки уведомлений» beside the back arrow and bell on a 360px phone. Default line height, not `leading-tight`: `truncate` clips, and Cyrillic descenders (у, д) need the room |
 | Card/section heading | `text-base sm:text-lg font-semibold leading-snug` | h2/h3 inside cards |
 | Body paragraph | `text-sm sm:text-base leading-relaxed` | Default for descriptive text |
-| Secondary/helper | `text-xs sm:text-sm leading-relaxed` | Short helper lines next to controls |
+| Secondary/helper | `text-sm leading-snug` | Helper, hint and error lines next to controls — the size `FieldDescription` / `FieldError` use |
 | Label/metadata | `text-xs leading-none font-medium` | Single-line only — timestamps, badges, tags |
 
 **Rules:**
