@@ -1,16 +1,21 @@
 <!doctype html>
 <!--
 	Device frames for the README hero: a laptop with a browser window and an iPhone 16,
-	each showing a screenshot passed in the query string:
+	each showing a screenshot handed to the page's frameScreens():
 
-	  device-frames.html?desktop=<url>&phone=<url>&title=<tab title>
+	  await frameScreens({ desktop: '<url>', phone: '<url>', title: '<tab title>' });
+
+	A function rather than query-string parameters: CodeQL flags assigning an `src`
+	read from `location` (js/xss, js/client-side-unvalidated-url-redirection), and
+	the caller here is a script anyway.
 
 	`desktop` is a 1280×720 capture (a 1280×800 screen minus the 80px browser chrome
 	drawn here); `phone` is a 393×852 capture taken with the iPhone 16's safe-area insets
 	(59 top, 34 bottom) emulated, so the app's own layout leaves room for the status bar
 	and home indicator drawn over it. Any device scale factor works: the images are
-	sized by CSS. The readme-gallery spec fills this in and screenshots #stage with a
-	transparent background; open it in a browser with your own captures to reuse it.
+	sized by CSS. The readme-gallery spec calls it and screenshots #stage with a
+	transparent background; to reuse it, open the file and call it from the devtools
+	console with your own captures.
 
 	Devices are drawn at native size (CSS px = device points) and composited with
 	`zoom`, so every bezel, radius and inset below reads as the real device value. `zoom`,
@@ -391,13 +396,16 @@
 		</div>
 
 		<script>
-			const params = new URLSearchParams(location.search);
-			for (const screen of ['desktop', 'phone']) {
-				const src = params.get(screen);
-				if (src) document.querySelector(`[data-screen="${screen}"]`).src = src;
-			}
-			const title = params.get('title');
-			if (title) document.querySelector('[data-tab-title]').textContent = title;
+			// Resolves once both screenshots are decoded, so a screenshot taken after it
+			// never catches an empty frame.
+			window.frameScreens = async ({ desktop, phone, title }) => {
+				const desktopImage = document.querySelector('[data-screen="desktop"]');
+				const phoneImage = document.querySelector('[data-screen="phone"]');
+				desktopImage.src = desktop;
+				phoneImage.src = phone;
+				if (title) document.querySelector('[data-tab-title]').textContent = title;
+				await Promise.all([desktopImage.decode(), phoneImage.decode(), document.fonts.ready]);
+			};
 		</script>
 	</body>
 </html>

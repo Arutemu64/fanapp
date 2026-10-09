@@ -39,9 +39,9 @@ backend's demo seed.
 
 The hero captures Home on a 1280px laptop and an iPhone 16 (with its safe-area
 insets emulated over CDP) and frames both in `e2e/gallery/device-frames.html`. The
-template takes its screenshots from the query string
-(`device-frames.html?desktop=<url>&phone=<url>&title=<tab title>`), so it can frame
-any other pair of captures too.
+template takes its screenshots through a function
+(`frameScreens({ desktop, phone, title })`, callable from the devtools console), so
+it can frame any other pair of captures too.
 
 ## Writing a spec
 

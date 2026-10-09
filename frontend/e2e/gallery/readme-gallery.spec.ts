@@ -154,6 +154,11 @@ const IPHONE: BrowserContextOptions = {
 // the iPhone 16's real insets. https://useyourloaf.com/blog/iphone-16-screen-sizes/
 const IPHONE_INSETS = { top: 59, bottom: 34 };
 
+// The page API device-frames.html defines.
+interface DeviceFramesWindow {
+	frameScreens(screens: { desktop?: string; phone?: string; title?: string }): Promise<void>;
+}
+
 async function captureHome(
 	browser: Browser,
 	options: BrowserContextOptions,
@@ -182,11 +187,11 @@ test('header', async ({ browser }, testInfo) => {
 		phone: await captureHome(browser, IPHONE, IPHONE_INSETS)
 	};
 
-	const frames = new URL('device-frames.html', import.meta.url);
+	const screens: Record<string, string> = {};
 	for (const [screen, png] of Object.entries(shots)) {
 		const path = testInfo.outputPath(`${screen}.png`);
 		await writeFile(path, png);
-		frames.searchParams.set(screen, pathToFileURL(path).href);
+		screens[screen] = pathToFileURL(path).href;
 	}
 
 	const context = await browser.newContext({
@@ -196,11 +201,10 @@ test('header', async ({ browser }, testInfo) => {
 		hasTouch: false
 	});
 	const page = await context.newPage();
-	await page.goto(frames.href);
-	await page.evaluate(async () => {
-		await document.fonts.ready;
-		await Promise.all([...document.images].map((image) => image.decode()));
-	});
+	await page.goto(new URL('device-frames.html', import.meta.url).href);
+	await page.evaluate(async (urls) => {
+		await (window as unknown as DeviceFramesWindow).frameScreens(urls);
+	}, screens);
 	const png = await page.locator('#stage').screenshot({ omitBackground: true });
 	await writeWebp(page, png, HEADER_OUT);
 	await context.close();
