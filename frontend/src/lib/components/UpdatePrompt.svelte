@@ -145,7 +145,7 @@
 				<div
 					class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
 				>
-					<RotateCw class="size-4 animate-spin" aria-hidden="true" />
+					<RotateCw class="size-4" aria-hidden="true" />
 				</div>
 				<div class="text-sm leading-snug font-medium">Доступна новая версия приложения.</div>
 			</div>

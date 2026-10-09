@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import { Bell } from '@lucide/svelte';
 	import { onMount } from 'svelte';
 
@@ -45,6 +46,11 @@
 		// so the count can't drift out of sync with the true total (coalesced, so a
 		// broadcast burst costs at most two round-trips).
 		void unread.refresh();
+		// On the notifications page the item already appears at the top of the
+		// list, so a toast would only repeat it — Apple's HIG: in the foreground,
+		// insert new data into the current view rather than notify:
+		// https://developer.apple.com/design/human-interface-guidelines/notifications
+		if (page.route.id === '/(app)/(protected)/notifications') return;
 		toastService.push(notification);
 	}
 

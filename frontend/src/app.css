@@ -173,7 +173,7 @@
 	/*
 	 * Respect the user's "reduce motion" OS setting: near-instantly finish any
 	 * CSS animation/transition and disable smooth scrolling. JS-driven Svelte
-	 * transitions (e.g. toast fly) are handled separately via `prefersReducedMotion`.
+	 * transitions (e.g. HeroCard's) are handled separately via `prefersReducedMotion`.
 	 */
 	@media (prefers-reduced-motion: reduce) {
 		*,
