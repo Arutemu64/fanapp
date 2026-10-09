@@ -83,6 +83,20 @@ describe('probeReachability', () => {
 		expect(isReachable()).toBe(true);
 	});
 
+	it('lets a response that repeats "reachable" cancel a pending offline verdict', async () => {
+		vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockRejectedValue(new TypeError('Failed')));
+		const { isReachable, markReachable, probeReachability } = await loadReachability();
+
+		const probe = probeReachability();
+		// Mid-window, an API call gets an answer: the state was already "reachable".
+		await vi.advanceTimersByTimeAsync(600);
+		markReachable(true);
+		await vi.advanceTimersByTimeAsync(6000);
+
+		await probe;
+		expect(isReachable()).toBe(true);
+	});
+
 	it('drops its verdict when fresher evidence landed while it was in flight', async () => {
 		let failPing!: (error: Error) => void;
 		const pending = new Promise<Response>((_, reject) => {

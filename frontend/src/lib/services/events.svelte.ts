@@ -328,6 +328,11 @@ export class EventsClient {
 		if (this.#pausedForVisibility) {
 			this.#pausedForVisibility = false;
 			this.#resume();
+			// Catch up now rather than on the handshake: a proxy that blocks SSE while
+			// HTTP works would otherwise leave the pages stale after every background
+			// trip. Clearing the flag keeps the handshake from refreshing a second time.
+			this.#needsCatchUp = false;
+			requestReconnectRefresh();
 			return;
 		}
 

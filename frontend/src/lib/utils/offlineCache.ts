@@ -1,6 +1,6 @@
 import { createStore, delMany, get, keys, set } from 'idb-keyval';
 
-import { isReachable } from '#lib/services/reachability.js';
+import { isReachable, probeReachability } from '#lib/services/reachability.js';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '#lib/utils/fetchTimeout.js';
 
 /**
@@ -222,6 +222,12 @@ export async function fetchWithCache<T>({
 
 	if (value === undefined) {
 		const cached = await readEnvelope<T>(key, scope);
+		// Nothing to show, so the caller branches on `isReachable()` to choose a calm
+		// offline state over an error page. A request that died without a response
+		// only *started* a probe (see the API client's error interceptor), which may
+		// still be inside its confirm window — wait for its verdict so that branch
+		// reads the truth. Only this rare complete-miss path pays the wait.
+		if (cached === undefined && isReachable()) await probeReachability();
 		return { data: cached?.value, cachedAt: cached?.cachedAt, stale: true };
 	}
 

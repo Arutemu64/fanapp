@@ -15,10 +15,15 @@ vi.mock('idb-keyval', () => ({
 
 // Reachability is switchable per test; it defaults to reachable so fetchWithCache and
 // warmCache take the live-fetch path.
-const reachability = vi.hoisted(() => ({ reachable: true }));
+const reachability = vi.hoisted(() => ({
+	reachable: true,
+	// Stands in for the health probe: by default its verdict is "still reachable".
+	probeReachability: vi.fn<() => Promise<boolean>>()
+}));
 
 vi.mock('#lib/services/reachability.js', () => ({
-	isReachable: () => reachability.reachable
+	isReachable: () => reachability.reachable,
+	probeReachability: reachability.probeReachability
 }));
 
 import { clearUserCache, fetchWithCache, universalScope, userScope } from './offlineCache';
@@ -26,6 +31,7 @@ import { clearUserCache, fetchWithCache, universalScope, userScope } from './off
 beforeEach(() => {
 	store.clear();
 	reachability.reachable = true;
+	reachability.probeReachability.mockReset().mockResolvedValue(true);
 });
 
 // A deferred promise lets a test hold a fetch open across a clearUserCache() call,
@@ -136,6 +142,32 @@ describe('offlineCache fallback', () => {
 		});
 
 		expect(result).toEqual({ data: undefined, cachedAt: undefined, stale: true });
+	});
+
+	// A failed request only starts a probe; the caller picks an offline state over an
+	// error page by reading isReachable() right after, so the miss must wait for it.
+	it('settles reachability before returning a complete miss', async () => {
+		reachability.probeReachability.mockImplementation(() => {
+			reachability.reachable = false;
+			return Promise.resolve(false);
+		});
+
+		const result = await fetchWithCache<string>({
+			key: 'schedule',
+			scope: universalScope,
+			fetcher: failing
+		});
+
+		expect(result.data).toBeUndefined();
+		expect(reachability.reachable).toBe(false);
+	});
+
+	it('does not probe when a cached copy can be served', async () => {
+		store.set('g:schedule', { value: 'cached', cachedAt: 4000 });
+
+		await fetchWithCache<string>({ key: 'schedule', scope: universalScope, fetcher: failing });
+
+		expect(reachability.probeReachability).not.toHaveBeenCalled();
 	});
 
 	it('serves a legacy bare value without a timestamp', async () => {

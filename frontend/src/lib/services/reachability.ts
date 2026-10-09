@@ -60,8 +60,10 @@ export function isUnreachableResponse(response: Response | undefined): boolean {
 // Optimistic default so the very first paint still attempts the network; the
 // first probe corrects it within PROBE_TIMEOUT_MS.
 let reachable = true;
-// Bumped on every change, so a probe can tell that a fresher verdict landed
-// while it was still in flight (see probeReachability).
+// Bumped on every report, even one that repeats the current value, so a probe
+// can tell that fresher evidence landed while it was still in flight (see
+// probeReachability) — an API response arriving mid-confirm-window must cancel
+// the probe's pending "offline" verdict although `reachable` never changed.
 let version = 0;
 const listeners = new Set<() => void>();
 
@@ -72,9 +74,9 @@ export function isReachable(): boolean {
 
 /** Update reachability from a known outcome (an HTTP response, the SSE handshake). */
 export function markReachable(value: boolean): void {
+	version += 1;
 	if (reachable === value) return;
 	reachable = value;
-	version += 1;
 	for (const listener of listeners) listener();
 }
 
