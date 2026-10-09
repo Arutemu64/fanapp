@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { PUBLIC_APP_VERSION } from '$app/env/public';
 	import { resolve } from '$app/paths';
 	import {
 		Bell,
@@ -67,10 +66,13 @@
 	// where they expect to land.
 	const loginHref = `${resolve('login')}?${LOGIN_NEXT_PARAM}=${encodeURIComponent('/profile')}`;
 
-	// Commit SHA baked in at build time, shortened for display. Empty for a local
-	// build from source — then the line is hidden rather than showing a blank id.
-	// It exists so a bug report ("у меня всё сломалось") names an exact bundle.
-	const buildId = PUBLIC_APP_VERSION.slice(0, 7);
+	// Both baked in at build time (vite.config.ts `define`). The release number is
+	// what an attendee can read out in a bug report ("у меня всё сломалось"); the
+	// short SHA pins the exact bundle, since every build between two releases
+	// carries the same number. A build without a release number (on the host,
+	// outside Docker) hides the line rather than showing a blank one.
+	const appVersion = __APP_VERSION__;
+	const buildId = __APP_BUILD__.slice(0, 7);
 </script>
 
 <svelte:head>
@@ -224,8 +226,11 @@
 			</a>
 			<Heart class="inline size-3.5 text-red-400" />
 		</p>
-		{#if buildId}
-			<p class="mt-0.5">Сборка {buildId}</p>
+		{#if appVersion}
+			<p class="mt-0.5">
+				Версия {appVersion}
+				{#if buildId}· {buildId}{/if}
+			</p>
 		{/if}
 	</footer>
 </div>

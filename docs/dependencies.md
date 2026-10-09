@@ -247,28 +247,49 @@ deployed app.
 
 ### Build id — *which build is running?*
 
-The commit SHA. This, not the release version, is what a deploy pins and what a
-bug report needs.
+The commit SHA. This, not the release version, is what a deploy pins and what
+ties an error to an exact bundle: every build between two releases carries the
+same release number.
 
 | Where | How it gets there |
 | --- | --- |
 | Image tag (`sha-1a2b3c4`) | `type=sha` in the publish workflow; pinned via `IMAGE_TAG` |
-| Backend Sentry release | `APP_BUILD` build arg → image `ENV` → `EnvConfig.build` |
-| Frontend Sentry release | `SENTRY_RELEASE` build arg (source-map upload) |
-| Profile footer | `PUBLIC_APP_VERSION` build arg, baked into the bundle |
+| Backend Sentry release | `APP_BUILD` build arg → `/app/BUILD_ID` file → `common/version.py` |
+| Frontend Sentry release | `APP_BUILD` build arg → source-map upload release (`vite.config.ts`) |
+| Profile footer | `APP_BUILD` build arg → `__APP_BUILD__` constant, baked into the bundle |
 
 All four come from the same `github.sha`, so one deploy is one release across
 both services. Sentry
 ([naming releases](https://docs.sentry.io/product/releases/naming-releases/))
 recommends exactly this for VCS-backed projects.
 
-`APP_BUILD` stays **commented out** in `.env.example`. Compose `env_file` values
-are injected into the container and override image `ENV`, so an empty
-`APP_BUILD=` line would erase the value the workflow baked in.
+### Both, baked in at build time
 
-Building from source locally leaves both unset — the footer line hides itself
-and Sentry gets no release, which is the honest answer for a build that has no
-published identity.
+The two identifiers describe the build artifact, so they are fixed when it is
+built and never read from the environment of a running container — 12-Factor's
+build stage turns a specific commit into the artifact, and a release "cannot be
+mutated once it is created" ([build, release, run](https://12factor.net/build-release-run)).
+They enter as Docker build args because neither image's build context can see
+their source: `./frontend` has no `pyproject.toml`, and neither context has a
+`.git`.
+
+- **Frontend** — the publish workflow reads the release number from
+  `pyproject.toml` and passes `APP_VERSION` and `APP_BUILD`; `vite.config.ts`
+  inlines them as `__APP_VERSION__` / `__APP_BUILD__` with Vite's
+  [`define`](https://vite.dev/config/shared-options#define). The profile
+  footer shows `Версия 2.1.0 · 1a2b3c4`: the number an attendee can read out in
+  a bug report, plus the short SHA.
+- **Backend** — `APP_BUILD` is written to a file, not set as image `ENV`.
+  Compose `env_file` values override image `ENV`, so a stray `APP_BUILD=` line in
+  a server's `.env` would silently erase the baked-in id; a file is out of its
+  reach. The Dockerfile uses a plain `ARG`, which Docker does not persist into
+  the image ([Dockerfile reference](https://docs.docker.com/reference/dockerfile/#arg)).
+
+`just run-prod` passes `APP_VERSION` only, so a local image shows the release
+number without a SHA. Building from a working tree leaves `APP_BUILD` unset — the
+footer drops the SHA and Sentry gets no release, which is the honest answer for
+a build that has no published identity. A host build outside Docker
+(`just frontend-dev`) has neither, and the footer line hides itself.
 
 ### What is deliberately *not* versioned
 

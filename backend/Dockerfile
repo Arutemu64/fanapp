@@ -56,12 +56,14 @@ ENV PATH="/app/.venv/bin:$PATH"
 # vanish on crash; unbuffered output reaches the container log immediately.
 ENV PYTHONUNBUFFERED=1
 
-# Commit SHA of this build, read back by EnvConfig.build and reported as the
-# Sentry release. Declared this late on purpose: it changes on every commit, and
-# only the metadata-only layers below it are invalidated when it does. Empty for
-# a local build from source — the app treats that as "unknown build".
+# Commit SHA of this build, read back by common/version.py and reported as the
+# Sentry release. Written to a file, not ENV: Compose `env_file` values override
+# image ENV, so a stray `APP_BUILD=` line in a server's .env would silently erase
+# the baked-in id. Declared this late on purpose: it changes on every commit, and
+# only the layers below it are invalidated when it does. Empty for a local build
+# from source — the app treats that as "unknown build".
 ARG APP_BUILD
-ENV APP_BUILD=$APP_BUILD
+RUN printf '%s' "$APP_BUILD" > /app/BUILD_ID
 
 USER nonroot
 WORKDIR /app

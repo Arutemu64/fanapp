@@ -42,6 +42,16 @@ export default defineConfig(({ mode }) => {
 
 	return {
 		envDir: rootDir,
+		// The build's identity, inlined as constants (declared in src/app.d.ts) for
+		// the profile footer. Build inputs, not settings: the publish workflow and
+		// `just run-prod` pass them as Docker build args, and nothing can change them
+		// after the build. Not `$app/env/public`, which fails the build on a declared
+		// var the environment lacks, so every .env would need empty placeholders.
+		// See docs/dependencies.md "Versioning the app".
+		define: {
+			__APP_VERSION__: JSON.stringify(env.APP_VERSION ?? ''),
+			__APP_BUILD__: JSON.stringify(env.APP_BUILD ?? '')
+		},
 		plugins: [
 			sentrySvelteKit({
 				...sentryUpload,
@@ -49,9 +59,10 @@ export default defineConfig(({ mode }) => {
 				release: {
 					// Names the release the source maps are uploaded under, and gets
 					// injected into the bundle so the SDK reports the same name — see the
-					// note in src/hooks.client.ts. Left undefined (not '') when unset so
-					// the plugin's own detection, the git HEAD SHA, still applies.
-					name: env.SENTRY_RELEASE || undefined
+					// note in src/hooks.client.ts. The commit SHA, matching the backend's
+					// Sentry release. Left undefined (not '') when unset so the plugin's
+					// own detection, the git HEAD SHA, still applies on the host.
+					name: env.APP_BUILD || undefined
 				}
 			}),
 			tailwindcss(),

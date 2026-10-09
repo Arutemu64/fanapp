@@ -73,7 +73,7 @@ else
   # lacks, copying the example's placeholder value. This self-heals the drift
   # each session and is idempotent (a backfilled key is "present" next run).
   # Only uncommented `KEY=` lines are copied: commented example entries
-  # (APP_BUILD, IMAGE_TAG) are deliberately optional and must stay out.
+  # (APP_VERSION, APP_BUILD, IMAGE_TAG) are deliberately optional and must stay out.
   missing_env=$(awk -F= '
     FNR==NR { if ($0 ~ /^[A-Za-z_][A-Za-z0-9_]*=/) seen[$1]=1; next }
     /^[A-Za-z_][A-Za-z0-9_]*=/ && !($1 in seen)

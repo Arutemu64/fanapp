@@ -35,6 +35,11 @@ declare global {
 		}
 		// interface Platform {}
 	}
+
+	/** Release number from backend/pyproject.toml; empty when the build had none. Set by vite.config.ts `define`. */
+	const __APP_VERSION__: string;
+	/** Commit SHA of the build; empty when the build had none. Set by vite.config.ts `define`. */
+	const __APP_BUILD__: string;
 }
 
 export {};

@@ -17,16 +17,15 @@ services:
         PUBLIC_SENTRY_TRACES_SAMPLE_RATE: ${PUBLIC_SENTRY_TRACES_SAMPLE_RATE}
         PUBLIC_SMARTCAPTCHA_CLIENT_KEY: ${PUBLIC_SMARTCAPTCHA_CLIENT_KEY}
         PUBLIC_VK_GROUP_ID: ${PUBLIC_VK_GROUP_ID}
-        # Commit SHA shown in the profile footer. Injected by the publish
-        # workflow; empty for a local build, which hides the line.
-        PUBLIC_APP_VERSION: ${PUBLIC_APP_VERSION}
+        # Release number for the profile footer, from backend/pyproject.toml.
+        # `just run-prod` supplies it; empty hides the footer line.
+        APP_VERSION: ${APP_VERSION:-}
         # Source-map upload target. Non-secret and build-time only (read by
         # vite.config.ts, never bundled). An empty URL/ORG/PROJECT = upload
-        # skipped; SENTRY_RELEASE names the release the maps land under.
+        # skipped.
         SENTRY_URL: ${SENTRY_URL}
         SENTRY_ORG: ${SENTRY_ORG}
         SENTRY_PROJECT: ${SENTRY_PROJECT}
-        SENTRY_RELEASE: ${SENTRY_RELEASE}
       # The Sentry token (source-map upload) is a real secret, so it enters the
       # build as a BuildKit secret (never stored in layers or build caches)
       # instead of a build arg. Empty token = upload skipped.

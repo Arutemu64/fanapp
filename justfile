@@ -221,9 +221,11 @@ stop-infra:
 run-dev build="":
     docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile core up {{build}} --watch
 
-# Pass build="" to skip image rebuild (default rebuilds)
+# Pass build="" to skip image rebuild (default rebuilds). APP_VERSION labels the
+# frontend build with the release from backend/pyproject.toml; no APP_BUILD, since
+# a build from a working tree has no commit it can honestly claim.
 run-prod build="--build":
-    docker compose -f docker-compose.yml --profile core --profile ops up {{build}}
+    APP_VERSION="$(cd backend && uv version --short)" docker compose -f docker-compose.yml --profile core --profile ops up {{build}}
 
 # Pulls prebuilt GHCR images (docker-compose.prod.yml), builds nothing on the host.
 # Requires `docker login ghcr.io` first. Pin a build via IMAGE_TAG in .env.
