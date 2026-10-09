@@ -58,9 +58,9 @@ frontend-e2e-webkit:
 frontend-e2e-ui:
     cd frontend && pnpm e2e:ui
 
-# Re-capture the README screenshot gallery (docs/assets/readme-gallery/*.webp) from a
-# production build with the backend mocked (frontend/e2e/gallery/). Review the image
-# diff before committing.
+# Re-capture the README screenshot gallery (docs/assets/readme-gallery/*.webp) and the
+# hero (docs/assets/readme-header.webp) from a production build with the backend mocked
+# (frontend/e2e/gallery/). Review the image diff before committing.
 readme-gallery:
     cd frontend && pnpm exec playwright test -c playwright.gallery.config.ts
 

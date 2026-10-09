@@ -31,10 +31,17 @@ pnpm --dir frontend exec playwright install chromium
 ## README gallery
 
 `just readme-gallery` reuses this mock layer to re-capture the README screenshots
-(`docs/assets/readme-gallery/*.webp`). It has its own config,
-`playwright.gallery.config.ts` (a 390×844 phone at 1.5×), and its specs live in
-`e2e/gallery/`, outside `e2e/specs/`, so the test suite never rewrites committed
-images. The demo programme in `e2e/gallery/data.ts` mirrors the backend's demo seed.
+(`docs/assets/readme-gallery/*.webp`) and the hero (`docs/assets/readme-header.webp`).
+It has its own config, `playwright.gallery.config.ts` (a 390×844 phone at 1.5×), and
+its specs live in `e2e/gallery/`, outside `e2e/specs/`, so the test suite never
+rewrites committed images. The demo programme in `e2e/gallery/data.ts` mirrors the
+backend's demo seed.
+
+The hero captures Home on a 1280px laptop and an iPhone 16 (with its safe-area
+insets emulated over CDP) and frames both in `e2e/gallery/device-frames.html`. The
+template takes its screenshots from the query string
+(`device-frames.html?desktop=<url>&phone=<url>&title=<tab title>`), so it can frame
+any other pair of captures too.
 
 ## Writing a spec
 
