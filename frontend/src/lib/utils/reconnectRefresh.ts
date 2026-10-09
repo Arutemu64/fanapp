@@ -1,7 +1,12 @@
 import { refreshAll } from '$app/navigation';
 
 /**
- * Coalesced catch-up refetch after connectivity recovers.
+ * Coalesced catch-up refetch after connectivity recovers — the app's one
+ * "resync now" moment. It re-runs every active page `load` (`refreshAll`), then
+ * tells {@link onCatchUp} subscribers, which hold data outside any `load` (the
+ * unread badge, the live notification feed). Pages never listen for the SSE
+ * `connection_established` handshake to resync: that would refetch on the first
+ * connect, right after the load did, and a second time on every reconnect.
  *
  * Live SSE events only carry server-side *changes*, so any recovery — the SSE
  * stream re-establishing after a silent drop, the offline→online edge, or a
@@ -29,10 +34,22 @@ const REFRESH_DEBOUNCE_MS = 3000;
 
 let lastRefresh = 0;
 let trailingTimer: ReturnType<typeof setTimeout> | null = null;
+// Mounted components, each removed by its own teardown — no user data lives here.
+const catchUpListeners = new Set<() => void>();
 
 function refreshNow(): void {
 	lastRefresh = Date.now();
 	void refreshAll();
+	for (const listener of catchUpListeners) listener();
+}
+
+/**
+ * Run `listener` on every catch-up, for state a page `load` doesn't own. Call it
+ * from `onMount` and return the unsubscribe it gives back.
+ */
+export function onCatchUp(listener: () => void): () => void {
+	catchUpListeners.add(listener);
+	return () => catchUpListeners.delete(listener);
 }
 
 export function requestReconnectRefresh(): void {

@@ -154,8 +154,8 @@
 	// state must not trip the foreground refetch below.
 	let lastRefetch = Date.now();
 
-	// Also refetch on every (re)connect, so a schedule_updated missed while the SSE
-	// stream was down doesn't leave a stale page.
+	// A schedule_updated missed while the SSE stream was down is caught by the
+	// reconnect catch-up (reconnectRefresh), which re-runs this page's load.
 	function reloadSchedule() {
 		lastRefetch = Date.now();
 		void invalidate('app:schedule');
@@ -183,12 +183,10 @@
 		updateScrollState();
 		scrollContainer?.addEventListener('scroll', updateScrollState, { passive: true });
 		eventsClient.on('schedule_updated', reloadSchedule);
-		eventsClient.on('connection_established', reloadSchedule);
 
 		return () => {
 			scrollContainer?.removeEventListener('scroll', updateScrollState);
 			eventsClient.off('schedule_updated', reloadSchedule);
-			eventsClient.off('connection_established', reloadSchedule);
 		};
 	});
 </script>

@@ -147,11 +147,10 @@
 			devicePush = state;
 		});
 
-		// Refetch config (and the voting window it gates) on a change and on every
-		// (re)connect, so the phase flips (e.g. organizers ending the festival)
-		// without a reload, and a 'config_updated' missed while the stream was down
-		// still self-heals. Firing on first connect just re-runs the freshly loaded
-		// data once — harmless and idempotent.
+		// Refetch config (and the voting window it gates) on a change, so the phase
+		// flips (e.g. organizers ending the festival) without a reload. Anything
+		// missed while the stream was down is caught by the reconnect catch-up
+		// (reconnectRefresh), which re-runs this page's load.
 		const reloadConfig = () => {
 			void invalidate('app:config');
 		};
@@ -162,12 +161,10 @@
 		};
 
 		eventsClient.on('config_updated', reloadConfig);
-		eventsClient.on('connection_established', reloadConfig);
 		eventsClient.on('schedule_updated', reloadSchedule);
 
 		return () => {
 			eventsClient.off('config_updated', reloadConfig);
-			eventsClient.off('connection_established', reloadConfig);
 			eventsClient.off('schedule_updated', reloadSchedule);
 		};
 	});

@@ -42,22 +42,19 @@
 	});
 
 	onMount(() => {
-		// Refetch voting status on a config change and on every (re)connect, so the
-		// banner flips open/closed the moment organizers change the range — without a
-		// reload — and a 'config_updated' missed while the stream was down self-heals.
-		// The server still enforces the range at vote time, so a missed refresh is
-		// cosmetic, never a votable dead end. Firing on first connect just re-runs the
-		// freshly loaded status once — harmless and idempotent.
+		// Refetch voting status on a config change, so the banner flips open/closed
+		// the moment organizers change the range — without a reload. A
+		// 'config_updated' missed while the stream was down is caught by the reconnect
+		// catch-up (reconnectRefresh). The server still enforces the range at vote
+		// time, so a missed refresh is cosmetic, never a votable dead end.
 		const reloadStatus = () => {
 			void invalidate('app:config');
 		};
 
 		eventsClient.on('config_updated', reloadStatus);
-		eventsClient.on('connection_established', reloadStatus);
 
 		return () => {
 			eventsClient.off('config_updated', reloadStatus);
-			eventsClient.off('connection_established', reloadStatus);
 		};
 	});
 </script>
