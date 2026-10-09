@@ -92,7 +92,7 @@
 		<!-- Watermelon-primary badge per the design system (unseen dots are primary,
 			not red — red reads as an error). The label is announced via aria-label. -->
 		<span
-			class="absolute top-0.5 right-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-background bg-primary px-1 text-[10px] leading-none font-semibold text-primary-foreground"
+			class="absolute top-0.5 right-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-background bg-primary px-1 text-3xs leading-none font-semibold text-primary-foreground"
 			aria-hidden="true"
 		>
 			{badgeLabel}

@@ -112,7 +112,7 @@
 		<Card.Root class="w-full max-w-none rounded-2xl p-4 sm:p-6">
 			<div class="flex flex-wrap items-start justify-between gap-3">
 				<div class="min-w-0">
-					<h2 class="text-lg font-semibold text-foreground">
+					<h2 class="text-base font-semibold text-foreground sm:text-lg">
 						{SOURCE_LABELS[source.source]}
 					</h2>
 					<p class="mt-1 text-sm text-muted-foreground">

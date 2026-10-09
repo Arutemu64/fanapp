@@ -113,7 +113,9 @@
 
 {#if steps.length > 0}
 	<section aria-labelledby="get-ready-heading" class="flex flex-col gap-3">
-		<h2 id="get-ready-heading" class="text-lg font-semibold text-foreground">{heading}</h2>
+		<h2 id="get-ready-heading" class="text-base font-semibold text-foreground sm:text-lg">
+			{heading}
+		</h2>
 
 		<MenuGroup>
 			{#each steps as key (key)}
