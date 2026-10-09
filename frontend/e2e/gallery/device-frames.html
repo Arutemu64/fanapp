@@ -200,6 +200,9 @@
 			}
 
 			.phone {
+				/* Positioned like the lid and base, so DOM order paints it above them: an
+				   unpositioned phone would sit under the laptop wherever they overlap. */
+				position: relative;
 				flex: none;
 				/* Over the base's overhang and the lid's bezel, never the screen. */
 				margin-left: -96px;
