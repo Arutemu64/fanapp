@@ -1,8 +1,9 @@
 <script lang="ts">
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
-	import { getOfflineService, shouldShowStaleNotice } from '#lib/services/offline.svelte.js';
+	import { reachability } from '#lib/services/reachability.js';
 	import { feedSnapshotKey } from '#lib/utils/feed.js';
+	import { shouldShowStaleNotice } from '#lib/utils/offlineCache.js';
 
 	import type { PageProps } from './$types';
 
@@ -18,12 +19,11 @@
 		)
 	);
 
-	const offline = getOfflineService();
 	let showStaleNotice = $derived(
 		shouldShowStaleNotice({
 			offlineMiss: data.offlineMiss,
 			stale: data.stale,
-			isOnline: offline.isOnline
+			isOnline: reachability.current
 		})
 	);
 </script>

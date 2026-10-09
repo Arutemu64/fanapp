@@ -9,8 +9,8 @@
 	import Toaster from '#lib/components/ui/sonner/sonner.svelte';
 	import UpdatePrompt from '#lib/components/UpdatePrompt.svelte';
 	import { setEventsClient } from '#lib/services/events.svelte.js';
-	import { setOfflineService } from '#lib/services/offline.svelte.js';
 	import { setPwaService } from '#lib/services/pwa.svelte.js';
+	import { startReachabilityMonitor } from '#lib/services/reachabilityMonitor.js';
 	import { setThemeService } from '#lib/services/theme.svelte.js';
 	import { setToastService } from '#lib/services/toasts.svelte.js';
 	import { registerServiceWorker } from '#lib/utils/serviceWorker.js';
@@ -23,7 +23,6 @@
 	setToastService();
 	const pwa = setPwaService();
 	setThemeService();
-	const offlineService = setOfflineService();
 
 	onMount(() => {
 		// Remove the static boot splash (in app.html) now that the app has mounted.
@@ -32,6 +31,10 @@
 		// SvelteKit's auto-registration is disabled (svelte.config.js) so we can
 		// catch a rejected register() ourselves — see registerServiceWorker.
 		registerServiceWorker();
+
+		// The returned teardown drops the monitor's listeners and recovery poll, so
+		// dev HMR re-creating this layout doesn't stack duplicates.
+		return startReachabilityMonitor();
 	});
 
 	$effect(() => {
@@ -50,9 +53,6 @@
 		// window/document listeners, so no zombie stream can resurrect —
 		// matters mostly for dev HMR, which re-creates the layout.
 		eventsClient.destroy();
-		// Same reason: drop the offline service's global listeners and its
-		// recovery-poll timer so HMR doesn't stack duplicates.
-		offlineService.destroy();
 	});
 </script>
 

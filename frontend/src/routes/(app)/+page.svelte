@@ -5,8 +5,9 @@
 	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
 	import { documentVisibility } from '#lib/services/documentVisibility.js';
 	import { getEventsClient } from '#lib/services/events.svelte.js';
-	import { getOfflineService, shouldShowStaleNotice } from '#lib/services/offline.svelte.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
+	import { reachability } from '#lib/services/reachability.js';
+	import { shouldShowStaleNotice } from '#lib/utils/offlineCache.js';
 	import { type DevicePushState, getDevicePushState } from '#lib/utils/pushSubscription.js';
 	import { hasVotingEnded, isVotingOpenNow } from '#lib/utils/votingStatus.js';
 
@@ -30,7 +31,6 @@
 	let votingStatus = $derived(data.votingStatus);
 
 	const eventsClient = getEventsClient();
-	const offline = getOfflineService();
 	const pwa = getPwaService();
 
 	let festivalStartMs = $derived(new Date(config.festival_start).getTime());
@@ -105,7 +105,7 @@
 			shouldShowStaleNotice({
 				offlineMiss: false,
 				stale: data.scheduleStale,
-				isOnline: offline.isOnline
+				isOnline: reachability.current
 			})
 	);
 

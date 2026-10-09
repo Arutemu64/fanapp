@@ -1,4 +1,4 @@
-import { getOfflineService } from '#lib/services/offline.svelte.js';
+import { reachability } from '#lib/services/reachability.js';
 
 /**
  * Hint shown on a write control that is disabled because the backend is
@@ -15,8 +15,7 @@ const OFFLINE_ACTION_HINT = 'Доступно только онлайн';
  * online-only"). Rather than let a tap fail into an error toast, the trigger
  * degrades to a disabled state with a hint.
  *
- * Reads the OfflineService from context, so call it during component init. The
- * returned getters read the service's reactive `isOnline`, so binding
+ * The returned getters read reactive reachability, so binding
  * `disabled={gate.disabled}` in markup re-evaluates on connectivity changes.
  *
  * One shared gate keeps every write control consistent and impossible to forget:
@@ -26,14 +25,13 @@ const OFFLINE_ACTION_HINT = 'Доступно только онлайн';
  * they have nothing to read offline.
  */
 export function offlineWriteGate() {
-	const offline = getOfflineService();
 	return {
 		get disabled(): boolean {
-			return !offline.isOnline;
+			return !reachability.current;
 		},
 		/** `title` for the control: the hint while offline, `undefined` when online. */
 		get title(): string | undefined {
-			return offline.isOnline ? undefined : OFFLINE_ACTION_HINT;
+			return reachability.current ? undefined : OFFLINE_ACTION_HINT;
 		}
 	};
 }

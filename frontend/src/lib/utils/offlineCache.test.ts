@@ -15,14 +15,10 @@ vi.mock('idb-keyval', () => ({
 
 // Reachability is switchable per test; it defaults to reachable so fetchWithCache and
 // warmCache take the live-fetch path.
-const reachability = vi.hoisted(() => ({
-	reachable: true,
-	markReachable: vi.fn<(value: boolean) => void>()
-}));
+const reachability = vi.hoisted(() => ({ reachable: true }));
 
 vi.mock('#lib/services/reachability.js', () => ({
-	isReachable: () => reachability.reachable,
-	markReachable: reachability.markReachable
+	isReachable: () => reachability.reachable
 }));
 
 import { clearUserCache, fetchWithCache, universalScope, userScope } from './offlineCache';
@@ -30,7 +26,6 @@ import { clearUserCache, fetchWithCache, universalScope, userScope } from './off
 beforeEach(() => {
 	store.clear();
 	reachability.reachable = true;
-	reachability.markReachable.mockClear();
 });
 
 // A deferred promise lets a test hold a fetch open across a clearUserCache() call,
@@ -109,7 +104,7 @@ describe('offlineCache fallback', () => {
 		expect(result).toEqual({ data: 'cached', cachedAt: 1000, stale: true });
 	});
 
-	it('falls back to the cache and marks the server unreachable when the fetch throws', async () => {
+	it('falls back to the cache when the fetch throws', async () => {
 		store.set('g:schedule', { value: 'cached', cachedAt: 2000 });
 
 		const result = await fetchWithCache<string>({
@@ -119,7 +114,6 @@ describe('offlineCache fallback', () => {
 		});
 
 		expect(result).toEqual({ data: 'cached', cachedAt: 2000, stale: true });
-		expect(reachability.markReachable).toHaveBeenCalledWith(false);
 	});
 
 	it('falls back to the cache when the fetcher reports no usable data', async () => {
@@ -132,7 +126,6 @@ describe('offlineCache fallback', () => {
 		});
 
 		expect(result).toEqual({ data: 'cached', cachedAt: 3000, stale: true });
-		expect(reachability.markReachable).toHaveBeenCalledWith(true);
 	});
 
 	it('returns a stale miss when nothing is cached', async () => {

@@ -1,165 +1,61 @@
 <script lang="ts">
-	import { AlertCircle, RotateCw } from '@lucide/svelte';
+	import { AlertCircle } from '@lucide/svelte';
 	import { slide } from 'svelte/transition';
 
-	import { type ConnectionStatus, getEventsClient } from '#lib/services/events.svelte.js';
-	import { getOfflineService } from '#lib/services/offline.svelte.js';
 	import { reachability } from '#lib/services/reachability.js';
-	import { requestReconnectRefresh } from '#lib/utils/reconnectRefresh.js';
-
-	// 8s absorbs the normal SSE reconnect after foregrounding without alarming
-	// the user; only a genuinely struggling connection exceeds this window.
-	const RECOVERING_GRACE_MS = 8000;
 
 	// Material Design 3 snackbar minimum; prevents flash on brief blips.
 	const MIN_DISPLAY_MS = 4000;
 
-	type Health = 'healthy' | 'recovering' | 'down';
-
-	// `disconnected` is intentional (logout) — stays silent.
-	const HEALTH_BY_STATUS: Record<ConnectionStatus, Health> = {
-		connected: 'healthy',
-		transport_open: 'healthy',
-		disconnected: 'healthy',
-		connecting: 'recovering',
-		error: 'recovering',
-		failed: 'down'
-	};
-
-	const client = getEventsClient();
-	let health = $derived<Health>(HEALTH_BY_STATUS[client.connectionStatus]);
-
-	const offline = getOfflineService();
-	let isOnline = $derived(offline.isOnline);
+	// Only one state reaches the user: whether the backend is reachable. The SSE
+	// stream's own reconnects stay silent — it only carries change signals, the
+	// pages load over plain HTTP, and an attendee can do nothing about a dropped
+	// stream. A drop is already confirmed before `reachability` flips, so the
+	// banner needs no grace window of its own.
+	let isOnline = $derived(reachability.current);
 	let deviceOnline = $derived(reachability.deviceOnline);
 
-	let recoveringVisible = $state(false);
+	// A trustworthy `navigator.onLine === false` is the device's own connection;
+	// otherwise the device is online and the API is unreachable (outage, captive
+	// portal, dead VPN) — never blame the user's internet for a server outage.
+	let desiredMessage = $derived.by(() => {
+		if (isOnline) return null;
+		return deviceOnline ? 'Нет связи с сервером' : 'Нет интернета';
+	});
+
+	// Held separately from `desiredMessage` so the strip keeps its last wording
+	// through the minimum display time instead of vanishing mid-read.
+	let message = $state<string | null>(null);
+	let hideLockedUntil = 0;
 
 	$effect(() => {
-		if (health !== 'recovering') {
-			recoveringVisible = false;
+		const desired = desiredMessage;
+
+		if (desired) {
+			message = desired;
+			hideLockedUntil = Date.now() + MIN_DISPLAY_MS;
 			return;
 		}
 
-		const timeoutId = setTimeout(() => (recoveringVisible = true), RECOVERING_GRACE_MS);
-		return () => clearTimeout(timeoutId);
-	});
-
-	type BannerTone = 'yellow' | 'red';
-
-	const TONE_CLASSES: Record<BannerTone, string> = {
-		yellow: 'border-warning/30 bg-warning/10 text-warning',
-		red: 'border-destructive/30 bg-destructive/10 text-destructive'
-	};
-
-	interface Banner {
-		tone: BannerTone;
-		role: 'status' | 'alert';
-		icon: typeof AlertCircle;
-		iconClass: string;
-		message: string;
-		showRetry: boolean;
-	}
-
-	// Unreachable server outranks lost SSE stream outranks delayed "reconnecting".
-	let desiredBanner = $derived.by<Banner | null>(() => {
-		if (!isOnline) {
-			return {
-				tone: 'yellow',
-				role: 'status',
-				icon: AlertCircle,
-				iconClass: 'h-4 w-4',
-				message: deviceOnline ? 'Нет связи с сервером' : 'Нет интернета',
-				showRetry: false
-			};
-		}
-		if (health === 'down') {
-			return {
-				tone: 'red',
-				role: 'alert',
-				icon: AlertCircle,
-				iconClass: 'h-4 w-4',
-				message: 'Соединение потеряно',
-				showRetry: true
-			};
-		}
-		if (recoveringVisible) {
-			return {
-				tone: 'yellow',
-				role: 'status',
-				icon: RotateCw,
-				iconClass: 'h-3.5 w-3.5 motion-safe:animate-spin',
-				message: 'Восстанавливаем связь…',
-				showRetry: false
-			};
-		}
-		return null;
-	});
-
-	// Manual retry from the down banner. `restart()` reconnects the stream but
-	// resets the attempt counter, so its handshake won't fire the catch-up refetch;
-	// and this banner only shows while the backend is reachable (a dead stream, not
-	// an outage), so no offline→online edge refetches either. Request the catch-up
-	// explicitly — the user tapped "refresh", so refreshing the data is the point.
-	function handleRetry() {
-		client.restart();
-		requestReconnectRefresh();
-	}
-
-	let banner = $state<Banner | null>(null);
-	let hideLockedUntil = 0;
-	let holdTimeoutId: ReturnType<typeof setTimeout> | null = null;
-
-	$effect(() => {
-		const desired = desiredBanner;
-
-		if (holdTimeoutId !== null) {
-			clearTimeout(holdTimeoutId);
-			holdTimeoutId = null;
+		const remaining = hideLockedUntil - Date.now();
+		if (remaining <= 0) {
+			message = null;
+			return;
 		}
 
-		if (desired) {
-			banner = desired;
-			hideLockedUntil = Date.now() + MIN_DISPLAY_MS;
-		} else {
-			const remaining = hideLockedUntil - Date.now();
-			if (remaining > 0) {
-				holdTimeoutId = setTimeout(() => {
-					holdTimeoutId = null;
-					banner = null;
-				}, remaining);
-			} else {
-				banner = null;
-			}
-		}
-
-		return () => {
-			if (holdTimeoutId !== null) {
-				clearTimeout(holdTimeoutId);
-				holdTimeoutId = null;
-			}
-		};
+		const holdTimeoutId = setTimeout(() => (message = null), remaining);
+		return () => clearTimeout(holdTimeoutId);
 	});
 </script>
 
-{#if banner}
-	{@const Icon = banner.icon}
+{#if message}
 	<div
-		role={banner.role}
-		aria-live={banner.role === 'status' ? 'polite' : undefined}
+		role="status"
+		aria-live="polite"
 		transition:slide={{ duration: 200 }}
-		class="flex items-center gap-2.5 border-b px-4 py-2 text-xs sm:px-6 {TONE_CLASSES[banner.tone]}"
+		class="flex items-center gap-2.5 border-b border-warning/30 bg-warning/10 px-4 py-2 text-xs text-warning sm:px-6"
 	>
-		<Icon class="shrink-0 {banner.iconClass}" aria-hidden="true" />
-		<p class="flex-1 leading-snug">{banner.message}</p>
-		{#if banner.showRetry}
-			<button
-				type="button"
-				onclick={handleRetry}
-				class="inline-flex min-h-9 shrink-0 items-center rounded-lg bg-destructive px-2.5 text-xs font-medium text-white hover:bg-destructive/90 focus-visible:ring-2 focus-visible:ring-destructive/40 focus-visible:ring-offset-2 focus-visible:outline-none"
-			>
-				Обновить
-			</button>
-		{/if}
+		<AlertCircle class="h-4 w-4 shrink-0" aria-hidden="true" />
+		<p class="flex-1 leading-snug">{message}</p>
 	</div>
 {/if}

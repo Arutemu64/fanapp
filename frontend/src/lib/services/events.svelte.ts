@@ -14,19 +14,15 @@ import { requestReconnectRefresh } from '#lib/utils/reconnectRefresh.js';
 
 const [getEvents, setEvents] = createContext<EventsClient>();
 
-/** Max reconnect attempts before backing off to the slow retry below. */
-const MAX_RECONNECT_ATTEMPTS = 10;
 /**
- * Once the fast retries are exhausted, keep dialing at this cadence rather than
- * stopping for good. A stream that stays broken while the backend is otherwise
- * healthy — a carrier proxy that kills long-lived connections, say — never
- * produces a reachability *transition*, so `markReachable(true)` notifies nobody
- * and none of the other recovery paths (`online`, reachability change, visibility
- * resume) ever fire. Without this the down banner would stick for the rest of the
- * session on an app whose pages all load fine. One dial a minute is cheap, and it
- * is paused with the rest of the stream while the app is backgrounded.
+ * Ceiling for the reconnect backoff. The stream never gives up: one that stays
+ * broken while the backend is otherwise healthy — a carrier proxy that kills
+ * long-lived connections, say — produces no reachability change for any other
+ * path to hook, so only its own retries can ever bring realtime back.
  */
-const FAILED_RETRY_INTERVAL_MS = 60000;
+const MAX_RECONNECT_DELAY_MS = 60000;
+/** After this many failed dials in a row, file one Sentry issue for the outage. */
+const REPORT_AFTER_ATTEMPTS = 10;
 /** Wait briefly before reconnecting after auth changes to avoid flicker during navigation. */
 const RESTART_DEBOUNCE_MS = 250;
 /**
@@ -36,8 +32,7 @@ const RESTART_DEBOUNCE_MS = 250;
  * dial — a server or proxy that accepts the connection but never sends headers,
  * firing neither onopen nor onerror for minutes — not a slow one, so it is set
  * well past plausible slowness: timing out a merely-slow network makes things
- * worse, since every retry restarts the whole dial and spends the fast-retry
- * budget on a connection that would have succeeded.
+ * worse, since every retry restarts the whole dial.
  */
 const DIAL_TIMEOUT_MS = 15000;
 /**
@@ -57,15 +52,19 @@ const HANDSHAKE_TIMEOUT_MS = 5000;
  */
 const HEARTBEAT_TIMEOUT_MS = 45000;
 /**
+ * On foregrounding, a stream that heard nothing for longer than two server pings
+ * is redialled at once rather than left to the watchdog. iOS 18 can resume a
+ * suspended PWA with its EventSource still `OPEN` but dead, and no `error` event
+ * ever fires (https://developer.apple.com/forums/thread/765183).
+ */
+const STALE_ON_RESUME_MS = 30000;
+/**
  * Pause the stream once the app has been backgrounded this long. Web Push covers
  * notifications while hidden, so holding SSE open only churns the mobile radio.
  * The grace window avoids thrashing on quick app-switches (following a link out
  * and straight back).
  */
 const HIDDEN_PAUSE_GRACE_MS = 60000;
-
-export type ConnectionStatus =
-	'disconnected' | 'connecting' | 'transport_open' | 'connected' | 'error' | 'failed';
 
 export interface EventsHandshakePayload {
 	server_time: string;
@@ -136,36 +135,37 @@ function parseEventData(raw: unknown): unknown {
 }
 
 /**
- * SSE (Server-Sent Events) client with automatic reconnection.
+ * SSE (Server-Sent Events) client with automatic reconnection. It reports no
+ * state to the UI: reachability (`reachability.ts`) is what the user sees, and a
+ * lost stream just keeps retrying in the background.
  *
  * Usage:
  *   const client = getEventsClient();
- *   client?.on('schedule_updated', handler);
+ *   client.on('schedule_updated', handler);
  *   // cleanup:
- *   client?.off('schedule_updated', handler);
+ *   client.off('schedule_updated', handler);
  */
 export class EventsClient {
-	#connectionStatus: ConnectionStatus = $state('disconnected');
-	// Reassigned wholesale from parsed JSON, never mutated — `$state.raw` skips the
-	// deep proxy `$state` would otherwise build for it.
-	#handshake: EventsHandshakePayload | null = $state.raw(null);
 	#source: EventSource | null = null;
 	#reconnectAttempts = 0;
-	#reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null;
-	#stallTimeoutId: ReturnType<typeof setTimeout> | null = null;
-	#restartTimeoutId: ReturnType<typeof setTimeout> | null = null;
-	#visibilityTimeoutId: ReturnType<typeof setTimeout> | null = null;
-	#heartbeatTimeoutId: ReturnType<typeof setTimeout> | null = null;
-	#manualDisconnect = false;
+	// A pending connect: a backoff retry or the restart debounce.
+	#dialTimerId: ReturnType<typeof setTimeout> | null = null;
+	// One watchdog for whichever stage is live — the dial, the handshake, or the
+	// open stream's heartbeat — since only one can be at a time.
+	#watchdogId: ReturnType<typeof setTimeout> | null = null;
+	#visibilityTimerId: ReturnType<typeof setTimeout> | null = null;
+	#lastEventAt = 0;
+	// Set whenever the stream goes down for a reason other than an auth restart.
+	// Live events only carry server-side *changes*, so whatever moved while it was
+	// down is missed; the next handshake refetches the pages to catch up.
+	#needsCatchUp = false;
 	// True while the stream is intentionally paused because the app is backgrounded.
 	#pausedForVisibility = false;
 	// Terminal flag set by destroy(); a destroyed client never reconnects.
 	#destroyed = false;
-	#unsubscribeReachable: (() => void) | null = null;
-	// Guards the one-issue-per-outage rule below: the slow retry re-enters
-	// #failAndReconnect once a minute while `failed`, and each of those must not
-	// file a fresh GlitchTip issue. Reset on the next successful handshake.
+	// One Sentry issue per outage, reset on the next successful handshake.
 	#failureReported = false;
+	#unsubscribeReachable: () => void;
 
 	// Tracks registered listeners so they survive reconnects.
 	// When EventSource reconnects, we re-attach all listeners to the new instance.
@@ -173,101 +173,17 @@ export class EventsClient {
 	// wrapper actually attached to the EventSource.
 	#listeners: Record<string, RegisteredListener[]> = {};
 
-	/** Current stream state. Reactive — read it from a `$derived` or a template. */
-	get connectionStatus(): ConnectionStatus {
-		return this.#connectionStatus;
-	}
-
-	/** Payload of the last completed handshake; null whenever the stream is down. */
-	get handshake(): EventsHandshakePayload | null {
-		return this.#handshake;
-	}
-
 	constructor() {
-		// React to OS network changes: pause the stream when the browser goes
-		// offline (stops the reconnect churn and the "reconnecting" banner) and
-		// re-dial when it comes back.
+		// Stop dialling while the browser reports no network; re-dial when it
+		// comes back.
 		window.addEventListener('offline', this.#handleOffline);
 		window.addEventListener('online', this.#handleOnline);
-		// Recover when connectivity returns after the stream gave up retrying.
-		// While the reconnect loop is still running it handles recovery itself,
-		// so we only step in once it has reached the terminal 'failed' state.
-		this.#unsubscribeReachable = onReachableChange(this.#handleReachableChange);
 		// Pause the stream while the app is backgrounded and resume on return;
 		// Web Push keeps notifications flowing while it is down.
 		document.addEventListener('visibilitychange', this.#handleVisibilityChange);
-		this.connect();
-	}
-
-	connect() {
-		if (this.#destroyed || this.#source) return;
-
-		this.#clearReconnectTimer();
-		this.#clearRestartTimer();
-		this.#clearStallTimer();
-		this.#clearHeartbeatTimer();
-		this.#manualDisconnect = false;
-		this.#handshake = null;
-
-		// Don't dial while the browser reports no network — wait for the `online`
-		// event instead of looping failed connection attempts.
-		if (!navigator.onLine) {
-			this.#connectionStatus = 'disconnected';
-			return;
-		}
-
-		// A slow background retry from 'failed' must not downgrade the status to
-		// 'connecting': the user has already been told the stream is down, and
-		// flipping the banner off and back on every minute reads as flapping. Only
-		// a transport that actually opens should change what they see.
-		if (this.#connectionStatus !== 'failed') {
-			this.#connectionStatus = 'connecting';
-		}
-
-		this.#source = new EventSource(`${PUBLIC_API_URL}/events`, {
-			withCredentials: true
-		});
-
-		// Covers a hung dial: a server (or proxy) that accepts the connection but
-		// never sends headers fires neither onopen nor onerror for minutes, which
-		// would leave the status stuck in 'connecting' with no retry scheduled.
-		this.#armStallTimeout(DIAL_TIMEOUT_MS, 'dial');
-
-		this.#source.onopen = () => {
-			// Mirrors connect()'s 'failed' guard above — see there for why; a
-			// transport that opens and stalls on the handshake shouldn't blink
-			// the banner off for HANDSHAKE_TIMEOUT_MS on every slow retry.
-			//
-			// The attempt counter is reset on handshake success, not here: a
-			// transport that opens but never completes the handshake must still
-			// count toward `failed`, or it loops forever instead of surfacing
-			// the down banner.
-			if (this.#connectionStatus !== 'failed') {
-				this.#connectionStatus = 'transport_open';
-			}
-			this.#armStallTimeout(HANDSHAKE_TIMEOUT_MS, 'handshake');
-		};
-
-		this.#source.onerror = () => {
-			if (this.#manualDisconnect) return;
-			console.warn('EventSource error, attempting to reconnect...');
-			this.#failAndReconnect('transport_error');
-		};
-
-		this.#source.addEventListener('connection_established', this.#handleHandshake);
-
-		// Feed the liveness watchdog from every known event (incl. server pings),
-		// so any traffic proves the stream alive — see ALL_SSE_EVENTS.
-		for (const event of ALL_SSE_EVENTS) {
-			this.#source.addEventListener(event, this.#handleAnyEvent);
-		}
-
-		// Re-attach all registered listeners to the new EventSource instance.
-		for (const [event, handlers] of Object.entries(this.#listeners)) {
-			for (const { wrapper } of handlers) {
-				this.#source.addEventListener(event, wrapper);
-			}
-		}
+		// Skip the rest of a backoff wait once the backend is confirmed back.
+		this.#unsubscribeReachable = onReachableChange(this.#handleReachableChange);
+		this.#connect();
 	}
 
 	/**
@@ -306,88 +222,102 @@ export class EventsClient {
 		}
 	}
 
-	/** Disconnect and immediately reconnect (e.g. after login/logout). */
+	/** Reconnect with a fresh session (after login/logout). */
 	restart() {
 		if (this.#destroyed) return;
-		this.disconnect();
-		this.#connectionStatus = 'connecting';
-		this.#restartTimeoutId = setTimeout(() => {
-			this.#restartTimeoutId = null;
-			this.connect();
-		}, RESTART_DEBOUNCE_MS);
-	}
-
-	/** Close the connection and stop reconnecting. */
-	disconnect() {
-		this.#manualDisconnect = true;
-		this.#clearReconnectTimer();
-		this.#clearRestartTimer();
-		this.#clearStallTimer();
-		this.#clearHeartbeatTimer();
-		this.#clearVisibilityTimer();
 		this.#closeSource();
-		this.#handshake = null;
-		this.#connectionStatus = 'disconnected';
 		this.#reconnectAttempts = 0;
-		this.#pausedForVisibility = false;
+		this.#scheduleDial(RESTART_DEBOUNCE_MS);
 	}
 
 	/**
 	 * Permanently tear down the client: close the stream and unhook the global
 	 * window/document listeners registered in the constructor. Without this, a
-	 * disconnected client would resurrect on the next `online` event. Call from
-	 * the root layout's onDestroy; the client is unusable afterwards.
+	 * closed client would resurrect on the next `online` event. Call from the
+	 * root layout's onDestroy; the client is unusable afterwards.
 	 */
 	destroy() {
-		this.disconnect();
 		this.#destroyed = true;
+		this.#closeSource();
+		this.#clearDialTimer();
+		this.#clearVisibilityTimer();
 		window.removeEventListener('offline', this.#handleOffline);
 		window.removeEventListener('online', this.#handleOnline);
 		document.removeEventListener('visibilitychange', this.#handleVisibilityChange);
-		this.#unsubscribeReachable?.();
-		this.#unsubscribeReachable = null;
+		this.#unsubscribeReachable();
 	}
 
-	// Browser lost the network: stop reconnect attempts and go quiet. The offline
-	// banner (OfflineService) covers the UI; SSE resumes on the `online` event.
+	#connect() {
+		if (this.#destroyed || this.#source) return;
+		this.#clearDialTimer();
+
+		// Don't dial while the browser reports no network — the `online` event
+		// resumes instead of a loop of failed attempts.
+		if (!navigator.onLine) return;
+
+		const source = new EventSource(`${PUBLIC_API_URL}/events`, { withCredentials: true });
+		this.#source = source;
+		this.#lastEventAt = Date.now();
+		this.#armWatchdog(DIAL_TIMEOUT_MS, 'dial_timeout');
+
+		// The attempt counter is reset on handshake, not here: a transport that
+		// opens but never completes the handshake must still back off.
+		source.onopen = () => {
+			if (this.#source === source) this.#armWatchdog(HANDSHAKE_TIMEOUT_MS, 'handshake_timeout');
+		};
+		source.onerror = () => {
+			if (this.#source === source) this.#dropAndRetry('transport_error');
+		};
+
+		source.addEventListener('connection_established', this.#handleHandshake);
+
+		// Feed the liveness watchdog from every known event (incl. server pings),
+		// so any traffic proves the stream alive — see ALL_SSE_EVENTS.
+		for (const event of ALL_SSE_EVENTS) {
+			source.addEventListener(event, this.#handleAnyEvent);
+		}
+
+		// Re-attach all registered listeners to the new EventSource instance.
+		for (const [event, handlers] of Object.entries(this.#listeners)) {
+			for (const { wrapper } of handlers) {
+				source.addEventListener(event, wrapper);
+			}
+		}
+	}
+
+	// Stop now and dial again straight away, from a fresh backoff — the network or
+	// the app's visibility just changed, so the old attempt count says nothing.
+	#resume() {
+		this.#closeSource();
+		this.#needsCatchUp = true;
+		this.#reconnectAttempts = 0;
+		this.#connect();
+	}
+
+	// Go quiet until something resumes the stream.
+	#suspend() {
+		this.#closeSource();
+		this.#clearDialTimer();
+		this.#needsCatchUp = true;
+	}
+
 	#handleOffline = () => {
 		this.#suspend();
 	};
 
-	// Tear down the live stream without the terminal semantics of disconnect():
-	// keeps the backoff counter, ready to be resumed by an online/visibility event.
-	// Deliberately leaves the visibility timer alone — it tracks how long the app
-	// has been backgrounded, which a network blip does not change. Clearing it here
-	// let an offline/online flap mid-background cancel the pending pause, so the
-	// stream redialled and then stayed open on a hidden app until the user returned
-	// (visibilitychange does not fire again while hidden), which is precisely the
-	// radio churn HIDDEN_PAUSE_GRACE_MS exists to avoid.
-	#suspend() {
-		this.#manualDisconnect = true;
-		this.#clearReconnectTimer();
-		this.#clearRestartTimer();
-		this.#clearStallTimer();
-		this.#clearHeartbeatTimer();
-		this.#closeSource();
-		this.#handshake = null;
-		this.#connectionStatus = 'disconnected';
-	}
-
-	// Network is back: re-dial from a clean slate — unless we're paused because the
-	// app is backgrounded, in which case the visibility resume handles the redial.
+	// While backgrounded, the visibility resume handles the redial instead.
 	#handleOnline = () => {
-		if (this.#pausedForVisibility) return;
-		this.restart();
+		if (!this.#pausedForVisibility) this.#resume();
 	};
 
 	// App backgrounded: after a grace window, drop the stream to stop radio churn.
-	// Foregrounding clears the pending timer and, if we did pause, redials and
-	// refreshes the page to catch anything that changed while the stream was down.
+	// The timer is left alone by offline/online flaps, which don't change how long
+	// the app has been hidden — and visibilitychange won't fire again while hidden.
 	#handleVisibilityChange = () => {
 		if (document.visibilityState === 'hidden') {
-			if (this.#pausedForVisibility || this.#visibilityTimeoutId) return;
-			this.#visibilityTimeoutId = setTimeout(() => {
-				this.#visibilityTimeoutId = null;
+			if (this.#pausedForVisibility || this.#visibilityTimerId) return;
+			this.#visibilityTimerId = setTimeout(() => {
+				this.#visibilityTimerId = null;
 				this.#pausedForVisibility = true;
 				this.#suspend();
 			}, HIDDEN_PAUSE_GRACE_MS);
@@ -397,91 +327,62 @@ export class EventsClient {
 		this.#clearVisibilityTimer();
 		if (this.#pausedForVisibility) {
 			this.#pausedForVisibility = false;
-			this.restart();
-			// Catch whatever changed while the stream was paused. Shares the reconnect
-			// debounce so foregrounding onto a just-recovered network (which also fires
-			// the online edge and the fresh handshake below) refreshes once, not thrice.
+			this.#resume();
+			return;
+		}
+
+		const silentForMs = Date.now() - this.#lastEventAt;
+		if (this.#source && silentForMs > STALE_ON_RESUME_MS) this.#resume();
+	};
+
+	// The backend is confirmed reachable again (a probe, a load) while we sit out a
+	// backoff wait — up to a minute by then. Good enough evidence to dial now.
+	#handleReachableChange = () => {
+		if (isReachable() && this.#dialTimerId !== null) this.#resume();
+	};
+
+	#handleHandshake = () => {
+		// A live stream proves the backend is reachable — feed that to the probe.
+		markReachable(true);
+		this.#reconnectAttempts = 0;
+		this.#failureReported = false;
+		// Leave a trail for whatever error fires next; on a recovery it also closes
+		// out the outage that #dropAndRetry may have filed as an issue.
+		Sentry.addBreadcrumb({
+			category: 'sse',
+			level: 'info',
+			message: this.#needsCatchUp ? 'SSE reconnected' : 'SSE connected'
+		});
+
+		// The first connect is skipped: the page's own load just fetched fresh data.
+		// Shares the reconnect debounce with the reachability edge, so a recovery
+		// that trips both refreshes once.
+		if (this.#needsCatchUp) {
+			this.#needsCatchUp = false;
 			requestReconnectRefresh();
 		}
 	};
 
-	// Reachability recovered (e.g. the offline recovery poll or a load succeeded).
-	// A given-up stream is only retrying once a FAILED_RETRY_INTERVAL_MS by then;
-	// a confirmed-reachable backend is good enough evidence to dial straight away
-	// rather than sit out the rest of that minute. Note this fires on a reachability
-	// *transition* only, which is exactly why the slow retry has to exist.
-	#handleReachableChange = () => {
-		if (this.#connectionStatus === 'failed' && isReachable()) {
-			this.restart();
-		}
+	// Resets the liveness watchdog; fires on every observed event (see #connect()).
+	#handleAnyEvent = () => {
+		this.#lastEventAt = Date.now();
+		this.#armWatchdog(HEARTBEAT_TIMEOUT_MS, 'heartbeat_silence');
 	};
 
-	#handleHandshake = (event: Event) => {
-		if (!(event instanceof MessageEvent)) return;
-
-		try {
-			this.#handshake = JSON.parse(event.data as string) as EventsHandshakePayload;
-		} catch (error) {
-			console.warn('Failed to parse SSE handshake payload', error);
-			this.#handshake = null;
-		}
-
-		// A re-established stream (not the first dial) may have missed change signals
-		// while it was down — a silent drop the watchdog caught, or a long outage the
-		// slow retry recovered from. Neither crosses a reachability edge, so nothing
-		// else refetches on those paths; catch up now. The first connect is skipped
-		// because the page's own load already fetched fresh data. `restart()` (login,
-		// visibility, online) resets the counter to 0 before reconnecting, so those
-		// paths refetch through their own call, not here — no double refresh.
-		const wasReconnect = this.#reconnectAttempts > 0;
-
-		this.#clearStallTimer();
-		this.#connectionStatus = 'connected';
-		// A live stream proves the backend is reachable — feed that to the probe.
-		markReachable(true);
-		// Leave a trail for whatever error fires next; on a recovery it also closes
-		// out the outage that #failAndReconnect may have filed as an issue.
-		Sentry.addBreadcrumb({
-			category: 'sse',
-			level: 'info',
-			message: wasReconnect ? 'SSE reconnected' : 'SSE connected'
-		});
-		this.#failureReported = false;
-		// Connection is fully online; reset backoff so the next blip starts fresh.
-		this.#reconnectAttempts = 0;
-
-		if (wasReconnect) requestReconnectRefresh();
-	};
-
-	// Guards both stages of coming online — the dial, then the handshake. Either
-	// stalling leaves the stream dead in a way EventSource itself never reports.
-	#armStallTimeout(timeoutMs: number, stage: 'dial' | 'handshake') {
-		this.#clearStallTimer();
-		this.#stallTimeoutId = setTimeout(() => {
-			console.warn(`SSE ${stage} timed out, reconnecting...`);
-			this.#failAndReconnect(`${stage}_timeout`);
+	// Covers every way the stream can die without EventSource reporting it: a dial
+	// that hangs before headers, a handshake that never comes, a silent transport.
+	#armWatchdog(timeoutMs: number, reason: string) {
+		this.#clearWatchdog();
+		this.#watchdogId = setTimeout(() => {
+			this.#watchdogId = null;
+			console.warn(`SSE ${reason}, reconnecting...`);
+			this.#dropAndRetry(reason);
 		}, timeoutMs);
 	}
 
-	// Resets the liveness watchdog; fires on every observed event (see connect()).
-	#handleAnyEvent = () => {
-		this.#armHeartbeatTimeout();
-	};
-
-	#armHeartbeatTimeout() {
-		this.#clearHeartbeatTimer();
-		this.#heartbeatTimeoutId = setTimeout(() => {
-			console.warn('SSE stream went silent, reconnecting...');
-			this.#failAndReconnect('heartbeat_silence');
-		}, HEARTBEAT_TIMEOUT_MS);
-	}
-
-	#failAndReconnect(reason: string) {
-		this.#clearStallTimer();
-		this.#clearHeartbeatTimer();
+	#dropAndRetry(reason: string) {
 		this.#closeSource();
-		this.#handshake = null;
-		this.#connectionStatus = 'error';
+		this.#needsCatchUp = true;
 
 		// Cheap trail (buffered, shipped only with the next captured event) so any
 		// later error carries how the realtime stream was behaving on this device.
@@ -497,43 +398,35 @@ export class EventsClient {
 		// even when no `load` is running to report an outcome.
 		void probeReachability();
 
-		if (this.#reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-			this.#connectionStatus = 'failed';
-			// Giving up on fast recovery is the one SSE state worth its own issue: on a
-			// saturated venue network it means realtime went silently dead for this
-			// attendee. File it once per outage — the slow retry re-enters here every
-			// minute while `failed`, and #handleHandshake clears the flag on recovery.
-			if (!this.#failureReported) {
-				this.#failureReported = true;
-				Sentry.captureMessage('SSE stream failed after retries', {
-					level: 'warning',
-					tags: { sse_outcome: 'failed', sse_reason: reason },
-					extra: { attempts: this.#reconnectAttempts }
-				});
-			}
-			// Give up on *fast* recovery only — keep a slow dial going so the stream
-			// self-heals without a manual refresh. See FAILED_RETRY_INTERVAL_MS for
-			// why no other recovery path covers this. The counter stays maxed out, so
-			// a failing retry lands back here rather than restarting the fast burst.
-			this.#reconnectTimeoutId = setTimeout(() => {
-				this.#reconnectTimeoutId = null;
-				this.connect();
-			}, FAILED_RETRY_INTERVAL_MS);
-			return;
+		// Realtime silently dead for an attendee is worth one issue — on a saturated
+		// venue network that is the failure we most need to hear about.
+		if (this.#reconnectAttempts >= REPORT_AFTER_ATTEMPTS && !this.#failureReported) {
+			this.#failureReported = true;
+			Sentry.captureMessage('SSE stream failed after retries', {
+				level: 'warning',
+				tags: { sse_outcome: 'failed', sse_reason: reason },
+				extra: { attempts: this.#reconnectAttempts }
+			});
 		}
 
 		// Exponential backoff with full jitter: a random delay up to 1s, 2s, 4s,
-		// ... capped at 30s. The randomness spreads re-dials out when a backend
-		// restart drops every client at the same moment (thundering herd).
-		const timeout = Math.random() * Math.min(1000 * 2 ** this.#reconnectAttempts, 30000);
-		this.#reconnectTimeoutId = setTimeout(() => {
-			this.#reconnectTimeoutId = null;
-			this.connect();
-		}, timeout);
+		// ... capped. The randomness spreads re-dials out when a backend restart
+		// drops every client at the same moment (thundering herd).
+		const ceilingMs = Math.min(1000 * 2 ** this.#reconnectAttempts, MAX_RECONNECT_DELAY_MS);
 		this.#reconnectAttempts++;
+		this.#scheduleDial(Math.random() * ceilingMs);
+	}
+
+	#scheduleDial(delayMs: number) {
+		this.#clearDialTimer();
+		this.#dialTimerId = setTimeout(() => {
+			this.#dialTimerId = null;
+			this.#connect();
+		}, delayMs);
 	}
 
 	#closeSource() {
+		this.#clearWatchdog();
 		if (!this.#source) return;
 		this.#source.removeEventListener('connection_established', this.#handleHandshake);
 		for (const event of ALL_SSE_EVENTS) {
@@ -543,34 +436,22 @@ export class EventsClient {
 		this.#source = null;
 	}
 
-	#clearReconnectTimer() {
-		if (!this.#reconnectTimeoutId) return;
-		clearTimeout(this.#reconnectTimeoutId);
-		this.#reconnectTimeoutId = null;
+	#clearDialTimer() {
+		if (!this.#dialTimerId) return;
+		clearTimeout(this.#dialTimerId);
+		this.#dialTimerId = null;
 	}
 
-	#clearRestartTimer() {
-		if (!this.#restartTimeoutId) return;
-		clearTimeout(this.#restartTimeoutId);
-		this.#restartTimeoutId = null;
-	}
-
-	#clearStallTimer() {
-		if (!this.#stallTimeoutId) return;
-		clearTimeout(this.#stallTimeoutId);
-		this.#stallTimeoutId = null;
+	#clearWatchdog() {
+		if (!this.#watchdogId) return;
+		clearTimeout(this.#watchdogId);
+		this.#watchdogId = null;
 	}
 
 	#clearVisibilityTimer() {
-		if (!this.#visibilityTimeoutId) return;
-		clearTimeout(this.#visibilityTimeoutId);
-		this.#visibilityTimeoutId = null;
-	}
-
-	#clearHeartbeatTimer() {
-		if (!this.#heartbeatTimeoutId) return;
-		clearTimeout(this.#heartbeatTimeoutId);
-		this.#heartbeatTimeoutId = null;
+		if (!this.#visibilityTimerId) return;
+		clearTimeout(this.#visibilityTimerId);
+		this.#visibilityTimerId = null;
 	}
 }
 

@@ -1,6 +1,6 @@
 import { createStore, delMany, get, keys, set } from 'idb-keyval';
 
-import { isReachable, markReachable } from '#lib/services/reachability.js';
+import { isReachable } from '#lib/services/reachability.js';
 import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '#lib/utils/fetchTimeout.js';
 
 /**
@@ -151,6 +151,21 @@ export interface FetchWithCacheResult<T> {
 	cachedAt?: number;
 }
 
+/**
+ * Whether a page should show the "showing cached/stale data" notice. True when
+ * the loaded copy is cached (`stale`) or the backend became unreachable since
+ * open — in both cases what's on screen may be out of date until reconnect.
+ * Suppressed on an offline cold miss (`offlineMiss`): there's no saved copy to
+ * caveat, so the page's dedicated empty state explains the situation instead.
+ */
+export function shouldShowStaleNotice(opts: {
+	offlineMiss: boolean;
+	stale: boolean;
+	isOnline: boolean;
+}): boolean {
+	return !opts.offlineMiss && (opts.stale || !opts.isOnline);
+}
+
 export interface FetchWithCacheOptions<T> {
 	/** Cache key within {@link scope}. */
 	key: string;
@@ -172,11 +187,12 @@ export interface FetchWithCacheOptions<T> {
  *
  *   1. If the server is known unreachable, skip the doomed request and serve the
  *      cached copy immediately so first paint isn't blocked.
- *   2. Otherwise run `fetcher` under a timeout. A resolved promise proves the
- *      server answered (`markReachable(true)`); a returned value is cached and
- *      returned fresh, while `undefined` falls back to the cache.
- *   3. A thrown error (network failure / timeout) marks us unreachable and serves
- *      the cached copy.
+ *   2. Otherwise run `fetcher` under a timeout. A returned value is cached and
+ *      returned fresh; `undefined` or a throw (network failure, timeout, HTTP
+ *      error) serves the last synced copy instead.
+ *
+ * It never decides reachability itself: the API client's interceptors already
+ * see every outcome, and they ask the probe rather than trust one failure.
  *
  * `fetcher` should close over the `load`'s own `fetch` so SvelteKit can track the
  * request; this helper only supplies the timeout `signal`.
@@ -197,26 +213,21 @@ export async function fetchWithCache<T>({
 		return { data: cached?.value, cachedAt: cached?.cachedAt, stale: true };
 	}
 
+	let value: T | undefined;
 	try {
-		const value = await fetcher({ signal: timeoutSignal(timeoutMs) });
-		// Resolved → the server responded, even if the payload was unusable.
-		markReachable(true);
-
-		if (value === undefined) {
-			// Reachable but errored/empty — prefer the cached copy over a hard failure.
-			const cached = await readEnvelope<T>(key, scope);
-			return { data: cached?.value, cachedAt: cached?.cachedAt, stale: true };
-		}
-
-		const cachedAt = Date.now();
-		void writeCache<CachedEnvelope<T>>(key, { value, cachedAt }, scope, epoch);
-		return { data: value, cachedAt, stale: false };
+		value = await fetcher({ signal: timeoutSignal(timeoutMs) });
 	} catch {
-		// Network failure / timeout: serve the last synced copy.
-		markReachable(false);
+		value = undefined;
+	}
+
+	if (value === undefined) {
 		const cached = await readEnvelope<T>(key, scope);
 		return { data: cached?.value, cachedAt: cached?.cachedAt, stale: true };
 	}
+
+	const cachedAt = Date.now();
+	void writeCache<CachedEnvelope<T>>(key, { value, cachedAt }, scope, epoch);
+	return { data: value, cachedAt, stale: false };
 }
 
 export interface WarmCacheOptions<T> {
@@ -254,7 +265,6 @@ export async function warmCache<T>({
 		if ((await readCache<unknown>(key, scope)) !== undefined) return;
 
 		const value = await fetcher({ signal: timeoutSignal(timeoutMs) });
-		markReachable(true);
 		if (value === undefined) return;
 
 		void writeCache<CachedEnvelope<T>>(key, { value, cachedAt: Date.now() }, scope, epoch);
