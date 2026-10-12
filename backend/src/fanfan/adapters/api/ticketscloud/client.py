@@ -1,4 +1,5 @@
 import logging
+from http import HTTPStatus
 
 import httpx2
 
@@ -9,8 +10,6 @@ from fanfan.adapters.api.ticketscloud.dto.order import (
     OrdersResponse,
 )
 from fanfan.adapters.api.ticketscloud.dto.refund import RefundsResponse
-
-HTTP_NOT_FOUND = 404
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +35,7 @@ class TCloudClient(BaseApiClient):
         try:
             response = await self._get(f"resources/orders/{order_id}", OrderResponse)
         except httpx2.HTTPStatusError as error:
-            if error.response.status_code == HTTP_NOT_FOUND:
+            if error.response.status_code == HTTPStatus.NOT_FOUND:
                 return None
             raise
         return response.data
