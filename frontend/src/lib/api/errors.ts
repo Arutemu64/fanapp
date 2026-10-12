@@ -329,10 +329,6 @@ export function getApiErrorDetail(error: unknown): string | null {
 	return null;
 }
 
-function getApiErrorCode(error: unknown): string | null {
-	return getApiErrorPayload(error)?.code ?? null;
-}
-
 /**
  * Throw a SvelteKit error from a failed API call, so a `load` failure
  * speaks the same language as a form/toast failure. Maps the API error `code` to
@@ -350,7 +346,7 @@ export function throwApiError(
 	const status = response && response.status >= 400 ? response.status : 500;
 
 	const message = getApiErrorDetail(apiError) ?? fallback;
-	const code = getApiErrorCode(apiError);
+	const code = getApiErrorPayload(apiError)?.code;
 	return kitError(status, code ? { message, code } : { message });
 }
 

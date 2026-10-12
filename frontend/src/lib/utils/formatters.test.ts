@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	formatDayHeading,
 	formatDuration,
+	formatEventNumber,
 	formatFestivalDateTime,
 	formatRelativeTime,
 	formatUntil,
@@ -16,6 +17,18 @@ import {
 // field — so that a sub-minute act survives the round trip exactly. These cases
 // pin that the label reads the value as seconds and never rounds a short act up
 // to a whole minute.
+describe('formatEventNumber', () => {
+	it('pads the public number to three digits', () => {
+		expect(formatEventNumber(7)).toBe('007');
+		expect(formatEventNumber(1234)).toBe('1234');
+	});
+
+	it('returns null for a numberless row', () => {
+		expect(formatEventNumber(null)).toBeNull();
+		expect(formatEventNumber(undefined)).toBeNull();
+	});
+});
+
 describe('formatDuration', () => {
 	it('renders a sub-minute act in seconds', () => {
 		expect(formatDuration(45)).toBe('45 секунд');

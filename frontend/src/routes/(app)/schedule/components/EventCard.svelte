@@ -25,7 +25,12 @@
 	import NumberBadge from '#lib/components/NumberBadge.svelte';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import { formatDuration, formatUntil, pluralize } from '#lib/utils/formatters.js';
+	import {
+		formatDuration,
+		formatEventNumber,
+		formatUntil,
+		pluralize
+	} from '#lib/utils/formatters.js';
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 	import { canManageSchedule } from '#lib/utils/permissions.js';
 
@@ -80,9 +85,7 @@
 	let confirmOpen = $state(false);
 	let confirmConfig = $state<ConfirmConfig | null>(null);
 
-	// Pad the public number to three digits, e.g. 7 → "007". Null for events that
-	// have none (breaks and other filler rows), which render no number badge.
-	let eventNumber = $derived(event.number === null ? null : String(event.number).padStart(3, '0'));
+	let eventNumber = $derived(formatEventNumber(event.number));
 
 	// Optimistic skip flag: the row reflects the toggle instantly instead of waiting
 	// for the schedule refetch to round-trip (a flaky connection can delay it for

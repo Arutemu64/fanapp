@@ -3,7 +3,7 @@
 
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { documentVisibility } from '#lib/services/documentVisibility.js';
-	import { formatFestivalDateTime, pluralize } from '#lib/utils/formatters.js';
+	import { formatEventNumber, formatFestivalDateTime, pluralize } from '#lib/utils/formatters.js';
 
 	import type { FestivalPhase } from './festivalPhase';
 	import type { FeaturedAct } from './stage';
@@ -18,12 +18,7 @@
 	let { phase, festivalStart, featured }: Props = $props();
 
 	let featuredLabel = $derived(featured?.live ? 'Сейчас на сцене' : 'Скоро начало');
-	// Same padding as the schedule rows: "7" reads as "007", the public number format.
-	let featuredNumber = $derived.by(() => {
-		const number = featured?.event.number;
-		if (number === null || number === undefined) return null;
-		return String(number).padStart(3, '0');
-	});
+	let featuredNumber = $derived(formatEventNumber(featured?.event.number));
 
 	// Program start, on the venue clock. Configurable via GET /config and passed in
 	// by the page so the hero renders for guests and on a cold/offline load.
