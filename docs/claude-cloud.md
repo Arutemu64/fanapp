@@ -95,6 +95,10 @@ does not survive the snapshot:
 
 * `uv sync` / `pnpm install` — kept here so a dependency bump is picked up
   without an environment rebuild; near-instant when the lockfile is unchanged.
+  Installer output goes to a temp log, because SessionStart stdout is injected
+  into Claude's context; only status lines (plus the log tail on failure) reach
+  the session. The hook has a 300 s `timeout` so a hung registry can't stall the
+  first response for the 600 s default.
 * building/refreshing the CodeGraph index — `codegraph sync` updates an
   existing index incrementally so code-navigation queries stay accurate;
   falls back to a full `codegraph init` when no index exists yet, which is
@@ -103,12 +107,21 @@ does not survive the snapshot:
   the same reason as the dependency syncs: the index is per-branch state that
   must track the code a session actually has, not whatever ref happened to be
   checked out when the snapshot was built.
-* starting `dockerd` — a process, never cached; restarted every session.
-* `docker login` to Docker Hub — the environment's variables reach the session
-  but not the setup script, so this is the only place it can run; see
-  [Docker Hub authentication](#docker-hub-authentication).
 * per-session env vars written to `$CLAUDE_ENV_FILE` (`PATH`, including
   activating the nvm-installed Node 24 over the base image's system Node 22).
+
+**`.claude/hooks/session-start-docker.sh`** — a second SessionStart hook,
+registered `asyncRewake`, so it runs in the background instead of delaying the
+first response (nothing needs Docker at startup). Hooks in one matcher group run
+in parallel, so it must not depend on anything `session-start.sh` produces.
+
+* starting `dockerd` — a process, never cached; restarted every session. If the
+  daemon never comes up the script exits 2, which wakes Claude with the reason
+  rather than leaving `just backend-generate-auto` to fail later.
+* `docker login` to Docker Hub — the environment's variables reach the session
+  but not the setup script, so this is the only place it can run; see
+  [Docker Hub authentication](#docker-hub-authentication). A failed login only
+  warns: pulls stay anonymous.
 
 ## Network access
 
@@ -181,7 +194,7 @@ does need the daemon, since the `hadolint` shim is container-backed.
 Docker Hub caps **anonymous** pulls (~100 / 6h per egress IP), which a shared
 cloud egress hits quickly. Set `DOCKERHUB_USER` and `DOCKERHUB_TOKEN` (a scoped,
 read-only access token — not your password) in the environment's variables. The
-**SessionStart hook** runs `docker login` (token via stdin) right after it starts
+**`session-start-docker.sh`** hook runs `docker login` (token via stdin) right after it starts
 `dockerd`, so every pull a session makes — testcontainers, the `hadolint` shim,
 `just backend-generate-auto` — is authenticated.
 

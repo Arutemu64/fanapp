@@ -21,9 +21,9 @@
 # in-session.
 #
 # Steps that must run EVERY session (the Docker daemon process, the Docker Hub
-# login, per-session env vars) live in .claude/hooks/session-start.sh instead,
-# because processes and the per-session env file do not survive in the cached
-# snapshot - and because the environment's variables are not injected into this
+# login, per-session env vars) live in .claude/hooks/session-start.sh and
+# session-start-docker.sh instead, because processes and the per-session env
+# file do not survive in the cached snapshot - and because the environment's variables are not injected into this
 # script at all (see the prepull block below).
 #
 # Install-channel notes (this environment blocks GitHub release downloads):
@@ -212,7 +212,7 @@ if command -v dockerd >/dev/null 2>&1; then
     # variables (DOCKERHUB_USER/DOCKERHUB_TOKEN) are injected only into the
     # session, never into this setup-script phase, so a `docker login` here would
     # always read empty credentials (anthropics/claude-code#63541). The login
-    # lives in .claude/hooks/session-start.sh instead, which covers every pull a
+    # lives in .claude/hooks/session-start-docker.sh instead, which covers every pull a
     # session makes; only these three prepulls stay subject to the anonymous cap
     # (~100 / 6h per egress IP), and they degrade to a lazy pull at first use.
     for image in postgres:18.6-alpine valkey/valkey:9.1-alpine hadolint/hadolint:v2.15.1; do

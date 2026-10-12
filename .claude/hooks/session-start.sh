@@ -13,11 +13,10 @@
 #   * the CodeGraph index (.codegraph/, gitignored) - per-branch project state
 #     that must track the code actually checked out this session, which the
 #     setup script's snapshot cannot guarantee (see the codegraph block below).
-#   * the Docker daemon - a process; never survives between sessions. Used to
-#     boot a throwaway Postgres for Alembic autogenerate (not for testing).
-#   * the Docker Hub login - the environment's variables only exist here, not in
-#     the setup script (see the docker login block below)
 #   * per-session environment variables (PATH) written to $CLAUDE_ENV_FILE
+#
+# The Docker daemon and Docker Hub login live in session-start-docker.sh, a
+# separate async hook, so they don't delay the first response.
 #
 # The cloud-missing tooling (just, uv, Python 3.14, Node 24 via nvm) lives in
 # .claude/setup.sh, which runs once at environment creation and is baked into
@@ -50,8 +49,27 @@ if [ -s "$NVM_DIR/nvm.sh" ]; then
   export PATH="$(dirname "$(nvm which default)"):$PATH"
 fi
 
-# Run sudo correctly whether or not we are already root.
-if [ "$(id -u)" -eq 0 ]; then SUDO=""; else SUDO="sudo"; fi
+# Persist PATH additions so the upgraded uv (~/.local/bin) and nvm's Node 24
+# are used throughout the session, not just in this hook's own shell. Also
+# disable the testcontainers Ryuk reaper, matching CI (.github/workflows/ci.yml):
+# the integration test fixtures already stop their own containers in `finally`
+# blocks (backend/tests/fixtures/db_provider.py), and dockerd itself is
+# restarted fresh every session, so Ryuk's crash-cleanup role isn't needed here
+# - skipping it avoids pulling/running an extra container per test session. The
+# hook re-runs on resume against the same env file, so guard with a marker line
+# to avoid stacking duplicate entries. Written before the slow network steps below
+# because the hook's `timeout` can cut them short: a session that loses its
+# dependency syncs should still keep the Node 24 PATH and the Ryuk setting.
+ENV_MARKER="# fanfan session-start PATH"
+if [ -n "${CLAUDE_ENV_FILE:-}" ] && ! grep -qsF "$ENV_MARKER" "$CLAUDE_ENV_FILE"; then
+  {
+    echo "$ENV_MARKER"
+    echo 'export PATH="$HOME/.local/bin:$PATH"'
+    echo 'export NVM_DIR="/opt/nvm"'
+    echo '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && export PATH="$(dirname "$(nvm which default)"):$PATH"'
+    echo 'export TESTCONTAINERS_RYUK_DISABLED="true"'
+  } >> "$CLAUDE_ENV_FILE"
+fi
 
 # Seed / reconcile the root .env so `$app/env/public` resolves during the
 # svelte-kit sync that pnpm's `prepare` runs below (the frontend reads env from
@@ -99,12 +117,24 @@ fi
 # → frontend lint fails" a recurring web-session failure). A backend dep problem
 # surfaces on its own when a backend command runs; it must not take the frontend
 # down with it.
+#
+# SessionStart stdout is injected into Claude's context, so installer output (pnpm's
+# update notice, package diffs, progress bars) goes to a log file and only a status
+# line plus the log tail on failure reach the session.
+SYNC_LOG="$(mktemp -t session-start-sync.XXXXXX)"
+trap 'rm -f "$SYNC_LOG"' EXIT
+
 echo "[session-start] Syncing backend dependencies (uv sync)..."
-(cd "$REPO_ROOT/backend" && uv sync --all-groups) \
-  || echo "[session-start] WARN: backend uv sync failed; run 'just backend-install' before backend work."
+if ! (cd "$REPO_ROOT/backend" && uv sync --all-groups) >"$SYNC_LOG" 2>&1; then
+  tail -n 20 "$SYNC_LOG"
+  echo "[session-start] WARN: backend uv sync failed; run 'just backend-install' before backend work."
+fi
 
 echo "[session-start] Syncing frontend dependencies (pnpm install)..."
-(cd "$REPO_ROOT/frontend" && pnpm install)
+if ! (cd "$REPO_ROOT/frontend" && pnpm install) >"$SYNC_LOG" 2>&1; then
+  tail -n 20 "$SYNC_LOG"
+  exit 1
+fi
 
 # Install the Chromium build the pinned @playwright/test expects, so web sessions
 # run the E2E suite on the same browser as CI. The base image's pre-baked
@@ -142,76 +172,6 @@ if command -v codegraph >/dev/null 2>&1; then
   fi
 else
   echo "[session-start] Note: codegraph not installed; skipping index (grep/read still available)."
-fi
-
-# Start the Docker daemon: `just backend-generate-auto` boots a throwaway
-# Postgres against it to autogenerate Alembic migrations, and
-# `@pytest.mark.integration` tests boot Postgres + Valkey via testcontainers
-# (see docs/testing.md). The daemon is not started by the base image and does
-# not survive between sessions, so we (re)start it each time. (Image builds
-# are still left to docker-publish.yml - see docs/claude-cloud.md.)
-# Best-effort: warn and keep going rather than abort session setup (so `if`
-# suppresses `set -e`).
-echo "[session-start] Starting Docker daemon..."
-if docker info >/dev/null 2>&1; then
-  echo "[session-start] Docker daemon already running."
-elif command -v dockerd >/dev/null 2>&1; then
-  # dockerd is a long-running root process; launch it detached and poll the
-  # socket (it usually comes up in ~1s). Logs go to a file for inspection.
-  $SUDO sh -c 'dockerd >/tmp/dockerd.log 2>&1 &'
-  for _ in $(seq 1 15); do
-    if docker info >/dev/null 2>&1; then break; fi
-    sleep 1
-  done
-  if docker info >/dev/null 2>&1; then
-    echo "[session-start] Docker daemon ready."
-  else
-    echo "[session-start] WARN: Docker daemon did not start (see /tmp/dockerd.log); Alembic autogenerate (just backend-generate-auto) unavailable."
-  fi
-else
-  echo "[session-start] WARN: dockerd not found; Alembic autogenerate (just backend-generate-auto) unavailable."
-fi
-
-# Authenticate to Docker Hub so this session's pulls are not capped by the
-# anonymous limit (~100 / 6h per egress IP), which a shared cloud egress hits
-# quickly. This deliberately lives here and NOT in setup.sh: the cloud
-# environment's variables are injected only into the session, never into the
-# setup-script phase, so DOCKERHUB_USER/DOCKERHUB_TOKEN read as empty there
-# (anthropics/claude-code#63541). That also means the login cannot be baked into
-# the snapshot - ~/.docker/config.json is written per session, after dockerd is
-# up (docker login authenticates through the daemon). The token goes in on stdin,
-# never on the command line. Best-effort: no token, or a bad one, just leaves
-# pulls anonymous.
-if docker info >/dev/null 2>&1; then
-  if [ -n "${DOCKERHUB_USER:-}" ] && [ -n "${DOCKERHUB_TOKEN:-}" ]; then
-    if printf '%s' "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin >/dev/null 2>&1; then
-      echo "[session-start] Authenticated to Docker Hub as $DOCKERHUB_USER."
-    else
-      echo "[session-start] WARN: Docker Hub login failed; pulls are anonymous and rate-limited."
-    fi
-  else
-    echo "[session-start] Note: DOCKERHUB_USER/DOCKERHUB_TOKEN not set; pulls are anonymous and rate-limited."
-  fi
-fi
-
-# Persist PATH additions so the upgraded uv (~/.local/bin) and nvm's Node 24
-# are used throughout the session, not just in this hook's own shell. Also
-# disable the testcontainers Ryuk reaper, matching CI (.github/workflows/ci.yml):
-# the integration test fixtures already stop their own containers in `finally`
-# blocks (backend/tests/fixtures/db_provider.py), and dockerd itself is
-# restarted fresh every session, so Ryuk's crash-cleanup role isn't needed here
-# - skipping it avoids pulling/running an extra container per test session. The
-# hook re-runs on resume against the same env file, so guard with a marker line
-# to avoid stacking duplicate entries.
-ENV_MARKER="# fanfan session-start PATH"
-if [ -n "${CLAUDE_ENV_FILE:-}" ] && ! grep -qsF "$ENV_MARKER" "$CLAUDE_ENV_FILE"; then
-  {
-    echo "$ENV_MARKER"
-    echo 'export PATH="$HOME/.local/bin:$PATH"'
-    echo 'export NVM_DIR="/opt/nvm"'
-    echo '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && export PATH="$(dirname "$(nvm which default)"):$PATH"'
-    echo 'export TESTCONTAINERS_RYUK_DISABLED="true"'
-  } >> "$CLAUDE_ENV_FILE"
 fi
 
 echo "[session-start] Setup complete."
