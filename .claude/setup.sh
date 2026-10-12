@@ -152,7 +152,7 @@ npm install -g pnpm@12.3.4 || echo "[setup]   WARN: pnpm install failed."
 # my code." A version bump here is a deliberate edit, same as the uv/node/pnpm
 # pins below it; the SessionStart hook only keeps the *index* current each
 # session; it deliberately does not re-run this install to check for updates.
-CODEGRAPH_VERSION=1.6.0
+CODEGRAPH_VERSION=1.6.2
 echo "[setup] Installing CodeGraph $CODEGRAPH_VERSION (npm)..."
 if npm install -g "@colbymchenry/codegraph@$CODEGRAPH_VERSION" >/dev/null 2>&1; then
   # Expose codegraph on the base PATH via /usr/local/bin so the project's
