@@ -17,6 +17,8 @@ from fanfan.core.models.schedule_event import ScheduleEvent
 from fanfan.core.vo.permission import Permission
 from fanfan.core.vo.schedule_event import generate_schedule_event_id
 
+# Events start at 100 and step by 100 so an organizer can later drop rows between
+# them without renumbering (order is a float column). The demo seed reuses these.
 ORDER_INIT = 100.0
 ORDER_STEP = 100.0
 

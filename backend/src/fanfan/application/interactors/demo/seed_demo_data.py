@@ -2,6 +2,10 @@ import logging
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 
+from fanfan.application.interactors.schedule_mgmt.import_schedule import (
+    ORDER_INIT,
+    ORDER_STEP,
+)
 from fanfan.application.ports.gateways.app_settings import AppSettingsGateway
 from fanfan.application.ports.gateways.nominations import NominationGateway
 from fanfan.application.ports.gateways.participants import ParticipantGateway
@@ -25,11 +29,6 @@ logger = logging.getLogger(__name__)
 # base band; participants the +1000 band, both offset by list position.
 _DEMO_NOMINATION_ID_BASE = 900_000
 _DEMO_PARTICIPANT_ID_BASE = 901_000
-
-# Matches ImportSchedule: events start at 100 and step by 100 so an organizer can
-# later drop rows between them without renumbering (order is a float column).
-_ORDER_INIT = 100.0
-_ORDER_STEP = 100.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -214,7 +213,7 @@ class SeedDemoData:
         if await self.schedule_gateway.list_all():
             logger.info("Schedule already has events, skipping demo programme")
             return
-        order = _ORDER_INIT
+        order = ORDER_INIT
         for entry in DEMO_SCHEDULE:
             event = ScheduleEvent(
                 id=generate_schedule_event_id(),
@@ -228,7 +227,7 @@ class SeedDemoData:
                 is_skipped=False,
             )
             await self.schedule_gateway.add(event)
-            order += _ORDER_STEP
+            order += ORDER_STEP
         logger.info("Demo programme seeded", extra={"events": len(DEMO_SCHEDULE)})
 
     async def _seed_voting(self) -> None:

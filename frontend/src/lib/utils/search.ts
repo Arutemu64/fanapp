@@ -29,28 +29,7 @@ function normalizeSearchText(value: string): string {
 		.trim();
 }
 
-/**
- * Split a raw query into normalized search tokens. Empty query → no tokens,
- * which the index treats as "match everything".
- */
-function tokenizeQuery(query: string): string[] {
-	const normalized = normalizeSearchText(query);
-	return normalized.length === 0 ? [] : normalized.split(' ');
-}
-
 type SearchFields = Array<string | number | null | undefined>;
-
-/** One normalized string per non-empty field, ready to substring-match against. */
-function buildHaystacks(fields: SearchFields): string[] {
-	return fields
-		.filter((field) => field !== null && field !== undefined)
-		.map((field) => normalizeSearchText(String(field)));
-}
-
-/** True when every token appears somewhere in one item's normalized fields. */
-function matchesAllTokens(tokens: string[], haystacks: string[]): boolean {
-	return tokens.every((token) => haystacks.some((haystack) => haystack.includes(token)));
-}
 
 export type SearchIndex<T> = {
 	/**
@@ -79,17 +58,26 @@ export function createSearchIndex<T>(
 	items: readonly T[],
 	getFields: (item: T) => SearchFields
 ): SearchIndex<T> {
-	const entries = items.map((item) => ({ item, haystacks: buildHaystacks(getFields(item)) }));
+	const entries = items.map((item) => {
+		const haystacks = getFields(item)
+			.filter((field) => field !== null && field !== undefined)
+			.map((field) => normalizeSearchText(String(field)));
+		return { item, haystacks };
+	});
 
 	return {
 		filter(query) {
-			const tokens = tokenizeQuery(query);
-			if (tokens.length === 0) return [...items];
+			const normalized = normalizeSearchText(query);
+			if (normalized.length === 0) return [...items];
+			const tokens = normalized.split(' ');
 
 			const matches: T[] = [];
-			for (const entry of entries) {
-				if (matchesAllTokens(tokens, entry.haystacks)) {
-					matches.push(entry.item);
+			for (const { item, haystacks } of entries) {
+				const matchesAll = tokens.every((token) =>
+					haystacks.some((haystack) => haystack.includes(token))
+				);
+				if (matchesAll) {
+					matches.push(item);
 				}
 			}
 			return matches;

@@ -80,16 +80,11 @@ class UserService:
 
     async def generate_username(self) -> Username:
         for _ in range(500):
-            candidate = self._build_candidate()
+            adjective = RUSSIAN_ADJECTIVES[randbelow(len(RUSSIAN_ADJECTIVES))]
+            noun = RUSSIAN_NOUNS[randbelow(len(RUSSIAN_NOUNS))]
+            candidate = f"{adjective}{noun}{randbelow(100):02d}"
             if not await self.user_gateway.get_by_username(candidate):
                 return Username(candidate)
 
         msg = "Could not generate unique username"
         raise RuntimeError(msg)
-
-    @staticmethod
-    def _build_candidate() -> str:
-        adjective = RUSSIAN_ADJECTIVES[randbelow(len(RUSSIAN_ADJECTIVES))]
-        noun = RUSSIAN_NOUNS[randbelow(len(RUSSIAN_NOUNS))]
-        suffix = f"{randbelow(100):02d}"
-        return f"{adjective}{noun}{suffix}"

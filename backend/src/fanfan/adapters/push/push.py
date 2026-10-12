@@ -1,5 +1,6 @@
 import html
 import logging
+from http import HTTPStatus
 
 import httpx2
 import nh3
@@ -26,9 +27,6 @@ logger = logging.getLogger(__name__)
 # misconfiguration no retry can fix. 429 and 5xx are transient — retry later.
 _GONE_STATUS_CODES = frozenset({404, 410})
 _CHANNEL_UNAVAILABLE_STATUS_CODES = frozenset({400, 401, 403})
-_TOO_MANY_REQUESTS = 429
-_CLIENT_ERROR_STATUS = 400
-_SERVER_ERROR_STATUS = 500
 
 # When a 429 carries no usable Retry-After hint, back off a fixed short interval
 # before the consumer redelivers.
@@ -122,7 +120,8 @@ class PushNotifier(PushNotifierPort):
                 )
                 raise NotificationChannelUnavailable
             elif (
-                status_code == _TOO_MANY_REQUESTS or status_code >= _SERVER_ERROR_STATUS
+                status_code == HTTPStatus.TOO_MANY_REQUESTS
+                or status_code >= HTTPStatus.INTERNAL_SERVER_ERROR
             ):
                 # Throttled or a push-service outage — transient, so ask the
                 # consumer to redeliver later instead of dropping the message.
@@ -135,7 +134,7 @@ class PushNotifier(PushNotifierPort):
                         "retry_after": retry_after,
                     },
                 )
-            elif status_code >= _CLIENT_ERROR_STATUS:
+            elif status_code >= HTTPStatus.BAD_REQUEST:
                 # An unexpected failure we don't specifically translate (e.g. 413
                 # payload too large). Log it so it's diagnosable; skip this
                 # endpoint without pruning, since the cause may be per-message.

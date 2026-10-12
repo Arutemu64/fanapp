@@ -17,16 +17,6 @@ const ICON = /^icons\/[^/]+\.png$/;
 // latin-ext stays: romaji macrons (ō, ū) live there.
 const UNUSED_FONT_SUBSET = /-(greek|greek-ext|vietnamese)-[^/]*\.woff2$/;
 
-function isPrecachedImmutable(path: string): boolean {
-	return SHELL_FILE.test(path) && !UNUSED_FONT_SUBSET.test(path);
-}
-
-// `static/` also holds og-image.png (only link-preview crawlers read it),
-// robots.txt and the schedule-import template; none belongs in an offline shell.
-function isPrecachedAsset(path: string): boolean {
-	return SHELL_FILE.test(path) || ICON.test(path);
-}
-
 interface BuildOutput {
 	// `immutable` and `assets` from `$app/manifest`.
 	immutable: readonly { path: string }[];
@@ -50,13 +40,15 @@ export function buildPrecacheManifest(output: BuildOutput): PrecacheEntry[] {
 	const entries: PrecacheEntry[] = [];
 
 	for (const { path } of output.immutable) {
-		if (isPrecachedImmutable(path)) {
+		if (SHELL_FILE.test(path) && !UNUSED_FONT_SUBSET.test(path)) {
 			entries.push({ url: path, revision: null });
 		}
 	}
 
+	// `static/` also holds og-image.png (only link-preview crawlers read it),
+	// robots.txt and the schedule-import template; none belongs in an offline shell.
 	for (const { path } of output.assets) {
-		if (isPrecachedAsset(path)) {
+		if (SHELL_FILE.test(path) || ICON.test(path)) {
 			entries.push({ url: path, revision: output.version });
 		}
 	}

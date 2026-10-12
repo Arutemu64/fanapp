@@ -11,6 +11,15 @@ const SECONDS_IN_HOUR = 60 * SECONDS_IN_MINUTE;
 const EVENT_TIME_ZONE = PUBLIC_TIMEZONE || 'Europe/Moscow';
 
 /**
+ * An act's public number as people see it in the programme: "7" reads as "007".
+ * Null for numberless rows (breaks and other filler), which render no badge.
+ */
+export function formatEventNumber(number: number | null | undefined): string | null {
+	if (number === null || number === undefined) return null;
+	return String(number).padStart(3, '0');
+}
+
+/**
  * Render an event's `duration`, which the API carries in **seconds** end to end
  * so a sub-minute act stays exact and rounding to whole minutes cannot accumulate
  * error across the programme.
@@ -135,10 +144,6 @@ const EVENT_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {
 	timeZone: EVENT_TIME_ZONE
 });
 
-function formatEventDateTime(value: string | number | Date): string {
-	return EVENT_DATE_TIME_FORMATTER.format(new Date(value));
-}
-
 /**
  * "5 минут назад" for the last day, the venue-clock date and time after that.
  * `now` is injectable so a caller can re-render against a ticking clock (see
@@ -165,7 +170,7 @@ export function formatRelativeTime(
 		return `${diffHours} ${pluralize(diffHours, 'час', 'часа', 'часов')} назад`;
 	}
 
-	return formatEventDateTime(date);
+	return EVENT_DATE_TIME_FORMATTER.format(date);
 }
 
 const EVENT_TIME_FORMATTER = new Intl.DateTimeFormat('ru-RU', {

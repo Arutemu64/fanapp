@@ -5,7 +5,7 @@
 
 	import NumberBadge from '#lib/components/NumberBadge.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import { formatUntil } from '#lib/utils/formatters.js';
+	import { formatEventNumber, formatUntil } from '#lib/utils/formatters.js';
 
 	import { actsUntil, type StageSnapshot } from './stage';
 
@@ -22,15 +22,10 @@
 		const distance = actsUntil(event, snapshot.current);
 		return distance === null ? null : formatUntil(distance);
 	}
-
-	// Same padding as the schedule rows: "7" reads as "007", the public number format.
-	function paddedNumber(event: ScheduleEventWithSubscription): string | null {
-		return event.number === null ? null : String(event.number).padStart(3, '0');
-	}
 </script>
 
 {#snippet eventRow(event: ScheduleEventWithSubscription)}
-	{@const number = paddedNumber(event)}
+	{@const number = formatEventNumber(event.number)}
 	{@const until = untilLabel(event)}
 	<div class="flex min-w-0 items-center gap-3">
 		{#if number !== null}

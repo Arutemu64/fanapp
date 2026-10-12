@@ -95,7 +95,8 @@ def _retry_delay(
         retry_after = _parse_retry_after(error.response.headers.get("Retry-After"))
         if retry_after is not None:
             return retry_after
-    return _backoff_delay(attempt)
+    capped = min(RETRY_MAX_DELAY, RETRY_BASE_DELAY * 2 ** (attempt - 1))
+    return float(capped * random.uniform(0.5, 1.5))  # noqa: S311 — jitter, not a draw
 
 
 def _parse_retry_after(value: str | None) -> float | None:
@@ -118,8 +119,3 @@ def _parse_retry_after(value: str | None) -> float | None:
         retry_at = retry_at.replace(tzinfo=UTC)
     seconds = (retry_at - datetime.now(UTC)).total_seconds()
     return max(0.0, seconds)
-
-
-def _backoff_delay(attempt: int) -> float:
-    capped = min(RETRY_MAX_DELAY, RETRY_BASE_DELAY * 2 ** (attempt - 1))
-    return float(capped * random.uniform(0.5, 1.5))  # noqa: S311 — jitter, not a draw

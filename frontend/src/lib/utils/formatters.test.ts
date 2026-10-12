@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	formatDayHeading,
 	formatDuration,
+	formatEventNumber,
 	formatFestivalDateTime,
 	formatRelativeTime,
 	formatUntil,
@@ -11,6 +12,18 @@ import {
 	previousDayKey,
 	toEventDateTimeLocal
 } from './formatters';
+
+describe('formatEventNumber', () => {
+	it('pads the public number to three digits', () => {
+		expect(formatEventNumber(7)).toBe('007');
+		expect(formatEventNumber(1234)).toBe('1234');
+	});
+
+	it('returns null for a numberless row', () => {
+		expect(formatEventNumber(null)).toBeNull();
+		expect(formatEventNumber(undefined)).toBeNull();
+	});
+});
 
 // `duration` is seconds everywhere — spreadsheet cell, database column, API
 // field — so that a sub-minute act survives the round trip exactly. These cases

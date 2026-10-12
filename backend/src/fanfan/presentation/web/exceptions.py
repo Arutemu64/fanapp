@@ -70,19 +70,6 @@ def is_expected_error(exc: BaseException) -> bool:
     return False
 
 
-# A bare `{}` literal in a return position infers `dict[str, Unknown]`, which is
-# assignable to the declared type but not a subtype of it.
-_NO_HEADERS: Mapping[str, str] = {}
-
-
-def _build_app_exception_headers(exc: AppException) -> Mapping[str, str]:
-    retry_after = exc.details.get("retry_after")
-    if isinstance(retry_after, int):
-        return {"Retry-After": str(retry_after)}
-
-    return _NO_HEADERS
-
-
 def _build_error_content(
     code: str,
     details: Mapping[str, object] | None = None,
@@ -116,10 +103,15 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
     if status_code == status.HTTP_500_INTERNAL_SERVER_ERROR:
         return internal_error_response(exc)
 
+    headers: dict[str, str] | None = None
+    retry_after = exc.details.get("retry_after")
+    if isinstance(retry_after, int):
+        headers = {"Retry-After": str(retry_after)}
+
     return JSONResponse(
         status_code=status_code,
         content=_build_error_content(exc.code, exc.details),
-        headers=dict(_build_app_exception_headers(exc)),
+        headers=headers,
     )
 
 
