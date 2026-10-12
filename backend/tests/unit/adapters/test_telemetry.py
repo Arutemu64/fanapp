@@ -47,3 +47,10 @@ def test_keeps_other_cancellations_and_errors() -> None:
     for exc in (asyncio.CancelledError(), RuntimeError("boom")):
         hint = {"exc_info": (type(exc), exc, None)}
         assert _drop_expected_errors({}, hint, _never_expected) == {}
+
+
+def test_keeps_cleanup_error_raised_during_shutdown_cancel() -> None:
+    exc = RuntimeError("cleanup failed")
+    exc.__context__ = asyncio.CancelledError(UVICORN_SHUTDOWN_CANCEL_MESSAGE)
+    hint = {"exc_info": (type(exc), exc, None)}
+    assert _drop_expected_errors({}, hint, _never_expected) == {}

@@ -33,6 +33,12 @@ def _is_forced_shutdown(event: Event, exc_value: BaseException | None) -> bool:
     if logentry.get("message") == UVICORN_SHUTDOWN_TIMEOUT_LOG:
         return True
 
+    # Only a reported cancellation qualifies: an error raised while cleaning
+    # up a cancelled request carries the cancellation as its context, and is a
+    # real fault.
+    if not isinstance(exc_value, asyncio.CancelledError):
+        return False
+
     # The cancellation surfaces re-raised, so the message sits further down
     # the chain. Track what was seen: an exception chain can loop.
     seen: set[int] = set()

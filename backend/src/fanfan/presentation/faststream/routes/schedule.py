@@ -44,14 +44,16 @@ async def process_schedule_change(
     publish_schedule_updated: FromDishka[PublishScheduleUpdated],
     msg: NatsMessage,
 ) -> None:
-    # Broadcast before the notification fan-out: the screen should not wait on
-    # building a notification per subscriber, nor on a fan-out failure that
-    # redelivers this message. A redelivery repeats the broadcast, which is
-    # harmless — clients revalidate and get a 304 for a schedule they hold.
-    await publish_schedule_updated()
     # A large fan-out can outlast AckWait while NATS is slow to ack; the
-    # heartbeat keeps a live run from being redelivered on top of itself.
+    # heartbeat keeps a live run from being redelivered on top of itself. It
+    # covers the broadcast too, whose cache warm-up waits on the edit lock.
     async with in_progress_heartbeat(msg):
+        # Broadcast before the notification fan-out: the screen should not wait
+        # on building a notification per subscriber, nor on a fan-out failure
+        # that redelivers this message. A redelivery repeats the broadcast,
+        # which is harmless — clients revalidate and get a 304 for a schedule
+        # they already hold.
+        await publish_schedule_updated()
         await interactor(
             SendScheduleChangeNotificationsInput(
                 schedule_change_id=data.schedule_change_id,
@@ -77,6 +79,9 @@ async def undo_schedule_change(
     events_broker: FromDishka[EventBroker],
     publish_schedule_updated: FromDishka[PublishScheduleUpdated],
 ) -> None:
-    await publish_schedule_updated()
+    # Cancel first: until it lands, notifications queued for the undone change
+    # can still go out, so it must not wait on the cache warm-up or fail with
+    # the broadcast.
     if data.mailing_id:
         await events_broker.publish(MailingCancelled(mailing_id=data.mailing_id))
+    await publish_schedule_updated()
