@@ -3,7 +3,11 @@ from collections.abc import Callable
 import pytest
 from dishka import AsyncContainer
 
+from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.interactors.schedule.get_schedule import GetSchedule
+from fanfan.application.interactors.schedule.publish_schedule_updated import (
+    PublishScheduleUpdated,
+)
 from fanfan.application.interactors.schedule_mgmt.set_current_schedule_event import (
     SetCurrentScheduleEvent,
     SetCurrentScheduleEventInput,
@@ -13,6 +17,7 @@ from fanfan.application.ports.uow import UnitOfWork
 from fanfan.core.models.schedule_event import ScheduleEvent
 from fanfan.core.models.user import User
 from fanfan.core.vo.schedule_event import generate_schedule_event_id
+from tests.fakes.realtime_gateway import FakeRealtimeGateway
 
 pytestmark = [
     pytest.mark.asyncio,
@@ -81,3 +86,29 @@ async def test_schedule_edit_invalidates_cache(
     # The edit invalidated the cache, so the read recomputed from committed state.
     assert after.etag != before.etag
     assert '"is_current":true' in after.payload
+
+
+async def test_publish_schedule_updated_warms_cache_before_broadcast(
+    dishka_request: AsyncContainer,
+    uow: UnitOfWork,
+) -> None:
+    get_schedule = await dishka_request.get(GetSchedule)
+    publish = await dishka_request.get(PublishScheduleUpdated)
+    schedule_gateway = await dishka_request.get(ScheduleEventGateway)
+    realtime = await dishka_request.get(FakeRealtimeGateway)
+
+    await schedule_gateway.add(_schedule_event(1, 1.0))
+    await uow.commit()
+    stale = await get_schedule()  # populates the cache
+
+    # Left stale on purpose: the warm-up must overwrite the entry from
+    # committed state, not keep whatever the cache already holds.
+    await schedule_gateway.add(_schedule_event(2, 2.0))
+    await uow.commit()
+
+    await publish()
+
+    warmed = await get_schedule()
+    assert warmed.etag != stale.etag
+    assert '"number":2' in warmed.payload
+    assert realtime.published == [(None, SSEMessage(SSEEventName.SCHEDULE_UPDATED))]

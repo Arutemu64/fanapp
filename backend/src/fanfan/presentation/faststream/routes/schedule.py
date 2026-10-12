@@ -3,13 +3,14 @@ from dishka_faststream import inject
 from faststream import AckPolicy
 from faststream.nats import NatsMessage, NatsRouter, PullSub
 
-from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.interactors.notifications.send_schedule_change_notifications import (  # noqa: E501
     SendScheduleChangeNotifications,
     SendScheduleChangeNotificationsInput,
 )
+from fanfan.application.interactors.schedule.publish_schedule_updated import (
+    PublishScheduleUpdated,
+)
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.application.ports.realtime_gateway import RealtimeGateway
 from fanfan.core.events.notifications import MailingCancelled
 from fanfan.core.events.schedule import (
     ScheduleChangeCreated,
@@ -40,9 +41,14 @@ schedule_router = NatsRouter()
 async def process_schedule_change(
     data: ScheduleChangeCreated,
     interactor: FromDishka[SendScheduleChangeNotifications],
-    realtime_gateway: FromDishka[RealtimeGateway],
+    publish_schedule_updated: FromDishka[PublishScheduleUpdated],
     msg: NatsMessage,
 ) -> None:
+    # Broadcast before the notification fan-out: the screen should not wait on
+    # building a notification per subscriber, nor on a fan-out failure that
+    # redelivers this message. A redelivery repeats the broadcast, which is
+    # harmless — clients revalidate and get a 304 for a schedule they hold.
+    await publish_schedule_updated()
     # A large fan-out can outlast AckWait while NATS is slow to ack; the
     # heartbeat keeps a live run from being redelivered on top of itself.
     async with in_progress_heartbeat(msg):
@@ -52,7 +58,6 @@ async def process_schedule_change(
                 occurred_at=read_occurred_at(msg),
             )
         )
-    await realtime_gateway.publish(SSEMessage(SSEEventName.SCHEDULE_UPDATED))
 
 
 @schedule_router.subscriber(
@@ -70,8 +75,8 @@ async def process_schedule_change(
 async def undo_schedule_change(
     data: ScheduleChangeUndone,
     events_broker: FromDishka[EventBroker],
-    realtime_gateway: FromDishka[RealtimeGateway],
+    publish_schedule_updated: FromDishka[PublishScheduleUpdated],
 ) -> None:
+    await publish_schedule_updated()
     if data.mailing_id:
         await events_broker.publish(MailingCancelled(mailing_id=data.mailing_id))
-    await realtime_gateway.publish(SSEMessage(SSEEventName.SCHEDULE_UPDATED))
