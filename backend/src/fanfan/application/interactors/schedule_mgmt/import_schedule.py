@@ -2,12 +2,13 @@ import logging
 
 from pydantic import BaseModel
 
-from fanfan.application.dto.realtime import SSEEventName, SSEMessage
+from fanfan.application.interactors.schedule.publish_schedule_updated import (
+    PublishScheduleUpdated,
+)
 from fanfan.application.ports.gateways.schedule_events import (
     ScheduleEventGateway,
 )
 from fanfan.application.ports.gateways.users import UserGateway
-from fanfan.application.ports.realtime_gateway import RealtimeGateway
 from fanfan.application.ports.schedule_cache import ScheduleCacheGateway
 from fanfan.application.ports.uow import UnitOfWork
 from fanfan.application.services.current_user import CurrentUserProvider
@@ -48,7 +49,7 @@ class ImportSchedule:
         current_user_provider: CurrentUserProvider,
         user_gateway: UserGateway,
         perm_service: PermissionService,
-        realtime: RealtimeGateway,
+        publish_schedule_updated: PublishScheduleUpdated,
         schedule_cache: ScheduleCacheGateway,
     ) -> None:
         self.user_gateway = user_gateway
@@ -56,7 +57,7 @@ class ImportSchedule:
         self.uow = uow
         self.schedule_gateway = schedule_gateway
         self.perm_service = perm_service
-        self.realtime = realtime
+        self.publish_schedule_updated = publish_schedule_updated
         self.schedule_cache = schedule_cache
 
     @staticmethod
@@ -135,8 +136,8 @@ class ImportSchedule:
             )
         await self.uow.commit()
 
-        # Invalidate after commit so the refetch triggered below recomputes from
-        # the committed state instead of serving the pre-import cache (ADR-0014).
+        # Invalidate after commit so no read serves the pre-import cache, even if
+        # the warm-up in the broadcast below fails (ADR-0014).
         await self.schedule_cache.invalidate()
 
         # Import rewrites the whole schedule but deliberately records no
@@ -146,4 +147,4 @@ class ImportSchedule:
         # Published after commit: SSE carries no committed state, and a
         # broadcast for a rolled-back import would send clients to refetch
         # a schedule that never changed.
-        await self.realtime.publish(SSEMessage(SSEEventName.SCHEDULE_UPDATED))
+        await self.publish_schedule_updated()

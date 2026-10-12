@@ -19,6 +19,9 @@ def main() -> None:
             port=config.web.port,
             root_path="/api",
             forwarded_allow_ips=["*"],
+            # Bounds the wait on open SSE streams, which never end on their
+            # own; see UVICORN_TIMEOUT_GRACEFUL_SHUTDOWN in docker-compose.yml.
+            timeout_graceful_shutdown=5,
             log_level=config.debug.logging_level,
             log_config=None,
             # psycopg's async mode cannot run on Windows' default

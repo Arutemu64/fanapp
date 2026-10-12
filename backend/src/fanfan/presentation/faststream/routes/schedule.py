@@ -3,13 +3,14 @@ from dishka_faststream import inject
 from faststream import AckPolicy
 from faststream.nats import NatsMessage, NatsRouter, PullSub
 
-from fanfan.application.dto.realtime import SSEEventName, SSEMessage
 from fanfan.application.interactors.notifications.send_schedule_change_notifications import (  # noqa: E501
     SendScheduleChangeNotifications,
     SendScheduleChangeNotificationsInput,
 )
+from fanfan.application.interactors.schedule.publish_schedule_updated import (
+    PublishScheduleUpdated,
+)
 from fanfan.application.ports.events_broker import EventBroker
-from fanfan.application.ports.realtime_gateway import RealtimeGateway
 from fanfan.core.events.notifications import MailingCancelled
 from fanfan.core.events.schedule import (
     ScheduleChangeCreated,
@@ -40,19 +41,25 @@ schedule_router = NatsRouter()
 async def process_schedule_change(
     data: ScheduleChangeCreated,
     interactor: FromDishka[SendScheduleChangeNotifications],
-    realtime_gateway: FromDishka[RealtimeGateway],
+    publish_schedule_updated: FromDishka[PublishScheduleUpdated],
     msg: NatsMessage,
 ) -> None:
     # A large fan-out can outlast AckWait while NATS is slow to ack; the
-    # heartbeat keeps a live run from being redelivered on top of itself.
+    # heartbeat keeps a live run from being redelivered on top of itself. It
+    # covers the broadcast too, whose cache warm-up waits on the edit lock.
     async with in_progress_heartbeat(msg):
+        # Broadcast before the notification fan-out: the screen should not wait
+        # on building a notification per subscriber, nor on a fan-out failure
+        # that redelivers this message. A redelivery repeats the broadcast,
+        # which is harmless — clients revalidate and get a 304 for a schedule
+        # they already hold.
+        await publish_schedule_updated()
         await interactor(
             SendScheduleChangeNotificationsInput(
                 schedule_change_id=data.schedule_change_id,
                 occurred_at=read_occurred_at(msg),
             )
         )
-    await realtime_gateway.publish(SSEMessage(SSEEventName.SCHEDULE_UPDATED))
 
 
 @schedule_router.subscriber(
@@ -70,8 +77,11 @@ async def process_schedule_change(
 async def undo_schedule_change(
     data: ScheduleChangeUndone,
     events_broker: FromDishka[EventBroker],
-    realtime_gateway: FromDishka[RealtimeGateway],
+    publish_schedule_updated: FromDishka[PublishScheduleUpdated],
 ) -> None:
+    # Cancel first: until it lands, notifications queued for the undone change
+    # can still go out, so it must not wait on the cache warm-up or fail with
+    # the broadcast.
     if data.mailing_id:
         await events_broker.publish(MailingCancelled(mailing_id=data.mailing_id))
-    await realtime_gateway.publish(SSEMessage(SSEEventName.SCHEDULE_UPDATED))
+    await publish_schedule_updated()

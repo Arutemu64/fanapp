@@ -105,6 +105,9 @@ from fanfan.application.interactors.push_sub.delete_push_subscription import (
     DeletePushSubscription,
 )
 from fanfan.application.interactors.schedule.get_schedule import GetSchedule
+from fanfan.application.interactors.schedule.publish_schedule_updated import (
+    PublishScheduleUpdated,
+)
 from fanfan.application.interactors.schedule_mgmt.import_schedule import ImportSchedule
 from fanfan.application.interactors.schedule_mgmt.list_schedule_changes import (
     ListScheduleChanges,
@@ -182,6 +185,7 @@ class InteractorsProvider(Provider):
     # provide_all keeps the roster flat instead of one binding line each.
     interactors = provide_all(
         GetSchedule,
+        PublishScheduleUpdated,
         MoveScheduleEvent,
         SetCurrentScheduleEvent,
         UpdateScheduleEventSkip,

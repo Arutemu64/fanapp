@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import Callable
 from typing import Any, cast
 
@@ -15,14 +16,52 @@ from sentry_sdk.types import Event
 # client can act on, and a bug when it has no such marker.
 ExpectedErrorPredicate = Callable[[BaseException], bool]
 
+# uvicorn's own wording (uvicorn/server.py) when --timeout-graceful-shutdown
+# expires: it logs the first at ERROR, then cancels each running request with
+# the second as the CancelledError message. Open SSE streams never end on their
+# own, so every deploy hits that timeout. It is how the API is meant to stop,
+# not a fault, and would otherwise file two Sentry issues per deploy. A unit test
+# pins both strings to the installed uvicorn so a bump that rewords them fails.
+UVICORN_SHUTDOWN_TIMEOUT_LOG = (
+    "Cancel %s running task(s), timeout graceful shutdown exceeded"
+)
+UVICORN_SHUTDOWN_CANCEL_MESSAGE = "Task cancelled, timeout graceful shutdown exceeded"
+
+
+def _is_forced_shutdown(event: Event, exc_value: BaseException | None) -> bool:
+    logentry = event.get("logentry") or {}
+    if logentry.get("message") == UVICORN_SHUTDOWN_TIMEOUT_LOG:
+        return True
+
+    # Only a reported cancellation qualifies: an error raised while cleaning
+    # up a cancelled request carries the cancellation as its context, and is a
+    # real fault.
+    if not isinstance(exc_value, asyncio.CancelledError):
+        return False
+
+    # The cancellation surfaces re-raised, so the message sits further down
+    # the chain. Track what was seen: an exception chain can loop.
+    seen: set[int] = set()
+    while exc_value is not None and id(exc_value) not in seen:
+        seen.add(id(exc_value))
+        is_cancel = isinstance(exc_value, asyncio.CancelledError)
+        if is_cancel and UVICORN_SHUTDOWN_CANCEL_MESSAGE in exc_value.args:
+            return True
+        exc_value = exc_value.__cause__ or exc_value.__context__
+    return False
+
 
 def _drop_expected_errors(
     event: Event, hint: dict[str, Any], is_expected_error: ExpectedErrorPredicate
 ) -> Event | None:
+    exc_value = None
     if "exc_info" in hint:
         _, exc_value, _ = hint["exc_info"]
         if exc_value is not None and is_expected_error(exc_value):
             return None
+
+    if _is_forced_shutdown(event, exc_value):
+        return None
 
     return _scrub_sensitive_data(event)
 

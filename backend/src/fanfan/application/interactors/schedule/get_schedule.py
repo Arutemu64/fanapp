@@ -23,6 +23,12 @@ def _compute_etag(payload: str) -> str:
     return f'"{digest}"'
 
 
+async def render_schedule(schedule_gateway: ScheduleEventGateway) -> CachedSchedule:
+    events = await schedule_gateway.read_list_schedule()
+    payload = GetScheduleOutput(schedule=events).model_dump_json()
+    return CachedSchedule(etag=_compute_etag(payload), payload=payload)
+
+
 class GetSchedule:
     def __init__(
         self,
@@ -42,8 +48,6 @@ class GetSchedule:
         if cached is not None:
             return cached
 
-        events = await self.schedule_gateway.read_list_schedule()
-        payload = GetScheduleOutput(schedule=events).model_dump_json()
-        cached = CachedSchedule(etag=_compute_etag(payload), payload=payload)
+        cached = await render_schedule(self.schedule_gateway)
         await self.schedule_cache.set(cached)
         return cached
