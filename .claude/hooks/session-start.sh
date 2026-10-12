@@ -49,6 +49,28 @@ if [ -s "$NVM_DIR/nvm.sh" ]; then
   export PATH="$(dirname "$(nvm which default)"):$PATH"
 fi
 
+# Persist PATH additions so the upgraded uv (~/.local/bin) and nvm's Node 24
+# are used throughout the session, not just in this hook's own shell. Also
+# disable the testcontainers Ryuk reaper, matching CI (.github/workflows/ci.yml):
+# the integration test fixtures already stop their own containers in `finally`
+# blocks (backend/tests/fixtures/db_provider.py), and dockerd itself is
+# restarted fresh every session, so Ryuk's crash-cleanup role isn't needed here
+# - skipping it avoids pulling/running an extra container per test session. The
+# hook re-runs on resume against the same env file, so guard with a marker line
+# to avoid stacking duplicate entries. Written before the slow network steps below
+# because the hook's `timeout` can cut them short: a session that loses its
+# dependency syncs should still keep the Node 24 PATH and the Ryuk setting.
+ENV_MARKER="# fanfan session-start PATH"
+if [ -n "${CLAUDE_ENV_FILE:-}" ] && ! grep -qsF "$ENV_MARKER" "$CLAUDE_ENV_FILE"; then
+  {
+    echo "$ENV_MARKER"
+    echo 'export PATH="$HOME/.local/bin:$PATH"'
+    echo 'export NVM_DIR="/opt/nvm"'
+    echo '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && export PATH="$(dirname "$(nvm which default)"):$PATH"'
+    echo 'export TESTCONTAINERS_RYUK_DISABLED="true"'
+  } >> "$CLAUDE_ENV_FILE"
+fi
+
 # Seed / reconcile the root .env so `$app/env/public` resolves during the
 # svelte-kit sync that pnpm's `prepare` runs below (the frontend reads env from
 # the repo root — see `env.dir` in frontend/vite.config.ts). SvelteKit inlines
@@ -100,6 +122,7 @@ fi
 # update notice, package diffs, progress bars) goes to a log file and only a status
 # line plus the log tail on failure reach the session.
 SYNC_LOG="$(mktemp -t session-start-sync.XXXXXX)"
+trap 'rm -f "$SYNC_LOG"' EXIT
 
 echo "[session-start] Syncing backend dependencies (uv sync)..."
 if ! (cd "$REPO_ROOT/backend" && uv sync --all-groups) >"$SYNC_LOG" 2>&1; then
@@ -112,7 +135,6 @@ if ! (cd "$REPO_ROOT/frontend" && pnpm install) >"$SYNC_LOG" 2>&1; then
   tail -n 20 "$SYNC_LOG"
   exit 1
 fi
-rm -f "$SYNC_LOG"
 
 # Install the Chromium build the pinned @playwright/test expects, so web sessions
 # run the E2E suite on the same browser as CI. The base image's pre-baked
@@ -150,26 +172,6 @@ if command -v codegraph >/dev/null 2>&1; then
   fi
 else
   echo "[session-start] Note: codegraph not installed; skipping index (grep/read still available)."
-fi
-
-# Persist PATH additions so the upgraded uv (~/.local/bin) and nvm's Node 24
-# are used throughout the session, not just in this hook's own shell. Also
-# disable the testcontainers Ryuk reaper, matching CI (.github/workflows/ci.yml):
-# the integration test fixtures already stop their own containers in `finally`
-# blocks (backend/tests/fixtures/db_provider.py), and dockerd itself is
-# restarted fresh every session, so Ryuk's crash-cleanup role isn't needed here
-# - skipping it avoids pulling/running an extra container per test session. The
-# hook re-runs on resume against the same env file, so guard with a marker line
-# to avoid stacking duplicate entries.
-ENV_MARKER="# fanfan session-start PATH"
-if [ -n "${CLAUDE_ENV_FILE:-}" ] && ! grep -qsF "$ENV_MARKER" "$CLAUDE_ENV_FILE"; then
-  {
-    echo "$ENV_MARKER"
-    echo 'export PATH="$HOME/.local/bin:$PATH"'
-    echo 'export NVM_DIR="/opt/nvm"'
-    echo '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && export PATH="$(dirname "$(nvm which default)"):$PATH"'
-    echo 'export TESTCONTAINERS_RYUK_DISABLED="true"'
-  } >> "$CLAUDE_ENV_FILE"
 fi
 
 echo "[session-start] Setup complete."
