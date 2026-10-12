@@ -95,12 +95,24 @@ fi
 # → frontend lint fails" a recurring web-session failure). A backend dep problem
 # surfaces on its own when a backend command runs; it must not take the frontend
 # down with it.
+#
+# SessionStart stdout is injected into Claude's context, so installer output (pnpm's
+# update notice, package diffs, progress bars) goes to a log file and only a status
+# line plus the log tail on failure reach the session.
+SYNC_LOG="$(mktemp -t session-start-sync.XXXXXX)"
+
 echo "[session-start] Syncing backend dependencies (uv sync)..."
-(cd "$REPO_ROOT/backend" && uv sync --all-groups) \
-  || echo "[session-start] WARN: backend uv sync failed; run 'just backend-install' before backend work."
+if ! (cd "$REPO_ROOT/backend" && uv sync --all-groups) >"$SYNC_LOG" 2>&1; then
+  tail -n 20 "$SYNC_LOG"
+  echo "[session-start] WARN: backend uv sync failed; run 'just backend-install' before backend work."
+fi
 
 echo "[session-start] Syncing frontend dependencies (pnpm install)..."
-(cd "$REPO_ROOT/frontend" && pnpm install)
+if ! (cd "$REPO_ROOT/frontend" && pnpm install) >"$SYNC_LOG" 2>&1; then
+  tail -n 20 "$SYNC_LOG"
+  exit 1
+fi
+rm -f "$SYNC_LOG"
 
 # Install the Chromium build the pinned @playwright/test expects, so web sessions
 # run the E2E suite on the same browser as CI. The base image's pre-baked

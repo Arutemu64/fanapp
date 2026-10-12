@@ -95,6 +95,10 @@ does not survive the snapshot:
 
 * `uv sync` / `pnpm install` — kept here so a dependency bump is picked up
   without an environment rebuild; near-instant when the lockfile is unchanged.
+  Installer output goes to a temp log, because SessionStart stdout is injected
+  into Claude's context; only status lines (plus the log tail on failure) reach
+  the session. The hook has a 300 s `timeout` so a hung registry can't stall the
+  first response for the 600 s default.
 * building/refreshing the CodeGraph index — `codegraph sync` updates an
   existing index incrementally so code-navigation queries stay accurate;
   falls back to a full `codegraph init` when no index exists yet, which is
