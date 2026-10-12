@@ -97,6 +97,13 @@ services:
       UVICORN_PORT: "8000"
       UVICORN_FORWARDED_ALLOW_IPS: "*"
       UVICORN_ROOT_PATH: "/api"
+      # Open SSE streams never end on their own, and uvicorn otherwise waits
+      # for every connection indefinitely, so `docker stop` would run into the
+      # 10s default stop_grace_period, SIGKILL the api and skip its lifespan
+      # shutdown. 5s leaves that shutdown room inside the 10s. The requests it
+      # cancels are filtered out of Sentry (adapters/debug/telemetry.py).
+      # Mirrored in main/web.py for the host runner.
+      UVICORN_TIMEOUT_GRACEFUL_SHUTDOWN: "5"
       PUSH__PRIVATE_KEY_PATH: "/app/secrets/private_key.pem"
       PUSH__PUBLIC_KEY_PATH: "/app/secrets/public_key.pem"
     # Host port defaults to 8000; override with API_PORT in .env to avoid a

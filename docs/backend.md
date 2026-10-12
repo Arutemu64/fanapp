@@ -248,6 +248,8 @@ Naming standard for new events:
 
 **Liveness heartbeat**: the `/events` route injects a named `ping` event after `HEARTBEAT_INTERVAL_SECONDS` (15s) of stream silence — `ping` is the one `SSEEventName` never published via `RealtimeGateway`. Comment-based keepalives are invisible to the browser `EventSource` API, so the frontend watchdog (`HEARTBEAT_TIMEOUT_MS`, 3x the interval = 45s, in `events.svelte.ts`) relies on these pings to detect silently dead connections (Wi-Fi roaming, NAT timeouts) and reconnect. 15s sits inside the 30s floor of cellular NAT gateway idle timeouts. If you change the interval, keep it below common proxy idle timeouts (60s) and update the frontend timeout to match.
 
+**Shutdown**: streams never end on their own, so uvicorn's graceful shutdown is bounded (`UVICORN_TIMEOUT_GRACEFUL_SHUTDOWN`, 5s). When it expires, uvicorn cancels the open streams and runs the lifespan shutdown. See [deployment.md](deployment.md#stopping-the-api-with-sse-streams-open).
+
 ## Notification Formatting
 
 A notification `body` is stored as a **small, safe HTML subset** so the same text can be highlighted across every delivery channel. The subset is the intersection of what Telegram's HTML parse mode accepts and what the web UI can render: `b`, `strong`, `i`, `em`, `u`, `s`, `a[href]`, `code`, `pre`, `blockquote`. Line breaks are stored as plain `\n` (no `<br>`/`<p>`), which Telegram treats as newlines and the web renders via CSS `white-space: pre-line`.

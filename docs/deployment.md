@@ -439,6 +439,18 @@ and withholds the response headers until the first body bytes, which delays the
 Carry the carve-out over if you put a different proxy in front — with NGINX that
 means keeping `text/event-stream` out of `gzip_types`.
 
+### Stopping the API with SSE streams open
+
+An `/events` stream never ends on its own. By default uvicorn waits for every open
+connection to close before shutting down, so the api would sit out Compose's 10s
+`stop_grace_period` and be SIGKILLed with its lifespan shutdown skipped. The api
+service sets `UVICORN_TIMEOUT_GRACEFUL_SHUTDOWN=5`: after 5s uvicorn cancels the
+remaining requests and runs the shutdown normally. Clients see the stream drop
+and reconnect with backoff, the same as on any other drop. uvicorn reports the
+cancellation as an error, and `adapters/debug/telemetry.py` keeps exactly those
+two reports out of Sentry. If you raise the timeout, raise `stop_grace_period`
+with it, so the timeout always expires first.
+
 With the relative default you only set the origin-dependent values to match how
 the browser reaches the site:
 
