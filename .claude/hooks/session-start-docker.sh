@@ -31,10 +31,17 @@ if ! docker info >/dev/null 2>&1; then
   fi
   # dockerd is a long-running root process; launch it detached and poll the
   # socket (it usually comes up in ~1s). Logs go to a file for inspection.
-  $SUDO sh -c 'dockerd >/tmp/dockerd.log 2>&1 &'
-  for _ in $(seq 1 15); do
+  # Two attempts: on resume the first can lose a race with a containerd left over
+  # from the previous run ("failed to save containerd pid to disk: process with
+  # PID N is still running" in /tmp/dockerd.log); by the second it has exited.
+  for attempt in 1 2; do
+    $SUDO sh -c 'dockerd >/tmp/dockerd.log 2>&1 &'
+    for _ in $(seq 1 15); do
+      if docker info >/dev/null 2>&1; then break; fi
+      sleep 1
+    done
     if docker info >/dev/null 2>&1; then break; fi
-    sleep 1
+    if [ "$attempt" -eq 1 ]; then sleep 3; fi
   done
   if ! docker info >/dev/null 2>&1; then
     echo "[session-start-docker] Docker daemon did not start (see /tmp/dockerd.log); Alembic autogenerate (just backend-generate-auto) and the hadolint shim are unavailable." >&2
