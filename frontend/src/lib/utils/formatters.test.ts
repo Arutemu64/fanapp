@@ -13,10 +13,6 @@ import {
 	toEventDateTimeLocal
 } from './formatters';
 
-// `duration` is seconds everywhere — spreadsheet cell, database column, API
-// field — so that a sub-minute act survives the round trip exactly. These cases
-// pin that the label reads the value as seconds and never rounds a short act up
-// to a whole minute.
 describe('formatEventNumber', () => {
 	it('pads the public number to three digits', () => {
 		expect(formatEventNumber(7)).toBe('007');
@@ -29,6 +25,10 @@ describe('formatEventNumber', () => {
 	});
 });
 
+// `duration` is seconds everywhere — spreadsheet cell, database column, API
+// field — so that a sub-minute act survives the round trip exactly. These cases
+// pin that the label reads the value as seconds and never rounds a short act up
+// to a whole minute.
 describe('formatDuration', () => {
 	it('renders a sub-minute act in seconds', () => {
 		expect(formatDuration(45)).toBe('45 секунд');
