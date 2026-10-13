@@ -1,20 +1,12 @@
 import { includeIgnoreFile } from '@eslint/compat';
 import js from '@eslint/js';
-import { loadConfig } from '@sveltejs/load-config';
 import prettier from 'eslint-config-prettier';
 import perfectionist from 'eslint-plugin-perfectionist';
-import svelte from 'eslint-plugin-svelte';
+import vue from 'eslint-plugin-vue';
 import { defineConfig } from 'eslint/config';
 import globals from 'globals';
 import path from 'node:path';
 import ts from 'typescript-eslint';
-
-// SvelteKit 3 keeps the Svelte config in vite.config.ts; load-config reads it from
-// there (https://sveltejs.github.io/eslint-plugin-svelte/user-guide/). The resolved
-// config carries a function default under `typescript`, which `eslint --cache`
-// cannot serialize, so it is dropped — the parser doesn't read it.
-const { typescript: _typescript, ...svelteConfig } =
-	(await loadConfig('./', { traverse: false }))?.config ?? {};
 
 const gitignorePath = path.resolve(import.meta.dirname, '.gitignore');
 
@@ -23,9 +15,8 @@ export default defineConfig(
 	{ ignores: ['src/lib/api/generated/'] },
 	js.configs.recommended,
 	ts.configs.recommendedTypeChecked,
-	svelte.configs.recommended,
+	vue.configs['flat/recommended'],
 	prettier,
-	svelte.configs.prettier,
 	{
 		// Type-checked rules need type information; point the parser at the
 		// nearest tsconfig via the project service for every linted TS file.
@@ -34,12 +25,12 @@ export default defineConfig(
 			parserOptions: {
 				projectService: true,
 				tsconfigRootDir: import.meta.dirname,
-				// Declare `.svelte` here, globally, not only in the Svelte override.
+				// Declare `.vue` here, globally, not only in the Vue override.
 				// With projectService, differing extraFileExtensions across files in
 				// the same TS project forces a full project reload per file, turning
 				// a cold lint of this repo from ~2min into ~15s once made consistent.
 				// https://typescript-eslint.io/troubleshooting/typed-linting/performance/
-				extraFileExtensions: ['.svelte']
+				extraFileExtensions: ['.vue']
 			}
 		},
 		rules: {
@@ -67,7 +58,7 @@ export default defineConfig(
 	{
 		// Import/export ordering only. We deliberately do NOT enable the full
 		// `recommended-*` preset, which would also reorder object keys, union
-		// members and JSX/Svelte attributes across the whole codebase.
+		// members and JSX/Vue attributes across the whole codebase.
 		// `type: 'natural'` keeps numeric segments human-sorted (e.g. v2 < v10).
 		plugins: { perfectionist },
 		rules: {
@@ -78,39 +69,36 @@ export default defineConfig(
 		}
 	},
 	{
-		files: ['**/*.svelte', '**/*.svelte.ts', '**/*.svelte.js'],
+		files: ['**/*.vue'],
 		languageOptions: {
 			parserOptions: {
 				projectService: true,
-				extraFileExtensions: ['.svelte'],
-				parser: ts.parser,
-				svelteConfig
+				extraFileExtensions: ['.vue'],
+				parser: ts.parser
 			}
 		},
 		rules: {
-			// Known false positive with $bindable props: ESLint sees the write-out to the
-			// parent but not the parent-side bind read, and flags it incorrectly.
-			// Tracked: sveltejs/eslint-plugin-svelte#1478 — re-enable once fixed.
-			'no-useless-assignment': 'off'
+			// The Vue tooling (vue-tsc) type-checks templates; the SFC layout is
+			// fixed to script → template → style so every component reads the same way.
+			'vue/block-order': ['error', { order: ['script', 'template', 'style'] }],
+			'vue/component-api-style': ['error', ['script-setup']],
+			'vue/define-macros-order': ['error', { order: ['defineProps', 'defineEmits'] }],
+			// Prettier owns the attribute layout and self-closing style.
+			'vue/html-self-closing': 'off',
+			'vue/singleline-html-element-content-newline': 'off',
+			'vue/multiline-html-element-content-newline': 'off'
 		}
 	},
 	{
-		// Design-system primitive renders <a href={...}> from an external/variable href.
-		files: ['src/lib/components/ui/button/button.svelte'],
-		rules: {
-			'svelte/no-navigation-without-resolve': 'off'
-		}
-	},
-	{
-		// Vendored shadcn-svelte primitives. Some wrap another local primitive via
-		// `ComponentProps<typeof Input>` etc.; typescript-eslint's type service does
-		// not run svelte2tsx, so a type originating in a `.svelte` file resolves to
-		// `any` and trips the no-unsafe family — a false positive (svelte-check/tsc
-		// type these correctly). Relax only that family here, and only for the
-		// generated `ui/` sources, so `shadcn-svelte` components stay unedited and
-		// `shadcn-svelte update`-able. See sveltejs/svelte#16264.
+		// Vendored shadcn-vue primitives. Some wrap another local primitive, and
+		// typescript-eslint's type service does not run vue-tsc, so a type originating
+		// in a `.vue` file resolves to `any` and trips the no-unsafe family — a false
+		// positive (vue-tsc types these correctly). Relax only that family here, and
+		// only for the generated `ui/` sources, so the components stay unedited and
+		// `shadcn-vue`-updatable. shadcn-vue's own names are single words (`Button`).
 		files: ['src/lib/components/ui/**'],
 		rules: {
+			'vue/multi-word-component-names': 'off',
 			'@typescript-eslint/no-unsafe-argument': 'off',
 			'@typescript-eslint/no-unsafe-assignment': 'off',
 			'@typescript-eslint/no-unsafe-call': 'off',

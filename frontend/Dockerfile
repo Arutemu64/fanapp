@@ -42,7 +42,7 @@ EXPOSE 3000
 
 # No --port flag: vite.config.ts reads FRONTEND_PORT (compose passes it in), so a
 # single var drives the port and the flag can't silently override it.
-CMD ["sh", "-c", "pnpm exec svelte-kit sync && pnpm dev --host 0.0.0.0"]
+CMD ["pnpm", "dev", "--host", "0.0.0.0"]
 
 # ── Build stage ──────────────────────────────────────────────────────────────
 FROM base AS build
@@ -52,7 +52,7 @@ RUN --mount=type=cache,target=/pnpm/store \
 
 COPY . .
 
-# PUBLIC_* values are read by `$app/env/public` and inlined into the bundle at
+# PUBLIC_* values are read through `import.meta.env` (src/lib/env.ts) and inlined into the bundle at
 # build time (this is a static SPA — there is no server to inject them at
 # runtime). They must therefore be supplied as build args. All are public,
 # non-secret deploy constants.
@@ -102,7 +102,7 @@ ARG APP_BUILD
 # check). The mount is optional: with no secret passed the variable is unset and
 # vite.config.ts skips the source-map upload.
 RUN --mount=type=secret,id=sentry_auth_token,env=SENTRY_AUTH_TOKEN \
-	pnpm exec svelte-kit sync && pnpm build
+	pnpm build
 
 # ── Prod stage ───────────────────────────────────────────────────────────────
 # Serve the static bundle with NGINX. No Node runtime ships to production.

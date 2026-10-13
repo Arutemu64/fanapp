@@ -1,4 +1,4 @@
-import { onlineManager } from '@tanstack/svelte-query';
+import { onlineManager } from '@tanstack/vue-query';
 
 import { flushPendingLogout } from '#lib/utils/pendingLogout.js';
 

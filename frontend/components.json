@@ -1,20 +1,22 @@
 {
-	"$schema": "https://shadcn-svelte.com/schema.json",
-	"tailwind": {
-		"css": "src\\app.css",
-		"baseColor": "neutral"
-	},
-	"aliases": {
-		"components": "#lib/components",
-		"utils": "#lib/utils",
-		"ui": "#lib/components/ui",
-		"hooks": "#lib/hooks",
-		"lib": "#lib"
-	},
+	"$schema": "https://shadcn-vue.com/schema.json",
+	"style": "reka-vega",
 	"typescript": true,
-	"registry": "https://shadcn-svelte.com/registry",
-	"style": "vega",
+	"tailwind": {
+		"config": "",
+		"css": "src/app.css",
+		"baseColor": "neutral",
+		"cssVariables": true,
+		"prefix": ""
+	},
 	"iconLibrary": "lucide",
 	"menuColor": "default",
-	"menuAccent": "subtle"
+	"menuAccent": "subtle",
+	"aliases": {
+		"components": "#lib/components",
+		"composables": "#lib/composables",
+		"utils": "#lib/utils",
+		"ui": "#lib/components/ui",
+		"lib": "#lib"
+	}
 }

@@ -6,10 +6,9 @@ bun.lock
 bun.lockb
 
 # Miscellaneous
-/static/
+/public/
 
-# Svelte
-.svelte-kit/
+# Build output
 build/
 
 # Generated API client (just frontend-generate-api) is emitted through

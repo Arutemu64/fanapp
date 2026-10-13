@@ -1,6 +1,6 @@
-import { PUBLIC_API_URL } from '$app/env/public';
-import { createSubscriber } from 'svelte/reactivity';
+import { ref } from 'vue';
 
+import { PUBLIC_API_URL } from '#lib/env.js';
 import { timeoutSignal } from '#lib/utils/fetchTimeout.js';
 
 /**
@@ -10,8 +10,9 @@ import { timeoutSignal } from '#lib/utils/fetchTimeout.js';
  * online on a connected-but-dead VPN or captive WiFi, where the backend is in
  * fact unreachable. This module instead probes a cheap, unauthenticated health
  * endpoint and treats *getting any response back* as proof we can reach the
- * server. State is module-global (not Svelte context) so universal `load`
- * functions can read it synchronously to skip a doomed network call.
+ * server. State is module-global (not provided through the app) so route
+ * loaders, which run outside any component, can read it synchronously to skip a
+ * doomed network call.
  *
  * Only three things write it: the probe below, the API client's response
  * interceptor (`#lib/api/index.ts`, which sees every status), and the SSE
@@ -50,7 +51,10 @@ export function isBackendUnreachableStatus(status: number): boolean {
 
 // Optimistic default so the very first paint still attempts the network; the
 // first probe corrects it within PROBE_TIMEOUT_MS.
-let reachable = true;
+//
+// A Vue ref so `reachability.current` is tracked by computeds and templates;
+// `isReachable()` reads the same ref untracked-in-practice from plain code.
+const reachable = ref(true);
 // Bumped on every report, even one that repeats the current value, so a probe
 // can tell that fresher evidence landed while it was still in flight (see
 // probeReachability) — an API response arriving mid-confirm-window must cancel
@@ -60,14 +64,14 @@ const listeners = new Set<() => void>();
 
 /** Last known reachability. */
 export function isReachable(): boolean {
-	return reachable;
+	return reachable.value;
 }
 
 /** Update reachability from a known outcome (an HTTP response, the SSE handshake). */
 export function markReachable(value: boolean): void {
 	version += 1;
-	if (reachable === value) return;
-	reachable = value;
+	if (reachable.value === value) return;
+	reachable.value = value;
 	for (const listener of listeners) listener();
 }
 
@@ -76,12 +80,6 @@ export function onReachableChange(listener: () => void): () => void {
 	listeners.add(listener);
 	return () => listeners.delete(listener);
 }
-
-// Bridges the listener set above into Svelte's reactivity, so a component can
-// read reachability in a $derived instead of mirroring it into $state from an
-// $effect. One subscription is shared however many readers there are, and it is
-// torn down when the last of them goes away.
-const subscribeReachable = createSubscriber((update) => onReachableChange(update));
 
 /**
  * Device-level connectivity (`navigator.onLine`).
@@ -98,29 +96,27 @@ export function deviceOnlineNow(): boolean {
 	return typeof navigator === 'undefined' ? true : navigator.onLine;
 }
 
-const subscribeDeviceOnline = createSubscriber((update) => {
-	window.addEventListener('online', update);
-	window.addEventListener('offline', update);
-	return () => {
-		window.removeEventListener('online', update);
-		window.removeEventListener('offline', update);
-	};
-});
+const deviceOnline = ref(deviceOnlineNow());
+
+// Device state, not user state, so these listeners live as long as the page and
+// need no teardown. Guarded for the DOM-less unit-test runner.
+if (typeof window !== 'undefined') {
+	window.addEventListener('online', () => (deviceOnline.value = deviceOnlineNow()));
+	window.addEventListener('offline', () => (deviceOnline.value = deviceOnlineNow()));
+}
 
 /**
- * Reachability as a *reactive* read, for components and deriveds.
+ * Reachability as a *reactive* read, for components and computeds.
  *
- * `isReachable()` stays the plain read: `load` functions run outside any effect,
+ * `isReachable()` stays the plain read: route loaders run outside any effect,
  * where subscribing would do nothing, and they only need the current value.
  */
 export const reachability = {
 	get current(): boolean {
-		subscribeReachable();
-		return reachable;
+		return reachable.value;
 	},
 	get deviceOnline(): boolean {
-		subscribeDeviceOnline();
-		return deviceOnlineNow();
+		return deviceOnline.value;
 	}
 };
 
@@ -161,7 +157,7 @@ async function runProbe(startVersion: number): Promise<boolean> {
 		if (await pingHealth()) return true;
 
 		const confirming =
-			version === startVersion && reachable && deviceOnlineNow() && Date.now() < deadline;
+			version === startVersion && reachable.value && deviceOnlineNow() && Date.now() < deadline;
 		if (!confirming) return false;
 		await delay(OFFLINE_CONFIRM_GAP_MS);
 	}

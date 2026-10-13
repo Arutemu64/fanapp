@@ -1,4 +1,4 @@
-import { createSubscriber } from 'svelte/reactivity';
+import { ref } from 'vue';
 
 /**
  * Wall-clock time as a *reactive* read that ticks once a minute, for relative
@@ -6,17 +6,31 @@ import { createSubscriber } from 'svelte/reactivity';
  * installed app stays open for hours.
  *
  * Module-global like `documentVisibility`: the time is a device fact, not user-
- * or session-scoped state. One interval is shared by every reader and cleared
- * when the last of them unmounts.
+ * or session-scoped state. One interval is shared by every reader. It starts on
+ * the first read, so nothing ticks until a screen actually shows a relative
+ * label, and then runs for the life of the page.
  */
-const subscribeMinute = createSubscriber((update) => {
-	const id = setInterval(update, 60_000);
-	return () => clearInterval(id);
-});
+const MINUTE_MS = 60_000;
+
+const nowMs = ref(Date.now());
+let ticking = false;
+
+function startTicking(): void {
+	if (ticking) return;
+	ticking = true;
+	// Refresh after the current read, not during it: writing a ref from inside a
+	// computed that is reading it would re-trigger that computed mid-evaluation.
+	queueMicrotask(() => {
+		nowMs.value = Date.now();
+	});
+	setInterval(() => {
+		nowMs.value = Date.now();
+	}, MINUTE_MS);
+}
 
 export const minuteClock = {
 	get now(): number {
-		subscribeMinute();
-		return Date.now();
+		startTicking();
+		return nowMs.value;
 	}
 };

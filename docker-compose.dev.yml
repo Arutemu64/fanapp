@@ -44,7 +44,6 @@ services:
           initial_sync: true
           ignore:
             - node_modules/
-            - .svelte-kit/
             - build/
         - action: rebuild
           path: ./frontend/package.json

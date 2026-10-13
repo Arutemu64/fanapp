@@ -1,6 +1,4 @@
-import type { Path } from '$app/types';
-
-import { resolve } from '$app/paths';
+import type { AppPath } from '#lib/types/navigation.js';
 
 /**
  * Shared navigation helpers used by both navigation surfaces (sidebar + bottom nav)
@@ -21,17 +19,8 @@ export function isActivePath(activeUrl: string, href: string): boolean {
  */
 export function isNavItemActive(
 	activeUrl: string,
-	item: { href: Path; nestedRoots?: readonly Path[] }
+	item: { href: AppPath; nestedRoots?: readonly AppPath[] }
 ): boolean {
 	const roots = [item.href, ...(item.nestedRoots ?? [])];
-	return roots.some((root) => isActivePath(activeUrl, resolve(root)));
-}
-
-/**
- * A backend deep link ("/schedule", "/" for home) as an app `Path`. The API
- * sends root-relative pathnames, but `resolve()` reads a leading "/" as a route
- * ID, whose segments it would parse for [params] and (groups).
- */
-export function toAppPath(backendPath: string): Path {
-	return backendPath.replace(/^\//, '') as Path;
+	return roots.some((root) => isActivePath(activeUrl, root));
 }

@@ -7,6 +7,9 @@ allowBuilds:
   # @sveltejs/enhanced-img runs sharp at build to generate the map gallery's
   # AVIF/WebP + resized variants; its postinstall links the native libvips.
   sharp: true
+  # vue-demi (a @tanstack/vue-query dependency) only runs a postinstall that
+  # picks the Vue 2 vs 3 build; its default entry already targets Vue 3.
+  vue-demi: false
 
 # Supply-chain cooldown: refuse versions published less than 7 days ago (value is
 # in minutes; 7 days = 10080). Matches Renovate's `minimumReleaseAge` (renovate.jsonc)
