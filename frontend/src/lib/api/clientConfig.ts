@@ -1,4 +1,4 @@
-import { PUBLIC_API_URL } from '$app/env/public';
+import { PUBLIC_API_URL } from '#lib/env.js';
 
 import type { CreateClientConfig } from './generated/client.gen';
 

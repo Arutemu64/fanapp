@@ -1,15 +1,15 @@
-import { goto } from '$app/navigation';
-import { page } from '$app/state';
+import type { Router } from 'vue-router';
+
 import {
 	type FetchQueryOptions,
 	type QueryClient,
 	type QueryKey,
 	queryOptions
-} from '@tanstack/svelte-query';
+} from '@tanstack/vue-query';
 
 import type { ResolvedRequestOptions } from '#lib/api/generated/client/index.js';
 
-import { getCurrentUserQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+import { getCurrentUserQueryKey } from '#lib/api/generated/@tanstack/vue-query.gen.js';
 import { client } from '#lib/api/generated/client.gen.js';
 import { getCurrentUser } from '#lib/api/generated/index.js';
 import {
@@ -96,7 +96,7 @@ export function forgetSession(queryClient: QueryClient): void {
 const IDENTITY_PATH = '/me/';
 const CREDENTIAL_CHECK_PATHS = new Set(['/auth/login', '/auth/login-with-code']);
 
-async function endSession(queryClient: QueryClient): Promise<void> {
+async function endSession(queryClient: QueryClient, router: Router): Promise<void> {
 	const { queryKey } = currentUserOptions();
 	// A guest was already a guest; this also makes a burst of 401s end it once.
 	if (!queryClient.getQueryData(queryKey)) return;
@@ -104,19 +104,20 @@ async function endSession(queryClient: QueryClient): Promise<void> {
 
 	// The (protected) guard only runs on navigation, so a screen already open
 	// behind it is left explicitly — to the same `next` login the guard builds.
-	if (page.route.id?.startsWith('/(app)/(protected)/')) {
-		const next = page.url.pathname + page.url.search;
-		await goto(`/login?${LOGIN_NEXT_PARAM}=${encodeURIComponent(next)}`);
+	const { currentRoute } = router;
+	if (currentRoute.value.meta.protected) {
+		const next = currentRoute.value.fullPath;
+		await router.push(`/login?${LOGIN_NEXT_PARAM}=${encodeURIComponent(next)}`);
 	}
 	forgetSession(queryClient);
 }
 
 /**
  * Watch every API response for reachability and session expiry. Call once from
- * the root layout; returns the teardown, which matters for dev HMR — without it
+ * the root component; returns the teardown, which matters for dev HMR — without it
  * each cycle would stack another pair of interceptors on the shared client.
  */
-export function watchApiResponses(queryClient: QueryClient): () => void {
+export function watchApiResponses(queryClient: QueryClient, router: Router): () => void {
 	// The response interceptor runs for every response the client receives, before
 	// it decides ok vs error — so it sees 4xx/5xx too, not just 2xx. `options.url`
 	// is the operation's path template (e.g. `/me/`), not the resolved URL, which
@@ -132,7 +133,7 @@ export function watchApiResponses(queryClient: QueryClient): () => void {
 			// Fire-and-forget so the failing response still settles immediately for its
 			// caller — forms keep their own inline 401 error handling.
 			if (options.url === IDENTITY_PATH) {
-				void endSession(queryClient);
+				void endSession(queryClient, router);
 			} else {
 				// Joins a /me/ fetch already in flight, so a burst of 401s asks once.
 				void queryClient.refetchQueries(

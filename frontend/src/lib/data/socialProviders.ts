@@ -1,4 +1,4 @@
-import type { Component } from 'svelte';
+import type { Component } from 'vue';
 
 import IconTelegram from '~icons/simple-icons/telegram';
 import IconVk from '~icons/simple-icons/vk';

@@ -1,12 +1,10 @@
-import type { QueryClient } from '@tanstack/svelte-query';
+import type { QueryClient } from '@tanstack/vue-query';
+import type { Router } from 'vue-router';
 
-import { goto } from '$app/navigation';
-import { resolve } from '$app/paths';
+import type { EventsClient } from '#lib/services/events.js';
+import type { useToastStore } from '#lib/stores/toasts.js';
 
-import type { EventsClient } from '#lib/services/events.svelte.js';
-import type { ToastService } from '#lib/services/toasts.svelte.js';
-
-import { getCurrentUserQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+import { getCurrentUserQueryKey } from '#lib/api/generated/@tanstack/vue-query.gen.js';
 
 import { clearLogoutPending } from './pendingLogout';
 
@@ -36,6 +34,13 @@ export function sanitizeNextPath(raw: string | null): string | null {
 	return raw;
 }
 
+// The catch-all record (`:pathMatch(.*)*`) matches every path, so it does not
+// count as the route the user was heading to.
+function matchesRoute(router: Router, path: string): boolean {
+	const { matched } = router.resolve(path);
+	return matched.length > 0 && !matched.some((record) => record.path.includes(':pathMatch'));
+}
+
 /**
  * Finish a successful login: load the new identity, confirm with a toast,
  * navigate to the page the user originally wanted (the validated `next` param,
@@ -43,9 +48,10 @@ export function sanitizeNextPath(raw: string | null): string | null {
  * new identity. Shared by every login form.
  */
 export async function completeLogin(
-	toastService: ToastService,
+	toasts: ReturnType<typeof useToastStore>,
 	eventsClient: EventsClient,
 	queryClient: QueryClient,
+	router: Router,
 	message: string
 ): Promise<void> {
 	// A logout queued while offline must not outlive a deliberate re-login: clear
@@ -58,19 +64,18 @@ export async function completeLogin(
 	void queryClient.invalidateQueries();
 	await queryClient.refetchQueries({ queryKey: getCurrentUserQueryKey() });
 
-	toastService.add(message, 'success');
+	toasts.add(message, 'success');
 	const next = sanitizeNextPath(new URL(window.location.href).searchParams.get(LOGIN_NEXT_PARAM));
-	// `next` was captured by the (protected) guard from `url.pathname`, which is
-	// already base-qualified — wrapping it in resolve() would prepend the base
-	// path a second time. It is sanitized to an in-app path above.
-	const home = resolve('');
-	// goto rejects a path that matches no route, and `next` comes from the URL, so
-	// a hand-edited one can name anything: land on home rather than strand the
-	// now-signed-in user on the login form.
+	// `next` is sanitized to an in-app path above. The router resolves it with no
+	// match when it names no route (or lands on the catch-all), and it comes from
+	// the URL, so a hand-edited one can name anything: land on home rather than
+	// strand the now-signed-in user on the login form.
+	const home = '/';
+	const destination = next !== null && matchesRoute(router, next) ? next : home;
 	try {
-		await goto(next ?? home);
+		await router.push(destination);
 	} catch {
-		await goto(home);
+		await router.push(home);
 	}
 	eventsClient.restart();
 }

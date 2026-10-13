@@ -1,7 +1,6 @@
-import { resolve } from '$app/paths';
 import { describe, expect, it } from 'vitest';
 
-import { isActivePath, isNavItemActive, toAppPath } from './nav';
+import { isActivePath, isNavItemActive } from './nav';
 
 describe('isActivePath', () => {
 	it.each([
@@ -18,7 +17,7 @@ describe('isActivePath', () => {
 });
 
 describe('isNavItemActive', () => {
-	const profile = { href: 'profile', nestedRoots: ['feedback', 'tools'] } as const;
+	const profile = { href: '/profile', nestedRoots: ['/feedback', '/tools'] } as const;
 
 	it.each([
 		['/profile', true],
@@ -32,24 +31,7 @@ describe('isNavItemActive', () => {
 	});
 
 	it('falls back to the item href alone without nested roots', () => {
-		expect(isNavItemActive('/map', { href: 'map' })).toBe(true);
-		expect(isNavItemActive('/feedback', { href: 'map' })).toBe(false);
-	});
-});
-
-describe('toAppPath', () => {
-	// Paths the backend's notification interactors actually send.
-	it.each([
-		['/', ''],
-		['/notifications', 'notifications'],
-		['/schedule', 'schedule'],
-		['/schedule/changes', 'schedule/changes']
-	])('%s -> %s', (backendPath, expected) => {
-		expect(toAppPath(backendPath)).toBe(expected);
-	});
-
-	it('resolves to the same pathname the backend named', () => {
-		expect(resolve(toAppPath('/schedule/changes'))).toBe('/schedule/changes');
-		expect(resolve(toAppPath('/'))).toBe('/');
+		expect(isNavItemActive('/map', { href: '/map' })).toBe(true);
+		expect(isNavItemActive('/feedback', { href: '/map' })).toBe(false);
 	});
 });

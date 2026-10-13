@@ -13,7 +13,7 @@
 		"strict": true,
 		"noUncheckedIndexedAccess": true,
 		"noFallthroughCasesInSwitch": true,
-		"types": ["vite/client", "unplugin-icons/types/vue", "vite-imagetools/client"]
+		"types": ["vite/client", "unplugin-icons/types/vue"]
 	},
 	"include": ["src/**/*.ts", "src/**/*.vue", "vite.config.ts"],
 	// The service worker is its own TypeScript project (src/service-worker/tsconfig.json):

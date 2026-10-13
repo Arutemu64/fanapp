@@ -1,7 +1,17 @@
 {
-	"extends": "$app/tsconfig/service-worker",
 	"compilerOptions": {
+		"target": "ES2023",
+		"lib": ["ES2023", "WebWorker"],
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"verbatimModuleSyntax": true,
+		"isolatedModules": true,
+		"moduleDetection": "force",
+		"skipLibCheck": true,
+		"noEmit": true,
 		"strict": true,
-		"noUncheckedIndexedAccess": true
-	}
+		"noUncheckedIndexedAccess": true,
+		"types": ["vite/client"]
+	},
+	"include": ["./*.ts", "../env.d.ts"]
 }

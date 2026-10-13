@@ -1,5 +1,7 @@
-import type { Path } from '$app/types';
-import type { Component } from 'svelte';
+import type { Component } from 'vue';
+
+/** An absolute in-app path (`/`, `/schedule`, `/tools/users/42`), as `router.push` and `RouterLink` take it. */
+export type AppPath = `/${string}`;
 
 /**
  * Where the navbar's back arrow leads. A fixed parent route rather than
@@ -7,7 +9,7 @@ import type { Component } from 'svelte';
  * no in-app history, so "back" would leave the app or do nothing.
  */
 export interface BackTarget {
-	href: Path;
+	href: AppPath;
 	/** Accessible name of the icon-only button, e.g. «Назад к инструментам». */
 	label: string;
 }
@@ -20,7 +22,7 @@ export interface BackTarget {
  * (https://www.sap.com/design-system/fiori-design-android/v26-4/components/navigation-and-search/top-app-bar/usage).
  */
 export interface NavbarAction {
-	href: Path;
+	href: AppPath;
 	/** Accessible name of the icon-only button, e.g. «Изменения программы». */
 	label: string;
 	icon: Component;

@@ -1,4 +1,6 @@
-import { Persisted } from './persisted.svelte';
+import { defineStore } from 'pinia';
+
+import { usePersisted } from '#lib/composables/usePersisted.js';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 
@@ -6,9 +8,9 @@ function parseThemeMode(raw: string): ThemeMode | undefined {
 	return raw === 'light' || raw === 'dark' || raw === 'system' ? raw : undefined;
 }
 
-// Browser-UI tints (address/status bar). Must match app.html: the light value is
+// Browser-UI tints (address/status bar). Must match index.html: the light value is
 // the watermelon pink, the dark value app.css's dark --background
-// (oklch(0.145 0 0) = #0a0a0a). The inline boot script in app.html seeds
+// (oklch(0.145 0 0) = #0a0a0a). The inline boot script in index.html seeds
 // <meta name="theme-color"> with the same two values before paint; keep all
 // three in sync.
 const THEME_COLOR_LIGHT = '#d61450';
@@ -37,43 +39,26 @@ function applyTheme(mode: ThemeMode): void {
 	if (meta) meta.setAttribute('content', isDark ? THEME_COLOR_DARK : THEME_COLOR_LIGHT);
 }
 
-class ThemeService {
-	// Device-wide preference, persisted through safeStorage (see the singleton
-	// note below for why surviving login/logout is wanted here, not a leak).
-	#mode = new Persisted<ThemeMode>('theme-mode', 'system', { parse: parseThemeMode });
+/**
+ * Device-wide theme preference, persisted through safeStorage. Unlike user- or
+ * session-scoped state it is meant to survive login/logout, and the Pinia store
+ * (created once per app) holds only that persisted ref, never anything tied to a
+ * session. Created on first use; the root component reads it at boot so the
+ * saved theme is applied before the first screen.
+ */
+export const useThemeStore = defineStore('theme', () => {
+	const mode = usePersisted<ThemeMode>('theme-mode', 'system', { parse: parseThemeMode });
 
-	get mode(): ThemeMode {
-		return this.#mode.current;
+	applyTheme(mode.value);
+
+	window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+		if (mode.value === 'system') applyTheme('system');
+	});
+
+	function setMode(next: ThemeMode): void {
+		mode.value = next;
+		applyTheme(next);
 	}
 
-	constructor() {
-		applyTheme(this.#mode.current);
-
-		window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-			if (this.#mode.current === 'system') applyTheme('system');
-		});
-	}
-
-	setMode(mode: ThemeMode): void {
-		this.#mode.current = mode;
-		applyTheme(mode);
-	}
-}
-
-// Module-global singleton (the odd one out vs. the createContext-based services).
-// The no-module-singletons rule exists because a module outlives navigation and
-// login/logout; theme is a device-wide preference backed by localStorage, not
-// user-scoped state, so surviving a session change is the wanted behaviour rather
-// than a leak. Kept global so any component can read/toggle the theme without
-// threading context through every layout.
-let instance: ThemeService | null = null;
-
-export function setThemeService(): ThemeService {
-	instance = new ThemeService();
-	return instance;
-}
-
-export function getThemeService(): ThemeService {
-	if (!instance) instance = new ThemeService();
-	return instance;
-}
+	return { mode, setMode };
+});

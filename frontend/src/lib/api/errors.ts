@@ -1,6 +1,6 @@
-import { error as kitError } from '@sveltejs/kit';
-
 import type { ErrorMessage } from '#lib/api/generated/index.js';
+
+import { HttpError } from '#lib/router/load.js';
 
 // The closed set of error codes the API can return, generated from the backend
 // OpenAPI spec (ErrorMessage.code enum). Drives both typo safety on the message
@@ -338,10 +338,10 @@ export function getApiErrorDetail(error: unknown): string | null {
 }
 
 /**
- * Throw a SvelteKit error from a failed API call, so a `load` failure
- * speaks the same language as a form/toast failure. Maps the API error `code` to
- * the shared Russian copy and reuses the real HTTP status; `code` rides along on
- * `App.Error` for the error page and Sentry. Usage:
+ * Throw an `HttpError` from a failed API call, so a loader failure speaks the
+ * same language as a form/toast failure. Maps the API error `code` to the shared
+ * Russian copy and reuses the real HTTP status; `code` rides along on the error
+ * for the error screen and Sentry. Usage:
  * `if (apiError) throwApiError(apiError, response, 'Не удалось загрузить …');`
  */
 export function throwApiError(
@@ -355,7 +355,7 @@ export function throwApiError(
 
 	const message = getApiErrorDetail(apiError) ?? fallback;
 	const code = getApiErrorPayload(apiError)?.code;
-	return kitError(status, code ? { message, code } : { message });
+	throw new HttpError(status, message, code);
 }
 
 // Compile-time drift guard: every client-facing code must be covered by the

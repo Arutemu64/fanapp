@@ -1,8 +1,16 @@
-import type { Picture } from '@sveltejs/enhanced-img';
+/**
+ * What vite-imagetools' `as=picture` yields: one `srcset` string per
+ * non-fallback format, plus the fallback format's largest variant as `img`.
+ */
+export interface MapPicture {
+	/** `srcset` per format, e.g. `{ avif: '… 640w, …', webp: '…' }`. The fallback format has none. */
+	sources: Record<string, string>;
+	img: { src: string; w: number; h: number };
+}
 
 export interface MapEntry {
 	id: string;
-	picture: Picture;
+	picture: MapPicture;
 	// Short caption under the thumbnail, e.g. «1 этаж».
 	label: string;
 	alt: string;
@@ -13,20 +21,22 @@ export interface MapEntry {
 // The caption and alt text are the only per-file metadata that can't be
 // derived from the file: both are human-authored Russian, and alt is required
 // for accessibility. Intrinsic dimensions, formats and responsive sizes come
-// from <enhanced:img> at build time, so dropping in a map of any proportions
+// from vite-imagetools at build time, so dropping in a map of any proportions
 // needs only its entry here.
 const TEXT: Record<string, { label: string; alt: string }> = {
 	'map_1.png': { label: '1 этаж', alt: 'Карта 1 этажа' },
 	'map_2.png': { label: '2 и 3 этажи', alt: 'Карта 2 и 3 этажа' }
 };
 
-// enhanced-img processes each match at build into a Picture (AVIF/WebP + sized
-// variants, content-hashed so a swap busts every cache layer — browser, CDN,
-// service worker). eager inlines the objects; import:'default' unwraps each
-// module to its Picture.
-const modules = import.meta.glob<Picture>('#lib/assets/map/*.{jpg,jpeg,png}', {
+// vite-imagetools processes each match at build into a picture (AVIF/WebP +
+// sized variants, content-hashed so a swap busts every cache layer — browser,
+// CDN, service worker). The widths bracket the thumbnail (512px at 2x) and run
+// up to the 2835px original, which PhotoSwipe's zoom reaches for. PNG is the
+// fallback format, last by imagetools' convention. eager inlines the objects;
+// import:'default' unwraps each module to its picture.
+const modules = import.meta.glob<MapPicture>('#lib/assets/map/*.{jpg,jpeg,png}', {
 	eager: true,
-	query: { enhanced: true },
+	query: { w: '640;1280;1920;2835', format: 'avif;webp;png', as: 'picture' },
 	import: 'default'
 });
 

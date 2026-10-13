@@ -476,6 +476,7 @@ export const eventsClientKey: InjectionKey<EventsClient> = Symbol('eventsClient'
  */
 export function useEventsClient(): EventsClient {
 	const client = inject(eventsClientKey);
-	if (!client) throw new Error('EventsClient is not provided; call provide(eventsClientKey, …) in App.vue');
+	if (!client)
+		throw new Error('EventsClient is not provided; call provide(eventsClientKey, …) in App.vue');
 	return client;
 }

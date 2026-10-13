@@ -1,7 +1,4 @@
-import { dev, version } from '$app/env';
-import { PUBLIC_API_URL } from '$app/env/public';
-import { assets, immutable } from '$app/manifest';
-import { self } from '$app/service-worker';
+/// <reference lib="webworker" />
 import { clientsClaim } from 'workbox-core';
 import { ExpirationPlugin } from 'workbox-expiration';
 import {
@@ -12,11 +9,13 @@ import {
 import { NavigationRoute, registerRoute } from 'workbox-routing';
 import { CacheFirst } from 'workbox-strategies';
 
-import { buildPrecacheManifest } from '#lib/utils/precacheManifest.js';
+import { PUBLIC_API_URL } from '#lib/env.js';
 
-// The adapter-static fallback page (`fallback` in vite.config.ts) that every
-// SPA route renders from.
-const FALLBACK_PAGE = '200.html';
+declare const self: ServiceWorkerGlobalScope;
+
+// The SPA shell that every route renders from. Precached below (the `*.html`
+// glob in vite.config.ts), so navigations never wait on the network.
+const SHELL_PAGE = '/index.html';
 
 // The backend is deployed under a path on the *same* origin as the app
 // (e.g. https://host/api), so an origin check can't tell API calls apart from
@@ -35,37 +34,35 @@ const API_BASE_PATH = API_URL.pathname.replace(/\/+$/, '');
 // Matches the API base path and anything under it, anchored at the start.
 const API_PATH_PATTERN = new RegExp(`^${API_BASE_PATH}(/|$)`);
 
-// Caching only runs in a production build. In dev `$app/manifest` lists no build
-// output, and cache-first would be wrong anyway — that strategy assumes the
+// Caching only runs in a production build. In dev `self.__WB_MANIFEST` lists no
+// build output, and cache-first would be wrong anyway — that strategy assumes the
 // immutable, versioned shell only a real build emits — so the worker stays
 // inert. The push/notificationclick handlers below register either way, so push
 // still works in dev.
-if (!dev) {
+if (!import.meta.env.DEV) {
 	// --- Precaching -----------------------------------------------------------
-	// Precache the shell and serve it cache-first. Hashed files are keyed by URL
-	// and everything else by build version, so a cache hit is never stale, and
-	// cleanupOutdatedCaches prunes entries left by superseded revisions. The
-	// responsive image variants are kept out of the list (precacheManifest.ts)
-	// and runtime-cached below instead.
-	precacheAndRoute(
-		buildPrecacheManifest({ immutable, assets, fallbackPage: FALLBACK_PAGE, version })
-	);
+	// Precache the shell and serve it cache-first. vite-plugin-pwa injects the
+	// list at build time (globPatterns/globIgnores in vite.config.ts): hashed
+	// files under assets/ are keyed by URL alone, everything else carries a
+	// content revision, so a cache hit is never stale, and cleanupOutdatedCaches
+	// prunes entries left by superseded revisions. The responsive image variants
+	// are kept out of the list and runtime-cached below instead.
+	precacheAndRoute(self.__WB_MANIFEST);
 	cleanupOutdatedCaches();
 
 	// --- SPA navigation fallback ----------------------------------------------
-	// Every route renders from the same client-built shell, precached above as
-	// the adapter-static fallback. Serving it for navigations means
-	// startup never depends on the origin being healthy — a reachable-but-broken
+	// Every route renders from the same client-built shell, precached above.
+	// Serving it for navigations means startup never depends on the origin being healthy — a reachable-but-broken
 	// upstream (502/503/504) can't block the app from booting. API paths are
 	// denylisted so a navigation-shaped API request still hits the network.
 	registerRoute(
-		new NavigationRoute(createHandlerBoundToURL(`/${FALLBACK_PAGE}`), {
+		new NavigationRoute(createHandlerBoundToURL(SHELL_PAGE), {
 			denylist: [API_PATH_PATTERN]
 		})
 	);
 
 	// --- Responsive image variants: runtime cache-first -----------------------
-	// The AVIF/WebP/… variants <enhanced:img> emits are content-hashed and
+	// The AVIF/WebP/… variants vite-imagetools emits under /assets are content-hashed and
 	// immutable, so cache-first is safe (a hit is never stale) and they become
 	// available offline after the first online view. Precached shell images
 	// (icons) are already served by the precache route, so this only catches the

@@ -1,4 +1,4 @@
-import { PUBLIC_TIMEZONE } from '$app/env/public';
+import { PUBLIC_TIMEZONE } from '#lib/env.js';
 
 const SECONDS_IN_MINUTE = 60;
 const SECONDS_IN_HOUR = 60 * SECONDS_IN_MINUTE;

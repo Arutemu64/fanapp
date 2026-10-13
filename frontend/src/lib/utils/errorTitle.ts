@@ -1,6 +1,6 @@
 /**
  * Short Russian title for an HTTP error status. Shared by ErrorState (the
- * on-screen heading) and +error.svelte (the document <title>) so the mapping
+ * on-screen heading) and the router's document title so the mapping
  * lives in one place. The offline case isn't tied to a status code and is
  * handled separately in ErrorState.
  */

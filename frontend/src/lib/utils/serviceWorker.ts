@@ -1,22 +1,15 @@
-import type { AssetPath } from '$app/types';
-
-import { asset } from '$app/paths';
-
-// We register the service worker ourselves instead of letting SvelteKit do it
-// (vite.config.ts sets serviceWorker.register = false). SvelteKit's built-in
-// registration leaves the register() promise's rejection unhandled, and some
-// browsers reject it for reasons the app can do nothing about — storage
-// partitioning in embedded/in-app browsers, private/incognito modes, or an
-// enterprise policy that blocks workers. There the app simply degrades to
-// online-only, which is expected; without a .catch() that rejection surfaces to
-// Sentry as an uncaught "Error: Rejected". Mirrors SvelteKit's default: same
-// script path, registered on load so it doesn't compete with first paint for
-// bandwidth, and as a module worker — SvelteKit emits the worker as an ES module,
-// so a browser without module service workers (Firefox < 147) rejects here and
-// stays online-only.
-// SvelteKit serves the worker beside the static/ files and prefixes it the same
-// way in its own registration, but the generated AssetPath union lists only static/.
-const SCRIPT_URL = asset('service-worker.js' as AssetPath);
+// We register the service worker ourselves instead of letting vite-plugin-pwa
+// inject its registration (`injectRegister: false` in vite.config.ts). A bare
+// register() leaves the promise's rejection unhandled, and some browsers reject
+// it for reasons the app can do nothing about — storage partitioning in
+// embedded/in-app browsers, private/incognito modes, or an enterprise policy
+// that blocks workers. There the app simply degrades to online-only, which is
+// expected; without a .catch() that rejection surfaces to Sentry as an uncaught
+// "Error: Rejected". Registered on load so it doesn't compete with first paint
+// for bandwidth, and as a module worker — the plugin emits the worker as an ES
+// module (`rollupFormat: 'es'`), so a browser without module service workers
+// (Firefox < 147) rejects here and stays online-only.
+const SCRIPT_URL = '/service-worker.js';
 
 export function registerServiceWorker(): void {
 	if (!('serviceWorker' in navigator)) return;
@@ -34,7 +27,7 @@ export function registerServiceWorker(): void {
 		});
 	};
 
-	// `load` has already fired by the time the app hydrates on a warm/back-forward
+	// `load` has already fired by the time the app has booted on a warm/back-forward
 	// navigation, so the listener would never run — register straight away then.
 	if (document.readyState === 'complete') {
 		register();

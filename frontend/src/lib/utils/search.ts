@@ -51,7 +51,7 @@ export type SearchIndex<T> = {
  * ~400-event schedule from ~2ms to ~0.03ms per keypress, which matters because
  * the schedule page rebuilds its block/nomination grouping from the result.
  *
- * The index captures `items` as they are; rebuild it (a `$derived` on the list)
+ * The index captures `items` as they are; rebuild it (a `computed` on the list)
  * whenever the list itself changes.
  */
 export function createSearchIndex<T>(

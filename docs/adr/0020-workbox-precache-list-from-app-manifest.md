@@ -1,6 +1,6 @@
 # ADR-0020: Workbox precache list from `$app/manifest`, without vite-pwa
 
-- **Status:** Accepted
+- **Status:** Accepted; the precache list built from `$app/manifest` is superseded by [ADR-0023](0023-vite-plugin-pwa-inject-manifest.md)
 - **Date:** 2026-10-08
 - **Deciders:** Project maintainers
 
