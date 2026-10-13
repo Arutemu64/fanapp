@@ -187,6 +187,7 @@
 	{#if scheduleQuery.isError}
 		<ErrorState
 			variant="inline"
+			onRetry={() => void scheduleQuery.refetch()}
 			error={{
 				status: 500,
 				message: getApiErrorDetail(scheduleQuery.error) ?? 'Не удалось загрузить программу'

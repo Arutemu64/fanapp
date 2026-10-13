@@ -55,6 +55,7 @@
 	{#if changesQuery.isError}
 		<ErrorState
 			variant="inline"
+			onRetry={() => void changesQuery.refetch()}
 			error={{
 				status: 500,
 				message: getApiErrorDetail(changesQuery.error) ?? 'Не удалось загрузить изменения программы'
@@ -73,6 +74,10 @@
 	</div>
 
 	{#if changesQuery.hasNextPage}
-		<LoadMoreButton loading={changesQuery.isFetchingNextPage} onclick={loadMore} />
+		<LoadMoreButton
+			loading={changesQuery.isFetchingNextPage}
+			busy={changesQuery.isFetching}
+			onclick={loadMore}
+		/>
 	{/if}
 {/if}

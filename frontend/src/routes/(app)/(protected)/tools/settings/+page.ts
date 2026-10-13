@@ -20,7 +20,7 @@ export const load: PageLoad = async ({ parent }) => {
 	// The form is seeded once from this, so it waits for a fresh copy rather than
 	// a cached one an edit would then overwrite.
 	const settings = await queryClient
-		.query(getSettingsOptions())
+		.query({ ...getSettingsOptions(), staleTime: 0 })
 		.catch((apiError: unknown) =>
 			throwApiError(apiError, undefined, 'Не удалось загрузить настройки фестиваля')
 		);

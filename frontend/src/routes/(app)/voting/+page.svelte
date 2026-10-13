@@ -45,6 +45,7 @@
 	{#if nominationsQuery.isError}
 		<ErrorState
 			variant="inline"
+			onRetry={() => void nominationsQuery.refetch()}
 			error={{
 				status: 500,
 				message: getApiErrorDetail(nominationsQuery.error) ?? 'Не удалось загрузить номинации'

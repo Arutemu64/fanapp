@@ -17,8 +17,9 @@ export const load: PageLoad = async ({ parent, params }) => {
 		error(403, 'У тебя нет доступа к карточкам пользователей');
 	}
 
+	// Staff-only operational data, like the directory: waits for a fresh copy.
 	const data = await queryClient
-		.query(getUserOptions({ path: { user_id: params.id } }))
+		.query({ ...getUserOptions({ path: { user_id: params.id } }), staleTime: 0 })
 		.catch((apiError: unknown) => {
 			if (getApiErrorCode(apiError) === 'USER_NOT_FOUND') {
 				error(404, 'Пользователь не найден');

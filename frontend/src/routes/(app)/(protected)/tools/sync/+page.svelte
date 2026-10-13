@@ -99,6 +99,7 @@
 	{#if sourcesQuery.isError}
 		<ErrorState
 			variant="inline"
+			onRetry={() => void sourcesQuery.refetch()}
 			error={{
 				status: 500,
 				message:

@@ -1,9 +1,20 @@
 import { version } from '$app/env';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
-import { QueryClient } from '@tanstack/svelte-query';
+import { defaultShouldDehydrateQuery, QueryClient } from '@tanstack/svelte-query';
 import { persistQueryClient } from '@tanstack/svelte-query-persist-client';
 import { del, get, set } from 'idb-keyval';
 
+import { getApiErrorCode } from '#lib/api/errors.js';
+import {
+	getSettingsQueryKey,
+	getSyncSourcesQueryKey,
+	getUserQueryKey,
+	getVotingDashboardQueryKey,
+	listBroadcastsQueryKey,
+	listFeedbackQueryKey,
+	listScheduleChangesQueryKey,
+	listUsersQueryKey
+} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 import { currentUserOptions } from '#lib/api/index.js';
 import { FIRST_PAINT_TIMEOUT_MS } from '#lib/utils/fetchTimeout.js';
 
@@ -20,6 +31,24 @@ export const ssr = false;
 // https://tanstack.com/query/latest/docs/framework/react/plugins/persistQueryClient
 const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
+// Staff tools are online-only (tools/+layout.ts), so a saved copy of them buys
+// nothing offline — and the user directory, cards and feedback would leave
+// other people's details on the device for the cache's whole lifetime. Kept in
+// memory, never written to IndexedDB. Identified by operation id, the first
+// part of every hey-api query key.
+const ONLINE_ONLY_QUERY_IDS = new Set(
+	[
+		getSettingsQueryKey(),
+		getVotingDashboardQueryKey(),
+		getSyncSourcesQueryKey(),
+		listUsersQueryKey(),
+		getUserQueryKey({ path: { user_id: '' } }),
+		listFeedbackQueryKey(),
+		listBroadcastsQueryKey(),
+		listScheduleChangesQueryKey()
+	].map(([{ _id }]) => _id)
+);
+
 // Runs once per page load: nothing here reads `url` or calls `depends`, and the
 // app never calls `invalidateAll`/`refreshAll`, so the QueryClient — and the
 // cache in it — lives for the whole session. It is load data rather than a
@@ -28,7 +57,21 @@ const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 // outlives the document; logout empties it explicitly (forgetSession).
 export const load: LayoutLoad = async () => {
 	const queryClient = new QueryClient({
-		defaultOptions: { queries: { gcTime: CACHE_MAX_AGE_MS } }
+		defaultOptions: {
+			queries: {
+				gcTime: CACHE_MAX_AGE_MS,
+				// Data a load prefetched on hover/tap stays fresh when the page mounts a
+				// moment later, rather than being refetched straight away
+				// (https://tanstack.com/query/latest/docs/framework/react/guides/prefetching).
+				// Live data doesn't wait it out: SSE events and mutations invalidate, which
+				// refetches regardless of staleTime.
+				staleTime: 60 * 1000,
+				// Retry only a request that got no API answer — a network failure, a
+				// timeout, a gateway page. An API error (401, 404, validation) is the
+				// server's verdict, and repeating it only delays showing it by seconds.
+				retry: (failureCount, error) => failureCount < 3 && getApiErrorCode(error) === undefined
+			}
+		}
 	});
 
 	// One IndexedDB entry holds the whole cache, so every screen that has loaded
@@ -41,7 +84,13 @@ export const load: LayoutLoad = async () => {
 			storage: { getItem: get, setItem: set, removeItem: del }
 		}),
 		maxAge: CACHE_MAX_AGE_MS,
-		buster: version
+		buster: version,
+		dehydrateOptions: {
+			shouldDehydrateQuery: (query) => {
+				const [{ _id }] = query.queryKey as [{ _id: string }];
+				return defaultShouldDehydrateQuery(query) && !ONLINE_ONLY_QUERY_IDS.has(_id);
+			}
+		}
 	});
 	await restored;
 

@@ -332,7 +332,8 @@ export class EventsClient {
 			this.#pausedForVisibility = false;
 			this.#resume();
 			// No catch-up on the handshake: foregrounding already refetches every query
-			// on screen (TanStack Query's refetchOnWindowFocus), which also covers a
+			// on screen (TanStack Query's refetchOnWindowFocus) — all of them stale by
+			// now, since the pause grace outlasts the staleTime — which also covers a
 			// proxy that blocks SSE while HTTP works.
 			this.#needsCatchUp = false;
 			return;

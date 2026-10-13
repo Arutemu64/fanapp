@@ -49,6 +49,7 @@
 	{#if feedbackQuery.isError}
 		<ErrorState
 			variant="inline"
+			onRetry={() => void feedbackQuery.refetch()}
 			error={{
 				status: 500,
 				message: getApiErrorDetail(feedbackQuery.error) ?? 'Не удалось загрузить отзывы'
@@ -69,6 +70,10 @@
 	</MenuGroup>
 
 	{#if feedbackQuery.hasNextPage}
-		<LoadMoreButton loading={feedbackQuery.isFetchingNextPage} onclick={loadMore} />
+		<LoadMoreButton
+			loading={feedbackQuery.isFetchingNextPage}
+			busy={feedbackQuery.isFetching}
+			onclick={loadMore}
+		/>
 	{/if}
 {/if}

@@ -233,6 +233,7 @@
 	{#if notificationsQuery.isError}
 		<ErrorState
 			variant="inline"
+			onRetry={() => void notificationsQuery.refetch()}
 			error={{
 				status: 500,
 				message: getApiErrorDetail(notificationsQuery.error) ?? 'Не удалось загрузить уведомления'
@@ -302,6 +303,10 @@
 	</div>
 
 	{#if notificationsQuery.hasNextPage}
-		<LoadMoreButton loading={notificationsQuery.isFetchingNextPage} onclick={loadMore} />
+		<LoadMoreButton
+			loading={notificationsQuery.isFetchingNextPage}
+			busy={notificationsQuery.isFetching}
+			onclick={loadMore}
+		/>
 	{/if}
 {/if}

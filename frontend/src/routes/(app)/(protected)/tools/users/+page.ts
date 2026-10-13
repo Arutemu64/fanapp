@@ -30,11 +30,12 @@ export const load: PageLoad = async ({ parent, url }) => {
 	// Staff-only operational directory: stale data would misrepresent live state,
 	// so it waits for a fresh page rather than serving a cached one.
 	const data = await queryClient
-		.query(
-			listUsersOptions({
+		.query({
+			...listUsersOptions({
 				query: { limit: USERS_PAGE_SIZE, offset, ...(search ? { search } : {}) }
-			})
-		)
+			}),
+			staleTime: 0
+		})
 		.catch((apiError: unknown) =>
 			throwApiError(apiError, undefined, 'Не удалось загрузить пользователей')
 		);

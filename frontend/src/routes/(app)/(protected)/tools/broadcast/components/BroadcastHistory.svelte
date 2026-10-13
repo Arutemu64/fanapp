@@ -172,7 +172,11 @@
 		</MenuGroup>
 
 		{#if mailingsQuery.hasNextPage}
-			<LoadMoreButton loading={mailingsQuery.isFetchingNextPage} onclick={loadMore} />
+			<LoadMoreButton
+				loading={mailingsQuery.isFetchingNextPage}
+				busy={mailingsQuery.isFetching}
+				onclick={loadMore}
+			/>
 		{/if}
 	{/if}
 </section>

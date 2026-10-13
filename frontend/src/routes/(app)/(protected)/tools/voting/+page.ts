@@ -20,7 +20,7 @@ export const load: PageLoad = async ({ parent }) => {
 	// The voting-window form is seeded once from this, so it waits for a fresh
 	// copy rather than a cached one an edit would then overwrite.
 	const dashboard = await queryClient
-		.query(getVotingDashboardOptions())
+		.query({ ...getVotingDashboardOptions(), staleTime: 0 })
 		.catch((apiError: unknown) =>
 			throwApiError(apiError, undefined, 'Не удалось загрузить панель голосования')
 		);
