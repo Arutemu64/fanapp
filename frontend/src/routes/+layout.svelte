@@ -21,7 +21,10 @@
 	import UpdatePrompt from '#lib/components/UpdatePrompt.svelte';
 	import { setEventsClient } from '#lib/services/events.svelte.js';
 	import { setPwaService } from '#lib/services/pwa.svelte.js';
+	import { isReachable } from '#lib/services/reachability.js';
 	import { startReachabilityMonitor } from '#lib/services/reachabilityMonitor.js';
+	import { setSession } from '#lib/services/session.js';
+	import { browserSessionRouter } from '#lib/services/sessionRouter.js';
 	import { setThemeService } from '#lib/services/theme.svelte.js';
 	import { setToastService } from '#lib/services/toasts.svelte.js';
 	import { registerServiceWorker } from '#lib/utils/serviceWorker.js';
@@ -35,6 +38,12 @@
 	const { queryClient } = data;
 
 	const eventsClient = setEventsClient(queryClient);
+	const session = setSession({
+		queryClient,
+		events: eventsClient,
+		router: browserSessionRouter,
+		isReachable
+	});
 	setToastService();
 	const pwa = setPwaService();
 	setThemeService();
@@ -63,7 +72,7 @@
 		// Each teardown drops listeners, interceptors or a recovery poll, so dev HMR
 		// re-creating this layout doesn't stack duplicates.
 		const stopMonitor = startReachabilityMonitor();
-		const stopWatching = watchApiResponses(queryClient);
+		const stopWatching = watchApiResponses(queryClient, () => void session.expired());
 
 		eventsClient.on('schedule_updated', handleScheduleUpdated);
 		eventsClient.on('config_updated', handleConfigUpdated);

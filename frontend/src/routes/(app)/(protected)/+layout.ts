@@ -26,7 +26,7 @@ export const load: LayoutLoad = async ({ parent, url }) => {
 		}
 
 		// Reachable and still no user: a genuine guest — send them to login,
-		// remembering where they were headed so completeLogin can return them
+		// remembering where they were headed so Session.loggedIn can return them
 		// there (validated by sanitizeNextPath on the way back).
 		redirect(303, `/login?${LOGIN_NEXT_PARAM}=${encodeURIComponent(url.pathname + url.search)}`);
 	}

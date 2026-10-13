@@ -1,15 +1,3 @@
-import type { QueryClient } from '@tanstack/svelte-query';
-
-import { goto } from '$app/navigation';
-import { resolve } from '$app/paths';
-
-import type { EventsClient } from '#lib/services/events.svelte.js';
-import type { ToastService } from '#lib/services/toasts.svelte.js';
-
-import { getCurrentUserQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-
-import { clearLogoutPending } from './pendingLogout';
-
 /**
  * Query param carrying the in-app path a guest was trying to reach when the
  * `(protected)` guard bounced them to `/login`. Read back after a successful
@@ -34,43 +22,4 @@ export function sanitizeNextPath(raw: string | null): string | null {
 	if (/[\u0000-\u001f\u007f]/.test(raw)) return null;
 	if (!raw.startsWith('/') || raw.startsWith('//')) return null;
 	return raw;
-}
-
-/**
- * Finish a successful login: load the new identity, confirm with a toast,
- * navigate to the page the user originally wanted (the validated `next` param,
- * home otherwise), then restart the SSE stream so live events resume under the
- * new identity. Shared by every login form.
- */
-export async function completeLogin(
-	toastService: ToastService,
-	eventsClient: EventsClient,
-	queryClient: QueryClient,
-	message: string
-): Promise<void> {
-	// A logout queued while offline must not outlive a deliberate re-login: clear
-	// it so the reconnect flush can't revoke this fresh session (see pendingLogout).
-	clearLogoutPending();
-
-	// Everything cached so far was fetched as a guest: mark it all stale, so what
-	// is on screen refetches now and the rest when next shown. Identity is awaited,
-	// since the guards on the way to `next` read it from the cache.
-	void queryClient.invalidateQueries();
-	await queryClient.refetchQueries({ queryKey: getCurrentUserQueryKey() });
-
-	toastService.add(message, 'success');
-	const next = sanitizeNextPath(new URL(window.location.href).searchParams.get(LOGIN_NEXT_PARAM));
-	// `next` was captured by the (protected) guard from `url.pathname`, which is
-	// already base-qualified — wrapping it in resolve() would prepend the base
-	// path a second time. It is sanitized to an in-app path above.
-	const home = resolve('');
-	// goto rejects a path that matches no route, and `next` comes from the URL, so
-	// a hand-edited one can name anything: land on home rather than strand the
-	// now-signed-in user on the login form.
-	try {
-		await goto(next ?? home);
-	} catch {
-		await goto(home);
-	}
-	eventsClient.restart();
 }
