@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 from fanfan.application.dto.feedback import FeedbackDTO
-from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.page import CursorPagination, cut_page
 from fanfan.application.ports.gateways.feedback import FeedbackGateway
 from fanfan.application.services.current_user import CurrentUserProvider
 from fanfan.application.services.permissions import PermissionService
@@ -9,11 +9,12 @@ from fanfan.core.vo.permission import Permission
 
 
 class ListFeedbackInput(BaseModel):
-    pagination: Pagination
+    pagination: CursorPagination
 
 
 class ListFeedbackOutput(BaseModel):
     feedback: list[FeedbackDTO]
+    next_cursor: str | None
 
 
 class ListFeedback:
@@ -32,7 +33,8 @@ class ListFeedback:
         await self.perm_service.ensure(
             user=current_user, permission=Permission.FEEDBACK_READ
         )
-        feedback = await self.feedback_gateway.read_list_feedback(
+        rows = await self.feedback_gateway.read_list_feedback(
             pagination=data.pagination
         )
-        return ListFeedbackOutput(feedback=feedback)
+        feedback, next_cursor = cut_page(rows, data.pagination)
+        return ListFeedbackOutput(feedback=feedback, next_cursor=next_cursor)

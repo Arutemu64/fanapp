@@ -4,7 +4,7 @@ from uuid import UUID
 import pytest
 from dishka import AsyncContainer
 
-from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.page import CursorPagination
 from fanfan.application.interactors.schedule_mgmt.set_current_schedule_event import (
     SetCurrentScheduleEvent,
     SetCurrentScheduleEventInput,
@@ -95,7 +95,7 @@ async def test_set_current_event_replaces_previous_current_and_records_change(
     assert saved_new_event.is_current is True
 
     changes = await changes_gateway.read_list_schedule_changes(
-        pagination=Pagination(limit=100, offset=0)
+        pagination=CursorPagination(limit=100)
     )
     assert len(changes) == 1
     change = changes[0]
@@ -144,7 +144,7 @@ async def test_set_current_event_sets_current_when_none_was_current(
     assert saved_event.is_current is True
 
     changes = await changes_gateway.read_list_schedule_changes(
-        pagination=Pagination(limit=100, offset=0)
+        pagination=CursorPagination(limit=100)
     )
     assert len(changes) == 1
     change = changes[0]
@@ -184,7 +184,7 @@ async def test_set_current_event_can_unset_current_event(
     assert saved_previous_event.is_current is False
 
     changes = await changes_gateway.read_list_schedule_changes(
-        pagination=Pagination(limit=100, offset=0)
+        pagination=CursorPagination(limit=100)
     )
     assert len(changes) == 1
     change = changes[0]
@@ -232,7 +232,7 @@ async def test_set_current_event_raises_when_event_not_found(
     assert saved_previous_event.is_current is True
     assert (
         await changes_gateway.read_list_schedule_changes(
-            pagination=Pagination(limit=100, offset=0)
+            pagination=CursorPagination(limit=100)
         )
         == []
     )
@@ -264,7 +264,7 @@ async def test_set_current_event_without_permission_raises_access_denied(
     assert saved_event.is_current is False
     assert (
         await changes_gateway.read_list_schedule_changes(
-            pagination=Pagination(limit=100, offset=0)
+            pagination=CursorPagination(limit=100)
         )
         == []
     )
@@ -306,7 +306,7 @@ async def test_set_current_event_twice_in_a_row_raises_too_fast(
     assert saved_second_event.is_current is False
 
     changes = await changes_gateway.read_list_schedule_changes(
-        pagination=Pagination(limit=100, offset=0)
+        pagination=CursorPagination(limit=100)
     )
     assert len(changes) == 1
     assert [

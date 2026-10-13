@@ -4,7 +4,7 @@ from uuid import UUID
 import pytest
 from dishka import AsyncContainer
 
-from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.page import CursorPagination
 from fanfan.application.interactors.schedule_mgmt.update_schedule_event_skip import (
     UpdateScheduleEventSkip,
     UpdateScheduleEventSkipInput,
@@ -87,7 +87,7 @@ async def test_skip_marks_event_and_records_change(
     assert saved_second.is_skipped is True
 
     changes = await changes_gateway.read_list_schedule_changes(
-        pagination=Pagination(limit=100, offset=0)
+        pagination=CursorPagination(limit=100)
     )
     assert len(changes) == 1
     change = changes[0]
@@ -133,7 +133,7 @@ async def test_unskip_marks_event_and_records_change(
     assert saved_event.is_skipped is False
 
     changes = await changes_gateway.read_list_schedule_changes(
-        pagination=Pagination(limit=100, offset=0)
+        pagination=CursorPagination(limit=100)
     )
     assert len(changes) == 1
     change = changes[0]
@@ -178,7 +178,7 @@ async def test_skip_current_event_raises_and_records_nothing(
     assert saved_current.is_current is True
     assert (
         await changes_gateway.read_list_schedule_changes(
-            pagination=Pagination(limit=100, offset=0)
+            pagination=CursorPagination(limit=100)
         )
         == []
     )
@@ -205,7 +205,7 @@ async def test_skip_raises_when_event_not_found(
 
     assert (
         await changes_gateway.read_list_schedule_changes(
-            pagination=Pagination(limit=100, offset=0)
+            pagination=CursorPagination(limit=100)
         )
         == []
     )
@@ -239,7 +239,7 @@ async def test_skip_without_permission_raises_access_denied(
     assert saved_event.is_skipped is False
     assert (
         await changes_gateway.read_list_schedule_changes(
-            pagination=Pagination(limit=100, offset=0)
+            pagination=CursorPagination(limit=100)
         )
         == []
     )
@@ -279,7 +279,7 @@ async def test_skip_twice_in_a_row_raises_too_fast(
     assert saved_second.is_skipped is False
 
     changes = await changes_gateway.read_list_schedule_changes(
-        pagination=Pagination(limit=100, offset=0)
+        pagination=CursorPagination(limit=100)
     )
     assert len(changes) == 1
     assert changes[0].changed_event is not None

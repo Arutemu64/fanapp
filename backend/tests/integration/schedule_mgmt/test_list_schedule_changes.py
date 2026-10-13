@@ -3,7 +3,7 @@ from collections.abc import Callable
 import pytest
 from dishka import AsyncContainer
 
-from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.page import CursorPagination
 from fanfan.application.interactors.schedule_mgmt.list_schedule_changes import (
     ListScheduleChanges,
     ListScheduleChangesInput,
@@ -27,7 +27,7 @@ async def _add_change(dishka_request: AsyncContainer, author: User) -> ScheduleC
     The test runs in one wrapping transaction, so created_at (server-side
     func.now(), the transaction clock) is identical across these rows; the
     later-generated id (uuid7) then decides order under the gateway's
-    id.desc() tiebreaker — a regression guard for offset pages skipping rows.
+    id.desc() tiebreaker — a regression guard for the page cursor skipping rows.
     """
     schedule_change_gateway = await dishka_request.get(ScheduleChangeGateway)
     uow = await dishka_request.get(UnitOfWork)
@@ -54,7 +54,7 @@ async def test_list_schedule_changes_newest_first_stable_under_created_at_tie(
     login(schedule_editor)
 
     result = await interactor(
-        ListScheduleChangesInput(pagination=Pagination(limit=100, offset=0))
+        ListScheduleChangesInput(pagination=CursorPagination(limit=100))
     )
 
     assert [c.id for c in result.schedule_changes] == [second, first]
@@ -72,14 +72,55 @@ async def test_list_schedule_changes_paginates_without_skips(
     login(schedule_editor)
 
     first_page = await interactor(
-        ListScheduleChangesInput(pagination=Pagination(limit=1, offset=0))
+        ListScheduleChangesInput(pagination=CursorPagination(limit=1))
     )
     second_page = await interactor(
-        ListScheduleChangesInput(pagination=Pagination(limit=1, offset=1))
+        ListScheduleChangesInput(
+            pagination=CursorPagination.from_token(
+                limit=1, cursor=first_page.next_cursor
+            )
+        )
     )
 
     assert [c.id for c in first_page.schedule_changes] == [second]
     assert [c.id for c in second_page.schedule_changes] == [first]
+    assert first_page.next_cursor is not None
+    assert second_page.next_cursor is None
+
+
+async def test_list_schedule_changes_next_page_survives_deleting_a_seen_row(
+    dishka_request: AsyncContainer,
+    schedule_editor: User,
+    login: Callable[[User], None],
+) -> None:
+    # Offset paging would shift the second page up by the deleted row and skip
+    # `second` without anyone noticing.
+    first = await _add_change(dishka_request, schedule_editor)
+    second = await _add_change(dishka_request, schedule_editor)
+    third = await _add_change(dishka_request, schedule_editor)
+
+    interactor = await dishka_request.get(ListScheduleChanges)
+    login(schedule_editor)
+
+    first_page = await interactor(
+        ListScheduleChangesInput(pagination=CursorPagination(limit=1))
+    )
+    schedule_change_gateway = await dishka_request.get(ScheduleChangeGateway)
+    uow = await dishka_request.get(UnitOfWork)
+    seen = await schedule_change_gateway.get_by_id(third)
+    assert seen is not None
+    await schedule_change_gateway.delete(seen)
+    await uow.commit()
+    second_page = await interactor(
+        ListScheduleChangesInput(
+            pagination=CursorPagination.from_token(
+                limit=2, cursor=first_page.next_cursor
+            )
+        )
+    )
+
+    assert [c.id for c in first_page.schedule_changes] == [third]
+    assert [c.id for c in second_page.schedule_changes] == [second, first]
 
 
 async def test_list_schedule_changes_denied_without_permission(
@@ -92,5 +133,5 @@ async def test_list_schedule_changes_denied_without_permission(
 
     with pytest.raises(AccessDenied):
         await interactor(
-            ListScheduleChangesInput(pagination=Pagination(limit=100, offset=0))
+            ListScheduleChangesInput(pagination=CursorPagination(limit=100))
         )

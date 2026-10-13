@@ -41,7 +41,7 @@ export const baselineHandlers: Handlers = {
 		voting_start: null,
 		voting_end: null
 	}),
-	'GET /notifications/': json<ListUserNotificationOutput>({ notifications: [] }),
+	'GET /notifications/': json<ListUserNotificationOutput>({ next_cursor: null, notifications: [] }),
 	'GET /notifications/unread-count': json<UnreadNotificationsCountOutput>({
 		count: 0
 	}),

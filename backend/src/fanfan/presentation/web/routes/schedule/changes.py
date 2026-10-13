@@ -4,7 +4,7 @@ from dishka import FromDishka
 from dishka.integrations.fastapi import inject
 from fastapi import APIRouter, Path, Query
 
-from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.page import CursorPagination
 from fanfan.application.interactors.schedule_mgmt.list_schedule_changes import (
     ListScheduleChanges,
     ListScheduleChangesInput,
@@ -17,6 +17,7 @@ from fanfan.application.interactors.schedule_mgmt.undo_schedule_change import (
 from fanfan.core.vo.schedule_change import ScheduleChangeId
 from fanfan.presentation.web.responses import AUTH_RESPONSES
 from fanfan.presentation.web.schemas.error import ErrorMessage
+from fanfan.presentation.web.schemas.page import PageCursorQuery
 from fanfan.presentation.web.security import session_security
 
 changes_router = APIRouter(
@@ -39,9 +40,11 @@ changes_router = APIRouter(
 async def list_schedule_changes(
     interactor: FromDishka[ListScheduleChanges],
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
-    offset: Annotated[int, Query(ge=0)] = 0,
+    cursor: PageCursorQuery = None,
 ) -> ListScheduleChangesOutput:
-    data = ListScheduleChangesInput(pagination=Pagination(limit=limit, offset=offset))
+    data = ListScheduleChangesInput(
+        pagination=CursorPagination.from_token(limit=limit, cursor=cursor)
+    )
     return await interactor(data)
 
 

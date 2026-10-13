@@ -259,6 +259,7 @@ export type ErrorMessage = {
 		| 'INVALID_EMAIL'
 		| 'INVALID_FESTIVAL_TIME_RANGE'
 		| 'INVALID_OTP_CODE'
+		| 'INVALID_PAGE_CURSOR'
 		| 'INVALID_SCHEDULE_FILE'
 		| 'INVALID_TELEGRAM_AUTH_PAYLOAD'
 		| 'INVALID_VOTING_TIME_RANGE'
@@ -488,6 +489,10 @@ export type ListBroadcastsOutput = {
 	 * Mailings
 	 */
 	mailings: Array<MailingDto>;
+	/**
+	 * Next Cursor
+	 */
+	next_cursor: string | null;
 };
 
 /**
@@ -498,6 +503,10 @@ export type ListFeedbackOutput = {
 	 * Feedback
 	 */
 	feedback: Array<FeedbackDto>;
+	/**
+	 * Next Cursor
+	 */
+	next_cursor: string | null;
 };
 
 /**
@@ -508,6 +517,10 @@ export type ListScheduleChangesOutput = {
 	 * Schedule Changes
 	 */
 	schedule_changes: Array<ScheduleChangeFullDto>;
+	/**
+	 * Next Cursor
+	 */
+	next_cursor: string | null;
 };
 
 /**
@@ -518,6 +531,10 @@ export type ListUserNotificationOutput = {
 	 * Notifications
 	 */
 	notifications: Array<NotificationDto>;
+	/**
+	 * Next Cursor
+	 */
+	next_cursor: string | null;
 };
 
 /**
@@ -903,6 +920,10 @@ export type ScheduleChangeFullDto = {
 	changed_event: ScheduleChangeEventDto | null;
 	argument_event: ScheduleChangeEventDto | null;
 	user: ScheduleChangeUserDto | null;
+	/**
+	 * Created At
+	 */
+	created_at: string;
 };
 
 /**
@@ -2422,9 +2443,11 @@ export type ListScheduleChangesData = {
 		 */
 		limit?: number;
 		/**
-		 * Offset
+		 * Cursor
+		 *
+		 * Opaque `next_cursor` from the previous page; omit it for the first page.
 		 */
-		offset?: number;
+		cursor?: string | null;
 	};
 	url: '/schedule/changes/';
 };
@@ -2984,9 +3007,11 @@ export type ListUserNotificationsData = {
 		 */
 		limit?: number;
 		/**
-		 * Offset
+		 * Cursor
+		 *
+		 * Opaque `next_cursor` from the previous page; omit it for the first page.
 		 */
-		offset?: number;
+		cursor?: string | null;
 	};
 	url: '/notifications/';
 };
@@ -3168,9 +3193,11 @@ export type ListBroadcastsData = {
 		 */
 		limit?: number;
 		/**
-		 * Offset
+		 * Cursor
+		 *
+		 * Opaque `next_cursor` from the previous page; omit it for the first page.
 		 */
-		offset?: number;
+		cursor?: string | null;
 	};
 	url: '/notifications/broadcast';
 };
@@ -3400,9 +3427,11 @@ export type ListFeedbackData = {
 		 */
 		limit?: number;
 		/**
-		 * Offset
+		 * Cursor
+		 *
+		 * Opaque `next_cursor` from the previous page; omit it for the first page.
 		 */
-		offset?: number;
+		cursor?: string | null;
 	};
 	url: '/feedback/';
 };

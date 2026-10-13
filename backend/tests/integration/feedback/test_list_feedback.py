@@ -3,7 +3,7 @@ from collections.abc import Callable
 import pytest
 from dishka import AsyncContainer
 
-from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.page import CursorPagination
 from fanfan.application.interactors.feedback.list_feedback import (
     ListFeedback,
     ListFeedbackInput,
@@ -48,9 +48,7 @@ async def test_list_feedback_returns_newest_first_with_author(
     interactor = await dishka_request.get(ListFeedback)
     login(feedback_reader)
 
-    result = await interactor(
-        ListFeedbackInput(pagination=Pagination(limit=100, offset=0))
-    )
+    result = await interactor(ListFeedbackInput(pagination=CursorPagination(limit=100)))
 
     assert [item.text for item in result.feedback] == ["Второй отзыв", "Первый отзыв"]
     newest = result.feedback[0]
@@ -71,14 +69,20 @@ async def test_list_feedback_paginates(
     login(feedback_reader)
 
     first_page = await interactor(
-        ListFeedbackInput(pagination=Pagination(limit=1, offset=0))
+        ListFeedbackInput(pagination=CursorPagination(limit=1))
     )
     second_page = await interactor(
-        ListFeedbackInput(pagination=Pagination(limit=1, offset=1))
+        ListFeedbackInput(
+            pagination=CursorPagination.from_token(
+                limit=1, cursor=first_page.next_cursor
+            )
+        )
     )
 
     assert [item.text for item in first_page.feedback] == ["Второй отзыв"]
     assert [item.text for item in second_page.feedback] == ["Первый отзыв"]
+    assert first_page.next_cursor is not None
+    assert second_page.next_cursor is None
 
 
 async def test_list_feedback_denied_without_permission(
@@ -90,4 +94,4 @@ async def test_list_feedback_denied_without_permission(
     login(visitor)
 
     with pytest.raises(AccessDenied):
-        await interactor(ListFeedbackInput(pagination=Pagination(limit=100, offset=0)))
+        await interactor(ListFeedbackInput(pagination=CursorPagination(limit=100)))

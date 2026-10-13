@@ -1,17 +1,18 @@
 from pydantic import BaseModel
 
 from fanfan.application.dto.notification import NotificationDTO
-from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.page import CursorPagination, cut_page
 from fanfan.application.ports.gateways.notifications import NotificationGateway
 from fanfan.application.services.current_user import CurrentUserProvider
 
 
 class ListUserNotificationsInput(BaseModel):
-    pagination: Pagination
+    pagination: CursorPagination
 
 
 class ListUserNotificationOutput(BaseModel):
     notifications: list[NotificationDTO]
+    next_cursor: str | None
 
 
 class ListUserNotifications:
@@ -28,9 +29,11 @@ class ListUserNotifications:
     ) -> ListUserNotificationOutput:
         current_user_id = await self.current_user_provider.require_user_id()
 
-        notifications = await self.notification_gateway.read_list_user_notifications(
+        rows = await self.notification_gateway.read_list_user_notifications(
             user_id=current_user_id,
             pagination=data.pagination,
         )
-
-        return ListUserNotificationOutput(notifications=notifications)
+        notifications, next_cursor = cut_page(rows, data.pagination)
+        return ListUserNotificationOutput(
+            notifications=notifications, next_cursor=next_cursor
+        )

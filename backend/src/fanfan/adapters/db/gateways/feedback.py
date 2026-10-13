@@ -3,8 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from fanfan.adapters.db.models import FeedbackORM
+from fanfan.adapters.db.pagination import rows_after
 from fanfan.application.dto.feedback import FeedbackDTO, FeedbackUserDTO
-from fanfan.application.dto.page import Pagination
+from fanfan.application.dto.page import CursorPagination
 from fanfan.application.ports.gateways.feedback import FeedbackGateway
 from fanfan.core.models.feedback import Feedback
 from fanfan.core.vo.feedback import FeedbackId
@@ -40,16 +41,21 @@ class SqlFeedbackGateway(FeedbackGateway):
         self.session.add(feedback_orm)
         await self.session.flush()
 
-    async def read_list_feedback(self, pagination: Pagination) -> list[FeedbackDTO]:
+    async def read_list_feedback(
+        self, pagination: CursorPagination
+    ) -> list[FeedbackDTO]:
         # id (uuid7, time-ordered) is the tiebreaker so rows sharing a created_at
         # — feedback submitted within the same clock tick — keep a stable,
-        # newest-first order across paginated requests instead of shuffling.
+        # newest-first order the page cursor can point into.
         stmt = (
             select(FeedbackORM)
             .order_by(FeedbackORM.created_at.desc(), FeedbackORM.id.desc())
             .options(joinedload(FeedbackORM.user))
-            .limit(pagination.limit)
-            .offset(pagination.offset)
+            .limit(pagination.fetch_limit)
         )
+        if pagination.after is not None:
+            stmt = stmt.where(
+                rows_after(FeedbackORM.created_at, FeedbackORM.id, pagination.after)
+            )
         feedback = await self.session.scalars(stmt)
         return [_parse_dto(f) for f in feedback]

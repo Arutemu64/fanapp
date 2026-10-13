@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 from fanfan.core.vo.mailing import MailingId
@@ -27,3 +29,4 @@ class ScheduleChangeFullDTO(BaseModel):
     changed_event: ScheduleChangeEventDTO | None
     argument_event: ScheduleChangeEventDTO | None
     user: ScheduleChangeUserDTO | None
+    created_at: datetime

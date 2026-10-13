@@ -14,12 +14,8 @@
 	import { Badge, type BadgeVariant } from '#lib/components/ui/badge/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
-	import {
-		BROADCAST_PAGE_REQUEST_LIMIT,
-		BROADCAST_PAGE_SIZE
-	} from '#lib/constants/notifications.js';
+	import { BROADCAST_PAGE_SIZE } from '#lib/constants/notifications.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import { dedupeById } from '#lib/utils/feed.js';
 	import { formatFestivalDateTime } from '#lib/utils/formatters.js';
 
 	import SectionSpinner from '../../../../components/SectionSpinner.svelte';
@@ -41,24 +37,15 @@
 		cancelMutation.isPending ? cancelMutation.variables?.path.mailing_id : null
 	);
 
-	// Each page over-fetches one item so a short page proves there is no next one.
 	const mailingsQuery = createInfiniteQuery(() => ({
-		...listBroadcastsInfiniteOptions({ query: { limit: BROADCAST_PAGE_REQUEST_LIMIT } }),
-		initialPageParam: 0,
-		getNextPageParam: (lastPage, allPages) => {
-			if (lastPage.mailings.length <= BROADCAST_PAGE_SIZE) return undefined;
-			return allPages.length * BROADCAST_PAGE_SIZE;
-		}
+		...listBroadcastsInfiniteOptions({ query: { limit: BROADCAST_PAGE_SIZE } }),
+		// An object page param is request overrides to hey-api, a string the cursor:
+		// an empty object asks for the first page.
+		initialPageParam: {},
+		getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined
 	}));
 
-	// Items can shift between page requests, so one may arrive twice.
-	let mailings = $derived.by(() => {
-		let items: MailingDto[] = [];
-		for (const page of mailingsQuery.data?.pages ?? []) {
-			items = dedupeById(items, page.mailings.slice(0, BROADCAST_PAGE_SIZE));
-		}
-		return items;
-	});
+	let mailings = $derived(mailingsQuery.data?.pages.flatMap((page) => page.mailings) ?? []);
 
 	async function loadMore() {
 		const result = await mailingsQuery.fetchNextPage();

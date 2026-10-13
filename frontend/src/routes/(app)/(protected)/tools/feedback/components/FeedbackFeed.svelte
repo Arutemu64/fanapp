@@ -1,41 +1,29 @@
 <script lang="ts">
 	import { createInfiniteQuery } from '@tanstack/svelte-query';
 
-	import type { FeedbackDto } from '#lib/api/generated/index.js';
-
 	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import { listFeedbackInfiniteOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import ErrorState from '#lib/components/ErrorState.svelte';
 	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
-	import { FEEDBACK_PAGE_REQUEST_LIMIT, FEEDBACK_PAGE_SIZE } from '#lib/constants/feedback.js';
+	import { FEEDBACK_PAGE_SIZE } from '#lib/constants/feedback.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import { dedupeById } from '#lib/utils/feed.js';
 
 	import SectionSpinner from '../../../../components/SectionSpinner.svelte';
 	import FeedbackItem from './FeedbackItem.svelte';
 
 	const toastService = getToastService();
 
-	// Each page over-fetches one item so a short page proves there is no next one.
 	const feedbackQuery = createInfiniteQuery(() => ({
-		...listFeedbackInfiniteOptions({ query: { limit: FEEDBACK_PAGE_REQUEST_LIMIT } }),
-		initialPageParam: 0,
-		getNextPageParam: (lastPage, allPages) => {
-			if (lastPage.feedback.length <= FEEDBACK_PAGE_SIZE) return undefined;
-			return allPages.length * FEEDBACK_PAGE_SIZE;
-		}
+		...listFeedbackInfiniteOptions({ query: { limit: FEEDBACK_PAGE_SIZE } }),
+		// An object page param is request overrides to hey-api, a string the cursor:
+		// an empty object asks for the first page.
+		initialPageParam: {},
+		getNextPageParam: (lastPage) => lastPage.next_cursor ?? undefined
 	}));
 
-	// Items can shift between page requests, so one may arrive twice.
-	let feedback = $derived.by(() => {
-		let items: FeedbackDto[] = [];
-		for (const page of feedbackQuery.data?.pages ?? []) {
-			items = dedupeById(items, page.feedback.slice(0, FEEDBACK_PAGE_SIZE));
-		}
-		return items;
-	});
+	let feedback = $derived(feedbackQuery.data?.pages.flatMap((page) => page.feedback) ?? []);
 
 	async function loadMore() {
 		const result = await feedbackQuery.fetchNextPage();

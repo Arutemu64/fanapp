@@ -23,6 +23,7 @@ test.describe('notifications', { tag: '@critical' }, () => {
 		api.use(loggedInAs());
 		api.use({
 			'GET /notifications/': json<ListUserNotificationOutput>({
+				next_cursor: null,
 				notifications: [UNREAD]
 			}),
 			// Opening the page marks the on-screen unread items read (mark-on-open).
@@ -49,7 +50,10 @@ test.describe('notifications', { tag: '@critical' }, () => {
 		let unreadCount = 30;
 		api.use(loggedInAs());
 		api.use({
-			'GET /notifications/': json<ListUserNotificationOutput>({ notifications: [UNREAD] }),
+			'GET /notifications/': json<ListUserNotificationOutput>({
+				next_cursor: null,
+				notifications: [UNREAD]
+			}),
 			'POST /notifications/mark-read': json({}),
 			'GET /notifications/unread-count': () =>
 				json<UnreadNotificationsCountOutput>({ count: unreadCount }),
@@ -73,6 +77,7 @@ test.describe('notifications', { tag: '@critical' }, () => {
 		api.use(loggedInAs());
 		api.use({
 			'GET /notifications/': json<ListUserNotificationOutput>({
+				next_cursor: null,
 				notifications: [
 					{
 						...UNREAD,

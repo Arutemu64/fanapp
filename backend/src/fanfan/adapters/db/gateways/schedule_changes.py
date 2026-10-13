@@ -3,7 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from fanfan.adapters.db.models import ScheduleChangeORM
-from fanfan.application.dto.page import Pagination
+from fanfan.adapters.db.pagination import rows_after
+from fanfan.application.dto.page import CursorPagination
 from fanfan.application.dto.schedule_change import (
     ScheduleChangeEventDTO,
     ScheduleChangeFullDTO,
@@ -83,6 +84,7 @@ def _parse_full_dto(
         )
         if schedule_change_orm.user
         else None,
+        created_at=schedule_change_orm.created_at,
     )
 
 
@@ -134,23 +136,28 @@ class SqlScheduleChangeGateway(ScheduleChangeGateway):
         return _parse_full_dto(result) if result else None
 
     async def read_list_schedule_changes(
-        self, pagination: Pagination
+        self, pagination: CursorPagination
     ) -> list[ScheduleChangeFullDTO]:
         stmt = (
             select(ScheduleChangeORM)
-            # id (uuid7, time-ordered) breaks created_at ties so a stable total
-            # order holds across offset pages — a bulk schedule edit inserts many
-            # change rows in one transaction sharing created_at, which would
-            # otherwise shift between pages and let a change slip through unseen.
+            # id (uuid7, time-ordered) breaks created_at ties so the page cursor
+            # names one row — a bulk schedule edit inserts many change rows in one
+            # transaction sharing created_at, which would otherwise leave the
+            # cursor ambiguous and let a change slip through unseen.
             .order_by(ScheduleChangeORM.created_at.desc(), ScheduleChangeORM.id.desc())
             .options(
                 joinedload(ScheduleChangeORM.changed_event),
                 joinedload(ScheduleChangeORM.argument_event),
                 joinedload(ScheduleChangeORM.user),
             )
-            .limit(pagination.limit)
-            .offset(pagination.offset)
+            .limit(pagination.fetch_limit)
         )
+        if pagination.after is not None:
+            stmt = stmt.where(
+                rows_after(
+                    ScheduleChangeORM.created_at, ScheduleChangeORM.id, pagination.after
+                )
+            )
         result = (await self.session.scalars(stmt)).unique()
         return [_parse_full_dto(s) for s in result]
 

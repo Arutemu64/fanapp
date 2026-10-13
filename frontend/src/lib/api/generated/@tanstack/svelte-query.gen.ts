@@ -1085,7 +1085,8 @@ export const listScheduleChangesInfiniteOptions = (options?: Options<ListSchedul
 		ListScheduleChangesError,
 		InfiniteData<ListScheduleChangesResponse>,
 		QueryKey<Options<ListScheduleChangesData>>,
-		| number
+		| string
+		| null
 		| Pick<QueryKey<Options<ListScheduleChangesData>>[0], 'body' | 'headers' | 'path' | 'query'>
 	>(
 		// @ts-ignore
@@ -1100,7 +1101,7 @@ export const listScheduleChangesInfiniteOptions = (options?: Options<ListSchedul
 						? pageParam
 						: {
 								query: {
-									offset: pageParam
+									cursor: pageParam
 								}
 							};
 				const params = createInfiniteParams(queryKey, page);
@@ -1537,7 +1538,8 @@ export const listUserNotificationsInfiniteOptions = (
 		ListUserNotificationsError,
 		InfiniteData<ListUserNotificationsResponse>,
 		QueryKey<Options<ListUserNotificationsData>>,
-		| number
+		| string
+		| null
 		| Pick<QueryKey<Options<ListUserNotificationsData>>[0], 'body' | 'headers' | 'path' | 'query'>
 	>(
 		// @ts-ignore
@@ -1552,7 +1554,7 @@ export const listUserNotificationsInfiniteOptions = (
 						? pageParam
 						: {
 								query: {
-									offset: pageParam
+									cursor: pageParam
 								}
 							};
 				const params = createInfiniteParams(queryKey, page);
@@ -1726,7 +1728,9 @@ export const listBroadcastsInfiniteOptions = (options?: Options<ListBroadcastsDa
 		ListBroadcastsError,
 		InfiniteData<ListBroadcastsResponse>,
 		QueryKey<Options<ListBroadcastsData>>,
-		number | Pick<QueryKey<Options<ListBroadcastsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+		| string
+		| null
+		| Pick<QueryKey<Options<ListBroadcastsData>>[0], 'body' | 'headers' | 'path' | 'query'>
 	>(
 		// @ts-ignore
 		{
@@ -1740,7 +1744,7 @@ export const listBroadcastsInfiniteOptions = (options?: Options<ListBroadcastsDa
 						? pageParam
 						: {
 								query: {
-									offset: pageParam
+									cursor: pageParam
 								}
 							};
 				const params = createInfiniteParams(queryKey, page);
@@ -1927,7 +1931,9 @@ export const listFeedbackInfiniteOptions = (options?: Options<ListFeedbackData>)
 		ListFeedbackError,
 		InfiniteData<ListFeedbackResponse>,
 		QueryKey<Options<ListFeedbackData>>,
-		number | Pick<QueryKey<Options<ListFeedbackData>>[0], 'body' | 'headers' | 'path' | 'query'>
+		| string
+		| null
+		| Pick<QueryKey<Options<ListFeedbackData>>[0], 'body' | 'headers' | 'path' | 'query'>
 	>(
 		// @ts-ignore
 		{
@@ -1941,7 +1947,7 @@ export const listFeedbackInfiniteOptions = (options?: Options<ListFeedbackData>)
 						? pageParam
 						: {
 								query: {
-									offset: pageParam
+									cursor: pageParam
 								}
 							};
 				const params = createInfiniteParams(queryKey, page);
