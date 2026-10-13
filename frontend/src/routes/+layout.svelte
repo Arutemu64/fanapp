@@ -47,6 +47,19 @@
 		// catch a rejected register() ourselves — see registerServiceWorker.
 		registerServiceWorker();
 
+		// Exempt the saved offline screens from eviction under storage pressure, so a
+		// full phone can't drop the programme before the festival. Only when
+		// installed: Chrome and Safari grant or deny silently, an installed app
+		// among WebKit's grounds for granting
+		// (https://webkit.org/blog/14403/updates-to-storage-policy/), but Firefox
+		// asks with a popup, which a passing visitor shouldn't get
+		// (https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria).
+		if (pwa.isInstalled) {
+			void navigator.storage?.persist().catch(() => {
+				// Denied or unsupported: the cache stays best-effort.
+			});
+		}
+
 		// Each teardown drops listeners, interceptors or a recovery poll, so dev HMR
 		// re-creating this layout doesn't stack duplicates.
 		const stopMonitor = startReachabilityMonitor();
