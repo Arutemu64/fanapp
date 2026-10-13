@@ -92,14 +92,15 @@
       "automerge": true
     },
     {
-      "description": "Shared pin (docs/dependencies.md): keep every uv pin identical. Groups the PyPI pin (setup.sh, pyproject [tool.uv]), the setup-uv 'version' input in CI that the github-actions manager reads as 'astral-sh/uv', the Docker builder image, and the mise toolchain pin into one PR so they always bump together. uv_build rides along: Astral releases it from the same repo under the same version numbers, so with rangeStrategy 'bump' its floor in [build-system] requires would otherwise move in a PR of its own and leave the two disagreeing.",
+      "description": "Shared pin (docs/dependencies.md): keep every uv pin identical. Groups the PyPI pin (setup.sh, pyproject [tool.uv]), the setup-uv 'version' input in CI and the Docker builder image (both read as 'astral-sh/uv' GitHub releases — see the rule below), and the mise toolchain pin into one PR so they always bump together. uv_build rides along: Astral releases it from the same repo under the same version numbers, so with rangeStrategy 'bump' its floor in [build-system] requires would otherwise move in a PR of its own and leave the two disagreeing.",
       "groupName": "uv",
-      "matchPackageNames": [
-        "uv",
-        "astral-sh/uv",
-        "ghcr.io/astral-sh/uv",
-        "uv_build"
-      ]
+      "matchPackageNames": ["uv", "astral-sh/uv", "uv_build"]
+    },
+    {
+      "description": "The backend/Dockerfile builder image is tracked by the 'astral-sh/uv' regex manager below, not by the dockerfile manager. GHCR returns no release timestamps (https://docs.renovatebot.com/key-concepts/minimum-release-age/), and since Renovate 42 the default minimumReleaseAgeBehaviour 'timestamp-required' holds such an update forever, so the uv group shipped without the image and its bumped [tool.uv] required-version broke the image build (PR #643). Turning on 'timestamp-optional' for the image instead is no fix: with no age check it jumps to the newest tag while the aged sites stay a release behind, the same mismatch the other way round.",
+      "matchManagers": ["dockerfile"],
+      "matchPackageNames": ["ghcr.io/astral-sh/uv"],
+      "enabled": false
     },
     {
       "description": "Shared pin (docs/dependencies.md): keep every Postgres image pin identical (docker-compose + the two Python literals) — a mismatched image risks false migration diffs. One grouped PR. postgres-backup-local's '18-alpine' tag must track the postgres major, so it rides in the same group.",
@@ -213,6 +214,15 @@
       "depNameTemplate": "uv",
       "datasourceTemplate": "pypi",
       "versioningTemplate": "pep440"
+    },
+    {
+      "description": "Shared pin (docs/dependencies.md): the uv version in the backend/Dockerfile builder tag (ghcr.io/astral-sh/uv:X.Y.Z-trixie-slim), read from GitHub releases rather than the GHCR tag list so minimumReleaseAge can age it (see the dockerfile disable rule above). Datasource, packageName and versioning mirror how the github-actions manager reads the setup-uv input (known-actions/github-releases.ts in Renovate), so the two sites always agree on the target version. Feeds the 'uv' group above.",
+      "customType": "regex",
+      "managerFilePatterns": ["/^backend/Dockerfile$/"],
+      "matchStrings": ["FROM ghcr\\.io/astral-sh/uv:(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)-trixie-slim"],
+      "depNameTemplate": "astral-sh/uv",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "npm"
     },
     {
       "description": "Shared pin (docs/dependencies.md): pnpm installed via `npm install -g pnpm@X.Y.Z` in the cloud setup script. This is a functional pin — the session runs this pnpm — unlike the postgres/valkey prepull literals in the same file, which are cache hints backed by the real pins in docker-compose.yml and the test fixtures. No built-in manager reads a shell script, so without this manager the line stays invisible to Renovate and drifts behind the other pnpm sites. Feeds the 'pnpm' group above via depName 'pnpm'.",

@@ -74,7 +74,20 @@ site needs no group, just its own review PR.
   (the `npm install -g pnpm@…` and `NODE_VERSION=…` lines the session actually
   runs — distinct from the postgres/valkey prepull literals in that file, which
   are cache hints, not functional pins, so they are left untracked); the uv pin
-  in `backend/pyproject.toml`.
+  in `backend/pyproject.toml`; and the uv version in the `backend/Dockerfile`
+  builder tag, which the `dockerfile` manager is switched off for (next
+  bullet).
+* **The uv builder image is aged through GitHub releases, not GHCR.** GHCR
+  returns no release timestamps
+  ([Renovate docs](https://docs.renovatebot.com/key-concepts/minimum-release-age/)),
+  and since Renovate 42 `minimumReleaseAgeBehaviour` defaults to
+  `timestamp-required`, which holds an update without a timestamp forever. So
+  the `dockerfile` manager would never raise `ghcr.io/astral-sh/uv` at all. A
+  regex manager reads the same `FROM` tag as `astral-sh/uv` from GitHub
+  releases instead, with the datasource and versioning the `setup-uv` input
+  already uses, so the two always pick the same version. `timestamp-optional`
+  for the image would not fix it: with no age check the image jumps to the
+  newest tag while the aged sites stay one release behind.
 * **A pin inside a Dockerfile that isn't a `FROM` line gets an inline
   annotation, not a regex manager.** The `dockerfile` manager reads `FROM` lines
   only, so a pin like `ENV PNPM_VERSION` in `frontend/Dockerfile` is invisible
@@ -114,6 +127,9 @@ version in an otherwise correct-looking PR. [PR #360](https://github.com/Arutemu
 did exactly that: it moved four of the five `uv` sites to `0.11.30` and left the
 `ghcr.io/astral-sh/uv` builder tag in `backend/Dockerfile` at `0.11.29`, which
 `[tool.uv] required-version` then rejected inside the image build.
+[PR #643](https://github.com/Arutemu64/fanapp/pull/643) repeated it for
+`0.12.23`; the GHCR timestamp gap above was the cause, and the builder tag now
+reads from GitHub releases.
 
 So `ci.yml` has an `images` job that builds both images (without pushing) on any
 change to `backend/**`, `frontend/**` or a `Dockerfile`. Before it existed the
