@@ -37,9 +37,17 @@ class PageCursor:
         padded = token + "=" * (-len(token) % 4)
         try:
             payload = json.loads(base64.urlsafe_b64decode(padded))
-            created_at = datetime.fromisoformat(payload["t"])
-            row_id = UUID(payload["id"])
+            raw_created_at, raw_id = payload["t"], payload["id"]
         except (binascii.Error, ValueError, TypeError, KeyError) as e:
+            raise InvalidPageCursor from e
+        # Checked up front: UUID() given a non-string fails with AttributeError,
+        # which would surface as a 500 instead of a bad request.
+        if not isinstance(raw_created_at, str) or not isinstance(raw_id, str):
+            raise InvalidPageCursor
+        try:
+            created_at = datetime.fromisoformat(raw_created_at)
+            row_id = UUID(raw_id)
+        except ValueError as e:
             raise InvalidPageCursor from e
         # A naive timestamp would raise on comparison with the timestamptz column
         # instead of failing as a bad request.
