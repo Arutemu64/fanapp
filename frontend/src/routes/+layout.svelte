@@ -4,8 +4,19 @@
 	import '../app.css';
 
 	import * as Sentry from '@sentry/sveltekit';
+	import { createQuery, QueryClientProvider } from '@tanstack/svelte-query';
 	import { onDestroy, onMount } from 'svelte';
 
+	import {
+		countUnreadNotificationsQueryKey,
+		getPublicConfigQueryKey,
+		getScheduleQueryKey,
+		getSyncSourcesQueryKey,
+		getVotingStatusQueryKey,
+		listScheduleChangesQueryKey,
+		listUserNotificationsQueryKey
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { currentUserOptions, watchApiResponses } from '#lib/api/index.js';
 	import Toaster from '#lib/components/ui/sonner/sonner.svelte';
 	import UpdatePrompt from '#lib/components/UpdatePrompt.svelte';
 	import { setEventsClient } from '#lib/services/events.svelte.js';
@@ -19,7 +30,11 @@
 
 	let { children, data }: LayoutProps = $props();
 
-	const eventsClient = setEventsClient();
+	// The root load runs once, so this is the same client for the whole session.
+	// svelte-ignore state_referenced_locally
+	const { queryClient } = data;
+
+	const eventsClient = setEventsClient(queryClient);
 	setToastService();
 	const pwa = setPwaService();
 	setThemeService();
@@ -32,16 +47,62 @@
 		// catch a rejected register() ourselves — see registerServiceWorker.
 		registerServiceWorker();
 
-		// The returned teardown drops the monitor's listeners and recovery poll, so
-		// dev HMR re-creating this layout doesn't stack duplicates.
-		return startReachabilityMonitor();
+		// Each teardown drops listeners, interceptors or a recovery poll, so dev HMR
+		// re-creating this layout doesn't stack duplicates.
+		const stopMonitor = startReachabilityMonitor();
+		const stopWatching = watchApiResponses(queryClient);
+
+		eventsClient.on('schedule_updated', handleScheduleUpdated);
+		eventsClient.on('config_updated', handleConfigUpdated);
+		eventsClient.on('notification_created', handleNotificationCreated);
+		eventsClient.on('sync_run_updated', handleSyncRunUpdated);
+
+		return () => {
+			stopMonitor();
+			stopWatching();
+			eventsClient.off('schedule_updated', handleScheduleUpdated);
+			eventsClient.off('config_updated', handleConfigUpdated);
+			eventsClient.off('notification_created', handleNotificationCreated);
+			eventsClient.off('sync_run_updated', handleSyncRunUpdated);
+		};
 	});
 
+	// SSE carries change signals only, so each event marks the queries it affects
+	// stale: those on screen refetch at once, the rest when next shown. Keys match
+	// by prefix, so a list key also covers its infinite (paginated) variant.
+	function handleScheduleUpdated() {
+		void queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() });
+		void queryClient.invalidateQueries({ queryKey: listScheduleChangesQueryKey() });
+	}
+
+	// The voting window is part of the festival config, so the voting status moves
+	// with it.
+	function handleConfigUpdated() {
+		void queryClient.invalidateQueries({ queryKey: getPublicConfigQueryKey() });
+		void queryClient.invalidateQueries({ queryKey: getVotingStatusQueryKey() });
+	}
+
+	function handleNotificationCreated() {
+		void queryClient.invalidateQueries({ queryKey: countUnreadNotificationsQueryKey() });
+		void queryClient.invalidateQueries({ queryKey: listUserNotificationsQueryKey() });
+	}
+
+	// The payload only names the run; GET /sync/sources stays the source of truth.
+	function handleSyncRunUpdated() {
+		void queryClient.invalidateQueries({ queryKey: getSyncSourcesQueryKey() });
+	}
+
+	// Rendered above the provider, so the client is passed explicitly.
+	const user = createQuery(
+		() => currentUserOptions(),
+		() => queryClient
+	);
+
 	$effect(() => {
-		if (data?.user) {
+		if (user.data) {
 			Sentry.setUser({
-				id: String(data.user.id),
-				username: data.user.username ?? undefined
+				id: String(user.data.id),
+				username: user.data.username ?? undefined
 			});
 		} else {
 			Sentry.setUser(null);
@@ -68,7 +129,9 @@
 	<title>ФАН ФАН</title>
 </svelte:head>
 
-{@render children()}
+<QueryClientProvider client={queryClient}>
+	{@render children()}
+</QueryClientProvider>
 
 <Toaster />
 

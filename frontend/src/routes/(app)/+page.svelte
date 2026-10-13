@@ -1,17 +1,24 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
+	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 
+	import {
+		getPublicConfigOptions,
+		getPublicConfigQueryKey,
+		getScheduleOptions,
+		getSubscriptionsOptions,
+		getVotingStatusOptions,
+		getVotingStatusQueryKey
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { currentUserOptions } from '#lib/api/index.js';
 	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
+	import { FALLBACK_CONFIG } from '#lib/constants/festival.js';
 	import { documentVisibility } from '#lib/services/documentVisibility.js';
-	import { getEventsClient } from '#lib/services/events.svelte.js';
 	import { getPwaService } from '#lib/services/pwa.svelte.js';
 	import { reachability } from '#lib/services/reachability.js';
-	import { shouldShowStaleNotice } from '#lib/utils/offlineCache.js';
 	import { type DevicePushState, getDevicePushState } from '#lib/utils/pushSubscription.js';
+	import { mergeSubscriptions } from '#lib/utils/scheduleData.js';
 	import { hasVotingEnded, isVotingOpenNow } from '#lib/utils/votingStatus.js';
-
-	import type { PageProps } from './$types';
 
 	import { getFestivalPhase, nextBoundary } from './components/home/festivalPhase';
 	import GetReadySection from './components/home/GetReadySection.svelte';
@@ -25,12 +32,31 @@
 	import UpNextCard from './components/home/UpNextCard.svelte';
 	import VotingCard from './components/home/VotingCard.svelte';
 
-	let { data }: PageProps = $props();
-	let user = $derived(data.user);
-	let config = $derived(data.config);
-	let votingStatus = $derived(data.votingStatus);
+	const queryClient = useQueryClient();
+	const userQuery = createQuery(() => currentUserOptions());
+	let user = $derived(userQuery.data ?? null);
 
-	const eventsClient = getEventsClient();
+	// Public config drives the hero's phase and countdown, so it renders for guests
+	// and offline: the cached copy, or the shipped defaults on a first-ever visit
+	// made offline. The phase is computed from the clock, so a cached copy still
+	// flips to "after" on time; only an organizer's date edit waits for the refetch.
+	const configQuery = createQuery(() => getPublicConfigOptions());
+	const scheduleQuery = createQuery(() => getScheduleOptions());
+	const subscriptionsQuery = createQuery(() => ({
+		...getSubscriptionsOptions(),
+		enabled: user !== null
+	}));
+	const votingStatusQuery = createQuery(() => getVotingStatusOptions());
+
+	let config = $derived(configQuery.data ?? FALLBACK_CONFIG);
+	// A guest has no subscriptions, whatever an earlier session left cached.
+	let subscriptions = $derived(user ? (subscriptionsQuery.data?.subscriptions ?? []) : []);
+	let schedule = $derived(mergeSubscriptions(scheduleQuery.data?.schedule ?? [], subscriptions));
+	// Voting status is a live read: a stale "open" offline would lead to a ballot
+	// that can't be submitted, so offline it is treated as unknown and every
+	// voting surface on this page hides.
+	let votingStatus = $derived(reachability.current ? votingStatusQuery.data : undefined);
+
 	const pwa = getPwaService();
 
 	let festivalStartMs = $derived(new Date(config.festival_start).getTime());
@@ -48,9 +74,9 @@
 	let votingOpen = $derived(isVotingOpenNow(votingStatus, now));
 	let votingEnded = $derived(hasVotingEnded(votingStatus?.voting_end, now));
 
-	let snapshot = $derived(getStageSnapshot(data.schedule));
-	let hasProgramme = $derived(data.schedule.length > 0);
-	let hasSubscriptions = $derived(data.schedule.some((event) => event.user_subscription !== null));
+	let snapshot = $derived(getStageSnapshot(schedule));
+	let hasProgramme = $derived(schedule.length > 0);
+	let hasSubscriptions = $derived(schedule.some((event) => event.user_subscription !== null));
 	// Before the festival the steps are preparation; once it runs they are app setup.
 	let readyHeading = $derived(
 		phase === 'before' ? 'Подготовься к фестивалю' : 'Настрой приложение'
@@ -101,12 +127,7 @@
 	// pane, and even at 2:1 rather than Material's 70/30 it is only ~310px wide.
 	let twoColumns = $derived(showStage && hasSupportingContent);
 	let showStaleNotice = $derived(
-		showStage &&
-			shouldShowStaleNotice({
-				offlineMiss: false,
-				stale: data.scheduleStale,
-				isOnline: reachability.current
-			})
+		showStage && (scheduleQuery.isRefetchError || !reachability.current)
 	);
 
 	// setTimeout delays are stored in a signed 32-bit int of milliseconds; a delay
@@ -120,9 +141,9 @@
 	// derives from that, then it re-arms for the following boundary. Re-runs (and
 	// resyncs `now`) when the tab returns to the front, since a hidden tab's timers
 	// can fire late. Reads Date.now(), never the `now` state, so the effect does not
-	// re-run on its own writes. A boundary that fires also refetches the voting
-	// status, as the voting layout does: a `disabled` loaded just before the window
-	// opened would otherwise keep the voting card hidden until a reload.
+	// re-run on its own writes. A boundary that fires also refetches the config and
+	// voting status, as the voting layout does: a `disabled` loaded just before the
+	// window opened would otherwise keep the voting card hidden until a reload.
 	$effect(() => {
 		if (!documentVisibility.current) return;
 
@@ -132,7 +153,10 @@
 		const tick = (fired: boolean) => {
 			const current = Date.now();
 			now = current;
-			if (fired) void invalidate('app:config');
+			if (fired) {
+				void queryClient.invalidateQueries({ queryKey: getPublicConfigQueryKey() });
+				void queryClient.invalidateQueries({ queryKey: getVotingStatusQueryKey() });
+			}
 			const next = nextBoundary(boundaries, current);
 			if (next === null) return;
 			timer = setTimeout(() => tick(true), Math.min(next - current, MAX_TIMEOUT_MS));
@@ -146,27 +170,6 @@
 		void getDevicePushState().then((state) => {
 			devicePush = state;
 		});
-
-		// Refetch config (and the voting window it gates) on a change, so the phase
-		// flips (e.g. organizers ending the festival) without a reload. Anything
-		// missed while the stream was down is caught by the reconnect catch-up
-		// (reconnectRefresh), which re-runs this page's load.
-		const reloadConfig = () => {
-			void invalidate('app:config');
-		};
-		// "Now on stage" moves with every act the operator marks current, which
-		// arrives as schedule_updated, as on the schedule page.
-		const reloadSchedule = () => {
-			void invalidate('app:schedule');
-		};
-
-		eventsClient.on('config_updated', reloadConfig);
-		eventsClient.on('schedule_updated', reloadSchedule);
-
-		return () => {
-			eventsClient.off('config_updated', reloadConfig);
-			eventsClient.off('schedule_updated', reloadSchedule);
-		};
 	});
 </script>
 
@@ -188,7 +191,7 @@
 	{#if showStaleNotice}
 		<StaleDataNotice
 			message="Нет связи. Показана сохранённая программа&nbsp;— обновится при подключении."
-			cachedAt={data.scheduleCachedAt}
+			cachedAt={scheduleQuery.dataUpdatedAt}
 		/>
 	{/if}
 

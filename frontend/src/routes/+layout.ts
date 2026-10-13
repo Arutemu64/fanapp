@@ -1,107 +1,57 @@
-import type {
-	CurrentUserDto,
-	ScheduleEventFullDto,
-	SubscriptionFullDto
-} from '#lib/api/generated/index.js';
+import { version } from '$app/env';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import { QueryClient } from '@tanstack/svelte-query';
+import { persistQueryClient } from '@tanstack/svelte-query-persist-client';
+import { del, get, set } from 'idb-keyval';
 
-import { getCurrentUser, getSchedule, getSubscriptions } from '#lib/api/generated/index.js';
-import { createApiClient } from '#lib/api/index.js';
-import {
-	clearUserCache,
-	fetchWithCache,
-	universalScope,
-	userScope,
-	warmCache
-} from '#lib/utils/offlineCache.js';
-import { isLogoutPending } from '#lib/utils/pendingLogout.js';
-import { SCHEDULE_CACHE_KEY, SUBSCRIPTIONS_CACHE_KEY } from '#lib/utils/scheduleData.js';
+import { currentUserOptions } from '#lib/api/index.js';
+import { FIRST_PAINT_TIMEOUT_MS } from '#lib/utils/fetchTimeout.js';
 
 import type { LayoutLoad } from './$types';
 
 // SPA-only: render entirely on the client. There is no server render.
 export const ssr = false;
 
-// Single current-session user; cached so the app can still boot offline.
-const USER_CACHE_KEY = 'me:user';
+// How long a cached copy may serve the app offline. The persister drops a cache
+// older than its `maxAge` (24h by default), and gcTime must be at least that, or
+// unused queries are garbage-collected before they are ever persisted:
+// https://tanstack.com/query/latest/docs/framework/react/plugins/persistQueryClient
+const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
-export const load: LayoutLoad = async ({ fetch, depends }) => {
-	depends('app:current-user');
-
-	// A logout requested offline is still pending server-side (the HttpOnly cookie
-	// can't be cleared by JS). Present as logged-out until the queued POST
-	// /auth/logout revokes the session — otherwise a still-valid cookie would let
-	// /me resurrect the account we just left. The flush (reachabilityMonitor) clears the
-	// intent once it succeeds; a fresh login clears it too (completeLogin).
-	if (isLogoutPending()) {
-		return { user: null };
-	}
-
-	const client = createApiClient();
-
-	// `null` is a real cached value (logged out); `undefined` means "reachable but
-	// no verdict, keep the cached user" (see fetcher below), so the type spans both.
-	const { data } = await fetchWithCache<CurrentUserDto | null>({
-		key: USER_CACHE_KEY,
-		scope: userScope,
-		fetcher: async ({ signal }) => {
-			const { data, response, error } = await getCurrentUser({ client, fetch, signal });
-
-			// Authoritative "session ended": cache logged-out AND drop per-user caches
-			// so no orphaned entries linger for the next account on a shared device.
-			// Universal caches (e.g. schedule) are kept warm. Mirrors explicit logout
-			// (the Profile page's LogoutButton).
-			if (response?.status === 401 || response?.status === 403) {
-				void clearUserCache();
-				return null;
-			}
-
-			// Reachable but not an auth verdict (5xx / parse error / empty body): do NOT
-			// downgrade identity. Returning `undefined` keeps the last-good cached user
-			// instead of overwriting it with `null` — a transient error must not flip a
-			// logged-in user to guest (which would orphan their per-user caches).
-			if (error || !data) {
-				return undefined;
-			}
-
-			return data;
-		}
+// Runs once per page load: nothing here reads `url` or calls `depends`, and the
+// app never calls `invalidateAll`/`refreshAll`, so the QueryClient — and the
+// cache in it — lives for the whole session. It is load data rather than a
+// module singleton (TanStack's SvelteKit setup:
+// https://tanstack.com/query/latest/docs/framework/svelte/ssr), so it never
+// outlives the document; logout empties it explicitly (forgetSession).
+export const load: LayoutLoad = async () => {
+	const queryClient = new QueryClient({
+		defaultOptions: { queries: { gcTime: CACHE_MAX_AGE_MS } }
 	});
 
-	// A complete cache miss (offline first boot) is also "not logged in".
-	const user = data ?? null;
-
-	// Warm the offline caches on the first online boot so they're viewable even if
-	// the user never opens the schedule page. Fire-and-forget: each is a no-op when
-	// offline or already cached, so it never blocks first paint or refetches once
-	// warmed (the schedule page's own load + SSE keep them fresh after that). Uses
-	// the same keys the schedule page reads, and its own client so it isn't tied to
-	// this load's tracked `fetch`.
-
-	// Schedule is universal — one shared key for guests and every account.
-	void warmCache<ScheduleEventFullDto[]>({
-		key: SCHEDULE_CACHE_KEY,
-		scope: universalScope,
-		fetcher: async ({ signal }) => {
-			const warmClient = createApiClient();
-			const { data: schedule, error } = await getSchedule({ client: warmClient, signal });
-			if (error || !schedule) return undefined;
-			return schedule.schedule ?? [];
-		}
+	// One IndexedDB entry holds the whole cache, so every screen that has loaded
+	// once also opens offline. Restored before any guard reads identity from it.
+	// The build `version` busts it on deploy, so a client never reads a payload
+	// shaped by an older API.
+	const [, restored] = persistQueryClient({
+		queryClient,
+		persister: createAsyncStoragePersister({
+			storage: { getItem: get, setItem: set, removeItem: del }
+		}),
+		maxAge: CACHE_MAX_AGE_MS,
+		buster: version
 	});
+	await restored;
 
-	// Subscriptions are per-user; only logged-in users have them.
-	if (user) {
-		void warmCache<SubscriptionFullDto[]>({
-			key: SUBSCRIPTIONS_CACHE_KEY,
-			scope: userScope,
-			fetcher: async ({ signal }) => {
-				const warmClient = createApiClient();
-				const { data, error } = await getSubscriptions({ client: warmClient, signal });
-				if (error || !data) return undefined;
-				return data.subscriptions ?? [];
-			}
-		});
-	}
+	// Identity gates the route guards, so settle it before any child load reads
+	// it. A restored user answers at once (the components reading it revalidate);
+	// only a first boot waits on /me, and no longer than first paint can afford on
+	// a stalled network — the request keeps going and lands in the cache anyway.
+	const firstPaintBudget = new Promise((resolve) => setTimeout(resolve, FIRST_PAINT_TIMEOUT_MS));
+	await Promise.race([
+		queryClient.query({ ...currentUserOptions(), staleTime: 'static' }),
+		firstPaintBudget
+	]).catch(() => {});
 
-	return { user };
+	return { queryClient };
 };

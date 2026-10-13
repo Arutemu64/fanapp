@@ -1,4 +1,6 @@
 import { PUBLIC_API_URL } from '$app/env/public';
+import type { QueryClient } from '@tanstack/svelte-query';
+
 import * as Sentry from '@sentry/sveltekit';
 import { createContext } from 'svelte';
 
@@ -10,7 +12,6 @@ import {
 	onReachableChange,
 	probeReachability
 } from '#lib/services/reachability.js';
-import { requestReconnectRefresh } from '#lib/utils/reconnectRefresh.js';
 
 const [getEvents, setEvents] = createContext<EventsClient>();
 
@@ -157,8 +158,9 @@ export class EventsClient {
 	#lastEventAt = 0;
 	// Set whenever the stream goes down for a reason other than an auth restart.
 	// Live events only carry server-side *changes*, so whatever moved while it was
-	// down is missed; the next handshake refetches the pages to catch up.
+	// down is missed; the next handshake invalidates the query cache to catch up.
 	#needsCatchUp = false;
+	#queryClient: QueryClient;
 	// True while the stream is intentionally paused because the app is backgrounded.
 	#pausedForVisibility = false;
 	// Terminal flag set by destroy(); a destroyed client never reconnects.
@@ -173,7 +175,8 @@ export class EventsClient {
 	// wrapper actually attached to the EventSource.
 	#listeners: Record<string, RegisteredListener[]> = {};
 
-	constructor() {
+	constructor(queryClient: QueryClient) {
+		this.#queryClient = queryClient;
 		// Stop dialling while the browser reports no network; re-dial when it
 		// comes back.
 		window.addEventListener('offline', this.#handleOffline);
@@ -328,11 +331,10 @@ export class EventsClient {
 		if (this.#pausedForVisibility) {
 			this.#pausedForVisibility = false;
 			this.#resume();
-			// Catch up now rather than on the handshake: a proxy that blocks SSE while
-			// HTTP works would otherwise leave the pages stale after every background
-			// trip. Clearing the flag keeps the handshake from refreshing a second time.
+			// No catch-up on the handshake: foregrounding already refetches every query
+			// on screen (TanStack Query's refetchOnWindowFocus), which also covers a
+			// proxy that blocks SSE while HTTP works.
 			this.#needsCatchUp = false;
-			requestReconnectRefresh();
 			return;
 		}
 
@@ -359,12 +361,12 @@ export class EventsClient {
 			message: this.#needsCatchUp ? 'SSE reconnected' : 'SSE connected'
 		});
 
-		// The first connect is skipped: the page's own load just fetched fresh data.
-		// Shares the reconnect debounce with the reachability edge, so a recovery
-		// that trips both refreshes once.
+		// The first connect is skipped: the queries on screen just fetched fresh
+		// data. Only active queries refetch; the rest are marked stale and refetch
+		// when next shown.
 		if (this.#needsCatchUp) {
 			this.#needsCatchUp = false;
-			requestReconnectRefresh();
+			void this.#queryClient.invalidateQueries();
 		}
 	};
 
@@ -461,8 +463,8 @@ export class EventsClient {
 }
 
 /** Create and set the EventsClient in Svelte context (call in root layout). */
-export function setEventsClient(): EventsClient {
-	const client = new EventsClient();
+export function setEventsClient(queryClient: QueryClient): EventsClient {
+	const client = new EventsClient(queryClient);
 	setEvents(client);
 	return client;
 }
