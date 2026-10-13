@@ -1,53 +1,58 @@
 <script setup lang="ts">
-import type { AlertDialogContentEmits, AlertDialogContentProps } from 'reka-ui'
-import type { HTMLAttributes } from 'vue'
-import { reactiveOmit } from '@vueuse/core'
-import {
-  AlertDialogContent,
-  AlertDialogOverlay,
-  AlertDialogPortal,
-  useForwardPropsEmits,
-} from 'reka-ui'
-import { cn } from '#lib/utils.js'
+import type { AlertDialogContentEmits, AlertDialogContentProps } from 'reka-ui';
+import type { HTMLAttributes } from 'vue';
 
-defineOptions({
-  inheritAttrs: false,
-})
+import { reactiveOmit } from '@vueuse/core';
+import {
+	AlertDialogContent,
+	AlertDialogOverlay,
+	AlertDialogPortal,
+	useForwardPropsEmits
+} from 'reka-ui';
+
+import { cn } from '#lib/utils.js';
 
 const props = withDefaults(
-  defineProps<AlertDialogContentProps & {
-    class?: HTMLAttributes['class']
-    size?: 'default' | 'sm'
-  }>(),
-  {
-    size: 'default',
-  },
-)
-const emits = defineEmits<AlertDialogContentEmits>()
+	defineProps<
+		AlertDialogContentProps & {
+			class?: HTMLAttributes['class'];
+			size?: 'default' | 'sm';
+		}
+	>(),
+	{
+		size: 'default'
+	}
+);
 
-const delegatedProps = reactiveOmit(props, 'class', 'size')
+const emits = defineEmits<AlertDialogContentEmits>();
 
-const forwarded = useForwardPropsEmits(delegatedProps, emits)
+defineOptions({
+	inheritAttrs: false
+});
+
+const delegatedProps = reactiveOmit(props, 'class', 'size');
+
+const forwarded = useForwardPropsEmits(delegatedProps, emits);
 </script>
 
 <template>
-  <AlertDialogPortal>
-    <AlertDialogOverlay
-      data-slot="alert-dialog-overlay"
-      class="data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs fixed inset-0 z-50"
-    />
-    <AlertDialogContent
-      data-slot="alert-dialog-content"
-      :data-size="size"
-      v-bind="{ ...$attrs, ...forwarded }"
-      :class="
-        cn(
-          'data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 bg-popover text-popover-foreground ring-foreground/10 gap-6 rounded-xl p-6 ring-1 duration-100 data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-lg group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 outline-none',
-          props.class,
-        )
-      "
-    >
-      <slot />
-    </AlertDialogContent>
-  </AlertDialogPortal>
+	<AlertDialogPortal>
+		<AlertDialogOverlay
+			data-slot="alert-dialog-overlay"
+			class="fixed inset-0 z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0"
+		/>
+		<AlertDialogContent
+			data-slot="alert-dialog-content"
+			:data-size="size"
+			v-bind="{ ...$attrs, ...forwarded }"
+			:class="
+				cn(
+					'group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-6 rounded-xl bg-popover p-6 text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-lg data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
+					props.class
+				)
+			"
+		>
+			<slot />
+		</AlertDialogContent>
+	</AlertDialogPortal>
 </template>

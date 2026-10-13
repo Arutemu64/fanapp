@@ -1,23 +1,30 @@
 <script setup lang="ts">
-import type { DialogDescriptionProps } from 'reka-ui'
-import type { HTMLAttributes } from 'vue'
-import { reactiveOmit } from '@vueuse/core'
-import { DialogDescription, useForwardProps } from 'reka-ui'
-import { cn } from '#lib/utils.js'
+import type { DialogDescriptionProps } from 'reka-ui';
+import type { HTMLAttributes } from 'vue';
 
-const props = defineProps<DialogDescriptionProps & { class?: HTMLAttributes['class'] }>()
+import { reactiveOmit } from '@vueuse/core';
+import { DialogDescription, useForwardProps } from 'reka-ui';
 
-const delegatedProps = reactiveOmit(props, 'class')
+import { cn } from '#lib/utils.js';
 
-const forwardedProps = useForwardProps(delegatedProps)
+const props = defineProps<DialogDescriptionProps & { class?: HTMLAttributes['class'] }>();
+
+const delegatedProps = reactiveOmit(props, 'class');
+
+const forwardedProps = useForwardProps(delegatedProps);
 </script>
 
 <template>
-  <DialogDescription
-    data-slot="dialog-description"
-    v-bind="forwardedProps"
-    :class="cn('text-muted-foreground *:[a]:hover:text-foreground text-sm *:[a]:underline *:[a]:underline-offset-3', props.class)"
-  >
-    <slot />
-  </DialogDescription>
+	<DialogDescription
+		data-slot="dialog-description"
+		v-bind="forwardedProps"
+		:class="
+			cn(
+				'text-sm text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground',
+				props.class
+			)
+		"
+	>
+		<slot />
+	</DialogDescription>
 </template>
