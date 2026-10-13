@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { invalidate } from '$app/navigation';
 	import { page } from '$app/state';
-	import { ChevronUp, Play, Search as SearchIcon, X } from '@lucide/svelte';
+	import { ChevronUp, Search as SearchIcon, X } from '@lucide/svelte';
 	import { onMount } from 'svelte';
+	import { prefersReducedMotion } from 'svelte/motion';
+	import { fly } from 'svelte/transition';
 
 	import type { CurrentUserDto } from '#lib/api/generated/index.js';
 	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
@@ -19,7 +21,9 @@
 
 	import type { PageProps } from './$types';
 
+	import { actsUntil, getStageSnapshot } from '../components/home/stage';
 	import EventCard from './components/EventCard.svelte';
+	import NowPlayingBar from './components/NowPlayingBar.svelte';
 	import {
 		buildScheduleGroups,
 		filterScheduleGroups,
@@ -79,7 +83,7 @@
 			.filter((event) => !showOnlySubscribed || event.user_subscription !== null)
 	);
 
-	// Hide the FAB for the current event when the active filters remove that row from the page.
+	// Hide the now-playing bar when the active filters remove the current row from the page.
 	let visibleCurrentEvent = $derived(filtered.find((event) => event.is_current) ?? null);
 
 	// Group rows into block and nomination sections so we can make headers sticky.
@@ -94,6 +98,24 @@
 			? `Всего выступлений: ${schedule.length}`
 			: `Показано ${filtered.length} из ${schedule.length}`
 	);
+
+	// Built off the full schedule, not the filtered one: the next act and the viewer's
+	// next subscribed act exist whatever the search box says.
+	let stage = $derived(getStageSnapshot(schedule));
+	let nextAct = $derived(stage.current ? (stage.upNext[0] ?? null) : null);
+
+	let nextSubscribed = $derived.by(() => {
+		let nearest: { event: ScheduleEventWithSubscription; actsAway: number } | null = null;
+		for (const event of schedule) {
+			if (event.user_subscription === null) continue;
+			const actsAway = actsUntil(event, stage.current);
+			if (actsAway === null) continue;
+			if (nearest === null || actsAway < nearest.actsAway) {
+				nearest = { event, actsAway };
+			}
+		}
+		return nearest;
+	});
 
 	let hasActiveFilters = $derived(showOnlySubscribed || searchQuery.trim().length > 0);
 
@@ -138,6 +160,39 @@
 		// (https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollTo).
 		element?.scrollIntoView({ block: 'center' });
 	}
+
+	// The bar repeats what the current row already shows, so it steps aside while that
+	// row is on screen — Apple Music's mini player does the same once the full player
+	// is open.
+	// null until the observer's first report, which lands a frame after mount: starting
+	// at false would flash the bar on every load with the current row in view.
+	let currentRowOnScreen = $state<boolean | null>(null);
+	let showNowPlaying = $derived(visibleCurrentEvent !== null && currentRowOnScreen === false);
+
+	// An effect, not an attachment: the observed row lives inside EventCard's wrapper
+	// and changes with the current-event id, which only the page knows.
+	$effect(() => {
+		const currentId = visibleCurrentEvent?.id;
+		if (!currentId || !pageRoot) {
+			currentRowOnScreen = null;
+			return;
+		}
+
+		const row = pageRoot.querySelector<HTMLElement>(`[data-event-id="${currentId}"]`);
+		if (!row) return;
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				currentRowOnScreen = entries.some((entry) => entry.isIntersecting);
+			},
+			{ root: getScrollContainer() }
+		);
+		observer.observe(row);
+		return () => observer.disconnect();
+	});
+
+	// Svelte transitions run in JS, so the global reduced-motion CSS doesn't reach them.
+	let nowPlayingFlyMs = $derived(prefersReducedMotion.current ? 0 : 200);
 
 	function scrollToTop() {
 		getScrollContainer()?.scrollTo({ top: 0 });
@@ -195,7 +250,9 @@
 	<title>Программа · ФАН ФАН</title>
 </svelte:head>
 
-<div {@attach capturePageRoot} class="flex flex-col gap-4">
+<!-- The bottom padding makes room for the now-playing bar, so it never sits over the
+	last rows once the list is scrolled to its end. -->
+<div {@attach capturePageRoot} class={['flex flex-col gap-4', visibleCurrentEvent && 'pb-20']}>
 	{#if showStaleNotice}
 		<StaleDataNotice
 			message="Нет связи. Показана сохранённая программа — обновится при подключении."
@@ -305,14 +362,15 @@
 		{/each}
 	</div>
 
-	{#if visibleCurrentEvent || showScrollTopButton}
-		<!-- Lift FAB actions above the floating bottom mobile navigation so they stay
-			tappable. The right inset keeps them clear of a landscape phone's notch and
-			rounded corners; on desktop the bottom inset clears the home indicator. -->
+	{#if showNowPlaying || showScrollTopButton}
+		<!-- Lift the bar and the FAB above the floating bottom mobile navigation so they
+			stay tappable. The side insets keep them clear of a landscape phone's notch and
+			rounded corners; on desktop the bottom inset clears the home indicator, and the
+			bar docks to the right instead of spanning the content column. -->
 		<div
-			class="pointer-events-none fixed right-[calc(1rem+env(safe-area-inset-right))] bottom-[calc(var(--bottom-nav-clearance)+1rem)] z-30 md:bottom-[calc(1.5rem+env(safe-area-inset-bottom))]"
+			class="pointer-events-none fixed right-[calc(0.5rem+env(safe-area-inset-right))] bottom-[calc(var(--bottom-nav-clearance)+0.5rem)] left-[calc(0.5rem+env(safe-area-inset-left))] z-30 min-[25rem]:right-[calc(0.75rem+env(safe-area-inset-right))] min-[25rem]:left-[calc(0.75rem+env(safe-area-inset-left))] md:right-[calc(1.5rem+env(safe-area-inset-right))] md:bottom-[calc(1.5rem+env(safe-area-inset-bottom))] md:left-auto md:w-96"
 		>
-			<div class="flex flex-col items-end gap-2">
+			<div class="mx-auto flex max-w-md flex-col items-end gap-2">
 				{#if showScrollTopButton}
 					<Button
 						variant="floating"
@@ -326,16 +384,16 @@
 					</Button>
 				{/if}
 
-				{#if visibleCurrentEvent}
-					<Button
-						size="sm"
-						class="pointer-events-auto size-12 rounded-full bg-success px-0 text-success-foreground shadow-lg hover:bg-success/90 lg:w-32 lg:rounded-full lg:px-3"
-						onclick={scrollToCurrentEvent}
-						aria-label="Перейти к текущему выступлению"
-					>
-						<Play class="size-5 shrink-0 fill-current" />
-						<span class="sr-only lg:not-sr-only lg:ml-2">Текущее</span>
-					</Button>
+				{#if showNowPlaying && visibleCurrentEvent}
+					<div class="w-full" transition:fly={{ y: 16, duration: nowPlayingFlyMs }}>
+						<NowPlayingBar
+							current={visibleCurrentEvent}
+							next={nextAct}
+							{nextSubscribed}
+							{user}
+							onjump={scrollToCurrentEvent}
+						/>
+					</div>
 				{/if}
 			</div>
 		</div>
