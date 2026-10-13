@@ -4,7 +4,7 @@
 
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
-	import { reachability } from '#lib/services/reachability.js';
+	import { probeReachability, reachability } from '#lib/services/reachability.js';
 	import { statusTitle } from '#lib/utils/errorTitle.js';
 
 	type Variant = 'fullscreen' | 'inline';
@@ -80,6 +80,10 @@
 
 	function handleRetry() {
 		if (onRetry) {
+			// While the app counts the server as unreachable, TanStack pauses the
+			// refetch, and the background recovery poll can be up to 30s away. Checking
+			// now lets a tap resume every paused query the moment the server answers.
+			if (!online) void probeReachability();
 			onRetry();
 			return;
 		}
