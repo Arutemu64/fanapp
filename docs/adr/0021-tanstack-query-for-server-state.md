@@ -35,8 +35,10 @@ reconnect; three retries) except where persistence requires otherwise.
   `depends`/`invalidate`/`invalidateAll`/`refreshAll` are not used at all.
 - **Persisted whole to IndexedDB.** `persistQueryClient` with
   `createAsyncStoragePersister` over `idb-keyval` (already a dependency) restores
-  the cache before any guard runs. `gcTime` equals the persister's 24h `maxAge`,
-  as [its docs](https://tanstack.com/query/latest/docs/framework/react/plugins/persistQueryClient)
+  the cache before any guard runs. `maxAge` is 7 days rather than the default
+  24h, so the programme survives a festival weekend and the trip without
+  opening the app; `gcTime` matches it, as
+  [its docs](https://tanstack.com/query/latest/docs/framework/react/plugins/persistQueryClient)
   require, and the build `version` is the `buster`.
 - **One scope.** There is no per-user partition. At logout or session expiry
   the user query turns `null`, and once the screen shows the guest state
@@ -65,8 +67,9 @@ reconnect; three retries) except where persistence requires otherwise.
 - A page now owns its pending and error states: a skeleton or spinner, and an
   inline `ErrorState` built from `query.error`. Query errors carry the API
   error body without the HTTP status, so a "not found" is matched by `code`.
-- A cached copy expires 24h after the app last saved its cache, where the old
-  IndexedDB entries never expired.
+- A cached copy expires 7 days after the app last saved its cache, where the
+  old IndexedDB entries never expired. Matching `gcTime` keeps unused queries in
+  memory that long too — a few dozen small ones here.
 - Data that must not be shown stale offline (voting) is still cached, so each
   such surface must hide it offline itself.
 - Do not call SvelteKit `invalidateAll`/`refreshAll` or make the root load
@@ -82,6 +85,10 @@ reconnect; three retries) except where persistence requires otherwise.
   guard loads that read identity from the cache. The root load restores first
   instead; the package is kept for the `persistQueryClient` it re-exports.
 - **Per-query persistence (`experimental_createQueryPersister`).** Rejected:
-  experimental, and one entry for the whole cache is enough at this size.
+  its one gain is decoupling `gcTime` from `maxAge`, which this cache is too
+  small to need. It restores lazily on first use (the guards read identity
+  synchronously), does not persist `setQueryData` nor clear storage on
+  `removeQueries` (logout would need hand-written cleanup again), switches the
+  default `networkMode` to `offlineFirst`, and is experimental.
 - **Generated mutation options (`createMutation`).** Not adopted for now:
   mutations stay plain SDK calls with their existing inline error handling.

@@ -12,11 +12,13 @@ import type { LayoutLoad } from './$types';
 // SPA-only: render entirely on the client. There is no server render.
 export const ssr = false;
 
-// How long a cached copy may serve the app offline. The persister drops a cache
-// older than its `maxAge` (24h by default), and gcTime must be at least that, or
-// unused queries are garbage-collected before they are ever persisted:
+// How long a cached copy may serve the app offline: a festival weekend plus the
+// trip there and back, where the persister's 24h default would drop the
+// programme for anyone who didn't open the app for a day. StaleDataNotice shows
+// how old what's on screen is. gcTime must be at least this, or unused queries
+// are garbage-collected before they are ever persisted:
 // https://tanstack.com/query/latest/docs/framework/react/plugins/persistQueryClient
-const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 // Runs once per page load: nothing here reads `url` or calls `depends`, and the
 // app never calls `invalidateAll`/`refreshAll`, so the QueryClient — and the
