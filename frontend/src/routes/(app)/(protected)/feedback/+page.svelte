@@ -8,6 +8,7 @@
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
+	import { reachability } from '#lib/services/reachability.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 
 	import type { PageProps } from './$types';
@@ -25,6 +26,10 @@
 	let submitError = $state('');
 
 	let charsLeft = $derived(MAX_LENGTH - feedbackText.length);
+	// Opened offline and still offline: clears on reconnect without a reload, and
+	// a connection that drops mid-draft keeps the form (its submit fails into a
+	// toast) rather than unmounting what was typed.
+	let showOffline = $derived(data.offlineUnavailable && !reachability.current);
 
 	function validateForm() {
 		if (!feedbackText.trim()) {
@@ -81,7 +86,7 @@
 	<title>Обратная связь · ФАН ФАН</title>
 </svelte:head>
 
-{#if data.offlineUnavailable}
+{#if showOffline}
 	<!-- Submit-only surface with nothing to cache: say so plainly rather than
 	     showing a form that can't send. -->
 	<OfflineUnavailableState

@@ -1,6 +1,6 @@
 import { version } from '$app/env';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
-import { defaultShouldDehydrateQuery, QueryClient } from '@tanstack/svelte-query';
+import { QueryClient } from '@tanstack/svelte-query';
 import { persistQueryClient } from '@tanstack/svelte-query-persist-client';
 import { del, get, set } from 'idb-keyval';
 
@@ -13,8 +13,7 @@ import {
 	getSubscriptionsQueryKey,
 	listUserNotificationsQueryKey
 } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-import { currentUserOptions } from '#lib/api/index.js';
-import { FIRST_PAINT_TIMEOUT_MS } from '#lib/utils/fetchTimeout.js';
+import { currentUserOptions, queryForLoad } from '#lib/api/index.js';
 
 import type { LayoutLoad } from './$types';
 
@@ -88,23 +87,27 @@ export const load: LayoutLoad = async () => {
 		maxAge: CACHE_MAX_AGE_MS,
 		buster: version,
 		dehydrateOptions: {
+			// Not TanStack's default (successful queries only): a refetch that failed
+			// leaves the query in error with its last good data, and dropping it here
+			// would erase the saved programme right when the network is bad.
 			shouldDehydrateQuery: (query) => {
 				const [{ _id }] = query.queryKey as [{ _id: string }];
-				return defaultShouldDehydrateQuery(query) && OFFLINE_QUERY_IDS.has(_id);
+				return OFFLINE_QUERY_IDS.has(_id) && query.state.data !== undefined;
 			}
 		}
 	});
 	await restored;
 
 	// Identity gates the route guards, so settle it before any child load reads
-	// it. A restored user answers at once (the components reading it revalidate);
-	// only a first boot waits on /me, and no longer than first paint can afford on
-	// a stalled network — the request keeps going and lands in the cache anyway.
-	const firstPaintBudget = new Promise((resolve) => setTimeout(resolve, FIRST_PAINT_TIMEOUT_MS));
-	await Promise.race([
-		queryClient.query({ ...currentUserOptions(), staleTime: 'static' }),
-		firstPaintBudget
-	]).catch(() => {});
+	// it. A restored user answers at once (the components reading it revalidate,
+	// and a /me 401 ends an expired session). A restored guest is re-checked: a
+	// social login arrives here as a full page load with a fresh session cookie,
+	// and trusting the saved `null` would bounce the new user to /login. A first
+	// boot and a guest wait on /me no longer than first paint can afford.
+	await queryForLoad(queryClient, {
+		...currentUserOptions(),
+		staleTime: (query) => (query.state.data ? 'static' : 0)
+	}).catch(() => {});
 
 	return { queryClient };
 };

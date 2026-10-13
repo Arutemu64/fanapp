@@ -15,7 +15,7 @@
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { dedupeById } from '#lib/utils/feed.js';
 
-	import SectionSpinner from '../../../components/SectionSpinner.svelte';
+	import SectionSpinner from '../../../../components/SectionSpinner.svelte';
 	import ScheduleChangeCard from './ScheduleChangeCard.svelte';
 
 	const toastService = getToastService();

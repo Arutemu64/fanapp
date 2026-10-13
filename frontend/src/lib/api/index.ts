@@ -1,6 +1,11 @@
 import { goto } from '$app/navigation';
 import { page } from '$app/state';
-import { type QueryClient, queryOptions } from '@tanstack/svelte-query';
+import {
+	type FetchQueryOptions,
+	type QueryClient,
+	type QueryKey,
+	queryOptions
+} from '@tanstack/svelte-query';
 
 import type { ResolvedRequestOptions } from '#lib/api/generated/client/index.js';
 
@@ -13,6 +18,7 @@ import {
 	probeReachability
 } from '#lib/services/reachability.js';
 import { LOGIN_NEXT_PARAM } from '#lib/utils/auth.js';
+import { FIRST_PAINT_TIMEOUT_MS } from '#lib/utils/fetchTimeout.js';
 import { isLogoutPending } from '#lib/utils/pendingLogout.js';
 
 /**
@@ -42,6 +48,29 @@ export function currentUserOptions() {
 			return data;
 		}
 	});
+}
+
+/**
+ * Run a query a `load` waits for, bounded so a navigation can't hang. A load has
+ * no component to show progress, so the request runs at once and once only —
+ * no retries, and no pausing until reachability recovers (`networkMode:
+ * 'always'`) — and rejects with a TimeoutError (`isConnectionFailure`) after
+ * the first-paint budget. A request still running then keeps going and lands in
+ * the cache.
+ */
+export function queryForLoad<TData, TError, TQueryKey extends QueryKey>(
+	queryClient: QueryClient,
+	options: FetchQueryOptions<TData, TError, TData, TQueryKey>
+): Promise<TData> {
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const budget = new Promise<never>((_, reject) => {
+		timer = setTimeout(
+			() => reject(new DOMException('signal timed out', 'TimeoutError')),
+			FIRST_PAINT_TIMEOUT_MS
+		);
+	});
+	const query = queryClient.query({ ...options, retry: false, networkMode: 'always' });
+	return Promise.race([query, budget]).finally(() => clearTimeout(timer));
 }
 
 /**

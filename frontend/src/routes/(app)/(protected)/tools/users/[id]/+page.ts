@@ -4,6 +4,7 @@ import type { BackTarget } from '#lib/types/navigation.js';
 
 import { getApiErrorCode, throwApiError } from '#lib/api/errors.js';
 import { getUserOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+import { queryForLoad } from '#lib/api/index.js';
 import { canReadUsers } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';
@@ -18,14 +19,15 @@ export const load: PageLoad = async ({ parent, params }) => {
 	}
 
 	// Staff-only operational data, like the directory: waits for a fresh copy.
-	const data = await queryClient
-		.query({ ...getUserOptions({ path: { user_id: params.id } }), staleTime: 0 })
-		.catch((apiError: unknown) => {
-			if (getApiErrorCode(apiError) === 'USER_NOT_FOUND') {
-				error(404, 'Пользователь не найден');
-			}
-			return throwApiError(apiError, undefined, 'Не удалось загрузить пользователя');
-		});
+	const data = await queryForLoad(queryClient, {
+		...getUserOptions({ path: { user_id: params.id } }),
+		staleTime: 0
+	}).catch((apiError: unknown) => {
+		if (getApiErrorCode(apiError) === 'USER_NOT_FOUND') {
+			error(404, 'Пользователь не найден');
+		}
+		return throwApiError(apiError, undefined, 'Не удалось загрузить пользователя');
+	});
 
 	return {
 		title: 'Пользователь',

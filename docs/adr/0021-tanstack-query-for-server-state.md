@@ -59,7 +59,9 @@ persistence requires.
   `refetchOnReconnect` is the reconnect catch-up.
 - **Loads guard and prefetch.** They read identity from the cache, set navbar
   data, and start the page's query early (SvelteKit preloads on hover/tap).
-  They await a query only when the page can't render without it.
+  They await a query only when the page can't render without it, through
+  `queryForLoad`: one attempt, no pausing for reachability, a first-paint
+  timeout, so a navigation can't hang.
 - **Invalidation is TanStack's.** Mutations and a single SSE→query-key map in
   the root layout call `queryClient.invalidateQueries`.
 - **One configured API client.** hey-api's `runtimeConfigPath` configures the

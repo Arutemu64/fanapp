@@ -1,19 +1,16 @@
-import { error, redirect } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 
 import type { BackTarget } from '#lib/types/navigation.js';
 
-import { currentUserOptions } from '#lib/api/index.js';
 import { canManageSchedule } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';
 
+// Staff-only, so it lives in (protected): the URL stays /schedule/changes, and a
+// session that expires while it is open hands it over to /login like any other
+// members-only screen.
 export const load: PageLoad = async ({ parent }) => {
-	const { queryClient } = await parent();
-	const user = queryClient.getQueryData(currentUserOptions().queryKey) ?? null;
-
-	if (!user) {
-		redirect(303, '/login');
-	}
+	const { user } = await parent();
 
 	if (!canManageSchedule(user)) {
 		error(403, 'У тебя нет доступа к этой странице');

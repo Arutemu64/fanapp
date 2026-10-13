@@ -4,6 +4,7 @@ import type { BackTarget } from '#lib/types/navigation.js';
 
 import { throwApiError } from '#lib/api/errors.js';
 import { getVotingDashboardOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+import { queryForLoad } from '#lib/api/index.js';
 import { canManageVoting } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';
@@ -19,11 +20,12 @@ export const load: PageLoad = async ({ parent }) => {
 
 	// The voting-window form is seeded once from this, so it waits for a fresh
 	// copy rather than a cached one an edit would then overwrite.
-	const dashboard = await queryClient
-		.query({ ...getVotingDashboardOptions(), staleTime: 0 })
-		.catch((apiError: unknown) =>
-			throwApiError(apiError, undefined, 'Не удалось загрузить панель голосования')
-		);
+	const dashboard = await queryForLoad(queryClient, {
+		...getVotingDashboardOptions(),
+		staleTime: 0
+	}).catch((apiError: unknown) =>
+		throwApiError(apiError, undefined, 'Не удалось загрузить панель голосования')
+	);
 
 	return {
 		title: 'Голосование',
