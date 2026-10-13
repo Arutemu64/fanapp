@@ -3,10 +3,9 @@
 
 	// Placeholder that mirrors the notifications feed — an intro line, a day heading,
 	// then a stack of list-item cards (round icon, title line, timestamp) — so the layout
-	// doesn't jump when the loaded page replaces it. Shown by the app shell during a
-	// navigation whose load runs longer than the delay gate; the feed blocks on a
-	// network fetch (fetchWithCache), so that load can outlast it. Pulse is CSS-only,
-	// so app.css's prefers-reduced-motion rule stills it.
+	// doesn't jump when the loaded page replaces it. Shown by the feed until its
+	// first page arrives. Pulse is CSS-only, so app.css's prefers-reduced-motion rule
+	// stills it.
 
 	// Uneven title widths so the placeholder reads as content, not a repeating grid.
 	// Index keys are fine — these rows are static and never reorder.

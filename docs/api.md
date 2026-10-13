@@ -1,11 +1,11 @@
 # API Integration Guide
 
-How the SvelteKit frontend uses [`@hey-api/openapi-ts`](https://heyapi.dev/) to call the FastAPI backend with typed requests and a client scoped to each request. The frontend is a client-rendered SPA, so the browser talks to the backend directly.
+How the SvelteKit frontend uses [`@hey-api/openapi-ts`](https://heyapi.dev/) to call the FastAPI backend with typed requests, and [TanStack Query](https://tanstack.com/query/latest/docs/framework/svelte/overview) to cache what it reads. The frontend is a client-rendered SPA, so the browser talks to the backend directly.
 
-The generator (config in `frontend/openapi-ts.config.ts`) emits, into `frontend/src/lib/api/generated/`, a typed **SDK** (one function per operation, in `sdk.gen.ts`), the **types** (`types.gen.ts`), and a bundled **fetch client** (`client/`). Each operation function returns `{ data, error, request?, response? }`. `data`/`error` are narrowed by the `error` discriminant; `request`/`response` are optional because a network failure produces no response. Output is run through Prettier by the generator (`output.postProcess`), so it stays formatted and is checked by the format gate like any other source.
+The generator (config in `frontend/openapi-ts.config.ts`) emits, into `frontend/src/lib/api/generated/`, a typed **SDK** (one function per operation, in `sdk.gen.ts`), the **types** (`types.gen.ts`), a bundled **fetch client** (`client/`), and, from the [`@tanstack/svelte-query` plugin](https://heyapi.dev/openapi-ts/plugins/tanstack-query), the **query options and keys** for every operation (`@tanstack/svelte-query.gen.ts`: `getScheduleOptions()`, `getScheduleQueryKey()`, `listFeedbackInfiniteOptions()`, …). Each operation function returns `{ data, error, request?, response? }`. `data`/`error` are narrowed by the `error` discriminant; `request`/`response` are optional because a network failure produces no response. Output is run through Prettier by the generator (`output.postProcess`), so it stays formatted and is checked by the format gate like any other source.
 
 ## Core Concept: Single Source of Truth
-* **Generated client**: `frontend/src/lib/api/generated/` is the single source of truth for all API contracts — import operation functions and types from `#lib/api/generated`, and `createApiClient` (the per-request client factory) from `#lib/api`.
+* **Generated client**: `frontend/src/lib/api/generated/` is the single source of truth for all API contracts — import operation functions and types from `#lib/api/generated`, query options and keys from `#lib/api/generated/@tanstack/svelte-query.gen.js`, and the app wiring (`currentUserOptions`, `forgetSession`, `watchApiResponses`) from `#lib/api`.
 * **Auto-generation**: Run `just frontend-generate-api` from the workspace root whenever the backend endpoints, routers, or Pydantic schemas change.
 * **Binary / file uploads**: hey-api types binary fields as `Blob | File` and serializes `multipart/form-data` (and `application/x-www-form-urlencoded`) bodies for you — pass `body: { file }` and it builds the `FormData`. No custom transform is needed.
 
@@ -24,68 +24,32 @@ CI checks both committed artifacts, because a stale one still compiles and would
 
 The general rule when adding to the spec: **a value that is not derived from committed source does not belong in a committed artifact.** `APP_BUILD` (the commit SHA) is the case in point: putting it in `info` would churn the spec, and the generated client with it, on every commit. Keep build- and environment-derived values on a runtime endpoint (`/debug/`) instead, and if one has to be in the spec, give it its own test against its own source of truth rather than the byte comparison.
 
-## Client Isolation
-A shared global/module singleton API client can accumulate mutable state that bleeds across navigations and login/logout, so **never use one**.
+## One configured client, one query cache
 
-Instead, always instantiate a local client per context using `createApiClient()`, and pass it to each SDK call as `{ client }`. Operation functions fall back to a shared module-global client when none is given — **never rely on that**, since it is exactly the cross-navigation singleton this rule forbids.
+There is **one** API client: the generated singleton in `client.gen.ts`. The generator's `runtimeConfigPath` points it at `#lib/api/clientConfig.ts`, which sets the base URL and `credentials: 'include'` before any call, so SDK functions and generated query options never take a `client` argument. The client holds configuration only — no user data. Its two response interceptors (reachability, session expiry) are registered by the root layout through `watchApiResponses(queryClient)`, which returns their teardown.
 
-### 1. Universal load functions (`+page.ts` / `+layout.ts`)
-Inside universal load functions, initialize the client locally and **always inject the SvelteKit-provided `fetch`**:
+Everything the app **reads** goes through TanStack Query. The cache — the `QueryClient` — is the per-session state, so it is created in the root `+layout.ts` load and returned as `data.queryClient`, never as a module singleton ([TanStack's SvelteKit setup](https://tanstack.com/query/latest/docs/framework/svelte/ssr)). Components get it from context (`useQueryClient()`), loads from `await parent()`.
 
-```typescript
-import { createApiClient } from '#lib/api/index.js';
-import { getSettings } from '#lib/api/generated/index.js';
-import type { PageLoad } from './$types';
-
-export const load: PageLoad = async ({ fetch, depends }) => {
-	depends('app:settings');
-
-	// 1. Initialize client locally (request-isolated)
-	const client = createApiClient();
-
-	// 2. Call the operation, passing the client and SvelteKit's fetch
-	const { data, error, response } = await getSettings({ client, fetch });
-
-	if (error || !response?.ok) {
-		// Handle/log error...
-	}
-
-	return { settings: data };
-};
-```
-
-> [!IMPORTANT]
-> **Why inject the SvelteKit-provided `fetch` in load functions?**
-> * **Request deduplication**: SvelteKit dedupes identical requests and lets `invalidate()` re-run the load when its data changes.
-> * **Relative URL Resolution**: SvelteKit resolves relative routes correctly.
-> * **Cookies**: The `session_id` cookie is carried automatically by the browser; the client uses `credentials: 'include'` and the frontend is served same-origin with the API (behind Caddy), so it stays first-party.
-
-### 2. Browser & Svelte Component Context
-For local component scripts (`.svelte`), page layouts, or event handlers that only run in the browser, initialize a local client at the top of the `<script>` tag:
+### 1. Components read with `createQuery`
+Pass the generated options straight in; override only what the page needs (`enabled`, a custom `getNextPageParam`):
 
 ```svelte
 <script lang="ts">
-	import { createApiClient } from '#lib/api/index.js';
-	import { listUserNotifications } from '#lib/api/generated/index.js';
-	import { onMount } from 'svelte';
+	import { createQuery } from '@tanstack/svelte-query';
 
-	// Create local client for this component instance
-	const client = createApiClient();
-	let notifications = $state([]);
+	import { getScheduleOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 
-	async function loadNotifications() {
-		const { data } = await listUserNotifications({
-			client,
-			query: { limit: 10 }
-		});
-		if (data) notifications = data.notifications;
-	}
-
-	onMount(() => {
-		void loadNotifications();
-	});
+	const scheduleQuery = createQuery(() => getScheduleOptions());
 </script>
 ```
+
+The query renders the cached copy at once and refetches in the background (stale-while-revalidate, TanStack's defaults: `staleTime` 0, refetch on mount, on window focus and on reconnect). Paginated feeds use `createInfiniteQuery` with the generated `…InfiniteOptions` (offset paging) and an over-fetched page size to detect the next page.
+
+### 2. Loads guard, prefetch, and only sometimes wait
+A `load` keeps three jobs: permission guards (reading identity from the cache, `queryClient.getQueryData(currentUserOptions().queryKey)`), the navbar data (`title`, `back`, `actions`), and starting the page's fetch early — SvelteKit preloads a route's data on hover/tap, so `void queryClient.query(getScheduleOptions()).catch(() => {})` there puts the request on the wire before the page mounts. A load **awaits** a query only when the page can't render without it — a form seeded once from it (festival settings, the voting dashboard), a navbar title (a nomination), a staff directory paged by URL — and turns its failure into an error page with `throwApiError(apiError, undefined, fallback)`.
+
+### 3. Plain SDK calls for mutations
+Mutations stay direct SDK calls in event handlers (`await newSubscription({ body })`), followed by `queryClient.invalidateQueries({ queryKey: …QueryKey() })` for the data they changed. The SDK call never throws (see below); the generated query options *do* (`throwOnError: true`), so a failed query surfaces as `query.error` holding the error body.
 
 > Query params go under `query`, path params under `path`, and the request body under `body` — flat on the options object, not nested under `params`.
 
@@ -102,8 +66,8 @@ Request bodies, query params, and responses are named too — `UpdateSettingsDat
 Backend `StrEnum`s that appear on a DTO field (`UserRole`, `Permission` in `core/vo/`) are emitted as OpenAPI enum schemas, so `frontend-generate-api` regenerates them as string-literal unions. Never hand-copy enum values on the frontend — import the generated union. Permission literals in `lib/utils/permissions.ts` type their constants as the generated `Permission`, so a backend rename/removal makes the stale literal fail `pnpm check` instead of silently breaking permission checks (same drift-guard idea as the error `code` union below). To expose a new enum on the wire, type a DTO field with the enum (not a plain `NewType` str) and run `just frontend-generate-api`.
 
 ## Mutations & Data Recovery
-* **UI Consistency**: Define how the UI becomes consistent after mutations (e.g. invalidate layout cache, optimistic update, or full state refetch).
-* **Dependency Invalidation**: When a route uses dependency invalidation, call `depends(...)` in the page load and trigger it with `invalidate('app:something')` after a successful mutation.
+* **UI Consistency**: after a successful mutation, invalidate the queries it changed — `queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() })` — so what is on screen refetches and the rest refetches when next shown. Keys match by prefix, so a list key covers its infinite variant too. Optimistic writes follow TanStack's order: `cancelQueries`, `setQueryData`, then `invalidateQueries` (mark-all-read zeroing the badge).
+* **No SvelteKit invalidation**: loads hold no data, so nothing calls `depends`/`invalidate`/`invalidateAll`/`refreshAll` — the last two would also re-run the root load and replace the cache.
 * **Return Checking**: Success payload, error payload, and response metadata are checked through the SDK return (`data`, `error`, `response`). `response` is optional (`response?.ok`, `response?.status`) — a network failure yields `error` with no `response`.
 * **The client never throws** (`throwOnError` is off): every failure, a dropped connection included, comes back as `error` — the generated client catches the `fetch` rejection itself. So don't wrap an SDK call in `try/catch` to handle API failures; that `catch` can't fire for them. Keep `try/finally` to reset a busy flag, and a `catch` only around code that really throws (browser APIs, clipboard, a `load` re-throwing `throwApiError`).
 
@@ -112,13 +76,13 @@ Backend `StrEnum`s that appear on a DTO field (`UserRole`, `Permission` in `core
 An action that cannot finish inside the request returns **202** with the created record and a `Location` header pointing at a **status resource** the client re-reads, instead of blocking. `POST /sync/{source}` is the first of these: it queues the work, returns the `SyncRunDTO`, and sets `Location: /sync/sources`.
 
 * **The status resource is an existing list endpoint, not a per-run one.** `GET /sync/sources` already reports each source's latest run, including the active one, so a dedicated `GET /sync/runs/{id}` would exist only to satisfy the convention. Add a per-run endpoint if something genuinely needs to poll one run by id — not before.
-* **Prefer SSE over polling for progress.** The page subscribes to the relevant `SSEEventName` (here `sync_run_updated`) and calls `invalidate(...)`; it also re-invalidates on `connection_established`, so an update missed while the stream was down (or the tab was backgrounded past the pause grace) self-heals on reconnect rather than leaving a stale "in progress" on screen. Treat the SSE payload as a nudge to refetch, never as the source of truth.
+* **Prefer SSE over polling for progress.** The root layout maps each `SSEEventName` to the query keys it invalidates (here `sync_run_updated` → `getSyncSourcesQueryKey()`), and a reconnect after a gap invalidates the whole cache, so an update missed while the stream was down self-heals rather than leaving a stale "in progress" on screen. Treat the SSE payload as a nudge to refetch, never as the source of truth.
 * **A second request while one is running is a 409**, mapped to Russian copy by `code` like any other error — not a silent no-op.
 
 ## Russian Localization & Error Handling
 Russian copy is mandatory (AGENTS.md, "Never"). API-specific rule: normalize failures before presenting them — never expose raw backend stack traces or internal identifiers, and show a friendly Russian message explaining how to recover or retry.
 
 * **Error shape**: every error response is `ErrorMessage { code, details }` (see backend `presentation/web/exceptions.py`). Map failures by the machine-readable `code`, not by HTTP status or message text.
-* **Single funnel**: `getApiErrorDetail(error)` (`lib/api/errors.ts`) turns the SDK's `error` into Russian copy — the mapped `code`, or the connection message when the request got no answer (a `TypeError` from `fetch`, or a `TimeoutError` from `timeoutSignal`). Never branch on `response.status` to pick copy. For **inline form errors** use `getApiErrorDetail(error) ?? '<fallback>'`, and first `getApiFieldError(error, '<field>')` for each field that has its own error slot, so a `VALIDATION_ERROR` lands under its input; for **mutations/toasts** use `toastService.error(error, '<fallback>')`; for **`load` failures** use `throwApiError(apiError, response, fallback)` from the same module — it throws a SvelteKit `error()` with the mapped copy and the real HTTP status (and carries `code` on `App.Error`), so a load failure looks like every other error instead of a bespoke per-page string. Add new copy to the `ERROR_MESSAGES` dictionary there. (Permission guards and offline-cache-miss states still throw `error()` directly — they have no API `code` to map.)
+* **Single funnel**: `getApiErrorDetail(error)` (`lib/api/errors.ts`) turns the SDK's `error` into Russian copy — the mapped `code`, or the connection message when the request got no answer (a `TypeError` from `fetch`, or a `TimeoutError` from `timeoutSignal`; `isConnectionFailure` exposes that test). Never branch on `response.status` to pick copy. For **inline form errors** use `getApiErrorDetail(error) ?? '<fallback>'`, and first `getApiFieldError(error, '<field>')` for each field that has its own error slot, so a `VALIDATION_ERROR` lands under its input; for **mutations/toasts** use `toastService.error(error, '<fallback>')`; for a **failed query** a page renders `ErrorState` inline with `{ status: 500, message: getApiErrorDetail(query.error) ?? '<fallback>' }`; for a **`load` that awaits a query** use `throwApiError(apiError, undefined, fallback)` from the same module — it throws a SvelteKit `error()` with the mapped copy (and carries `code` on `App.Error`), so a load failure looks like every other error instead of a bespoke per-page string. A query rethrows the error *body*, without the HTTP status, so a load that maps a "not found" checks `getApiErrorCode(error)` (`USER_NOT_FOUND`, `NOMINATION_NOT_FOUND`) and throws its own `error(404, …)`. Add new copy to the `ERROR_MESSAGES` dictionary there. (Permission guards and offline-cache-miss states still throw `error()` directly — they have no API `code` to map.)
 * **`code` is a typed union**: the backend stamps the closed set of client-facing codes onto `ErrorMessage.code` as an OpenAPI enum (`presentation/web/error_codes.py`), so `frontend-generate-api` regenerates it as a string-literal union. Dictionary keys are checked against it — a typo is a compile error.
 * **Drift guard**: a compile-time exhaustiveness check in `errors.ts` fails `pnpm check` if the backend adds a client-facing code that is neither given copy nor listed in `GENERIC_FALLBACK_CODES`. After changing backend error codes, run `just frontend-generate-api` and resolve any new code the guard reports.

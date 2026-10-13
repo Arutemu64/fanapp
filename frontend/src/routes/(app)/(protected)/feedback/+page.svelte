@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import { submitFeedback } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
-	const client = createApiClient();
 	import OfflineUnavailableState from '#lib/components/OfflineUnavailableState.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
@@ -55,7 +53,6 @@
 
 		try {
 			const { error, response } = await submitFeedback({
-				client,
 				body: {
 					text: feedbackText.trim()
 				}

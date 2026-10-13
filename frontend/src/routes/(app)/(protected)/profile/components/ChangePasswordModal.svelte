@@ -5,7 +5,6 @@
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import { changeCurrentUserPassword } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
 	import PasswordInput from '#lib/components/PasswordInput.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -13,8 +12,6 @@
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-
-	const client = createApiClient();
 
 	interface Props {
 		open: boolean;
@@ -69,7 +66,6 @@
 		};
 
 		const { error, response } = await changeCurrentUserPassword({
-			client,
 			body
 		});
 

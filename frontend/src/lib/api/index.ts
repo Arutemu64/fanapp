@@ -1,4 +1,5 @@
-import { invalidate } from '$app/navigation';
+import { goto } from '$app/navigation';
+import { page } from '$app/state';
 import { type QueryClient, queryOptions } from '@tanstack/svelte-query';
 
 import type { ResolvedRequestOptions } from '#lib/api/generated/client/index.js';
@@ -11,6 +12,7 @@ import {
 	markReachable,
 	probeReachability
 } from '#lib/services/reachability.js';
+import { LOGIN_NEXT_PARAM } from '#lib/utils/auth.js';
 import { isLogoutPending } from '#lib/utils/pendingLogout.js';
 
 /**
@@ -36,7 +38,7 @@ export function currentUserOptions() {
 
 			const { data, error, response } = await getCurrentUser({ signal });
 			if (response?.status === 401 || response?.status === 403) return null;
-			if (data === undefined) throw error;
+			if (data === undefined) throw new Error('GET /me/ failed', { cause: error });
 			return data;
 		}
 	});
@@ -53,33 +55,30 @@ export function forgetSession(queryClient: QueryClient): void {
 	void queryClient.invalidateQueries();
 }
 
-// True while a 401-triggered identity refresh is in flight, so a burst of
-// rejected calls collapses into a single /me refetch. A transient concurrency
-// latch, not user/session state, so it is safe as module state in this
-// client-only SPA.
-let reconcilingSession = false;
+// A 401 means the session may have ended; /me/ gives the verdict. Its own 401
+// ends the session — whenever it comes: a restored user whose session expired
+// while the app was closed, a refetch on focus, or the check any other 401
+// triggers below. An expired session then flips the whole app to the guest
+// state in one place instead of every page failing on its own with a stale
+// "logged in" UI. The credential logins are excluded: they 401 on a wrong
+// password/code, which is not a session expiry, and the visitor is a guest
+// already. (`/auth/logout` is NOT excluded: a 401 there means the session is
+// already gone — checking is exactly what we want.)
+const IDENTITY_PATH = '/me/';
+const CREDENTIAL_CHECK_PATHS = new Set(['/auth/login', '/auth/login-with-code']);
 
-// When any API call is rejected as unauthenticated, re-check identity. An
-// expired session then flips the whole app to the guest state in one place —
-// the user query turns `null`, the guards re-run (the (protected) one redirects
-// to /login) and the previous account's cache is forgotten — instead of every
-// page failing on its own with a stale "logged in" UI. Exclusions:
-//   - `/me/` delivers the auth verdict itself; reacting to its 401 would
-//     re-trigger the same fetch in a loop.
-//   - credential logins 401 on a wrong password/code — that is not a session
-//     expiry, and the visitor is a guest already. (`/auth/logout` is NOT
-//     excluded: a 401 there means the session is already gone — reconciling
-//     is exactly what we want.)
-const CREDENTIAL_CHECK_PATHS = new Set(['/me/', '/auth/login', '/auth/login-with-code']);
-
-async function reconcileSession(queryClient: QueryClient): Promise<void> {
+async function endSession(queryClient: QueryClient): Promise<void> {
 	const { queryKey } = currentUserOptions();
-	const hadUser = Boolean(queryClient.getQueryData(queryKey));
-	await queryClient.refetchQueries({ queryKey });
-	if (!hadUser || queryClient.getQueryData(queryKey)) return;
+	// A guest was already a guest; this also makes a burst of 401s end it once.
+	if (!queryClient.getQueryData(queryKey)) return;
+	queryClient.setQueryData(queryKey, null);
 
-	// 'app:current-user' is what the guard loads depend on.
-	await invalidate('app:current-user');
+	// The (protected) guard only runs on navigation, so a screen already open
+	// behind it is left explicitly — to the same `next` login the guard builds.
+	if (page.route.id?.startsWith('/(app)/(protected)/')) {
+		const next = page.url.pathname + page.url.search;
+		await goto(`/login?${LOGIN_NEXT_PARAM}=${encodeURIComponent(next)}`);
+	}
 	forgetSession(queryClient);
 }
 
@@ -92,7 +91,7 @@ export function watchApiResponses(queryClient: QueryClient): () => void {
 	// The response interceptor runs for every response the client receives, before
 	// it decides ok vs error — so it sees 4xx/5xx too, not just 2xx. `options.url`
 	// is the operation's path template (e.g. `/me/`), not the resolved URL, which
-	// is what the credential-path exclusion matches against.
+	// is what the path checks match against.
 	const responseId = client.interceptors.response.use(
 		(response: Response, _request: Request, options: ResolvedRequestOptions) => {
 			// A non-gateway response proves the backend answered; 502/503/504 means the
@@ -101,13 +100,17 @@ export function watchApiResponses(queryClient: QueryClient): () => void {
 
 			if (response.status !== 401) return response;
 			if (CREDENTIAL_CHECK_PATHS.has(options.url)) return response;
-			if (reconcilingSession) return response;
-			reconcilingSession = true;
 			// Fire-and-forget so the failing response still settles immediately for its
 			// caller — forms keep their own inline 401 error handling.
-			void reconcileSession(queryClient).finally(() => {
-				reconcilingSession = false;
-			});
+			if (options.url === IDENTITY_PATH) {
+				void endSession(queryClient);
+			} else {
+				// Joins a /me/ fetch already in flight, so a burst of 401s asks once.
+				void queryClient.refetchQueries(
+					{ queryKey: currentUserOptions().queryKey },
+					{ cancelRefetch: false }
+				);
+			}
 			return response;
 		}
 	);

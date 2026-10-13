@@ -48,15 +48,6 @@ export function isBackendUnreachableStatus(status: number): boolean {
 	return BACKEND_UNREACHABLE_STATUSES.has(status);
 }
 
-/**
- * Whether an API call's outcome means the backend wasn't reached: no response at
- * all (network failure, timeout, abort) or a gateway status. Lets a `load` pick
- * its offline state without deciding app-wide reachability itself.
- */
-export function isUnreachableResponse(response: Response | undefined): boolean {
-	return response === undefined || isBackendUnreachableStatus(response.status);
-}
-
 // Optimistic default so the very first paint still attempts the network; the
 // first probe corrects it within PROBE_TIMEOUT_MS.
 let reachable = true;

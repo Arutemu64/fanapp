@@ -1,13 +1,14 @@
 import { redirect } from '@sveltejs/kit';
 
+import { currentUserOptions } from '#lib/api/index.js';
 import { LOGIN_NEXT_PARAM, sanitizeNextPath } from '#lib/utils/auth.js';
 
 import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = async ({ parent, url }) => {
-	// Reuse the user from the root layout data so this guard works
-	// on first load and on later client-side navigations.
-	const { user } = await parent();
+	// The root load settled identity into the cache before any guard runs.
+	const { queryClient } = await parent();
+	const user = queryClient.getQueryData(currentUserOptions().queryKey);
 
 	if (user) {
 		// Already signed in: honor a pending `next` target (e.g. a login link

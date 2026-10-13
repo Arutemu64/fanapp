@@ -1,12 +1,10 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
-
-	import { importSchedule } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
-	const client = createApiClient();
 	import { AlertCircle, CheckCircle2 } from '@lucide/svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
+	import { getScheduleQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { importSchedule } from '#lib/api/generated/index.js';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -15,6 +13,8 @@
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 
 	import FileFormatGuide from './components/FileFormatGuide.svelte';
+
+	const queryClient = useQueryClient();
 
 	let selectedFiles = $state<FileList | undefined>(undefined);
 	let isUploading = $state(false);
@@ -47,7 +47,6 @@
 
 		try {
 			const { error, response } = await importSchedule({
-				client,
 				body: { file: selectedFile }
 			});
 
@@ -63,7 +62,7 @@
 			selectedFiles = undefined;
 			form.reset();
 
-			await invalidate('app:schedule');
+			await queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() });
 		} finally {
 			isUploading = false;
 		}

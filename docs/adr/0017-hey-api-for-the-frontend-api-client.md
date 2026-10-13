@@ -1,6 +1,6 @@
 # ADR-0017: `@hey-api/openapi-ts` for the frontend API client
 
-- **Status:** Accepted
+- **Status:** Accepted; the per-call `createApiClient()` is superseded by [ADR-0021](0021-tanstack-query-for-server-state.md)
 - **Date:** 2026-09-16
 - **Deciders:** @arutemu64 (PR #834)
 

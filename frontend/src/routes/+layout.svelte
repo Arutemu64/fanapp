@@ -70,6 +70,11 @@
 	// SSE carries change signals only, so each event marks the queries it affects
 	// stale: those on screen refetch at once, the rest when next shown. Keys match
 	// by prefix, so a list key also covers its infinite (paginated) variant.
+
+	// The change log has no event of its own: every change that adds a row to it
+	// (create, undo) also broadcasts schedule_updated, a superset of the moments it
+	// goes stale. The extra refetch that costs — a bulk import touches the schedule
+	// but records no change row — is one request for the few staff watching it.
 	function handleScheduleUpdated() {
 		void queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() });
 		void queryClient.invalidateQueries({ queryKey: listScheduleChangesQueryKey() });

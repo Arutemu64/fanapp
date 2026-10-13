@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { createApiClient } from '#lib/api/index.js';
-	const client = createApiClient();
 	import { Mail } from '@lucide/svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import { login } from '#lib/api/generated/index.js';
@@ -33,6 +32,7 @@
 	let formError = $state('');
 
 	const eventsClient = getEventsClient();
+	const queryClient = useQueryClient();
 	const toastService = getToastService();
 
 	let busy = $derived(activeAction !== null);
@@ -81,7 +81,6 @@
 
 		try {
 			const { error, response } = await login({
-				client,
 				body: {
 					email: trimmedEmail,
 					password
@@ -99,7 +98,7 @@
 				return;
 			}
 
-			await completeLogin(toastService, eventsClient, 'Вход выполнен');
+			await completeLogin(toastService, eventsClient, queryClient, 'Вход выполнен');
 		} finally {
 			activeAction = null;
 		}

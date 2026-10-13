@@ -11,10 +11,12 @@
 		UserRound,
 		Wrench
 	} from '@lucide/svelte';
+	import { createQuery } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 	import IconFastapi from '~icons/simple-icons/fastapi';
 	import IconSvelte from '~icons/simple-icons/svelte';
 
+	import { currentUserOptions } from '#lib/api/index.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
 	import * as Avatar from '#lib/components/ui/avatar/index.js';
@@ -26,15 +28,13 @@
 	import { type DevicePushState, getDevicePushState } from '#lib/utils/pushSubscription.js';
 	import { getAvatarInitials, getRoleLabel } from '#lib/utils/users.js';
 
-	import type { PageProps } from './$types';
-
 	import LogoutButton from './components/LogoutButton.svelte';
 	import MenuLink from './components/MenuLink.svelte';
 	import ThemeToggle from './components/ThemeToggle.svelte';
 	import { notificationsStatus } from './notificationsStatus';
 
-	let { data }: PageProps = $props();
-	let user = $derived(data.user);
+	const userQuery = createQuery(() => currentUserOptions());
+	let user = $derived(userQuery.data ?? null);
 	let avatarInitials = $derived(getAvatarInitials(user?.username));
 	let ticketStatus = $derived(user?.ticket ? 'Привязан' : 'Не привязан');
 
@@ -58,7 +58,7 @@
 
 	const pwa = getPwaService();
 
-	// The account row and ticket status render from the layout-cached user, so
+	// The account row and ticket status render from the cached user, so
 	// offline they may be out of date; say so, as the settings pages behind it do.
 	let showStaleNotice = $derived(Boolean(user) && !reachability.current);
 

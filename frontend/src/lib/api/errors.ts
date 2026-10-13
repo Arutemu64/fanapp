@@ -128,6 +128,14 @@ function getValidationMessage(details: ApiErrorDetails): string {
 }
 
 /**
+ * The API error `code`, for a caller that branches on one. A query rethrows the
+ * error body without its HTTP status, so a "not found" is told apart by code.
+ */
+export function getApiErrorCode(error: unknown): string | undefined {
+	return getApiErrorPayload(error)?.code;
+}
+
+/**
  * What a VALIDATION_ERROR says about one request field, for showing under that
  * input instead of as a form-level message. `null` when the error is anything
  * else or names a different field — the caller then falls back to
@@ -284,7 +292,7 @@ const CONNECTION_FAILED_MESSAGE = 'Не удалось связаться с с�
 // failure (each engine words it differently, so the type is the only stable
 // signal) or a TimeoutError DOMException from `timeoutSignal`. A deliberate
 // AbortError is left out: nobody is waiting for that request's answer.
-function isConnectionFailure(error: unknown): boolean {
+export function isConnectionFailure(error: unknown): boolean {
 	if (error instanceof TypeError) {
 		return true;
 	}

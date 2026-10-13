@@ -6,7 +6,6 @@
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import { updateCurrentUser } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
@@ -14,8 +13,6 @@
 	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-
-	const client = createApiClient();
 
 	interface Props {
 		user: CurrentUserDto;
@@ -111,7 +108,6 @@
 		if (username && username !== user.username) body.username = username;
 
 		const { error, response } = await updateCurrentUser({
-			client,
 			body
 		});
 

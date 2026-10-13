@@ -6,7 +6,6 @@
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import { drawVotingContestWinner, setVotingTimeRange } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
@@ -22,7 +21,6 @@
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
-	const client = createApiClient();
 	const toastService = getToastService();
 
 	let nominations = $derived<NominationContenderDto[]>(data.dashboard.nominations);
@@ -58,7 +56,6 @@
 		isSaving = true;
 		try {
 			const { error, response } = await setVotingTimeRange({
-				client,
 				body: {
 					voting_start: fromLocalInput(votingStart),
 					voting_end: fromLocalInput(votingEnd)
@@ -86,7 +83,7 @@
 		isDrawing = true;
 		drawError = '';
 		try {
-			const { data: result, error, response } = await drawVotingContestWinner({ client });
+			const { data: result, error, response } = await drawVotingContestWinner();
 
 			if (error || !response?.ok || !result) {
 				drawError = getApiErrorDetail(error) ?? 'Не удалось провести розыгрыш';

@@ -4,13 +4,10 @@
 	import type { ParticipantFullDto, ParticipantVoteDto } from '#lib/api/generated/index.js';
 
 	import { cancelVote } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-
-	const client = createApiClient();
 
 	interface Props {
 		participant: ParticipantFullDto;
@@ -36,7 +33,6 @@
 		isLoading = true;
 		try {
 			const { error, response } = await cancelVote({
-				client,
 				path: { vote_id: vote.id }
 			});
 

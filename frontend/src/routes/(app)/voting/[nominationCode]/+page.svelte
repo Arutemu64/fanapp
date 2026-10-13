@@ -1,17 +1,23 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
+	import { page } from '$app/state';
 	import { ExternalLink, Search as SearchIcon, Users, X } from '@lucide/svelte';
+	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { GetVotingNominationOutput } from '#lib/api/generated/index.js';
 
+	import {
+		getVotingNominationOptions,
+		getVotingNominationQueryKey,
+		getVotingStatusOptions,
+		listVotingNominationsQueryKey
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import OfflineUnavailableState from '#lib/components/OfflineUnavailableState.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
+	import { reachability } from '#lib/services/reachability.js';
 	import { createSearchIndex } from '#lib/utils/search.js';
-
-	import type { PageProps } from './$types';
 
 	import ParticipantRow from '../components/ParticipantRow.svelte';
 	import UserVoteNotice from '../components/UserVoteNotice.svelte';
@@ -19,12 +25,20 @@
 
 	type VotingParticipant = GetVotingNominationOutput['participants'][number];
 
-	let { data }: PageProps = $props();
-	// Absent offline: voting is uncached and online-only (see +page.ts).
-	let nomination: GetVotingNominationOutput | undefined = $derived(data.nomination);
+	const queryClient = useQueryClient();
+	let nominationCode = $derived(page.params.nominationCode ?? '');
+	const nominationQuery = createQuery(() =>
+		getVotingNominationOptions({ path: { nomination_code: nominationCode } })
+	);
+	const votingStatusQuery = createQuery(() => getVotingStatusOptions());
+
+	// Never shown from the cache offline: voting is a live, online-only surface
+	// (see ../+page.svelte).
+	let nomination: GetVotingNominationOutput | undefined = $derived(
+		reachability.current ? nominationQuery.data : undefined
+	);
 	let participants = $derived(nomination?.participants ?? []);
-	let votingStatus = $derived(data.votingStatus);
-	let canVote = $derived(votingStatus?.can_vote ?? false);
+	let canVote = $derived(votingStatusQuery.data?.can_vote ?? false);
 
 	let searchQuery = $state('');
 
@@ -49,7 +63,10 @@
 	let showVoteHint = $derived(canVote && !hasVoted);
 
 	async function handleVoted() {
-		await invalidate('app:voting:nomination');
+		void queryClient.invalidateQueries({ queryKey: listVotingNominationsQueryKey() });
+		await queryClient.invalidateQueries({
+			queryKey: getVotingNominationQueryKey({ path: { nomination_code: nominationCode } })
+		});
 	}
 </script>
 
@@ -57,9 +74,9 @@
 	<title>{nomination ? `${nomination.title} · ` : ''}Голосование · ФАН ФАН</title>
 </svelte:head>
 
-{#if data.offlineUnavailable || !nomination}
-	<!-- Voting is uncached and online-only, so there is no saved copy to show —
-	     say so plainly instead of crashing on a missing nomination. -->
+{#if !nomination}
+	<!-- Voting is online-only, so there is no saved copy to show — say so plainly
+	     instead of crashing on a missing nomination. -->
 	<OfflineUnavailableState
 		title="Голосование доступно только онлайн"
 		message="Подключись к интернету, чтобы голосовать за участников."
@@ -92,7 +109,7 @@
 		</SectionIntro>
 	{/if}
 
-	<VotingStatusAlert votingState={votingStatus} class="mb-4" />
+	<VotingStatusAlert votingState={votingStatusQuery.data} class="mb-4" />
 
 	<!-- Above the search on purpose: the voted participant can be filtered out of
 	     the list, and this is where the vote is taken back. -->

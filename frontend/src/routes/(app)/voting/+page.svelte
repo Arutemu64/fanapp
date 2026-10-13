@@ -1,34 +1,60 @@
 <script lang="ts">
 	import { ThumbsUp } from '@lucide/svelte';
+	import { createQuery } from '@tanstack/svelte-query';
 
-	import type { NominationVotingDto } from '#lib/api/generated/index.js';
-
+	import { getApiErrorDetail, isConnectionFailure } from '#lib/api/errors.js';
+	import {
+		getVotingStatusOptions,
+		listVotingNominationsOptions
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
+	import ErrorState from '#lib/components/ErrorState.svelte';
 	import OfflineUnavailableState from '#lib/components/OfflineUnavailableState.svelte';
-
-	import type { PageProps } from './$types';
+	import { reachability } from '#lib/services/reachability.js';
 
 	import NominationCard from './components/NominationCard.svelte';
+	import VotingSkeleton from './components/VotingSkeleton.svelte';
 	import VotingStatusAlert from './components/VotingStatusAlert.svelte';
 
-	let { data }: PageProps = $props();
-	let nominations: NominationVotingDto[] = $derived(data.nominations);
-	let votingStatus = $derived(data.votingStatus);
+	const nominationsQuery = createQuery(() => listVotingNominationsOptions());
+	const votingStatusQuery = createQuery(() => getVotingStatusOptions());
+
+	let nominations = $derived(nominationsQuery.data?.nominations ?? []);
+	// A read that got no answer means the same here as being offline, without
+	// waiting for the reachability probe to confirm it or for the retries to run
+	// out: `failureReason` is set on the first failed attempt.
+	let offline = $derived(
+		!reachability.current ||
+			(nominationsQuery.data === undefined && isConnectionFailure(nominationsQuery.failureReason))
+	);
 </script>
 
 <svelte:head>
 	<title>Голосование · ФАН ФАН</title>
 </svelte:head>
 
-{#if data.offlineUnavailable}
-	<!-- Voting is uncached and online-only, so there is no saved copy to show —
-	     say so plainly instead of an empty "no nominations" state. -->
+{#if offline}
+	<!-- Voting is a live, online-only surface: casting a vote is a mutation, and the
+	     open/closed and already-voted state must not be shown stale (a ballot you
+	     can't submit is a dead end). So a cached copy is never shown offline. -->
 	<OfflineUnavailableState
 		title="Голосование доступно только онлайн"
 		message="Подключись к интернету, чтобы голосовать за участников."
 	/>
+{:else if nominationsQuery.data === undefined}
+	{#if nominationsQuery.isError}
+		<ErrorState
+			variant="inline"
+			error={{
+				status: 500,
+				message: getApiErrorDetail(nominationsQuery.error) ?? 'Не удалось загрузить номинации'
+			}}
+		/>
+	{:else}
+		<VotingSkeleton />
+	{/if}
 {:else}
-	<VotingStatusAlert votingState={votingStatus} class="mb-4" />
+	<VotingStatusAlert votingState={votingStatusQuery.data} class="mb-4" />
 
 	{#if nominations.length === 0}
 		<EmptyState icon={ThumbsUp} message="Номинаций пока нет" />

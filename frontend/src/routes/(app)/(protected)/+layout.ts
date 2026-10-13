@@ -1,12 +1,15 @@
 import { error, redirect } from '@sveltejs/kit';
 
+import { currentUserOptions } from '#lib/api/index.js';
 import { isReachable } from '#lib/services/reachability.js';
 import { LOGIN_NEXT_PARAM } from '#lib/utils/auth.js';
 
 import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = async ({ parent, url }) => {
-	const { user } = await parent();
+	// The root load settled identity into the cache before any guard runs.
+	const { queryClient } = await parent();
+	const user = queryClient.getQueryData(currentUserOptions().queryKey);
 
 	if (!user) {
 		// A null user has two very different causes. Only redirect to login when the
@@ -27,4 +30,8 @@ export const load: LayoutLoad = async ({ parent, url }) => {
 		// there (validated by sanitizeNextPath on the way back).
 		redirect(303, `/login?${LOGIN_NEXT_PARAM}=${encodeURIComponent(url.pathname + url.search)}`);
 	}
+
+	// A snapshot for the permission checks in the loads below, which run on every
+	// navigation; components read the live user from the query.
+	return { user };
 };

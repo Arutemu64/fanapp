@@ -3,9 +3,9 @@
 
 	// Placeholder that mirrors the voting grid — a status bar then a responsive
 	// grid of nomination cards (count line, title, footer action) — so the layout
-	// doesn't jump when the loaded page replaces it. Voting is online-only and
-	// uncached, so its load is the most likely to outlast the shell's delay gate.
-	// Pulse is CSS-only, so app.css's prefers-reduced-motion rule stills it.
+	// doesn't jump when the loaded page replaces it. Shown by the page until the
+	// nominations first arrive. Pulse is CSS-only, so app.css's
+	// prefers-reduced-motion rule stills it.
 
 	// Six cards fill the 1/2/3-column grid evenly at every breakpoint.
 	const cards = Array.from({ length: 6 }, (_, i) => i);

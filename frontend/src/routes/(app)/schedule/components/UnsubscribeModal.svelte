@@ -1,24 +1,23 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
 	import { Bell } from '@lucide/svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
 
 	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
+	import { getSubscriptionsQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { deleteSubscription } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-
-	const client = createApiClient();
 
 	interface Props {
 		open: boolean;
 		event: ScheduleEventWithSubscription;
 	}
 	let { open = $bindable(), event }: Props = $props();
+	const queryClient = useQueryClient();
 	const toastService = getToastService();
 	let formError = $state('');
 
@@ -36,7 +35,6 @@
 
 		formError = '';
 		const { error, response } = await deleteSubscription({
-			client,
 			path: { subscription_id: event.user_subscription.id }
 		});
 
@@ -47,7 +45,7 @@
 		}
 
 		toastService.add('Подписка на уведомления отключена', 'success');
-		await invalidate('app:schedule');
+		await queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() });
 		open = false;
 	}
 </script>

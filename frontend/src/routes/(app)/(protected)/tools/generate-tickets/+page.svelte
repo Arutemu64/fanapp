@@ -1,10 +1,8 @@
 <script lang="ts">
-	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
-	import { generateTickets } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
-	const client = createApiClient();
 	import { ClipboardCopy } from '@lucide/svelte';
 
+	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
+	import { generateTickets } from '#lib/api/generated/index.js';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -83,7 +81,6 @@
 
 		try {
 			const { data, error, response } = await generateTickets({
-				client,
 				body: { role: selectedRole, amount }
 			});
 

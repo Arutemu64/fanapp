@@ -1,13 +1,15 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
-	import { page } from '$app/state';
 	import { ArrowUpDown, BellRing, Search as SearchIcon, X } from '@lucide/svelte';
+	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { ScheduleEventFullDto } from '#lib/api/generated/index.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
+	import {
+		getScheduleOptions,
+		getScheduleQueryKey
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { moveScheduleEvent } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
@@ -16,22 +18,20 @@
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { createSearchIndex } from '#lib/utils/search.js';
 
-	const client = createApiClient();
-
 	interface Props {
 		open: boolean;
 		event: ScheduleEventFullDto;
 	}
 
 	let { open = $bindable(), event }: Props = $props();
+	const queryClient = useQueryClient();
 	const toastService = getToastService();
 
-	// The move picker searches the whole programme. It reads that off the route's
-	// loaded schedule rather than a prop, so the full array isn't drilled through
-	// every EventCard row just to reach this rarely-opened dialog. The cast is
-	// needed because merged page.data is untyped; this dialog only ever mounts
-	// under the schedule route, where the load supplies `schedule`.
-	let schedule = $derived(page.data.schedule as ScheduleEventFullDto[]);
+	// The move picker searches the whole programme. It reads that off the cached
+	// schedule query rather than a prop, so the full array isn't drilled through
+	// every EventCard row just to reach this rarely-opened dialog.
+	const scheduleQuery = createQuery(() => getScheduleOptions());
+	let schedule = $derived(scheduleQuery.data?.schedule ?? []);
 
 	let query = $state('');
 	let selectedId: string | null = $state(null);
@@ -70,7 +70,6 @@
 		isSubmitting = true;
 		try {
 			const { error, response } = await moveScheduleEvent({
-				client,
 				path: { event_id: event.id },
 				body: { place_after_event_id: selectedId }
 			});
@@ -85,7 +84,7 @@
 			// rather than waiting for the schedule_updated SSE echo, which can arrive
 			// late or be dropped on a flaky operator connection. See EventCard's
 			// reloadSchedule for the full rationale.
-			void invalidate('app:schedule');
+			void queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() });
 			toastService.add('Выступление перенесено', 'success');
 
 			open = false;

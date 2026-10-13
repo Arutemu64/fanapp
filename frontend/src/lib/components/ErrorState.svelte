@@ -16,10 +16,12 @@
 	// rendering error. Prefer it to `page.error`: every failing boundary — the
 	// navbar's bell included — writes its error there, so a later failure
 	// elsewhere could replace this page's message and «Код ошибки».
+	// A page showing a failed query passes one too, status included: the page
+	// itself rendered fine, so `page.status` is a 200.
 	let { variant = 'fullscreen', error }: { variant?: Variant; error?: App.Error } = $props();
 
 	let shownError = $derived(error ?? page.error);
-	let status = $derived(page.status);
+	let status = $derived(error?.status ?? page.status);
 	let errorMessage = $derived(shownError?.message);
 	let errorId = $derived(shownError?.errorId);
 

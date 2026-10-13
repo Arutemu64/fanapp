@@ -15,7 +15,6 @@
 		unsubscribe,
 		updateCurrentUserSettings
 	} from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
@@ -34,8 +33,6 @@
 	}
 
 	let { user, onSettingsUpdate }: Props = $props();
-
-	const client = createApiClient();
 
 	// Every control here writes to the server (push subscribe/unsubscribe, settings
 	// PATCH, test send) — online only. The current toggle states still render.
@@ -111,7 +108,6 @@
 			// about this exact endpoint, otherwise treat it as not subscribed so the
 			// user can re-register (e.g. after the server lost the subscription).
 			const { data } = await checkPushSubscription({
-				client,
 				query: { endpoint: subscription.endpoint }
 			});
 			isSubscribed = data?.subscribed ?? false;
@@ -146,7 +142,6 @@
 				if (subscription) {
 					// Remove the matching subscription on the backend before unsubscribing locally.
 					const { error, response } = await unsubscribe({
-						client,
 						body: {
 							endpoint: subscription.endpoint
 						}
@@ -247,7 +242,6 @@
 			}
 
 			const { error, response } = await subscribe({
-				client,
 				body: {
 					endpoint,
 					p256dh,
@@ -291,7 +285,6 @@
 	) {
 		isSavingSettings = true;
 		const { error, response } = await updateCurrentUserSettings({
-			client,
 			body: nextSettings
 		});
 
@@ -344,7 +337,7 @@
 		try {
 			isSendingTest = true;
 
-			const { error, response } = await sendTestPushNotification({ client });
+			const { error, response } = await sendTestPushNotification();
 
 			if (error || !response?.ok) {
 				console.error('API Error:', error);

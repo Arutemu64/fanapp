@@ -3,15 +3,13 @@ import { error } from '@sveltejs/kit';
 import type { BackTarget } from '#lib/types/navigation.js';
 
 import { throwApiError } from '#lib/api/errors.js';
-import { getVotingDashboard } from '#lib/api/generated/index.js';
-import { createApiClient } from '#lib/api/index.js';
-import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '#lib/utils/fetchTimeout.js';
+import { getVotingDashboardOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 import { canManageVoting } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ fetch, parent }) => {
-	const { user } = await parent();
+export const load: PageLoad = async ({ parent }) => {
+	const { queryClient, user } = await parent();
 
 	// Mirror the backend voting:manage check before hitting the API, so the page
 	// is not shown to users the endpoint would reject with a 403.
@@ -19,24 +17,17 @@ export const load: PageLoad = async ({ fetch, parent }) => {
 		error(403, 'У тебя нет доступа к управлению голосованием');
 	}
 
-	const client = createApiClient();
-	const {
-		data,
-		error: requestError,
-		response
-	} = await getVotingDashboard({
-		client,
-		fetch,
-		signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
-	});
-
-	if (requestError || !response?.ok || !data) {
-		throwApiError(requestError, response, 'Не удалось загрузить панель голосования');
-	}
+	// The voting-window form is seeded once from this, so it waits for a fresh
+	// copy rather than a cached one an edit would then overwrite.
+	const dashboard = await queryClient
+		.query(getVotingDashboardOptions())
+		.catch((apiError: unknown) =>
+			throwApiError(apiError, undefined, 'Не удалось загрузить панель голосования')
+		);
 
 	return {
 		title: 'Голосование',
 		back: { href: 'tools', label: 'Назад к инструментам' } satisfies BackTarget,
-		dashboard: data
+		dashboard
 	};
 };

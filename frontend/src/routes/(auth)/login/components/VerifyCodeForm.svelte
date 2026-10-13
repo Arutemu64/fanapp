@@ -1,13 +1,11 @@
 <script lang="ts">
-	import { type PinInputCell, REGEXP_ONLY_DIGITS } from 'bits-ui';
-
-	import { loginWithCode, requestLoginCode } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
-	const client = createApiClient();
 	import { RotateCw } from '@lucide/svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
+	import { type PinInputCell, REGEXP_ONLY_DIGITS } from 'bits-ui';
 	import { onMount } from 'svelte';
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
+	import { loginWithCode, requestLoginCode } from '#lib/api/generated/index.js';
 	import CaptchaWidget, { captchaEnabled } from '#lib/components/CaptchaWidget.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -50,6 +48,7 @@
 	let busy = $derived(activeAction !== null || captchaGate.awaitingCaptcha);
 
 	const eventsClient = getEventsClient();
+	const queryClient = useQueryClient();
 	const toastService = getToastService();
 
 	// Fulfill a deferred resend the moment the invisible captcha solves.
@@ -93,7 +92,6 @@
 
 		try {
 			const { error, response } = await loginWithCode({
-				client,
 				body: { email, code: loginCode }
 			});
 
@@ -115,7 +113,7 @@
 				return;
 			}
 
-			await completeLogin(toastService, eventsClient, 'Вход выполнен');
+			await completeLogin(toastService, eventsClient, queryClient, 'Вход выполнен');
 		} finally {
 			activeAction = null;
 		}
@@ -140,7 +138,6 @@
 
 		try {
 			const { error, response } = await requestLoginCode({
-				client,
 				body: { email, captcha_token: captchaToken }
 			});
 

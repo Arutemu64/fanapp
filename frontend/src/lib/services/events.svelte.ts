@@ -1,6 +1,6 @@
-import { PUBLIC_API_URL } from '$app/env/public';
 import type { QueryClient } from '@tanstack/svelte-query';
 
+import { PUBLIC_API_URL } from '$app/env/public';
 import * as Sentry from '@sentry/sveltekit';
 import { createContext } from 'svelte';
 

@@ -1,10 +1,13 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
+	import { createInfiniteQuery, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { MailingDto, MailingStatus, UserRole } from '#lib/api/generated/index.js';
 
-	import { cancelMailing, listBroadcasts } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
+	import {
+		listBroadcastsInfiniteOptions,
+		listBroadcastsQueryKey
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { cancelMailing } from '#lib/api/generated/index.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
@@ -15,36 +18,42 @@
 		BROADCAST_PAGE_REQUEST_LIMIT,
 		BROADCAST_PAGE_SIZE
 	} from '#lib/constants/notifications.js';
-	import { PaginatedFeed } from '#lib/services/feed.svelte.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
+	import { dedupeById } from '#lib/utils/feed.js';
 	import { formatFestivalDateTime } from '#lib/utils/formatters.js';
 
-	interface Props {
-		initialMailings: Array<MailingDto>;
-		initialHasMore: boolean;
-	}
+	import SectionSpinner from '../../../../components/SectionSpinner.svelte';
 
-	let { initialMailings, initialHasMore }: Props = $props();
-
-	const client = createApiClient();
 	const toastService = getToastService();
+	const queryClient = useQueryClient();
 
 	let cancellingId = $state<string | null>(null);
 
-	const feed = new PaginatedFeed<MailingDto>({
-		pageSize: BROADCAST_PAGE_SIZE,
-		requestLimit: BROADCAST_PAGE_REQUEST_LIMIT,
-		getInitialItems: () => initialMailings,
-		getInitialHasMore: () => initialHasMore,
-		fetchPage: async (limit, offset) => {
-			const { data, error } = await listBroadcasts({
-				client,
-				query: { limit, offset }
-			});
-			return error || !data ? null : data.mailings;
-		},
-		onError: () => toastService.add('Не удалось загрузить рассылки', 'error')
+	// Each page over-fetches one item so a short page proves there is no next one.
+	const mailingsQuery = createInfiniteQuery(() => ({
+		...listBroadcastsInfiniteOptions({ query: { limit: BROADCAST_PAGE_REQUEST_LIMIT } }),
+		initialPageParam: 0,
+		getNextPageParam: (lastPage, allPages) => {
+			if (lastPage.mailings.length <= BROADCAST_PAGE_SIZE) return undefined;
+			return allPages.length * BROADCAST_PAGE_SIZE;
+		}
+	}));
+
+	// Items can shift between page requests, so one may arrive twice.
+	let mailings = $derived.by(() => {
+		let items: MailingDto[] = [];
+		for (const page of mailingsQuery.data?.pages ?? []) {
+			items = dedupeById(items, page.mailings.slice(0, BROADCAST_PAGE_SIZE));
+		}
+		return items;
 	});
+
+	async function loadMore() {
+		const result = await mailingsQuery.fetchNextPage();
+		if (result.isFetchNextPageError) {
+			toastService.add('Не удалось загрузить рассылки', 'error');
+		}
+	}
 
 	const STATUS_LABELS: Record<MailingStatus, string> = {
 		pending: 'В очереди',
@@ -82,7 +91,6 @@
 		cancellingId = mailing.id;
 		try {
 			const { error, response } = await cancelMailing({
-				client,
 				path: { mailing_id: mailing.id }
 			});
 			if (error || !response?.ok) {
@@ -91,9 +99,8 @@
 				toastService.add('Рассылка отменена', 'success');
 			}
 			// Refresh from the server whether it succeeded or raced with another
-			// change, so the row reflects the real state (the page remounts this
-			// feed with the fresh first page).
-			await invalidate('app:broadcasts');
+			// change, so the row reflects the real state.
+			await queryClient.invalidateQueries({ queryKey: listBroadcastsQueryKey() });
 		} finally {
 			cancellingId = null;
 		}
@@ -103,13 +110,21 @@
 <section class="mx-auto w-full max-w-2xl">
 	<h2 class="mb-3 text-base font-semibold text-foreground sm:text-lg">История рассылок</h2>
 
-	{#if feed.items.length === 0}
+	{#if mailingsQuery.data === undefined}
+		<!-- Best-effort: a history that fails to load must not block the composer
+		     above it, so it degrades to a line rather than an error page. -->
+		{#if mailingsQuery.isError}
+			<EmptyState message="Не удалось загрузить историю рассылок" />
+		{:else}
+			<SectionSpinner />
+		{/if}
+	{:else if mailings.length === 0}
 		<EmptyState message="Пока ничего не отправлено" />
 	{:else}
 		<!-- One divided list, not a card per mailing: the entries are all the same
 		     shape, so a list scans faster and fits more on a phone screen. -->
 		<MenuGroup class="divide-y divide-border">
-			{#each feed.items as mailing (mailing.id)}
+			{#each mailings as mailing (mailing.id)}
 				<div class="p-4">
 					<div class="flex flex-col gap-2">
 						<div class="flex items-center justify-between gap-2">
@@ -156,8 +171,8 @@
 			{/each}
 		</MenuGroup>
 
-		{#if feed.hasMore}
-			<LoadMoreButton loading={feed.isLoadingMore} onclick={feed.loadMore} />
+		{#if mailingsQuery.hasNextPage}
+			<LoadMoreButton loading={mailingsQuery.isFetchingNextPage} onclick={loadMore} />
 		{/if}
 	{/if}
 </section>

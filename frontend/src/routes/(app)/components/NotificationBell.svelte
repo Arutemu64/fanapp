@@ -2,16 +2,16 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { Bell } from '@lucide/svelte';
+	import { createQuery } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 
 	import type { NotificationDto } from '#lib/api/generated/index.js';
 
+	import { countUnreadNotificationsOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { NOTIFICATION_BADGE_MAX } from '#lib/constants/notifications.js';
 	import { getEventsClient } from '#lib/services/events.svelte.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import { getUnreadCountService } from '#lib/services/unreadCount.svelte.js';
 	import { setAppBadgeCount } from '#lib/utils/appBadge.js';
-	import { onCatchUp } from '#lib/utils/reconnectRefresh.js';
 
 	// The bell is a link to the notifications page on every screen size. A desktop
 	// dropdown preview was dropped: the audience is almost always on a phone, and a
@@ -19,16 +19,19 @@
 	// on open, it had its own mark-all), which is the bell/page mismatch that makes
 	// users miss notifications.
 
-	// The badge is the true unread total, shared with the notifications page (which
-	// clears it on open).
-	const unread = getUnreadCountService();
+	// The badge is the server's unread total, one query shared with the
+	// notifications page (which clears it on open). It refetches on every
+	// notification_created event and mark-read; there is deliberately no local
+	// +1, since a delta can't be ordered against the authoritative total.
+	const unreadQuery = createQuery(() => countUnreadNotificationsOptions());
+	let unreadCount = $derived(unreadQuery.data?.count ?? 0);
 	let badgeLabel = $derived(
-		unread.count > NOTIFICATION_BADGE_MAX ? `${NOTIFICATION_BADGE_MAX}+` : unread.count
+		unreadCount > NOTIFICATION_BADGE_MAX ? `${NOTIFICATION_BADGE_MAX}+` : unreadCount
 	);
 	// Announce the count to screen readers so the unread state isn't conveyed by
 	// the badge color alone.
 	let bellLabel = $derived(
-		unread.count > 0 ? `Открыть уведомления, непрочитанных: ${unread.count}` : 'Открыть уведомления'
+		unreadCount > 0 ? `Открыть уведомления, непрочитанных: ${unreadCount}` : 'Открыть уведомления'
 	);
 	const eventsClient = getEventsClient();
 	const toastService = getToastService();
@@ -37,16 +40,12 @@
 	// also replaces the count-less "flag" badge the service worker sets on push
 	// with the exact number once the app opens. The bell unmounts on every session
 	// end — explicit logout AND a passive 401 expiry — so the icon badge is cleared
-	// in the onMount teardown below, the one surface clearUserCache can't reach.
+	// in the onMount teardown below, the one surface the query cache can't reach.
 	$effect(() => {
-		setAppBadgeCount(unread.count);
+		setAppBadgeCount(unreadCount);
 	});
 
 	function handleNewNotification(notification: NotificationDto) {
-		// Reconcile the badge with the server rather than optimistically bumping it,
-		// so the count can't drift out of sync with the true total (coalesced, so a
-		// broadcast burst costs at most two round-trips).
-		void unread.refresh();
 		// On the notifications page the item already appears at the top of the
 		// list, so a toast would only repeat it — Apple's HIG: in the foreground,
 		// insert new data into the current view rather than notify:
@@ -55,25 +54,11 @@
 		toastService.push(notification);
 	}
 
-	function refreshAfterReconnect() {
-		// Notifications published while the stream was down still count.
-		void unread.refresh();
-	}
-
 	onMount(() => {
-		// Load the count here rather than in a layout load: the bell renders as soon
-		// as /me resolves, so it is just as early, and an explicit fetch doesn't hang
-		// on SSE — the stream may already be connected before this mounts.
-		void unread.refresh();
-
 		eventsClient.on('notification_created', handleNewNotification);
-		// The badge lives outside any page load, so the reconnect catch-up's
-		// refreshAll() can't reach it — it subscribes to the catch-up instead.
-		const stopCatchUp = onCatchUp(refreshAfterReconnect);
 
 		return () => {
 			eventsClient.off('notification_created', handleNewNotification);
-			stopCatchUp();
 			// Session ended (the bell only renders while logged in): drop the OS icon
 			// badge so the previous user's count can't linger on a shared or installed
 			// device. Covers passive 401 expiry too, which never runs LogoutButton.
@@ -88,7 +73,7 @@
 	class="relative inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
 >
 	<Bell class="size-5" aria-hidden="true" />
-	{#if unread.count > 0}
+	{#if unreadCount > 0}
 		<!-- Watermelon-primary badge per the design system (unseen dots are primary,
 			not red — red reads as an error). The label is announced via aria-label. -->
 		<span

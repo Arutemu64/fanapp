@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
 	import { Undo2 } from '@lucide/svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
 
 	import type {
 		ScheduleChangeEventDto,
@@ -8,15 +8,16 @@
 		ScheduleChangeType
 	} from '#lib/api/generated/index.js';
 
+	import {
+		getScheduleQueryKey,
+		listScheduleChangesQueryKey
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { undoScheduleChange } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-
-	const client = createApiClient();
 
 	interface Props {
 		change: ScheduleChangeFullDto;
@@ -25,13 +26,13 @@
 	let { change }: Props = $props();
 
 	const toastService = getToastService();
+	const queryClient = useQueryClient();
 	let isUndoing = $state(false);
 
 	async function undoChange() {
 		isUndoing = true;
 		try {
 			const { error, response } = await undoScheduleChange({
-				client,
 				path: { schedule_change_id: change.id }
 			});
 
@@ -42,7 +43,10 @@
 			}
 
 			toastService.add('Изменение отменено', 'success');
-			await invalidate('app:schedule:changes');
+			// Read-your-writes, without waiting for the schedule_updated echo (see
+			// EventCard's reloadSchedule).
+			void queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() });
+			await queryClient.invalidateQueries({ queryKey: listScheduleChangesQueryKey() });
 		} finally {
 			isUndoing = false;
 		}

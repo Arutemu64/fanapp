@@ -2,18 +2,13 @@ import { error } from '@sveltejs/kit';
 
 import type { BackTarget } from '#lib/types/navigation.js';
 
-import { throwApiError } from '#lib/api/errors.js';
-import { getSyncSources } from '#lib/api/generated/index.js';
-import { createApiClient } from '#lib/api/index.js';
-import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '#lib/utils/fetchTimeout.js';
+import { getSyncSourcesOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 import { canRunSync } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ parent, fetch, depends }) => {
-	depends('app:sync-sources');
-
-	const { user } = await parent();
+export const load: PageLoad = async ({ parent }) => {
+	const { queryClient, user } = await parent();
 
 	// Mirror the backend SYNC_RUN check so the page is not shown to users who
 	// would be rejected on submit.
@@ -21,24 +16,12 @@ export const load: PageLoad = async ({ parent, fetch, depends }) => {
 		error(403, 'У тебя нет доступа к синхронизации');
 	}
 
-	const client = createApiClient();
-	const {
-		data,
-		error: apiError,
-		response
-	} = await getSyncSources({
-		client,
-		fetch,
-		signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
-	});
-
-	if (apiError || !response?.ok || !data) {
-		throwApiError(apiError, response, 'Не удалось загрузить состояние синхронизации');
-	}
+	// Start the fetch as early as SvelteKit preloads the route (on hover/tap); the
+	// page subscribes to the same query.
+	void queryClient.query(getSyncSourcesOptions()).catch(() => {});
 
 	return {
 		title: 'Синхронизация',
-		back: { href: 'tools', label: 'Назад к инструментам' } satisfies BackTarget,
-		sources: data
+		back: { href: 'tools', label: 'Назад к инструментам' } satisfies BackTarget
 	};
 };

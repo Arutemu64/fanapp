@@ -1,19 +1,24 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { Bell, Settings } from '@lucide/svelte';
+	import { createInfiniteQuery, createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { onMount, tick } from 'svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	import type { NotificationDto } from '#lib/api/generated/index.js';
 
+	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import {
-		listUserNotifications,
-		markAllNotificationsRead,
-		markNotificationsRead
-	} from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
+		countUnreadNotificationsOptions,
+		countUnreadNotificationsQueryKey,
+		listUserNotificationsInfiniteOptions
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { markAllNotificationsRead, markNotificationsRead } from '#lib/api/generated/index.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
+	import ErrorState from '#lib/components/ErrorState.svelte';
 	import LoadMoreButton from '#lib/components/LoadMoreButton.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
+	import StaleDataNotice from '#lib/components/StaleDataNotice.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import {
 		NOTIFICATION_PAGE_REQUEST_LIMIT,
@@ -21,60 +26,70 @@
 	} from '#lib/constants/notifications.js';
 	import { documentVisibility } from '#lib/services/documentVisibility.js';
 	import { getEventsClient } from '#lib/services/events.svelte.js';
-	import { PaginatedFeed } from '#lib/services/feed.svelte.js';
 	import { minuteClock } from '#lib/services/minuteClock.js';
+	import { reachability } from '#lib/services/reachability.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import { getUnreadCountService } from '#lib/services/unreadCount.svelte.js';
 	import { dedupeById } from '#lib/utils/feed.js';
-	import { onCatchUp } from '#lib/utils/reconnectRefresh.js';
 
 	import { groupByDay } from '../groupByDay.js';
 	import NotificationListItem from './NotificationListItem.svelte';
+	import NotificationsSkeleton from './NotificationsSkeleton.svelte';
 
-	const client = createApiClient();
-
-	interface Props {
-		initialNotifications: Array<NotificationDto>;
-		initialHasMore: boolean;
-	}
-
-	let { initialNotifications, initialHasMore }: Props = $props();
-
+	const queryClient = useQueryClient();
 	const toastService = getToastService();
 	const eventsClient = getEventsClient();
-	const unread = getUnreadCountService();
 
-	const feed = new PaginatedFeed<NotificationDto>({
-		pageSize: NOTIFICATION_PAGE_SIZE,
-		requestLimit: NOTIFICATION_PAGE_REQUEST_LIMIT,
-		getInitialItems: () => initialNotifications,
-		getInitialHasMore: () => initialHasMore,
-		fetchPage: async (limit, offset) => {
-			const { data, error } = await listUserNotifications({
-				client,
-				query: { limit, offset }
-			});
-			return error || !data ? null : data.notifications;
-		},
-		onError: () => toastService.add('Не удалось загрузить уведомления', 'error')
+	// The bell shows the same query, so clearing it here clears the badge too.
+	const unreadQuery = createQuery(() => countUnreadNotificationsOptions());
+	let unreadCount = $derived(unreadQuery.data?.count ?? 0);
+
+	// Each page over-fetches one item so a short page proves there is no next one.
+	// New arrivals (SSE) invalidate the query, which refetches every loaded page.
+	const notificationsQuery = createInfiniteQuery(() => ({
+		...listUserNotificationsInfiniteOptions({
+			query: { limit: NOTIFICATION_PAGE_REQUEST_LIMIT }
+		}),
+		initialPageParam: 0,
+		getNextPageParam: (lastPage, allPages) => {
+			if (lastPage.notifications.length <= NOTIFICATION_PAGE_SIZE) return undefined;
+			return allPages.length * NOTIFICATION_PAGE_SIZE;
+		}
+	}));
+
+	// Items can shift between page requests, so one may arrive twice.
+	let notifications = $derived.by(() => {
+		let items: NotificationDto[] = [];
+		for (const page of notificationsQuery.data?.pages ?? []) {
+			items = dedupeById(items, page.notifications.slice(0, NOTIFICATION_PAGE_SIZE));
+		}
+		return items;
 	});
+	let dayGroups = $derived(groupByDay(notifications, minuteClock.now));
 
-	// Notifications pushed over SSE — kept on top, newest first.
-	let liveNotifications = $state.raw<Array<NotificationDto>>([]);
+	// Nothing saved yet and no way to fetch it: a calm inline state that keeps the
+	// app shell usable, not an error.
+	let offlineMiss = $derived(notificationsQuery.data === undefined && !reachability.current);
+	let showStaleNotice = $derived(
+		notificationsQuery.data !== undefined &&
+			(notificationsQuery.isRefetchError || !reachability.current)
+	);
+
 	// This page shows no push toast (the item lands in the list instead), so it
 	// announces arrivals to screen readers itself.
 	let liveAnnouncement = $state('');
 
-	// Fresh SSE items on top, then the server page and anything loaded after it.
-	let notifications = $derived(dedupeById(liveNotifications, feed.items));
-	let dayGroups = $derived(groupByDay(notifications, minuteClock.now));
+	// Ids that were unseen when they reached this screen. Each stays marked "new"
+	// for as long as the screen is open, even once a refetch brings it back with the
+	// seen_at this visit recorded: clearing the dot the moment the mark-read request
+	// lands would erase the one cue telling the user which items they haven't seen
+	// yet. The next visit shows them as seen.
+	const unseenOnArrival = new SvelteSet<NotificationDto['id']>();
 
-	// The DTOs keep the seen_at they were fetched with, so an item that was unseen
-	// when it reached this screen stays marked "new" for as long as the screen is
-	// open, even after the server has recorded it as read. Clearing the dot the
-	// moment the mark-read request lands would erase the one cue telling the user
-	// which items they haven't seen yet; the next visit fetches them as seen.
-	let newCount = $derived(notifications.filter((notification) => !notification.seen_at).length);
+	function isNew(notification: NotificationDto): boolean {
+		return !notification.seen_at || unseenOnArrival.has(notification.id);
+	}
+
+	let newCount = $derived(notifications.filter(isNew).length);
 
 	// Ids already sent (or in flight) to mark-read, so each one is posted once.
 	// Deliberately not reactive: the effect below reads it, and a failed request
@@ -90,15 +105,15 @@
 
 	// Unread items the screen can't mark on view: older than every loaded page, or
 	// arrived while the app was in the background.
-	let showMarkAll = $derived(openingReadSettled && unread.count > 0);
+	let showMarkAll = $derived(openingReadSettled && unreadCount > 0);
 
 	async function markRead(ids: Array<NotificationDto['id']>) {
 		for (const id of ids) {
 			requestedReadIds.add(id);
+			unseenOnArrival.add(id);
 		}
 
 		const { error, response } = await markNotificationsRead({
-			client,
 			body: { notification_ids: ids }
 		});
 		if (error || !response?.ok) {
@@ -109,7 +124,7 @@
 			return;
 		}
 
-		await unread.refresh();
+		await queryClient.invalidateQueries({ queryKey: countUnreadNotificationsQueryKey() });
 	}
 
 	// Read-on-view: an item counts as read once it is on this screen while the app
@@ -120,6 +135,7 @@
 	// the background wait until it comes back, so nothing is marked read unseen.
 	$effect(() => {
 		if (!documentVisibility.current) return;
+		if (notificationsQuery.data === undefined) return;
 
 		const unseenIds = notifications
 			.filter((notification) => !notification.seen_at && !requestedReadIds.has(notification.id))
@@ -137,7 +153,7 @@
 
 	async function markAllRead() {
 		isMarkingAll = true;
-		const { error, response } = await markAllNotificationsRead({ client });
+		const { error, response } = await markAllNotificationsRead();
 		isMarkingAll = false;
 
 		if (error || !response?.ok) {
@@ -145,12 +161,14 @@
 			return;
 		}
 
-		// Clear for instant feedback, then reconcile with the server: a notification
-		// committed between the mark-all and this handler is still unread, and only a
-		// follow-up refresh surfaces it (the clear's own guard drops a stale pre-mark
-		// refresh, so this can't restore the old total).
-		unread.clear();
-		await unread.refresh();
+		// Zero the badge at once, then reconcile with the server: a notification
+		// committed between the mark-all and this handler is still unread, and only
+		// the refetch surfaces it. Cancelling first stops a count fetched before the
+		// mark-all from landing on top of the zero (TanStack's optimistic-update order).
+		const queryKey = countUnreadNotificationsQueryKey();
+		await queryClient.cancelQueries({ queryKey });
+		queryClient.setQueryData(queryKey, { count: 0 });
+		await queryClient.invalidateQueries({ queryKey });
 	}
 
 	let listElement = $state<HTMLElement>();
@@ -158,16 +176,19 @@
 	// Move focus to the first item of the page just loaded, the usual advice for a
 	// load-more control: keyboard and screen-reader users continue where the new
 	// content starts, and focus isn't dropped to <body> when the button unmounts
-	// after the last page. Matched by id against the fetched pages only, since live
-	// arrivals can be prepended while the request is in flight.
+	// after the last page.
 	async function loadMore() {
-		const idsBefore = new Set(feed.items.map((notification) => notification.id));
-		await feed.loadMore();
+		const idsBefore = new Set(notifications.map((notification) => notification.id));
+		const result = await notificationsQuery.fetchNextPage();
+		if (result.isFetchNextPageError) {
+			toastService.add('Не удалось загрузить уведомления', 'error');
+			return;
+		}
 
-		let target = feed.items.find((notification) => !idsBefore.has(notification.id));
+		let target = notifications.find((notification) => !idsBefore.has(notification.id));
 		// An empty or all-duplicate last page adds nothing but still removes the
 		// button, so hand focus to the end of the list instead.
-		if (!target && !feed.hasMore) {
+		if (!target && !notificationsQuery.hasNextPage) {
 			target = notifications.at(-1);
 		}
 		if (!target) return;
@@ -180,52 +201,47 @@
 		(link ?? item)?.focus();
 	}
 
-	function addLiveNotification(notification: NotificationDto) {
-		liveNotifications = dedupeById([notification], liveNotifications);
+	function announceNotification(notification: NotificationDto) {
 		liveAnnouncement = `Новое уведомление: ${notification.title}`;
 	}
 
-	// Refetch the first page and lift anything not yet in the list to the top, so we
-	// don't lose notifications that arrived while the SSE channel was disconnected.
-	async function syncLatestNotifications() {
-		const { data: result, error } = await listUserNotifications({
-			client,
-			query: { limit: NOTIFICATION_PAGE_SIZE }
-		});
-
-		if (error || !result) {
-			return;
-		}
-
-		// Live items count as known too: by now they may be marked read, and the
-		// server copy would replace them and drop their "new" flag mid-visit.
-		const knownIds = new Set(notifications.map((notification) => notification.id));
-		const fresh = result.notifications.filter((notification) => !knownIds.has(notification.id));
-		liveNotifications = dedupeById(fresh, liveNotifications);
-	}
-
-	function syncAfterReconnect() {
-		void syncLatestNotifications();
-	}
-
 	onMount(() => {
-		eventsClient.on('notification_created', addLiveNotification);
-		// Live items live outside the page load, so the reconnect catch-up's
-		// refreshAll() can't reach them — sync them on the catch-up instead.
-		const stopCatchUp = onCatchUp(syncAfterReconnect);
-
+		eventsClient.on('notification_created', announceNotification);
 		return () => {
-			eventsClient.off('notification_created', addLiveNotification);
-			stopCatchUp();
+			eventsClient.off('notification_created', announceNotification);
 		};
 	});
 </script>
+
+{#if showStaleNotice}
+	<StaleDataNotice
+		message="Нет связи. Показаны сохранённые уведомления — обновятся при подключении."
+		cachedAt={notificationsQuery.dataUpdatedAt}
+	/>
+{/if}
 
 <!-- Rendered before any announcement: a live region injected together with its
 	text is not reliably announced. -->
 <p class="sr-only" aria-live="polite" aria-atomic="true">{liveAnnouncement}</p>
 
-{#if notifications.length === 0}
+{#if offlineMiss}
+	<EmptyState
+		title="Уведомления недоступны офлайн"
+		message="Появятся после подключения к интернету"
+	/>
+{:else if notificationsQuery.data === undefined}
+	{#if notificationsQuery.isError}
+		<ErrorState
+			variant="inline"
+			error={{
+				status: 500,
+				message: getApiErrorDetail(notificationsQuery.error) ?? 'Не удалось загрузить уведомления'
+			}}
+		/>
+	{:else}
+		<NotificationsSkeleton />
+	{/if}
+{:else if notifications.length === 0}
 	<EmptyState
 		icon={Bell}
 		title="Уведомлений пока нет"
@@ -242,7 +258,7 @@
 			<p class="text-sm text-muted-foreground">
 				{#if newCount > 0}
 					Новых: {newCount}
-				{:else if unread.count === 0}
+				{:else if unreadCount === 0}
 					Все уведомления прочитаны
 				{/if}
 			</p>
@@ -277,7 +293,7 @@
 							tabindex="-1"
 							class="rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						>
-							<NotificationListItem {notification} />
+							<NotificationListItem {notification} isNew={isNew(notification)} />
 						</li>
 					{/each}
 				</ul>
@@ -285,7 +301,7 @@
 		{/each}
 	</div>
 
-	{#if feed.hasMore}
-		<LoadMoreButton loading={feed.isLoadingMore} onclick={loadMore} />
+	{#if notificationsQuery.hasNextPage}
+		<LoadMoreButton loading={notificationsQuery.isFetchingNextPage} onclick={loadMore} />
 	{/if}
 {/if}

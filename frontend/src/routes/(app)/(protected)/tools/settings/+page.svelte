@@ -1,13 +1,14 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
-
-	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
-	import { updateSettings } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
-	const client = createApiClient();
 	import { AlertCircle } from '@lucide/svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 
+	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
+	import {
+		getPublicConfigQueryKey,
+		getSettingsQueryKey
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { updateSettings } from '#lib/api/generated/index.js';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -22,6 +23,7 @@
 
 	let { data }: PageProps = $props();
 	const toastService = getToastService();
+	const queryClient = useQueryClient();
 
 	let isSaving = $state(false);
 	// festival_start and festival_end are instants; edit them on the venue clock
@@ -137,7 +139,6 @@
 
 		try {
 			const { error, response } = await updateSettings({
-				client,
 				body: {
 					festival_start: fromEventDateTimeLocal(festivalStart),
 					festival_end: fromEventDateTimeLocal(festivalEnd),
@@ -163,7 +164,10 @@
 			festivalEndError = '';
 			announcementTimeoutError = '';
 			toastService.add('Настройки фестиваля сохранены', 'success');
-			await invalidate('app:festival-settings');
+			// The festival dates are public config too; config_updated would refresh it,
+			// but not before this organizer looks at the home hero.
+			void queryClient.invalidateQueries({ queryKey: getSettingsQueryKey() });
+			void queryClient.invalidateQueries({ queryKey: getPublicConfigQueryKey() });
 		} finally {
 			isSaving = false;
 		}

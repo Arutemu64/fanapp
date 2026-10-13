@@ -2,15 +2,12 @@
 	import { Activity } from '@lucide/svelte';
 
 	import { countOnlineUsers } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
 	import { pluralize } from '#lib/utils/formatters.js';
 
 	// Coarse on purpose: the figure is a rough "how many are here now", and a
 	// user's presence marker ages out server-side within ~45s, so a tighter poll
 	// would add load without adding meaning.
 	const REFRESH_MS = 20_000;
-
-	const client = createApiClient();
 
 	// null until the first response lands, so the card shows a placeholder
 	// instead of a misleading "0" while loading.
@@ -20,7 +17,7 @@
 		// A failed poll — a dropped connection included, which the client returns
 		// as `error` rather than throwing — leaves the stale count standing until
 		// the next successful one: this is a glanceable stat, not critical data.
-		const { data, error, response } = await countOnlineUsers({ client });
+		const { data, error, response } = await countOnlineUsers();
 		if (!error && response?.ok && data) {
 			count = data.count;
 		}

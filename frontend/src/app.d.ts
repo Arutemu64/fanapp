@@ -3,7 +3,6 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
 
-import type { CurrentUserDto } from '#lib/api/generated/index.js';
 import type { BackTarget, NavbarAction } from '#lib/types/navigation.js';
 
 declare global {
@@ -17,7 +16,6 @@ declare global {
 			errorId?: string;
 		}
 		interface PageData {
-			user: CurrentUserDto | null;
 			/** Page heading rendered in the navbar; set per page via `load`. */
 			title?: string;
 			/** Parent route for the navbar's back arrow; set by nested pages via `load`. */

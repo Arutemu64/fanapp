@@ -2,7 +2,6 @@
 	import type { Path } from '$app/types';
 	import type { Component } from 'svelte';
 
-	import { page } from '$app/state';
 	import {
 		Award,
 		FileUp,
@@ -13,8 +12,6 @@
 		Ticket,
 		Users
 	} from '@lucide/svelte';
-
-	import type { CurrentUserDto } from '#lib/api/generated/index.js';
 
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
@@ -29,10 +26,14 @@
 		canSendNotifications
 	} from '#lib/utils/permissions.js';
 
+	import type { PageProps } from './$types';
+
 	import OnlineNowCard from './components/OnlineNowCard.svelte';
 	import ToolRow from './components/ToolRow.svelte';
 
-	let user: CurrentUserDto | null = $derived(page.data.user);
+	let { data }: PageProps = $props();
+	// The (protected) guard's snapshot: these rows only gate links.
+	let user = $derived(data.user);
 
 	interface Tool {
 		key: string;
