@@ -70,7 +70,7 @@ dev = [
     "ruff>=0.16.10",
     "testcontainers>=4.15.0",
     "ty>=0.0.79",
-    "types-authlib>=1.8.0.20260907",
+    "types-authlib>=1.8.0.20260911",
     "uv-sort>=0.8.0",
     # Dead-code sweep (`just backend-deadcode`), never a CI gate — see
     # [tool.vulture] below and docs/backend.md "Dead-code sweep".
