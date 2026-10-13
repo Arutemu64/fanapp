@@ -88,6 +88,10 @@ site needs no group, just its own review PR.
   already uses, so the two always pick the same version. `timestamp-optional`
   for the image would not fix it: with no age check the image jumps to the
   newest tag while the aged sites stay one release behind.
+* **`uv_build` is matched as `uv-build`.** The `pep621` manager normalizes
+  PyPI names per PEP 503 before rules see them, and `matchPackageNames` matches
+  that normalized `packageName`, so the `uv_build` spelling from `pyproject.toml`
+  never joined the `uv` group and its floor drifted in a branch of its own.
 * **A pin inside a Dockerfile that isn't a `FROM` line gets an inline
   annotation, not a regex manager.** The `dockerfile` manager reads `FROM` lines
   only, so a pin like `ENV PNPM_VERSION` in `frontend/Dockerfile` is invisible
