@@ -29,22 +29,28 @@ and stay on TanStack's defaults (refetch on mount, focus and reconnect) with
 three deliberate exceptions: a 60s `staleTime`, so a load's hover/tap prefetch
 isn't refetched the moment the page mounts (live data is invalidated by SSE and
 mutations regardless); retries only for requests that got no API answer, so an
-API error shows at once; and the `gcTime` persistence requires.
+API error shows at once; and a 7-day `gcTime` on the persisted queries, which
+persistence requires.
 
 - **One cache, created in the root load.** `+layout.ts` creates the
   `QueryClient` and returns it as load data
   ([TanStack's SvelteKit setup](https://tanstack.com/query/latest/docs/framework/svelte/ssr)),
   never as a module singleton. Nothing re-runs that load, so SvelteKit's
   `depends`/`invalidate`/`invalidateAll`/`refreshAll` are not used at all.
-- **Persisted whole to IndexedDB.** `persistQueryClient` with
-  `createAsyncStoragePersister` over `idb-keyval` (already a dependency) restores
-  the cache before any guard runs. `maxAge` is 7 days rather than the default
-  24h, so the programme survives a festival weekend and the trip without
-  opening the app; `gcTime` matches it, as
+- **Only the offline screens are persisted, to IndexedDB.** An allowlist in the
+  root load — identity, public config, schedule, subscriptions, notifications
+  and their unread count — is written by `persistQueryClient` with
+  `createAsyncStoragePersister` over `idb-keyval` (already a dependency), and
+  restored before any guard runs. Every other query is online-only: fetched
+  fresh after a cold start, held in memory for TanStack's default 5-minute
+  `gcTime`. Voting thereby never shows a stale ballot after a restart, and the
+  staff tools' data (other people's details) never lands on the device; a new
+  query stays off it unless added deliberately. `maxAge` is 7 days rather than
+  the default 24h, so the programme survives a festival weekend and the trip
+  without opening the app; the persisted queries' `gcTime` matches it
+  (`setQueryDefaults`), as
   [its docs](https://tanstack.com/query/latest/docs/framework/react/plugins/persistQueryClient)
-  require, and the build `version` is the `buster`. The staff tools' queries
-  are never written to it: they are online-only, and they hold other people's
-  details.
+  require, and the build `version` is the `buster`.
 - **One scope.** There is no per-user partition. At logout or session expiry
   the user query turns `null`, and once the screen shows the guest state
   `forgetSession` removes every unused query and invalidates the rest.
@@ -63,8 +69,9 @@ API error shows at once; and the `gcTime` persistence requires.
 
 ## Consequences
 
-- Cached screens paint at once, offline included, and revalidate behind it.
-  Offline support is no longer per-page code: every query is saved.
+- Cached screens paint at once and revalidate behind it; the allowlisted ones
+  do so offline and after a restart. Offline support is one list, not per-page
+  code.
 - About 1,350 net lines of hand-written loading, caching, pagination and refresh
   code are gone. In their place are three dependencies:
   `@tanstack/svelte-query`, `@tanstack/svelte-query-persist-client` and
@@ -73,10 +80,11 @@ API error shows at once; and the `gcTime` persistence requires.
   inline `ErrorState` built from `query.error`. Query errors carry the API
   error body without the HTTP status, so a "not found" is matched by `code`.
 - A cached copy expires 7 days after the app last saved its cache, where the
-  old IndexedDB entries never expired. Matching `gcTime` keeps unused queries in
-  memory that long too — a few dozen small ones here.
-- Data that must not be shown stale offline (voting) is still cached, so each
-  such surface must hide it offline itself.
+  old IndexedDB entries never expired. Matching `gcTime` keeps the persisted
+  queries in memory that long too — a handful of small ones.
+- Online-only screens show a skeleton or spinner after a cold start instead of
+  a saved copy. A copy cached earlier in the session can still be in memory, so
+  voting hides it offline itself.
 - Do not call SvelteKit `invalidateAll`/`refreshAll` or make the root load
   depend on anything. Re-running it would replace the cache.
 
@@ -89,6 +97,9 @@ API error shows at once; and the `gcTime` persistence requires.
   Rejected: it restores in an effect after the first render, too late for the
   guard loads that read identity from the cache. The root load restores first
   instead; the package is kept for the `persistQueryClient` it re-exports.
+- **Persisting everything except a denylist.** Rejected: any new query would
+  land on the device by default, staff data included, until someone remembered
+  to exclude it.
 - **Per-query persistence (`experimental_createQueryPersister`).** Rejected:
   its one gain is decoupling `gcTime` from `maxAge`, which this cache is too
   small to need. It restores lazily on first use (the guards read identity

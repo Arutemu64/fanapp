@@ -6,14 +6,12 @@ import { del, get, set } from 'idb-keyval';
 
 import { getApiErrorCode } from '#lib/api/errors.js';
 import {
-	getSettingsQueryKey,
-	getSyncSourcesQueryKey,
-	getUserQueryKey,
-	getVotingDashboardQueryKey,
-	listBroadcastsQueryKey,
-	listFeedbackQueryKey,
-	listScheduleChangesQueryKey,
-	listUsersQueryKey
+	countUnreadNotificationsQueryKey,
+	getCurrentUserQueryKey,
+	getPublicConfigQueryKey,
+	getScheduleQueryKey,
+	getSubscriptionsQueryKey,
+	listUserNotificationsQueryKey
 } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 import { currentUserOptions } from '#lib/api/index.js';
 import { FIRST_PAINT_TIMEOUT_MS } from '#lib/utils/fetchTimeout.js';
@@ -23,31 +21,32 @@ import type { LayoutLoad } from './$types';
 // SPA-only: render entirely on the client. There is no server render.
 export const ssr = false;
 
+// The screens that must open offline: the identity the guards and the profile
+// read, the home hero, the programme with the viewer's subscriptions, and the
+// notifications with their badge. Only these are written to IndexedDB. Every
+// other query is online-only: fetched fresh after a cold start and dropped from
+// memory five minutes after its screen closes (TanStack's default gcTime) —
+// voting must not show a stale ballot, and the staff tools hold other people's
+// details that have no business on the device.
+const OFFLINE_QUERY_KEYS = [
+	getCurrentUserQueryKey(),
+	getPublicConfigQueryKey(),
+	getScheduleQueryKey(),
+	getSubscriptionsQueryKey(),
+	listUserNotificationsQueryKey(),
+	countUnreadNotificationsQueryKey()
+];
+// Matched by operation id, the first part of every hey-api query key, so a
+// list key also covers its paginated variant.
+const OFFLINE_QUERY_IDS = new Set(OFFLINE_QUERY_KEYS.map(([{ _id }]) => _id));
+
 // How long a cached copy may serve the app offline: a festival weekend plus the
 // trip there and back, where the persister's 24h default would drop the
 // programme for anyone who didn't open the app for a day. StaleDataNotice shows
-// how old what's on screen is. gcTime must be at least this, or unused queries
+// how old what's on screen is. The offline queries keep this gcTime too, or they
 // are garbage-collected before they are ever persisted:
 // https://tanstack.com/query/latest/docs/framework/react/plugins/persistQueryClient
 const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
-
-// Staff tools are online-only (tools/+layout.ts), so a saved copy of them buys
-// nothing offline — and the user directory, cards and feedback would leave
-// other people's details on the device for the cache's whole lifetime. Kept in
-// memory, never written to IndexedDB. Identified by operation id, the first
-// part of every hey-api query key.
-const ONLINE_ONLY_QUERY_IDS = new Set(
-	[
-		getSettingsQueryKey(),
-		getVotingDashboardQueryKey(),
-		getSyncSourcesQueryKey(),
-		listUsersQueryKey(),
-		getUserQueryKey({ path: { user_id: '' } }),
-		listFeedbackQueryKey(),
-		listBroadcastsQueryKey(),
-		listScheduleChangesQueryKey()
-	].map(([{ _id }]) => _id)
-);
 
 // Runs once per page load: nothing here reads `url` or calls `depends`, and the
 // app never calls `invalidateAll`/`refreshAll`, so the QueryClient — and the
@@ -59,7 +58,6 @@ export const load: LayoutLoad = async () => {
 	const queryClient = new QueryClient({
 		defaultOptions: {
 			queries: {
-				gcTime: CACHE_MAX_AGE_MS,
 				// Data a load prefetched on hover/tap stays fresh when the page mounts a
 				// moment later, rather than being refetched straight away
 				// (https://tanstack.com/query/latest/docs/framework/react/guides/prefetching).
@@ -73,9 +71,13 @@ export const load: LayoutLoad = async () => {
 			}
 		}
 	});
+	// Set before the restore below: restored queries take their options from here.
+	for (const queryKey of OFFLINE_QUERY_KEYS) {
+		queryClient.setQueryDefaults(queryKey, { gcTime: CACHE_MAX_AGE_MS });
+	}
 
-	// One IndexedDB entry holds the whole cache, so every screen that has loaded
-	// once also opens offline. Restored before any guard reads identity from it.
+	// One IndexedDB entry holds the offline queries, so those screens open offline
+	// once they have loaded. Restored before any guard reads identity from it.
 	// The build `version` busts it on deploy, so a client never reads a payload
 	// shaped by an older API.
 	const [, restored] = persistQueryClient({
@@ -88,7 +90,7 @@ export const load: LayoutLoad = async () => {
 		dehydrateOptions: {
 			shouldDehydrateQuery: (query) => {
 				const [{ _id }] = query.queryKey as [{ _id: string }];
-				return defaultShouldDehydrateQuery(query) && !ONLINE_ONLY_QUERY_IDS.has(_id);
+				return defaultShouldDehydrateQuery(query) && OFFLINE_QUERY_IDS.has(_id);
 			}
 		}
 	});

@@ -36,7 +36,8 @@
 {#if offline}
 	<!-- Voting is a live, online-only surface: casting a vote is a mutation, and the
 	     open/closed and already-voted state must not be shown stale (a ballot you
-	     can't submit is a dead end). So a cached copy is never shown offline. -->
+	     can't submit is a dead end). So it is never persisted, and a copy still in
+	     memory from earlier in the session is not shown offline either. -->
 	<OfflineUnavailableState
 		title="Голосование доступно только онлайн"
 		message="Подключись к интернету, чтобы голосовать за участников."
