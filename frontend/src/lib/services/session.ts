@@ -4,7 +4,12 @@ import { createContext } from 'svelte';
 
 import { getCurrentUserQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 import { currentUserOptions } from '#lib/api/index.js';
-import { clearLogoutPending, markLogoutPending } from '#lib/utils/pendingLogout.js';
+import {
+	clearLogoutPending,
+	flushPendingLogout,
+	isLogoutPending,
+	markLogoutPending
+} from '#lib/utils/pendingLogout.js';
 
 /** The navigation a session change needs, so the module is testable without a router. */
 export interface SessionRouter {
@@ -91,6 +96,24 @@ export class Session {
 		this.#queryClient.setQueryData(currentUserOptions().queryKey, null);
 		await this.#router.goHome();
 		this.#forgetAccount();
+	}
+
+	/** True while a logout made offline still waits for its server revoke. */
+	get logoutPending(): boolean {
+		return isLogoutPending();
+	}
+
+	/**
+	 * Call before leaving for an OAuth provider while `logoutPending`. A social
+	 * login returns as a full page load, whose boot flush would send the queued
+	 * revoke with the *new* session's cookie and end it. Clearing the intent
+	 * instead is wrong too: an abandoned OAuth flow would then let the still-valid
+	 * old cookie restore the account the user left. So revoke the old session now.
+	 * Resolves `false` when that couldn't be confirmed, and the caller stays put.
+	 */
+	async settlePendingLogout(): Promise<boolean> {
+		await flushPendingLogout();
+		return !isLogoutPending();
 	}
 
 	/** The server said the session is gone (a 401 from `/me/`), whatever the screen. */

@@ -10,7 +10,8 @@ import { isLogoutPending, markLogoutPending } from '#lib/utils/pendingLogout.js'
 import { Session, type SessionRouter } from './session.js';
 
 const getCurrentUser = vi.hoisted(() => vi.fn());
-vi.mock('#lib/api/generated/index.js', () => ({ getCurrentUser, logoutUser: vi.fn() }));
+const logoutUser = vi.hoisted(() => vi.fn());
+vi.mock('#lib/api/generated/index.js', () => ({ getCurrentUser, logoutUser }));
 
 const USER = { id: '1', username: 'neko' } as CurrentUserDto;
 
@@ -44,6 +45,7 @@ function setup({ reachable = true } = {}) {
 beforeEach(() => {
 	vi.stubGlobal('localStorage', fakeStorage());
 	getCurrentUser.mockReset();
+	logoutUser.mockReset();
 });
 
 describe('Session.loggedIn', () => {
@@ -139,5 +141,28 @@ describe('Session.expired', () => {
 		await session.expired();
 
 		expect(events.restart).toHaveBeenCalledOnce();
+	});
+});
+
+describe('Session.settlePendingLogout', () => {
+	it('revokes the old session before a social login, so the boot flush cannot end the new one', async () => {
+		logoutUser.mockResolvedValue({ response: { ok: true, status: 204 } });
+		markLogoutPending();
+		const { session } = setup();
+
+		await expect(session.settlePendingLogout()).resolves.toBe(true);
+
+		expect(logoutUser).toHaveBeenCalledOnce();
+		expect(session.logoutPending).toBe(false);
+	});
+
+	it('keeps the intent when the revoke fails, so an abandoned login cannot restore the old account', async () => {
+		logoutUser.mockResolvedValue({ response: { ok: false, status: 503 } });
+		markLogoutPending();
+		const { session } = setup();
+
+		await expect(session.settlePendingLogout()).resolves.toBe(false);
+
+		expect(session.logoutPending).toBe(true);
 	});
 });

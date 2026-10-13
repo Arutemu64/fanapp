@@ -16,6 +16,7 @@
 	import * as Card from '#lib/components/ui/card/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { ALL_SOCIAL_PROVIDERS, SOCIAL_PROVIDER_PRESENTATION } from '#lib/data/socialProviders.js';
+	import { getSession } from '#lib/services/session.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { LOGIN_NEXT_PARAM, sanitizeNextPath } from '#lib/utils/auth.js';
 	import { clearOAuthErrorParam, OAUTH_LOGIN_ERROR_PARAM } from '#lib/utils/oauthErrors.js';
@@ -28,6 +29,7 @@
 
 	let { data }: PageProps = $props();
 	const toastService = getToastService();
+	const session = getSession();
 
 	// Which social login buttons to show is a per-deployment backend decision — a
 	// provider can be built in yet unreachable from this host (Telegram is blocked
@@ -83,20 +85,25 @@
 		return `${url}?${query}`;
 	}
 
-	function handleProviderClick(event: MouseEvent, provider: SocialProvider) {
+	async function handleProviderClick(event: MouseEvent, provider: SocialProvider) {
 		if (openingProvider !== null) {
 			event.preventDefault();
 			return;
 		}
 
-		// Don't cancel a pending offline-logout here — clearing it before OAuth
-		// *succeeds* would let a cancelled/abandoned login drop the revoke, leaving the
-		// valid HttpOnly cookie to restore the old account. The reconnect/boot flush
-		// clears the intent once the old session is actually revoked, which in practice
-		// runs before the user reaches this button, so a genuine new login still starts
-		// from a cleared intent. (A client-only "did OAuth succeed?" signal can't tell
-		// success from an abandoned flow, so we don't try — see the PR discussion.)
 		openingProvider = provider;
+		// A logout made offline must be revoked before a new session exists, or the
+		// queued revoke would end the new one on return (see settlePendingLogout).
+		// Usually the reconnect/boot flush already did it and the link just navigates.
+		if (!session.logoutPending) return;
+
+		event.preventDefault();
+		if (await session.settlePendingLogout()) {
+			window.location.assign(providerStartUrl(provider));
+			return;
+		}
+		openingProvider = null;
+		toastService.add('Не удалось выйти из прошлого аккаунта. Попробуй ещё раз.', 'error');
 	}
 
 	function showEmailLogin() {
@@ -208,7 +215,7 @@
 							variant="outline"
 							class="w-full"
 							aria-disabled={openingProvider === provider}
-							onclick={(event: MouseEvent) => handleProviderClick(event, provider)}
+							onclick={(event: MouseEvent) => void handleProviderClick(event, provider)}
 						>
 							{#if openingProvider === provider}
 								<Spinner data-icon="inline-start" />
