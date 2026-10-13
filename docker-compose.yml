@@ -393,7 +393,7 @@ services:
       - backend-network
 
   redis:
-    image: valkey/valkey:9.1-alpine
+    image: valkey/valkey:9.2-alpine
     environment:
       REDIS__PASSWORD: "${REDIS__PASSWORD}"
     volumes:
