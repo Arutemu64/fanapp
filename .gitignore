@@ -28,6 +28,9 @@ build/
 # the repo (empty) via its own secrets/.gitignore, which ignores everything
 # inside except itself — so no secret is ever accidentally committed.
 
+# Database dumps written by the pgbackup service's bind mount
+/backups/
+
 # Local tools and scratch files
 /etc/
 *.log

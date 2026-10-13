@@ -347,14 +347,22 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # A bind mount, not a named volume: the dumps are pulled off the host with
+    # rsync (docs/deployment.md "Backups and restore"), and Docker documents bind
+    # mounts as the fit for files both the host and a container need.
     volumes:
-      - pgbackup-data:/backups
+      - ./backups:/backups
+    # Custom format (-Fc) restores with pg_restore: one table at a time, or the
+    # whole database. Deliberately no --schema=public: an explicit -n makes
+    # pg_dump emit CREATE SCHEMA public, which collides with the public schema
+    # every fresh database already has, so the restore fails.
     environment:
       - POSTGRES_HOST=db
       - POSTGRES_DB=${DB__NAME}
       - POSTGRES_USER=${DB__USER}
       - POSTGRES_PASSWORD=${DB__PASSWORD}
-      - POSTGRES_EXTRA_OPTS=-Z1 --schema=public --blobs
+      - POSTGRES_EXTRA_OPTS=-Fc -Z zstd
+      - BACKUP_SUFFIX=.dump
       - SCHEDULE=@every 6h00m00s
       - BACKUP_ON_START=TRUE
       - BACKUP_KEEP_DAYS=7
@@ -420,7 +428,6 @@ secrets:
 
 volumes:
   db-data: {}
-  pgbackup-data: {}
   redis-data: {}
   nats-data: {}
 
