@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { Activity } from '@lucide/svelte';
+	import { createQuery } from '@tanstack/svelte-query';
 
-	import { countOnlineUsers } from '#lib/api/generated/index.js';
+	import { countOnlineUsersOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { pluralize } from '#lib/utils/formatters.js';
 
 	// Coarse on purpose: the figure is a rough "how many are here now", and a
@@ -9,27 +10,18 @@
 	// would add load without adding meaning.
 	const REFRESH_MS = 20_000;
 
-	// null until the first response lands, so the card shows a placeholder
+	// TanStack's interval skips its tick while the window is in the background
+	// (refetchIntervalInBackground is off), and a failed poll keeps the last count
+	// standing: this is a glanceable stat, not critical data. A copy older than one
+	// poll refetches on mount instead of waiting out the client's 60s staleTime.
+	const onlineQuery = createQuery(() => ({
+		...countOnlineUsersOptions(),
+		refetchInterval: REFRESH_MS,
+		staleTime: REFRESH_MS
+	}));
+	// Undefined until the first response lands, so the card shows a placeholder
 	// instead of a misleading "0" while loading.
-	let count = $state<number | null>(null);
-
-	async function refresh(): Promise<void> {
-		// A failed poll — a dropped connection included, which the client returns
-		// as `error` rather than throwing — leaves the stale count standing until
-		// the next successful one: this is a glanceable stat, not critical data.
-		const { data, error, response } = await countOnlineUsers();
-		if (!error && response?.ok && data) {
-			count = data.count;
-		}
-	}
-
-	// Poll only on the client: an $effect never runs during SSR, and its cleanup
-	// clears the timer when the card unmounts (leaving the tools section).
-	$effect(() => {
-		void refresh();
-		const id = setInterval(() => void refresh(), REFRESH_MS);
-		return () => clearInterval(id);
-	});
+	let count = $derived(onlineQuery.data?.count);
 </script>
 
 <div class="flex items-center gap-3 rounded-lg border border-border bg-card p-4">
@@ -38,7 +30,7 @@
 	</div>
 	<div>
 		<p class="text-xl font-semibold tabular-nums" aria-live="polite">
-			{#if count === null}
+			{#if count === undefined}
 				<span class="text-muted-foreground">…</span>
 			{:else}
 				{count}

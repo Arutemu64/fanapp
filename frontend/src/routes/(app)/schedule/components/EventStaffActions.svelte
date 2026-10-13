@@ -76,9 +76,11 @@
 		...uncheckCurrentEventMutation(),
 		onSuccess: reloadSchedule
 	}));
+	// Settled, not just succeeded: the skip is shown optimistically, and a failure
+	// (another staffer's change raced it) must still resync the row.
 	const skipMutation = createMutation(() => ({
 		...updateScheduleEventMutation(),
-		onSuccess: reloadSchedule
+		onSettled: reloadSchedule
 	}));
 
 	let isCurrentTogglePending = $derived(

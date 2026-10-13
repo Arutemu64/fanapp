@@ -69,8 +69,9 @@ const subscribeMutation = createMutation(() => ({
 
 Plain SDK calls stay where no component makes the request: the queued offline
 logout flush (`pendingLogout.ts`), and notifications read-on-view, a background
-sync with its own retry bookkeeping. Reads stay reads, including the GETs
-called imperatively (`checkSubscription`, `countOnlineUsers`).
+sync with its own retry bookkeeping. `checkSubscription` stays a plain GET: it
+is one step of the browser's push-subscription check and feeds local state, not
+the cache.
 
 ## Consequences
 

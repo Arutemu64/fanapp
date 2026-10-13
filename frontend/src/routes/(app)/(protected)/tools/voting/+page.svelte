@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { AlertCircle, Award, Gift, Users } from '@lucide/svelte';
-	import { createMutation } from '@tanstack/svelte-query';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 
 	import type { NominationContenderDto, UserBaseDto } from '#lib/api/generated/index.js';
@@ -8,6 +8,7 @@
 	import { getApiErrorDetail } from '#lib/api/errors.js';
 	import {
 		drawVotingContestWinnerMutation,
+		getVotingStatusQueryKey,
 		setVotingTimeRangeMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
@@ -26,12 +27,18 @@
 
 	let { data }: PageProps = $props();
 	const toastService = getToastService();
+	const queryClient = useQueryClient();
 
 	let nominations = $derived<NominationContenderDto[]>(data.dashboard.nominations);
 
 	let votingStart = $state(untrack(() => toLocalInput(data.dashboard.voting_start)));
 	let votingEnd = $state(untrack(() => toLocalInput(data.dashboard.voting_end)));
-	const timeRangeMutation = createMutation(() => setVotingTimeRangeMutation());
+	const timeRangeMutation = createMutation(() => ({
+		...setVotingTimeRangeMutation(),
+		// config_updated would refresh the status too, but not before this organizer
+		// opens voting to check the window they just set.
+		onSuccess: () => void queryClient.invalidateQueries({ queryKey: getVotingStatusQueryKey() })
+	}));
 
 	// Seeded from the dashboard, then refreshed from each draw's response, so the
 	// displayed pool tracks who is currently eligible even as people finish voting.
