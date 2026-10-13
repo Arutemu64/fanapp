@@ -2,15 +2,15 @@ import { error } from '@sveltejs/kit';
 
 import type { BackTarget } from '#lib/types/navigation.js';
 
-import { throwApiError } from '#lib/api/errors.js';
-import { getUser } from '#lib/api/generated/index.js';
-import { createApiClient } from '#lib/api/index.js';
+import { getApiErrorCode, throwApiError } from '#lib/api/errors.js';
+import { getUserOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+import { queryForLoad } from '#lib/api/index.js';
 import { canReadUsers } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ fetch, parent, params }) => {
-	const { user } = await parent();
+export const load: PageLoad = async ({ parent, params }) => {
+	const { queryClient, user } = await parent();
 
 	// Mirror the backend users:read check before hitting the API, so the page is
 	// not shown to users the endpoint would reject with a 403.
@@ -18,23 +18,16 @@ export const load: PageLoad = async ({ fetch, parent, params }) => {
 		error(403, 'У тебя нет доступа к карточкам пользователей');
 	}
 
-	const client = createApiClient();
-	const {
-		data,
-		error: fetchError,
-		response
-	} = await getUser({
-		client,
-		fetch,
-		path: { user_id: params.id }
+	// Staff-only operational data, like the directory: waits for a fresh copy.
+	const data = await queryForLoad(queryClient, {
+		...getUserOptions({ path: { user_id: params.id } }),
+		staleTime: 0
+	}).catch((apiError: unknown) => {
+		if (getApiErrorCode(apiError) === 'USER_NOT_FOUND') {
+			error(404, 'Пользователь не найден');
+		}
+		return throwApiError(apiError, undefined, 'Не удалось загрузить пользователя');
 	});
-
-	if (response?.status === 404) {
-		error(404, 'Пользователь не найден');
-	}
-	if (fetchError || !data) {
-		throwApiError(fetchError, response, 'Не удалось загрузить пользователя');
-	}
 
 	return {
 		title: 'Пользователь',

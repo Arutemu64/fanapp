@@ -4,7 +4,7 @@
 
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
-	import { reachability } from '#lib/services/reachability.js';
+	import { probeReachability, reachability } from '#lib/services/reachability.js';
 	import { statusTitle } from '#lib/utils/errorTitle.js';
 
 	type Variant = 'fullscreen' | 'inline';
@@ -16,10 +16,17 @@
 	// rendering error. Prefer it to `page.error`: every failing boundary — the
 	// navbar's bell included — writes its error there, so a later failure
 	// elsewhere could replace this page's message and «Код ошибки».
-	let { variant = 'fullscreen', error }: { variant?: Variant; error?: App.Error } = $props();
+	// A page showing a failed query passes one too, status included: the page
+	// itself rendered fine, so `page.status` is a 200. It also passes `onRetry`,
+	// which refetches that query instead of reloading the whole app.
+	let {
+		variant = 'fullscreen',
+		error,
+		onRetry
+	}: { variant?: Variant; error?: App.Error; onRetry?: () => void } = $props();
 
 	let shownError = $derived(error ?? page.error);
-	let status = $derived(page.status);
+	let status = $derived(error?.status ?? page.status);
 	let errorMessage = $derived(shownError?.message);
 	let errorId = $derived(shownError?.errorId);
 
@@ -72,6 +79,14 @@
 	}
 
 	function handleRetry() {
+		if (onRetry) {
+			// While the app counts the server as unreachable, TanStack pauses the
+			// refetch, and the background recovery poll can be up to 30s away. Checking
+			// now lets a tap resume every paused query the moment the server answers.
+			if (!online) void probeReachability();
+			onRetry();
+			return;
+		}
 		window.location.reload();
 	}
 </script>

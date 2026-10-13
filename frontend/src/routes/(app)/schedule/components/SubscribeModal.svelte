@@ -1,25 +1,24 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { BellRing, Minus, Plus } from '@lucide/svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
 
 	import type { ScheduleEventFullDto } from '#lib/api/generated/index.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
+	import { getSubscriptionsQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { newSubscription } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-
-	const client = createApiClient();
 
 	interface Props {
 		open: boolean;
 		event: ScheduleEventFullDto;
 	}
 	let { open = $bindable(), event }: Props = $props();
+	const queryClient = useQueryClient();
 	const toastService = getToastService();
 
 	let counter = $state(5);
@@ -42,7 +41,6 @@
 		setCounter(counter);
 		formError = '';
 		const { error, response } = await newSubscription({
-			client,
 			body: {
 				event_id: event.id,
 				counter
@@ -55,7 +53,7 @@
 		}
 
 		toastService.add('Подписка оформлена', 'success');
-		await invalidate('app:schedule');
+		await queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() });
 		open = false;
 	}
 </script>

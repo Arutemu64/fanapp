@@ -1,11 +1,9 @@
 <script lang="ts">
-	import { requestLoginCode } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
-	const client = createApiClient();
 	import { Mail } from '@lucide/svelte';
 	import { onDestroy } from 'svelte';
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
+	import { requestLoginCode } from '#lib/api/generated/index.js';
 	import CaptchaWidget, { captchaEnabled } from '#lib/components/CaptchaWidget.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -115,7 +113,6 @@
 
 		try {
 			const { error, response } = await requestLoginCode({
-				client,
 				body: { email: trimmedEmail, captcha_token: captchaToken }
 			});
 

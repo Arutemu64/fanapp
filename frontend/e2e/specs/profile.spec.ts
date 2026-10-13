@@ -1,4 +1,4 @@
-import type { OAuthProvidersOutput } from '../../src/lib/api/generated';
+import type { OAuthProvidersOutput } from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, loggedInAs, organizer, test } from '../fixtures';
 

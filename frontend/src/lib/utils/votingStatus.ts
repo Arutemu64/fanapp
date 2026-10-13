@@ -1,39 +1,5 @@
 import type { GetVotingStateOutput } from '#lib/api/generated/index.js';
 
-import { getVotingStatus } from '#lib/api/generated/index.js';
-import { createApiClient } from '#lib/api/index.js';
-import { isReachable, isUnreachableResponse } from '#lib/services/reachability.js';
-import { FIRST_PAINT_TIMEOUT_MS, timeoutSignal } from '#lib/utils/fetchTimeout.js';
-
-/**
- * Fetch the viewer's voting status, or `undefined` when it can't be had. Voting
- * status is a live, online-only read — a stale "open" would lead to a ballot that
- * can't be submitted — so it is never cached, and every caller treats `undefined`
- * as "show nothing about voting".
- */
-export async function fetchVotingStatus(
-	fetch: typeof globalThis.fetch
-): Promise<GetVotingStateOutput | undefined> {
-	// When the backend is known unreachable, skip the doomed request.
-	if (!isReachable()) return undefined;
-
-	const { data, error, response } = await getVotingStatus({
-		client: createApiClient(),
-		fetch,
-		signal: timeoutSignal(FIRST_PAINT_TIMEOUT_MS)
-	});
-
-	if (error) {
-		// Not reaching the backend is expected offline — hide voting UI quietly.
-		if (!isUnreachableResponse(response)) {
-			console.error('Error fetching voting status:', error);
-		}
-		return undefined;
-	}
-
-	return data;
-}
-
 /**
  * Whether `now` falls inside the configured voting window, mirroring the backend's
  * [start, end) rule (`AppSettings.is_voting_open`). A missing bound means voting

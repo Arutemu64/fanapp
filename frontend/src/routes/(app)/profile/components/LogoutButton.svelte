@@ -2,21 +2,21 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { LogOut } from '@lucide/svelte';
+	import { useQueryClient } from '@tanstack/svelte-query';
 
 	import { logoutUser } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
+	import { currentUserOptions, forgetSession } from '#lib/api/index.js';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { getEventsClient } from '#lib/services/events.svelte.js';
 	import { reachability } from '#lib/services/reachability.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import { clearUserCache } from '#lib/utils/offlineCache.js';
 	import { markLogoutPending } from '#lib/utils/pendingLogout.js';
 
-	const client = createApiClient();
 	const toastService = getToastService();
 	const eventsClient = getEventsClient();
+	const queryClient = useQueryClient();
 
 	// Disables the button for the round-trip, so a second tap can't fire a second
 	// logout into a session the first one is already ending.
@@ -48,7 +48,7 @@
 			return;
 		}
 
-		const { error, response } = await logoutUser({ client });
+		const { error, response } = await logoutUser();
 
 		if (error || !response?.ok) {
 			toastService.error(error);
@@ -59,12 +59,13 @@
 	}
 
 	async function finishLogout() {
-		// Drop the previous user's cached data so it can't surface for the next
-		// account (or offline) on a shared device. Universal caches (e.g. schedule)
-		// stay warm by design.
-		await clearUserCache();
-
-		await goto(resolve(''), { refreshAll: true });
+		// Guest from here on: the user query turns null at once (the bell and every
+		// account row drop), then, once home has replaced this screen, the account's
+		// cached data is forgotten so it can't surface for the next person (or
+		// offline) on a shared device.
+		queryClient.setQueryData(currentUserOptions().queryKey, null);
+		await goto(resolve(''));
+		forgetSession(queryClient);
 		eventsClient.restart();
 	}
 </script>

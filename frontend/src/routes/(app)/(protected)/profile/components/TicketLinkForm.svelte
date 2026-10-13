@@ -1,12 +1,10 @@
 <script lang="ts">
-	import { linkTicket } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
-	const client = createApiClient();
 	import { CheckCircle2 } from '@lucide/svelte';
 
 	import type { CurrentUserDto } from '#lib/api/generated/index.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
+	import { linkTicket } from '#lib/api/generated/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -47,7 +45,6 @@
 
 		try {
 			const { error, response } = await linkTicket({
-				client,
 				body: { barcode: barcode.trim() }
 			});
 

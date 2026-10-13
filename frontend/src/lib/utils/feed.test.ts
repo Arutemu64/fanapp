@@ -1,16 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { dedupeById, feedSnapshotKey } from './feed';
-
-describe('feedSnapshotKey', () => {
-	it('encodes the flag and the ids in order', () => {
-		expect(feedSnapshotKey(true, [1, 'b', 3])).toBe('true:1:b:3');
-	});
-
-	it('differs when only the flag differs', () => {
-		expect(feedSnapshotKey(true, [1])).not.toBe(feedSnapshotKey(false, [1]));
-	});
-});
+import { dedupeById } from './feed';
 
 describe('dedupeById', () => {
 	it('drops items from `next` whose id is already present', () => {

@@ -1,34 +1,28 @@
 <script lang="ts">
 	import { afterNavigate, beforeNavigate, onNavigate } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { navigating, page } from '$app/state';
+	import { page } from '$app/state';
+	import { createQuery } from '@tanstack/svelte-query';
 	import { prefersReducedMotion } from 'svelte/motion';
 	import { MediaQuery } from 'svelte/reactivity';
 
+	import { currentUserOptions } from '#lib/api/index.js';
 	import SkipLink from '#lib/components/SkipLink.svelte';
 	import { TAB_ROOTS } from '#lib/data/nav.js';
-	import { setUnreadCountService } from '#lib/services/unreadCount.svelte.js';
 
 	import type { LayoutProps, Snapshot } from './$types';
 
-	import NotificationsSkeleton from './(protected)/notifications/components/NotificationsSkeleton.svelte';
 	import AppBottomNav from './components/AppBottomNav.svelte';
 	import AppNavbar from './components/AppNavbar.svelte';
 	import AppSidebar from './components/AppSidebar.svelte';
 	import ConnectionBanner from './components/ConnectionBanner.svelte';
-	import SectionSpinner from './components/SectionSpinner.svelte';
 	import { navTransitionKind } from './navTransition';
-	import ScheduleSkeleton from './schedule/components/ScheduleSkeleton.svelte';
-	import VotingSkeleton from './voting/components/VotingSkeleton.svelte';
 
-	let { data, children }: LayoutProps = $props();
+	let { children }: LayoutProps = $props();
 
 	let activeUrl = $derived(page.url.pathname);
-	let user = $derived(data.user);
-
-	// Shared unread count for the bell badge and the notifications page; the bell
-	// loads it on mount and SSE, mark-read and reconnects keep it current.
-	setUnreadCountService();
+	const userQuery = createQuery(() => currentUserOptions());
+	let user = $derived(userQuery.data ?? null);
 
 	// <main> is the scroll region and lives in this layout, so it persists across
 	// navigation — SvelteKit's scroll handling only manages the window, never this
@@ -176,35 +170,6 @@
 		restoreScroll(top);
 	});
 
-	// In-shell loading indicator. Section pages block on their `load`, so during a
-	// switch the previous page stays painted until the new one commits; we replace
-	// the content region with a skeleton (or a spinner) so feedback is local to
-	// where the content will appear, the way a persistent app shell should behave.
-	// Only real route changes populate `navigating` — an `invalidate()` data refresh
-	// (e.g. the schedule's SSE reload) never does, so those never flash the loader.
-	const LOADER_DELAY_MS = 250;
-
-	// Gate on a short delay so fast navigations swap straight to the new page with
-	// no placeholder flash; only a load that outlasts the delay reveals the loader.
-	let showLoader = $state(false);
-	$effect(() => {
-		const target = navigating.to;
-		// Scope to in-app section switches — auth navigations (login/logout) keep
-		// their own form-level feedback and shouldn't paint a section loader.
-		if (!target?.route?.id?.startsWith('/(app)')) {
-			showLoader = false;
-			return;
-		}
-		const timer = setTimeout(() => {
-			showLoader = true;
-		}, LOADER_DELAY_MS);
-		return () => clearTimeout(timer);
-	});
-
-	// Sections with a regular, predictable layout get a bespoke skeleton keyed off
-	// the destination route; everything else falls back to a centred spinner.
-	let loaderRoute = $derived(navigating.to?.route?.id);
-
 	// Native-style page transitions via the View Transitions API: a shared-axis slide
 	// down or up the hierarchy, a fade-through between tabs (keyframes in app.css,
 	// keyed off html[data-nav-transition]). Phones only — on desktop a slide reads as
@@ -223,16 +188,13 @@
 		if (navigation.willUnload || !navigation.from || !navigation.to) return;
 		if (!navigation.to.route.id?.startsWith('/(app)')) return;
 
-		let kind = navTransitionKind({
+		const kind = navTransitionKind({
 			from: navigation.from.url.pathname,
 			to: navigation.to.url.pathname,
 			fromBackHref: page.data.back && resolve(page.data.back.href),
 			tabRoots: TAB_ROOTS
 		});
 		if (!kind) return;
-		// A slow load has already swapped the section for its skeleton, so the content
-		// arrives in place: sliding it in would move it away from where it is shown.
-		if (showLoader) kind = 'fade';
 
 		const id = ++transitionId;
 		const root = document.documentElement;
@@ -329,19 +291,7 @@
 			<div
 				class="mx-auto w-full max-w-5xl grow p-4 pb-[calc(var(--bottom-nav-clearance)+1rem)] md:p-6 md:pt-4 lg:p-8 lg:pt-4"
 			>
-				{#if showLoader}
-					{#if loaderRoute === '/(app)/schedule'}
-						<ScheduleSkeleton />
-					{:else if loaderRoute === '/(app)/voting'}
-						<VotingSkeleton />
-					{:else if loaderRoute === '/(app)/(protected)/notifications'}
-						<NotificationsSkeleton />
-					{:else}
-						<SectionSpinner />
-					{/if}
-				{:else}
-					{@render children()}
-				{/if}
+				{@render children()}
 			</div>
 		</main>
 	</div>

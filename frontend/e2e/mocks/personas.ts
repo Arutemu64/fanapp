@@ -1,4 +1,4 @@
-import type { CurrentUserDto, UserSettingsDto } from '../../src/lib/api/generated';
+import type { CurrentUserDto, UserSettingsDto } from '../../src/lib/api/generated/types.gen';
 import type { Handlers } from './api';
 
 import { json } from './api';

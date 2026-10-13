@@ -1,107 +1,126 @@
-import type {
-	CurrentUserDto,
-	ScheduleEventFullDto,
-	SubscriptionFullDto
-} from '#lib/api/generated/index.js';
+import { version } from '$app/env';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import { QueryClient } from '@tanstack/svelte-query';
+import { persistQueryClient } from '@tanstack/svelte-query-persist-client';
+import { del, get, set } from 'idb-keyval';
 
-import { getCurrentUser, getSchedule, getSubscriptions } from '#lib/api/generated/index.js';
-import { createApiClient } from '#lib/api/index.js';
+import { getApiErrorCode } from '#lib/api/errors.js';
 import {
-	clearUserCache,
-	fetchWithCache,
-	universalScope,
-	userScope,
-	warmCache
-} from '#lib/utils/offlineCache.js';
+	countUnreadNotificationsQueryKey,
+	getCurrentUserQueryKey,
+	getPublicConfigQueryKey,
+	getScheduleQueryKey,
+	getSubscriptionsQueryKey,
+	listUserNotificationsQueryKey
+} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+import { currentUserOptions, queryForLoad } from '#lib/api/index.js';
+import { isReachable, probeReachability } from '#lib/services/reachability.js';
 import { isLogoutPending } from '#lib/utils/pendingLogout.js';
-import { SCHEDULE_CACHE_KEY, SUBSCRIPTIONS_CACHE_KEY } from '#lib/utils/scheduleData.js';
 
 import type { LayoutLoad } from './$types';
 
 // SPA-only: render entirely on the client. There is no server render.
 export const ssr = false;
 
-// Single current-session user; cached so the app can still boot offline.
-const USER_CACHE_KEY = 'me:user';
+// The screens that must open offline: the identity the guards and the profile
+// read, the home hero, the programme with the viewer's subscriptions, and the
+// notifications with their badge. Only these are written to IndexedDB. Every
+// other query is online-only: fetched fresh after a cold start and dropped from
+// memory five minutes after its screen closes (TanStack's default gcTime) —
+// voting must not show a stale ballot, and the staff tools hold other people's
+// details that have no business on the device.
+const OFFLINE_QUERY_KEYS = [
+	getCurrentUserQueryKey(),
+	getPublicConfigQueryKey(),
+	getScheduleQueryKey(),
+	getSubscriptionsQueryKey(),
+	listUserNotificationsQueryKey(),
+	countUnreadNotificationsQueryKey()
+];
+// Matched by operation id, the first part of every hey-api query key, so a
+// list key also covers its paginated variant.
+const OFFLINE_QUERY_IDS = new Set(OFFLINE_QUERY_KEYS.map(([{ _id }]) => _id));
 
-export const load: LayoutLoad = async ({ fetch, depends }) => {
-	depends('app:current-user');
+// How long a cached copy may serve the app offline: a festival weekend plus the
+// trip there and back, where the persister's 24h default would drop the
+// programme for anyone who didn't open the app for a day. StaleDataNotice shows
+// how old what's on screen is. The offline queries keep this gcTime too, or they
+// are garbage-collected before they are ever persisted:
+// https://tanstack.com/query/latest/docs/framework/react/plugins/persistQueryClient
+const CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
-	// A logout requested offline is still pending server-side (the HttpOnly cookie
-	// can't be cleared by JS). Present as logged-out until the queued POST
-	// /auth/logout revokes the session — otherwise a still-valid cookie would let
-	// /me resurrect the account we just left. The flush (reachabilityMonitor) clears the
-	// intent once it succeeds; a fresh login clears it too (completeLogin).
-	if (isLogoutPending()) {
-		return { user: null };
-	}
-
-	const client = createApiClient();
-
-	// `null` is a real cached value (logged out); `undefined` means "reachable but
-	// no verdict, keep the cached user" (see fetcher below), so the type spans both.
-	const { data } = await fetchWithCache<CurrentUserDto | null>({
-		key: USER_CACHE_KEY,
-		scope: userScope,
-		fetcher: async ({ signal }) => {
-			const { data, response, error } = await getCurrentUser({ client, fetch, signal });
-
-			// Authoritative "session ended": cache logged-out AND drop per-user caches
-			// so no orphaned entries linger for the next account on a shared device.
-			// Universal caches (e.g. schedule) are kept warm. Mirrors explicit logout
-			// (the Profile page's LogoutButton).
-			if (response?.status === 401 || response?.status === 403) {
-				void clearUserCache();
-				return null;
+// Runs once per page load: nothing here reads `url` or calls `depends`, and the
+// app never calls `invalidateAll`/`refreshAll`, so the QueryClient — and the
+// cache in it — lives for the whole session. It is load data rather than a
+// module singleton (TanStack's SvelteKit setup:
+// https://tanstack.com/query/latest/docs/framework/svelte/ssr), so it never
+// outlives the document; logout empties it explicitly (forgetSession).
+export const load: LayoutLoad = async () => {
+	const queryClient = new QueryClient({
+		defaultOptions: {
+			queries: {
+				// Data a load prefetched on hover/tap stays fresh when the page mounts a
+				// moment later, rather than being refetched straight away
+				// (https://tanstack.com/query/latest/docs/framework/react/guides/prefetching).
+				// Live data doesn't wait it out: SSE events and mutations invalidate, which
+				// refetches regardless of staleTime.
+				staleTime: 60 * 1000,
+				// Retry only a request that got no API answer — a network failure, a
+				// timeout, a gateway page. An API error (401, 404, validation) is the
+				// server's verdict, and repeating it only delays showing it by seconds.
+				retry: (failureCount, error) => failureCount < 3 && getApiErrorCode(error) === undefined
 			}
-
-			// Reachable but not an auth verdict (5xx / parse error / empty body): do NOT
-			// downgrade identity. Returning `undefined` keeps the last-good cached user
-			// instead of overwriting it with `null` — a transient error must not flip a
-			// logged-in user to guest (which would orphan their per-user caches).
-			if (error || !data) {
-				return undefined;
-			}
-
-			return data;
 		}
 	});
-
-	// A complete cache miss (offline first boot) is also "not logged in".
-	const user = data ?? null;
-
-	// Warm the offline caches on the first online boot so they're viewable even if
-	// the user never opens the schedule page. Fire-and-forget: each is a no-op when
-	// offline or already cached, so it never blocks first paint or refetches once
-	// warmed (the schedule page's own load + SSE keep them fresh after that). Uses
-	// the same keys the schedule page reads, and its own client so it isn't tied to
-	// this load's tracked `fetch`.
-
-	// Schedule is universal — one shared key for guests and every account.
-	void warmCache<ScheduleEventFullDto[]>({
-		key: SCHEDULE_CACHE_KEY,
-		scope: universalScope,
-		fetcher: async ({ signal }) => {
-			const warmClient = createApiClient();
-			const { data: schedule, error } = await getSchedule({ client: warmClient, signal });
-			if (error || !schedule) return undefined;
-			return schedule.schedule ?? [];
-		}
-	});
-
-	// Subscriptions are per-user; only logged-in users have them.
-	if (user) {
-		void warmCache<SubscriptionFullDto[]>({
-			key: SUBSCRIPTIONS_CACHE_KEY,
-			scope: userScope,
-			fetcher: async ({ signal }) => {
-				const warmClient = createApiClient();
-				const { data, error } = await getSubscriptions({ client: warmClient, signal });
-				if (error || !data) return undefined;
-				return data.subscriptions ?? [];
-			}
-		});
+	// Set before the restore below: restored queries take their options from here.
+	for (const queryKey of OFFLINE_QUERY_KEYS) {
+		queryClient.setQueryDefaults(queryKey, { gcTime: CACHE_MAX_AGE_MS });
 	}
 
-	return { user };
+	// One IndexedDB entry holds the offline queries, so those screens open offline
+	// once they have loaded. Restored before any guard reads identity from it.
+	// The build `version` busts it on deploy, so a client never reads a payload
+	// shaped by an older API.
+	const [, restored] = persistQueryClient({
+		queryClient,
+		persister: createAsyncStoragePersister({
+			storage: { getItem: get, setItem: set, removeItem: del }
+		}),
+		maxAge: CACHE_MAX_AGE_MS,
+		buster: version,
+		dehydrateOptions: {
+			// Not TanStack's default (successful queries only): a refetch that failed
+			// leaves the query in error with its last good data, and dropping it here
+			// would erase the saved programme right when the network is bad.
+			shouldDehydrateQuery: (query) => {
+				const [{ _id }] = query.queryKey as [{ _id: string }];
+				return OFFLINE_QUERY_IDS.has(_id) && query.state.data !== undefined;
+			}
+		}
+	});
+	await restored;
+
+	// Identity gates the route guards, so settle it before any child load reads
+	// it. A restored user answers at once (the components reading it revalidate,
+	// and a /me 401 ends an expired session). A restored guest is re-checked: a
+	// social login arrives here as a full page load with a fresh session cookie,
+	// and trusting the saved `null` would bounce the new user to /login. A first
+	// boot and a guest wait on /me no longer than first paint can afford. A pending
+	// offline logout is re-checked too, whose queryFn answers `null` without the
+	// network: the logout flag is saved at once but the cache only on the
+	// persister's throttle, so a restart in between can restore the account the
+	// user just left.
+	await queryForLoad(queryClient, {
+		...currentUserOptions(),
+		staleTime: (query) => (query.state.data && !isLogoutPending() ? 'static' : 0)
+	}).catch(async () => {
+		// The guards branch on reachability to choose between /login and the offline
+		// state, but the API interceptors that ask the probe for a verdict are only
+		// installed once the root layout mounts, after this load. Without a verdict
+		// `isReachable()` keeps its optimistic default and an offline cold start
+		// would land on a login page that can't work offline.
+		if (isReachable()) await probeReachability();
+	});
+
+	return { queryClient };
 };

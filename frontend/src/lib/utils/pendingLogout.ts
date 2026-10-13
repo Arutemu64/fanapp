@@ -1,5 +1,4 @@
 import { logoutUser } from '#lib/api/generated/index.js';
-import { createApiClient } from '#lib/api/index.js';
 
 import { readStorage, removeStorage, writeStorage } from './safeStorage';
 
@@ -47,9 +46,8 @@ export function clearLogoutPending(): void {
 export async function flushPendingLogout(): Promise<void> {
 	if (!isLogoutPending()) return;
 
-	const client = createApiClient();
 	try {
-		const { response } = await logoutUser({ client });
+		const { response } = await logoutUser();
 		if (response?.ok || response?.status === 401 || response?.status === 403) {
 			clearLogoutPending();
 		}

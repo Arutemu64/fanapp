@@ -1,7 +1,9 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
+	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 
+	import { listOauthProvidersOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { currentUserOptions } from '#lib/api/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { clearOAuthErrorParam, OAUTH_LINK_ERROR_PARAM } from '#lib/utils/oauthErrors.js';
 
@@ -11,8 +13,19 @@
 	import SignInMethods from '../components/SignInMethods.svelte';
 
 	let { data }: PageProps = $props();
-	let user = $derived(data.user!);
-	let enabledProviders = $derived(data.enabledProviders);
+	const queryClient = useQueryClient();
+	const userQuery = createQuery(() => currentUserOptions());
+	// Live from the query; the guard's snapshot covers the moment a session expiry
+	// has emptied it but not yet moved us to /login.
+	let user = $derived(userQuery.data ?? data.user);
+
+	// Which providers can be *linked* is the same deployment gate the login screen
+	// reads — a provider unreachable from this host offers no "connect" button. Read
+	// at runtime, not baked in. An already-linked provider stays unlinkable even when
+	// disabled (that row comes from the user, and the unlink route is never gated), so
+	// a failure here just drops the connect affordances, never the ability to unlink.
+	const providersQuery = createQuery(() => listOauthProvidersOptions());
+	let enabledProviders = $derived(providersQuery.data?.providers ?? []);
 	const toastService = getToastService();
 
 	// Cancelling is the user's own choice, so it gets an informational toast —
@@ -36,7 +49,7 @@
 
 	// Refreshing the current user also refreshes connections — they ship together now.
 	async function refreshProfile() {
-		await invalidate('app:current-user');
+		await queryClient.invalidateQueries({ queryKey: currentUserOptions().queryKey });
 	}
 
 	onMount(() => {

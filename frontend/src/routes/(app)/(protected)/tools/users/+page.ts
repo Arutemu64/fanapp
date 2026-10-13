@@ -3,15 +3,15 @@ import { error } from '@sveltejs/kit';
 import type { BackTarget } from '#lib/types/navigation.js';
 
 import { throwApiError } from '#lib/api/errors.js';
-import { listUsers } from '#lib/api/generated/index.js';
-import { createApiClient } from '#lib/api/index.js';
+import { listUsersOptions } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+import { queryForLoad } from '#lib/api/index.js';
 import { USERS_PAGE_SIZE } from '#lib/constants/users.js';
 import { canReadUsers } from '#lib/utils/permissions.js';
 
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ fetch, parent, url }) => {
-	const { user } = await parent();
+export const load: PageLoad = async ({ parent, url }) => {
+	const { queryClient, user } = await parent();
 
 	// The tools layout gates the section to organisers; mirror the backend
 	// users:read check here so a user without the grant isn't shown a page the
@@ -28,26 +28,16 @@ export const load: PageLoad = async ({ fetch, parent, url }) => {
 	const page = Number.isInteger(rawPage) && rawPage > 0 ? rawPage : 1;
 	const offset = (page - 1) * USERS_PAGE_SIZE;
 
-	const client = createApiClient();
-
 	// Staff-only operational directory: stale data would misrepresent live state,
-	// so no offline cache — fail hard when unreachable instead.
-	const {
-		data,
-		error: fetchError,
-		response
-	} = await listUsers({
-		client,
-		fetch,
-		query: {
-			limit: USERS_PAGE_SIZE,
-			offset,
-			...(search ? { search } : {})
-		}
-	});
-	if (fetchError || !data) {
-		throwApiError(fetchError, response, 'Не удалось загрузить пользователей');
-	}
+	// so it waits for a fresh page rather than serving a cached one.
+	const data = await queryForLoad(queryClient, {
+		...listUsersOptions({
+			query: { limit: USERS_PAGE_SIZE, offset, ...(search ? { search } : {}) }
+		}),
+		staleTime: 0
+	}).catch((apiError: unknown) =>
+		throwApiError(apiError, undefined, 'Не удалось загрузить пользователей')
+	);
 
 	return {
 		title: 'Пользователи',

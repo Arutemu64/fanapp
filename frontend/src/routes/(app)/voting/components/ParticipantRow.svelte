@@ -4,15 +4,12 @@
 	import type { ParticipantFullDto } from '#lib/api/generated/index.js';
 
 	import { addVote } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
 	import NumberBadge from '#lib/components/NumberBadge.svelte';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { pluralize } from '#lib/utils/formatters.js';
-
-	const client = createApiClient();
 
 	interface Props {
 		participant: ParticipantFullDto;
@@ -38,7 +35,6 @@
 		optimisticDelta += 1;
 		try {
 			const { data, error, response } = await addVote({
-				client,
 				body: {
 					participant_id: participant.id
 				}

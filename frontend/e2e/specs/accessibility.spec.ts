@@ -4,7 +4,7 @@ import type {
 	GetVotingNominationOutput,
 	GetVotingStateOutput,
 	ListVotingNominationsOutput
-} from '../../src/lib/api/generated';
+} from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, loggedInAs, organizer, test } from '../fixtures';
 

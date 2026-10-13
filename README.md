@@ -29,7 +29,7 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 - **Organizer tools**: schedule import, manual TicketsCloud / Cosplay2 syncs, and other admin screens, gated by permissions.
 - **Feedback**: user feedback submission.
 - **Live updates**: Server-Sent Events (SSE) push real-time changes to the client.
-- **Installable PWA**: installs to the home screen; the schedule, notifications and profile stay readable offline from their last synced copy.
+- **Installable PWA**: installs to the home screen; screens show their last copy at once and refresh in the background, and the schedule, notifications and profile stay readable offline.
 
 ### Screenshots
 
@@ -54,7 +54,7 @@ This is a monorepo: a FastAPI backend, a SvelteKit frontend, and a shared OpenAP
 
 | Layer | Tech |
 |---|---|
-| Frontend | SvelteKit (Svelte 5 runes), shadcn-svelte, Tailwind CSS v4, `pnpm` |
+| Frontend | SvelteKit (Svelte 5 runes), TanStack Query (server state, offline cache in IndexedDB), shadcn-svelte, Tailwind CSS v4, `pnpm` |
 | Backend | FastAPI, aiogram (Telegram Bot API), SQLAlchemy + Alembic, Dishka (DI), `uv` |
 | Data / infra | PostgreSQL, Redis (Valkey), NATS + FastStream |
 | Jobs | APScheduler (periodic syncs), FastStream consumers (domain events) |
@@ -204,7 +204,7 @@ All commands run from the repo root via `just`.
 
 The full list is `just --list`.
 
-> The frontend talks to the backend through a generated, type-safe client in `frontend/src/lib/api/generated/` (produced by [`@hey-api/openapi-ts`](https://heyapi.dev/)). Whenever backend endpoints or schemas change, run `just frontend-generate-api` to keep the contract in sync. CI fails if you forget: the spec is checked against the routers by a backend test, and the generated client against the spec by `just frontend-check-api`.
+> The frontend talks to the backend through a generated, type-safe client in `frontend/src/lib/api/generated/` (produced by [`@hey-api/openapi-ts`](https://heyapi.dev/)), along with the [TanStack Query](https://tanstack.com/query) options and keys for every endpoint. Whenever backend endpoints or schemas change, run `just frontend-generate-api` to keep the contract in sync. CI fails if you forget: the spec is checked against the routers by a backend test, and the generated client against the spec by `just frontend-check-api`.
 
 ## Deployment
 

@@ -5,7 +5,6 @@
 	import type { CurrentUserDto, SocialProvider } from '#lib/api/generated/index.js';
 
 	import { unlinkTelegramAccount, unlinkVkAccount } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Item from '#lib/components/ui/item/index.js';
@@ -17,8 +16,6 @@
 	import ChangePasswordModal from './ChangePasswordModal.svelte';
 	import SettingsSection from './SettingsSection.svelte';
 	import SocialConnectionRow from './SocialConnectionRow.svelte';
-
-	const client = createApiClient();
 
 	interface Props {
 		user: CurrentUserDto;
@@ -65,9 +62,7 @@
 	async function unlinkProvider(provider: SocialProvider) {
 		const { name } = SOCIAL_PROVIDER_PRESENTATION[provider];
 		const { error, response } =
-			provider === 'vk'
-				? await unlinkVkAccount({ client })
-				: await unlinkTelegramAccount({ client });
+			provider === 'vk' ? await unlinkVkAccount() : await unlinkTelegramAccount();
 
 		if (error || !response?.ok) {
 			toastService.error(error);

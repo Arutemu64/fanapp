@@ -21,9 +21,12 @@
 
 	interface Props {
 		notification: NotificationDto;
+		// Decided by the feed: an item stays "new" for the whole visit, even after a
+		// refetch brings it back with the seen_at the visit itself recorded.
+		isNew: boolean;
 	}
 
-	let { notification }: Props = $props();
+	let { notification, isNew }: Props = $props();
 
 	const TYPE_ICONS: Record<NotificationType, Component<{ class?: string }>> = {
 		default: Bell,
@@ -36,7 +39,6 @@
 	};
 
 	let Icon = $derived(TYPE_ICONS[notification.type] ?? Bell);
-	let isNew = $derived(!notification.seen_at);
 	let createdAt = $derived(formatRelativeTime(notification.created_at, minuteClock.now));
 
 	// Backend-provided in-app deep-link (e.g. "/schedule"). Without one the item is

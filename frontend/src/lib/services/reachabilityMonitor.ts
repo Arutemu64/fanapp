@@ -1,5 +1,6 @@
+import { onlineManager } from '@tanstack/svelte-query';
+
 import { flushPendingLogout } from '#lib/utils/pendingLogout.js';
-import { requestReconnectRefresh } from '#lib/utils/reconnectRefresh.js';
 
 import { isReachable, markReachable, onReachableChange, probeReachability } from './reachability';
 
@@ -16,10 +17,12 @@ const RECOVERY_POLL_MAX_MS = 30000;
  * recovery. Call once from the root layout; returns the teardown, which matters
  * for dev HMR — without it each cycle would stack another poll and listener set.
  *
- * On the offline→online edge it fires an offline logout's queued revoke and
- * refreshes the pages, which may be showing cached copies. Live SSE events only
- * cover data that *changed* server-side, so the refresh catches the rest; it is
- * debounced together with the SSE reconnect's own catch-up.
+ * It is also what TanStack Query's `onlineManager` listens to, in place of its
+ * default `navigator.onLine` events: while the backend is unreachable queries
+ * pause instead of burning their retries, and on the offline→online edge every
+ * query on screen refetches (`refetchOnReconnect`) — the catch-up for screens
+ * showing cached copies. The edge also fires an offline logout's queued revoke.
+ * https://tanstack.com/query/latest/docs/reference/onlineManager
  */
 export function startReachabilityMonitor(): () => void {
 	let pollTimerId: ReturnType<typeof setTimeout> | null = null;
@@ -59,11 +62,17 @@ export function startReachabilityMonitor(): () => void {
 		}
 
 		stopPolling();
-		// Revoke a session the user logged out of while offline, before the refresh
-		// below re-runs /me — the pending flag keeps identity logged-out until this
-		// clears, so there's no "logged back in" flicker in between.
+		// Revoke a session the user logged out of while offline. The pending flag
+		// keeps the /me refetch on reconnect logged-out until this clears, so there's
+		// no "logged back in" flicker in between.
 		void flushPendingLogout();
-		requestReconnectRefresh();
+	});
+
+	// Replacing the listener cleans up the previous one, so an HMR restart doesn't
+	// stack them.
+	onlineManager.setEventListener((setOnline) => {
+		setOnline(isReachable());
+		return onReachableChange(() => setOnline(isReachable()));
 	});
 
 	// The `offline` event is a trustworthy negative; `online` only means an

@@ -8,7 +8,6 @@
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import { changeCurrentUserEmail, confirmEmailCode } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
@@ -20,8 +19,6 @@
 	import { ResendCooldown } from '#lib/services/cooldown.svelte.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
 	import { isValidEmail, isValidOtp, normalizeEmail } from '#lib/utils/validation.js';
-
-	const client = createApiClient();
 
 	interface Props {
 		open: boolean;
@@ -68,7 +65,7 @@
 
 		try {
 			const body: ChangeEmailInput = { new_email: normalizeEmail(newEmail) };
-			const { error, response } = await changeCurrentUserEmail({ client, body });
+			const { error, response } = await changeCurrentUserEmail({ body });
 
 			if (error || !response?.ok) {
 				formError = getApiErrorDetail(error) ?? 'Не удалось отправить код подтверждения';
@@ -97,7 +94,7 @@
 		isLoading = true;
 
 		const body: ChangeEmailInput = { new_email: trimmedEmail };
-		const { error, response } = await changeCurrentUserEmail({ client, body });
+		const { error, response } = await changeCurrentUserEmail({ body });
 
 		isLoading = false;
 
@@ -137,7 +134,6 @@
 
 		try {
 			const { error, response } = await confirmEmailCode({
-				client,
 				body: { code: verificationCode }
 			});
 

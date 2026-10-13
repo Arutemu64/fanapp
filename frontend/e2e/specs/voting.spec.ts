@@ -2,7 +2,7 @@ import type {
 	GetVotingStateOutput,
 	ListVotingNominationsOutput,
 	NominationVotingDto
-} from '../../src/lib/api/generated';
+} from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, test } from '../fixtures';
 

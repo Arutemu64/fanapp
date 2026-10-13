@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
-	import { sendBroadcast } from '#lib/api/generated/index.js';
-	import { createApiClient } from '#lib/api/index.js';
-	const client = createApiClient();
-	import { invalidate } from '$app/navigation';
+	import { useQueryClient } from '@tanstack/svelte-query';
 
+	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
+	import { listBroadcastsQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { sendBroadcast } from '#lib/api/generated/index.js';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -13,24 +12,11 @@
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
-	import { feedSnapshotKey } from '#lib/utils/feed.js';
-
-	import type { PageProps } from './$types';
 
 	import BroadcastHistory from './components/BroadcastHistory.svelte';
 
-	let { data }: PageProps = $props();
-
 	const toastService = getToastService();
-
-	// Remount the history with the fresh server snapshot whenever route data changes
-	// (a new send or a cancel triggers invalidate('app:broadcasts')).
-	let broadcastsKey = $derived(
-		feedSnapshotKey(
-			data.hasMore,
-			data.mailings.map((mailing) => mailing.id)
-		)
-	);
+	const queryClient = useQueryClient();
 
 	let bodyText = $state('');
 	let selectedRoles = $state<string[]>([]);
@@ -93,7 +79,6 @@
 
 		try {
 			const { error, response } = await sendBroadcast({
-				client,
 				body: {
 					body: bodyText.trim(),
 					roles: selectedRoles as ('visitor' | 'participant' | 'helper' | 'org')[]
@@ -115,7 +100,7 @@
 			selectedRoles = [];
 			bodyError = '';
 			rolesError = '';
-			await invalidate('app:broadcasts');
+			await queryClient.invalidateQueries({ queryKey: listBroadcastsQueryKey() });
 		} finally {
 			isSending = false;
 		}
@@ -225,7 +210,5 @@
 </div>
 
 <div class="mt-8">
-	{#key broadcastsKey}
-		<BroadcastHistory initialMailings={data.mailings} initialHasMore={data.hasMore} />
-	{/key}
+	<BroadcastHistory />
 </div>

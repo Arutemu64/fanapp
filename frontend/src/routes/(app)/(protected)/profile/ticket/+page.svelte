@@ -1,16 +1,29 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
+	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
+
+	import { getVotingStatusQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	import { currentUserOptions } from '#lib/api/index.js';
 
 	import type { PageProps } from './$types';
 
 	import TicketLinkForm from '../components/TicketLinkForm.svelte';
 
 	let { data }: PageProps = $props();
-	let user = $derived(data.user!);
+	const queryClient = useQueryClient();
+	const userQuery = createQuery(() => currentUserOptions());
+	// Live from the query; the guard's snapshot covers the moment a session expiry
+	// has emptied it but not yet moved us to /login.
+	let user = $derived(userQuery.data ?? data.user);
+
+	// A linked ticket is what lets the user vote, so the voting status moves with it.
+	function refreshUser() {
+		void queryClient.invalidateQueries({ queryKey: getVotingStatusQueryKey() });
+		return queryClient.invalidateQueries({ queryKey: currentUserOptions().queryKey });
+	}
 </script>
 
 <svelte:head>
 	<title>Билет · ФАН ФАН</title>
 </svelte:head>
 
-<TicketLinkForm {user} onTicketLinked={() => invalidate('app:current-user')} />
+<TicketLinkForm {user} onTicketLinked={refreshUser} />

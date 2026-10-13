@@ -1,4 +1,4 @@
-import type { GetScheduleOutput } from '../../src/lib/api/generated';
+import type { GetScheduleOutput } from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, loggedInAs, test } from '../fixtures';
 

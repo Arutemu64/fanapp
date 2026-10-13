@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 
-	// Generic content-area fallback shown by the app shell while a section whose
-	// layout we can't meaningfully skeletonise loads. A spinner (not a skeleton) is
+	// Generic content-area fallback a section shows while its first query loads,
+	// when its layout can't be meaningfully skeletonised. A spinner (not a skeleton) is
 	// the honest choice when the incoming shape is unknown; sections with a regular,
 	// predictable layout get a bespoke skeleton instead.
 </script>
