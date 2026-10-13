@@ -11,7 +11,8 @@
 	import {
 		countUnreadNotificationsOptions,
 		countUnreadNotificationsQueryKey,
-		listUserNotificationsInfiniteOptions
+		listUserNotificationsInfiniteOptions,
+		listUserNotificationsQueryKey
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { markAllNotificationsRead, markNotificationsRead } from '#lib/api/generated/index.js';
 	import EmptyState from '#lib/components/EmptyState.svelte';
@@ -125,6 +126,13 @@
 		}
 
 		await queryClient.invalidateQueries({ queryKey: countUnreadNotificationsQueryKey() });
+		// The cached feed still carries these as unseen. Mark it stale without
+		// refetching every loaded page now (unseenOnArrival keeps this visit's dots),
+		// so the next visit refetches instead of showing them as new again.
+		void queryClient.invalidateQueries({
+			queryKey: listUserNotificationsQueryKey(),
+			refetchType: 'none'
+		});
 	}
 
 	// Read-on-view: an item counts as read once it is on this screen while the app

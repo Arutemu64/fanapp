@@ -14,6 +14,8 @@ import {
 	listUserNotificationsQueryKey
 } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 import { currentUserOptions, queryForLoad } from '#lib/api/index.js';
+import { isReachable, probeReachability } from '#lib/services/reachability.js';
+import { isLogoutPending } from '#lib/utils/pendingLogout.js';
 
 import type { LayoutLoad } from './$types';
 
@@ -103,11 +105,22 @@ export const load: LayoutLoad = async () => {
 	// and a /me 401 ends an expired session). A restored guest is re-checked: a
 	// social login arrives here as a full page load with a fresh session cookie,
 	// and trusting the saved `null` would bounce the new user to /login. A first
-	// boot and a guest wait on /me no longer than first paint can afford.
+	// boot and a guest wait on /me no longer than first paint can afford. A pending
+	// offline logout is re-checked too, whose queryFn answers `null` without the
+	// network: the logout flag is saved at once but the cache only on the
+	// persister's throttle, so a restart in between can restore the account the
+	// user just left.
 	await queryForLoad(queryClient, {
 		...currentUserOptions(),
-		staleTime: (query) => (query.state.data ? 'static' : 0)
-	}).catch(() => {});
+		staleTime: (query) => (query.state.data && !isLogoutPending() ? 'static' : 0)
+	}).catch(async () => {
+		// The guards branch on reachability to choose between /login and the offline
+		// state, but the API interceptors that ask the probe for a verdict are only
+		// installed once the root layout mounts, after this load. Without a verdict
+		// `isReachable()` keeps its optimistic default and an offline cold start
+		// would land on a login page that can't work offline.
+		if (isReachable()) await probeReachability();
+	});
 
 	return { queryClient };
 };
