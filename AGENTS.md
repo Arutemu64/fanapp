@@ -28,6 +28,7 @@ Load the listed skills and read the guide **before** implementing, not after.
 | Russian user-facing copy | `ux-copy`, `fanfan-russian-copy` | [.agents/redpolitika.md](.agents/redpolitika.md), [.agents/context/PRODUCT.md](.agents/context/PRODUCT.md) |
 | Service worker / manifest / offline / push | — | [docs/frontend.md](docs/frontend.md) §2 "PWA & Offline Support" |
 | Frontend ↔ API contracts | — | [docs/api.md](docs/api.md) |
+| Server state (TanStack Query: queries, mutations, cache, persistence) | `tanstack-query-best-practices` (written for React: map `useQuery` to Svelte's thunk `createQuery`; ADR-0021's departures from the defaults win) | [docs/frontend.md](docs/frontend.md) §2, [docs/api.md](docs/api.md), [ADR-0021](docs/adr/0021-tanstack-query-for-server-state.md) |
 | Tests | `python-testing-patterns` (pytest), `vitest` (frontend unit), `playwright-best-practices` (E2E) | [docs/testing.md](docs/testing.md) |
 | Auth, user input, webhooks, external integrations | `security-and-hardening` | [docs/backend.md](docs/backend.md) |
 | Docker / infra | `docker-expert` | [docs/dependencies.md](docs/dependencies.md) |
