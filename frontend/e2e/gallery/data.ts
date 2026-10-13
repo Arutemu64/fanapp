@@ -3,7 +3,7 @@ import type {
 	NotificationDto,
 	ScheduleEventFullDto,
 	SubscriptionFullDto
-} from '../../src/lib/api/generated';
+} from '../../src/lib/api/generated/types.gen';
 
 // The demo festival behind the README gallery: the acts and nominations of the
 // backend's demo seed (seed_demo_data.py), so the gallery and the README hero

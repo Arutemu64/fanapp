@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 
-import type { OAuthProvidersOutput } from '../../src/lib/api/generated';
+import type { OAuthProvidersOutput } from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, test } from '../fixtures';
 

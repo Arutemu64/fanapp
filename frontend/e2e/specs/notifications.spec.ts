@@ -2,7 +2,7 @@ import type {
 	ListUserNotificationOutput,
 	NotificationDto,
 	UnreadNotificationsCountOutput
-} from '../../src/lib/api/generated';
+} from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, loggedInAs, test } from '../fixtures';
 

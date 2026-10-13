@@ -1,4 +1,4 @@
-import type { ListBroadcastsOutput, MailingDto } from '../../src/lib/api/generated';
+import type { ListBroadcastsOutput, MailingDto } from '../../src/lib/api/generated/types.gen';
 
 import { expect, json, organizer, test } from '../fixtures';
 

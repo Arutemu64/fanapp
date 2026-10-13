@@ -6,7 +6,7 @@ import type {
 	OAuthProvidersOutput,
 	PublicConfigDto,
 	UnreadNotificationsCountOutput
-} from '../../src/lib/api/generated';
+} from '../../src/lib/api/generated/types.gen';
 import type { Handlers } from './api';
 
 import { json } from './api';
