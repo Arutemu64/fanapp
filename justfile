@@ -224,18 +224,23 @@ run-dev build="":
 # Pass build="" to skip image rebuild (default rebuilds). APP_VERSION labels the
 # frontend build with the release from backend/pyproject.toml; no APP_BUILD, since
 # a build from a working tree has no commit it can honestly claim.
-run-prod build="--build":
+run-prod build="--build": _backups-dir
     APP_VERSION="$(cd backend && uv version --short)" docker compose -f docker-compose.yml --profile core --profile ops up {{build}}
 
 # Pulls prebuilt GHCR images (docker-compose.prod.yml), builds nothing on the host.
 # Requires `docker login ghcr.io` first. Pin a build via IMAGE_TAG in .env.
 
 # Server deploy: pull prebuilt images and (re)start
-deploy:
-    # Pre-create the pgbackup bind mount owner-only; left to Docker it is root-owned and world-readable.
-    mkdir -p -m 700 backups
+deploy: _backups-dir
     docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile core --profile ops pull
     docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile core --profile ops up -d
+
+# pgbackup's bind mount, kept owner-only: left to Docker it is created root-owned
+# and world-readable, and the dumps hold attendees' personal data. chmod rather
+# than `mkdir -m` so a folder that already exists is tightened too.
+_backups-dir:
+    mkdir -p backups
+    chmod 700 backups
 
 dev:
     @echo "Run in separate terminals:"

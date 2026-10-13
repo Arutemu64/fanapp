@@ -322,7 +322,7 @@ tables out of it
 ([pg_dump docs](https://www.postgresql.org/docs/18/app-pgdump.html)).
 
 The dumps land in `backups/` next to `docker-compose.yml` on the host (a bind
-mount; `just deploy` creates it owner-only):
+mount; `just deploy` and `just run-prod` keep it owner-only):
 
 | Folder | Holds |
 | --- | --- |
@@ -362,7 +362,9 @@ rsync -aH --exclude=last/ <user>@<server>:<deploy-dir>/backups/ ~/fanfan-backups
   server cannot delete your copies. The flip side is that `~/fanfan-backups/`
   only grows: prune it by hand.
 - Use the SSH user that ran `just deploy`: `backups/` is mode `700`, owned by
-  that user, so other accounts cannot read it.
+  that user, so other accounts cannot read it. Start the stack with
+  `just deploy` rather than a bare `docker compose up` — Docker would create
+  `backups/` root-owned and world-readable instead.
 
 Optionally give the pull its own SSH key that can do nothing but read
 `backups/`, via rsync's read-only `rrsync` wrapper
@@ -384,15 +386,20 @@ encrypted disk.
 
 `docker ps` health only says a dump *ran*, not that it can be *loaded*. Load the
 newest one into a throwaway database — never the live one — and check the row
-counts of a couple of core tables look right:
+counts of a couple of core tables look right. The commands read the database
+user and name from the `db` container's own environment (`POSTGRES_USER`,
+`POSTGRES_DB`), since Compose does not export `.env` into your shell:
 
 ```sh
-docker compose exec db createdb -U "$DB__USER" restore_check
-docker compose exec -T db pg_restore -U "$DB__USER" -d restore_check \
-  --single-transaction --exit-on-error < "backups/last/$DB__NAME-latest.dump"
-docker compose exec db psql -U "$DB__USER" -d restore_check   # look around
-docker compose exec db dropdb -U "$DB__USER" restore_check
+docker compose exec db sh -c 'createdb -U "$POSTGRES_USER" restore_check'
+docker compose exec -T db sh -c \
+  'pg_restore -U "$POSTGRES_USER" -d restore_check --single-transaction --exit-on-error' \
+  < backups/last/<db>-latest.dump
+docker compose exec db sh -c 'psql -U "$POSTGRES_USER" -d restore_check'   # look around
+docker compose exec db sh -c 'dropdb -U "$POSTGRES_USER" restore_check'
 ```
+
+`<db>` is the database name, `DB__NAME` in `.env`.
 
 `pg_restore -l < <file>` lists a dump's contents without loading it — a quick
 check that a downloaded file is a readable archive, but not proof it restores.
@@ -404,10 +411,11 @@ nothing writes mid-restore, recreate the database empty, then load the dump:
 
 ```sh
 docker compose stop api frontend migration scheduler stream pgbackup
-docker compose exec db dropdb -U "$DB__USER" --force "$DB__NAME"
-docker compose exec db createdb -U "$DB__USER" "$DB__NAME"
-docker compose exec -T db pg_restore -U "$DB__USER" -d "$DB__NAME" \
-  --single-transaction --exit-on-error < backups/daily/<file>.dump
+docker compose exec db sh -c \
+  'dropdb -U "$POSTGRES_USER" --force "$POSTGRES_DB" && createdb -U "$POSTGRES_USER" "$POSTGRES_DB"'
+docker compose exec -T db sh -c \
+  'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --single-transaction --exit-on-error' \
+  < backups/daily/<file>.dump
 docker compose start api frontend migration scheduler stream pgbackup
 ```
 
