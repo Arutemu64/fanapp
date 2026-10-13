@@ -68,6 +68,40 @@ test.describe('voting — casting a ballot', { tag: '@critical' }, () => {
 		expect(api.countCalls('POST /voting/votes')).toBe(1);
 		expect(api.unmatched).toEqual([]);
 	});
+
+	test('holds the counted vote until the refetch lands', async ({ page, api }) => {
+		let release = () => {};
+		const released = new Promise<void>((resolve) => (release = resolve));
+		api.use(loggedInAs());
+		api.use({
+			'GET /voting/status': json(OPEN),
+			// The post-vote refetch waits for `release`, opening the window where the
+			// accepted vote isn't in the cached ballot yet.
+			'GET /voting/nominations/best-cosplay': async () => {
+				const voted = api.countCalls('POST /voting/votes') > 0;
+				if (voted) await released;
+				return json(nomination(voted));
+			},
+			'POST /voting/votes': json<AddVoteOutput>({ vote_id: VOTE_ID }, 201)
+		});
+
+		await page.goto('/voting/best-cosplay');
+
+		const voteButton = page.getByRole('button', { name: 'Голосовать за Косплей на Аи-тян' });
+		const voteAnswered = page.waitForResponse('**/voting/votes');
+		await voteButton.click();
+		await voteAnswered;
+
+		// Accepted but not refetched: the count keeps the vote and the button stays
+		// off, rather than dropping back to the stale ballot for a round-trip.
+		await expect(page.getByText('1 голос', { exact: true })).toBeVisible();
+		await expect(voteButton).toBeDisabled();
+
+		release();
+		await expect(page.getByText('Твой голос')).toBeVisible();
+		await expect(page.getByText('1 голос', { exact: true })).toBeVisible();
+		expect(api.countCalls('POST /voting/votes')).toBe(1);
+	});
 });
 
 test.describe('voting — taking a vote back', { tag: '@critical' }, () => {

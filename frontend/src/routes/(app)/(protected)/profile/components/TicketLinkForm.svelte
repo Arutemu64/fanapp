@@ -1,10 +1,15 @@
 <script lang="ts">
 	import { CheckCircle2 } from '@lucide/svelte';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { CurrentUserDto } from '#lib/api/generated/index.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
-	import { linkTicket } from '#lib/api/generated/index.js';
+	import {
+		getCurrentUserQueryKey,
+		getVotingStatusQueryKey,
+		linkTicketMutation
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Field from '#lib/components/ui/field/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -16,23 +21,31 @@
 
 	interface Props {
 		user: CurrentUserDto;
-		onTicketLinked?: () => void;
 	}
 
-	let { user, onTicketLinked }: Props = $props();
+	let { user }: Props = $props();
+	const queryClient = useQueryClient();
 	const toastService = getToastService();
+
+	const linkMutation = createMutation(() => ({
+		...linkTicketMutation(),
+		onSuccess: () => {
+			// A linked ticket is what lets the user vote, so the voting status moves with it.
+			void queryClient.invalidateQueries({ queryKey: getVotingStatusQueryKey() });
+			return queryClient.invalidateQueries({ queryKey: getCurrentUserQueryKey() });
+		}
+	}));
 
 	// Linking a ticket is a mutation — online only. A linked ticket still shows.
 	const offlineGate = offlineWriteGate();
 
 	let barcode = $state('');
-	let isSubmitting = $state(false);
 	let submitError = $state('');
 	let barcodeDescribedBy = $derived(
 		submitError ? 'ticket-barcode-error ticket-barcode-hint' : 'ticket-barcode-hint'
 	);
 
-	async function handleLinkTicket(event: SubmitEvent) {
+	function handleLinkTicket(event: SubmitEvent) {
 		event.preventDefault();
 		submitError = '';
 
@@ -41,24 +54,18 @@
 			return;
 		}
 
-		isSubmitting = true;
-
-		try {
-			const { error, response } = await linkTicket({
-				body: { barcode: barcode.trim() }
-			});
-
-			if (error || !response?.ok) {
-				submitError = getApiErrorDetail(error) ?? 'Не удалось привязать билет';
-				return;
+		linkMutation.mutate(
+			{ body: { barcode: barcode.trim() } },
+			{
+				onSuccess: () => {
+					toastService.add('Билет привязан', 'success');
+					barcode = '';
+				},
+				onError: (error) => {
+					submitError = getApiErrorDetail(error) ?? 'Не удалось привязать билет';
+				}
 			}
-
-			toastService.add('Билет привязан', 'success');
-			barcode = '';
-			onTicketLinked?.();
-		} finally {
-			isSubmitting = false;
-		}
+		);
 	}
 </script>
 
@@ -92,7 +99,7 @@
 					spellcheck={false}
 					aria-invalid={submitError ? true : undefined}
 					aria-describedby={barcodeDescribedBy}
-					disabled={isSubmitting || offlineGate.disabled}
+					disabled={linkMutation.isPending || offlineGate.disabled}
 					oninput={() => (submitError = '')}
 				/>
 				{#if submitError}
@@ -102,10 +109,10 @@
 			<Button
 				type="submit"
 				class="w-full"
-				disabled={isSubmitting || offlineGate.disabled}
+				disabled={linkMutation.isPending || offlineGate.disabled}
 				title={offlineGate.title}
 			>
-				{#if isSubmitting}
+				{#if linkMutation.isPending}
 					<Spinner data-icon="inline-start" />
 					Привязка…
 				{:else}

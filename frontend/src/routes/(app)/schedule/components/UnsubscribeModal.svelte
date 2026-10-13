@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { Bell } from '@lucide/svelte';
-	import { useQueryClient } from '@tanstack/svelte-query';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
-	import { getSubscriptionsQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import { deleteSubscription } from '#lib/api/generated/index.js';
+	import {
+		deleteSubscriptionMutation,
+		getSubscriptionsQueryKey
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -19,6 +21,12 @@
 	let { open = $bindable(), event }: Props = $props();
 	const queryClient = useQueryClient();
 	const toastService = getToastService();
+
+	const unsubscribeMutation = createMutation(() => ({
+		...deleteSubscriptionMutation(),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() })
+	}));
+
 	let formError = $state('');
 
 	$effect(() => {
@@ -27,26 +35,25 @@
 		}
 	});
 
-	async function handleUnsubscribe() {
+	function handleUnsubscribe() {
 		if (!event.user_subscription) {
 			open = false;
 			return;
 		}
 
 		formError = '';
-		const { error, response } = await deleteSubscription({
-			path: { subscription_id: event.user_subscription.id }
-		});
-
-		if (error || !response?.ok) {
-			console.error('Error unsubscribing:', error);
-			formError = getApiErrorDetail(error) ?? 'Не удалось отключить уведомления';
-			return;
-		}
-
-		toastService.add('Подписка на уведомления отключена', 'success');
-		await queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() });
-		open = false;
+		unsubscribeMutation.mutate(
+			{ path: { subscription_id: event.user_subscription.id } },
+			{
+				onSuccess: () => {
+					toastService.add('Подписка на уведомления отключена', 'success');
+					open = false;
+				},
+				onError: (error) => {
+					formError = getApiErrorDetail(error) ?? 'Не удалось отключить уведомления';
+				}
+			}
+		);
 	}
 </script>
 
@@ -76,7 +83,12 @@
 
 		<AlertDialog.Footer>
 			<AlertDialog.Cancel>Отмена</AlertDialog.Cancel>
-			<Button type="button" variant="destructive" onclick={handleUnsubscribe}>Отписаться</Button>
+			<Button
+				type="button"
+				variant="destructive"
+				onclick={handleUnsubscribe}
+				disabled={unsubscribeMutation.isPending}>Отписаться</Button
+			>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>
 </AlertDialog.Root>

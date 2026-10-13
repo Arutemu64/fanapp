@@ -1,10 +1,14 @@
 <script lang="ts">
 	import { CheckCircle2, Lock, XCircle } from '@lucide/svelte';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { ChangePasswordInput } from '#lib/api/generated/index.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
-	import { changeCurrentUserPassword } from '#lib/api/generated/index.js';
+	import {
+		changeCurrentUserPasswordMutation,
+		getCurrentUserQueryKey
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import PasswordInput from '#lib/components/PasswordInput.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -16,15 +20,21 @@
 	interface Props {
 		open: boolean;
 		hasPassword?: boolean;
-		onSuccess?: () => void;
 	}
 
-	let { open = $bindable(false), hasPassword = true, onSuccess }: Props = $props();
+	let { open = $bindable(false), hasPassword = true }: Props = $props();
+	const queryClient = useQueryClient();
+
+	// Not awaited: the refreshed user flips `hasPassword`, and with it this
+	// dialog's title and toast, so the dialog closes first.
+	const changePasswordMutation = createMutation(() => ({
+		...changeCurrentUserPasswordMutation(),
+		onSuccess: () => void queryClient.invalidateQueries({ queryKey: getCurrentUserQueryKey() })
+	}));
 
 	let oldPassword = $state('');
 	const toastService = getToastService();
 	let newPassword = $state('');
-	let isLoading = $state(false);
 	let formError = $state('');
 	let newPasswordError = $state('');
 
@@ -50,7 +60,7 @@
 		}
 	});
 
-	async function handleSubmit(e: Event) {
+	function handleSubmit(e: Event) {
 		e.preventDefault();
 
 		if (!isValid) {
@@ -58,29 +68,25 @@
 			return;
 		}
 
-		isLoading = true;
-
 		const body: ChangePasswordInput = {
 			old_password: oldPassword || null,
 			new_password: newPassword
 		};
 
-		const { error, response } = await changeCurrentUserPassword({
-			body
-		});
-
-		isLoading = false;
-
-		if (error || !response?.ok) {
-			formError = getApiErrorDetail(error) ?? 'Не удалось сменить пароль';
-			return;
-		}
-
-		toastService.add(hasPassword ? 'Пароль изменён' : 'Пароль установлен', 'success');
-		oldPassword = '';
-		newPassword = '';
-		open = false;
-		if (onSuccess) onSuccess();
+		changePasswordMutation.mutate(
+			{ body },
+			{
+				onSuccess: () => {
+					toastService.add(hasPassword ? 'Пароль изменён' : 'Пароль установлен', 'success');
+					oldPassword = '';
+					newPassword = '';
+					open = false;
+				},
+				onError: (error) => {
+					formError = getApiErrorDetail(error) ?? 'Не удалось сменить пароль';
+				}
+			}
+		);
 	}
 </script>
 
@@ -152,8 +158,8 @@
 				</Field.Field>
 			</Field.FieldGroup>
 
-			<Button type="submit" class="w-full" disabled={isLoading}>
-				{#if isLoading}
+			<Button type="submit" class="w-full" disabled={changePasswordMutation.isPending}>
+				{#if changePasswordMutation.isPending}
 					<Spinner data-icon="inline-start" />
 					Сохранение…
 				{:else}

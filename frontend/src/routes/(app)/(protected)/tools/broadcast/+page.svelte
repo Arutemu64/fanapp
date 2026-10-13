@@ -1,9 +1,11 @@
 <script lang="ts">
-	import { useQueryClient } from '@tanstack/svelte-query';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
-	import { listBroadcastsQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import { sendBroadcast } from '#lib/api/generated/index.js';
+	import {
+		listBroadcastsQueryKey,
+		sendBroadcastMutation
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -18,9 +20,13 @@
 	const toastService = getToastService();
 	const queryClient = useQueryClient();
 
+	const broadcastMutation = createMutation(() => ({
+		...sendBroadcastMutation(),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: listBroadcastsQueryKey() })
+	}));
+
 	let bodyText = $state('');
 	let selectedRoles = $state<string[]>([]);
-	let isSending = $state(false);
 
 	let bodyError = $state('');
 	let rolesError = $state('');
@@ -67,7 +73,7 @@
 		handleRoleChange();
 	}
 
-	async function handleSubmit(event: Event) {
+	function handleSubmit(event: Event) {
 		event.preventDefault();
 		submitError = '';
 
@@ -75,35 +81,31 @@
 			return;
 		}
 
-		isSending = true;
-
-		try {
-			const { error, response } = await sendBroadcast({
+		broadcastMutation.mutate(
+			{
 				body: {
 					body: bodyText.trim(),
 					roles: selectedRoles as ('visitor' | 'participant' | 'helper' | 'org')[]
 				}
-			});
-
-			if (error || !response?.ok) {
-				bodyError = getApiFieldError(error, 'body') ?? '';
-				rolesError = getApiFieldError(error, 'roles') ?? '';
-				if (bodyError || rolesError) {
-					return;
+			},
+			{
+				onSuccess: () => {
+					toastService.add('Рассылка запущена', 'success');
+					bodyText = '';
+					selectedRoles = [];
+					bodyError = '';
+					rolesError = '';
+				},
+				onError: (error) => {
+					bodyError = getApiFieldError(error, 'body') ?? '';
+					rolesError = getApiFieldError(error, 'roles') ?? '';
+					if (bodyError || rolesError) {
+						return;
+					}
+					submitError = getApiErrorDetail(error) ?? 'Не удалось запустить рассылку';
 				}
-				submitError = getApiErrorDetail(error) ?? 'Не удалось запустить рассылку';
-				return;
 			}
-
-			toastService.add('Рассылка запущена', 'success');
-			bodyText = '';
-			selectedRoles = [];
-			bodyError = '';
-			rolesError = '';
-			await queryClient.invalidateQueries({ queryKey: listBroadcastsQueryKey() });
-		} finally {
-			isSending = false;
-		}
+		);
 	}
 </script>
 
@@ -125,7 +127,7 @@
 				rows={4}
 				placeholder="Напиши важное сообщение для участников фестиваля…"
 				bind:value={bodyText}
-				disabled={isSending}
+				disabled={broadcastMutation.isPending}
 				oninput={handleBodyInput}
 				class="resize-none"
 				aria-invalid={bodyError ? true : undefined}
@@ -147,7 +149,7 @@
 						id="role-visitor"
 						checked={selectedRoles.includes('visitor')}
 						onCheckedChange={(v) => toggleRole('visitor', !!v)}
-						disabled={isSending}
+						disabled={broadcastMutation.isPending}
 					/>
 					<Field.FieldLabel for="role-visitor" class="cursor-pointer font-normal">
 						Зрители
@@ -158,7 +160,7 @@
 						id="role-participant"
 						checked={selectedRoles.includes('participant')}
 						onCheckedChange={(v) => toggleRole('participant', !!v)}
-						disabled={isSending}
+						disabled={broadcastMutation.isPending}
 					/>
 					<Field.FieldLabel for="role-participant" class="cursor-pointer font-normal">
 						Участники
@@ -169,7 +171,7 @@
 						id="role-helper"
 						checked={selectedRoles.includes('helper')}
 						onCheckedChange={(v) => toggleRole('helper', !!v)}
-						disabled={isSending}
+						disabled={broadcastMutation.isPending}
 					/>
 					<Field.FieldLabel for="role-helper" class="cursor-pointer font-normal">
 						Волонтёры
@@ -180,7 +182,7 @@
 						id="role-org"
 						checked={selectedRoles.includes('org')}
 						onCheckedChange={(v) => toggleRole('org', !!v)}
-						disabled={isSending}
+						disabled={broadcastMutation.isPending}
 					/>
 					<Field.FieldLabel for="role-org" class="cursor-pointer font-normal">
 						Организаторы
@@ -198,8 +200,8 @@
 			</Alert.Root>
 		{/if}
 
-		<Button type="submit" class="w-full sm:w-auto" disabled={isSending}>
-			{#if isSending}
+		<Button type="submit" class="w-full sm:w-auto" disabled={broadcastMutation.isPending}>
+			{#if broadcastMutation.isPending}
 				<Spinner data-icon="inline-start" />
 				Отправка…
 			{:else}

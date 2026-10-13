@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { createMutation } from '@tanstack/svelte-query';
+
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
-	import { submitFeedback } from '#lib/api/generated/index.js';
+	import { submitFeedbackMutation } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import OfflineUnavailableState from '#lib/components/OfflineUnavailableState.svelte';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
@@ -20,7 +22,7 @@
 	const MAX_LENGTH = 2000;
 
 	let feedbackText = $state('');
-	let isSending = $state(false);
+	const feedbackMutation = createMutation(() => submitFeedbackMutation());
 
 	let feedbackError = $state('');
 	let submitError = $state('');
@@ -46,7 +48,7 @@
 		}
 	}
 
-	async function handleSubmit(event: Event) {
+	function handleSubmit(event: Event) {
 		event.preventDefault();
 		submitError = '';
 
@@ -54,31 +56,24 @@
 			return;
 		}
 
-		isSending = true;
-
-		try {
-			const { error, response } = await submitFeedback({
-				body: {
-					text: feedbackText.trim()
+		feedbackMutation.mutate(
+			{ body: { text: feedbackText.trim() } },
+			{
+				onSuccess: () => {
+					toastService.add('Спасибо, отзыв отправлен', 'success');
+					feedbackText = '';
+					feedbackError = '';
+				},
+				onError: (error) => {
+					const textError = getApiFieldError(error, 'text');
+					if (textError) {
+						feedbackError = textError;
+						return;
+					}
+					submitError = getApiErrorDetail(error) ?? 'Не удалось отправить отзыв';
 				}
-			});
-
-			if (error || !response?.ok) {
-				const textError = getApiFieldError(error, 'text');
-				if (textError) {
-					feedbackError = textError;
-					return;
-				}
-				submitError = getApiErrorDetail(error) ?? 'Не удалось отправить отзыв';
-				return;
 			}
-
-			toastService.add('Спасибо, отзыв отправлен', 'success');
-			feedbackText = '';
-			feedbackError = '';
-		} finally {
-			isSending = false;
-		}
+		);
 	}
 </script>
 
@@ -109,7 +104,7 @@
 					maxlength={MAX_LENGTH}
 					placeholder="Поделись впечатлениями о фестивале, идеями по приложению или сообщи о проблеме…"
 					bind:value={feedbackText}
-					disabled={isSending}
+					disabled={feedbackMutation.isPending}
 					oninput={handleInput}
 					aria-invalid={feedbackError ? true : undefined}
 					class="resize-none"
@@ -129,8 +124,8 @@
 				</Alert.Root>
 			{/if}
 
-			<Button type="submit" class="w-full sm:w-auto" disabled={isSending}>
-				{#if isSending}
+			<Button type="submit" class="w-full sm:w-auto" disabled={feedbackMutation.isPending}>
+				{#if feedbackMutation.isPending}
 					<Spinner data-icon="inline-start" />
 					Отправка…
 				{:else}

@@ -1,6 +1,6 @@
 # ADR-0021: TanStack Query for server state, persisted to IndexedDB
 
-- **Status:** Accepted
+- **Status:** Accepted; plain-SDK mutations superseded by [ADR-0022](0022-createmutation-for-writes.md)
 - **Date:** 2026-10-13
 - **Deciders:** Project maintainers
 

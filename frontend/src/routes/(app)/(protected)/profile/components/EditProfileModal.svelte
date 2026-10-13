@@ -1,11 +1,15 @@
 <script lang="ts">
 	import { User } from '@lucide/svelte';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 
 	import type { CurrentUserDto, UpdateCurrentUserInput } from '#lib/api/generated/index.js';
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
-	import { updateCurrentUser } from '#lib/api/generated/index.js';
+	import {
+		getCurrentUserQueryKey,
+		updateCurrentUserMutation
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
@@ -17,14 +21,18 @@
 	interface Props {
 		user: CurrentUserDto;
 		open: boolean;
-		onUpdate?: () => void;
 	}
 
-	let { user, open = $bindable(false), onUpdate }: Props = $props();
+	let { user, open = $bindable(false) }: Props = $props();
+	const queryClient = useQueryClient();
 	const toastService = getToastService();
 
+	const updateProfileMutation = createMutation(() => ({
+		...updateCurrentUserMutation(),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: getCurrentUserQueryKey() })
+	}));
+
 	let username = $state('');
-	let isLoading = $state(false);
 
 	let usernameError = $state('');
 	let formError = $state('');
@@ -87,7 +95,7 @@
 		return !usernameError;
 	}
 
-	async function handleSubmit(e: Event) {
+	function handleSubmit(e: Event) {
 		e.preventDefault();
 
 		usernameError = validateUsername(username);
@@ -102,34 +110,27 @@
 			return;
 		}
 
-		isLoading = true;
-
 		const body: UpdateCurrentUserInput = {};
 		if (username && username !== user.username) body.username = username;
 
-		const { error, response } = await updateCurrentUser({
-			body
-		});
-
-		isLoading = false;
-
-		if (error || !response?.ok) {
-			const usernameFieldError = getApiFieldError(error, 'username');
-			if (usernameFieldError) {
-				usernameError = usernameFieldError;
-				return;
+		updateProfileMutation.mutate(
+			{ body },
+			{
+				onSuccess: () => {
+					toastService.add('Профиль обновлён', 'success');
+					open = false;
+					username = '';
+				},
+				onError: (error) => {
+					const usernameFieldError = getApiFieldError(error, 'username');
+					if (usernameFieldError) {
+						usernameError = usernameFieldError;
+						return;
+					}
+					formError = getApiErrorDetail(error) ?? 'Не удалось обновить профиль';
+				}
 			}
-			formError = getApiErrorDetail(error) ?? 'Не удалось обновить профиль';
-			return;
-		}
-
-		toastService.add('Профиль обновлён', 'success');
-		open = false;
-		username = '';
-
-		if (onUpdate) {
-			onUpdate();
-		}
+		);
 	}
 </script>
 
@@ -179,8 +180,8 @@
 				</ul>
 			</Field.Field>
 
-			<Button type="submit" class="w-full" disabled={isLoading}>
-				{#if isLoading}
+			<Button type="submit" class="w-full" disabled={updateProfileMutation.isPending}>
+				{#if updateProfileMutation.isPending}
 					<Spinner data-icon="inline-start" />
 					Сохранение…
 				{:else}

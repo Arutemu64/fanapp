@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { CheckCircle2, ThumbsUp } from '@lucide/svelte';
+	import { createMutation } from '@tanstack/svelte-query';
 
 	import type { ParticipantFullDto } from '#lib/api/generated/index.js';
 
-	import { addVote } from '#lib/api/generated/index.js';
+	import { addVoteMutation } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import NumberBadge from '#lib/components/NumberBadge.svelte';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -15,45 +16,41 @@
 		participant: ParticipantFullDto;
 		hasVoted: boolean;
 		canVote: boolean;
-		onVoted?: () => void;
+		onVoted?: () => Promise<void> | void;
 	}
 
 	let { participant, hasVoted, canVote, onVoted }: Props = $props();
 	const toastService = getToastService();
 
-	let isLoading = $state(false);
-	let areActionsDisabled = $derived(isLoading || !canVote);
+	// Stays pending until the page has refetched the ballot, so the button stays
+	// disabled and the optimistic count holds until the server's own count and
+	// «Твой голос» replace them — no round-trip where the count drops back.
+	const voteMutation = createMutation(() => ({
+		...addVoteMutation(),
+		onSuccess: async () => {
+			await onVoted?.();
+		}
+	}));
+
+	let areActionsDisabled = $derived(voteMutation.isPending || !canVote);
 	let isVotedFor = $derived(participant.user_vote !== null);
 
-	let optimisticDelta = $state(0);
-	let votesCount = $derived(participant.votes_count + optimisticDelta);
+	// Counted until the refetched row carries the vote itself, not until the
+	// mutation settles: the two land in separate notifications, and keying on
+	// isPending alone could count the vote twice for a frame.
+	let isVoteUnconfirmed = $derived(voteMutation.isPending && !isVotedFor);
+	let votesCount = $derived(participant.votes_count + (isVoteUnconfirmed ? 1 : 0));
 
-	async function handleVote() {
+	function handleVote() {
 		if (areActionsDisabled || isVotedFor) return;
 
-		isLoading = true;
-		optimisticDelta += 1;
-		try {
-			const { data, error, response } = await addVote({
-				body: {
-					participant_id: participant.id
-				}
-			});
-
-			if (error || !response?.ok) {
-				optimisticDelta -= 1;
-				toastService.error(error);
-				return;
+		voteMutation.mutate(
+			{ body: { participant_id: participant.id } },
+			{
+				onSuccess: () => toastService.add('Голос учтён', 'success'),
+				onError: (error) => toastService.error(error)
 			}
-
-			if (data) {
-				toastService.add('Голос учтён', 'success');
-				optimisticDelta = 0;
-				onVoted?.();
-			}
-		} finally {
-			isLoading = false;
-		}
+		);
 	}
 </script>
 
@@ -109,7 +106,7 @@
 			onclick={handleVote}
 			aria-label={`Голосовать за ${participant.title}`}
 		>
-			{#if isLoading}
+			{#if voteMutation.isPending}
 				<Spinner data-icon="inline-start" />
 			{/if}
 			Голосовать

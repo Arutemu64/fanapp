@@ -69,6 +69,14 @@ export const load: LayoutLoad = async () => {
 				// timeout, a gateway page. An API error (401, 404, validation) is the
 				// server's verdict, and repeating it only delays showing it by seconds.
 				retry: (failureCount, error) => failureCount < 3 && getApiErrorCode(error) === undefined
+			},
+			mutations: {
+				// Every write is online-only (ADR-0022): it must fail at once with the
+				// connection message, not wait out an offline spell in TanStack's default
+				// `online` mode and then fire unseen once reachability — which drives
+				// onlineManager — comes back.
+				// https://tanstack.com/query/latest/docs/framework/react/guides/network-mode
+				networkMode: 'always'
 			}
 		}
 	});

@@ -1,27 +1,9 @@
 <script lang="ts">
-	import {
-		Ban,
-		Bell,
-		BellRing,
-		Clock,
-		Eye,
-		EyeOff,
-		Hourglass,
-		Play,
-		Shuffle,
-		XCircle
-	} from '@lucide/svelte';
-	import { useQueryClient } from '@tanstack/svelte-query';
+	import { Ban, Bell, BellRing, Clock, Hourglass } from '@lucide/svelte';
 
 	import type { CurrentUserDto } from '#lib/api/generated/index.js';
 	import type { ScheduleEventWithSubscription } from '#lib/types/schedule.js';
 
-	import { getScheduleQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import {
-		setEventAsCurrent,
-		uncheckCurrentEvent,
-		updateScheduleEvent
-	} from '#lib/api/generated/index.js';
 	import NumberBadge from '#lib/components/NumberBadge.svelte';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { getToastService } from '#lib/services/toasts.svelte.js';
@@ -34,8 +16,7 @@
 	import { offlineWriteGate } from '#lib/utils/offlineAction.js';
 	import { canManageSchedule } from '#lib/utils/permissions.js';
 
-	import ConfirmActionModal from './ConfirmActionModal.svelte';
-	import MoveEventModal from './MoveEventModal.svelte';
+	import EventStaffActions from './EventStaffActions.svelte';
 	import SubscribeModal from './SubscribeModal.svelte';
 	import UnsubscribeModal from './UnsubscribeModal.svelte';
 
@@ -52,37 +33,14 @@
 	}
 
 	let { event, currentEvent, user, variant = 'default' }: Props = $props();
-	const queryClient = useQueryClient();
 	const toastService = getToastService();
 
 	// Subscribe/unsubscribe and the staff actions all POST to the server — online
 	// only. The cached schedule (and each row's subscription state) still renders.
 	const offlineGate = offlineWriteGate();
-	// Staff-action labels, hoisted so each button's title stays a single ternary
-	// (offline hint vs. action) rather than a nested one in the markup.
-	let currentActionLabel = $derived(event.is_current ? 'Снять отметку' : 'Отметить текущим');
 
-	let moveModal = $state(false);
 	let subscribeModal = $state(false);
 	let unsubscribeModal = $state(false);
-
-	// Confirmation dialog for management actions. Each one broadcasts an
-	// irreversible push, so the action only runs after the staffer confirms.
-	type ConfirmConfig = {
-		title: string;
-		message: string;
-		confirmLabel: string;
-		color: 'primary' | 'red';
-		// 'warning' for actions that push new info; 'muted' for reverting actions.
-		notifyTone: 'warning' | 'muted';
-		// The confirm handlers are async; the modal fires them and doesn't await.
-		run: () => void | Promise<void>;
-	};
-	// Two pieces of state, set together when a staff button is tapped:
-	// confirmOpen drives the modal's visibility (bound two-way so Esc/backdrop
-	// can close it), and confirmConfig holds what that modal should show.
-	let confirmOpen = $state(false);
-	let confirmConfig = $state<ConfirmConfig | null>(null);
 
 	let eventNumber = $derived(formatEventNumber(event.number));
 
@@ -91,7 +49,6 @@
 	// seconds). null = trust the server-loaded prop; otherwise show our pending guess.
 	let optimisticSkipped = $state<boolean | null>(null);
 	let isSkipped = $derived(optimisticSkipped ?? event.is_skipped);
-	let skipActionLabel = $derived(isSkipped ? 'Вернуть' : 'Пропустить');
 
 	// Once the reloaded schedule confirms our guess, drop the override so external
 	// changes (another staffer skipping the same event) flow through again.
@@ -118,70 +75,6 @@
 		queueUntil === null || queueUntil <= 0 ? null : formatUntil(queueUntil)
 	);
 
-	// Read-your-writes: after our own successful mutation, refetch straight off the
-	// response instead of waiting for the schedule_updated SSE echo. That echo
-	// travels DB → outbox relay → NATS → SSE fan-out before it reaches us, and on a
-	// flaky operator connection it can arrive late or be dropped — which would leave
-	// the operator who made the change on a stale schedule while everyone else
-	// already sees it. The refetch reads committed state (the write closed before
-	// the 200), so it is correct even before the relay has ticked; the SSE echo
-	// still drives every other client.
-	function reloadSchedule() {
-		void queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() });
-	}
-
-	async function handleMarkCurrent() {
-		const { error, response } = await setEventAsCurrent({
-			path: { event_id: event.id }
-		});
-
-		if (error || !response?.ok) {
-			toastService.error(error);
-			return;
-		}
-
-		reloadSchedule();
-		toastService.add('Выступление отмечено как текущее', 'success');
-	}
-
-	async function handleUnmarkCurrent() {
-		const { error, response } = await uncheckCurrentEvent();
-
-		if (error || !response?.ok) {
-			toastService.error(error);
-			return;
-		}
-
-		reloadSchedule();
-		toastService.add('Отметка снята', 'success');
-	}
-
-	// `skip` is captured when the confirm dialog opens, not recomputed here: if
-	// another staffer flips this event while the modal is open, the schedule_updated
-	// reload could change `isSkipped` under us and make a generic toggle broadcast
-	// the opposite action from what the dialog promised.
-	async function handleSkip(skip: boolean) {
-		// Flip the row immediately; revert below if the request fails.
-		optimisticSkipped = skip;
-
-		const { error, response } = await updateScheduleEvent({
-			path: { event_id: event.id },
-			body: { is_skipped: skip }
-		});
-
-		if (error || !response?.ok) {
-			optimisticSkipped = null;
-			toastService.error(error);
-			return;
-		}
-
-		reloadSchedule();
-		const toastMessage = skip
-			? 'Выступление помечено как пропущенное'
-			: 'Выступление возвращено в программу';
-		toastService.add(toastMessage, 'success');
-	}
-
 	function handleSubscribe() {
 		if (!user) {
 			toastService.add('Войди в аккаунт, чтобы подписаться', 'error');
@@ -192,50 +85,6 @@
 
 	function handleUnsubscribe() {
 		unsubscribeModal = true;
-	}
-
-	function askToggleCurrent() {
-		confirmConfig = event.is_current
-			? {
-					title: 'Снять отметку',
-					message: 'Снять отметку текущего выступления?',
-					confirmLabel: 'Снять',
-					color: 'primary',
-					notifyTone: 'muted',
-					run: handleUnmarkCurrent
-				}
-			: {
-					title: 'Отметить текущим',
-					message: `Отметить «${event.title}» как текущее выступление?`,
-					confirmLabel: 'Отметить',
-					color: 'primary',
-					notifyTone: 'warning',
-					run: handleMarkCurrent
-				};
-		confirmOpen = true;
-	}
-
-	function askToggleSkip() {
-		confirmConfig = isSkipped
-			? {
-					title: 'Вернуть выступление',
-					message: `Вернуть «${event.title}» в программу?`,
-					confirmLabel: 'Вернуть',
-					color: 'primary',
-					notifyTone: 'muted',
-					// Lock the direction to what the dialog shows now, so a concurrent
-					// schedule_updated reload can't flip it before the staffer confirms.
-					run: () => handleSkip(false)
-				}
-			: {
-					title: 'Пропустить выступление',
-					message: `Пропустить «${event.title}»? Оно будет помечено как пропущенное.`,
-					confirmLabel: 'Пропустить',
-					color: 'red',
-					notifyTone: 'warning',
-					run: () => handleSkip(true)
-				};
-		confirmOpen = true;
 	}
 </script>
 
@@ -363,88 +212,18 @@
 
 		<!-- Staff management strip: broadcast actions live on their own row so they never crowd the title, and read as "changes the show for everyone" distinct from the personal bell above. -->
 		{#if canManageSchedule(user)}
-			<div
-				class="mt-3 flex flex-wrap items-center justify-end gap-1.5 border-t border-border/50 pt-2.5"
-			>
-				<!-- Icon-only staff actions: 44px square tap targets keep mobile usable while the strip stays compact on dense rows. Labels live in aria-label/title. -->
-				<!-- Mark-current is the hot, repeated live-show action, so it carries a primary tint while move/skip stay quiet ghosts. -->
-				<!-- Hidden on skipped events: a skipped event can't go on stage (backend rejects it), so don't offer the action. Still shown when it's somehow current, to keep the unmark affordance available. -->
-				{#if event.is_current || !isSkipped}
-					<button
-						type="button"
-						onclick={askToggleCurrent}
-						disabled={offlineGate.disabled}
-						aria-label={currentActionLabel}
-						title={offlineGate.disabled ? offlineGate.title : currentActionLabel}
-						class="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors hover:bg-primary/20 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
-					>
-						{#if event.is_current}
-							<XCircle class="size-5" />
-						{:else}
-							<Play class="size-5" />
-						{/if}
-					</button>
-				{/if}
-
-				<button
-					type="button"
-					onclick={() => (moveModal = true)}
-					disabled={offlineGate.disabled}
-					aria-label="Перенести"
-					title={offlineGate.disabled ? offlineGate.title : 'Перенести'}
-					class="inline-flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40"
-				>
-					<Shuffle class="size-5" />
-				</button>
-
-				<button
-					type="button"
-					onclick={askToggleSkip}
-					disabled={offlineGate.disabled}
-					aria-label={skipActionLabel}
-					title={offlineGate.disabled ? offlineGate.title : skipActionLabel}
-					class={[
-						'inline-flex h-11 w-11 items-center justify-center rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40',
-						isSkipped
-							? 'text-muted-foreground hover:bg-accent hover:text-foreground'
-							: 'text-destructive hover:bg-destructive/10'
-					]}
-				>
-					{#if isSkipped}
-						<Eye class="size-5" />
-					{:else}
-						<EyeOff class="size-5" />
-					{/if}
-				</button>
-			</div>
+			<EventStaffActions {event} {isSkipped} bind:optimisticSkipped />
 		{/if}
 	</div>
 </div>
 
 <!-- Mounted only while open. This card renders once per schedule row, so
-	always-mounted dialogs cost four component instances — and four API clients —
-	per row for something almost never opened. -->
+	always-mounted dialogs cost component instances per row for something almost
+	never opened. -->
 {#if subscribeModal}
 	<SubscribeModal bind:open={subscribeModal} {event} />
 {/if}
 
 {#if unsubscribeModal}
 	<UnsubscribeModal bind:open={unsubscribeModal} {event} />
-{/if}
-
-{#if moveModal}
-	<MoveEventModal bind:open={moveModal} {event} />
-{/if}
-
-<!-- Shared confirm dialog for the staff strip's broadcast actions. -->
-{#if confirmOpen && confirmConfig}
-	<ConfirmActionModal
-		bind:open={confirmOpen}
-		title={confirmConfig.title}
-		message={confirmConfig.message}
-		confirmLabel={confirmConfig.confirmLabel}
-		confirmColor={confirmConfig.color}
-		notifyTone={confirmConfig.notifyTone}
-		onconfirm={() => void confirmConfig?.run()}
-	/>
 {/if}

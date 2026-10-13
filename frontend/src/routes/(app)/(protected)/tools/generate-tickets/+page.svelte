@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { ClipboardCopy } from '@lucide/svelte';
+	import { createMutation } from '@tanstack/svelte-query';
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
-	import { generateTickets } from '#lib/api/generated/index.js';
+	import { generateTicketsMutation } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -34,7 +35,7 @@
 	// A `type="number"` binding yields a number, or an empty value when the field is
 	// cleared — never a string. Validated as an integer in range on submit.
 	let amountInput = $state<number | undefined>(10);
-	let isGenerating = $state(false);
+	const generateMutation = createMutation(() => generateTicketsMutation());
 
 	let amountError = $state('');
 	let submitError = $state('');
@@ -68,7 +69,7 @@
 		}
 	}
 
-	async function handleSubmit(event: Event) {
+	function handleSubmit(event: Event) {
 		event.preventDefault();
 		submitError = '';
 
@@ -77,28 +78,23 @@
 			return;
 		}
 
-		isGenerating = true;
-
-		try {
-			const { data, error, response } = await generateTickets({
-				body: { role: selectedRole, amount }
-			});
-
-			if (error || !response?.ok || !data) {
-				const amountFieldError = getApiFieldError(error, 'amount');
-				if (amountFieldError) {
-					amountError = amountFieldError;
-					return;
+		generateMutation.mutate(
+			{ body: { role: selectedRole, amount } },
+			{
+				onSuccess: (data) => {
+					generatedBarcodes = data.barcodes;
+					toastService.add(`Готово! Создано билетов: ${data.barcodes.length}`, 'success');
+				},
+				onError: (error) => {
+					const amountFieldError = getApiFieldError(error, 'amount');
+					if (amountFieldError) {
+						amountError = amountFieldError;
+						return;
+					}
+					submitError = getApiErrorDetail(error) ?? 'Не удалось сгенерировать билеты';
 				}
-				submitError = getApiErrorDetail(error) ?? 'Не удалось сгенерировать билеты';
-				return;
 			}
-
-			generatedBarcodes = data.barcodes;
-			toastService.add(`Готово! Создано билетов: ${data.barcodes.length}`, 'success');
-		} finally {
-			isGenerating = false;
-		}
+		);
 	}
 
 	async function copyBarcodes() {
@@ -125,7 +121,12 @@
 		<Field.FieldGroup class="gap-6">
 			<Field.Field>
 				<Field.FieldLabel for="ticket-role">Роль</Field.FieldLabel>
-				<Select.Root type="single" name="role" bind:value={selectedRole} disabled={isGenerating}>
+				<Select.Root
+					type="single"
+					name="role"
+					bind:value={selectedRole}
+					disabled={generateMutation.isPending}
+				>
 					<Select.Trigger id="ticket-role" class="w-full">
 						{selectedRoleLabel}
 					</Select.Trigger>
@@ -151,7 +152,7 @@
 					max={MAX_AMOUNT}
 					step="1"
 					bind:value={amountInput}
-					disabled={isGenerating}
+					disabled={generateMutation.isPending}
 					oninput={handleAmountInput}
 					aria-invalid={amountError ? true : undefined}
 					class="w-full rounded-xl"
@@ -172,8 +173,8 @@
 			</Alert.Root>
 		{/if}
 
-		<Button type="submit" class="w-full sm:w-auto" disabled={isGenerating}>
-			{#if isGenerating}
+		<Button type="submit" class="w-full sm:w-auto" disabled={generateMutation.isPending}>
+			{#if generateMutation.isPending}
 				<Spinner data-icon="inline-start" />
 				Генерируем…
 			{:else}

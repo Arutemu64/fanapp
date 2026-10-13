@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { BellRing, Minus, Plus } from '@lucide/svelte';
-	import { useQueryClient } from '@tanstack/svelte-query';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type { ScheduleEventFullDto } from '#lib/api/generated/index.js';
 
 	import { getApiErrorDetail } from '#lib/api/errors.js';
-	import { getSubscriptionsQueryKey } from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import { newSubscription } from '#lib/api/generated/index.js';
+	import {
+		getSubscriptionsQueryKey,
+		newSubscriptionMutation
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Dialog from '#lib/components/ui/dialog/index.js';
@@ -20,6 +22,11 @@
 	let { open = $bindable(), event }: Props = $props();
 	const queryClient = useQueryClient();
 	const toastService = getToastService();
+
+	const subscribeMutation = createMutation(() => ({
+		...newSubscriptionMutation(),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() })
+	}));
 
 	let counter = $state(5);
 	let formError = $state('');
@@ -37,24 +44,21 @@
 		counter = Number.isFinite(next) ? Math.max(1, Math.min(100, Math.floor(next))) : 1;
 	}
 
-	async function handleSubmit() {
+	function handleSubmit() {
 		setCounter(counter);
 		formError = '';
-		const { error, response } = await newSubscription({
-			body: {
-				event_id: event.id,
-				counter
+		subscribeMutation.mutate(
+			{ body: { event_id: event.id, counter } },
+			{
+				onSuccess: () => {
+					toastService.add('Подписка оформлена', 'success');
+					open = false;
+				},
+				onError: (error) => {
+					formError = getApiErrorDetail(error) ?? 'Не удалось оформить подписку';
+				}
 			}
-		});
-
-		if (error || !response?.ok) {
-			formError = getApiErrorDetail(error) ?? 'Не удалось оформить подписку';
-			return;
-		}
-
-		toastService.add('Подписка оформлена', 'success');
-		await queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() });
-		open = false;
+		);
 	}
 </script>
 
@@ -137,7 +141,9 @@
 
 		<Dialog.Footer class="flex flex-row justify-end gap-2">
 			<Button type="button" variant="outline" onclick={() => (open = false)}>Отмена</Button>
-			<Button type="button" onclick={handleSubmit}>Подписаться</Button>
+			<Button type="button" onclick={handleSubmit} disabled={subscribeMutation.isPending}
+				>Подписаться</Button
+			>
 		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>

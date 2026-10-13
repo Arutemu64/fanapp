@@ -2,19 +2,21 @@
 	import { PUBLIC_VAPID_KEY, PUBLIC_VK_GROUP_ID } from '$app/env/public';
 	import { resolve } from '$app/paths';
 	import * as Sentry from '@sentry/sveltekit';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 
 	import type { CurrentUserDto, UpdateUserSettingsInput } from '#lib/api/generated/index.js';
 
-	// `checkSubscription` and `sendTestNotification` are aliased so they don't
-	// clash with this component's own handlers of the same name below.
+	import { getApiErrorCode } from '#lib/api/errors.js';
 	import {
-		checkSubscription as checkPushSubscription,
-		sendTestNotification as sendTestPushNotification,
-		subscribe,
-		unsubscribe,
-		updateCurrentUserSettings
-	} from '#lib/api/generated/index.js';
+		getCurrentUserQueryKey,
+		sendTestNotificationMutation,
+		subscribeMutation,
+		unsubscribeMutation,
+		updateCurrentUserSettingsMutation
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+	// Aliased so it doesn't clash with this component's own handler of the same name.
+	import { checkSubscription as checkPushSubscription } from '#lib/api/generated/index.js';
 	import MenuGroup from '#lib/components/MenuGroup.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
@@ -29,10 +31,28 @@
 
 	interface Props {
 		user: CurrentUserDto;
-		onSettingsUpdate?: () => void;
 	}
 
-	let { user, onSettingsUpdate }: Props = $props();
+	let { user }: Props = $props();
+	const queryClient = useQueryClient();
+
+	function refreshUser() {
+		return queryClient.invalidateQueries({ queryKey: getCurrentUserQueryKey() });
+	}
+
+	const pushSubscribeMutation = createMutation(() => ({
+		...subscribeMutation(),
+		onSuccess: refreshUser
+	}));
+	const pushUnsubscribeMutation = createMutation(() => ({
+		...unsubscribeMutation(),
+		onSuccess: refreshUser
+	}));
+	const settingsMutation = createMutation(() => ({
+		...updateCurrentUserSettingsMutation(),
+		onSuccess: refreshUser
+	}));
+	const testMutation = createMutation(() => sendTestNotificationMutation());
 
 	// Every control here writes to the server (push subscribe/unsubscribe, settings
 	// PATCH, test send) — online only. The current toggle states still render.
@@ -62,8 +82,6 @@
 			? 'Получать сообщения от сообщества во ВКонтакте.'
 			: 'Сначала подключи ВКонтакте в настройках аккаунта.'
 	);
-	let isSavingSettings = $state(false);
-	let isSendingTest = $state(false);
 	const pwa = getPwaService();
 	let showVkModal = $state(false);
 	// Link to the group's chat where the user grants "allow messages". Built from
@@ -140,20 +158,16 @@
 				const registration = await navigator.serviceWorker.ready;
 				const subscription = await registration.pushManager.getSubscription();
 				if (subscription) {
-					// Remove the matching subscription on the backend before unsubscribing locally.
-					const { error, response } = await unsubscribe({
-						body: {
-							endpoint: subscription.endpoint
-						}
-					});
-
-					if (error || !response?.ok) {
-						console.error('Failed to remove subscription from server:', error);
-					}
+					// Remove the matching subscription on the backend before unsubscribing
+					// locally. A server failure doesn't stop the local unsubscribe.
+					await pushUnsubscribeMutation
+						.mutateAsync({ body: { endpoint: subscription.endpoint } })
+						.catch((error: unknown) => {
+							console.error('Failed to remove subscription from server:', error);
+						});
 
 					await subscription.unsubscribe();
 					isSubscribed = false;
-					onSettingsUpdate?.();
 				}
 			} catch (e) {
 				console.error('Failed to unsubscribe', e);
@@ -241,22 +255,16 @@
 				return;
 			}
 
-			const { error, response } = await subscribe({
-				body: {
-					endpoint,
-					p256dh,
-					auth
-				}
-			});
-
-			if (error || !response?.ok) {
+			try {
+				await pushSubscribeMutation.mutateAsync({ body: { endpoint, p256dh, auth } });
+			} catch (error: unknown) {
 				console.error('API Error:', error);
 				// The browser subscribed but the backend rejected it, so push stays off
 				// despite a granted permission — the failure mode worth catching.
 				Sentry.captureMessage('Push subscribe rejected by backend', {
 					level: 'warning',
 					tags: { push_outcome: 'backend_rejected' },
-					extra: { status: response?.status }
+					extra: { code: getApiErrorCode(error) }
 				});
 				toastService.add('Не удалось включить уведомления. Попробуй ещё раз', 'error');
 				await discardSubscription(subscription);
@@ -264,12 +272,11 @@
 			}
 
 			isSubscribed = true;
-			onSettingsUpdate?.();
 		} catch (error: unknown) {
 			console.error('Failed to subscribe:', error);
 			// Classify by where it threw: before the browser subscription exists it's a
-			// genuine subscribe / service-worker failure; after, the only throw left is
-			// the backend registration request, which is a different failure mode.
+			// genuine subscribe / service-worker failure; after, it's a bug in handling
+			// the backend registration (the request's own failure is caught above).
 			Sentry.captureException(error, {
 				tags: { push_outcome: browserSubscribed ? 'backend_request_threw' : 'subscribe_threw' }
 			});
@@ -279,31 +286,24 @@
 		}
 	}
 
-	async function updateSettings(
-		nextSettings: Partial<UpdateUserSettingsInput>,
-		rollback: () => void
-	) {
-		isSavingSettings = true;
-		const { error, response } = await updateCurrentUserSettings({
-			body: nextSettings
-		});
-
-		if (error || !response?.ok) {
-			console.error('API Error:', error);
-			toastService.add('Не удалось обновить настройки', 'error');
-			rollback();
-		} else {
-			// No success toast: the switch already sits in its new position, and a
-			// switch is expected to take effect on its own
-			// (https://www.nngroup.com/articles/toggle-switch-guidelines/).
-			onSettingsUpdate?.();
-		}
-		isSavingSettings = false;
+	function updateSettings(nextSettings: Partial<UpdateUserSettingsInput>, rollback: () => void) {
+		// No success toast: the switch already sits in its new position, and a
+		// switch is expected to take effect on its own
+		// (https://www.nngroup.com/articles/toggle-switch-guidelines/).
+		settingsMutation.mutate(
+			{ body: nextSettings },
+			{
+				onError: () => {
+					toastService.add('Не удалось обновить настройки', 'error');
+					rollback();
+				}
+			}
+		);
 	}
 
 	function toggleReceiveAll(checked: boolean) {
 		receiveAll = checked;
-		void updateSettings(
+		updateSettings(
 			{
 				receive_all_announcements: receiveAll
 			},
@@ -315,7 +315,7 @@
 
 	function toggleReceiveVk(checked: boolean) {
 		receiveVk = checked;
-		void updateSettings(
+		updateSettings(
 			{
 				receive_vk_notifications: receiveVk
 			},
@@ -329,32 +329,19 @@
 		);
 	}
 
-	async function sendTestNotification() {
-		if (isSendingTest) {
-			return;
-		}
-
-		try {
-			isSendingTest = true;
-
-			const { error, response } = await sendTestPushNotification();
-
-			if (error || !response?.ok) {
-				console.error('API Error:', error);
-				toastService.add('Не удалось отправить тестовое уведомление', 'error');
-				return;
+	function sendTestNotification() {
+		testMutation.mutate(
+			{},
+			{
+				onSuccess: () => {
+					toastService.add(
+						'Тест отправлен. Должны прийти тост, колокольчик и системное пуш-уведомление.',
+						'success'
+					);
+				},
+				onError: () => toastService.add('Не удалось отправить тестовое уведомление', 'error')
 			}
-
-			toastService.add(
-				'Тест отправлен. Должны прийти тост, колокольчик и системное пуш-уведомление.',
-				'success'
-			);
-		} catch (error) {
-			console.error('Failed to send test notification:', error);
-			toastService.add('Не удалось отправить тест по каналам уведомлений', 'error');
-		} finally {
-			isSendingTest = false;
-		}
+		);
 	}
 </script>
 
@@ -391,7 +378,7 @@
 				title="ВКонтакте"
 				description={vkDescription}
 				checked={receiveVk}
-				disabled={isSavingSettings || !hasVkAccount || offlineGate.disabled}
+				disabled={settingsMutation.isPending || !hasVkAccount || offlineGate.disabled}
 				disabledHint={offlineGate.title}
 				onCheckedChange={toggleReceiveVk}
 			>
@@ -423,7 +410,7 @@
 				title="Все анонсы"
 				description="Получать уведомления о начале каждого выступления."
 				checked={receiveAll}
-				disabled={isSavingSettings || offlineGate.disabled}
+				disabled={settingsMutation.isPending || offlineGate.disabled}
 				disabledHint={offlineGate.title}
 				onCheckedChange={toggleReceiveAll}
 			/>
@@ -437,11 +424,11 @@
 		<Button
 			variant="outline"
 			class="w-full sm:w-auto"
-			disabled={isSendingTest || offlineGate.disabled}
+			disabled={testMutation.isPending || offlineGate.disabled}
 			title={offlineGate.title}
 			onclick={sendTestNotification}
 		>
-			{#if isSendingTest}
+			{#if testMutation.isPending}
 				<Spinner data-icon="inline-start" />
 				Отправка…
 			{:else}

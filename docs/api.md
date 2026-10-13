@@ -51,9 +51,51 @@ The query renders the cached copy at once and refetches in the background (stale
 
 A `load` keeps three jobs: permission guards (reading identity from the cache, `queryClient.getQueryData(currentUserOptions().queryKey)`), the navbar data (`title`, `back`, `actions`), and starting the page's fetch early — SvelteKit preloads a route's data on hover/tap, so `void queryClient.query(getScheduleOptions()).catch(() => {})` there puts the request on the wire before the page mounts. A load **awaits** a query only when the page can't render without it — a form seeded once from it (festival settings, the voting dashboard), a navbar title (a nomination), a staff directory paged by URL — through `queryForLoad(queryClient, options)` (`#lib/api`), which runs the request at once and once only — no retries, no pausing for reachability — and rejects with a `TimeoutError` after `FIRST_PAINT_TIMEOUT_MS`, so a stalled server or a dropped connection can't hang the navigation; the load turns that failure into an error page with `throwApiError(apiError, undefined, fallback)`.
 
-### 3. Plain SDK calls for mutations
+### 3. Writes go through `createMutation`
 
-Mutations stay direct SDK calls in event handlers (`await newSubscription({ body })`), followed by `queryClient.invalidateQueries({ queryKey: …QueryKey() })` for the data they changed. The SDK call never throws (see below); the generated query options _do_ (`throwOnError: true`), so a failed query surfaces as `query.error` holding the error body.
+A user-triggered write is a `createMutation` over the generated `…Mutation()` options, and the mutation's own `onSuccess` invalidates what it changed ([ADR-0022](adr/0022-createmutation-for-writes.md)):
+
+```svelte
+<script lang="ts">
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
+
+	import {
+		getSubscriptionsQueryKey,
+		newSubscriptionMutation
+	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
+
+	const queryClient = useQueryClient();
+	const subscribeMutation = createMutation(() => ({
+		...newSubscriptionMutation(),
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() })
+	}));
+
+	function handleSubmit() {
+		formError = '';
+		subscribeMutation.mutate(
+			{ body: { event_id: event.id, counter } },
+			{
+				onSuccess: () => toastService.add('Подписка оформлена', 'success'),
+				onError: (error) => {
+					formError = getApiErrorDetail(error) ?? 'Не удалось оформить подписку';
+				}
+			}
+		);
+	}
+</script>
+
+<Button onclick={handleSubmit} disabled={subscribeMutation.isPending}>Подписаться</Button>
+```
+
+- **Mutations never pause offline.** The root client sets `networkMode: 'always'` for mutations, so a write made with no connection fails at once with the connection message. It is not held and fired on reconnect. Writes are online-only, and the controls for them are gated (`offlineWriteGate`, `offlineUnavailable`).
+- **Invalidation goes on the mutation; UI work goes on the call.** `createMutation`'s callbacks run even after the component unmounts. `mutate(vars, { onSuccess, onError })` callbacks are skipped once it has unmounted ([Mutations](https://tanstack.com/query/latest/docs/framework/react/guides/mutations)), so toasts, closing a dialog and form errors go there. A toast that must survive the refetch removing its own component goes on the mutation instead (`UserVoteNotice`, `ScheduleChangeCard`).
+- **Return the invalidation** so `isPending` lasts until the fresh data arrives ([TkDodo](https://tkdodo.eu/blog/mastering-mutations-in-react-query)). Use `void` when the refetch would change the open dialog's own content (`ChangePasswordModal`, `ChangeEmailModal`), or when it is heavy and the user doesn't need it first (schedule edits).
+- **`isPending` is the busy flag.** Disable the trigger with it, so a double-tap can't send twice.
+- **`mutate` by default.** Use `mutateAsync` in `try/catch` only when the caller needs a promise: a browser-API sequence (push subscribe), a child that awaits the action (`SocialConnectionRow`), or calls that can overlap (sync sources). `mutate` only runs the callbacks of its latest call.
+- **Forms keep their own `formError`**, set in `onError` and cleared on input, because they mix client-side and API errors. Don't derive it from `mutation.error`. If you do call `mutation.reset()` from an `$effect`, wrap it in `untrack`: reading any field of a mutation result makes the effect depend on all of them.
+- **Errors are thrown bodies.** The generated `mutationFn` passes `throwOnError: true`, so `onError` gets the API error body (or the `fetch` TypeError) with no HTTP status, the same as `query.error`. Branch on `getApiErrorCode(error)`.
+
+A plain SDK call (`await sdkCall()`, then check `error`) remains only where no component submits anything: the offline-logout flush, notifications read-on-view, and the `currentUserOptions` query function.
 
 > Query params go under `query`, path params under `path`, and the request body under `body` — flat on the options object, not nested under `params`.
 
@@ -73,10 +115,10 @@ Backend `StrEnum`s that appear on a DTO field (`UserRole`, `Permission` in `core
 
 ## Mutations & Data Recovery
 
-- **UI Consistency**: after a successful mutation, invalidate the queries it changed — `queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() })` — so what is on screen refetches and the rest refetches when next shown. Keys match by prefix, so a list key covers its infinite variant too. Optimistic writes follow TanStack's order: `cancelQueries`, `setQueryData`, then `invalidateQueries` (mark-all-read zeroing the badge).
+- **UI Consistency**: after a successful mutation, invalidate the queries it changed — `queryClient.invalidateQueries({ queryKey: getSubscriptionsQueryKey() })` — so what is on screen refetches and the rest refetches when next shown. Keys match by prefix, so a list key covers its infinite variant too. Optimistic writes follow TanStack's order: `cancelQueries`, `setQueryData`, then `invalidateQueries` (mark-all-read zeroing the badge). A local optimistic value can key off the mutation itself instead (a vote counts `+1` while `isPending` and the refetched row doesn't carry it yet).
 - **No SvelteKit invalidation**: loads hold no data, so nothing calls `depends`/`invalidate`/`invalidateAll`/`refreshAll` — the last two would also re-run the root load and replace the cache.
-- **Return Checking**: Success payload, error payload, and response metadata are checked through the SDK return (`data`, `error`, `response`). `response` is optional (`response?.ok`, `response?.status`) — a network failure yields `error` with no `response`.
-- **The client never throws** (`throwOnError` is off): every failure, a dropped connection included, comes back as `error` — the generated client catches the `fetch` rejection itself. So don't wrap an SDK call in `try/catch` to handle API failures; that `catch` can't fire for them. Keep `try/finally` to reset a busy flag, and a `catch` only around code that really throws (browser APIs, clipboard, a `load` re-throwing `throwApiError`).
+- **Return Checking** (plain SDK calls only): success payload, error payload, and response metadata come back on the SDK return (`data`, `error`, `response`). `response` is optional (`response?.ok`, `response?.status`) — a network failure yields `error` with no `response`.
+- **A plain SDK call never throws** (`throwOnError` is off on the client): every failure, a dropped connection included, comes back as `error`. So don't wrap one in `try/catch` to handle API failures; that `catch` can't fire for them. The generated query and mutation options are the opposite: they pass `throwOnError: true`, so failures arrive as `query.error` / `onError` (or a rejected `mutateAsync`).
 
 ### Long-running actions (202 Accepted)
 

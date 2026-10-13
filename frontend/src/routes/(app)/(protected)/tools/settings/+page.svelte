@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { AlertCircle } from '@lucide/svelte';
-	import { useQueryClient } from '@tanstack/svelte-query';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 	import { untrack } from 'svelte';
 
 	import { getApiErrorDetail, getApiFieldError } from '#lib/api/errors.js';
 	import {
 		getPublicConfigQueryKey,
-		getSettingsQueryKey
+		getSettingsQueryKey,
+		updateSettingsMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import { updateSettings } from '#lib/api/generated/index.js';
 	import SectionIntro from '#lib/components/SectionIntro.svelte';
 	import * as Alert from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -25,7 +25,15 @@
 	const toastService = getToastService();
 	const queryClient = useQueryClient();
 
-	let isSaving = $state(false);
+	const saveMutation = createMutation(() => ({
+		...updateSettingsMutation(),
+		onSuccess: () => {
+			// The festival dates are public config too; config_updated would refresh it,
+			// but not before this organizer looks at the home hero.
+			void queryClient.invalidateQueries({ queryKey: getSettingsQueryKey() });
+			void queryClient.invalidateQueries({ queryKey: getPublicConfigQueryKey() });
+		}
+	}));
 	// festival_start and festival_end are instants; edit them on the venue clock
 	// via zone-naive datetime-locals, converting back to ISO instants on save.
 	let savedFestivalStart = $state(
@@ -116,7 +124,7 @@
 		}
 	}
 
-	async function handleSubmit(event: Event) {
+	function handleSubmit(event: Event) {
 		event.preventDefault();
 		submitError = '';
 
@@ -135,42 +143,35 @@
 			return;
 		}
 
-		isSaving = true;
-
-		try {
-			const { error, response } = await updateSettings({
+		saveMutation.mutate(
+			{
 				body: {
 					festival_start: fromEventDateTimeLocal(festivalStart),
 					festival_end: fromEventDateTimeLocal(festivalEnd),
 					announcement_timeout: nextAnnouncementTimeout
 				}
-			});
-
-			if (error || !response?.ok) {
-				festivalStartError = getApiFieldError(error, 'festival_start') ?? '';
-				festivalEndError = getApiFieldError(error, 'festival_end') ?? '';
-				announcementTimeoutError = getApiFieldError(error, 'announcement_timeout') ?? '';
-				if (festivalStartError || festivalEndError || announcementTimeoutError) {
-					return;
+			},
+			{
+				onSuccess: () => {
+					savedFestivalStart = festivalStart;
+					savedFestivalEnd = festivalEnd;
+					savedAnnouncementTimeout = nextAnnouncementTimeout;
+					festivalStartError = '';
+					festivalEndError = '';
+					announcementTimeoutError = '';
+					toastService.add('Настройки фестиваля сохранены', 'success');
+				},
+				onError: (error) => {
+					festivalStartError = getApiFieldError(error, 'festival_start') ?? '';
+					festivalEndError = getApiFieldError(error, 'festival_end') ?? '';
+					announcementTimeoutError = getApiFieldError(error, 'announcement_timeout') ?? '';
+					if (festivalStartError || festivalEndError || announcementTimeoutError) {
+						return;
+					}
+					submitError = getApiErrorDetail(error) ?? 'Не удалось сохранить настройки фестиваля';
 				}
-				submitError = getApiErrorDetail(error) ?? 'Не удалось сохранить настройки фестиваля';
-				return;
 			}
-
-			savedFestivalStart = festivalStart;
-			savedFestivalEnd = festivalEnd;
-			savedAnnouncementTimeout = nextAnnouncementTimeout;
-			festivalStartError = '';
-			festivalEndError = '';
-			announcementTimeoutError = '';
-			toastService.add('Настройки фестиваля сохранены', 'success');
-			// The festival dates are public config too; config_updated would refresh it,
-			// but not before this organizer looks at the home hero.
-			void queryClient.invalidateQueries({ queryKey: getSettingsQueryKey() });
-			void queryClient.invalidateQueries({ queryKey: getPublicConfigQueryKey() });
-		} finally {
-			isSaving = false;
-		}
+		);
 	}
 </script>
 
@@ -200,7 +201,7 @@
 					type="datetime-local"
 					autocomplete="off"
 					bind:value={festivalStart}
-					disabled={isSaving}
+					disabled={saveMutation.isPending}
 					oninput={handleFestivalStartInput}
 					onblur={validateFestivalStart}
 					aria-invalid={festivalStartError ? true : undefined}
@@ -222,7 +223,7 @@
 					type="datetime-local"
 					autocomplete="off"
 					bind:value={festivalEnd}
-					disabled={isSaving}
+					disabled={saveMutation.isPending}
 					oninput={handleFestivalEndInput}
 					onblur={validateFestivalEnd}
 					aria-invalid={festivalEndError ? true : undefined}
@@ -253,7 +254,7 @@
 				inputmode="numeric"
 				autocomplete="off"
 				bind:value={announcementTimeout}
-				disabled={isSaving}
+				disabled={saveMutation.isPending}
 				oninput={handleAnnouncementTimeoutInput}
 				onblur={validateAnnouncementTimeout}
 				aria-invalid={announcementTimeoutError ? true : undefined}
@@ -268,8 +269,8 @@
 		</Field.Field>
 	</Card.Root>
 
-	<Button type="submit" class="w-full sm:w-auto" disabled={isSaving || !hasChanges}>
-		{#if isSaving}
+	<Button type="submit" class="w-full sm:w-auto" disabled={saveMutation.isPending || !hasChanges}>
+		{#if saveMutation.isPending}
 			<Spinner data-icon="inline-start" />
 			Сохраняем…
 		{:else}

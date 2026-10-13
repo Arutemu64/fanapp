@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Undo2 } from '@lucide/svelte';
-	import { useQueryClient } from '@tanstack/svelte-query';
+	import { createMutation, useQueryClient } from '@tanstack/svelte-query';
 
 	import type {
 		ScheduleChangeEventDto,
@@ -10,9 +10,9 @@
 
 	import {
 		getScheduleQueryKey,
-		listScheduleChangesQueryKey
+		listScheduleChangesQueryKey,
+		undoScheduleChangeMutation
 	} from '#lib/api/generated/@tanstack/svelte-query.gen.js';
-	import { undoScheduleChange } from '#lib/api/generated/index.js';
 	import { Badge } from '#lib/components/ui/badge/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as Card from '#lib/components/ui/card/index.js';
@@ -27,29 +27,25 @@
 
 	const toastService = getToastService();
 	const queryClient = useQueryClient();
-	let isUndoing = $state(false);
 
-	async function undoChange() {
-		isUndoing = true;
-		try {
-			const { error, response } = await undoScheduleChange({
-				path: { schedule_change_id: change.id }
-			});
-
-			if (error || !response?.ok) {
-				console.error('Error undoing change:', error);
-				toastService.error(error, 'Не удалось отменить изменение');
-				return;
-			}
-
+	const undoMutation = createMutation(() => ({
+		...undoScheduleChangeMutation(),
+		onSuccess: () => {
+			// Toasted here, not in a `mutate` callback: the refetched feed can drop or
+			// re-key this card, and TanStack skips a call's callbacks once it unmounts.
 			toastService.add('Изменение отменено', 'success');
 			// Read-your-writes, without waiting for the schedule_updated echo (see
-			// EventCard's reloadSchedule).
+			// EventStaffActions' reloadSchedule).
 			void queryClient.invalidateQueries({ queryKey: getScheduleQueryKey() });
-			await queryClient.invalidateQueries({ queryKey: listScheduleChangesQueryKey() });
-		} finally {
-			isUndoing = false;
+			return queryClient.invalidateQueries({ queryKey: listScheduleChangesQueryKey() });
 		}
+	}));
+
+	function undoChange() {
+		undoMutation.mutate(
+			{ path: { schedule_change_id: change.id } },
+			{ onError: (error) => toastService.error(error, 'Не удалось отменить изменение') }
+		);
 	}
 
 	const changeTypeLabels: Record<ScheduleChangeType, string> = {
@@ -132,8 +128,8 @@
 			<span class="text-xs text-muted-foreground">
 				ID: {change.id}
 			</span>
-			<Button variant="outline" size="sm" onclick={undoChange} disabled={isUndoing}>
-				{#if isUndoing}
+			<Button variant="outline" size="sm" onclick={undoChange} disabled={undoMutation.isPending}>
+				{#if undoMutation.isPending}
 					<Spinner data-icon="inline-start" />
 				{:else}
 					<Undo2 data-icon="inline-start" />

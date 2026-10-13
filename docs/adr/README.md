@@ -65,4 +65,5 @@ permanent — it is how other ADRs and commits reference the decision.
 | [0018](0018-psycopg-3-as-the-postgres-driver.md) | psycopg 3 as the PostgreSQL driver | Accepted |
 | [0019](0019-photoswipe-for-the-map-viewer.md) | PhotoSwipe for the map viewer | Accepted |
 | [0020](0020-workbox-precache-list-from-app-manifest.md) | Workbox precache list from `$app/manifest`, without vite-pwa | Accepted |
-| [0021](0021-tanstack-query-for-server-state.md) | TanStack Query for server state, persisted to IndexedDB | Accepted |
+| [0021](0021-tanstack-query-for-server-state.md) | TanStack Query for server state, persisted to IndexedDB | Accepted; mutations superseded by [0022](0022-createmutation-for-writes.md) |
+| [0022](0022-createmutation-for-writes.md) | `createMutation` for writes, online-only | Accepted |
